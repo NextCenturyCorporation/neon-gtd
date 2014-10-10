@@ -2,10 +2,17 @@
   "name": "neon-gtd",
   "description": "A sample geo-temporal analysis dashboard that uses the neon.js library to show interactions between multiple visualizations of a dataset.",
   "version": "0.8.0",
-  "repository": "https://github.com/NextCenturyCorporation/neon-gtd",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/NextCenturyCorporation/neon-gtd"
+  },
   "license": "Apache v2",
   "private": true,
   "devDependencies": {
+    "grunt": "~0.4.1",
+    "grunt-cli": "~0.1.6",
+    "grunt-contrib-jshint": "0.3.0",
+    "grunt-bower-task": "0.4.0",
     "karma": "~0.10",
     "protractor": "^1.1.1",
     "http-server": "^0.6.1",
@@ -14,7 +21,7 @@
     "karma-junit-reporter": "^0.2.2"
   },
   "scripts": {
-    "postinstall": "bower install",
+    "postinstall": "grunt",
 
     "prestart": "npm install",
     "start": "http-server -a localhost -p 8000 -c-1",

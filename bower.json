@@ -10,11 +10,27 @@
     "angular-route": "1.2.x",
     "angular-loader": "1.2.x",
     "angular-mocks": "~1.2.x",
-    "html5-boilerplate": "~4.3.0",
+    "bootstrap": "3.2.0",
+    "d3": "~3.0",
     "jquery": "1.11.0",
     "jquery-ui": "1.10.4",
-    "jquery.event.drag": "2.2",
-    "jquery.event.drop": "2.2",
-    "bootstrap": "3.2.0"
+    "jquery.event.drag-drop": "2.2.1",
+    "openlayers": "https://github.com/openlayers/openlayers/releases/download/release-2.13.1/OpenLayers-2.13.1.zip"
+  },
+  "resolutions": {
+    "jquery": "1.11.x"
+  },
+  "exportsOverride": {
+    "bootstrap-*": {
+      "js": "**/*.js",
+      "css": "**/*.css"
+    },
+
+    "bootstrap": {
+        "js": "dist/js/*.js",
+        "css": "dist/css/*.css",
+        "fonts": "dist/fonts/*.*"
+    }
   }
+    
 }
