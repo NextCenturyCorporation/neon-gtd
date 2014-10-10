@@ -1,0 +1,20 @@
+{
+  "name": "neon-gtd",
+  "description": "A sample geo-temporal analysis dashboard that uses the neon.js library to show interactions between multiple visualizations of a dataset.",
+  "version": "0.8.0",
+  "homepage": "https://github.com/NextCenturyCorporation/neon-gtd",
+  "license": "Apache v2",
+  "private": true,
+  "dependencies": {
+    "angular": "1.2.x",
+    "angular-route": "1.2.x",
+    "angular-loader": "1.2.x",
+    "angular-mocks": "~1.2.x",
+    "html5-boilerplate": "~4.3.0",
+    "jquery": "1.11.0",
+    "jquery-ui": "1.10.4",
+    "jquery.event.drag": "2.2",
+    "jquery.event.drop": "2.2",
+    "bootstrap": "3.2.0"
+  }
+}
