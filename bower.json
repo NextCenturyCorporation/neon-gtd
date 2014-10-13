@@ -7,15 +7,24 @@
   "private": true,
   "dependencies": {
     "angular": "1.2.x",
-    "angular-route": "1.2.x",
     "angular-loader": "1.2.x",
     "angular-mocks": "~1.2.x",
+    "angular-route": "1.2.x",
     "bootstrap": "3.2.0",
     "d3": "~3.0",
+    "html5shiv": "3.7.2",
     "jquery": "1.11.0",
     "jquery-ui": "1.10.4",
     "jquery.event.drag-drop": "2.2.1",
-    "openlayers": "https://github.com/openlayers/openlayers/releases/download/release-2.13.1/OpenLayers-2.13.1.zip"
+    "jquery.tag.cloud": "https://raw.githubusercontent.com/addywaddy/jquery.tagcloud.js/master/jquery.tagcloud.js",
+    "mergesort": "https://github.com/justinforce/merge-sort/archive/1.0.zip",
+    "opencpu": "https://github.com/jeroenooms/opencpu.js.git",
+    "openlayers": "https://github.com/openlayers/openlayers.git#release-2.13.1",
+    "owf": "https://www.owfgoss.org/nexus/content/groups/public/org/ozoneplatform/ozone-widgeting-framework/OWF-bundle/7.0.1/OWF-bundle-7.0.1-GA.zip",
+    "respond": "1.4.x",
+    "slickgrid": "2.1.0",
+    "xdatalogger": "https://raw.githubusercontent.com/draperlab/xdatalogger/master/javascript/draper.activity_logger-2.1.1.js",
+    "xdatalogger-worker": "https://raw.githubusercontent.com/draperlab/xdatalogger/master/javascript/draper.activity_worker-2.1.1.js"
   },
   "resolutions": {
     "jquery": "1.11.x"
@@ -30,6 +39,59 @@
         "js": "dist/js/*.js",
         "css": "dist/css/*.css",
         "fonts": "dist/fonts/*.*"
+    },
+
+    "d3": {
+      "js": "**/d3.min.js",
+      "css": "**/*.css"
+    },
+
+    "html5shiv": {
+      "js": "**/*min.js"
+    },
+
+    "jquery.event.drag-drop": {
+      "js": "**/jquery.event*.js",
+      "css": "**/*.css"
+    },
+
+    "jquery-ui": {
+      "js": "**/jquery-ui.min.js",
+      "css": "**/*min.css"
+    },
+
+    "mergesort": {
+      "js": "**/merge*.js"
+    },
+
+    "opencpu": {
+      "js": "**/opencpu-*.*.js"
+    },
+
+    "openlayers": {
+      "js": ["**/OpenLayer*.js", "**/OpenLayers.*.js"],
+      "theme/default": "theme/default/*.css",
+      "theme/default/img": ["**/*.gif", "**/*.png"],
+      "img": ["img/*.gif", "img/*.png"]
+    },
+
+    "owf": {
+      "js": "etc/widget/js/owf-widget-debug.js"
+    },
+
+    "respond": {
+      "js": "dest/*min.js"
+    },
+
+    "slickgrid": {
+      "js": "**/slick.*.js",
+      "css/images": ["**/*.gif", "**/*.png"],
+      "css": "**/slick*.css"
+    },
+
+    "*": {
+      "js": ["**/*min.js", "**/*.map"],
+      "css": "**/*.css"
     }
   }
     
