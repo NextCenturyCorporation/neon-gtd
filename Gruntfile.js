@@ -13,6 +13,7 @@ module.exports = function(grunt) {
     bower: {
       install: {
         options: {
+          targetDir: "app/lib",
           layout: "byComponent",
           cleanTargetDir: true,
           cleanBowerDir: true,
@@ -22,6 +23,7 @@ module.exports = function(grunt) {
       },
       cleanup: {
         options: {
+          targetDir: "app/lib",
           layout: "byComponent",
           cleanTargetDir: true,
           cleanBowerDir: true,

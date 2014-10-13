@@ -8,7 +8,7 @@
   "dependencies": {
     "angular": "1.2.x",
     "angular-loader": "1.2.x",
-    "angular-mocks": "~1.2.x",
+    "angular-mocks": "1.2.x",
     "angular-route": "1.2.x",
     "bootstrap": "3.2.0",
     "d3": "~3.0",
@@ -20,16 +20,22 @@
     "mergesort": "https://github.com/justinforce/merge-sort/archive/1.0.zip",
     "opencpu": "https://github.com/jeroenooms/opencpu.js.git",
     "openlayers": "https://github.com/openlayers/openlayers.git#release-2.13.1",
+    "openlayers-heatmap": "https://github.com/pa7/heatmap.js.git#v1.0",
     "owf": "https://www.owfgoss.org/nexus/content/groups/public/org/ozoneplatform/ozone-widgeting-framework/OWF-bundle/7.0.1/OWF-bundle-7.0.1-GA.zip",
     "respond": "1.4.x",
     "slickgrid": "2.1.0",
-    "xdatalogger": "https://raw.githubusercontent.com/draperlab/xdatalogger/master/javascript/draper.activity_logger-2.1.1.js",
+    "xdatalogger": "https://github.com/draperlab/xdatalogger.git",
     "xdatalogger-worker": "https://raw.githubusercontent.com/draperlab/xdatalogger/master/javascript/draper.activity_worker-2.1.1.js"
   },
   "resolutions": {
     "jquery": "1.11.x"
   },
   "exportsOverride": {
+    "angular-mocks": {
+      "js": "**/*.js",
+      "css": "**/*.css"
+    },
+
     "bootstrap-*": {
       "js": "**/*.js",
       "css": "**/*.css"
@@ -69,10 +75,14 @@
     },
 
     "openlayers": {
-      "js": ["**/OpenLayer*.js", "**/OpenLayers.*.js"],
+      ".": ["**/OpenLayer*.js", "**/OpenLayers.*.js"],
       "theme/default": "theme/default/*.css",
       "theme/default/img": ["**/*.gif", "**/*.png"],
       "img": ["img/*.gif", "img/*.png"]
+    },
+
+    "openlayers-heatmap": {
+      "js": ["**/heatmap.js", "**/*openlayers*.js"]
     },
 
     "owf": {
@@ -87,6 +97,10 @@
       "js": "**/slick.*.js",
       "css/images": ["**/*.gif", "**/*.png"],
       "css": "**/slick*.css"
+    },
+
+    "xdatalogger": {
+      "js": "**/draper.activity_*-2.1.1.js"
     },
 
     "*": {
