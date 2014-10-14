@@ -42,6 +42,13 @@ MIT/X11 (mit.txt)
   -- slick.grid.js, v2.2
   -- slick.core.js
   -- slick.dataview.js
+- Grunt
+  -- grunt, 0.4.1
+  -- grunt-cli, 0.1.6
+  -- grunt-contrib-jshint, 0.3.0
+  -- grunt-bower-task, 0.4.0
+  -- grunt-war, 0.3.3
+  -- grunt-contrib-yuidoc, 0.5.2
 
 JQuery Tagcloud (jquery.tagcloud.txt)
   -- jquery.tagcloud.js

@@ -22,9 +22,9 @@
  * @constructor
  */
 angular.module('neonDemo.controllers', []).controller('neonDemoController', ['$scope', '$timeout', 'FilterCountService',
-	function($scope, $timeout, filterCountService) {
+    function($scope, $timeout, filterCountService) {
 
-		$scope.seeData = false;
+        $scope.seeData = false;
         $scope.createFilters = false;
         $scope.chartOptions = false;
         $scope.filterCount = 0;
@@ -63,8 +63,8 @@ angular.module('neonDemo.controllers', []).controller('neonDemoController', ['$s
          * whose visiblity is managed by Bootstrap hooks.
          * @method toggleSeeData
          */
-		$scope.toggleSeeData = function() {
-			$scope.seeData = !$scope.seeData;
+        $scope.toggleSeeData = function() {
+            $scope.seeData = !$scope.seeData;
             var action = ($scope.seeData === true) ? 'show_data_table' : 'hide_data_table';
             XDATA.activityLogger.logUserActivity('Neon Demo - Toggle data table display', action,
                 XDATA.activityLogger.WF_CREATE,
@@ -82,7 +82,7 @@ angular.module('neonDemo.controllers', []).controller('neonDemoController', ['$s
                     $($("[href='.filter-tray']")[0]).click();  
                 }, 5, false);
             }
-		};
+        };
 
         /**
          * Simple toggle method for tracking which chart is visible.
@@ -99,9 +99,9 @@ angular.module('neonDemo.controllers', []).controller('neonDemoController', ['$s
                 });
         };
 
-		// Watch for changes in the filter counts and update the filter badge binding.
+        // Watch for changes in the filter counts and update the filter badge binding.
         $scope.$watch(function() {
-        	return filterCountService.getCount();
+            return filterCountService.getCount();
         }, function(count) {
             $scope.filterCount = count;
         });

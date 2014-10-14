@@ -218,7 +218,7 @@ angular.module('heatMapDirective', []).directive('heatMap', ['ConnectionService'
                                 to: newVal
                             });
                         $scope.queryForMapData();
-                    })
+                    });
 
                 };
 
@@ -459,7 +459,7 @@ angular.module('heatMapDirective', []).directive('heatMap', ['ConnectionService'
                         return { left: minLon, bottom: minLat, right: maxLon, top: maxLat};
                     }
 
-                }
+                };
 
                 $scope.buildQuery = function () {
                     var query = new neon.query.Query().selectFrom($scope.databaseName, $scope.tableName).limit($scope.limit)
@@ -481,12 +481,12 @@ angular.module('heatMapDirective', []).directive('heatMap', ['ConnectionService'
                     }
 
                     return query;
-                }
+                };
 
                 $scope.buildPointQuery = function() {
                     var query = new neon.query.Query().selectFrom($scope.databaseName, $scope.tableName).limit($scope.limit)
                     return query;
-                }
+                };
 
                 $scope.hideClearFilterButton = function () {
                     // hide the Clear Filter button.
@@ -566,7 +566,7 @@ angular.module('heatMapDirective', []).directive('heatMap', ['ConnectionService'
                         $scope.map.sizeMapping = "";
                     }
                     $scope.map.updateRadii();
-                }
+                };
 
                 /**
                  * Sets the category mapping field used by the map for its layers.  This should be a top level
@@ -581,7 +581,7 @@ angular.module('heatMapDirective', []).directive('heatMap', ['ConnectionService'
                     else {
                         $scope.map.categoryMapping = undefined;
                     }
-                }
+                };
 
                 /**
                  * Toggles whether or not the options menu should be displayed.

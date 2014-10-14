@@ -74,6 +74,6 @@ angular.module('circularHeatChartDirective', []).directive('circularHeatChart', 
                 }
             }, true);
         }
-	}
+	};
 });
 

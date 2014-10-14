@@ -2,6 +2,7 @@ logs/*
 !.gitkeep
 app/lib
 bower_components/
+docs/
 node_modules/
 target/
 tmp

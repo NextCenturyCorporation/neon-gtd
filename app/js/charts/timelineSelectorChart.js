@@ -72,7 +72,7 @@ charts.TimelineSelectorChart = function (element, configuration) {
         this.redrawOnResize();
 
         return this;
-    }
+    };
 
     this.determineWidth = function (element) {
         if (this.config.width) {
@@ -129,7 +129,7 @@ charts.TimelineSelectorChart = function (element, configuration) {
                 this.brush.on("brushend", wrapBrushHandler(this.brush, handler));
             }
         }
-    }
+    };
 
     /**
      * Removes the brush end handler from the timeline's brush.
@@ -138,7 +138,7 @@ charts.TimelineSelectorChart = function (element, configuration) {
     this.removeBrushHandler = function () {
         this.brushHandler = undefined;
         this.brush.on("brushend");
-    }
+    };
 
     /**
      * Clears the brush from the timeline.
@@ -147,7 +147,7 @@ charts.TimelineSelectorChart = function (element, configuration) {
     this.clearBrush = function () {
         this.brush.clear();
         d3.select(this.element).select('.brush').call(this.brush);
-    }
+    };
 
     /**
      * Updates the positions of the east and west timeline masks for unselected areas.
@@ -204,7 +204,7 @@ charts.TimelineSelectorChart = function (element, configuration) {
             brushElement.find('.mask-west').attr('x', parseFloat(xPos) - width);
             brushElement.find('.mask-east').attr('x', parseFloat(xPos) + parseFloat(extentWidth));
         }
-    }
+    };
 
     /**
      * This will re-render the control with the given values.  This is a costly method and calls to it should be minimized
@@ -501,11 +501,11 @@ charts.TimelineSelectorChart = function (element, configuration) {
 
     this.updatePrimarySeries = function(series) {
         this.primarySeries = series;
-    }
+    };
 
     this.updateGranularity = function(granularity) {
         this.granularity = granularity;
-    }
+    };
 
     this.redrawOnResize = function () {
         var me = this;
@@ -527,7 +527,7 @@ charts.TimelineSelectorChart = function (element, configuration) {
         var brushElement = this.svg.select(".brush");
         brushElement.call(this.brush.extent(extent));
         this.updateMask.apply(brushElement[0][0]);
-    }
+    };
 
     // initialization
     return this.configure(configuration);

@@ -1,3 +1,5 @@
+'use strict';
+
 var databaseConfig = angular.module('configurationDirective', []);
 
 databaseConfig.directive('databaseConfig', ['ConnectionService', function (connectionService) {
@@ -65,7 +67,7 @@ databaseConfig.directive('databaseConfig', ['ConnectionService', function (conne
             $scope.messenger = new neon.eventing.Messenger();
             $scope.datastoreSelect = $scope.storeSelect || 'mongo';
             $scope.hostnameInput = $scope.hostName || 'localhost';
-        }
+        };
 
         $scope.connectToDataServer = function () {
             XDATA.activityLogger.logUserActivity('User selected new datastore',
@@ -221,14 +223,14 @@ databaseConfig.directive('databaseConfig', ['ConnectionService', function (conne
             $scope.messenger.publish(neon.eventing.channels.ACTIVE_DATASET_CHANGED, message);
             XDATA.activityLogger.logSystemActivity('Publishing Neon Active Dataset Change message',
                 message);
-        }
+        };
 
         // Wait for neon to be ready, the create our messenger and intialize the view and data.
         neon.ready(function () {
             $scope.initialize();
         });
 
-    }
+    };
 
     return {
         templateUrl: 'partials/databaseConfig.html',
@@ -238,5 +240,5 @@ databaseConfig.directive('databaseConfig', ['ConnectionService', function (conne
             hostName: '='
         },
         link: link
-    }
+    };
 }]);

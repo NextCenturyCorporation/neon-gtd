@@ -58,7 +58,7 @@ fieldSelector.directive('fieldselector', ['ConnectionService', function(connecti
 			XDATA.activityLogger.logUserActivity('FieldSelector - user changed a field selection', 'define_axes',
                 XDATA.activityLogger.WF_CREATE,
                 {
-                	"field": $scope.labelText,
+                    "field": $scope.labelText,
                     "to": newVal,
                     "from": oldVal
                 });

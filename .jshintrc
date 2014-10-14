@@ -1,13 +1,25 @@
 {
-  "globalstrict": true,
-  "globals": {
-    "angular": false,
-    "describe": false,
-    "it": false,
-    "expect": false,
-    "beforeEach": false,
-    "afterEach": false,
-    "module": false,
-    "inject": false
-  }
+    "globalstrict": true,
+    "globals": {
+        "$": false,
+        "_": false,
+        "activityLogger": false,
+        "afterEach": false,
+        "angular": false,
+        "beforeEach": false,
+        "charts": false,
+        "d3": false,
+        "DEMO_CONFIG": false,
+        "describe": false,
+        "expect": false,
+        "it": false,
+        "inject": false,
+        "module": false,
+        "neon": false,
+        "ocpu": false,
+        "OpenLayers": false,
+        "OWF": false,
+        "window": false,
+        "XDATA": false
+    }
 }

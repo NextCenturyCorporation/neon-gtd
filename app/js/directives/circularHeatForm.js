@@ -106,7 +106,7 @@ angular.module('circularHeatFormDirective', []).directive('circularHeatForm', ['
 				];
 				$scope.maxDay = "";
 				$scope.maxTime = "";
-			}
+			};
 
 
 			/**

@@ -1,3 +1,4 @@
+'use strict';
 function circularHeatChart(element, configuration) {
     var margin = {top: 20, right: 20, bottom: 20, left: 20},
     innerRadius = 50,
@@ -6,7 +7,8 @@ function circularHeatChart(element, configuration) {
     domain = null,
     range = ["#ffffff", "#39b54a"],
     accessor = function(d) {return d;},
-    radialLabels = segmentLabels = [];
+    radialLabels = [],
+    segmentLabels = [];
 
     // Cache the element to which we are bound.
     var element = element;
@@ -18,7 +20,7 @@ function circularHeatChart(element, configuration) {
             svg.attr("viewBox","0 0 356 356");
 
             var offset = innerRadius + Math.ceil(data.length / numSegments) * segmentHeight;
-            g = svg.append("g")
+            var g = svg.append("g")
                 .classed("circular-heat", true)
                 .attr("transform", "translate(" + parseInt(margin.left + offset) + "," + parseInt(margin.top + offset) + ")");
 
@@ -94,18 +96,18 @@ function circularHeatChart(element, configuration) {
     }
 
     /* Arc functions */
-    ir = function(d, i) {
+    var ir = function(d, i) {
         return innerRadius + Math.floor(i/numSegments) * segmentHeight;
-    }
-    or = function(d, i) {
+    };
+    var or = function(d, i) {
         return innerRadius + segmentHeight + Math.floor(i/numSegments) * segmentHeight;
-    }
-    sa = function(d, i) {
+    };
+    var sa = function(d, i) {
         return (i * 2 * Math.PI) / numSegments;
-    }
-    ea = function(d, i) {
+    };
+    var ea = function(d, i) {
         return ((i + 1) * 2 * Math.PI) / numSegments;
-    }
+    };
 
     /* Configuration getters/setters */
     chart.margin = function(_) {

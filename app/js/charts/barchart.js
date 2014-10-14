@@ -1,3 +1,4 @@
+'use strict';
 /*
  * Copyright 2013 Next Century Corporation
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -442,7 +443,7 @@ charts.BarChart.prototype.setInactive = function (predicate) {
 
 charts.BarChart.prototype.showTooltip_ = function (item, mouseLocation) {
 	var xValue = this.tickFormat_ ? this.tickFormat_(item.key) : item.key;
-	var yValue = this.isStacked ? (item.values - item[this.yMinAttribute_]) : item.values
+	var yValue = this.isStacked ? (item.values - item[this.yMinAttribute_]) : item.values;
 
 	var tooltip = this.element.append("div")
 	.property('id', charts.BarChart.TOOLTIP_ID_)

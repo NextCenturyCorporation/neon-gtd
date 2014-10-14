@@ -112,7 +112,7 @@ barchart.directive('barchart', ['ConnectionService', '$timeout', function(connec
 
 		$scope.queryForData = function() {
 			var xAxis = $scope.attrX || connectionService.getFieldMapping("bar_x_axis");
-			var yAxis = $scope.attrY || connectionService.getFieldMapping("y_axis")
+			var yAxis = $scope.attrY || connectionService.getFieldMapping("y_axis");
 
             if (xAxis === undefined || xAxis === "" || yAxis === undefined || yAxis ==="") {
                 drawBlankChart();

@@ -1,120 +1,120 @@
 {
-  "name": "neon-gtd",
-  "description": "A sample geo-temporal analysis dashboard that uses the neon.js library to show interactions between multiple visualizations of a dataset.",
-  "version": "0.8.0",
-  "homepage": "https://github.com/NextCenturyCorporation/neon-gtd",
-  "license": "Apache v2",
-  "private": true,
-  "dependencies": {
-    "angular": "1.2.x",
-    "angular-loader": "1.2.x",
-    "angular-mocks": "1.2.x",
-    "angular-route": "1.2.x",
-    "bootstrap": "3.2.0",
-    "d3": "~3.0",
-    "html5shiv": "3.7.2",
-    "jquery": "1.11.0",
-    "jquery-ui": "1.10.4",
-    "jquery.event.drag-drop": "2.2.1",
-    "jquery.tagcloud": "https://github.com/addywaddy/jquery.tagcloud.js.git",
-    "mergesort": "https://github.com/justinforce/merge-sort/archive/1.0.zip",
-    "opencpu": "https://github.com/jeroenooms/opencpu.js.git",
-    "openlayers": "https://github.com/openlayers/openlayers/releases/download/release-2.13.1/OpenLayers-2.13.1.zip",
-    "openlayers-heatmap": "https://github.com/pa7/heatmap.js.git#v1.0",
-    "owf": "https://www.owfgoss.org/nexus/content/groups/public/org/ozoneplatform/ozone-widgeting-framework/OWF-bundle/7.0.1/OWF-bundle-7.0.1-GA.zip",
-    "respond": "1.4.x",
-    "slickgrid": "2.1.0",
-    "xdatalogger": "https://github.com/draperlab/xdatalogger.git",
-    "xdatalogger-worker": "https://raw.githubusercontent.com/draperlab/xdatalogger/master/javascript/draper.activity_worker-2.1.1.js"
-  },
-  "resolutions": {
-    "jquery": "1.11.x"
-  },
-  "exportsOverride": {
-    "angular-mocks": {
-      "js": "**/*.js",
-      "css": "**/*.css"
+    "name": "neon-gtd",
+    "description": "A sample geo-temporal analysis dashboard that uses the neon.js library to show interactions between multiple visualizations of a dataset.",
+    "version": "0.8.0",
+    "homepage": "https://github.com/NextCenturyCorporation/neon-gtd",
+    "license": "Apache v2",
+    "private": true,
+    "dependencies": {
+        "angular": "1.2.x",
+        "angular-loader": "1.2.x",
+        "angular-mocks": "1.2.x",
+        "angular-route": "1.2.x",
+        "bootstrap": "3.2.0",
+        "d3": "~3.0",
+        "html5shiv": "3.7.2",
+        "jquery": "1.11.0",
+        "jquery-ui": "1.10.4",
+        "jquery.event.drag-drop": "2.2.1",
+        "jquery.tagcloud": "https://github.com/addywaddy/jquery.tagcloud.js.git",
+        "mergesort": "https://github.com/justinforce/merge-sort/archive/1.0.zip",
+        "opencpu": "https://github.com/jeroenooms/opencpu.js.git",
+        "openlayers": "https://github.com/openlayers/openlayers/releases/download/release-2.13.1/OpenLayers-2.13.1.zip",
+        "openlayers-heatmap": "https://github.com/pa7/heatmap.js.git#v1.0",
+        "owf": "https://www.owfgoss.org/nexus/content/groups/public/org/ozoneplatform/ozone-widgeting-framework/OWF-bundle/7.0.1/OWF-bundle-7.0.1-GA.zip",
+        "respond": "1.4.x",
+        "slickgrid": "2.1.0",
+        "xdatalogger": "https://github.com/draperlab/xdatalogger.git",
+        "xdatalogger-worker": "https://raw.githubusercontent.com/draperlab/xdatalogger/master/javascript/draper.activity_worker-2.1.1.js"
     },
-
-    "bootstrap-*": {
-      "js": "**/*.js",
-      "css": "**/*.css"
+    "resolutions": {
+        "jquery": "1.11.x"
     },
+    "exportsOverride": {
+        "angular-mocks": {
+            "js": "**/*.js",
+            "css": "**/*.css"
+        },
 
-    "bootstrap": {
-        "js": "dist/js/*.js",
-        "css": "dist/css/*.css",
-        "fonts": "dist/fonts/*.*"
-    },
+        "bootstrap-*": {
+            "js": "**/*.js",
+            "css": "**/*.css"
+        },
 
-    "d3": {
-      "js": "**/d3.min.js",
-      "css": "**/*.css"
-    },
+        "bootstrap": {
+                "js": "dist/js/*.js",
+                "css": "dist/css/*.css",
+                "fonts": "dist/fonts/*.*"
+        },
 
-    "html5shiv": {
-      "js": "**/*min.js"
-    },
+        "d3": {
+            "js": "**/d3.min.js",
+            "css": "**/*.css"
+        },
 
-    "jquery.event.drag-drop": {
-      "js": "**/jquery.event*.js",
-      "css": "**/*.css"
-    },
+        "html5shiv": {
+            "js": "**/*min.js"
+        },
 
-    "jquery-ui": {
-      "js": "**/jquery-ui.min.js",
-      "themes/smoothness": "themes/smoothness/**.css",
-      "themes/smoothness/images": ["themes/smoothness/images/*.png","themes/smoothness/images/*.gif"],
-      "themes/ui-lightness": "themes/ui-lightness/**.css",
-      "themes/ui-lightness/images": ["themes/ui-lightness/images/*.png","themes/ui-lightness/images/*.gif"]
-    },
+        "jquery.event.drag-drop": {
+            "js": "**/jquery.event*.js",
+            "css": "**/*.css"
+        },
 
-    "jquery.tagcloud": {
-      "js": "**/*.js",
-      "css": "**/*.css"
-    },
+        "jquery-ui": {
+            "js": "**/jquery-ui.min.js",
+            "themes/smoothness": "themes/smoothness/**.css",
+            "themes/smoothness/images": ["themes/smoothness/images/*.png","themes/smoothness/images/*.gif"],
+            "themes/ui-lightness": "themes/ui-lightness/**.css",
+            "themes/ui-lightness/images": ["themes/ui-lightness/images/*.png","themes/ui-lightness/images/*.gif"]
+        },
 
-    "mergesort": {
-      "js": "**/merge*.js"
-    },
+        "jquery.tagcloud": {
+            "js": "**/*.js",
+            "css": "**/*.css"
+        },
 
-    "opencpu": {
-      "js": "**/opencpu-*.*.js"
-    },
+        "mergesort": {
+            "js": "**/merge*.js"
+        },
 
-    "openlayers": {
-      ".": ["OpenLayer*.js", "OpenLayers.*.js"],
-      "theme/default": "theme/default/*.css",
-      "theme/default/img": ["**/*.gif", "**/*.png"],
-      "img": ["img/*.gif", "img/*.png"]
-    },
+        "opencpu": {
+            "js": "**/opencpu-*.*.js"
+        },
 
-    "openlayers-heatmap": {
-      "js": ["**/heatmap.js", "**/*openlayers*.js"]
-    },
+        "openlayers": {
+            ".": ["OpenLayer*.js", "OpenLayers.*.js"],
+            "theme/default": "theme/default/*.css",
+            "theme/default/img": ["**/*.gif", "**/*.png"],
+            "img": ["img/*.gif", "img/*.png"]
+        },
 
-    "owf": {
-      "js": "etc/widget/js/owf-widget-debug.js"
-    },
+        "openlayers-heatmap": {
+            "js": ["**/heatmap.js", "**/*openlayers*.js"]
+        },
 
-    "respond": {
-      "js": "dest/*min.js"
-    },
+        "owf": {
+            "js": "etc/widget/js/owf-widget-debug.js"
+        },
 
-    "slickgrid": {
-      "js": "**/slick.*.js",
-      "css/images": ["**/*.gif", "**/*.png"],
-      "css": "**/slick*.css"
-    },
+        "respond": {
+            "js": "dest/*min.js"
+        },
 
-    "xdatalogger": {
-      "js": "**/draper.activity_*-2.1.1.js"
-    },
+        "slickgrid": {
+            "js": "**/slick.*.js",
+            "css/images": ["**/*.gif", "**/*.png"],
+            "css": "**/slick*.css"
+        },
 
-    "*": {
-      "js": ["**/*min.js", "**/*.map"],
-      "css": "**/*.css"
+        "xdatalogger": {
+            "js": "**/draper.activity_*-2.1.1.js"
+        },
+
+        "*": {
+            "js": ["**/*min.js", "**/*.map"],
+            "css": "**/*.css"
+        }
     }
-  }
-    
+        
 }

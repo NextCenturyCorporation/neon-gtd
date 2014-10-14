@@ -1,3 +1,4 @@
+'use strict';
 /*
  * Copyright 2013 Next Century Corporation
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -153,7 +154,7 @@ coreMap.Map.DESTINATION_PROJECTION = new OpenLayers.Projection("EPSG:900913");
 
 var onPopupClose = function (evt) {
     this.map.selectControl.unselect(this.feature);
-}
+};
 
 /**
  * Feature select handler used to display popups on point layers.
@@ -179,7 +180,7 @@ var onFeatureSelect = function(feature) {
 
     feature.popup = popup;
     this.map.addPopup(popup);
-}
+};
 
 /**
  * Feature unselect handler used to remove popups from point layers.
@@ -194,7 +195,7 @@ var onFeatureUnselect = function(feature) {
         feature.popup.destroy();
         feature.popup = null;
     }
-}
+};
 
 /**
  * Draws the map data
@@ -281,7 +282,7 @@ coreMap.Map.prototype.getColorMappings = function () {
 
     // convert to an array that is in alphabetical order for consistent iteration order
     var sortedColors = [];
-    for (key in this.colors) {
+    for (var key in this.colors) {
         var color = me.colors[key];
         sortedColors.push({ 'color': color, 'category': key});
     }
@@ -441,7 +442,7 @@ coreMap.Map.prototype.calculateColor = function (element) {
         this.colors[category] = color;
     }
 
-    return color
+    return color;
 };
 
 /**
@@ -495,13 +496,13 @@ coreMap.Map.prototype.toggleCaching = function () {
         this.cacheReader.activate();
         this.cacheWriter.deactivate();
     }
-}
+};
 
 // clear the LocaleStorage used by the browser to store data for this.
 coreMap.Map.prototype.clearCache = function () {
     OpenLayers.Control.CacheWrite.clearCache();
     console.log("Cleared the map cache.");
-}
+};
 
 /**
  * Initializes the map.
@@ -603,7 +604,7 @@ coreMap.Map.prototype.configureFilterOnZoomRectangle = function () {
                     };
                     this.map.zoomTo(zoom, zoomOriginPx);
                 }
-                if (lastZoom == this.map.getZoom() && this.alwaysZoom == true) {
+                if (lastZoom == this.map.getZoom() && this.alwaysZoom === true) {
                     this.map.zoomTo(lastZoom + (this.out ? -1 : 1));
                 }
                 if (me.onZoomRect) {
