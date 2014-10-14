@@ -177,6 +177,7 @@ charts.LineChart.prototype.getColorMappings = function () {
 
 charts.LineChart.prototype.drawLine = function(opts) {
     var me = this;
+    var i = 0;
 
     if(!($.isArray(opts))) {
         opts = [opts];
@@ -186,7 +187,7 @@ charts.LineChart.prototype.drawLine = function(opts) {
 
     var fullDataSet = [];
     //get list of all data
-    for(var i = 0; i < opts.length; i++) {
+    for(i = 0; i < opts.length; i++) {
         this.calculateColor(opts[i].series, opts[i].total);
         if(this.hiddenSeries.indexOf(opts[i].series) == -1)
             fullDataSet = fullDataSet.concat(opts[i].data);
@@ -255,7 +256,7 @@ charts.LineChart.prototype.drawLine = function(opts) {
     var line;
     var hoverSeries = [];
     var hoverCircles = {};
-    for(var i = (opts.length-1); i > -1; i--) {
+    for(i = (opts.length-1); i > -1; i--) {
         if(this.hiddenSeries.indexOf(opts[i].series) >= 0) continue;
         cls = (opts[i].series ? " " + opts[i].series : "");
         data = opts[i].data;
@@ -304,11 +305,11 @@ charts.LineChart.prototype.drawLine = function(opts) {
 
             // Hide circle if point is a 0
             var isZero = function(d) {
-                if(d[me.yAttribute] == 0)
+                if(d[me.yAttribute] === 0)
                     return 0;
                 else
                     return 1;
-            }
+            };
             
             me.svg.selectAll("dot")
                 .data(data)
@@ -339,7 +340,7 @@ charts.LineChart.prototype.drawLine = function(opts) {
         .call(yAxis);
 
     var tick = $('.linechart').find('.x.axis').find('.tick.major').first();
-    if(tick.length != 0){
+    if(tick.length !== 0){
         var transform = tick.attr('transform');
         var parts  = /translate\(\s*([^\s,)]+)[ ,]([^\s,)]+)/.exec(transform);
         var firstX = parseInt(parts[1]);
@@ -372,17 +373,18 @@ charts.LineChart.prototype.drawLine = function(opts) {
             var format = d3.time.format.utc('%e %B %Y');
             var numFormat = d3.format("0,000.00");
             var html = '';
+            var bisect, dataIndex, dataIndexLeft, dataDate, dataDateLeft, closerIndex, closerDate;
 
             if(opts[0].data.length > 1){
-                var bisect = d3.bisector(function(d) { return d[me.xAttribute]; }).right;
-                var dataIndex = bisect(opts[0].data, graph_x);
-                var dataDate = opts[0].data[dataIndex][me.xAttribute];
-                var closerDate = dataDate;
-                var closerIndex = dataIndex;
+                bisect = d3.bisector(function(d) { return d[me.xAttribute]; }).right;
+                dataIndex = bisect(opts[0].data, graph_x);
+                dataDate = opts[0].data[dataIndex][me.xAttribute];
+                closerDate = dataDate;
+                closerIndex = dataIndex;
 
                 if(dataIndex > 0){
-                    var dataIndexLeft = (dataIndex-1);
-                    var dataDateLeft = opts[0].data[dataIndexLeft][me.xAttribute];
+                    dataIndexLeft = (dataIndex-1);
+                    dataDateLeft = opts[0].data[dataIndexLeft][me.xAttribute];
                     var compare = ((me.x(dataDate) - me.x(dataDateLeft))/2)+me.x(dataDateLeft);
                     if(mouse_x < compare){
                         closerDate = dataDateLeft;
@@ -390,8 +392,8 @@ charts.LineChart.prototype.drawLine = function(opts) {
                     }
                 }
             }else{
-                var closerIndex = 0;
-                var closerDate = opts[0].data[closerIndex][me.xAttribute];
+                closerIndex = 0;
+                closerDate = opts[0].data[closerIndex][me.xAttribute];
             }
 
             html = '<span class="tooltip-date">'+format(closerDate)+'</span>';
@@ -440,7 +442,7 @@ charts.LineChart.prototype.toggleSeries = function(series) {
     var activity = '';
     if(index >= 0){
         this.hiddenSeries.splice(index, 1);
-        activity = 'show_plot'
+        activity = 'show_plot';
     }else{
         this.hiddenSeries.push(series);
         activity = 'hide_plot';

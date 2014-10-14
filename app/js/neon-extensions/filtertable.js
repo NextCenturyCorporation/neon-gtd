@@ -36,7 +36,7 @@ neon.query = neon.query || {};
 neon.query.FilterTable = function () {
     //this.messenger = new neon.eventing.Messenger();
     this.filterKey = '';
-    this.columnOptions;
+    this.columnOptions = [];
     this.operatorOptions = ["=", "!=", ">", "<", ">=", "<=", "contains"];
     this.filterState = {
         data: []

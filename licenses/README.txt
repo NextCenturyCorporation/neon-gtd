@@ -45,6 +45,7 @@ MIT/X11 (mit.txt)
 - Grunt
   -- grunt, 0.4.1
   -- grunt-cli, 0.1.6
+  -- grunt-contrib-clean, 0.6.0
   -- grunt-contrib-jshint, 0.3.0
   -- grunt-bower-task, 0.4.0
   -- grunt-war, 0.3.3

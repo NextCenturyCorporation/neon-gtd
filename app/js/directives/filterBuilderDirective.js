@@ -262,7 +262,7 @@ angular.module('filterBuilderDirective', []).directive('filterBuilder', ['Connec
              */
             $scope.updateFilterRow = function(index) {
                 var row = $scope.filterTable.getFilterRow(index);
-
+                var oldVal = $scope.filterTable.filterState;
                 var filter = $scope.filterTable.buildFilterFromData($scope.databaseName, $scope.tableName, $scope.andClauses);
 
                 XDATA.activityLogger.logUserActivity('FilterBuilder - update custom Neon filter', 'execute_query_filter',

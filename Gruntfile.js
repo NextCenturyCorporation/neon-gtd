@@ -2,6 +2,8 @@
 
 module.exports = function(grunt) {
 
+    var packageJSON = require('./package.json');
+
     grunt.initConfig({
         jshint: {
             all: [ 'Gruntfile.js', 'app/js/**/*.js' ],
@@ -33,6 +35,8 @@ module.exports = function(grunt) {
             }
         },
 
+        clean: ["app/lib", "docs", "target"],
+
         /*
          * Build a WAR (web archive) without Maven or the JVM installed.
          */
@@ -43,7 +47,7 @@ module.exports = function(grunt) {
                     war_verbose: true,
                     war_name: 'neon-gtd',
                     webxml_welcome: 'index.html',
-                    webxml_display_name: 'Neon Geo Temporal Dashboard',
+                    webxml_display_name: packageJSON.shortDescription,
                     webxml_mime_mapping: [{ 
                         extension: 'woff', 
                         mime_type: 'application/font-woff' 
@@ -53,7 +57,7 @@ module.exports = function(grunt) {
                     {
                         expand: true,
                         cwd: ".",
-                        src: ["app/**", "lib/**"],
+                        src: ["app/**"],
                         dest: ""
                     }
                 ]
@@ -62,10 +66,10 @@ module.exports = function(grunt) {
 
         yuidoc: {
             compile: {
-                name: 'Neon Geo Temporal Dashbaord',
-                description: 'An example geo-spatial, temporal analysis dashboard that uses Neon to allow multiple visualizations to interact with one another on the same data sets.',
-                version: '0.8.0',
-                url: 'http://neonframework.org/',
+                name: packageJSON.shortDescription,
+                description: packageJSON.description,
+                version: packageJSON.version,
+                url: packageJSON.repository.url,
                 logo: '../app/img/Neon_60x34.png',
                 options: {
                     paths: 'app/js',
@@ -74,14 +78,14 @@ module.exports = function(grunt) {
             }
         }
     });
-
-
-    grunt.loadNpmTasks('grunt-war');
+    
     grunt.loadNpmTasks('grunt-bower-task');
+    grunt.loadNpmTasks('grunt-contrib-clean');
     grunt.loadNpmTasks('grunt-contrib-jshint');
     grunt.loadNpmTasks('grunt-contrib-yuidoc');
+    grunt.loadNpmTasks('grunt-war');
 
     grunt.registerTask('test', ['jshint']);
-    grunt.registerTask('default', ['bower:install']);
+    grunt.registerTask('default', ['clean', 'bower:install', 'yuidoc', 'war']);
 
 };
