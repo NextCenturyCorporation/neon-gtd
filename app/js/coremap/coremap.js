@@ -165,7 +165,7 @@ var onPopupClose = function (evt) {
 
 var onFeatureSelect = function(feature) {
     var text = '<div><table class="table table-striped table-condensed">';
-    for (key in feature.attributes) {
+    for (var key in feature.attributes) {
         text += '<tr><th>' + _.escape(key) + '</th><td>' + _.escape(feature.attributes[key]) + '</td>';
     }
     text += '</table></div>';
@@ -615,7 +615,7 @@ coreMap.Map.prototype.configureFilterOnZoomRectangle = function () {
         }
     });
     this.map.addControl(control);
-}
+};
 
 /**
  * Initializes the map layers and adds the base layer.

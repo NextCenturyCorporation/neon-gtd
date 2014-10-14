@@ -175,19 +175,18 @@ linechart.directive('linechart', ['ConnectionService', function(connectionServic
         $scope.queryForData = function() {
             XDATA.activityLogger.logSystemActivity('LineChart - query for data');
             query(function(results) {
+                var i, minDate, maxDate, range;
+
                 //this prevents an error in older mongo caused when the xAxis value is invalid as it is not
                 //included as a key in the response
-                for(var i = 0; i < results.data.length; i++) {
+                for(i = 0; i < results.data.length; i++) {
                     if(typeof(results.data[i][$scope.attrX]) === 'undefined') {
                         results.data[i][$scope.attrX] = null;
                     }
-                };
-
-                var minDate, maxDate;
-                var range;
+                }
 
                 if(results.data.length > 0) {
-                    range = d3.extent(results.data, function(d) { return new Date(d.date)});
+                    range = d3.extent(results.data, function(d) { return new Date(d.date);});
                     minDate = range[0];
                     maxDate = range[1];
                 } else {
@@ -196,7 +195,7 @@ linechart.directive('linechart', ['ConnectionService', function(connectionServic
                 }
 
                 var data = [];
-                var series = []
+                var series = [];
                 var zeroedData = zeroPadData(results, minDate, maxDate);
 
                 // Convert results to array
@@ -215,7 +214,7 @@ linechart.directive('linechart', ['ConnectionService', function(connectionServic
                 var otherTotal = 0;
                 var otherData = [];
                 if($scope.aggregation != 'avg'){
-                    for(var i = $scope.seriesLimit; i < data.length; i++) {
+                    for(i = $scope.seriesLimit; i < data.length; i++) {
                         otherTotal += data[i].total;
                         for(var d = 0; d < data[i].data.length; d++) {
                             if(otherData[d])
@@ -238,7 +237,7 @@ linechart.directive('linechart', ['ConnectionService', function(connectionServic
                         series: "Other",
                         total: otherTotal,
                         data: otherData
-                    })
+                    });
 
                 // Render chart and series lines
                 XDATA.activityLogger.logSystemActivity('LineChart - query data received');
@@ -262,6 +261,7 @@ linechart.directive('linechart', ['ConnectionService', function(connectionServic
         var zeroPadData = function(data, minDate, maxDate) {
             data = data.data;
 
+            var i = 0;
             var start = zeroOutDate(minDate);
             var end = zeroOutDate(maxDate);
 
@@ -279,9 +279,9 @@ linechart.directive('linechart', ['ConnectionService', function(connectionServic
                 series = $scope.attrY;
 
             // Scrape data for unique series
-            for(var i = 0; i < data.length; i++) {
+            for(i = 0; i < data.length; i++) {
                 if($scope.categoryField)
-                    series = data[i][$scope.categoryField] != '' ? data[i][$scope.categoryField] : 'Unknown';
+                    series = data[i][$scope.categoryField] !== '' ? data[i][$scope.categoryField] : 'Unknown';
 
                 if(!resultData[series]){
                     resultData[series] = {
@@ -292,8 +292,8 @@ linechart.directive('linechart', ['ConnectionService', function(connectionServic
                 }
             }
 
-            // Initialize our time buckets.
-            for(var i = 0; i < numBuckets; i++) {
+            // Initialize our data buckets.
+            for(i = 0; i < numBuckets; i++) {
                 var bucketGraphDate = new Date(startTime + (dayMillis * i));
                 for (series in resultData){
                     resultData[series].data.push({date: bucketGraphDate, value: 0});
@@ -306,14 +306,14 @@ linechart.directive('linechart', ['ConnectionService', function(connectionServic
                 indexDate = new Date(data[i].date);
 
                 if($scope.categoryField)
-                    series = data[i][$scope.categoryField] != '' ? data[i][$scope.categoryField] : 'Unknown';
+                    series = data[i][$scope.categoryField] !== '' ? data[i][$scope.categoryField] : 'Unknown';
 
                 resultData[series].data[Math.floor(Math.abs(indexDate - start) / dayMillis)].value = data[i].value;
-                resultData[series]['total'] += data[i].value;
+                resultData[series].total += data[i].value;
             }
 
             return resultData;
-        }
+        };
 
         var drawChart = function() {
             var opts = {"x": "date", "y": "value", responsive: true};

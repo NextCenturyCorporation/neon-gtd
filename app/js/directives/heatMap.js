@@ -462,12 +462,12 @@ angular.module('heatMapDirective', []).directive('heatMap', ['ConnectionService'
                 };
 
                 $scope.buildQuery = function () {
-                    var query = new neon.query.Query().selectFrom($scope.databaseName, $scope.tableName).limit($scope.limit)
+                    var query = new neon.query.Query().selectFrom($scope.databaseName, $scope.tableName).limit($scope.limit);
                     var groupByFields = [$scope.latitudeField, $scope.longitudeField];
 
                     if ($scope.colorByField) {
                         groupByFields.push($scope.colorByField);
-                        query = query.groupBy($scope.latitudeField, $scope.longitudeField, $scope.colorByField)
+                        query = query.groupBy($scope.latitudeField, $scope.longitudeField, $scope.colorByField);
                     }
                     else {
                         query = query.groupBy($scope.latitudeField, $scope.longitudeField);
@@ -484,7 +484,7 @@ angular.module('heatMapDirective', []).directive('heatMap', ['ConnectionService'
                 };
 
                 $scope.buildPointQuery = function() {
-                    var query = new neon.query.Query().selectFrom($scope.databaseName, $scope.tableName).limit($scope.limit)
+                    var query = new neon.query.Query().selectFrom($scope.databaseName, $scope.tableName).limit($scope.limit);
                     return query;
                 };
 
@@ -505,6 +505,7 @@ angular.module('heatMapDirective', []).directive('heatMap', ['ConnectionService'
                     var bottomClause = neon.query.where($scope.latitudeField, ">=", extent.minimumLatitude);
                     var topClause = neon.query.where($scope.latitudeField, "<=", extent.maximumLatitude);
                     var filterClause = neon.query.and(leftClause, rightClause, bottomClause, topClause);
+                    var leftDateLine, rightDateLine, datelineClause;
 
                     //Deal with different dateline crossing scenarios.
                     if (extent.minimumLongitude < -180 && extent.maximumLongitude > 180) {
@@ -512,16 +513,16 @@ angular.module('heatMapDirective', []).directive('heatMap', ['ConnectionService'
                     }
                     else if (extent.minimumLongitude < -180) {
                         leftClause = neon.query.where($scope.longitudeField, ">=", extent.minimumLongitude + 360);
-                        var leftDateLine = neon.query.where($scope.longitudeField, "<=", 180);
-                        var rightDateLine = neon.query.where($scope.longitudeField, ">=", -180);
-                        var datelineClause = neon.query.or(neon.query.and(leftClause, leftDateLine), neon.query.and(rightClause, rightDateLine));
+                        leftDateLine = neon.query.where($scope.longitudeField, "<=", 180);
+                        rightDateLine = neon.query.where($scope.longitudeField, ">=", -180);
+                        datelineClause = neon.query.or(neon.query.and(leftClause, leftDateLine), neon.query.and(rightClause, rightDateLine));
                         filterClause = neon.query.and(topClause, bottomClause, datelineClause);
                     }
                     else if (extent.maximumLongitude > 180) {
                         rightClause = neon.query.where($scope.longitudeField, "<=", extent.maximumLongitude - 360);
-                        var rightDateLine = neon.query.where($scope.longitudeField, ">=", -180);
-                        var leftDateLine = neon.query.where($scope.longitudeField, "<=", 180);
-                        var datelineClause = neon.query.or(neon.query.and(leftClause, leftDateLine), neon.query.and(rightClause, rightDateLine));
+                        rightDateLine = neon.query.where($scope.longitudeField, ">=", -180);
+                        leftDateLine = neon.query.where($scope.longitudeField, "<=", 180);
+                        datelineClause = neon.query.or(neon.query.and(leftClause, leftDateLine), neon.query.and(rightClause, rightDateLine));
                         filterClause = neon.query.and(topClause, bottomClause, datelineClause);
                     }
 

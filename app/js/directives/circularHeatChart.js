@@ -47,7 +47,7 @@ angular.module('circularHeatChartDirective', []).directive('circularHeatChart', 
             }
 
             // Initialize the chart.
-            $scope.chart = new circularHeatChart(element[0])
+            $scope.chart = new CircularHeatChart(element[0])
                 .segmentHeight(20)
                 .innerRadius(20)
                 .numSegments(24)

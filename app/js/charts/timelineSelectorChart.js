@@ -193,7 +193,7 @@ charts.TimelineSelectorChart = function (element, configuration) {
         var xPos = brushElement.find('.extent').attr('x');
 
         var extentWidth = brushElement.find('.extent').attr('width');
-        var width = parseInt(brushElement.find('.mask-west').attr('width'));
+        var width = parseInt(brushElement.find('.mask-west').attr('width').replace('px',''), 10);
 
         // If brush extent has been cleared, reset mask positions
         if (extentWidth == "0" || extentWidth === undefined) {
@@ -430,7 +430,7 @@ charts.TimelineSelectorChart = function (element, configuration) {
             });
 
             seriesPos++;
-        }
+        };
         
         var charts = [];
         // If set, render primary series first

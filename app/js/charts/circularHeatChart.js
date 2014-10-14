@@ -1,5 +1,5 @@
 'use strict';
-function circularHeatChart(element, configuration) {
+function CircularHeatChart(el, configuration) {
     var margin = {top: 20, right: 20, bottom: 20, left: 20},
     innerRadius = 50,
     numSegments = 24,
@@ -11,7 +11,7 @@ function circularHeatChart(element, configuration) {
     segmentLabels = [];
 
     // Cache the element to which we are bound.
-    var element = element;
+    var element = el;
 
     function chart(selection) {
         selection.each(function(data) {

@@ -121,7 +121,7 @@ angular.module('tagCloudDirective', []).directive('tagCloud', ['ConnectionServic
                                 success: function (tagCounts) {
                                     XDATA.activityLogger.logSystemActivity('TagCloud - received tag data');
                                     $scope.$apply(function () {
-                                        $scope.updateTagData(tagCounts)
+                                        $scope.updateTagData(tagCounts);
                                         XDATA.activityLogger.logSystemActivity('TagCloud - rendered tag data');
                                     });
                                 },
@@ -194,13 +194,16 @@ angular.module('tagCloudDirective', []).directive('tagCloud', ['ConnectionServic
                  * @method createFilterForTags
                  */
                 $scope.createFilterForTags = function(tagNames) {
+                    var filterClause;
                     var filterClauses = tagNames.map(function(tagName) {
                         return neon.query.where($scope.tagField, "=", tagName);
                     });
-                    if($scope.andTags)
-                        var filterClause = filterClauses.length > 1 ? neon.query.and.apply(neon.query, filterClauses) : filterClauses[0];
-                    else
-                        var filterClause = filterClauses.length > 1 ? neon.query.or.apply(neon.query, filterClauses) : filterClauses[0];
+                    if($scope.andTags) {
+                        filterClause = filterClauses.length > 1 ? neon.query.and.apply(neon.query, filterClauses) : filterClauses[0];
+                    }
+                    else {
+                        filterClause = filterClauses.length > 1 ? neon.query.or.apply(neon.query, filterClauses) : filterClauses[0];
+                    }
                     return new neon.query.Filter().selectFrom($scope.databaseName, $scope.tableName).where(filterClause);
                 };
 
@@ -256,7 +259,7 @@ angular.module('tagCloudDirective', []).directive('tagCloud', ['ConnectionServic
                         {
                             tag: tagName
                         });
-                    $scope.filterTags = _.without($scope.filterTags, tagName)
+                    $scope.filterTags = _.without($scope.filterTags, tagName);
                 };
 
                 $scope.toggleOptionsDisplay = function() {
