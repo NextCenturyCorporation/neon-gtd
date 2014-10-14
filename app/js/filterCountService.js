@@ -28,11 +28,11 @@ services.factory('FilterCountService',
 
         service.setCount = function (newCount) {
             count = newCount;
-        }
+        };
 
         service.getCount = function () {
             return count;
-        }
+        };
 
         return service;
     }

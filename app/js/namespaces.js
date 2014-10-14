@@ -14,5 +14,4 @@
  *
  */
 
-
 var charts = charts || {};

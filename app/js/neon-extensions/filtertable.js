@@ -50,7 +50,7 @@ neon.query.FilterTable = function () {
  */
 neon.query.FilterTable.prototype.addFilterRow = function(row) {
     this.filterState.data.push(row);
-}
+};
 
 /**
  * Inserts a FilterRow at a particular index in the table.
@@ -60,7 +60,7 @@ neon.query.FilterTable.prototype.addFilterRow = function(row) {
  */
 neon.query.FilterTable.prototype.insertFilterRow = function(row, index) {
     this.filterState.data.splice(index, 1, row);
-}
+};
 
 /**
  * Removes a FilterRow from the given row index and returns it.
@@ -90,7 +90,8 @@ neon.query.FilterTable.prototype.getFilterRow = function (id) {
  * @method setFilterRow
  */
 neon.query.FilterTable.prototype.setFilterRow = function (row, index) {
-    return this.filterState.data[index] = row;
+    this.filterState.data[index] = row;
+    return this.filterState.data[index];
 };
 
 /**

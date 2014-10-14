@@ -19,6 +19,9 @@
         "ocpu": false,
         "OpenLayers": false,
         "OWF": false,
+        "Slick": false,
+        "tables": false,
+        "uuid": false,
         "window": false,
         "XDATA": false
     }

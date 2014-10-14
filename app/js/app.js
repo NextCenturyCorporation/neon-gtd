@@ -74,6 +74,6 @@ angular.module('numberShortModule', [])
               else
                 number = Math.round(number * 100) / 100;
             }
-            return number
+            return number;
         };
     });

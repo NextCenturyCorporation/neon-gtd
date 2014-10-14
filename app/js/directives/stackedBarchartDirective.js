@@ -124,7 +124,7 @@ barchart.directive('stackedbarchart', ['ConnectionService', function(connectionS
 			connectionService.getActiveConnection().executeQuery(query, function(queryResults) {
 				next(queryResults);
 			});
-		}
+		};
 
 		$scope.queryForData = function() {
 			var xAxis = $scope.attrX || connectionService.getFieldMapping("x_axis");

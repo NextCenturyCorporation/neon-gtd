@@ -114,7 +114,7 @@ charts.TimelineSelectorChart = function (element, configuration) {
                     handler(brush.extent());
                 }
             }
-        }
+        };
     };
 
     /**
@@ -218,7 +218,7 @@ charts.TimelineSelectorChart = function (element, configuration) {
      */
     this.render = function (values) {
         var me = this;
-
+        var i = 0;
         var width = this.determineWidth(this.d3element) - this.config.margin.left - this.config.margin.right;
         var barWidth = 0;
 
@@ -231,7 +231,7 @@ charts.TimelineSelectorChart = function (element, configuration) {
         if (values && values.length > 0) {
             this.data = values;
             // Get list of all data to calculate min/max and domain
-            for(var i = 0; i < values.length; i++) {
+            for(i = 0; i < values.length; i++) {
                 fullDataSet = fullDataSet.concat(values[i].data);
                 if(values[i].data && !barWidth) barWidth = (width/values[i].data.length);
             }
@@ -260,15 +260,15 @@ charts.TimelineSelectorChart = function (element, configuration) {
             var e = +(d == "e"),
                 x = e ? 1 : -1,
                 y = height / 3;
-            return "M" + (.5 * x) + "," + y
-                + "A6,6 0 0 " + e + " " + (6.5 * x) + "," + (y + 6)
-                + "V" + (2 * y - 6)
-                + "A6,6 0 0 " + e + " " + (.5 * x) + "," + (2 * y)
-                + "Z"
-                + "M" + (2.5 * x) + "," + (y + 8)
-                + "V" + (2 * y - 8)
-                + "M" + (4.5 * x) + "," + (y + 8)
-                + "V" + (2 * y - 8);
+            return "M" + (0.5 * x) + "," + y +
+                "A6,6 0 0 " + e + " " + (6.5 * x) + "," + (y + 6) +
+                "V" + (2 * y - 6) +
+                "A6,6 0 0 " + e + " " + (0.5 * x) + "," + (2 * y) +
+                "Z" +
+                "M" + (2.5 * x) + "," + (y + 8) +
+                "V" + (2 * y - 8) +
+                "M" + (4.5 * x) + "," + (y + 8) +
+                "V" + (2 * y - 8);
         }
 
         var xMin = d3.min(fullDataSet.map(function (d) {
@@ -333,7 +333,7 @@ charts.TimelineSelectorChart = function (element, configuration) {
                 return d.value;
             }))]);
 
-            var style = 'stroke:'+series.color+';'
+            var style = 'stroke:' + series.color + ';';
             var chartType = '';
             
             // If type is bar AND the data isn't too long, render a bar plot
@@ -342,7 +342,7 @@ charts.TimelineSelectorChart = function (element, configuration) {
                 var barheight = 0;
                 
                 if(series.data.length < 60){
-                    style = 'stroke:#f1f1f1;'
+                    style = 'stroke:#f1f1f1;';
                     barheight++;
                 }
 
@@ -437,7 +437,7 @@ charts.TimelineSelectorChart = function (element, configuration) {
         if(this.primarySeries)
             createSeries(this.primarySeries);
         // Render all series
-        for(var i = 0; i < values.length; i++) {
+        for(i = 0; i < values.length; i++) {
             if(this.primarySeries && values[i].name == this.primarySeries.name) continue;
             createSeries(values[i]);
         }
@@ -484,7 +484,7 @@ charts.TimelineSelectorChart = function (element, configuration) {
             .append("path")
             .attr("d", resizePath);
 
-        for(var i = 0; i < charts.length; i++) {
+        for(i = 0; i < charts.length; i++) {
             context.append("g")
                 .attr("class", "y axis series-y")
                 .attr("transform", "translate(0," + ((chartHeight+this.config.margin.top+this.config.margin.bottom)*charts[i].index) + ")")
@@ -531,4 +531,4 @@ charts.TimelineSelectorChart = function (element, configuration) {
 
     // initialization
     return this.configure(configuration);
-}
+};

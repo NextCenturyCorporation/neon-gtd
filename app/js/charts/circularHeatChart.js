@@ -22,7 +22,7 @@ function circularHeatChart(element, configuration) {
             var offset = innerRadius + Math.ceil(data.length / numSegments) * segmentHeight;
             var g = svg.append("g")
                 .classed("circular-heat", true)
-                .attr("transform", "translate(" + parseInt(margin.left + offset) + "," + parseInt(margin.top + offset) + ")");
+                .attr("transform", "translate(" + parseInt(margin.left + offset, 10) + "," + parseInt(margin.top + offset, 10) + ")");
 
             var autoDomain = false;
             if (domain === null) {
@@ -49,7 +49,7 @@ function circularHeatChart(element, configuration) {
             var labels = svg.append("g")
                 .classed("labels", true)
                 .classed("radial", true)
-                .attr("transform", "translate(" + parseInt(margin.left + offset) + "," + parseInt(margin.top + offset) + ")");
+                .attr("transform", "translate(" + parseInt(margin.left + offset, 10) + "," + parseInt(margin.top + offset, 10) + ")");
 
             labels.selectAll("def")
                 .data(radialLabels).enter()
@@ -76,7 +76,7 @@ function circularHeatChart(element, configuration) {
             labels = svg.append("g")
                 .classed("labels", true)
                 .classed("segment", true)
-                .attr("transform", "translate(" + parseInt(margin.left + offset) + "," + parseInt(margin.top + offset) + ")");
+                .attr("transform", "translate(" + parseInt(margin.left + offset, 10) + "," + parseInt(margin.top + offset, 10) + ")");
 
             labels.append("def")
                 .append("path")
@@ -148,14 +148,14 @@ function circularHeatChart(element, configuration) {
 
     chart.radialLabels = function(_) {
         if (!arguments.length) return radialLabels;
-        if (_ == null) _ = [];
+        if (_ === null) _ = [];
         radialLabels = _;
         return chart;
     };
 
     chart.segmentLabels = function(_) {
         if (!arguments.length) return segmentLabels;
-        if (_ == null) _ = [];
+        if (_ === null) _ = [];
         segmentLabels = _;
         return chart;
     };
@@ -180,7 +180,7 @@ function circularHeatChart(element, configuration) {
             .enter()
             .append('svg')
             .call(chart);
-    }
+    };
 
     return chart;
 }

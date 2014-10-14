@@ -41,7 +41,7 @@ angular.module('poweredByNeonDirective', []).directive('poweredByNeon', function
                     $scope.$apply(function() {
                         $scope.versionString = result;
                         $scope.infoLoaded = true;
-                    })
+                    });
                 });
             }
         };

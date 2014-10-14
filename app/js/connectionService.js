@@ -24,7 +24,7 @@ var services = angular.module('neonDemo.services',[]);
 services.factory('ConnectionService', ['$filter',
 	function($filter) {
 
-		var activeConnection = undefined;
+		var activeConnection;
 		var connectionInformation = {fields: {}};
 
 		var service = {};
@@ -51,16 +51,16 @@ services.factory('ConnectionService', ['$filter',
 			activeConnection.use(database);
 
             // If this is different from the previous call, clear out the metadata
-            if (connectionInformation === undefined || connectionInformation.type !== databaseType
-                || connectionInformation.host !== host || connectionInformation.database !== database
-                || connectionInformation.table !== table) {
+            if (connectionInformation === undefined || connectionInformation.type !== databaseType ||
+                connectionInformation.host !== host || connectionInformation.database !== database ||
+                connectionInformation.table !== table) {
                 connectionInformation = {
                     type: databaseType,
                     host: host,
                     database: database,
                     table: table,
                     fields: {}
-                }
+                };
             }
 		};
 

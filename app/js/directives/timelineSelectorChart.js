@@ -49,7 +49,7 @@ angular.module('timelineSelectorChartDirective', []).directive('timelineSelector
                 // angular's digest cycle.
                 $scope.$apply(function () {
                     $scope.timelineBrush = data;
-                })
+                });
             });
 
             // Render an initial empty view.
@@ -93,6 +93,6 @@ angular.module('timelineSelectorChartDirective', []).directive('timelineSelector
                 }
             });
         }
-    }
+    };
 });
 

@@ -150,7 +150,7 @@ angular.module('timelineSelectorDirective', []).directive('timelineSelector', ['
 
                     var query = new neon.query.Query()
                         .selectFrom($scope.databaseName, $scope.tableName)
-                        .where($scope.dateField, '!=', null)
+                        .where($scope.dateField, '!=', null);
 
                     // Group by the appropriate granularity.
                     if ($scope.granularity === DAY) {
@@ -176,7 +176,7 @@ angular.module('timelineSelectorDirective', []).directive('timelineSelector', ['
                         $scope.$apply(function () {
                             $scope.updateChartData([]);
                             XDATA.activityLogger.logSystemActivity('TimelineSelector - data requested failed');
-                        })
+                        });
                     });
 
                 };
@@ -189,9 +189,10 @@ angular.module('timelineSelectorDirective', []).directive('timelineSelector', ['
                  */
                 $scope.updateChartTimesAndTotal = function () {
                     // Try to find primary series in new data
+                    var i = 0;
                     var primaryIndex = 0;
                     if($scope.primarySeries){
-                        for (var i = 0; i < $scope.data.length; i++) {
+                        for (i = 0; i < $scope.data.length; i++) {
                             if($scope.primarySeries.name == $scope.data[i].name){
                                  primaryIndex = i;
                                  break;
@@ -235,7 +236,7 @@ angular.module('timelineSelectorDirective', []).directive('timelineSelector', ['
                     var total = 0;
                     // endIdx points to the start of the day/hour just after the buckets we want to count, so do not
                     // include the bucket at endIdx.
-                    for (var i = startIdx; i < endIdx; i++) {
+                    for (i = startIdx; i < endIdx; i++) {
                         total += $scope.primarySeries.data[i].value;
                     }
 
@@ -261,11 +262,7 @@ angular.module('timelineSelectorDirective', []).directive('timelineSelector', ['
                     }
 
                     $scope.recordCount = total;
-                }
-
-                $scope.convertDateForDisplay = function (date) {
-                    return
-                }
+                };
 
                 /**
                  * Updates the data bound to the chart managed by this directive.  This will trigger a change in
@@ -377,7 +374,7 @@ angular.module('timelineSelectorDirective', []).directive('timelineSelector', ['
                     if(roundedDate > $scope.endDate)
                         return $scope.endDate;
                     else
-                        return roundedDate
+                        return roundedDate;
                 };
 
                 /**
@@ -390,7 +387,7 @@ angular.module('timelineSelectorDirective', []).directive('timelineSelector', ['
                     if(roundedDate < $scope.startDate)
                         return $scope.startDate;
                     else
-                        return roundedDate
+                        return roundedDate;
                 };
 
                 /**
@@ -412,7 +409,7 @@ angular.module('timelineSelectorDirective', []).directive('timelineSelector', ['
                         rawData[0] = {
                             date: $scope.startDate || new Date(),
                             count: 0
-                        }
+                        };
                         rawLength = 1;
                     }
                     // If we have only 1 value, create a range for it.
@@ -421,7 +418,7 @@ angular.module('timelineSelectorDirective', []).directive('timelineSelector', ['
                             // Use a time just within our end date, if available, so it fits in a bucket.
                             date: new Date($scope.endDate.getTime() - 1) || rawData[0].date,
                             count: 0
-                        }
+                        };
                         rawLength = 2;
                     }
 
@@ -429,7 +426,7 @@ angular.module('timelineSelectorDirective', []).directive('timelineSelector', ['
                     // Determine the number of hour buckets along with the start and end dates for our buckets.
                     // var startDate = new Date(Date.UTC(rawData[0].year, rawData[0].month - 1, rawData[0].day, rawData[0].hour));
                     // var endDate = new Date(Date.UTC(rawData[rawLength - 1].year, rawData[rawLength - 1].month - 1,
-                    // 	rawData[rawLength - 1].day, rawData[rawLength - 1].hour));
+                    // rawData[rawLength - 1].day, rawData[rawLength - 1].hour));
                     var startDate = $scope.zeroOutDate($scope.startDate || rawData[0].date);
                     var endDate = $scope.zeroOutDate($scope.endDate  || rawData[rawData.length - 1].date);
 
@@ -447,7 +444,7 @@ angular.module('timelineSelectorDirective', []).directive('timelineSelector', ['
                         queryData[i] = {
                             date: bucketGraphDate,
                             value: 0
-                        }
+                        };
                     }
 
                     // Fill our rawData into the appropriate hour buckets.
@@ -535,7 +532,7 @@ angular.module('timelineSelectorDirective', []).directive('timelineSelector', ['
 
                 $scope.addStl2TimeSeriesAnalysis = function(timelineData, graphData) {
                     // The analysis code just wants an array of the counts
-                    var timelineVector = _.map(timelineData, function(it) {return it.value});
+                    var timelineVector = _.map(timelineData, function(it) {return it.value;});
 
                     var periodLength = 1;
                     var seasonWindow = 1;

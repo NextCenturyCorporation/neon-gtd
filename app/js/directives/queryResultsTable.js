@@ -48,8 +48,8 @@ angular.module('queryResultsTableDirective', []).directive('queryResultsTable', 
              * @method initialize
              */
             $scope.initialize = function() {
-            	$scope.ASCENDING = neon.query.ASCENDING;
-            	$scope.DESCENDING = neon.query.DESCENDING;
+                $scope.ASCENDING = neon.query.ASCENDING;
+                $scope.DESCENDING = neon.query.DESCENDING;
 
                 $scope.databaseName = '';
                 $scope.tableName = '';
@@ -173,7 +173,7 @@ angular.module('queryResultsTableDirective', []).directive('queryResultsTable', 
                 XDATA.activityLogger.logUserActivity('DataView - user requested table refresh', 'execute_query_filter',
                     XDATA.activityLogger.WF_GETDATA);
                 $scope.queryForData();
-            }
+            };
 
             /**
              * Triggers a Neon query that pull the a number of records that match the current Neon connection
@@ -260,7 +260,7 @@ angular.module('queryResultsTableDirective', []).directive('queryResultsTable', 
                 }
 
                 return query;
-            }
+            };
 
             // KLUDGE: Watch for changes to showData if it goes from false to true, we want to requery for data to 
             // trigger the data table to be recreated.  While deferring data queries to when the user want to display them
