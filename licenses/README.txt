@@ -11,6 +11,7 @@ Apache v2.0 (apache-2.0.txt)
 - OpenCPU JS client
   -- opencpu-0.4.4.js
   -- opencpu-0.5.js
+- Open Sans Google Font
 - XMLHttpRequest.js (this is including in OpenLayers.js)
 
 Bower (bower.txt)

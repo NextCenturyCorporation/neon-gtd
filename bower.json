@@ -16,10 +16,10 @@
     "jquery": "1.11.0",
     "jquery-ui": "1.10.4",
     "jquery.event.drag-drop": "2.2.1",
-    "jquery.tag.cloud": "https://raw.githubusercontent.com/addywaddy/jquery.tagcloud.js/master/jquery.tagcloud.js",
+    "jquery.tagcloud": "https://github.com/addywaddy/jquery.tagcloud.js.git",
     "mergesort": "https://github.com/justinforce/merge-sort/archive/1.0.zip",
     "opencpu": "https://github.com/jeroenooms/opencpu.js.git",
-    "openlayers": "https://github.com/openlayers/openlayers.git#release-2.13.1",
+    "openlayers": "https://github.com/openlayers/openlayers/releases/download/release-2.13.1/OpenLayers-2.13.1.zip",
     "openlayers-heatmap": "https://github.com/pa7/heatmap.js.git#v1.0",
     "owf": "https://www.owfgoss.org/nexus/content/groups/public/org/ozoneplatform/ozone-widgeting-framework/OWF-bundle/7.0.1/OWF-bundle-7.0.1-GA.zip",
     "respond": "1.4.x",
@@ -63,7 +63,15 @@
 
     "jquery-ui": {
       "js": "**/jquery-ui.min.js",
-      "css": "**/*min.css"
+      "themes/smoothness": "themes/smoothness/**.css",
+      "themes/smoothness/images": ["themes/smoothness/images/*.png","themes/smoothness/images/*.gif"],
+      "themes/ui-lightness": "themes/ui-lightness/**.css",
+      "themes/ui-lightness/images": ["themes/ui-lightness/images/*.png","themes/ui-lightness/images/*.gif"]
+    },
+
+    "jquery.tagcloud": {
+      "js": "**/*.js",
+      "css": "**/*.css"
     },
 
     "mergesort": {
@@ -75,7 +83,7 @@
     },
 
     "openlayers": {
-      ".": ["**/OpenLayer*.js", "**/OpenLayers.*.js"],
+      ".": ["OpenLayer*.js", "OpenLayers.*.js"],
       "theme/default": "theme/default/*.css",
       "theme/default/img": ["**/*.gif", "**/*.png"],
       "img": ["img/*.gif", "img/*.png"]
