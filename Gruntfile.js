@@ -10,8 +10,8 @@ module.exports = function(grunt) {
             options: {
                 jshintrc: '.jshintrc',
                 force: true,
-                reporter: "checkstyle",
-                reporterOutput: "reports/checkstyle.xml"
+                reporter: "jslint",
+                reporterOutput: "reports/jslint.xml"
             }
         },
 
