@@ -501,7 +501,6 @@ coreMap.Map.prototype.toggleCaching = function () {
 // clear the LocaleStorage used by the browser to store data for this.
 coreMap.Map.prototype.clearCache = function () {
     OpenLayers.Control.CacheWrite.clearCache();
-    console.log("Cleared the map cache.");
 };
 
 /**
@@ -669,7 +668,6 @@ coreMap.Map.prototype.setupLayers = function () {
         imageFormat: "image/png",
         eventListeners: {
             cachefull: function () {
-                console.log("Map cache is full.  Will not cache again until the cache is cleared.");
                 alert("Cache Full.  Re-enable caching to clear the cache and start building a new set");
                 this.toggleCaching();
             }

@@ -6,12 +6,19 @@ module.exports = function(grunt) {
 
     grunt.initConfig({
         jshint: {
-            all: [ 'Gruntfile.js', 'app/js/**/*.js' ],
             options: {
                 jshintrc: '.jshintrc',
-                force: true,
-                reporter: "jslint",
-                reporterOutput: "reports/jslint.xml"
+                force: true
+            },
+            console: [ 'Gruntfile.js', 'app/js/**/*.js' ],
+            xml: {
+                options: {
+                    reporter: "jslint",
+                    reporterOutput: "reports/jslint.xml"
+                },
+                files: {
+                    src: [ 'Gruntfile.js', 'app/js/**/*.js' ]
+                }
             }
         },
 
@@ -88,7 +95,7 @@ module.exports = function(grunt) {
     grunt.loadNpmTasks('grunt-contrib-yuidoc');
     grunt.loadNpmTasks('grunt-war');
 
-    grunt.registerTask('test', ['jshint']);
-    grunt.registerTask('default', ['clean', 'bower:install', 'jshint', 'yuidoc', 'war']);
+    grunt.registerTask('test', ['jshint:console']);
+    grunt.registerTask('default', ['clean', 'bower:install', 'jshint:xml', 'yuidoc', 'war']);
 
 };

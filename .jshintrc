@@ -21,6 +21,7 @@
         "ocpu": true,
         "OpenLayers": true,
         "OWF": true,
+        "require": true,
         "Slick": true,
         "tables": true,
         "uuid": true,
