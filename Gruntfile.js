@@ -8,7 +8,10 @@ module.exports = function(grunt) {
         jshint: {
             all: [ 'Gruntfile.js', 'app/js/**/*.js' ],
             options: {
-                jshintrc: '.jshintrc'
+                jshintrc: '.jshintrc',
+                force: true,
+                reporter: "jslint",
+                reporterOutput: "reports/jslint.xml"
             }
         },
 
@@ -35,7 +38,7 @@ module.exports = function(grunt) {
             }
         },
 
-        clean: ["app/lib", "docs", "target"],
+        clean: ["app/lib", "docs", "target", "reports"],
 
         /*
          * Build a WAR (web archive) without Maven or the JVM installed.
@@ -45,7 +48,7 @@ module.exports = function(grunt) {
                 options: {
                     war_dist_folder: "target",
                     war_verbose: true,
-                    war_name: 'neon-gtd',
+                    war_name: 'neon-gtd-' + packageJSON.version,
                     webxml_welcome: 'index.html',
                     webxml_display_name: packageJSON.shortDescription,
                     webxml_mime_mapping: [{ 
@@ -86,6 +89,6 @@ module.exports = function(grunt) {
     grunt.loadNpmTasks('grunt-war');
 
     grunt.registerTask('test', ['jshint']);
-    grunt.registerTask('default', ['clean', 'bower:install', 'yuidoc', 'war']);
+    grunt.registerTask('default', ['clean', 'bower:install', 'jshint', 'yuidoc', 'war']);
 
 };
