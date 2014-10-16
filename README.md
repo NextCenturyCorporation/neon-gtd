@@ -18,12 +18,12 @@ Building the **neon-gtd** application requires [npm][10], [grunt][11], and [bowe
         git clone https://github.com/NextCenturyCorporation/neon-gtd.git
         cd neon-gtd/
         
-3. Use npm and grunt to download dependencies and build the application.  This will create a neon-gtd war file in  the neon-gtd/target directory.
+3. Use npm and grunt to download dependencies and build the application.  This will create a neon-gtd war file in  the **neon-gtd/target** directory.
 
         npm install
         grunt
 
-4. Deploy the neon-gtd-&lt;version&gt;.war file to your container from step 1.
+4. Deploy the **neon-gtd-&lt;version&gt;.war** file to your container from step 1.
     Note: On Tomcat, this may be as simple as copying the file to your <apache-tomcat>/webapps folder.  Optionally, you may want to rename the war file to be simply neon-gtd.war.
 
 5. If running against a stock, localhost Tomcat instance, browse to the [http://localhost:8080/neon-gtd/app/][neon-gtd-localhost] to verify its installation.  The [Users Guide][neon-gtd-guide] describes its basic use.
