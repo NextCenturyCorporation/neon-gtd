@@ -32,6 +32,8 @@ Building the **neon-gtd** application requires [npm][10], [grunt][11], and [bowe
 
 ##Documentation
 
+**[Neon Git Repo][6]** - Visit the main Neon project and download its source code.
+
 **[Neon Wiki][1]** - Visit the Neon wiki for more information on what Neon can do for you.
 
 **[Build Instructions][2]** - Includes instructions for building the Neon WAR file from source code and lists Neon's external dependencies.
