@@ -2,7 +2,7 @@
 
 The Neon Geo Temporal Dashboard (neon-gtd) is a sample analysis dashboard built upon the [Neon Framework][5]. It includes a number of geo-spatial and temporal data visualizations built as Angular directives that use the Neon framework to query and filter data hosted in [MongoDB][8] or [Spark][9].  Additionally, each of the dashboard components can funtion as a widget within the [OZONE Widget Framework][7].
 
-[Neon][5] is a software platform designed to help developers integrate disparate visualization widgets with your data stores. It includes a **Data Access API** that makes it easy for to query an underlying database directly from JavaScript or RESTful endpoints. Additionally, the [Neon][5] **Interaction API** provides capabilities for inter-widget communication and shared data filters, allowing multiple visualizations to interact without tight coupling.
+[Neon][5] is a software platform designed to help developers integrate disparate visualization widgets with your data stores. It includes a **Data Access API** that makes it easy to query an underlying database directly from JavaScript or RESTful endpoints. Additionally, the [Neon][5] **Interaction API** provides capabilities for inter-widget communication and shared data filters, allowing multiple visualizations to interact without being explicityly aware of one another.
 
 ## View an example application
 To see an example of this project, check out our [demo server](http://54.88.152.130:8080/neon-examples/angular-demo/app/). Read more about how to use it and how it interacts with Neon [here](https://github.com/NextCenturyCorporation/neon/wiki/Demo-App-QuickStart-Guide).
@@ -39,7 +39,7 @@ Building the **neon-gtd** application requires [npm][10], [grunt][11], and [bowe
 
 **[Build Instructions][2]** - Includes instructions for building the Neon WAR file from source code and lists Neon's external dependencies.
 
-**[Deploying Neon][3]** - Includes instructions for deploying the Neon application to a web server (e.g., Jetty and Tomcat).
+**[Deploying Neon][3]** - Includes instructions for deploying the Neon application to a web application container (e.g., Jetty or Tomcat).
 
 **[Developer Quick Start Guide][4]** - A quick tour of how to develop apps that use Neon.
 
