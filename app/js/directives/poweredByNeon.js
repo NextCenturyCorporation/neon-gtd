@@ -28,7 +28,7 @@
  * @constructor
  */
 angular.module('poweredByNeonDirective', []).directive('poweredByNeon', function () {
-    var link = function ($scope, el, attr) {
+    var link = function ($scope) {
 
         $scope.initialize = function() {
             $scope.versionString = "Loading...";
