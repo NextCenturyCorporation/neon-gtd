@@ -39,10 +39,10 @@ angular.module('timelineSelectorDirective', []).directive('timelineSelector', ['
             scope: {
 
             },
-            controller: function ($scope) {
+            controller: function () {
 
             },
-            link: function ($scope, element, attr) {
+            link: function ($scope, element) {
 
                 // Cache the number of milliseconds in an hour for processing.
                 var MILLIS_IN_HOUR = 1000 * 60 * 60;
@@ -96,7 +96,7 @@ angular.module('timelineSelectorDirective', []).directive('timelineSelector', ['
                  * @method onFiltersChanged
                  * @private
                  */
-                var onFiltersChanged = function (message) {
+                var onFiltersChanged = function () {
                     XDATA.activityLogger.logSystemActivity('TimelineSelector - received neon filter changed event');
                     $scope.queryForChartData();
                 };
@@ -172,7 +172,7 @@ angular.module('timelineSelectorDirective', []).directive('timelineSelector', ['
                             $scope.updateChartData(queryResults);
                             XDATA.activityLogger.logSystemActivity('TimelineSelector - data received');
                         });
-                    }, function(error) {
+                    }, function() {
                         $scope.$apply(function () {
                             $scope.updateChartData([]);
                             XDATA.activityLogger.logSystemActivity('TimelineSelector - data requested failed');
@@ -193,7 +193,7 @@ angular.module('timelineSelectorDirective', []).directive('timelineSelector', ['
                     var primaryIndex = 0;
                     if($scope.primarySeries){
                         for (i = 0; i < $scope.data.length; i++) {
-                            if($scope.primarySeries.name == $scope.data[i].name){
+                            if($scope.primarySeries.name === $scope.data[i].name){
                                  primaryIndex = i;
                                  break;
                             }
@@ -205,7 +205,7 @@ angular.module('timelineSelectorDirective', []).directive('timelineSelector', ['
 
                     var extentStartDate;
                     var extentEndDate;
-                    if ($scope.brush.length == 2) {
+                    if ($scope.brush.length === 2) {
                         extentStartDate = $scope.brush[0];
                         extentEndDate = $scope.brush[1];
                     }
@@ -435,7 +435,7 @@ angular.module('timelineSelectorDirective', []).directive('timelineSelector', ['
 
                     // Initialize our time buckets.
                     for (i = 0; i < numBuckets; i++) {
-                        // Calculate the start date for a bucket (e.g., 01:00, 02:00) using the millisMultiplier.  
+                        // Calculate the start date for a bucket (e.g., 01:00, 02:00) using the millisMultiplier.
                         // Also calculate the temporal midpoint of that bucket by adding 1/2 the multiplier to get the
                         // point on the timeline at which we want to display the count for that time bucket.
                         // For the 01:00 to 01:59 time bucket, we want to display the aggregate value at the
@@ -509,7 +509,7 @@ angular.module('timelineSelectorDirective', []).directive('timelineSelector', ['
                             }
                         }
                     }
-                    var req = ocpu.rpc("nsensorMMPP", {
+                    ocpu.rpc("nsensorMMPP", {
                         N: timelineMatrix,
                         ITER: [50, 10]
                     }, function(output) {
@@ -523,7 +523,7 @@ angular.module('timelineSelectorDirective', []).directive('timelineSelector', ['
                         $scope.$apply(function() {
                             $scope.eventProbabilitiesDisplayed = true;
                         });
-                    }).fail(function (output) {
+                    }).fail(function () {
                         // If the request fails, then just update.
                         $scope.$apply();
                     });
@@ -548,7 +548,7 @@ angular.module('timelineSelectorDirective', []).directive('timelineSelector', ['
                         seasonWindow = 24*7*2;
                         trendWindow = 24*30;
                     }
-                    var req = ocpu.rpc("nstl2",{
+                    ocpu.rpc("nstl2",{
                         x : timelineVector,
                         "n.p": periodLength, // specifies seasonal periodicity
                         "t.degree": 2, "t.window": 41, // trend smoothing parameters
@@ -619,7 +619,7 @@ angular.module('timelineSelectorDirective', []).directive('timelineSelector', ['
                         if ($scope.brush.length > 0) {
                             var newBrushStart = $scope.roundDownBucket($scope.brush[0]);
                             // Set the brush to one millisecond back when changing resolutions back to what we had.
-                            // Otherwise, our brush will drift forward in time on consecutive granularity changes due to the 
+                            // Otherwise, our brush will drift forward in time on consecutive granularity changes due to the
                             // nature of having to zero out the value and calculating the start point of the next day/hour.
                             var newBrushEnd = $scope.roundUpBucket($scope.brush[1]);
 

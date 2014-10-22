@@ -27,9 +27,9 @@ angular.module('tagCloudDirective', []).directive('tagCloud', ['ConnectionServic
             scope: {
                 tagField: '='
             },
-            controller: function ($scope) {
+            controller: function () {
             },
-            link: function ($scope, element, attr) {
+            link: function ($scope, element) {
                 /**
                  * Initializes the name of the directive's scope variables
                  * and the Neon Messenger used to monitor data change events.
@@ -75,7 +75,7 @@ angular.module('tagCloudDirective', []).directive('tagCloud', ['ConnectionServic
                  * @method onFiltersChanged
                  * @private
                  */
-                var onFiltersChanged = function (message) {
+                var onFiltersChanged = function () {
                     XDATA.activityLogger.logSystemActivity('TagCloud - received neon filter changed event');
                     $scope.queryForTags();
                 };
@@ -143,7 +143,7 @@ angular.module('tagCloudDirective', []).directive('tagCloud', ['ConnectionServic
 
                     if($scope.andTags)
                         $scope.data = tagCounts.filter(function(elem) {
-                            return $scope.filterTags.indexOf(elem.tag) == -1;
+                            return $scope.filterTags.indexOf(elem.tag) === -1;
                         });
                     else
                         $scope.data = tagCounts;
@@ -280,7 +280,7 @@ angular.module('tagCloudDirective', []).directive('tagCloud', ['ConnectionServic
                 });
 
                 // Log whenever the user toggles the options display.
-                $scope.$watch('optionsDisplayed', function(newVal, oldVal) {
+                $scope.$watch('optionsDisplayed', function(newVal) {
                     var action = (newVal === true) ? 'show_options' : 'hide_options';
                     XDATA.activityLogger.logUserActivity('TagCloud - user toggled options display', action,
                         XDATA.activityLogger.WF_EXPLORE);

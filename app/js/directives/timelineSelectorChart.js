@@ -38,7 +38,7 @@ angular.module('timelineSelectorChartDirective', []).directive('timelineSelector
             primarySeries: '=',
             granularity: '='
         },
-        link: function ($scope, element, attrs) {
+        link: function ($scope, element) {
 
             // Initialize the chart.
             $scope.chart = new charts.TimelineSelectorChart(element[0]);
