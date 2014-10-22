@@ -29,12 +29,10 @@
 var barchart = angular.module('barchartDirective', []);
 
 barchart.directive('barchart', ['ConnectionService', '$timeout', function(connectionService, $timeout) {
-	var COUNT_FIELD_NAME = 'Count';
-
-	var link = function($scope, el, attr) {
+	var link = function($scope, el) {
 		el.addClass('barchartDirective');
 
-		var messenger = new neon.eventing.Messenger();
+		$scope.messenger = new neon.eventing.Messenger();
 		$scope.database = '';
 		$scope.tableName = '';
 		$scope.barType = $scope.barType || 'count';
@@ -44,7 +42,6 @@ barchart.directive('barchart', ['ConnectionService', '$timeout', function(connec
         $scope.chart = undefined;
 
 		var COUNT_FIELD_NAME = 'Count';
-		var clientId;
 
 		var initialize = function() {
 
@@ -55,17 +52,17 @@ barchart.directive('barchart', ['ConnectionService', '$timeout', function(connec
 				filtersChanged: onFiltersChanged
 			});
 
-			$scope.$watch('attrX', function(newValue, oldValue) {
+			$scope.$watch('attrX', function() {
 				if(!$scope.initializing && $scope.databaseName && $scope.tableName) {
 					$scope.queryForData();
 				}
 			});
-			$scope.$watch('attrY', function(newValue, oldValue) {
+			$scope.$watch('attrY', function() {
 				if(!$scope.initializing && $scope.databaseName && $scope.tableName) {
 					$scope.queryForData();
 				}
 			});
-			$scope.$watch('barType', function(newValue, oldValue) {
+			$scope.$watch('barType', function() {
 				if(!$scope.initializing && $scope.databaseName && $scope.tableName) {
 					$scope.queryForData();
 				}
@@ -83,7 +80,7 @@ barchart.directive('barchart', ['ConnectionService', '$timeout', function(connec
 			});
 		};
 
-		var onFiltersChanged = function(message) {
+		var onFiltersChanged = function() {
 			XDATA.activityLogger.logSystemActivity('BarChart - received neon filter changed event');
 			$scope.queryForData();
 		};
@@ -159,7 +156,7 @@ barchart.directive('barchart', ['ConnectionService', '$timeout', function(connec
 		var doDrawChart = function(data) {
 			// Destroy the old chart and rebuild it.
 			if ($scope.chart) {
-				$scope.chart.destroy();	
+				$scope.chart.destroy();
 			}
 
 			var xAxis = $scope.attrX || connectionService.getFieldMapping("bar_x_axis");

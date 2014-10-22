@@ -29,12 +29,10 @@
 var barchart = angular.module('stackedBarchartDirective', []);
 
 barchart.directive('stackedbarchart', ['ConnectionService', function(connectionService) {
-	var COUNT_FIELD_NAME = 'Count';
-
-	var link = function($scope, el, attr) {
+	var link = function($scope, el) {
 		el.addClass('barchartDirective');
 
-		var messenger = new neon.eventing.Messenger();
+		$scope.messenger = new neon.eventing.Messenger();
 		$scope.database = '';
 		$scope.tableName = '';
 		$scope.barType = /*$scope.barType ||*/'count'; //Changed because negative values break the display
@@ -42,7 +40,6 @@ barchart.directive('stackedbarchart', ['ConnectionService', function(connectionS
 		$scope.xAxisSelect = $scope.fields[0] ? $scope.fields[0] : '';
 
 		var COUNT_FIELD_NAME = 'Count';
-		var clientId;
 
 		var initialize = function() {
 
@@ -53,24 +50,24 @@ barchart.directive('stackedbarchart', ['ConnectionService', function(connectionS
 				filtersChanged: onFiltersChanged
 			});
 
-			$scope.$watch('attrX', function(newValue, oldValue) {
+			$scope.$watch('attrX', function() {
 				if($scope.databaseName && $scope.tableName) {
 					$scope.queryForData();
 				}
 			});
-			$scope.$watch('attrY', function(newValue, oldValue) {
+			$scope.$watch('attrY', function() {
 				if($scope.databaseName && $scope.tableName) {
 					$scope.queryForData();
 				}
 			});
-			$scope.$watch('barType', function(newValue, oldValue) {
+			$scope.$watch('barType', function() {
 				if($scope.databaseName && $scope.tableName) {
 					$scope.queryForData();
 				}
 			});
 		};
 
-		var onFiltersChanged = function(message) {
+		var onFiltersChanged = function() {
 			$scope.queryForData();
 		};
 
@@ -97,7 +94,6 @@ barchart.directive('stackedbarchart', ['ConnectionService', function(connectionS
 			if (!yAxis) {
 				yAxis = COUNT_FIELD_NAME;
 			}
-			var yMin = ($scope.barType ? COUNT_FIELD_NAME : yAxis) + "-min";
 
 			var query = new neon.query.Query()
 				.selectFrom($scope.databaseName, $scope.tableName)
@@ -232,7 +228,7 @@ barchart.directive('stackedbarchart', ['ConnectionService', function(connectionS
 				stacked: true,
 				responsive: false
 			};
-			var chart = new charts.BarChart(el[0], '.barchart', opts).draw();
+			(new charts.BarChart(el[0], '.barchart', opts)).draw();
 		};
 
 		neon.ready(function () {
