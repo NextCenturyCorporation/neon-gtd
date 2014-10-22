@@ -86,7 +86,6 @@ charts.LineChart.prototype.determineHeight = function (element) {
 };
 
 charts.LineChart.prototype.categoryForItem = function (item) {
-    var me = this;
     if (typeof this.xAttribute === 'function') {
         return this.xAttribute.call(this, item);
     }
@@ -189,16 +188,12 @@ charts.LineChart.prototype.drawLine = function(opts) {
     //get list of all data
     for(i = 0; i < opts.length; i++) {
         this.calculateColor(opts[i].series, opts[i].total);
-        if(this.hiddenSeries.indexOf(opts[i].series) == -1)
+        if(this.hiddenSeries.indexOf(opts[i].series) === -1)
             fullDataSet = fullDataSet.concat(opts[i].data);
     }
 
     me.x = d3.time.scale.utc()
     .range([0, (me.width - (me.margin.left + me.margin.right))],0.25);
-
-    var extent = d3.extent(fullDataSet.map(function (d) {
-        return d[me.xAttribute];
-    }));
 
     me.x.domain(d3.extent(fullDataSet, function(d) { return d[me.xAttribute]; }));
 
@@ -207,7 +202,7 @@ charts.LineChart.prototype.drawLine = function(opts) {
         .orient("bottom")
         .ticks(Math.round(me.width/100));
 
-    var xAxisElement = me.svg.append("g")
+    me.svg.append("g")
         .attr("class", "x axis")
         .attr("transform", "translate(0," + (me.height - (me.margin.top + me.margin.bottom)) + ")")
         .call(xAxis);
@@ -244,7 +239,8 @@ charts.LineChart.prototype.drawLine = function(opts) {
         .append("line")
             .attr("x1", 10).attr("x2", 10) 
             .attr("y1", 0).attr("y2", me.height); 
-    var hoverDate = hoverLineGroup.append('text')
+    // Add a date to appear on hover.
+    hoverLineGroup.append('text')
        .attr("class", "hover-text hover-date")
        .attr('y', me.height+20);
 
@@ -300,7 +296,7 @@ charts.LineChart.prototype.drawLine = function(opts) {
         if(data.length < 40){
 
             var func = function(d) { return me.x(d.date); };
-            if(data.length == 1)
+            if(data.length === 1)
                 func = me.width/2;
 
             // Hide circle if point is a 0
@@ -335,7 +331,7 @@ charts.LineChart.prototype.drawLine = function(opts) {
                 .attr("cy", 0);
     }
 
-    var yAxisElement = me.svg.append("g")
+    me.svg.append("g")
         .attr("class", "y axis")
         .call(yAxis);
 
@@ -362,13 +358,9 @@ charts.LineChart.prototype.drawLine = function(opts) {
     }
 
     // Add mouseover events.
-    d3.select('.linechart').on("mouseover", function() { 
-        //console.log('mouseover')
-    }).on("mousemove", function(event) {
+    d3.select('.linechart').on("mousemove", function() {
         if (opts && opts.length > 0) {
             var mouse_x = d3.mouse(this)[0];
-            var mouse_y = d3.mouse(this)[1];
-            var graph_y = me.y.invert(mouse_y);
             var graph_x = me.x.invert(mouse_x);
             var format = d3.time.format.utc('%e %B %Y');
             var numFormat = d3.format("0,000.00");
@@ -402,7 +394,7 @@ charts.LineChart.prototype.drawLine = function(opts) {
                 if(me.hiddenSeries.indexOf(opts[i].series) >= 0) continue;
                 var color = me.calculateColor(opts[i].series, opts[i].total);
                 var xPos = me.x(closerDate);
-                if(opts[i].data.length == 1)
+                if(opts[i].data.length === 1)
                     xPos = me.width/2;
 
                 hoverCircles[opts[i].series]
@@ -414,7 +406,7 @@ charts.LineChart.prototype.drawLine = function(opts) {
                 html += '<span style="color: '+color+'">'+opts[i].series+": "+numFormat(Math.round(opts[i].data[closerIndex].value * 100) / 100)+'</span>';
             }
 
-            if(opts[0].data.length == 1)
+            if(opts[0].data.length === 1)
                 hoverLine.attr("x1", me.width/2).attr("x2", me.width/2);
             else
                 hoverLine.attr("x1", me.x(closerDate)).attr("x2", me.x(closerDate));

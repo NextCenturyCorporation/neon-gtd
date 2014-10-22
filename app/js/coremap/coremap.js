@@ -152,7 +152,7 @@ coreMap.Map.DESTINATION_PROJECTION = new OpenLayers.Projection("EPSG:900913");
  * @method onPopupClose
  */
 
-var onPopupClose = function (evt) {
+var onPopupClose = function () {
     this.map.selectControl.unselect(this.feature);
 };
 
@@ -166,7 +166,9 @@ var onPopupClose = function (evt) {
 var onFeatureSelect = function(feature) {
     var text = '<div><table class="table table-striped table-condensed">';
     for (var key in feature.attributes) {
-        text += '<tr><th>' + _.escape(key) + '</th><td>' + _.escape(feature.attributes[key]) + '</td>';
+        if (Object.prototype.hasOwnProperty.call(feature.attributes, key)) {
+            text += '<tr><th>' + _.escape(key) + '</th><td>' + _.escape(feature.attributes[key]) + '</td>';
+        }
     }
     text += '</table></div>';
 
@@ -283,8 +285,10 @@ coreMap.Map.prototype.getColorMappings = function () {
     // convert to an array that is in alphabetical order for consistent iteration order
     var sortedColors = [];
     for (var key in this.colors) {
-        var color = me.colors[key];
-        sortedColors.push({ 'color': color, 'category': key});
+        if (Object.prototype.hasOwnProperty.call(this.colors, key)) {
+            var color = me.colors[key];
+            sortedColors.push({ 'color': color, 'category': key});
+        }
     }
 
     return sortedColors;
@@ -592,7 +596,7 @@ coreMap.Map.prototype.configureFilterOnZoomRectangle = function () {
                     zoom = this.map.getZoomForExtent(bounds),
                     oldRes = this.map.getResolution(),
                     newRes = this.map.getResolutionForZoom(zoom);
-                if (oldRes == newRes) {
+                if (oldRes === newRes) {
                     this.map.setCenter(this.map.getLonLatFromPixel(targetCenterPx));
                 } else {
                     var zoomOriginPx = {
@@ -603,7 +607,7 @@ coreMap.Map.prototype.configureFilterOnZoomRectangle = function () {
                     };
                     this.map.zoomTo(zoom, zoomOriginPx);
                 }
-                if (lastZoom == this.map.getZoom() && this.alwaysZoom === true) {
+                if (lastZoom === this.map.getZoom() && this.alwaysZoom === true) {
                     this.map.zoomTo(lastZoom + (this.out ? -1 : 1));
                 }
                 if (me.onZoomRect) {

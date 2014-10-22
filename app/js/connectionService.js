@@ -21,8 +21,8 @@
  * @constructor
  */
 var services = angular.module('neonDemo.services',[]);
-services.factory('ConnectionService', ['$filter',
-	function($filter) {
+services.factory('ConnectionService', 
+	function() {
 
 		var activeConnection;
 		var connectionInformation = {fields: {}};
@@ -133,4 +133,4 @@ services.factory('ConnectionService', ['$filter',
 
 		return service;
 
-	}]);
+	});

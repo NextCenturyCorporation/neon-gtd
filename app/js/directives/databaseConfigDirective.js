@@ -3,7 +3,7 @@
 var databaseConfig = angular.module('configurationDirective', []);
 
 databaseConfig.directive('databaseConfig', ['ConnectionService', function (connectionService) {
-    var link = function ($scope, el, attr) {
+    var link = function ($scope, el) {
         el.addClass('databaseConfig');
 
         $scope.showDbTable = false;
@@ -166,9 +166,11 @@ databaseConfig.directive('databaseConfig', ['ConnectionService', function (conne
             connectionService.loadMetadata(function() {
                 $scope.$apply(function() {
                     var mappings = connectionService.getFieldMappings();
-                    for (var i in $scope.fields) {
-                        var field = $scope.fields[i];
-                        field.selected = mappings.hasOwnProperty(field.name) ? mappings[field.name] : "";
+                    for (var key in $scope.fields) {
+                        if (Object.prototype.hasOwnProperty.call($scope.fields, key)) {
+                            var field = $scope.fields[key];
+                            field.selected = mappings.hasOwnProperty(field.name) ? mappings[field.name] : "";
+                        }
                     }
                 });
             });
@@ -197,9 +199,11 @@ databaseConfig.directive('databaseConfig', ['ConnectionService', function (conne
         $scope.connectClick = function () {
             // Set active connection to Custom and connect.
             $scope.activeServer = "Custom";
-            for (var i in $scope.fields) {
-                var field = $scope.fields[i];
-                connectionService.setFieldMapping(field.name, field.selected);
+            for (var key in $scope.fields) {
+                if (Object.prototype.hasOwnProperty.call($scope.fields, key)) {
+                    var field = $scope.fields[key];
+                    connectionService.setFieldMapping(field.name, field.selected);
+                }
             }
             $scope.connectToDatabase();
             XDATA.activityLogger.logUserActivity('User requested new dataset',

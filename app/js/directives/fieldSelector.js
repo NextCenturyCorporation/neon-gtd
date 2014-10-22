@@ -18,15 +18,12 @@
 var fieldSelector = angular.module('fieldSelectorDirective', []);
 
 fieldSelector.directive('fieldselector', ['ConnectionService', function(connectionService) {
-	var link = function($scope, el, attr) {
+	var link = function($scope) {
 		var messenger = new neon.eventing.Messenger();
 		$scope.database = '';
 		$scope.tableName = '';
 		$scope.fields = [];
 		$scope.tmp = "";
-
-		//add select
-		//el.append('<select><option>Boo</option></select>');
 
 		var initialize = function() {
 			messenger.events({

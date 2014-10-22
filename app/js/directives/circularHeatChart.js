@@ -30,14 +30,13 @@
 angular.module('circularHeatChartDirective', []).directive('circularHeatChart', function() {
 
     var HOURS_IN_WEEK = 168;
-    var HOURS_IN_DAY = 24;
 
 	return {
 		restrict: 'EA',
 		scope: {
             cellValues: '='
         },
-		link: function($scope, element, attrs) {
+		link: function($scope, element) {
             element.addClass('circularheatchart');
 
             // Initialize our cell data.

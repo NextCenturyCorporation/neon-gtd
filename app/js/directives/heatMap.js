@@ -36,10 +36,7 @@ angular.module('heatMapDirective', []).directive('heatMap', ['ConnectionService'
                 // map of categories to colors used for the legend
                 colorMappings: '&'
             },
-            controller: function ($scope) {
-
-            },
-            link: function ($scope, element, attr) {
+            link: function ($scope, element) {
 
                 element.addClass('heat-map');
 
@@ -237,7 +234,7 @@ angular.module('heatMapDirective', []).directive('heatMap', ['ConnectionService'
                  * @method onFiltersChanged
                  * @private
                  */
-                var onFiltersChanged = function (message) {
+                var onFiltersChanged = function () {
                     XDATA.activityLogger.logSystemActivity('HeatMap - received neon filter changed event');
                     $scope.queryForMapData();
                 };

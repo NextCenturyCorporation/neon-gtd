@@ -36,15 +36,14 @@ angular.module('filterBuilderDirective', []).directive('filterBuilder', ['Connec
         controller: 'neonDemoController',
         scope: {
         },
-        link: function($scope, el, attr) {
+        link: function($scope, el) {
 
             /**
              * Event handler for connection changed events issued over Neon's messaging channels.
-             * @param {Object} message A Neon filter changed message.
              * @method onConnectionChanged
              * @private
              */ 
-            var onConnectionChanged = function(message) {
+            var onConnectionChanged = function() {
                 XDATA.activityLogger.logSystemActivity('FilterBuilder - received neon connection changed event');
                 $scope.filterTable.clearFilterState();
             };
@@ -106,7 +105,7 @@ angular.module('filterBuilderDirective', []).directive('filterBuilder', ['Connec
 
                 // Adjust the filters whenever the user toggles AND/OR clauses.
                 $scope.$watch('andClauses', function(newVal, oldVal) {
-                    if (newVal != oldVal) {
+                    if (newVal !== oldVal) {
                         var filter = $scope.filterTable.buildFilterFromData($scope.databaseName, $scope.tableName, $scope.andClauses);
 
                         XDATA.activityLogger.logUserActivity('FilterBuilder - Toggle custom Neon filter set operator', 'select_filter_menu_option',
@@ -132,7 +131,7 @@ angular.module('filterBuilderDirective', []).directive('filterBuilder', ['Connec
                 });
 
                 $scope.$watch('filterTable', function(newVal, oldVal) {
-                    if (newVal != oldVal) {
+                    if (newVal !== oldVal) {
                         var logData = {};
                         if (newVal && newVal.filterState && newVal.filterState.data[0]) {
                             logData.to = newVal.filterState.data[0];
@@ -145,7 +144,7 @@ angular.module('filterBuilderDirective', []).directive('filterBuilder', ['Connec
                         // menu selection or new filter text, 
                         // based upon whether the filter value changed or not.
                         if (logData.to && logData.from) {
-                            var activity = (logData.to.value != logData.from.value) ? 'enter_filter_text' : 'select_filter_menu_option';
+                            var activity = (logData.to.value !== logData.from.value) ? 'enter_filter_text' : 'select_filter_menu_option';
                             XDATA.activityLogger.logUserActivity('FilterBuilder - Modifying custom Neon filter data', 
                                 activity,
                                 XDATA.activityLogger.WF_GETDATA,
@@ -161,7 +160,7 @@ angular.module('filterBuilderDirective', []).directive('filterBuilder', ['Connec
                 },true);
 
                 $scope.$watch('[selectedField, selectedOperator, selectedValue]', function (newVal, oldVal) {
-                    if (newVal != oldVal) {
+                    if (newVal !== oldVal) {
                         var logData = {};
                         if (newVal) {
                             logData.to = newVal;
@@ -177,7 +176,7 @@ angular.module('filterBuilderDirective', []).directive('filterBuilder', ['Connec
                 }, true);
 
                 $scope.$watch('selectedValue', function (newVal, oldVal) {
-                    if (newVal != oldVal) {
+                    if (newVal !== oldVal) {
                         var logData = {};
                         if (newVal) {
                             logData.to = newVal;

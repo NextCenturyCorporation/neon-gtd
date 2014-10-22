@@ -31,10 +31,9 @@ var linechart = angular.module('linechartDirective', []);
 linechart.directive('linechart', ['ConnectionService', function(connectionService) {
     var COUNT_FIELD_NAME = 'value';
 
-    var link = function($scope, el, attr) {
+    var link = function($scope, el) {
         el.addClass('linechartDirective');
 
-        var messenger = new neon.eventing.Messenger();
         $scope.databaseName = '';
         $scope.tableName = '';
         $scope.totalType = 'count';
@@ -45,8 +44,6 @@ linechart.directive('linechart', ['ConnectionService', function(connectionServic
         $scope.categoryField = '';
         $scope.aggregation = 'count';
         $scope.seriesLimit = 10;
-
-        var COUNT_FIELD_NAME = 'value';
 
         var initialize = function() {
 
@@ -96,18 +93,7 @@ linechart.directive('linechart', ['ConnectionService', function(connectionServic
                 });
         };
 
-        /**
-         * Event handler for selection changed events issued over Neon's messaging channels.
-         * @param {Object} message A Neon selection changed message.
-         * @method onSelectionChanged
-         * @private
-         */
-        var onSelectionChanged = function(message) {
-            XDATA.activityLogger.logSystemActivity('LineChart - received neon selection changed event');
-            $scope.queryForData();
-        };
-
-        var onFiltersChanged = function(message) {
+        var onFiltersChanged = function() {
             XDATA.activityLogger.logSystemActivity('LineChart - received neon filter changed event');
             $scope.queryForData();
         };
@@ -200,7 +186,9 @@ linechart.directive('linechart', ['ConnectionService', function(connectionServic
 
                 // Convert results to array
                 for (series in zeroedData){
-                    data.push(zeroedData[series]);
+                    if (Object.prototype.hasOwnProperty.call(zeroedData, series)) {
+                        data.push(zeroedData[series]);
+                    }
                 }
 
                 // Sort by series total
@@ -213,7 +201,7 @@ linechart.directive('linechart', ['ConnectionService', function(connectionServic
                 // Calculate Other series
                 var otherTotal = 0;
                 var otherData = [];
-                if($scope.aggregation != 'avg'){
+                if($scope.aggregation !== 'avg'){
                     for(i = $scope.seriesLimit; i < data.length; i++) {
                         otherTotal += data[i].total;
                         for(var d = 0; d < data[i].data.length; d++) {
@@ -273,9 +261,9 @@ linechart.directive('linechart', ['ConnectionService', function(connectionServic
             var resultData = {};
 
             var series = 'Total';
-            if($scope.aggregation == 'avg')
+            if($scope.aggregation === 'avg')
                 series = 'Average '+$scope.attrY;
-            else if($scope.aggregation == 'sum')
+            else if($scope.aggregation === 'sum')
                 series = $scope.attrY;
 
             // Scrape data for unique series
@@ -296,7 +284,9 @@ linechart.directive('linechart', ['ConnectionService', function(connectionServic
             for(i = 0; i < numBuckets; i++) {
                 var bucketGraphDate = new Date(startTime + (dayMillis * i));
                 for (series in resultData){
-                    resultData[series].data.push({date: bucketGraphDate, value: 0});
+                    if (Object.prototype.hasOwnProperty.call(resultData, series)) {
+                        resultData[series].data.push({date: bucketGraphDate, value: 0});
+                    }
                 }
             }
 

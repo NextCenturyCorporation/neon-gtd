@@ -56,7 +56,7 @@ angular.module('circularHeatFormDirective', []).directive('circularHeatForm', ['
 				return $scope.dateField;
 			};
 		},
-		link: function($scope, element, attr) {
+		link: function($scope, element) {
 
 			$scope.days = [];
 			$scope.timeofday = [];
@@ -111,11 +111,10 @@ angular.module('circularHeatFormDirective', []).directive('circularHeatForm', ['
 
 			/**
 			 * Event handler for filter changed events issued over Neon's messaging channels.
-			 * @param {Object} message A Neon filter changed message.
 			 * @method onFiltersChanged
 			 * @private
 			 */ 
-			var onFiltersChanged = function(message) {
+			var onFiltersChanged = function() {
 				XDATA.activityLogger.logSystemActivity('CircularHeatForm - received neon filter changed event');
 				$scope.queryForChartData();
 			};
