@@ -458,8 +458,6 @@ charts.BarChart.prototype.showTooltip_ = function (item, mouseLocation) {
 
 charts.BarChart.prototype.positionTooltip_ = function (tooltip, mouseLocation) {
 	// the extra 35px in the next two variables is needed to account for the padding of .charttooltip
-	var chartHeight = $(this.element[0]).height() - 35;
-	var spaceNeeded = $(".charttooltip").height() + 35;
 
 	var top = mouseLocation[1] + 35;
 
@@ -481,7 +479,7 @@ charts.BarChart.prototype.drawXAxis_ = function (chart) {
 	.style("text-anchor", "end")
 	.attr("dx", "-.8em")
 	.attr("dy", ".15em")
-	.attr("transform", function(d) {
+	.attr("transform", function() {
 		return "rotate(-60)";
 	});
 

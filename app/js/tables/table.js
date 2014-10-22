@@ -52,7 +52,7 @@ tables.Table = function (tableSelector, opts) {
     this.tableSelector_ = tableSelector;
     this.idField_ = opts.id;
     this.options_ = opts.gridOptions || {};
-    
+
     var data = opts.data;
     var columns = opts.columns ? opts.columns : tables.Table.computeColumnNames_(data);
 
@@ -194,19 +194,19 @@ tables.Table.prototype.draw = function () {
     this.table_.registerPlugin(new Slick.AutoTooltips({ enableForHeaderCells: true }));
 
     // Setup some event loggers.
-    this.table_.onColumnsResized.subscribe(function(e,args){
+    this.table_.onColumnsResized.subscribe(function(){
         XDATA.activityLogger.logUserActivity('Grid - user resized columns', 'resize',
             XDATA.activityLogger.WF_EXPLORE);
     });
 
     // Setup some event loggers.
-    this.table_.onColumnsReordered.subscribe(function(e,args){
+    this.table_.onColumnsReordered.subscribe(function(){
         XDATA.activityLogger.logUserActivity('Grid - user reordered columns', 'reorder',
             XDATA.activityLogger.WF_EXPLORE);
     });
 
     // Setup some event loggers.
-    this.table_.onScroll.subscribe(function(e,args){
+    this.table_.onScroll.subscribe(function(){
         XDATA.activityLogger.logUserActivity('Grid - user scrolled data view', 'scroll',
             XDATA.activityLogger.WF_EXPLORE);
     });
