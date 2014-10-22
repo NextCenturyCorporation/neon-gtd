@@ -654,6 +654,9 @@ a.navbar-text:focus{
 ================ */
 
 .well{
+    height:100%;
+    width:100%;
+    overflow:auto;
     background-color: #FFFFFF;
     box-shadow: 0 1px 4px rgba(154, 154, 154, 0.3);
     border: 1px solid #D6D6D6;

@@ -55,7 +55,8 @@ var neonDemo = angular.module('neonDemo', [
     'queryResultsTableDirective',
     'tagCloudDirective',
     'linechartDirective',
-    'numberShortModule'
+    'numberShortModule',
+    'gridster'
 ]);
 
 angular.module('numberShortModule', [])
