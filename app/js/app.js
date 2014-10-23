@@ -30,13 +30,11 @@ XDATA.activityLogger.registerActivityLogger(DEMO_CONFIG.xdata.ACTIVITY_LOGGER_UR
 	DEMO_CONFIG.xdata.COMPONENT_VERSION);
 
 // Configure opencpu connection
-if (DEMO_CONFIG.opencpu.enableOpenCpu) {
+if(DEMO_CONFIG.opencpu.enableOpenCpu) {
 	ocpu.enableLogging = DEMO_CONFIG.opencpu.enableLogging;
 	ocpu.useAlerts = DEMO_CONFIG.opencpu.useAlerts;
 	ocpu.seturl(DEMO_CONFIG.opencpu.url);
 }
-
-
 
 angular.module('neonDemo', [
 	'neonDemo.controllers',
@@ -63,19 +61,19 @@ angular.module('neonDemo', [
 angular.module('neonDemo.directives', []);
 
 angular.module('numberShortModule', [])
-	.filter('numberShort', function () {
-		return function(number){
-			if (typeof number !== undefined){
+	.filter('numberShort', function() {
+		return function(number) {
+			if(typeof number !== undefined) {
 				var abs = Math.abs(number);
-				if (abs >= Math.pow(10, 12))
-					number = (number / Math.pow(10, 12)).toFixed(1)+"T";
-				else if (abs < Math.pow(10, 12) && abs >= Math.pow(10, 9))
-					number = (number / Math.pow(10, 9)).toFixed(1)+"B";
-				else if (abs < Math.pow(10, 9) && abs >= Math.pow(10, 6))
-					number = (number / Math.pow(10, 6)).toFixed(1)+"M";
-				else if (abs < Math.pow(10, 6) && abs >= Math.pow(10, 3))
-					number = (number / Math.pow(10, 3)).toFixed(1)+"K";
-				else
+				if(abs >= Math.pow(10, 12)) {
+					number = (number / Math.pow(10, 12)).toFixed(1) + "T";
+				} else if(abs < Math.pow(10, 12) && abs >= Math.pow(10, 9)) {
+					number = (number / Math.pow(10, 9)).toFixed(1) + "B";
+				} else if(abs < Math.pow(10, 9) && abs >= Math.pow(10, 6)) {
+					number = (number / Math.pow(10, 6)).toFixed(1) + "M";
+				} else if(abs < Math.pow(10, 6) && abs >= Math.pow(10, 3)) {
+					number = (number / Math.pow(10, 3)).toFixed(1) + "K";
+				} else
 					number = Math.round(number * 100) / 100;
 			}
 			return number;

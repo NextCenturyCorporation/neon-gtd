@@ -118,7 +118,7 @@
 	],
 	"requireDotNotation": true,
 	//yoda?
-	//"requireYodaConditions": true,
+	"requireYodaConditions": true,
 	"disallowNewlineBeforeBlockStatements": true,
 	"validateParameterSeparator": ", "
 

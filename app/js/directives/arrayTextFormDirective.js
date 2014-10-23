@@ -24,12 +24,12 @@ angular.module('neonDemo.directives')
 			fields: '='
 		},
 		templateUrl: "app/partials/directives/arrayTextForm.html",
-		link: function( $scope ){
+		link: function($scope) {
 			$scope.addField = function() {
 				$scope.fields.push("");
 			};
 
-			$scope.blur = function( $event, $index ){
+			$scope.blur = function($event, $index) {
 				if($event.currentTarget.value === "" && $scope.fields.length > 1) {
 					$scope.fields.splice($index, 1);
 				} else {
