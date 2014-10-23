@@ -27,35 +27,33 @@
  * @class neonDemo.directives.heatMap
  * @constructor
  */
-angular.module('poweredByNeonDirective', []).directive('poweredByNeon', function () {
-    var link = function ($scope) {
+angular.module('poweredByNeonDirective', []).directive('poweredByNeon', function() {
+	var link = function($scope) {
+		$scope.initialize = function() {
+			$scope.versionString = "Loading...";
+			$scope.infoLoaded = false;
+		};
 
-        $scope.initialize = function() {
-            $scope.versionString = "Loading...";
-            $scope.infoLoaded = false;
-        };
+		$scope.loadNeonInfo = function() {
+			if(!$scope.infoLoaded) {
+				neon.util.infoUtils.getNeonVersion(function(result) {
+					$scope.$apply(function() {
+						$scope.versionString = result;
+						$scope.infoLoaded = true;
+					});
+				});
+			}
+		};
 
-        $scope.loadNeonInfo = function() {
-            if (!$scope.infoLoaded) {
-                neon.util.infoUtils.getNeonVersion( function(result) {
-                    $scope.$apply(function() {
-                        $scope.versionString = result;
-                        $scope.infoLoaded = true;
-                    });
-                });
-            }
-        };
+		// Wait for neon to be ready, then intialize the view and data.
+		neon.ready(function() {
+			$scope.initialize();
+		});
+	};
 
-        // Wait for neon to be ready, then intialize the view and data.
-        neon.ready(function () {
-            $scope.initialize();
-        });
-
-    };
-
-    return {
-        templateUrl: 'partials/poweredByNeon.html',
-        restrict: 'EA',
-        link: link
-    };
+	return {
+		templateUrl: 'partials/poweredByNeon.html',
+		restrict: 'EA',
+		link: link
+	};
 });

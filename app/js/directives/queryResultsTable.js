@@ -28,7 +28,6 @@
  */
 angular.module('queryResultsTableDirective', []).directive('queryResultsTable', ['ConnectionService',
 	function(connectionService) {
-
 	return {
 		templateUrl: 'partials/queryResultsTable.html',
 		restrict: 'EA',
@@ -36,10 +35,8 @@ angular.module('queryResultsTableDirective', []).directive('queryResultsTable', 
 			showData: '='
 		},
 		controller: function() {
-
 		},
 		link: function($scope, element) {
-
 			element.addClass('query-results-table');
 
 			/**
@@ -75,15 +72,14 @@ angular.module('queryResultsTableDirective', []).directive('queryResultsTable', 
 					activeDatasetChanged: onDatasetChanged,
 					filtersChanged: onFiltersChanged
 				});
-
 			};
 
 			$scope.createOptions = function(data) {
 				var _id = "_id";
 				var has_id = true;
 
-				_.each(data.data, function (element) {
-					if (!(_.has(element, _id))) {
+				_.each(data.data, function(element) {
+					if(!(_.has(element, _id))) {
 						has_id = false;
 					}
 				});
@@ -97,7 +93,7 @@ angular.module('queryResultsTableDirective', []).directive('queryResultsTable', 
 					}
 				};
 
-				if (has_id) {
+				if(has_id) {
 					options.id = _id;
 				}
 				return options;
@@ -140,10 +136,10 @@ angular.module('queryResultsTableDirective', []).directive('queryResultsTable', 
 
 				// Pull data.
 				var connection = connectionService.getActiveConnection();
-				if (connection) {
+				if(connection) {
 					connectionService.loadMetadata(function() {
-						connection.getFieldNames($scope.tableName, function (results) {
-							$scope.$apply(function () {
+						connection.getFieldNames($scope.tableName, function(results) {
+							$scope.$apply(function() {
 								populateFieldNames(results);
 								$scope.sortByField = connectionService.getFieldMapping("sort_by");
 								$scope.sortByField = $scope.sortByField || $scope.fields[0];
@@ -185,15 +181,15 @@ angular.module('queryResultsTableDirective', []).directive('queryResultsTable', 
 			 * @method queryForData
 			 */
 			$scope.queryForData = function() {
-				if ($scope.showData) {
+				if($scope.showData) {
 					var connection = connectionService.getActiveConnection();
-					if (connection) {
+					if(connection) {
 						var query = $scope.buildQuery();
 
 						XDATA.activityLogger.logSystemActivity('DataView - query for data');
 						connection.executeQuery(query, function(queryResults) {
 							XDATA.activityLogger.logSystemActivity('DataView - received data');
-							$scope.$apply(function(){
+							$scope.$apply(function() {
 								$scope.updateData(queryResults);
 								XDATA.activityLogger.logSystemActivity('DataView - rendered data');
 							});
@@ -207,17 +203,15 @@ angular.module('queryResultsTableDirective', []).directive('queryResultsTable', 
 			 * @method queryForData
 			 */
 			$scope.queryForTotalRows = function() {
-
 				var query = new neon.query.Query().selectFrom($scope.databaseName, $scope.tableName)
 					.aggregate(neon.query.COUNT, '*', 'count');
 
 				XDATA.activityLogger.logSystemActivity('DataView - query for total rows of data');
 				connectionService.getActiveConnection().executeQuery(query, function(queryResults) {
-					$scope.$apply(function(){
-						if (queryResults.data.length > 0) {
+					$scope.$apply(function() {
+						if(queryResults.data.length > 0) {
 							$scope.totalRows = queryResults.data[0].count;
-						}
-						else {
+						} else {
 							$scope.totalRows = 0;
 						}
 						XDATA.activityLogger.logSystemActivity('DataView - received total; updating view');
@@ -243,7 +237,6 @@ angular.module('queryResultsTableDirective', []).directive('queryResultsTable', 
 
 				$scope.table = new tables.Table("#" + $scope.tableId, $scope.tableOptions).draw();//.registerSelectionListener(onSelection);
 				$scope.table.refreshLayout();
-
 			};
 
 			/**
@@ -254,7 +247,7 @@ angular.module('queryResultsTableDirective', []).directive('queryResultsTable', 
 			$scope.buildQuery = function() {
 				var query = new neon.query.Query().selectFrom($scope.databaseName, $scope.tableName);
 				query.limit($scope.limit);
-				if ($scope.sortByField !== "undefined" && $scope.sortByField.length > 0) {
+				if($scope.sortByField !== "undefined" && $scope.sortByField.length > 0) {
 					query.sortBy($scope.sortByField, $scope.sortDirection);
 				}
 
@@ -300,10 +293,9 @@ angular.module('queryResultsTableDirective', []).directive('queryResultsTable', 
 			});
 
 			// Wait for neon to be ready, the create our messenger and intialize the view and data.
-			neon.ready(function () {
+			neon.ready(function() {
 				$scope.initialize();
 			});
-
 		}
 	};
 }]);

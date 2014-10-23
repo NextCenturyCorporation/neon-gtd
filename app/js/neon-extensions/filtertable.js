@@ -24,23 +24,23 @@ neon.query = neon.query || {};
  * represents a field-operator-value combo.  For example, "total < 10".  This class
  * provides convenience functions for adding/removing rows or building a filter
  * table from more primitive data arrays.
- * 
+ *
  * @example
  *    var filterRow = new FilterRow("total", "<", 10);<br>
  *    var filterTable = new FilterTable();<br>
  *    filterTable.addFilterRow(filterRow);
- * 
+ *
  * @class neon.query.FilterTable
  * @constructor
  */
-neon.query.FilterTable = function () {
-    //this.messenger = new neon.eventing.Messenger();
-    this.filterKey = '';
-    this.columnOptions = [];
-    this.operatorOptions = ["=", "!=", ">", "<", ">=", "<=", "contains"];
-    this.filterState = {
-        data: []
-    };
+neon.query.FilterTable = function() {
+	//this.messenger = new neon.eventing.Messenger();
+	this.filterKey = '';
+	this.columnOptions = [];
+	this.operatorOptions = ["=", "!=", ">", "<", ">=", "<=", "contains"];
+	this.filterState = {
+		data: []
+	};
 };
 
 /**
@@ -49,7 +49,7 @@ neon.query.FilterTable = function () {
  * @method addFilterRow
  */
 neon.query.FilterTable.prototype.addFilterRow = function(row) {
-    this.filterState.data.push(row);
+	this.filterState.data.push(row);
 };
 
 /**
@@ -59,7 +59,7 @@ neon.query.FilterTable.prototype.addFilterRow = function(row) {
  * @method insertFilterRow
  */
 neon.query.FilterTable.prototype.insertFilterRow = function(row, index) {
-    this.filterState.data.splice(index, 1, row);
+	this.filterState.data.splice(index, 1, row);
 };
 
 /**
@@ -68,8 +68,8 @@ neon.query.FilterTable.prototype.insertFilterRow = function(row, index) {
  * @return {neon.query.FilterRow}
  * @method removeFilterRow
  */
-neon.query.FilterTable.prototype.removeFilterRow = function (id) {
-    return this.filterState.data.splice(id, 1);
+neon.query.FilterTable.prototype.removeFilterRow = function(id) {
+	return this.filterState.data.splice(id, 1);
 };
 
 /**
@@ -78,28 +78,28 @@ neon.query.FilterTable.prototype.removeFilterRow = function (id) {
  * @return {neon.query.FilterRow}
  * @method getFilterRow
  */
-neon.query.FilterTable.prototype.getFilterRow = function (id) {
-    return this.filterState.data[id];
+neon.query.FilterTable.prototype.getFilterRow = function(id) {
+	return this.filterState.data[id];
 };
 
 /**
  * Sets the FilterRow at the given row index.
- * @param {neon.query.FilterRow} row 
+ * @param {neon.query.FilterRow} row
  * @param {Number} index
  * @return {neon.query.FilterRow}
  * @method setFilterRow
  */
-neon.query.FilterTable.prototype.setFilterRow = function (row, index) {
-    this.filterState.data[index] = row;
-    return this.filterState.data[index];
+neon.query.FilterTable.prototype.setFilterRow = function(row, index) {
+	this.filterState.data[index] = row;
+	return this.filterState.data[index];
 };
 
 /**
  * Clears the filter table's state, removing all rows.
  * @method clearFilterState
  */
-neon.query.FilterTable.prototype.clearFilterState = function () {
-    this.filterState.data = [];
+neon.query.FilterTable.prototype.clearFilterState = function() {
+	this.filterState.data = [];
 };
 
 /**
@@ -107,8 +107,8 @@ neon.query.FilterTable.prototype.clearFilterState = function () {
  * @param {String} key
  * @method setFilterKey
  */
-neon.query.FilterTable.prototype.setFilterKey = function (key) {
-    this.filterKey = key;
+neon.query.FilterTable.prototype.setFilterKey = function(key) {
+	this.filterKey = key;
 };
 
 /**
@@ -117,8 +117,8 @@ neon.query.FilterTable.prototype.setFilterKey = function (key) {
  * @deprecated
  * @method setColumns
  */
-neon.query.FilterTable.prototype.setColumns = function (columns){
-    this.columnOptions = columns;
+neon.query.FilterTable.prototype.setColumns = function(columns) {
+	this.columnOptions = columns;
 };
 
 /**
@@ -126,8 +126,8 @@ neon.query.FilterTable.prototype.setColumns = function (columns){
  * @return {String}
  * @method getFilterKey
  */
-neon.query.FilterTable.prototype.getFilterKey = function () {
-    return this.filterKey;
+neon.query.FilterTable.prototype.getFilterKey = function() {
+	return this.filterKey;
 };
 
 /**
@@ -135,11 +135,11 @@ neon.query.FilterTable.prototype.getFilterKey = function () {
  * @return {Object}  An object containing a data array of FilterRows.
  * @method getFilterState
  */
-neon.query.FilterTable.prototype.getFilterState = function () {
-    return this.filterState;
+neon.query.FilterTable.prototype.getFilterState = function() {
+	return this.filterState;
 };
 
-/** 
+/**
  * Builds a Neon where clause suitable for use as a composite Filter for Neon Queries from the
  * FilterRow data contained in this FilterTable.
  * @param {String} database The database to filter.
@@ -150,26 +150,25 @@ neon.query.FilterTable.prototype.getFilterState = function () {
  * @method buildFilterFromData
  */
 neon.query.FilterTable.prototype.buildFilterFromData = function(database, table, andClauses) {
-    var baseFilter = new neon.query.Filter().selectFrom(database, table);
+	var baseFilter = new neon.query.Filter().selectFrom(database, table);
 
-    var whereClause;
-    if (this.filterState.data.length === 0) {
-        return baseFilter;
-    }
-    if (this.filterState.data.length === 1) {
-        var filterData = this.filterState.data[0];
-        whereClause = neon.query.where(filterData.columnValue, filterData.operatorValue, neon.query.FilterTable.parseValue(filterData.value));
-    }
-    else {
-        whereClause = neon.query.FilterTable.buildCompoundWhereClause(this.filterState.data, andClauses);
-    }
-    return baseFilter.where(whereClause);
+	var whereClause;
+	if(0 === this.filterState.data.length) {
+		return baseFilter;
+	}
+	if(1 === this.filterState.data.length) {
+		var filterData = this.filterState.data[0];
+		whereClause = neon.query.where(filterData.columnValue, filterData.operatorValue, neon.query.FilterTable.parseValue(filterData.value));
+	} else {
+		whereClause = neon.query.FilterTable.buildCompoundWhereClause(this.filterState.data, andClauses);
+	}
+	return baseFilter.where(whereClause);
 };
 
 /**
- * Takes an array of FilterRows and builds a compound Neon where object suitable for 
+ * Takes an array of FilterRows and builds a compound Neon where object suitable for
  * filtering Neon Queries.
- * @param {Array} data A data array of FilterRows 
+ * @param {Array} data A data array of FilterRows
  * @param {Boolean} andClauses True if the compound clause should 'AND' all the FilterRows; false
  *    if it should 'OR' all the FilterRows
  * @return {neon.query.where}
@@ -177,67 +176,62 @@ neon.query.FilterTable.prototype.buildFilterFromData = function(database, table,
  * @static
  */
 neon.query.FilterTable.buildCompoundWhereClause = function(data, andClauses) {
-    var whereClause;
-    var clauses = [];
+	var whereClause;
+	var clauses = [];
 
-    $.each(data, function (index, filterData) {
-        var clause = neon.query.where(filterData.columnValue, filterData.operatorValue, neon.query.FilterTable.parseValue(filterData.value));
-        clauses.push(clause);
-    });
+	$.each(data, function(index, filterData) {
+		var clause = neon.query.where(filterData.columnValue, filterData.operatorValue, neon.query.FilterTable.parseValue(filterData.value));
+		clauses.push(clause);
+	});
 
-    if (andClauses) {
-        whereClause = neon.query.and.apply(this, clauses);
-    }
-    else {
-        whereClause = neon.query.or.apply(this, clauses);
-    }
-    return whereClause;
+	if(andClauses) {
+		whereClause = neon.query.and.apply(this, clauses);
+	} else {
+		whereClause = neon.query.or.apply(this, clauses);
+	}
+	return whereClause;
 };
 
 /**
  * Takes a string value (e.g., input field value) and parses it to a float, null, or boolean, or string as
  * appropriate to work with the Neon Query API.
  * @param {String} value The value to parse
- * @return {String|Number|Boolean|null} 
+ * @return {String|Number|Boolean|null}
  * @method parseValue
  * @static
  */
 neon.query.FilterTable.parseValue = function(value) {
-    var retVal = value;
+	var retVal = value;
 
-    if ($.isNumeric(retVal)) {
-       retVal = parseFloat(retVal);
-    }
-    else if (retVal === "null" || retVal === "") {
-       retVal = null;
-    }
-    else if (retVal === '""') {
-       retVal = "";
-    }
-    else if (retVal === 'false') {
-       retVal = false;
-    }
-    else if (retVal === 'true') {
-       retVal = true;
-    }
-    return retVal;
+	if($.isNumeric(retVal)) {
+		retVal = parseFloat(retVal);
+	} else if('null' === retVal || "" === retVal) {
+		retVal = null;
+	} else if('""' === retVal) {
+		retVal = "";
+	} else if('false' === retVal) {
+		retVal = false;
+	} else if('true' === retVal) {
+		retVal = true;
+	}
+	return retVal;
 };
 
 /**
- * A FilterRow is a basic support object for a filter build application.  It store the 
+ * A FilterRow is a basic support object for a filter build application.  It store the
  * minimum data elements required to build a Neon filter: a column to act upon, the operator
  * for comparison, and a value to compare against.
- * 
+ *
  * @example
  *    var filterRow = new FilterRow("total", "<", 10);
- * 
+ *
  * @class neon.query.FilterRow
  * @constructor
  */
-neon.query.FilterRow = function (columnValue, operatorValue, value, columnOptions, operatorOptions) {
-    this.columnOptions = columnOptions;
-    this.columnValue = columnValue;
-    this.operatorOptions = operatorOptions;
-    this.operatorValue = operatorValue;
-    this.value = value;
+neon.query.FilterRow = function(columnValue, operatorValue, value, columnOptions, operatorOptions) {
+	this.columnOptions = columnOptions;
+	this.columnValue = columnValue;
+	this.operatorOptions = operatorOptions;
+	this.operatorValue = operatorValue;
+	this.value = value;
 };

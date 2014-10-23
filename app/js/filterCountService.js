@@ -21,19 +21,18 @@
 
 var services = angular.module('neonDemo.services');
 services.factory('FilterCountService',
-    function () {
+	function() {
+		var count = 0;
+		var service = {};
 
-        var count = 0;
-        var service = {};
+		service.setCount = function(newCount) {
+			count = newCount;
+		};
 
-        service.setCount = function (newCount) {
-            count = newCount;
-        };
+		service.getCount = function() {
+			return count;
+		};
 
-        service.getCount = function () {
-            return count;
-        };
-
-        return service;
-    }
+		return service;
+	}
 );

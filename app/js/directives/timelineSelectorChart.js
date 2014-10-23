@@ -26,73 +26,71 @@
  * @class neonDemo.directives.timelineSelectorChart
  * @constructor
  */
-angular.module('timelineSelectorChartDirective', []).directive('timelineSelectorChart', function () {
+angular.module('timelineSelectorChartDirective', [])
+.directive('timelineSelectorChart', function() {
+	return {
+		restrict: 'EA',
+		scope: {
+			timelineData: '=',
+			timelineBrush: '=',
+			extentDirty: '=',
+			collapsed: '=',
+			primarySeries: '=',
+			granularity: '='
+		},
+		link: function($scope, element) {
+			// Initialize the chart.
+			$scope.chart = new charts.TimelineSelectorChart(element[0]);
 
-    return {
-        restrict: 'EA',
-        scope: {
-            timelineData: '=',
-            timelineBrush: '=',
-            extentDirty: '=',
-            collapsed: '=',
-            primarySeries: '=',
-            granularity: '='
-        },
-        link: function ($scope, element) {
+			// Add a brush handler.
+			$scope.chart.addBrushHandler(function(data) {
+				// Wrap our data change in $apply since this is fired from a D3 event and outside of
+				// angular's digest cycle.
+				$scope.$apply(function() {
+					$scope.timelineBrush = data;
+				});
+			});
 
-            // Initialize the chart.
-            $scope.chart = new charts.TimelineSelectorChart(element[0]);
+			// Render an initial empty view.
+			$scope.chart.render([]);
 
-            // Add a brush handler.
-            $scope.chart.addBrushHandler(function (data) {
-                // Wrap our data change in $apply since this is fired from a D3 event and outside of
-                // angular's digest cycle.
-                $scope.$apply(function () {
-                    $scope.timelineBrush = data;
-                });
-            });
+			// If our data updates, reset our internal value fields and render the new view
+			// and clear the brush.
+			$scope.$watch('timelineData', function(newVal) {
+				if(newVal && (newVal.length > 0)) {
+					$scope.chart.updateGranularity($scope.granularity);
+					$scope.chart.render(newVal);
+					$scope.chart.renderExtent($scope.timelineBrush);
+				}
+			}, true);
 
-            // Render an initial empty view.
-            $scope.chart.render([]);
+			$scope.$watch('timelineBrush', function(newVal) {
+				if(newVal && newVal.length === 0) {
+					$scope.chart.clearBrush();
+				}
+			});
 
-            // If our data updates, reset our internal value fields and render the new view
-            // and clear the brush.
-            $scope.$watch('timelineData', function (newVal) {
-                if (newVal && (newVal.length > 0)) {
-                    $scope.chart.updateGranularity($scope.granularity);
-                    $scope.chart.render(newVal);
-                    $scope.chart.renderExtent($scope.timelineBrush);
-                }
-            }, true);
+			$scope.$watch('extentDirty', function(newVal) {
+				if(newVal) {
+					$scope.extentDirty = false;
+					$scope.chart.renderExtent($scope.timelineBrush);
+				}
+			});
 
-            $scope.$watch('timelineBrush', function (newVal) {
-                if (newVal && newVal.length === 0) {
-                    $scope.chart.clearBrush();
-                }
-            });
+			$scope.$watch('collapsed', function(newVal) {
+				if(typeof newVal !== "undefined") {
+					$scope.chart.render($scope.timelineData);
+					$scope.chart.renderExtent($scope.timelineBrush);
+				}
+			});
 
-            $scope.$watch('extentDirty', function(newVal) {
-                if (newVal) {
-                    $scope.extentDirty = false;
-                    $scope.chart.renderExtent($scope.timelineBrush);
-                }
-            });
-
-            $scope.$watch('collapsed', function(newVal) {
-                if (typeof newVal !== "undefined") {
-                    $scope.chart.render($scope.timelineData);
-                    $scope.chart.renderExtent($scope.timelineBrush);
-                }
-            });
-
-            $scope.$watch('primarySeries', function(newVal) {
-                if (newVal) {
-                    $scope.chart.updatePrimarySeries(newVal);
-                    $scope.chart.render($scope.timelineData);
-                    $scope.chart.renderExtent($scope.timelineBrush);
-                }
-            });
-        }
-    };
+			$scope.$watch('primarySeries', function(newVal) {
+				if(newVal) {
+					$scope.chart.updatePrimarySeries(newVal);
+					$scope.chart.render($scope.timelineData);
+					$scope.chart.renderExtent($scope.timelineBrush);
+				}
+			});
+		}
+	};
 });
-

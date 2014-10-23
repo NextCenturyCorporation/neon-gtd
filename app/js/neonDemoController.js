@@ -15,115 +15,110 @@
  *
  */
 /**
- * This provides a bare-bones controller for the primary portion of index.html, the main page of the 
+ * This provides a bare-bones controller for the primary portion of index.html, the main page of the
  * application.
  *
  * @class neonDemo.controllers.neonDemoController
  * @constructor
  */
-angular.module('neonDemo.controllers', []).controller('neonDemoController', ['$scope', '$timeout', 'FilterCountService',
-    function($scope, $timeout, filterCountService) {
+angular.module('neonDemo.controllers', [])
+.controller('neonDemoController', ['$scope', '$timeout', 'FilterCountService', function($scope, $timeout, filterCountService) {
+	$scope.seeData = false;
+	$scope.createFilters = false;
+	$scope.chartOptions = false;
+	$scope.filterCount = 0;
 
-        $scope.seeData = false;
-        $scope.createFilters = false;
-        $scope.chartOptions = false;
-        $scope.filterCount = 0;
+	/**
+	 * Simple toggle method for tracking whether or not the create filters tray should be visible.
+	 * At present, this is used to sync an angular scope variable with the collapsed state of a div
+	 * whose visiblity is managed by Bootstrap hooks.
+	 * @method toggleCreateFilters
+	 */
+	$scope.toggleCreateFilters = function() {
+		$scope.createFilters = !$scope.createFilters;
+		var action = (true === $scope.createFilters) ? 'show_custom_filters' : 'hide_custom_filters';
+		XDATA.activityLogger.logUserActivity('Neon Demo - Toggle custom filter display', action,
+			XDATA.activityLogger.WF_CREATE,
+			{
+				from: !$scope.createFilters,
+				to: $scope.createFilters
+			});
 
-        /**
-         * Simple toggle method for tracking whether or not the create filters tray should be visible.
-         * At present, this is used to sync an angular scope variable with the collapsed state of a div
-         * whose visiblity is managed by Bootstrap hooks.
-         * @method toggleCreateFilters
-         */
-        $scope.toggleCreateFilters = function() {
-            $scope.createFilters = !$scope.createFilters;
-            var action = ($scope.createFilters === true) ? 'show_custom_filters' : 'hide_custom_filters';
-            XDATA.activityLogger.logUserActivity('Neon Demo - Toggle custom filter display', action,
-                XDATA.activityLogger.WF_CREATE,
-                {
-                    from: !$scope.createFilters,
-                    to: $scope.createFilters
-                });
+		if($scope.createFilters && $scope.seeData) {
+			// using timeout here to execute a jquery event outside of apply().  This is necessary
+			// to avoid the event occuring within an apply() cycle and triggering another
+			// update which calls apply() since the side-effects of the click would change
+			// things that are watched in index.html.
+			$timeout(function() {
+				$($("[href='.data-tray']")[0]).click();
+			}, 5, false);
+		}
+	};
 
-            if ($scope.createFilters && $scope.seeData) {
-                // using timeout here to execute a jquery event outside of apply().  This is necessary
-                // to avoid the event occuring within an apply() cycle and triggering another
-                // update which calls apply() since the side-effects of the click would change
-                // things that are watched in index.html.
-                $timeout(function() {
-                    $($("[href='.data-tray']")[0]).click();  
-                }, 5, false);
-                
-            }
-        };
+	/**
+	 * Simple toggle method for tracking whether or not the data table tray should be visible.
+	 * At present, this is used to sync an angular scope variable with the collapsed state of a div
+	 * whose visiblity is managed by Bootstrap hooks.
+	 * @method toggleSeeData
+	 */
+	$scope.toggleSeeData = function() {
+		$scope.seeData = !$scope.seeData;
+		var action = (true === $scope.seeData) ? 'show_data_table' : 'hide_data_table';
+		XDATA.activityLogger.logUserActivity('Neon Demo - Toggle data table display', action,
+			XDATA.activityLogger.WF_CREATE,
+			{
+				from: !$scope.seeData,
+				to: $scope.seeData
+			});
 
-        /**
-         * Simple toggle method for tracking whether or not the data table tray should be visible.
-         * At present, this is used to sync an angular scope variable with the collapsed state of a div
-         * whose visiblity is managed by Bootstrap hooks.
-         * @method toggleSeeData
-         */
-        $scope.toggleSeeData = function() {
-            $scope.seeData = !$scope.seeData;
-            var action = ($scope.seeData === true) ? 'show_data_table' : 'hide_data_table';
-            XDATA.activityLogger.logUserActivity('Neon Demo - Toggle data table display', action,
-                XDATA.activityLogger.WF_CREATE,
-                {
-                    from: !$scope.seeData,
-                    to: $scope.seeData
-                });
+		if($scope.createFilters && $scope.seeData) {
+			// using timeout here to execute a jquery event outside of apply().  This is necessary
+			// to avoid the event occuring within an apply() cycle and triggering another
+			// update which calls apply() since the side-effects of the click would change
+			// things that are watched in index.html.
+			$timeout(function() {
+				$($("[href='.filter-tray']")[0]).click();
+			}, 5, false);
+		}
+	};
 
-            if ($scope.createFilters && $scope.seeData) {
-                // using timeout here to execute a jquery event outside of apply().  This is necessary
-                // to avoid the event occuring within an apply() cycle and triggering another
-                // update which calls apply() since the side-effects of the click would change
-                // things that are watched in index.html.
-                $timeout(function() {
-                    $($("[href='.filter-tray']")[0]).click();  
-                }, 5, false);
-            }
-        };
+	/**
+	 * Simple toggle method for tracking which chart is visible.
+	 * @method toggleCreateFilters
+	 */
+	$scope.toggleChartOptions = function() {
+		$scope.chartOptions = !$scope.chartOptions;
+		var action = (true === $scope.chartOptions) ? 'show_options' : 'hide_options';
+		XDATA.activityLogger.logUserActivity('Neon Demo - Toggle chart options display', action,
+			XDATA.activityLogger.WF_CREATE,
+			{
+				from: !$scope.chartOptions,
+				to: $scope.chartOptions
+			});
+	};
 
-        /**
-         * Simple toggle method for tracking which chart is visible.
-         * @method toggleCreateFilters
-         */
-        $scope.toggleChartOptions = function() {
-            $scope.chartOptions = !$scope.chartOptions;
-            var action = ($scope.chartOptions === true) ? 'show_options' : 'hide_options';
-            XDATA.activityLogger.logUserActivity('Neon Demo - Toggle chart options display', action,
-                XDATA.activityLogger.WF_CREATE,
-                {
-                    from: !$scope.chartOptions,
-                    to: $scope.chartOptions
-                });
-        };
+	// Watch for changes in the filter counts and update the filter badge binding.
+	$scope.$watch(function() {
+		return filterCountService.getCount();
+	}, function(count) {
+		$scope.filterCount = count;
+	});
 
-        // Watch for changes in the filter counts and update the filter badge binding.
-        $scope.$watch(function() {
-            return filterCountService.getCount();
-        }, function(count) {
-            $scope.filterCount = count;
-        });
+	$scope.$watch('chartType', function(newVal, oldVal) {
+		XDATA.activityLogger.logUserActivity('Neon Demo - Select chart type', 'select_plot_type',
+			XDATA.activityLogger.WF_CREATE,
+			{
+				from: oldVal,
+				to: newVal
+			});
+	}, true);
 
-        $scope.$watch('chartType', function(newVal, oldVal) {
-            XDATA.activityLogger.logUserActivity('Neon Demo - Select chart type', 'select_plot_type',
-                XDATA.activityLogger.WF_CREATE,
-                {
-                    from: oldVal,
-                    to: newVal
-                });
-        }, true);
-
-        $scope.$watch('barType', function(newVal, oldVal) {
-            XDATA.activityLogger.logUserActivity('Neon Demo - Select chart aggregation type', 'define_axes',
-                XDATA.activityLogger.WF_CREATE,
-                {
-                    from: oldVal,
-                    to: newVal
-                });
-        }, true);
-
-
-
-    }]);
+	$scope.$watch('barType', function(newVal, oldVal) {
+		XDATA.activityLogger.logUserActivity('Neon Demo - Select chart aggregation type', 'define_axes',
+			XDATA.activityLogger.WF_CREATE,
+			{
+				from: oldVal,
+				to: newVal
+			});
+	}, true);
+}]);

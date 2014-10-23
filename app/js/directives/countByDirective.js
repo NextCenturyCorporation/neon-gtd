@@ -46,7 +46,6 @@ angular.module("neonDemo.directives")
 					activeDatasetChanged: onDatasetChanged,
 					filtersChanged: onFiltersChanged
 				});
-
 			};
 
 			$scope.createOptions = function(data) {
@@ -89,9 +88,9 @@ angular.module("neonDemo.directives")
 
 				// Pull data.
 				var connection = connectionService.getActiveConnection();
-				if (connection) {
+				if(connection) {
 					connectionService.loadMetadata(function() {
-						connection.getFieldNames($scope.tableName, function (results) {
+						connection.getFieldNames($scope.tableName, function(results) {
 							$scope.$apply(function() {
 								$scope.fields = results;
 								$scope.queryForData();
@@ -113,13 +112,13 @@ angular.module("neonDemo.directives")
 			 */
 			$scope.queryForData = function() {
 				var connection = connectionService.getActiveConnection();
-				if (connection) {
+				if(connection) {
 					var query = $scope.buildQuery();
 
 					XDATA.activityLogger.logSystemActivity('CountBy - query for data');
 					connection.executeQuery(query, function(queryResults) {
 						XDATA.activityLogger.logSystemActivity('CountBy - received data');
-						$scope.$apply(function(){
+						$scope.$apply(function() {
 							$scope.updateData(queryResults);
 							XDATA.activityLogger.logSystemActivity('CountBy - rendered data');
 						});
@@ -159,7 +158,6 @@ angular.module("neonDemo.directives")
 
 				$scope.table = new tables.Table("#" + $scope.tableId, $scope.tableOptions).draw();
 				$scope.table.refreshLayout();
-
 			};
 
 			/**
@@ -180,7 +178,7 @@ angular.module("neonDemo.directives")
 				$scope.queryForData();
 			});
 
-			neon.ready(function () {
+			neon.ready(function() {
 				$scope.initialize();
 			});
 		}

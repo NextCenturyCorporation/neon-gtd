@@ -3,15 +3,22 @@
 /* jshint unused:false */
 function CircularHeatChart(el) {
 	/* jshint unused:true */
-	var margin = {top: 20, right: 20, bottom: 20, left: 20},
-	innerRadius = 50,
-	numSegments = 24,
-	segmentHeight = 20,
-	domain = null,
-	range = ["#ffffff", "#39b54a"],
-	accessor = function(d) {return d;},
-	radialLabels = [],
-	segmentLabels = [];
+	var margin = {
+		top: 20,
+		right: 20,
+		bottom: 20,
+		left: 20
+	};
+	var innerRadius = 50;
+	var numSegments = 24;
+	var segmentHeight = 20;
+	var domain = null;
+	var range = ["#ffffff", "#39b54a"];
+	var accessor = function(d) {
+		return d;
+	};
+	var radialLabels = [];
+	var segmentLabels = [];
 
 	// Cache the element to which we are bound.
 	var element = el;
@@ -20,7 +27,7 @@ function CircularHeatChart(el) {
 		selection.each(function(data) {
 			var svg = d3.select(this);
 
-			svg.attr("viewBox","0 0 356 356");
+			svg.attr("viewBox", "0 0 356 356");
 
 			var offset = innerRadius + Math.ceil(data.length / numSegments) * segmentHeight;
 			var g = svg.append("g")
@@ -28,7 +35,7 @@ function CircularHeatChart(el) {
 				.attr("transform", "translate(" + parseInt(margin.left + offset, 10) + "," + parseInt(margin.top + offset, 10) + ")");
 
 			var autoDomain = false;
-			if (domain === null) {
+			if(domain === null) {
 				domain = d3.extent(data, accessor);
 				autoDomain = true;
 			}
@@ -39,10 +46,11 @@ function CircularHeatChart(el) {
 			g.selectAll("path").data(data)
 				.enter().append("path")
 				.attr("d", d3.svg.arc().innerRadius(ir).outerRadius(or).startAngle(sa).endAngle(ea))
-				.attr("fill", function(d) {return color(accessor(d));})
+				.attr("fill", function(d) {
+					return color(accessor(d));
+				})
 				.attr("stroke", "gray")
 				.attr("stroke-width", "0.3px");
-
 
 			// Unique id so that the text path defs are unique - is there a better way to do this?
 			var id = uuid.v4();
@@ -58,7 +66,9 @@ function CircularHeatChart(el) {
 				.data(radialLabels).enter()
 				.append("def")
 				.append("path")
-				.attr("id", function(d, i) {return "radial-label-path-"+id+"-"+i;})
+				.attr("id", function(d, i) {
+					return "radial-label-path-" + id + "-" + i;
+				})
 				.attr("d", function(d, i) {
 					var r = innerRadius + ((i + 0.2) * segmentHeight);
 					return "m" + r * Math.sin(lsa) + " -" + r * Math.cos(lsa) +
@@ -69,9 +79,13 @@ function CircularHeatChart(el) {
 				.data(radialLabels).enter()
 				.append("text")
 				.append("textPath")
-				.attr("xlink:href", function(d, i) {return "#radial-label-path-"+id+"-"+i;})
+				.attr("xlink:href", function(d, i) {
+					return "#radial-label-path-" + id + "-" + i;
+				})
 				.style("font-size", 0.6 * segmentHeight + 'px')
-				.text(function(d) {return d;});
+				.text(function(d) {
+					return d;
+				});
 
 			//Segment labels
 			var segmentLabelOffset = 2;
@@ -83,27 +97,30 @@ function CircularHeatChart(el) {
 
 			labels.append("def")
 				.append("path")
-				.attr("id", "segment-label-path-"+id)
+				.attr("id", "segment-label-path-" + id)
 				.attr("d", "m0 -" + r + " a" + r + " " + r + " 0 1 1 -1 0");
 
 			labels.selectAll("text")
 				.data(segmentLabels).enter()
 				.append("text")
 				.append("textPath")
-				.attr("xlink:href", "#segment-label-path-"+id)
-				.attr("startOffset", function(d, i) {return i * 100 / numSegments + "%";})
+				.attr("xlink:href", "#segment-label-path-" + id)
+				.attr("startOffset", function(d, i) {
+					return i * 100 / numSegments + "%";
+				})
 				.style("font-size", 0.6 * segmentHeight + 'px')
-				.text(function(d) {return d;});
+				.text(function(d) {
+					return d;
+				});
 		});
-
 	}
 
 	/* Arc functions */
 	var ir = function(d, i) {
-		return innerRadius + Math.floor(i/numSegments) * segmentHeight;
+		return innerRadius + Math.floor(i / numSegments) * segmentHeight;
 	};
 	var or = function(d, i) {
-		return innerRadius + segmentHeight + Math.floor(i/numSegments) * segmentHeight;
+		return innerRadius + segmentHeight + Math.floor(i / numSegments) * segmentHeight;
 	};
 	var sa = function(d, i) {
 		return (i * 2 * Math.PI) / numSegments;
@@ -114,63 +131,62 @@ function CircularHeatChart(el) {
 
 	/* Configuration getters/setters */
 	chart.margin = function(_) {
-		if (!arguments.length) return margin;
+		if(!arguments.length) return margin;
 		margin = _;
 		return chart;
 	};
 
 	chart.innerRadius = function(_) {
-		if (!arguments.length) return innerRadius;
+		if(!arguments.length) return innerRadius;
 		innerRadius = _;
 		return chart;
 	};
 
 	chart.numSegments = function(_) {
-		if (!arguments.length) return numSegments;
+		if(!arguments.length) return numSegments;
 		numSegments = _;
 		return chart;
 	};
 
 	chart.segmentHeight = function(_) {
-		if (!arguments.length) return segmentHeight;
+		if(!arguments.length) return segmentHeight;
 		segmentHeight = _;
 		return chart;
 	};
 
 	chart.domain = function(_) {
-		if (!arguments.length) return domain;
+		if(!arguments.length) return domain;
 		domain = _;
 		return chart;
 	};
 
 	chart.range = function(_) {
-		if (!arguments.length) return range;
+		if(!arguments.length) return range;
 		range = _;
 		return chart;
 	};
 
 	chart.radialLabels = function(_) {
-		if (!arguments.length) return radialLabels;
-		if (_ === null) _ = [];
+		if(!arguments.length) return radialLabels;
+		if(_ === null) _ = [];
 		radialLabels = _;
 		return chart;
 	};
 
 	chart.segmentLabels = function(_) {
-		if (!arguments.length) return segmentLabels;
-		if (_ === null) _ = [];
+		if(!arguments.length) return segmentLabels;
+		if(_ === null) _ = [];
 		segmentLabels = _;
 		return chart;
 	};
 
 	chart.accessor = function(_) {
-		if (!arguments.length) return accessor;
+		if(!arguments.length) return accessor;
 		accessor = _;
 		return chart;
 	};
 
 	chart.render = function(data) {
-
 		data = data || [];
 
 		d3.select(element)
