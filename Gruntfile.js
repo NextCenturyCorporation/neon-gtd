@@ -120,5 +120,5 @@ module.exports = function(grunt) {
     grunt.loadNpmTasks('grunt-war');
 
     grunt.registerTask('test', ['jshint:console', 'jscs:console']);
-    grunt.registerTask('default', ['clean', 'bower:install', 'jshint:xml', 'yuidoc', 'war']);
+    grunt.registerTask('default', ['clean', 'bower:install', 'jshint:xml', 'jscs:xml', 'yuidoc', 'war']);
 };
