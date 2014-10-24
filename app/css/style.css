@@ -475,6 +475,10 @@ a.navbar-text:focus{
     top: 0;
     width: 100%;
     z-index: 1040;
+    /* Disable transform used in Bootstrap 3.2.0 Affix plugin.  This hides any modals that are defined 
+       inside the nav. */
+    transform: none;
+    -webkit-transform: none;
 }
 .navbar-text{
     margin: 8px;
