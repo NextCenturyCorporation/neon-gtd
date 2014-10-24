@@ -1,6 +1,5 @@
 #Neon Geo Temporal Dashboard
-
-The Neon Geo Temporal Dashboard (neon-gtd) is a sample analysis dashboard built upon the [Neon Framework][5]. It includes a number of geo-spatial and temporal data visualizations built as Angular directives that use the Neon framework to query and filter data hosted in [MongoDB][8] or [Spark][9].  Additionally, each of the dashboard components can funtion as a widget within the [OZONE Widget Framework][7].
+The Neon Geo Temporal Dashboard (neon-gtd) is a sample analysis dashboard built upon the [Neon Framework][5]. It includes a number of geo-spatial and temporal data visualizations built as [AngularJS][13] directives that use the Neon framework to query and filter data served by [MongoDB][8] or an [Apache Spark][9] server. Additionally, each of the dashboard components can function as a widget within the [OZONE Widget Framework][7].
 
 [Neon][5] is a software platform designed to help developers integrate disparate visualization widgets with your data stores. It includes a **Data Access API** that makes it easy to query an underlying database directly from JavaScript or RESTful endpoints. Additionally, the [Neon][5] **Interaction API** provides capabilities for inter-widget communication and shared data filters, allowing multiple visualizations to interact without being explicityly aware of one another.
 
@@ -63,3 +62,4 @@ Copyright 2014 Next Century Corporation
 [10]: https://www.npmjs.org/
 [11]: http://gruntjs.com/
 [12]: http://bower.io/
+[13]: https://angularjs.org/
