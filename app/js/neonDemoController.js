@@ -64,38 +64,57 @@ angular.module('neonDemo.controllers', [])
     $scope.visualizations = [{
         size: {
             x: 6,
-            y: 2
+            y: 1
         },
         position: [0,0],
-        type: 'heatmap'
+        type: 'timeline-selector'
+    },{
+        size: {
+            x: 6,
+            y: 2
+        },
+        position: [1,0],
+        type: 'heat-map'
     },{
         size: {
             x: 2,
             y: 2
         },
-        position: [2,0],
-        type: 'line-chart'
-    }, {
-        size: {
-            x: 2,
-            y: 2
-        },
-        position: [2,2],
-        type: 'circular-heat-map'
-    }, {
-        size: {
-            x: 2,
-            y: 2
-        },
-        position: [2,4],
-        type: 'tag-cloud'
-    }, {
-        size: {
-            x: 2,
-            y: 2
-        },
         position: [3,0],
-        type: '<div circular-heat-map></div>'
+        type: 'linechart',
+        bindings: {
+            "chart-type": "chartType",
+            "ng-hide": "chartType != 'line'",
+        }
+    },{
+        size: {
+            x: 2,
+            y: 2
+        },
+        position: [3,2],
+        type: 'barchart',
+        bindings: {
+            "attr-x": "xAxisField",
+            "attr-y": "yAxisField",
+            "bar-type": "barType"
+        }
+    },{
+        size: {
+            x: 2,
+            y: 2
+        },
+        position: [3,4],
+        type: 'circular-heat-form'
+    },{
+        size: {
+            x: 2,
+            y: 2
+        },
+        position: [5,0],
+        type: 'tag-cloud',
+        bindings: {
+            "tag-field": "'hashtags'"
+        }
     }];
 
     /**

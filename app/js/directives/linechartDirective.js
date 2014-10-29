@@ -355,7 +355,7 @@ linechart.directive('linechart', ['ConnectionService', function(connectionServic
 
 	return {
 		templateUrl: 'partials/linechart.html',
-		restrict: 'E',
+		restrict: 'EA',
 		scope: {
 			colorMappings: '&',
 			chartType: '='

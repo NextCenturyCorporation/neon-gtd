@@ -22,7 +22,7 @@ angular.module('tagCloudDirective', [])
 .directive('tagCloud', ['ConnectionService', '$timeout', function(connectionService, $timeout) {
 	return {
 		templateUrl: 'partials/tagCloud.html',
-		restrict: 'E',
+		restrict: 'EA',
 		scope: {
 			tagField: '='
 		},

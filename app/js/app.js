@@ -54,6 +54,7 @@ angular.module('neonDemo', [
     'queryResultsTableDirective',
     'tagCloudDirective',
     'linechartDirective',
+    'visualizationWidgetDirective',
     'numberShortModule',
     'gridster'
 ]);
