@@ -28,7 +28,6 @@ DEMO_CONFIG.xdata.ACTIVITY_LOGGER_URL = "http://xd-draper.xdata.data-tactics-cor
 DEMO_CONFIG.xdata.COMPONENT = "Neon Demo";
 DEMO_CONFIG.xdata.COMPONENT_VERSION = "0.8.0-SNAPSHOT";
 
-
 DEMO_CONFIG.opencpu = {};
 // Set this to true to use OpenCPU to do on-the-fly analysis of the data. Make sure
 // the url variable is configured correctly.

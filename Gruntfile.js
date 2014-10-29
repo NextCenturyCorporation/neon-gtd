@@ -1,7 +1,6 @@
 'use strict';
 
 module.exports = function(grunt) {
-
     var packageJSON = require('./package.json');
 
     grunt.initConfig({
@@ -10,14 +9,38 @@ module.exports = function(grunt) {
                 jshintrc: '.jshintrc',
                 force: true
             },
-            console: [ 'Gruntfile.js', 'app/js/**/*.js' ],
+            console: ['Gruntfile.js', 'app/js/**/*.js'],
             xml: {
                 options: {
                     reporter: "jslint",
                     reporterOutput: "reports/jslint.xml"
                 },
                 files: {
-                    src: [ 'Gruntfile.js', 'app/js/**/*.js' ]
+                    src: ['Gruntfile.js', 'app/js/**/*.js']
+                }
+            }
+        },
+
+        jscs: {
+            options: {
+                config: ".jscsrc",
+                force: true
+            },
+            console: {
+                options: {
+                    reporter: 'console'
+                },
+                files: {
+                    src: ['Gruntfile.js', 'app/js/**/*.js']
+                }
+            },
+            xml: {
+                options: {
+                    reporterOutput: 'reports/jscs.xml',
+                    reporter: 'checkstyle'
+                },
+                files: {
+                    src: ['Gruntfile.js', 'app/js/**/*.js']
                 }
             }
         },
@@ -58,9 +81,9 @@ module.exports = function(grunt) {
                     war_name: 'neon-gtd-' + packageJSON.version,
                     webxml_welcome: 'index.html',
                     webxml_display_name: packageJSON.shortDescription,
-                    webxml_mime_mapping: [{ 
-                        extension: 'woff', 
-                        mime_type: 'application/font-woff' 
+                    webxml_mime_mapping: [{
+                        extension: 'woff',
+                        mime_type: 'application/font-woff'
                     }]
                 },
                 files: [
@@ -88,14 +111,14 @@ module.exports = function(grunt) {
             }
         }
     });
-    
+
     grunt.loadNpmTasks('grunt-bower-task');
     grunt.loadNpmTasks('grunt-contrib-clean');
     grunt.loadNpmTasks('grunt-contrib-jshint');
+    grunt.loadNpmTasks('grunt-jscs');
     grunt.loadNpmTasks('grunt-contrib-yuidoc');
     grunt.loadNpmTasks('grunt-war');
 
-    grunt.registerTask('test', ['jshint:console']);
-    grunt.registerTask('default', ['clean', 'bower:install', 'jshint:xml', 'yuidoc', 'war']);
-
+    grunt.registerTask('test', ['jshint:console', 'jscs:console']);
+    grunt.registerTask('default', ['clean', 'bower:install', 'jshint:xml', 'jscs:xml', 'yuidoc', 'war']);
 };

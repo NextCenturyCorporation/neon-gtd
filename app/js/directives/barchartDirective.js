@@ -29,25 +29,21 @@
 var barchart = angular.module('barchartDirective', []);
 
 barchart.directive('barchart', ['ConnectionService', '$timeout', function(connectionService, $timeout) {
-	var COUNT_FIELD_NAME = 'Count';
-
-	var link = function($scope, el, attr) {
+	var link = function($scope, el) {
 		el.addClass('barchartDirective');
 
-		var messenger = new neon.eventing.Messenger();
+		$scope.messenger = new neon.eventing.Messenger();
 		$scope.database = '';
 		$scope.tableName = '';
 		$scope.barType = $scope.barType || 'count';
 		$scope.fields = [];
 		$scope.xAxisSelect = $scope.fields[0] ? $scope.fields[0] : '';
-        $scope.initializing = false;
-        $scope.chart = undefined;
+		$scope.initializing = false;
+		$scope.chart = undefined;
 
 		var COUNT_FIELD_NAME = 'Count';
-		var clientId;
 
 		var initialize = function() {
-
 			drawBlankChart();
 
 			$scope.messenger.events({
@@ -55,17 +51,17 @@ barchart.directive('barchart', ['ConnectionService', '$timeout', function(connec
 				filtersChanged: onFiltersChanged
 			});
 
-			$scope.$watch('attrX', function(newValue, oldValue) {
+			$scope.$watch('attrX', function() {
 				if(!$scope.initializing && $scope.databaseName && $scope.tableName) {
 					$scope.queryForData();
 				}
 			});
-			$scope.$watch('attrY', function(newValue, oldValue) {
+			$scope.$watch('attrY', function() {
 				if(!$scope.initializing && $scope.databaseName && $scope.tableName) {
 					$scope.queryForData();
 				}
 			});
-			$scope.$watch('barType', function(newValue, oldValue) {
+			$scope.$watch('barType', function() {
 				if(!$scope.initializing && $scope.databaseName && $scope.tableName) {
 					$scope.queryForData();
 				}
@@ -77,20 +73,20 @@ barchart.directive('barchart', ['ConnectionService', '$timeout', function(connec
 			$scope.$watch(function() {
 				return $(el).hasClass('ng-hide');
 			}, function(hidden) {
-				if (!hidden && $scope.chart) {
+				if(!hidden && $scope.chart) {
 					$scope.chart.draw();
 				}
 			});
 		};
 
-		var onFiltersChanged = function(message) {
+		var onFiltersChanged = function() {
 			XDATA.activityLogger.logSystemActivity('BarChart - received neon filter changed event');
 			$scope.queryForData();
 		};
 
 		var onDatasetChanged = function(message) {
 			XDATA.activityLogger.logSystemActivity('BarChart - received neon dataset changed event');
-            $scope.initializing = true;
+			$scope.initializing = true;
 			$scope.databaseName = message.database;
 			$scope.tableName = message.table;
 
@@ -99,29 +95,28 @@ barchart.directive('barchart', ['ConnectionService', '$timeout', function(connec
 
 			// Pull data.
 			var connection = connectionService.getActiveConnection();
-            $timeout(function() {
-                $scope.initializing = false;
-                if (connection) {
-                    connectionService.loadMetadata(function() {
-                        $scope.queryForData();
-                    });
-                }
-            });
-
+			$timeout(function() {
+				$scope.initializing = false;
+				if(connection) {
+					connectionService.loadMetadata(function() {
+						$scope.queryForData();
+					});
+				}
+			});
 		};
 
 		$scope.queryForData = function() {
 			var xAxis = $scope.attrX || connectionService.getFieldMapping("bar_x_axis");
 			var yAxis = $scope.attrY || connectionService.getFieldMapping("y_axis");
 
-            if (xAxis === undefined || xAxis === "" || yAxis === undefined || yAxis ==="") {
-                drawBlankChart();
-                return;
-            }
+			if(xAxis === undefined || xAxis === "" || yAxis === undefined || yAxis === "") {
+				drawBlankChart();
+				return;
+			}
 
 			var query = new neon.query.Query()
 				.selectFrom($scope.databaseName, $scope.tableName)
-				.where(xAxis,'!=', null)
+				.where(xAxis, '!=', null)
 				.groupBy(xAxis);
 
 			var queryType;
@@ -141,41 +136,49 @@ barchart.directive('barchart', ['ConnectionService', '$timeout', function(connec
 
 			XDATA.activityLogger.logSystemActivity('BarChart - query for data');
 			connectionService.getActiveConnection().executeQuery(query, function(queryResults) {
-				$scope.$apply(function(){
+				$scope.$apply(function() {
 					XDATA.activityLogger.logSystemActivity('BarChart - received query data');
 					doDrawChart(queryResults);
 					XDATA.activityLogger.logSystemActivity('BarChart - rendered results');
 				});
 			}, function() {
 				XDATA.activityLogger.logSystemActivity('BarChart - query failed');
-                drawBlankChart();
+				drawBlankChart();
 			});
 		};
 
 		var drawBlankChart = function() {
-			doDrawChart({data: []});
+			doDrawChart({
+				data: []
+			});
 		};
 
 		var doDrawChart = function(data) {
 			// Destroy the old chart and rebuild it.
-			if ($scope.chart) {
-				$scope.chart.destroy();	
+			if($scope.chart) {
+				$scope.chart.destroy();
 			}
 
 			var xAxis = $scope.attrX || connectionService.getFieldMapping("bar_x_axis");
 			var yAxis = $scope.attrY || connectionService.getFieldMapping("y_axis");
 
-			if (!yAxis) {
+			if(!yAxis) {
 				yAxis = COUNT_FIELD_NAME;
 			} else {
 				yAxis = COUNT_FIELD_NAME;
 			}
 
-			var opts = { "data": data.data, "x": xAxis, "y": yAxis, responsive: true, height: 250};
+			var opts = {
+				data: data.data,
+				x: xAxis,
+				y: yAxis,
+				responsive: true,
+				height: 250
+			};
 			$scope.chart = new charts.BarChart(el[0], '.barchart', opts).draw();
 		};
 
-		neon.ready(function () {
+		neon.ready(function() {
 			$scope.messenger = new neon.eventing.Messenger();
 			initialize();
 		});

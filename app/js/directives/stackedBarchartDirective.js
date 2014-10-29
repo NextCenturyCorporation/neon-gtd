@@ -29,12 +29,10 @@
 var barchart = angular.module('stackedBarchartDirective', []);
 
 barchart.directive('stackedbarchart', ['ConnectionService', function(connectionService) {
-	var COUNT_FIELD_NAME = 'Count';
-
-	var link = function($scope, el, attr) {
+	var link = function($scope, el) {
 		el.addClass('barchartDirective');
 
-		var messenger = new neon.eventing.Messenger();
+		$scope.messenger = new neon.eventing.Messenger();
 		$scope.database = '';
 		$scope.tableName = '';
 		$scope.barType = /*$scope.barType ||*/'count'; //Changed because negative values break the display
@@ -42,10 +40,8 @@ barchart.directive('stackedbarchart', ['ConnectionService', function(connectionS
 		$scope.xAxisSelect = $scope.fields[0] ? $scope.fields[0] : '';
 
 		var COUNT_FIELD_NAME = 'Count';
-		var clientId;
 
 		var initialize = function() {
-
 			drawBlankChart();
 
 			$scope.messenger.events({
@@ -53,24 +49,24 @@ barchart.directive('stackedbarchart', ['ConnectionService', function(connectionS
 				filtersChanged: onFiltersChanged
 			});
 
-			$scope.$watch('attrX', function(newValue, oldValue) {
+			$scope.$watch('attrX', function() {
 				if($scope.databaseName && $scope.tableName) {
 					$scope.queryForData();
 				}
 			});
-			$scope.$watch('attrY', function(newValue, oldValue) {
+			$scope.$watch('attrY', function() {
 				if($scope.databaseName && $scope.tableName) {
 					$scope.queryForData();
 				}
 			});
-			$scope.$watch('barType', function(newValue, oldValue) {
+			$scope.$watch('barType', function() {
 				if($scope.databaseName && $scope.tableName) {
 					$scope.queryForData();
 				}
 			});
 		};
 
-		var onFiltersChanged = function(message) {
+		var onFiltersChanged = function() {
 			$scope.queryForData();
 		};
 
@@ -78,30 +74,28 @@ barchart.directive('stackedbarchart', ['ConnectionService', function(connectionS
 			$scope.databaseName = message.database;
 			$scope.tableName = message.table;
 
-            // if there is no active connection, try to make one.
+			// if there is no active connection, try to make one.
 			connectionService.connectToDataset(message.datastore, message.hostname, message.database, message.table);
 
 			// Pull data.
 			var connection = connectionService.getActiveConnection();
-			if (connection) {
-                connectionService.loadMetadata(function() {
-                    $scope.queryForData();
-                });
+			if(connection) {
+				connectionService.loadMetadata(function() {
+					$scope.queryForData();
+				});
 			}
-
-        };
+		};
 
 		var queryData = function(yRuleComparator, yRuleVal, next) {
 			var xAxis = $scope.attrX || connectionService.getFieldMapping("x_axis");
 			var yAxis = $scope.attrY || connectionService.getFieldMapping("y_axis");
-			if (!yAxis) {
+			if(!yAxis) {
 				yAxis = COUNT_FIELD_NAME;
 			}
-			var yMin = ($scope.barType ? COUNT_FIELD_NAME : yAxis) + "-min";
 
 			var query = new neon.query.Query()
 				.selectFrom($scope.databaseName, $scope.tableName)
-				.where(xAxis,'!=', null)
+				.where(xAxis, '!=', null)
 				.where(yAxis, yRuleComparator, yRuleVal)
 				.groupBy(xAxis);
 
@@ -129,15 +123,16 @@ barchart.directive('stackedbarchart', ['ConnectionService', function(connectionS
 		$scope.queryForData = function() {
 			var xAxis = $scope.attrX || connectionService.getFieldMapping("x_axis");
 			var yAxis = $scope.attrY || connectionService.getFieldMapping("y_axis");
-			if (!yAxis) {
+			if(!yAxis) {
 				yAxis = COUNT_FIELD_NAME;
 			}
 
 			var yField = ($scope.barType ? COUNT_FIELD_NAME : yAxis);
 			var yMin = yField + "-min";
 
-
-			var results = {data:[]};
+			var results = {
+				data: []
+			};
 
 			queryData('>', 0, function(posResults) {
 				for(var i = 0; i < posResults.data.length; i++) {
@@ -209,7 +204,9 @@ barchart.directive('stackedbarchart', ['ConnectionService', function(connectionS
 		};
 
 		var drawBlankChart = function() {
-			doDrawChart({data: []});
+			doDrawChart({
+				data: []
+			});
 		};
 
 		var doDrawChart = function(data) {
@@ -219,7 +216,7 @@ barchart.directive('stackedbarchart', ['ConnectionService', function(connectionS
 				xAxis = xAxis || $scope.attrX;
 			var yAxis = connectionService.getFieldMapping("y_axis");
 				yAxis = yAxis || $scope.attrY;
-			if (!yAxis) {
+			if(!yAxis) {
 				yAxis = COUNT_FIELD_NAME;
 			}
 			var yMin = ($scope.barType ? COUNT_FIELD_NAME : yAxis) + "-min";
@@ -232,10 +229,10 @@ barchart.directive('stackedbarchart', ['ConnectionService', function(connectionS
 				stacked: true,
 				responsive: false
 			};
-			var chart = new charts.BarChart(el[0], '.barchart', opts).draw();
+			(new charts.BarChart(el[0], '.barchart', opts)).draw();
 		};
 
-		neon.ready(function () {
+		neon.ready(function() {
 			$scope.messenger = new neon.eventing.Messenger();
 			initialize();
 		});

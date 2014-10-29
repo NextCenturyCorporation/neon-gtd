@@ -21,17 +21,16 @@
  * Neon connection from a connection service and listens for
  * neon system events (e.g., data tables changed) to determine when to update its visualization
  * by issuing a Neon query for aggregated time data.
- * 
+ *
  * @example
  *    &lt;circular-heat-form&gt;&lt;/circular-heat-form&gt;<br>
  *    &lt;div circular-heat-form&gt;&lt;/div&gt;
- * 
+ *
  * @class neonDemo.directives.circularHeatForm
  * @constructor
  */
-angular.module('circularHeatFormDirective', []).directive('circularHeatForm', ['ConnectionService',
-	function(connectionService) {
-
+angular.module('circularHeatFormDirective', [])
+.directive('circularHeatForm', ['ConnectionService', function(connectionService) {
 	return {
 		templateUrl: 'partials/circularHeatForm.html',
 		restrict: 'EA',
@@ -39,8 +38,7 @@ angular.module('circularHeatFormDirective', []).directive('circularHeatForm', ['
 			filterKey: '='
 		},
 		controller: function($scope) {
-
-			/** 
+			/**
 			 * Sets the name of the date field to pull from the current dataset.
 			 * @method setDateField
 			 */
@@ -48,7 +46,7 @@ angular.module('circularHeatFormDirective', []).directive('circularHeatForm', ['
 				$scope.dateField = field;
 			};
 
-			/** 
+			/**
 			 * Returns the name of the date field used to pull from time data from the current dataset.
 			 * @method getDateField
 			 */
@@ -56,8 +54,7 @@ angular.module('circularHeatFormDirective', []).directive('circularHeatForm', ['
 				return $scope.dateField;
 			};
 		},
-		link: function($scope, element, attr) {
-
+		link: function($scope, element) {
 			$scope.days = [];
 			$scope.timeofday = [];
 			$scope.maxDay = "";
@@ -70,7 +67,7 @@ angular.module('circularHeatFormDirective', []).directive('circularHeatForm', ['
 			// Defaulting the expected date field to 'created_at' as that works best with our twitter datasets.
 			var DEFAULT_DATE_FIELD = 'created_at';
 
-			/** 
+			/**
 			 * Initializes the name of the date field used to query the current dataset
 			 * and the Neon Messenger used to monitor data change events.
 			 * @method initialize
@@ -88,34 +85,52 @@ angular.module('circularHeatFormDirective', []).directive('circularHeatForm', ['
 			 * Initializes the arrays and variables used to track the most active day of the week and time of day.
 			 * @method initDayTimeArrays
 			 */
-			$scope.initDayTimeArrays = function(){
-				$scope.days = [
-					{name: "Sundays", count: 0},
-					{name: "Mondays", count: 0},
-					{name: "Tuesdays", count: 0},
-					{name: "Wednesdays", count: 0},
-					{name: "Thursdays", count: 0},
-					{name: "Fridays", count: 0},
-					{name: "Saturdays", count: 0}
-				];
-				$scope.timeofday = [
-					{name: "mornings", count: 0},
-					{name: "afternoons", count: 0},
-					{name: "evenings", count: 0},
-					{name: "nights", count: 0}
-				];
+			$scope.initDayTimeArrays = function() {
+				$scope.days = [{
+					name: "Sundays",
+					count: 0
+				}, {
+					name: "Mondays",
+					count: 0
+				}, {
+					name: "Tuesdays",
+					count: 0
+				}, {
+					name: "Wednesdays",
+					count: 0
+				}, {
+					name: "Thursdays",
+					count: 0
+				}, {
+					name: "Fridays",
+					count: 0
+				}, {
+					name: "Saturdays",
+					count: 0
+				}];
+				$scope.timeofday = [{
+					name: "mornings",
+					count: 0
+				}, {
+					name: "afternoons",
+					count: 0
+				}, {
+					name: "evenings",
+					count: 0
+				}, {
+					name: "nights",
+					count: 0
+				}];
 				$scope.maxDay = "";
 				$scope.maxTime = "";
 			};
 
-
 			/**
 			 * Event handler for filter changed events issued over Neon's messaging channels.
-			 * @param {Object} message A Neon filter changed message.
 			 * @method onFiltersChanged
 			 * @private
-			 */ 
-			var onFiltersChanged = function(message) {
+			 */
+			var onFiltersChanged = function() {
 				XDATA.activityLogger.logSystemActivity('CircularHeatForm - received neon filter changed event');
 				$scope.queryForChartData();
 			};
@@ -127,7 +142,7 @@ angular.module('circularHeatFormDirective', []).directive('circularHeatForm', ['
 			 * @param {String} message.table The table within the database that was selected.
 			 * @method onDatasetChanged
 			 * @private
-			 */ 
+			 */
 			var onDatasetChanged = function(message) {
 				XDATA.activityLogger.logSystemActivity('CircularHeatForm - received neon dataset changed event');
 
@@ -139,10 +154,10 @@ angular.module('circularHeatFormDirective', []).directive('circularHeatForm', ['
 
 				// Pull data.
 				var connection = connectionService.getActiveConnection();
-				if (connection) {
-                    connectionService.loadMetadata(function() {
-                        $scope.queryForChartData();
-                    });
+				if(connection) {
+					connectionService.loadMetadata(function() {
+						$scope.queryForChartData();
+					});
 				}
 			};
 
@@ -157,8 +172,10 @@ angular.module('circularHeatFormDirective', []).directive('circularHeatForm', ['
 				var dateField = connectionService.getFieldMapping("date");
 				dateField = dateField || DEFAULT_DATE_FIELD;
 
-				if (!dateField) {
-					$scope.updateChartData({data: []});
+				if(!dateField) {
+					$scope.updateChartData({
+						data: []
+					});
 					return;
 				} else {
 					$scope.dateField = dateField;
@@ -182,16 +199,15 @@ angular.module('circularHeatFormDirective', []).directive('circularHeatForm', ['
 				XDATA.activityLogger.logSystemActivity('CircularHeatForm - query for data');
 				connectionService.getActiveConnection().executeQuery(query, function(queryResults) {
 					XDATA.activityLogger.logSystemActivity('CircularHeatForm - data received');
-					$scope.$apply(function(){
+					$scope.$apply(function() {
 						$scope.updateChartData(queryResults);
 						XDATA.activityLogger.logSystemActivity('CircularHeatForm - display updated');
 					});
 				});
-
 			};
 
 			/**
-			 * Updates the data bound to the heat chart managed by this directive.  This will trigger a change in 
+			 * Updates the data bound to the heat chart managed by this directive.  This will trigger a change in
 			 * the chart's visualization.
 			 * @param {Object} queryResults Results returned from a Neon query.
 			 * @param {Array} queryResults.data The aggregate numbers for the heat chart cells.
@@ -208,38 +224,39 @@ angular.module('circularHeatFormDirective', []).directive('circularHeatForm', ['
 			 * @param {Array} queryResults.data The aggregate numbers for the heat chart cells.
 			 * @method createHeatChartData
 			 */
-			$scope.createHeatChartData = function(queryResults){
+			$scope.createHeatChartData = function(queryResults) {
 				var rawData = queryResults.data;
 
 				var data = [];
 
-				for (var i = 0; i < HOURS_IN_WEEK; i++) {
+				for(var i = 0; i < HOURS_IN_WEEK; i++) {
 					data[i] = 0;
 				}
 
 				$scope.initDayTimeArrays();
 
-				_.each(rawData, function (element) {
+				_.each(rawData, function(element) {
 					data[(element.day - 1) * HOURS_IN_DAY + element.hour] = element.count;
 
 					// Add count to total for this day of the week.
-					$scope.days[element.day-1].count += element.count;
+					$scope.days[element.day - 1].count += element.count;
 
 					// Add count to total for this time of day.
-					if(element.hour >= 5 && element.hour < 12)
+					if(element.hour >= 5 && element.hour < 12) {
 						$scope.timeofday[0].count += element.count;
-					else if(element.hour >= 12 && element.hour < 17)
+					} else if(element.hour >= 12 && element.hour < 17) {
 						$scope.timeofday[1].count += element.count;
-					else if(element.hour >= 17 && element.hour < 21)
+					} else if(element.hour >= 17 && element.hour < 21) {
 						$scope.timeofday[2].count += element.count;
-					else
+					} else {
 						$scope.timeofday[3].count += element.count;
+					}
 				});
 
 				// Find the day with the highest count.
 				var maxCount = 0;
-				_.each($scope.days, function (day) {
-					if(day.count > maxCount){
+				_.each($scope.days, function(day) {
+					if(day.count > maxCount) {
 						maxCount = day.count;
 						$scope.maxDay = day.name;
 					}
@@ -247,8 +264,8 @@ angular.module('circularHeatFormDirective', []).directive('circularHeatForm', ['
 
 				// Find the time of day with the highest count.
 				maxCount = 0;
-				_.each($scope.timeofday, function (time) {
-					if(time.count > maxCount){
+				_.each($scope.timeofday, function(time) {
+					if(time.count > maxCount) {
 						maxCount = time.count;
 						$scope.maxTime = time.name;
 					}
@@ -258,11 +275,10 @@ angular.module('circularHeatFormDirective', []).directive('circularHeatForm', ['
 			};
 
 			// Wait for neon to be ready, the create our messenger and intialize the view and data.
-			neon.ready(function () {
+			neon.ready(function() {
 				$scope.messenger = new neon.eventing.Messenger();
 				$scope.initialize();
 			});
-
 		}
 	};
 }]);
