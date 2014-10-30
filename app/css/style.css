@@ -658,14 +658,10 @@ a.navbar-text:focus{
 ================ */
 
 .well{
-    height:100%;
-    width:100%;
-    overflow:auto;
     background-color: #FFFFFF;
     box-shadow: 0 1px 4px rgba(154, 154, 154, 0.3);
     border: 1px solid #D6D6D6;
-    margin-bottom: 30px;
-    padding: 30px;
+    padding: 20px;
     position: relative;
 }
 .well-blank{
@@ -832,3 +828,18 @@ label{
     }
 }
 
+/* ================
+    Visualizations
+================ */
+.visualization-widget {
+    display: block;
+    height: 100%;
+    width: 100%;
+    margin: 0px;
+    padding: 0px;
+}
+
+.gridster {
+    margin-left: -10px;
+    margin-right: -10px;
+}

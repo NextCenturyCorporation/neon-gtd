@@ -23,6 +23,8 @@ MIT/X11 (mit.txt)
   -- "angular-route": "1.2.x"
   -- "angular-loader": "1.2.x"
   -- "angular-mocks": "~1.2.15"
+- Angular-Gridster
+  -- "angular-gridster": "0.10.x"
 - Bootstrap 
   -- bootstrap.min.js v3.1.1
 - HTML5 Shiv
@@ -51,6 +53,8 @@ MIT/X11 (mit.txt)
   -- grunt-war, 0.3.3
   -- grunt-contrib-yuidoc, 0.5.2
 
+Javascript-Detect-Element-Resize
+  -- detect-element-resize.js
 JQuery Tagcloud (jquery.tagcloud.txt)
   -- jquery.tagcloud.js
 

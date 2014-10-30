@@ -29,7 +29,7 @@ angular.module('neonDemo.controllers', [])
     $scope.filterCount = 0;
 
     $scope.gridsterOpts = {
-        columns: 4, // the width of the grid, in columns
+        columns: 6, // the width of the grid, in columns
         pushing: true, // whether to push other items out of the way on move or resize
         floating: true, // whether to automatically float items up so they stack (you can temporarily disable if you are adding unsorted items with ng-repeat)
         width: 'auto', // can be an integer or 'auto'. 'auto' scales gridster to be the full width of its containing element
@@ -62,36 +62,31 @@ angular.module('neonDemo.controllers', [])
     };
 
     $scope.visualizations = [{
-        size: {
-            x: 6,
-            y: 1
-        },
-        position: [0,0],
+        sizeX: 6,
+        sizeY: 1,
+        row: 0,
+        col: 0,
         type: 'timeline-selector'
     },{
-        size: {
-            x: 6,
-            y: 2
-        },
-        position: [1,0],
+        sizeX: 6,
+        sizeY: 2,
+        row: 1,
+        col: 0,
         type: 'heat-map'
     },{
-        size: {
-            x: 2,
-            y: 2
-        },
-        position: [3,0],
+        sizeX: 2,
+        sizeY: 2,
+        row: 3,
+        col: 0,
         type: 'linechart',
         bindings: {
-            "chart-type": "chartType",
-            "ng-hide": "chartType != 'line'",
+            "chart-type": "chartType"
         }
     },{
-        size: {
-            x: 2,
-            y: 2
-        },
-        position: [3,2],
+        sizeX: 2,
+        sizeY: 2,
+        row: 3,
+        col: 2,
         type: 'barchart',
         bindings: {
             "attr-x": "xAxisField",
@@ -99,18 +94,16 @@ angular.module('neonDemo.controllers', [])
             "bar-type": "barType"
         }
     },{
-        size: {
-            x: 2,
-            y: 2
-        },
-        position: [3,4],
+        sizeX: 2,
+        sizeY: 2,
+        row: 3,
+        col: 4,
         type: 'circular-heat-form'
     },{
-        size: {
-            x: 2,
-            y: 2
-        },
-        position: [5,0],
+        sizeX: 6,
+        sizeY: 2,
+        row: 5,
+        col: 0,
         type: 'tag-cloud',
         bindings: {
             "tag-field": "'hashtags'"

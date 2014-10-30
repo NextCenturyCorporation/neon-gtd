@@ -22,11 +22,11 @@ angular.module('visualizationWidgetDirective', [])
         // Create out widget.  Here, we are assuming the visualization is 
         // implementated as an attribute directive.
         var widgetElement = document.createElement("div");
-        widgetElement.setAttribute($attrs.visualization, "");
+        widgetElement.setAttribute($scope.gridsterConfig.type, "");
 
         // Pass along any bindings.
-        if ($attrs.bindings) {
-            var bindings = JSON.parse($attrs.bindings);
+        if ($scope.gridsterConfig && $scope.gridsterConfig.bindings) {
+            var bindings = $scope.gridsterConfig.bindings;
             for (var prop in bindings) {
                 if (bindings.hasOwnProperty(prop)) {
                     widgetElement.setAttribute(prop, bindings[prop]);
@@ -37,13 +37,25 @@ angular.module('visualizationWidgetDirective', [])
         $elem.append($compile(widgetElement)($scope));
 
         var onVisualizationChange = function() {
+            console.log($scope.gridsterConfig.type + " changed");
         };
 
         $scope.$watch(["bindings", "visualization"], onVisualizationChange, true);
+
+        $scope.$watch('gridsterConfig.position[0]', function() {
+            console.log($scope.gridsterConfig.type + " repositioned");
+        }, true);
+
+        $scope.$watch('gridsterConfig.size.x', function() {
+            console.log($scope.gridsterConfig.type + " resized");
+        }, true);
     };
 
     return {
         restrict: 'A',
+        scope: {
+            gridsterConfig: "="
+        },
         link: link
     };
 });

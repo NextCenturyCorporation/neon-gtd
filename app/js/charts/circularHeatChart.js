@@ -11,7 +11,7 @@ function CircularHeatChart(el) {
 	};
 	var innerRadius = 50;
 	var numSegments = 24;
-	var segmentHeight = 20;
+	var segmentHeight = 0;
 	var domain = null;
 	var range = ["#ffffff", "#39b54a"];
 	var accessor = function(d) {
@@ -28,6 +28,7 @@ function CircularHeatChart(el) {
 			var svg = d3.select(this);
 
 			svg.attr("viewBox", "0 0 356 356");
+			svg.attr("preserveAspectRation", "xMidYMid meet");
 
 			var offset = innerRadius + Math.ceil(data.length / numSegments) * segmentHeight;
 			var g = svg.append("g")

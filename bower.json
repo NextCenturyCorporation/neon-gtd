@@ -17,6 +17,7 @@
         "jquery": "1.11.1",
         "jquery-ui": "1.10.4",
         "jquery.event.drag-drop": "2.2.1",
+        "javascript-detect-element-resize": "sdecima/javascript-detect-element-resize#~0.5.1",
         "jquery.tagcloud": "https://github.com/addywaddy/jquery.tagcloud.js.git",
         "mergesort": "https://github.com/justinforce/merge-sort/archive/1.0.zip",
         "opencpu": "https://github.com/jeroenooms/opencpu.js.git",
@@ -62,17 +63,21 @@
             "css": "**/*.css"
         },
 
+        "javascript-detect-element-resize": {
+            "js": "**/*.js"
+        },
+
+        "jquery.tagcloud": {
+            "js": "**/*.js",
+            "css": "**/*.css"
+        },
+
         "jquery-ui": {
             "js": "**/jquery-ui.min.js",
             "themes/smoothness": "themes/smoothness/**.css",
             "themes/smoothness/images": ["themes/smoothness/images/*.png","themes/smoothness/images/*.gif"],
             "themes/ui-lightness": "themes/ui-lightness/**.css",
             "themes/ui-lightness/images": ["themes/ui-lightness/images/*.png","themes/ui-lightness/images/*.gif"]
-        },
-
-        "jquery.tagcloud": {
-            "js": "**/*.js",
-            "css": "**/*.css"
         },
 
         "mergesort": {
