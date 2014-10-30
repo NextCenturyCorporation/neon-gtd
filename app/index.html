@@ -46,7 +46,7 @@
 					<div powered-by-neon class="pull-right"></div>
 
 					<div class="clearfix visible-xs"></div>
-					
+
 					<!-- Database Config -->
 					<database-config></database-config>
 
@@ -65,11 +65,11 @@
 								<span class="glyphicon glyphicon-list"></span> View Data
 							</a>
 						</li>
-                        <!-- <li>
-                            <a data-toggle="collapse" data-parent="#trays" href=".query-tray" class="collapsed">
-                                <span class="glyphicon glyphicon-pencil"></span> Write Query
-                            </a>
-                        </li> -->
+						<!-- <li>
+							<a data-toggle="collapse" data-parent="#trays" href=".query-tray" class="collapsed">
+								<span class="glyphicon glyphicon-pencil"></span> Write Query
+							</a>
+						</li> -->
 					</ul>
 				</div>
 			</div>
@@ -84,47 +84,47 @@
 			<!-- See Data tray -->
 			<div query-results-table show-data="seeData"></div>
 
-            <!-- Query Builder tray -->
-            <!-- <div>
+			<!-- Query Builder tray -->
+			<!-- <div>
 
-                <div class="tray-mirror query-tray collapse">
-                  <div class="inner" style="height: 223px"></div>
-                </div>
-                <div id="query-tray" class="tray query-tray panel panel-default collapse">
+				<div class="tray-mirror query-tray collapse">
+				  <div class="inner" style="height: 223px"></div>
+				</div>
+				<div id="query-tray" class="tray query-tray panel panel-default collapse">
 
-                  <div class="container panel-body">
+				  <div class="container panel-body">
 
-                    <a class="pull-right" data-toggle="modal" href="#queryHelpModal">Help <span class="glyphicon glyphicon-question-sign"></span></a>
+					<a class="pull-right" data-toggle="modal" href="#queryHelpModal">Help <span class="glyphicon glyphicon-question-sign"></span></a>
 
-                    <h4>Write your own query</h4>
+					<h4>Write your own query</h4>
 
-                    <textarea class="form-control" rows="5"></textarea>
+					<textarea class="form-control" rows="5"></textarea>
 
-                    <button type="button" class="btn btn-primary pull-right">
-                      Run Query
-                    </button>
+					<button type="button" class="btn btn-primary pull-right">
+					  Run Query
+					</button>
 
-                  </div>
-                </div>
+				  </div>
+				</div>
 
-                <div class="modal fade" id="queryHelpModal" tabindex="-1" role="dialog" aria-labelledby="queryHelpModalLabel" aria-hidden="true">
-                    <div class="modal-dialog">
-                        <div class="modal-content">
-                            <div class="modal-header">
-                                <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
-                                <h4 class="modal-title" id="queryHelpModalLabel">Custom Query Instructions</h4>
-                            </div>
-                            <div class="modal-body">
-                                Helpful info here.
-                            </div>
-                            <div class="modal-footer">
-                                <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
-                            </div>
-                        </div>
-                    </div>
-                </div>
+				<div class="modal fade" id="queryHelpModal" tabindex="-1" role="dialog" aria-labelledby="queryHelpModalLabel" aria-hidden="true">
+					<div class="modal-dialog">
+						<div class="modal-content">
+							<div class="modal-header">
+								<button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+								<h4 class="modal-title" id="queryHelpModalLabel">Custom Query Instructions</h4>
+							</div>
+							<div class="modal-body">
+								Helpful info here.
+							</div>
+							<div class="modal-footer">
+								<button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+							</div>
+						</div>
+					</div>
+				</div>
 
-            </div> -->
+			</div> -->
 
 		</div>
 
@@ -139,115 +139,114 @@
 				<!-- Left column -->
 				<div class="col-md-6 col-xxl-6">
 
-                    <div class="row">
+					<div class="row">
 
-                        <div class="col-lg-12 col-xxl-6">
+						<div class="col-lg-12 col-xxl-6">
 
-                            <!-- Bar chart -->
-                            <div class="well" ng-init="chartType = 'line'" ng-hide="chartType != 'bar'">
-                                <div class="chart-options pull-right">
-                                    <a class="btn btn-lg text-muted collapsed" 
-                                        data-toggle="collapse" data-target="#chart-options" 
-                                        data-animation=false
-                                        ng-click="toggleChartOptions()">
-                                      <span class="glyphicon glyphicon-cog"></span>
-                                      <span class="caret"></span>
-                                    </a>
-                                    <div id="chart-options" class="popover bottom">
-                                        <div class="arrow"></div>
-                                        <div class="popover-content">
-                                            <div class="form-group">
-                                                <label>Chart Type</label>
-                                                <select ng-model="chartType" class="form-control">
-                                                    <option value="bar">Bar</option>
-                                                    <option value="line">Line</option>
-                                                </select>
-                                            </div>
-                                            <div class="form-group">
-                                                <fieldselector target-var="xAxisField" label-text="'X axis:'" default-mapping="'bar_x_axis'"></fieldSelector>
-                                            </div>
-                                            <div class="form-group">
-                                                <fieldselector target-var="yAxisField" label-text="'Y axis:'" default-mapping="'y_axis'"></fieldSelector>
-                                            </div>
-                                            <div class="form-group">
-                                                <select ng-model="barType" class="form-control">
-                                                    <option value="count">Count</option>
-                                                    <option value="sum">Sum</option>
-                                                    <option value="avg">Avg</option>
-                                                </select>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
+							<!-- Bar chart -->
+							<div class="well" ng-init="chartType = 'line'" ng-hide="chartType != 'bar'">
+								<div class="chart-options pull-right">
+									<a class="btn btn-lg text-muted collapsed"
+										data-toggle="collapse" data-target="#chart-options"
+										data-animation=false
+										ng-click="toggleChartOptions()">
+									  <span class="glyphicon glyphicon-cog"></span>
+									  <span class="caret"></span>
+									</a>
+									<div id="chart-options" class="popover bottom">
+										<div class="arrow"></div>
+										<div class="popover-content">
+											<div class="form-group">
+												<label>Chart Type</label>
+												<select ng-model="chartType" class="form-control">
+													<option value="bar">Bar</option>
+													<option value="line">Line</option>
+												</select>
+											</div>
+											<div class="form-group">
+												<fieldselector target-var="xAxisField" label-text="'X axis:'" default-mapping="'bar_x_axis'"></fieldSelector>
+											</div>
+											<div class="form-group">
+												<fieldselector target-var="yAxisField" label-text="'Y axis:'" default-mapping="'y_axis'"></fieldSelector>
+											</div>
+											<div class="form-group">
+												<select ng-model="barType" class="form-control">
+													<option value="count">Count</option>
+													<option value="sum">Sum</option>
+													<option value="avg">Avg</option>
+												</select>
+											</div>
+										</div>
+									</div>
+								</div>
 
-                                <div class="legend">
-                                    <div class="legend-item">
-                                        <span class="legend-icon" style="background-color: #39b54a"></span>
-                                        <span class="legend-text" ng-show="barType === 'avg'">Average {{yAxisField}}</span>
-                                        <span class="legend-text" ng-show="barType === 'sum'">{{yAxisField}}</span>
-                                        <span class="legend-text" ng-show="barType === 'count'">Total</span>
-                                    </div>
-                                </div>
+								<div class="legend">
+									<div class="legend-item">
+										<span class="legend-icon" style="background-color: #39b54a"></span>
+										<span class="legend-text" ng-show="barType === 'avg'">Average {{yAxisField}}</span>
+										<span class="legend-text" ng-show="barType === 'sum'">{{yAxisField}}</span>
+										<span class="legend-text" ng-show="barType === 'count'">Total</span>
+									</div>
+								</div>
 
-                                <div class="clearfix"></div>
+								<div class="clearfix"></div>
 
-                                <!-- <stackedbarchart attr-x="xAxisField" attr-y="yAxisField" bar-type='barType'></stackedbarchart> -->
-                                <barchart attr-x="xAxisField" attr-y="yAxisField" bar-type='barType'></barchart>
+								<!-- <stackedbarchart attr-x="xAxisField" attr-y="yAxisField" bar-type='barType'></stackedbarchart> -->
+								<barchart attr-x="xAxisField" attr-y="yAxisField" bar-type='barType'></barchart>
 
-                            </div>
+							</div>
 
-                            <!-- Line chart -->
-                            <linechart chart-type="chartType" ng-hide="chartType != 'line'"></linechart>
+							<!-- Line chart -->
+							<linechart chart-type="chartType" ng-hide="chartType != 'line'"></linechart>
 
-                        </div>
+						</div>
 
-                        <div class="col-lg-12 col-xxl-6">
+						<div class="col-lg-12 col-xxl-6">
 
-                            <!-- Map -->
-                            <div heat-map class="well well-map"></div>
-                            
-                        </div>
+							<!-- Map -->
+							<div heat-map class="well well-map"></div>
 
-                    </div>
+						</div>
+
+					</div>
 
 				</div>
 
 				<!-- Right column -->
 				<div class="col-md-6 col-xxl-6">
 
-                    <div class="row">
+					<div class="row">
 
-                        <div class="col-lg-12 col-xxl-6">
+						<div class="col-lg-12 col-xxl-6">
 
-                            <!-- Tag cloud -->
-                            <tag-cloud tag-field="'hashtags'"></tag-cloud>
+							<!-- Tag cloud -->
+							<tag-cloud tag-field="'hashtags'"></tag-cloud>
 
-                        </div>
+						</div>
 
-                        <div class="col-lg-12 col-xxl-6">
+						<div class="col-lg-12 col-xxl-6">
 
-                            <!-- Circular heat chart -->
-                            <div circular-heat-form></div>
+							<!-- Circular heat chart -->
+							<div circular-heat-form></div>
 
-                        </div>
+						</div>
 
-                    </div>
+					</div>
 
 				</div>
 			</div>
 
-            <div id="tooltip-container"></div>
+			<div id="tooltip-container"></div>
 
 		</div>
-
-		<!-- Including neon before angular here as neon has lodash and jquery wrapped into it.  If this is
-		     loaded first, angular should pick up the included jQuery. -->
-		<script src="/neon/js/neon.js"></script>
-        <script src="js/appConfig.js"></script>
-
 		<!-- Include the xdata logging package. -->
 		<script src="lib/xdatalogger/js/draper.activity_logger-2.1.1.js"></script>
 		<script src="lib/xdatalogger/js/draper.activity_worker-2.1.1.js"></script>
+
+		<!-- Including neon before angular here as neon has lodash and jquery wrapped into it.  If this is
+			 loaded first, angular should pick up the included jQuery. -->
+		<script src="/neon/js/neon.js"></script>
+		<script src="js/appConfig.js"></script>
 
 		<script src="lib/jquery/js/jquery.min.js"></script>
 		<!-- In production use:
@@ -256,7 +255,7 @@
 		<script src="lib/angular/js/angular.min.js"></script>
 
 		<!-- Include third party libs -->
-		<script src="lib/d3/js/d3.min.js"></script>		
+		<script src="lib/d3/js/d3.min.js"></script>
 
 		<script src="lib/openlayers/OpenLayers.js"></script>
 		<script src="lib/openlayers-heatmap/js/heatmap.js"></script>
@@ -277,7 +276,7 @@
 		<script src="lib/opencpu/js/opencpu-0.5.js"></script>
 
 		<!-- Include required non-angular support modules -->
-        <script src="js/neon-extensions/filtertable.js"></script>
+		<script src="js/neon-extensions/filtertable.js"></script>
 		<script src="js/namespaces.js"></script>
 		<script src="js/charts/barchart.js"></script>
 		<script src="js/charts/linechart.js"></script>
