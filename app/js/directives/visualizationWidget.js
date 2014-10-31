@@ -17,45 +17,44 @@
  */
 angular.module('visualizationWidgetDirective', [])
     .directive('visualizationWidget', function($compile) {
-    var link = function($scope, $elem, $attrs) {
-
-        // Create out widget.  Here, we are assuming the visualization is 
-        // implementated as an attribute directive.
-        var widgetElement = document.createElement("div");
-        widgetElement.setAttribute($scope.gridsterConfig.type, "");
-
-        // Pass along any bindings.
-        if ($scope.gridsterConfig && $scope.gridsterConfig.bindings) {
-            var bindings = $scope.gridsterConfig.bindings;
-            for (var prop in bindings) {
-                if (bindings.hasOwnProperty(prop)) {
-                    widgetElement.setAttribute(prop, bindings[prop]);
-                }
-            }
-        }
-
-        $elem.append($compile(widgetElement)($scope));
-
-        var onVisualizationChange = function() {
-            console.log($scope.gridsterConfig.type + " changed");
-        };
-
-        $scope.$watch(["bindings", "visualization"], onVisualizationChange, true);
-
-        $scope.$watch('gridsterConfig.position[0]', function() {
-            console.log($scope.gridsterConfig.type + " repositioned");
-        }, true);
-
-        $scope.$watch('gridsterConfig.size.x', function() {
-            console.log($scope.gridsterConfig.type + " resized");
-        }, true);
-    };
 
     return {
         restrict: 'A',
         scope: {
             gridsterConfig: "="
         },
-        link: link
+        template: '<div class="visualization-drag-handle"></div>',
+        link: function($scope, $elem, $attrs) {
+            // Create out widget.  Here, we are assuming the visualization is 
+            // implementated as an attribute directive.
+            var widgetElement = document.createElement("div");
+            widgetElement.setAttribute($scope.gridsterConfig.type, "");
+
+            // Pass along any bindings.
+            if ($scope.gridsterConfig && $scope.gridsterConfig.bindings) {
+                var bindings = $scope.gridsterConfig.bindings;
+                for (var prop in bindings) {
+                    if (bindings.hasOwnProperty(prop)) {
+                        widgetElement.setAttribute(prop, bindings[prop]);
+                    }
+                }
+            }
+
+            $elem.append($compile(widgetElement)($scope));
+
+            var onVisualizationChange = function() {
+                console.log($scope.gridsterConfig.type + " changed");
+            };
+
+            $scope.$watch(["bindings", "visualization"], onVisualizationChange, true);
+
+            $scope.$watch('gridsterConfig.position[0]', function() {
+                console.log($scope.gridsterConfig.type + " repositioned");
+            }, true);
+
+            $scope.$watch('gridsterConfig.size.x', function() {
+                console.log($scope.gridsterConfig.type + " resized");
+            }, true);
+        }
     };
 });

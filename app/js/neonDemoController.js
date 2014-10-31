@@ -47,14 +47,15 @@ angular.module('neonDemo.controllers', [])
         defaultSizeY: 2, // the default height of a gridster item, if not specified
         resizable: {
            enabled: true,
-           handles: ['n', 'e', 's', 'w', 'ne', 'se', 'sw', 'nw'],
+           //handles: ['n', 'e', 's', 'w', 'ne', 'se', 'sw', 'nw'],
+           handles: ['e', 's', 'w', 'ne', 'se', 'sw', 'nw'],
            start: function(event, $element, widget) {}, // optional callback fired when resize is started,
            resize: function(event, $element, widget) {}, // optional callback fired when item is resized,
            stop: function(event, $element, widget) {} // optional callback fired when item is finished resizing
         },
         draggable: {
            enabled: true, // whether dragging items is supported
-           handle: '.my-class', // optional selector for resize handle
+           handle: '.visualization-drag-handle', // optional selector for draggable handle
            start: function(event, $element, widget) {}, // optional callback fired when drag is started,
            drag: function(event, $element, widget) {}, // optional callback fired when item is moved,
            stop: function(event, $element, widget) {} // optional callback fired when item is finished dragging
