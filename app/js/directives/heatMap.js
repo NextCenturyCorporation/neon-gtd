@@ -35,8 +35,8 @@ angular.module('heatMapDirective', [])
 			// map of categories to colors used for the legend
 			colorMappings: '&'
 		},
-		link: function($scope, element) {
-			element.addClass('heat-map');
+		link: function($scope, $element) {
+			$element.addClass('heat-map');
 
 			// Setup scope variables.
 			$scope.databaseName = '';
@@ -66,10 +66,10 @@ angular.module('heatMapDirective', [])
 
 				// Setup our map.
 				$scope.mapId = uuid();
-				element.append('<div id="' + $scope.mapId + '" class="map"></div>');
+				$element.append('<div id="' + $scope.mapId + '" class="map"></div>');
 				$scope.map = new coreMap.Map($scope.mapId, {
-					height: 375,
-					width: "100%",
+					//height: "100%",
+					//width: "100%",
 					responsive: false,
 					onZoomRect: onZoomChanged
 				});
@@ -89,7 +89,7 @@ angular.module('heatMapDirective', [])
 				});
 
 				// Enable the tooltips.
-				$(element).find('label.btn-default').tooltip();
+				$($element).find('label.btn-default').tooltip();
 
 				// Setup the control watches.
 				// Update the latitude field used by the map.

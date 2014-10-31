@@ -732,21 +732,24 @@ coreMap.Map.prototype.zoomToBounds = function(bounds) {
 	this.map.zoomToExtent(boundsObject.transform(coreMap.Map.SOURCE_PROJECTION, coreMap.Map.DESTINATION_PROJECTION));
 };
 
+coreMap.Map.prototype.redraw = function() {
+	this.width = $(window).width();
+	this.height = $(window).height() - 40;
+
+	$('#' + this.elementId).css({
+		width: this.width,
+		height: this.height
+	});
+	this.map.updateSize();
+}
+
 /**
  * Add a resize listener on the window to redraw the map
  * @method redrawOnResize
  */
-
 coreMap.Map.prototype.redrawOnResize = function() {
 	var me = this;
 	$(window).resize(function() {
-		me.width = $(window).width();
-		me.height = $(window).height() - 40;
-
-		$('#' + me.elementId).css({
-			width: me.width,
-			height: me.height
-		});
-		me.map.updateSize();
+		me.redraw();
 	});
 };

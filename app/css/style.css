@@ -326,7 +326,7 @@ fieldset[disabled] .btn-primary.active {
 /* Chart dropdown menu */
 
 .chart-options > a{
-    padding: 2px 5px;
+    padding: 2px 16px;
     color: #39b54a;
 }
 .chart-options > a.collapsed{
@@ -341,8 +341,8 @@ fieldset[disabled] .btn-primary.active {
 }
 .chart-options .popover{
     left: auto;
-    right: 19px;
-    top: 60px;
+    right: 20px;
+    top: 45px;
     margin-top: 0;
 
     background: none;
@@ -844,7 +844,7 @@ label{
     position: absolute;
     height: 20px;
     width: 100%;
-    z-index: 2;
+    z-index: 1050;
 }
 
 .visualization-drag-handle:hover {
@@ -855,4 +855,8 @@ label{
 .gridster {
     margin-left: -10px;
     margin-right: -10px;
+}
+
+.gridster-item-resizable-handler {
+    z-index: 1060;
 }
