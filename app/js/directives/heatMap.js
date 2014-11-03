@@ -53,6 +53,7 @@ angular.module('heatMapDirective', [])
 			$scope.showFilter = false;
 			$scope.dataBounds = undefined;
 			$scope.limit = 1000;  // Max points to pull into the map.
+			$scope.resizeRedrawDelay = 1000; // Time in ms to wait after a resize event flood to try redrawing the map.
 
 			/**
 			 * Initializes the name of the directive's scope variables
@@ -211,6 +212,22 @@ angular.module('heatMapDirective', [])
 						});
 					$scope.queryForMapData();
 				});
+
+				// Setup a basic resize handler to redraw the map and calculate its size if our div changes.
+				// Since the map redraw can take a while and resize events can come in a flood, we attempt to 
+				// redraw only after a second of no consecutive resize events.
+				var redrawOnResize = function() {
+					$scope.resizePromise = null;
+					$scope.map.redraw();
+				};
+
+				$element.resize(function() {
+					if ($scope.resizePromise) {
+						$timeout.cancel($scope.resizePromise);
+					}
+					$scope.resizePromise = $timeout(redrawOnResize, $scope.resizeRedrawDelay);
+				});
+
 			};
 
 			var onMapEvent = function(message) {

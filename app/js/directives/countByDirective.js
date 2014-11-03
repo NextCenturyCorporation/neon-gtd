@@ -20,7 +20,7 @@ angular.module("neonDemo.directives")
 .directive('countBy', ['ConnectionService', function(connectionService) {
 	return {
 		templateUrl: 'partials/countby.html',
-		restrict: 'E',
+		restrict: 'EA',
 		scope: {
 		},
 		link: function($scope, el) {

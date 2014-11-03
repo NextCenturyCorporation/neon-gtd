@@ -43,6 +43,12 @@ barchart.directive('barchart', ['ConnectionService', '$timeout', function(connec
 
 		var COUNT_FIELD_NAME = 'Count';
 
+		el.resize(function() {
+			if ($scope.chart) {
+				$scope.chart.draw();
+			}
+		});
+
 		var initialize = function() {
 			drawBlankChart();
 
@@ -186,7 +192,7 @@ barchart.directive('barchart', ['ConnectionService', '$timeout', function(connec
 
 	return {
 		templateUrl: 'partials/barchart.html',
-		restrict: 'E',
+		restrict: 'EA',
 		scope: {
 			attrX: '=',
 			attrY: '=',

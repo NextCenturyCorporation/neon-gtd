@@ -66,7 +66,7 @@ coreMap.Map = function(elementId, opts) {
 	opts = opts || {};
 
 	this.elementId = elementId;
-	this.selector = $(elementId);
+	this.selector = $("#" + elementId);
 
 	// mapping of categories to colors
 	this.colors = {};
@@ -733,10 +733,9 @@ coreMap.Map.prototype.zoomToBounds = function(bounds) {
 };
 
 coreMap.Map.prototype.redraw = function() {
-	this.width = $(window).width();
-	this.height = $(window).height() - 40;
-
-	$('#' + this.elementId).css({
+	this.width = this.selector.width();
+	this.height = this.selector.height();
+	this.selector.css({
 		width: this.width,
 		height: this.height
 	});
