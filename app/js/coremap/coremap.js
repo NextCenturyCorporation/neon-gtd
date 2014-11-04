@@ -110,8 +110,8 @@ coreMap.Map = function(elementId, opts) {
 
 	if(this.responsive) {
 		this.redrawOnResize();
-		this.width = $(window).width();
-		this.height = $(window).height() - 40;
+		//this.width = $(window).width();
+		//this.height = $(window).height() - 40;
 	} else {
 		this.width = opts.width || coreMap.Map.DEFAULT_WIDTH;
 		this.height = opts.height || coreMap.Map.DEFAULT_HEIGHT;
@@ -736,9 +736,16 @@ coreMap.Map.prototype.redraw = function() {
 	this.width = this.selector.width();
 	this.height = this.selector.height();
 	this.selector.css({
-		width: this.width,
-		height: this.height
+		width: this.width + 'px',
+		height: this.height + 'px'
 	});
+
+	// Since the heatmap layer doesn't natively support resizing, we need to update its size prior to 
+	// updating the main map view.
+	this.heatmapLayer.heatmap.set("width", this.width);
+	this.heatmapLayer.heatmap.set("height", this.height);
+	this.heatmapLayer.heatmap.resize();
+	this.heatmapLayer.redraw();
 	this.map.updateSize();
 }
 
