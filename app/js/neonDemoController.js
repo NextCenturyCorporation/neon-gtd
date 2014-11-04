@@ -30,7 +30,7 @@ angular.module('neonDemo.controllers', [])
 
     $scope.gridsterOpts = {
         columns: 6, // the width of the grid, in columns
-        pushing: true, // whether to push other items out of the way on move or resize
+        pushing: false, // whether to push other items out of the way on move or resize
         floating: true, // whether to automatically float items up so they stack (you can temporarily disable if you are adding unsorted items with ng-repeat)
         width: 'auto', // can be an integer or 'auto'. 'auto' scales gridster to be the full width of its containing element
         colWidth: 'auto', // can be an integer or 'auto'.  'auto' uses the pixel width of the element divided by 'columns'
@@ -48,17 +48,11 @@ angular.module('neonDemo.controllers', [])
         resizable: {
            enabled: true,
            //handles: ['n', 'e', 's', 'w', 'ne', 'se', 'sw', 'nw'],
-           handles: ['e', 's', 'w', 'ne', 'se', 'sw', 'nw'],
-           start: function(event, $element, widget) {}, // optional callback fired when resize is started,
-           resize: function(event, $element, widget) {}, // optional callback fired when item is resized,
-           stop: function(event, $element, widget) {} // optional callback fired when item is finished resizing
+           handles: ['e', 's', 'w', 'ne', 'se', 'sw', 'nw']
         },
         draggable: {
            enabled: true, // whether dragging items is supported
-           handle: '.visualization-drag-handle', // optional selector for draggable handle
-           start: function(event, $element, widget) {}, // optional callback fired when drag is started,
-           drag: function(event, $element, widget) {}, // optional callback fired when item is moved,
-           stop: function(event, $element, widget) {} // optional callback fired when item is finished dragging
+           handle: '.visualization-drag-handle' // optional selector for draggable handle
         }
     };
 
@@ -68,13 +62,13 @@ angular.module('neonDemo.controllers', [])
         row: 0,
         col: 0,
         type: 'timeline-selector'
-    },{
+    }, {
         sizeX: 6,
         sizeY: 2,
         row: 1,
         col: 0,
         type: 'heat-map'
-    },{
+    }, {
         sizeX: 2,
         sizeY: 2,
         row: 3,
@@ -83,7 +77,7 @@ angular.module('neonDemo.controllers', [])
         bindings: {
             "chart-type": "chartType"
         }
-    },{
+    }, {
         sizeX: 2,
         sizeY: 2,
         row: 3,
@@ -94,13 +88,13 @@ angular.module('neonDemo.controllers', [])
             "attr-y": "yAxisField",
             "bar-type": "barType"
         }
-    },{
+    }, {
         sizeX: 2,
         sizeY: 2,
         row: 3,
         col: 4,
         type: 'circular-heat-form'
-    },{
+    }, {
         sizeX: 6,
         sizeY: 2,
         row: 5,

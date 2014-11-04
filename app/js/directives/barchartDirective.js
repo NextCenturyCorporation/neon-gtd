@@ -44,7 +44,7 @@ barchart.directive('barchart', ['ConnectionService', '$timeout', function(connec
 		var COUNT_FIELD_NAME = 'Count';
 
 		el.resize(function() {
-			if ($scope.chart) {
+			if($scope.chart) {
 				$scope.chart.draw();
 			}
 		});

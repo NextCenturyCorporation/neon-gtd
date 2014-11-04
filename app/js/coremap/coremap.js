@@ -740,14 +740,14 @@ coreMap.Map.prototype.redraw = function() {
 		height: this.height + 'px'
 	});
 
-	// Since the heatmap layer doesn't natively support resizing, we need to update its size prior to 
+	// Since the heatmap layer doesn't natively support resizing, we need to update its size prior to
 	// updating the main map view.
 	this.heatmapLayer.heatmap.set("width", this.width);
 	this.heatmapLayer.heatmap.set("height", this.height);
 	this.heatmapLayer.heatmap.resize();
 	this.heatmapLayer.redraw();
 	this.map.updateSize();
-}
+};
 
 /**
  * Add a resize listener on the window to redraw the map

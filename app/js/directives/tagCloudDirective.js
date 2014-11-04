@@ -30,7 +30,7 @@ angular.module('tagCloudDirective', [])
 		},
 		link: function($scope, element) {
 			element.addClass("tagcloud-container");
-			
+
 			/**
 			 * Initializes the name of the directive's scope variables
 			 * and the Neon Messenger used to monitor data change events.

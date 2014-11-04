@@ -214,7 +214,7 @@ angular.module('heatMapDirective', [])
 				});
 
 				// Setup a basic resize handler to redraw the map and calculate its size if our div changes.
-				// Since the map redraw can take a while and resize events can come in a flood, we attempt to 
+				// Since the map redraw can take a while and resize events can come in a flood, we attempt to
 				// redraw only after a second of no consecutive resize events.
 				var redrawOnResize = function() {
 					$scope.resizePromise = null;
@@ -222,12 +222,11 @@ angular.module('heatMapDirective', [])
 				};
 
 				$element.resize(function() {
-					if ($scope.resizePromise) {
+					if($scope.resizePromise) {
 						$timeout.cancel($scope.resizePromise);
 					}
 					$scope.resizePromise = $timeout(redrawOnResize, $scope.resizeRedrawDelay);
 				});
-
 			};
 
 			var onMapEvent = function(message) {

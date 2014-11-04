@@ -15,46 +15,72 @@
  * limitations under the License.
  *
  */
-angular.module('visualizationWidgetDirective', [])
-    .directive('visualizationWidget', function($compile) {
+
+ /**
+ * This Angular JS directive adds a basic widget that contain Neon visualizations.  Widgets are
+ * defined by an Angular Gridster configuration object and include resize handlers, a resize bar,
+ * and a simple icon for expanding to a max column/row size.
+ * @example
+ *    &lt;div visualization-widget gridsterConfig="item[i]"&gt;&lt;/div&gt;
+ *
+ * @class neonDemo.directives.visulizationWidget
+ * @constructor
+ */
+angular.module('visualizationWidgetDirective', []).directive('visualizationWidget', function($compile) {
+    var MAXIMIZED_COLUMN_SIZE = 6;
+    var MAXIMIZED_ROW_SIZE = 4;
 
     return {
         restrict: 'A',
         scope: {
             gridsterConfig: "="
         },
-        template: '<div class="visualization-drag-handle"></div>',
-        link: function($scope, $elem, $attrs) {
-            // Create out widget.  Here, we are assuming the visualization is 
+        template: '<div class="visualization-drag-handle">' +
+                '<button type="button" class="btn pull-right" ng-click="toggleSize()">' +
+                '   <span  class="glyphicon" ng-class="(oldSize) ? \'glyphicon-resize-small\' : \'glyphicon-resize-full\'"></span>' +
+                '</button>' +
+            '</div>',
+        link: function($scope, $element) {
+            // Create out widget.  Here, we are assuming the visualization is
             // implementated as an attribute directive.
             var widgetElement = document.createElement("div");
             widgetElement.setAttribute($scope.gridsterConfig.type, "");
 
             // Pass along any bindings.
-            if ($scope.gridsterConfig && $scope.gridsterConfig.bindings) {
+            if($scope.gridsterConfig && $scope.gridsterConfig.bindings) {
                 var bindings = $scope.gridsterConfig.bindings;
-                for (var prop in bindings) {
-                    if (bindings.hasOwnProperty(prop)) {
+                for(var prop in bindings) {
+                    if(bindings.hasOwnProperty(prop)) {
                         widgetElement.setAttribute(prop, bindings[prop]);
                     }
                 }
             }
 
-            $elem.append($compile(widgetElement)($scope));
+            $element.append($compile(widgetElement)($scope));
 
-            var onVisualizationChange = function() {
-                console.log($scope.gridsterConfig.type + " changed");
+            /**
+             * Toggles the visualization widget between default and maximized views.
+             * @method onDatasetChanged
+             */
+            $scope.toggleSize = function() {
+                if($scope.oldSize) {
+                    $scope.gridsterConfig.sizeX = $scope.oldSize.sizeX;
+                    $scope.gridsterConfig.sizeY = $scope.oldSize.sizeY;
+                    $scope.gridsterConfig.col = $scope.oldSize.col;
+                    $scope.gridsterConfig.row = $scope.oldSize.row;
+                    $scope.oldSize = null;
+                } else {
+                    $scope.oldSize = {
+                        col: $scope.gridsterConfig.col,
+                        row: $scope.gridsterConfig.row,
+                        sizeX: $scope.gridsterConfig.sizeX,
+                        sizeY: $scope.gridsterConfig.sizeY
+                    };
+                    $scope.gridsterConfig.col = 0;
+                    $scope.gridsterConfig.sizeX = MAXIMIZED_COLUMN_SIZE;
+                    $scope.gridsterConfig.sizeY = Math.max(MAXIMIZED_ROW_SIZE, $scope.gridsterConfig.sizeY);
+                }
             };
-
-            $scope.$watch(["bindings", "visualization"], onVisualizationChange, true);
-
-            $scope.$watch('gridsterConfig.position[0]', function() {
-                console.log($scope.gridsterConfig.type + " repositioned");
-            }, true);
-
-            $scope.$watch('gridsterConfig.size.x', function() {
-                console.log($scope.gridsterConfig.type + " resized");
-            }, true);
         }
     };
 });
