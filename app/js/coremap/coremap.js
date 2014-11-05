@@ -109,9 +109,7 @@ coreMap.Map = function(elementId, opts) {
 	}
 
 	if(this.responsive) {
-		this.redrawOnResize();
-		//this.width = $(window).width();
-		//this.height = $(window).height() - 40;
+		this.resizeOnWindowResize();
 	} else {
 		this.width = opts.width || coreMap.Map.DEFAULT_WIDTH;
 		this.height = opts.height || coreMap.Map.DEFAULT_HEIGHT;
@@ -134,6 +132,8 @@ coreMap.Map.DEFAULT_OPACITY = 0.8;
 coreMap.Map.DEFAULT_STROKE_WIDTH = 1;
 coreMap.Map.DEFAULT_COLOR = "#00ff00";
 coreMap.Map.DEFAULT_STROKE_COLOR = "#ffffff";
+coreMap.Map.MIN_HEIGHT = 200;
+coreMap.Map.MIN_WIDTH = 200;
 coreMap.Map.MIN_RADIUS = 3;
 coreMap.Map.MAX_RADIUS = 13;
 coreMap.Map.BOX_COLOR = "#39b54a";
@@ -732,9 +732,13 @@ coreMap.Map.prototype.zoomToBounds = function(bounds) {
 	this.map.zoomToExtent(boundsObject.transform(coreMap.Map.SOURCE_PROJECTION, coreMap.Map.DESTINATION_PROJECTION));
 };
 
-coreMap.Map.prototype.redraw = function() {
-	this.width = this.selector.width();
-	this.height = this.selector.height();
+/**
+ * Resize the map to its element size. Adjust the heatmap canvas to match.  This should be called
+ * when the window resizes on the containing element resizes
+ */
+coreMap.Map.prototype.resizeToElement = function() {
+	this.width = Math.max(this.selector.width() || coreMap.Map.MIN_WIDTH);
+	this.height = Math.max(this.selector.height() || coreMap.Map.MIN_HEIGHT);
 	this.selector.css({
 		width: this.width + 'px',
 		height: this.height + 'px'
@@ -745,17 +749,27 @@ coreMap.Map.prototype.redraw = function() {
 	this.heatmapLayer.heatmap.set("width", this.width);
 	this.heatmapLayer.heatmap.set("height", this.height);
 	this.heatmapLayer.heatmap.resize();
-	this.heatmapLayer.redraw();
-	this.map.updateSize();
+	
+	// The map may resize multiple times if a browser resize event is triggered.  In this case,
+	// openlayers elements may have updated before our this method.  In that case, calling
+	// updateSize() is a no-op and will not recenter or redraw our heatmap layer.  To get around 
+	// this we shift the view by a pixel and recenter.
+	if (this.width !== this.map.getSize().w || this.height !== this.map.getSize().h ) {
+		this.map.updateSize();
+	}
+	else {
+		this.map.pan(1,1);
+		this.map.setCenter(this.map.getCachedCenter());
+	}
 };
 
 /**
  * Add a resize listener on the window to redraw the map
  * @method redrawOnResize
  */
-coreMap.Map.prototype.redrawOnResize = function() {
+coreMap.Map.prototype.resizeOnWindowResize = function() {
 	var me = this;
 	$(window).resize(function() {
-		me.redraw();
+		setTimeout(me.resizeToElement(), 1000);
 	});
 };
