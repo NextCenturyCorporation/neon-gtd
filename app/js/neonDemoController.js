@@ -38,7 +38,7 @@ angular.module('neonDemo.controllers', [])
         margins: [10, 10], // the pixel distance between each widget
         outerMargin: true, // whether margins apply to outer edges of the grid
         isMobile: false, // stacks the grid items if true
-        mobileBreakPoint: 600, // if the screen is not wider that this, remove the grid layout and stack the items
+        mobileBreakPoint: 800, // if the screen is not wider that this, remove the grid layout and stack the items
         mobileModeEnabled: true, // whether or not to toggle mobile mode when screen width is less than mobileBreakPoint
         minColumns: 1, // the minimum columns the grid must have
         minRows: 2, // the minimum height of the grid, in rows
@@ -104,6 +104,15 @@ angular.module('neonDemo.controllers', [])
             "tag-field": "'hashtags'"
         }
     }];
+
+    /**
+     * Returns whether or not our gridster setup is currently in mobile mode.
+     * @method isInMobileMode
+     */
+    $scope.isInMobileMode = function() {
+        return ($scope.gridsterOpts.mobileModeEnabled && 
+            ($('#gridster-div').width() <= $scope.gridsterOpts.mobileBreakPoint));
+    }
 
     /**
      * Simple toggle method for tracking whether or not the create filters tray should be visible.

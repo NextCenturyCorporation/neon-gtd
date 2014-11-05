@@ -26,6 +26,7 @@
 .heat-map {
     height: 100%;
     width: 100%;
+    min-height: 200px;
 }
 
 .heat-map .legend-item{
@@ -64,6 +65,10 @@
     height: 100% !important;
     position: static;
     margin: 0px -1px 0px -1px !important;
+}
+
+.visualization-widget-mobile .heat-map .olMap {
+    height: 400px !important;
 }
 
 .heat-map .olControlAttribution{
