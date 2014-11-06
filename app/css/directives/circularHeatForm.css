@@ -31,3 +31,7 @@
     height: 88%;
     width: 100%;
 }
+
+.visualization-widget-mobile .circularheatform .circularheatchart {
+    height: 400px;
+}
