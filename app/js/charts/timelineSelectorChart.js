@@ -508,13 +508,17 @@ charts.TimelineSelectorChart = function(element, configuration) {
 		this.granularity = granularity;
 	};
 
+	this.redrawChart = function() {
+		var extent = this.brush.extent();
+		this.render(this.data);
+		this.renderExtent(extent);
+	};
+
 	this.redrawOnResize = function() {
 		var me = this;
 
 		function drawChart() {
-			var extent = me.brush.extent();
-			me.render(me.data);
-			me.renderExtent(extent);
+			me.redrawChart();
 		}
 
 		// Debounce is needed because browser resizes fire this resize even multiple times.

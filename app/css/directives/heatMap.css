@@ -67,10 +67,6 @@
     margin: 0px -1px 0px -1px !important;
 }
 
-.visualization-widget-mobile .heat-map .olMap {
-    height: 400px !important;
-}
-
 .heat-map .olControlAttribution{
     bottom: 0;
     color: #555;
@@ -104,4 +100,8 @@
 
 .heatmap .olPopup td, .olPopup th {
     padding: 2px;
+}
+
+.visualization-widget-mobile .heat-map .olMap {
+    height: 400px !important;
 }

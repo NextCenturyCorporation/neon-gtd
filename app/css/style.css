@@ -831,16 +831,19 @@ label{
 /* ================
     Visualizations
 ================ */
+.gridster {
+    margin-left: -10px;
+    margin-right: -10px;
+}
+
+.gridster-item-resizable-handler {
+    z-index: 1060;
+}
+
 .visualization-widget {
     display: block;
     height: 100%;
     width: 100%;
-    margin: 0px;
-    padding: 0px;
-}
-
-.visualization-widget-mobile {
-    min-height:200px;
     margin: 0px;
     padding: 0px;
 }
@@ -858,7 +861,6 @@ label{
 .visualization-drag-handle:hover, .visualization-drag-handle:focus {
     background-color: #dddddd;
     opacity: 0.5;
-  /*  border: 1px black solid;*/
 }
 
 .visualization-drag-handle button {
@@ -874,11 +876,12 @@ label{
     opacity: 1;
 }
 
-.gridster {
-    margin-left: -10px;
-    margin-right: -10px;
+.visualization-widget-mobile {
+    min-height:200px;
+    margin: 0px;
+    padding: 0px;
 }
 
-.gridster-item-resizable-handler {
-    z-index: 1060;
+.visualization-widget-mobile .visualization-drag-handle {
+    display:none;
 }

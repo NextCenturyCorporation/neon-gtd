@@ -27,7 +27,7 @@
  * @constructor
  */
 angular.module('timelineSelectorChartDirective', [])
-.directive('timelineSelectorChart', function() {
+.directive('timelineSelectorChart', ['$timeout', function($timeout) {
 	return {
 		restrict: 'EA',
 		scope: {
@@ -38,9 +38,9 @@ angular.module('timelineSelectorChartDirective', [])
 			primarySeries: '=',
 			granularity: '='
 		},
-		link: function($scope, element) {
+		link: function($scope, $element) {
 			// Initialize the chart.
-			$scope.chart = new charts.TimelineSelectorChart(element[0]);
+			$scope.chart = new charts.TimelineSelectorChart($element[0]);
 
 			// Add a brush handler.
 			$scope.chart.addBrushHandler(function(data) {
@@ -53,6 +53,26 @@ angular.module('timelineSelectorChartDirective', [])
 
 			// Render an initial empty view.
 			$scope.chart.render([]);
+
+			var redrawOnResize = function() {
+				$scope.chart.redrawChart();
+				$scope.resizePromise = null;
+			};
+
+				
+			// Watch for changes in the element size and update us.
+			$scope.$watch(
+				function() {
+					return $element[0].clientWidth + "x" + $element[0].clientHeight;
+				},
+				function(oldVal, newVal) {
+					if ((oldVal !== newVal) && $scope.chart && $scope.timelineData && $scope.timelineData.length > 0) {
+						if($scope.resizePromise) {
+							$timeout.cancel($scope.resizePromise);
+						}
+						$scope.resizePromise = $timeout(redrawOnResize, 200);
+					}
+				});
 
 			// If our data updates, reset our internal value fields and render the new view
 			// and clear the brush.
@@ -93,4 +113,4 @@ angular.module('timelineSelectorChartDirective', [])
 			});
 		}
 	};
-});
+}]);

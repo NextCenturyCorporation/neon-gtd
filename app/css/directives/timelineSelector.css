@@ -15,23 +15,25 @@
  */
 
 .timeline-selector {
-	margin:auto;
 	display:block;
-	margin-top: 30px;
+	margin: 0px;
+	padding: 15px 20px 0px 20px;
+	overflow-x: hidden;
+	overflow-y: auto;
+	height: 100%;
+	width: 100%;
 }
 
-.timeline-selector h3 {
-    margin-bottom: 5px;
-    margin-top: -5px;
+.timeline-selector h4 {
+    margin: 0px 0px 0px 0px;
 }
 
 .timeline-selector .btn-group{
-	margin-top: 5px;
+	margin: 10px 0px 0px 0px;
 }
 
 .timeline-selector .form-group{
-	margin-top: 5px;
-	margin-left: 15px;
+	margin: 0px;
 }
 .timeline-selector select{
 	color: #555555;
@@ -41,7 +43,7 @@
 }
 
 .timeline-selector .filter-reset{
-	margin: 7px 15px 0 0;
+	margin: 13px 15px 0px 0px;
 	background-color: #dddddd;
 }
 .timeline-selector .filter-reset .btn{
