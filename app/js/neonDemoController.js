@@ -30,7 +30,7 @@ angular.module('neonDemo.controllers', [])
 
     $scope.gridsterOpts = {
         columns: 6, // the width of the grid, in columns
-        pushing: false, // whether to push other items out of the way on move or resize
+        pushing: true, // whether to push other items out of the way on move or resize
         floating: true, // whether to automatically float items up so they stack (you can temporarily disable if you are adding unsorted items with ng-repeat)
         width: 'auto', // can be an integer or 'auto'. 'auto' scales gridster to be the full width of its containing element
         colWidth: 'auto', // can be an integer or 'auto'.  'auto' uses the pixel width of the element divided by 'columns'
@@ -41,14 +41,14 @@ angular.module('neonDemo.controllers', [])
         mobileBreakPoint: 800, // if the screen is not wider that this, remove the grid layout and stack the items
         mobileModeEnabled: true, // whether or not to toggle mobile mode when screen width is less than mobileBreakPoint
         minColumns: 1, // the minimum columns the grid must have
-        minRows: 2, // the minimum height of the grid, in rows
+        minRows: 1, // the minimum height of the grid, in rows
         maxRows: 100,
         defaultSizeX: 2, // the default width of a gridster item, if not specifed
         defaultSizeY: 2, // the default height of a gridster item, if not specified
         resizable: {
            enabled: true,
            //handles: ['n', 'e', 's', 'w', 'ne', 'se', 'sw', 'nw'],
-           handles: ['e', 's', 'w', 'ne', 'se', 'sw', 'nw']
+           handles: ['ne', 'se', 'sw', 'nw']
         },
         draggable: {
            enabled: true, // whether dragging items is supported
@@ -96,7 +96,7 @@ angular.module('neonDemo.controllers', [])
         type: 'circular-heat-form'
     }, {
         sizeX: 6,
-        sizeY: 2,
+        sizeY: 1,
         row: 5,
         col: 0,
         type: 'tag-cloud',
