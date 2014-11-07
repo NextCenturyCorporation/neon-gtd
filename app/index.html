@@ -141,10 +141,9 @@
                     <!-- <li data-gridster-item data-row="visualization.position[0]" data-col="visualization.position[1]" data-sizex="visualization.size.x" data-sizey="visualization.size.y" ng-repeat="visualization in visualizations"> -->
                     <li gridster-item="visualization" ng-repeat="visualization in visualizations">
                         <div class="well" visualization-widget
-                            gridster-config="visualization"
-                            ng-class="(isInMobileMode())? 'visualization-widget-mobile' : 'visualization-widget'"
-                            visualization="{{visualization.type}}" 
-                            bindings="{{visualization.bindings}}"></div>
+                            gridster-configs="visualizations"
+                            gridster-config-index="$index"
+                            ng-class="(isInMobileMode())? 'visualization-widget-mobile' : 'visualization-widget'"></div>
                     </li>
                 </ul>
             </div>

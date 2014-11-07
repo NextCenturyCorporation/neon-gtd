@@ -21,7 +21,7 @@
  * defined by an Angular Gridster configuration object and include resize handlers, a resize bar,
  * and a simple icon for expanding to a max column/row size.
  * @example
- *    &lt;div visualization-widget gridsterConfig="item[i]"&gt;&lt;/div&gt;
+ *    &lt;div visualization-widget gridster-configs="items" gridster-config-index="0"&gt;&lt;/div&gt;
  *
  * @class neonDemo.directives.visulizationWidget
  * @constructor
@@ -33,9 +33,13 @@ angular.module('visualizationWidgetDirective', []).directive('visualizationWidge
     return {
         restrict: 'A',
         scope: {
-            gridsterConfig: "="
+            gridsterConfigs: "=",
+            gridsterConfigIndex: "=",
         },
         template: '<div class="visualization-drag-handle">' +
+                '<button type="button" class="btn pull-right" ng-click="remove()">' +
+                '   <span  class="glyphicon glyphicon-remove"></span>' +
+                '</button>' +
                 '<button type="button" class="btn pull-right" ng-click="toggleSize()">' +
                 '   <span  class="glyphicon" ng-class="(oldSize) ? \'glyphicon-resize-small\' : \'glyphicon-resize-full\'"></span>' +
                 '</button>' +
@@ -44,11 +48,12 @@ angular.module('visualizationWidgetDirective', []).directive('visualizationWidge
             // Create out widget.  Here, we are assuming the visualization is
             // implementated as an attribute directive.
             var widgetElement = document.createElement("div");
-            widgetElement.setAttribute($scope.gridsterConfig.type, "");
+            widgetElement.setAttribute($scope.gridsterConfigs[$scope.gridsterConfigIndex].type, "");
 
             // Pass along any bindings.
-            if($scope.gridsterConfig && $scope.gridsterConfig.bindings) {
-                var bindings = $scope.gridsterConfig.bindings;
+            if($scope.gridsterConfigs[$scope.gridsterConfigIndex] && 
+                $scope.gridsterConfigs[$scope.gridsterConfigIndex].bindings) {
+                var bindings = $scope.gridsterConfigs[$scope.gridsterConfigIndex].bindings;
                 for(var prop in bindings) {
                     if(bindings.hasOwnProperty(prop)) {
                         widgetElement.setAttribute(prop, bindings[prop]);
@@ -64,23 +69,32 @@ angular.module('visualizationWidgetDirective', []).directive('visualizationWidge
              */
             $scope.toggleSize = function() {
                 if($scope.oldSize) {
-                    $scope.gridsterConfig.sizeX = $scope.oldSize.sizeX;
-                    $scope.gridsterConfig.sizeY = $scope.oldSize.sizeY;
-                    $scope.gridsterConfig.col = $scope.oldSize.col;
-                    $scope.gridsterConfig.row = $scope.oldSize.row;
+                    $scope.gridsterConfigs[$scope.gridsterConfigIndex].sizeX = $scope.oldSize.sizeX;
+                    $scope.gridsterConfigs[$scope.gridsterConfigIndex].sizeY = $scope.oldSize.sizeY;
+                    $scope.gridsterConfigs[$scope.gridsterConfigIndex].col = $scope.oldSize.col;
+                    $scope.gridsterConfigs[$scope.gridsterConfigIndex].row = $scope.oldSize.row;
                     $scope.oldSize = null;
                 } else {
                     $scope.oldSize = {
-                        col: $scope.gridsterConfig.col,
-                        row: $scope.gridsterConfig.row,
-                        sizeX: $scope.gridsterConfig.sizeX,
-                        sizeY: $scope.gridsterConfig.sizeY
+                        col: $scope.gridsterConfigs[$scope.gridsterConfigIndex].col,
+                        row: $scope.gridsterConfigs[$scope.gridsterConfigIndex].row,
+                        sizeX: $scope.gridsterConfigs[$scope.gridsterConfigIndex].sizeX,
+                        sizeY: $scope.gridsterConfigs[$scope.gridsterConfigIndex].sizeY
                     };
-                    $scope.gridsterConfig.col = 0;
-                    $scope.gridsterConfig.sizeX = MAXIMIZED_COLUMN_SIZE;
-                    $scope.gridsterConfig.sizeY = Math.max(MAXIMIZED_ROW_SIZE, $scope.gridsterConfig.sizeY);
+                    $scope.gridsterConfigs[$scope.gridsterConfigIndex].col = 0;
+                    $scope.gridsterConfigs[$scope.gridsterConfigIndex].sizeX = MAXIMIZED_COLUMN_SIZE;
+                    $scope.gridsterConfigs[$scope.gridsterConfigIndex].sizeY = Math.max(MAXIMIZED_ROW_SIZE, 
+                        $scope.gridsterConfigs[$scope.gridsterConfigIndex].sizeY);
                 }
             };
+
+            /**
+             * Remove ourselves from the visualization list.
+             * @method remove
+             */
+            $scope.remove = function() {
+                $scope.gridsterConfigs.splice($scope.gridsterConfigIndex, 1);
+            }
         }
     };
 });

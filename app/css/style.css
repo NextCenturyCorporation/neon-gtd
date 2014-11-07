@@ -852,7 +852,7 @@ label{
 .visualization-drag-handle {
     cursor: move;
     position: absolute;
-    padding: 0px;
+    padding: 0px 10px;
     height: 25px;
     width: 100%;
     z-index: 1050;
@@ -861,20 +861,25 @@ label{
 
 .visualization-drag-handle:hover, .visualization-drag-handle:focus {
     background-color: #dddddd;
-    opacity: 0.5;
+    opacity: 0.75;
 }
 
 .visualization-drag-handle button {
-    margin: 4px 10px;
+    margin: 4px 0px 4px 5px;
     padding: 0px;
     height: 16px;
     width: 16px;
-    opacity: 1;
     z-index: 1065;
 }
 
-.visualization-drag-handle:hover button {
+.visualization-drag-handle:hover .glyphicon-remove {
     opacity: 1;
+    color: #f00;
+}
+
+.visualization-drag-handle:hover .glyphicon-resize-full, .visualization-drag-handle:hover .glyphicon-resize-small {
+    opacity: 1;
+    color: #39b54a;
 }
 
 .visualization-widget-mobile {

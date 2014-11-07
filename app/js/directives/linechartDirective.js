@@ -39,11 +39,19 @@ linechart.directive('linechart', ['ConnectionService', '$timeout', function(conn
 		$scope.totalType = 'count';
 		$scope.fields = [];
 		$scope.chart = undefined;
+		$scope.colorMappings = [];
 		$scope.attrX = '';
 		$scope.attrY = '';
 		$scope.categoryField = '';
 		$scope.aggregation = 'count';
 		$scope.seriesLimit = 10;
+
+		var updateChartSize = function() {
+			if ($scope.chart) {
+				$element.find('.linechart').height($element.height() - $element.find('.legend').outerHeight(true));
+				$scope.chart.redraw();
+			}
+		};
 
 		var initialize = function() {
 			$scope.messenger.events({
@@ -51,26 +59,26 @@ linechart.directive('linechart', ['ConnectionService', '$timeout', function(conn
 				filtersChanged: onFiltersChanged
 			});
 
-			var redrawOnResize = function() {
-				$element.find('.linechart').height($element.height() - $element.find('.legend').outerHeight(true));
-				//$element.find('.linechart').width($element.innerWidth() - $element.find('.legend').width());
-				$scope.chart.redraw();
-				$scope.resizePromise = null;
-			};
-
 				
-			// Watch for changes in the element size and update us.
+			// Watch for changes in the element size and update the graph to fill remaining space.
 			$scope.$watch(
 				function() {
-					return $element[0].clientWidth + "x" + $element[0].clientHeight;
+					return $element[0].clientHeight + "x" + $element[0].clientWidth;
 				},
 				function(oldVal, newVal) {
 					if ((oldVal !== newVal) && $scope.chart) {
-						redrawOnResize();
-						// if($scope.resizePromise) {
-						// 	$timeout.cancel($scope.resizePromise);
-						// }
-						// $scope.resizePromise = $timeout(redrawOnResize, 200);
+						updateChartSize();
+					}
+				});
+
+			// Watch for changes in the legend size and update the graph to fill remaining space.
+			$scope.$watch(
+				function() {
+					return $element.find('.legend')[0].clientHeight + "x" + $element.find('.legend')[0].clientWidth;
+				},
+				function(oldVal, newVal) {
+					if ((oldVal !== newVal) && $scope.colorMappings) {
+						updateChartSize();
 					}
 				});
 
@@ -100,7 +108,7 @@ linechart.directive('linechart', ['ConnectionService', '$timeout', function(conn
 				return $element.hasClass('ng-hide');
 			}, function(hidden) {
 				if(!hidden && $scope.chart) {
-					$scope.chart.redraw();
+					updateChartSize();
 				}
 			});
 		};
@@ -256,9 +264,11 @@ linechart.directive('linechart', ['ConnectionService', '$timeout', function(conn
 
 				// Render chart and series lines
 				XDATA.activityLogger.logSystemActivity('LineChart - query data received');
+
 				$scope.$apply(function() {
 					drawChart();
 					drawLine(data);
+					updateChartSize();
 					XDATA.activityLogger.logSystemActivity('LineChart - query data rendered');
 				});
 			});
