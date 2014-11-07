@@ -28,11 +28,11 @@
  */
 var linechart = angular.module('linechartDirective', []);
 
-linechart.directive('linechart', ['ConnectionService', function(connectionService) {
+linechart.directive('linechart', ['ConnectionService', '$timeout', function(connectionService, $timeout) {
 	var COUNT_FIELD_NAME = 'value';
 
-	var link = function($scope, el) {
-		el.addClass('linechartDirective');
+	var link = function($scope, $element) {
+		$element.addClass('linechartDirective well');
 
 		$scope.databaseName = '';
 		$scope.tableName = '';
@@ -50,6 +50,29 @@ linechart.directive('linechart', ['ConnectionService', function(connectionServic
 				activeDatasetChanged: onDatasetChanged,
 				filtersChanged: onFiltersChanged
 			});
+
+			var redrawOnResize = function() {
+				$element.find('.linechart').height($element.height() - $element.find('.legend').outerHeight(true));
+				//$element.find('.linechart').width($element.innerWidth() - $element.find('.legend').width());
+				$scope.chart.redraw();
+				$scope.resizePromise = null;
+			};
+
+				
+			// Watch for changes in the element size and update us.
+			$scope.$watch(
+				function() {
+					return $element[0].clientWidth + "x" + $element[0].clientHeight;
+				},
+				function(oldVal, newVal) {
+					if ((oldVal !== newVal) && $scope.chart) {
+						redrawOnResize();
+						// if($scope.resizePromise) {
+						// 	$timeout.cancel($scope.resizePromise);
+						// }
+						// $scope.resizePromise = $timeout(redrawOnResize, 200);
+					}
+				});
 
 			$scope.$watch('attrY', function(newValue, oldValue) {
 				onFieldChange('attrY', newValue, oldValue);
@@ -74,7 +97,7 @@ linechart.directive('linechart', ['ConnectionService', function(connectionServic
 			// Note, this supports the angular hide method and would need to be augmented to catch
 			// any other hiding mechanisms.
 			$scope.$watch(function() {
-				return $(el).hasClass('ng-hide');
+				return $element.hasClass('ng-hide');
 			}, function(hidden) {
 				if(!hidden && $scope.chart) {
 					$scope.chart.redraw();
@@ -324,7 +347,7 @@ linechart.directive('linechart', ['ConnectionService', function(connectionServic
 			if($scope.chart) {
 				$scope.chart.destroy();
 			}
-			$scope.chart = new charts.LineChart(el[0], '.linechart', opts);
+			$scope.chart = new charts.LineChart($element[0], '.linechart', opts);
 			$scope.chart.drawChart();
 		};
 

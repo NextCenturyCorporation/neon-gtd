@@ -139,6 +139,7 @@ charts.LineChart.prototype.drawChart = function() {
 		.attr("height", me.height)
 	.append("g")
 		.attr("transform", "translate(" + me.margin.left + "," + me.margin.top + ")");
+
 };
 
 charts.LineChart.prototype.calculateColor = function(series, total) {
@@ -407,6 +408,8 @@ charts.LineChart.prototype.drawLine = function(opts) {
 					return d[me.xAttribute];
 				}).right;
 				dataIndex = bisect(opts[0].data, graph_x);
+				// Adjust for out of range mouse events; Typical during a resize and some orientations.
+				dataIndex = (dataIndex < opts[0].data.length) ? dataIndex : (opts[0].data.length - 1);
 				dataDate = opts[0].data[dataIndex][me.xAttribute];
 				closerDate = dataDate;
 				closerIndex = dataIndex;
