@@ -32,7 +32,7 @@ linechart.directive('linechart', ['ConnectionService', '$timeout', function(conn
 	var COUNT_FIELD_NAME = 'value';
 
 	var link = function($scope, $element) {
-		$element.addClass('linechartDirective well');
+		$element.addClass('linechartDirective');
 
 		$scope.databaseName = '';
 		$scope.tableName = '';
@@ -59,16 +59,10 @@ linechart.directive('linechart', ['ConnectionService', '$timeout', function(conn
 				filtersChanged: onFiltersChanged
 			});
 
-				
-			// Watch for changes in the element size and update the graph to fill remaining space.
-			$scope.$watch(
-				function() {
-					return $element[0].clientHeight + "x" + $element[0].clientWidth;
-				},
-				function(oldVal, newVal) {
-					if ((oldVal !== newVal) && $scope.chart) {
-						updateChartSize();
-					}
+			// This resizes the chart when the div changes.  This rely's on jquery's resize plugin to fire
+			// on the associated element and not just the window.
+			$element.resize(function() {
+					updateChartSize();
 				});
 
 			// Watch for changes in the legend size and update the graph to fill remaining space.

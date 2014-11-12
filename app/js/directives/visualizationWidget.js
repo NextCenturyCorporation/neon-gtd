@@ -94,7 +94,7 @@ angular.module('visualizationWidgetDirective', []).directive('visualizationWidge
              */
             $scope.remove = function() {
                 $scope.gridsterConfigs.splice($scope.gridsterConfigIndex, 1);
-            }
+            };
         }
     };
 });

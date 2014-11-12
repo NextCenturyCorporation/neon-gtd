@@ -46,9 +46,9 @@ angular.module('neonDemo.controllers', [])
         defaultSizeX: 2, // the default width of a gridster item, if not specifed
         defaultSizeY: 2, // the default height of a gridster item, if not specified
         resizable: {
-           enabled: true,
-           //handles: ['n', 'e', 's', 'w', 'ne', 'se', 'sw', 'nw'],
-           handles: ['ne', 'se', 'sw', 'nw']
+            enabled: true,
+            //handles: ['n', 'e', 's', 'w', 'ne', 'se', 'sw', 'nw'],
+            handles: ['ne', 'se', 'sw', 'nw']
         },
         draggable: {
            enabled: true, // whether dragging items is supported
@@ -82,12 +82,7 @@ angular.module('neonDemo.controllers', [])
         sizeY: 2,
         row: 3,
         col: 2,
-        type: 'barchart',
-        bindings: {
-            "attr-x": "xAxisField",
-            "attr-y": "yAxisField",
-            "bar-type": "barType"
-        }
+        type: 'barchart'
     }, {
         sizeX: 2,
         sizeY: 2,

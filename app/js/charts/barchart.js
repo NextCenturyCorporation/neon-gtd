@@ -206,7 +206,7 @@ charts.BarChart.prototype.computeTickValues_ = function(tickValues) {
 	return tickValues;
 };
 
-charts.BarChart.prototype.determineVeiwboxString = function() {
+charts.BarChart.prototype.determineViewboxString = function() {
 	return this.viewboxXMin + " " + this.viewboxYMin + " " + this.viewboxXMax + " " + this.viewboxYMax;
 };
 
@@ -346,7 +346,7 @@ charts.BarChart.prototype.displayError = function() {
 charts.BarChart.prototype.drawChartSVG_ = function() {
 	var chart = this.element
 		.append('svg')
-		//.attr("viewBox", this.determineVeiwboxString())
+		//.attr("viewBox", this.determineViewboxString())
 		.attr('id', 'plot')
 		.append('g')
 		.attr('transform', 'translate(' + this.margin.left + ',' + this.margin.top + ')');
@@ -488,7 +488,7 @@ charts.BarChart.prototype.drawXAxis_ = function(chart) {
 	});
 
 	this.viewboxYMax = this.viewboxYMax + $(this.element[0]).find('g.x')[0].getBoundingClientRect().height;
-	//$(this.element[0]).children('svg')[0].setAttribute("viewBox", this.determineVeiwboxString());
+	//$(this.element[0]).children('svg')[0].setAttribute("viewBox", this.determineViewboxString());
 	$(this.element[0]).height(this.height - this.margin.bottom + $(this.element[0]).find('g.x')[0].getBoundingClientRect().height);
 
 	return axis;

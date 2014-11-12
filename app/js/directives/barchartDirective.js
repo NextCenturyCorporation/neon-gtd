@@ -29,8 +29,8 @@
 var barchart = angular.module('barchartDirective', []);
 
 barchart.directive('barchart', ['ConnectionService', '$timeout', function(connectionService, $timeout) {
-	var link = function($scope, el) {
-		el.addClass('barchartDirective');
+	var link = function($scope, $element) {
+		$element.addClass('barchartDirective');
 
 		$scope.messenger = new neon.eventing.Messenger();
 		$scope.database = '';
@@ -43,11 +43,12 @@ barchart.directive('barchart', ['ConnectionService', '$timeout', function(connec
 
 		var COUNT_FIELD_NAME = 'Count';
 
-		el.resize(function() {
-			if($scope.chart) {
+		var updateChartSize = function() {
+			if ($scope.chart) {
+				$element.find('.barchart').height($element.height() - $element.find('.legend').outerHeight(true));
 				$scope.chart.draw();
 			}
-		});
+		};
 
 		var initialize = function() {
 			drawBlankChart();
@@ -73,16 +74,20 @@ barchart.directive('barchart', ['ConnectionService', '$timeout', function(connec
 				}
 			});
 
-			// Detect if anything in the digest cycle altered our visibility and redraw our chart if necessary.
-			// Note, this supports the angular hide method and would need to be augmented to catch
-			// any other hiding mechanisms.
-			$scope.$watch(function() {
-				return $(el).hasClass('ng-hide');
-			}, function(hidden) {
-				if(!hidden && $scope.chart) {
-					$scope.chart.draw();
-				}
+			$element.resize(function() {
+				updateChartSize();
 			});
+
+			// // Watch for changes in the legend size and update the graph to fill remaining space.
+			$scope.$watch(
+				function() {
+					return $element.find('.legend')[0].clientHeight + "x" + $element.find('.legend')[0].clientWidth;
+				},
+				function(oldVal, newVal) {
+					if ((oldVal !== newVal) && $scope.colorMappings) {
+						updateChartSize();
+					}
+				});
 		};
 
 		var onFiltersChanged = function() {
@@ -178,10 +183,10 @@ barchart.directive('barchart', ['ConnectionService', '$timeout', function(connec
 				data: data.data,
 				x: xAxis,
 				y: yAxis,
-				responsive: true,
-				height: 250
+				responsive: false
 			};
-			$scope.chart = new charts.BarChart(el[0], '.barchart', opts).draw();
+			$scope.chart = new charts.BarChart($element[0], '.barchart', opts);
+			updateChartSize();
 		};
 
 		neon.ready(function() {
@@ -193,11 +198,6 @@ barchart.directive('barchart', ['ConnectionService', '$timeout', function(connec
 	return {
 		templateUrl: 'partials/barchart.html',
 		restrict: 'EA',
-		scope: {
-			attrX: '=',
-			attrY: '=',
-			barType: '='
-		},
 		link: link
 	};
 }]);

@@ -16,6 +16,7 @@
 
 .barchartDirective {
     margin: auto;
+    padding: 20px;
     display: block;
 }
 
@@ -67,11 +68,6 @@ svg .tick {
     color: #555555;
 }
 
-.timeline-div {
-    width: 100%;
-    height: 100%;
-}
-
 .chart-div {
     margin: auto;
     display: block;
@@ -82,4 +78,96 @@ svg .tick {
     color: red;
     margin-top: 170px;
     margin-left: 20px;
+}
+
+.barchart{
+  margin: 0 0 0;
+  min-height: 50px;
+  overflow: hidden;
+}
+.barchart .hover-line line { 
+  stroke: #e1e1e1;  
+  fill: none;
+  stroke-width: 1px;
+}
+.barchart .hover-line text {
+  font-weight: bold;
+  text-shadow: 0 2px 0 #FFFFFF;
+}
+.barchart .hover-line .hover-date {
+  fill: #555555;
+}
+.barchart svg{
+    font-size: 10px;
+}
+.axis path,
+.axis line {
+  fill: none;
+  stroke: #cccccc;
+  shape-rendering: crispEdges;
+}
+
+.x.axis path {
+  display: none;
+}
+
+.barchart .y.axis text{
+  text-shadow:
+    1px 1px 0 #FFFFFF,
+    1px 0px 0 #FFFFFF,
+    1px -1px 0 #FFFFFF,
+    -1px 1px 0 #FFFFFF,
+    -1px 0px 0 #FFFFFF,
+    -1px -1px 0 #FFFFFF,
+    0px 2px 0 #FFFFFF,
+    0px -2px 0 #FFFFFF;
+  font-weight: bold;
+  fill: #555555;
+}
+.barchart .y.axis .tick:first-child,
+.barchart .y.axis path,
+.barchart .y.axis .tick line{
+  display: none;
+}
+
+.barchart .horizontalGrid{
+  fill: none;
+  shape-rendering: crispEdges;
+  stroke: #eeeeee;
+  stroke-width : 1px;
+  stroke-dasharray: 6px;
+}
+.barchart .gridLines .horizontalGrid:first-child{
+  stroke-dasharray: 0;
+}
+
+
+.line {
+  fill: none;
+  stroke-width: 2px;
+}
+
+.barchart .dot{
+  stroke-width: 2px;
+}
+
+.barchart .dot-empty{
+  fill: #FFFFFF;
+}
+
+.barchartDirective .well{
+  margin: 0px;
+  padding: 20px;
+  height: 100%;
+  width: 100%;
+}
+
+.visualization-widget .barchartDirective {
+  height: 100%;
+  width: 100%;
+}
+
+.visualization-widget-mobile .barchartDirective {
+  min-height: 400px;
+  width: 100%;
 }
