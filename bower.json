@@ -6,25 +6,25 @@
     "license": "Apache v2",
     "private": true,
     "dependencies": {
-        "angular": "1.2.x",
-        "angular-gridster": "0.10.x",
-        "angular-loader": "1.2.x",
-        "angular-mocks": "1.2.x",
-        "angular-route": "1.2.x",
+        "angular": "1.2.26",
+        "angular-gridster": "0.10.7",
+        "angular-loader": "1.2.26",
+        "angular-mocks": "1.2.26",
+        "angular-route": "1.2.26",
         "bootstrap": "3.2.0",
-        "d3": "~3.0",
+        "d3": "3.0.8",
         "html5shiv": "3.7.2",
         "jquery": "1.11.1",
         "jquery-ui": "1.10.4",
         "jquery.event.drag-drop": "2.2.1",
-        "javascript-detect-element-resize": "sdecima/javascript-detect-element-resize#~0.5.1",
+        "javascript-detect-element-resize": "sdecima/javascript-detect-element-resize#0.5.3",
         "jquery.tagcloud": "https://github.com/addywaddy/jquery.tagcloud.js.git",
         "mergesort": "https://github.com/justinforce/merge-sort/archive/1.0.zip",
         "opencpu": "https://github.com/jeroenooms/opencpu.js.git",
         "openlayers": "https://github.com/openlayers/openlayers/releases/download/release-2.13.1/OpenLayers-2.13.1.zip",
         "openlayers-heatmap": "https://github.com/pa7/heatmap.js.git#v1.0",
         "owf": "https://www.owfgoss.org/nexus/content/groups/public/org/ozoneplatform/ozone-widgeting-framework/OWF-bundle/7.0.1/OWF-bundle-7.0.1-GA.zip",
-        "respond": "1.4.x",
+        "respond": "1.4.2",
         "slickgrid": "2.1.0",
         "xdatalogger": "https://github.com/draperlab/xdatalogger.git",
         "xdatalogger-worker": "https://raw.githubusercontent.com/draperlab/xdatalogger/master/javascript/draper.activity_worker-2.1.1.js"
@@ -122,5 +122,5 @@
             "css": "**/*.css"
         }
     }
-        
+
 }
