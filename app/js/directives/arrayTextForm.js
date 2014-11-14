@@ -19,11 +19,11 @@
 angular.module('neonDemo.directives')
 .directive('arrayTextForm', function() {
 	return {
+		templateUrl: "partials/directives/arrayTextForm.html",
 		restrict: "E",
 		scope: {
 			fields: '='
 		},
-		templateUrl: "app/partials/directives/arrayTextForm.html",
 		link: function($scope) {
 			$scope.addField = function() {
 				$scope.fields.push("");

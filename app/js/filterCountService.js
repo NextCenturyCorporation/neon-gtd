@@ -19,8 +19,8 @@
  * A service that provides the number of filters currently applied through the filter builder
  */
 
-var services = angular.module('neonDemo.services');
-services.factory('FilterCountService',
+angular.module('neonDemo.services')
+.factory('FilterCountService',
 	function() {
 		var count = 0;
 		var service = {};

@@ -27,7 +27,7 @@
  * @class neonDemo.directives.circularHeatChart
  * @constructor
  */
-angular.module('circularHeatChartDirective', [])
+angular.module('neonDemo.directives')
 .directive('circularHeatChart', function() {
 	var HOURS_IN_WEEK = 168;
 

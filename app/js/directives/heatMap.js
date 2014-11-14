@@ -26,10 +26,10 @@
  * @class neonDemo.directives.heatMap
  * @constructor
  */
-angular.module('heatMapDirective', [])
+angular.module('neonDemo.directives')
 .directive('heatMap', ['ConnectionService', '$timeout', function(connectionService, $timeout) {
 	return {
-		templateUrl: 'partials/heatMap.html',
+		templateUrl: 'partials/directives/heatMap.html',
 		restrict: 'EA',
 		scope: {
 			// map of categories to colors used for the legend
@@ -54,26 +54,25 @@ angular.module('heatMapDirective', [])
 			$scope.dataBounds = undefined;
 			$scope.limit = 1000;  // Max points to pull into the map.
 
+			// optionsDisplayed is used merely to track the display of the options menu
+			// for usability and workflow analysis.
+			$scope.optionsDisplayed = false;
+			// Setup our map.
+			$scope.mapId = uuid();
+			element.append('<div id="' + $scope.mapId + '" class="map"></div>');
+			$scope.map = new coreMap.Map($scope.mapId, {
+				height: 375,
+				width: "100%",
+				responsive: false,
+				onZoomRect: onZoomChanged
+			});
+
 			/**
 			 * Initializes the name of the directive's scope variables
 			 * and the Neon Messenger used to monitor data change events.
 			 * @method initialize
 			 */
 			$scope.initialize = function() {
-				// optionsDisplayed is used merely to track the display of the options menu
-				// for usability and workflow analysis.
-				$scope.optionsDisplayed = false;
-
-				// Setup our map.
-				$scope.mapId = uuid();
-				element.append('<div id="' + $scope.mapId + '" class="map"></div>');
-				$scope.map = new coreMap.Map($scope.mapId, {
-					height: 375,
-					width: "100%",
-					responsive: false,
-					onZoomRect: onZoomChanged
-				});
-
 				$scope.draw();
 				$scope.map.register("movestart", this, onMapEvent);
 				$scope.map.register("moveend", this, onMapEvent);
