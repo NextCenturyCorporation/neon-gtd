@@ -31,7 +31,7 @@
  * @constructor
  */
 angular.module('neonDemo.directives')
-.directive('timelineSelector', ['ConnectionService',function(connectionService) {
+.directive('timelineSelector', ['ConnectionService', function(connectionService) {
 	return {
 		templateUrl: 'partials/directives/timelineSelector.html',
 		restrict: 'EA',

@@ -73,7 +73,6 @@ angular.module('neonDemo.directives')
 
 			$scope.initialize = function() {
 				$scope.messenger = new neon.eventing.Messenger();
-
 			};
 
 			$scope.connectToDataServer = function() {
