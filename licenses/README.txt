@@ -37,11 +37,15 @@ MIT/X11 (mit.txt)
   -- angular.min.js v1.2.26
   -- angular-mocks.js v1.2.26
   -- angular-route.min.js v1.2.26
+- Angular-Gridster
+ -- angular-gridster.min.js 0.10.7
 - Bootstrap
   -- bootstrap.js v3.2.0
   -- bootstrap.min.js v3.2.0
 - HTML5 Shiv
   -- html5shiv.js v3.7.0
+- JavaScript Detect Element Resize
+  -- jquery.resize.js 0.5.3
 - jQuery
   -- jquery.min.js  v1.11.1
 - jQuery-ui
