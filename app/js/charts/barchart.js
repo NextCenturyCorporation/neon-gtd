@@ -78,6 +78,7 @@
  *
  */
 charts.BarChart = function(rootElement, selector, opts) {
+
 	opts = opts || {};
 	this.chartSelector_ = selector;
 	this.element = d3.select(rootElement).select(selector);
@@ -101,6 +102,8 @@ charts.BarChart = function(rootElement, selector, opts) {
 	this.viewboxXMax = 618;
 	this.viewboxYMax = 270;
 
+        this.maxCategoryLength = 10;
+
 	if(opts.init) {
 		opts.init.call(this, opts);
 	}
@@ -109,6 +112,7 @@ charts.BarChart = function(rootElement, selector, opts) {
 	this.tickFormat_ = opts.tickFormat;
 	this.tickValues_ = this.computeTickValues_(opts.tickValues);
 	this.categories = this.createCategories_(opts.categories ? opts.categories : this.createCategoriesFromUniqueValues_, opts.data);
+        this.categories = this.truncateCategories_(this.categories);
 
 	this.data_ = this.aggregateData_(opts.data);
 
@@ -222,6 +226,14 @@ charts.BarChart.prototype.createCategoriesFromUniqueValues_ = function(data) {
 		})
 		.sort(charts.BarChart.sortComparator_)
 		.value();
+};
+
+charts.BarChart.prototype.truncateCategories_ = function(categories) {
+        var me = this;
+        var truncatedCategories = categories.map(function(item) { 
+	        return item.substring(0, me.maxCategoryLength);
+        });
+        return truncatedCategories;
 };
 
 charts.BarChart.sortComparator_ = function(a, b) {
@@ -485,6 +497,12 @@ charts.BarChart.prototype.drawXAxis_ = function(chart) {
 	.attr("dy", ".15em")
 	.attr("transform", function() {
 		return "rotate(-60)";
+	})
+	.text(function (d) {
+	    if (d.length > 6)
+		return d.substring(0,6)+'...';
+	    else
+		return d;                       
 	});
 
 	this.viewboxYMax = this.viewboxYMax + $(this.element[0]).find('g.x')[0].getBoundingClientRect().height;
