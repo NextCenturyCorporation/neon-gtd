@@ -18,18 +18,29 @@
 /**
  * This directive is for building a tag cloud
  */
-angular.module('tagCloudDirective', [])
+angular.module('neonDemo.directives')
 .directive('tagCloud', ['ConnectionService', '$timeout', function(connectionService, $timeout) {
 	return {
-		templateUrl: 'partials/tagCloud.html',
+		templateUrl: 'partials/directives/tagCloud.html',
 		restrict: 'EA',
 		scope: {
 			tagField: '='
 		},
-		controller: function() {
-		},
 		link: function($scope, element) {
 			element.addClass("tagcloud-container");
+			$scope.databaseName = '';
+			$scope.tableName = '';
+
+			// data will be a list of tag name/counts in descending order
+			$scope.data = [];
+
+			// optionsDisplayed is used merely to track the display of the options menu
+			// for usability and workflow analysis.
+			$scope.optionsDisplayed = false;
+
+			$scope.filterTags = [];
+			$scope.showFilter = false;
+			$scope.andTags = true;
 
 			/**
 			 * Initializes the name of the directive's scope variables
@@ -37,22 +48,27 @@ angular.module('tagCloudDirective', [])
 			 * @method initialize
 			 */
 			$scope.initialize = function() {
-				$scope.databaseName = '';
-				$scope.tableName = '';
+				// Toggle the points and clusters view when the user toggles between them.
+				$scope.$watch('andTags', function(newVal, oldVal) {
+					XDATA.activityLogger.logUserActivity('TagCloud - user toggled tag combination', 'select_filter_menu_option',
+						XDATA.activityLogger.WF_EXPLORE,
+						{
+							and: newVal,
+							or: !newVal
+						});
+					if(newVal !== oldVal) {
+						$scope.setTagFilter($scope.filterTags);
+					}
+				});
 
-				// data will be a list of tag name/counts in descending order
-				$scope.data = [];
-
-				// optionsDisplayed is used merely to track the display of the options menu
-				// for usability and workflow analysis.
-				$scope.optionsDisplayed = false;
+				// Log whenever the user toggles the options display.
+				$scope.$watch('optionsDisplayed', function(newVal) {
+					var action = (newVal === true) ? 'show_options' : 'hide_options';
+					XDATA.activityLogger.logUserActivity('TagCloud - user toggled options display', action,
+						XDATA.activityLogger.WF_EXPLORE);
+				});
 
 				$scope.filterKey = neon.widget.getInstanceId("tagcloud");
-				$scope.filterTags = [];
-				$scope.showFilter = false;
-				$scope.$watchCollection('filterTags', $scope.setTagFilter);
-				$scope.andTags = true;
-
 				// Setup our messenger.
 				$scope.messenger = new neon.eventing.Messenger();
 
@@ -73,6 +89,8 @@ angular.module('tagCloudDirective', [])
 						end: '#2f9f3e'
 					}
 				};
+
+				$scope.$watchCollection('filterTags', $scope.setTagFilter);
 			};
 
 			/**
@@ -269,26 +287,6 @@ angular.module('tagCloudDirective', [])
 			$scope.toggleOptionsDisplay = function() {
 				$scope.optionsDisplayed = !$scope.optionsDisplayed;
 			};
-
-			// Toggle the points and clusters view when the user toggles between them.
-			$scope.$watch('andTags', function(newVal, oldVal) {
-				XDATA.activityLogger.logUserActivity('TagCloud - user toggled tag combination', 'select_filter_menu_option',
-					XDATA.activityLogger.WF_EXPLORE,
-					{
-						and: newVal,
-						or: !newVal
-					});
-				if(newVal !== oldVal) {
-					$scope.setTagFilter($scope.filterTags);
-				}
-			});
-
-			// Log whenever the user toggles the options display.
-			$scope.$watch('optionsDisplayed', function(newVal) {
-				var action = (newVal === true) ? 'show_options' : 'hide_options';
-				XDATA.activityLogger.logUserActivity('TagCloud - user toggled options display', action,
-					XDATA.activityLogger.WF_EXPLORE);
-			});
 
 			// Wait for neon to be ready, the create our messenger and intialize the view and data.
 			neon.ready(function() {

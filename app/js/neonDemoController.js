@@ -21,7 +21,7 @@
  * @class neonDemo.controllers.neonDemoController
  * @constructor
  */
-angular.module('neonDemo.controllers', [])
+angular.module('neonDemo.controllers')
 .controller('neonDemoController', ['$scope', '$timeout', 'FilterCountService', function($scope, $timeout, filterCountService) {
     $scope.seeData = false;
     $scope.createFilters = false;

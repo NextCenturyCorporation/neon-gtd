@@ -27,58 +27,18 @@
  * @class neonDemo.directives.filterBuilder
  * @constructor
  */
-angular.module('filterBuilderDirective', []).directive('filterBuilder', ['ConnectionService', 'FilterCountService',
-	function(connectionService, filterCountService) {
+angular.module('neonDemo.directives')
+.directive('filterBuilder', ['ConnectionService', 'FilterCountService', function(connectionService, filterCountService) {
 	return {
-		templateUrl: 'partials/filterBuilder.html',
+		templateUrl: 'partials/directives/filterBuilder.html',
 		restrict: 'EA',
-		controller: 'neonDemoController',
 		scope: {
 		},
+		controller: 'neonDemoController',
 		link: function($scope, el) {
-			/**
-			 * Event handler for connection changed events issued over Neon's messaging channels.
-			 * @method onConnectionChanged
-			 * @private
-			 */
-			var onConnectionChanged = function() {
-				XDATA.activityLogger.logSystemActivity('FilterBuilder - received neon connection changed event');
-				$scope.filterTable.clearFilterState();
-			};
-
-			/**
-			 * Event handler for dataset changed events issued over Neon's messaging channels.
-			 * @param {Object} message A Neon dataset changed message.
-			 * @param {String} message.database The database that was selected.
-			 * @param {String} message.table The table within the database that was selected.
-			 * @method onDatasetChanged
-			 * @private
-			 */
-			var onDatasetChanged = function(message) {
-				XDATA.activityLogger.logSystemActivity('FilterBuilder - received neon dataset changed event');
-				// Clear the filter table.
-				$scope.filterTable.clearFilterState();
-
-				// Save the new database and table name; Fetch the new table fields.
-				$scope.databaseName = message.database;
-				$scope.tableName = message.table;
-
-				// if there is no active connection, try to make one.
-				connectionService.connectToDataset(message.datastore, message.hostname, message.database, message.table);
-
-				// Query for data only if we have an active connection.
-				var connection = connectionService.getActiveConnection();
-				if(connection) {
-					XDATA.activityLogger.logSystemActivity('FilterBuilder - query for available fields');
-					connection.getFieldNames($scope.tableName, function(results) {
-						$scope.$apply(function() {
-							populateFieldNames(results);
-							$scope.selectedField = results[0];
-							XDATA.activityLogger.logSystemActivity('FilterBuilder - received available fields');
-						});
-					});
-				}
-			};
+			$scope.fields = [];
+			$scope.selectedField = "Select Field";
+			$scope.andClauses = true;
 
 			/**
 			 * Initializes the name of the date field used to query the current dataset
@@ -86,14 +46,11 @@ angular.module('filterBuilderDirective', []).directive('filterBuilder', ['Connec
 			 * @method initialize
 			 */
 			$scope.initialize = function() {
-				$scope.fields = [];
 				$scope.messenger = new neon.eventing.Messenger();
 				$scope.filterTable = new neon.query.FilterTable();
 				// Use a single session based filter key for this directive instance to allow multiple
 				// filter sets to be used in the same application.
 				$scope.filterTable.setFilterKey(neon.widget.getInstanceId("filterBuilder"));
-				$scope.selectedField = "Select Field";
-				$scope.andClauses = true;
 				$scope.selectedOperator = $scope.filterTable.operatorOptions[0] || '=';
 
 				$scope.messenger.events({
@@ -189,6 +146,50 @@ angular.module('filterBuilderDirective', []).directive('filterBuilder', ['Connec
 							logData);
 					}
 				}, true);
+			};
+
+			/**
+			 * Event handler for connection changed events issued over Neon's messaging channels.
+			 * @method onConnectionChanged
+			 * @private
+			 */
+			var onConnectionChanged = function() {
+				XDATA.activityLogger.logSystemActivity('FilterBuilder - received neon connection changed event');
+				$scope.filterTable.clearFilterState();
+			};
+
+			/**
+			 * Event handler for dataset changed events issued over Neon's messaging channels.
+			 * @param {Object} message A Neon dataset changed message.
+			 * @param {String} message.database The database that was selected.
+			 * @param {String} message.table The table within the database that was selected.
+			 * @method onDatasetChanged
+			 * @private
+			 */
+			var onDatasetChanged = function(message) {
+				XDATA.activityLogger.logSystemActivity('FilterBuilder - received neon dataset changed event');
+				// Clear the filter table.
+				$scope.filterTable.clearFilterState();
+
+				// Save the new database and table name; Fetch the new table fields.
+				$scope.databaseName = message.database;
+				$scope.tableName = message.table;
+
+				// if there is no active connection, try to make one.
+				connectionService.connectToDataset(message.datastore, message.hostname, message.database, message.table);
+
+				// Query for data only if we have an active connection.
+				var connection = connectionService.getActiveConnection();
+				if(connection) {
+					XDATA.activityLogger.logSystemActivity('FilterBuilder - query for available fields');
+					connection.getFieldNames($scope.tableName, function(results) {
+						$scope.$apply(function() {
+							populateFieldNames(results);
+							$scope.selectedField = results[0];
+							XDATA.activityLogger.logSystemActivity('FilterBuilder - received available fields');
+						});
+					});
+				}
 			};
 
 			/**

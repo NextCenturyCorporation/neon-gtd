@@ -26,10 +26,10 @@
  * @class neonDemo.directives.heatMap
  * @constructor
  */
-angular.module('heatMapDirective', [])
+angular.module('neonDemo.directives')
 .directive('heatMap', ['ConnectionService', '$timeout', function(connectionService, $timeout) {
 	return {
-		templateUrl: 'partials/heatMap.html',
+		templateUrl: 'partials/directives/heatMap.html',
 		restrict: 'EA',
 		scope: {
 			// map of categories to colors used for the legend
@@ -55,26 +55,22 @@ angular.module('heatMapDirective', [])
 			$scope.limit = 1000;  // Max points to pull into the map.
 			$scope.resizeRedrawDelay = 1500; // Time in ms to wait after a resize event flood to try redrawing the map.
 
+			// optionsDisplayed is used merely to track the display of the options menu
+			// for usability and workflow analysis.
+			$scope.optionsDisplayed = false;
+			// Setup our map.
+			$scope.mapId = uuid();
+			$element.append('<div id="' + $scope.mapId + '" class="map"></div>');
+			$scope.map = new coreMap.Map($scope.mapId, {
+				responsive: false
+			});
+
 			/**
 			 * Initializes the name of the directive's scope variables
 			 * and the Neon Messenger used to monitor data change events.
 			 * @method initialize
 			 */
 			$scope.initialize = function() {
-				// optionsDisplayed is used merely to track the display of the options menu
-				// for usability and workflow analysis.
-				$scope.optionsDisplayed = false;
-
-				// Setup our map.
-				$scope.mapId = uuid();
-				$element.append('<div id="' + $scope.mapId + '" class="map"></div>');
-				$scope.map = new coreMap.Map($scope.mapId, {
-					//height: "100%",
-					//width: "100%",
-					responsive: false,
-					onZoomRect: onZoomChanged
-				});
-
 				$scope.draw();
 				$scope.map.register("movestart", this, onMapEvent);
 				$scope.map.register("moveend", this, onMapEvent);
@@ -228,6 +224,36 @@ angular.module('heatMapDirective', [])
 					$scope.resizePromise = $timeout(redrawOnResize, $scope.resizeRedrawDelay);
 				});
 
+				// Add a zoomRect handler to the map.
+				$scope.map.onZoomRect = function(bounds) {
+					var extent = boundsToExtent(bounds);
+					var filter = $scope.createFilterFromExtent(extent);
+
+					XDATA.activityLogger.logUserActivity('HeatMap - user defined geographic filter area', 'execute_visual_filter',
+						XDATA.activityLogger.WF_GETDATA, extent);
+					XDATA.activityLogger.logSystemActivity('HeatMap - applying neon filter based on users geographic selection');
+					$scope.messenger.replaceFilter($scope.filterKey, filter, function() {
+						XDATA.activityLogger.logSystemActivity('HeatMap - applied neon filter');
+						$scope.$apply(function() {
+							$scope.queryForMapData();
+							drawZoomRect({
+								left: extent.minimumLongitude,
+								bottom: extent.minimumLatitude,
+								right: extent.maximumLongitude,
+								top: extent.maximumLatitude
+							});
+
+							// Show the Clear Filter button.
+							$scope.showFilter = true;
+							$scope.error = "";
+							XDATA.activityLogger.logSystemActivity('HeatMap - rendered filter graphic');
+						});
+					}, function() {
+						XDATA.activityLogger.logSystemActivity('HeatMap - Failed to apply neon filter');
+						// Notify the user of the error.
+						$scope.error = "Error: Failed to create filter.";
+					});
+				};
 			};
 
 			var onMapEvent = function(message) {
@@ -248,36 +274,6 @@ angular.module('heatMapDirective', [])
 			var onFiltersChanged = function() {
 				XDATA.activityLogger.logSystemActivity('HeatMap - received neon filter changed event');
 				$scope.queryForMapData();
-			};
-
-			var onZoomChanged = function(bounds) {
-				var extent = boundsToExtent(bounds);
-				var filter = $scope.createFilterFromExtent(extent);
-
-				XDATA.activityLogger.logUserActivity('HeatMap - user defined geographic filter area', 'execute_visual_filter',
-					XDATA.activityLogger.WF_GETDATA, extent);
-				XDATA.activityLogger.logSystemActivity('HeatMap - applying neon filter based on users geographic selection');
-				$scope.messenger.replaceFilter($scope.filterKey, filter, function() {
-					XDATA.activityLogger.logSystemActivity('HeatMap - applied neon filter');
-					$scope.$apply(function() {
-						$scope.queryForMapData();
-						drawZoomRect({
-							left: extent.minimumLongitude,
-							bottom: extent.minimumLatitude,
-							right: extent.maximumLongitude,
-							top: extent.maximumLatitude
-						});
-
-						// Show the Clear Filter button.
-						$scope.showFilter = true;
-						$scope.error = "";
-						XDATA.activityLogger.logSystemActivity('HeatMap - rendered filter graphic');
-					});
-				}, function() {
-					XDATA.activityLogger.logSystemActivity('HeatMap - Failed to apply neon filter');
-					// Notify the user of the error.
-					$scope.error = "Error: Failed to create filter.";
-				});
 			};
 
 			/**

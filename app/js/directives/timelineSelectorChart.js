@@ -26,7 +26,7 @@
  * @class neonDemo.directives.timelineSelectorChart
  * @constructor
  */
-angular.module('timelineSelectorChartDirective', [])
+angular.module('neonDemo.directives')
 .directive('timelineSelectorChart', ['$timeout', function($timeout) {
 	return {
 		restrict: 'EA',

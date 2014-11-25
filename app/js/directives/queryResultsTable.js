@@ -26,18 +26,37 @@
  * @class neonDemo.directives.queryResultsTable
  * @constructor
  */
-angular.module('queryResultsTableDirective', []).directive('queryResultsTable', ['ConnectionService',
+angular.module('neonDemo.directives')
+.directive('queryResultsTable', ['ConnectionService',
 	function(connectionService) {
 	return {
-		templateUrl: 'partials/queryResultsTable.html',
+		templateUrl: 'partials/directives/queryResultsTable.html',
 		restrict: 'EA',
 		scope: {
 			showData: '='
 		},
-		controller: function() {
-		},
 		link: function($scope, element) {
 			element.addClass('query-results-table');
+
+			$scope.ASCENDING = neon.query.ASCENDING;
+			$scope.DESCENDING = neon.query.DESCENDING;
+
+			$scope.databaseName = '';
+			$scope.tableName = '';
+			$scope.fields = [];
+			$scope.sortByField = '';
+			$scope.sortDirection = neon.query.ASCENDING;
+			$scope.limit = 500;
+			$scope.totalRows = 0;
+			$scope.error = '';
+
+			// Default our data table to be empty.  Generate a unique ID for it
+			// and pass that to the tables.Table object.
+			$scope.data = [];
+			$scope.tableId = 'query-results-' + uuid();
+			var $tableDiv = $(element).find('.query-results-grid');
+
+			$tableDiv.attr("id", $scope.tableId);
 
 			/**
 			 * Initializes the name of the directive's scope variables
@@ -45,25 +64,43 @@ angular.module('queryResultsTableDirective', []).directive('queryResultsTable', 
 			 * @method initialize
 			 */
 			$scope.initialize = function() {
-				$scope.ASCENDING = neon.query.ASCENDING;
-				$scope.DESCENDING = neon.query.DESCENDING;
+				// KLUDGE: Watch for changes to showData if it goes from false to true, we want to requery for data to
+				// trigger the data table to be recreated.  While deferring data queries to when the user want to display them
+				// is benefitial for initial application load, it can interfere with animations tied to whether or not this is
+				// displayed.  The other reason to query for data on show is because of issues with SlickGrid.  It does not
+				// display proper scrolling and sizing behavior if it is rendered while not visible.
+				$scope.$watch('showData', function(newVal) {
+					if(newVal) {
+						$scope.queryForData();
+					}
+				});
 
-				$scope.databaseName = '';
-				$scope.tableName = '';
-				$scope.fields = [];
-				$scope.sortByField = '';
-				$scope.sortDirection = neon.query.ASCENDING;
-				$scope.limit = 500;
-				$scope.totalRows = 0;
-				$scope.error = '';
+				$scope.$watch('sortByField', function(newVal, oldVal) {
+					XDATA.activityLogger.logUserActivity('DataView - user set database level sorting field', 'select_filter_menu_option',
+						XDATA.activityLogger.WF_GETDATA,
+						{
+							from: oldVal,
+							to: newVal
+						});
+				});
 
-				// Default our data table to be empty.  Generate a unique ID for it
-				// and pass that to the tables.Table object.
-				$scope.data = [];
-				$scope.tableId = 'query-results-' + uuid();
-				var $tableDiv = $(element).find('.query-results-grid');
+				$scope.$watch('sortDirection', function(newVal, oldVal) {
+					XDATA.activityLogger.logUserActivity('DataView - user set database level sorting direction', 'select_filter_menu_option',
+						XDATA.activityLogger.WF_GETDATA,
+						{
+							from: oldVal,
+							to: newVal
+						});
+				});
 
-				$tableDiv.attr("id", $scope.tableId);
+				$scope.$watch('limit', function(newVal, oldVal) {
+					XDATA.activityLogger.logUserActivity('DataView - user set max rows to pull from database', 'enter_filter_text',
+						XDATA.activityLogger.WF_GETDATA,
+						{
+							from: oldVal,
+							to: newVal
+						});
+				});
 
 				// Setup our messenger.
 				$scope.messenger = new neon.eventing.Messenger();
@@ -253,44 +290,6 @@ angular.module('queryResultsTableDirective', []).directive('queryResultsTable', 
 
 				return query;
 			};
-
-			// KLUDGE: Watch for changes to showData if it goes from false to true, we want to requery for data to
-			// trigger the data table to be recreated.  While deferring data queries to when the user want to display them
-			// is benefitial for initial application load, it can interfere with animations tied to whether or not this is
-			// displayed.  The other reason to query for data on show is because of issues with SlickGrid.  It does not
-			// display proper scrolling and sizing behavior if it is rendered while not visible.
-			$scope.$watch('showData', function(newVal) {
-				if(newVal) {
-					$scope.queryForData();
-				}
-			});
-
-			$scope.$watch('sortByField', function(newVal, oldVal) {
-				XDATA.activityLogger.logUserActivity('DataView - user set database level sorting field', 'select_filter_menu_option',
-					XDATA.activityLogger.WF_GETDATA,
-					{
-						from: oldVal,
-						to: newVal
-					});
-			});
-
-			$scope.$watch('sortDirection', function(newVal, oldVal) {
-				XDATA.activityLogger.logUserActivity('DataView - user set database level sorting direction', 'select_filter_menu_option',
-					XDATA.activityLogger.WF_GETDATA,
-					{
-						from: oldVal,
-						to: newVal
-					});
-			});
-
-			$scope.$watch('limit', function(newVal, oldVal) {
-				XDATA.activityLogger.logUserActivity('DataView - user set max rows to pull from database', 'enter_filter_text',
-					XDATA.activityLogger.WF_GETDATA,
-					{
-						from: oldVal,
-						to: newVal
-					});
-			});
 
 			// Wait for neon to be ready, the create our messenger and intialize the view and data.
 			neon.ready(function() {

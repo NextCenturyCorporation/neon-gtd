@@ -29,10 +29,10 @@
  * @class neonDemo.directives.circularHeatForm
  * @constructor
  */
-angular.module('circularHeatFormDirective', [])
+angular.module('neonDemo.directives')
 .directive('circularHeatForm', ['ConnectionService', function(connectionService) {
 	return {
-		templateUrl: 'partials/circularHeatForm.html',
+		templateUrl: 'partials/directives/circularHeatForm.html',
 		restrict: 'EA',
 		scope: {
 			filterKey: '='
@@ -66,6 +66,7 @@ angular.module('circularHeatFormDirective', [])
 			var HOURS_IN_DAY = 24;
 			// Defaulting the expected date field to 'created_at' as that works best with our twitter datasets.
 			var DEFAULT_DATE_FIELD = 'created_at';
+			$scope.dateField = DEFAULT_DATE_FIELD;
 
 			/**
 			 * Initializes the name of the date field used to query the current dataset
@@ -73,8 +74,6 @@ angular.module('circularHeatFormDirective', [])
 			 * @method initialize
 			 */
 			$scope.initialize = function() {
-				$scope.dateField = DEFAULT_DATE_FIELD;
-
 				$scope.messenger.events({
 					activeDatasetChanged: onDatasetChanged,
 					filtersChanged: onFiltersChanged

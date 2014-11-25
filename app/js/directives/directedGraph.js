@@ -15,10 +15,10 @@
  *
  */
 
-angular.module('directedGraphDirective', [])
+angular.module('neonDemo.directives')
 .directive('directedGraph', ['ConnectionService', function(connectionService) {
 	return {
-		templateUrl: 'app/partials/directives/directedGraph.html',
+		templateUrl: 'partials/directives/directedGraph.html',
 		restrict: 'EA',
 		scope: {
 			startingFields: '='

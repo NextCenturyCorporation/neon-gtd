@@ -26,7 +26,7 @@
  * @class neonDemo.directives.visulizationWidget
  * @constructor
  */
-angular.module('visualizationWidgetDirective', []).directive('visualizationWidget', function($compile) {
+angular.module('neonDemo.directives').directive('visualizationWidget', function($compile) {
     var MAXIMIZED_COLUMN_SIZE = 6;
     var MAXIMIZED_ROW_SIZE = 4;
 

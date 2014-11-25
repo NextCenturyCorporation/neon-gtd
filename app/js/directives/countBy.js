@@ -16,10 +16,10 @@
  *
  */
 
-angular.module("neonDemo.directives")
+angular.module('neonDemo.directives')
 .directive('countBy', ['ConnectionService', function(connectionService) {
 	return {
-		templateUrl: 'partials/countby.html',
+		templateUrl: 'partials/directives/countby.html',
 		restrict: 'EA',
 		scope: {
 		},
@@ -28,23 +28,27 @@ angular.module("neonDemo.directives")
 			$scope.fields = [];
 			$scope.tableId = 'query-results-' + uuid();
 
+			var $tableDiv = $(el).find('.count-by-grid');
+			$scope.createOptions([]);
+
+			$tableDiv.attr("id", $scope.tableId);
+
 			/**
 			 * Initializes the name of the directive's scope variables
 			 * and the Neon Messenger used to monitor data change events.
 			 * @method initialize
 			 */
 			$scope.initialize = function() {
-				var $tableDiv = $(el).find('.count-by-grid');
-				$scope.createOptions([]);
-
-				$tableDiv.attr("id", $scope.tableId);
-
 				// Setup our messenger.
 				$scope.messenger = new neon.eventing.Messenger();
 
 				$scope.messenger.events({
 					activeDatasetChanged: onDatasetChanged,
 					filtersChanged: onFiltersChanged
+				});
+
+				$scope.$watch('countField', function() {
+					$scope.queryForData();
 				});
 			};
 
@@ -173,10 +177,6 @@ angular.module("neonDemo.directives")
 
 				return query;
 			};
-
-			$scope.$watch('countField', function() {
-				$scope.queryForData();
-			});
 
 			neon.ready(function() {
 				$scope.initialize();

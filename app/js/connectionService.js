@@ -20,7 +20,7 @@
  * @class neonDemo.services.ConnectionService
  * @constructor
  */
-angular.module('neonDemo.services', [])
+angular.module('neonDemo.services')
 .factory('ConnectionService', function() {
 	var activeConnection;
 	var connectionInformation = {
