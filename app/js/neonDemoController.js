@@ -57,18 +57,21 @@ angular.module('neonDemo.controllers')
     };
 
     $scope.visualizations = [{
+        id: uuid(),
         sizeX: 6,
         sizeY: 1,
         row: 0,
         col: 0,
         type: 'timeline-selector'
     }, {
+        id: uuid(),
         sizeX: 6,
         sizeY: 2,
         row: 1,
         col: 0,
         type: 'heat-map'
     }, {
+        id: uuid(),
         sizeX: 2,
         sizeY: 2,
         row: 3,
@@ -78,18 +81,21 @@ angular.module('neonDemo.controllers')
             "chart-type": "chartType"
         }
     }, {
+        id: uuid(),
         sizeX: 2,
         sizeY: 2,
         row: 3,
         col: 2,
         type: 'barchart'
     }, {
+        id: uuid(),
         sizeX: 2,
         sizeY: 2,
         row: 3,
         col: 4,
         type: 'circular-heat-form'
     }, {
+        id: uuid(),
         sizeX: 6,
         sizeY: 1,
         row: 5,

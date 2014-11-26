@@ -1,0 +1,85 @@
+/*
+ * Copyright 2014 Next Century Corporation
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ */
+
+.add-visualization-button{
+    margin-right: 40px;
+    padding: 0px;
+    display: block;
+}
+
+.add-visualization-button > a {
+    background: none;
+    border: 0;
+    color: #777777;
+    display: block;
+    padding-bottom: 15px;
+    padding-top: 15px;
+}
+
+.add-visualization-button > a:focus,
+.add-visualization-button > a:hover,
+.add-visualization-button > a.collapsed:hover {
+    color: #39b54a;
+}
+
+.add-visualization .modal-body {
+    max-height: 405px;
+    overflow-y: auto;
+}
+
+.add-visualization-list {
+    list-style: none;
+}
+
+.add-visualization-list > li {
+    display: block;
+    float:left;
+    height: 100px;
+    margin: 10px;
+    width: 100px;
+}
+
+.add-visualization-list > li img {
+    border-width: 2px;
+}
+
+.add-visualization-list > li:hover img {
+    border-color: #7ce98e;
+}
+
+.add-visualization-list > li:hover p {
+    color: #7ce98e;
+}
+
+.add-visualization-list .visualization-thumbnail {
+    height: 70px;
+    width: 100px;
+}
+
+.add-visualization-list p {
+    color: #777777;
+    font-weight: bold;
+    height: 30px;
+    width: 100px;
+}
+
+.add-visualization-list .selected  img {
+    border-color: #39b54a;
+}
+
+.add-visualization-list .selected  p {
+    color: #39b54a;
+}

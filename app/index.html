@@ -19,6 +19,7 @@
         <link href="css/style.css" rel="stylesheet">
 
         <!-- Directive styles -->
+        <link rel="stylesheet" type="text/css" href="css/directives/addVisualization.css">
         <link rel="stylesheet" type="text/css" href="css/directives/circularHeatForm.css">
         <link rel="stylesheet" type="text/css" href="css/directives/circularHeatChart.css">
         <link rel="stylesheet" type="text/css" href="css/directives/barchart.css">
@@ -51,6 +52,9 @@
                     
                     <!-- Database Config -->
                     <database-config></database-config>
+
+                    <!-- Add visualization control -->
+                    <div add-visualization gridster-configs="visualizations"></div>
 
                     <ul class="nav navbar-nav">
                         <li>
@@ -133,13 +137,10 @@
         <!-- DASHBOARD CONTENT -->
         <div class="container">
 
-            <!-- Timeline -->
-            <!-- <div timeline-selector></div> -->
-
+            <!-- Use gridster to manage visualization layouts. -->
             <div gridster="gridsterOpts" id="gridster-div">
                 <ul>
-                    <!-- <li data-gridster-item data-row="visualization.position[0]" data-col="visualization.position[1]" data-sizex="visualization.size.x" data-sizey="visualization.size.y" ng-repeat="visualization in visualizations"> -->
-                    <li gridster-item="visualization" ng-repeat="visualization in visualizations">
+                    <li gridster-item="visualization" ng-repeat="visualization in visualizations track by visualization.id">
                         <div class="well" visualization-widget
                             gridster-configs="visualizations"
                             gridster-config-index="$index"
@@ -204,6 +205,7 @@
         <script src="js/filterCountService.js"></script>
         <script src="js/neonDemoController.js"></script>
 
+        <script src="js/directives/addVisualization.js"></script>
         <script src="js/directives/databaseConfig.js"></script>
         <script src="js/directives/poweredByNeon.js"></script>
         <script src="js/directives/filterBuilder.js"></script>
