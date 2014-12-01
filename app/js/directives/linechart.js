@@ -27,7 +27,7 @@
  * @constructor
  */
 angular.module('neonDemo.directives')
-.directive('linechart', ['ConnectionService', '$timeout', function(connectionService, $timeout) {
+.directive('linechart', ['ConnectionService', function(connectionService) {
 	var COUNT_FIELD_NAME = 'value';
 
 	return {
@@ -53,7 +53,7 @@ angular.module('neonDemo.directives')
 			$scope.seriesLimit = 10;
 
 			var updateChartSize = function() {
-				if ($scope.chart) {
+				if($scope.chart) {
 					$element.find('.linechart').height($element.height() - $element.find('.legend').outerHeight(true));
 					$scope.chart.redraw();
 				}

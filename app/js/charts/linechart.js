@@ -139,7 +139,6 @@ charts.LineChart.prototype.drawChart = function() {
 		.attr("height", me.height)
 	.append("g")
 		.attr("transform", "translate(" + me.margin.left + "," + me.margin.top + ")");
-
 };
 
 charts.LineChart.prototype.calculateColor = function(series, total) {

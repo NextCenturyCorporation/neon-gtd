@@ -749,16 +749,15 @@ coreMap.Map.prototype.resizeToElement = function() {
 	this.heatmapLayer.heatmap.set("width", this.width);
 	this.heatmapLayer.heatmap.set("height", this.height);
 	this.heatmapLayer.heatmap.resize();
-	
+
 	// The map may resize multiple times if a browser resize event is triggered.  In this case,
 	// openlayers elements may have updated before our this method.  In that case, calling
-	// updateSize() is a no-op and will not recenter or redraw our heatmap layer.  To get around 
+	// updateSize() is a no-op and will not recenter or redraw our heatmap layer.  To get around
 	// this we shift the view by a pixel and recenter.
-	if (this.width !== this.map.getSize().w || this.height !== this.map.getSize().h ) {
+	if(this.width !== this.map.getSize().w || this.height !== this.map.getSize().h) {
 		this.map.updateSize();
-	}
-	else {
-		this.map.pan(1,1);
+	} else {
+		this.map.pan(1, 1);
 		this.map.setCenter(this.map.getCachedCenter());
 	}
 };

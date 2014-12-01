@@ -59,14 +59,13 @@ angular.module('neonDemo.directives')
 				$scope.resizePromise = null;
 			};
 
-				
 			// Watch for changes in the element size and update us.
 			$scope.$watch(
 				function() {
 					return $element[0].clientWidth + "x" + $element[0].clientHeight;
 				},
 				function(oldVal, newVal) {
-					if ((oldVal !== newVal) && $scope.chart && $scope.timelineData && $scope.timelineData.length > 0) {
+					if((oldVal !== newVal) && $scope.chart && $scope.timelineData && $scope.timelineData.length > 0) {
 						if($scope.resizePromise) {
 							$timeout.cancel($scope.resizePromise);
 						}

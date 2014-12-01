@@ -46,7 +46,7 @@ angular.module('neonDemo.directives')
 			var COUNT_FIELD_NAME = 'Count';
 
 			var updateChartSize = function() {
-				if ($scope.chart) {
+				if($scope.chart) {
 					$element.find('.barchart').height($element.height() - $element.find('.legend').outerHeight(true));
 					$scope.chart.draw();
 				}

@@ -84,20 +84,20 @@ angular.module('neonDemo.directives')
              * @private
              */
             function getSelected() {
-                return _.filter($scope.visualizations, function(visualization) { 
-                    return visualization.selected === true; 
+                return _.filter($scope.visualizations, function(visualization) {
+                    return visualization.selected === true;
                 });
             }
 
             /**
-             * Adds one instance of each user-selected visualization type to the gridsterConfigs provided as 
+             * Adds one instance of each user-selected visualization type to the gridsterConfigs provided as
              * a binding to this directive instance.
              * @method addVisualizations
              */
             $scope.addVisualizations = function() {
                 var selected = getSelected();
                 _.each(selected, function(visualization) {
-                    // Clone the items.  Note that underscore's clone is shallow, so also 
+                    // Clone the items.  Note that underscore's clone is shallow, so also
                     // clone the default bindings explicitly.
                     var newVis = _.clone(visualization);
                     newVis.bindings = _.clone(visualization.bindings);
@@ -108,14 +108,16 @@ angular.module('neonDemo.directives')
                 $scope.deselectAll();
             };
 
-            /** 
+            /**
              * Deselects all visualization configurations in the dialog managed byt his directive.
              * @method deselectAll
              * @private
              */
             $scope.deselectAll = function() {
-                _.each($scope.visualizations, function(visualization) { visualization.selected = false; });
-            }
+                _.each($scope.visualizations, function(visualization) {
+                    visualization.selected = false;
+                });
+            };
         }
     };
 });

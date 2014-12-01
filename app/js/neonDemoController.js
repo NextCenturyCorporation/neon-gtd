@@ -56,6 +56,7 @@ angular.module('neonDemo.controllers')
         }
     };
 
+    // Define the gridster configurations for the default visualizations.
     $scope.visualizations = [{
         id: uuid(),
         sizeX: 6,
@@ -111,9 +112,9 @@ angular.module('neonDemo.controllers')
      * @method isInMobileMode
      */
     $scope.isInMobileMode = function() {
-        return ($scope.gridsterOpts.mobileModeEnabled && 
+        return ($scope.gridsterOpts.mobileModeEnabled &&
             ($('#gridster-div').width() <= $scope.gridsterOpts.mobileBreakPoint));
-    }
+    };
 
     /**
      * Simple toggle method for tracking whether or not the create filters tray should be visible.

@@ -34,7 +34,7 @@ angular.module('neonDemo.directives').directive('visualizationWidget', function(
         restrict: 'A',
         scope: {
             gridsterConfigs: "=",
-            gridsterConfigIndex: "=",
+            gridsterConfigIndex: "="
         },
         template: '<div class="visualization-drag-handle">' +
                 '<button type="button" class="btn pull-right" ng-click="remove()">' +
@@ -51,7 +51,7 @@ angular.module('neonDemo.directives').directive('visualizationWidget', function(
             widgetElement.setAttribute($scope.gridsterConfigs[$scope.gridsterConfigIndex].type, "");
 
             // Pass along any bindings.
-            if($scope.gridsterConfigs[$scope.gridsterConfigIndex] && 
+            if($scope.gridsterConfigs[$scope.gridsterConfigIndex] &&
                 $scope.gridsterConfigs[$scope.gridsterConfigIndex].bindings) {
                 var bindings = $scope.gridsterConfigs[$scope.gridsterConfigIndex].bindings;
                 for(var prop in bindings) {
@@ -83,7 +83,7 @@ angular.module('neonDemo.directives').directive('visualizationWidget', function(
                     };
                     $scope.gridsterConfigs[$scope.gridsterConfigIndex].col = 0;
                     $scope.gridsterConfigs[$scope.gridsterConfigIndex].sizeX = MAXIMIZED_COLUMN_SIZE;
-                    $scope.gridsterConfigs[$scope.gridsterConfigIndex].sizeY = Math.max(MAXIMIZED_ROW_SIZE, 
+                    $scope.gridsterConfigs[$scope.gridsterConfigIndex].sizeY = Math.max(MAXIMIZED_ROW_SIZE,
                         $scope.gridsterConfigs[$scope.gridsterConfigIndex].sizeY);
                 }
             };
