@@ -865,6 +865,7 @@ label{
 }
 
 .visualization-drag-handle button {
+    line-height: 16px;
     margin: 4px 0px 4px 5px;
     padding: 0px;
     height: 16px;

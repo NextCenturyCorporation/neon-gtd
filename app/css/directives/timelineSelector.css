@@ -33,8 +33,13 @@
 }
 
 .timeline-selector .form-group{
-	margin: 0px;
+	margin: 10px 0px 0px 5px;
 }
+
+.timeline-selector .text-center{
+	margin: 10px 0px 0px 0px;
+}
+
 .timeline-selector select{
 	color: #555555;
 	font-size: 12px;
@@ -51,7 +56,7 @@
 }
 
 .timeline-selector .timeseries-selector{
-	width: 150px;
+	width: 200px;
 }
 .timeline-selector .timeseries-selector .btn{
 	background-color: #dddddd;
