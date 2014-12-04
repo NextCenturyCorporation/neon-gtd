@@ -230,7 +230,7 @@ charts.BarChart.prototype.createCategoriesFromUniqueValues_ = function(data) {
 charts.BarChart.prototype.truncateCategories_ = function(categories) {
         var me = this;
         var truncatedCategories = categories.map(function(item) {
-            return item.substring(0, me.maxCategoryLength);
+            return item.toString().substring(0, me.maxCategoryLength);
         });
         return truncatedCategories;
 };
