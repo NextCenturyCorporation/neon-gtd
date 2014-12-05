@@ -98,7 +98,6 @@
 	],
 	"requireSpaceAfterBinaryOperators": [
 		"=",
-		",",
 		"+",
 		"-",
 		"/",
@@ -121,5 +120,4 @@
 	//"requireYodaConditions": true,
 	"disallowNewlineBeforeBlockStatements": true,
 	"validateParameterSeparator": ", "
-
 }
