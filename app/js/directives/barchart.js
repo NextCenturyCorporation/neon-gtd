@@ -32,6 +32,10 @@ angular.module('neonDemo.directives')
 		templateUrl: 'partials/directives/barchart.html',
 		restrict: 'EA',
 		link: function($scope, $element) {
+			$scope.uniqueChartOptions = 'chart-options-' + uuid();
+			var chartOptions = $($element).find('.chart-options');
+			chartOptions.toggleClass($scope.uniqueChartOptions);
+
 			$element.addClass('barchartDirective');
 
 			$scope.messenger = new neon.eventing.Messenger();
