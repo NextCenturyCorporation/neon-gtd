@@ -364,7 +364,7 @@ charts.LineChart.prototype.drawLine = function(opts) {
 		.attr("class", "y axis")
 		.call(yAxis);
 
-	var tick = $('.linechart').find('.x.axis').find('.tick.major').first();
+	var tick = $(this.element).find('.x.axis').find('.tick.major').first();
 	if(tick.length !== 0) {
 		var transform = tick.attr('transform');
 		var parts  = /translate\(\s*([^\s,)]+)[ ,]([^\s,)]+)/.exec(transform);
@@ -375,7 +375,7 @@ charts.LineChart.prototype.drawLine = function(opts) {
 			tick.find('text').css('text-anchor', 'start');
 		}
 
-		tick = $('.linechart').find('.x.axis').find('.tick.major').last();
+		tick = $(this.element).find('.x.axis').find('.tick.major').last();
 		transform = tick.attr('transform');
 		parts  = /translate\(\s*([^\s,)]+)[ ,]([^\s,)]+)/.exec(transform);
 		firstX = parseInt(parts[1]);
@@ -387,7 +387,7 @@ charts.LineChart.prototype.drawLine = function(opts) {
 	}
 
 	// Add mouseover events.
-	d3.select('.linechart').on("mousemove", function() {
+	this.element.on("mousemove", function() {
 		if(opts && opts.length > 0) {
 			var mouse_x = d3.mouse(this)[0];
 			var graph_x = me.x.invert(mouse_x);

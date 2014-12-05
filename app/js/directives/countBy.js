@@ -29,7 +29,7 @@ angular.module('neonDemo.directives')
 			$scope.tableId = 'query-results-' + uuid();
 
 			var $tableDiv = $(el).find('.count-by-grid');
-			$scope.createOptions([]);
+			createOptions([]);
 
 			$tableDiv.attr("id", $scope.tableId);
 
@@ -52,7 +52,7 @@ angular.module('neonDemo.directives')
 				});
 			};
 
-			$scope.createOptions = function(data) {
+			function createOptions(data) {
 				var options = {
 					data: data.data,
 					gridOptions: {
@@ -63,7 +63,7 @@ angular.module('neonDemo.directives')
 				};
 
 				return options;
-			};
+			}
 
 			/**
 			 * Event handler for filter changed events issued over Neon's messaging channels.
@@ -158,7 +158,7 @@ angular.module('neonDemo.directives')
 			$scope.updateData = function(queryResults) {
 				var cleanData = $scope.stripIdField(queryResults);
 				// Handle the new data.
-				$scope.tableOptions = $scope.createOptions(cleanData);
+				$scope.tableOptions = createOptions(cleanData);
 
 				$scope.table = new tables.Table("#" + $scope.tableId, $scope.tableOptions).draw();
 				$scope.table.refreshLayout();

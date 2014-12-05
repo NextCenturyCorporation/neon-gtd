@@ -1,9 +1,9 @@
 <div class="chart-options pull-right">
-    <a class="btn btn-lg text-muted collapsed" data-toggle="collapse" data-target="#line-chart-options" data-animation=false>
+    <a class="btn btn-lg text-muted collapsed" data-toggle="collapse" data-target=".{{uniqueChartOptions}} .line-chart-options" data-animation=false>
       <span class="glyphicon glyphicon-cog"></span>
       <span class="caret"></span>
     </a>
-    <div id="line-chart-options" class="popover bottom">
+    <div class="line-chart-options popover bottom">
         <div class="arrow"></div>
         <div class="popover-content">
             <div class="form-group">
@@ -36,12 +36,12 @@
 
     <div class="legend-item legend-item-clickable" title="{{colorMapping.series}}" ng-repeat="colorMapping in colorMappings" ng-click="toggleSeries(colorMapping.series)" ng-class="{true: 'legend-hidden', false: ''}[colorMapping.hidden]">
         <span class="legend-icon" style="background-color: {{colorMapping.color}}"></span>
-        <span class="legend-text">{{colorMapping.series}}</span> 
+        <span class="legend-text">{{colorMapping.series}}</span>
         <span ng-show="aggregation != 'avg'" class="legend-count text-muted">({{colorMapping.total | numberShort}})</span>
     </div>
 
 </div>
 
-<div class="clearfix"></div> 
+<div class="clearfix"></div>
 
 <div class="linechart"></div>

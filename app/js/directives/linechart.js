@@ -38,6 +38,10 @@ angular.module('neonDemo.directives')
 			chartType: '='
 		},
 		link: function($scope, $element) {
+			$scope.uniqueChartOptions = 'chart-options-' + uuid();
+			var chartOptions = $($element).find('.chart-options');
+			chartOptions.toggleClass($scope.uniqueChartOptions);
+
 			$element.addClass('linechartDirective');
 
 			$scope.databaseName = '';

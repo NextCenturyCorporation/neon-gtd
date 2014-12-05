@@ -75,6 +75,12 @@ angular.module('neonDemo.directives')
                     "tag-field": "'hashtags'"
                 },
                 icon: 'img/visualizations/TagCloud64.png'
+            },{
+                name: 'Count By',
+                sizeX: 2,
+                sizeY: 2,
+                type: 'count-by',
+                icon: 'img/Neon_60x34.png'
             }];
 
             /**
