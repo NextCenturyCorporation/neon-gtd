@@ -153,16 +153,22 @@
 
 		</div>
 
-		<!-- Include the xdata logging package. -->
+				<!-- Include the xdata logging package. -->
 		<script src="lib/xdatalogger/js/draper.activity_logger-2.1.1.js"></script>
 		<script src="lib/xdatalogger/js/draper.activity_worker-2.1.1.js"></script>
 
 		<!-- Including neon before angular here as neon has lodash and jquery wrapped into it.  If this is
 			 loaded first, angular should pick up the included jQuery. -->
 		<script src="/neon/js/neon.js"></script>
-		<script src="js/appConfig.js"></script>
 
 		<script src="lib/jquery/js/jquery.min.js"></script>
+
+		<!-- Include the opencpu library. OpenCPU needs to be included after JQuery and before the app config. -->
+		<script src="lib/opencpu/js/opencpu-0.5.js"></script>
+
+		<!-- Configure our main demo application -->
+		<script src="js/appConfig.js"></script>
+
 		<!-- In production use:
 		<script src="//ajax.googleapis.com/ajax/libs/angularjs/x.x.x/angular.min.js"></script>
 		-->
@@ -188,7 +194,6 @@
 		<script src="lib/slickgrid/js/slick.rowselectionmodel.js"></script>
 		<script src="lib/mergesort/js/merge-sort.js"></script>
 		<script src="lib/bootstrap/js/bootstrap.min.js"></script>
-		<script src="lib/opencpu/js/opencpu-0.5.js"></script>
 
 		<!-- Include required non-angular support modules -->
 		<script src="js/neon-extensions/filtertable.js"></script>
