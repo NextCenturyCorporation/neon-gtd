@@ -63,7 +63,7 @@ angular.module('neonDemo.directives')
 				};
 
 				return options;
-			};
+			}
 
 			/**
 			 * Event handler for filter changed events issued over Neon's messaging channels.
