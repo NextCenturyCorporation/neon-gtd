@@ -41,31 +41,31 @@ angular.module('neonDemo.directives')
                 sizeX: 6,
                 sizeY: 1,
                 type: 'timeline-selector',
-                icon: 'img/Neon_60x34.png'
+                icon: 'img/visualizations/Timeline64.png'
             }, {
                 name: 'Map',
                 sizeX: 6,
                 sizeY: 2,
                 type: 'heat-map',
-                icon: 'img/Neon_60x34.png'
+                icon: 'img/visualizations/Map64.png'
             }, {
                 name: 'Linechart',
                 sizeX: 2,
                 sizeY: 2,
                 type: 'linechart',
-                icon: 'img/Neon_60x34.png'
+                icon: 'img/visualizations/LineChart64.png'
             }, {
                 name: 'Barchart',
                 sizeX: 2,
                 sizeY: 2,
                 type: 'barchart',
-                icon: 'img/Neon_60x34.png'
+                icon: 'img/visualizations/BarChart64.png'
             }, {
                 name: 'Ops Clock',
                 sizeX: 2,
                 sizeY: 2,
                 type: 'circular-heat-form',
-                icon: 'img/Neon_60x34.png'
+                icon: 'img/visualizations/OpsClock64.png'
             }, {
                 name: 'Tag Cloud',
                 sizeX: 6,
@@ -74,7 +74,7 @@ angular.module('neonDemo.directives')
                 bindings: {
                     "tag-field": "'hashtags'"
                 },
-                icon: 'img/Neon_60x34.png'
+                icon: 'img/visualizations/TagCloud64.png'
             }];
 
             /**
