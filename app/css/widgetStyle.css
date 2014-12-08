@@ -9,7 +9,6 @@ body{
     box-shadow: none;
     border: 0;
     margin: 0;
-    padding: 20px 20px 0;
 }
 .well-blank{
     padding: 20px 20px 0;
@@ -230,18 +229,6 @@ body{
 @media (max-width: 767px) {
     .timeline-selector h3 {
         font-size: 17px;
-    }
-}
-
-/* Tag cloud */
-@media (max-width: 767px) {
-    .tagcloud {
-        font-size: 12px;
-    }
-}
-@media (max-width: 500px) {
-    .tagcloud {
-        font-size: 10px;
     }
 }
 
