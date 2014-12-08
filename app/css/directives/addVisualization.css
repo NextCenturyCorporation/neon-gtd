@@ -56,20 +56,27 @@
     border-width: 2px;
 }
 
-.add-visualization-list > li:hover img {
+.add-visualization-list button {
+    background: rgba(256, 256, 256, 1);
+    border: 0px;
+}
+
+.add-visualization-list button:focus img,
+.add-visualization-list button:hover img {
     border-color: #7ce98e;
 }
 
-.add-visualization-list > li:hover p {
+.add-visualization-list button:focus span,
+.add-visualization-list button:hover span {
     color: #7ce98e;
 }
 
 .add-visualization-list .visualization-thumbnail {
-    height: 70px;
+    height: 76px;
     width: 100px;
 }
 
-.add-visualization-list p {
+.add-visualization-list span {
     color: #777777;
     font-weight: bold;
     height: 30px;
@@ -80,6 +87,6 @@
     border-color: #39b54a;
 }
 
-.add-visualization-list .selected  p {
+.add-visualization-list .selected  span {
     color: #39b54a;
 }
