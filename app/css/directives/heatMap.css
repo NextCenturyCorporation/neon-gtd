@@ -64,7 +64,7 @@
     width: auto !important;
     height: 100% !important;
     position: static;
-    margin: 0px -1px 0px -1px !important;
+   margin: 0px !important;
 }
 
 .heat-map .olControlAttribution{

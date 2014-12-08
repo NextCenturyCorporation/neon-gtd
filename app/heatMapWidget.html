@@ -32,7 +32,9 @@
 	<body ng-controller="neonDemoController">
 
 		<!-- Map -->
-		<div heat-map class="well well-map"></div>
+		<div class="visualization-widget">
+			<div heat-map></div>
+		</div>
 
 		<!-- In production use:
 		<script src="//ajax.googleapis.com/ajax/libs/angularjs/x.x.x/angular.min.js"></script>
@@ -49,6 +51,7 @@
 		<script src="js/appConfig.js"></script>
 
 		<script src="lib/jquery/js/jquery.min.js"></script>
+		<script src="lib/javascript-detect-element-resize/js/jquery.resize.js"></script>
 		<script src="lib/angular/js/angular.min.js"></script>
 
 		<!-- Include third party libs -->
@@ -108,9 +111,12 @@
 			var neonDemo = angular.module('neonDemo', [
 				'neonDemo.controllers',
 				'neonDemo.services',
-				'heatMapDirective'
+				'neonDemo.directives',
 			]);
 
+			angular.module('neonDemo.directives', []);
+			angular.module('neonDemo.controllers', []);
+			angular.module('neonDemo.services', []);
 		</script>
 
 		<!-- Include supporting directives. -->

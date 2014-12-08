@@ -101,8 +101,12 @@
 			var neonDemo = angular.module('neonDemo', [
 				'neonDemo.controllers',
 				'neonDemo.services',
-				'configurationDirective',
+				'neonDemo.directives',
 			]);
+
+			angular.module('neonDemo.directives', []);
+			angular.module('neonDemo.controllers', []);
+			angular.module('neonDemo.services', []);
 
 		</script>
 
@@ -111,6 +115,6 @@
 		<script src="js/filterCountService.js"></script>
 		<script src="js/neonDemoController.js"></script>
 
-		<script src="js/directives/databaseConfigDirective.js"></script>
+		<script src="js/directives/databaseConfig.js"></script>
 	</body>
 </html>

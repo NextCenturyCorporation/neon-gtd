@@ -48,6 +48,7 @@
 		<script src="js/appConfig.js"></script>
 
 		<script src="lib/jquery/js/jquery.min.js"></script>
+		<script src="lib/javascript-detect-element-resize/js/jquery.resize.js"></script>
 		<script src="lib/angular/js/angular.min.js"></script>
 
 		<!-- Include third party libs -->
@@ -104,8 +105,12 @@
 			var neonDemo = angular.module('neonDemo', [
 				'neonDemo.controllers',
 				'neonDemo.services',
-				'filterBuilderDirective'
+				'neonDemo.directives',
 			]);
+
+			angular.module('neonDemo.directives', []);
+			angular.module('neonDemo.controllers', []);
+			angular.module('neonDemo.services', []);
 
 		</script>
 
@@ -113,6 +118,6 @@
 		<script src="js/filterCountService.js"></script>
 		<script src="js/neonDemoController.js"></script>
 
-		<script src="js/directives/filterBuilderDirective.js"></script>
+		<script src="js/directives/filterBuilder.js"></script>
 	</body>
 </html>

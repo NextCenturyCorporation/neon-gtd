@@ -32,23 +32,8 @@
 	<body ng-controller="neonDemoController">
 
 		<!-- Line chart -->
-		<div class="well chart-well">
-
-			<div class="legend">
-				<div class="legend-item">
-					<span class="legend-icon" style="background-color: #39b54a"></span>
-					<span class="legend-text">Positive</span>
-				</div>
-				<div class="legend-item">
-					<span class="legend-icon" style="background-color: #C2360D"></span>
-					<span class="legend-text">Negative</span>
-				</div>
-			</div>
-
-			<div class="clearfix"></div>
-
-			<linechart attr-x="xAxisField" attr-y="yAxisField" total-type='barType'></linechart>
-
+		<div class="well visualization-widget">
+			<div linechart></div linechart>
 		</div>
 
 		<!-- In production use:
@@ -66,6 +51,8 @@
 		<script src="js/appConfig.js"></script>
 
 		<script src="lib/jquery/js/jquery.min.js"></script>
+		<script src="lib/javascript-detect-element-resize/js/jquery.resize.js"></script>
+
 		<script src="lib/angular/js/angular.min.js"></script>
 
 		<!-- Include third party libs -->
@@ -121,11 +108,15 @@
 			var neonDemo = angular.module('neonDemo', [
 				'neonDemo.controllers',
 				'neonDemo.services',
-				'linechartDirective',
-				'numberShortModule'
+				'neonDemo.directives',
+				'neonDemo.filters'
 			]);
 
-			angular.module('numberShortModule', [])
+			angular.module('neonDemo.directives', []);
+			angular.module('neonDemo.controllers', []);
+			angular.module('neonDemo.services', []);
+
+			angular.module('neonDemo.filters', [])
 			.filter('numberShort', function() {
 				return function(number) {
 					if(typeof number !== undefined) {
@@ -152,6 +143,6 @@
 		<script src="js/filterCountService.js"></script>
 		<script src="js/neonDemoController.js"></script>
 
-		<script src="js/directives/linechartDirective.js"></script>
+		<script src="js/directives/linechart.js"></script>
 	</body>
 </html>
