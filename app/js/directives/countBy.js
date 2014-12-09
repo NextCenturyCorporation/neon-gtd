@@ -24,6 +24,8 @@ angular.module('neonDemo.directives')
 		scope: {
 		},
 		link: function($scope, el) {
+			el.addClass('countByDirective');
+
 			$scope.countField = "_id";
 			$scope.fields = [];
 			$scope.tableId = 'query-results-' + uuid();
@@ -32,6 +34,11 @@ angular.module('neonDemo.directives')
 			createOptions([]);
 
 			$tableDiv.attr("id", $scope.tableId);
+
+			var updateSize = function() {
+				$('#' + $scope.tableId).height(el.height() - $(el).find('.count-by-header').outerHeight(true));
+				$scope.table.refreshLayout();
+			};
 
 			/**
 			 * Initializes the name of the directive's scope variables
@@ -50,6 +57,10 @@ angular.module('neonDemo.directives')
 				$scope.$watch('countField', function() {
 					$scope.queryForData();
 				});
+
+				/*el.resize(function() {
+					updateSize();
+				});*/
 			};
 
 			function createOptions(data) {
@@ -161,7 +172,8 @@ angular.module('neonDemo.directives')
 				$scope.tableOptions = createOptions(cleanData);
 
 				$scope.table = new tables.Table("#" + $scope.tableId, $scope.tableOptions).draw();
-				$scope.table.refreshLayout();
+				updateSize();
+				//$scope.table.refreshLayout();
 			};
 
 			/**
