@@ -82,8 +82,12 @@
 			var neonDemo = angular.module('neonDemo', [
 				'neonDemo.controllers',
 				'neonDemo.services',
-				'queryResultsTableDirective'
+				'neonDemo.directives',
 			]);
+
+			angular.module('neonDemo.directives', []);
+			angular.module('neonDemo.controllers', []);
+			angular.module('neonDemo.services', []);
 
 		</script>
 

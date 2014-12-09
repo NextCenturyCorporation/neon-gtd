@@ -18,6 +18,7 @@
 
 		<!-- Directive styles -->
 		<link rel="stylesheet" type="text/css" href="css/directives/circularHeatChart.css">
+		<link rel="stylesheet" type="text/css" href="css/directives/circularHeatForm.css">
 
 		<!-- Special widget styles -->
 		<link rel="stylesheet" type="text/css" href="css/widgetStyle.css">
@@ -31,8 +32,9 @@
 	</head>
 	<body ng-controller="neonDemoController">
 
-
-		<div circular-heat-form></div>
+		<div class="well visualization-widget">
+			<div circular-heat-form></div>
+		</div>
 
 		<!-- In production use:
 		<script src="//ajax.googleapis.com/ajax/libs/angularjs/x.x.x/angular.min.js"></script>
@@ -49,6 +51,7 @@
 		<script src="js/appConfig.js"></script>
 
 		<script src="lib/jquery/js/jquery.min.js"></script>
+		<script src="lib/javascript-detect-element-resize/js/jquery.resize.js"></script>
 		<script src="lib/angular/js/angular.min.js"></script>
 
 		<!-- Include third party libs -->
@@ -103,9 +106,12 @@
 			var neonDemo = angular.module('neonDemo', [
 				'neonDemo.controllers',
 				'neonDemo.services',
-				'circularHeatChartDirective',
-				'circularHeatFormDirective'
+				'neonDemo.directives',
 			]);
+
+			angular.module('neonDemo.directives', []);
+			angular.module('neonDemo.controllers', []);
+			angular.module('neonDemo.services', []);
 
 		</script>
 

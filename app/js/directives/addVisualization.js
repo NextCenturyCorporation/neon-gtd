@@ -26,104 +26,104 @@
  */
 angular.module('neonDemo.directives')
 .directive('addVisualization', function() {
-	return {
-		templateUrl: 'partials/directives/addVisualization.html',
-		restrict: 'EA',
-		scope: {
-			gridsterConfigs: "="
-		},
-		link: function($scope, $element) {
-			$element.addClass('add-visualization');
+    return {
+        templateUrl: 'partials/directives/addVisualization.html',
+        restrict: 'EA',
+        scope: {
+            gridsterConfigs: "="
+        },
+        link: function($scope, $element) {
+            $element.addClass('add-visualization');
 
-			/** Hold the default size, name, and directive settings for allowed visualizations. */
-			$scope.visualizations = [{
-				name: 'Timeline',
-				sizeX: 6,
-				sizeY: 1,
-				type: 'timeline-selector',
-				icon: 'img/Neon_60x34.png'
-			},{
-				name: 'Map',
-				sizeX: 6,
-				sizeY: 2,
-				type: 'heat-map',
-				icon: 'img/Neon_60x34.png'
-			},{
-				name: 'Linechart',
-				sizeX: 2,
-				sizeY: 2,
-				type: 'linechart',
-				icon: 'img/Neon_60x34.png'
-			},{
-				name: 'Barchart',
-				sizeX: 2,
-				sizeY: 2,
-				type: 'barchart',
-				icon: 'img/Neon_60x34.png'
-			},{
-				name: 'Ops Clock',
-				sizeX: 2,
-				sizeY: 2,
-				type: 'circular-heat-form',
-				icon: 'img/Neon_60x34.png'
-			},{
-				name: 'Tag Cloud',
-				sizeX: 6,
-				sizeY: 1,
-				type: 'tag-cloud',
-				bindings: {
-					"tag-field": "'hashtags'"
-				},
-				icon: 'img/Neon_60x34.png'
-			},{
-				name: 'Count By',
-				sizeX: 2,
-				sizeY: 2,
-				type: 'count-by',
-				icon: 'img/Neon_60x34.png'
-			}];
+            /** Hold the default size, name, and directive settings for allowed visualizations. */
+            $scope.visualizations = [{
+                name: 'Timeline',
+                sizeX: 6,
+                sizeY: 1,
+                type: 'timeline-selector',
+                icon: 'img/visualizations/Timeline64.png'
+            }, {
+                name: 'Map',
+                sizeX: 6,
+                sizeY: 2,
+                type: 'heat-map',
+                icon: 'img/visualizations/Map64.png'
+            }, {
+                name: 'Linechart',
+                sizeX: 2,
+                sizeY: 2,
+                type: 'linechart',
+                icon: 'img/visualizations/LineChart64.png'
+            }, {
+                name: 'Barchart',
+                sizeX: 2,
+                sizeY: 2,
+                type: 'barchart',
+                icon: 'img/visualizations/BarChart64.png'
+            }, {
+                name: 'Ops Clock',
+                sizeX: 2,
+                sizeY: 2,
+                type: 'circular-heat-form',
+                icon: 'img/visualizations/OpsClock64.png'
+            }, {
+                name: 'Tag Cloud',
+                sizeX: 6,
+                sizeY: 1,
+                type: 'tag-cloud',
+                bindings: {
+                    "tag-field": "'hashtags'"
+                },
+                icon: 'img/visualizations/TagCloud64.png'
+            },{
+                name: 'Count By',
+                sizeX: 2,
+                sizeY: 2,
+                type: 'count-by',
+                icon: 'img/Neon_60x34.png'
+            }];
 
-			/**
-			 * Returns the visualization types selected by the user in the dialog managed by this directive.
-			 * @returns Array{Object} Selected visualization configurations
-			 * @method getSelected
-			 * @private
-			 */
-			function getSelected() {
-				return _.filter($scope.visualizations, function(visualization) {
-					return visualization.selected === true;
-				});
-			}
+            /**
+             * Returns the visualization types selected by the user in the dialog managed by this directive.
+             * @returns Array{Object} Selected visualization configurations
+             * @method getSelected
+             * @private
+             */
+            function getSelected() {
+                return _.filter($scope.visualizations, function(visualization) {
+                    return visualization.selected === true;
+                });
+            }
 
-			/**
-			 * Adds one instance of each user-selected visualization type to the gridsterConfigs provided as
-			 * a binding to this directive instance.
-			 * @method addVisualizations
-			 */
-			$scope.addVisualizations = function() {
-				var selected = getSelected();
-				_.each(selected, function(visualization) {
-					// Clone the items.  Note that underscore's clone is shallow, so also
-					// clone the default bindings explicitly.
-					var newVis = _.clone(visualization);
-					newVis.bindings = _.clone(visualization.bindings);
-					newVis.id = uuid();
-					$scope.gridsterConfigs.push(newVis);
-				});
+            /**
+             * Adds one instance of each user-selected visualization type to the gridsterConfigs provided as
+             * a binding to this directive instance.
+             * @method addVisualizations
+             */
+            $scope.addVisualizations = function() {
+                var selected = getSelected();
+                _.each(selected, function(visualization) {
+                    // Clone the items.  Note that underscore's clone is shallow, so also
+                    // clone the default bindings explicitly.
+                    var newVis = _.clone(visualization);
+                    newVis.bindings = _.clone(visualization.bindings);
+                    newVis.id = uuid();
+                    $scope.gridsterConfigs.push(newVis);
+                });
 
-				$scope.deselectAll();
-			};
+                $scope.deselectAll();
+            };
 
-			/**
-			 * Deselects all visualization configurations in the dialog managed byt his directive.
-			 * @method deselectAll
-			 * @private
-			 */
-			$scope.deselectAll = function() {
-				_.each($scope.visualizations, function(visualization) {
-					visualization.selected = false;
-				});
-			};
-		}
-	};
+            /**
+             * Deselects all visualization configurations in the dialog managed byt his directive.
+             * @method deselectAll
+             * @private
+             */
+            $scope.deselectAll = function() {
+                _.each($scope.visualizations, function(visualization) {
+                    visualization.selected = false;
+                });
+            };
+        }
+    };
 });

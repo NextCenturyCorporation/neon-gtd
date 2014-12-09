@@ -454,6 +454,30 @@ charts.BarChart.prototype.setInactive = function(predicate) {
     this.applyStyle_(d3.selectAll('.' + charts.BarChart.INACTIVE_BAR_CLASS_), charts.BarChart.INACTIVE_STYLE_KEY_);
 };
 
+charts.BarChart.prototype.showTooltipXaxis_ = function(item, mouseLocation) {
+
+    var yValue = 0;
+    this.data_.forEach(function(d) {
+	if (item == d.key) { yValue = d.values; }
+    });
+
+    var tooltip = this.element.append("div")
+	.property('id', charts.BarChart.TOOLTIP_ID_)
+	.classed({
+            charttooltip: true
+	});
+
+    tooltip.append("div").html('<strong>' + this.xLabel_ + ':</strong> ' + item)
+	.append("div").html('<strong>' + this.yLabel_ + ':</strong> ' + yValue);
+    $(tooltip[0]).hide();
+
+    // TODO:  Determine the correct location here.  The mouseLocation that is passed in is the 
+    // location of the text within its bounding rectangle, rather than the entire div, so it appears 
+    // in the upper left hand side
+    this.positionTooltip_(tooltip, [100, 20]);
+    $(tooltip[0]).fadeIn(500);
+};
+
 charts.BarChart.prototype.showTooltip_ = function(item, mouseLocation) {
     var xValue = this.tickFormat_ ? this.tickFormat_(item.key) : item.key;
     var yValue = this.isStacked ? (item.values - item[this.yMinAttribute_]) : item.values;
@@ -485,6 +509,9 @@ charts.BarChart.prototype.hideTooltip_ = function() {
 };
 
 charts.BarChart.prototype.drawXAxis_ = function(chart) {
+
+    var me = this;
+
     var axis = chart.append('g')
         .attr('class', 'x axis')
         .attr('transform', 'translate(0,' + (this.height - this.vMargin_) + ')')
@@ -503,10 +530,15 @@ charts.BarChart.prototype.drawXAxis_ = function(chart) {
         } else {
             return d;
         }
+    })
+    .on('mouseover', function(d) {
+        me.showTooltipXaxis_(d, d3.mouse(this));
+    })
+    .on('mouseout', function() {
+        me.hideTooltip_();
     });
 
     this.viewboxYMax = this.viewboxYMax + $(this.element[0]).find('g.x')[0].getBoundingClientRect().height;
-    //$(this.element[0]).children('svg')[0].setAttribute("viewBox", this.determineViewboxString());
     $(this.element[0]).height(this.height - this.margin.bottom + $(this.element[0]).find('g.x')[0].getBoundingClientRect().height);
 
     return axis;

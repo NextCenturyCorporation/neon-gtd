@@ -15,15 +15,18 @@
                 <div class="">
                     <ul class="add-visualization-list">
                         <li ng-repeat="item in visualizations" 
-                            ng-click="item.selected = !item.selected"
                             ng-init="item.selected = false" 
                             ng-class="(item.selected) ? 'selected' : ''">
-                            <div class="visualization-thumbnail center-block">
-                                <img ng-src="{{(item.icon) ? item.icon : ''}}" 
-                                    alt="{{(item.name) ? item.name : ''}}" 
-                                    class="img-thumbnail center-block"><br>
+                            <div class="visualization-thumbnail center-block text-center">
+                                <button  ng-click="item.selected = !item.selected" 
+                                    tabindex="0">
+                                    <img ng-src="{{(item.icon) ? item.icon : ''}}" 
+                                        alt="{{(item.name) ? item.name : ''}}" 
+                                        class="img-thumbnail center-block">
+                                    <span class="text-uppercase small" ng-bind="item.name"></span>
+                                </button>
                             </div>
-                            <p class="text-uppercase text-center small" ng-bind="item.name"></p>
+                            
                         </li>
                     </ul>
                 </div>
