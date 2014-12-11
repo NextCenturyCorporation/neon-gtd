@@ -42,23 +42,29 @@
 
 .add-visualization-list {
     list-style: none;
+    margin: 10px 0px 0px 10px;
+    padding: 0px;
 }
 
 .add-visualization-list > li {
     display: block;
     float:left;
     height: 100px;
-    margin: 10px;
+    margin: 0px 10px 10px 0px;
     width: 100px;
 }
 
 .add-visualization-list > li img {
-    border-width: 2px;
+   border: 0px;
 }
 
 .add-visualization-list button {
     background: rgba(256, 256, 256, 1);
     border: 0px;
+    border-radius: 4px;
+    height: 100%;
+    padding: 5px;
+    width: 100px;
 }
 
 .add-visualization-list button:focus img,
@@ -72,7 +78,7 @@
 }
 
 .add-visualization-list .visualization-thumbnail {
-    height: 76px;
+    height: 100%;
     width: 100px;
 }
 
@@ -80,13 +86,15 @@
     color: #777777;
     font-weight: bold;
     height: 30px;
+    letter-spacing: 0.05em;
     width: 100px;
 }
 
-.add-visualization-list .selected  img {
-    border-color: #39b54a;
+/* Styles for selected visualizations. */
+.add-visualization-list .selected  button {
+    background: #39b54a;
 }
 
 .add-visualization-list .selected  span {
-    color: #39b54a;
+    color: #ffffff;
 }
