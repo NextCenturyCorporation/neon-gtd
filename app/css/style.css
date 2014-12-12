@@ -232,7 +232,6 @@ a:focus{
     color: #555555;
 }
 .btn-default:focus{
-    background-color: #FFFFFF;
     border-color: #CCCCCC;
     color: #333333;
 }

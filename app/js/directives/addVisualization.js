@@ -25,7 +25,7 @@
  * @constructor
  */
 angular.module('neonDemo.directives')
-.directive('addVisualization', function() {
+.directive('addVisualization', ['$timeout', function($timeout) {
     return {
         templateUrl: 'partials/directives/addVisualization.html',
         restrict: 'EA',
@@ -34,6 +34,11 @@ angular.module('neonDemo.directives')
         },
         link: function($scope, $element) {
             $element.addClass('add-visualization');
+
+            $scope.alertMessage = "";
+            $scope.alertTimer = null;
+            $scope.alertDelay = 2000;
+            $scope.fadeTime = 500;
 
             /** Hold the default size, name, and directive settings for allowed visualizations. */
             $scope.visualizations = [{
@@ -95,23 +100,50 @@ angular.module('neonDemo.directives')
                 });
             }
 
+            $scope.displayAlert = function(message) {
+                // Cancel any existing alert timeouts.
+                if ($scope.alertTimer) {
+                    $timeout.cancel($scope.alertTimer);
+                }
+
+                // Set the new alert
+                $scope.alertMessage = message;
+                $element.find('.alert-success').fadeIn($scope.fadeTime);
+                $scope.alertTimer = $timeout(function() {
+                    $element.find('.alert-success').fadeOut($scope.fadeTime);
+                }, $scope.alertDelay);
+            };
+
+            $scope.selectedItem = function(item, evt) {
+                if ($scope.lastSelected) {
+                    $scope.lastSelected.selected = false;
+                }
+                item.selected = true; 
+                $scope.lastSelected = item;
+                $scope.addVisualization(item);
+            };
+
             /**
              * Adds one instance of each user-selected visualization type to the gridsterConfigs provided as
              * a binding to this directive instance.
-             * @method addVisualizations
+             * @param {Object} visualziation a visualization configuration; 
+             * @param {String} visualization.name The name to display in the visualization list.
+             * @param {Number} visualization.sizeX The number of columns to take up in a gridster layout.
+             * @param {Number} visualization.sizeY The number of rows to take up in a gridster layout.
+             * @param {String} visualization.type The name of the visualization directive to use in a gridster layout.
+             * @param {Object} visualization.bindings An object mapping variable names to use for directive bindings.
+             * @param {String} visualization.icon A URL for an icon representing this visualization type.
+             * @method addVisualization
              */
-            $scope.addVisualizations = function() {
-                var selected = getSelected();
-                _.each(selected, function(visualization) {
-                    // Clone the items.  Note that underscore's clone is shallow, so also
-                    // clone the default bindings explicitly.
-                    var newVis = _.clone(visualization);
-                    newVis.bindings = _.clone(visualization.bindings);
-                    newVis.id = uuid();
-                    $scope.gridsterConfigs.push(newVis);
-                });
+            $scope.addVisualization = function(visualization) {
+                // Clone the items.  Note that underscore's clone is shallow, so also
+                // clone the default bindings explicitly.
+                var newVis = _.clone(visualization);
+                newVis.bindings = _.clone(visualization.bindings);
+                newVis.id = uuid();
+                $scope.gridsterConfigs.push(newVis);
 
-                $scope.deselectAll();
+                $scope.displayAlert(visualization.name + " added!");
             };
 
             /**
@@ -126,4 +158,4 @@ angular.module('neonDemo.directives')
             };
         }
     };
-});
+}]);

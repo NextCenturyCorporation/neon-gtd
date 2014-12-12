@@ -98,3 +98,14 @@
 .add-visualization-list .selected  span {
     color: #ffffff;
 }
+
+/* Styles for the alert messages. */
+.add-visualization .alert-success {
+    display: inline;
+    font-weight: bold;
+    height: 35px;
+    line-height: 15px;
+    margin: 0px;
+    padding: 10px;
+    width: 400px;
+}
