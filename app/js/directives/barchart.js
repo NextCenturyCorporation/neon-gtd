@@ -95,22 +95,31 @@ angular.module('neonDemo.directives')
 			var onDatasetChanged = function(message) {
 				XDATA.activityLogger.logSystemActivity('BarChart - received neon dataset changed event');
 				$scope.initializing = true;
-				$scope.databaseName = message.database;
-				$scope.tableName = message.table;
 
 				// if there is no active connection, try to make one.
 				connectionService.connectToDataset(message.datastore, message.hostname, message.database, message.table);
 
 				// Pull data.
-				var connection = connectionService.getActiveConnection();
 				$timeout(function() {
+					$scope.displayActiveDataset();
 					$scope.initializing = false;
-					if(connection) {
-						connectionService.loadMetadata(function() {
-							$scope.queryForData();
-						});
-					}
 				});
+			};
+
+			/**
+			 * Displays data for any currently active datasets.
+			 * @method displayActiveDataset
+			 */
+			$scope.displayActiveDataset = function() {
+				var connection = connectionService.getActiveConnection();
+				if(connection) {
+					connectionService.loadMetadata(function() {
+						var info = connectionService.getActiveDataset();
+						$scope.databaseName = info.database;
+						$scope.tableName = info.table;
+						$scope.queryForData();
+					});
+				}
 			};
 
 			$scope.queryForData = function() {
@@ -189,6 +198,7 @@ angular.module('neonDemo.directives')
 			neon.ready(function() {
 				$scope.messenger = new neon.eventing.Messenger();
 				initialize();
+				$scope.displayActiveDataset();
 			});
 		}
 	};

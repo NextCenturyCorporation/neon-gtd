@@ -114,18 +114,29 @@ angular.module('neonDemo.directives')
 			 */
 			var onDatasetChanged = function(message) {
 				XDATA.activityLogger.logSystemActivity('TagCloud - received neon dataset changed event');
-				$scope.databaseName = message.database;
-				$scope.tableName = message.table;
 
 				// if there is no active connection, try to make one.
 				connectionService.connectToDataset(message.datastore, message.hostname, message.database, message.table);
+				$scope.displayActiveDataset();
+			};
 
-				connectionService.loadMetadata(function() {
-					// check if the field was passed in, otherwise check the mapping. if neither is found leave it empty
-					$scope.tagField = $scope.tagField || connectionService.getFieldMapping("tags") || '';
-					// Pull data.
-					$scope.clearTagFilters();
-				});
+			/**
+			 * Displays data for any currently active datasets.
+			 * @method displayActiveDataset
+			 */
+			$scope.displayActiveDataset = function() {
+				var connection = connectionService.getActiveConnection();
+				if(connection) {
+					connectionService.loadMetadata(function() {
+						var info = connectionService.getActiveDataset();
+						$scope.databaseName = info.database;
+						$scope.tableName = info.table;
+						// check if the field was passed in, otherwise check the mapping. if neither is found leave it empty
+						$scope.tagField = $scope.tagField || connectionService.getFieldMapping("tags") || '';
+						// Pull data.
+						$scope.clearTagFilters();
+					});
+				}
 			};
 
 			/**
@@ -291,6 +302,7 @@ angular.module('neonDemo.directives')
 			// Wait for neon to be ready, the create our messenger and intialize the view and data.
 			neon.ready(function() {
 				$scope.initialize();
+				$scope.displayActiveDataset();
 			});
 		}
 	};

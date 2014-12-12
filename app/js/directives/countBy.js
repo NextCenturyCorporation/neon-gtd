@@ -100,17 +100,27 @@ angular.module('neonDemo.directives')
 
 				// if there is no active connection, try to make one.
 				connectionService.connectToDataset(message.datastore, message.hostname, message.database, message.table);
+				$scope.displayActiveDataset();
+			};
 
-				// Pull data.
+			/**
+			 * Displays data for any currently active datasets.
+			 * @method displayActiveDataset
+			 */
+			$scope.displayActiveDataset = function() {
 				var connection = connectionService.getActiveConnection();
 				if(connection) {
 					connectionService.loadMetadata(function() {
+						var info = connectionService.getActiveDataset();
+						$scope.databaseName = info.database;
+						$scope.tableName = info.table;
 						connection.getFieldNames($scope.tableName, function(results) {
 							$scope.$apply(function() {
 								$scope.fields = results;
 								$scope.queryForData();
 							});
 						});
+						$scope.queryForData();
 					});
 				}
 			};
@@ -192,6 +202,7 @@ angular.module('neonDemo.directives')
 
 			neon.ready(function() {
 				$scope.initialize();
+				$scope.displayActiveDataset();
 			});
 		}
 	};

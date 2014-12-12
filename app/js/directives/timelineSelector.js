@@ -177,24 +177,30 @@ angular.module('neonDemo.directives')
 			var onDatasetChanged = function(message) {
 				XDATA.activityLogger.logSystemActivity('TimelineSelector - received neon dataset changed event');
 
-				$scope.databaseName = message.database;
-				$scope.tableName = message.table;
-				$scope.startDate = undefined;
-				$scope.startDateForDisplay = undefined;
-				$scope.endDate = undefined;
-				$scope.endDateForDisplay = undefined;
-				$scope.referenceStartDate = undefined;
-				$scope.referenceEndDate = undefined;
-				$scope.data = [];
-				$scope.brush = [];
-
 				// if there is no active connection, try to make one.
 				connectionService.connectToDataset(message.datastore, message.hostname, message.database, message.table);
+				$scope.displayActiveDataset();
+			};
 
-				// Pull data.
+			/**
+			 * Displays data for any currently active datasets.
+			 * @method displayActiveDataset
+			 */
+			$scope.displayActiveDataset = function() {
 				var connection = connectionService.getActiveConnection();
 				if(connection) {
 					connectionService.loadMetadata(function() {
+						var info = connectionService.getActiveDataset();
+						$scope.databaseName = info.database;
+						$scope.tableName = info.table;
+						$scope.startDate = undefined;
+						$scope.startDateForDisplay = undefined;
+						$scope.endDate = undefined;
+						$scope.endDateForDisplay = undefined;
+						$scope.referenceStartDate = undefined;
+						$scope.referenceEndDate = undefined;
+						$scope.data = [];
+						$scope.brush = [];
 						$scope.queryForChartData();
 					});
 				}
@@ -677,6 +683,7 @@ angular.module('neonDemo.directives')
 			// Wait for neon to be ready, the create our messenger and intialize the view and data.
 			neon.ready(function() {
 				$scope.initialize();
+				$scope.displayActiveDataset();
 			});
 		}
 	};

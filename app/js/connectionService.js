@@ -65,9 +65,24 @@ angular.module('neonDemo.services')
 	};
 
 	/**
+	* Returns an object the type, host, database, and table names for the current active dataset.
+	* @return {Object}
+	* @method getActiveDataset
+	*/
+	service.getActiveDataset = function() {
+		return {
+			type: connectionInformation.type,
+			host: connectionInformation.host,
+			database: connectionInformation.database,
+			table: connectionInformation.table
+		};
+	};
+
+	/**
 	 * Gets any metadata information from the service for this specific table. connectToDataset must be called
 	 * before this function.
 	 * @param callback
+	 * @method loadMetadata
 	 */
 	service.loadMetadata = function(callback) {
 		var database = connectionInformation.database;
@@ -118,6 +133,7 @@ angular.module('neonDemo.services')
 	 * Overrides the meta-data for a particular field.
 	 * @param {String} field
 	 * @param {String} mapping
+	 * @method setFieldMapping
 	 */
 	service.setFieldMapping = function(field, mapping) {
 		connectionInformation.fields[field] = mapping;
@@ -126,6 +142,7 @@ angular.module('neonDemo.services')
 	/**
 	 * Returns an object where the keys are the fields and the values are the mappings for the current host.
 	 * @returns {String}
+	 * @method getFieldMappings
 	 */
 	service.getFieldMappings = function() {
 		return connectionInformation.fields;

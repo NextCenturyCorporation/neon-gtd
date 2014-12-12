@@ -145,16 +145,22 @@ angular.module('neonDemo.directives')
 			var onDatasetChanged = function(message) {
 				XDATA.activityLogger.logSystemActivity('CircularHeatForm - received neon dataset changed event');
 
-				$scope.databaseName = message.database;
-				$scope.tableName = message.table;
-
 				// if there is no active connection, try to make one.
 				connectionService.connectToDataset(message.datastore, message.hostname, message.database, message.table);
+				$scope.displayActiveDataset();
+			};
 
-				// Pull data.
+			/**
+			 * Displays data for any currently active datasets.
+			 * @method displayActiveDataset
+			 */
+			$scope.displayActiveDataset = function() {
 				var connection = connectionService.getActiveConnection();
 				if(connection) {
 					connectionService.loadMetadata(function() {
+						var info = connectionService.getActiveDataset();
+						$scope.databaseName = info.database;
+						$scope.tableName = info.table;
 						$scope.queryForChartData();
 					});
 				}
@@ -277,6 +283,7 @@ angular.module('neonDemo.directives')
 			neon.ready(function() {
 				$scope.messenger = new neon.eventing.Messenger();
 				$scope.initialize();
+				$scope.displayActiveDataset();
 			});
 		}
 	};

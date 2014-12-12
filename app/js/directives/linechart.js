@@ -117,25 +117,7 @@ angular.module('neonDemo.directives')
 
 				// if there is no active connection, try to make one.
 				connectionService.connectToDataset(message.datastore, message.hostname, message.database, message.table);
-
-				// Pull data.
-				var connection = connectionService.getActiveConnection();
-				if(connection) {
-					connectionService.loadMetadata(function() {
-						connection.getFieldNames($scope.tableName, function(results) {
-							XDATA.activityLogger.logSystemActivity('LineChart - query for available fields');
-							$scope.$apply(function() {
-								$scope.fields = results;
-								XDATA.activityLogger.logSystemActivity('LineChart - received available fields');
-							});
-						});
-						$scope.attrX = connectionService.getFieldMapping("date");
-						$scope.attrY = connectionService.getFieldMapping("y_axis");
-						$scope.categoryField = connectionService.getFieldMapping("line_category");
-						$scope.aggregation = 'count';
-						$scope.queryForData();
-					});
-				}
+				$scope.displayActiveDataset();
 			};
 
 			var query = function(callback) {
@@ -167,6 +149,33 @@ angular.module('neonDemo.directives')
 				connectionService.getActiveConnection().executeQuery(query, callback, function() {
 					XDATA.activityLogger.logSystemActivity('LineChart - query failed');
 				});
+			};
+
+			/**
+			 * Displays data for any currently active datasets.
+			 * @method displayActiveDataset
+			 */
+			$scope.displayActiveDataset = function() {
+				var connection = connectionService.getActiveConnection();
+				if(connection) {
+					connectionService.loadMetadata(function() {
+						var info = connectionService.getActiveDataset();
+						$scope.databaseName = info.database;
+						$scope.tableName = info.table;
+						$scope.attrX = connectionService.getFieldMapping("date");
+						$scope.attrY = connectionService.getFieldMapping("y_axis");
+						$scope.categoryField = connectionService.getFieldMapping("line_category");
+						$scope.aggregation = 'count';
+						connection.getFieldNames($scope.tableName, function(results) {
+							XDATA.activityLogger.logSystemActivity('LineChart - query for available fields');
+							$scope.$apply(function() {
+								$scope.fields = results;
+								XDATA.activityLogger.logSystemActivity('LineChart - received available fields');
+							});
+						});
+						$scope.queryForData();
+					});
+				}
 			};
 
 			$scope.queryForData = function() {
@@ -364,6 +373,7 @@ angular.module('neonDemo.directives')
 			neon.ready(function() {
 				$scope.messenger = new neon.eventing.Messenger();
 				initialize();
+				$scope.displayActiveDataset();
 			});
 		}
 	};

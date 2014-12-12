@@ -39,23 +39,8 @@ angular.module('neonDemo.directives')
 			};
 
 			var onDatasetChanged = function(message) {
-				$scope.database = message.database;
-				$scope.table = message.table;
-
 				connectionService.connectToDataset(message.datastore, message.hostname, message.database, message.table);
-				connectionService.getActiveConnection().getFieldNames($scope.table, function(results) {
-					XDATA.activityLogger.logSystemActivity('FieldSelector - query for available fields');
-					$scope.$apply(function() {
-						$scope.fields = results;
-						XDATA.activityLogger.logSystemActivity('FieldSelector - received available fields');
-					});
-				});
-
-				if($scope.defaultMapping) {
-					connectionService.loadMetadata(function() {
-						$scope.targetVar = connectionService.getFieldMapping($scope.defaultMapping);
-					});
-				}
+				$scope.displayActiveDataset();
 			};
 
 			var onSelectionChange = function(newVal, oldVal) {
@@ -68,11 +53,40 @@ angular.module('neonDemo.directives')
 					});
 			};
 
+			/**
+			 * Displays data for any currently active datasets.
+			 * @method displayActiveDataset
+			 */
+			$scope.displayActiveDataset = function() {
+				var connection = connectionService.getActiveConnection();
+				if(connection) {
+					connectionService.loadMetadata(function() {
+						var info = connectionService.getActiveDataset();
+						$scope.databaseName = info.database;
+						$scope.tableName = info.table;
+						connectionService.getActiveConnection().getFieldNames($scope.tableName, function(results) {
+							XDATA.activityLogger.logSystemActivity('FieldSelector - query for available fields');
+							$scope.$apply(function() {
+								$scope.fields = results;
+								XDATA.activityLogger.logSystemActivity('FieldSelector - received available fields');
+							});
+						});
+
+						if($scope.defaultMapping) {
+							connectionService.loadMetadata(function() {
+								$scope.targetVar = connectionService.getFieldMapping($scope.defaultMapping);
+							});
+						}
+					});
+				}
+			};
+
 			$scope.$watch("targetVar", onSelectionChange);
 
 			// Wait for neon to be ready, the create our messenger and intialize the view and data.
 			neon.ready(function() {
 				initialize();
+				$scope.displayActiveDataset();
 			});
 		}
 	};

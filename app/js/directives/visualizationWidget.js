@@ -45,7 +45,7 @@ angular.module('neonDemo.directives').directive('visualizationWidget', function(
                 '</button>' +
             '</div>',
         link: function($scope, $element) {
-            // Create out widget.  Here, we are assuming the visualization is
+            // Create our widget.  Here, we are assuming the visualization is
             // implementated as an attribute directive.
             var widgetElement = document.createElement("div");
             widgetElement.setAttribute($scope.gridsterConfigs[$scope.gridsterConfigIndex].type, "");

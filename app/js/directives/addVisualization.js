@@ -89,20 +89,13 @@ angular.module('neonDemo.directives')
             }];
 
             /**
-             * Returns the visualization types selected by the user in the dialog managed by this directive.
-             * @returns Array{Object} Selected visualization configurations
-             * @method getSelected
-             * @private
+             * Displays a simple "added" alert to the user when they have added a new visualization.
+             * The alert will disappear after a few seconds.
+             * @method displayAlert
              */
-            function getSelected() {
-                return _.filter($scope.visualizations, function(visualization) {
-                    return visualization.selected === true;
-                });
-            }
-
             $scope.displayAlert = function(message) {
                 // Cancel any existing alert timeouts.
-                if ($scope.alertTimer) {
+                if($scope.alertTimer) {
                     $timeout.cancel($scope.alertTimer);
                 }
 
@@ -114,11 +107,15 @@ angular.module('neonDemo.directives')
                 }, $scope.alertDelay);
             };
 
-            $scope.selectedItem = function(item, evt) {
-                if ($scope.lastSelected) {
+            /**
+             * A selection handler that adds new visualizations when a type is selected by the user.
+             * @method onItemSelected
+             */
+            $scope.onItemSelected = function(item) {
+                if($scope.lastSelected) {
                     $scope.lastSelected.selected = false;
                 }
-                item.selected = true; 
+                item.selected = true;
                 $scope.lastSelected = item;
                 $scope.addVisualization(item);
             };
@@ -126,7 +123,7 @@ angular.module('neonDemo.directives')
             /**
              * Adds one instance of each user-selected visualization type to the gridsterConfigs provided as
              * a binding to this directive instance.
-             * @param {Object} visualziation a visualization configuration; 
+             * @param {Object} visualziation a visualization configuration;
              * @param {String} visualization.name The name to display in the visualization list.
              * @param {Number} visualization.sizeX The number of columns to take up in a gridster layout.
              * @param {Number} visualization.sizeY The number of rows to take up in a gridster layout.

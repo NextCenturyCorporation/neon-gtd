@@ -287,8 +287,6 @@ angular.module('neonDemo.directives')
 			var onDatasetChanged = function(message) {
 				XDATA.activityLogger.logSystemActivity('HeatMap - received neon dataset changed event');
 				$scope.initializing = true;
-				$scope.databaseName = message.database;
-				$scope.tableName = message.table;
 				$scope.latitudeField = "";
 				$scope.longitudeField = "";
 				$scope.colorByField = "";
@@ -302,31 +300,7 @@ angular.module('neonDemo.directives')
 
 				// if there is no active connection, try to make one.
 				connectionService.connectToDataset(message.datastore, message.hostname, message.database, message.table);
-
-				// Query for data only if we have an active connection.
-				var connection = connectionService.getActiveConnection();
-				if(connection) {
-					connectionService.loadMetadata(function() {
-						// Repopulate the field selectors and get the default values.
-						XDATA.activityLogger.logSystemActivity('HeatMap - query for data field names');
-						connection.getFieldNames($scope.tableName, function(results) {
-							$scope.$apply(function() {
-								XDATA.activityLogger.logSystemActivity('HeatMap - data field names received');
-								populateFieldNames(results);
-								$scope.latitudeField = connectionService.getFieldMapping("latitude");
-								$scope.longitudeField = connectionService.getFieldMapping("longitude");
-								$scope.colorByField = connectionService.getFieldMapping("color_by");
-								$scope.sizeByField = connectionService.getFieldMapping("size_by");
-								XDATA.activityLogger.logSystemActivity('HeatMap - field selectors updated');
-
-								$timeout(function() {
-									$scope.initializing = false;
-									$scope.queryForMapData();
-								});
-							});
-						});
-					});
-				}
+				$scope.displayActiveDataset();
 			};
 
 			/**
@@ -371,6 +345,39 @@ angular.module('neonDemo.directives')
 				// Draw the new rect
 				if(rect !== undefined) {
 					$scope.zoomRectId = $scope.map.drawBox(rect);
+				}
+			};
+
+			/**
+			 * Displays data for any currently active datasets.
+			 * @method displayActiveDataset
+			 */
+			$scope.displayActiveDataset = function() {
+				var connection = connectionService.getActiveConnection();
+				if(connection) {
+					connectionService.loadMetadata(function() {
+						var info = connectionService.getActiveDataset();
+						$scope.databaseName = info.database;
+						$scope.tableName = info.table;
+						// Repopulate the field selectors and get the default values.
+						XDATA.activityLogger.logSystemActivity('HeatMap - query for data field names');
+						connection.getFieldNames($scope.tableName, function(results) {
+							$scope.$apply(function() {
+								XDATA.activityLogger.logSystemActivity('HeatMap - data field names received');
+								populateFieldNames(results);
+								$scope.latitudeField = connectionService.getFieldMapping("latitude");
+								$scope.longitudeField = connectionService.getFieldMapping("longitude");
+								$scope.colorByField = connectionService.getFieldMapping("color_by");
+								$scope.sizeByField = connectionService.getFieldMapping("size_by");
+								XDATA.activityLogger.logSystemActivity('HeatMap - field selectors updated');
+
+								$timeout(function() {
+									$scope.initializing = false;
+									$scope.queryForMapData();
+								});
+							});
+						});
+					});
 				}
 			};
 
@@ -601,6 +608,7 @@ angular.module('neonDemo.directives')
 			// Wait for neon to be ready, the create our messenger and intialize the view and data.
 			neon.ready(function() {
 				$scope.initialize();
+				$scope.displayActiveDataset();
 			});
 		}
 	};
