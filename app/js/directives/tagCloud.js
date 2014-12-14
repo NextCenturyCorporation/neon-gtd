@@ -68,7 +68,7 @@ angular.module('neonDemo.directives')
 						XDATA.activityLogger.WF_EXPLORE);
 				});
 
-				$scope.filterKey = neon.widget.getInstanceId("tagcloud");
+				$scope.filterKey = "tagcloud" + uuid();
 				// Setup our messenger.
 				$scope.messenger = new neon.eventing.Messenger();
 
