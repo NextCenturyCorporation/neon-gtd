@@ -85,7 +85,13 @@ angular.module('neonDemo.directives')
                 sizeX: 2,
                 sizeY: 2,
                 type: 'count-by',
-                icon: 'img/Neon_60x34.png'
+                icon: 'img/visualizations/Count64.png'
+            },{
+                name: 'Sunburst',
+                sizeX: 2,
+                sizeY: 2,
+                type: 'sunburst',
+                icon: 'img/visualizations/Sunburst64.png'
             }];
 
             /**
