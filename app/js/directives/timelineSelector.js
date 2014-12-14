@@ -64,7 +64,7 @@ angular.module('neonDemo.directives')
 			$scope.granularity = DAY;
 			$scope.millisMultiplier = MILLIS_IN_DAY;
 			$scope.recordCount = 0;
-			$scope.filterId = 'timelineFilter';
+			$scope.filterId = 'timelineFilter' + uuid();
 			$scope.collapsed = true;
 			$scope.eventProbabilitiesDisplayed = false;
 
