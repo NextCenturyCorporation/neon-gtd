@@ -37,7 +37,7 @@ angular.module('neonDemo.directives')
 
             $scope.alertMessage = "";
             $scope.alertTimer = null;
-            $scope.alertDelay = 2000;
+            $scope.alertDelay = 4000;
             $scope.fadeTime = 500;
 
             /** Hold the default size, name, and directive settings for allowed visualizations. */
