@@ -42,7 +42,9 @@ angular.module('neonDemo.directives')
 			 */
 			var updateSize = function() {
 				$('#' + $scope.tableId).height(el.height() - $(el).find('.count-by-header').outerHeight(true));
-				$scope.table.refreshLayout();
+				if($scope.table) {
+					$scope.table.refreshLayout();
+				}
 			};
 
 			/**
