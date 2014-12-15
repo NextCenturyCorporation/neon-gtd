@@ -1,3 +1,6 @@
+<div class="ng-hide" ng-show="(filterTags.length <= 0) && (data.length <= 0)">
+    <strong><span class="text-primary">Tag Cloud:</span></strong> No available tag data.
+</div>
 <div class="" ng-show="filterTags.length > 0 || data.length > 0">
     <h4 class="sr-only">Popular Hashtags</h4>
     <div class="filter-tags" ng-class="{true: '', false: 'hidden'}[showFilter]">
@@ -27,15 +30,16 @@
                 </div>
             </div>
         </div>
-
-    	<div class="filter-reset" ng-repeat="tagName in filterTags">
-			{{tagName}}
+        <div class="filter-reset" ng-repeat="tagName in filterTags">
+            {{tagName}}
             <a class="btn" ng-click="removeFilter(tagName)">
-			 <span class="glyphicon glyphicon-remove"></span>
-			</a>
-		</div>
+             <span class="glyphicon glyphicon-remove"></span>
+            </a>
+        </div>
     </div>
     <div class="tagcloud">
-        <a ng-click="addTagFilter(tagCount.tag)" class="tag" ng-repeat="tagCount in data" rel="{{tagCount.count}}">{{tagCount.tag}}</a>
+        <a ng-click="addTagFilter(tagCount.tag)" class="tag" 
+            ng-repeat="tagCount in data" rel="{{tagCount.count}}"
+            ng-bind="tagCount.tag"></a>
     </div>
 </div>
