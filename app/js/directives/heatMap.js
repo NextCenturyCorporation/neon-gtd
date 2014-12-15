@@ -38,6 +38,10 @@ angular.module('neonDemo.directives')
 		link: function($scope, $element) {
 			$element.addClass('heat-map');
 
+			$scope.uniqueChartOptions = 'chart-options-' + uuid();
+			var chartOptions = $($element).find('.chart-options');
+			chartOptions.toggleClass($scope.uniqueChartOptions);
+
 			// Setup scope variables.
 			$scope.databaseName = '';
 			$scope.tableName = '';
