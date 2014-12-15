@@ -49,7 +49,7 @@ angular.module('neonDemo.directives')
                 icon: 'img/visualizations/Timeline64.png'
             }, {
                 name: 'Map',
-                sizeX: 6,
+                sizeX: 4,
                 sizeY: 2,
                 type: 'heat-map',
                 icon: 'img/visualizations/Map64.png'
@@ -73,8 +73,8 @@ angular.module('neonDemo.directives')
                 icon: 'img/visualizations/OpsClock64.png'
             }, {
                 name: 'Tag Cloud',
-                sizeX: 6,
-                sizeY: 1,
+                sizeX: 2,
+                sizeY: 2,
                 type: 'tag-cloud',
                 bindings: {
                     "tag-field": "'hashtags'"

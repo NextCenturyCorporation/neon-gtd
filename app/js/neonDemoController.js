@@ -61,46 +61,31 @@ angular.module('neonDemo.controllers')
         id: uuid(),
         sizeX: 6,
         sizeY: 1,
-        row: 0,
-        col: 0,
         type: 'timeline-selector'
     }, {
         id: uuid(),
-        sizeX: 6,
+        sizeX: 4,
         sizeY: 2,
-        row: 1,
-        col: 0,
         type: 'heat-map'
     }, {
         id: uuid(),
         sizeX: 2,
         sizeY: 2,
-        row: 3,
-        col: 0,
-        type: 'linechart',
-        bindings: {
-            "chart-type": "chartType"
-        }
+        type: 'circular-heat-form'
     }, {
         id: uuid(),
         sizeX: 2,
         sizeY: 2,
-        row: 3,
-        col: 2,
+        type: 'linechart'
+    }, {
+        id: uuid(),
+        sizeX: 2,
+        sizeY: 2,
         type: 'barchart'
     }, {
         id: uuid(),
         sizeX: 2,
         sizeY: 2,
-        row: 3,
-        col: 4,
-        type: 'circular-heat-form'
-    }, {
-        id: uuid(),
-        sizeX: 6,
-        sizeY: 1,
-        row: 5,
-        col: 0,
         type: 'tag-cloud',
         bindings: {
             "tag-field": "'hashtags'"
