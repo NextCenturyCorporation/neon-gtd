@@ -25,7 +25,7 @@
 }
 
 .count-by-grid {
-    min-height: 200px;
+    min-height: 100px;
     background-color: #F1F1F1;
     border: 1px solid #CCCCCC;
     border-radius: 2px;
@@ -114,4 +114,14 @@
 	.data-tray .form-inline{
 		margin-bottom: 5px;
 	}
+}
+
+.visualization-widget .countByDirective {
+  height: 100%;
+  width: 100%;
+}
+
+.visualization-widget-mobile .countByDirective {
+  height: 400px;
+  width: 100%;
 }

@@ -35,6 +35,11 @@ angular.module('neonDemo.directives')
 
 			$tableDiv.attr("id", $scope.tableId);
 
+			/**
+			 * Updates the size of the table to fill the available space in the directive's area.
+			 * @method updateSize
+			 * @private
+			 */
 			var updateSize = function() {
 				$('#' + $scope.tableId).height(el.height() - $(el).find('.count-by-header').outerHeight(true));
 				$scope.table.refreshLayout();
@@ -58,9 +63,9 @@ angular.module('neonDemo.directives')
 					$scope.queryForData();
 				});
 
-				/*el.resize(function() {
+				el.resize(function() {
 					updateSize();
-				});*/
+				});
 			};
 
 			function createOptions(data) {
@@ -183,7 +188,6 @@ angular.module('neonDemo.directives')
 
 				$scope.table = new tables.Table("#" + $scope.tableId, $scope.tableOptions).draw();
 				updateSize();
-				//$scope.table.refreshLayout();
 			};
 
 			/**
