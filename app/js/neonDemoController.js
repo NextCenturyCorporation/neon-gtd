@@ -28,6 +28,26 @@ angular.module('neonDemo.controllers')
     $scope.chartOptions = false;
     $scope.filterCount = 0;
 
+    /**
+     * Basic gridster layout hander that will disable mouse events on gridster items via CSS so mouse handlers
+     * in the items will not trigger and conflict with the layout action.
+     * @method onStartGridsterLayoutChange
+     * @private
+     */
+    var onStartGridsterLayoutChange = function(event, $element, widget) {
+        $('.gridster-item').css('pointer-events', 'none');
+    };
+
+    /**
+     * Basic gridster layout hander that will enable mouse events on gridster items via CSS so mouse handlers
+     * in the items will trigger again after the layout action was completed.
+     * @method onStopGridsterLayoutChange
+     * @private
+     */
+    var onStopGridsterLayoutChange = function(event, $element, widget) {
+        $('.gridster-item').css('pointer-events', 'auto');
+    };
+
     $scope.gridsterOpts = {
         columns: 6, // the width of the grid, in columns
         pushing: true, // whether to push other items out of the way on move or resize
@@ -48,11 +68,15 @@ angular.module('neonDemo.controllers')
         resizable: {
             enabled: true,
             //handles: ['n', 'e', 's', 'w', 'ne', 'se', 'sw', 'nw'],
-            handles: ['ne', 'se', 'sw', 'nw']
+            handles: ['ne', 'se', 'sw', 'nw'],
+            start: onStartGridsterLayoutChange,
+            stop: onStopGridsterLayoutChange
         },
         draggable: {
-           enabled: true, // whether dragging items is supported
-           handle: '.visualization-drag-handle' // optional selector for draggable handle
+            enabled: true, // whether dragging items is supported
+            handle: '.visualization-drag-handle', // optional selector for draggable handle
+            start: onStartGridsterLayoutChange,
+            stop: onStopGridsterLayoutChange
         }
     };
 

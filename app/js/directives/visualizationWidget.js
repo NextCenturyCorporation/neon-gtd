@@ -36,7 +36,15 @@ angular.module('neonDemo.directives').directive('visualizationWidget', function(
             gridsterConfigs: "=",
             gridsterConfigIndex: "="
         },
-        templateUrl: "partials/directives/visualizationWidget.html",
+        template: '<div class="visualization-drag-handle">' +
+                '<button type="button" class="btn pull-right" ng-click="remove()">' +
+                '   <span  class="glyphicon glyphicon-remove"></span>' +
+                '</button>' +
+                '<button type="button" class="btn pull-right" ng-click="toggleSize()">' +
+                '   <span  class="glyphicon" ng-class="(oldSize) ? \'glyphicon-resize-small\' : \'glyphicon-resize-full\'"></span>' +
+                '</button>' +
+            '</div>',
+//        templateUrl: "partials/directives/visualizationWidget.html",
         link: function($scope, $element) {
             // Create our widget.  Here, we are assuming the visualization is
             // implementated as an attribute directive.

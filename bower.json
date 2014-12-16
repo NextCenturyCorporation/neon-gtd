@@ -7,7 +7,7 @@
     "private": true,
     "dependencies": {
         "angular": "1.2.26",
-        "angular-gridster": "0.10.7",
+        "angular-gridster": "0.11.0",
         "angular-loader": "1.2.26",
         "angular-mocks": "1.2.26",
         "angular-route": "1.2.26",
