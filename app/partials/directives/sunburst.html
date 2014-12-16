@@ -1,0 +1,10 @@
+<form>
+	<select ng-options="field for field in fields" ng-model="selectedItem" ng-change="addGroup()"></select>
+	<label><input type="radio" name="mode" value="total" class="sunburst-chart-selector"> Amount</label>
+	<label><input type="radio" name="mode" value="count" checked class="sunburst-chart-selector"> Count</label>
+</form>
+<div class="row">
+	<div class="col-xs-3" ng-repeat="groupField in groupFields" ng-click="dropGroup(groupField)">{{groupField}}</div>
+</div>
+<div class="sunburst-tooltip">foo</div>
+<div class="sunburst-chart"></div>
