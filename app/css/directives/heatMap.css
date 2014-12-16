@@ -26,7 +26,7 @@
 .heat-map {
     height: 100%;
     width: 100%;
-    min-height: 200px;
+    min-height: 100px;
 }
 
 .heat-map .legend-item{
