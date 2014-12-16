@@ -74,9 +74,7 @@ angular.module('neonDemo.controllers')
         },
         draggable: {
             enabled: true, // whether dragging items is supported
-            handle: '.visualization-drag-handle', // optional selector for draggable handle
-            start: onStartGridsterLayoutChange,
-            stop: onStopGridsterLayoutChange
+            handle: '.visualization-drag-handle' // optional selector for draggable handle
         }
     };
 

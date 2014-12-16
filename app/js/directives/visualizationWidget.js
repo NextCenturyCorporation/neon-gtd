@@ -37,10 +37,10 @@ angular.module('neonDemo.directives').directive('visualizationWidget', function(
             gridsterConfigIndex: "="
         },
         template: '<div class="visualization-drag-handle">' +
-                '<button type="button" class="btn pull-right" ng-click="remove()">' +
+                '<button type="button" class="btn pull-right" ng-click="remove()" ng-mouseover="$event.stopPropagation()">' +
                 '   <span  class="glyphicon glyphicon-remove"></span>' +
                 '</button>' +
-                '<button type="button" class="btn pull-right" ng-click="toggleSize()">' +
+                '<button type="button" class="btn pull-right" ng-click="toggleSize()"" ng-mouseover="$event.stopPropagation()">' +
                 '   <span  class="glyphicon" ng-class="(oldSize) ? \'glyphicon-resize-small\' : \'glyphicon-resize-full\'"></span>' +
                 '</button>' +
             '</div>',
