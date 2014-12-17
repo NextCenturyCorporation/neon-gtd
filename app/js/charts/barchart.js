@@ -172,7 +172,7 @@ charts.BarChart.STRING_KEY_ = 'string';
 
 charts.BarChart.prototype.truncateFormat = function(item) {
     return item.toString().substring(0, this.maxCategoryLength);
-}
+};
 
 /**
  * Gets the label for the category (bin on the x-axis) for this item.
@@ -284,10 +284,9 @@ charts.BarChart.prototype.computePlotWidth_ = function() {
 };
 
 charts.BarChart.prototype.createXAxis_ = function() {
-    var me = this;
     var xAxis = d3.svg.axis()
         .scale(this.x)
-        .orient('bottom')
+        .orient('bottom');
 
     if(this.tickFormat_) {
         xAxis = xAxis.tickFormat(this.tickFormat_);
