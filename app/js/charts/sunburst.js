@@ -209,7 +209,7 @@ charts.SunburstChart.prototype.drawData = function(root) {
 			.attrTween("d", arcTweenZoom(d));
 	}
 
-	function onMouseOver(d, i) {
+	function onMouseOver(d) {
 		var tooltip = d3.select(".sunburst-tooltip");
 		var text = "<span class='sunburst-tooltip-title'>" + d.name + "</span><br>";
 		text = (!d.count && !d.total && d.value) ? text + "<span class='sunburst-tooltip-field'>Aggregate:</span> " + me.countFormatter(d.value) + "<br>" : text;
@@ -263,10 +263,6 @@ charts.SunburstChart.prototype.drawData = function(root) {
 				};
 			}
 		};
-	}
-
-	function computeTextRotation(d) {
-		return (this.x(d.x + d.dx / 2) - Math.PI / 2) / Math.PI * 180;
 	}
 };
 

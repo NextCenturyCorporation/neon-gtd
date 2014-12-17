@@ -34,7 +34,7 @@ angular.module('neonDemo.controllers')
      * @method onStartGridsterLayoutChange
      * @private
      */
-    var onStartGridsterLayoutChange = function(event, $element, widget) {
+    var onStartGridsterLayoutChange = function() {
         $('.gridster-item').css('pointer-events', 'none');
     };
 
@@ -44,7 +44,7 @@ angular.module('neonDemo.controllers')
      * @method onStopGridsterLayoutChange
      * @private
      */
-    var onStopGridsterLayoutChange = function(event, $element, widget) {
+    var onStopGridsterLayoutChange = function() {
         $('.gridster-item').css('pointer-events', 'auto');
     };
 
