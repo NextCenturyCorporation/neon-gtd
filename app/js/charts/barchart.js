@@ -111,7 +111,7 @@ charts.BarChart = function(rootElement, selector, opts) {
     this.tickFormat_ = opts.tickFormat;
     this.tickValues_ = this.computeTickValues_(opts.tickValues);
     this.categories = this.createCategories_(opts.categories ? opts.categories : this.createCategoriesFromUniqueValues_, opts.data);
-        this.categories = this.truncateCategories_(this.categories);
+    this.truncatedCategories = this.truncateCategories_(this.categories);
 
     this.data_ = this.aggregateData_(opts.data);
 
@@ -169,6 +169,10 @@ charts.BarChart.NUMERIC_KEY_ = 'numeric';
 charts.BarChart.DATE_KEY_ = 'date';
 charts.BarChart.BOOLEAN_KEY_ = 'boolean';
 charts.BarChart.STRING_KEY_ = 'string';
+
+charts.BarChart.prototype.truncateFormat = function(item) {
+    return item.toString().substring(0, this.maxCategoryLength);
+}
 
 /**
  * Gets the label for the category (bin on the x-axis) for this item.
@@ -280,12 +284,15 @@ charts.BarChart.prototype.computePlotWidth_ = function() {
 };
 
 charts.BarChart.prototype.createXAxis_ = function() {
+    var me = this;
     var xAxis = d3.svg.axis()
         .scale(this.x)
-        .orient('bottom');
+        .orient('bottom')
 
     if(this.tickFormat_) {
         xAxis = xAxis.tickFormat(this.tickFormat_);
+    } else {
+        xAxis = xAxis.tickFormat(this.truncateFormat);
     }
     if(this.tickValues_) {
         xAxis = xAxis.tickValues(this.tickValues_);
@@ -458,21 +465,21 @@ charts.BarChart.prototype.showTooltipXaxis_ = function(item, mouseLocation) {
 
     var yValue = 0;
     this.data_.forEach(function(d) {
-	if (item == d.key) { yValue = d.values; }
+    if (item == d.key) { yValue = d.values; }
     });
 
     var tooltip = this.element.append("div")
-	.property('id', charts.BarChart.TOOLTIP_ID_)
-	.classed({
+    .property('id', charts.BarChart.TOOLTIP_ID_)
+    .classed({
             charttooltip: true
-	});
+    });
 
     tooltip.append("div").html('<strong>' + this.xLabel_ + ':</strong> ' + item)
-	.append("div").html('<strong>' + this.yLabel_ + ':</strong> ' + yValue);
+    .append("div").html('<strong>' + this.yLabel_ + ':</strong> ' + yValue);
     $(tooltip[0]).hide();
 
-    // TODO:  Determine the correct location here.  The mouseLocation that is passed in is the 
-    // location of the text within its bounding rectangle, rather than the entire div, so it appears 
+    // TODO:  Determine the correct location here.  The mouseLocation that is passed in is the
+    // location of the text within its bounding rectangle, rather than the entire div, so it appears
     // in the upper left hand side
     this.positionTooltip_(tooltip, [100, 20]);
     $(tooltip[0]).fadeIn(500);
@@ -488,7 +495,7 @@ charts.BarChart.prototype.showTooltip_ = function(item, mouseLocation) {
         charttooltip: true
     });
 
-    tooltip.append("div").html('<strong>' + this.xLabel_ + ':</strong> ' + xValue)
+    tooltip.append("div").html('<strong>' + this.xLabel_ + ':</strong> ' + _.escape(xValue))
     .append("div").html('<strong>' + this.yLabel_ + ':</strong> ' + yValue);
     $(tooltip[0]).hide();
     this.positionTooltip_(tooltip, mouseLocation);
