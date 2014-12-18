@@ -14,12 +14,12 @@
  *
  */
 
-.filter-tags {
+.tagcloud .filter-tags {
 	padding-bottom: 10px;
 	margin-bottom: 10px;
 	border-bottom: 1px solid #e1e1e1;
 }
-.filter-tags .filter-reset{
+.tagcloud .filter-tags .filter-reset{
 	display: inline-block;
 	margin-right: 10px;
 	margin-bottom: 10px;

@@ -84,10 +84,29 @@ charts.SunburstChart = function(rootElement, selector, opts) {
 	this.root = d3.select(rootElement);
 	this.element = this.root.select(selector);
 
-	this.width = opts.width || charts.SunburstChart.DEFAULT_WIDTH;
-	this.height = opts.height || charts.SunburstChart.DEFAULT_HEIGHT;
+	if (typeof opts.width === "string" && opts.width.slice(-1) === "%") {
+		// Set width to string and viewbox to default
+		this.width = opts.width;
+		this.viewBoxWidth = charts.SunburstChart.DEFAULT_WIDTH;
+	}
+	else {
+		// Set both viewbox and width to value or default.
+		this.width = opts.width || charts.SunburstChart.DEFAULT_WIDTH;
+		this.viewBoxWidth = this.width;
+	}
 
-	this.radius = Math.min(this.width - 20, this.height - 20) / 2;
+	if (typeof opts.height === "string" && opts.height.slice(-1) === "%") {
+		// Set width to string and viewbox to default
+		this.height = opts.height;
+		this.viewBoxHeight = charts.SunburstChart.DEFAULT_HEIGHT;
+	}
+	else {
+		// Set both viewbox and width to value or default.
+		this.height = opts.height || charts.SunburstChart.DEFAULT_HEIGHT;
+		this.viewBoxHeight = this.height;
+	}
+
+	this.radius = Math.min(this.viewBoxWidth - 20, this.viewBoxHeight - 20) / 2;
 
 	this.x = d3.scale.linear()
 		.range([0, 2 * Math.PI]);
@@ -103,16 +122,18 @@ charts.SunburstChart = function(rootElement, selector, opts) {
 	this.partitionValue = "count";
 };
 
-charts.SunburstChart.DEFAULT_HEIGHT = 500;
-charts.SunburstChart.DEFAULT_WIDTH = 500;
+charts.SunburstChart.DEFAULT_HEIGHT = 1000;
+charts.SunburstChart.DEFAULT_WIDTH = 1000;
 
 charts.SunburstChart.prototype.drawBlank = function() {
 	var me = this;
 	this.svg = me.element.append("svg")
+		.attr("viewBox", "0 0 " + this.viewBoxWidth + " " + this.viewBoxHeight)
+		.attr("preserveAspectRatio", "xMidYMid meet")
 		.attr("width", this.width)
 		.attr("height", this.height)
 		.append("g")
-		.attr("transform", "translate(" + this.width / 2 + "," + (this.height / 2 + 10) + ")");
+		.attr("transform", "translate(" + this.viewBoxWidth / 2 + "," + (this.viewBoxHeight / 2 + 10) + ")");
 
 	this.partition = d3.layout.partition()
 		.sort(null)
@@ -272,3 +293,4 @@ charts.SunburstChart.prototype.clearData = function() {
 	//draw blank
 	this.drawBlank();
 };
+

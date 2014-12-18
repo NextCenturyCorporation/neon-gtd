@@ -1,10 +1,63 @@
-<form>
-	<select ng-options="field for field in fields" ng-model="selectedItem" ng-change="addGroup()"></select>
-	<label><input type="radio" name="mode" value="total" class="sunburst-chart-selector"> Amount</label>
-	<label><input type="radio" name="mode" value="count" checked class="sunburst-chart-selector"> Count</label>
-</form>
-<div class="row">
-	<div class="col-xs-3" ng-repeat="groupField in groupFields" ng-click="dropGroup(groupField)">{{groupField}}</div>
+<div class="sunburst-header">
+    <div class="clearfix">
+        <div class="form-inline pull-left">
+            <div class="form-input-group">
+                <!-- <label>Add Ring</label> -->
+                <div>
+                    <select class="form-control" ng-model="selectedItem" ng-disabled="!(fields.length > 0)" 
+                        ng-options="field for field in fields" ng-change="addGroup()">
+                        <option value="">Add a Ring</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+    <!--     <div class=""> -->
+        <div class="chart-options pull-right">
+            <a class="btn btn-lg text-muted collapsed" data-toggle="collapse" 
+                data-target=".{{uniqueChartOptions}} .sunburst-options" data-animation=false>
+              <span class="glyphicon glyphicon-cog"></span>
+              <span class="caret"></span>
+            </a>
+            <div class="sunburst-options popover bottom">
+                <div class="arrow"></div>
+                <div class="popover-content">
+                    <div class="form-group">
+                        <label>Arc Value
+                            <select class="form-control" ng-model="arcValue">
+                                <option>Record Count</option>
+                                <option>Field Summation</option>
+                            </select>
+                        </label>
+                        <label ng-hide="arcValue === 'Record Count'">Value Field
+                            <select class="form-control" ng-model="valueField"
+                                ng-options="field for field in fields">
+                                <option value="">Select a Field</option>
+                            </select>
+                        </label>
+                        <div class="clearfix"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="sunburst-ring-controls">
+        <!-- <div class="sunburst-breadcrumb">
+            <span ng-bind="tableName"></span>
+            <span class="glyphicon glyphicon-chevron-right"></span>
+        </div> -->
+        <div class="sunburst-transient-breadcrumb" ng-repeat="groupField in groupFields">
+            <div class="filter-reset">
+                <span ng-bind="groupField"></span>
+                <a class="btn" ng-click="dropGroup(groupField)">
+                  <span class="glyphicon glyphicon-remove"></span>
+                </a>
+            </div>
+            <span class="glyphicon glyphicon-chevron-right"></span>
+        </div>
+        <div class="sunburst-breadcrumb">
+            <span ng-bind="(arcValue === 'Record Count') ? arcValue : 'SUM (' + valueField + ')'"></span>
+        </div>
+    </div>
 </div>
 <div class="sunburst-tooltip">foo</div>
 <div class="sunburst-chart"></div>

@@ -2,6 +2,34 @@
   padding: 25px 20px 20px 20px;
 }
 
+.sunburst-directive .form-input-group {
+  margin: 0px 5px 5px 0px;
+  width: auto;
+}
+
+.sunburst-ring-controls  {
+  font-size: smaller;
+  width:100%;
+}
+
+.sunburst-breadcrumb {
+  display: inline;
+  margin: 0px 3px;
+  white-space: nowrap;
+}
+
+.sunburst-transient-breadcrumb {
+  display: inline;
+  margin: 0px 0px;
+  
+}
+
+.sunburst-ring-controls .filter-reset {
+  display: inline-block;
+  margin-right: 0px;
+  margin-bottom: 0px;
+}
+
 .sunburst-chart path {
   stroke: #fff;
   fill-rule: evenodd;
@@ -38,4 +66,14 @@
 
 .sunburst-tooltip-field {
   font-weight: bold;
+}
+
+.visualization-widget .sunburst-directive {
+  height: 100%;
+  width: 100%;
+}
+
+.visualization-widget-mobile .sunburst-directive {
+  min-height: 400px;
+  width: 100%;
 }

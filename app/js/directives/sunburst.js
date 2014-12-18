@@ -33,10 +33,13 @@ angular.module('neonDemo.directives')
 		restrict: 'EA',
 		scope: {
 		},
-		link: function($scope, el) {
-			el.addClass('sunburst-directive');
+		link: function($scope, $element) {
+			$element.addClass('sunburst-directive');
 
-			$scope.selectedItem = "";
+			$scope.uniqueChartOptions = 'chart-options-' + uuid();
+			$scope.arcValue = "Record Count";
+			$scope.valueField = null;
+			$scope.selectedItem = null;
 			$scope.groupFields = [];
 			$scope.messenger = new neon.eventing.Messenger();
 			$scope.database = '';
@@ -44,14 +47,26 @@ angular.module('neonDemo.directives')
 			$scope.fields = [""];
 			$scope.chart = undefined;
 
-			var initialize = function() {
-				$scope.chart = new charts.SunburstChart(el[0], '.sunburst-chart');
-				$scope.chart.drawBlank();
+			var chartOptions = $element.find('.chart-options');
+			chartOptions.toggleClass($scope.uniqueChartOptions);
 
+			var initialize = function() {
+				$scope.chart = new charts.SunburstChart($element[0], '.sunburst-chart', {
+					height: "100%",
+					width: "100%"
+				});
+				$scope.chart.drawBlank();
 				$scope.messenger.events({
 					activeDatasetChanged: onDatasetChanged,
 					filtersChanged: onFiltersChanged
 				});
+
+				// This resizes the chart when the div changes.  This rely's on jquery's resize plugin to fire
+				// on the associated element and not just the window.
+				$element.resize(function() {
+						$scope.updateChartSize();
+					});
+				
 			};
 
 			var onFiltersChanged = function() {
@@ -69,6 +84,13 @@ angular.module('neonDemo.directives')
 
 				// Pull data.
 				$scope.displayActiveDataset();
+			};
+
+			$scope.updateChartSize = function() {
+				if($scope.chart) {
+					console.log($element.width(), $element.height() - $element.find('.sunburst-header').outerHeight(true));
+					$element.find('.sunburst-chart').height($element.height() - $element.find('.sunburst-header').outerHeight(true));
+				}
 			};
 
 			/**
@@ -102,9 +124,9 @@ angular.module('neonDemo.directives')
 							$scope.$apply(function() {
 								$scope.fields = results;
 
-								$scope.fields.splice(0, 0, "");
+								//$scope.fields.splice(0, 0, "");
 
-								$scope.queryForData();
+								//$scope.queryForData();
 							});
 						});
 					});
@@ -122,6 +144,7 @@ angular.module('neonDemo.directives')
 						console.log(queryResults);
 						XDATA.activityLogger.logSystemActivity('sunburst - received data');
 						$scope.$apply(function() {
+							$scope.updateChartSize();
 							doDrawChart(buildDataTree(queryResults));
 							XDATA.activityLogger.logSystemActivity('sunburst - rendered data');
 						});
