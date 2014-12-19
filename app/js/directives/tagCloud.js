@@ -134,7 +134,7 @@ angular.module('neonDemo.directives')
 						// check if the field was passed in, otherwise check the mapping. if neither is found leave it empty
 						$scope.tagField = $scope.tagField || connectionService.getFieldMapping("tags") || '';
 						// Pull data.
-						$scope.clearTagFilters();
+						$scope.queryForTags();
 					});
 				}
 			};
