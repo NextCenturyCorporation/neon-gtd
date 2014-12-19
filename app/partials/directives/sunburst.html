@@ -11,7 +11,7 @@
                 </div>
             </div>
         </div>
-    <!--     <div class=""> -->
+
         <div class="chart-options pull-right">
             <a class="btn btn-lg text-muted collapsed" data-toggle="collapse" 
                 data-target=".{{uniqueChartOptions}} .sunburst-options" data-animation=false>
@@ -22,19 +22,18 @@
                 <div class="arrow"></div>
                 <div class="popover-content">
                     <div class="form-group">
-                        <label>Arc Value
-                            <select class="form-control" ng-model="arcValue">
-                                <option>Record Count</option>
-                                <option>Field Summation</option>
-                            </select>
-                        </label>
-                        <label ng-hide="arcValue === 'Record Count'">Value Field
-                            <select class="form-control" ng-model="valueField"
-                                ng-options="field for field in fields">
-                                <option value="">Select a Field</option>
-                            </select>
-                        </label>
-                        <div class="clearfix"></div>
+                        <label>Value</label>
+                        <select class="form-control" ng-model="arcValue">
+                            <option>Record Count</option>
+                            <option>Field Summation</option>
+                        </select>
+                    </div>
+                    <div class="form-group"  ng-hide="arcValue === 'Record Count'">
+                        <label>Value Field</label>
+                        <select class="form-control" ng-model="valueField"
+                            ng-options="field for field in fields">
+                            <option value="">Select a Field</option>
+                        </select>
                     </div>
                 </div>
             </div>
@@ -59,5 +58,5 @@
         </div>
     </div>
 </div>
-<div class="sunburst-tooltip">foo</div>
+<div class="sunburst-tooltip"></div>
 <div class="sunburst-chart"></div>
