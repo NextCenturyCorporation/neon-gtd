@@ -27,7 +27,7 @@
 .sunburst-ring-controls .filter-reset {
   display: inline-block;
   margin-right: 0px;
-  margin-bottom: 0px;
+  margin-bottom: 5px;
 }
 
 .sunburst-chart path {
