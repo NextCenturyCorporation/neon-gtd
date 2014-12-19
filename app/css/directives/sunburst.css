@@ -8,7 +8,6 @@
 }
 
 .sunburst-ring-controls  {
-  font-size: smaller;
   width:100%;
 }
 
@@ -21,7 +20,26 @@
 .sunburst-transient-breadcrumb {
   display: inline;
   margin: 0px 0px;
-  
+}
+
+.sunburst-transient-breadcrumb .breadcrumb-title {
+  text-decoration: none;
+}
+
+.sunburst-transient-breadcrumb:hover .breadcrumb-title,
+.sunburst-transient-breadcrumb:focus .breadcrumb-title {
+  color: #a00;
+}
+
+.sunburst-transient-breadcrumb .breadcrumb-remove {
+  color: #a00;
+  display: none;
+  text-decoration: none;
+}
+
+.sunburst-transient-breadcrumb:hover .breadcrumb-remove,
+.sunburst-transient-breadcrumb:focus .breadcrumb-remove {
+  display: inline;
 }
 
 .sunburst-ring-controls .filter-reset {

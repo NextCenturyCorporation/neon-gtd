@@ -1,4 +1,4 @@
-<div class="sunburst-header">
+<div class="sunburst-header clearfix">
     <div class="chart-options pull-right">
         <a class="btn btn-lg text-muted collapsed" data-toggle="collapse" 
             data-target=".{{uniqueChartOptions}} .sunburst-options" data-animation=false>
@@ -39,12 +39,12 @@
             <span class="glyphicon glyphicon-chevron-right"></span>
         </div> -->
         <div class="sunburst-transient-breadcrumb" ng-repeat="groupField in groupFields">
-            <div class="filter-reset">
-                <span ng-bind="groupField"></span>
-                <a class="btn" ng-click="dropGroup(groupField)">
-                  <span class="glyphicon glyphicon-remove"></span>
-                </a>
-            </div>
+            <a class="breadcrumb-title" ng-click="dropGroup(groupField)">
+              <span ng-bind="groupField"></span></span>
+            </a>
+            <a class="breadcrumb-remove" ng-click="dropGroup(groupField)">
+              <span class="glyphicon glyphicon-remove"></span>
+            </a>
             <span class="glyphicon glyphicon-chevron-right"></span>
         </div>
         <div class="sunburst-breadcrumb">
@@ -52,7 +52,7 @@
         </div>
     </div>
 </div>
-
-<div class="clearfix"></div>
+<!-- 
+<div class="clearfix"></div> -->
 <div class="sunburst-tooltip"></div>
 <div class="sunburst-chart"></div>

@@ -17,13 +17,13 @@
  */
 
 /**
- * This directive adds a barchart to the DOM and drives the visualization data from
+ * This directive adds a D3 sunburst chart to the DOM and drives the visualization data from
  * whatever database and table are currently selected in neon.  This directive accomplishes that
- * by using getting a neon connection from a connection service and listening for
+ * by getting a neon connection from a connection service and listening for
  * neon system events (e.g., data tables changed).  On these events, it requeries the active
  * connection for data and updates applies the change to its scope.  The contained
- * barchart will update as a result.
- * @class neonDemo.directives.barchart
+ * sunburst will update as a result.
+ * @class neonDemo.directives.sunburst
  * @constructor
  */
 angular.module('neonDemo.directives')
@@ -67,17 +67,24 @@ angular.module('neonDemo.directives')
 						$scope.updateChartSize();
 					});
 				
+				$scope.$watch('[arcValue, valueField]', function(newValue, oldValue) {
+					if((newValue[0] === "Record Count") ||
+					    (newValue[0] === "Field Summation" && newValue[1])) {
+						$scope.queryForData();
+					}
+				}, true);
 			};
 
 			var onFiltersChanged = function() {
-				XDATA.activityLogger.logSystemActivity('BarChart - received neon filter changed event');
+				XDATA.activityLogger.logSystemActivity('SunburstChart - received neon filter changed event');
 				$scope.queryForData();
 			};
 
 			var onDatasetChanged = function(message) {
-				XDATA.activityLogger.logSystemActivity('BarChart - received neon dataset changed event');
+				XDATA.activityLogger.logSystemActivity('SunburstChart - received neon dataset changed event');
 				$scope.databaseName = message.database;
 				$scope.tableName = message.table;
+				$scope.groupFields = [];
 
 				// if there is no active connection, try to make one.
 				connectionService.connectToDataset(message.datastore, message.hostname, message.database, message.table);
@@ -88,7 +95,6 @@ angular.module('neonDemo.directives')
 
 			$scope.updateChartSize = function() {
 				if($scope.chart) {
-					console.log($element.width(), $element.height() - $element.find('.sunburst-header').outerHeight(true));
 					$element.find('.sunburst-chart').height($element.height() - $element.find('.sunburst-header').outerHeight(true));
 				}
 			};
@@ -100,11 +106,15 @@ angular.module('neonDemo.directives')
 			 */
 			$scope.buildQuery = function() {
 				var query = new neon.query.Query().selectFrom($scope.databaseName, $scope.tableName);
-				query.groupBy.apply(query, $scope.groupFields);
-				//for each groupFields add groupBy
+				if ($scope.groupFields.length > 0) {
+					query.groupBy.apply(query, $scope.groupFields);
+				}
 
 				//take based on selected count or total
 				query.aggregate(neon.query.COUNT, '*', 'count');
+				if ($scope.valueField && $scope.arcValue === "Field Summation") {
+					query.aggregate(neon.query.SUM, $scope.valueField, $scope.valueField)
+				}
 
 				return query;
 			};
@@ -120,13 +130,11 @@ angular.module('neonDemo.directives')
 						var info = connectionService.getActiveDataset();
 						$scope.databaseName = info.database;
 						$scope.tableName = info.table;
+
 						connection.getFieldNames($scope.tableName, function(results) {
 							$scope.$apply(function() {
 								$scope.fields = results;
-
-								//$scope.fields.splice(0, 0, "");
-
-								//$scope.queryForData();
+								$scope.queryForData();
 							});
 						});
 					});
@@ -135,13 +143,12 @@ angular.module('neonDemo.directives')
 
 			$scope.queryForData = function() {
 				var connection = connectionService.getActiveConnection();
-				if(connection && $scope.groupFields.length > 0) {
+				// if(connection && $scope.groupFields.length > 0) {
+				if (connection) {
 					var query = $scope.buildQuery();
 
 					XDATA.activityLogger.logSystemActivity('sunburst - query for data');
 					connection.executeQuery(query, function(queryResults) {
-						console.log("back");
-						console.log(queryResults);
 						XDATA.activityLogger.logSystemActivity('sunburst - received data');
 						$scope.$apply(function() {
 							$scope.updateChartSize();
@@ -189,7 +196,7 @@ angular.module('neonDemo.directives')
 							} else {
 								leafObject.name = field + ": " + doc[field];
 								leafObject.count = doc.count;
-								leafObject.total = doc[field];
+								leafObject.total = doc[$scope.valueField];
 								parent.children.push(leafObject);
 							}
 						} else {
@@ -202,7 +209,6 @@ angular.module('neonDemo.directives')
 			};
 
 			var doDrawChart = function(data) {
-				console.log(data);
 				$scope.chart.clearData();
 				$scope.chart.drawData(data);
 			};

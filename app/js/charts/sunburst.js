@@ -19,7 +19,7 @@
  *
  * Creates a new bar chart component
  * @namespace charts
- * @class BarChart
+ * @class SunburstChart
  * @param {String} chartSelector The selector for the component in which the chart will be drawn
  * @param {Object} opts A collection of key/value pairs used for configuration parameters:
  * <ul>
@@ -40,7 +40,7 @@
  *     <li>margin (optional) - An object with any of the elements `top`, `left`, `bottom` or `right`. These are pixel values to override the default margin. If not specified, a preconfigured default value will be used.</li>
  *     <li>style (optional) - a mapping of a bar state to the different attributes to style for that attribute. The available bar states
  *     are active (default bar state), inactive (a visual state to indicate to the user that the bar should be seen
- *     as inactive - the meaning of this is chart specified - see {{#crossLink "charts.BarChart/setInactive"}}{{/crossLink}}),
+ *     as inactive - the meaning of this is chart specified - see {{#crossLink "charts.SunburstChart/setInactive"}}{{/crossLink}}),
  *     and hover. The attributes that can be toggled correspond
  *     to the underlying svg type used to render the bar. For example, to modify the the active/inactive bar states,
  *     but not do anything on hover this attribute would be
@@ -55,7 +55,7 @@
  *     that takes 1 parameter (the data) and will compute the categories. If not specified, all unique values from the
  *     x-attribute will used as the category values</li>
  *     <li>init (optional) - An optional method for the bar chart to invoke before aggregating the data, but after setting
- *     up the x/y attributes. This allows callers to use the {{#crossLink "charts.BarChart/categoryForItem"}}{{/crossLink}})
+ *     up the x/y attributes. This allows callers to use the {{#crossLink "charts.SunburstChart/categoryForItem"}}{{/crossLink}})
  *     method to perform any preprocessing. This is useful because the bar chart will take the appropriate action to
  *     resolve the x attribute, which can be a string or a function.
  *     The init method is called with a single parameter containing the options passed into the bar chart.</li>
@@ -133,7 +133,7 @@ charts.SunburstChart.prototype.drawBlank = function() {
 		.attr("width", this.width)
 		.attr("height", this.height)
 		.append("g")
-		.attr("transform", "translate(" + this.viewBoxWidth / 2 + "," + (this.viewBoxHeight / 2 + 10) + ")");
+		.attr("transform", "translate(" + (this.viewBoxWidth / 2) + "," + (this.viewBoxHeight / 2) + ")");
 
 	this.partition = d3.layout.partition()
 		.sort(null)
