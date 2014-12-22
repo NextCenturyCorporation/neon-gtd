@@ -9,6 +9,7 @@
 
 .sunburst-ring-controls  {
   width:100%;
+  margin-bottom: 10px;
 }
 
 .sunburst-breadcrumb {
@@ -42,10 +43,8 @@
   display: inline;
 }
 
-.sunburst-ring-controls .filter-reset {
-  display: inline-block;
-  margin-right: 0px;
-  margin-bottom: 5px;
+.sunburst-aggregate-controls {
+  margin: 0px 0px 10px 0px;
 }
 
 .sunburst-chart path {

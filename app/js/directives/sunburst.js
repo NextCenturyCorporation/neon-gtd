@@ -37,7 +37,7 @@ angular.module('neonDemo.directives')
 			$element.addClass('sunburst-directive');
 
 			$scope.uniqueChartOptions = 'chart-options-' + uuid();
-			$scope.arcValue = "Record Count";
+			$scope.arcValue = "count";
 			$scope.valueField = null;
 			$scope.selectedItem = null;
 			$scope.groupFields = [];
@@ -66,13 +66,18 @@ angular.module('neonDemo.directives')
 				$element.resize(function() {
 						$scope.updateChartSize();
 					});
-				
-				$scope.$watch('[arcValue, valueField]', function(newValue, oldValue) {
-					if((newValue[0] === "Record Count") ||
-					    (newValue[0] === "Field Summation" && newValue[1])) {
+
+				$scope.$watch('valueField', function(newValue, oldValue) {
+					if(newValue !== oldValue) {
 						$scope.queryForData();
 					}
 				}, true);
+
+				$scope.$watch('arcValue', function(newValue, oldValue) {
+					if (newValue !== oldValue) {
+						$scope.chart.displayPartition(newValue);
+					}
+				})
 			};
 
 			var onFiltersChanged = function() {
@@ -85,6 +90,8 @@ angular.module('neonDemo.directives')
 				$scope.databaseName = message.database;
 				$scope.tableName = message.table;
 				$scope.groupFields = [];
+				$scope.valueField = null;
+				$scope.arcValue = charts.SunburstChart.COUNT_PARTITION;
 
 				// if there is no active connection, try to make one.
 				connectionService.connectToDataset(message.datastore, message.hostname, message.database, message.table);
@@ -112,7 +119,7 @@ angular.module('neonDemo.directives')
 
 				//take based on selected count or total
 				query.aggregate(neon.query.COUNT, '*', 'count');
-				if ($scope.valueField && $scope.arcValue === "Field Summation") {
+				if ($scope.valueField) {
 					query.aggregate(neon.query.SUM, $scope.valueField, $scope.valueField)
 				}
 

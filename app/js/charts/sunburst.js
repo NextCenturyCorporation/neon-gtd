@@ -80,6 +80,8 @@
  */
 charts.SunburstChart = function(rootElement, selector, opts) {
 	opts = opts || {};
+	var me = this;
+	this.node = {};
 	this.chartSelector_ = selector;
 	this.root = d3.select(rootElement);
 	this.element = this.root.select(selector);
@@ -119,87 +121,13 @@ charts.SunburstChart = function(rootElement, selector, opts) {
 	this.countFormatter = d3.format(' ,.0f');
 
 	this.moneyFormatter = d3.format(' $,.2f');
-	this.partitionValue = "count";
-};
+	this.partitionType = "count";
 
-charts.SunburstChart.DEFAULT_HEIGHT = 1000;
-charts.SunburstChart.DEFAULT_WIDTH = 1000;
+	var partitionFunction = function(d) {
+		return d[me.partitionType];
+	};
 
-charts.SunburstChart.prototype.drawBlank = function() {
-	var me = this;
-	this.svg = me.element.append("svg")
-		.attr("viewBox", "0 0 " + this.viewBoxWidth + " " + this.viewBoxHeight)
-		.attr("preserveAspectRatio", "xMidYMid meet")
-		.attr("width", this.width)
-		.attr("height", this.height)
-		.append("g")
-		.attr("transform", "translate(" + (this.viewBoxWidth / 2) + "," + (this.viewBoxHeight / 2) + ")");
-
-	this.partition = d3.layout.partition()
-		.sort(null)
-		.value(function(d) {
-			return d[me.partitionValue];
-		});
-
-	this.arc = d3.svg.arc()
-		.startAngle(function(d) {
-			return Math.max(0, Math.min(2 * Math.PI, me.x(d.x)));
-		})
-		.endAngle(function(d) {
-			return Math.max(0, Math.min(2 * Math.PI, me.x(d.x + d.dx)));
-		})
-		.innerRadius(function(d) {
-			return Math.max(0, me.y(d.y));
-		})
-		.outerRadius(function(d) {
-			return Math.max(0, me.y(d.y + d.dy));
-		});
-};
-
-charts.SunburstChart.prototype.drawData = function(root) {
-	var me = this;
-	// Keep track of the node that is currentfoly being displayed as the root.
-	var node;
-
-	node = root;
-
-	var path = this.svg.datum(root).selectAll("path")
-		.data(this.partition.nodes)
-		.enter().append("path")
-			.attr("d", this.arc)
-			.style("fill", function(d) {
-				return me.color((d.children ? d : d.parent).name);
-			})
-			.on("click", click)
-			.on("mouseover", onMouseOver)
-			.on("mouseout", onMouseOut)
-			.on("mousemove", onMouseMove)
-			.each(stash);
-
-	me.root.selectAll("input.sunburst-chart-selector").on("change", function change() {
-		var element = me.root.select('input.sunburst-chart-selector:checked')[0];
-		var value = element[0].value;
-		if(value === "count") {
-			me.partitionValue = "count";
-			value = function(d) {
-				return d.count;
-			};
-		} else {
-			me.partitionValue = "total";
-			value = function(d) {
-				return d.total;
-			};
-		}
-
-		path
-		.data(me.partition.value(value).nodes)
-		.transition()
-		.duration(1000)
-		.attrTween("d", arcTweenData);
-	});
-
-	// When switching data: interpolate the arcs in data space.
-	function arcTweenData(a, i) {
+	var arcTweenData = function (a, i) {
 		var oi = d3.interpolate({
 			x: a.x0,
 			dx: a.dx0
@@ -213,7 +141,7 @@ charts.SunburstChart.prototype.drawData = function(root) {
 		if(i === 0) {
 			// If we are on the first arc, adjust the x domain to match the root node
 			// at the current zoom level. (We only need to do this once.)
-			var xd = d3.interpolate(me.x.domain(), [node.x, node.x + node.dx]);
+			var xd = d3.interpolate(me.x.domain(), [me.node.x, me.node.x + me.node.dx]);
 			return function(t) {
 				me.x.domain(xd(t));
 				return tween(t);
@@ -221,53 +149,9 @@ charts.SunburstChart.prototype.drawData = function(root) {
 		} else {
 			return tween;
 		}
-	}
+	};
 
-	function click(d) {
-		node = d;
-		path.transition()
-			.duration(1000)
-			.attrTween("d", arcTweenZoom(d));
-	}
-
-	function onMouseOver(d) {
-		var tooltip = d3.select(".sunburst-tooltip");
-		var text = "<span class='sunburst-tooltip-title'>" + d.name + "</span><br>";
-		text = (!d.count && !d.total && d.value) ? text + "<span class='sunburst-tooltip-field'>Aggregate:</span> " + me.countFormatter(d.value) + "<br>" : text;
-		text = (d.count) ? text + "<span class='sunburst-tooltip-field'>Count:</span> " + me.countFormatter(d.count) + "<br>" : text;
-		text = (d.total) ? text + "<span class='sunburst-tooltip-field'>Amount:</span> " + me.moneyFormatter(d.total) + "<br>" : text;
-
-		tooltip.html(text);
-		// tooltip.transition()
-		//   .duration(200)
-		tooltip.style("opacity", 0.9);
-		tooltip.style("left", d3.event.offsetX + "px")
-			.style("top", d3.event.offsetY + "px");
-	}
-
-	function onMouseMove() {
-		var tooltip = d3.select(".sunburst-tooltip");
-		tooltip.style("left", d3.event.offsetX + "px")
-			.style("top", d3.event.offsetY + "px");
-	}
-
-	function onMouseOut() {
-		var tooltip = d3.select(".sunburst-tooltip");
-		// tooltip.transition()
-		//   .duration(200)
-		tooltip.style("opacity", 0);
-	}
-
-	d3.select(window.frameElement).style("height", this.height + "px");
-
-	// Setup for switching data: stash the old values for transition.
-	function stash(d) {
-		d.x0 = d.x;
-		d.dx0 = d.dx;
-	}
-
-	// When zooming: interpolate the scales.
-	function arcTweenZoom(d) {
+	var arcTweenZoom = function(d) {
 		var xd = d3.interpolate(me.x.domain(), [d.x, d.x + d.dx]);
 		var yd = d3.interpolate(me.y.domain(), [d.y, 1]);
 		var yr = d3.interpolate(me.y.range(), [d.y ? 20 : 0, me.radius]);
@@ -284,8 +168,124 @@ charts.SunburstChart.prototype.drawData = function(root) {
 				};
 			}
 		};
-	}
+	};
+
+	this.displayPartition = function(type) {
+		var me = this;
+		var node = this.node;
+		this.partitionType = type;
+
+		this.path.data(this.partition.value(partitionFunction).nodes)
+			.transition()
+			.duration(1000)
+			.attrTween("d", arcTweenData);
+	};
+
+	this.drawBlank = function() {
+		var me = this;
+
+		this.tooltip = me.element.append("div")
+			.attr("class", "sunburst-tooltip");
+
+		this.svg = me.element.append("svg")
+			.attr("viewBox", "0 0 " + this.viewBoxWidth + " " + this.viewBoxHeight)
+			.attr("preserveAspectRatio", "xMidYMid meet")
+			.attr("width", this.width)
+			.attr("height", this.height)
+			.append("g")
+			.attr("transform", "translate(" + (this.viewBoxWidth / 2) + "," + (this.viewBoxHeight / 2) + ")");
+
+		this.partition = d3.layout.partition()
+			.sort(null)
+			.value(function(d) {
+				return d[me.partitionType];
+			});
+
+		this.arc = d3.svg.arc()
+			.startAngle(function(d) {
+				return Math.max(0, Math.min(2 * Math.PI, me.x(d.x)));
+			})
+			.endAngle(function(d) {
+				return Math.max(0, Math.min(2 * Math.PI, me.x(d.x + d.dx)));
+			})
+			.innerRadius(function(d) {
+				return Math.max(0, me.y(d.y));
+			})
+			.outerRadius(function(d) {
+				return Math.max(0, me.y(d.y + d.dy));
+			});
+	};
+
+	this.drawData = function(root) {
+		var me = this;
+		// Keep track of the node that is currentfoly being displayed as the root.
+		var node;
+
+		node = root;
+		this.node = root;
+
+		this.path = this.svg.datum(root).selectAll("path")
+			.data(this.partition.nodes)
+			.enter().append("path")
+				.attr("d", this.arc)
+				.style("fill", function(d) {
+					return me.color((d.children ? d : d.parent).name);
+				})
+				.on("click", click)
+				.on("mouseover", onMouseOver)
+				.on("mouseout", onMouseOut)
+				.on("mousemove", onMouseMove)
+				.each(stash);
+
+		function click(d) {
+			me.node = d;
+			me.path.transition()
+				.duration(1000)
+				.attrTween("d", arcTweenZoom(d));
+		}
+
+		function onMouseOver(d) {
+			var tooltip = d3.select(".sunburst-tooltip");
+			var text = "<span class='sunburst-tooltip-title'>" + d.name + "</span><br>";
+
+			if (!d.count && !d.total && d.value) {
+				text = text + "<span class='sunburst-tooltip-field'>";
+				text = text + ((me.partitionType ===  charts.SunburstChart.COUNT_PARTITION) ? "Count" : "Total");
+				text = text + ":</span> " + me.countFormatter(d.value) + "<br>";
+			} 
+
+			text = (d.count) ? text + "<span class='sunburst-tooltip-field'>Count:</span> " + me.countFormatter(d.count) + "<br>" : text;
+			text = (d.total) ? text + "<span class='sunburst-tooltip-field'>Total:</span> " + me.moneyFormatter(d.total) + "<br>" : text;
+
+			me.tooltip.html(text);
+			me.tooltip.style("opacity", 0.9);
+			me.tooltip.style("left", d3.event.offsetX + "px")
+				.style("top", d3.event.offsetY + "px");
+		}
+
+		function onMouseMove() {
+			var tooltip = d3.select(".sunburst-tooltip");
+			me.tooltip.style("left", d3.event.offsetX + "px")
+				.style("top", d3.event.offsetY + "px");
+		}
+
+		function onMouseOut() {
+			var tooltip = d3.select(".sunburst-tooltip");
+			me.tooltip.style("opacity", 0);
+		}
+
+		// Setup for switching data: stash the old values for transition.
+		function stash(d) {
+			d.x0 = d.x;
+			d.dx0 = d.dx;
+		}
+	};
 };
+
+charts.SunburstChart.DEFAULT_HEIGHT = 1000;
+charts.SunburstChart.DEFAULT_WIDTH = 1000;
+charts.SunburstChart.COUNT_PARTITION = "count";
+charts.SunburstChart.TOTAL_PARTITION = "total";
 
 charts.SunburstChart.prototype.clearData = function() {
 	//clear
