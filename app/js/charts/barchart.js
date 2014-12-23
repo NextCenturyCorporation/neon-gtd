@@ -121,6 +121,8 @@ charts.BarChart = function(rootElement, selector, opts) {
     if(opts.responsive) {
         this.redrawOnResize_();
     }
+
+    this.clickHandler = opts.clickHandler;
 };
 
 charts.BarChart.DEFAULT_HEIGHT_ = 250;
@@ -406,9 +408,22 @@ charts.BarChart.prototype.bindData_ = function(chart) {
         .on('mouseout', function() {
             me.toggleHoverStyle_(d3.select(this), false);
             me.hideTooltip_();
+        })
+        .on('click', function(d) {
+
+            d3.select(this).classed('selectedBar', true);
+            if(me.clickHandler) {
+                me.clickHandler(d.key);
+            }
         });
     // initially all bars active, so just apply the active style
     this.applyStyle_(bars, charts.BarChart.ACTIVE_STYLE_KEY_);
+};
+
+charts.BarChart.prototype.clearSelectedBar = function() {
+    this.element
+    .select('.selectedBar')
+    .classed('selectedBar', false);
 };
 
 charts.BarChart.prototype.toggleHoverStyle_ = function(selection, hover) {

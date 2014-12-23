@@ -85,8 +85,8 @@ svg .tick {
   min-height: 50px;
   overflow: hidden;
 }
-.barchart .hover-line line { 
-  stroke: #e1e1e1;  
+.barchart .hover-line line {
+  stroke: #e1e1e1;
   fill: none;
   stroke-width: 1px;
 }
@@ -170,4 +170,12 @@ svg .tick {
 .visualization-widget-mobile .barchartDirective {
   min-height: 400px;
   width: 100%;
+}
+
+.barchart .selectedBar {
+  fill: #9CDAA5;
+}
+
+.barchartDirective .filter-reset {
+  margin-right: 10px;
 }

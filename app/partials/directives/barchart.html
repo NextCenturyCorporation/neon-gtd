@@ -10,10 +10,10 @@
 		<div class="arrow"></div>
 		<div class="popover-content">
 			<div class="form-group">
-				<fieldselector target-var="attrX" label-text="'X axis:'" default-mapping="'bar_x_axis'"></fieldSelector>
+				<fieldselector target-var="attrX" label-text="'X axis:'" default-mapping="'bar_x_axis'"></fieldselector>
 			</div>
 			<div class="form-group">
-				<fieldselector target-var="attrY" label-text="'Y axis:'" default-mapping="'y_axis'"></fieldSelector>
+				<fieldselector target-var="attrY" label-text="'Y axis:'" default-mapping="'y_axis'"></fieldselector>
 			</div>
 			<div class="form-group">
 				<select ng-model="barType" class="form-control">
@@ -24,6 +24,12 @@
 			</div>
 		</div>
 	</div>
+</div>
+<div class="filter-reset pull-right" ng-class="{true: 'hidden', false: ''}[filterSet === undefined]">
+  Filter
+  <a class="btn" ng-click="clearFilterSet()">
+    <span class="glyphicon glyphicon-remove"></span>
+  </a>
 </div>
 
 <div class="legend">

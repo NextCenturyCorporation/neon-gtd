@@ -46,6 +46,8 @@ angular.module('neonDemo.directives')
 			$scope.xAxisSelect = $scope.fields[0] ? $scope.fields[0] : '';
 			$scope.initializing = false;
 			$scope.chart = undefined;
+			$scope.filterKey = "barchart-" + uuid();
+			$scope.filterSet = undefined;
 
 			var COUNT_FIELD_NAME = 'Count';
 
@@ -136,6 +138,8 @@ angular.module('neonDemo.directives')
 					.where(xAxis, '!=', null)
 					.groupBy(xAxis);
 
+				query.ignoreFilters([$scope.filterKey]);
+
 				var queryType;
 				if($scope.barType === 'count') {
 					queryType = neon.query.COUNT;
@@ -170,6 +174,47 @@ angular.module('neonDemo.directives')
 				});
 			};
 
+			var clickFilterHandler = function(filterValue) {
+				var xAxis = $scope.attrX || connectionService.getFieldMapping("bar_x_axis");
+				var connection = connectionService.getActiveConnection();
+				if(xAxis !== undefined && xAxis !== "" && $scope.messenger && connection) {
+					var filterClause = neon.query.where(xAxis, '=', filterValue);
+					var filter = new neon.query.Filter().selectFrom($scope.databaseName, $scope.tableName).where(filterClause);
+
+					if(!$scope.filterSet) {
+						$scope.messenger.addFilter($scope.filterKey, filter, function() {
+							handleFilterSet(xAxis, filterValue);
+						});
+					} else {
+						$scope.messenger.replaceFilter($scope.filterKey, filter, function() {
+							handleFilterSet(xAxis, filterValue);
+						});
+					}
+				}
+			};
+
+			var handleFilterSet = function(key, val) {
+				$scope.filterSet = {
+					key: key,
+					value: val
+				};
+				//no need to requery because barchart ignores its own filter
+			};
+
+			var clearFilterSet = function() {
+				$scope.filterSet = undefined;
+			};
+
+			$scope.clearFilterSet = function() {
+				if($scope.messenger) {
+					$scope.messenger.removeFilter($scope.filterKey, function() {
+						console.log("foo");
+						$scope.chart.clearSelectedBar();
+						clearFilterSet();
+					});
+				}
+			};
+
 			var doDrawChart = function(data) {
 				// Destroy the old chart and rebuild it.
 				if($scope.chart) {
@@ -189,7 +234,8 @@ angular.module('neonDemo.directives')
 					data: data.data,
 					x: xAxis,
 					y: yAxis,
-					responsive: false
+					responsive: false,
+					clickHandler: clickFilterHandler
 				};
 				$scope.chart = new charts.BarChart($element[0], '.barchart', opts);
 				updateChartSize();
