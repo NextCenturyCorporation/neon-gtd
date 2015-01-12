@@ -411,19 +411,29 @@ charts.BarChart.prototype.bindData_ = function(chart) {
         })
         .on('click', function(d) {
 
-            d3.select(this).classed('selectedBar', true);
-            if(me.clickHandler) {
-                me.clickHandler(d.key);
-            }
+	    me.setBarSelected(this, d.key);
+
         });
+
     // initially all bars active, so just apply the active style
     this.applyStyle_(bars, charts.BarChart.ACTIVE_STYLE_KEY_);
 };
 
+charts.BarChart.prototype.setBarSelected = function(selectedBar, selectedKey) {
+
+    this.element.selectAll(charts.BarChart.SVG_ELEMENT_).classed('unselectedBar', true);
+
+    d3.select(selectedBar).classed('unselectedBar', false);
+    d3.select(selectedBar).classed('selectedBar', true);
+    if (this.clickHandler) { 
+	this.clickHandler(selectedKey);
+    }
+};
+
 charts.BarChart.prototype.clearSelectedBar = function() {
-    this.element
-    .select('.selectedBar')
-    .classed('selectedBar', false);
+
+    this.element.selectAll(charts.BarChart.SVG_ELEMENT_).classed('unselectedBar', false);
+    this.element.selectAll(charts.BarChart.SVG_ELEMENT_).classed('selectedBar', false);
 };
 
 charts.BarChart.prototype.toggleHoverStyle_ = function(selection, hover) {

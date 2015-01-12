@@ -173,9 +173,12 @@ svg .tick {
 }
 
 .barchart .selectedBar {
-  fill: #9CDAA5;
+  fill: #39b54a;
 }
 
+.barchart .unselectedBar {
+  opacity: 0.5;
+}
 .barchartDirective .filter-reset {
   margin-right: 10px;
 }

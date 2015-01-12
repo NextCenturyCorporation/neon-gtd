@@ -208,7 +208,6 @@ angular.module('neonDemo.directives')
 			$scope.clearFilterSet = function() {
 				if($scope.messenger) {
 					$scope.messenger.removeFilter($scope.filterKey, function() {
-						console.log("foo");
 						$scope.chart.clearSelectedBar();
 						clearFilterSet();
 					});
