@@ -224,6 +224,23 @@ charts.SunburstChart = function(rootElement, selector, opts) {
 		node = root;
 		this.node = root;
 
+	        // sort the children
+	        function compare(a,b) {
+		    if (a.name && b.name) { 
+			if (a.name < b.name) {
+			    return -1;
+			}
+			if (a.name > b.name) {
+			    return 1;
+			}
+			return 0;
+		    }
+		    return 0;
+		}
+	        if (root && root.children) {
+		    root.children.sort(compare);
+                }
+
 		this.path = this.svg.datum(root).selectAll("path")
 			.data(this.partition.nodes)
 			.enter().append("path")
