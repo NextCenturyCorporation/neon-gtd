@@ -169,6 +169,7 @@ svg .tick {
 
 .visualization-widget-mobile .barchartDirective {
   min-height: 400px;
+  max-height: 400px;
   width: 100%;
 }
 
