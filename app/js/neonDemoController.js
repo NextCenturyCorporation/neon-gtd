@@ -86,21 +86,6 @@ angular.module('neonDemo.controllers')
         type: 'timeline-selector'
     }, {
         id: uuid(),
-        sizeX: 4,
-        sizeY: 2,
-        type: 'heat-map'
-    }, {
-        id: uuid(),
-        sizeX: 2,
-        sizeY: 2,
-        type: 'circular-heat-form'
-    }, {
-        id: uuid(),
-        sizeX: 2,
-        sizeY: 2,
-        type: 'linechart'
-    }, {
-        id: uuid(),
         sizeX: 2,
         sizeY: 2,
         type: 'barchart'
@@ -111,6 +96,22 @@ angular.module('neonDemo.controllers')
         type: 'tag-cloud',
         bindings: {
             "tag-field": "'hashtags'"
+        }
+    }, {
+        id: uuid(),
+        sizeX: 2,
+        sizeY: 2,
+        type: 'tag-cloud',
+        bindings: {
+            "tag-field": "'compounds'"
+        }
+    },{
+        id: uuid(),
+        sizeX: 2,
+        sizeY: 2,
+        type: 'tag-cloud',
+        bindings: {
+            "tag-field": "'authors'"
         }
     }];
 
