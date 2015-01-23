@@ -91,28 +91,9 @@ angular.module('neonDemo.controllers')
         type: 'barchart'
     }, {
         id: uuid(),
-        sizeX: 2,
-        sizeY: 2,
-        type: 'tag-cloud',
-        bindings: {
-            "tag-field": "'hashtags'"
-        }
-    }, {
-        id: uuid(),
-        sizeX: 2,
-        sizeY: 2,
-        type: 'tag-cloud',
-        bindings: {
-            "tag-field": "'compounds'"
-        }
-    },{
-        id: uuid(),
-        sizeX: 2,
-        sizeY: 2,
-        type: 'tag-cloud',
-        bindings: {
-            "tag-field": "'authors'"
-        }
+        sizeX: 4,
+        sizeY: 4,
+        type: 'sunburst',
     }];
 
     /**

@@ -41,7 +41,8 @@ angular.module('neonDemo.directives')
 			$scope.messenger = new neon.eventing.Messenger();
 			$scope.database = '';
 			$scope.tableName = '';
-			$scope.barType = $scope.barType || 'count';
+//			$scope.barType = $scope.barType || 'count';
+			$scope.barType = $scope.barType || 'sum';
 			$scope.fields = [];
 			$scope.xAxisSelect = $scope.fields[0] ? $scope.fields[0] : '';
 			$scope.initializing = false;
