@@ -23,33 +23,12 @@ angular.module('neonDemo.directives')
 			$scope.activeServer = "Choose dataset";
 			$scope.servers = [
 				{
-					name: "Earthquakes",
+					name: "MaterialSciencePapers",
 					datastoreSelect: "mongo",
 					hostnameInput: "localhost",
-					selectedDb: "test",
-					selectedTable: "earthquakes"
+					selectedDb: "memex",
+					selectedTable: "papers"
 				},
-				{
-					name: "South America Tweets",
-					datastoreSelect: "mongo",
-					hostnameInput: "localhost",
-					selectedDb: "test",
-					selectedTable: "alibaverstock130k"
-				},
-				{
-					name: "Twitter",
-					datastoreSelect: "mongo",
-					hostnameInput: "localhost",
-					selectedDb: "test",
-					selectedTable: "gbDate"
-				},
-				{
-					name: "Traffic",
-					datastoreSelect: "mongo",
-					hostnameInput: "localhost",
-					selectedDb: "test",
-					selectedTable: "most_active"
-				}
 			];
 			$scope.fields = [
 				{
