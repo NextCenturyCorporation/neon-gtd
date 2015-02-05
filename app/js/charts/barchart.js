@@ -77,14 +77,14 @@
  *    var barchart = new charts.BarChart('#chart', opts).draw();
  *
  */
-charts.BarChart = function(rootElement, selector, opts) {
+charts.BarChart = function (rootElement, selector, opts) {
     opts = opts || {};
     this.chartSelector_ = selector;
     this.element = d3.select(rootElement).select(selector);
 
     this.isStacked = opts.stacked;
 
-    if(!opts.responsive) {
+    if (!opts.responsive) {
         this.userSetWidth_ = opts.width;
     }
     this.userSetHeight_ = opts.height;
@@ -101,9 +101,9 @@ charts.BarChart = function(rootElement, selector, opts) {
     this.viewboxXMax = 618;
     this.viewboxYMax = 270;
 
-        this.maxCategoryLength = 10;
+    this.maxCategoryLength = 10;
 
-    if(opts.init) {
+    if (opts.init) {
         opts.init.call(this, opts);
     }
 
@@ -118,7 +118,7 @@ charts.BarChart = function(rootElement, selector, opts) {
     this.preparePropertiesForDrawing_();
     this.style_ = $.extend({}, charts.BarChart.DEFAULT_STYLE_, opts.style);
 
-    if(opts.responsive) {
+    if (opts.responsive) {
         this.redrawOnResize_();
     }
 
@@ -172,7 +172,7 @@ charts.BarChart.DATE_KEY_ = 'date';
 charts.BarChart.BOOLEAN_KEY_ = 'boolean';
 charts.BarChart.STRING_KEY_ = 'string';
 
-charts.BarChart.prototype.truncateFormat = function(item) {
+charts.BarChart.prototype.truncateFormat = function (item) {
     return item.toString().substring(0, this.maxCategoryLength);
 };
 
@@ -183,94 +183,104 @@ charts.BarChart.prototype.truncateFormat = function(item) {
  * @method categoryForItem
  * @protected
  */
-charts.BarChart.prototype.categoryForItem = function(item) {
-    if(typeof this.xAttribute_ === 'function') {
+charts.BarChart.prototype.categoryForItem = function (item) {
+    if (typeof this.xAttribute_ === 'function') {
         return this.xAttribute_.call(this, item);
     }
     return item[this.xAttribute_];
 };
 
-charts.BarChart.prototype.determineXLabel_ = function() {
-    if(typeof this.xAttribute_ === 'string') {
+charts.BarChart.prototype.determineXLabel_ = function () {
+    if (typeof this.xAttribute_ === 'string') {
         return this.xAttribute_;
     }
     return 'x';
 };
 
-charts.BarChart.prototype.determineYLabel_ = function() {
+charts.BarChart.prototype.determineYLabel_ = function () {
     return this.yAttribute_ ? this.yAttribute_ : "Count";
 };
 
-charts.BarChart.prototype.createCategories_ = function(categories, data) {
-    if(typeof categories === 'function') {
+charts.BarChart.prototype.createCategories_ = function (categories, data) {
+    if (typeof categories === 'function') {
         return categories.call(this, data);
     }
     return categories;
 };
 
-charts.BarChart.prototype.computeTickValues_ = function(tickValues) {
-    if(typeof tickValues === 'function') {
+charts.BarChart.prototype.computeTickValues_ = function (tickValues) {
+    if (typeof tickValues === 'function') {
         return tickValues.call(this);
     }
     return tickValues;
 };
 
-charts.BarChart.prototype.determineViewboxString = function() {
+charts.BarChart.prototype.determineViewboxString = function () {
     return this.viewboxXMin + " " + this.viewboxYMin + " " + this.viewboxXMax + " " + this.viewboxYMax;
 };
 
-charts.BarChart.prototype.createCategoriesFromUniqueValues_ = function(data) {
+charts.BarChart.prototype.createCategoriesFromUniqueValues_ = function (data) {
     var me = this;
     return _.chain(data)
-        .map(function(item) {
+        .map(function (item) {
             return me.categoryForItem(item);
         })
         .unique()
-        .filter(function(item) {
+        .filter(function (item) {
             return !_.isNull(item) && !_.isUndefined(item);
         })
         .sort(charts.BarChart.sortComparator_)
         .value();
 };
 
-charts.BarChart.prototype.truncateCategories_ = function(categories) {
-        var me = this;
-        var truncatedCategories = categories.map(function(item) {
-            return item.toString().substring(0, me.maxCategoryLength);
-        });
-        return truncatedCategories;
+charts.BarChart.prototype.truncateCategories_ = function (categories) {
+    var me = this;
+    var truncatedCategories = categories.map(function (item) {
+        return item.toString().substring(0, me.maxCategoryLength);
+    });
+    return truncatedCategories;
 };
 
-charts.BarChart.sortComparator_ = function(a, b) {
-    if(a instanceof Date && b instanceof Date) {
+charts.BarChart.sortComparator_ = function (a, b) {
+
+    if (a instanceof Date && b instanceof Date) {
         return charts.BarChart.compareValues_(a.getTime(), b.getTime());
     }
+
+    if (typeof(a) == 'string' && typeof(b) == 'string') {
+        var numA = parseFloat(a);
+        var numB = parseFloat(b);
+        if (!isNaN(numA) && !isNaN(numB)) {
+            return charts.BarChart.compareValues_(numA, numB);
+        }
+    }
+
     return charts.BarChart.compareValues_(a, b);
 };
 
-charts.BarChart.compareValues_ = function(a, b) {
-    if(a < b) {
+charts.BarChart.compareValues_ = function (a, b) {
+    if (a < b) {
         return -1;
     }
-    if(a > b) {
+    if (a > b) {
         return 1;
     }
     return 0;
 };
 
-charts.BarChart.prototype.createXScale_ = function() {
+charts.BarChart.prototype.createXScale_ = function () {
     return d3.scale.ordinal()
         .domain(this.categories)
         .rangeRoundBands([0, this.width - this.hMargin_]);
 };
 
-charts.BarChart.prototype.createYScale_ = function() {
-    var maxCount = d3.max(this.data_, function(d) {
+charts.BarChart.prototype.createYScale_ = function () {
+    var maxCount = d3.max(this.data_, function (d) {
         return d.values;
     });
 
     // may be NaN if no data
-    if(!maxCount) {
+    if (!maxCount) {
         maxCount = 0;
     }
     return d3.scale.linear()
@@ -278,31 +288,31 @@ charts.BarChart.prototype.createYScale_ = function() {
         .rangeRound([this.height - this.vMargin_, 0]);
 };
 
-charts.BarChart.prototype.computePlotWidth_ = function() {
-    if(this.categories.length > 0) {
+charts.BarChart.prototype.computePlotWidth_ = function () {
+    if (this.categories.length > 0) {
         return this.x.rangeBand() * this.categories.length;
     }
     return this.width;
 };
 
-charts.BarChart.prototype.createXAxis_ = function() {
+charts.BarChart.prototype.createXAxis_ = function () {
     var xAxis = d3.svg.axis()
         .scale(this.x)
         .orient('bottom');
 
-    if(this.tickFormat_) {
+    if (this.tickFormat_) {
         xAxis = xAxis.tickFormat(this.tickFormat_);
     } else {
         xAxis = xAxis.tickFormat(this.truncateFormat);
     }
-    if(this.tickValues_) {
+    if (this.tickValues_) {
         xAxis = xAxis.tickValues(this.tickValues_);
     }
 
     return xAxis;
 };
 
-charts.BarChart.prototype.createYAxis_ = function() {
+charts.BarChart.prototype.createYAxis_ = function () {
     return d3.svg.axis()
         .scale(this.y)
         .orient('left')
@@ -311,8 +321,8 @@ charts.BarChart.prototype.createYAxis_ = function() {
         .tickValues(this.y.domain());
 };
 
-charts.BarChart.createYAxisTickFormat_ = function() {
-    return function(val) {
+charts.BarChart.createYAxisTickFormat_ = function () {
+    return function (val) {
         return val === 0 ? val : d3.format('.2s')(val);
     };
 };
@@ -322,10 +332,10 @@ charts.BarChart.createYAxisTickFormat_ = function() {
  * @method draw
  * @return {charts.BarChart} This bar chart
  */
-charts.BarChart.prototype.draw = function() {
+charts.BarChart.prototype.draw = function () {
     this.preparePropertiesForDrawing_();
     $(this.element[0]).empty();
-    if(this.plotWidth === 0) {
+    if (this.plotWidth === 0) {
         this.displayError();
     } else {
         var chart = this.drawChartSVG_();
@@ -337,7 +347,7 @@ charts.BarChart.prototype.draw = function() {
     return this;
 };
 
-charts.BarChart.prototype.preparePropertiesForDrawing_ = function() {
+charts.BarChart.prototype.preparePropertiesForDrawing_ = function () {
     this.width = this.determineWidth_(this.element);
     this.height = this.determineHeight_(this.element);
     this.setMargins_();
@@ -355,14 +365,14 @@ charts.BarChart.prototype.preparePropertiesForDrawing_ = function() {
  * Displays an error to the user describing why the chart could not be drawn.
  * @method displayError
  */
-charts.BarChart.prototype.displayError = function() {
+charts.BarChart.prototype.displayError = function () {
     $(this.element[0]).append("<div class='error-text'>" +
         "You've attempted to draw a chart with too many categories.<br/>" +
         "Reduce the number of categories or increase the width of the chart to " +
         this.categories.length + " pixels.</div>");
 };
 
-charts.BarChart.prototype.drawChartSVG_ = function() {
+charts.BarChart.prototype.drawChartSVG_ = function () {
     var chart = this.element
         .append('svg')
         //.attr("viewBox", this.determineViewboxString())
@@ -372,28 +382,28 @@ charts.BarChart.prototype.drawChartSVG_ = function() {
     return chart;
 };
 
-charts.BarChart.prototype.bindData_ = function(chart) {
+charts.BarChart.prototype.bindData_ = function (chart) {
     var me = this;
 
     var bars = chart.selectAll(charts.BarChart.SVG_ELEMENT_)
         .data(this.data_)
         .enter().append(charts.BarChart.SVG_ELEMENT_)
-        .attr('class', function(d) {
+        .attr('class', function (d) {
             var classString = charts.BarChart.BAR_CLASS_ + ' ' + charts.BarChart.ACTIVE_BAR_CLASS_;
-            if(d.classString) {
+            if (d.classString) {
                 classString = classString + ' ' + d.classString;
             }
             return classString;
         })
-        .attr('x', function(d) {
+        .attr('x', function (d) {
             return me.x(d.key);
         })
-        .attr('y', function(d) {
+        .attr('y', function (d) {
             return me.y(d.values);
         })
         .attr('width', this.x.rangeBand())
-        .attr('height', function(d) {
-            if(me.yMinAttribute_ && d[me.yMinAttribute_]) {
+        .attr('height', function (d) {
+            if (me.yMinAttribute_ && d[me.yMinAttribute_]) {
                 return me.height - me.vMargin_ - me.y(d[me.yMinAttribute_]);
             } else {
                 return me.height - me.vMargin_ - me.y(d.values);
@@ -401,17 +411,17 @@ charts.BarChart.prototype.bindData_ = function(chart) {
         })
         // using the same color for the border of the bars as the svg background gives separation for adjacent bars
         .attr('stroke', '#FFFFFF')
-        .on('mouseover', function(d) {
+        .on('mouseover', function (d) {
             me.toggleHoverStyle_(d3.select(this), true);
             me.showTooltip_(d, d3.mouse(this));
         })
-        .on('mouseout', function() {
+        .on('mouseout', function () {
             me.toggleHoverStyle_(d3.select(this), false);
             me.hideTooltip_();
         })
-        .on('click', function(d) {
+        .on('click', function (d) {
 
-	    me.setBarSelected(this, d.key);
+            me.setBarSelected(this, d.key);
 
         });
 
@@ -419,29 +429,29 @@ charts.BarChart.prototype.bindData_ = function(chart) {
     this.applyStyle_(bars, charts.BarChart.ACTIVE_STYLE_KEY_);
 };
 
-charts.BarChart.prototype.setBarSelected = function(selectedBar, selectedKey) {
+charts.BarChart.prototype.setBarSelected = function (selectedBar, selectedKey) {
 
     this.element.selectAll(charts.BarChart.SVG_ELEMENT_).classed('unselectedBar', true);
 
     d3.select(selectedBar).classed('unselectedBar', false);
     d3.select(selectedBar).classed('selectedBar', true);
-    if (this.clickHandler) { 
-	this.clickHandler(selectedKey);
+    if (this.clickHandler) {
+        this.clickHandler(selectedKey);
     }
 };
 
-charts.BarChart.prototype.clearSelectedBar = function() {
+charts.BarChart.prototype.clearSelectedBar = function () {
 
     this.element.selectAll(charts.BarChart.SVG_ELEMENT_).classed('unselectedBar', false);
     this.element.selectAll(charts.BarChart.SVG_ELEMENT_).classed('selectedBar', false);
 };
 
-charts.BarChart.prototype.toggleHoverStyle_ = function(selection, hover) {
+charts.BarChart.prototype.toggleHoverStyle_ = function (selection, hover) {
     selection.classed(charts.BarChart.HOVER_BAR_CLASS_, hover);
 
     // when hovering, apply the hover style, otherwise revert the style based on the current class
     var style;
-    if(hover) {
+    if (hover) {
         style = charts.BarChart.HOVER_STYLE_KEY_;
     } else {
         style = selection.classed(charts.BarChart.ACTIVE_BAR_CLASS_) ?
@@ -451,9 +461,9 @@ charts.BarChart.prototype.toggleHoverStyle_ = function(selection, hover) {
     this.applyStyle_(selection, style);
 };
 
-charts.BarChart.prototype.applyStyle_ = function(selection, styleKey) {
+charts.BarChart.prototype.applyStyle_ = function (selection, styleKey) {
     var attrMap = this.style_[styleKey];
-    Object.keys(attrMap).forEach(function(key) {
+    Object.keys(attrMap).forEach(function (key) {
         var attrVal = attrMap[key];
         selection.attr(key, attrVal);
     });
@@ -465,7 +475,7 @@ charts.BarChart.prototype.applyStyle_ = function(selection, styleKey) {
  * `false` if it should be active
  * @method setInactive
  */
-charts.BarChart.prototype.setInactive = function(predicate) {
+charts.BarChart.prototype.setInactive = function (predicate) {
     var allBars = d3.selectAll('.' + charts.BarChart.BAR_CLASS_);
 
     // remove existing active/inactive classes then toggle on the correct one. this allows us to keep any other
@@ -485,22 +495,22 @@ charts.BarChart.prototype.setInactive = function(predicate) {
     this.applyStyle_(d3.selectAll('.' + charts.BarChart.INACTIVE_BAR_CLASS_), charts.BarChart.INACTIVE_STYLE_KEY_);
 };
 
-charts.BarChart.prototype.showTooltipXaxis_ = function(item) {
+charts.BarChart.prototype.showTooltipXaxis_ = function (item) {
     var yValue = 0;
-    this.data_.forEach(function(d) {
-        if(item === d.key) {
+    this.data_.forEach(function (d) {
+        if (item === d.key) {
             yValue = d.values;
         }
     });
 
     var tooltip = this.element.append("div")
-    .property('id', charts.BarChart.TOOLTIP_ID_)
-    .classed({
-        charttooltip: true
-    });
+        .property('id', charts.BarChart.TOOLTIP_ID_)
+        .classed({
+            charttooltip: true
+        });
 
     tooltip.append("div").html('<strong>' + this.xLabel_ + ':</strong> ' + item)
-    .append("div").html('<strong>' + this.yLabel_ + ':</strong> ' + yValue);
+        .append("div").html('<strong>' + this.yLabel_ + ':</strong> ' + yValue);
     $(tooltip[0]).hide();
 
     // TODO:  Determine the correct location here.  The mouseLocation that is passed in is the
@@ -510,37 +520,37 @@ charts.BarChart.prototype.showTooltipXaxis_ = function(item) {
     $(tooltip[0]).fadeIn(500);
 };
 
-charts.BarChart.prototype.showTooltip_ = function(item, mouseLocation) {
+charts.BarChart.prototype.showTooltip_ = function (item, mouseLocation) {
     var xValue = this.tickFormat_ ? this.tickFormat_(item.key) : item.key;
     var yValue = this.isStacked ? (item.values - item[this.yMinAttribute_]) : item.values;
 
     var tooltip = this.element.append("div")
-    .property('id', charts.BarChart.TOOLTIP_ID_)
-    .classed({
-        charttooltip: true
-    });
+        .property('id', charts.BarChart.TOOLTIP_ID_)
+        .classed({
+            charttooltip: true
+        });
 
     tooltip.append("div").html('<strong>' + this.xLabel_ + ':</strong> ' + _.escape(xValue))
-    .append("div").html('<strong>' + this.yLabel_ + ':</strong> ' + yValue);
+        .append("div").html('<strong>' + this.yLabel_ + ':</strong> ' + yValue);
     $(tooltip[0]).hide();
     this.positionTooltip_(tooltip, mouseLocation);
     $(tooltip[0]).fadeIn(500);
 };
 
-charts.BarChart.prototype.positionTooltip_ = function(tooltip, mouseLocation) {
+charts.BarChart.prototype.positionTooltip_ = function (tooltip, mouseLocation) {
     // the extra 35px in the next two variables is needed to account for the padding of .charttooltip
 
     var top = mouseLocation[1] + 35;
 
     tooltip.style('top', top + 'px')
-    .style('left', mouseLocation[0] + 'px');
+        .style('left', mouseLocation[0] + 'px');
 };
 
-charts.BarChart.prototype.hideTooltip_ = function() {
+charts.BarChart.prototype.hideTooltip_ = function () {
     $('#' + charts.BarChart.TOOLTIP_ID_).remove();
 };
 
-charts.BarChart.prototype.drawXAxis_ = function(chart) {
+charts.BarChart.prototype.drawXAxis_ = function (chart) {
     var me = this;
 
     var axis = chart.append('g')
@@ -549,25 +559,25 @@ charts.BarChart.prototype.drawXAxis_ = function(chart) {
         .call(this.xAxis_);
 
     axis.selectAll("text")
-    .style("text-anchor", "end")
-    .attr("dx", "-.8em")
-    .attr("dy", ".15em")
-    .attr("transform", function() {
-        return "rotate(-60)";
-    })
-    .text(function(d) {
-        if(d.length > 6) {
-            return d.substring(0, 6) + '...';
-        } else {
-            return d;
-        }
-    })
-    .on('mouseover', function(d) {
-        me.showTooltipXaxis_(d, d3.mouse(this));
-    })
-    .on('mouseout', function() {
-        me.hideTooltip_();
-    });
+        .style("text-anchor", "end")
+        .attr("dx", "-.8em")
+        .attr("dy", ".15em")
+        .attr("transform", function () {
+            return "rotate(-60)";
+        })
+        .text(function (d) {
+            if (d.length > 6) {
+                return d.substring(0, 6) + '...';
+            } else {
+                return d;
+            }
+        })
+        .on('mouseover', function (d) {
+            me.showTooltipXaxis_(d, d3.mouse(this));
+        })
+        .on('mouseout', function () {
+            me.hideTooltip_();
+        });
 
     this.viewboxYMax = this.viewboxYMax + $(this.element[0]).find('g.x')[0].getBoundingClientRect().height;
     $(this.element[0]).height(this.height - this.margin.bottom + $(this.element[0]).find('g.x')[0].getBoundingClientRect().height);
@@ -575,7 +585,7 @@ charts.BarChart.prototype.drawXAxis_ = function(chart) {
     return axis;
 };
 
-charts.BarChart.prototype.drawYAxis_ = function(chart) {
+charts.BarChart.prototype.drawYAxis_ = function (chart) {
     chart.append('g')
         .attr('class', 'y axis')
         .call(this.yAxis_);
@@ -589,7 +599,7 @@ charts.BarChart.prototype.drawYAxis_ = function(chart) {
  * @return {Object} An array of objects whose keys are `key` and `values`, whose values are the x-category
  * and the number of items in that category period respectively
  */
-charts.BarChart.prototype.aggregateData_ = function(data) {
+charts.BarChart.prototype.aggregateData_ = function (data) {
     var aggregated = this.rollupDataByCategory_(data);
     return this.removeDataWithNoMatchingCategory_(aggregated);
 };
@@ -600,27 +610,27 @@ charts.BarChart.prototype.aggregateData_ = function(data) {
  * @method rollupDataByCategory_
  * @private
  */
-charts.BarChart.prototype.rollupDataByCategory_ = function(data) {
+charts.BarChart.prototype.rollupDataByCategory_ = function (data) {
     var me = this;
 
     // if the attributes are non-strings, they must be converted because d3 rolls them up as strings, so
     // check for those cases
     var keyTypes;
 
-    if(me.isStacked) {
-        for(var i = 0; i < data.length; i++) {
+    if (me.isStacked) {
+        for (var i = 0; i < data.length; i++) {
             var category = me.categoryForItem(data[i]);
-            if(keyTypes !== charts.BarChart.STRING_KEY_) {
+            if (keyTypes !== charts.BarChart.STRING_KEY_) {
                 var keyType = charts.BarChart.keyType_(category);
                 // the first time we see a value, set that as the key type
-                if(!keyTypes) {
+                if (!keyTypes) {
                     keyTypes = keyType;
-                } else if(keyType !== keyTypes) { // if the key type has changed across values, just treat everything as strings
+                } else if (keyType !== keyTypes) { // if the key type has changed across values, just treat everything as strings
                     keyTypes = charts.BarChart.STRING_KEY_;
                 }
                 // d3 will convert the date to a string, which loses any milliseconds. so convert it to a time. it will get
                 // converted back after the rollup is done
-                if(category instanceof Date) {
+                if (category instanceof Date) {
                     category = category.getTime();
                 }
             }
@@ -629,49 +639,49 @@ charts.BarChart.prototype.rollupDataByCategory_ = function(data) {
             data[i].values = data[i][me.yAttribute_];
         }
 
-        data = data.sort(function(a, b) {
+        data = data.sort(function (a, b) {
             return b.values - a.values;
         });
 
         return charts.BarChart.transformByKeyTypes_(data, keyTypes);
     } else {
-        var aggregated = d3.nest().key(function(d) {
+        var aggregated = d3.nest().key(function (d) {
             var category = me.categoryForItem(d);
-            if(keyTypes !== charts.BarChart.STRING_KEY_) {
+            if (keyTypes !== charts.BarChart.STRING_KEY_) {
                 var keyType = charts.BarChart.keyType_(category);
                 // the first time we see a value, set that as the key type
-                if(!keyTypes) {
+                if (!keyTypes) {
                     keyTypes = keyType;
-                } else if(keyType !== keyTypes) { // if the key type has changed across values, just treat everything as strings
+                } else if (keyType !== keyTypes) { // if the key type has changed across values, just treat everything as strings
                     keyTypes = charts.BarChart.STRING_KEY_;
                 }
                 // d3 will convert the date to a string, which loses any milliseconds. so convert it to a time. it will get
                 // converted back after the rollup is done
-                if(category instanceof Date) {
+                if (category instanceof Date) {
                     category = category.getTime();
                 }
             }
             return category;
-        }).rollup(function(d) {
-            return d3.sum(d, function(el) {
-                return me.yAttribute_ ? el[me.yAttribute_] : 1;
-            });
-        }).entries(data);
+        }).rollup(function (d) {
+                return d3.sum(d, function (el) {
+                    return me.yAttribute_ ? el[me.yAttribute_] : 1;
+                });
+            }).entries(data);
 
         return charts.BarChart.transformByKeyTypes_(aggregated, keyTypes);
     }
 };
 
-charts.BarChart.keyType_ = function(value) {
-    if(_.isNumber(value)) {
+charts.BarChart.keyType_ = function (value) {
+    if (_.isNumber(value)) {
         return charts.BarChart.NUMERIC_KEY_;
     }
 
-    if(_.isDate(value)) {
+    if (_.isDate(value)) {
         return charts.BarChart.DATE_KEY_;
     }
 
-    if(_.isBoolean(value)) {
+    if (_.isBoolean(value)) {
         return charts.BarChart.BOOLEAN_KEY_;
     }
 
@@ -687,44 +697,44 @@ charts.BarChart.keyType_ = function(value) {
  * @private
  * @method transformByKeyTypes_
  */
-charts.BarChart.transformByKeyTypes_ = function(aggregatedData, keyTypes) {
-    if(keyTypes === charts.BarChart.DATE_KEY_) {
+charts.BarChart.transformByKeyTypes_ = function (aggregatedData, keyTypes) {
+    if (keyTypes === charts.BarChart.DATE_KEY_) {
         return charts.BarChart.mapKeysToDates_(aggregatedData);
     }
 
-    if(keyTypes === charts.BarChart.NUMERIC_KEY_) {
+    if (keyTypes === charts.BarChart.NUMERIC_KEY_) {
         return charts.BarChart.mapKeysToNumbers_(aggregatedData);
     }
 
-    if(keyTypes === charts.BarChart.BOOLEAN_KEY_) {
+    if (keyTypes === charts.BarChart.BOOLEAN_KEY_) {
         return charts.BarChart.mapKeysToBooleans_(aggregatedData);
     }
 
     return aggregatedData;
 };
 
-charts.BarChart.mapKeysToDates_ = function(aggregatedData) {
-    return aggregatedData.map(function(d) {
+charts.BarChart.mapKeysToDates_ = function (aggregatedData) {
+    return aggregatedData.map(function (d) {
         d.key = new Date(+d.key);
         return d;
     });
 };
 
-charts.BarChart.mapKeysToNumbers_ = function(aggregatedData) {
-    return aggregatedData.map(function(d) {
+charts.BarChart.mapKeysToNumbers_ = function (aggregatedData) {
+    return aggregatedData.map(function (d) {
         d.key = +d.key;
         return d;
     });
 };
 
-charts.BarChart.mapKeysToBooleans_ = function(aggregatedData) {
-    return aggregatedData.map(function(d) {
+charts.BarChart.mapKeysToBooleans_ = function (aggregatedData) {
+    return aggregatedData.map(function (d) {
         d.key = (d.key.toLowerCase() === 'true');
         return d;
     });
 };
 
-charts.BarChart.prototype.setMargins_ = function() {
+charts.BarChart.prototype.setMargins_ = function () {
     this.hMargin_ = this.margin.left + this.margin.right;
     this.vMargin_ = this.margin.top + this.margin.bottom;
 };
@@ -736,14 +746,14 @@ charts.BarChart.prototype.setMargins_ = function() {
  * @private
  * @method removeDataWithNoMatchingCategory_
  */
-charts.BarChart.prototype.removeDataWithNoMatchingCategory_ = function(aggregatedData) {
+charts.BarChart.prototype.removeDataWithNoMatchingCategory_ = function (aggregatedData) {
     var me = this;
-    return _.reject(aggregatedData, function(item) {
+    return _.reject(aggregatedData, function (item) {
         var key = item.key;
 
-        return _.isUndefined(_.find(me.categories, function(category) {
+        return _.isUndefined(_.find(me.categories, function (category) {
             // dates won't compare with === since they are different object, so compare using the time values
-            if(key instanceof Date && category instanceof Date) {
+            if (key instanceof Date && category instanceof Date) {
                 return category.getTime() === key.getTime();
             }
             return category === key;
@@ -751,25 +761,25 @@ charts.BarChart.prototype.removeDataWithNoMatchingCategory_ = function(aggregate
     });
 };
 
-charts.BarChart.prototype.determineWidth_ = function(element) {
-    if(this.userSetWidth_) {
+charts.BarChart.prototype.determineWidth_ = function (element) {
+    if (this.userSetWidth_) {
         return this.userSetWidth_;
-    } else if($(element[0]).width() !== 0) {
+    } else if ($(element[0]).width() !== 0) {
         return $(element[0]).width();
     }
     return charts.BarChart.DEFAULT_WIDTH_;
 };
 
-charts.BarChart.prototype.determineHeight_ = function(element) {
-    if(this.userSetHeight_) {
+charts.BarChart.prototype.determineHeight_ = function (element) {
+    if (this.userSetHeight_) {
         return this.userSetHeight_;
-    } else if($(element[0]).height() !== 0) {
+    } else if ($(element[0]).height() !== 0) {
         return $(element[0]).height();
     }
     return charts.BarChart.DEFAULT_HEIGHT_;
 };
 
-charts.BarChart.prototype.redrawOnResize_ = function() {
+charts.BarChart.prototype.redrawOnResize_ = function () {
     var me = this;
 
     function drawChart() {
@@ -782,7 +792,7 @@ charts.BarChart.prototype.redrawOnResize_ = function() {
     $(window).resize(me.resizeHandler_);
 };
 
-charts.BarChart.prototype.destroy = function() {
+charts.BarChart.prototype.destroy = function () {
     $(window).off('resize', this.resizeHandler_);
     $(this.element[0]).empty();
 };
