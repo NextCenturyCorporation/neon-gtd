@@ -94,6 +94,10 @@ angular.module('neonDemo.directives')
 				};
 
 				$scope.$watchCollection('filterTags', $scope.setTagFilter);
+
+				$scope.$on('$destroy', function() {
+					$scope.messenger.removeFilter($scope.filterKey);
+				});
 			};
 
 			/**
