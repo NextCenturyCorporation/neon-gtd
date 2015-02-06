@@ -82,6 +82,10 @@ charts.BarChart = function(rootElement, selector, opts) {
     this.chartSelector_ = selector;
     this.element = d3.select(rootElement).select(selector);
 
+    this.setOptsConfiguration(opts);
+};
+
+charts.BarChart.prototype.setOptsConfiguration = function(opts) {
     this.isStacked = opts.stacked;
 
     if(!opts.responsive) {
@@ -334,6 +338,12 @@ charts.BarChart.prototype.draw = function() {
         this.drawYAxis_(chart);
     }
 
+    if(this.selectedKey) {
+        var keyClass = (charts.BarChart.BAR_CLASS_ + '-' + this.selectedKey);
+        var selectedEl = this.element.selectAll(charts.BarChart.SVG_ELEMENT_ + '.' + keyClass)[0][0];
+        this.setBarSelected(selectedEl, this.selectedKey, true);
+    }
+
     return this;
 };
 
@@ -377,9 +387,11 @@ charts.BarChart.prototype.bindData_ = function(chart) {
 
     var bars = chart.selectAll(charts.BarChart.SVG_ELEMENT_)
         .data(this.data_)
-        .enter().append(charts.BarChart.SVG_ELEMENT_)
+        .enter()
+        .append(charts.BarChart.SVG_ELEMENT_)
         .attr('class', function(d) {
             var classString = charts.BarChart.BAR_CLASS_ + ' ' + charts.BarChart.ACTIVE_BAR_CLASS_;
+            classString += ' ' + charts.BarChart.BAR_CLASS_ + '-' + d.key;
             if(d.classString) {
                 classString = classString + ' ' + d.classString;
             }
@@ -410,23 +422,22 @@ charts.BarChart.prototype.bindData_ = function(chart) {
             me.hideTooltip_();
         })
         .on('click', function(d) {
-
-	    me.setBarSelected(this, d.key);
-
+            me.setBarSelected(this, d.key);
         });
 
     // initially all bars active, so just apply the active style
     this.applyStyle_(bars, charts.BarChart.ACTIVE_STYLE_KEY_);
 };
 
-charts.BarChart.prototype.setBarSelected = function(selectedBar, selectedKey) {
+charts.BarChart.prototype.setBarSelected = function(selectedBar, selectedKey, preventClickHandler) {
+    this.selectedKey = selectedKey;
 
     this.element.selectAll(charts.BarChart.SVG_ELEMENT_).classed('unselectedBar', true);
 
     d3.select(selectedBar).classed('unselectedBar', false);
     d3.select(selectedBar).classed('selectedBar', true);
-    if (this.clickHandler) { 
-	this.clickHandler(selectedKey);
+    if(this.clickHandler && !preventClickHandler) {
+        this.clickHandler(selectedKey);
     }
 };
 
