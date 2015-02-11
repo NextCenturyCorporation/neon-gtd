@@ -105,7 +105,7 @@ charts.BarChart.prototype.setOptsConfiguration = function(opts) {
     this.viewboxXMax = 618;
     this.viewboxYMax = 270;
 
-        this.maxCategoryLength = 10;
+    this.maxCategoryLength = 10;
 
     if(opts.init) {
         opts.init.call(this, opts);
@@ -238,17 +238,26 @@ charts.BarChart.prototype.createCategoriesFromUniqueValues_ = function(data) {
 };
 
 charts.BarChart.prototype.truncateCategories_ = function(categories) {
-        var me = this;
-        var truncatedCategories = categories.map(function(item) {
-            return item.toString().substring(0, me.maxCategoryLength);
-        });
-        return truncatedCategories;
+    var me = this;
+    var truncatedCategories = categories.map(function(item) {
+        return item.toString().substring(0, me.maxCategoryLength);
+    });
+    return truncatedCategories;
 };
 
 charts.BarChart.sortComparator_ = function(a, b) {
     if(a instanceof Date && b instanceof Date) {
         return charts.BarChart.compareValues_(a.getTime(), b.getTime());
     }
+
+    if(typeof(a) === 'string' && typeof(b) === 'string') {
+        var numA = parseFloat(a);
+        var numB = parseFloat(b);
+        if(!isNaN(numA) && !isNaN(numB)) {
+            return charts.BarChart.compareValues_(numA, numB);
+        }
+    }
+
     return charts.BarChart.compareValues_(a, b);
 };
 
@@ -327,24 +336,33 @@ charts.BarChart.createYAxisTickFormat_ = function() {
  * @return {charts.BarChart} This bar chart
  */
 charts.BarChart.prototype.draw = function() {
-    this.preparePropertiesForDrawing_();
-    $(this.element[0]).empty();
-    if(this.plotWidth === 0) {
-        this.displayError();
+    var me = this;
+
+    me.preparePropertiesForDrawing_();
+    $(me.element[0]).empty();
+    if(me.plotWidth === 0) {
+        me.displayError();
     } else {
-        var chart = this.drawChartSVG_();
-        this.bindData_(chart);
-        this.drawXAxis_(chart);
-        this.drawYAxis_(chart);
+        var chart = me.drawChartSVG_();
+        me.bindData_(chart);
+        me.drawXAxis_(chart);
+        me.drawYAxis_(chart);
     }
 
-    if(this.selectedKey) {
-        var keyClass = (charts.BarChart.BAR_CLASS_ + '-' + this.selectedKey);
-        var selectedEl = this.element.selectAll(charts.BarChart.SVG_ELEMENT_ + '.' + keyClass)[0][0];
-        this.setBarSelected(selectedEl, this.selectedKey, true);
+    if(me.selectedKey) {
+        var rects = me.element.selectAll(charts.BarChart.SVG_ELEMENT_ + '.' + charts.BarChart.BAR_CLASS_)[0];
+
+        var selectedEl;
+        rects.forEach(function(rect) {
+            if(rect && rect.__data__ && rect.__data__.key === me.selectedKey) {
+                selectedEl = rect;
+            }
+        });
+
+        me.setBarSelected(selectedEl, me.selectedKey, true);
     }
 
-    return this;
+    return me;
 };
 
 charts.BarChart.prototype.preparePropertiesForDrawing_ = function() {
@@ -391,7 +409,6 @@ charts.BarChart.prototype.bindData_ = function(chart) {
         .append(charts.BarChart.SVG_ELEMENT_)
         .attr('class', function(d) {
             var classString = charts.BarChart.BAR_CLASS_ + ' ' + charts.BarChart.ACTIVE_BAR_CLASS_;
-            classString += ' ' + charts.BarChart.BAR_CLASS_ + '-' + d.key;
             if(d.classString) {
                 classString = classString + ' ' + d.classString;
             }
@@ -442,7 +459,7 @@ charts.BarChart.prototype.setBarSelected = function(selectedBar, selectedKey, pr
 };
 
 charts.BarChart.prototype.clearSelectedBar = function() {
-
+    this.selectedKey = null;
     this.element.selectAll(charts.BarChart.SVG_ELEMENT_).classed('unselectedBar', false);
     this.element.selectAll(charts.BarChart.SVG_ELEMENT_).classed('selectedBar', false);
 };
@@ -505,13 +522,13 @@ charts.BarChart.prototype.showTooltipXaxis_ = function(item) {
     });
 
     var tooltip = this.element.append("div")
-    .property('id', charts.BarChart.TOOLTIP_ID_)
-    .classed({
-        charttooltip: true
-    });
+        .property('id', charts.BarChart.TOOLTIP_ID_)
+        .classed({
+            charttooltip: true
+        });
 
     tooltip.append("div").html('<strong>' + this.xLabel_ + ':</strong> ' + item)
-    .append("div").html('<strong>' + this.yLabel_ + ':</strong> ' + yValue);
+        .append("div").html('<strong>' + this.yLabel_ + ':</strong> ' + yValue);
     $(tooltip[0]).hide();
 
     // TODO:  Determine the correct location here.  The mouseLocation that is passed in is the
@@ -526,13 +543,13 @@ charts.BarChart.prototype.showTooltip_ = function(item, mouseLocation) {
     var yValue = this.isStacked ? (item.values - item[this.yMinAttribute_]) : item.values;
 
     var tooltip = this.element.append("div")
-    .property('id', charts.BarChart.TOOLTIP_ID_)
-    .classed({
-        charttooltip: true
-    });
+        .property('id', charts.BarChart.TOOLTIP_ID_)
+        .classed({
+            charttooltip: true
+        });
 
     tooltip.append("div").html('<strong>' + this.xLabel_ + ':</strong> ' + _.escape(xValue))
-    .append("div").html('<strong>' + this.yLabel_ + ':</strong> ' + yValue);
+        .append("div").html('<strong>' + this.yLabel_ + ':</strong> ' + yValue);
     $(tooltip[0]).hide();
     this.positionTooltip_(tooltip, mouseLocation);
     $(tooltip[0]).fadeIn(500);
@@ -544,7 +561,7 @@ charts.BarChart.prototype.positionTooltip_ = function(tooltip, mouseLocation) {
     var top = mouseLocation[1] + 35;
 
     tooltip.style('top', top + 'px')
-    .style('left', mouseLocation[0] + 'px');
+        .style('left', mouseLocation[0] + 'px');
 };
 
 charts.BarChart.prototype.hideTooltip_ = function() {
@@ -560,25 +577,25 @@ charts.BarChart.prototype.drawXAxis_ = function(chart) {
         .call(this.xAxis_);
 
     axis.selectAll("text")
-    .style("text-anchor", "end")
-    .attr("dx", "-.8em")
-    .attr("dy", ".15em")
-    .attr("transform", function() {
-        return "rotate(-60)";
-    })
-    .text(function(d) {
-        if(d.length > 6) {
-            return d.substring(0, 6) + '...';
-        } else {
-            return d;
-        }
-    })
-    .on('mouseover', function(d) {
-        me.showTooltipXaxis_(d, d3.mouse(this));
-    })
-    .on('mouseout', function() {
-        me.hideTooltip_();
-    });
+        .style("text-anchor", "end")
+        .attr("dx", "-.8em")
+        .attr("dy", ".15em")
+        .attr("transform", function() {
+            return "rotate(-60)";
+        })
+        .text(function(d) {
+            if(d.length > 6) {
+                return d.substring(0, 6) + '...';
+            } else {
+                return d;
+            }
+        })
+        .on('mouseover', function(d) {
+            me.showTooltipXaxis_(d, d3.mouse(this));
+        })
+        .on('mouseout', function() {
+            me.hideTooltip_();
+        });
 
     this.viewboxYMax = this.viewboxYMax + $(this.element[0]).find('g.x')[0].getBoundingClientRect().height;
     $(this.element[0]).height(this.height - this.margin.bottom + $(this.element[0]).find('g.x')[0].getBoundingClientRect().height);
@@ -664,10 +681,10 @@ charts.BarChart.prototype.rollupDataByCategory_ = function(data) {
             }
             return category;
         }).rollup(function(d) {
-            return d3.sum(d, function(el) {
-                return me.yAttribute_ ? el[me.yAttribute_] : 1;
-            });
-        }).entries(data);
+                return d3.sum(d, function(el) {
+                    return me.yAttribute_ ? el[me.yAttribute_] : 1;
+                });
+            }).entries(data);
 
         return charts.BarChart.transformByKeyTypes_(aggregated, keyTypes);
     }
