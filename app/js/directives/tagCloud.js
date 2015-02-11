@@ -30,6 +30,9 @@ angular.module('neonDemo.directives')
 			element.addClass("tagcloud-container");
 			$scope.databaseName = '';
 			$scope.tableName = '';
+			$scope.uniqueChartOptions = 'chart-options-' + uuid();
+			var chartOptions = $(element).find('.chart-options');
+			chartOptions.toggleClass($scope.uniqueChartOptions);
 
 			// data will be a list of tag name/counts in descending order
 			$scope.data = [];
@@ -91,6 +94,10 @@ angular.module('neonDemo.directives')
 				};
 
 				$scope.$watchCollection('filterTags', $scope.setTagFilter);
+
+				$scope.$on('$destroy', function() {
+					$scope.messenger.removeFilter($scope.filterKey);
+				});
 			};
 
 			/**

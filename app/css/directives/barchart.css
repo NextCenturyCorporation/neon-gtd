@@ -40,7 +40,7 @@ svg .tick {
 .bar {
     /** provides a slight separation for adjacent bars. the barchart javascript sets the color based on the svg color */
     fill: #39b54a;
-    stroke-width: 6;
+    /* stroke-width: 6; */
     stroke-opacity: 1;
 }
 

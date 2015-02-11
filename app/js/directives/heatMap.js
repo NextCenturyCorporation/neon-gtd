@@ -53,7 +53,7 @@ angular.module('neonDemo.directives')
 			$scope.showPoints = false;  // Default to the heatmap view.
 			$scope.cacheMap = false;
 			$scope.initializing = true;
-			$scope.filterKey = neon.widget.getInstanceId("map");
+			$scope.filterKey = "map" + uuid();
 			$scope.showFilter = false;
 			$scope.dataBounds = undefined;
 			$scope.limit = 1000;  // Max points to pull into the map.
@@ -258,6 +258,11 @@ angular.module('neonDemo.directives')
 						$scope.error = "Error: Failed to create filter.";
 					});
 				};
+
+				// Clear any active filters on destroy.
+				$scope.$on('$destroy', function() {
+					$scope.messenger.removeFilter($scope.filterKey);
+				});
 			};
 
 			var onMapEvent = function(message) {
