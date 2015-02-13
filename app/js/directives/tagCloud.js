@@ -72,12 +72,21 @@ angular.module('neonDemo.directives')
 				});
 
 				$scope.filterKey = "tagcloud" + uuid();
+
 				// Setup our messenger.
 				$scope.messenger = new neon.eventing.Messenger();
 
 				$scope.messenger.events({
 					activeDatasetChanged: onDatasetChanged,
 					filtersChanged: onFiltersChanged
+				});
+
+				$scope.$on('$destroy', function() {
+					$scope.messenger.removeEvents();
+					// Remove our filter if we had an active one.
+					if (0 < $scope.filterTags.length) {
+						$scope.messenger.removeFilter($scope.filterKey);
+					}
 				});
 
 				// setup tag cloud color/size changes
@@ -94,10 +103,6 @@ angular.module('neonDemo.directives')
 				};
 
 				$scope.$watchCollection('filterTags', $scope.setTagFilter);
-
-				$scope.$on('$destroy', function() {
-					$scope.messenger.removeFilter($scope.filterKey);
-				});
 			};
 
 			/**

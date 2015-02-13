@@ -69,6 +69,10 @@ angular.module('neonDemo.directives')
 					filtersChanged: onFiltersChanged
 				});
 
+				$scope.$on('$destroy', function() {
+					$scope.messenger.removeEvents();
+				});
+
 				// This resizes the chart when the div changes.  This rely's on jquery's resize plugin to fire
 				// on the associated element and not just the window.
 				$element.resize(function() {

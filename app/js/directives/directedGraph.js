@@ -37,6 +37,10 @@ angular.module('neonDemo.directives')
 					activeDatasetChanged: onDatasetChanged,
 					filtersChanged: onFiltersChanged
 				});
+
+				$scope.$on('$destroy', function() {
+					$scope.messenger.removeEvents();
+				});
 			};
 
 			var onFiltersChanged = function() {

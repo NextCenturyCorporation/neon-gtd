@@ -58,6 +58,11 @@ angular.module('neonDemo.directives')
 					activeDatasetChanged: onDatasetChanged
 				});
 
+				$scope.$on('$destroy', function() {
+					$scope.messenger.removeEvents();
+					$scope.messenger.removeFilter($scope.filterTable.filterKey);
+				});
+
 				// Adjust the filters whenever the user toggles AND/OR clauses.
 				$scope.$watch('andClauses', function(newVal, oldVal) {
 					if(newVal !== oldVal) {

@@ -56,9 +56,14 @@ angular.module('neonDemo.directives')
                     width: "100%"
                 });
                 $scope.chart.drawBlank();
+
                 $scope.messenger.events({
                     activeDatasetChanged: onDatasetChanged,
                     filtersChanged: onFiltersChanged
+                });
+
+                $scope.$on('$destroy', function() {
+                    $scope.messenger.removeEvents();
                 });
 
                 // This resizes the chart when the div changes.  This rely's on jquery's resize plugin to fire

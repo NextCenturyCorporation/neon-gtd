@@ -36,6 +36,10 @@ angular.module('neonDemo.directives')
 				messenger.events({
 					activeDatasetChanged: onDatasetChanged
 				});
+
+				$scope.$on('$destroy', function() {
+					messenger.removeEvents();
+				});
 			};
 
 			var onDatasetChanged = function(message) {

@@ -38,7 +38,6 @@ angular.module('neonDemo.directives')
 
             $element.addClass('barchartDirective');
 
-            $scope.messenger = new neon.eventing.Messenger();
             $scope.database = '';
             $scope.tableName = '';
             $scope.barType = $scope.barType || 'count';
@@ -66,6 +65,14 @@ angular.module('neonDemo.directives')
                     filtersChanged: onFiltersChanged
                 });
 
+                $scope.$on('$destroy', function() {
+                    $scope.messenger.removeEvents();
+                    // Remove our filter if we had an active one.
+                    if ($scope.filterSet) {
+                        $scope.messenger.removeFilter($scope.filterKey);
+                    }
+                });
+
                 $scope.$watch('attrX', function() {
                     if(!$scope.initializing && $scope.databaseName && $scope.tableName) {
                         $scope.queryForData(true);
@@ -80,10 +87,6 @@ angular.module('neonDemo.directives')
                     if(!$scope.initializing && $scope.databaseName && $scope.tableName) {
                         $scope.queryForData(false);
                     }
-                });
-
-                $scope.$on('$destroy', function() {
-                    $scope.messenger.removeFilter($scope.filterKey);
                 });
 
                 // This resizes the chart when the div changes.  This rely's on jquery's resize plugin to fire
