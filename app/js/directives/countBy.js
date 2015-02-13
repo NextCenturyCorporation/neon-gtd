@@ -26,7 +26,7 @@ angular.module('neonDemo.directives')
 		link: function($scope, el) {
 			el.addClass('countByDirective');
 
-			$scope.countField = "_id";
+			$scope.countField = "";
 			$scope.fields = [];
 			$scope.tableId = 'query-results-' + uuid();
 
@@ -122,6 +122,7 @@ angular.module('neonDemo.directives')
 						connection.getFieldNames($scope.tableName, function(results) {
 							$scope.$apply(function() {
 								$scope.fields = results;
+                                $scope.fields.splice(0, 0, "");
 								$scope.queryForData();
 							});
 						});
@@ -141,6 +142,10 @@ angular.module('neonDemo.directives')
 			 * @method queryForData
 			 */
 			$scope.queryForData = function() {
+                if(!$scope.countField) {
+                    return;
+                }
+
 				var connection = connectionService.getActiveConnection();
 				if(connection) {
 					var query = $scope.buildQuery();
@@ -164,10 +169,6 @@ angular.module('neonDemo.directives')
 					var row = {};
 					row[$scope.countField] = data[i][$scope.countField];
 					row.count = data[i].count;
-
-					//REMOVE THIS
-					//row['_id'] = data[i]['_id'];
-
 					cleanData.push(row);
 				}
 				dataObject.data = cleanData;
