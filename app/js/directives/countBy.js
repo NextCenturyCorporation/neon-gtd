@@ -122,7 +122,6 @@ angular.module('neonDemo.directives')
 						connection.getFieldNames($scope.tableName, function(results) {
 							$scope.$apply(function() {
 								$scope.fields = results;
-                                $scope.fields.splice(0, 0, "");
 								$scope.queryForData();
 							});
 						});
