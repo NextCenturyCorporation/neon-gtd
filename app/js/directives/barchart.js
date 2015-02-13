@@ -68,7 +68,7 @@ angular.module('neonDemo.directives')
                 $scope.$on('$destroy', function() {
                     $scope.messenger.removeEvents();
                     // Remove our filter if we had an active one.
-                    if ($scope.filterSet) {
+                    if($scope.filterSet) {
                         $scope.messenger.removeFilter($scope.filterKey);
                     }
                 });
