@@ -490,6 +490,15 @@ angular.module('neonDemo.directives')
 
 			$scope.buildQuery = function() {
 				var query = new neon.query.Query().selectFrom($scope.databaseName, $scope.tableName).limit($scope.limit);
+				if ($scope.zoomRectId === undefined) {
+					var leftClause = neon.query.where($scope.longitudeField, ">=", -180);
+					var rightClause = neon.query.where($scope.longitudeField, "<=", 180);
+					var bottomClause = neon.query.where($scope.latitudeField, ">=", -90);
+					var topClause = neon.query.where($scope.latitudeField, "<=", 90);
+					var filterClause = neon.query.and(leftClause, rightClause, bottomClause, topClause);
+					query = query.where(filterClause);
+				}
+
 				var groupByFields = [$scope.latitudeField, $scope.longitudeField];
 
 				if($scope.colorByField) {
@@ -509,6 +518,14 @@ angular.module('neonDemo.directives')
 			};
 
 			$scope.buildPointQuery = function() {
+				if ($scope.zoomRectId === undefined) {
+					var leftClause = neon.query.where($scope.longitudeField, ">=", -180);
+					var rightClause = neon.query.where($scope.longitudeField, "<=", 180);
+					var bottomClause = neon.query.where($scope.latitudeField, ">=", -90);
+					var topClause = neon.query.where($scope.latitudeField, "<=", 90);
+					var filterClause = neon.query.and(leftClause, rightClause, bottomClause, topClause);
+					query = query.where(filterClause);
+				}
 				var query = new neon.query.Query().selectFrom($scope.databaseName, $scope.tableName).limit($scope.limit);
 				return query;
 			};
