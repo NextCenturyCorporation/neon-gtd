@@ -518,7 +518,8 @@ angular.module('neonDemo.directives')
 			};
 
 			$scope.buildPointQuery = function() {
-				if ($scope.zoomRectId === undefined) {
+                var query = new neon.query.Query().selectFrom($scope.databaseName, $scope.tableName).limit($scope.limit);
+                if ($scope.zoomRectId === undefined) {
 					var leftClause = neon.query.where($scope.longitudeField, ">=", -180);
 					var rightClause = neon.query.where($scope.longitudeField, "<=", 180);
 					var bottomClause = neon.query.where($scope.latitudeField, ">=", -90);
@@ -526,7 +527,6 @@ angular.module('neonDemo.directives')
 					var filterClause = neon.query.and(leftClause, rightClause, bottomClause, topClause);
 					query = query.where(filterClause);
 				}
-				var query = new neon.query.Query().selectFrom($scope.databaseName, $scope.tableName).limit($scope.limit);
 				return query;
 			};
 
