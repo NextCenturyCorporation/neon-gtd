@@ -224,9 +224,9 @@ angular.module('neonDemo.directives')
                 charts.BarChart.destroy(el[0], '.barchart');
 
                 var xAxis = connectionService.getFieldMapping("x_axis");
-                    xAxis = xAxis || $scope.attrX;
+                xAxis = xAxis || $scope.attrX;
                 var yAxis = connectionService.getFieldMapping("y_axis");
-                    yAxis = yAxis || $scope.attrY;
+                yAxis = yAxis || $scope.attrY;
                 if(!yAxis) {
                     yAxis = COUNT_FIELD_NAME;
                 }

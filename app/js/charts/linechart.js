@@ -162,7 +162,7 @@ charts.LineChart.prototype.calculateColor = function(series, total) {
             series: series,
             total: total,
             hidden: hidden
-        });
+    });
 
     return color;
 };

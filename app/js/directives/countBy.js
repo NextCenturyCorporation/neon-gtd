@@ -219,4 +219,3 @@ angular.module('neonDemo.directives')
         }
     };
 }]);
-

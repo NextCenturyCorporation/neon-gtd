@@ -200,9 +200,9 @@ angular.module('neonDemo.directives')
                     })
                     .call(force.drag);
 
-                    node.on("click", function(d) {
-                        d3.select("#node-click-name").text(d.name);
-                    });
+                node.on("click", function(d) {
+                    d3.select("#node-click-name").text(d.name);
+                });
 
                 node.append("title")
                     .text(function(d) {

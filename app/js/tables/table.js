@@ -261,7 +261,10 @@ tables.Table.prototype.sortColumn_ = function(field, sortAsc) {
     this.dataView_.setItems(data);
     this.table_.invalidateAllRows();
     this.table_.render();
-    this.sortInfo_ = { field: field, sortAsc: sortAsc };
+    this.sortInfo_ = {
+        field: field,
+        sortAsc: sortAsc
+    };
 };
 
 tables.Table.prototype.addSortSupport_ = function() {
@@ -282,4 +285,3 @@ tables.Table.prototype.sortColumnAndChangeGlyph = function(sortInfo) {
     // Change the sort glyph in the column header.
     this.table_.setSortColumn(sortInfo.field, sortInfo.sortAsc);
 };
-
