@@ -31,8 +31,6 @@ angular.module('neonDemo.directives')
 			$scope.tableId = 'query-results-' + uuid();
 
 			var $tableDiv = $(el).find('.count-by-grid');
-			createOptions([]);
-
 			$tableDiv.attr("id", $scope.tableId);
 
 			/**
@@ -189,11 +187,15 @@ angular.module('neonDemo.directives')
 			 */
 			$scope.updateData = function(queryResults) {
 				var cleanData = $scope.stripIdField(queryResults);
-				// Handle the new data.
-				$scope.tableOptions = createOptions(cleanData);
+                var sortInfo = $scope.table ? $scope.table.sortInfo_ : {};
 
+				$scope.tableOptions = createOptions(cleanData);
 				$scope.table = new tables.Table("#" + $scope.tableId, $scope.tableOptions).draw();
 				updateSize();
+
+                if(sortInfo.hasOwnProperty("field") && sortInfo.hasOwnProperty("sortAsc")) {
+                    $scope.table.sortColumnAndChangeGlyph(sortInfo);
+                }
 			};
 
 			/**
@@ -217,3 +219,4 @@ angular.module('neonDemo.directives')
 		}
 	};
 }]);
+
