@@ -278,3 +278,41 @@ tables.Table.prototype.sortColumnAndChangeGlyph = function(sortInfo) {
     this.table_.setSortColumn(sortInfo.field, sortInfo.sortAsc);
 };
 
+/**
+ * Adds an onClick listener to the SlickGrid table using the given callback with
+ * arguments for the array of column definitions and the selected row object.
+ * @param {Function} The callback function
+ */
+tables.Table.prototype.addOnClickListener = function(callback) {
+    var me = this;
+    this.table_.onClick.subscribe(function(event, args) {
+        callback(me.table_.getColumns(), me.dataView_.getItem(args.row));
+    });
+};
+
+/**
+ * Deselects the active elements in the table.
+ */
+tables.Table.prototype.deselect = function() {
+    this.table_.resetActiveCell();
+};
+
+/**
+ * Sets the active cell in this table to the column and row containing the given
+ * field and value, if it exists.
+ * @param {String} The field matching a column name
+ * @param {String} The value matching a cell's text
+ */
+tables.Table.prototype.setActiveCellIfMatchExists = function(field, value) {
+    var columns = this.table_.getColumns();
+    for(var i = 0; i < columns.length; ++i) {
+        if(columns[i].field === field) {
+            for(var j = 0; j < this.table_.getDataLength(); ++j) {
+                if(this.table_.getCellNode(j, i).innerHTML === value) {
+                    this.table_.setActiveCell(j, i);
+                }
+            }
+        }
+    }
+};
+
