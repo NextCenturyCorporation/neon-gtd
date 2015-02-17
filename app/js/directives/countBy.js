@@ -234,8 +234,17 @@ angular.module('neonDemo.directives')
              */
             $scope.addOnClickListener = function() {
                 $scope.table.addOnClickListener(function(columns, row) {
-                    $(".count-by-grid").addClass("filtered");
                     var field = columns[0].field;
+
+                    // If the user clicks on the filtered row/cell, clear the filter.
+                    if($scope.filterSet !== undefined) {
+                        if($scope.filterSet.key === field && $scope.filterSet.value === row[field]) {
+                            $scope.clearFilter();
+                            return;
+                        }
+                    }
+
+                    $(".count-by-grid").addClass("filtered");
                     $scope.setFilter(field, row[field]);
                 });
             };
