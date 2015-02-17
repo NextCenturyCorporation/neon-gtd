@@ -40,8 +40,8 @@ angular.module('neonDemo.directives')
 					name: "Twitter",
 					datastoreSelect: "mongo",
 					hostnameInput: "localhost",
-					selectedDb: "test",
-					selectedTable: "gbDate"
+                                        selectedDb: "qcr",
+                                        selectedTable: "twitter36"
 				},
 				{
 					name: "Traffic",
