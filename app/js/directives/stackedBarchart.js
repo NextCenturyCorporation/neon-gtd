@@ -56,6 +56,10 @@ angular.module('neonDemo.directives')
 					filtersChanged: onFiltersChanged
 				});
 
+				$scope.$on('$destroy', function() {
+					$scope.messenger.removeEvents();
+				});
+
 				$scope.$watch('attrX', function() {
 					if($scope.databaseName && $scope.tableName) {
 						$scope.queryForData();

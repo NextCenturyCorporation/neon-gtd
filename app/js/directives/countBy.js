@@ -59,6 +59,10 @@ angular.module('neonDemo.directives')
 					filtersChanged: onFiltersChanged
 				});
 
+				$scope.$on('$destroy', function() {
+					$scope.messenger.removeEvents();
+				});
+
 				$scope.$watch('countField', function() {
 					$scope.queryForData();
 				});

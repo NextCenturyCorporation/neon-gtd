@@ -28,219 +28,224 @@
  */
 angular.module('neonDemo.directives')
 .directive('sunburst', ['ConnectionService', function(connectionService) {
-	return {
-		templateUrl: 'partials/directives/sunburst.html',
-		restrict: 'EA',
-		scope: {
-		},
-		link: function($scope, $element) {
-			$element.addClass('sunburst-directive');
+    return {
+        templateUrl: 'partials/directives/sunburst.html',
+        restrict: 'EA',
+        scope: {
+        },
+        link: function($scope, $element) {
+            $element.addClass('sunburst-directive');
 
-			$scope.uniqueChartOptions = 'chart-options-' + uuid();
-			$scope.arcValue = "count";
-			$scope.valueField = null;
-			$scope.selectedItem = null;
-			$scope.groupFields = [];
-			$scope.messenger = new neon.eventing.Messenger();
-			$scope.database = '';
-			$scope.tableName = '';
-			$scope.fields = [""];
-			$scope.chart = undefined;
+            $scope.uniqueChartOptions = 'chart-options-' + uuid();
+            $scope.arcValue = "count";
+            $scope.valueField = null;
+            $scope.selectedItem = null;
+            $scope.groupFields = [];
+            $scope.messenger = new neon.eventing.Messenger();
+            $scope.database = '';
+            $scope.tableName = '';
+            $scope.fields = [""];
+            $scope.chart = undefined;
 
-			var chartOptions = $element.find('.chart-options');
-			chartOptions.toggleClass($scope.uniqueChartOptions);
+            var chartOptions = $element.find('.chart-options');
+            chartOptions.toggleClass($scope.uniqueChartOptions);
 
-			var initialize = function() {
-				$scope.chart = new charts.SunburstChart($element[0], '.sunburst-chart', {
-					height: "100%",
-					width: "100%"
-				});
-				$scope.chart.drawBlank();
-				$scope.messenger.events({
-					activeDatasetChanged: onDatasetChanged,
-					filtersChanged: onFiltersChanged
-				});
+            var initialize = function() {
+                $scope.chart = new charts.SunburstChart($element[0], '.sunburst-chart', {
+                    height: "100%",
+                    width: "100%"
+                });
+                $scope.chart.drawBlank();
 
-				// This resizes the chart when the div changes.  This rely's on jquery's resize plugin to fire
-				// on the associated element and not just the window.
-				$element.resize(function() {
-						$scope.updateChartSize();
-					});
+                $scope.messenger.events({
+                    activeDatasetChanged: onDatasetChanged,
+                    filtersChanged: onFiltersChanged
+                });
 
-				$scope.$watch('valueField', function(newValue, oldValue) {
-					if(newValue !== oldValue) {
-						$scope.queryForData();
-					}
-				}, true);
+                $scope.$on('$destroy', function() {
+                    $scope.messenger.removeEvents();
+                });
 
-				$scope.$watch('arcValue', function(newValue, oldValue) {
-					if (newValue !== oldValue) {
-						$scope.chart.displayPartition(newValue);
-					}
-				})
-			};
+                // This resizes the chart when the div changes.  This rely's on jquery's resize plugin to fire
+                // on the associated element and not just the window.
+                $element.resize(function() {
+                        $scope.updateChartSize();
+                    });
 
-			var onFiltersChanged = function() {
-				XDATA.activityLogger.logSystemActivity('SunburstChart - received neon filter changed event');
-				$scope.queryForData();
-			};
+                $scope.$watch('valueField', function(newValue, oldValue) {
+                    if(newValue !== oldValue) {
+                        $scope.queryForData();
+                    }
+                }, true);
 
-			var onDatasetChanged = function(message) {
-				XDATA.activityLogger.logSystemActivity('SunburstChart - received neon dataset changed event');
-				$scope.databaseName = message.database;
-				$scope.tableName = message.table;
-				$scope.groupFields = [];
-				$scope.valueField = null;
-				$scope.arcValue = charts.SunburstChart.COUNT_PARTITION;
+                $scope.$watch('arcValue', function(newValue, oldValue) {
+                    if(newValue !== oldValue) {
+                        $scope.chart.displayPartition(newValue);
+                    }
+                });
+            };
 
-				// if there is no active connection, try to make one.
-				connectionService.connectToDataset(message.datastore, message.hostname, message.database, message.table);
+            var onFiltersChanged = function() {
+                XDATA.activityLogger.logSystemActivity('SunburstChart - received neon filter changed event');
+                $scope.queryForData();
+            };
 
-				// Pull data.
-				$scope.displayActiveDataset();
-			};
+            var onDatasetChanged = function(message) {
+                XDATA.activityLogger.logSystemActivity('SunburstChart - received neon dataset changed event');
+                $scope.databaseName = message.database;
+                $scope.tableName = message.table;
+                $scope.groupFields = [];
+                $scope.valueField = null;
+                $scope.arcValue = charts.SunburstChart.COUNT_PARTITION;
 
-			$scope.updateChartSize = function() {
-				if($scope.chart) {
-					$element.find('.sunburst-chart').height($element.height() - $element.find('.sunburst-header').outerHeight(true));
-				}
-			};
+                // if there is no active connection, try to make one.
+                connectionService.connectToDataset(message.datastore, message.hostname, message.database, message.table);
 
-			/**
-			 * Builds a query to pull a limited set of records that match any existing filter sets.
-			 * @return neon.query.Query
-			 * @method buildQuery
-			 */
-			$scope.buildQuery = function() {
-				var query = new neon.query.Query().selectFrom($scope.databaseName, $scope.tableName);
-				if ($scope.groupFields.length > 0) {
-					query.groupBy.apply(query, $scope.groupFields);
-				}
+                // Pull data.
+                $scope.displayActiveDataset();
+            };
 
-				//take based on selected count or total
-				query.aggregate(neon.query.COUNT, '*', 'count');
-				if ($scope.valueField) {
-					query.aggregate(neon.query.SUM, $scope.valueField, $scope.valueField)
-				}
+            $scope.updateChartSize = function() {
+                if($scope.chart) {
+                    $element.find('.sunburst-chart').height($element.height() - $element.find('.sunburst-header').outerHeight(true));
+                }
+            };
 
-				return query;
-			};
+            /**
+             * Builds a query to pull a limited set of records that match any existing filter sets.
+             * @return neon.query.Query
+             * @method buildQuery
+             */
+            $scope.buildQuery = function() {
+                var query = new neon.query.Query().selectFrom($scope.databaseName, $scope.tableName);
+                if($scope.groupFields.length > 0) {
+                    query.groupBy.apply(query, $scope.groupFields);
+                }
 
-			/**
-			 * Displays data for any currently active datasets.
-			 * @method displayActiveDataset
-			 */
-			$scope.displayActiveDataset = function() {
-				var connection = connectionService.getActiveConnection();
-				if(connection) {
-					connectionService.loadMetadata(function() {
-						var info = connectionService.getActiveDataset();
-						$scope.databaseName = info.database;
-						$scope.tableName = info.table;
+                //take based on selected count or total
+                query.aggregate(neon.query.COUNT, '*', 'count');
+                if($scope.valueField) {
+                    query.aggregate(neon.query.SUM, $scope.valueField, $scope.valueField);
+                }
 
-						connection.getFieldNames($scope.tableName, function(results) {
-							$scope.$apply(function() {
-								$scope.fields = results;
-								$scope.queryForData();
-							});
-						});
-					});
-				}
-			};
+                return query;
+            };
 
-			$scope.queryForData = function() {
-				var connection = connectionService.getActiveConnection();
-				// if(connection && $scope.groupFields.length > 0) {
-				if (connection) {
-					var query = $scope.buildQuery();
+            /**
+             * Displays data for any currently active datasets.
+             * @method displayActiveDataset
+             */
+            $scope.displayActiveDataset = function() {
+                var connection = connectionService.getActiveConnection();
+                if(connection) {
+                    connectionService.loadMetadata(function() {
+                        var info = connectionService.getActiveDataset();
+                        $scope.databaseName = info.database;
+                        $scope.tableName = info.table;
 
-					XDATA.activityLogger.logSystemActivity('sunburst - query for data');
-					connection.executeQuery(query, function(queryResults) {
-						XDATA.activityLogger.logSystemActivity('sunburst - received data');
-						$scope.$apply(function() {
-							$scope.updateChartSize();
-							doDrawChart(buildDataTree(queryResults));
-							XDATA.activityLogger.logSystemActivity('sunburst - rendered data');
-						});
-					});
-				}
-			};
+                        connection.getFieldNames($scope.tableName, function(results) {
+                            $scope.$apply(function() {
+                                $scope.fields = results;
+                                $scope.queryForData();
+                            });
+                        });
+                    });
+                }
+            };
 
-			var buildDataTree = function(data) {
-				var nodes = {};
-				var tree = {
-					name: $scope.tableName,
-					children: []
-				};
-				var leafObject;
-				var nodeObject;
-				var nodeKey;
-				var nodeKeyString;
+            $scope.queryForData = function() {
+                var connection = connectionService.getActiveConnection();
+                // if(connection && $scope.groupFields.length > 0) {
+                if(connection) {
+                    var query = $scope.buildQuery();
 
-				var field;
+                    XDATA.activityLogger.logSystemActivity('sunburst - query for data');
+                    connection.executeQuery(query, function(queryResults) {
+                        XDATA.activityLogger.logSystemActivity('sunburst - received data');
+                        $scope.$apply(function() {
+                            $scope.updateChartSize();
+                            doDrawChart(buildDataTree(queryResults));
+                            XDATA.activityLogger.logSystemActivity('sunburst - rendered data');
+                        });
+                    });
+                }
+            };
 
-				var i;
-				data.data.forEach(function(doc) {
-					var parent = tree;
-					leafObject = {};
-					nodeKey = {};
-					for(i = 0; i < $scope.groupFields.length; i++) {
-						field = $scope.groupFields[i];
+            var buildDataTree = function(data) {
+                var nodes = {};
+                var tree = {
+                    name: $scope.tableName,
+                    children: []
+                };
+                var leafObject;
+                var nodeObject;
+                var nodeKey;
+                var nodeKeyString;
 
-						leafObject[field] = doc[field];
-						nodeKey[field] = doc[field];
-						nodeKey.name = field + ": " + doc[field];
-						nodeKeyString = JSON.stringify(nodeKey);
+                var field;
 
-						if(!nodes[nodeKeyString]) {
-							if(i !== $scope.groupFields.length - 1) {
-								nodeObject = {};
-								nodeObject.name = field + ": " + doc[field];
-								nodeObject.children = [];
-								parent.children.push(nodeObject);
-								parent = nodeObject;
-								nodes[nodeKeyString] = nodeObject;
-							} else {
-								leafObject.name = field + ": " + doc[field];
-								leafObject.count = doc.count;
-								leafObject.total = doc[$scope.valueField];
-								parent.children.push(leafObject);
-							}
-						} else {
-							parent = nodes[nodeKeyString];
-						}
-					}
-				});
+                var i;
+                data.data.forEach(function(doc) {
+                    var parent = tree;
+                    leafObject = {};
+                    nodeKey = {};
+                    for(i = 0; i < $scope.groupFields.length; i++) {
+                        field = $scope.groupFields[i];
 
-				return tree;
-			};
+                        leafObject[field] = doc[field];
+                        nodeKey[field] = doc[field];
+                        nodeKey.name = field + ": " + doc[field];
+                        nodeKeyString = JSON.stringify(nodeKey);
 
-			var doDrawChart = function(data) {
-				$scope.chart.clearData();
-				$scope.chart.drawData(data);
-			};
+                        if(!nodes[nodeKeyString]) {
+                            if(i !== $scope.groupFields.length - 1) {
+                                nodeObject = {};
+                                nodeObject.name = field + ": " + doc[field];
+                                nodeObject.children = [];
+                                parent.children.push(nodeObject);
+                                parent = nodeObject;
+                                nodes[nodeKeyString] = nodeObject;
+                            } else {
+                                leafObject.name = field + ": " + doc[field];
+                                leafObject.count = doc.count;
+                                leafObject.total = doc[$scope.valueField];
+                                parent.children.push(leafObject);
+                            }
+                        } else {
+                            parent = nodes[nodeKeyString];
+                        }
+                    }
+                });
 
-			neon.ready(function() {
-				$scope.messenger = new neon.eventing.Messenger();
-				initialize();
-				$scope.displayActiveDataset();
-			});
+                return tree;
+            };
 
-			$scope.addGroup = function() {
-				if($scope.groupFields.indexOf($scope.selectedItem) === -1 && $scope.selectedItem !== "") {
-					$scope.groupFields.push($scope.selectedItem);
-				}
-				$scope.selectedItem = "";
-				$scope.queryForData();
-			};
+            var doDrawChart = function(data) {
+                $scope.chart.clearData();
+                $scope.chart.drawData(data);
+            };
 
-			$scope.dropGroup = function(groupField) {
-				var index = $scope.groupFields.indexOf(groupField);
-				if(index !== -1) {
-					$scope.groupFields.splice(index, 1);
-				}
-				$scope.queryForData();
-			};
-		}
-	};
+            neon.ready(function() {
+                $scope.messenger = new neon.eventing.Messenger();
+                initialize();
+                $scope.displayActiveDataset();
+            });
+
+            $scope.addGroup = function() {
+                if($scope.groupFields.indexOf($scope.selectedItem) === -1 && $scope.selectedItem !== "") {
+                    $scope.groupFields.push($scope.selectedItem);
+                }
+                $scope.selectedItem = "";
+                $scope.queryForData();
+            };
+
+            $scope.dropGroup = function(groupField) {
+                var index = $scope.groupFields.indexOf(groupField);
+                if(index !== -1) {
+                    $scope.groupFields.splice(index, 1);
+                }
+                $scope.queryForData();
+            };
+        }
+    };
 }]);

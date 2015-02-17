@@ -86,23 +86,21 @@ charts.SunburstChart = function(rootElement, selector, opts) {
 	this.root = d3.select(rootElement);
 	this.element = this.root.select(selector);
 
-	if (typeof opts.width === "string" && opts.width.slice(-1) === "%") {
+	if(typeof opts.width === "string" && opts.width.slice(-1) === "%") {
 		// Set width to string and viewbox to default
 		this.width = opts.width;
 		this.viewBoxWidth = charts.SunburstChart.DEFAULT_WIDTH;
-	}
-	else {
+	} else {
 		// Set both viewbox and width to value or default.
 		this.width = opts.width || charts.SunburstChart.DEFAULT_WIDTH;
 		this.viewBoxWidth = this.width;
 	}
 
-	if (typeof opts.height === "string" && opts.height.slice(-1) === "%") {
+	if(typeof opts.height === "string" && opts.height.slice(-1) === "%") {
 		// Set width to string and viewbox to default
 		this.height = opts.height;
 		this.viewBoxHeight = charts.SunburstChart.DEFAULT_HEIGHT;
-	}
-	else {
+	} else {
 		// Set both viewbox and width to value or default.
 		this.height = opts.height || charts.SunburstChart.DEFAULT_HEIGHT;
 		this.viewBoxHeight = this.height;
@@ -127,7 +125,7 @@ charts.SunburstChart = function(rootElement, selector, opts) {
 		return d[me.partitionType];
 	};
 
-	var arcTweenData = function (a, i) {
+	var arcTweenData = function(a, i) {
 		var oi = d3.interpolate({
 			x: a.x0,
 			dx: a.dx0
@@ -171,8 +169,6 @@ charts.SunburstChart = function(rootElement, selector, opts) {
 	};
 
 	this.displayPartition = function(type) {
-		var me = this;
-		var node = this.node;
 		this.partitionType = type;
 
 		this.path.data(this.partition.value(partitionFunction).nodes)
@@ -245,14 +241,13 @@ charts.SunburstChart = function(rootElement, selector, opts) {
 		}
 
 		function onMouseOver(d) {
-			var tooltip = d3.select(".sunburst-tooltip");
 			var text = "<span class='sunburst-tooltip-title'>" + d.name + "</span><br>";
 
-			if (!d.count && !d.total && d.value) {
+			if(!d.count && !d.total && d.value) {
 				text = text + "<span class='sunburst-tooltip-field'>";
 				text = text + ((me.partitionType ===  charts.SunburstChart.COUNT_PARTITION) ? "Count" : "Total");
 				text = text + ":</span> " + me.countFormatter(d.value) + "<br>";
-			} 
+			}
 
 			text = (d.count) ? text + "<span class='sunburst-tooltip-field'>Count:</span> " + me.countFormatter(d.count) + "<br>" : text;
 			text = (d.total) ? text + "<span class='sunburst-tooltip-field'>Total:</span> " + me.moneyFormatter(d.total) + "<br>" : text;
@@ -264,13 +259,11 @@ charts.SunburstChart = function(rootElement, selector, opts) {
 		}
 
 		function onMouseMove() {
-			var tooltip = d3.select(".sunburst-tooltip");
 			me.tooltip.style("left", d3.event.offsetX + "px")
 				.style("top", d3.event.offsetY + "px");
 		}
 
 		function onMouseOut() {
-			var tooltip = d3.select(".sunburst-tooltip");
 			me.tooltip.style("opacity", 0);
 		}
 
@@ -293,4 +286,3 @@ charts.SunburstChart.prototype.clearData = function() {
 	//draw blank
 	this.drawBlank();
 };
-

@@ -89,6 +89,13 @@ angular.module('neonDemo.directives')
 					filtersChanged: onFiltersChanged
 				});
 
+				$scope.$on('$destroy', function() {
+					$scope.messenger.removeEvents();
+					if($scope.showFilter) {
+						$scope.messenger.removeFilter($scope.filterKey);
+					}
+				});
+
 				// Enable the tooltips.
 				$($element).find('label.btn-default').tooltip();
 
@@ -258,11 +265,6 @@ angular.module('neonDemo.directives')
 						$scope.error = "Error: Failed to create filter.";
 					});
 				};
-
-				// Clear any active filters on destroy.
-				$scope.$on('$destroy', function() {
-					$scope.messenger.removeFilter($scope.filterKey);
-				});
 			};
 
 			var onMapEvent = function(message) {
