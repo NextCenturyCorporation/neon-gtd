@@ -63,63 +63,63 @@ var coreMap = coreMap || {};
  **/
 
 coreMap.Map = function(elementId, opts) {
-	opts = opts || {};
+    opts = opts || {};
 
-	this.elementId = elementId;
-	this.selector = $("#" + elementId);
+    this.elementId = elementId;
+    this.selector = $("#" + elementId);
 
-	// mapping of categories to colors
-	this.colors = {};
+    // mapping of categories to colors
+    this.colors = {};
 
-	this.latitudeMapping = opts.latitudeMapping || coreMap.Map.DEFAULT_LATITUDE_MAPPING;
-	this.longitudeMapping = opts.longitudeMapping || coreMap.Map.DEFAULT_LONGITUDE_MAPPING;
-	this.sizeMapping = opts.sizeMapping || coreMap.Map.DEFAULT_SIZE_MAPPING;
+    this.latitudeMapping = opts.latitudeMapping || coreMap.Map.DEFAULT_LATITUDE_MAPPING;
+    this.longitudeMapping = opts.longitudeMapping || coreMap.Map.DEFAULT_LONGITUDE_MAPPING;
+    this.sizeMapping = opts.sizeMapping || coreMap.Map.DEFAULT_SIZE_MAPPING;
 
-	this.categoryMapping = opts.categoryMapping;
-	this.onZoomRect = opts.onZoomRect;
+    this.categoryMapping = opts.categoryMapping;
+    this.onZoomRect = opts.onZoomRect;
 
-	//this.colorScale = d3.scale.category20();
-	this.colorRange = [
-		'#39b54a',
-		'#C23333',
-		'#3662CC',
-		"#ff7f0e",
-		"#9467bd",
-		"#8c564b",
-		"#e377c2",
-		"#7f7f7f",
-		"#bcbd22",
-		"#17becf",
-		"#98df8a",
-		"#ff9896",
-		"#aec7e8",
-		"#ffbb78",
-		"#c5b0d5",
-		"#c49c94",
-		"#f7b6d2",
-		"#c7c7c7",
-		"#dbdb8d",
-		"#9edae5"
-	];
-	this.colorScale = d3.scale.ordinal().range(this.colorRange);
-	this.responsive = true;
+    //this.colorScale = d3.scale.category20();
+    this.colorRange = [
+        '#39b54a',
+        '#C23333',
+        '#3662CC',
+        "#ff7f0e",
+        "#9467bd",
+        "#8c564b",
+        "#e377c2",
+        "#7f7f7f",
+        "#bcbd22",
+        "#17becf",
+        "#98df8a",
+        "#ff9896",
+        "#aec7e8",
+        "#ffbb78",
+        "#c5b0d5",
+        "#c49c94",
+        "#f7b6d2",
+        "#c7c7c7",
+        "#dbdb8d",
+        "#9edae5"
+    ];
+    this.colorScale = d3.scale.ordinal().range(this.colorRange);
+    this.responsive = true;
 
-	if(opts.responsive === false) {
-		this.responsive = false;
-	}
+    if(opts.responsive === false) {
+        this.responsive = false;
+    }
 
-	if(this.responsive) {
-		this.resizeOnWindowResize();
-	} else {
-		this.width = opts.width || coreMap.Map.DEFAULT_WIDTH;
-		this.height = opts.height || coreMap.Map.DEFAULT_HEIGHT;
-	}
+    if(this.responsive) {
+        this.resizeOnWindowResize();
+    } else {
+        this.width = opts.width || coreMap.Map.DEFAULT_WIDTH;
+        this.height = opts.height || coreMap.Map.DEFAULT_HEIGHT;
+    }
 
-	this.initializeMap();
-	this.setupLayers();
-	this.resetZoom();
-	this.setData(opts.data || []);
-	this.heatmapLayer.toggle();
+    this.initializeMap();
+    this.setupLayers();
+    this.resetZoom();
+    this.setData(opts.data || []);
+    this.heatmapLayer.toggle();
 };
 
 coreMap.Map.DEFAULT_WIDTH = 1024;
@@ -151,7 +151,7 @@ coreMap.Map.DESTINATION_PROJECTION = new OpenLayers.Projection("EPSG:900913");
  */
 
 var onPopupClose = function() {
-	this.map.selectControl.unselect(this.feature);
+    this.map.selectControl.unselect(this.feature);
 };
 
 /**
@@ -162,24 +162,24 @@ var onPopupClose = function() {
  */
 
 var onFeatureSelect = function(feature) {
-	var text = '<div><table class="table table-striped table-condensed">';
-	for(var key in feature.attributes) {
-		if(Object.prototype.hasOwnProperty.call(feature.attributes, key)) {
-			text += '<tr><th>' + _.escape(key) + '</th><td>' + _.escape(feature.attributes[key]) + '</td>';
-		}
-	}
-	text += '</table></div>';
+    var text = '<div><table class="table table-striped table-condensed">';
+    for(var key in feature.attributes) {
+        if(Object.prototype.hasOwnProperty.call(feature.attributes, key)) {
+            text += '<tr><th>' + _.escape(key) + '</th><td>' + _.escape(feature.attributes[key]) + '</td>';
+        }
+    }
+    text += '</table></div>';
 
-	var popup = new OpenLayers.Popup.FramedCloud("Data",
-		feature.geometry.getBounds().getCenterLonLat(),
-		null,
-		text,
-		null,
-		false,
-		onPopupClose);
+    var popup = new OpenLayers.Popup.FramedCloud("Data",
+        feature.geometry.getBounds().getCenterLonLat(),
+        null,
+        text,
+        null,
+        false,
+        onPopupClose);
 
-	feature.popup = popup;
-	this.map.addPopup(popup);
+    feature.popup = popup;
+    this.map.addPopup(popup);
 };
 
 /**
@@ -190,11 +190,11 @@ var onFeatureSelect = function(feature) {
  */
 
 var onFeatureUnselect = function(feature) {
-	if(feature.popup) {
-		this.map.removePopup(feature.popup);
-		feature.popup.destroy();
-		feature.popup = null;
-	}
+    if(feature.popup) {
+        this.map.removePopup(feature.popup);
+        feature.popup.destroy();
+        feature.popup = null;
+    }
 };
 
 /**
@@ -203,29 +203,29 @@ var onFeatureUnselect = function(feature) {
  */
 
 coreMap.Map.prototype.draw = function() {
-	var me = this;
+    var me = this;
 
-	var heatmapData = [];
-	var mapData = [];
-	me.colors = {};
-	_.each(this.data, function(element) {
-		var longitude = me.getValueFromDataElement(me.longitudeMapping, element);
-		var latitude = me.getValueFromDataElement(me.latitudeMapping, element);
+    var heatmapData = [];
+    var mapData = [];
+    me.colors = {};
+    _.each(this.data, function(element) {
+        var longitude = me.getValueFromDataElement(me.longitudeMapping, element);
+        var latitude = me.getValueFromDataElement(me.latitudeMapping, element);
 
-		if($.isNumeric(latitude) && $.isNumeric(longitude)) {
-			heatmapData.push(me.createHeatmapDataPoint(element, longitude, latitude));
-			mapData.push(me.createPointsLayerDataPoint(element, longitude, latitude));
-		}
-	});
+        if($.isNumeric(latitude) && $.isNumeric(longitude)) {
+            heatmapData.push(me.createHeatmapDataPoint(element, longitude, latitude));
+            mapData.push(me.createPointsLayerDataPoint(element, longitude, latitude));
+        }
+    });
 
-	// Remove any popups before resetting data so they do not become orphaned.
-	me.map.selectControl.unselectAll();
-	me.heatmapLayer.setDataSet({
-		max: 1,
-		data: heatmapData
-	});
-	me.pointsLayer.removeAllFeatures();
-	me.pointsLayer.addFeatures(mapData);
+    // Remove any popups before resetting data so they do not become orphaned.
+    me.map.selectControl.unselectAll();
+    me.heatmapLayer.setDataSet({
+        max: 1,
+        data: heatmapData
+    });
+    me.pointsLayer.removeAllFeatures();
+    me.pointsLayer.addFeatures(mapData);
 };
 
 /**
@@ -234,10 +234,10 @@ coreMap.Map.prototype.draw = function() {
  */
 
 coreMap.Map.prototype.reset = function() {
-	this.map.selectControl.unSelectAll();
-	this.setData([]);
-	this.draw();
-	this.resetZoom();
+    this.map.selectControl.unSelectAll();
+    this.setData([]);
+    this.draw();
+    this.resetZoom();
 };
 
 /**
@@ -246,8 +246,8 @@ coreMap.Map.prototype.reset = function() {
  */
 
 coreMap.Map.prototype.resetZoom = function() {
-	this.map.zoomToMaxExtent();
-	this.map.setCenter(new OpenLayers.LonLat(0, 0), 1);
+    this.map.zoomToMaxExtent();
+    this.map.setCenter(new OpenLayers.LonLat(0, 0), 1);
 };
 
 /**
@@ -259,8 +259,8 @@ coreMap.Map.prototype.resetZoom = function() {
  */
 
 coreMap.Map.prototype.setData = function(mapData) {
-	this.data = mapData;
-	this.updateRadii();
+    this.data = mapData;
+    this.updateRadii();
 };
 
 /**
@@ -273,28 +273,28 @@ coreMap.Map.prototype.setData = function(mapData) {
  */
 
 coreMap.Map.prototype.updateRadii = function() {
-	this.minRadius = this.calculateMinRadius();
-	this.maxRadius = this.calculateMaxRadius();
-	this._baseRadiusDiff = coreMap.Map.MAX_RADIUS - coreMap.Map.MIN_RADIUS;
-	this._dataRadiusDiff = this.maxRadius - this.minRadius;
+    this.minRadius = this.calculateMinRadius();
+    this.maxRadius = this.calculateMaxRadius();
+    this._baseRadiusDiff = coreMap.Map.MAX_RADIUS - coreMap.Map.MIN_RADIUS;
+    this._dataRadiusDiff = this.maxRadius - this.minRadius;
 };
 
 coreMap.Map.prototype.getColorMappings = function() {
-	var me = this;
+    var me = this;
 
-	// convert to an array that is in alphabetical order for consistent iteration order
-	var sortedColors = [];
-	for(var key in this.colors) {
-		if(Object.prototype.hasOwnProperty.call(this.colors, key)) {
-			var color = me.colors[key];
-			sortedColors.push({
-				color: color,
-				category: key
-			});
-		}
-	}
+    // convert to an array that is in alphabetical order for consistent iteration order
+    var sortedColors = [];
+    for(var key in this.colors) {
+        if(Object.prototype.hasOwnProperty.call(this.colors, key)) {
+            var color = me.colors[key];
+            sortedColors.push({
+                color: color,
+                category: key
+            });
+        }
+    }
 
-	return sortedColors;
+    return sortedColors;
 };
 
 /**
@@ -303,7 +303,7 @@ coreMap.Map.prototype.getColorMappings = function() {
  */
 
 coreMap.Map.prototype.resetColorMappings = function() {
-	this.colorScale = d3.scale.ordinal().range(this.colorRange);
+    this.colorScale = d3.scale.ordinal().range(this.colorRange);
 };
 
 /**
@@ -312,15 +312,15 @@ coreMap.Map.prototype.resetColorMappings = function() {
  */
 
 coreMap.Map.prototype.toggleLayers = function() {
-	if(this.currentLayer === this.pointsLayer) {
-		this.pointsLayer.setVisibility(false);
-		this.heatmapLayer.toggle();
-		this.currentLayer = this.heatmapLayer;
-	} else {
-		this.heatmapLayer.toggle();
-		this.pointsLayer.setVisibility(true);
-		this.currentLayer = this.pointsLayer;
-	}
+    if(this.currentLayer === this.pointsLayer) {
+        this.pointsLayer.setVisibility(false);
+        this.heatmapLayer.toggle();
+        this.currentLayer = this.heatmapLayer;
+    } else {
+        this.heatmapLayer.toggle();
+        this.pointsLayer.setVisibility(true);
+        this.currentLayer = this.pointsLayer;
+    }
 };
 
 /**
@@ -332,7 +332,7 @@ coreMap.Map.prototype.toggleLayers = function() {
  */
 
 coreMap.Map.prototype.register = function(type, obj, listener) {
-	this.map.events.register(type, obj, listener);
+    this.map.events.register(type, obj, listener);
 };
 
 /**
@@ -345,13 +345,13 @@ coreMap.Map.prototype.register = function(type, obj, listener) {
  */
 
 coreMap.Map.prototype.createHeatmapDataPoint = function(element, longitude, latitude) {
-	var count = this.getValueFromDataElement(this.sizeMapping, element);
-	var point = new OpenLayers.LonLat(longitude, latitude);
+    var count = this.getValueFromDataElement(this.sizeMapping, element);
+    var point = new OpenLayers.LonLat(longitude, latitude);
 
-	return {
-		lonlat: point,
-		count: count
-	};
+    return {
+        lonlat: point,
+        count: count
+    };
 };
 
 /**
@@ -364,13 +364,13 @@ coreMap.Map.prototype.createHeatmapDataPoint = function(element, longitude, lati
  */
 
 coreMap.Map.prototype.createPointsLayerDataPoint = function(element, longitude, latitude) {
-	var point = new OpenLayers.Geometry.Point(longitude, latitude);
-	point.data = element;
-	point.transform(coreMap.Map.SOURCE_PROJECTION, coreMap.Map.DESTINATION_PROJECTION);
-	var feature = new OpenLayers.Feature.Vector(point);
-	feature.style = this.stylePoint(element);
-	feature.attributes = element;
-	return feature;
+    var point = new OpenLayers.Geometry.Point(longitude, latitude);
+    point.data = element;
+    point.transform(coreMap.Map.SOURCE_PROJECTION, coreMap.Map.DESTINATION_PROJECTION);
+    var feature = new OpenLayers.Feature.Vector(point);
+    feature.style = this.stylePoint(element);
+    feature.attributes = element;
+    return feature;
 };
 
 /**
@@ -381,10 +381,10 @@ coreMap.Map.prototype.createPointsLayerDataPoint = function(element, longitude, 
  */
 
 coreMap.Map.prototype.stylePoint = function(element) {
-	var radius = this.calculateRadius(element);
-	var color = this.calculateColor(element);
+    var radius = this.calculateRadius(element);
+    var color = this.calculateColor(element);
 
-	return this.createPointStyleObject(color, radius);
+    return this.createPointStyleObject(color, radius);
 };
 
 /**
@@ -396,17 +396,17 @@ coreMap.Map.prototype.stylePoint = function(element) {
  */
 
 coreMap.Map.prototype.createPointStyleObject = function(color, radius) {
-	color = color || coreMap.Map.DEFAULT_COLOR;
-	radius = radius || coreMap.Map.MIN_RADIUS;
+    color = color || coreMap.Map.DEFAULT_COLOR;
+    radius = radius || coreMap.Map.MIN_RADIUS;
 
-	return new OpenLayers.Symbolizer.Point({
-		fillColor: color,
-		fillOpacity: coreMap.Map.DEFAULT_OPACITY,
-		strokeOpacity: coreMap.Map.DEFAULT_OPACITY,
-		strokeWidth: coreMap.Map.DEFAULT_STROKE_WIDTH,
-		stroke: coreMap.Map.DEFAULT_STROKE_COLOR,
-		pointRadius: radius
-	});
+    return new OpenLayers.Symbolizer.Point({
+        fillColor: color,
+        fillOpacity: coreMap.Map.DEFAULT_OPACITY,
+        strokeOpacity: coreMap.Map.DEFAULT_OPACITY,
+        strokeWidth: coreMap.Map.DEFAULT_STROKE_WIDTH,
+        stroke: coreMap.Map.DEFAULT_STROKE_COLOR,
+        pointRadius: radius
+    });
 };
 
 /**
@@ -417,9 +417,9 @@ coreMap.Map.prototype.createPointStyleObject = function(color, radius) {
  * @method calculateRadius
  */
 coreMap.Map.prototype.calculateRadius = function(element) {
-	var dataVal = this.getValueFromDataElement(this.sizeMapping, element);
-	var percentOfDataRange = (dataVal - this.minRadius) / this._dataRadiusDiff;
-	return coreMap.Map.MIN_RADIUS + (percentOfDataRange * this._baseRadiusDiff);
+    var dataVal = this.getValueFromDataElement(this.sizeMapping, element);
+    var percentOfDataRange = (dataVal - this.minRadius) / this._dataRadiusDiff;
+    return coreMap.Map.MIN_RADIUS + (percentOfDataRange * this._baseRadiusDiff);
 };
 
 /**
@@ -430,22 +430,22 @@ coreMap.Map.prototype.calculateRadius = function(element) {
  */
 
 coreMap.Map.prototype.calculateColor = function(element) {
-	var category = this.getValueFromDataElement(this.categoryMapping, element);
-	var color;
+    var category = this.getValueFromDataElement(this.categoryMapping, element);
+    var color;
 
-	if(category) {
-		color = this.colorScale(category);
-	} else {
-		category = '(Uncategorized)';
-		color = coreMap.Map.DEFAULT_COLOR;
-	}
+    if(category) {
+        color = this.colorScale(category);
+    } else {
+        category = '(Uncategorized)';
+        color = coreMap.Map.DEFAULT_COLOR;
+    }
 
-	// store the color in the registry so we know the color/category mappings
-	if(!(this.colors.hasOwnProperty(category))) {
-		this.colors[category] = color;
-	}
+    // store the color in the registry so we know the color/category mappings
+    if(!(this.colors.hasOwnProperty(category))) {
+        this.colors[category] = color;
+    }
 
-	return color;
+    return color;
 };
 
 /**
@@ -455,10 +455,10 @@ coreMap.Map.prototype.calculateColor = function(element) {
  */
 
 coreMap.Map.prototype.calculateMinRadius = function() {
-	var me = this;
-	return d3.min(me.data, function(el) {
-		return me.getValueFromDataElement(me.sizeMapping, el);
-	});
+    var me = this;
+    return d3.min(me.data, function(el) {
+        return me.getValueFromDataElement(me.sizeMapping, el);
+    });
 };
 
 /**
@@ -468,10 +468,10 @@ coreMap.Map.prototype.calculateMinRadius = function() {
  */
 
 coreMap.Map.prototype.calculateMaxRadius = function() {
-	var me = this;
-	return d3.max(me.data, function(el) {
-		return me.getValueFromDataElement(me.sizeMapping, el);
-	});
+    var me = this;
+    return d3.max(me.data, function(el) {
+        return me.getValueFromDataElement(me.sizeMapping, el);
+    });
 };
 
 /**
@@ -483,26 +483,26 @@ coreMap.Map.prototype.calculateMaxRadius = function() {
  */
 
 coreMap.Map.prototype.getValueFromDataElement = function(mapping, element) {
-	if(typeof mapping === 'function') {
-		return mapping.call(this, element);
-	}
-	return element[mapping];
+    if(typeof mapping === 'function') {
+        return mapping.call(this, element);
+    }
+    return element[mapping];
 };
 
 coreMap.Map.prototype.toggleCaching = function() {
-	this.caching = !this.caching;
-	if(this.caching) {
-		this.cacheReader.deactivate();
-		this.cacheWriter.activate();
-	} else {
-		this.cacheReader.activate();
-		this.cacheWriter.deactivate();
-	}
+    this.caching = !this.caching;
+    if(this.caching) {
+        this.cacheReader.deactivate();
+        this.cacheWriter.activate();
+    } else {
+        this.cacheReader.activate();
+        this.cacheWriter.deactivate();
+    }
 };
 
 // clear the LocaleStorage used by the browser to store data for this.
 coreMap.Map.prototype.clearCache = function() {
-	OpenLayers.Control.CacheWrite.clearCache();
+    OpenLayers.Control.CacheWrite.clearCache();
 };
 
 /**
@@ -511,115 +511,115 @@ coreMap.Map.prototype.clearCache = function() {
  */
 
 coreMap.Map.prototype.initializeMap = function() {
-	OpenLayers.ProxyHost = "proxy.cgi?url=";
-	$('#' + this.elementId).css({
-		width: this.width,
-		height: this.height
-	});
-	this.map = new OpenLayers.Map(this.elementId);
-	this.configureFilterOnZoomRectangle();
+    OpenLayers.ProxyHost = "proxy.cgi?url=";
+    $('#' + this.elementId).css({
+        width: this.width,
+        height: this.height
+    });
+    this.map = new OpenLayers.Map(this.elementId);
+    this.configureFilterOnZoomRectangle();
 };
 
 coreMap.Map.prototype.configureFilterOnZoomRectangle = function() {
-	var me = this;
-	var control = new OpenLayers.Control();
-	// this is copied from the OpenLayers.Control.ZoomBox, but that doesn't provide a way to hook in, so we had to copy
-	// it here to provide a callback after zooming
-	OpenLayers.Util.extend(control, {
-		draw: function() {
-			// this Key Handler is works in conjunctions with the Box handler below.  It detects when the user
-			// has depressed the shift key and tells the map to update its sizing.  This is a work around for
-			// zoomboxes being drawn in incorrect locations.  If any dom element higher in the page than a
-			// map changes height to reposition the map, the next time a user tries to draw a rectangle, it does
-			// not appear under the mouse cursor.  Rather, it is incorrectly drawn in proportion to the
-			// height change in other dom elements.  This forces a the map to recalculate its size on the key event
-			// that occurs just prior to the zoombox being drawn.  This may also trigger on other random shift-clicks
-			// but does not appears performant enough in a map that displays a few hundred thousand points.
-			this.keyHandler = new OpenLayers.Handler.Keyboard(control, {
-				keydown: function(event) {
-					if(event.keyCode === 16 && !this.waitingForShiftUp) {
-						this.map.updateSize();
-						this.waitingForShiftUp = true;
-					}
-				},
-				keyup: function(event) {
-					if(event.keyCode === 16 && this.waitingForShiftUp) {
-						this.waitingForShiftUp = false;
-					}
-				}
-			});
-			this.keyHandler.activate();
+    var me = this;
+    var control = new OpenLayers.Control();
+    // this is copied from the OpenLayers.Control.ZoomBox, but that doesn't provide a way to hook in, so we had to copy
+    // it here to provide a callback after zooming
+    OpenLayers.Util.extend(control, {
+        draw: function() {
+            // this Key Handler is works in conjunctions with the Box handler below.  It detects when the user
+            // has depressed the shift key and tells the map to update its sizing.  This is a work around for
+            // zoomboxes being drawn in incorrect locations.  If any dom element higher in the page than a
+            // map changes height to reposition the map, the next time a user tries to draw a rectangle, it does
+            // not appear under the mouse cursor.  Rather, it is incorrectly drawn in proportion to the
+            // height change in other dom elements.  This forces a the map to recalculate its size on the key event
+            // that occurs just prior to the zoombox being drawn.  This may also trigger on other random shift-clicks
+            // but does not appears performant enough in a map that displays a few hundred thousand points.
+            this.keyHandler = new OpenLayers.Handler.Keyboard(control, {
+                keydown: function(event) {
+                    if(event.keyCode === 16 && !this.waitingForShiftUp) {
+                        this.map.updateSize();
+                        this.waitingForShiftUp = true;
+                    }
+                },
+                keyup: function(event) {
+                    if(event.keyCode === 16 && this.waitingForShiftUp) {
+                        this.waitingForShiftUp = false;
+                    }
+                }
+            });
+            this.keyHandler.activate();
 
-			// this Handler.Box will intercept the shift-mousedown
-			// before Control.MouseDefault gets to see it
-			this.box = new OpenLayers.Handler.Box(control, {
-				done: this.notice
-			}, {
-				keyMask: OpenLayers.Handler.MOD_SHIFT
-			});
-			this.box.activate();
-		},
+            // this Handler.Box will intercept the shift-mousedown
+            // before Control.MouseDefault gets to see it
+            this.box = new OpenLayers.Handler.Box(control, {
+                done: this.notice
+            }, {
+                keyMask: OpenLayers.Handler.MOD_SHIFT
+            });
+            this.box.activate();
+        },
 
-		notice: function(position) {
-			if(position instanceof OpenLayers.Bounds) {
-				var bounds;
-				var targetCenterPx = position.getCenterPixel();
-				if(!this.out) {
-					var minXY = this.map.getLonLatFromPixel({
-						x: position.left,
-						y: position.bottom
-					});
-					var maxXY = this.map.getLonLatFromPixel({
-						x: position.right,
-						y: position.top
-					});
-					bounds = new OpenLayers.Bounds(minXY.lon, minXY.lat,
-						maxXY.lon, maxXY.lat);
-				} else {
-					var pixWidth = position.right - position.left;
-					var pixHeight = position.bottom - position.top;
-					var zoomFactor = Math.min((this.map.size.h / pixHeight),
-						(this.map.size.w / pixWidth));
-					var extent = this.map.getExtent();
-					var center = this.map.getLonLatFromPixel(targetCenterPx);
-					var xmin = center.lon - (extent.getWidth() / 2) * zoomFactor;
-					var xmax = center.lon + (extent.getWidth() / 2) * zoomFactor;
-					var ymin = center.lat - (extent.getHeight() / 2) * zoomFactor;
-					var ymax = center.lat + (extent.getHeight() / 2) * zoomFactor;
-					bounds = new OpenLayers.Bounds(xmin, ymin, xmax, ymax);
-				}
-				// always zoom in/out
-				var lastZoom = this.map.getZoom();
-				var size = this.map.getSize();
-				var centerPx = {
-					x: size.w / 2,
-					y: size.h / 2
-				};
-				var zoom = this.map.getZoomForExtent(bounds);
-				var oldRes = this.map.getResolution();
-				var newRes = this.map.getResolutionForZoom(zoom);
-				if(oldRes === newRes) {
-					this.map.setCenter(this.map.getLonLatFromPixel(targetCenterPx));
-				} else {
-					var zoomOriginPx = {
-						x: (oldRes * targetCenterPx.x - newRes * centerPx.x) /
-							(oldRes - newRes),
-						y: (oldRes * targetCenterPx.y - newRes * centerPx.y) /
-							(oldRes - newRes)
-					};
-					this.map.zoomTo(zoom, zoomOriginPx);
-				}
-				if(lastZoom === this.map.getZoom() && this.alwaysZoom === true) {
-					this.map.zoomTo(lastZoom + (this.out ? -1 : 1));
-				}
-				if(me.onZoomRect) {
-					// switch destination and source here since we're projecting back into lat/lon
-					me.onZoomRect.call(me, bounds.transform(coreMap.Map.DESTINATION_PROJECTION, coreMap.Map.SOURCE_PROJECTION));
-				}
-			}
-		}
-	});
-	this.map.addControl(control);
+        notice: function(position) {
+            if(position instanceof OpenLayers.Bounds) {
+                var bounds;
+                var targetCenterPx = position.getCenterPixel();
+                if(!this.out) {
+                    var minXY = this.map.getLonLatFromPixel({
+                        x: position.left,
+                        y: position.bottom
+                    });
+                    var maxXY = this.map.getLonLatFromPixel({
+                        x: position.right,
+                        y: position.top
+                    });
+                    bounds = new OpenLayers.Bounds(minXY.lon, minXY.lat,
+                        maxXY.lon, maxXY.lat);
+                } else {
+                    var pixWidth = position.right - position.left;
+                    var pixHeight = position.bottom - position.top;
+                    var zoomFactor = Math.min((this.map.size.h / pixHeight),
+                        (this.map.size.w / pixWidth));
+                    var extent = this.map.getExtent();
+                    var center = this.map.getLonLatFromPixel(targetCenterPx);
+                    var xmin = center.lon - (extent.getWidth() / 2) * zoomFactor;
+                    var xmax = center.lon + (extent.getWidth() / 2) * zoomFactor;
+                    var ymin = center.lat - (extent.getHeight() / 2) * zoomFactor;
+                    var ymax = center.lat + (extent.getHeight() / 2) * zoomFactor;
+                    bounds = new OpenLayers.Bounds(xmin, ymin, xmax, ymax);
+                }
+                // always zoom in/out
+                var lastZoom = this.map.getZoom();
+                var size = this.map.getSize();
+                var centerPx = {
+                    x: size.w / 2,
+                    y: size.h / 2
+                };
+                var zoom = this.map.getZoomForExtent(bounds);
+                var oldRes = this.map.getResolution();
+                var newRes = this.map.getResolutionForZoom(zoom);
+                if(oldRes === newRes) {
+                    this.map.setCenter(this.map.getLonLatFromPixel(targetCenterPx));
+                } else {
+                    var zoomOriginPx = {
+                        x: (oldRes * targetCenterPx.x - newRes * centerPx.x) /
+                            (oldRes - newRes),
+                        y: (oldRes * targetCenterPx.y - newRes * centerPx.y) /
+                            (oldRes - newRes)
+                    };
+                    this.map.zoomTo(zoom, zoomOriginPx);
+                }
+                if(lastZoom === this.map.getZoom() && this.alwaysZoom === true) {
+                    this.map.zoomTo(lastZoom + (this.out ? -1 : 1));
+                }
+                if(me.onZoomRect) {
+                    // switch destination and source here since we're projecting back into lat/lon
+                    me.onZoomRect.call(me, bounds.transform(coreMap.Map.DESTINATION_PROJECTION, coreMap.Map.SOURCE_PROJECTION));
+                }
+            }
+        }
+    });
+    this.map.addControl(control);
 };
 
 /**
@@ -628,76 +628,76 @@ coreMap.Map.prototype.configureFilterOnZoomRectangle = function() {
  */
 
 coreMap.Map.prototype.setupLayers = function() {
-	var baseLayer = new OpenLayers.Layer.OSM("OSM", null, {
-		wrapDateLine: false
-	});
-	this.map.addLayer(baseLayer);
+    var baseLayer = new OpenLayers.Layer.OSM("OSM", null, {
+        wrapDateLine: false
+    });
+    this.map.addLayer(baseLayer);
 
-	var style = {
-		styleMap: new OpenLayers.StyleMap(OpenLayers.Util.applyDefaults(
-			{
-				fillColor: "#00FF00",
-				fillOpacity: 0.8,
-				strokeOpacity: 0.8,
-				strokeWidth: 1,
-				pointRadius: 4
-			},
-			OpenLayers.Feature.Vector.style["default"]
-		))
-	};
-	// lets clients draw boxes on the map
-	this.boxLayer = new OpenLayers.Layer.Boxes();
-	this.pointsLayer = new OpenLayers.Layer.Vector("Points Layer", style);
+    var style = {
+        styleMap: new OpenLayers.StyleMap(OpenLayers.Util.applyDefaults(
+            {
+                fillColor: "#00FF00",
+                fillOpacity: 0.8,
+                strokeOpacity: 0.8,
+                strokeWidth: 1,
+                pointRadius: 4
+            },
+            OpenLayers.Feature.Vector.style["default"]
+        ))
+    };
+    // lets clients draw boxes on the map
+    this.boxLayer = new OpenLayers.Layer.Boxes();
+    this.pointsLayer = new OpenLayers.Layer.Vector("Points Layer", style);
 
-	var heatmapOptions = {
-		visible: true,
-		radius: 10
-	};
-	var options = {
-		isBaseLayer: false,
-		opacity: 0.3,
-		projection: coreMap.Map.SOURCE_PROJECTION
-	};
-	this.heatmapLayer = new OpenLayers.Layer.Heatmap("Heatmap Layer", this.map, baseLayer, heatmapOptions, options);
+    var heatmapOptions = {
+        visible: true,
+        radius: 10
+    };
+    var options = {
+        isBaseLayer: false,
+        opacity: 0.3,
+        projection: coreMap.Map.SOURCE_PROJECTION
+    };
+    this.heatmapLayer = new OpenLayers.Layer.Heatmap("Heatmap Layer", this.map, baseLayer, heatmapOptions, options);
 
-	this.map.addLayer(this.heatmapLayer);
-	this.map.addLayer(this.pointsLayer);
-	this.map.addLayer(this.boxLayer);
+    this.map.addLayer(this.heatmapLayer);
+    this.map.addLayer(this.pointsLayer);
+    this.map.addLayer(this.boxLayer);
 
-	// Add popup handlers to the points layer.
-	// this.pointsLayer.events.on({
-	//     'featureselected': onFeatureSelect,
-	//     'featureunselected': onFeatureUnselect
-	// });
-	this.map.selectControl = new OpenLayers.Control.SelectFeature(this.pointsLayer, {
-		onSelect: onFeatureSelect,
-		onUnselect: onFeatureUnselect
-	});
-	this.map.addControl(this.map.selectControl);
-	this.map.selectControl.activate();
+    // Add popup handlers to the points layer.
+    // this.pointsLayer.events.on({
+    //     'featureselected': onFeatureSelect,
+    //     'featureunselected': onFeatureUnselect
+    // });
+    this.map.selectControl = new OpenLayers.Control.SelectFeature(this.pointsLayer, {
+        onSelect: onFeatureSelect,
+        onUnselect: onFeatureUnselect
+    });
+    this.map.addControl(this.map.selectControl);
+    this.map.selectControl.activate();
 
-	// Default the heatmap to be visible.
-	this.heatmapLayer.toggle();
-	this.pointsLayer.setVisibility(false);
-	this.currentLayer = this.heatmapLayer;
+    // Default the heatmap to be visible.
+    this.heatmapLayer.toggle();
+    this.pointsLayer.setVisibility(false);
+    this.currentLayer = this.heatmapLayer;
 
-	// Create a cache reader and writer.  Use default reader
-	// settings to read from cache first.
-	this.cacheReader = new OpenLayers.Control.CacheRead();
+    // Create a cache reader and writer.  Use default reader
+    // settings to read from cache first.
+    this.cacheReader = new OpenLayers.Control.CacheRead();
 
-	this.cacheWriter = new OpenLayers.Control.CacheWrite({
-		imageFormat: "image/png",
-		eventListeners: {
-			cachefull: function() {
-				alert("Cache Full.  Re-enable caching to clear the cache and start building a new set");
-				this.toggleCaching();
-			}
-		}
-	});
+    this.cacheWriter = new OpenLayers.Control.CacheWrite({
+        imageFormat: "image/png",
+        eventListeners: {
+            cachefull: function() {
+                alert("Cache Full.  Re-enable caching to clear the cache and start building a new set");
+                this.toggleCaching();
+            }
+        }
+    });
 
-	//this.cacheWriter.addLayer(baseLayer);
-	this.map.addControl(this.cacheReader);
-	this.map.addControl(this.cacheWriter);
+    //this.cacheWriter.addLayer(baseLayer);
+    this.map.addControl(this.cacheReader);
+    this.map.addControl(this.cacheWriter);
 };
 
 /**
@@ -706,13 +706,13 @@ coreMap.Map.prototype.setupLayers = function() {
  * @return {Object} The object representing the box so it can be removed
  */
 coreMap.Map.prototype.drawBox = function(bounds) {
-	var box = new OpenLayers.Marker.Box(
-		new OpenLayers.Bounds(bounds.left, bounds.bottom, bounds.right, bounds.top)
-		.transform(coreMap.Map.SOURCE_PROJECTION, coreMap.Map.DESTINATION_PROJECTION),
-			coreMap.Map.BOX_COLOR, coreMap.Map.BOX_WIDTH);
-	box.div.style.opacity = coreMap.Map.BOX_OPACITY;
-	this.boxLayer.addMarker(box);
-	return box;
+    var box = new OpenLayers.Marker.Box(
+        new OpenLayers.Bounds(bounds.left, bounds.bottom, bounds.right, bounds.top)
+        .transform(coreMap.Map.SOURCE_PROJECTION, coreMap.Map.DESTINATION_PROJECTION),
+            coreMap.Map.BOX_COLOR, coreMap.Map.BOX_WIDTH);
+    box.div.style.opacity = coreMap.Map.BOX_OPACITY;
+    this.boxLayer.addMarker(box);
+    return box;
 };
 
 /**
@@ -720,7 +720,7 @@ coreMap.Map.prototype.drawBox = function(bounds) {
  * @param box
  */
 coreMap.Map.prototype.removeBox = function(box) {
-	this.boxLayer.removeMarker(box);
+    this.boxLayer.removeMarker(box);
 };
 
 /**
@@ -728,8 +728,8 @@ coreMap.Map.prototype.removeBox = function(box) {
  * @param {Object} bounds An object with 4 parameters, left, bottom, right and top
  */
 coreMap.Map.prototype.zoomToBounds = function(bounds) {
-	var boundsObject = new OpenLayers.Bounds(bounds.left, bounds.bottom, bounds.right, bounds.top);
-	this.map.zoomToExtent(boundsObject.transform(coreMap.Map.SOURCE_PROJECTION, coreMap.Map.DESTINATION_PROJECTION));
+    var boundsObject = new OpenLayers.Bounds(bounds.left, bounds.bottom, bounds.right, bounds.top);
+    this.map.zoomToExtent(boundsObject.transform(coreMap.Map.SOURCE_PROJECTION, coreMap.Map.DESTINATION_PROJECTION));
 };
 
 /**
@@ -737,29 +737,29 @@ coreMap.Map.prototype.zoomToBounds = function(bounds) {
  * when the window resizes on the containing element resizes
  */
 coreMap.Map.prototype.resizeToElement = function() {
-	this.width = Math.max(this.selector.width() || coreMap.Map.MIN_WIDTH);
-	this.height = Math.max(this.selector.height() || coreMap.Map.MIN_HEIGHT);
-	this.selector.css({
-		width: this.width + 'px',
-		height: this.height + 'px'
-	});
+    this.width = Math.max(this.selector.width() || coreMap.Map.MIN_WIDTH);
+    this.height = Math.max(this.selector.height() || coreMap.Map.MIN_HEIGHT);
+    this.selector.css({
+        width: this.width + 'px',
+        height: this.height + 'px'
+    });
 
-	// Since the heatmap layer doesn't natively support resizing, we need to update its size prior to
-	// updating the main map view.
-	this.heatmapLayer.heatmap.set("width", this.width);
-	this.heatmapLayer.heatmap.set("height", this.height);
-	this.heatmapLayer.heatmap.resize();
+    // Since the heatmap layer doesn't natively support resizing, we need to update its size prior to
+    // updating the main map view.
+    this.heatmapLayer.heatmap.set("width", this.width);
+    this.heatmapLayer.heatmap.set("height", this.height);
+    this.heatmapLayer.heatmap.resize();
 
-	// The map may resize multiple times if a browser resize event is triggered.  In this case,
-	// openlayers elements may have updated before our this method.  In that case, calling
-	// updateSize() is a no-op and will not recenter or redraw our heatmap layer.  To get around
-	// this we shift the view by a pixel and recenter.
-	if(this.width !== this.map.getSize().w || this.height !== this.map.getSize().h) {
-		this.map.updateSize();
-	} else {
-		this.map.pan(1, 1);
-		this.map.setCenter(this.map.getCachedCenter());
-	}
+    // The map may resize multiple times if a browser resize event is triggered.  In this case,
+    // openlayers elements may have updated before our this method.  In that case, calling
+    // updateSize() is a no-op and will not recenter or redraw our heatmap layer.  To get around
+    // this we shift the view by a pixel and recenter.
+    if(this.width !== this.map.getSize().w || this.height !== this.map.getSize().h) {
+        this.map.updateSize();
+    } else {
+        this.map.pan(1, 1);
+        this.map.setCenter(this.map.getCachedCenter());
+    }
 };
 
 /**
@@ -767,8 +767,8 @@ coreMap.Map.prototype.resizeToElement = function() {
  * @method redrawOnResize
  */
 coreMap.Map.prototype.resizeOnWindowResize = function() {
-	var me = this;
-	$(window).resize(function() {
-		setTimeout(me.resizeToElement(), 1000);
-	});
+    var me = this;
+    $(window).resize(function() {
+        setTimeout(me.resizeToElement(), 1000);
+    });
 };

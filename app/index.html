@@ -1,240 +1,240 @@
 <!doctype html>
 <html lang="en" ng-app="neonDemo">
-	<head>
-		<meta charset="utf-8">
-		<meta http-equiv="X-UA-Compatible" content="IE=edge">
-			<meta name="viewport" content="width=device-width, initial-scale=1">
-		<title>Neon</title>
+    <head>
+        <meta charset="utf-8">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge">
+            <meta name="viewport" content="width=device-width, initial-scale=1">
+        <title>Neon</title>
 
-		<link type="image/png" rel="shortcut icon" href="img/Neon_16x16.png">
+        <link type="image/png" rel="shortcut icon" href="img/Neon_16x16.png">
 
-		<link rel="stylesheet" type="text/css" href="lib/bootstrap/css/bootstrap.min.css">
-		<!-- <link rel="stylesheet" type="text/css" href="css/smoothness/jquery-ui-1.8.16.custom.css"> -->
-		<link rel="stylesheet" type="text/css" href="lib/jquery-ui/themes/ui-lightness/jquery-ui.min.css">
-		<link rel="stylesheet" type="text/css" href="lib/jquery-ui/themes/ui-lightness/jquery.ui.theme.css">
-		<link rel="stylesheet" type="text/css" href="js/vendor/slick-grid/css/slick.grid.css">
-		<link rel="stylesheet" type="text/css" href="lib/angular-gridster/css/angular-gridster.min.css">
+        <link rel="stylesheet" type="text/css" href="lib/bootstrap/css/bootstrap.min.css">
+        <!-- <link rel="stylesheet" type="text/css" href="css/smoothness/jquery-ui-1.8.16.custom.css"> -->
+        <link rel="stylesheet" type="text/css" href="lib/jquery-ui/themes/ui-lightness/jquery-ui.min.css">
+        <link rel="stylesheet" type="text/css" href="lib/jquery-ui/themes/ui-lightness/jquery.ui.theme.css">
+        <link rel="stylesheet" type="text/css" href="js/vendor/slick-grid/css/slick.grid.css">
+        <link rel="stylesheet" type="text/css" href="lib/angular-gridster/css/angular-gridster.min.css">
 
-		<!-- Custom Stylesheet -->
-		<link href="css/style.css" rel="stylesheet">
+        <!-- Custom Stylesheet -->
+        <link href="css/style.css" rel="stylesheet">
 
-		<!-- Directive styles -->
-		<link rel="stylesheet" type="text/css" href="css/directives/addVisualization.css">
-		<link rel="stylesheet" type="text/css" href="css/directives/circularHeatForm.css">
-		<link rel="stylesheet" type="text/css" href="css/directives/circularHeatChart.css">
-		<link rel="stylesheet" type="text/css" href="css/directives/countBy.css">
-		<link rel="stylesheet" type="text/css" href="css/directives/barchart.css">
-		<link rel="stylesheet" type="text/css" href="css/directives/linechart.css">
-		<link rel="stylesheet" type="text/css" href="css/directives/stackedBarChart.css">
-		<link rel="stylesheet" type="text/css" href="css/directives/timelineSelector.css">
-		<link rel="stylesheet" type="text/css" href="css/directives/timelineSelectorChart.css">
-		<link rel="stylesheet" type="text/css" href="css/directives/heatMap.css">
-		<link rel="stylesheet" type="text/css" href="css/directives/queryResultsTable.css">
-		<link rel="stylesheet" type="text/css" href="css/directives/tagCloud.css">
-		<link rel="stylesheet" type="text/css" href="css/directives/visualizationWidget.css">
+        <!-- Directive styles -->
+        <link rel="stylesheet" type="text/css" href="css/directives/addVisualization.css">
+        <link rel="stylesheet" type="text/css" href="css/directives/circularHeatForm.css">
+        <link rel="stylesheet" type="text/css" href="css/directives/circularHeatChart.css">
+        <link rel="stylesheet" type="text/css" href="css/directives/countBy.css">
+        <link rel="stylesheet" type="text/css" href="css/directives/barchart.css">
+        <link rel="stylesheet" type="text/css" href="css/directives/linechart.css">
+        <link rel="stylesheet" type="text/css" href="css/directives/stackedBarChart.css">
+        <link rel="stylesheet" type="text/css" href="css/directives/timelineSelector.css">
+        <link rel="stylesheet" type="text/css" href="css/directives/timelineSelectorChart.css">
+        <link rel="stylesheet" type="text/css" href="css/directives/heatMap.css">
+        <link rel="stylesheet" type="text/css" href="css/directives/queryResultsTable.css">
+        <link rel="stylesheet" type="text/css" href="css/directives/tagCloud.css">
+        <link rel="stylesheet" type="text/css" href="css/directives/visualizationWidget.css">
 
-		<link rel="stylesheet" type="text/css" href="css/directives/sunburst.css">
+        <link rel="stylesheet" type="text/css" href="css/directives/sunburst.css">
 
-		<!-- HTML5 Shim and Respond.js IE8 support of HTML5 elements and media queries -->
-		<!-- WARNING: Respond.js doesn't work if you view the page via file:// -->
-		<!--[if lt IE 9]>
-		<script src="lib/html5shiv.js"></script>
-		<script src="lib/respond.min.js"></script>
-		<![endif]-->
-	</head>
-	<body ng-controller="neonDemoController">
+        <!-- HTML5 Shim and Respond.js IE8 support of HTML5 elements and media queries -->
+        <!-- WARNING: Respond.js doesn't work if you view the page via file:// -->
+        <!--[if lt IE 9]>
+        <script src="lib/html5shiv.js"></script>
+        <script src="lib/respond.min.js"></script>
+        <![endif]-->
+    </head>
+    <body ng-controller="neonDemoController">
 
-		<!-- Header -->
-		<!-- This could be made into either a directive or a partial -->
-		<nav role="navigation" class="navbar">
-			<div class="navbar-default navbar-static-top" data-spy="affix">
-				<div class="container">
+        <!-- Header -->
+        <!-- This could be made into either a directive or a partial -->
+        <nav role="navigation" class="navbar">
+            <div class="navbar-default navbar-static-top" data-spy="affix">
+                <div class="container">
 
-					<div powered-by-neon class="pull-right"></div>
+                    <div powered-by-neon class="pull-right"></div>
 
-					<div class="clearfix visible-xs"></div>
+                    <div class="clearfix visible-xs"></div>
 
-					<!-- Database Config -->
-					<database-config></database-config>
+                    <!-- Database Config -->
+                    <database-config></database-config>
 
-					<!-- Add visualization control -->
-					<div add-visualization gridster-configs="visualizations"></div>
+                    <!-- Add visualization control -->
+                    <div add-visualization gridster-configs="visualizations"></div>
 
-					<ul class="nav navbar-nav">
-						<li>
-							<a data-toggle="collapse" data-parent="#trays" href=".filter-tray" class="collapsed"
-								ng-click="toggleCreateFilters()">
-								<span class="glyphicon glyphicon-filter"></span>
-								Create Filters
-								<span class="label label-primary" ng-bind="filterCount" ng-class="{true: '', false: 'hidden'}[filterCount > 0]"></span>
-							</a>
-						</li>
-						<li>
-							<a data-toggle="collapse" data-parent="#trays" href=".data-tray" class="collapsed"
-							   ng-click="toggleSeeData()">
-								<span class="glyphicon glyphicon-list"></span> View Data
-							</a>
-						</li>
-						<!-- <li>
-							<a data-toggle="collapse" data-parent="#trays" href=".query-tray" class="collapsed">
-								<span class="glyphicon glyphicon-pencil"></span> Write Query
-							</a>
-						</li> -->
-					</ul>
-				</div>
-			</div>
-		</nav>
+                    <ul class="nav navbar-nav">
+                        <li>
+                            <a data-toggle="collapse" data-parent="#trays" href=".filter-tray" class="collapsed"
+                                ng-click="toggleCreateFilters()">
+                                <span class="glyphicon glyphicon-filter"></span>
+                                Create Filters
+                                <span class="label label-primary" ng-bind="filterCount" ng-class="{true: '', false: 'hidden'}[filterCount > 0]"></span>
+                            </a>
+                        </li>
+                        <li>
+                            <a data-toggle="collapse" data-parent="#trays" href=".data-tray" class="collapsed"
+                               ng-click="toggleSeeData()">
+                                <span class="glyphicon glyphicon-list"></span> View Data
+                            </a>
+                        </li>
+                        <!-- <li>
+                            <a data-toggle="collapse" data-parent="#trays" href=".query-tray" class="collapsed">
+                                <span class="glyphicon glyphicon-pencil"></span> Write Query
+                            </a>
+                        </li> -->
+                    </ul>
+                </div>
+            </div>
+        </nav>
 
-		<!-- Trays -->
-		<div class="panel-group" id="trays">
+        <!-- Trays -->
+        <div class="panel-group" id="trays">
 
-			<!-- Filter Builder tray -->
-			<div filter-builder></div>
+            <!-- Filter Builder tray -->
+            <div filter-builder></div>
 
-			<!-- See Data tray -->
-			<div query-results-table show-data="seeData"></div>
+            <!-- See Data tray -->
+            <div query-results-table show-data="seeData"></div>
 
-			<!-- Query Builder tray -->
-			<!-- <div>
+            <!-- Query Builder tray -->
+            <!-- <div>
 
-				<div class="tray-mirror query-tray collapse">
-				  <div class="inner" style="height: 223px"></div>
-				</div>
-				<div id="query-tray" class="tray query-tray panel panel-default collapse">
+                <div class="tray-mirror query-tray collapse">
+                  <div class="inner" style="height: 223px"></div>
+                </div>
+                <div id="query-tray" class="tray query-tray panel panel-default collapse">
 
-				  <div class="container panel-body">
+                  <div class="container panel-body">
 
-					<a class="pull-right" data-toggle="modal" href="#queryHelpModal">Help <span class="glyphicon glyphicon-question-sign"></span></a>
+                    <a class="pull-right" data-toggle="modal" href="#queryHelpModal">Help <span class="glyphicon glyphicon-question-sign"></span></a>
 
-					<h4>Write your own query</h4>
+                    <h4>Write your own query</h4>
 
-					<textarea class="form-control" rows="5"></textarea>
+                    <textarea class="form-control" rows="5"></textarea>
 
-					<button type="button" class="btn btn-primary pull-right">
-					  Run Query
-					</button>
+                    <button type="button" class="btn btn-primary pull-right">
+                      Run Query
+                    </button>
 
-				  </div>
-				</div>
+                  </div>
+                </div>
 
-				<div class="modal fade" id="queryHelpModal" tabindex="-1" role="dialog" aria-labelledby="queryHelpModalLabel" aria-hidden="true">
-					<div class="modal-dialog">
-						<div class="modal-content">
-							<div class="modal-header">
-								<button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
-								<h4 class="modal-title" id="queryHelpModalLabel">Custom Query Instructions</h4>
-							</div>
-							<div class="modal-body">
-								Helpful info here.
-							</div>
-							<div class="modal-footer">
-								<button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
-							</div>
-						</div>
-					</div>
-				</div>
+                <div class="modal fade" id="queryHelpModal" tabindex="-1" role="dialog" aria-labelledby="queryHelpModalLabel" aria-hidden="true">
+                    <div class="modal-dialog">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+                                <h4 class="modal-title" id="queryHelpModalLabel">Custom Query Instructions</h4>
+                            </div>
+                            <div class="modal-body">
+                                Helpful info here.
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
 
-			</div> -->
+            </div> -->
 
-		</div>
+        </div>
 
-		<!-- DASHBOARD CONTENT -->
-		<div class="container">
+        <!-- DASHBOARD CONTENT -->
+        <div class="container">
 
-			<!-- Use gridster to manage visualization layouts. -->
-			<div gridster="gridsterOpts" id="gridster-div">
-				<ul>
-					<li gridster-item="visualization" ng-repeat="visualization in visualizations track by visualization.id">
-						<div class="well" visualization-widget
-							gridster-configs="visualizations"
-							gridster-config-index="$index"
-							ng-class="(isInMobileMode())? 'visualization-widget-mobile' : 'visualization-widget'"></div>
-					</li>
-				</ul>
-			</div>
+            <!-- Use gridster to manage visualization layouts. -->
+            <div gridster="gridsterOpts" id="gridster-div">
+                <ul>
+                    <li gridster-item="visualization" ng-repeat="visualization in visualizations track by visualization.id">
+                        <div class="well" visualization-widget
+                            gridster-configs="visualizations"
+                            gridster-config-index="$index"
+                            ng-class="(isInMobileMode())? 'visualization-widget-mobile' : 'visualization-widget'"></div>
+                    </li>
+                </ul>
+            </div>
 
-			<div id="tooltip-container"></div>
+            <div id="tooltip-container"></div>
 
-		</div>
+        </div>
 
-		<!-- Include the xdata logging package. -->
-		<script src="lib/xdatalogger/js/draper.activity_logger-2.1.1.js"></script>
-		<script src="lib/xdatalogger/js/draper.activity_worker-2.1.1.js"></script>
+        <!-- Include the xdata logging package. -->
+        <script src="lib/xdatalogger/js/draper.activity_logger-2.1.1.js"></script>
+        <script src="lib/xdatalogger/js/draper.activity_worker-2.1.1.js"></script>
 
-		<!-- Including neon before angular here as neon has lodash and jquery wrapped into it.  If this is
-			 loaded first, angular should pick up the included jQuery. -->
-		<script src="/neon/js/neon.js"></script>
+        <!-- Including neon before angular here as neon has lodash and jquery wrapped into it.  If this is
+             loaded first, angular should pick up the included jQuery. -->
+        <script src="/neon/js/neon.js"></script>
 
-		<script src="lib/jquery/js/jquery.min.js"></script>
+        <script src="lib/jquery/js/jquery.min.js"></script>
 
-		<!-- Include the opencpu library. OpenCPU needs to be included after JQuery and before the app config. -->
-		<script src="lib/opencpu/js/opencpu-0.5.js"></script>
+        <!-- Include the opencpu library. OpenCPU needs to be included after JQuery and before the app config. -->
+        <script src="lib/opencpu/js/opencpu-0.5.js"></script>
 
-		<!-- Configure our main demo application -->
-		<script src="js/appConfig.js"></script>
+        <!-- Configure our main demo application -->
+        <script src="js/appConfig.js"></script>
 
-		<!-- In production use:
-		<script src="//ajax.googleapis.com/ajax/libs/angularjs/x.x.x/angular.min.js"></script>
-		-->
-		<script src="lib/angular/js/angular.min.js"></script>
-		<script src="lib/angular-gridster/js/angular-gridster.min.js"></script>
-		<script src="lib/javascript-detect-element-resize/js/jquery.resize.js"></script>
+        <!-- In production use:
+        <script src="//ajax.googleapis.com/ajax/libs/angularjs/x.x.x/angular.min.js"></script>
+        -->
+        <script src="lib/angular/js/angular.min.js"></script>
+        <script src="lib/angular-gridster/js/angular-gridster.min.js"></script>
+        <script src="lib/javascript-detect-element-resize/js/jquery.resize.js"></script>
 
-		<!-- Include third party libs -->
-		<script src="lib/d3/js/d3.min.js"></script>
+        <!-- Include third party libs -->
+        <script src="lib/d3/js/d3.min.js"></script>
 
-		<script src="lib/openlayers/OpenLayers.js"></script>
-		<script src="lib/openlayers-heatmap/js/heatmap.js"></script>
-		<script src="lib/openlayers-heatmap/js/heatmap-openlayers.js"></script>
-		<script src="lib/jquery.tagcloud/js/jquery.tagcloud.js"></script>
-		<script src="lib/jquery.event.drag-drop/js/jquery.event.drag.js"></script>
-		<script src="lib/jquery.event.drag-drop/js/jquery.event.drop.js"></script>
-		<!-- <script src="lib/jquery/jquery-ui-1.8.16.custom.min.js"></script> -->
-		<script src="lib/jquery-ui/js/jquery-ui.min.js"></script>
-		<script src="js/vendor/slick-grid/js/slick.core.js"></script>
-		<script src="js/vendor/slick-grid/js/slick.grid.js"></script>
-		<script src="js/vendor/slick-grid/js/slick.dataview.js"></script>
-		<script src="js/vendor/slick-grid/js/slick.autotooltips.js"></script>
-		<script src="js/vendor/slick-grid/js/slick.rowselectionmodel.js"></script>
-		<script src="lib/mergesort/js/merge-sort.js"></script>
-		<script src="lib/bootstrap/js/bootstrap.min.js"></script>
+        <script src="lib/openlayers/OpenLayers.js"></script>
+        <script src="lib/openlayers-heatmap/js/heatmap.js"></script>
+        <script src="lib/openlayers-heatmap/js/heatmap-openlayers.js"></script>
+        <script src="lib/jquery.tagcloud/js/jquery.tagcloud.js"></script>
+        <script src="lib/jquery.event.drag-drop/js/jquery.event.drag.js"></script>
+        <script src="lib/jquery.event.drag-drop/js/jquery.event.drop.js"></script>
+        <!-- <script src="lib/jquery/jquery-ui-1.8.16.custom.min.js"></script> -->
+        <script src="lib/jquery-ui/js/jquery-ui.min.js"></script>
+        <script src="js/vendor/slick-grid/js/slick.core.js"></script>
+        <script src="js/vendor/slick-grid/js/slick.grid.js"></script>
+        <script src="js/vendor/slick-grid/js/slick.dataview.js"></script>
+        <script src="js/vendor/slick-grid/js/slick.autotooltips.js"></script>
+        <script src="js/vendor/slick-grid/js/slick.rowselectionmodel.js"></script>
+        <script src="lib/mergesort/js/merge-sort.js"></script>
+        <script src="lib/bootstrap/js/bootstrap.min.js"></script>
 
-		<!-- Include required non-angular support modules -->
-		<script src="js/neon-extensions/filtertable.js"></script>
-		<script src="js/namespaces.js"></script>
-		<script src="js/charts/barchart.js"></script>
-		<script src="js/charts/linechart.js"></script>
-		<script src="js/charts/timelineSelectorChart.js"></script>
-		<script src="js/coremap/coremap.js"></script>
-		<script src="js/tables/table.js"></script>
-		<script src="js/charts/sunburst.js"></script>
+        <!-- Include required non-angular support modules -->
+        <script src="js/neon-extensions/filtertable.js"></script>
+        <script src="js/namespaces.js"></script>
+        <script src="js/charts/barchart.js"></script>
+        <script src="js/charts/linechart.js"></script>
+        <script src="js/charts/timelineSelectorChart.js"></script>
+        <script src="js/coremap/coremap.js"></script>
+        <script src="js/tables/table.js"></script>
+        <script src="js/charts/sunburst.js"></script>
 
-		<!-- Include our custom Angular components here for now. -->
-		<script src="js/app.js"></script>
-		<script src="js/connectionService.js"></script>
-		<script src="js/filterCountService.js"></script>
-		<script src="js/neonDemoController.js"></script>
+        <!-- Include our custom Angular components here for now. -->
+        <script src="js/app.js"></script>
+        <script src="js/connectionService.js"></script>
+        <script src="js/filterCountService.js"></script>
+        <script src="js/neonDemoController.js"></script>
 
-		<script src="js/charts/circularHeatChart.js"></script>
+        <script src="js/charts/circularHeatChart.js"></script>
 
-		<script src="js/directives/addVisualization.js"></script>
-		<script src="js/directives/barchart.js"></script>
-		<script src="js/directives/circularHeatChart.js"></script>
-		<script src="js/directives/circularHeatForm.js"></script>
-		<script src="js/directives/countBy.js"></script>
-		<script src="js/directives/databaseConfig.js"></script>
-		<script src="js/directives/filterBuilder.js"></script>
-		<script src="js/directives/fieldSelector.js"></script>
-		<script src="js/directives/heatMap.js"></script>
-		<script src="js/directives/linechart.js"></script>
-		<script src="js/directives/poweredByNeon.js"></script>
-		<script src="js/directives/queryResultsTable.js"></script>
-		<script src="js/directives/stackedBarchart.js"></script>
-		<script src="js/directives/tagCloud.js"></script>
-		<script src="js/directives/timelineSelectorChart.js"></script>
-		<script src="js/directives/timelineSelector.js"></script>
-		<script src="js/directives/visualizationWidget.js"></script>
-		<script src="js/directives/sunburst.js"></script>
-		<script src="js/directives/arrayTextForm.js"></script>
-	</body>
+        <script src="js/directives/addVisualization.js"></script>
+        <script src="js/directives/barchart.js"></script>
+        <script src="js/directives/circularHeatChart.js"></script>
+        <script src="js/directives/circularHeatForm.js"></script>
+        <script src="js/directives/countBy.js"></script>
+        <script src="js/directives/databaseConfig.js"></script>
+        <script src="js/directives/filterBuilder.js"></script>
+        <script src="js/directives/fieldSelector.js"></script>
+        <script src="js/directives/heatMap.js"></script>
+        <script src="js/directives/linechart.js"></script>
+        <script src="js/directives/poweredByNeon.js"></script>
+        <script src="js/directives/queryResultsTable.js"></script>
+        <script src="js/directives/stackedBarchart.js"></script>
+        <script src="js/directives/tagCloud.js"></script>
+        <script src="js/directives/timelineSelectorChart.js"></script>
+        <script src="js/directives/timelineSelector.js"></script>
+        <script src="js/directives/visualizationWidget.js"></script>
+        <script src="js/directives/sunburst.js"></script>
+        <script src="js/directives/arrayTextForm.js"></script>
+    </body>
 </html>

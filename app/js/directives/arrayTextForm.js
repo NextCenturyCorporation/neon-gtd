@@ -18,24 +18,24 @@
 
 angular.module('neonDemo.directives')
 .directive('arrayTextForm', function() {
-	return {
-		templateUrl: "partials/directives/arrayTextForm.html",
-		restrict: "E",
-		scope: {
-			fields: '='
-		},
-		link: function($scope) {
-			$scope.addField = function() {
-				$scope.fields.push("");
-			};
+    return {
+        templateUrl: "partials/directives/arrayTextForm.html",
+        restrict: "E",
+        scope: {
+            fields: '='
+        },
+        link: function($scope) {
+            $scope.addField = function() {
+                $scope.fields.push("");
+            };
 
-			$scope.blur = function($event, $index) {
-				if($event.currentTarget.value === "" && $scope.fields.length > 1) {
-					$scope.fields.splice($index, 1);
-				} else {
-					$scope.fields[ $index ] = $event.currentTarget.value;
-				}
-			};
-		}
-	};
+            $scope.blur = function($event, $index) {
+                if($event.currentTarget.value === "" && $scope.fields.length > 1) {
+                    $scope.fields.splice($index, 1);
+                } else {
+                    $scope.fields[ $index ] = $event.currentTarget.value;
+                }
+            };
+        }
+    };
 });

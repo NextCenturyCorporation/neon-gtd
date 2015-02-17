@@ -28,88 +28,88 @@
  */
 angular.module('neonDemo.directives')
 .directive('timelineSelectorChart', ['$timeout', function($timeout) {
-	return {
-		restrict: 'EA',
-		scope: {
-			timelineData: '=',
-			timelineBrush: '=',
-			extentDirty: '=',
-			collapsed: '=',
-			primarySeries: '=',
-			granularity: '='
-		},
-		link: function($scope, $element) {
-			// Initialize the chart.
-			$scope.chart = new charts.TimelineSelectorChart($element[0]);
+    return {
+        restrict: 'EA',
+        scope: {
+            timelineData: '=',
+            timelineBrush: '=',
+            extentDirty: '=',
+            collapsed: '=',
+            primarySeries: '=',
+            granularity: '='
+        },
+        link: function($scope, $element) {
+            // Initialize the chart.
+            $scope.chart = new charts.TimelineSelectorChart($element[0]);
 
-			// Add a brush handler.
-			$scope.chart.addBrushHandler(function(data) {
-				// Wrap our data change in $apply since this is fired from a D3 event and outside of
-				// angular's digest cycle.
-				$scope.$apply(function() {
-					$scope.timelineBrush = data;
-				});
-			});
+            // Add a brush handler.
+            $scope.chart.addBrushHandler(function(data) {
+                // Wrap our data change in $apply since this is fired from a D3 event and outside of
+                // angular's digest cycle.
+                $scope.$apply(function() {
+                    $scope.timelineBrush = data;
+                });
+            });
 
-			// Render an initial empty view.
-			$scope.chart.render([]);
+            // Render an initial empty view.
+            $scope.chart.render([]);
 
-			var redrawOnResize = function() {
-				$scope.chart.redrawChart();
-				$scope.resizePromise = null;
-			};
+            var redrawOnResize = function() {
+                $scope.chart.redrawChart();
+                $scope.resizePromise = null;
+            };
 
-			// Watch for changes in the element size and update us.
-			$scope.$watch(
-				function() {
-					return $element[0].clientWidth + "x" + $element[0].clientHeight;
-				},
-				function(oldVal, newVal) {
-					if((oldVal !== newVal) && $scope.chart && $scope.timelineData && $scope.timelineData.length > 0) {
-						if($scope.resizePromise) {
-							$timeout.cancel($scope.resizePromise);
-						}
-						$scope.resizePromise = $timeout(redrawOnResize, 200);
-					}
-				});
+            // Watch for changes in the element size and update us.
+            $scope.$watch(
+                function() {
+                    return $element[0].clientWidth + "x" + $element[0].clientHeight;
+                },
+                function(oldVal, newVal) {
+                    if((oldVal !== newVal) && $scope.chart && $scope.timelineData && $scope.timelineData.length > 0) {
+                        if($scope.resizePromise) {
+                            $timeout.cancel($scope.resizePromise);
+                        }
+                        $scope.resizePromise = $timeout(redrawOnResize, 200);
+                    }
+                });
 
-			// If our data updates, reset our internal value fields and render the new view
-			// and clear the brush.
-			$scope.$watch('timelineData', function(newVal) {
-				if(newVal && (newVal.length > 0)) {
-					$scope.chart.updateGranularity($scope.granularity);
-					$scope.chart.render(newVal);
-					$scope.chart.renderExtent($scope.timelineBrush);
-				}
-			}, true);
+            // If our data updates, reset our internal value fields and render the new view
+            // and clear the brush.
+            $scope.$watch('timelineData', function(newVal) {
+                if(newVal && (newVal.length > 0)) {
+                    $scope.chart.updateGranularity($scope.granularity);
+                    $scope.chart.render(newVal);
+                    $scope.chart.renderExtent($scope.timelineBrush);
+                }
+            }, true);
 
-			$scope.$watch('timelineBrush', function(newVal) {
-				if(newVal && newVal.length === 0) {
-					$scope.chart.clearBrush();
-				}
-			});
+            $scope.$watch('timelineBrush', function(newVal) {
+                if(newVal && newVal.length === 0) {
+                    $scope.chart.clearBrush();
+                }
+            });
 
-			$scope.$watch('extentDirty', function(newVal) {
-				if(newVal) {
-					$scope.extentDirty = false;
-					$scope.chart.renderExtent($scope.timelineBrush);
-				}
-			});
+            $scope.$watch('extentDirty', function(newVal) {
+                if(newVal) {
+                    $scope.extentDirty = false;
+                    $scope.chart.renderExtent($scope.timelineBrush);
+                }
+            });
 
-			$scope.$watch('collapsed', function(newVal) {
-				if(typeof newVal !== "undefined") {
-					$scope.chart.render($scope.timelineData);
-					$scope.chart.renderExtent($scope.timelineBrush);
-				}
-			});
+            $scope.$watch('collapsed', function(newVal) {
+                if(typeof newVal !== "undefined") {
+                    $scope.chart.render($scope.timelineData);
+                    $scope.chart.renderExtent($scope.timelineBrush);
+                }
+            });
 
-			$scope.$watch('primarySeries', function(newVal) {
-				if(newVal) {
-					$scope.chart.updatePrimarySeries(newVal);
-					$scope.chart.render($scope.timelineData);
-					$scope.chart.renderExtent($scope.timelineBrush);
-				}
-			});
-		}
-	};
+            $scope.$watch('primarySeries', function(newVal) {
+                if(newVal) {
+                    $scope.chart.updatePrimarySeries(newVal);
+                    $scope.chart.render($scope.timelineData);
+                    $scope.chart.renderExtent($scope.timelineBrush);
+                }
+            });
+        }
+    };
 }]);
