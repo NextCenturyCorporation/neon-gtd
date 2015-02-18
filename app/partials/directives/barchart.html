@@ -26,7 +26,7 @@
     </div>
 </div>
 <div class="filter-reset pull-right" ng-class="{true: 'hidden', false: ''}[filterSet === undefined]">
-  Filter
+    {{filterSet.key}}={{filterSet.value}}
   <a class="btn" ng-click="clearFilterSet()">
     <span class="glyphicon glyphicon-remove"></span>
   </a>
