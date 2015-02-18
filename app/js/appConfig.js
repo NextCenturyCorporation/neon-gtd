@@ -51,12 +51,12 @@ XDATA.activityLogger = new activityLogger('lib/xdatalogger/js/draper.activity_wo
 XDATA.activityLogger.echo(DEMO_CONFIG.xdata.echoToConsole).testing(!DEMO_CONFIG.xdata.enableLogging);
 // Register the xdata logger with a server.
 XDATA.activityLogger.registerActivityLogger(DEMO_CONFIG.xdata.ACTIVITY_LOGGER_URL,
-	DEMO_CONFIG.xdata.COMPONENT,
-	DEMO_CONFIG.xdata.COMPONENT_VERSION);
+    DEMO_CONFIG.xdata.COMPONENT,
+    DEMO_CONFIG.xdata.COMPONENT_VERSION);
 
 // Configure opencpu connection
 if(DEMO_CONFIG.opencpu.enableOpenCpu) {
-	ocpu.enableLogging = DEMO_CONFIG.opencpu.enableLogging;
-	ocpu.useAlerts = DEMO_CONFIG.opencpu.useAlerts;
-	ocpu.seturl(DEMO_CONFIG.opencpu.url);
+    ocpu.enableLogging = DEMO_CONFIG.opencpu.enableLogging;
+    ocpu.useAlerts = DEMO_CONFIG.opencpu.useAlerts;
+    ocpu.seturl(DEMO_CONFIG.opencpu.url);
 }

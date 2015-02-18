@@ -15,8 +15,8 @@
  */
 
 .timeline-selector-chart {
-	margin: 0 -15px 0;
-	display:block;
+    margin: 0 -15px 0;
+    display:block;
   min-height: 40px;
 
  /* -webkit-transition: height 0.3s ease-out; 

@@ -79,200 +79,200 @@
  *
  */
 charts.SunburstChart = function(rootElement, selector, opts) {
-	opts = opts || {};
-	var me = this;
-	this.node = {};
-	this.chartSelector_ = selector;
-	this.root = d3.select(rootElement);
-	this.element = this.root.select(selector);
+    opts = opts || {};
+    var me = this;
+    this.node = {};
+    this.chartSelector_ = selector;
+    this.root = d3.select(rootElement);
+    this.element = this.root.select(selector);
 
-	if(typeof opts.width === "string" && opts.width.slice(-1) === "%") {
-		// Set width to string and viewbox to default
-		this.width = opts.width;
-		this.viewBoxWidth = charts.SunburstChart.DEFAULT_WIDTH;
-	} else {
-		// Set both viewbox and width to value or default.
-		this.width = opts.width || charts.SunburstChart.DEFAULT_WIDTH;
-		this.viewBoxWidth = this.width;
-	}
+    if(typeof opts.width === "string" && opts.width.slice(-1) === "%") {
+        // Set width to string and viewbox to default
+        this.width = opts.width;
+        this.viewBoxWidth = charts.SunburstChart.DEFAULT_WIDTH;
+    } else {
+        // Set both viewbox and width to value or default.
+        this.width = opts.width || charts.SunburstChart.DEFAULT_WIDTH;
+        this.viewBoxWidth = this.width;
+    }
 
-	if(typeof opts.height === "string" && opts.height.slice(-1) === "%") {
-		// Set width to string and viewbox to default
-		this.height = opts.height;
-		this.viewBoxHeight = charts.SunburstChart.DEFAULT_HEIGHT;
-	} else {
-		// Set both viewbox and width to value or default.
-		this.height = opts.height || charts.SunburstChart.DEFAULT_HEIGHT;
-		this.viewBoxHeight = this.height;
-	}
+    if(typeof opts.height === "string" && opts.height.slice(-1) === "%") {
+        // Set width to string and viewbox to default
+        this.height = opts.height;
+        this.viewBoxHeight = charts.SunburstChart.DEFAULT_HEIGHT;
+    } else {
+        // Set both viewbox and width to value or default.
+        this.height = opts.height || charts.SunburstChart.DEFAULT_HEIGHT;
+        this.viewBoxHeight = this.height;
+    }
 
-	this.radius = Math.min(this.viewBoxWidth - 20, this.viewBoxHeight - 20) / 2;
+    this.radius = Math.min(this.viewBoxWidth - 20, this.viewBoxHeight - 20) / 2;
 
-	this.x = d3.scale.linear()
-		.range([0, 2 * Math.PI]);
+    this.x = d3.scale.linear()
+        .range([0, 2 * Math.PI]);
 
-	this.y = d3.scale.linear()
-		.range([0, this.radius]);
+    this.y = d3.scale.linear()
+        .range([0, this.radius]);
 
-	this.color = d3.scale.category20c();
+    this.color = d3.scale.category20c();
 
-	this.countFormatter = d3.format(' ,.0f');
+    this.countFormatter = d3.format(' ,.0f');
 
-	this.moneyFormatter = d3.format(' $,.2f');
-	this.partitionType = "count";
+    this.moneyFormatter = d3.format(' $,.2f');
+    this.partitionType = "count";
 
-	var partitionFunction = function(d) {
-		return d[me.partitionType];
-	};
+    var partitionFunction = function(d) {
+        return d[me.partitionType];
+    };
 
-	var arcTweenData = function(a, i) {
-		var oi = d3.interpolate({
-			x: a.x0,
-			dx: a.dx0
-		}, a);
-		function tween(t) {
-			var b = oi(t);
-			a.x0 = b.x;
-			a.dx0 = b.dx;
-			return me.arc(b);
-		}
-		if(i === 0) {
-			// If we are on the first arc, adjust the x domain to match the root node
-			// at the current zoom level. (We only need to do this once.)
-			var xd = d3.interpolate(me.x.domain(), [me.node.x, me.node.x + me.node.dx]);
-			return function(t) {
-				me.x.domain(xd(t));
-				return tween(t);
-			};
-		} else {
-			return tween;
-		}
-	};
+    var arcTweenData = function(a, i) {
+        var oi = d3.interpolate({
+            x: a.x0,
+            dx: a.dx0
+        }, a);
+        function tween(t) {
+            var b = oi(t);
+            a.x0 = b.x;
+            a.dx0 = b.dx;
+            return me.arc(b);
+        }
+        if(i === 0) {
+            // If we are on the first arc, adjust the x domain to match the root node
+            // at the current zoom level. (We only need to do this once.)
+            var xd = d3.interpolate(me.x.domain(), [me.node.x, me.node.x + me.node.dx]);
+            return function(t) {
+                me.x.domain(xd(t));
+                return tween(t);
+            };
+        } else {
+            return tween;
+        }
+    };
 
-	var arcTweenZoom = function(d) {
-		var xd = d3.interpolate(me.x.domain(), [d.x, d.x + d.dx]);
-		var yd = d3.interpolate(me.y.domain(), [d.y, 1]);
-		var yr = d3.interpolate(me.y.range(), [d.y ? 20 : 0, me.radius]);
-		return function(d, i) {
-			if(i) {
-				return function() {
-					return me.arc(d);
-				};
-			} else {
-				return function(t) {
-					me.x.domain(xd(t));
-					me.y.domain(yd(t)).range(yr(t));
-					return me.arc(d);
-				};
-			}
-		};
-	};
+    var arcTweenZoom = function(d) {
+        var xd = d3.interpolate(me.x.domain(), [d.x, d.x + d.dx]);
+        var yd = d3.interpolate(me.y.domain(), [d.y, 1]);
+        var yr = d3.interpolate(me.y.range(), [d.y ? 20 : 0, me.radius]);
+        return function(d, i) {
+            if(i) {
+                return function() {
+                    return me.arc(d);
+                };
+            } else {
+                return function(t) {
+                    me.x.domain(xd(t));
+                    me.y.domain(yd(t)).range(yr(t));
+                    return me.arc(d);
+                };
+            }
+        };
+    };
 
-	this.displayPartition = function(type) {
-		this.partitionType = type;
+    this.displayPartition = function(type) {
+        this.partitionType = type;
 
-		this.path.data(this.partition.value(partitionFunction).nodes)
-			.transition()
-			.duration(1000)
-			.attrTween("d", arcTweenData);
-	};
+        this.path.data(this.partition.value(partitionFunction).nodes)
+            .transition()
+            .duration(1000)
+            .attrTween("d", arcTweenData);
+    };
 
-	this.drawBlank = function() {
-		var me = this;
+    this.drawBlank = function() {
+        var me = this;
 
-		this.tooltip = me.element.append("div")
-			.attr("class", "sunburst-tooltip");
+        this.tooltip = me.element.append("div")
+            .attr("class", "sunburst-tooltip");
 
-		this.svg = me.element.append("svg")
-			.attr("viewBox", "0 0 " + this.viewBoxWidth + " " + this.viewBoxHeight)
-			.attr("preserveAspectRatio", "xMidYMid meet")
-			.attr("width", this.width)
-			.attr("height", this.height)
-			.append("g")
-			.attr("transform", "translate(" + (this.viewBoxWidth / 2) + "," + (this.viewBoxHeight / 2) + ")");
+        this.svg = me.element.append("svg")
+            .attr("viewBox", "0 0 " + this.viewBoxWidth + " " + this.viewBoxHeight)
+            .attr("preserveAspectRatio", "xMidYMid meet")
+            .attr("width", this.width)
+            .attr("height", this.height)
+            .append("g")
+            .attr("transform", "translate(" + (this.viewBoxWidth / 2) + "," + (this.viewBoxHeight / 2) + ")");
 
-		this.partition = d3.layout.partition()
-			.sort(null)
-			.value(function(d) {
-				return d[me.partitionType];
-			});
+        this.partition = d3.layout.partition()
+            .sort(null)
+            .value(function(d) {
+                return d[me.partitionType];
+            });
 
-		this.arc = d3.svg.arc()
-			.startAngle(function(d) {
-				return Math.max(0, Math.min(2 * Math.PI, me.x(d.x)));
-			})
-			.endAngle(function(d) {
-				return Math.max(0, Math.min(2 * Math.PI, me.x(d.x + d.dx)));
-			})
-			.innerRadius(function(d) {
-				return Math.max(0, me.y(d.y));
-			})
-			.outerRadius(function(d) {
-				return Math.max(0, me.y(d.y + d.dy));
-			});
-	};
+        this.arc = d3.svg.arc()
+            .startAngle(function(d) {
+                return Math.max(0, Math.min(2 * Math.PI, me.x(d.x)));
+            })
+            .endAngle(function(d) {
+                return Math.max(0, Math.min(2 * Math.PI, me.x(d.x + d.dx)));
+            })
+            .innerRadius(function(d) {
+                return Math.max(0, me.y(d.y));
+            })
+            .outerRadius(function(d) {
+                return Math.max(0, me.y(d.y + d.dy));
+            });
+    };
 
-	this.drawData = function(root) {
-		var me = this;
-		// Keep track of the node that is currentfoly being displayed as the root.
-		var node;
+    this.drawData = function(root) {
+        var me = this;
+        // Keep track of the node that is currentfoly being displayed as the root.
+        var node;
 
-		node = root;
-		this.node = root;
+        node = root;
+        this.node = root;
 
-		this.path = this.svg.datum(root).selectAll("path")
-			.data(this.partition.nodes)
-			.enter().append("path")
-				.attr("d", this.arc)
-				.style("fill", function(d) {
-					return me.color((d.children ? d : d.parent).name);
-				})
-				.on("click", click)
-				.on("mouseover", onMouseOver)
-				.on("mouseout", onMouseOut)
-				.on("mousemove", onMouseMove)
-				.each(stash);
+        this.path = this.svg.datum(root).selectAll("path")
+            .data(this.partition.nodes)
+            .enter().append("path")
+                .attr("d", this.arc)
+                .style("fill", function(d) {
+                    return me.color((d.children ? d : d.parent).name);
+                })
+                .on("click", click)
+                .on("mouseover", onMouseOver)
+                .on("mouseout", onMouseOut)
+                .on("mousemove", onMouseMove)
+                .each(stash);
 
-		function click(d) {
-			me.node = d;
-			me.path.transition()
-				.duration(1000)
-				.attrTween("d", arcTweenZoom(d));
-		}
+        function click(d) {
+            me.node = d;
+            me.path.transition()
+                .duration(1000)
+                .attrTween("d", arcTweenZoom(d));
+        }
 
-		function onMouseOver(d) {
-			var text = "<span class='sunburst-tooltip-title'>" + d.name + "</span><br>";
+        function onMouseOver(d) {
+            var text = "<span class='sunburst-tooltip-title'>" + d.name + "</span><br>";
 
-			if(!d.count && !d.total && d.value) {
-				text = text + "<span class='sunburst-tooltip-field'>";
-				text = text + ((me.partitionType ===  charts.SunburstChart.COUNT_PARTITION) ? "Count" : "Total");
-				text = text + ":</span> " + me.countFormatter(d.value) + "<br>";
-			}
+            if(!d.count && !d.total && d.value) {
+                text = text + "<span class='sunburst-tooltip-field'>";
+                text = text + ((me.partitionType ===  charts.SunburstChart.COUNT_PARTITION) ? "Count" : "Total");
+                text = text + ":</span> " + me.countFormatter(d.value) + "<br>";
+            }
 
-			text = (d.count) ? text + "<span class='sunburst-tooltip-field'>Count:</span> " + me.countFormatter(d.count) + "<br>" : text;
-			text = (d.total) ? text + "<span class='sunburst-tooltip-field'>Total:</span> " + me.moneyFormatter(d.total) + "<br>" : text;
+            text = (d.count) ? text + "<span class='sunburst-tooltip-field'>Count:</span> " + me.countFormatter(d.count) + "<br>" : text;
+            text = (d.total) ? text + "<span class='sunburst-tooltip-field'>Total:</span> " + me.moneyFormatter(d.total) + "<br>" : text;
 
-			me.tooltip.html(text);
-			me.tooltip.style("opacity", 0.9);
-			me.tooltip.style("left", d3.event.offsetX + "px")
-				.style("top", d3.event.offsetY + "px");
-		}
+            me.tooltip.html(text);
+            me.tooltip.style("opacity", 0.9);
+            me.tooltip.style("left", d3.event.offsetX + "px")
+                .style("top", d3.event.offsetY + "px");
+        }
 
-		function onMouseMove() {
-			me.tooltip.style("left", d3.event.offsetX + "px")
-				.style("top", d3.event.offsetY + "px");
-		}
+        function onMouseMove() {
+            me.tooltip.style("left", d3.event.offsetX + "px")
+                .style("top", d3.event.offsetY + "px");
+        }
 
-		function onMouseOut() {
-			me.tooltip.style("opacity", 0);
-		}
+        function onMouseOut() {
+            me.tooltip.style("opacity", 0);
+        }
 
-		// Setup for switching data: stash the old values for transition.
-		function stash(d) {
-			d.x0 = d.x;
-			d.dx0 = d.dx;
-		}
-	};
+        // Setup for switching data: stash the old values for transition.
+        function stash(d) {
+            d.x0 = d.x;
+            d.dx0 = d.dx;
+        }
+    };
 };
 
 charts.SunburstChart.DEFAULT_HEIGHT = 1000;
@@ -281,8 +281,8 @@ charts.SunburstChart.COUNT_PARTITION = "count";
 charts.SunburstChart.TOTAL_PARTITION = "total";
 
 charts.SunburstChart.prototype.clearData = function() {
-	//clear
-	$(this.element[0]).empty();
-	//draw blank
-	this.drawBlank();
+    //clear
+    $(this.element[0]).empty();
+    //draw blank
+    this.drawBlank();
 };

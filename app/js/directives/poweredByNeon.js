@@ -29,23 +29,23 @@
  */
 angular.module('neonDemo.directives')
 .directive('poweredByNeon', function() {
-	return {
-		templateUrl: 'partials/directives/poweredByNeon.html',
-		restrict: 'EA',
-		link: function($scope) {
-			$scope.versionString = "Loading...";
-			$scope.infoLoaded = false;
+    return {
+        templateUrl: 'partials/directives/poweredByNeon.html',
+        restrict: 'EA',
+        link: function($scope) {
+            $scope.versionString = "Loading...";
+            $scope.infoLoaded = false;
 
-			$scope.loadNeonInfo = function() {
-				if(!$scope.infoLoaded) {
-					neon.util.infoUtils.getNeonVersion(function(result) {
-						$scope.$apply(function() {
-							$scope.versionString = result;
-							$scope.infoLoaded = true;
-						});
-					});
-				}
-			};
-		}
-	};
+            $scope.loadNeonInfo = function() {
+                if(!$scope.infoLoaded) {
+                    neon.util.infoUtils.getNeonVersion(function(result) {
+                        $scope.$apply(function() {
+                            $scope.versionString = result;
+                            $scope.infoLoaded = true;
+                        });
+                    });
+                }
+            };
+        }
+    };
 });

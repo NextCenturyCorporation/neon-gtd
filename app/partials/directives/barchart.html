@@ -1,29 +1,29 @@
 <div class="chart-options pull-right">
-	<a class="btn btn-lg text-muted collapsed"
-		data-toggle="collapse" data-target=".{{uniqueChartOptions}} .bar-chart-options"
-		data-animation=false
-		ng-click="toggleChartOptions()">
-	  <span class="glyphicon glyphicon-cog"></span>
-	  <span class="caret"></span>
-	</a>
-	<div class="bar-chart-options popover bottom">
-		<div class="arrow"></div>
-		<div class="popover-content">
-			<div class="form-group">
-				<fieldselector target-var="attrX" label-text="'X axis:'" default-mapping="'bar_x_axis'"></fieldselector>
-			</div>
-			<div class="form-group">
-				<fieldselector target-var="attrY" label-text="'Y axis:'" default-mapping="'y_axis'"></fieldselector>
-			</div>
-			<div class="form-group">
-				<select ng-model="barType" class="form-control">
-					<option value="count">Count</option>
-					<option value="sum">Sum</option>
-					<option value="avg">Avg</option>
-				</select>
-			</div>
-		</div>
-	</div>
+    <a class="btn btn-lg text-muted collapsed"
+        data-toggle="collapse" data-target=".{{uniqueChartOptions}} .bar-chart-options"
+        data-animation=false
+        ng-click="toggleChartOptions()">
+      <span class="glyphicon glyphicon-cog"></span>
+      <span class="caret"></span>
+    </a>
+    <div class="bar-chart-options popover bottom">
+        <div class="arrow"></div>
+        <div class="popover-content">
+            <div class="form-group">
+                <fieldselector target-var="attrX" label-text="'X axis:'" default-mapping="'bar_x_axis'"></fieldselector>
+            </div>
+            <div class="form-group">
+                <fieldselector target-var="attrY" label-text="'Y axis:'" default-mapping="'y_axis'"></fieldselector>
+            </div>
+            <div class="form-group">
+                <select ng-model="barType" class="form-control">
+                    <option value="count">Count</option>
+                    <option value="sum">Sum</option>
+                    <option value="avg">Avg</option>
+                </select>
+            </div>
+        </div>
+    </div>
 </div>
 <div class="filter-reset pull-right" ng-class="{true: 'hidden', false: ''}[filterSet === undefined]">
   Filter
@@ -33,13 +33,13 @@
 </div>
 
 <div class="legend">
-	<div class="legend-item">
-		<span class="legend-icon" style="background-color: #39b54a"></span>
-		<span class="legend-text" ng-show="barType === 'avg'">Average {{attrY}}</span>
-		<span class="legend-text" ng-show="barType === 'sum'">Sum {{attrY}}</span>
-		<span class="legend-text" ng-show="barType === 'count'">Count</span>
-		<span class="legend-text" >vs {{attrX}}</span>
-	</div>
+    <div class="legend-item">
+        <span class="legend-icon" style="background-color: #39b54a"></span>
+        <span class="legend-text" ng-show="barType === 'avg'">Average {{attrY}}</span>
+        <span class="legend-text" ng-show="barType === 'sum'">Sum {{attrY}}</span>
+        <span class="legend-text" ng-show="barType === 'count'">Count</span>
+        <span class="legend-text" >vs {{attrX}}</span>
+    </div>
 </div>
 
 <div class="clearfix"></div>

@@ -21,7 +21,7 @@
 }
 
 .data-tray .refresh{
-	margin-left: 10px;
+    margin-left: 10px;
 }
 
 .count-by-grid {
@@ -33,87 +33,87 @@
 }
 
 .count-by-grid, .count-by-grid:before, .count-by-grid:after, .count-by-grid *, .count-by-grid *:before, .count-by-grid *:after {
-	box-sizing: content-box;
-	-webkit-box-sizing: content-box;
-	-moz-box-sizing: content-box;
+    box-sizing: content-box;
+    -webkit-box-sizing: content-box;
+    -moz-box-sizing: content-box;
 }
 
 .slick-sort-indicator {
-	float: none;
+    float: none;
 }
 
 .count-by-grid .slick-row{
-	background: #FAFAFA;
+    background: #FAFAFA;
 }
 .count-by-grid .slick-row.odd{
-	background: #F1F1F1;
+    background: #F1F1F1;
 }
 .count-by-grid .slick-header{
-	border-top: 0;
+    border-top: 0;
 }
 .count-by-grid .slick-header .slick-header-column{
-	color: #eeeeee;
-	background: #39b54a;
+    color: #eeeeee;
+    background: #39b54a;
 }
 .count-by-grid .slick-header .slick-header-column.ui-state-hover{
-	color: #39b54a;
-	background: #FFFFFF;
+    color: #39b54a;
+    background: #FFFFFF;
 }
 .count-by-grid .slick-header .slick-header-column-sorted{
-	color: #39b54a;
-	background: #FFFFFF;
-	font-style: normal;
+    color: #39b54a;
+    background: #FFFFFF;
+    font-style: normal;
 }
 .count-by-grid .slick-header .slick-sortable-placeholder{
-	background: #cccccc;
+    background: #cccccc;
 }
 
 @media (max-width: 767px) {
-	.data-tray h4.pull-left,
-	.data-tray .form-inline,
-	.data-tray .form-inline .form-input-group > label{
-		float: none !important;
-	}
-	.data-tray .form-inline{
-		margin-top: 15px !important;
-		margin-bottom: 10px;
-	}
-	.data-tray .form-inline .form-group {
-		display: inline-block;
-		margin-bottom: 0;
-		vertical-align: middle;
-		width: 20%;
-	}
-	.data-tray .form-inline .form-group > label,
-	.data-tray .form-inline .form-input-group > label{
-		display: block;
-		margin-top: 0;
-		margin-left: 0;
-	}
-	.data-tray .form-inline .form-input-group{
-		width: 55%;
-		padding-right: 10px;
-	}
-	.data-tray .form-inline .form-control {
-		display: inline-block;
-		width: 100%;
-		vertical-align: middle;
-	}
-	.data-tray .input-group .form-control {
-		width: 100%;
-	}
-	.data-tray .refresh {
-		margin-top: 21px;
-	}
+    .data-tray h4.pull-left,
+    .data-tray .form-inline,
+    .data-tray .form-inline .form-input-group > label{
+        float: none !important;
+    }
+    .data-tray .form-inline{
+        margin-top: 15px !important;
+        margin-bottom: 10px;
+    }
+    .data-tray .form-inline .form-group {
+        display: inline-block;
+        margin-bottom: 0;
+        vertical-align: middle;
+        width: 20%;
+    }
+    .data-tray .form-inline .form-group > label,
+    .data-tray .form-inline .form-input-group > label{
+        display: block;
+        margin-top: 0;
+        margin-left: 0;
+    }
+    .data-tray .form-inline .form-input-group{
+        width: 55%;
+        padding-right: 10px;
+    }
+    .data-tray .form-inline .form-control {
+        display: inline-block;
+        width: 100%;
+        vertical-align: middle;
+    }
+    .data-tray .input-group .form-control {
+        width: 100%;
+    }
+    .data-tray .refresh {
+        margin-top: 21px;
+    }
 }
 @media (min-width: 768px) and (max-width: 991px) {
-	.data-tray h4.pull-left,
-	.data-tray .form-inline{
-		float: none !important;
-	}
-	.data-tray .form-inline{
-		margin-bottom: 5px;
-	}
+    .data-tray h4.pull-left,
+    .data-tray .form-inline{
+        float: none !important;
+    }
+    .data-tray .form-inline{
+        margin-bottom: 5px;
+    }
 }
 
 .visualization-widget .countByDirective {
