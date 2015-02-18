@@ -53,6 +53,7 @@
     opacity: 0.5;
 }
 
+/* Will override opacity 0.5 rule due to specificity and cascade. */
 .count-by-grid .slick-row.active {
     background: #88d292;
     opacity: 1.0;

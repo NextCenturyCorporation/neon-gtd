@@ -219,8 +219,7 @@ angular.module('neonDemo.directives')
                         $scope.messenger.addFilter($scope.filterKey, filter, function() {
                             handleSetFilter(field, value);
                         });
-                    }
-                    else {
+                    } else {
                         $scope.messenger.replaceFilter($scope.filterKey, filter, function() {
                             handleSetFilter(field, value);
                         });
@@ -244,7 +243,7 @@ angular.module('neonDemo.directives')
                         }
                     }
 
-                    $(".count-by-grid").addClass("filtered");
+                    $tableDiv.addClass("filtered");
                     $scope.setFilter(field, row[field]);
                 });
             };
@@ -297,7 +296,7 @@ angular.module('neonDemo.directives')
             $scope.clearFilter = function() {
                 if($scope.messenger) {
                     $scope.messenger.removeFilter($scope.filterKey, function() {
-                        $(".count-by-grid").removeClass("filtered");
+                        $tableDiv.removeClass("filtered");
                         $scope.table.deselect();
                         clearFilter();
                     });
