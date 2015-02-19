@@ -304,9 +304,8 @@ tables.Table.prototype.deselect = function() {
  * @param {String} The value matching a cell's text
  */
 tables.Table.prototype.setActiveCellIfMatchExists = function(field, value) {
-    var columns = this.table_.getColumns();
-    for(var i = 0; i < columns.length; ++i) {
-        if(columns[i].field === field) {
+    for(var i = 0; i < this.columns_.length; ++i) {
+        if(this.columns_[i].field === field) {
             for(var j = 0; j < this.table_.getDataLength(); ++j) {
                 if(this.table_.getCellNode(j, i).innerHTML === value) {
                     this.table_.setActiveCell(j, i);
@@ -315,4 +314,3 @@ tables.Table.prototype.setActiveCellIfMatchExists = function(field, value) {
         }
     }
 };
-

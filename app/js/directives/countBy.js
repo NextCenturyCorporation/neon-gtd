@@ -207,6 +207,13 @@ angular.module('neonDemo.directives')
                 return dataObject;
             };
 
+            $scope.addLinkColumn = function(data) {
+                data.forEach(function(row) {
+                    row.link = $scope.countField + "=" + row[$scope.countField];
+                });
+                return data;
+            };
+
             /**
              * Saves the given field and value as the current filter for the
              * dashboard and this widget.
@@ -260,6 +267,7 @@ angular.module('neonDemo.directives')
              */
             $scope.updateData = function(queryResults) {
                 var cleanData = $scope.stripIdField(queryResults);
+                cleanData.data = $scope.addLinkColumn(cleanData.data);
                 var sortInfo = $scope.table ? $scope.table.sortInfo_ : {};
 
                 $scope.tableOptions = createOptions(cleanData);
