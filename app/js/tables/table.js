@@ -261,7 +261,10 @@ tables.Table.prototype.sortColumn = function(field, sortAsc) {
     this.dataView_.setItems(data);
     this.table_.invalidateAllRows();
     this.table_.render();
-    this.sortInfo_ = { field: field, sortAsc: sortAsc };
+    this.sortInfo_ = {
+        field: field,
+        sortAsc: sortAsc
+    };
 };
 
 tables.Table.prototype.addSortSupport_ = function() {
@@ -315,4 +318,3 @@ tables.Table.prototype.setActiveCellIfMatchExists = function(field, value) {
         }
     }
 };
-

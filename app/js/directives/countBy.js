@@ -313,4 +313,3 @@ angular.module('neonDemo.directives')
         }
     };
 }]);
-
