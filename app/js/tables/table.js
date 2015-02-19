@@ -253,7 +253,7 @@ tables.Table.prototype.registerSelectionListener = function(callback) {
     return this;
 };
 
-tables.Table.prototype.sortColumn_ = function(field, sortAsc) {
+tables.Table.prototype.sortColumn = function(field, sortAsc) {
     var data = this.dataView_.getItems();
     // Use a stable sorting algorithm as opposed to the built-in
     // dataView sort which may not be stable.
@@ -270,18 +270,51 @@ tables.Table.prototype.sortColumn_ = function(field, sortAsc) {
 tables.Table.prototype.addSortSupport_ = function() {
     var me = this;
     this.table_.onSort.subscribe(function(event, args) {
-        me.sortColumn_(args.sortCol.field, args.sortAsc);
+        me.sortColumn(args.sortCol.field, args.sortAsc);
+    });
+};
+
+tables.Table.prototype.sortColumnAndChangeGlyph = function(sortInfo) {
+    // Sort the data in the column.
+    this.sortColumn(sortInfo.field, sortInfo.sortAsc);
+    // Change the sort glyph in the column header.
+    this.table_.setSortColumn(sortInfo.field, sortInfo.sortAsc);
+};
+
+/**
+ * Adds an onClick listener to the SlickGrid table using the given callback with
+ * arguments for the array of column definitions and the selected row object.
+ * @param {Function} The callback function
+ */
+tables.Table.prototype.addOnClickListener = function(callback) {
+    var me = this;
+    this.table_.onClick.subscribe(function(event, args) {
+        callback(me.table_.getColumns(), me.dataView_.getItem(args.row));
     });
 };
 
 /**
- * Sorts the column for the given field in the given order and adds the correct
- * sort glyph to the header.
- * @param {Object} The information for the sort including "field" and "sortAsc".
+ * Deselects the active elements in the table.
  */
-tables.Table.prototype.sortColumnAndChangeGlyph = function(sortInfo) {
-    // Sort the data in the column.
-    this.sortColumn_(sortInfo.field, sortInfo.sortAsc);
-    // Change the sort glyph in the column header.
-    this.table_.setSortColumn(sortInfo.field, sortInfo.sortAsc);
+tables.Table.prototype.deselect = function() {
+    this.table_.resetActiveCell();
+};
+
+/**
+ * Sets the active cell in this table to the column and row containing the given
+ * field and value, if it exists.
+ * @param {String} The field matching a column name
+ * @param {String} The value matching a cell's text
+ */
+tables.Table.prototype.setActiveCellIfMatchExists = function(field, value) {
+    var columns = this.table_.getColumns();
+    for(var i = 0; i < columns.length; ++i) {
+        if(columns[i].field === field) {
+            for(var j = 0; j < this.table_.getDataLength(); ++j) {
+                if(this.table_.getCellNode(j, i).innerHTML === value) {
+                    this.table_.setActiveCell(j, i);
+                }
+            }
+        }
+    }
 };
