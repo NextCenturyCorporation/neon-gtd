@@ -53,6 +53,8 @@ MIT/X11 (mit.txt)
 - jQuery Event drag-drop
   -- jquery.event.drag.js  v2.2
   -- jquery.event.drop.js  v2.2
+- jQuery Linky
+  -- jquery.linky.min.js
 - Openlayers Heatmap
   -- heatmap.js  1.0
   -- heatmap-openlayers.js

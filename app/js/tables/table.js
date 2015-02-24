@@ -212,6 +212,23 @@ tables.Table.prototype.draw = function() {
         enableForHeaderCells: true
     }));
 
+    // Enable links in all text.
+    // TODO: change this to use a passed in config to allow for non-twitter links.
+    var linkyConfig = {
+        mentions: true,
+        hashtags: true,
+        urls: true,
+        linkTo: "twitter"
+    };
+    var cellSelector = this.tableSelector_;
+
+    // Enable links on initial view and then on any viewport changes.  See if there's something more efficient here.
+    $(cellSelector).find('.slick-cell').linky(linkyConfig);
+    this.table_.onViewportChanged.subscribe(function() {
+        $(cellSelector).find('.slick-cell').linky(linkyConfig);
+        console.log("viewport changed");
+    });
+
     // Setup some event loggers.
     this.table_.onColumnsResized.subscribe(function() {
         XDATA.activityLogger.logUserActivity('Grid - user resized columns', 'resize',
@@ -281,7 +298,10 @@ tables.Table.prototype.sortColumn = function(field, sortAsc) {
     this.dataView_.setItems(data);
     this.table_.invalidateAllRows();
     this.table_.render();
-    this.sortInfo_ = { field: field, sortAsc: sortAsc };
+    this.sortInfo_ = {
+        field: field,
+        sortAsc: sortAsc
+    };
 };
 
 tables.Table.prototype.addSortSupport_ = function() {

@@ -93,7 +93,7 @@ angular.module('neonDemo.controllers')
         id: uuid(),
         sizeX: 2,
         sizeY: 2,
-        type: 'circular-heat-form'
+        type: 'count-by'
     }, {
         id: uuid(),
         sizeX: 2,

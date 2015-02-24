@@ -366,4 +366,3 @@ angular.module('neonDemo.directives')
         }
     };
 }]);
-

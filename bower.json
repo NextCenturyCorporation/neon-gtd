@@ -19,6 +19,7 @@
         "threedubmedia.jquery.event": "2.2",
         "javascript-detect-element-resize": "sdecima/javascript-detect-element-resize#0.5.3",
         "jquery.tagcloud": "https://github.com/addywaddy/jquery.tagcloud.js.git",
+        "jquery.linky": "0.1.8",
         "mergesort": "https://github.com/justinforce/merge-sort/archive/1.0.zip",
         "opencpu": "https://github.com/jeroenooms/opencpu.js.git",
         "openlayers": "https://github.com/openlayers/openlayers/releases/download/release-2.13.1/OpenLayers-2.13.1.zip",
