@@ -30,12 +30,13 @@
                 </div>
             </div>
         </div>
-        <div class="filter-reset" ng-repeat="tagName in filterTags">
+        <div class="filter-reset pull-right" ng-repeat="tagName in filterTags">
             {{tagName}}
             <a class="btn" ng-click="removeFilter(tagName)">
              <span class="glyphicon glyphicon-remove"></span>
             </a>
         </div>
+        <div class="clearfix"></div>
     </div>
     <div class="tagcloud">
         <a ng-click="addTagFilter(tagCount.tag)" class="tag" 
