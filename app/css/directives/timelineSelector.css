@@ -15,13 +15,13 @@
  */
 
 .timeline-selector {
-	display:block;
-	margin: 0px;
-	padding: 15px 20px 0px 20px;
-	overflow-x: hidden;
-	overflow-y: auto;
-	height: 100%;
-	width: 100%;
+    display:block;
+    margin: 0px;
+    padding: 15px 20px 0px 20px;
+    overflow-x: hidden;
+    overflow-y: auto;
+    height: 100%;
+    width: 100%;
 }
 
 .timeline-selector h4 {
@@ -29,63 +29,63 @@
 }
 
 .timeline-selector .btn-group{
-	margin: 10px 0px 0px 0px;
+    margin: 10px 0px 0px 0px;
 }
 
 .timeline-selector .form-group{
-	margin: 10px 0px 0px 5px;
+    margin: 10px 0px 0px 5px;
 }
 
 .timeline-selector .text-center{
-	margin: 10px 0px 0px 0px;
+    margin: 10px 0px 0px 0px;
 }
 
 .timeline-selector select{
-	color: #555555;
-	font-size: 12px;
-	font-weight: bold;
-	text-transform: uppercase;
+    color: #555555;
+    font-size: 12px;
+    font-weight: bold;
+    text-transform: uppercase;
 }
 
 .timeline-selector .filter-reset{
-	margin: 13px 15px 0px 0px;
-	background-color: #dddddd;
+    margin: 13px 15px 0px 0px;
+    background-color: #dddddd;
 }
 .timeline-selector .filter-reset .btn{
-	border-color: #cccccc;
+    border-color: #cccccc;
 }
 
 .timeline-selector .timeseries-selector{
-	width: 200px;
+    width: 200px;
 }
 .timeline-selector .timeseries-selector .btn{
-	background-color: #dddddd;
-	border-color: #cccccc;
-	padding-left: 8px;
-	padding-right: 8px;
+    background-color: #dddddd;
+    border-color: #cccccc;
+    padding-left: 8px;
+    padding-right: 8px;
 }
 .timeline-selector .timeseries-selector .btn .glyphicon{
-	font-size: 12px;
+    font-size: 12px;
 }
 .timeline-selector .timeseries-selector .btn-primary{
-	color: #39b54a;
+    color: #39b54a;
 }
 .timeline-selector .timeseries-selector .btn-primary:hover{
-	color: #FFFFFF;
-	background-color: #39b54a;
-	border-color: #2F9F3E;
+    color: #FFFFFF;
+    background-color: #39b54a;
+    border-color: #2F9F3E;
 }
 .timeline-selector .timeseries-selector .btn-danger{
-	color: #C2360D;
+    color: #C2360D;
 }
 .timeline-selector .timeseries-selector .btn-danger:hover{
-	color: #FFFFFF;
-	background-color: #C2360D;
-	border-color: #AA1E13;
+    color: #FFFFFF;
+    background-color: #C2360D;
+    border-color: #AA1E13;
 }
 
 .visualization-widget-mobile .timeline-selector {
-	display:block;
-	margin: 0px;
-	padding: 20px 20px 20px 20px;
+    display:block;
+    margin: 0px;
+    padding: 20px 20px 20px 20px;
 }

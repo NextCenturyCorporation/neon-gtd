@@ -1,13 +1,24 @@
 <div class="count-by-header row">
-	<div class="count-by-field-label col-xs-4">
-		<h4 class="pull-left">Count Field</h4>
-	</div>
-	<div class="count-by-field-selector col-xs-8">
-		<select class="form-control" ng-model="countField" ng-disabled="!(fields.length > 0)" ng-options="field for field in fields">
-		</select>
-	</div>
+    <div class="filter-reset pull-right" ng-class="{true: 'hidden', false: ''}[filterSet === undefined]">
+        {{filterSet.key}}={{filterSet.value}}
+        <a class="btn" ng-click="clearFilter()">
+            <span class="glyphicon glyphicon-remove"></span>
+        </a>
+    </div>
+
+    <div class="clearfix"></div>
+
+    <div class="count-by-field-label col-xs-4">
+        <h4 class="pull-left">Count Field</h4>
+    </div>
+    <div class="count-by-field-selector col-xs-8">
+        <select class="form-control" ng-model="countField" ng-disabled="!(fields.length > 0)" ng-options="field for field in fields">
+            <option disabled selected value="">Please choose a field</option>
+        </select>
+    </div>
 </div>
 
 <div class="count-by-grid">
 
 </div>
+

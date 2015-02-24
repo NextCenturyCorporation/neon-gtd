@@ -34,13 +34,13 @@ neon.query = neon.query || {};
  * @constructor
  */
 neon.query.FilterTable = function() {
-	//this.messenger = new neon.eventing.Messenger();
-	this.filterKey = '';
-	this.columnOptions = [];
-	this.operatorOptions = ["=", "!=", ">", "<", ">=", "<=", "contains"];
-	this.filterState = {
-		data: []
-	};
+    //this.messenger = new neon.eventing.Messenger();
+    this.filterKey = '';
+    this.columnOptions = [];
+    this.operatorOptions = ["=", "!=", ">", "<", ">=", "<=", "contains"];
+    this.filterState = {
+        data: []
+    };
 };
 
 /**
@@ -49,7 +49,7 @@ neon.query.FilterTable = function() {
  * @method addFilterRow
  */
 neon.query.FilterTable.prototype.addFilterRow = function(row) {
-	this.filterState.data.push(row);
+    this.filterState.data.push(row);
 };
 
 /**
@@ -59,7 +59,7 @@ neon.query.FilterTable.prototype.addFilterRow = function(row) {
  * @method insertFilterRow
  */
 neon.query.FilterTable.prototype.insertFilterRow = function(row, index) {
-	this.filterState.data.splice(index, 1, row);
+    this.filterState.data.splice(index, 1, row);
 };
 
 /**
@@ -69,7 +69,7 @@ neon.query.FilterTable.prototype.insertFilterRow = function(row, index) {
  * @method removeFilterRow
  */
 neon.query.FilterTable.prototype.removeFilterRow = function(id) {
-	return this.filterState.data.splice(id, 1);
+    return this.filterState.data.splice(id, 1);
 };
 
 /**
@@ -79,7 +79,7 @@ neon.query.FilterTable.prototype.removeFilterRow = function(id) {
  * @method getFilterRow
  */
 neon.query.FilterTable.prototype.getFilterRow = function(id) {
-	return this.filterState.data[id];
+    return this.filterState.data[id];
 };
 
 /**
@@ -90,8 +90,8 @@ neon.query.FilterTable.prototype.getFilterRow = function(id) {
  * @method setFilterRow
  */
 neon.query.FilterTable.prototype.setFilterRow = function(row, index) {
-	this.filterState.data[index] = row;
-	return this.filterState.data[index];
+    this.filterState.data[index] = row;
+    return this.filterState.data[index];
 };
 
 /**
@@ -99,7 +99,7 @@ neon.query.FilterTable.prototype.setFilterRow = function(row, index) {
  * @method clearFilterState
  */
 neon.query.FilterTable.prototype.clearFilterState = function() {
-	this.filterState.data = [];
+    this.filterState.data = [];
 };
 
 /**
@@ -108,7 +108,7 @@ neon.query.FilterTable.prototype.clearFilterState = function() {
  * @method setFilterKey
  */
 neon.query.FilterTable.prototype.setFilterKey = function(key) {
-	this.filterKey = key;
+    this.filterKey = key;
 };
 
 /**
@@ -118,7 +118,7 @@ neon.query.FilterTable.prototype.setFilterKey = function(key) {
  * @method setColumns
  */
 neon.query.FilterTable.prototype.setColumns = function(columns) {
-	this.columnOptions = columns;
+    this.columnOptions = columns;
 };
 
 /**
@@ -127,7 +127,7 @@ neon.query.FilterTable.prototype.setColumns = function(columns) {
  * @method getFilterKey
  */
 neon.query.FilterTable.prototype.getFilterKey = function() {
-	return this.filterKey;
+    return this.filterKey;
 };
 
 /**
@@ -136,7 +136,7 @@ neon.query.FilterTable.prototype.getFilterKey = function() {
  * @method getFilterState
  */
 neon.query.FilterTable.prototype.getFilterState = function() {
-	return this.filterState;
+    return this.filterState;
 };
 
 /**
@@ -150,19 +150,19 @@ neon.query.FilterTable.prototype.getFilterState = function() {
  * @method buildFilterFromData
  */
 neon.query.FilterTable.prototype.buildFilterFromData = function(database, table, andClauses) {
-	var baseFilter = new neon.query.Filter().selectFrom(database, table);
+    var baseFilter = new neon.query.Filter().selectFrom(database, table);
 
-	var whereClause;
-	if(0 === this.filterState.data.length) {
-		return baseFilter;
-	}
-	if(1 === this.filterState.data.length) {
-		var filterData = this.filterState.data[0];
-		whereClause = neon.query.where(filterData.columnValue, filterData.operatorValue, neon.query.FilterTable.parseValue(filterData.value));
-	} else {
-		whereClause = neon.query.FilterTable.buildCompoundWhereClause(this.filterState.data, andClauses);
-	}
-	return baseFilter.where(whereClause);
+    var whereClause;
+    if(0 === this.filterState.data.length) {
+        return baseFilter;
+    }
+    if(1 === this.filterState.data.length) {
+        var filterData = this.filterState.data[0];
+        whereClause = neon.query.where(filterData.columnValue, filterData.operatorValue, neon.query.FilterTable.parseValue(filterData.value));
+    } else {
+        whereClause = neon.query.FilterTable.buildCompoundWhereClause(this.filterState.data, andClauses);
+    }
+    return baseFilter.where(whereClause);
 };
 
 /**
@@ -176,20 +176,20 @@ neon.query.FilterTable.prototype.buildFilterFromData = function(database, table,
  * @static
  */
 neon.query.FilterTable.buildCompoundWhereClause = function(data, andClauses) {
-	var whereClause;
-	var clauses = [];
+    var whereClause;
+    var clauses = [];
 
-	$.each(data, function(index, filterData) {
-		var clause = neon.query.where(filterData.columnValue, filterData.operatorValue, neon.query.FilterTable.parseValue(filterData.value));
-		clauses.push(clause);
-	});
+    $.each(data, function(index, filterData) {
+        var clause = neon.query.where(filterData.columnValue, filterData.operatorValue, neon.query.FilterTable.parseValue(filterData.value));
+        clauses.push(clause);
+    });
 
-	if(andClauses) {
-		whereClause = neon.query.and.apply(this, clauses);
-	} else {
-		whereClause = neon.query.or.apply(this, clauses);
-	}
-	return whereClause;
+    if(andClauses) {
+        whereClause = neon.query.and.apply(this, clauses);
+    } else {
+        whereClause = neon.query.or.apply(this, clauses);
+    }
+    return whereClause;
 };
 
 /**
@@ -201,20 +201,20 @@ neon.query.FilterTable.buildCompoundWhereClause = function(data, andClauses) {
  * @static
  */
 neon.query.FilterTable.parseValue = function(value) {
-	var retVal = value;
+    var retVal = value;
 
-	if($.isNumeric(retVal)) {
-		retVal = parseFloat(retVal);
-	} else if('null' === retVal || "" === retVal) {
-		retVal = null;
-	} else if('""' === retVal) {
-		retVal = "";
-	} else if('false' === retVal) {
-		retVal = false;
-	} else if('true' === retVal) {
-		retVal = true;
-	}
-	return retVal;
+    if($.isNumeric(retVal)) {
+        retVal = parseFloat(retVal);
+    } else if('null' === retVal || "" === retVal) {
+        retVal = null;
+    } else if('""' === retVal) {
+        retVal = "";
+    } else if('false' === retVal) {
+        retVal = false;
+    } else if('true' === retVal) {
+        retVal = true;
+    }
+    return retVal;
 };
 
 /**
@@ -229,9 +229,9 @@ neon.query.FilterTable.parseValue = function(value) {
  * @constructor
  */
 neon.query.FilterRow = function(columnValue, operatorValue, value, columnOptions, operatorOptions) {
-	this.columnOptions = columnOptions;
-	this.columnValue = columnValue;
-	this.operatorOptions = operatorOptions;
-	this.operatorValue = operatorValue;
-	this.value = value;
+    this.columnOptions = columnOptions;
+    this.columnValue = columnValue;
+    this.operatorOptions = operatorOptions;
+    this.operatorValue = operatorValue;
+    this.value = value;
 };

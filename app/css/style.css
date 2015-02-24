@@ -1,5 +1,5 @@
 /* ================
-	FONT
+    FONT
 ================ */
 
 @font-face {
@@ -7,7 +7,7 @@
     font-style: normal;
     font-weight: 300;
     src:  url('../fonts/OpenSans-Light.eot');
-    src: 	url('../fonts/OpenSans-Light.eot?#iefix') format('embedded-opentype'),
+    src:     url('../fonts/OpenSans-Light.eot?#iefix') format('embedded-opentype'),
     url('../fonts/OpenSans-Light.woff') format('woff'),
     url('../fonts/OpenSans-Light.ttf') format('truetype'),
     url('../fonts/opensans-light-webfont.svg#open_sanslight') format('svg');
@@ -17,7 +17,7 @@
     font-style: normal;
     font-weight: 400;
     src:  url('../fonts/OpenSans-Regular.eot');
-    src: 	url('../fonts/OpenSans-Regular.eot?#iefix') format('embedded-opentype'),
+    src:     url('../fonts/OpenSans-Regular.eot?#iefix') format('embedded-opentype'),
     url('../fonts/OpenSans-Regular.woff') format('woff'),
     url('../fonts/OpenSans-Regular.ttf') format('truetype'),
     url('../fonts/opensans-regular-webfont.svg#open_sansregular') format('svg');
@@ -27,7 +27,7 @@
     font-style: normal;
     font-weight: 700;
     src:  url('../fonts/OpenSans-Bold.eot');
-    src: 	url('../fonts/OpenSans-Bold.eot?#iefix') format('embedded-opentype'),
+    src:     url('../fonts/OpenSans-Bold.eot?#iefix') format('embedded-opentype'),
     url('../fonts/OpenSans-Bold.woff') format('woff'),
     url('../fonts/OpenSans-Bold.ttf') format('truetype'),
     url('../fonts/opensans-bold-webfont.svg#open_sansbold') format('svg');
@@ -39,13 +39,13 @@
         font-family: 'Open Sans';
         font-style: normal;
         font-weight: 300;
-        src: 	url('../fonts/opensans-light-webfont.svg#open_sanslight') format('svg');
+        src:     url('../fonts/opensans-light-webfont.svg#open_sanslight') format('svg');
     }
     @font-face {
         font-family: 'Open Sans';
         font-style: normal;
         font-weight: 400;
-        src: 	url('../fonts/opensans-regular-webfont.svg#open_sansregular') format('svg');
+        src:     url('../fonts/opensans-regular-webfont.svg#open_sansregular') format('svg');
     }
     @font-face {
         font-family: 'Open Sans';
@@ -60,7 +60,7 @@
         font-style: normal;
         font-weight: 300;
         src:  url('../fonts/OpenSans-Light.eot');
-        src: 	url('../fonts/OpenSans-Light.eot?#iefix') format('embedded-opentype'),
+        src:     url('../fonts/OpenSans-Light.eot?#iefix') format('embedded-opentype'),
         url('../fonts/OpenSans-Light.woff') format('woff'),
         url('../fonts/OpenSans-Light.ttf') format('truetype');
     }
@@ -69,7 +69,7 @@
         font-style: normal;
         font-weight: 400;
         src:  url('../fonts/OpenSans-Regular.eot');
-        src: 	url('../fonts/OpenSans-Regular.eot?#iefix') format('embedded-opentype'),
+        src:     url('../fonts/OpenSans-Regular.eot?#iefix') format('embedded-opentype'),
         url('../fonts/OpenSans-Regular.woff') format('woff'),
         url('../fonts/OpenSans-Regular.ttf') format('truetype');
     }
@@ -78,7 +78,7 @@
         font-style: normal;
         font-weight: 700;
         src:  url('../fonts/OpenSans-Bold.eot');
-        src: 	url('../fonts/OpenSans-Bold.eot?#iefix') format('embedded-opentype'),
+        src:     url('../fonts/OpenSans-Bold.eot?#iefix') format('embedded-opentype'),
         url('../fonts/OpenSans-Bold.woff') format('woff'),
         url('../fonts/OpenSans-Bold.ttf') format('truetype');
     }
@@ -88,7 +88,7 @@
 }
 
 /* ================
-	BASE
+    BASE
 ================ */
 
 *{
@@ -202,7 +202,7 @@ a:focus{
 }
 
 /* ================
-	BUTTONS
+    BUTTONS
 ================ */
 
 .btn {
@@ -454,7 +454,7 @@ fieldset[disabled] .btn-primary.active {
 
 
 /* ================
-	NAVBAR
+    NAVBAR
 ================ */
 
 a.navbar-text:hover,
@@ -549,7 +549,7 @@ a.navbar-text:focus{
 }
 
 /* ================
-	TRAYS
+    TRAYS
 ================ */
 
 .tray{
@@ -653,7 +653,7 @@ a.navbar-text:focus{
 }
 
 /* ================
-	WELLS
+    WELLS
 ================ */
 
 .well{
@@ -679,7 +679,7 @@ a.navbar-text:focus{
 }
 
 /* ================
-	COUNTS
+    COUNTS
 ================ */
 
 .count{
@@ -700,7 +700,7 @@ a.navbar-text:focus{
 }
 
 /* ================
-	ALERTS
+    ALERTS
 ================ */
 
 .alert-danger {
@@ -710,7 +710,7 @@ a.navbar-text:focus{
 }
 
 /* ================
-	TABLES
+    TABLES
 ================ */
 
 .table-responsive{
@@ -723,7 +723,7 @@ a.navbar-text:focus{
 }
 
 /* ================
-	FORMS
+    FORMS
 ================ */
 
 .form-control:focus {
@@ -760,7 +760,7 @@ label{
 }
 
 /* ================
-	OVERLAY
+    OVERLAY
 ================ */
 
 .overlay{

@@ -664,23 +664,23 @@ charts.BarChart.prototype.rollupDataByCategory_ = function(data) {
         return charts.BarChart.transformByKeyTypes_(data, keyTypes);
     } else {
         var aggregated = d3.nest().key(function(d) {
-            var category = me.categoryForItem(d);
-            if(keyTypes !== charts.BarChart.STRING_KEY_) {
-                var keyType = charts.BarChart.keyType_(category);
-                // the first time we see a value, set that as the key type
-                if(!keyTypes) {
-                    keyTypes = keyType;
-                } else if(keyType !== keyTypes) { // if the key type has changed across values, just treat everything as strings
-                    keyTypes = charts.BarChart.STRING_KEY_;
+                var category = me.categoryForItem(d);
+                if(keyTypes !== charts.BarChart.STRING_KEY_) {
+                    var keyType = charts.BarChart.keyType_(category);
+                    // the first time we see a value, set that as the key type
+                    if(!keyTypes) {
+                        keyTypes = keyType;
+                    } else if(keyType !== keyTypes) { // if the key type has changed across values, just treat everything as strings
+                        keyTypes = charts.BarChart.STRING_KEY_;
+                    }
+                    // d3 will convert the date to a string, which loses any milliseconds. so convert it to a time. it will get
+                    // converted back after the rollup is done
+                    if(category instanceof Date) {
+                        category = category.getTime();
+                    }
                 }
-                // d3 will convert the date to a string, which loses any milliseconds. so convert it to a time. it will get
-                // converted back after the rollup is done
-                if(category instanceof Date) {
-                    category = category.getTime();
-                }
-            }
-            return category;
-        }).rollup(function(d) {
+                return category;
+            }).rollup(function(d) {
                 return d3.sum(d, function(el) {
                     return me.yAttribute_ ? el[me.yAttribute_] : 1;
                 });
