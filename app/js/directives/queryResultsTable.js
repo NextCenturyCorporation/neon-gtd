@@ -33,10 +33,25 @@ angular.module('neonDemo.directives')
         templateUrl: 'partials/directives/queryResultsTable.html',
         restrict: 'EA',
         scope: {
-            showData: '='
+            collapsable: '@?',
+            showData: '=?'
         },
         link: function($scope, element) {
-            element.addClass('query-results-table');
+            if($scope.collapsable) {
+                element.addClass('query-results-table');
+            }
+            else {
+                element.addClass('query-results-directive');
+                element.resize(function() {
+                    updateSize();
+                });
+            }
+
+            // If this widget was launched as a navbar collapsable then showData will be bound to the collapse toggle.
+            // Otherwise show the data automatically on launching the widget.
+            if(typeof($scope.showData) === "undefined") {
+                $scope.showData = true;
+            }
 
             $scope.ASCENDING = neon.query.ASCENDING;
             $scope.DESCENDING = neon.query.DESCENDING;
@@ -57,6 +72,14 @@ angular.module('neonDemo.directives')
             var $tableDiv = $(element).find('.query-results-grid');
 
             $tableDiv.attr("id", $scope.tableId);
+
+            var updateSize = function() {
+                var margin = $tableDiv.outerHeight(true) - $tableDiv.height();
+                $tableDiv.height(element.height() - $(element).find('.count-header').outerHeight(true) - margin);
+                if($scope.table) {
+                    $scope.table.refreshLayout();
+                }
+            };
 
             /**
              * Initializes the name of the directive's scope variables
@@ -174,11 +197,20 @@ angular.module('neonDemo.directives')
 
                 // if there is no active connection, try to make one.
                 connectionService.connectToDataset(message.datastore, message.hostname, message.database, message.table);
+                $scope.displayActiveDataset();
+            };
 
-                // Pull data.
+            /**
+             * Displays data for any currently active datasets.
+             * @method displayActiveDataset
+             */
+            $scope.displayActiveDataset = function() {
                 var connection = connectionService.getActiveConnection();
                 if(connection) {
                     connectionService.loadMetadata(function() {
+                        var info = connectionService.getActiveDataset();
+                        $scope.databaseName = info.database;
+                        $scope.tableName = info.table;
                         connection.getFieldNames($scope.tableName, function(results) {
                             $scope.$apply(function() {
                                 populateFieldNames(results);
@@ -251,7 +283,7 @@ angular.module('neonDemo.directives')
                 connectionService.getActiveConnection().executeQuery(query, function(queryResults) {
                     $scope.$apply(function() {
                         if(queryResults.data.length > 0) {
-                            $scope.totalRows = queryResults.data[0].count;
+                            $scope.totalRows = queryResults.data[0].counter;
                         } else {
                             $scope.totalRows = 0;
                         }
@@ -298,6 +330,7 @@ angular.module('neonDemo.directives')
             // Wait for neon to be ready, the create our messenger and intialize the view and data.
             neon.ready(function() {
                 $scope.initialize();
+                $scope.displayActiveDataset();
             });
         }
     };

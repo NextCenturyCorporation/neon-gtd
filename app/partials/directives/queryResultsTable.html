@@ -1,11 +1,11 @@
-<div class="tray-mirror data-tray collapse">
+<div ng-class="(collapsable) ? 'tray-mirror data-tray collapse' : 'hidden'">
   <div class="inner" style="height: 394px"></div>
 </div>
 
-<div id="data-tray" class="tray data-tray panel panel-default collapse">
-    <div class="container panel-body">
+<div id="data-tray" ng-class="(collapsable) ? 'tray data-tray panel panel-default collapse' : ''">
+    <div ng-class="(collapsable) ? 'container panel-body' : ''">
 
-        <h4 class="pull-left">Showing 
+        <h4 class="count-header pull-left">Showing 
             <span class="count text-primary" ng-bind="tableOptions.data.length"></span> of 
             <span ng-bind="totalRows"></span>
         </h4>
