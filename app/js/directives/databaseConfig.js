@@ -238,6 +238,14 @@ angular.module('neonDemo.directives')
             neon.ready(function() {
                 $scope.initialize();
             });
+
+            for(var i = 0; i < $scope.servers.length; ++i) {
+                if($scope.servers[i].connectOnLoad) {
+                    $scope.connectToPreset($scope.servers[i]);
+                    $scope.clearPopover = 'sr-only';
+                    break;
+                }
+            }
         }
     };
 }]);
