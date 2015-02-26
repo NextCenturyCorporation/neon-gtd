@@ -41,7 +41,8 @@ angular.module('neonDemo.directives')
                     datastoreSelect: "mongo",
                     hostnameInput: "localhost",
                     selectedDb: "test",
-                    selectedTable: "twitter36"
+                    selectedTable: "twitter36",
+                    connectOnLoad: true
                 },
 //                {
 //                    name: "Traffic",
