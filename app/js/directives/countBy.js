@@ -26,7 +26,6 @@ angular.module('neonDemo.directives')
         link: function($scope, el) {
             el.addClass('countByDirective');
 
-            $scope.digUrl = "http://localhost:9000/list";
             $scope.countField = "";
             $scope.fields = [];
             $scope.tableId = 'query-results-' + uuid();
@@ -234,7 +233,7 @@ angular.module('neonDemo.directives')
                     var field = $scope.countField;
                     var value = row[$scope.countField];
                     var query = $scope.countField + "=" + row[$scope.countField];
-                    var element = "<form action=\"" + $scope.digUrl + "\" method=\"get\" target=\"" + query + "\">" +
+                    var element = "<form action=\"" + neon.DIG_SERVER + "\" method=\"get\" target=\"" + query + "\">" +
                         "<input type=\"hidden\" name=\"field\" value=\"" + field + "\">" +
                         "<input type=\"hidden\" name=\"value\" value=\"" + value + "\">" +
                         "<button class=\"hidden-button\" type=\"submit\" title=\"" + query + "\">" +

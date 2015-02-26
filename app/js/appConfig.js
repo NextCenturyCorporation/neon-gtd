@@ -44,6 +44,7 @@ DEMO_CONFIG.opencpu.useAlerts = false;
 // If the neon application is loaded elsewhere, this can be changed as in the following example:
 // neon.SERVER_URL = "http://localhost:8080/neon"
 neon.SERVER_URL = "/neon";
+neon.DIG_SERVER = "http://localhost:9000/list";
 
 // Configure xdata logger
 var XDATA = {};
