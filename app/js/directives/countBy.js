@@ -98,31 +98,21 @@ angular.module('neonDemo.directives')
             }
 
             var createColumns = function(data) {
-                var map = {};
-                data.forEach(function(row) {
-                    var keys = Object.keys(row);
-                    keys.forEach(function(key) {
-                        map[key] = true;
-                    });
-                });
+                var columns = tables.createColumns(data);
+                for(var i = 0; i < columns.length; ++i) {
+                    // Since forceFitColumns is enabled, setting this width will force the columns to use as much
+                    // space as possible, which is necessary to keep the first column (dig) as small as possible.
+                    columns[i].width = $tableDiv.outerWidth()
+                }
 
-                var columns = [{
+                var digColumn = {
                     name: "",
                     field: "dig",
                     width: "15",
                     cssClass: "centered",
                     ignoreClicks: true
-                }];
-
-                var names = Object.keys(map);
-                names.forEach(function(name) {
-                    columns.push({
-                        name: name,
-                        // Since forceFitColumns is enabled, setting this width will force the columns to use as much
-                        // space as possible, which is necessary to keep the first column (dig) as small as possible.
-                        width: $tableDiv.outerWidth()
-                    });
-                });
+                };
+                columns.splice(0, 0, digColumn);
 
                 return columns;
             };
