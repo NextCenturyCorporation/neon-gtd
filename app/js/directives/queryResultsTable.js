@@ -41,7 +41,6 @@ angular.module('neonDemo.directives')
             $scope.ASCENDING = neon.query.ASCENDING;
             $scope.DESCENDING = neon.query.DESCENDING;
 
-            $scope.digUrl = "http://localhost:9000/list";
             $scope.databaseName = '';
             $scope.tableName = '';
             $scope.fields = [];
@@ -302,7 +301,7 @@ angular.module('neonDemo.directives')
                 data.data.forEach(function(row) {
                     var rowId = row._id;
                     var query = "id=" + rowId;
-                    var element = "<form action=\"" + $scope.digUrl + "\" method=\"get\" target=\"" + query + "\">" +
+                    var element = "<form action=\"" + neon.DIG_SERVER + "\" method=\"get\" target=\"" + query + "\">" +
                         "<input type=\"hidden\" name=\"id\" value=\"" + rowId + "\">" +
                         "<button class=\"hidden-button\" type=\"submit\" title=\"" + query + "\">" +
                         "<span class=\"glyphicon glyphicon-new-window\"></span></button></form>";
