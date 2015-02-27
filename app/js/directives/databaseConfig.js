@@ -142,8 +142,7 @@ angular.module('neonDemo.directives')
                     });
 
                 if($scope.selectedDb) {
-                    $scope.connection.use($scope.selectedDb);
-                    $scope.connection.getTableNames(function(tables) {
+                    $scope.connection.getTableNames($scope.selectedDB, function(tables) {
                         $scope.$apply(function() {
                             populateTableDropdown(tables);
                         });

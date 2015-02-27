@@ -23,6 +23,8 @@
 angular.module('neonDemo.services')
 .factory('ConnectionService', function() {
     var activeConnection;
+    var databaseName;
+
     var connectionInformation = {
         fields: {}
     };
@@ -41,14 +43,12 @@ angular.module('neonDemo.services')
             activeConnection = new neon.query.Connection();
         }
 
+        databaseName = database;
+
         // Connect to the specified server.
         if(databaseType && host) {
             activeConnection.connect(databaseType, host);
         }
-
-        // Use the given database if present.  If datbase is undefined, this will
-        // will be passed along, clearing out the table database field.
-        activeConnection.use(database);
 
         // If this is different from the previous call, clear out the metadata
         if(connectionInformation === undefined || connectionInformation.type !== databaseType ||
