@@ -166,7 +166,9 @@ charts.TimelineSelectorChart = function(element, configuration) {
             var extent0 = brush.extent();
             var extent1;
 
-            if(typeof extent0[0] === 'undefined' || typeof extent0[1] === 'undefined') return;
+            if(typeof extent0[0] === 'undefined' || typeof extent0[1] === 'undefined') {
+                return;
+            }
 
             // if dragging, preserve the width of the extent
             if(d3.event.mode === "move") {
@@ -184,8 +186,9 @@ charts.TimelineSelectorChart = function(element, configuration) {
                 }
             }
 
-            if(extent1[0] < extent1[1])
+            if(extent1[0] < extent1[1]) {
                 d3.select(this).call(brush.extent(extent1));
+            }
         }
 
         // Update mask
@@ -233,7 +236,9 @@ charts.TimelineSelectorChart = function(element, configuration) {
             // Get list of all data to calculate min/max and domain
             for(i = 0; i < values.length; i++) {
                 fullDataSet = fullDataSet.concat(values[i].data);
-                if(values[i].data && !barWidth) barWidth = (width / values[i].data.length);
+                if(values[i].data && !barWidth) {
+                    barWidth = (width / values[i].data.length);
+                }
             }
         }
 
@@ -310,8 +315,9 @@ charts.TimelineSelectorChart = function(element, configuration) {
         var seriesPos = 0;
         var createSeries = function(series) {
             var xOffset = barWidth / 2;
-            if(series.type === 'bar')
+            if(series.type === 'bar') {
                 xOffset = 0;
+            }
 
             var container = context.append("g")
                 .attr("class", series.name)
@@ -398,8 +404,9 @@ charts.TimelineSelectorChart = function(element, configuration) {
                     var func = function(d) {
                         return x(d.date);
                     };
-                    if(series.data.length === 1)
+                    if(series.data.length === 1) {
                         func = width / 2;
+                    }
 
                     container.selectAll("dot")
                         .data(series.data)
@@ -436,11 +443,14 @@ charts.TimelineSelectorChart = function(element, configuration) {
 
         var charts = [];
         // If set, render primary series first
-        if(this.primarySeries)
+        if(this.primarySeries) {
             createSeries(this.primarySeries);
+        }
         // Render all series
         for(i = 0; i < values.length; i++) {
-            if(this.primarySeries && values[i].name === this.primarySeries.name) continue;
+            if(this.primarySeries && values[i].name === this.primarySeries.name) {
+                continue;
+            }
             createSeries(values[i]);
         }
 
