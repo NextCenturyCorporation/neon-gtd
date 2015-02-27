@@ -143,6 +143,10 @@ angular.module('neonDemo.directives')
 
             var createColumns = function(data) {
                 var columns = tables.createColumns(data);
+                for(var i = 0; i < columns.length; ++i) {
+                    columns[i].cssClass = "linkable"
+                }
+
                 var digColumn = {
                     name: "",
                     field: "dig",

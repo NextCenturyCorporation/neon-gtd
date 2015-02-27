@@ -223,9 +223,9 @@ tables.Table.prototype.draw = function() {
     var cellSelector = this.tableSelector_;
 
     // Enable links on initial view and then on any viewport changes.  See if there's something more efficient here.
-    $(cellSelector).find('.slick-cell').linky(linkyConfig);
+    $(cellSelector).find('.slick-cell.linkable').linky(linkyConfig);
     this.table_.onViewportChanged.subscribe(function() {
-        $(cellSelector).find('.slick-cell').linky(linkyConfig);
+        $(cellSelector).find('.slick-cell.linkable').linky(linkyConfig);
         console.log("viewport changed");
     });
 
