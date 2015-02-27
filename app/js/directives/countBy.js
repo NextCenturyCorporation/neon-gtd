@@ -176,6 +176,10 @@ angular.module('neonDemo.directives')
                         connection.getFieldNames($scope.tableName, function(results) {
                             $scope.$apply(function() {
                                 $scope.fields = results;
+                                // Default to the screen_name field for the twitter36 dataset.
+                                if($.inArray("screen_name", $scope.fields)) {
+                                    $scope.countField = "screen_name";
+                                }
                                 $scope.queryForData();
                             });
                         });
