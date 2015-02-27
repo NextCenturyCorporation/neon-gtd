@@ -42,10 +42,15 @@
     float: none;
 }
 
-.count-by-grid .slick-row{
+.count-by-grid .slick-cell {
+    cursor: pointer;
+}
+
+.count-by-grid .slick-row {
     background: #FAFAFA;
 }
-.count-by-grid .slick-row.odd{
+
+.count-by-grid .slick-row.odd {
     background: #F1F1F1;
 }
 
@@ -54,7 +59,7 @@
 }
 
 /* Will override opacity 0.5 rule due to specificity and cascade. */
-.count-by-grid .slick-row.active {
+.count-by-grid.filtered .slick-row.active {
     background: #88d292;
     opacity: 1.0;
 }
@@ -140,5 +145,20 @@
 .filter-reset {
     margin-bottom: 5px;
     margin-right: 15px;
+}
+
+.centered {
+    text-align: center;
+}
+
+.hidden-button {
+    background-color: inherit;
+    border: 0;
+    padding: 0;
+}
+
+span.glyphicon:focus,
+span.glyphicon:hover {
+    color: #39b54a;
 }
 
