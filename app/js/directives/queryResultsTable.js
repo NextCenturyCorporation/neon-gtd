@@ -127,6 +127,7 @@ angular.module('neonDemo.directives')
 
                 var options = {
                     data: data.data,
+                    columns: createColumns(data.data),
                     gridOptions: {
                         forceFitColumns: false,
                         enableColumnReorder: true,
@@ -138,6 +139,20 @@ angular.module('neonDemo.directives')
                     options.id = _id;
                 }
                 return options;
+            };
+
+            var createColumns = function(data) {
+                var columns = tables.createColumns(data);
+                var digColumn = {
+                    name: "",
+                    field: "dig",
+                    width: "15",
+                    cssClass: "centered",
+                    ignoreClicks: true
+                };
+                columns.splice(0, 0, digColumn);
+
+                return columns;
             };
 
             /**
@@ -276,8 +291,23 @@ angular.module('neonDemo.directives')
                 // Handle the new data.
                 $scope.tableOptions = $scope.createOptions(queryResults);
 
-                $scope.table = new tables.Table("#" + $scope.tableId, $scope.tableOptions).draw();//.registerSelectionListener(onSelection);
+                queryResults = $scope.addDigUrlColumnData(queryResults);
+
+                $scope.table = new tables.Table("#" + $scope.tableId, $scope.tableOptions).draw();
                 $scope.table.refreshLayout();
+            };
+
+            $scope.addDigUrlColumnData = function(data) {
+                data.data.forEach(function(row) {
+                    var rowId = row._id;
+                    var query = "id=" + rowId;
+                    var element = "<form action=\"" + neon.DIG_SERVER + "/list\" method=\"get\" target=\"" + query + "\">" +
+                        "<input type=\"hidden\" name=\"id\" value=\"" + rowId + "\">" +
+                        "<button class=\"hidden-button\" type=\"submit\" title=\"" + query + "\">" +
+                        "<span class=\"glyphicon glyphicon-new-window\"></span></button></form>";
+                    row.dig = element;
+                });
+                return data;
             };
 
             /**
