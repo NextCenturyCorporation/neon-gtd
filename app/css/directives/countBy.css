@@ -20,6 +20,15 @@
   width: 100%;
 }
 
+.count-by-header {
+    margin-bottom: 5px;
+}
+
+.count-by-field-count {
+    margin-top: 5px;
+    margin-bottom: 0px;
+}
+
 .data-tray .refresh{
     margin-left: 10px;
 }
