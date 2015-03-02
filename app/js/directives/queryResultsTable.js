@@ -283,7 +283,7 @@ angular.module('neonDemo.directives')
                 connectionService.getActiveConnection().executeQuery(query, function(queryResults) {
                     $scope.$apply(function() {
                         if(queryResults.data.length > 0) {
-                            $scope.totalRows = queryResults.data[0].counter;
+                            $scope.totalRows = queryResults.data[0].count;
                         } else {
                             $scope.totalRows = 0;
                         }
