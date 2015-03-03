@@ -79,6 +79,14 @@ module.exports = function(grunt) {
             }
         },
 
+        karma: {
+            unit: {
+                options: {
+                    configFile: 'karma.conf.js'
+                }
+            }
+        },
+
         clean: ["app/lib", "docs", "target", "reports"],
 
         /*
@@ -127,9 +135,10 @@ module.exports = function(grunt) {
     grunt.loadNpmTasks('grunt-contrib-clean');
     grunt.loadNpmTasks('grunt-contrib-jshint');
     grunt.loadNpmTasks('grunt-jscs');
+    grunt.loadNpmTasks('grunt-karma');
     grunt.loadNpmTasks('grunt-contrib-yuidoc');
     grunt.loadNpmTasks('grunt-war');
 
-    grunt.registerTask('test', ['jshint:console', 'jscs:console']);
+    grunt.registerTask('test', ['jshint:console', 'jscs:console', 'karma']);
     grunt.registerTask('default', ['clean', 'bower:install', 'jshint:xml', 'jscs:xml', 'yuidoc', 'war']);
 };
