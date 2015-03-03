@@ -13,6 +13,7 @@ module.exports = function(grunt) {
                 'Gruntfile.js',
                 'app/js/*.js',
                 'app/js/**/*.js',
+                'test/**/*.js',
                 '!app/js/vendor/**/*.js'
             ],
             xml: {
@@ -25,6 +26,7 @@ module.exports = function(grunt) {
                         'Gruntfile.js',
                         'app/js/*.js',
                         'app/js/**/*.js',
+                        'test/**/*.js',
                         '!app/js/vendor/**/*.js'
                     ]
                 }
@@ -42,7 +44,7 @@ module.exports = function(grunt) {
                     reporter: 'console'
                 },
                 files: {
-                    src: ['Gruntfile.js', 'app/js/**/*.js']
+                    src: ['Gruntfile.js', 'app/js/**/*.js', 'test/**/*.js']
                 }
             },
             xml: {
@@ -51,7 +53,7 @@ module.exports = function(grunt) {
                     reporter: 'checkstyle'
                 },
                 files: {
-                    src: ['Gruntfile.js', 'app/js/**/*.js']
+                    src: ['Gruntfile.js', 'app/js/**/*.js', 'test/**/*.js']
                 }
             }
         },

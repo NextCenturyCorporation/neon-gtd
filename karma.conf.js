@@ -10,6 +10,7 @@ module.exports = function(config){
       '../neon/neon-server/build/js/neon.js',
       'app/js/app.js',
       'app/js/directives/*.js',
+      'test/directives/*.js',
     ],
 
     singleRun : true,
