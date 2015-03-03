@@ -106,8 +106,7 @@ tables.addLinkabilityToColumns = function(columns) {
     for(var i = 0; i < columns.length; ++i) {
         if(columns[i].cssClass) {
             columns[i].cssClass += " " + tables.LINKABLE;
-        }
-        else {
+        } else {
             columns[i].cssClass = tables.LINKABLE;
         }
     }
