@@ -33,24 +33,18 @@ angular.module('neonDemo.directives')
         templateUrl: 'partials/directives/queryResultsTable.html',
         restrict: 'EA',
         scope: {
-            collapsable: '@?',
             showData: '=?'
         },
         link: function($scope, element) {
-            if($scope.collapsable) {
-                element.addClass('query-results-table');
-            }
-            else {
-                element.addClass('query-results-directive');
-                element.resize(function() {
-                    updateSize();
-                });
-            }
+            element.addClass('query-results-directive');
 
             // If this widget was launched as a navbar collapsable then showData will be bound to the collapse toggle.
             // Otherwise show the data automatically on launching the widget.
             if(typeof($scope.showData) === "undefined") {
                 $scope.showData = true;
+                element.resize(function() {
+                    updateSize();
+                });
             }
 
             $scope.ASCENDING = neon.query.ASCENDING;
