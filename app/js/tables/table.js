@@ -16,6 +16,7 @@
  */
 
 var tables = tables || {};
+tables.LINKABLE = "linkable";
 
 /**
  * Creates a new table
@@ -95,6 +96,18 @@ tables.createColumns = function(data) {
     });
     return columns;
 };
+
+/**
+ * Adds a CSS class to the given column definitions so the cells in those columns will be linkified.
+ * @param {Array} The array of column definition objects.
+ * @return {Array} The amended array.
+ */
+tables.addLinkabilityToColumns = function(columns) {
+    for(var i = 0; i < columns.length; ++i) {
+        columns[i].cssClass = tables.LINKABLE;
+    }
+    return columns;
+}
 
 /**
  * Creates the sort comparator to sort the data in the table
@@ -212,9 +225,9 @@ tables.Table.prototype.addLinks_ = function() {
     var cellSelector = this.tableSelector_;
 
     // Add initial links and update links on viewport changes.
-    $(cellSelector).find(".slick-cell.linkable").linky(linkyConfig);
+    $(cellSelector).find(".slick-cell." + tables.LINKABLE).linky(linkyConfig);
     this.table_.onViewportChanged.subscribe(function() {
-        $(cellSelector).find("slick-cell.linkable").linky(linkyConfig);
+        $(cellSelector).find("slick-cell." + tables.LINKABLE).linky(linkyConfig);
     });
 };
 
