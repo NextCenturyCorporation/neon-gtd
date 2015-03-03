@@ -1,8 +1,10 @@
-describe("MonthBucketizer", function() {
+'use strict';
+
+describe("monthBucketizer", function() {
     var bucketizer;
 
     beforeEach(function() {
-        bucketizer = MonthBucketizer();
+        bucketizer = monthBucketizer();
     });
 
     it("initial values are correct", function() {
@@ -12,7 +14,7 @@ describe("MonthBucketizer", function() {
 
     it("setters and getters for start and end dates work", function() {
         var past = new Date(1980, 1, 2, 3, 4, 5);
-        var future = new Date(2050, 5, 4, 3, 2, 1)
+        var future = new Date(2050, 5, 4, 3, 2, 1);
         bucketizer.setStartDate(past);
         bucketizer.setEndDate(future);
         expect(bucketizer.getStartDate()).toBe(past);

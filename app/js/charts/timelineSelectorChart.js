@@ -235,7 +235,9 @@ charts.TimelineSelectorChart = function(element, configuration) {
             // Get list of all data to calculate min/max and domain
             for(i = 0; i < values.length; i++) {
                 fullDataSet = fullDataSet.concat(values[i].data);
-                if(values[i].data && !approximateBarWidth) approximateBarWidth = (width / values[i].data.length);
+                if(values[i].data && !approximateBarWidth) {
+                    approximateBarWidth = (width / values[i].data.length);
+                }
             }
         }
 
@@ -278,15 +280,15 @@ charts.TimelineSelectorChart = function(element, configuration) {
 
         x.domain([xMin, xMax]);
 
-        var xAxis = d3.svg.axis().scale(x).orient("bottom").ticks(Math.round(width/100));
+        var xAxis = d3.svg.axis().scale(x).orient("bottom");
 
         // We don't want the ticks to be too close together, so calculate the most ticks that
-        // comfortable fit on the timeline
-        var maximumNumberOfTicks = Math.round(width/100);
+        // comfortably fit on the timeline
+        var maximumNumberOfTicks = Math.round(width / 100);
         // We don't want to have more ticks than buckets (e.g., monthly buckets with daily ticks
         // look funny)
         var minimumTickRange = d3.time[me.granularity].utc.range;
-        if (x.ticks(minimumTickRange).length < maximumNumberOfTicks) {
+        if(x.ticks(minimumTickRange).length < maximumNumberOfTicks) {
             // There's enough room to do one tick per bucket
             xAxis.ticks(minimumTickRange);
         } else {

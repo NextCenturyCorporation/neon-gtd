@@ -51,8 +51,8 @@ angular.module('neonDemo.directives')
             $scope.data = [];
             $scope.brush = [];
             $scope.extentDirty = false;
-            $scope.dayHourBucketizer = DateBucketizer();
-            $scope.monthBucketizer = MonthBucketizer();
+            $scope.dayHourBucketizer = dateBucketizer();
+            $scope.monthBucketizer = monthBucketizer();
             $scope.bucketizer = $scope.dayHourBucketizer;
             $scope.startDateForDisplay = undefined;
             $scope.endDateForDisplay = undefined;
@@ -71,13 +71,13 @@ angular.module('neonDemo.directives')
              * @param {String} the constant for the new granularity
              */
             $scope.setGranularity = function(newGranularity) {
-                if (newGranularity === MONTH) {
+                if(newGranularity === MONTH) {
                     $scope.bucketizer = $scope.monthBucketizer;
                 } else {
                     $scope.bucketizer = $scope.dayHourBucketizer;
                     $scope.bucketizer.setGranularity(newGranularity);
                 }
-            }
+            };
 
             /**
              * Updates the starts/end dates based on the chart granularity
@@ -88,7 +88,7 @@ angular.module('neonDemo.directives')
                 if($scope.referenceStartDate && $scope.referenceEndDate) {
                     $scope.bucketizer.setStartDate($scope.bucketizer.zeroOutDate($scope.referenceStartDate));
                     var endDateBucket = $scope.bucketizer.getBucketIndex($scope.referenceEndDate);
-                    var afterEndDate = $scope.bucketizer.getDateForBucket(endDateBucket+1);
+                    var afterEndDate = $scope.bucketizer.getDateForBucket(endDateBucket + 1);
                     $scope.bucketizer.setEndDate(afterEndDate);
                 }
             };
@@ -118,7 +118,7 @@ angular.module('neonDemo.directives')
                     $scope.endDateForDisplay = new Date(new Date(displayEndDate.getUTCFullYear(),
                         displayEndDate.getUTCMonth(),
                         displayEndDate.getUTCDate()).getTime() - 1);
-                } else if ($scope.granularity === MONTH) {
+                } else if($scope.granularity === MONTH) {
                     $scope.startDateForDisplay = new Date(displayStartDate.getUTCFullYear(),
                         displayStartDate.getUTCMonth());
                     // Month ranges last until the end of the last interval (e.g., June-July)
@@ -146,7 +146,7 @@ angular.module('neonDemo.directives')
                 } else if($scope.granularity === HOUR) {
                     query.groupBy(yearGroupClause, monthGroupClause, dayGroupClause, hourGroupClause);
                 }
-            }
+            };
 
             /**
              * Initializes the name of the date field used to query the current dataset

@@ -15,7 +15,7 @@
  *
  */
 
-function MonthBucketizer() {
+var monthBucketizer = monthBucketizer || function() {
     var startDate;
     var endDate;
 
@@ -70,12 +70,12 @@ function MonthBucketizer() {
     };
 
     var roundUpBucket = function(date) {
-        var rounded = zeroOutDate(date)
+        var rounded = zeroOutDate(date);
         // If the original date is after the zeroed out version, then go to the next bucket
-        if (date > rounded) {
-            rounded.setUTCMonth(rounded.getUTCMonth()+1);
+        if(date > rounded) {
+            rounded.setUTCMonth(rounded.getUTCMonth() + 1);
         }
-        if (rounded > getEndDate()) {
+        if(rounded > getEndDate()) {
             rounded = zeroOutDate(getEndDate());
         }
         return rounded;
@@ -83,7 +83,7 @@ function MonthBucketizer() {
 
     var roundDownBucket = function(date) {
         var rounded = zeroOutDate(date);
-        if (rounded < getStartDate()) {
+        if(rounded < getStartDate()) {
             rounded = zeroOutDate(getStartDate());
         }
         return rounded;

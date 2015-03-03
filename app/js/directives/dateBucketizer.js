@@ -15,7 +15,7 @@
  *
  */
 
-function DateBucketizer() {
+var dateBucketizer = dateBucketizer || function() {
     var DAY = "day";
     var HOUR = "hour";
     // Cache the number of milliseconds in an hour for processing.
@@ -27,22 +27,21 @@ function DateBucketizer() {
     var granularity;
     var millisMultiplier;
 
-
     var setStartDate = function(date) {
         startDate = date;
-    }
+    };
 
     var getStartDate = function() {
         return startDate;
-    }
+    };
 
     var setEndDate = function(date) {
         endDate = date;
-    }
+    };
 
     var getEndDate = function() {
         return endDate;
-    }
+    };
 
     var setGranularity = function(newGranularity) {
         granularity = newGranularity;
@@ -51,15 +50,15 @@ function DateBucketizer() {
         } else if(newGranularity === HOUR) {
             millisMultiplier = MILLIS_IN_HOUR;
         }
-    }
+    };
 
     var getGranularity = function() {
         return granularity;
-    }
+    };
 
     var getMillisMultiplier = function() {
         return millisMultiplier;
-    }
+    };
 
     /**
      * Sets the minutes, seconds and millis to 0. If the granularity of the date is day,
@@ -92,7 +91,7 @@ function DateBucketizer() {
         // values
         var difference = Math.abs(date - effectiveStartDate);
         return Math.floor(difference / millisMultiplier);
-    }
+    };
 
     /**
      * Calculate the representative date for a particular bucket at the current granularity
@@ -106,7 +105,7 @@ function DateBucketizer() {
         var effectiveStartDate = zeroOutDate(getStartDate() || fallbackStartDate);
         var startDateInMs = effectiveStartDate.getTime();
         return new Date(startDateInMs + (millisMultiplier * bucketIndex));
-    }
+    };
 
     /**
      * Calculate the number of intervals or buckets needed at the current granularity
@@ -123,7 +122,7 @@ function DateBucketizer() {
         // values
         var difference = Math.abs(effectiveEndDate - effectiveStartDate);
         return Math.ceil(difference / millisMultiplier);
-    }
+    };
 
     /**
      * Rounds the date up to the beginning of the next bucket, unless the date is already at
