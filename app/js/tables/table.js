@@ -16,6 +16,7 @@
  */
 
 var tables = tables || {};
+tables.LINKABLE = "linkable";
 
 /**
  * Creates a new table
@@ -95,6 +96,23 @@ tables.createColumns = function(data) {
     });
     return columns;
 };
+
+/**
+ * Adds a CSS class to the given column definitions so the cells in those columns will be linkified.
+ * @param {Array} The array of column definition objects.
+ * @return {Array} The amended array.
+ */
+tables.addLinkabilityToColumns = function(columns) {
+    for(var i = 0; i < columns.length; ++i) {
+        if(columns[i].cssClass) {
+            columns[i].cssClass += " " + tables.LINKABLE;
+        }
+        else {
+            columns[i].cssClass = tables.LINKABLE;
+        }
+    }
+    return columns;
+}
 
 /**
  * Creates the sort comparator to sort the data in the table
@@ -200,6 +218,24 @@ tables.Table.createKeyValuePairsString_ = function(object, keys, row, cell, colu
     return keyValueStrings.join(', ');
 };
 
+tables.Table.prototype.addLinks_ = function() {
+    // TODO:  Make this configurable based on the dataset.
+    var linkyConfig = {
+        mentions: true,
+        hashtags: true,
+        urls: true,
+        linkTo: "twitter"
+    };
+
+    var cellSelector = this.tableSelector_;
+
+    // Add initial links and update links on viewport changes.
+    $(cellSelector).find(".slick-cell." + tables.LINKABLE).linky(linkyConfig);
+    this.table_.onViewportChanged.subscribe(function() {
+        $(cellSelector).find("slick-cell." + tables.LINKABLE).linky(linkyConfig);
+    });
+};
+
 /**
  * Draws the table in the selector specified in the constructor
  * @method draw
@@ -211,6 +247,7 @@ tables.Table.prototype.draw = function() {
     this.table_.registerPlugin(new Slick.AutoTooltips({
         enableForHeaderCells: true
     }));
+    this.addLinks_();
 
     // Setup some event loggers.
     this.table_.onColumnsResized.subscribe(function() {

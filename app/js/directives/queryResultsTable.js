@@ -143,6 +143,8 @@ angular.module('neonDemo.directives')
 
             var createColumns = function(data) {
                 var columns = tables.createColumns(data);
+                columns = tables.addLinkabilityToColumns(columns);
+
                 var digColumn = {
                     name: "",
                     field: "dig",
