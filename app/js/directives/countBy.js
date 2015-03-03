@@ -104,14 +104,16 @@ angular.module('neonDemo.directives')
                     columns[i].width = $tableDiv.outerWidth()
                 }
 
-                var digColumn = {
-                    name: "",
-                    field: "dig",
-                    width: "15",
-                    cssClass: "centered",
-                    ignoreClicks: true
-                };
-                columns.splice(0, 0, digColumn);
+                if(neon.DIG_ENABLED) {
+                    var digColumn = {
+                        name: "",
+                        field: "dig",
+                        width: "15",
+                        cssClass: "centered",
+                        ignoreClicks: true
+                    };
+                    columns.splice(0, 0, digColumn);
+                }
 
                 return columns;
             };
@@ -272,7 +274,8 @@ angular.module('neonDemo.directives')
              */
             $scope.addOnClickListener = function() {
                 $scope.table.addOnClickListener(function(columns, row) {
-                    var field = columns[1].field;
+                    var columnIndex = neon.DIG_ENABLED ? 1 : 0;
+                    var field = columns[columnIndex].field;
 
                     // If the user clicks on the filtered row/cell, clear the filter.
                     if($scope.filterSet !== undefined) {
@@ -303,7 +306,9 @@ angular.module('neonDemo.directives')
                 $scope.tableOptions = createOptions(cleanData);
 
                 // Add the DIG URLs after the table options have been created because it already includes the column.
-                cleanData = $scope.addDigUrlColumnData(cleanData);
+                if(neon.DIG_ENABLED) {
+                    cleanData = $scope.addDigUrlColumnData(cleanData);
+                }
 
                 $scope.table = new tables.Table("#" + $scope.tableId, $scope.tableOptions).draw();
                 $scope.addOnClickListener();

@@ -145,14 +145,16 @@ angular.module('neonDemo.directives')
                 var columns = tables.createColumns(data);
                 columns = tables.addLinkabilityToColumns(columns);
 
-                var digColumn = {
-                    name: "",
-                    field: "dig",
-                    width: "15",
-                    cssClass: "centered",
-                    ignoreClicks: true
-                };
-                columns.splice(0, 0, digColumn);
+                if(neon.DIG_ENABLED) {
+                    var digColumn = {
+                        name: "",
+                        field: "dig",
+                        width: "15",
+                        cssClass: "centered",
+                        ignoreClicks: true
+                    };
+                    columns.splice(0, 0, digColumn);
+                }
 
                 return columns;
             };
@@ -293,7 +295,9 @@ angular.module('neonDemo.directives')
                 // Handle the new data.
                 $scope.tableOptions = $scope.createOptions(queryResults);
 
-                queryResults = $scope.addDigUrlColumnData(queryResults);
+                if(neon.DIG_ENABLED) {
+                    queryResults = $scope.addDigUrlColumnData(queryResults);
+                }
 
                 $scope.table = new tables.Table("#" + $scope.tableId, $scope.tableOptions).draw();
                 $scope.table.refreshLayout();
