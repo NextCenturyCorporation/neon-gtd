@@ -104,7 +104,12 @@ tables.createColumns = function(data) {
  */
 tables.addLinkabilityToColumns = function(columns) {
     for(var i = 0; i < columns.length; ++i) {
-        columns[i].cssClass = tables.LINKABLE;
+        if(columns[i].cssClass) {
+            columns[i].cssClass += " " + tables.LINKABLE;
+        }
+        else {
+            columns[i].cssClass = tables.LINKABLE;
+        }
     }
     return columns;
 }
