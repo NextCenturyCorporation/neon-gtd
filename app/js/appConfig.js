@@ -45,7 +45,7 @@ DEMO_CONFIG.opencpu.useAlerts = false;
 // neon.SERVER_URL = "http://localhost:8080/neon"
 neon.SERVER_URL = "/neon";
 neon.DIG_ENABLED = false;
-neon.DIG_SERVER = "http://localhost:9000"
+neon.DIG_SERVER = "http://localhost:9000";
 
 // Configure xdata logger
 var XDATA = {};

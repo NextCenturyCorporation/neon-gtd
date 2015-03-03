@@ -111,7 +111,7 @@ tables.addLinkabilityToColumns = function(columns) {
         }
     }
     return columns;
-}
+};
 
 /**
  * Creates the sort comparator to sort the data in the table

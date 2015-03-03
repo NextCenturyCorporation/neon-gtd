@@ -101,7 +101,7 @@ angular.module('neonDemo.directives')
                 for(var i = 0; i < columns.length; ++i) {
                     // Since forceFitColumns is enabled, setting this width will force the columns to use as much
                     // space as possible, which is necessary to keep the first column (dig) as small as possible.
-                    columns[i].width = $tableDiv.outerWidth()
+                    columns[i].width = $tableDiv.outerWidth();
                 }
 
                 if(neon.DIG_ENABLED) {
