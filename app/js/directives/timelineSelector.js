@@ -476,17 +476,11 @@ angular.module('neonDemo.directives')
                     rawLength = 1;
                 }
 
-                // Setup the data buckets for them.
-                // If this query returns before the query that gets the first and last dates in the
-                // data set, then use the first and last dates in the query results.
-                var startDate = rawData[0].date;
-                var endDate = rawData[rawData.length - 1].date;
-
-                var numBuckets = $scope.bucketizer.getNumBuckets(startDate, endDate);
+                var numBuckets = $scope.bucketizer.getNumBuckets();
 
                 // Initialize our time buckets.
                 for(i = 0; i < numBuckets; i++) {
-                    var bucketGraphDate = $scope.bucketizer.getDateForBucket(i, startDate);
+                    var bucketGraphDate = $scope.bucketizer.getDateForBucket(i);
                     queryData[i] = {
                         date: bucketGraphDate,
                         value: 0
@@ -497,7 +491,7 @@ angular.module('neonDemo.directives')
                 var resultDate;
                 for(i = 0; i < rawLength; i++) {
                     resultDate = new Date(rawData[i].date);
-                    var bucketIndex = $scope.bucketizer.getBucketIndex(resultDate, startDate);
+                    var bucketIndex = $scope.bucketizer.getBucketIndex(resultDate);
                     queryData[bucketIndex].value = rawData[i].count;
                 }
 
