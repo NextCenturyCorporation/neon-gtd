@@ -9,8 +9,8 @@ module.exports = function(config){
       'app/lib/angular-mocks/angular-mocks.js',
       '../neon/neon-server/build/js/neon.js',
       'app/js/app.js',
-      'app/js/directives/*.js',
-      'test/directives/*.js',
+      'app/js/time/*.js',
+      'test/time/*.js',
     ],
 
     singleRun : true,
