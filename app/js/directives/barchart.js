@@ -47,6 +47,7 @@ angular.module('neonDemo.directives')
             $scope.chart = undefined;
             $scope.filterKey = "barchart-" + uuid();
             $scope.filterSet = undefined;
+            $scope.errorMessage = undefined;
 
             var COUNT_FIELD_NAME = 'Count';
 
@@ -93,6 +94,9 @@ angular.module('neonDemo.directives')
                 // on the associated element and not just the window.
                 $element.resize(function() {
                     updateChartSize();
+                    if($scope.errorMessage) {
+                        error.resizeErrorMessage($element, $scope.errorMessage);
+                    }
                 });
             };
 
@@ -132,6 +136,11 @@ angular.module('neonDemo.directives')
             };
 
             $scope.queryForData = function(rebuildChart) {
+                if($scope.errorMessage) {
+                    error.hideErrorMessage($scope.errorMessage);
+                    $scope.errorMessage = undefined;
+                }
+
                 var xAxis = $scope.attrX || connectionService.getFieldMapping("bar_x_axis");
                 var yAxis = $scope.attrY || connectionService.getFieldMapping("y_axis");
 
@@ -165,8 +174,15 @@ angular.module('neonDemo.directives')
                 XDATA.activityLogger.logSystemActivity('BarChart - query for data');
                 connectionService.getActiveConnection().executeQuery(query, function(queryResults) {
                     $scope.$apply(function() {
-                        XDATA.activityLogger.logSystemActivity('BarChart - received query data');
-                        doDrawChart(queryResults, rebuildChart);
+                        if(queryResults.errorCode) {
+                            XDATA.activityLogger.logSystemActivity('BarChart - received error');
+                            drawBlankChart();
+                            $scope.errorMessage = error.showErrorMessage($element, queryResults.errorCode, queryResults.stackTrace);
+                        }
+                        else {
+                            XDATA.activityLogger.logSystemActivity('BarChart - received query data');
+                            doDrawChart(queryResults, rebuildChart);
+                        }
                         XDATA.activityLogger.logSystemActivity('BarChart - rendered results');
                     });
                 }, function() {
