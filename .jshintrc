@@ -93,6 +93,7 @@
         "charts": true,
         "CircularHeatChart": true,
         "coreMap": true,
+        "yearBucketizer": true,
         "monthBucketizer": true,
         "dateBucketizer": true,
         "d3": true,

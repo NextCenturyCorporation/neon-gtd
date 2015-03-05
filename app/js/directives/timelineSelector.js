@@ -38,6 +38,7 @@ angular.module('neonDemo.directives')
         scope: {
         },
         link: function($scope, element) {
+            var YEAR = "year";
             var MONTH = "month";
             var HOUR = "hour";
             var DAY = "day";
@@ -53,6 +54,7 @@ angular.module('neonDemo.directives')
             $scope.extentDirty = false;
             $scope.dayHourBucketizer = dateBucketizer();
             $scope.monthBucketizer = monthBucketizer();
+            $scope.yearBucketizer = yearBucketizer();
             $scope.bucketizer = $scope.dayHourBucketizer;
             $scope.startDateForDisplay = undefined;
             $scope.endDateForDisplay = undefined;
@@ -73,6 +75,8 @@ angular.module('neonDemo.directives')
             $scope.setGranularity = function(newGranularity) {
                 if(newGranularity === MONTH) {
                     $scope.bucketizer = $scope.monthBucketizer;
+                } else if(newGranularity === YEAR) {
+                    $scope.bucketizer = $scope.yearBucketizer;
                 } else {
                     $scope.bucketizer = $scope.dayHourBucketizer;
                     $scope.bucketizer.setGranularity(newGranularity);
@@ -97,33 +101,19 @@ angular.module('neonDemo.directives')
              * Sets the display dates, that are used by the template, to the provided values.
              */
             $scope.setDisplayDates = function(displayStartDate, displayEndDate) {
+                $scope.startDateForDisplay = new Date(displayStartDate.getUTCFullYear(),
+                    displayStartDate.getUTCMonth(),
+                    displayStartDate.getUTCDate(),
+                    displayStartDate.getUTCHours());
+                $scope.endDateForDisplay = new Date(displayEndDate.getUTCFullYear(),
+                    displayEndDate.getUTCMonth(),
+                    displayEndDate.getUTCDate(),
+                    displayEndDate.getUTCHours());
                 // Describing ranges is odd. If an event lasts 2 hours starting at 6am, then it
                 // lasts from 6am to 8am. But if an event starts on the 6th and lasts 2 days, then
                 // it lasts from the 6th to the 7th.
-                if($scope.granularity === HOUR) {
-                    $scope.startDateForDisplay = new Date(displayStartDate.getUTCFullYear(),
-                        displayStartDate.getUTCMonth(),
-                        displayStartDate.getUTCDate(),
-                        displayStartDate.getUTCHours());
-                    // Hour ranges last until the start of the next interval (e.g., 6am-8am)
-                    $scope.endDateForDisplay = new Date(displayEndDate.getUTCFullYear(),
-                        displayEndDate.getUTCMonth(),
-                        displayEndDate.getUTCDate(),
-                        displayEndDate.getUTCHours());
-                } else if($scope.granularity === DAY) {
-                    $scope.startDateForDisplay = new Date(displayStartDate.getUTCFullYear(),
-                        displayStartDate.getUTCMonth(),
-                        displayStartDate.getUTCDate());
-                    // Day ranges last until the end of the last interval (e.g., June 6-7)
-                    $scope.endDateForDisplay = new Date(new Date(displayEndDate.getUTCFullYear(),
-                        displayEndDate.getUTCMonth(),
-                        displayEndDate.getUTCDate()).getTime() - 1);
-                } else if($scope.granularity === MONTH) {
-                    $scope.startDateForDisplay = new Date(displayStartDate.getUTCFullYear(),
-                        displayStartDate.getUTCMonth());
-                    // Month ranges last until the end of the last interval (e.g., June-July)
-                    $scope.endDateForDisplay = new Date(new Date(displayEndDate.getUTCFullYear(),
-                        displayEndDate.getUTCMonth() - 1));
+                if($scope.granularity !== HOUR) {
+                    $scope.endDateForDisplay = new Date($scope.endDateForDisplay.getTime() - 1);
                 }
             };
 
@@ -139,7 +129,9 @@ angular.module('neonDemo.directives')
                 var hourGroupClause = new neon.query.GroupByFunctionClause(neon.query.HOUR, $scope.dateField, 'hour');
 
                 // Group by the appropriate granularity.
-                if($scope.granularity === MONTH) {
+                if($scope.granularity === YEAR) {
+                    query.groupBy(yearGroupClause);
+                } else if($scope.granularity === MONTH) {
                     query.groupBy(yearGroupClause, monthGroupClause);
                 } else if($scope.granularity === DAY) {
                     query.groupBy(yearGroupClause, monthGroupClause, dayGroupClause);
@@ -369,7 +361,7 @@ angular.module('neonDemo.directives')
 
                 // Update the start/end times and totals used for the Neon selection and their
                 // display versions.  Since Angular formats dates as local values, we create new display values
-                // for the appropriate month/day/hours we want to appear in this directive's associated partial.
+                // for the appropriate date we want to appear in this directive's associated partial.
                 // This essentially shifts the display times from local to the value we want to appear in UTC time.
                 var total = 0;
                 // endIdx points to the start of the day/hour just after the buckets we want to count, so do not
