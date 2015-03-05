@@ -21,6 +21,7 @@
         "jquery.tagcloud": "https://github.com/addywaddy/jquery.tagcloud.js.git",
         "jquery.linky": "0.1.8",
         "mergesort": "https://github.com/justinforce/merge-sort/archive/1.0.zip",
+        "notifyjs": "0.3.2",
         "opencpu": "https://github.com/jeroenooms/opencpu.js.git",
         "openlayers": "https://github.com/openlayers/openlayers/releases/download/release-2.13.1/OpenLayers-2.13.1.zip",
         "openlayers-heatmap": "https://github.com/pa7/heatmap.js.git#v1.0",

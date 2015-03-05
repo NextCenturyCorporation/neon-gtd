@@ -1,0 +1,25 @@
+.notifyjs-error-base  {
+    margin: 20px;
+}
+
+.notifyjs-error-base .notifyjs-bootstrap-base,
+.notifyjs-stacktrace-base .notifyjs-bootstrap-base {
+    /* Set the top padding so that the text is aligned with the background icon. */
+    padding: 6px 10px 6px 25px;
+}
+
+.notifyjs-error-base .message {
+    font-size: 16px;
+    white-space: normal;
+}
+
+.notifyjs-error-base .buttons {
+    padding-top: 5px;
+}
+
+.notifyjs-stacktrace-base .stacktrace {
+    font-size: 10px;
+    max-height: 120px;
+    overflow: auto;
+    padding: 2px 4px;
+}
