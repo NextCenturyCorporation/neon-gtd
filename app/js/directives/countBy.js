@@ -27,6 +27,7 @@ angular.module('neonDemo.directives')
             el.addClass('countByDirective');
 
             $scope.countField = "";
+            $scope.count = 0;
             $scope.fields = [];
             $scope.tableId = 'query-results-' + uuid();
             $scope.filterKey = "countby-" + uuid();
@@ -310,6 +311,7 @@ angular.module('neonDemo.directives')
                     cleanData = $scope.addDigUrlColumnData(cleanData);
                 }
 
+                $scope.count = cleanData.data.length;
                 $scope.table = new tables.Table("#" + $scope.tableId, $scope.tableOptions).draw();
                 $scope.addOnClickListener();
                 updateSize();

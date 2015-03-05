@@ -21,6 +21,19 @@
   width: 100%;
 }
 
+.count-by-header {
+    margin-bottom: 5px;
+}
+
+.count-by-field-count {
+    margin-top: 5px;
+    margin-bottom: 0px;
+}
+
+.data-tray .refresh{
+    margin-left: 10px;
+}
+
 .count-by-grid {
     min-height: 80px;
     background-color: #F1F1F1;
