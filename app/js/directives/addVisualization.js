@@ -92,6 +92,12 @@ angular.module('neonDemo.directives')
                 sizeY: 2,
                 type: 'sunburst',
                 icon: 'img/visualizations/Sunburst64.png'
+            },{
+                name: 'View Data',
+                sizeX: 6,
+                sizeY: 2,
+                type: 'query-results-table',
+                icon: 'img/visualizations/ViewData64.png'
             }];
 
             /**

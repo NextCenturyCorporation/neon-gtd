@@ -170,7 +170,6 @@ body{
 }
 
 /* Data tray */
-.query-results-table,
 .data-tray,
 .tray .panel-body {
     height: 100%;

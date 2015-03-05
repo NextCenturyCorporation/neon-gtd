@@ -92,7 +92,15 @@
             <div filter-builder></div>
 
             <!-- See Data tray -->
-            <div query-results-table show-data="seeData"></div>
+            <div class="tray-mirror data-tray collapse">
+                <div class="inner" style="height: 394px"></div>
+            </div>
+
+            <div id="data-tray" class="tray data-tray panel panel-default collapse">
+                <div class="container panel-body">
+                    <div query-results-table show-data="seeData"></div>
+                </div>
+            </div>
 
             <!-- Query Builder tray -->
             <!-- <div>
