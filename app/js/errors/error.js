@@ -19,12 +19,6 @@ var error = error || {};
 
 error.UNKNOWN_ERROR_MESSAGE = "An error occurred.";
 
-// Customize the error message that is shown based on the error code returned by the neon-server.
-error.ERROR_CODE_TO_MESSAGE = {
-    // aggregation result exceeds maximum document size (16MB)
-    "16389": "Query execution failed because there was too much data."
-};
-
 // Store the stack trace text for each individual error so we don't have to insert it into the HTML.
 // We'll delete it when we're finished with it.
 error.STACK_TRACE_STORAGE = {};
@@ -66,14 +60,13 @@ $.notify.addStyle("stacktrace", {
 /**
  * Shows an error message popup for the given parameters.
  * @param {HTMLElement} The notification will be displayed next to this element.
- * @param {Integer} The error code corresponding to the error message that will be displayed.
+ * @param {String} The error message that will be displayed in the notification.
  * @param {String} The error stack trace.
  * @return The jQuery element for the error message.
  */
-error.showErrorMessage = function(htmlElement, errorCode, stackTrace) {
+error.showErrorMessage = function(htmlElement, message, stackTrace) {
     var jqueryElement = $(htmlElement);
 
-    var message = error.ERROR_CODE_TO_MESSAGE[errorCode] ? error.ERROR_CODE_TO_MESSAGE[errorCode] : error.UNKNOWN_ERROR_MESSAGE;
     var index = error.STACK_TRACE_NEXT_INDEX++;
     error.STACK_TRACE_STORAGE[index] = stackTrace;
 
