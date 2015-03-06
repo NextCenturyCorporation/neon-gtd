@@ -146,7 +146,11 @@ angular.module('neonDemo.directives')
              * @method initialize
              */
             $scope.initialize = function() {
-                // Update the millis multipler when the granularity is changed.
+                // The brush handler needs to behave differently when the brush changes as part of a
+                // granularity change.
+                var updatingGranularity = false;
+
+                // Switch bucketizers when the granularity is changed.
                 $scope.$watch('granularity', function(newVal, oldVal) {
                     if(newVal && newVal !== oldVal) {
                         XDATA.activityLogger.logUserActivity('TimelineSelector - Change timeline resolution', 'define_axes',
@@ -160,6 +164,7 @@ angular.module('neonDemo.directives')
                         $scope.updateDates();
 
                         if(0 < $scope.brush.length) {
+                            updatingGranularity = true;
                             var newBrushStart = $scope.bucketizer.roundDownBucket($scope.brush[0]);
                             var newBrushEnd = $scope.bucketizer.roundUpBucket($scope.brush[1]);
 
@@ -205,9 +210,17 @@ angular.module('neonDemo.directives')
 
                         XDATA.activityLogger.logSystemActivity('TimelineSelector - Create/Replace neon filter');
 
-                        // Because the timeline ignores its own filter, we just need to update the
-                        // chart times and total when this filter is applied
-                        $scope.messenger.replaceFilter($scope.filterKey, filter, $scope.updateChartTimesAndTotal());
+                        if(updatingGranularity) {
+                            // If the brush changed because of a granularity change, then don't
+                            // update the chart. The granularity change will cause the data to be
+                            // updated
+                            $scope.messenger.replaceFilter($scope.filterKey, filter);
+                            updatingGranularity = false;
+                        } else {
+                            // Because the timeline ignores its own filter, we just need to update the
+                            // chart times and total when this filter is applied
+                            $scope.messenger.replaceFilter($scope.filterKey, filter, $scope.updateChartTimesAndTotal());
+                        }
                     }
                 }, true);
 
