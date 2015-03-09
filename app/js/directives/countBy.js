@@ -219,15 +219,15 @@ angular.module('neonDemo.directives')
                     XDATA.activityLogger.logSystemActivity('CountBy - query for data');
                     connection.executeQuery(query, function(queryResults) {
                         $scope.$apply(function() {
-                            if(queryResults.errorCode) {
-                                XDATA.activityLogger.logSystemActivity('CountBy - received error');
-                                $scope.errorMessage = error.showErrorMessage(el, queryResults.errorCode, queryResults.stackTrace);
-                            }
-                            else {
-                                XDATA.activityLogger.logSystemActivity('CountBy - received data');
-                            }
+                            XDATA.activityLogger.logSystemActivity('CountBy - received data');
                             $scope.updateData(queryResults);
                             XDATA.activityLogger.logSystemActivity('CountBy - rendered data');
+                        });
+                    }, function(response) {
+                        XDATA.activityLogger.logSystemActivity('CountBy - query failed');
+                        $scope.errorMessage = error.showErrorMessage(el, response.responseJSON.error, response.responseJSON.stackTrace);
+                        $scope.updateData({
+                            data: []
                         });
                     });
                 }
