@@ -174,20 +174,14 @@ angular.module('neonDemo.directives')
                 XDATA.activityLogger.logSystemActivity('BarChart - query for data');
                 connectionService.getActiveConnection().executeQuery(query, function(queryResults) {
                     $scope.$apply(function() {
-                        if(queryResults.errorCode) {
-                            XDATA.activityLogger.logSystemActivity('BarChart - received error');
-                            drawBlankChart();
-                            $scope.errorMessage = error.showErrorMessage($element, queryResults.errorCode, queryResults.stackTrace);
-                        }
-                        else {
-                            XDATA.activityLogger.logSystemActivity('BarChart - received query data');
-                            doDrawChart(queryResults, rebuildChart);
-                        }
+                        XDATA.activityLogger.logSystemActivity('BarChart - received query data');
+                        doDrawChart(queryResults, rebuildChart);
                         XDATA.activityLogger.logSystemActivity('BarChart - rendered results');
                     });
-                }, function() {
+                }, function(response) {
                     XDATA.activityLogger.logSystemActivity('BarChart - query failed');
                     drawBlankChart();
+                    $scope.errorMessage = error.showErrorMessage($element, response.responseJSON.error, response.responseJSON.stackTrace);
                 });
             };
 
