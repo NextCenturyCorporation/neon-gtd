@@ -68,12 +68,6 @@ describe("monthBucketizer", function() {
         expect(bucketizer.getBucketIndex(nextYear)).toBe(12);
     });
 
-    it("bucket index uses fallback date if none is set", function() {
-        var startDate = new Date(Date.UTC(1980, 1, 2, 3, 4, 5));
-        // No start date, so the second argument is the fallback
-        expect(bucketizer.getBucketIndex(startDate, startDate)).toBe(0);
-    });
-
     it("getDateForBucket() returns a zeroed out date that matches that bucket", function() {
         var startDate = new Date(Date.UTC(1980, 1, 2, 3, 4, 5));
         var dateIndex = 1;
@@ -94,13 +88,6 @@ describe("monthBucketizer", function() {
         // The year and month are correct
         expect(nextDate.getUTCFullYear()).toBe(1981);
         expect(nextDate.getUTCMonth()).toBe(2);
-    });
-
-    it("getDateForBucket() uses fallback date if none is set", function() {
-        var startDate = new Date(Date.UTC(1980, 1, 2, 3, 4, 5));
-        // No start date, so the second argument is the fallback
-        var bucketDate = bucketizer.getDateForBucket(0, startDate);
-        expect(bucketDate.toUTCString()).toBe(bucketizer.zeroOutDate(startDate).toUTCString());
     });
 
     it("get num buckets for zero length", function() {
@@ -128,13 +115,6 @@ describe("monthBucketizer", function() {
         bucketizer.setEndDate(nextYear);
         // So long as the end date is on the following UTC day, there will be 1 bucket
         expect(bucketizer.getNumBuckets()).toBe(11);
-    });
-
-    it("get num buckets uses fallback dates if none are set", function() {
-        var startDate = new Date(Date.UTC(1980, 1, 2, 3, 4, 5));
-        var nextMonth = new Date(Date.UTC(1980, 2, 1, 0, 0, 0));
-        // Note that the setStartDate() and setEndDate() are not called
-        expect(bucketizer.getNumBuckets(startDate, nextMonth)).toBe(1);
     });
 
     it("round down bucket works like zero out date", function() {

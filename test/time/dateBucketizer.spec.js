@@ -141,20 +141,6 @@ describe("dateBucketizer", function() {
         expect(bucketizer.getBucketIndex(nextDay)).toBe(24);
     });
 
-    it("bucket index uses fallback date if none is set", function() {
-        var startDate = new Date(Date.UTC(1980, 1, 2, 3, 4, 5));
-        // No start date, so the second argument is the fallback
-        expect(bucketizer.getBucketIndex(startDate, startDate)).toBe(0);
-    });
-
-    it("bucket index uses fallback date if none is set", function() {
-        var startDate = new Date(Date.UTC(1980, 1, 2, 3, 4, 5));
-        var unusedFallbackDate = new Date(Date.UTC(1971, 1, 1, 1, 1, 1));
-        // Start date is set, so fallback should not be used
-        bucketizer.setStartDate(startDate);
-        expect(bucketizer.getBucketIndex(startDate, unusedFallbackDate)).toBe(0);
-    });
-
     it("getDateForBucket() returns a zeroed out date that matches that bucket (daily)", function() {
         var startDate = new Date(Date.UTC(1980, 1, 2, 3, 4, 5));
         var dateIndex = 1;

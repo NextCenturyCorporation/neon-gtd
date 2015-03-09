@@ -80,13 +80,11 @@ var dateBucketizer = dateBucketizer || function() {
     /**
      * Calculates the bucket index for the date
      * @param {Date} date the date to get the index of
-     * @param {Date} fallbackStartDate an optional argument that specifies the start date to use
-     * for counting in case the getStartDate() is undefined
      * @return 0 if date is before or in the same bucket as the start date, or the number of
      * granularity intervals after the start date otherwise
      */
-    var getBucketIndex = function(date, fallbackStartDate) {
-        var effectiveStartDate = zeroOutDate(getStartDate() || fallbackStartDate);
+    var getBucketIndex = function(date) {
+        var effectiveStartDate = zeroOutDate(getStartDate());
         // TODO - The absolute value doesn't make sense here; we just don't want negative
         // values
         var difference = Math.abs(date - effectiveStartDate);
@@ -96,27 +94,22 @@ var dateBucketizer = dateBucketizer || function() {
     /**
      * Calculate the representative date for a particular bucket at the current granularity
      * @param {Number} bucketIndex
-     * @param {Date} fallbackStartDate an optional date to use as the start date if
-     * the bucketizer's start date is not set
      * @return {Date} the date that represents the specified bucket (usually the start of
      * that bucket)
      */
-    var getDateForBucket = function(bucketIndex, fallbackStartDate) {
-        var effectiveStartDate = zeroOutDate(getStartDate() || fallbackStartDate);
+    var getDateForBucket = function(bucketIndex) {
+        var effectiveStartDate = zeroOutDate(getStartDate());
         var startDateInMs = effectiveStartDate.getTime();
         return new Date(startDateInMs + (millisMultiplier * bucketIndex));
     };
 
     /**
      * Calculate the number of intervals or buckets needed at the current granularity
-     * @param {Date} fallbackStartDate the optional date to use if the start date is not set
-     * @param {Date} fallbackEndDate the optional date to use if end date is not set
      * @return {Number} the number of buckets
      */
-    var getNumBuckets = function(fallbackStartDate, fallbackEndDate) {
-        // If bucketizer's start date or end date are undefined, use the fallbacks
-        var effectiveStartDate = zeroOutDate(getStartDate() || fallbackStartDate);
-        var effectiveEndDate = zeroOutDate(getEndDate() || fallbackEndDate);
+    var getNumBuckets = function() {
+        var effectiveStartDate = zeroOutDate(getStartDate());
+        var effectiveEndDate = zeroOutDate(getEndDate());
 
         // TODO - The absolute value doesn't make sense here; we just don't want negative
         // values

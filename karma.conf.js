@@ -43,9 +43,11 @@ module.exports = function(config){
         'app/js/charts/**/*.js',
         'app/js/coremap/**/*.js',
         'app/js/tables/**/*.js',
+        'app/js/time/**/*.js',
         'app/js/neon-extensions/**/*.js',
         'app/js/directives/**/*.js',
         'test/directives/*.js',
+        'test/time/*.js',
         '**/*.html',
     ],
 
