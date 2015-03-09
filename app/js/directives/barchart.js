@@ -27,7 +27,7 @@
  * @constructor
  */
 angular.module('neonDemo.directives')
-.directive('barchart', ['ConnectionService', '$timeout', function(connectionService, $timeout) {
+.directive('barchart', ['ConnectionService', 'ErrorHandlingService', '$timeout', function(connectionService, errorHandlingService, $timeout) {
     return {
         templateUrl: 'partials/directives/barchart.html',
         restrict: 'EA',
@@ -48,6 +48,8 @@ angular.module('neonDemo.directives')
             $scope.filterKey = "barchart-" + uuid();
             $scope.filterSet = undefined;
             $scope.errorMessage = undefined;
+
+            errorHandlingService.init();
 
             var COUNT_FIELD_NAME = 'Count';
 
@@ -95,7 +97,7 @@ angular.module('neonDemo.directives')
                 $element.resize(function() {
                     updateChartSize();
                     if($scope.errorMessage) {
-                        error.resizeErrorMessage($element, $scope.errorMessage);
+                        errorHandlingService.resizeErrorMessage($element, $scope.errorMessage);
                     }
                 });
             };
@@ -137,7 +139,7 @@ angular.module('neonDemo.directives')
 
             $scope.queryForData = function(rebuildChart) {
                 if($scope.errorMessage) {
-                    error.hideErrorMessage($scope.errorMessage);
+                    errorHandlingService.hideErrorMessage($scope.errorMessage);
                     $scope.errorMessage = undefined;
                 }
 
@@ -181,7 +183,7 @@ angular.module('neonDemo.directives')
                 }, function(response) {
                     XDATA.activityLogger.logSystemActivity('BarChart - query failed');
                     drawBlankChart();
-                    $scope.errorMessage = error.showErrorMessage($element, response.responseJSON.error, response.responseJSON.stackTrace);
+                    $scope.errorMessage = errorHandlingService.showErrorMessage($element, response.responseJSON.error, response.responseJSON.stackTrace);
                 });
             };
 
