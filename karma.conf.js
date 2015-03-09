@@ -3,6 +3,8 @@ module.exports = function(config){
 
     basePath : '',
 
+    colors: true,
+
     // Notes:  This assumes neon has been built and exists at the same directory level as 
     // neon-gtd.  Note that the base neon.js file also includes jquery, lodash, and a few other
     // items that are not explicitly pulled in here.
@@ -51,6 +53,8 @@ module.exports = function(config){
       '**/*.html': ['ng-html2js']
     },
 
+    reporters: ['progress', 'junit'],
+
     ngHtml2JsPreprocessor: {
       stripPrefix: 'app/'
     },
@@ -62,7 +66,7 @@ module.exports = function(config){
     browsers : ['PhantomJS'],
 
     junitReporter : {
-      outputFile: 'test_out/unit.xml',
+      outputFile: 'reports/unitTests.xml',
       suite: 'unit'
     }
 
