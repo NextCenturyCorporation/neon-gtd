@@ -1,24 +1,43 @@
-.notifyjs-error-base  {
-    margin: 20px;
+.neon-error-element {
+    /* Important because remarkable-bootstrap-notify will try to overwrite the margin against our wishes. */
+    margin: 20px!important;
 }
 
-.notifyjs-bootstrap-base {
-    /* Set the top padding so that the text is aligned with the background icon. */
-    padding: 6px 10px 6px 25px;
+.neon-error-global .neon-error-icon img,
+.neon-error-element .neon-error-icon img {
+    width: 16px;
+    margin-right: 6px;
+    /* Set the bottom padding so that the icon is vertically aligned with the message text. */
+    padding-bottom: 4px;
 }
 
-.notifyjs-error-base .message {
+.neon-error-global .neon-error-message,
+.neon-error-element .neon-error-message {
     font-size: 16px;
     white-space: normal;
 }
 
-.notifyjs-error-base .buttons {
-    padding: 10px 0px;
+.neon-error-element .neon-error-details {
+    font-size: 10px;
+    margin-top: 5px;
+    cursor: pointer;
 }
 
-.notifyjs-error-base .stacktrace {
+.neon-error-element .neon-error-stacktrace.well {
     font-size: 10px;
-    height: 120px;
+    height: 90px;
     overflow: auto;
     padding: 2px 4px;
+    white-space: pre;
+    margin-top: 5px;
+}
+
+/* Progress bar styling from the official website (http://bootstrap-growl.remabledesigns.com). */
+[data-notify="progressbar"] {
+    margin-bottom: 0px;
+    position: absolute;
+    bottom: 0px;
+    left: 0px;
+    width: 100%;
+    height: 5px;
 }
