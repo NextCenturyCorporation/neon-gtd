@@ -121,6 +121,9 @@ angular.module("neonDemo.services")
                 }
             });
 
+            // Setting the bottom is necessary due to a minor placement bug in Bootstrap Notify.
+            elementErrorNotification.css("bottom", "0px");
+
             return elementErrorNotification;
         };
 
