@@ -45,28 +45,22 @@ var monthBucketizer = monthBucketizer || function() {
         return zeroed;
     };
 
-    var getBucketIndex = function(date, fallbackStartDate) {
-        var effectiveStartDate = zeroOutDate(getStartDate() || fallbackStartDate);
-
-        var yearsDifference = date.getUTCFullYear() - effectiveStartDate.getUTCFullYear();
-        var monthsDifference = date.getUTCMonth() - effectiveStartDate.getUTCMonth();
+    var getBucketIndex = function(date) {
+        var yearsDifference = date.getUTCFullYear() - getStartDate().getUTCFullYear();
+        var monthsDifference = date.getUTCMonth() - getStartDate().getUTCMonth();
         return yearsDifference * 12 + monthsDifference;
     };
 
-    var getDateForBucket = function(bucketIndex, fallbackStartDate) {
-        var effectiveStartDate = zeroOutDate(getStartDate() || fallbackStartDate);
-
-        var newMonth = effectiveStartDate.getUTCMonth() + bucketIndex;
-        var dateForBucket = zeroOutDate(effectiveStartDate);
+    var getDateForBucket = function(bucketIndex) {
+        var newMonth = getStartDate().getUTCMonth() + bucketIndex;
+        var dateForBucket = zeroOutDate(getStartDate());
         // This will properly wrap to different years
         dateForBucket.setUTCMonth(newMonth);
         return dateForBucket;
     };
 
-    var getNumBuckets = function(fallbackStartDate, fallbackEndDate) {
-        // The number of buckets is really just the bucket index of the end date
-        var effectiveEndDate = getEndDate() || fallbackEndDate;
-        return getBucketIndex(effectiveEndDate, fallbackStartDate);
+    var getNumBuckets = function() {
+        return getBucketIndex(getEndDate());
     };
 
     var roundUpBucket = function(date) {
