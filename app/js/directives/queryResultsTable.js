@@ -146,6 +146,7 @@ angular.module('neonDemo.directives')
                     data: data.data,
                     columns: createColumns(data.data),
                     gridOptions: {
+                        enableTextSelectionOnCells: true,
                         forceFitColumns: false,
                         enableColumnReorder: true,
                         forceSyncScrolling: true
