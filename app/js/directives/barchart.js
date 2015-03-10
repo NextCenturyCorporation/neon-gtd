@@ -27,7 +27,7 @@
  * @constructor
  */
 angular.module('neonDemo.directives')
-.directive('barchart', ['ConnectionService', 'ErrorHandlingService', '$timeout', function(connectionService, errorHandlingService, $timeout) {
+.directive('barchart', ['ConnectionService', 'ErrorNotificationService', '$timeout', function(connectionService, errorNotificationService, $timeout) {
     return {
         templateUrl: 'partials/directives/barchart.html',
         restrict: 'EA',
@@ -48,8 +48,6 @@ angular.module('neonDemo.directives')
             $scope.filterKey = "barchart-" + uuid();
             $scope.filterSet = undefined;
             $scope.errorMessage = undefined;
-
-            errorHandlingService.init();
 
             var COUNT_FIELD_NAME = 'Count';
 
@@ -96,9 +94,6 @@ angular.module('neonDemo.directives')
                 // on the associated element and not just the window.
                 $element.resize(function() {
                     updateChartSize();
-                    if($scope.errorMessage) {
-                        errorHandlingService.resizeErrorMessage($element, $scope.errorMessage);
-                    }
                 });
             };
 
@@ -139,7 +134,7 @@ angular.module('neonDemo.directives')
 
             $scope.queryForData = function(rebuildChart) {
                 if($scope.errorMessage) {
-                    errorHandlingService.hideErrorMessage($scope.errorMessage);
+                    errorNotificationService.hideErrorMessage($scope.errorMessage);
                     $scope.errorMessage = undefined;
                 }
 
@@ -183,7 +178,7 @@ angular.module('neonDemo.directives')
                 }, function(response) {
                     XDATA.activityLogger.logSystemActivity('BarChart - query failed');
                     drawBlankChart();
-                    $scope.errorMessage = errorHandlingService.showErrorMessage($element, response.responseJSON.error, response.responseJSON.stackTrace);
+                    $scope.errorMessage = errorNotificationService.showErrorMessage($element, response.responseJSON.error, response.responseJSON.stackTrace);
                 });
             };
 
@@ -268,6 +263,10 @@ angular.module('neonDemo.directives')
                 initialize();
                 $scope.displayActiveDataset();
             });
+
+            var test = function(a) {
+                console.log("Thomas!");
+            };
         }
     };
 }]);
