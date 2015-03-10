@@ -263,10 +263,6 @@ angular.module('neonDemo.directives')
                 initialize();
                 $scope.displayActiveDataset();
             });
-
-            var test = function(a) {
-                console.log("Thomas!");
-            };
         }
     };
 }]);
