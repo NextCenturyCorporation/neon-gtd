@@ -17,7 +17,7 @@
  */
 
 angular.module('neonDemo.directives')
-.directive('countBy', ['ConnectionService', function(connectionService) {
+.directive('countBy', ['ConnectionService', 'ErrorNotificationService', function(connectionService, errorNotificationService) {
     return {
         templateUrl: 'partials/directives/countby.html',
         restrict: 'EA',
@@ -77,9 +77,6 @@ angular.module('neonDemo.directives')
 
                 el.resize(function() {
                     updateSize();
-                    if($scope.errorMessage) {
-                        error.resizeErrorMessage(el, $scope.errorMessage);
-                    }
                 });
 
                 // The header is resized whenever filtering is set or cleared.
@@ -208,7 +205,7 @@ angular.module('neonDemo.directives')
                 }
 
                 if($scope.errorMessage) {
-                    error.hideErrorMessage($scope.errorMessage);
+                    errorNotificationService.hideErrorMessage($scope.errorMessage);
                     $scope.errorMessage = undefined;
                 }
 
@@ -225,7 +222,7 @@ angular.module('neonDemo.directives')
                         });
                     }, function(response) {
                         XDATA.activityLogger.logSystemActivity('CountBy - query failed');
-                        $scope.errorMessage = error.showErrorMessage(el, response.responseJSON.error, response.responseJSON.stackTrace);
+                        $scope.errorMessage = errorNotificationService.showErrorMessage(el, response.responseJSON.error, response.responseJSON.stackTrace);
                         $scope.updateData({
                             data: []
                         });
