@@ -92,6 +92,12 @@ angular.module('neonDemo.directives')
                 sizeY: 2,
                 type: 'sunburst',
                 icon: 'img/visualizations/Sunburst64.png'
+            },{
+                name: 'Graph',
+                sizeX: 3,
+                sizeY: 2,
+                type: 'directed-graph',
+                icon: ''
             }];
 
             /**
