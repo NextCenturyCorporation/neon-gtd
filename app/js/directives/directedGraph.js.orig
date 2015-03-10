@@ -23,6 +23,7 @@ angular.module('neonDemo.directives')
         scope: {
             startingFields: '='
         },
+<<<<<<< HEAD
         link: function($scope, element) {
             $scope.uniqueChartOptions = 'chart-options-' + uuid();
             var chartOptions = $(element).find('.chart-options');
@@ -33,9 +34,12 @@ angular.module('neonDemo.directives')
             $scope.selectedTable = {
                 name: ""
             };
+            $scope.errorMessage = undefined;
+=======
+        link: function($scope) {
             $scope.fieldsLabel = "Username";
             $scope.allowMoreFields = false;
-            $scope.errorMessage = undefined;
+>>>>>>> 6761dce... Fixing graph to work with twitter friends and followers
 
             if($scope.startingFields) {
                 $scope.groupFields = $scope.startingFields;
@@ -102,14 +106,18 @@ angular.module('neonDemo.directives')
             };
 
             $scope.queryForData = function() {
+<<<<<<< HEAD
                 if($scope.errorMessage) {
                     errorNotificationService.hideErrorMessage($scope.errorMessage);
                     $scope.errorMessage = undefined;
                 }
+
+=======
                 $scope.queryForUsers($scope.queryForGraphData);
             }
 
             $scope.queryForUsers = function(next) {
+>>>>>>> 6761dce... Fixing graph to work with twitter friends and followers
                 var query = new neon.query.Query()
                     .selectFrom($scope.databaseName, $scope.selectedTable.name);
 
@@ -135,13 +143,12 @@ angular.module('neonDemo.directives')
 
             $scope.queryForGraphData = function() {
                 var query = new neon.query.Query()
-                    .selectFrom($scope.databaseName, $scope.selectedTable.name);
+                    .selectFrom($scope.databaseName, $scope.tableName);
 
                 //query = query.groupBy.apply(query, $scope.groupFields);
                 query = query.where('label', '=', $scope.groupFields[0]);
 
                 var connection = connectionService.getActiveConnection();
-
                 if(connection) {
                     d3.select("#node-click-name").text("");
                     connection.executeQuery(query, $scope.calculateGraphData, function(response) {
@@ -227,11 +234,6 @@ angular.module('neonDemo.directives')
                         links: links
                     });
                 }
-
-                $scope.updateGraph({
-                    nodes: nodes,
-                    links: links
-                });
             };
 
             $scope.uniqueId = (Math.floor(Math.random() * 10000));
