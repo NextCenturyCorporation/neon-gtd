@@ -24,11 +24,18 @@ angular.module('neonDemo.directives')
             startingFields: '='
         },
         link: function($scope) {
+            $scope.fieldsLabel = "Username";
+            $scope.allowMoreFields = false;
+
             if($scope.startingFields) {
                 $scope.groupFields = $scope.startingFields;
             } else {
                 $scope.groupFields = [""];
             }
+
+            $scope.$watch('groupFields', function() {
+                $scope.render();
+            }, true);
 
             $scope.initialize = function() {
                 $scope.messenger = new neon.eventing.Messenger();
@@ -71,10 +78,39 @@ angular.module('neonDemo.directives')
             };
 
             $scope.queryForData = function() {
+                $scope.queryForUsers($scope.queryForGraphData);
+            }
+
+            $scope.queryForUsers = function(next) {
                 var query = new neon.query.Query()
                     .selectFrom($scope.databaseName, $scope.tableName);
 
-                query = query.groupBy.apply(query, $scope.groupFields);
+                //query = query.groupBy.apply(query, $scope.groupFields);
+                query = query.withFields(["label"]);
+
+                var connection = connectionService.getActiveConnection();
+
+                if(connection) {
+                    connection.executeQuery(query, function(data) {
+                        $scope.users = [];
+                        for(var i = 0; i < data.data.length; i++) {
+                            if($scope.users.indexOf(data.data[i].label)) {
+                                $scope.users.push(data.data[i].label);
+                            }
+                        }
+                        next();
+                    });
+                } else {
+                    d3.select("#node-click-name").text("No database connection.");
+                }
+            };
+
+            $scope.queryForGraphData = function() {
+                var query = new neon.query.Query()
+                    .selectFrom($scope.databaseName, $scope.tableName);
+
+                //query = query.groupBy.apply(query, $scope.groupFields);
+                query = query.where('label', '=', $scope.groupFields[0]);
 
                 var connection = connectionService.getActiveConnection();
 
@@ -87,62 +123,84 @@ angular.module('neonDemo.directives')
             };
 
             $scope.calculateGraphData = function(response) {
-                var data = response.data;
-                //var data = [{name: "foo"},{name: "bar"},{name: "foo"}];
-
-                //build nodes array
-                var nodesIndexes = {};
-                var nodes = [];
-                var linksIndexes = {};
-                var links = [];
-                var node1;
-                var node2;
-                var field;
-                for(var i = 0; i < data.length; i++) {
-                    for(field = 0; field < $scope.groupFields.length; field++) {
-                        if(!nodesIndexes[data[i][$scope.groupFields[field]]] ||
-                                !nodesIndexes[data[i][$scope.groupFields[field]]][$scope.groupFields[field]]) {
-                            if(!nodesIndexes[data[i][$scope.groupFields[field]]]) {
-                                nodesIndexes[data[i][$scope.groupFields[field]]] = {};
-                            }
-
-                            nodesIndexes[data[i][$scope.groupFields[field]]][$scope.groupFields[field]] = nodes.length;
-                            nodes.push({
-                                name: data[i][$scope.groupFields[field]],
-                                group: field
-                            });
-                        }
+                if(response.data.length === 0) {
+                    d3.select("#node-click-name").text("Unknown user");
+                } else {
+                    var data = response.data;
+                    if(data.length >= 1000) {
+                        d3.select("#node-click-name").text("Limiting display to 1000 records");
+                        data = data.slice(0, 1001);
                     }
 
-                    for(field = 0; field < $scope.groupFields.length - 1; field++) {
-                        node1 = nodesIndexes[data[i][$scope.groupFields[field]]][$scope.groupFields[field]];
-                        node2 = nodesIndexes[data[i][$scope.groupFields[field + 1]]][$scope.groupFields[field + 1]];
+                    var nodesIndexes = {};
+                    var nodes = [];
+                    var linksIndexes = {};
+                    var links = [];
 
-                        if(!linksIndexes[node1] || !linksIndexes[node1][node2]) {
-                            if(!linksIndexes[node1]) {
-                                linksIndexes[node1] = {};
+                    var addNodesIfUnique = function(value) {
+                        if(!nodesIndexes[value]) {
+                            nodesIndexes[value] = nodes.length;
+                            var colorGroup;
+                            if(value === $scope.groupFields[0]) {
+                                colorGroup = 1;
+                            } else if($scope.users.indexOf(value) !== -1) {
+                                colorGroup = 3;
+                            } else {
+                                colorGroup = 2;
                             }
-                            linksIndexes[node1][node2] = links.length;
+                            nodes.push({
+                                name: value,
+                                group: colorGroup
+                            });
+                        }
+                        return nodesIndexes[value];
+                    };
 
+                    var addLinkIfUnique = function(node1, node2) {
+                        if(!linksIndexes[node1]) {
+                            linksIndexes[node1] = {};
+                        }
+
+                        if(!linksIndexes[node1][node2]) {
+                            linksIndexes[node1][node2] = links.length;
                             links.push({
                                 source: node1,
                                 target: node2,
                                 value: 1
                             });
                         }
-                    }
-                }
+                    };
 
-                $scope.updateGraph({
-                    nodes: nodes,
-                    links: links
-                });
+                    var node1;
+                    var node2;
+                    var relatedNodes;
+                    for(var i = 0; i < data.length; i++) {
+                        node1 = addNodesIfUnique(data[i].label);
+                        relatedNodes = data[i].attributeList;
+                        if(relatedNodes.length >= 1000) {
+                            d3.select("#node-click-name").text("Limiting display to 1000 records");
+                            relatedNodes = relatedNodes.slice(0, 1001);
+                        }
+
+                        for(var j = 0; j < relatedNodes.length; j++) {
+                            node2 = addNodesIfUnique(relatedNodes[j]);
+                            addLinkIfUnique(node1, node2);
+                        }
+                    }
+
+                    $scope.updateGraph({
+                        nodes: nodes,
+                        links: links
+                    });
+                }
             };
 
             $scope.uniqueId = (Math.floor(Math.random() * 10000));
             $scope.svgId = "directed-svg-" + $scope.uniqueId;
 
             $scope.updateGraph = function(data) {
+                var nodes = data.nodes;
+
                 var svg = d3.select("#" + $scope.svgId);
                 if(svg) {
                     svg.remove();
@@ -152,11 +210,6 @@ angular.module('neonDemo.directives')
                 var height = 300;
 
                 var color = d3.scale.category10();
-
-                var force = d3.layout.force()
-                    .charge(-10)
-                    .linkDistance(30)
-                    .size([width, height]);
 
                 svg = d3.select("#directed-graph-div-" + $scope.uniqueId)
                     .append("svg")
@@ -177,10 +230,15 @@ angular.module('neonDemo.directives')
                     vis.attr("transform", "translate(" + d3.event.translate + ")" + " scale(" + d3.event.scale + ")");
                 }
 
+                var force = d3.layout.force()
+                    .charge(-200)
+                    .linkDistance(100)
+                    .size([width, height])
+                    .gravity(0.05);
+
                 force
                 .nodes(data.nodes)
-                .links(data.links)
-                .start();
+                .links(data.links);
 
                 var link = vis.selectAll(".link")
                     .data(data.links)
@@ -192,17 +250,73 @@ angular.module('neonDemo.directives')
 
                 var node = vis.selectAll(".node")
                     .data(data.nodes)
-                .enter().append("circle")
+                .enter().append("g")
                     .attr("class", "node")
+                .append("circle")
                     .attr("r", 5)
                     .style("fill", function(d) {
                         return color(d.group);
                     })
                     .call(force.drag);
 
-                node.on("click", function(d) {
-                    d3.select("#node-click-name").text(d.name);
+                vis.selectAll("g.node").selectAll("circle")
+                .append("title")
+                .text(function(n) {
+                    return n.name;
                 });
+
+                var setupForceLayoutTick = function() {
+                    force.on("tick", function() {
+                        svg.selectAll("line").attr("x1", function(d) {
+                            return d.source.x;
+                        })
+                        .attr("y1", function(d) {
+                            return d.source.y;
+                        })
+                        .attr("x2", function(d) {
+                            return d.target.x;
+                        })
+                        .attr("y2", function(d) {
+                            return d.target.y;
+                        });
+
+                        svg.selectAll("g.node")
+                        .attr("cx", function(d) {
+                            return d.x;
+                        })
+                        .attr("cy", function(d) {
+                            return d.y;
+                        });
+
+                        nodes[0].x = width / 2;
+                        nodes[0].y = height / 2;
+                    });
+                };
+
+                var runForceLayoutSimulation = function() {
+                    force.start();
+                    var i = 0;
+                    while(force.alpha() > 0.01 && i++ < 1000) {
+                        force.tick();
+                    }
+                    force.stop();
+
+                    svg.selectAll(".node").each(function(nodeData) {
+                        nodeData.fixed = true;
+                    });
+                };
+
+                setupForceLayoutTick();
+                runForceLayoutSimulation();
+                force.start();
+
+                node.on('dblclick', function(d) {
+                    $scope.$apply(function() {
+                        $scope.groupFields[0] = d.name;
+                    });
+                });/*.on("click", function(d) {
+                    d3.select("#node-click-name").text(d.name);
+                })*/
 
                 node.append("title")
                     .text(function(d) {

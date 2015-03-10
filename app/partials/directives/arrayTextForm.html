@@ -1,5 +1,5 @@
-<div ng-if="fields">
-    <span class="field-label">Fields:</span>
-    <input type="text" ng-repeat="field in fields" ng-blur="blur( $event, $index )" value="{{field}}" class="form-control field-input" />
-    <button ng-click="addField()" class="btn btn-default">+</button>
+<div ng-if="fields" class="form-group">
+    <label>{{label}}:</label>
+    <input type="text col-xs-9" ng-repeat="field in fields" ng-blur="blur($event, $index)" ng-keyup="$event.keyCode == 13 && blur($event, $index)" value="{{field}}" class="form-control" />
+    <button ng-if="allowMore" ng-click="addField()" class="btn btn-default">+</button>
 </div>
