@@ -41,7 +41,7 @@ angular.module('neonDemo.directives')
                 console.log("handling submit");
                 if($scope.submitHandler) {
                     $scope.submitHandler.call(this);
-                };
+                }
             };
 
             $scope.blur = function($event, $index) {
@@ -50,6 +50,7 @@ angular.module('neonDemo.directives')
                 } else {
                     $scope.fields[ $index ] = $event.currentTarget.value;
                 }
+                $scope.handleSubmit();
             };
         }
     };

@@ -25,17 +25,17 @@ angular.module('neonDemo.directives')
         },
         link: function($scope) {
             $scope.fieldsLabel = "Username";
-            $scope.allowMoreFields = false;
+            $scope.allowMoreFields = true;
 
             if($scope.startingFields) {
                 $scope.groupFields = $scope.startingFields;
             } else {
-                $scope.groupFields = [""];
+                $scope.groupFields = [];
             }
 
-            $scope.$watch('groupFields', function() {
-                $scope.render();
-            }, true);
+            // $scope.$watch('groupFields', function() {
+            //     $scope.render();
+            // }, true);
 
             $scope.initialize = function() {
                 $scope.messenger = new neon.eventing.Messenger();
@@ -64,22 +64,41 @@ angular.module('neonDemo.directives')
 
                 var connection = connectionService.getActiveConnection();
                 if(connection) {
-                    connectionService.loadMetadata($scope.render);
+                    connectionService.loadMetadata(function() {
+                        $scope.queryForUsers(function(data) {
+                            //$scope.populateDropdown(data.data);
+                            $scope.render(data);
+                        });
+                    });
                 }
             };
 
-            $scope.render = function() {
-                if($scope.groupFields.length > 1 || $scope.groupFields[0] !== "") {
+            $scope.removeField = function(field) {
+                var index = $scope.groupFields.indexOf(field);
+                if(index !== -1) {
+                    $scope.groupFields.splice(index, 1);
+                    $scope.render();
+                }
+            };
+
+            $scope.render = function(data) {
+                if($scope.groupFields.length > 0) {
                     if($scope.groupFields[$scope.groupFields.length - 1] === "") {
                         $scope.groupFields.splice($scope.groupFields.length - 1, 1);
                     }
-                    $scope.queryForData();
+                    return $scope.queryForData();
+                }
+
+                if(data) {
+                    return $scope.calculateGraphData(data);
+                } else {
+                    $scope.queryForUsers($scope.calculateGraphData);
                 }
             };
 
             $scope.queryForData = function() {
                 $scope.queryForUsers($scope.queryForGraphData);
-            }
+            };
 
             $scope.queryForUsers = function(next) {
                 var query = new neon.query.Query()
@@ -98,7 +117,7 @@ angular.module('neonDemo.directives')
                                 $scope.users.push(data.data[i].label);
                             }
                         }
-                        next();
+                        next(data);
                     });
                 } else {
                     d3.select("#node-click-name").text("No database connection.");
@@ -110,7 +129,13 @@ angular.module('neonDemo.directives')
                     .selectFrom($scope.databaseName, $scope.tableName);
 
                 //query = query.groupBy.apply(query, $scope.groupFields);
-                query = query.where('label', '=', $scope.groupFields[0]);
+                var where = neon.query.where('label', '=', $scope.groupFields[0]);
+                var orWhere;
+                for(var i = 1; i < $scope.groupFields.length; i++) {
+                    orWhere = neon.query.where('label', '=', $scope.groupFields[i]);
+                    where = neon.query.or(where, orWhere);
+                }
+                query = query.where(where);
 
                 var connection = connectionService.getActiveConnection();
 
@@ -128,7 +153,7 @@ angular.module('neonDemo.directives')
                 } else {
                     var data = response.data;
                     if(data.length >= 1000) {
-                        d3.select("#node-click-name").text("Limiting display to 1000 records");
+                        d3.select("#node-click-name").text("Limiting display to 1000 records per user");
                         data = data.slice(0, 1001);
                     }
 
@@ -138,10 +163,10 @@ angular.module('neonDemo.directives')
                     var links = [];
 
                     var addNodesIfUnique = function(value) {
-                        if(!nodesIndexes[value]) {
+                        if(nodesIndexes[value] === undefined) {
                             nodesIndexes[value] = nodes.length;
                             var colorGroup;
-                            if(value === $scope.groupFields[0]) {
+                            if($scope.groupFields.indexOf(value) !== -1) {
                                 colorGroup = 1;
                             } else if($scope.users.indexOf(value) !== -1) {
                                 colorGroup = 3;
@@ -176,7 +201,7 @@ angular.module('neonDemo.directives')
                     var relatedNodes;
                     for(var i = 0; i < data.length; i++) {
                         node1 = addNodesIfUnique(data[i].label);
-                        relatedNodes = data[i].attributeList;
+                        relatedNodes = (data[i].attributeList ? data[i].attributeList : []);
                         if(relatedNodes.length >= 1000) {
                             d3.select("#node-click-name").text("Limiting display to 1000 records");
                             relatedNodes = relatedNodes.slice(0, 1001);
@@ -231,22 +256,25 @@ angular.module('neonDemo.directives')
                 }
 
                 var force = d3.layout.force()
-                    .charge(-200)
+                    .charge(-300)
                     .linkDistance(100)
                     .size([width, height])
                     .gravity(0.05);
 
                 force
-                .nodes(data.nodes)
-                .links(data.links);
+                .nodes(data.nodes);
 
-                var link = vis.selectAll(".link")
-                    .data(data.links)
-                .enter().append("line")
-                    .attr("class", "link")
-                    .style("stroke-width", function(d) {
-                        return Math.sqrt(d.value);
-                    });
+                if(data.links) {
+                    force.links(data.links);
+
+                    var link = vis.selectAll(".link")
+                        .data(data.links)
+                    .enter().append("line")
+                        .attr("class", "link")
+                        .style("stroke-width", function(d) {
+                            return Math.sqrt(d.value);
+                        });
+                }
 
                 var node = vis.selectAll(".node")
                     .data(data.nodes)
@@ -314,9 +342,18 @@ angular.module('neonDemo.directives')
                     $scope.$apply(function() {
                         $scope.groupFields[0] = d.name;
                     });
-                });/*.on("click", function(d) {
-                    d3.select("#node-click-name").text(d.name);
-                })*/
+                }).on("click", function(d) {
+                    //d3.select("#node-click-name").text(d.name);
+                    if(d3.event.shiftKey) {
+                        if($scope.users.indexOf(d.name) !== -1 &&
+                            $scope.groupFields.indexOf(d.name) === -1) {
+                            $scope.$apply(function() {
+                                $scope.groupFields.push(d.name);
+                                $scope.render();
+                            });
+                        }
+                    }
+                });
 
                 node.append("title")
                     .text(function(d) {

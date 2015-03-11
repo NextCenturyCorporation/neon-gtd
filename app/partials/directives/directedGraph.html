@@ -1,7 +1,10 @@
 <div class="directed-graph well">
     <div class="row config-row-div">
-        <div class="col-xs-12">
-            <array-text-form fields="groupFields" label="fieldsLabel" allow-more="allowMoreFields" submit-handler="render"></array-text-form>
+        <div class="filter-reset pull-right" ng-repeat="field in groupFields">
+            {{field}}
+            <a class="btn" ng-click="removeField(field)">
+             <span class="glyphicon glyphicon-remove"></span>
+            </a>
         </div>
         <div id="node-click-name" class="col-xs-12">
         </div>
