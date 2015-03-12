@@ -35,6 +35,7 @@ angular.module('neonDemo.directives')
             };
             $scope.fieldsLabel = "Username";
             $scope.allowMoreFields = true;
+            $scope.uniqueId = uuid();
             $scope.errorMessage = undefined;
 
             if($scope.startingFields) {
@@ -252,10 +253,14 @@ angular.module('neonDemo.directives')
                 }
             };
 
-            $scope.uniqueId = (Math.floor(Math.random() * 10000));
             $scope.svgId = "directed-svg-" + $scope.uniqueId;
 
             $scope.updateGraph = function(data) {
+                var graphDiv = $("." + $scope.uniqueId)[0];
+                var tooltipDiv = d3.select(graphDiv)
+                    .append("div")
+                    .attr("class", "graph-tooltip");
+                    //.style("opacity", 0);
                 var nodes = data.nodes;
 
                 var svg = d3.select("#" + $scope.svgId);
@@ -296,10 +301,11 @@ angular.module('neonDemo.directives')
                 force
                 .nodes(data.nodes);
 
+                var link;
                 if(data.links) {
                     force.links(data.links);
 
-                    var link = vis.selectAll(".link")
+                    link = vis.selectAll(".link")
                         .data(data.links)
                     .enter().append("line")
                         .attr("class", "link")
@@ -385,12 +391,21 @@ angular.module('neonDemo.directives')
                             });
                         }
                     }
-                });
+                }).on("mouseover", function(d) {
+                    var parentOffset = $("." + $scope.uniqueId).offset();
 
-                node.append("title")
-                    .text(function(d) {
-                        return d.name;
-                    });
+                    tooltipDiv.transition()
+                        .duration(200)
+                        .style("opacity", 0.9);
+
+                    tooltipDiv.html(d.name)
+                        .style("left", (d3.event.pageX - parentOffset.left + 10) + "px")
+                        .style("top", (d3.event.pageY - parentOffset.top - 20) + "px");
+                }).on("mouseout", function() {
+                    tooltipDiv.transition()
+                    .duration(500)
+                    .style("opacity", 0);
+                });
 
                 force.on("tick", function() {
                     link.attr("x1", function(d) {
