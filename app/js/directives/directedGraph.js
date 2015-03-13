@@ -16,7 +16,7 @@
  */
 
 angular.module('neonDemo.directives')
-.directive('directedGraph', ['ConnectionService', 'DatasetService', 'ErrorNotificationService', function(connectionService, datasetService, errorNotificationService) {
+.directive('directedGraph', ['ConnectionService', 'DatasetService', 'ErrorNotificationService', '$timeout', function(connectionService, datasetService, errorNotificationService, $timeout) {
     return {
         templateUrl: 'partials/directives/directedGraph.html',
         restrict: 'EA',
@@ -28,6 +28,8 @@ angular.module('neonDemo.directives')
             var chartOptions = $(element).find('.chart-options');
             chartOptions.toggleClass($scope.uniqueChartOptions);
 
+            element.addClass('directedGraphDirective');
+
             $scope.databaseName = "";
             $scope.tables = [];
             $scope.selectedTable = {
@@ -36,6 +38,7 @@ angular.module('neonDemo.directives')
             $scope.fieldsLabel = "Username";
             $scope.allowMoreFields = true;
             $scope.uniqueId = uuid();
+            $scope.selectedUser = "";
             $scope.errorMessage = undefined;
 
             if($scope.startingFields) {
@@ -44,9 +47,25 @@ angular.module('neonDemo.directives')
                 $scope.groupFields = [];
             }
 
-            // $scope.$watch('groupFields', function() {
-            //     $scope.render();
-            // }, true);
+            $scope.$watch('selectedUser', function() {
+                if($scope.selectedUser !== "") {
+                    $scope.groupFields.push($scope.selectedUser);
+                    $scope.selectedUser = "";
+                    $scope.render();
+                }
+            }, true);
+
+            var updateSize = function() {
+                element.find('#directed-graph-div-' + $scope.uniqueId).height(element.height() - element.find('.config-row-div').outerHeight(true) - 10);
+                return $timeout(redraw, 250);
+            };
+
+            var redraw = function() {
+                if($scope.graph) {
+                    $scope.graph.redraw();
+                }
+                $scope.resizePromise = null;
+            };
 
             $scope.initialize = function() {
                 $scope.messenger = new neon.eventing.Messenger();
@@ -61,6 +80,13 @@ angular.module('neonDemo.directives')
 
                 $scope.$on('$destroy', function() {
                     $scope.messenger.removeEvents();
+                });
+
+                element.resize(function() {
+                    if($scope.resizePromise) {
+                        $timeout.cancel($scope.resizePromise);
+                    }
+                    $scope.resizePromise = updateSize();
                 });
             };
 
@@ -83,6 +109,13 @@ angular.module('neonDemo.directives')
             $scope.displayActiveDataset = function() {
                 if(!datasetService.hasDataset()) {
                     return;
+                }
+
+                if(!$scope.graph) {
+                    $scope.graph = new charts.DirectedGraph(element[0], ('#directed-graph-div-' + $scope.uniqueId), {
+                        shiftClickHandler: $scope.shiftClickHandler,
+                        doubleClickHandler: $scope.doubleClickHandler
+                    });
                 }
 
                 $scope.databaseName = datasetService.getDatabase();
@@ -144,6 +177,8 @@ angular.module('neonDemo.directives')
                                 $scope.users.push(data.data[i].label);
                             }
                         }
+                        $scope.graph.setClickableNodes($scope.users);
+
                         next(data);
                     });
                 } else {
@@ -246,188 +281,28 @@ angular.module('neonDemo.directives')
                         }
                     }
 
-                    $scope.updateGraph({
+                    $scope.graph.setRootNodes($scope.groupFields);
+                    $scope.graph.updateGraph({
                         nodes: nodes,
                         links: links
                     });
                 }
             };
 
-            $scope.svgId = "directed-svg-" + $scope.uniqueId;
-
-            $scope.updateGraph = function(data) {
-                var graphDiv = $("." + $scope.uniqueId)[0];
-                var tooltipDiv = d3.select(graphDiv)
-                    .append("div")
-                    .attr("class", "graph-tooltip");
-                    //.style("opacity", 0);
-                var nodes = data.nodes;
-
-                var svg = d3.select("#" + $scope.svgId);
-                if(svg) {
-                    svg.remove();
-                }
-
-                var width = 600;
-                var height = 300;
-
-                var color = d3.scale.category10();
-
-                svg = d3.select("#directed-graph-div-" + $scope.uniqueId)
-                    .append("svg")
-                        .attr("id", $scope.svgId)
-                    .attr({
-                        width: "100%",
-                        height: "100%"
-                    })
-                    .attr("viewBox", "0 0 " + width + " " + height)
-                    .attr("preserveAspectRatio", "xMidYMid meet")
-                    .attr("pointer-events", "all")
-                    .call(d3.behavior.zoom().on("zoom", redraw));
-
-                var vis = svg
-                    .append('svg:g');
-
-                function redraw() {
-                    vis.attr("transform", "translate(" + d3.event.translate + ")" + " scale(" + d3.event.scale + ")");
-                }
-
-                var force = d3.layout.force()
-                    .charge(-300)
-                    .linkDistance(100)
-                    .size([width, height])
-                    .gravity(0.05);
-
-                force
-                .nodes(data.nodes);
-
-                var link;
-                if(data.links) {
-                    force.links(data.links);
-
-                    link = vis.selectAll(".link")
-                        .data(data.links)
-                    .enter().append("line")
-                        .attr("class", "link")
-                        .style("stroke-width", function(d) {
-                            return Math.sqrt(d.value);
-                        });
-                }
-
-                var node = vis.selectAll(".node")
-                    .data(data.nodes)
-                .enter().append("g")
-                    .attr("class", "node")
-                .append("circle")
-                    .attr("r", 5)
-                    .style("fill", function(d) {
-                        return color(d.group);
-                    })
-                    .call(force.drag);
-
-                vis.selectAll("g.node").selectAll("circle")
-                .append("title")
-                .text(function(n) {
-                    return n.name;
+            $scope.doubleClickHandler = function(d) {
+                $scope.$apply(function() {
+                    $scope.groupFields[0] = d.name;
+                    $scope.render();
                 });
+            };
 
-                var setupForceLayoutTick = function() {
-                    force.on("tick", function() {
-                        svg.selectAll("line").attr("x1", function(d) {
-                            return d.source.x;
-                        })
-                        .attr("y1", function(d) {
-                            return d.source.y;
-                        })
-                        .attr("x2", function(d) {
-                            return d.target.x;
-                        })
-                        .attr("y2", function(d) {
-                            return d.target.y;
-                        });
-
-                        svg.selectAll("g.node")
-                        .attr("cx", function(d) {
-                            return d.x;
-                        })
-                        .attr("cy", function(d) {
-                            return d.y;
-                        });
-
-                        nodes[0].x = width / 2;
-                        nodes[0].y = height / 2;
-                    });
-                };
-
-                var runForceLayoutSimulation = function() {
-                    force.start();
-                    var i = 0;
-                    while(force.alpha() > 0.01 && i++ < 1000) {
-                        force.tick();
-                    }
-                    force.stop();
-
-                    svg.selectAll(".node").each(function(nodeData) {
-                        nodeData.fixed = true;
-                    });
-                };
-
-                setupForceLayoutTick();
-                runForceLayoutSimulation();
-                force.start();
-
-                node.on('dblclick', function(d) {
+            $scope.shiftClickHandler = function(d) {
+                if($scope.users.indexOf(d.name) !== -1 && $scope.groupFields.indexOf(d.name) === -1) {
                     $scope.$apply(function() {
-                        $scope.groupFields[0] = d.name;
+                        $scope.groupFields.push(d.name);
+                        $scope.render();
                     });
-                }).on("click", function(d) {
-                    //d3.select("#node-click-name").text(d.name);
-                    if(d3.event.shiftKey) {
-                        if($scope.users.indexOf(d.name) !== -1 &&
-                            $scope.groupFields.indexOf(d.name) === -1) {
-                            $scope.$apply(function() {
-                                $scope.groupFields.push(d.name);
-                                $scope.render();
-                            });
-                        }
-                    }
-                }).on("mouseover", function(d) {
-                    var parentOffset = $("." + $scope.uniqueId).offset();
-
-                    tooltipDiv.transition()
-                        .duration(200)
-                        .style("opacity", 0.9);
-
-                    tooltipDiv.html(d.name)
-                        .style("left", (d3.event.pageX - parentOffset.left + 10) + "px")
-                        .style("top", (d3.event.pageY - parentOffset.top - 20) + "px");
-                }).on("mouseout", function() {
-                    tooltipDiv.transition()
-                    .duration(500)
-                    .style("opacity", 0);
-                });
-
-                force.on("tick", function() {
-                    link.attr("x1", function(d) {
-                            return d.source.x;
-                        })
-                        .attr("y1", function(d) {
-                            return d.source.y;
-                        })
-                        .attr("x2", function(d) {
-                            return d.target.x;
-                        })
-                        .attr("y2", function(d) {
-                            return d.target.y;
-                        });
-
-                    node.attr("cx", function(d) {
-                            return d.x;
-                        })
-                        .attr("cy", function(d) {
-                            return d.y;
-                        });
-                });
+                }
             };
 
             // Wait for neon to be ready, the create our messenger and intialize the view and data.
