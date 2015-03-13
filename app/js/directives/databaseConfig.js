@@ -39,7 +39,8 @@ angular.module('neonDemo.directives')
                 {
                     name: "Twitter",
                     datastoreSelect: "mongo",
-                    hostnameInput: "192.168.0.129",
+                    hostnameInput: "localhost",
+                    // hostnameInput: "192.168.0.129",
                     selectedDb: "test",
                     selectedTable: "twitter36",
                     connectOnLoad: true

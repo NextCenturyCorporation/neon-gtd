@@ -13,6 +13,7 @@ module.exports = function(grunt) {
                 'Gruntfile.js',
                 'app/js/*.js',
                 'app/js/**/*.js',
+                'test/**/*.js',
                 '!app/js/vendor/**/*.js'
             ],
             xml: {
@@ -25,6 +26,7 @@ module.exports = function(grunt) {
                         'Gruntfile.js',
                         'app/js/*.js',
                         'app/js/**/*.js',
+                        'test/**/*.js',
                         '!app/js/vendor/**/*.js'
                     ]
                 }
@@ -42,7 +44,7 @@ module.exports = function(grunt) {
                     reporter: 'console'
                 },
                 files: {
-                    src: ['Gruntfile.js', 'app/js/**/*.js']
+                    src: ['Gruntfile.js', 'app/js/**/*.js', 'test/**/*.js']
                 }
             },
             xml: {
@@ -51,7 +53,7 @@ module.exports = function(grunt) {
                     reporter: 'checkstyle'
                 },
                 files: {
-                    src: ['Gruntfile.js', 'app/js/**/*.js']
+                    src: ['Gruntfile.js', 'app/js/**/*.js', 'test/**/*.js']
                 }
             }
         },
@@ -75,6 +77,14 @@ module.exports = function(grunt) {
                     cleanBowerDir: true,
                     install: true,
                     copy: true
+                }
+            }
+        },
+
+        karma: {
+            unit: {
+                options: {
+                    configFile: 'karma.conf.js'
                 }
             }
         },
@@ -127,9 +137,10 @@ module.exports = function(grunt) {
     grunt.loadNpmTasks('grunt-contrib-clean');
     grunt.loadNpmTasks('grunt-contrib-jshint');
     grunt.loadNpmTasks('grunt-jscs');
+    grunt.loadNpmTasks('grunt-karma');
     grunt.loadNpmTasks('grunt-contrib-yuidoc');
     grunt.loadNpmTasks('grunt-war');
 
-    grunt.registerTask('test', ['jshint:console', 'jscs:console']);
+    grunt.registerTask('test', ['jshint:console', 'jscs:console', 'karma']);
     grunt.registerTask('default', ['clean', 'bower:install', 'jshint:xml', 'jscs:xml', 'yuidoc', 'war']);
 };
