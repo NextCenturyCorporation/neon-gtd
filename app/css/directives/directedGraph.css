@@ -13,6 +13,7 @@ div.draw-button-div {
 }
 
 div.config-row-div {
+    /*padding: 10px 5px 5px 5px;*/
     padding-bottom: 5px;
 }
 
@@ -27,4 +28,15 @@ div.graph-tooltip {
     border: 0px;
     border-radius: 8px;
     pointer-events: none;
+}
+
+div.directed-graph {
+    height: 100%;
+    width: 100%;
+}
+
+.directedGraphDirective {
+    padding: 20px;
+    height: 100%;
+    width: 100%;
 }
