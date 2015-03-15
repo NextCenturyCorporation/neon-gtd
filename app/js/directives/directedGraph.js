@@ -39,6 +39,7 @@ angular.module('neonDemo.directives')
             $scope.allowMoreFields = true;
             $scope.uniqueId = uuid();
             $scope.selectedUser = "";
+            $scope.filterKey = "graph-" + uuid();
             $scope.errorMessage = undefined;
 
             if($scope.startingFields) {
@@ -49,9 +50,11 @@ angular.module('neonDemo.directives')
 
             $scope.$watch('selectedUser', function() {
                 if($scope.selectedUser !== "") {
-                    $scope.groupFields.push($scope.selectedUser);
-                    $scope.selectedUser = "";
-                    $scope.render();
+                    if($scope.messenger && $scope.groupFields.length) {
+                        $scope.messenger.removeFilter($scope.filterKey);
+                    }
+                    $scope.groupFields = [];
+                    $scope.addFilter($scope.selectedUser);
                 }
             }, true);
 
@@ -80,6 +83,9 @@ angular.module('neonDemo.directives')
 
                 $scope.$on('$destroy', function() {
                     $scope.messenger.removeEvents();
+                    if($scope.groupFields.length) {
+                        $scope.messenger.removeFilter($scope.filterKey);
+                    }
                 });
 
                 element.resize(function() {
@@ -113,8 +119,7 @@ angular.module('neonDemo.directives')
 
                 if(!$scope.graph) {
                     $scope.graph = new charts.DirectedGraph(element[0], ('#directed-graph-div-' + $scope.uniqueId), {
-                        shiftClickHandler: $scope.shiftClickHandler,
-                        doubleClickHandler: $scope.doubleClickHandler
+                        shiftClickHandler: $scope.shiftClickHandler
                     });
                 }
 
@@ -124,21 +129,55 @@ angular.module('neonDemo.directives')
                 $scope.data = [];
 
                 $scope.queryForUsers(function(data) {
-                    //$scope.populateDropdown(data.data);
                     $scope.render(data);
                 });
             };
 
-            $scope.removeField = function(field) {
-                var index = $scope.groupFields.indexOf(field);
+            $scope.addFilter = function(value) {
+                $scope.selectedUser = "";
+
+                $scope.groupFields.push(value);
+
+                if($scope.messenger) {
+                    var filter = $scope.createFilter();
+                    $scope.messenger.addFilter($scope.filterKey, filter, function() {
+                        $scope.render();
+                    });
+                }
+            };
+
+            $scope.createFilter = function() {
+                var filterWhereClause = neon.query.where('label', '=', $scope.groupFields[0]);
+                for(var i = 1; i < $scope.groupFields.length; ++i) {
+                    var filterOrClause = neon.query.where('label', '=', $scope.groupFields[i]);
+                    filterWhereClause = neon.query.or(filterWhereClause, filterOrClause);
+                }
+                return new neon.query.Filter().selectFrom($scope.databaseName, $scope.selectedTable.name).where(filterWhereClause);
+            }
+
+            $scope.removeFilter = function(value) {
+                var index = $scope.groupFields.indexOf(value);
                 if(index !== -1) {
                     $scope.groupFields.splice(index, 1);
-                    $scope.render();
+                }
+
+                if($scope.messenger) {
+                    if($scope.groupFields.length === 0) {
+                        $scope.messenger.removeFilter($scope.filterKey, function() {
+                            $scope.render();
+                        });
+                    } else {
+                        var filter = $scope.createFilter();
+                        $scope.messenger.replaceFilter($scope.filterKey, filter, function() {
+                            $scope.render();
+                        });
+                    }
                 }
             };
 
             $scope.render = function(data) {
                 if($scope.groupFields.length > 0) {
+                    // TODO Why is this here?
                     if($scope.groupFields[$scope.groupFields.length - 1] === "") {
                         $scope.groupFields.splice($scope.groupFields.length - 1, 1);
                     }
@@ -162,13 +201,11 @@ angular.module('neonDemo.directives')
 
             $scope.queryForUsers = function(next) {
                 var query = new neon.query.Query()
-                    .selectFrom($scope.databaseName, $scope.selectedTable.name);
-
-                //query = query.groupBy.apply(query, $scope.groupFields);
-                query = query.withFields(["label"]);
+                    .selectFrom($scope.databaseName, $scope.selectedTable.name)
+                    .withFields(["label"]);
+                query.ignoreFilters([$scope.filterKey]);
 
                 var connection = connectionService.getActiveConnection();
-
                 if(connection) {
                     connection.executeQuery(query, function(data) {
                         $scope.users = [];
@@ -190,7 +227,6 @@ angular.module('neonDemo.directives')
                 var query = new neon.query.Query()
                     .selectFrom($scope.databaseName, $scope.selectedTable.name);
 
-                //query = query.groupBy.apply(query, $scope.groupFields);
                 var where = neon.query.where('label', '=', $scope.groupFields[0]);
                 var orWhere;
                 for(var i = 1; i < $scope.groupFields.length; i++) {
@@ -198,9 +234,9 @@ angular.module('neonDemo.directives')
                     where = neon.query.or(where, orWhere);
                 }
                 query = query.where(where);
+                query.ignoreFilters([$scope.filterKey]);
 
                 var connection = connectionService.getActiveConnection();
-
                 if(connection) {
                     d3.select("#node-click-name").text("");
                     connection.executeQuery(query, $scope.calculateGraphData, function(response) {
@@ -289,19 +325,18 @@ angular.module('neonDemo.directives')
                 }
             };
 
-            $scope.doubleClickHandler = function(d) {
-                $scope.$apply(function() {
-                    $scope.groupFields[0] = d.name;
-                    $scope.render();
-                });
-            };
-
-            $scope.shiftClickHandler = function(d) {
-                if($scope.users.indexOf(d.name) !== -1 && $scope.groupFields.indexOf(d.name) === -1) {
-                    $scope.$apply(function() {
-                        $scope.groupFields.push(d.name);
-                        $scope.render();
-                    });
+            $scope.shiftClickHandler = function(item) {
+                if($scope.users.indexOf(item.name) !== -1) {
+                    if($scope.groupFields.indexOf(item.name) === -1) {
+                        $scope.$apply(function() {
+                            $scope.addFilter(item.name);
+                        });
+                    }
+                    else {
+                        $scope.$apply(function() {
+                            $scope.removeFilter(item.name);
+                        });
+                    }
                 }
             };
 

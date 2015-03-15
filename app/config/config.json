@@ -76,6 +76,12 @@
         "sizeY": 2,
         "type": "query-results-table",
         "icon": "img/visualizations/ViewData64.png"
+    }, {
+        "name": "Graph",
+        "sizeX": 4,
+        "sizeY": 2,
+        "type": "directed-graph",
+        "icon": "img/visualizations/Graph64.png"
     }],
 
     "datasets": [{
@@ -279,6 +285,58 @@
                 "color_by": "lang_primary",
                 "size_by": "foo",
                 "sort_by": "created_at"
+            }
+        }]
+    },
+
+    {
+        "name": "QCR",
+        "datastore": "mongo",
+        "hostname": "localhost",
+        "database": "test",
+        "tables": [{
+            "name": "twitter36",
+            "fields": [{
+                "columnName": "_id",
+                "prettyName": "Database ID"
+            }, {
+                "columnName": "created_at",
+                "prettyName": "Created At"
+            }, {
+                "columnName": "screen_name",
+                "prettyName": "Screen Name"
+            }, {
+                "columnName": "lang",
+                "prettyName": "Language"
+            }, {
+                "columnName": "hashtags",
+                "prettyName": "Hashtags"
+            }, {
+                "columnName": "text",
+                "prettyName": "Text"
+            }],
+            "mappings": {
+                "date": "created_at"
+            }
+        }, {
+            "name": "ff",
+            "fields": [{
+                "columnName": "_id",
+                "prettyName": "Database ID"
+            }, {
+                "columnName": "attributeList",
+                "prettyName": "Attribute List"
+            }, {
+                "columnName": "id",
+                "prettyName": "User ID"
+            }, {
+                "columnName": "label",
+                "prettyName": "Label"
+            }, {
+                "columnName": "magnitude",
+                "prettyName": "Magnitude"
+            }],
+            "mappings": {
             }
         }]
     }],
