@@ -100,10 +100,10 @@ angular.module('neonDemo.directives')
                 icon: 'img/visualizations/ViewData64.png'
             },{
                 name: 'Graph',
-                sizeX: 3,
+                sizeX: 4,
                 sizeY: 2,
                 type: 'directed-graph',
-                icon: ''
+                icon: 'img/visualizations/Graph64.png'
             }];
 
             /**

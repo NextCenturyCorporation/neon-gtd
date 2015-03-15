@@ -31,6 +31,10 @@ charts.DirectedGraph.prototype.updateGraph = function(data) {
     var me = this;
     me.data = data;
 
+    // Reset element here because it may not get set correctly in the constructor due to an odd race
+    // condition issue with angularjs setting the graph's id using $scope.uniqueId.
+    me.element = d3.select(me.rootElement).select(me.chartSelector);
+
     var nodes = data.nodes;
 
     var height = me.getRenderHeight();

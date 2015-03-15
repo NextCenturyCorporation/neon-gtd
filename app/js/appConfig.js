@@ -47,6 +47,17 @@ neon.SERVER_URL = "/neon";
 neon.DIG_ENABLED = false;
 neon.DIG_SERVER = "http://localhost:9000";
 
+// Database information for the visualizations.
+neon.DATABASE_NAME = "test";
+neon.TABLE_NAME = "twitter36";
+
+// Database information for the D3 graph visualization.
+neon.GRAPH_DATASTORE = "mongo";
+neon.GRAPH_HOSTNAME = "localhost";
+neon.GRAPH_DATABASE_NAME = "test";
+neon.GRAPH_TABLE_NAME = "ff";
+neon.GRAPH_FILTER_FIELD = "screen_name";
+
 // Configure xdata logger
 var XDATA = {};
 XDATA.activityLogger = new activityLogger('lib/xdatalogger/js/draper.activity_worker-2.1.1.js');
