@@ -13,7 +13,7 @@ angular.module('neonDemo.directives')
             el.addClass('databaseConfig');
 
             $scope.showDbTable = false;
-            $scope.selectedDb = null;
+            $scope.selectedDB = null;
             $scope.selectedTable = null;
             $scope.databases = [];
             $scope.dbTables = [];
@@ -26,28 +26,28 @@ angular.module('neonDemo.directives')
                     name: "Earthquakes",
                     datastoreSelect: "mongo",
                     hostnameInput: "localhost",
-                    selectedDb: "test",
+                    selectedDB: "test",
                     selectedTable: "earthquakes"
                 },
                 {
                     name: "South America Tweets",
                     datastoreSelect: "mongo",
                     hostnameInput: "localhost",
-                    selectedDb: "test",
+                    selectedDB: "test",
                     selectedTable: "alibaverstock130k"
                 },
                 {
                     name: "Twitter",
                     datastoreSelect: "mongo",
                     hostnameInput: "localhost",
-                    selectedDb: "test",
+                    selectedDB: "test",
                     selectedTable: "gbDate"
                 },
                 {
                     name: "Traffic",
                     datastoreSelect: "mongo",
                     hostnameInput: "localhost",
-                    selectedDb: "test",
+                    selectedDB: "test",
                     selectedTable: "most_active"
                 }
             ];
@@ -94,7 +94,7 @@ angular.module('neonDemo.directives')
                 // Clear the table names to force re-selection by the user.
                 $scope.databases = [];
                 $scope.dbTables = [];
-                $scope.selectedDb = null;
+                $scope.selectedDB = null;
                 $scope.selectedTable = null;
 
                 // Flag that we're connected for the front-end controls enable/disable code.
@@ -122,7 +122,7 @@ angular.module('neonDemo.directives')
                 $scope.connectToDataServer();
 
                 // Set database name and get list of tables.
-                $scope.selectedDb = server.selectedDb;
+                $scope.selectedDB = server.selectedDB;
                 $scope.selectDatabase();
 
                 // Set table name and initiate connection.
@@ -138,10 +138,10 @@ angular.module('neonDemo.directives')
             $scope.selectDatabase = function() {
                 XDATA.activityLogger.logUserActivity('User selected new database',
                     'connect', XDATA.activityLogger.WF_GETDATA, {
-                        database: $scope.selectedDb
+                        database: $scope.selectedDB
                     });
 
-                if($scope.selectedDb) {
+                if($scope.selectedDB) {
                     $scope.connection.getTableNames($scope.selectedDB, function(tables) {
                         $scope.$apply(function() {
                             populateTableDropdown(tables);
@@ -157,11 +157,11 @@ angular.module('neonDemo.directives')
                     'connect', XDATA.activityLogger.WF_GETDATA, {
                         table: $scope.selectedTable
                     });
-                $scope.connection.getFieldNames($scope.selectedTable, function(result) {
+                $scope.connection.getFieldNames($scope.selectedDB, $scope.selectedTable, function(result) {
                     $scope.$apply(function() {
                         $scope.tableFields = result;
                     });
-                    connectionService.connectToDataset($scope.datastoreSelect, $scope.hostnameInput, $scope.selectedDb, $scope.selectedTable);
+                    connectionService.connectToDataset($scope.datastoreSelect, $scope.hostnameInput, $scope.selectedDB, $scope.selectedTable);
                     $scope.applyDefaultFields();
                 });
             };
@@ -214,7 +214,7 @@ angular.module('neonDemo.directives')
                     'connect', XDATA.activityLogger.WF_GETDATA, {
                         datastore: $scope.datastoreSelect,
                         hostname: $scope.hostnameInput,
-                        database: $scope.selectedDb,
+                        database: $scope.selectedDB,
                         table: $scope.selectedTable
                     });
             };
@@ -225,7 +225,7 @@ angular.module('neonDemo.directives')
                 var message = {
                     datastore: $scope.datastoreSelect,
                     hostname: $scope.hostnameInput,
-                    database: $scope.selectedDb,
+                    database: $scope.selectedDB,
                     table: $scope.selectedTable
                 };
                 $scope.messenger.publish(neon.eventing.channels.ACTIVE_DATASET_CHANGED, message);

@@ -225,7 +225,7 @@ angular.module('neonDemo.directives')
                         var info = connectionService.getActiveDataset();
                         $scope.databaseName = info.database;
                         $scope.tableName = info.table;
-                        connection.getFieldNames($scope.tableName, function(results) {
+                        connection.getFieldNames($scope.databaseName, $scope.tableName, function(results) {
                             $scope.$apply(function() {
                                 populateFieldNames(results);
                                 $scope.sortByField = connectionService.getFieldMapping("sort_by");
