@@ -236,6 +236,14 @@ angular.module('neonDemo.directives')
             // Wait for neon to be ready, the create our messenger and intialize the view and data.
             neon.ready(function() {
                 $scope.initialize();
+
+                for(var i = 0; i < $scope.servers.length; ++i) {
+                    if($scope.servers[i].connectOnLoad) {
+                        $scope.connectToPreset($scope.servers[i]);
+                        $scope.clearPopover = 'sr-only';
+                        break;
+                    }
+                }
             });
         }
     };

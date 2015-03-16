@@ -27,6 +27,7 @@ angular.module('neonDemo.directives')
             el.addClass('countByDirective');
 
             $scope.countField = "";
+            $scope.count = 0;
             $scope.fields = [];
             $scope.tableId = 'query-results-' + uuid();
             $scope.filterKey = "countby-" + uuid();
@@ -85,7 +86,9 @@ angular.module('neonDemo.directives')
             function createOptions(data) {
                 var options = {
                     data: data.data,
+                    columns: createColumns(data.data),
                     gridOptions: {
+                        enableTextSelectionOnCells: true,
                         forceFitColumns: true,
                         enableColumnReorder: true,
                         forceSyncScrolling: true
@@ -94,6 +97,28 @@ angular.module('neonDemo.directives')
 
                 return options;
             }
+
+            var createColumns = function(data) {
+                var columns = tables.createColumns(data);
+                for(var i = 0; i < columns.length; ++i) {
+                    // Since forceFitColumns is enabled, setting this width will force the columns to use as much
+                    // space as possible, which is necessary to keep the first column (dig) as small as possible.
+                    columns[i].width = $tableDiv.outerWidth();
+                }
+
+                if(neon.DIG_ENABLED) {
+                    var digColumn = {
+                        name: "",
+                        field: "dig",
+                        width: "15",
+                        cssClass: "centered",
+                        ignoreClicks: true
+                    };
+                    columns.splice(0, 0, digColumn);
+                }
+
+                return columns;
+            };
 
             /**
              * Saves the given field and value as the current filter.
@@ -207,6 +232,21 @@ angular.module('neonDemo.directives')
                 return dataObject;
             };
 
+            $scope.addDigUrlColumnData = function(data) {
+                data.data.forEach(function(row) {
+                    var field = $scope.countField;
+                    var value = row[$scope.countField];
+                    var query = $scope.countField + "=" + row[$scope.countField];
+                    var element = "<form action=\"" + neon.DIG_SERVER + "/list\" method=\"get\" target=\"" + query + "\">" +
+                        "<input type=\"hidden\" name=\"field\" value=\"" + field + "\">" +
+                        "<input type=\"hidden\" name=\"value\" value=\"" + value + "\">" +
+                        "<button class=\"hidden-button\" type=\"submit\" title=\"" + query + "\">" +
+                        "<span class=\"glyphicon glyphicon-new-window\"></span></button></form>";
+                    row.dig = element;
+                });
+                return data;
+            };
+
             /**
              * Saves the given field and value as the current filter for the
              * dashboard and this widget.
@@ -236,7 +276,8 @@ angular.module('neonDemo.directives')
              */
             $scope.addOnClickListener = function() {
                 $scope.table.addOnClickListener(function(columns, row) {
-                    var field = columns[0].field;
+                    var columnIndex = neon.DIG_ENABLED ? 1 : 0;
+                    var field = columns[columnIndex].field;
 
                     // If the user clicks on the filtered row/cell, clear the filter.
                     if($scope.filterSet !== undefined) {
@@ -260,9 +301,18 @@ angular.module('neonDemo.directives')
              */
             $scope.updateData = function(queryResults) {
                 var cleanData = $scope.stripIdField(queryResults);
+
+                // If the table is recreated while sorting is set, we must redo the sorting on the new table.
                 var sortInfo = $scope.table ? $scope.table.sortInfo_ : {};
 
                 $scope.tableOptions = createOptions(cleanData);
+
+                // Add the DIG URLs after the table options have been created because it already includes the column.
+                if(neon.DIG_ENABLED) {
+                    cleanData = $scope.addDigUrlColumnData(cleanData);
+                }
+
+                $scope.count = cleanData.data.length;
                 $scope.table = new tables.Table("#" + $scope.tableId, $scope.tableOptions).draw();
                 $scope.addOnClickListener();
                 updateSize();

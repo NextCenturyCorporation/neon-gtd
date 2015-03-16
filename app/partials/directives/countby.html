@@ -8,13 +8,14 @@
 
     <div class="clearfix"></div>
 
-    <div class="count-by-field-label col-xs-4">
-        <h4 class="pull-left">Count Field</h4>
-    </div>
     <div class="count-by-field-selector col-xs-8">
         <select class="form-control" ng-model="countField" ng-disabled="!(fields.length > 0)" ng-options="field for field in fields">
             <option disabled selected value="">Please choose a field</option>
         </select>
+    </div>
+
+    <div class="count-by-field-label col-xs-4">
+        <h4 class="count-by-field-count pull-right"><span class="count text-primary ng-binding" ng-bind="count"></span> values</h4>
     </div>
 </div>
 

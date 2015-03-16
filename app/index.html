@@ -92,7 +92,15 @@
             <div filter-builder></div>
 
             <!-- See Data tray -->
-            <div query-results-table show-data="seeData"></div>
+            <div class="tray-mirror data-tray collapse">
+                <div class="inner" style="height: 394px"></div>
+            </div>
+
+            <div id="data-tray" class="tray data-tray panel panel-default collapse">
+                <div class="container panel-body">
+                    <div query-results-table show-data="seeData"></div>
+                </div>
+            </div>
 
             <!-- Query Builder tray -->
             <!-- <div>
@@ -189,6 +197,7 @@
         <script src="lib/jquery.tagcloud/js/jquery.tagcloud.js"></script>
         <script src="lib/threedubmedia.jquery.event/js/jquery.event.drag.js"></script>
         <script src="lib/threedubmedia.jquery.event/js/jquery.event.drop.js"></script>
+        <script src="lib/jquery.linky/js/jquery.linky.min.js"></script>
         <!-- <script src="lib/jquery/jquery-ui-1.8.16.custom.min.js"></script> -->
         <script src="lib/jquery-ui/js/jquery-ui.min.js"></script>
         <script src="js/vendor/slick-grid/js/slick.core.js"></script>
@@ -231,6 +240,9 @@
         <script src="js/directives/queryResultsTable.js"></script>
         <script src="js/directives/stackedBarchart.js"></script>
         <script src="js/directives/tagCloud.js"></script>
+        <script src="js/time/dateBucketizer.js"></script>
+        <script src="js/time/monthBucketizer.js"></script>
+        <script src="js/time/yearBucketizer.js"></script>
         <script src="js/directives/timelineSelectorChart.js"></script>
         <script src="js/directives/timelineSelector.js"></script>
         <script src="js/directives/visualizationWidget.js"></script>

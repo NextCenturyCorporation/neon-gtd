@@ -13,11 +13,21 @@
  * limitations under the License.
  *
  */
+
 .countByDirective {
   margin: 0px;
   padding: 20px;
   height: 100%;
   width: 100%;
+}
+
+.count-by-header {
+    margin-bottom: 5px;
+}
+
+.count-by-field-count {
+    margin-top: 5px;
+    margin-bottom: 0px;
 }
 
 .data-tray .refresh{
@@ -42,10 +52,15 @@
     float: none;
 }
 
-.count-by-grid .slick-row{
+.count-by-grid .slick-cell {
+    cursor: pointer;
+}
+
+.count-by-grid .slick-row {
     background: #FAFAFA;
 }
-.count-by-grid .slick-row.odd{
+
+.count-by-grid .slick-row.odd {
     background: #F1F1F1;
 }
 
@@ -54,7 +69,7 @@
 }
 
 /* Will override opacity 0.5 rule due to specificity and cascade. */
-.count-by-grid .slick-row.active {
+.count-by-grid.filtered .slick-row.active {
     background: #88d292;
     opacity: 1.0;
 }
@@ -79,54 +94,6 @@
     background: #cccccc;
 }
 
-@media (max-width: 767px) {
-    .data-tray h4.pull-left,
-    .data-tray .form-inline,
-    .data-tray .form-inline .form-input-group > label{
-        float: none !important;
-    }
-    .data-tray .form-inline{
-        margin-top: 15px !important;
-        margin-bottom: 10px;
-    }
-    .data-tray .form-inline .form-group {
-        display: inline-block;
-        margin-bottom: 0;
-        vertical-align: middle;
-        width: 20%;
-    }
-    .data-tray .form-inline .form-group > label,
-    .data-tray .form-inline .form-input-group > label{
-        display: block;
-        margin-top: 0;
-        margin-left: 0;
-    }
-    .data-tray .form-inline .form-input-group{
-        width: 55%;
-        padding-right: 10px;
-    }
-    .data-tray .form-inline .form-control {
-        display: inline-block;
-        width: 100%;
-        vertical-align: middle;
-    }
-    .data-tray .input-group .form-control {
-        width: 100%;
-    }
-    .data-tray .refresh {
-        margin-top: 21px;
-    }
-}
-@media (min-width: 768px) and (max-width: 991px) {
-    .data-tray h4.pull-left,
-    .data-tray .form-inline{
-        float: none !important;
-    }
-    .data-tray .form-inline{
-        margin-bottom: 5px;
-    }
-}
-
 .visualization-widget .countByDirective {
   height: 100%;
   width: 100%;
@@ -140,5 +107,20 @@
 .filter-reset {
     margin-bottom: 5px;
     margin-right: 15px;
+}
+
+.centered {
+    text-align: center;
+}
+
+.hidden-button {
+    background-color: inherit;
+    border: 0;
+    padding: 0;
+}
+
+span.glyphicon:focus,
+span.glyphicon:hover {
+    color: #39b54a;
 }
 

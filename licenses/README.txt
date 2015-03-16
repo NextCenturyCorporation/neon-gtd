@@ -50,9 +50,11 @@ MIT/X11 (mit.txt)
   -- jquery.min.js  v1.11.1
 - jQuery-ui
   -- jquery-ui.min.js  v1.10.4
-- jQuery Event drag-drop
-  -- jquery.event.drag.js  v2.2
-  -- jquery.event.drop.js  v2.2
+- threedubmedia.jquery.event
+  -- jquery.event.drag.js
+  -- jquery.event.drop.js
+- jQuery Linky
+  -- jquery.linky.min.js
 - Openlayers Heatmap
   -- heatmap.js  1.0
   -- heatmap-openlayers.js

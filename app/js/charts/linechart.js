@@ -147,8 +147,9 @@ charts.LineChart.prototype.calculateColor = function(series, total) {
     var index = -1;
 
     for(var i = this.colors.length - 1; i > -1; i--) {
-        if(this.colors[i].series === series)
+        if(this.colors[i].series === series) {
             index = i;
+        }
     }
 
     // store the color in the registry so we know the color/series mappings
@@ -156,13 +157,14 @@ charts.LineChart.prototype.calculateColor = function(series, total) {
         this.colors[index].color = color;
         this.colors[index].total = total;
         this.colors[index].hidden = hidden;
-    }else
+    } else {
         this.colors.push({
             color: color,
             series: series,
             total: total,
             hidden: hidden
-    });
+        });
+    }
 
     return color;
 };
@@ -195,8 +197,9 @@ charts.LineChart.prototype.drawLine = function(opts) {
     //get list of all data
     for(i = 0; i < opts.length; i++) {
         this.calculateColor(opts[i].series, opts[i].total);
-        if(this.hiddenSeries.indexOf(opts[i].series) === -1)
+        if(this.hiddenSeries.indexOf(opts[i].series) === -1) {
             fullDataSet = fullDataSet.concat(opts[i].data);
+        }
     }
 
     me.x = d3.time.scale.utc()
@@ -269,7 +272,9 @@ charts.LineChart.prototype.drawLine = function(opts) {
     var hoverSeries = [];
     var hoverCircles = {};
     for(i = (opts.length - 1); i > -1; i--) {
-        if(this.hiddenSeries.indexOf(opts[i].series) >= 0) continue;
+        if(this.hiddenSeries.indexOf(opts[i].series) >= 0) {
+            continue;
+        }
         cls = (opts[i].series ? " " + opts[i].series : "");
         data = opts[i].data;
 
@@ -322,8 +327,9 @@ charts.LineChart.prototype.drawLine = function(opts) {
             var func = function(d) {
                 return me.x(d.date);
             };
-            if(data.length === 1)
+            if(data.length === 1) {
                 func = me.width / 2;
+            }
 
             // Hide circle if point is a 0
             var isZero = function(d) {
@@ -430,11 +436,14 @@ charts.LineChart.prototype.drawLine = function(opts) {
             html = '<span class="tooltip-date">' + format(closerDate) + '</span>';
 
             for(var i = 0; i < opts.length; i++) {
-                if(me.hiddenSeries.indexOf(opts[i].series) >= 0) continue;
+                if(me.hiddenSeries.indexOf(opts[i].series) >= 0) {
+                    continue;
+                }
                 var color = me.calculateColor(opts[i].series, opts[i].total);
                 var xPos = me.x(closerDate);
-                if(opts[i].data.length === 1)
+                if(opts[i].data.length === 1) {
                     xPos = me.width / 2;
+                }
 
                 hoverCircles[opts[i].series]
                     .attr("stroke-opacity", 1)

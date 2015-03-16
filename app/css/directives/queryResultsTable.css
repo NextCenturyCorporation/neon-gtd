@@ -14,18 +14,42 @@
  *
  */
 
+.query-results-directive {
+    margin: 0px;
+    height: 100%;
+    width: 100%;
+}
+
+.visualization-widget .query-results-directive {
+    padding: 20px;
+}
+
+.count-header {
+    margin: 5px 0px;
+}
+
+/* Needed to align with .tray .container > .pull-right rule from style.css. */
+.tray .container .count-header {
+    margin-top: 10px;
+}
+
 .data-tray .refresh{
     margin-left: 10px;
 }
 
 .query-results-grid {
-    min-height: 200px;
-    height: 300px;
+    min-height: 125px;
     margin: 10px 0;
     background-color: #F1F1F1;
     border: 1px solid #CCCCCC;
     border-radius: 2px;
     box-shadow: 0 1px 4px rgba(154, 154, 154, 0.2);
+}
+
+/* Set specific rules for the collapsable version of the grid. */
+.tray .container .query-results-grid {
+    min-height: 200px;
+    height: 300px;
 }
 
 .query-results-grid, .query-results-grid:before, .query-results-grid:after, .query-results-grid *, .query-results-grid *:before, .query-results-grid *:after {
