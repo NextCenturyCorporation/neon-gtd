@@ -46,7 +46,7 @@ angular.module('neonDemo.directives')
             element.addClass('timeline-selector');
 
             // Defaulting the expected date field to 'date'.
-            $scope.dateField = 'date';
+            $scope.dateField = 'created_at';
 
             // Default our time data to an empty array.
             $scope.data = [];
@@ -297,7 +297,7 @@ angular.module('neonDemo.directives')
              */
             $scope.queryForChartData = function() {
                 $scope.dateField = connectionService.getFieldMapping("date");
-                $scope.dateField = $scope.dateField || 'date';
+                $scope.dateField = $scope.dateField || 'created_at';
 
                 var query = new neon.query.Query()
                     .selectFrom($scope.databaseName, $scope.tableName)
