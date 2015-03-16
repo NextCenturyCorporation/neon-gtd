@@ -91,7 +91,7 @@ tables.createColumns = function(data) {
             }
             // This is slightly incorrect since we're using variable-width font but calculating the width of each cell
             // by inserting it into a DOM element using jQuery costs too much time.
-            if(columnNameToLongestText[key].length < row[key].length) {
+            if(row[key] && columnNameToLongestText[key].length < row[key].length) {
                 columnNameToLongestText[key] = row[key];
             }
         });
