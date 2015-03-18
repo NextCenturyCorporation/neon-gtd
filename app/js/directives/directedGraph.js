@@ -16,14 +16,16 @@
  */
 
 angular.module('neonDemo.directives')
-.directive('directedGraph', ['ConnectionService', function(connectionService) {
+.directive('directedGraph', ['ConnectionService', 'ErrorNotificationService', function(connectionService, errorNotificationService) {
     return {
         templateUrl: 'partials/directives/directedGraph.html',
         restrict: 'EA',
         scope: {
             startingFields: '='
         },
-        link: function($scope) {
+        link: function($scope, element) {
+            $scope.errorMessage = undefined;
+
             if($scope.startingFields) {
                 $scope.groupFields = $scope.startingFields;
             } else {
@@ -71,6 +73,11 @@ angular.module('neonDemo.directives')
             };
 
             $scope.queryForData = function() {
+                if($scope.errorMessage) {
+                    errorNotificationService.hideErrorMessage($scope.errorMessage);
+                    $scope.errorMessage = undefined;
+                }
+
                 var query = new neon.query.Query()
                     .selectFrom($scope.databaseName, $scope.tableName);
 
@@ -80,7 +87,13 @@ angular.module('neonDemo.directives')
 
                 if(connection) {
                     d3.select("#node-click-name").text("");
-                    connection.executeQuery(query, $scope.calculateGraphData);
+                    connection.executeQuery(query, $scope.calculateGraphData, function(response) {
+                        $scope.updateGraph({
+                            nodes: [],
+                            links: []
+                        });
+                        $scope.errorMessage = errorNotificationService.showErrorMessage(element, response.responseJSON.error, response.responseJSON.stackTrace);
+                    });
                 } else {
                     d3.select("#node-click-name").text("No database connection.");
                 }

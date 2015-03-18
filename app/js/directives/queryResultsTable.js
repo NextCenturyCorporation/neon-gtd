@@ -27,8 +27,8 @@
  * @constructor
  */
 angular.module('neonDemo.directives')
-.directive('queryResultsTable', ['ConnectionService',
-    function(connectionService) {
+.directive('queryResultsTable', ['ConnectionService', 'ErrorNotificationService',
+    function(connectionService, errorNotificationService) {
     return {
         templateUrl: 'partials/directives/queryResultsTable.html',
         restrict: 'EA',
@@ -57,7 +57,7 @@ angular.module('neonDemo.directives')
             $scope.sortDirection = neon.query.ASCENDING;
             $scope.limit = 500;
             $scope.totalRows = 0;
-            $scope.error = '';
+            $scope.errorMessage = undefined;
 
             // Default our data table to be empty.  Generate a unique ID for it
             // and pass that to the tables.Table object.
@@ -268,6 +268,11 @@ angular.module('neonDemo.directives')
              * @method queryForData
              */
             $scope.queryForData = function() {
+                if($scope.errorMessage) {
+                    errorNotificationService.hideErrorMessage($scope.errorMessage);
+                    $scope.errorMessage = undefined;
+                }
+
                 if($scope.showData) {
                     var connection = connectionService.getActiveConnection();
                     if(connection) {
@@ -280,6 +285,12 @@ angular.module('neonDemo.directives')
                                 $scope.updateData(queryResults);
                                 XDATA.activityLogger.logSystemActivity('DataView - rendered data');
                             });
+                        }, function(response) {
+                            XDATA.activityLogger.logSystemActivity('DataView - received error in query for data');
+                            $scope.updateData({
+                                data: []
+                            });
+                            $scope.errorMessage = errorNotificationService.showErrorMessage(element, response.responseJSON.error, response.responseJSON.stackTrace);
                         });
                     }
                 }
@@ -303,6 +314,9 @@ angular.module('neonDemo.directives')
                         }
                         XDATA.activityLogger.logSystemActivity('DataView - received total; updating view');
                     });
+                }, function(response) {
+                    XDATA.activityLogger.logSystemActivity('DataView - received error in query for total rows');
+                    $scope.totalRows = 0;
                 });
             };
 

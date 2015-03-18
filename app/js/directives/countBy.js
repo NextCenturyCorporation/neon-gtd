@@ -17,7 +17,7 @@
  */
 
 angular.module('neonDemo.directives')
-.directive('countBy', ['ConnectionService', function(connectionService) {
+.directive('countBy', ['ConnectionService', 'ErrorNotificationService', function(connectionService, errorNotificationService) {
     return {
         templateUrl: 'partials/directives/countby.html',
         restrict: 'EA',
@@ -32,6 +32,7 @@ angular.module('neonDemo.directives')
             $scope.tableId = 'query-results-' + uuid();
             $scope.filterKey = "countby-" + uuid();
             $scope.filterSet = undefined;
+            $scope.errorMessage = undefined;
 
             var $tableDiv = $(el).find('.count-by-grid');
             $tableDiv.attr("id", $scope.tableId);
@@ -42,7 +43,8 @@ angular.module('neonDemo.directives')
              * @private
              */
             var updateSize = function() {
-                $('#' + $scope.tableId).height(el.height() - $(el).find('.count-by-header').outerHeight(true));
+                // Subtract an additional 2 pixels from the table height to account for the its border.
+                $('#' + $scope.tableId).height(el.height() - $(el).find('.count-by-header').outerHeight(true) - 2);
                 if($scope.table) {
                     $scope.table.refreshLayout();
                 }
@@ -203,16 +205,27 @@ angular.module('neonDemo.directives')
                     return;
                 }
 
+                if($scope.errorMessage) {
+                    errorNotificationService.hideErrorMessage($scope.errorMessage);
+                    $scope.errorMessage = undefined;
+                }
+
                 var connection = connectionService.getActiveConnection();
                 if(connection) {
                     var query = $scope.buildQuery();
 
                     XDATA.activityLogger.logSystemActivity('CountBy - query for data');
                     connection.executeQuery(query, function(queryResults) {
-                        XDATA.activityLogger.logSystemActivity('CountBy - received data');
                         $scope.$apply(function() {
+                            XDATA.activityLogger.logSystemActivity('CountBy - received data');
                             $scope.updateData(queryResults);
                             XDATA.activityLogger.logSystemActivity('CountBy - rendered data');
+                        });
+                    }, function(response) {
+                        XDATA.activityLogger.logSystemActivity('CountBy - query failed');
+                        $scope.errorMessage = errorNotificationService.showErrorMessage(el, response.responseJSON.error, response.responseJSON.stackTrace);
+                        $scope.updateData({
+                            data: []
                         });
                     });
                 }
