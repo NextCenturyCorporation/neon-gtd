@@ -44,7 +44,19 @@ DEMO_CONFIG.opencpu.useAlerts = false;
 // If the neon application is loaded elsewhere, this can be changed as in the following example:
 // neon.SERVER_URL = "http://localhost:8080/neon"
 neon.SERVER_URL = "/neon";
-neon.DIG_SERVER = "http://10.1.93.199:8080"
+neon.DIG_ENABLED = false;
+neon.DIG_SERVER = "http://localhost:9000";
+
+// Database information for the visualizations.
+neon.DATABASE_NAME = "test";
+neon.TABLE_NAME = "twitter36";
+
+// Database information for the D3 graph visualization.
+neon.GRAPH_DATASTORE = "mongo";
+neon.GRAPH_HOSTNAME = "localhost";
+neon.GRAPH_DATABASE_NAME = "test";
+neon.GRAPH_TABLE_NAME = "ff";
+neon.GRAPH_FILTER_FIELD = "screen_name";
 
 // Configure xdata logger
 var XDATA = {};

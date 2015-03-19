@@ -86,10 +86,13 @@ angular.module('neonDemo.controllers')
         type: 'timeline-selector'
     }, {
         id: uuid(),
-        sizeX: 4,
+        sizeX: 2,
         sizeY: 2,
-        type: 'heat-map'
-    }, {
+        type: 'tag-cloud',
+        bindings: {
+            "tag-field": "'hashtags'"
+        }
+    },{
         id: uuid(),
         sizeX: 2,
         sizeY: 2,
@@ -98,21 +101,19 @@ angular.module('neonDemo.controllers')
         id: uuid(),
         sizeX: 2,
         sizeY: 2,
-        type: 'linechart'
-    }, {
-        id: uuid(),
-        sizeX: 2,
-        sizeY: 2,
         type: 'barchart'
-    }, {
+    },{
         id: uuid(),
-        sizeX: 2,
+        sizeX: 6,
         sizeY: 2,
-        type: 'tag-cloud',
-        bindings: {
-            "tag-field": "'hashtags'"
-        }
-    }];
+        type: 'query-results-table'
+    },{
+        id: uuid(),
+        sizeX: 4,
+        sizeY: 2,
+        type: 'heat-map'
+    }
+    ];
 
     /**
      * Returns whether or not our gridster setup is currently in mobile mode.

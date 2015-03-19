@@ -130,8 +130,9 @@ angular.module('neonDemo.directives')
                 var dayGroupClause = new neon.query.GroupByFunctionClause(neon.query.DAY, $scope.attrX, 'day');
 
                 var groupByClause = [yearGroupClause, monthGroupClause, dayGroupClause];
-                if($scope.categoryField)
+                if($scope.categoryField) {
                     groupByClause.push($scope.categoryField);
+                }
 
                 var query = new neon.query.Query()
                     .selectFrom($scope.databaseName, $scope.tableName)
@@ -222,8 +223,12 @@ angular.module('neonDemo.directives')
 
                     // Sort by series total
                     data.sort(function(a, b) {
-                        if(a.total < b.total) return 1;
-                        if(a.total > b.total) return -1;
+                        if(a.total < b.total) {
+                            return 1;
+                        }
+                        if(a.total > b.total) {
+                            return -1;
+                        }
                         return 0;
                     });
 
@@ -250,12 +255,13 @@ angular.module('neonDemo.directives')
                     data = data.splice(0, $scope.seriesLimit);
 
                     // Add Other series
-                    if(otherTotal > 0)
+                    if(otherTotal > 0) {
                         data.push({
                             series: "Other",
                             total: otherTotal,
                             data: otherData
                         });
+                    }
 
                     // Render chart and series lines
                     XDATA.activityLogger.logSystemActivity('LineChart - query data received');
@@ -300,8 +306,9 @@ angular.module('neonDemo.directives')
 
                 // Scrape data for unique series
                 for(i = 0; i < data.length; i++) {
-                    if($scope.categoryField)
+                    if($scope.categoryField) {
                         series = data[i][$scope.categoryField] !== '' ? data[i][$scope.categoryField] : 'Unknown';
+                    }
 
                     if(!resultData[series]) {
                         resultData[series] = {
@@ -330,8 +337,9 @@ angular.module('neonDemo.directives')
                 for(i = 0; i < data.length; i++) {
                     indexDate = new Date(data[i].date);
 
-                    if($scope.categoryField)
+                    if($scope.categoryField) {
                         series = data[i][$scope.categoryField] !== '' ? data[i][$scope.categoryField] : 'Unknown';
+                    }
 
                     resultData[series].data[Math.floor(Math.abs(indexDate - start) / dayMillis)].value = data[i].value;
                     resultData[series].total += data[i].value;

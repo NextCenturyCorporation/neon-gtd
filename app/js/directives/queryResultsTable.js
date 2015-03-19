@@ -33,10 +33,19 @@ angular.module('neonDemo.directives')
         templateUrl: 'partials/directives/queryResultsTable.html',
         restrict: 'EA',
         scope: {
-            showData: '='
+            showData: '=?'
         },
         link: function($scope, element) {
-            element.addClass('query-results-table');
+            element.addClass('query-results-directive');
+
+            // If this widget was launched as a navbar collapsable then showData will be bound to the collapse toggle.
+            // Otherwise show the data automatically on launching the widget.
+            if(typeof($scope.showData) === "undefined") {
+                $scope.showData = true;
+                element.resize(function() {
+                    updateSize();
+                });
+            }
 
             $scope.ASCENDING = neon.query.ASCENDING;
             $scope.DESCENDING = neon.query.DESCENDING;
@@ -57,6 +66,14 @@ angular.module('neonDemo.directives')
             var $tableDiv = $(element).find('.query-results-grid');
 
             $tableDiv.attr("id", $scope.tableId);
+
+            var updateSize = function() {
+                var margin = $tableDiv.outerHeight(true) - $tableDiv.height();
+                $tableDiv.height(element.height() - $(element).find('.count-header').outerHeight(true) - margin);
+                if($scope.table) {
+                    $scope.table.refreshLayout();
+                }
+            };
 
             /**
              * Initializes the name of the directive's scope variables
@@ -129,6 +146,7 @@ angular.module('neonDemo.directives')
                     data: data.data,
                     columns: createColumns(data.data),
                     gridOptions: {
+                        enableTextSelectionOnCells: true,
                         forceFitColumns: false,
                         enableColumnReorder: true,
                         forceSyncScrolling: true
@@ -147,14 +165,16 @@ angular.module('neonDemo.directives')
                     columns[i].cssClass = "linkable"
                 }
 
-                var digColumn = {
-                    name: "",
-                    field: "dig",
-                    width: "15",
-                    cssClass: "centered",
-                    ignoreClicks: true
-                };
-                columns.splice(0, 0, digColumn);
+                if(neon.DIG_ENABLED) {
+                    var digColumn = {
+                        name: "",
+                        field: "dig",
+                         width: "15",
+                         cssClass: "centered",
+                         ignoreClicks: true
+                    };
+                    columns.splice(0, 0, digColumn);
+                }
 
                 return columns;
             };
@@ -193,11 +213,20 @@ angular.module('neonDemo.directives')
 
                 // if there is no active connection, try to make one.
                 connectionService.connectToDataset(message.datastore, message.hostname, message.database, message.table);
+                $scope.displayActiveDataset();
+            };
 
-                // Pull data.
+            /**
+             * Displays data for any currently active datasets.
+             * @method displayActiveDataset
+             */
+            $scope.displayActiveDataset = function() {
                 var connection = connectionService.getActiveConnection();
                 if(connection) {
                     connectionService.loadMetadata(function() {
+                        var info = connectionService.getActiveDataset();
+                        $scope.databaseName = info.database;
+                        $scope.tableName = info.table;
                         connection.getFieldNames($scope.tableName, function(results) {
                             $scope.$apply(function() {
                                 populateFieldNames(results);
@@ -295,7 +324,9 @@ angular.module('neonDemo.directives')
                 // Handle the new data.
                 $scope.tableOptions = $scope.createOptions(queryResults);
 
-                queryResults = $scope.addDigUrlColumnData(queryResults);
+                if(neon.DIG_ENABLED) {
+                    queryResults = $scope.addDigUrlColumnData(queryResults);
+                }
 
                 $scope.table = new tables.Table("#" + $scope.tableId, $scope.tableOptions).draw();
                 $scope.table.refreshLayout();
@@ -332,6 +363,7 @@ angular.module('neonDemo.directives')
             // Wait for neon to be ready, the create our messenger and intialize the view and data.
             neon.ready(function() {
                 $scope.initialize();
+                $scope.displayActiveDataset();
             });
         }
     };

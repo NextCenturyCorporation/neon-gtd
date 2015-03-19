@@ -166,7 +166,9 @@ charts.TimelineSelectorChart = function(element, configuration) {
             var extent0 = brush.extent();
             var extent1;
 
-            if(typeof extent0[0] === 'undefined' || typeof extent0[1] === 'undefined') return;
+            if(typeof extent0[0] === 'undefined' || typeof extent0[1] === 'undefined') {
+                return;
+            }
 
             // if dragging, preserve the width of the extent
             if(d3.event.mode === "move") {
@@ -184,8 +186,9 @@ charts.TimelineSelectorChart = function(element, configuration) {
                 }
             }
 
-            if(extent1[0] < extent1[1])
+            if(extent1[0] < extent1[1]) {
                 d3.select(this).call(brush.extent(extent1));
+            }
         }
 
         // Update mask
@@ -220,7 +223,9 @@ charts.TimelineSelectorChart = function(element, configuration) {
         var me = this;
         var i = 0;
         var width = this.determineWidth(this.d3element) - this.config.margin.left - this.config.margin.right;
-        var barWidth = 0;
+        // Depending on the granularity, the bars are not all the same width (months are different
+        // lengths). But this is accurate enough to place tick marks and make other calculations.
+        var approximateBarWidth = 0;
 
         var baseHeight = 70;
         $(this.d3element[0]).css("height", (baseHeight * values.length));
@@ -233,13 +238,14 @@ charts.TimelineSelectorChart = function(element, configuration) {
             // Get list of all data to calculate min/max and domain
             for(i = 0; i < values.length; i++) {
                 fullDataSet = fullDataSet.concat(values[i].data);
-                if(values[i].data && !barWidth) barWidth = (width / values[i].data.length);
+                if(values[i].data && !approximateBarWidth) {
+                    approximateBarWidth = (width / values[i].data.length);
+                }
             }
         }
 
         // Setup the axes and their scales.
         var x = d3.time.scale.utc().range([0, width]);
-        var xAxis = d3.svg.axis().scale(x).orient("bottom").ticks(Math.round(width / 100));
 
         // Save the brush as an instance variable to allow interaction on it by client code.
         this.brush = d3.svg.brush().x(x).on("brush", this.updateMask);
@@ -277,6 +283,23 @@ charts.TimelineSelectorChart = function(element, configuration) {
 
         x.domain([xMin, xMax]);
 
+        var xAxis = d3.svg.axis().scale(x).orient("bottom");
+
+        // We don't want the ticks to be too close together, so calculate the most ticks that
+        // comfortably fit on the timeline
+        var maximumNumberOfTicks = Math.round(width / 100);
+        // We don't want to have more ticks than buckets (e.g., monthly buckets with daily ticks
+        // look funny)
+        var minimumTickRange = d3.time[me.granularity].utc.range;
+        if(x.ticks(minimumTickRange).length < maximumNumberOfTicks) {
+            // There's enough room to do one tick per bucket
+            xAxis.ticks(minimumTickRange);
+        } else {
+            // One tick per bucket at this granularity is too many; let D3 figure out tick spacing.
+            // Note that D3 may give us a few more ticks than we specify if it feels like it.
+            xAxis.ticks(maximumNumberOfTicks);
+        }
+
         // Clear the old contents by replacing innerhtml.
         d3.select(this.element).html('');
 
@@ -301,17 +324,18 @@ charts.TimelineSelectorChart = function(element, configuration) {
             .call(xAxis);
 
         context.selectAll('.major text')
-            .attr('transform', 'translate(' + (barWidth / 2) + ',0)');
+            .attr('transform', 'translate(' + (approximateBarWidth / 2) + ',0)');
 
         context.selectAll('.major line')
-            .attr('transform', 'translate(' + (barWidth / 2) + ',0)');
+            .attr('transform', 'translate(' + (approximateBarWidth / 2) + ',0)');
 
         // Render a series
         var seriesPos = 0;
         var createSeries = function(series) {
-            var xOffset = barWidth / 2;
-            if(series.type === 'bar')
+            var xOffset = approximateBarWidth / 2;
+            if(series.type === 'bar') {
                 xOffset = 0;
+            }
 
             var container = context.append("g")
                 .attr("class", series.name)
@@ -352,7 +376,9 @@ charts.TimelineSelectorChart = function(element, configuration) {
                     .attr("x", function(d) {
                         return x(d.date);
                     })
-                    .attr("width", barWidth)
+                    .attr("width", function(d) {
+                        return x(d3.time[me.granularity].utc.offset(d.date, 1)) - x(d.date);
+                    })
                     .attr("y", function(d) {
                         return y(Math.max(0, d.value));
                     })
@@ -398,8 +424,9 @@ charts.TimelineSelectorChart = function(element, configuration) {
                     var func = function(d) {
                         return x(d.date);
                     };
-                    if(series.data.length === 1)
+                    if(series.data.length === 1) {
                         func = width / 2;
+                    }
 
                     container.selectAll("dot")
                         .data(series.data)
@@ -436,11 +463,14 @@ charts.TimelineSelectorChart = function(element, configuration) {
 
         var charts = [];
         // If set, render primary series first
-        if(this.primarySeries)
+        if(this.primarySeries) {
             createSeries(this.primarySeries);
+        }
         // Render all series
         for(i = 0; i < values.length; i++) {
-            if(this.primarySeries && values[i].name === this.primarySeries.name) continue;
+            if(this.primarySeries && values[i].name === this.primarySeries.name) {
+                continue;
+            }
             createSeries(values[i]);
         }
 

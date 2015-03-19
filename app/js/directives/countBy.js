@@ -27,6 +27,7 @@ angular.module('neonDemo.directives')
             el.addClass('countByDirective');
 
             $scope.countField = "";
+            $scope.count = 0;
             $scope.fields = [];
             $scope.tableId = 'query-results-' + uuid();
             $scope.filterKey = "countby-" + uuid();
@@ -87,6 +88,7 @@ angular.module('neonDemo.directives')
                     data: data.data,
                     columns: createColumns(data.data),
                     gridOptions: {
+                        enableTextSelectionOnCells: true,
                         forceFitColumns: true,
                         enableColumnReorder: true,
                         forceSyncScrolling: true
@@ -101,17 +103,19 @@ angular.module('neonDemo.directives')
                 for(var i = 0; i < columns.length; ++i) {
                     // Since forceFitColumns is enabled, setting this width will force the columns to use as much
                     // space as possible, which is necessary to keep the first column (dig) as small as possible.
-                    columns[i].width = $tableDiv.outerWidth()
+                    columns[i].width = $tableDiv.outerWidth();
                 }
 
-                var digColumn = {
-                    name: "",
-                    field: "dig",
-                    width: "15",
-                    cssClass: "centered",
-                    ignoreClicks: true
-                };
-                columns.splice(0, 0, digColumn);
+                if(neon.DIG_ENABLED) {
+                    var digColumn = {
+                        name: "",
+                        field: "dig",
+                        width: "15",
+                        cssClass: "centered",
+                        ignoreClicks: true
+                    };
+                    columns.splice(0, 0, digColumn);
+                }
 
                 return columns;
             };
@@ -276,7 +280,8 @@ angular.module('neonDemo.directives')
              */
             $scope.addOnClickListener = function() {
                 $scope.table.addOnClickListener(function(columns, row) {
-                    var field = columns[1].field;
+                    var columnIndex = neon.DIG_ENABLED ? 1 : 0;
+                    var field = columns[columnIndex].field;
 
                     // If the user clicks on the filtered row/cell, clear the filter.
                     if($scope.filterSet !== undefined) {
@@ -307,8 +312,11 @@ angular.module('neonDemo.directives')
                 $scope.tableOptions = createOptions(cleanData);
 
                 // Add the DIG URLs after the table options have been created because it already includes the column.
-                cleanData = $scope.addDigUrlColumnData(cleanData);
+                if(neon.DIG_ENABLED) {
+                    cleanData = $scope.addDigUrlColumnData(cleanData);
+                }
 
+                $scope.count = cleanData.data.length;
                 $scope.table = new tables.Table("#" + $scope.tableId, $scope.tableOptions).draw();
                 $scope.addOnClickListener();
                 updateSize();

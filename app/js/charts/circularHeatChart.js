@@ -41,8 +41,9 @@ function CircularHeatChart(el) {
                 autoDomain = true;
             }
             var color = d3.scale.linear().domain(domain).range(range);
-            if(autoDomain)
+            if(autoDomain) {
                 domain = null;
+            }
 
             g.selectAll("path").data(data)
                 .enter().append("path")
@@ -132,57 +133,79 @@ function CircularHeatChart(el) {
 
     /* Configuration getters/setters */
     chart.margin = function(_) {
-        if(!arguments.length) return margin;
+        if(!arguments.length) {
+            return margin;
+        }
         margin = _;
         return chart;
     };
 
     chart.innerRadius = function(_) {
-        if(!arguments.length) return innerRadius;
+        if(!arguments.length) {
+            return innerRadius;
+        }
         innerRadius = _;
         return chart;
     };
 
     chart.numSegments = function(_) {
-        if(!arguments.length) return numSegments;
+        if(!arguments.length) {
+            return numSegments;
+        }
         numSegments = _;
         return chart;
     };
 
     chart.segmentHeight = function(_) {
-        if(!arguments.length) return segmentHeight;
+        if(!arguments.length) {
+            return segmentHeight;
+        }
         segmentHeight = _;
         return chart;
     };
 
     chart.domain = function(_) {
-        if(!arguments.length) return domain;
+        if(!arguments.length) {
+            return domain;
+        }
         domain = _;
         return chart;
     };
 
     chart.range = function(_) {
-        if(!arguments.length) return range;
+        if(!arguments.length) {
+            return range;
+        }
         range = _;
         return chart;
     };
 
     chart.radialLabels = function(_) {
-        if(!arguments.length) return radialLabels;
-        if(_ === null) _ = [];
+        if(!arguments.length) {
+            return radialLabels;
+        }
+        if(_ === null) {
+            _ = [];
+        }
         radialLabels = _;
         return chart;
     };
 
     chart.segmentLabels = function(_) {
-        if(!arguments.length) return segmentLabels;
-        if(_ === null) _ = [];
+        if(!arguments.length) {
+            return segmentLabels;
+        }
+        if(_ === null) {
+            _ = [];
+        }
         segmentLabels = _;
         return chart;
     };
 
     chart.accessor = function(_) {
-        if(!arguments.length) return accessor;
+        if(!arguments.length) {
+            return accessor;
+        }
         accessor = _;
         return chart;
     };

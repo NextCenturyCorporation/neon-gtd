@@ -30,6 +30,14 @@ angular.module('neonDemo.directives')
             $scope.allowMoreFields = true;
             $scope.uniqueId = uuid();
             $scope.selectedUser = "";
+            $scope.datastore = neon.GRAPH_DATASTORE;
+            $scope.hostname = neon.GRAPH_HOSTNAME;
+            $scope.databaseName = neon.GRAPH_DATABASE_NAME;
+            $scope.tableName = neon.GRAPH_TABLE_NAME;
+            $scope.nonGraphDatabaseName = neon.DATABASE_NAME;
+            $scope.nonGraphTableName = neon.TABLE_NAME;
+            $scope.filterField = neon.GRAPH_FILTER_FIELD;
+            $scope.filterKey = "graph-" + uuid();
 
             if($scope.startingFields) {
                 $scope.groupFields = $scope.startingFields;
@@ -39,9 +47,11 @@ angular.module('neonDemo.directives')
 
             $scope.$watch('selectedUser', function() {
                 if($scope.selectedUser !== "") {
-                    $scope.groupFields.push($scope.selectedUser);
-                    $scope.selectedUser = "";
-                    $scope.render();
+                    if($scope.messenger && $scope.groupFields.length) {
+                        $scope.messenger.removeFilter($scope.filterKey);
+                    }
+                    $scope.groupFields = [];
+                    $scope.addFilter($scope.selectedUser);
                 }
             }, true);
 
@@ -67,6 +77,9 @@ angular.module('neonDemo.directives')
 
                 $scope.$on('$destroy', function() {
                     $scope.messenger.removeEvents();
+                    if($scope.groupFields.length) {
+                        $scope.messenger.removeFilter($scope.filterKey);
+                    }
                 });
 
                 el.resize(function() {
@@ -82,41 +95,78 @@ angular.module('neonDemo.directives')
             };
 
             var onDatasetChanged = function(message) {
+                $scope.displayActiveDataset();
+            };
+
+            $scope.displayActiveDataset = function() {
                 if(!$scope.graph) {
                     $scope.graph = new charts.DirectedGraph(el[0], ('#directed-graph-div-' + $scope.uniqueId), {
-                        shiftClickHandler: $scope.shiftClickHandler,
-                        doubleClickHandler: $scope.doubleClickHandler
+                        shiftClickHandler: $scope.shiftClickHandler
                     });
                 }
 
-                $scope.databaseName = message.database;
-                $scope.tableName = message.table;
                 $scope.data = [];
 
-                // if there is no active connection, try to make one.
-                connectionService.connectToDataset(message.datastore, message.hostname, message.database, message.table);
-
-                var connection = connectionService.getActiveConnection();
+                var connection = $scope.connectToGraphDataset();
                 if(connection) {
                     connectionService.loadMetadata(function() {
                         $scope.queryForUsers(function(data) {
-                            //$scope.populateDropdown(data.data);
                             $scope.render(data);
                         });
                     });
                 }
             };
 
-            $scope.removeField = function(field) {
-                var index = $scope.groupFields.indexOf(field);
+            $scope.connectToGraphDataset = function() {
+                connectionService.connectToDataset($scope.datastore, $scope.hostname, $scope.databaseName, $scope.tableName);
+                return connectionService.getActiveConnection();
+            }
+
+            $scope.addFilter = function(value) {
+                $scope.selectedUser = "";
+
+                $scope.groupFields.push(value);
+
+                if($scope.messenger) {
+                    var filter = $scope.createFilter();
+                    $scope.messenger.addFilter($scope.filterKey, filter, function() {
+                        $scope.render();
+                    });
+                }
+            };
+
+            $scope.createFilter = function() {
+                var filterWhereClause = neon.query.where($scope.filterField, '=', $scope.groupFields[0]);
+                for(var i = 1; i < $scope.groupFields.length; ++i) {
+                    var filterOrClause = neon.query.where($scope.filterField, '=', $scope.groupFields[i]);
+                    filterWhereClause = neon.query.or(filterWhereClause, filterOrClause);
+                }
+                return new neon.query.Filter().selectFrom($scope.nonGraphDatabaseName, $scope.nonGraphTableName).where(filterWhereClause);
+            }
+
+            $scope.removeFilter = function(value) {
+                var index = $scope.groupFields.indexOf(value);
                 if(index !== -1) {
                     $scope.groupFields.splice(index, 1);
-                    $scope.render();
+                }
+
+                if($scope.messenger) {
+                    if($scope.groupFields.length === 0) {
+                        $scope.messenger.removeFilter($scope.filterKey, function() {
+                            $scope.render();
+                        });
+                    } else {
+                        var filter = $scope.createFilter();
+                        $scope.messenger.replaceFilter($scope.filterKey, filter, function() {
+                            $scope.render();
+                        });
+                    }
                 }
             };
 
             $scope.render = function(data) {
                 if($scope.groupFields.length > 0) {
+                    // TODO Why is this here?
                     if($scope.groupFields[$scope.groupFields.length - 1] === "") {
                         $scope.groupFields.splice($scope.groupFields.length - 1, 1);
                     }
@@ -136,13 +186,11 @@ angular.module('neonDemo.directives')
 
             $scope.queryForUsers = function(next) {
                 var query = new neon.query.Query()
-                    .selectFrom($scope.databaseName, $scope.tableName);
+                    .selectFrom($scope.databaseName, $scope.tableName)
+                    .withFields(["label"]);
+                query.ignoreFilters([$scope.filterKey]);
 
-                //query = query.groupBy.apply(query, $scope.groupFields);
-                query = query.withFields(["label"]);
-
-                var connection = connectionService.getActiveConnection();
-
+                var connection = $scope.connectToGraphDataset();
                 if(connection) {
                     connection.executeQuery(query, function(data) {
                         $scope.users = [];
@@ -164,7 +212,6 @@ angular.module('neonDemo.directives')
                 var query = new neon.query.Query()
                     .selectFrom($scope.databaseName, $scope.tableName);
 
-                //query = query.groupBy.apply(query, $scope.groupFields);
                 var where = neon.query.where('label', '=', $scope.groupFields[0]);
                 var orWhere;
                 for(var i = 1; i < $scope.groupFields.length; i++) {
@@ -172,9 +219,9 @@ angular.module('neonDemo.directives')
                     where = neon.query.or(where, orWhere);
                 }
                 query = query.where(where);
+                query.ignoreFilters([$scope.filterKey]);
 
-                var connection = connectionService.getActiveConnection();
-
+                var connection = $scope.connectToGraphDataset();
                 if(connection) {
                     d3.select("#node-click-name").text("");
                     connection.executeQuery(query, $scope.calculateGraphData);
@@ -257,25 +304,25 @@ angular.module('neonDemo.directives')
                 }
             };
 
-            $scope.doubleClickHandler = function(d) {
-                $scope.$apply(function() {
-                    $scope.groupFields[0] = d.name;
-                    $scope.render();
-                });
-            };
-
-            $scope.shiftClickHandler = function(d) {
-                if($scope.users.indexOf(d.name) !== -1 && $scope.groupFields.indexOf(d.name) === -1) {
-                    $scope.$apply(function() {
-                        $scope.groupFields.push(d.name);
-                        $scope.render();
-                    });
+            $scope.shiftClickHandler = function(item) {
+                if($scope.users.indexOf(item.name) !== -1) {
+                    if($scope.groupFields.indexOf(item.name) === -1) {
+                        $scope.$apply(function() {
+                            $scope.addFilter(item.name);
+                        });
+                    }
+                    else {
+                        $scope.$apply(function() {
+                            $scope.removeFilter(item.name);
+                        });
+                    }
                 }
             };
 
             // Wait for neon to be ready, the create our messenger and intialize the view and data.
             neon.ready(function() {
                 $scope.initialize();
+                $scope.displayActiveDataset();
             });
         }
     };

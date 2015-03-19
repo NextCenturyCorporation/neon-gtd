@@ -1,5 +1,14 @@
 {
-    //"requireCurlyBraces": [],  //jshint covers this rule
+    "requireCurlyBraces": ["if",
+        "else",
+        "for",
+        "while",
+        "do",
+        "try",
+        "catch",
+        "case",
+        "default"
+    ],
     "requireSpaceAfterKeywords": [
         "do",
         "else",
