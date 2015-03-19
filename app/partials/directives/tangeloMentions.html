@@ -1,0 +1,325 @@
+<div class="fuelux">
+  <div id=info-panel class="modal fade draper" data-wf="1"  data-description="info panel">
+      <div class=modal-dialog>
+          <div class=modal-content>
+              <div class=modal-header>
+                  <h3>Information</h3>
+              </div>
+
+              <div class=modal-body>
+                  <p>Explore the Twitter correspondence network.</p>
+
+                 <p>In this app, you can select a Twitter username, a date range, and a
+                  degree of separation, and see the resulting network of twitter mentions.
+                  For example, selecting
+                  <tt>esunhechoque</tt>, May 2, 2013, 1 day, and a degree
+                  of 2 will show everyone this user mentioned in their tweets from that day, and everyone
+                  THEY mentioned, as a graph.</p>
+              	<p> The charts at right display the most prolific tweeters and the most popular receivers.  The 
+              	number of entities displayed can be adjusted through the history control panel. Hover over
+               	a column to view the tweeter user id.  Click on the column to center the social graph on this tweeter. </p>
+              </div>
+
+              <div class=modal-footer>
+                  <a class="btn btn-default" data-dismiss=modal>OK</a>
+              </div>
+          </div>
+      </div>
+  </div>
+
+
+  <div id=history-panel class="modal fade draper" data-wf="2" data-description="history panel">
+      <div class=modal-dialog>
+          <div class=modal-content>
+              <div class=modal-header>
+                  <h3>History Controls</h3>
+              </div>
+
+              <div class=modal-body>
+                  <p>Configure the search histroy options</p>
+
+                 <p>The controls below affect how the app maintains and displays history records. 
+                 Change the length of history that is maintained and how much is displayed here. 
+                 Optionally clear the history in this session whenever desired. </p>
+              </div>
+
+
+              <div class=row style="margin-left: 20px">
+              <div class=col-md-6>
+                  <div id=clearSend class="btn btn-success offset1 draper" data-wf="4" data-desc="clear history button clicked" data-activity="clearHistory">Clear  History</div>
+     <!--             <div id=clearRcv class="btn btn-success ">Clear Receiver History</div>   -->
+              </div> 
+
+                  <div class=col-md-5>
+                      <!-- JQuery slider -->
+                      <h4>Running History Length</h4>
+                      <div id=history_storage_length class="draper" data-wf="4" data-activity="RunningHistoryLength" data-desk="change running history  length"></div>
+                      <div id="history_storage_length-label" class=code></div>
+
+                      <h4>Display History Length</h4>
+                      <div id=history_length class="draper" data-wf="4" data-activity="DisplayHistoryLength" data-desk="change history display length"></div>
+                      <div id="history_length-label" class=code></div>
+                  </div>
+              </div>
+
+              <div class=modal-footer>
+                  <a id=update-history class="btn btn-success offset1">Update</a>
+                  <a class="btn btn-default draper"  data-wf="4"  data-activity="historyWindowClose" data-desc="history window closed" data-dismiss=modal>Close</a>
+              </div>
+          </div>
+      </div>
+  </div>
+
+  <div class="navbar navbar-default navbar-fixed-top" >
+      <div class=navbar-header>
+          <a class=navbar-brand href=/examples>Tangelo</a>
+      </div>
+
+      <ul class="nav navbar-nav">
+          <li class=active> <a>Twiter Mention With History</a>
+          <li><a style=cursor:pointer data-toggle=modal data-target=#info-panel><span class="glyphicon glyphicon-info-sign"></span> Info</a>
+          <li><a style=cursor:pointer data-toggle=modal data-target=#history-panel><span class="caret"></span> History Controls</a>
+      </ul>
+  </div>
+
+
+  <!-- Create a fullscreen SVG element -->
+  <ul id="tabs" class="nav nav-tabs" data-tabs="tabs">
+      <li class="active"><a href="#mentions-tab" data-toggle="tab">Mention Network View</a></li>
+      <li><a href="#history-tab" data-toggle="tab">Search History View</a></li>
+  </ul>
+  <div id="my-tab-content" class="tab-content">
+
+      <div class="tab-pane active" id="mentions-tab">
+          <svg id=graph width=100%>
+              <g id="transform-group">
+                  <rect id="overlay"></rect>
+                  <g id="links"></g>
+                  <g id="nodes"></g>
+              </g>
+          </svg>
+      </div>
+
+      <div class="tab-pane" id="history-tab">
+          <h3>Tweet Sender History Chart </h3>
+          <div id=historychart1>
+                  <rect  style="fill:gray;" />
+          </div>
+              <h3 style="margin-top: 50px">Tweet Receiving History Chart </h3>
+              <div id=historychart2> 
+                  <rect  style="fill:gray;" /> 
+              </div>   
+          </div>
+      </div>
+  </div>
+
+
+  <!-- Create an SVG element to represent the legend -->
+  <svg id=legend height=100% style="position:fixed; top:100px; right:0px; pointer-events:none;"></svg>
+
+
+  <!-- Create a drawer with the control panel in it -->
+  <div id=control-panel style="opacity: 0.8; height: 50%">
+      <div class=container>
+          <div class=row>
+              <div class=col-md-2>
+                  <h4>Start Date</h4>
+                  <div id=start-date class=datepicker>
+                    <div class="input-group">
+                      <input class="form-control" id="myDatepickerInput" type="text"/>
+                      <div class="input-group-btn">
+                        <button type="button" class="btn btn-default dropdown-toggle" data-toggle="dropdown">
+                          <span class="glyphicon glyphicon-calendar"></span>
+                          <span class="sr-only">Toggle Calendar</span>
+                        </button>
+                        <div class="dropdown-menu dropdown-menu-right datepicker-calendar-wrapper" role="menu">
+                          <div class="datepicker-calendar">
+                            <div class="datepicker-calendar-header">
+                              <button type="button" class="prev"><span class="glyphicon glyphicon-chevron-left"></span><span class="sr-only">Previous Month</span></button>
+                              <button type="button" class="next"><span class="glyphicon glyphicon-chevron-right"></span><span class="sr-only">Next Month</span></button>
+                              <button type="button" class="title">
+                                  <span class="month">
+                                    <span data-month="0">January</span>
+                                    <span data-month="1">February</span>
+                                    <span data-month="2">March</span>
+                                    <span data-month="3">April</span>
+                                    <span data-month="4">May</span>
+                                    <span data-month="5">June</span>
+                                    <span data-month="6">July</span>
+                                    <span data-month="7">August</span>
+                                    <span data-month="8">September</span>
+                                    <span data-month="9">October</span>
+                                    <span data-month="10">November</span>
+                                    <span data-month="11">December</span>
+                                  </span> <span class="year"></span>
+                              </button>
+                            </div>
+                            <table class="datepicker-calendar-days">
+                              <thead>
+                              <tr>
+                                <th>Su</th>
+                                <th>Mo</th>
+                                <th>Tu</th>
+                                <th>We</th>
+                                <th>Th</th>
+                                <th>Fr</th>
+                                <th>Sa</th>
+                              </tr>
+                              </thead>
+                              <tbody></tbody>
+                            </table>
+                            <div class="datepicker-calendar-footer">
+                              <button type="button" class="datepicker-today">Today</button>
+                            </div>
+                          </div>
+                          <div class="datepicker-wheels" aria-hidden="true">
+                            <div class="datepicker-wheels-month">
+                              <h2 class="header">Month</h2>
+                              <ul>
+                                <li data-month="0"><button type="button">Jan</button></li>
+                                <li data-month="1"><button type="button">Feb</button></li>
+                                <li data-month="2"><button type="button">Mar</button></li>
+                                <li data-month="3"><button type="button">Apr</button></li>
+                                <li data-month="4"><button type="button">May</button></li>
+                                <li data-month="5"><button type="button">Jun</button></li>
+                                <li data-month="6"><button type="button">Jul</button></li>
+                                <li data-month="7"><button type="button">Aug</button></li>
+                                <li data-month="8"><button type="button">Sep</button></li>
+                                <li data-month="9"><button type="button">Oct</button></li>
+                                <li data-month="10"><button type="button">Nov</button></li>
+                                <li data-month="11"><button type="button">Dec</button></li>
+                              </ul>
+                            </div>
+                            <div class="datepicker-wheels-year">
+                              <h2 class="header">Year</h2>
+                              <ul></ul>
+                            </div>
+                            <div class="datepicker-wheels-footer clearfix">
+                              <button type="button" class="btn datepicker-wheels-back"><span class="glyphicon glyphicon-arrow-left"></span><span class="sr-only">Return to Calendar</span></button>
+                              <button type="button" class="btn datepicker-wheels-select">Select <span class="sr-only">Month and Year</span></button>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+              </div>
+
+              <div class=col-md-2>
+                  <h4>End Date</h4>
+                  <div id=end-date class=datepicker>
+                    <div class="input-group">
+                      <input class="form-control" id="myDatepickerInput" type="text"/>
+                      <div class="input-group-btn">
+                        <button type="button" class="btn btn-default dropdown-toggle" data-toggle="dropdown">
+                          <span class="glyphicon glyphicon-calendar"></span>
+                          <span class="sr-only">Toggle Calendar</span>
+                        </button>
+                        <div class="dropdown-menu dropdown-menu-right datepicker-calendar-wrapper" role="menu">
+                          <div class="datepicker-calendar">
+                            <div class="datepicker-calendar-header">
+                              <button type="button" class="prev"><span class="glyphicon glyphicon-chevron-left"></span><span class="sr-only">Previous Month</span></button>
+                              <button type="button" class="next"><span class="glyphicon glyphicon-chevron-right"></span><span class="sr-only">Next Month</span></button>
+                              <button type="button" class="title">
+                                  <span class="month">
+                                    <span data-month="0">January</span>
+                                    <span data-month="1">February</span>
+                                    <span data-month="2">March</span>
+                                    <span data-month="3">April</span>
+                                    <span data-month="4">May</span>
+                                    <span data-month="5">June</span>
+                                    <span data-month="6">July</span>
+                                    <span data-month="7">August</span>
+                                    <span data-month="8">September</span>
+                                    <span data-month="9">October</span>
+                                    <span data-month="10">November</span>
+                                    <span data-month="11">December</span>
+                                  </span> <span class="year"></span>
+                              </button>
+                            </div>
+                            <table class="datepicker-calendar-days">
+                              <thead>
+                              <tr>
+                                <th>Su</th>
+                                <th>Mo</th>
+                                <th>Tu</th>
+                                <th>We</th>
+                                <th>Th</th>
+                                <th>Fr</th>
+                                <th>Sa</th>
+                              </tr>
+                              </thead>
+                              <tbody></tbody>
+                            </table>
+                            <div class="datepicker-calendar-footer">
+                              <button type="button" class="datepicker-today">Today</button>
+                            </div>
+                          </div>
+                          <div class="datepicker-wheels" aria-hidden="true">
+                            <div class="datepicker-wheels-month">
+                              <h2 class="header">Month</h2>
+                              <ul>
+                                <li data-month="0"><button type="button">Jan</button></li>
+                                <li data-month="1"><button type="button">Feb</button></li>
+                                <li data-month="2"><button type="button">Mar</button></li>
+                                <li data-month="3"><button type="button">Apr</button></li>
+                                <li data-month="4"><button type="button">May</button></li>
+                                <li data-month="5"><button type="button">Jun</button></li>
+                                <li data-month="6"><button type="button">Jul</button></li>
+                                <li data-month="7"><button type="button">Aug</button></li>
+                                <li data-month="8"><button type="button">Sep</button></li>
+                                <li data-month="9"><button type="button">Oct</button></li>
+                                <li data-month="10"><button type="button">Nov</button></li>
+                                <li data-month="11"><button type="button">Dec</button></li>
+                              </ul>
+                            </div>
+                            <div class="datepicker-wheels-year">
+                              <h2 class="header">Year</h2>
+                              <ul></ul>
+                            </div>
+                            <div class="datepicker-wheels-footer clearfix">
+                              <button type="button" class="btn datepicker-wheels-back"><span class="glyphicon glyphicon-arrow-left"></span><span class="sr-only">Return to Calendar</span></button>
+                              <button type="button" class="btn datepicker-wheels-select">Select <span class="sr-only">Month and Year</span></button>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+              </div>
+
+              <div class="col-md-2">
+                  <h4>Central tweeter</h4>
+                  <input id="center">
+              </div>
+
+              <div class=col-md-2>
+                  <!-- JQuery spinner -->
+                  <h4>Degree of separation</h4>
+                  <input id="degree">
+              </div>
+              <div class=col-md-2>
+                      <label class=checkbox>
+                        <input type=checkbox id="usetext" checked> Render text labels
+                      </label>
+              </div>
+              <div class=col-md-2>
+                      <label class=checkbox>
+                        <input type=checkbox id="clickfollow">  Center graph on clicked node
+                      </label>
+              </div>  
+          </div>
+
+          <div class=row>
+              <div class=col-md-2>
+                  <div id=update class="btn btn-success offset1">Update</div>
+                  <div id=animate class="btn btn-success ">Animate</div>
+              </div>
+               
+          </div>
+          <div class=row>
+                  <spacer id="spacer1" type="vertical" height="20"></spacer>
+          </div>
+      </div>
+  </div>
+</div>

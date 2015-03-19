@@ -1,0 +1,74 @@
+{
+  "width": 850,
+  "height": 160,
+  "data": [
+    {
+      "name": "rows"
+    },
+    {
+      "name": "indexlist"
+    }
+  ],
+  "scales": [
+    {
+      "name": "x",
+      "type":"ordinal",
+      "range": "width",
+       "domain": {"data":"rows", "field":"data.0"}
+    },
+    {
+      "name": "y",
+      "type": "linear",
+      "range": "height",
+      "nice": true,
+    "domain": {
+        "fields": [
+          {"data":"rows","field":"data.2"}
+        ]}
+    },
+    {
+      "name": "color", "type": "ordinal", "range": "category10"
+    }
+  ],
+  "axes": [
+    {"type": "x", "scale": "x", "tickSizeEnd": 0},
+    {"type": "y", "scale": "y"}
+  ],
+  "marks": [
+        {
+          "type": "rect",
+          "from":  {"data":"rows"},
+          "properties": {
+            "enter": {
+              "x": {"scale": "x", "field": "data.0"},
+              "width": {"scale":"x", "band":true, "offset":-1},
+              "y": {"scale": "y", "field": "data.2"},
+              "y2": {"scale": "y", "value": 0}
+            },
+            "update" :   {"fill": {"value" :"steelblue"} },
+            "hover" : {"fill": {"value":"green"} }
+          }
+        },
+        {
+          "type": "text",
+          "from":  {"data":"rows"},
+          "properties": {
+            "enter": {
+              "text" : {"field":"data.1"},
+              "align": {"value":"center"},
+              "font": {"field":"font"},
+              "fontSize":{"value":20},
+              "x": {"scale": "x", "field": "data.0"},
+              "dx": {"scale":"x", "band":true, "mult":0.5},
+              "dy": {"value":-5},
+              "angle":{"value":0},
+              "y": {"scale": "y", "field": "data.2"},
+              "fill":{"value":"yellow"},
+              "opacity": {"value": 0.0}
+            },
+            "update0" :   {"fill":{"value":"yellow"}, "opacity":{"value": 0}},
+            "hover0" :  {"opacity": {"value":1.0}  }
+          }
+        }
+      ]
+}
