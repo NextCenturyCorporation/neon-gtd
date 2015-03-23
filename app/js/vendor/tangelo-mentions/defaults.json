@@ -2,9 +2,9 @@
     "mongoHost" : "localhost",
     "mentionsDatabase" : "year2",
     "mentionsCollection" : "twitter_mentions_sa",
-    "centralEntity" : "fehrnheit",
+    "centralEntity" : "",
     "startDate"	: "February 11, 2013",
     "endDate" : "February 12, 2015",
     "backend": "neon",
-    "controlPanelHeight": "500px"
+    "controlPanelHeight": "150px"
 }

@@ -296,33 +296,35 @@ angular.module('neonDemo.directives')
              * @method queryForChartData
              */
             $scope.queryForChartData = function() {
-                $scope.dateField = connectionService.getFieldMapping("date");
-                $scope.dateField = $scope.dateField || 'created_at';
+                if (connectionService.getActiveConnection()) {
+                    $scope.dateField = connectionService.getFieldMapping("date");
+                    $scope.dateField = $scope.dateField || 'created_at';
 
-                var query = new neon.query.Query()
-                    .selectFrom($scope.databaseName, $scope.tableName)
-                    .where($scope.dateField, '!=', null);
+                    var query = new neon.query.Query()
+                        .selectFrom($scope.databaseName, $scope.tableName)
+                        .where($scope.dateField, '!=', null);
 
-                $scope.addGroupByGranularityClause(query);
+                    $scope.addGroupByGranularityClause(query);
 
-                query.aggregate(neon.query.COUNT, '*', 'count');
-                // TODO: Does this need to be an aggregate on the date field? What is MIN doing or is this just an arbitrary function to include the date with the query?
-                query.aggregate(neon.query.MIN, $scope.dateField, 'date');
-                query.sortBy('date', neon.query.ASCENDING);
-                query.ignoreFilters([$scope.filterKey]);
+                    query.aggregate(neon.query.COUNT, '*', 'count');
+                    // TODO: Does this need to be an aggregate on the date field? What is MIN doing or is this just an arbitrary function to include the date with the query?
+                    query.aggregate(neon.query.MIN, $scope.dateField, 'date');
+                    query.sortBy('date', neon.query.ASCENDING);
+                    query.ignoreFilters([$scope.filterKey]);
 
-                XDATA.activityLogger.logSystemActivity('TimelineSelector - query for data');
-                connectionService.getActiveConnection().executeQuery(query, function(queryResults) {
-                    $scope.$apply(function() {
-                        $scope.updateChartData(queryResults);
-                        XDATA.activityLogger.logSystemActivity('TimelineSelector - data received');
+                    XDATA.activityLogger.logSystemActivity('TimelineSelector - query for data');
+                    connectionService.getActiveConnection().executeQuery(query, function(queryResults) {
+                        $scope.$apply(function() {
+                            $scope.updateChartData(queryResults);
+                            XDATA.activityLogger.logSystemActivity('TimelineSelector - data received');
+                        });
+                    }, function() {
+                        $scope.$apply(function() {
+                            $scope.updateChartData([]);
+                            XDATA.activityLogger.logSystemActivity('TimelineSelector - data requested failed');
+                        });
                     });
-                }, function() {
-                    $scope.$apply(function() {
-                        $scope.updateChartData([]);
-                        XDATA.activityLogger.logSystemActivity('TimelineSelector - data requested failed');
-                    });
-                });
+                }
             };
 
             /**

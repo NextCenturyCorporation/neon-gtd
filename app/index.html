@@ -38,7 +38,7 @@
 
         <!-- Include tangelo directive css -->
         <link rel="stylesheet" type="text/css" href="css/directives/tangeloMentions.css">
-        <link href="//www.fuelcdn.com/fuelux/3.5.0/css/fuelux.min.css" rel="stylesheet">
+        <link rel="stylesheet" type="text/css" href="http://www.fuelcdn.com/fuelux/3.5.0/css/fuelux.min.css">
         <!-- HTML5 Shim and Respond.js IE8 support of HTML5 elements and media queries -->
         <!-- WARNING: Respond.js doesn't work if you view the page via file:// -->
         <!--[if lt IE 9]>
@@ -79,12 +79,12 @@
                                 <span class="glyphicon glyphicon-list"></span> View Data
                             </a>
                         </li>
-                        <li>
+                        <!-- <li>
                             <a data-toggle="collapse" data-parent="#trays" href=".tangelo-mentions-tray" class="collapsed"
                                ng-click="toggleSeeMentions()">
                                 <span class="glyphicon glyphicon-list"></span> Tangelo Mentions
                             </a>
-                        </li>
+                        </li> -->
                         <!-- <li>
                             <a data-toggle="collapse" data-parent="#trays" href=".query-tray" class="collapsed">
                                 <span class="glyphicon glyphicon-pencil"></span> Write Query
@@ -113,13 +113,15 @@
             </div>
 
             <!-- Tangelo Mentions -->
-            <div class="tray-mirror tangelo-mentions-tray collapse">
+            <!-- <div class="tray-mirror tangelo-mentions-tray collapse">
                   <div class="inner" style="height: 600px"></div>
+            </div>
+
+            <div id="tangelo-mentions-tray" class="tray tangelo-mentions-tray panel panel-default collapse">
+                <div class="container panel-body">
+                    <div tangelo-mentions></div>
                 </div>
-                <div id="tangelo-mentions-tray" class="tray tangelo-mentions-tray panel panel-default collapse">
-            <div>
-                <div tangelo-mentions></div>
-            </div> 
+            </div>  -->
 
             <!-- Query Builder tray -->
             <!-- <div>

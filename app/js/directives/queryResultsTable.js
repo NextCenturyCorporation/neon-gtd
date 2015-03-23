@@ -295,17 +295,19 @@ angular.module('neonDemo.directives')
                 var query = new neon.query.Query().selectFrom($scope.databaseName, $scope.tableName)
                     .aggregate(neon.query.COUNT, '*', 'count');
 
-                XDATA.activityLogger.logSystemActivity('DataView - query for total rows of data');
-                connectionService.getActiveConnection().executeQuery(query, function(queryResults) {
-                    $scope.$apply(function() {
-                        if(queryResults.data.length > 0) {
-                            $scope.totalRows = queryResults.data[0].count;
-                        } else {
-                            $scope.totalRows = 0;
-                        }
-                        XDATA.activityLogger.logSystemActivity('DataView - received total; updating view');
+                if (connectionService.getActiveConnection()) {
+                    XDATA.activityLogger.logSystemActivity('DataView - query for total rows of data');
+                    connectionService.getActiveConnection().executeQuery(query, function(queryResults) {
+                        $scope.$apply(function() {
+                            if(queryResults.data.length > 0) {
+                                $scope.totalRows = queryResults.data[0].count;
+                            } else {
+                                $scope.totalRows = 0;
+                            }
+                            XDATA.activityLogger.logSystemActivity('DataView - received total; updating view');
+                        });
                     });
-                });
+                }
             };
 
             /**

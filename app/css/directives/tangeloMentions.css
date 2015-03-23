@@ -1,0 +1,76 @@
+
+
+.tangelo-mentions {
+    display:block;
+    margin: 0px;
+    padding: 0px;
+    overflow-x: hidden;
+    overflow-y: auto;
+    height: 100%;
+    width: 100%;
+}
+
+.tangelo-mentions .fuelux{
+    display:block;
+    margin: 0px;
+    padding: 0px;
+    overflow-x: hidden;
+    overflow-y: hidden;
+    height: 100%;
+    width: 100%;
+}
+
+.tangelo-mentions #control-panel {
+    position: absolute !important;
+    bottom: 0px;
+    height:150px;
+    opacity: 0.8;
+    background-color: lightgray;
+    padding-bottom: 20px;
+    overflow-y: hidden;
+}
+
+.tangelo-mentions #control-panel .container{
+    width: 100%;
+}
+
+.tangelo-mentions svg#legend {
+    position: absolute;
+}
+
+.tangelo-mentions svg#graph {
+/*    position: absolute;*/
+/*    height: 100%;
+    width: 100%;*/
+/*    padding-bottom: 90px;*/  /* To account for menu headers pushing this down in the containing widget space */
+}
+
+.tangelo-mentions .datepicker-calendar-wrapper {
+    width: 274px;
+}
+
+.tangelo-mentions p {
+    color: gray;
+}
+
+.tangelo-mentions h3 {
+    color: gray;
+}
+.tangelo-mentions #map img {
+    max-width: none;
+}
+
+.tangelo-mentions text {
+    fill: #333;
+    stroke: #333;
+    stroke-width: 1px;
+}
+
+.tangelo-mentions .modal {
+    position: absolute;
+    z-index: 2000;
+}
+
+#tangelo-mentions-tray {
+    height: 100%;
+}

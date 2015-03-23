@@ -70,7 +70,7 @@
       </div>
   </div>
 
-  <div class="navbar navbar-default navbar-fixed-top" >
+  <div class="navbar navbar-default navbar-fixed" >
       <div class=navbar-header>
           <a class=navbar-brand href=/examples>Tangelo</a>
       </div>
@@ -105,6 +105,7 @@
           <div id=historychart1>
                   <rect  style="fill:gray;" />
           </div>
+          <div>
               <h3 style="margin-top: 50px">Tweet Receiving History Chart </h3>
               <div id=historychart2> 
                   <rect  style="fill:gray;" /> 
@@ -124,10 +125,10 @@
           <div class=row>
               <div class=col-md-2>
                   <h4>Start Date</h4>
-                  <div id=start-date class=datepicker>
+                  <div id="start-date" class="datepicker">
                     <div class="input-group">
                       <input class="form-control" id="myDatepickerInput" type="text"/>
-                      <div class="input-group-btn">
+                      <div class="input-group-btn dropup">
                         <button type="button" class="btn btn-default dropdown-toggle" data-toggle="dropdown">
                           <span class="glyphicon glyphicon-calendar"></span>
                           <span class="sr-only">Toggle Calendar</span>
@@ -210,7 +211,7 @@
                   <div id=end-date class=datepicker>
                     <div class="input-group">
                       <input class="form-control" id="myDatepickerInput" type="text"/>
-                      <div class="input-group-btn">
+                      <div class="input-group-btn dropup">
                         <button type="button" class="btn btn-default dropdown-toggle" data-toggle="dropdown">
                           <span class="glyphicon glyphicon-calendar"></span>
                           <span class="sr-only">Toggle Calendar</span>
@@ -311,7 +312,7 @@
           </div>
 
           <div class=row>
-              <div class=col-md-2>
+              <div class=col-md-4>
                   <div id=update class="btn btn-success offset1">Update</div>
                   <div id=animate class="btn btn-success ">Animate</div>
               </div>

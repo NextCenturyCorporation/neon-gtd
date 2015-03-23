@@ -448,7 +448,24 @@ function twitterDistanceFunction( distance) {
     }
 }
 
-function firstTimeInitialize() {
+function resizeMentionsGraph(containingElement) {
+    height = $(containingElement).height() - $(containingElement).find('.navbar').outerHeight(true) -
+        $(containingElement).find('#tabs').outerHeight(true);
+    width = $(containingElement).width();
+
+    var svg = d3.select(containingElement).select('svg')
+        .attr('width', width)
+        .attr('height', height);
+    svg.select('rect#overlay')
+            .attr('x', 0)
+            .attr('y', 0)
+            .attr('height', height)
+            .attr('width', width)
+    svg.select('#transform-group')
+        .attr('transform', 'translate(' + translate.join() + ')');
+}
+
+function firstTimeInitialize(containingElement) {
     "use strict";
 
     d3.json("js/vendor/tangelo-mentions/defaults.json", function (err, defaults) {
@@ -458,8 +475,8 @@ function firstTimeInitialize() {
         twitter.host = defaults.mongoHost || "localhost";
         twitter.mentionsCollection = defaults.mentionsCollection || "twitter_mentions_sa";
         twitter.mentionsDatabase = defaults.mentionsDatabase || "year2";
-        twitter.centralEntity = defaults.centralEntity || "fehrnheit";
-        twitter.initialStartDate = defaults.startDate || "February 11, 2015";
+        twitter.centralEntity = defaults.centralEntity || "";
+        twitter.initialStartDate = defaults.startDate || "February 11, 2013";
         twitter.initialEndDate = defaults.endDate || "February 12, 2015";
         twitter.backend = defaults.backend || "tangelo";
         console.log('set mentions collection: ',twitter.mentionsCollection);
@@ -468,22 +485,34 @@ function firstTimeInitialize() {
         initializeNeon();
 
         // make the panel open & close over data content
+        console.log(JSON.stringify(defaults));
         $('#control-panel').controlPanel({
             height: defaults.controlPanelHeight || "500px"
         });
 
-        width = $(window).width();
-        height = $(window).height();
+        // width = $(window).width();
+        // height = $(window).height();
+        height = $(containingElement).height() - $(containingElement).find('.navbar').outerHeight(true) -
+            $(containingElement).find('#tabs').outerHeight(true);
+        width = $(containingElement).width();
 
-        svg = d3.select("svg")
+
+        // svg = d3.select("svg")
+        //     .attr('width', width)
+        //     .attr('height', height);
+        svg = d3.select(containingElement).select('svg')
             .attr('width', width)
             .attr('height', height);
 
         svg.select('rect#overlay')
-            .attr('x', -1000)
-            .attr('y', -1000)
-            .attr('width', $(window).width() + 1000)
-            .attr('height', $(window).height() + 1000)
+            //.attr('x', -1000)
+            //.attr('y', -1000)
+            // .attr('width', $(window).width() + 1000)
+            // .attr('height', $(window).height() + 1000)
+            .attr('x', 0)
+            .attr('y', 0)
+            .attr('height', height)
+            .attr('width', width)
             .style('fill-opacity', 1e-6)
             .style('cursor', 'move')
             .on('mousedown', function () {
@@ -926,7 +955,7 @@ neon.ready(function() {
         indexMode: "target"
     });
 
-    initializeNeon();
+    //initializeNeon();
 
-    firstTimeInitialize();
+    //firstTimeInitialize();
 });
