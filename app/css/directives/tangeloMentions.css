@@ -20,17 +20,16 @@
     width: 100%;
 }
 
-.tangelo-mentions #control-panel {
+.tangelo-mentions .control-panel {
     position: absolute !important;
     bottom: 0px;
     height:150px;
-    opacity: 0.8;
+    opacity: 0.9;
     background-color: lightgray;
     padding-bottom: 20px;
-    overflow-y: hidden;
 }
 
-.tangelo-mentions #control-panel .container{
+.tangelo-mentions .control-panel .container{
     width: 100%;
 }
 
@@ -46,7 +45,8 @@
 }
 
 .tangelo-mentions .datepicker-calendar-wrapper {
-    width: 274px;
+    left: 0px;
+   /* width: 274px;*/
 }
 
 .tangelo-mentions p {

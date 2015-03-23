@@ -2,6 +2,7 @@
     "mongoHost" : "localhost",
     "mentionsDatabase" : "year2",
     "mentionsCollection" : "twitter_mentions_sa",
+    "neonDataTable" : "twitter_sa_small",
     "centralEntity" : "",
     "startDate"	: "February 11, 2013",
     "endDate" : "February 12, 2015",

@@ -716,6 +716,14 @@ function filterNeonTableOnUser(item) {
     }
 }
 
+function clearNeonfilter() {
+    if(twitter.neon && twitter.neon.messenger) {
+        twitter.neon.messenger.removeFilter('tangelo-mentions-filter-key', function() {
+            console.log("Mentions: neon filter removed");
+        });
+    }
+}
+
 function centerOnClickedGraphNode(item) {
     "use strict";
 

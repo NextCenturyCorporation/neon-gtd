@@ -30,6 +30,7 @@ angular.module('neonDemo.directives')
 
                 // Remove our event handlers when we're removed from the DOM
                 $scope.$on('$destroy', function() {
+                    clearNeonfilter();
                     $scope.messenger.removeEvents();
                 });
 
