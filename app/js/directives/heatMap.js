@@ -56,7 +56,7 @@ angular.module('neonDemo.directives')
             $scope.filterKey = "map" + uuid();
             $scope.showFilter = false;
             $scope.dataBounds = undefined;
-            $scope.limit = 1000;  // Max points to pull into the map.
+            $scope.limit = 20000;  // Max points to pull into the map.
             $scope.resizeRedrawDelay = 1500; // Time in ms to wait after a resize event flood to try redrawing the map.
 
             // optionsDisplayed is used merely to track the display of the options menu
