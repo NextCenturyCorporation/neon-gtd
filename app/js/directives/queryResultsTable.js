@@ -27,8 +27,8 @@
  * @constructor
  */
 angular.module('neonDemo.directives')
-.directive('queryResultsTable', ['ConnectionService', 'ErrorNotificationService',
-    function(connectionService, errorNotificationService) {
+.directive('queryResultsTable', ['DIG', 'ConnectionService', 'ErrorNotificationService',
+    function(DIG, connectionService, errorNotificationService) {
     return {
         templateUrl: 'partials/directives/queryResultsTable.html',
         restrict: 'EA',
@@ -163,7 +163,7 @@ angular.module('neonDemo.directives')
                 var columns = tables.createColumns(data);
                 columns = tables.addLinkabilityToColumns(columns);
 
-                if(neon.DIG_ENABLED) {
+                if(DIG.enabled) {
                     var digColumn = {
                         name: "",
                         field: "dig",
@@ -336,7 +336,7 @@ angular.module('neonDemo.directives')
                 // Handle the new data.
                 $scope.tableOptions = $scope.createOptions(queryResults);
 
-                if(neon.DIG_ENABLED) {
+                if(DIG.enabled) {
                     queryResults = $scope.addDigUrlColumnData(queryResults);
                 }
 
@@ -348,7 +348,7 @@ angular.module('neonDemo.directives')
                 data.data.forEach(function(row) {
                     var rowId = row._id;
                     var query = "id=" + rowId;
-                    var element = "<form action=\"" + neon.DIG_SERVER + "/list\" method=\"get\" target=\"" + query + "\">" +
+                    var element = "<form action=\"" + DIG.server + "/list\" method=\"get\" target=\"" + query + "\">" +
                         "<input type=\"hidden\" name=\"id\" value=\"" + rowId + "\">" +
                         "<button class=\"hidden-button\" type=\"submit\" title=\"" + query + "\">" +
                         "<span class=\"glyphicon glyphicon-new-window\"></span></button></form>";

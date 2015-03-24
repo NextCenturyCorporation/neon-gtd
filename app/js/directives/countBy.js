@@ -17,7 +17,7 @@
  */
 
 angular.module('neonDemo.directives')
-.directive('countBy', ['ConnectionService', 'ErrorNotificationService', function(connectionService, errorNotificationService) {
+.directive('countBy', ['DIG', 'ConnectionService', 'ErrorNotificationService', function(DIG, connectionService, errorNotificationService) {
     return {
         templateUrl: 'partials/directives/countby.html',
         restrict: 'EA',
@@ -108,7 +108,7 @@ angular.module('neonDemo.directives')
                     columns[i].width = $tableDiv.outerWidth();
                 }
 
-                if(neon.DIG_ENABLED) {
+                if(DIG.enabled) {
                     var digColumn = {
                         name: "",
                         field: "dig",
@@ -250,7 +250,7 @@ angular.module('neonDemo.directives')
                     var field = $scope.countField;
                     var value = row[$scope.countField];
                     var query = $scope.countField + "=" + row[$scope.countField];
-                    var element = "<form action=\"" + neon.DIG_SERVER + "/list\" method=\"get\" target=\"" + query + "\">" +
+                    var element = "<form action=\"" + DIG.server + "/list\" method=\"get\" target=\"" + query + "\">" +
                         "<input type=\"hidden\" name=\"field\" value=\"" + field + "\">" +
                         "<input type=\"hidden\" name=\"value\" value=\"" + value + "\">" +
                         "<button class=\"hidden-button\" type=\"submit\" title=\"" + query + "\">" +
@@ -289,7 +289,7 @@ angular.module('neonDemo.directives')
              */
             $scope.addOnClickListener = function() {
                 $scope.table.addOnClickListener(function(columns, row) {
-                    var columnIndex = neon.DIG_ENABLED ? 1 : 0;
+                    var columnIndex = DIG.enabled ? 1 : 0;
                     var field = columns[columnIndex].field;
 
                     // If the user clicks on the filtered row/cell, clear the filter.
@@ -321,7 +321,7 @@ angular.module('neonDemo.directives')
                 $scope.tableOptions = createOptions(cleanData);
 
                 // Add the DIG URLs after the table options have been created because it already includes the column.
-                if(neon.DIG_ENABLED) {
+                if(DIG.enabled) {
                     cleanData = $scope.addDigUrlColumnData(cleanData);
                 }
 

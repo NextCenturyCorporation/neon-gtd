@@ -1,0 +1,21 @@
+{
+    "xdata": {
+        "echoToConsole": false,
+        "enableLoggin": false,
+        "activityLoggerUrl": "http://xd-draper.xdata.data-tactics-corp.com:1337",
+        "component": "Neon Demo",
+        "componentVersion": "1.0.0-SNAPSHOT"
+    },
+
+    "opencpu": {
+        "enableOpenCpu": false,
+        "enableLogging": false,
+        "useAlerts": false,
+        "url": "http://neon-opencpu/ocpu/library/NeonAngularDemo/R"
+    },
+
+    "dig": {
+        "enabled": false,
+        "server": "http://localhost:9000"
+    }
+}
