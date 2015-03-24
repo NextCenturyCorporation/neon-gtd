@@ -474,6 +474,8 @@ function firstTimeInitialize(containingElement) {
         // read default data collection names from config file
         twitter.host = defaults.mongoHost || "localhost";
         twitter.mentionsCollection = defaults.mentionsCollection || "twitter_mentions_sa";
+        twitter.neonCollection = defaults.neonCollection || "twitter_sa";
+        twitter.neonFilterField = defaults.neonFilterField || "user";
         twitter.mentionsDatabase = defaults.mentionsDatabase || "year2";
         twitter.centralEntity = defaults.centralEntity || "";
         twitter.initialStartDate = defaults.startDate || "February 11, 2013";
@@ -490,25 +492,15 @@ function firstTimeInitialize(containingElement) {
             height: defaults.controlPanelHeight || "500px"
         });
 
-        // width = $(window).width();
-        // height = $(window).height();
         height = $(containingElement).height() - $(containingElement).find('.navbar').outerHeight(true) -
             $(containingElement).find('#tabs').outerHeight(true);
         width = $(containingElement).width();
 
-
-        // svg = d3.select("svg")
-        //     .attr('width', width)
-        //     .attr('height', height);
         svg = d3.select(containingElement).select('svg')
             .attr('width', width)
             .attr('height', height);
 
         svg.select('rect#overlay')
-            //.attr('x', -1000)
-            //.attr('y', -1000)
-            // .attr('width', $(window).width() + 1000)
-            // .attr('height', $(window).height() + 1000)
             .attr('x', 0)
             .attr('y', 0)
             .attr('height', height)
@@ -516,7 +508,7 @@ function firstTimeInitialize(containingElement) {
             .style('fill-opacity', 1e-6)
             .style('cursor', 'move')
             .on('mousedown', function () {
-                var windowrect = d3.select('body')
+                var windowrect = d3.select(containingElement)
                         .append('svg')
                             .attr('width', width)
                             .attr('height', height)
@@ -533,7 +525,7 @@ function firstTimeInitialize(containingElement) {
                 windowrect
                     .on('mouseup.forcemap', function () {
                         dragging=false;
-                        d3.select('svg#overlay-rectangle').remove();
+                        d3.select(containingElement).select('svg#overlay-rectangle').remove();
                     })
                     .on('mousemove.forcemap', function () {
                         var position;
@@ -547,7 +539,7 @@ function firstTimeInitialize(containingElement) {
                     })
                     .on('mouseout.forcemap', function () {
                         dragging=false;
-                        d3.select('svg#overlay-rectangle').remove();
+                        d3.select(containingElement).select('svg#overlay-rectangle').remove();
                     });
             });
 
@@ -702,8 +694,8 @@ function filterNeonTableOnUser(item) {
 
     if(twitter.neon && twitter.neon.messenger) {
         if (item) {
-            var filterClause = neon.query.where('user', '=', item);
-            var filter = new neon.query.Filter().selectFrom('year2', 'twitter_sa_small').where(filterClause);
+            var filterClause = neon.query.where(twitter.neonFilterField, '=', item);
+            var filter = new neon.query.Filter().selectFrom(twitter.mentionsDatabase, twitter.neonCollection).where(filterClause);
             twitter.neon.messenger.replaceFilter('tangelo-mentions-filter-key', filter, function() {
                 console.log("Mentions: neon filter set on " + item);
             });
