@@ -22,7 +22,7 @@
  * @constructor
  */
 angular.module('neonDemo.controllers')
-.controller('neonDemoController', ['$scope', '$timeout', 'FilterCountService', function($scope, $timeout, filterCountService) {
+.controller('neonDemoController', ['$scope', '$timeout', 'layout', 'FilterCountService', function($scope, $timeout, layout, filterCountService) {
     $scope.seeData = false;
     $scope.createFilters = false;
     $scope.chartOptions = false;
@@ -78,41 +78,11 @@ angular.module('neonDemo.controllers')
         }
     };
 
-    // Define the gridster configurations for the default visualizations.
-    $scope.visualizations = [{
-        id: uuid(),
-        sizeX: 6,
-        sizeY: 1,
-        type: 'timeline-selector'
-    }, {
-        id: uuid(),
-        sizeX: 4,
-        sizeY: 2,
-        type: 'heat-map'
-    }, {
-        id: uuid(),
-        sizeX: 2,
-        sizeY: 2,
-        type: 'circular-heat-form'
-    }, {
-        id: uuid(),
-        sizeX: 2,
-        sizeY: 2,
-        type: 'linechart'
-    }, {
-        id: uuid(),
-        sizeX: 2,
-        sizeY: 2,
-        type: 'barchart'
-    }, {
-        id: uuid(),
-        sizeX: 2,
-        sizeY: 2,
-        type: 'tag-cloud',
-        bindings: {
-            "tag-field": "'hashtags'"
-        }
-    }];
+    // The gridster configurations for the default visualization layout.
+    $scope.visualizations = layout;
+    for(var i = 0; i < $scope.visualizations.length; ++i) {
+        $scope.visualizations[i].id = uuid();
+    }
 
     /**
      * Returns whether or not our gridster setup is currently in mobile mode.
