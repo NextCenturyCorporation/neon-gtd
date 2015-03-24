@@ -80,6 +80,9 @@ angular.element(document).ready(function() {
         });
         neonDemo.constant('DIG', digConfig);
 
+        var datasets = (config.datasets || []);
+        neonDemo.constant('datasets', datasets);
+
         var visualizations = (config.visualizations || []);
         neonDemo.constant('visualizations', visualizations);
 

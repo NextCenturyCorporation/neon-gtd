@@ -76,5 +76,31 @@
         "sizeY": 2,
         "type": "query-results-table",
         "icon": "img/visualizations/ViewData64.png"
+    }],
+
+    "datasets": [{
+        "name": "Earthquakes",
+        "datastoreSelect": "mongo",
+        "hostnameInput": "localhost",
+        "selectedDb": "test",
+        "selectedTable": "earthquakes"
+    }, {
+        "name": "South America Tweets",
+        "datastoreSelect": "mongo",
+        "hostnameInput": "localhost",
+        "selectedDb": "test",
+        "selectedTable": "alibaverstock130k"
+    }, {
+        "name": "Twitter",
+        "datastoreSelect": "mongo",
+        "hostnameInput": "localhost",
+        "selectedDb": "test",
+        "selectedTable": "gbDate"
+    }, {
+        "name": "Traffic",
+        "datastoreSelect": "mongo",
+        "hostnameInput": "localhost",
+        "selectedDb": "test",
+        "selectedTable": "most_active"
     }]
 }

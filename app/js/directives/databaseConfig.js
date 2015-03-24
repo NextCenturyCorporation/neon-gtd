@@ -1,7 +1,7 @@
 'use strict';
 
 angular.module('neonDemo.directives')
-.directive('databaseConfig', ['ConnectionService', function(connectionService) {
+.directive('databaseConfig', ['datasets', 'ConnectionService', function(datasets, connectionService) {
     return {
         templateUrl: 'partials/directives/databaseConfig.html',
         restrict: 'E',
@@ -21,36 +21,7 @@ angular.module('neonDemo.directives')
             $scope.isConnected = false;
             $scope.clearPopover = '';
             $scope.activeServer = "Choose dataset";
-            $scope.servers = [
-                {
-                    name: "Earthquakes",
-                    datastoreSelect: "mongo",
-                    hostnameInput: "localhost",
-                    selectedDb: "test",
-                    selectedTable: "earthquakes"
-                },
-                {
-                    name: "South America Tweets",
-                    datastoreSelect: "mongo",
-                    hostnameInput: "localhost",
-                    selectedDb: "test",
-                    selectedTable: "alibaverstock130k"
-                },
-                {
-                    name: "Twitter",
-                    datastoreSelect: "mongo",
-                    hostnameInput: "localhost",
-                    selectedDb: "test",
-                    selectedTable: "gbDate"
-                },
-                {
-                    name: "Traffic",
-                    datastoreSelect: "mongo",
-                    hostnameInput: "localhost",
-                    selectedDb: "test",
-                    selectedTable: "most_active"
-                }
-            ];
+            $scope.servers = datasets;
             $scope.fields = [
                 {
                     label: "Latitude",
