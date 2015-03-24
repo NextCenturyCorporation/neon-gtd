@@ -25,7 +25,7 @@
  * @constructor
  */
 angular.module('neonDemo.directives')
-.directive('addVisualization', ['$timeout', function($timeout) {
+.directive('addVisualization', ['$timeout', 'visualizations', function($timeout, visualizations) {
     return {
         templateUrl: 'partials/directives/addVisualization.html',
         restrict: 'EA',
@@ -35,70 +35,11 @@ angular.module('neonDemo.directives')
         link: function($scope, $element) {
             $element.addClass('add-visualization');
 
+            $scope.visualizations = visualizations;
             $scope.alertMessage = "";
             $scope.alertTimer = null;
             $scope.alertDelay = 4000;
             $scope.fadeTime = 500;
-
-            /** Hold the default size, name, and directive settings for allowed visualizations. */
-            $scope.visualizations = [{
-                name: 'Timeline',
-                sizeX: 6,
-                sizeY: 1,
-                type: 'timeline-selector',
-                icon: 'img/visualizations/Timeline64.png'
-            }, {
-                name: 'Map',
-                sizeX: 4,
-                sizeY: 2,
-                type: 'heat-map',
-                icon: 'img/visualizations/Map64.png'
-            }, {
-                name: 'Linechart',
-                sizeX: 2,
-                sizeY: 2,
-                type: 'linechart',
-                icon: 'img/visualizations/LineChart64.png'
-            }, {
-                name: 'Barchart',
-                sizeX: 2,
-                sizeY: 2,
-                type: 'barchart',
-                icon: 'img/visualizations/BarChart64.png'
-            }, {
-                name: 'Ops Clock',
-                sizeX: 2,
-                sizeY: 2,
-                type: 'circular-heat-form',
-                icon: 'img/visualizations/OpsClock64.png'
-            }, {
-                name: 'Tag Cloud',
-                sizeX: 2,
-                sizeY: 2,
-                type: 'tag-cloud',
-                bindings: {
-                    "tag-field": "'hashtags'"
-                },
-                icon: 'img/visualizations/TagCloud64.png'
-            },{
-                name: 'Count By',
-                sizeX: 2,
-                sizeY: 2,
-                type: 'count-by',
-                icon: 'img/visualizations/Count64.png'
-            },{
-                name: 'Sunburst',
-                sizeX: 2,
-                sizeY: 2,
-                type: 'sunburst',
-                icon: 'img/visualizations/Sunburst64.png'
-            },{
-                name: 'View Data',
-                sizeX: 6,
-                sizeY: 2,
-                type: 'query-results-table',
-                icon: 'img/visualizations/ViewData64.png'
-            }];
 
             /**
              * Displays a simple "added" alert to the user when they have added a new visualization.
