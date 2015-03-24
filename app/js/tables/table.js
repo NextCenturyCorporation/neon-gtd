@@ -100,7 +100,10 @@ tables.createColumns = function(data) {
     // Use a hidden jQuery element with the same style as a SlickGrid header to calculate the column width.
     var element = $("<div/>")
         .attr("class", "ui-widget ui-state-default slick-header-column")
-        .css({"white-space": "nowrap", "visibility": "hidden"})
+        .css({
+            "white-space": "nowrap",
+            visibility: "hidden"
+        })
         .appendTo("body");
 
     // Include elements contained within SlickGrid headers to ensure our width calculations will fit the header text.

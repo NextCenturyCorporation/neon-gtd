@@ -73,7 +73,7 @@ angular.module("neonDemo.services")
                 offset: {
                     x: 5,
                     // Include space for the navbar.
-                    y: 55 
+                    y: 55
                 },
                 icon_type: "src",
                 template: ERROR_AND_PROGRESS_BAR_TEMPLATE
@@ -95,7 +95,7 @@ angular.module("neonDemo.services")
                 },
                 offset: {
                     x: 20,
-                    y: 0 
+                    y: 0
                 },
                 // Display over neon popover elements.
                 z_index: 1061,
