@@ -44,8 +44,9 @@ DEMO_CONFIG.opencpu.useAlerts = false;
 // If the neon application is loaded elsewhere, this can be changed as in the following example:
 // neon.SERVER_URL = "http://localhost:8080/neon"
 neon.SERVER_URL = "/neon";
-neon.DIG_ENABLED = false;
-neon.DIG_SERVER = "http://localhost:9000";
+neon.DIG_ENABLED = true;
+//neon.DIG_SERVER = "http://localhost:9000";
+neon.DIG_SERVER = "http://10.1.93.199:8080";
 
 // Database information for the visualizations.
 neon.DATABASE_NAME = "test";
