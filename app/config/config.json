@@ -83,25 +83,69 @@
         "datastoreSelect": "mongo",
         "hostnameInput": "localhost",
         "selectedDb": "test",
-        "selectedTable": "earthquakes"
+        "selectedTable": "earthquakes",
+        "fields": {
+            "date": "time",
+            "latitude": "latitude",
+            "longitude": "longitude",
+            "line_category": "type",
+            "bar_x_axis": "net",
+            "y_axis": "mag",
+            "color_by": "magType",
+            "size_by": "mag",
+            "sort_by": "time"
+        }
     }, {
         "name": "South America Tweets",
         "datastoreSelect": "mongo",
         "hostnameInput": "localhost",
         "selectedDb": "test",
-        "selectedTable": "alibaverstock130k"
+        "selectedTable": "alibaverstock130k",
+        "fields": {
+            "date": "created_at",
+            "latitude": "latitude",
+            "longitude": "longitude",
+            "line_category": "country",
+            "bar_x_axis": "country",
+            "y_axis": "_id",
+            "color_by": "country",
+            "size_by": "foo",
+            "sort_by": "created_at"
+        }
     }, {
         "name": "Twitter",
         "datastoreSelect": "mongo",
         "hostnameInput": "localhost",
         "selectedDb": "test",
-        "selectedTable": "gbDate"
+        "selectedTable": "gbDate",
+        "fields": {
+            "date": "created_at",
+            "latitude": "latitude",
+            "longitude": "longitude",
+            "line_category": "sentimentType",
+            "bar_x_axis": "sentimentType",
+            "y_axis": "sentiment",
+            "color_by": "sentimentType",
+            "size_by": "sentiment",
+            "sort_by": "created_at"
+        }
     }, {
         "name": "Traffic",
         "datastoreSelect": "mongo",
         "hostnameInput": "localhost",
         "selectedDb": "test",
-        "selectedTable": "most_active"
+        "selectedTable": "most_active",
+        "fields": {
+            "date": "created_at",
+            "latitude": "latitude",
+            "longitude": "longitude",
+            "line_category": "user_screen_name",
+            "bar_x_axis": "yyyy-mm",
+            "y_axis": "sentiment",
+            "color_by": "lang_primary",
+            "size_by": "foo",
+            "sort_by": "created_at"
+        }
     }],
 
     "layout": [{
