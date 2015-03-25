@@ -27,7 +27,7 @@
  * @constructor
  */
 angular.module('neonDemo.directives')
-.directive('sunburst', ['ConnectionService', 'ErrorNotificationService', function(connectionService, errorNotificationService) {
+.directive('sunburst', ['ConnectionService', 'DatasetService', 'ErrorNotificationService', function(connectionService, datasetService, errorNotificationService) {
     return {
         templateUrl: 'partials/directives/sunburst.html',
         restrict: 'EA',
@@ -91,18 +91,23 @@ angular.module('neonDemo.directives')
                 $scope.queryForData();
             };
 
-            var onDatasetChanged = function(message) {
+            var onDatasetChanged = function() {
                 XDATA.activityLogger.logSystemActivity('SunburstChart - received neon dataset changed event');
-                $scope.databaseName = message.database;
-                $scope.tableName = message.table;
+                $scope.databaseName = datasetService.getDatabase();
+                $scope.tableName = datasetService.getTable();
                 $scope.groupFields = [];
                 $scope.valueField = null;
                 $scope.arcValue = charts.SunburstChart.COUNT_PARTITION;
 
-                // if there is no active connection, try to make one.
-                connectionService.connectToDataset(message.datastore, message.hostname, message.database, message.table);
+                if(!datasetService.hasDataset()) {
+                    return;
+                }
 
-                // Pull data.
+                connectionService.connectToDataset(datasetService.getDatastore(),
+                        datasetService.getHostname(),
+                        datasetService.getDatabase(),
+                        datasetService.getTable());
+
                 $scope.displayActiveDataset();
             };
 
@@ -239,7 +244,7 @@ angular.module('neonDemo.directives')
             neon.ready(function() {
                 $scope.messenger = new neon.eventing.Messenger();
                 initialize();
-                $scope.displayActiveDataset();
+                onDatasetChanged();
             });
 
             $scope.addGroup = function() {

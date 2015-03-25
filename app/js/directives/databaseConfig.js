@@ -1,7 +1,7 @@
 'use strict';
 
 angular.module('neonDemo.directives')
-.directive('databaseConfig', ['datasets', 'ConnectionService', function(datasets, connectionService) {
+.directive('databaseConfig', ['datasets', 'ConnectionService', 'DatasetService', function(datasets, connectionService, datasetService) {
     return {
         templateUrl: 'partials/directives/databaseConfig.html',
         restrict: 'E',
@@ -198,8 +198,10 @@ angular.module('neonDemo.directives')
                     datastore: $scope.datastoreSelect,
                     hostname: $scope.hostnameInput,
                     database: $scope.selectedDb,
-                    table: $scope.selectedTable
+                    table: $scope.selectedTable,
+                    fields: $scope.tableFields
                 };
+                datasetService.setActiveDataset(message);
                 $scope.messenger.publish(neon.eventing.channels.ACTIVE_DATASET_CHANGED, message);
                 XDATA.activityLogger.logSystemActivity('Publishing Neon Active Dataset Change message',
                     message);

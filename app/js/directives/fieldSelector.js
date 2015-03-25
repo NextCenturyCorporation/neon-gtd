@@ -16,7 +16,7 @@
  *
  */
 angular.module('neonDemo.directives')
-.directive('fieldselector', ['ConnectionService', function(connectionService) {
+.directive('fieldselector', ['ConnectionService', 'DatasetService', function(connectionService, datasetService) {
     return {
         template: '<label>{{labelText}}</label><select ng-model="targetVar" ng-options="field for field in fields" class="form-control"></select>',
         restrict: 'E',
@@ -42,8 +42,16 @@ angular.module('neonDemo.directives')
                 });
             };
 
-            var onDatasetChanged = function(message) {
-                connectionService.connectToDataset(message.datastore, message.hostname, message.database, message.table);
+            var onDatasetChanged = function() {
+                if(!datasetService.hasDataset()) {
+                    return;
+                }
+
+                connectionService.connectToDataset(datasetService.getDatastore(),
+                        datasetService.getHostname(),
+                        datasetService.getDatabase(),
+                        datasetService.getTable());
+
                 $scope.displayActiveDataset();
             };
 
@@ -90,7 +98,7 @@ angular.module('neonDemo.directives')
             // Wait for neon to be ready, the create our messenger and intialize the view and data.
             neon.ready(function() {
                 initialize();
-                $scope.displayActiveDataset();
+                onDatasetChanged();
             });
         }
     };

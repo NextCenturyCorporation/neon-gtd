@@ -30,7 +30,7 @@
  * @constructor
  */
 angular.module('neonDemo.directives')
-.directive('circularHeatForm', ['ConnectionService', 'ErrorNotificationService', function(connectionService, errorNotificationService) {
+.directive('circularHeatForm', ['ConnectionService', 'DatasetService', 'ErrorNotificationService', function(connectionService, datasetService, errorNotificationService) {
     return {
         templateUrl: 'partials/directives/circularHeatForm.html',
         restrict: 'EA',
@@ -141,17 +141,21 @@ angular.module('neonDemo.directives')
 
             /**
              * Event handler for dataset changed events issued over Neon's messaging channels.
-             * @param {Object} message A Neon dataset changed message.
-             * @param {String} message.database The database that was selected.
-             * @param {String} message.table The table within the database that was selected.
              * @method onDatasetChanged
              * @private
              */
-            var onDatasetChanged = function(message) {
+            var onDatasetChanged = function() {
                 XDATA.activityLogger.logSystemActivity('CircularHeatForm - received neon dataset changed event');
 
-                // if there is no active connection, try to make one.
-                connectionService.connectToDataset(message.datastore, message.hostname, message.database, message.table);
+                if(!datasetService.hasDataset()) {
+                    return;
+                }
+
+                connectionService.connectToDataset(datasetService.getDatastore(),
+                        datasetService.getHostname(),
+                        datasetService.getDatabase(),
+                        datasetService.getTable());
+
                 $scope.displayActiveDataset();
             };
 
@@ -299,7 +303,7 @@ angular.module('neonDemo.directives')
             neon.ready(function() {
                 $scope.messenger = new neon.eventing.Messenger();
                 $scope.initialize();
-                $scope.displayActiveDataset();
+                onDatasetChanged();
             });
         }
     };

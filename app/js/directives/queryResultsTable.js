@@ -27,8 +27,8 @@
  * @constructor
  */
 angular.module('neonDemo.directives')
-.directive('queryResultsTable', ['DIG', 'ConnectionService', 'ErrorNotificationService',
-    function(DIG, connectionService, errorNotificationService) {
+.directive('queryResultsTable', ['DIG', 'ConnectionService', 'DatasetService', 'ErrorNotificationService',
+    function(DIG, connectionService, datasetService, errorNotificationService) {
     return {
         templateUrl: 'partials/directives/queryResultsTable.html',
         restrict: 'EA',
@@ -179,7 +179,6 @@ angular.module('neonDemo.directives')
 
             /**
              * Event handler for filter changed events issued over Neon's messaging channels.
-             * @param {Object} message A Neon filter changed message.
              * @method onFiltersChanged
              * @private
              */
@@ -198,19 +197,23 @@ angular.module('neonDemo.directives')
 
             /**
              * Event handler for dataset changed events issued over Neon's messaging channels.
-             * @param {Object} message A Neon dataset changed message.
-             * @param {String} message.database The database that was selected.
-             * @param {String} message.table The table within the database that was selected.
              * @method onDatasetChanged
              * @private
              */
-            var onDatasetChanged = function(message) {
+            var onDatasetChanged = function() {
                 XDATA.activityLogger.logSystemActivity('DataView - received neon dataset changed event');
-                $scope.databaseName = message.database;
-                $scope.tableName = message.table;
+                $scope.databaseName = datasetService.getDatabase();
+                $scope.tableName = datasetService.getTable();
 
-                // if there is no active connection, try to make one.
-                connectionService.connectToDataset(message.datastore, message.hostname, message.database, message.table);
+                if(!datasetService.hasDataset()) {
+                    return;
+                }
+
+                connectionService.connectToDataset(datasetService.getDatastore(),
+                        datasetService.getHostname(),
+                        datasetService.getDatabase(),
+                        datasetService.getTable());
+
                 $scope.displayActiveDataset();
             };
 
@@ -375,7 +378,7 @@ angular.module('neonDemo.directives')
             // Wait for neon to be ready, the create our messenger and intialize the view and data.
             neon.ready(function() {
                 $scope.initialize();
-                $scope.displayActiveDataset();
+                onDatasetChanged();
             });
         }
     };

@@ -27,7 +27,7 @@
  * @constructor
  */
 angular.module('neonDemo.directives')
-.directive('linechart', ['ConnectionService', 'ErrorNotificationService', function(connectionService, errorNotificationService) {
+.directive('linechart', ['ConnectionService', 'DatasetService', 'ErrorNotificationService', function(connectionService, datasetService, errorNotificationService) {
     var COUNT_FIELD_NAME = 'value';
 
     return {
@@ -115,13 +115,20 @@ angular.module('neonDemo.directives')
                 $scope.queryForData();
             };
 
-            var onDatasetChanged = function(message) {
+            var onDatasetChanged = function() {
                 XDATA.activityLogger.logSystemActivity('LineChart - received neon dataset changed event');
-                $scope.databaseName = message.database;
-                $scope.tableName = message.table;
+                $scope.databaseName = datasetService.getDatabase();
+                $scope.tableName = datasetService.getTable();
 
-                // if there is no active connection, try to make one.
-                connectionService.connectToDataset(message.datastore, message.hostname, message.database, message.table);
+                if(!datasetService.hasDataset()) {
+                    return;
+                }
+
+                connectionService.connectToDataset(datasetService.getDatastore(),
+                        datasetService.getHostname(),
+                        datasetService.getDatabase(),
+                        datasetService.getTable());
+
                 $scope.displayActiveDataset();
             };
 
@@ -393,7 +400,7 @@ angular.module('neonDemo.directives')
             neon.ready(function() {
                 $scope.messenger = new neon.eventing.Messenger();
                 initialize();
-                $scope.displayActiveDataset();
+                onDatasetChanged();
             });
         }
     };

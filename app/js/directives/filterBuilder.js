@@ -28,7 +28,7 @@
  * @constructor
  */
 angular.module('neonDemo.directives')
-.directive('filterBuilder', ['ConnectionService', 'FilterCountService', function(connectionService, filterCountService) {
+.directive('filterBuilder', ['ConnectionService', 'DatasetService', 'FilterCountService', function(connectionService, datasetService, filterCountService) {
     return {
         templateUrl: 'partials/directives/filterBuilder.html',
         restrict: 'EA',
@@ -165,23 +165,26 @@ angular.module('neonDemo.directives')
 
             /**
              * Event handler for dataset changed events issued over Neon's messaging channels.
-             * @param {Object} message A Neon dataset changed message.
-             * @param {String} message.database The database that was selected.
-             * @param {String} message.table The table within the database that was selected.
              * @method onDatasetChanged
              * @private
              */
-            var onDatasetChanged = function(message) {
+            var onDatasetChanged = function() {
                 XDATA.activityLogger.logSystemActivity('FilterBuilder - received neon dataset changed event');
                 // Clear the filter table.
                 $scope.filterTable.clearFilterState();
 
                 // Save the new database and table name; Fetch the new table fields.
-                $scope.databaseName = message.database;
-                $scope.tableName = message.table;
+                $scope.databaseName = datasetService.getDatabase();
+                $scope.tableName = datasetService.getTable();
 
-                // if there is no active connection, try to make one.
-                connectionService.connectToDataset(message.datastore, message.hostname, message.database, message.table);
+                if(!datasetService.hasDataset()) {
+                    return;
+                }
+
+                connectionService.connectToDataset(datasetService.getDatastore(),
+                        datasetService.getHostname(),
+                        datasetService.getDatabase(),
+                        datasetService.getTable());
 
                 // Query for data only if we have an active connection.
                 var connection = connectionService.getActiveConnection();

@@ -27,7 +27,7 @@
  * @constructor
  */
 angular.module('neonDemo.directives')
-.directive('stackedbarchart', ['ConnectionService', 'ErrorNotificationService', function(connectionService, errorNotificationService) {
+.directive('stackedbarchart', ['ConnectionService', 'DatasetService', 'ErrorNotificationService', function(connectionService, datasetService, errorNotificationService) {
     return {
         templateUrl: 'partials/directives/barchart.html',
         restrict: 'E',
@@ -82,12 +82,18 @@ angular.module('neonDemo.directives')
                 $scope.queryForData();
             };
 
-            var onDatasetChanged = function(message) {
-                $scope.databaseName = message.database;
-                $scope.tableName = message.table;
+            var onDatasetChanged = function() {
+                $scope.databaseName = datasetService.getDatabase();
+                $scope.tableName = datasetService.getTable();
 
-                // if there is no active connection, try to make one.
-                connectionService.connectToDataset(message.datastore, message.hostname, message.database, message.table);
+                if(!datasetService.hasDataset()) {
+                    return;
+                }
+
+                connectionService.connectToDataset(datasetService.getDatastore(),
+                        datasetService.getHostname(),
+                        datasetService.getDatabase(),
+                        datasetService.getTable());
 
                 // Pull data.
                 var connection = connectionService.getActiveConnection();

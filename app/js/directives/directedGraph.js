@@ -16,7 +16,7 @@
  */
 
 angular.module('neonDemo.directives')
-.directive('directedGraph', ['ConnectionService', 'ErrorNotificationService', function(connectionService, errorNotificationService) {
+.directive('directedGraph', ['ConnectionService', 'DatasetService', 'ErrorNotificationService', function(connectionService, datasetService, errorNotificationService) {
     return {
         templateUrl: 'partials/directives/directedGraph.html',
         restrict: 'EA',
@@ -49,13 +49,19 @@ angular.module('neonDemo.directives')
                 $scope.render();
             };
 
-            var onDatasetChanged = function(message) {
-                $scope.databaseName = message.database;
-                $scope.tableName = message.table;
+            var onDatasetChanged = function() {
+                $scope.databaseName = datasetService.getDatabase();
+                $scope.tableName = datasetService.getTable();
                 $scope.data = [];
 
-                // if there is no active connection, try to make one.
-                connectionService.connectToDataset(message.datastore, message.hostname, message.database, message.table);
+                if(!datasetService.hasDataset()) {
+                    return;
+                }
+
+                connectionService.connectToDataset(datasetService.getDatastore(),
+                        datasetService.getHostname(),
+                        datasetService.getDatabase(),
+                        datasetService.getTable());
 
                 var connection = connectionService.getActiveConnection();
                 if(connection) {
