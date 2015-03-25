@@ -14,7 +14,10 @@ Apache v2.0 (apache-2.0.txt)
 - Open Sans Google Font
 - OWF widget library
   -- owf-widget-debug.js 7.0.1-GA
-- XMLHttpRequest.js (this is including in OpenLayers.js)
+- Kitware QCR Mentions Prototype
+  -- app/js/vendor/tangelo-mentions/*.js
+  (https://github.com/XDATA-Year-3/QCR-mentions-prototype/blob/neon-integration)
+- XMLHttpRequest.js (this is included in OpenLayers.js)
 
 Bower (bower.txt)
 
@@ -27,6 +30,8 @@ BSD 3-clause, aka the "New" BSD License (bsd-3clause.txt)
   -- d3.min.js 3.0.8
 - MergeSort in JS
   -- merge-sort.js v1.0
+- Trifacta Vega
+  -- vega-1.3.3.min.js
 
 JQuery Tagcloud (jquery.tagcloud.txt)
   -- jquery.tagcloud.js
