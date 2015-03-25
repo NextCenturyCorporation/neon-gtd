@@ -50,7 +50,7 @@ angular.module('neonDemo.directives')
             $scope.longitudeField = '';
             $scope.sizeByField = '';
             $scope.colorByField = '';
-            $scope.showPoints = false;  // Default to the heatmap view.
+            $scope.showPoints = true;  // true=points; false=Default to the heatmap view.
             $scope.cacheMap = false;
             $scope.initializing = true;
             $scope.filterKey = "map" + uuid();
@@ -170,15 +170,7 @@ angular.module('neonDemo.directives')
                             points: newVal,
                             clusters: !newVal
                         });
-                    if(newVal !== oldVal) {
-                        if($scope.showPoints) {
-                            $scope.setMapSizeMapping($scope.sizeByField);
-                        } else {
-                            $scope.setMapSizeMapping('');
-                        }
-                        $scope.map.draw();
-                        $scope.map.toggleLayers();
-                    }
+                    toggleShowPoints(newVal, oldVal);
                 });
 
                 // Handle toggling map caching.
@@ -265,7 +257,24 @@ angular.module('neonDemo.directives')
                         $scope.error = "Error: Failed to create filter.";
                     });
                 };
+
+                if ($scope.showPoints == true) {
+                    toggleShowPoints(false, true);
+                }
+
             };
+
+            var toggleShowPoints = function(oldVal, newVal) { 
+                if(newVal !== oldVal) {
+                    if($scope.showPoints) {
+                        $scope.setMapSizeMapping($scope.sizeByField);
+                    } else {
+                        $scope.setMapSizeMapping('');
+                    }
+                    $scope.map.draw();
+                    $scope.map.toggleLayers();
+                }
+            }
 
             var onMapEvent = function(message) {
                 var type = message.type;

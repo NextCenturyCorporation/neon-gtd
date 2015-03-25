@@ -43,7 +43,7 @@ angular.module('neonDemo.directives')
                     // hostnameInput: "192.168.0.129",
                     selectedDb: "test",
                     selectedTable: "twitter36",
-                    connectOnLoad: false
+                    connectOnLoad: true
                 },
                 {
                     name: "Neon-Tangelo Test",
