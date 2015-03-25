@@ -104,6 +104,12 @@ angular.module('neonDemo.directives')
                 sizeY: 2,
                 type: 'directed-graph',
                 icon: 'img/visualizations/Graph64.png'
+            },{
+                name: 'Mentions',
+                sizeX: 6,
+                sizeY:2,
+                type: 'tangelo-mentions',
+                icon: 'js/vendor/tangelo-mentions/tangelo-64x64.png'
             }];
 
             /**
