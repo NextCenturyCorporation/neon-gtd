@@ -367,28 +367,19 @@ angular.module('neonDemo.directives')
             $scope.displayActiveDataset = function() {
                 var connection = connectionService.getActiveConnection();
                 if(connection) {
-                    connectionService.loadMetadata(function() {
-                        var info = connectionService.getActiveDataset();
-                        $scope.databaseName = info.database;
-                        $scope.tableName = info.table;
-                        // Repopulate the field selectors and get the default values.
-                        XDATA.activityLogger.logSystemActivity('HeatMap - query for data field names');
-                        connection.getFieldNames($scope.tableName, function(results) {
-                            $scope.$apply(function() {
-                                XDATA.activityLogger.logSystemActivity('HeatMap - data field names received');
-                                populateFieldNames(results);
-                                $scope.latitudeField = connectionService.getFieldMapping("latitude");
-                                $scope.longitudeField = connectionService.getFieldMapping("longitude");
-                                $scope.colorByField = connectionService.getFieldMapping("color_by");
-                                $scope.sizeByField = connectionService.getFieldMapping("size_by");
-                                XDATA.activityLogger.logSystemActivity('HeatMap - field selectors updated');
+                    $scope.databaseName = datasetService.getDatabase();
+                    $scope.tableName = datasetService.getTable();
 
-                                $timeout(function() {
-                                    $scope.initializing = false;
-                                    $scope.queryForMapData();
-                                });
-                            });
-                        });
+                    populateFieldNames(datasetService.getFields());
+                    $scope.latitudeField = datasetService.getField("latitude");
+                    $scope.longitudeField = datasetService.getField("longitude");
+                    $scope.colorByField = datasetService.getField("color_by");
+                    $scope.sizeByField = datasetService.getField("size_by");
+                    XDATA.activityLogger.logSystemActivity('HeatMap - field selectors updated');
+
+                    $timeout(function() {
+                        $scope.initializing = false;
+                        $scope.queryForMapData();
                     });
                 }
             };

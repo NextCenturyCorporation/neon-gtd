@@ -66,6 +66,10 @@ angular.module("neonDemo.services")
             return service.dataset.fields ? service.dataset.fields[field] : "";
         };
 
+        service.setField = function(field, value) {
+            service.dataset.fields[field] = value;
+        };
+
         return service;
     }
 );

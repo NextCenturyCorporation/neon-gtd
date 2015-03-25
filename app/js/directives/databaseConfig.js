@@ -98,6 +98,7 @@ angular.module('neonDemo.directives')
 
                 // Set table name and initiate connection.
                 $scope.selectedTable = server.selectedTable;
+                $scope.tableFields = server.fields;
                 $scope.selectTable();
                 $scope.connectToDatabase();
             };
@@ -129,27 +130,16 @@ angular.module('neonDemo.directives')
                     'connect', XDATA.activityLogger.WF_GETDATA, {
                         table: $scope.selectedTable
                     });
-                $scope.connection.getFieldNames($scope.selectedTable, function(result) {
-                    $scope.$apply(function() {
-                        $scope.tableFields = result;
-                    });
-                    connectionService.connectToDataset($scope.datastoreSelect, $scope.hostnameInput, $scope.selectedDb, $scope.selectedTable);
-                    $scope.applyDefaultFields();
-                });
-            };
 
-            $scope.applyDefaultFields = function() {
-                connectionService.loadMetadata(function() {
-                    $scope.$apply(function() {
-                        var mappings = connectionService.getFieldMappings();
-                        for(var key in $scope.fields) {
-                            if(Object.prototype.hasOwnProperty.call($scope.fields, key)) {
-                                var field = $scope.fields[key];
-                                field.selected = mappings.hasOwnProperty(field.name) ? mappings[field.name] : "";
-                            }
-                        }
-                    });
-                });
+                connectionService.connectToDataset($scope.datastoreSelect, $scope.hostnameInput, $scope.selectedDb, $scope.selectedTable);
+
+                var mappings = datasetService.getFields();
+                for(var key in $scope.fields) {
+                    if(Object.prototype.hasOwnProperty.call($scope.fields, key)) {
+                        var field = $scope.fields[key];
+                        field.selected = mappings.hasOwnProperty(field.name) ? mappings[field.name] : "";
+                    }
+                }
             };
 
             $scope.selectField = function() {
@@ -178,7 +168,7 @@ angular.module('neonDemo.directives')
                 for(var key in $scope.fields) {
                     if(Object.prototype.hasOwnProperty.call($scope.fields, key)) {
                         var field = $scope.fields[key];
-                        connectionService.setFieldMapping(field.name, field.selected);
+                        datasetService.setField(field.name, field.selected);
                     }
                 }
                 $scope.connectToDatabase();

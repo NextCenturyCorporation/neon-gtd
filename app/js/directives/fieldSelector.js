@@ -72,24 +72,12 @@ angular.module('neonDemo.directives')
             $scope.displayActiveDataset = function() {
                 var connection = connectionService.getActiveConnection();
                 if(connection) {
-                    connectionService.loadMetadata(function() {
-                        var info = connectionService.getActiveDataset();
-                        $scope.databaseName = info.database;
-                        $scope.tableName = info.table;
-                        connectionService.getActiveConnection().getFieldNames($scope.tableName, function(results) {
-                            XDATA.activityLogger.logSystemActivity('FieldSelector - query for available fields');
-                            $scope.$apply(function() {
-                                $scope.fields = results;
-                                XDATA.activityLogger.logSystemActivity('FieldSelector - received available fields');
-                            });
-                        });
-
-                        if($scope.defaultMapping) {
-                            connectionService.loadMetadata(function() {
-                                $scope.targetVar = connectionService.getFieldMapping($scope.defaultMapping);
-                            });
-                        }
-                    });
+                    $scope.databaseName = datasetService.getDatabase();
+                    $scope.tableName = datasetService.getTable();
+                    $scope.fields = datasetService.getFields();
+                    if($scope.defaultMapping) {
+                        $scope.targetVar = datasetService.getField($scope.defaultMapping);
+                    }
                 }
             };
 

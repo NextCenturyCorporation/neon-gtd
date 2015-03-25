@@ -144,18 +144,10 @@ angular.module('neonDemo.directives')
             $scope.displayActiveDataset = function() {
                 var connection = connectionService.getActiveConnection();
                 if(connection) {
-                    connectionService.loadMetadata(function() {
-                        var info = connectionService.getActiveDataset();
-                        $scope.databaseName = info.database;
-                        $scope.tableName = info.table;
-
-                        connection.getFieldNames($scope.tableName, function(results) {
-                            $scope.$apply(function() {
-                                $scope.fields = results;
-                                $scope.queryForData();
-                            });
-                        });
-                    });
+                    $scope.databaseName = datasetService.getDatabase();
+                    $scope.tableName = datasetService.getTable();
+                    $scope.fields = datasetService.getFields();
+                    $scope.queryForData();
                 }
             };
 

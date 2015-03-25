@@ -279,19 +279,16 @@ angular.module('neonDemo.directives')
             $scope.displayActiveDataset = function() {
                 var connection = connectionService.getActiveConnection();
                 if(connection) {
-                    connectionService.loadMetadata(function() {
-                        var info = connectionService.getActiveDataset();
-                        $scope.databaseName = info.database;
-                        $scope.tableName = info.table;
-                        $scope.bucketizer.setStartDate(undefined);
-                        $scope.startDateForDisplay = undefined;
-                        $scope.endDateForDisplay = undefined;
-                        $scope.referenceStartDate = undefined;
-                        $scope.referenceEndDate = undefined;
-                        $scope.data = [];
-                        $scope.brush = [];
-                        $scope.queryForChartData();
-                    });
+                    $scope.databaseName = datasetService.getDatabase();
+                    $scope.tableName = datasetService.getTable();
+                    $scope.bucketizer.setStartDate(undefined);
+                    $scope.startDateForDisplay = undefined;
+                    $scope.endDateForDisplay = undefined;
+                    $scope.referenceStartDate = undefined;
+                    $scope.referenceEndDate = undefined;
+                    $scope.data = [];
+                    $scope.brush = [];
+                    $scope.queryForChartData();
                 }
             };
 
@@ -305,8 +302,7 @@ angular.module('neonDemo.directives')
                     $scope.errorMessage = undefined;
                 }
 
-                $scope.dateField = connectionService.getFieldMapping("date");
-                $scope.dateField = $scope.dateField || 'date';
+                $scope.dateField = datasetService.getField("date") || "date";
 
                 var query = new neon.query.Query()
                     .selectFrom($scope.databaseName, $scope.tableName)

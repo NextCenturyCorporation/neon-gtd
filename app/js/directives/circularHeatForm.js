@@ -166,12 +166,9 @@ angular.module('neonDemo.directives')
             $scope.displayActiveDataset = function() {
                 var connection = connectionService.getActiveConnection();
                 if(connection) {
-                    connectionService.loadMetadata(function() {
-                        var info = connectionService.getActiveDataset();
-                        $scope.databaseName = info.database;
-                        $scope.tableName = info.table;
-                        $scope.queryForChartData();
-                    });
+                    $scope.databaseName = datasetService.getDatabase();
+                    $scope.tableName = datasetService.getTable();
+                    $scope.queryForChartData();
                 }
             };
 
@@ -185,11 +182,7 @@ angular.module('neonDemo.directives')
                     $scope.errorMessage = undefined;
                 }
 
-                // TODO: Decide how to pass in field mappings.  We can do this through a controller or the
-                // connection service or some mapping service.  Two example below, one commented out.
-                //var dateField = $scope.getDateField();
-                var dateField = connectionService.getFieldMapping("date");
-                dateField = dateField || DEFAULT_DATE_FIELD;
+                var dateField = datasetService.getField("date") || DEFAULT_DATE_FIELD;
 
                 if(!dateField) {
                     $scope.updateChartData({

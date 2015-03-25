@@ -142,15 +142,12 @@ angular.module('neonDemo.directives')
             $scope.displayActiveDataset = function() {
                 var connection = connectionService.getActiveConnection();
                 if(connection) {
-                    connectionService.loadMetadata(function() {
-                        var info = connectionService.getActiveDataset();
-                        $scope.databaseName = info.database;
-                        $scope.tableName = info.table;
-                        // check if the field was passed in, otherwise check the mapping. if neither is found leave it empty
-                        $scope.tagField = $scope.tagField || connectionService.getFieldMapping("tags") || '';
-                        // Pull data.
-                        $scope.queryForTags();
-                    });
+                    $scope.databaseName = datasetService.getDatabase();
+                    $scope.tableName = datasetService.getTable();
+                    // check if the field was passed in, otherwise check the mapping. if neither is found leave it empty
+                    $scope.tagField = $scope.tagField || datasetService.getField("tags") || '';
+                    // Pull data.
+                    $scope.queryForTags();
                 }
             };
 

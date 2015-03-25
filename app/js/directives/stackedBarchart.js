@@ -98,9 +98,7 @@ angular.module('neonDemo.directives')
                 // Pull data.
                 var connection = connectionService.getActiveConnection();
                 if(connection) {
-                    connectionService.loadMetadata(function() {
-                        $scope.queryForData();
-                    });
+                    $scope.queryForData();
                 }
             };
 
@@ -110,8 +108,8 @@ angular.module('neonDemo.directives')
                     $scope.errorMessage = undefined;
                 }
 
-                var xAxis = $scope.attrX || connectionService.getFieldMapping("x_axis");
-                var yAxis = $scope.attrY || connectionService.getFieldMapping("y_axis");
+                var xAxis = $scope.attrX || datasetService.getField("x_axis");
+                var yAxis = $scope.attrY || datasetService.getField("y_axis");
                 if(!yAxis) {
                     yAxis = COUNT_FIELD_NAME;
                 }
@@ -147,8 +145,8 @@ angular.module('neonDemo.directives')
             };
 
             $scope.queryForData = function() {
-                var xAxis = $scope.attrX || connectionService.getFieldMapping("x_axis");
-                var yAxis = $scope.attrY || connectionService.getFieldMapping("y_axis");
+                var xAxis = $scope.attrX || datasetService.getField("x_axis");
+                var yAxis = $scope.attrY || datasetService.getField("y_axis");
                 if(!yAxis) {
                     yAxis = COUNT_FIELD_NAME;
                 }
@@ -238,10 +236,8 @@ angular.module('neonDemo.directives')
             var doDrawChart = function(data) {
                 charts.BarChart.destroy(el[0], '.barchart');
 
-                var xAxis = connectionService.getFieldMapping("x_axis");
-                xAxis = xAxis || $scope.attrX;
-                var yAxis = connectionService.getFieldMapping("y_axis");
-                yAxis = yAxis || $scope.attrY;
+                var xAxis = datasetService.getField("x_axis") || $scope.attrX;
+                var yAxis = datasetService.getField("y_axis") || $scope.attrY;
                 if(!yAxis) {
                     yAxis = COUNT_FIELD_NAME;
                 }

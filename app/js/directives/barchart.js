@@ -129,12 +129,9 @@ angular.module('neonDemo.directives')
             $scope.displayActiveDataset = function() {
                 var connection = connectionService.getActiveConnection();
                 if(connection) {
-                    connectionService.loadMetadata(function() {
-                        var info = connectionService.getActiveDataset();
-                        $scope.databaseName = info.database;
-                        $scope.tableName = info.table;
-                        $scope.queryForData(true);
-                    });
+                    $scope.databaseName = datasetService.getDatabase();
+                    $scope.tableName = datasetService.getTable();
+                    $scope.queryForData(true);
                 }
             };
 
@@ -144,8 +141,8 @@ angular.module('neonDemo.directives')
                     $scope.errorMessage = undefined;
                 }
 
-                var xAxis = $scope.attrX || connectionService.getFieldMapping("bar_x_axis");
-                var yAxis = $scope.attrY || connectionService.getFieldMapping("y_axis");
+                var xAxis = $scope.attrX || datasetService.getField("bar_x_axis");
+                var yAxis = $scope.attrY || datasetService.getField("y_axis");
 
                 if(xAxis === undefined || xAxis === "" || yAxis === undefined || yAxis === "") {
                     drawBlankChart();
@@ -195,7 +192,7 @@ angular.module('neonDemo.directives')
             };
 
             var clickFilterHandler = function(filterValue) {
-                var xAxis = $scope.attrX || connectionService.getFieldMapping("bar_x_axis");
+                var xAxis = $scope.attrX || datasetService.getField("bar_x_axis");
                 var connection = connectionService.getActiveConnection();
                 if(xAxis !== undefined && xAxis !== "" && $scope.messenger && connection) {
                     var filterClause = neon.query.where(xAxis, '=', filterValue);
@@ -235,8 +232,8 @@ angular.module('neonDemo.directives')
             };
 
             var doDrawChart = function(data, destroy) {
-                var xAxis = $scope.attrX || connectionService.getFieldMapping("bar_x_axis");
-                var yAxis = $scope.attrY || connectionService.getFieldMapping("y_axis");
+                var xAxis = $scope.attrX || datasetService.getField("bar_x_axis");
+                var yAxis = $scope.attrY || datasetService.getField("y_axis");
 
                 if(!yAxis) {
                     yAxis = COUNT_FIELD_NAME;

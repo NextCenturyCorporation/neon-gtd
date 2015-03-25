@@ -23,10 +23,6 @@
 angular.module('neonDemo.services')
 .factory('ConnectionService', function() {
     var activeConnection;
-    var connectionInformation = {
-        fields: {}
-    };
-
     var service = {};
 
     /**
@@ -49,53 +45,6 @@ angular.module('neonDemo.services')
         // Use the given database if present.  If datbase is undefined, this will
         // will be passed along, clearing out the table database field.
         activeConnection.use(database);
-
-        // If this is different from the previous call, clear out the metadata
-        if(connectionInformation === undefined || connectionInformation.type !== databaseType ||
-            connectionInformation.host !== host || connectionInformation.database !== database ||
-            connectionInformation.table !== table) {
-            connectionInformation = {
-                type: databaseType,
-                host: host,
-                database: database,
-                table: table,
-                fields: {}
-            };
-        }
-    };
-
-    /**
-    * Returns an object the type, host, database, and table names for the current active dataset.
-    * @return {Object}
-    * @method getActiveDataset
-    */
-    service.getActiveDataset = function() {
-        return {
-            type: connectionInformation.type,
-            host: connectionInformation.host,
-            database: connectionInformation.database,
-            table: connectionInformation.table
-        };
-    };
-
-    /**
-     * Gets any metadata information from the service for this specific table. connectToDataset must be called
-     * before this function.
-     * @param callback
-     * @method loadMetadata
-     */
-    service.loadMetadata = function(callback) {
-        var database = connectionInformation.database;
-        var table = connectionInformation.table;
-        // Only go to the server if the information hasn't already been loaded.
-        if(_.keys(connectionInformation.fields).length === 0) {
-            neon.widget.getWidgetDatasetMetadata(database, table, "angular_example", function(result) {
-                connectionInformation.fields = result;
-                callback();
-            });
-        } else {
-            callback();
-        }
     };
 
     /**
@@ -114,38 +63,6 @@ angular.module('neonDemo.services')
      */
     service.getActiveConnection = function() {
         return activeConnection;
-    };
-
-    /**
-     * Returns connection meta-data related to the current host.  Allows client code to ask if there is a mapping
-     * for common visualization fields to a particular table field.  For example, "latitude" values may stored in
-     * a "lat_val" column or visulizations may want to "size-by" a "magnitude" column in a table of earthquake data.
-     * loadMetadata() must be called before this function, or this function will return undefined.
-     * @param {String} field the name of the field to get the mapping for the current table
-     * @return {String} retVal The column in the table which contains data of the requested type
-     * @method getFieldMapping
-     */
-    service.getFieldMapping = function(field) {
-        return connectionInformation.fields[field];
-    };
-
-    /**
-     * Overrides the meta-data for a particular field.
-     * @param {String} field
-     * @param {String} mapping
-     * @method setFieldMapping
-     */
-    service.setFieldMapping = function(field, mapping) {
-        connectionInformation.fields[field] = mapping;
-    };
-
-    /**
-     * Returns an object where the keys are the fields and the values are the mappings for the current host.
-     * @returns {String}
-     * @method getFieldMappings
-     */
-    service.getFieldMappings = function() {
-        return connectionInformation.fields;
     };
 
     return service;

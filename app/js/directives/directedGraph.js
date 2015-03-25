@@ -65,7 +65,7 @@ angular.module('neonDemo.directives')
 
                 var connection = connectionService.getActiveConnection();
                 if(connection) {
-                    connectionService.loadMetadata($scope.render);
+                    $scope.render();
                 }
             };
 

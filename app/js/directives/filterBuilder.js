@@ -189,14 +189,9 @@ angular.module('neonDemo.directives')
                 // Query for data only if we have an active connection.
                 var connection = connectionService.getActiveConnection();
                 if(connection) {
-                    XDATA.activityLogger.logSystemActivity('FilterBuilder - query for available fields');
-                    connection.getFieldNames($scope.tableName, function(results) {
-                        $scope.$apply(function() {
-                            populateFieldNames(results);
-                            $scope.selectedField = results[0];
-                            XDATA.activityLogger.logSystemActivity('FilterBuilder - received available fields');
-                        });
-                    });
+                    var fields = datasetService.getFields();
+                    populateFieldNames(fields);
+                    $scope.selectedField = fields[0];
                 }
             };
 

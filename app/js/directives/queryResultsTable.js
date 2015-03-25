@@ -224,18 +224,12 @@ angular.module('neonDemo.directives')
             $scope.displayActiveDataset = function() {
                 var connection = connectionService.getActiveConnection();
                 if(connection) {
-                    connectionService.loadMetadata(function() {
-                        var info = connectionService.getActiveDataset();
-                        $scope.databaseName = info.database;
-                        $scope.tableName = info.table;
-                        connection.getFieldNames($scope.tableName, function(results) {
-                            $scope.$apply(function() {
-                                populateFieldNames(results);
-                                $scope.sortByField = connectionService.getFieldMapping("sort_by");
-                                $scope.sortByField = $scope.sortByField || $scope.fields[0];
-                                updateRowsAndCount();
-                            });
-                        });
+                    $scope.databaseName = datasetService.getDatabase();
+                    $scope.tableName = datasetService.getTable();
+                    $scope.$apply(function() {
+                        populateFieldNames(datasetService.getFields());
+                        $scope.sortByField = datasetService.getField("sort_by") || $scope.fields[0];
+                        updateRowsAndCount();
                     });
                 }
             };
