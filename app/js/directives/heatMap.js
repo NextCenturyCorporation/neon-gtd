@@ -361,8 +361,7 @@ angular.module('neonDemo.directives')
 
                 if(initializing) {
                     $scope.updateFieldsAndQueryForMapData();
-                }
-                else {
+                } else {
                     $scope.$apply(function() {
                         $scope.updateFieldsAndQueryForMapData();
                     });
@@ -371,10 +370,10 @@ angular.module('neonDemo.directives')
 
             $scope.updateFieldsAndQueryForMapData = function() {
                 $scope.fields = datasetService.getDatabaseFields();
-                $scope.latitudeField = datasetService.getMapping("latitude");
-                $scope.longitudeField = datasetService.getMapping("longitude");
-                $scope.colorByField = datasetService.getMapping("color_by");
-                $scope.sizeByField = datasetService.getMapping("size_by");
+                $scope.latitudeField = datasetService.getMapping("latitude") || "";
+                $scope.longitudeField = datasetService.getMapping("longitude") || "";
+                $scope.colorByField = datasetService.getMapping("color_by") || "";
+                $scope.sizeByField = datasetService.getMapping("size_by") || "";
                 XDATA.activityLogger.logSystemActivity('HeatMap - field selectors updated');
 
                 $timeout(function() {

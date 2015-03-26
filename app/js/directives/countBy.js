@@ -180,8 +180,7 @@ angular.module('neonDemo.directives')
 
                 if(initializing) {
                     $scope.updateFieldsAndQueryForData();
-                }
-                else {
+                } else {
                     $scope.$apply(function() {
                         $scope.updateFieldsAndQueryForData();
                     });

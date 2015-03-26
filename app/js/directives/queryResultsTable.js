@@ -225,8 +225,7 @@ angular.module('neonDemo.directives')
 
                 if(initializing) {
                     $scope.updateFieldsAndRowsAndCount();
-                }
-                else {
+                } else {
                     $scope.$apply(function() {
                         $scope.updateFieldsAndRowsAndCount();
                     });

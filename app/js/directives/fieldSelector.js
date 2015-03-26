@@ -71,8 +71,7 @@ angular.module('neonDemo.directives')
 
                 if(initializing) {
                     $scope.fields = datasetService.getDatabaseFields();
-                }
-                else {
+                } else {
                     $scope.$apply(function() {
                         $scope.fields = datasetService.getDatabaseFields();
                     });
