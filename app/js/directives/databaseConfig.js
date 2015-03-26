@@ -85,24 +85,26 @@ angular.module('neonDemo.directives')
                     'connect', XDATA.activityLogger.WF_GETDATA, {
                         preset: server.name
                     });
+
+                datasetService.setActiveDataset(server);
+
                 // Change name of active connection.
                 $scope.activeServer = server.name;
 
                 // Set datastore connection details and connect to the datastore.
-                $scope.datastoreSelect = server.datastoreSelect;
-                $scope.hostnameInput = server.hostnameInput;
+                $scope.datastoreSelect = server.datastore;
+                $scope.hostnameInput = server.hostname;
                 $scope.connectToDataServer();
 
                 // Set database name and get list of tables.
-                $scope.selectedDb = server.selectedDb;
+                $scope.selectedDb = server.database;
                 $scope.selectDatabase();
 
                 // Set table name and initiate connection.
-                $scope.selectedTable = server.selectedTable;
+                $scope.selectedTable = server.table;
                 $scope.tableFields = server.fields;
                 $scope.tableFieldMappings = server.mappings;
                 $scope.selectTable();
-                $scope.connectToDatabase();
             };
 
             var populateDatabaseDropdown = function(dbs) {
@@ -139,6 +141,8 @@ angular.module('neonDemo.directives')
                         $scope.tableFields = datasetService.getDatabaseFields();
                     });
                     connectionService.connectToDataset($scope.datastoreSelect, $scope.hostnameInput, $scope.selectedDb, $scope.selectedTable);
+                    // Wait to publish the dataset change until we've updated the field names.
+                    $scope.publishDatasetChanged();
                 });
             };
 
@@ -168,9 +172,10 @@ angular.module('neonDemo.directives')
                 $scope.dbTables = tables;
             };
 
-            $scope.connectToDatabase = function() {
+            $scope.publishDatasetChanged = function() {
                 $scope.messenger.clearFiltersSilently(function() {
-                    $scope.broadcastActiveDataset();
+                    $scope.messenger.publish(neon.eventing.channels.ACTIVE_DATASET_CHANGED, {});
+                    XDATA.activityLogger.logSystemActivity('Publishing Neon Active Dataset Change message', {});
                 });
             };
 
@@ -191,23 +196,6 @@ angular.module('neonDemo.directives')
                         database: $scope.selectedDb,
                         table: $scope.selectedTable
                     });
-            };
-
-            $scope.broadcastActiveDataset = function() {
-                // TODO: Alter or eliminate this when the Connection class in Neon is changed to emit
-                // dataset selections.
-                var message = {
-                    datastore: $scope.datastoreSelect,
-                    hostname: $scope.hostnameInput,
-                    database: $scope.selectedDb,
-                    table: $scope.selectedTable,
-                    fields: $scope.tableFields,
-                    mappings: $scope.tableFieldMappings
-                };
-                datasetService.setActiveDataset(message);
-                $scope.messenger.publish(neon.eventing.channels.ACTIVE_DATASET_CHANGED, message);
-                XDATA.activityLogger.logSystemActivity('Publishing Neon Active Dataset Change message',
-                    message);
             };
 
             // Wait for neon to be ready, the create our messenger and intialize the view and data.

@@ -80,10 +80,10 @@
 
     "datasets": [{
         "name": "Earthquakes",
-        "datastoreSelect": "mongo",
-        "hostnameInput": "localhost",
-        "selectedDb": "test",
-        "selectedTable": "earthquakes",
+        "datastore": "mongo",
+        "hostname": "localhost",
+        "database": "test",
+        "table": "earthquakes",
         "fields": [{
             "columnName": "_id",
             "prettyName": "Database ID"
@@ -146,10 +146,10 @@
         }
     }, {
         "name": "South America Tweets",
-        "datastoreSelect": "mongo",
-        "hostnameInput": "localhost",
-        "selectedDb": "test",
-        "selectedTable": "alibaverstock130k",
+        "datastore": "mongo",
+        "hostname": "localhost",
+        "database": "test",
+        "table": "alibaverstock130k",
         "fields": [{
             "columnName": "_id",
             "prettyName": "Database ID"
@@ -197,10 +197,10 @@
         }
     }, {
         "name": "Twitter",
-        "datastoreSelect": "mongo",
-        "hostnameInput": "localhost",
-        "selectedDb": "test",
-        "selectedTable": "gbDate",
+        "datastore": "mongo",
+        "hostname": "localhost",
+        "database": "test",
+        "table": "gbDate",
         "fields": [{
             "columnName": "_id",
             "prettyName": "Database ID"
@@ -248,10 +248,10 @@
         }
     }, {
         "name": "Traffic",
-        "datastoreSelect": "mongo",
-        "hostnameInput": "localhost",
-        "selectedDb": "test",
-        "selectedTable": "most_active",
+        "datastore": "mongo",
+        "hostname": "localhost",
+        "database": "test",
+        "table": "most_active",
         "fields": [{
             "columnName": "_id",
             "prettyName": "Database ID"
