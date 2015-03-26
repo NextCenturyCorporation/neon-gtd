@@ -84,7 +84,56 @@
         "hostnameInput": "localhost",
         "selectedDb": "test",
         "selectedTable": "earthquakes",
-        "fields": {
+        "fields": [{
+            "columnName": "_id",
+            "prettyName": "Database ID"
+        }, {
+            "columnName": "time",
+            "prettyName": "Time"
+        }, {
+            "columnName": "latitude",
+            "prettyName": "Latitude"
+        }, {
+            "columnName": "longitude",
+            "prettyName": "Longitude"
+        }, {
+            "columnName": "depth",
+            "prettyName": "Depth"
+        }, {
+            "columnName": "mag",
+            "prettyName": "Magnitude"
+        }, {
+            "columnName": "magType",
+            "prettyName": "Magnitude Type"
+        }, {
+            "columnName": "nst",
+            "prettyName": "NST"
+        }, {
+            "columnName": "gap",
+            "prettyName": "Gap"
+        }, {
+            "columnName": "dmin",
+            "prettyName": "DMIN"
+        }, {
+            "columnName": "rms",
+            "prettyName": "RMS"
+        }, {
+            "columnName": "net",
+            "prettyName": "Net"
+        }, {
+            "columnName": "id",
+            "prettyName": "ID"
+        }, {
+            "columnName": "updated",
+            "prettyName": "Updated"
+        }, {
+            "columnName": "place",
+            "prettyName": "Place"
+        }, {
+            "columnName": "type",
+            "prettyName": "Type"
+        }],
+        "mappings": {
             "date": "time",
             "latitude": "latitude",
             "longitude": "longitude",
@@ -101,7 +150,41 @@
         "hostnameInput": "localhost",
         "selectedDb": "test",
         "selectedTable": "alibaverstock130k",
-        "fields": {
+        "fields": [{
+            "columnName": "_id",
+            "prettyName": "Database ID"
+        }, {
+            "columnName": "created_at",
+            "prettyName": "Created At"
+        }, {
+            "columnName": "user_id",
+            "prettyName": "User ID"
+        }, {
+            "columnName": "user_name",
+            "prettyName": "User Name"
+        }, {
+            "columnName": "text",
+            "prettyName": "Text"
+        }, {
+            "columnName": "hashtags",
+            "prettyName": "Hashtags"
+        }, {
+            "columnName": "latitude",
+            "prettyName": "Latitude"
+        }, {
+            "columnName": "longitude",
+            "prettyName": "Longitude"
+        }, {
+            "columnName": "country",
+            "prettyName": "Country"
+        }, {
+            "columnName": "place",
+            "prettyName": "Place"
+        }, {
+            "columnName": "place_type",
+            "prettyName": "Place Type"
+        }],
+        "mappings": {
             "date": "created_at",
             "latitude": "latitude",
             "longitude": "longitude",
@@ -118,7 +201,41 @@
         "hostnameInput": "localhost",
         "selectedDb": "test",
         "selectedTable": "gbDate",
-        "fields": {
+        "fields": [{
+            "columnName": "_id",
+            "prettyName": "Database ID"
+        }, {
+            "columnName": "created_at",
+            "prettyName": "Created At"
+        }, {
+            "columnName": "hashtags",
+            "prettyName": "Hashtags"
+        }, {
+            "columnName": "latitude",
+            "prettyName": "Latitude"
+        }, {
+            "columnName": "longitude",
+            "prettyName": "Longitude"
+        }, {
+            "columnName": "sentiment",
+            "prettyName": "Sentiment"
+        }, {
+            "columnName": "sentimentType",
+            "prettyName": "Sentiment Type"
+        }, {
+            "columnName": "text",
+            "prettyName": "Text"
+        }, {
+            "columnName": "user_screen_name",
+            "prettyName": "Screen Name"
+        }, {
+            "columnName": "yyyy-mm",
+            "prettyName": "Month"
+        }, {
+            "columnName": "yyyy-mm-dd",
+            "prettyName": "Day"
+        }],
+        "mappings": {
             "date": "created_at",
             "latitude": "latitude",
             "longitude": "longitude",
@@ -135,7 +252,11 @@
         "hostnameInput": "localhost",
         "selectedDb": "test",
         "selectedTable": "most_active",
-        "fields": {
+        "fields": [{
+            "columnName": "_id",
+            "prettyName": "Database ID"
+        }],
+        "mappings": {
             "date": "created_at",
             "latitude": "latitude",
             "longitude": "longitude",

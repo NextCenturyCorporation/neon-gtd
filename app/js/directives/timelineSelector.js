@@ -259,7 +259,14 @@ angular.module('neonDemo.directives')
              */
             var onDatasetChanged = function() {
                 XDATA.activityLogger.logSystemActivity('TimelineSelector - received neon dataset changed event');
+                $scope.displayActiveDataset();
+            };
 
+            /**
+             * Displays data for any currently active datasets.
+             * @method displayActiveDataset
+             */
+            $scope.displayActiveDataset = function() {
                 if(!datasetService.hasDataset()) {
                     return;
                 }
@@ -269,27 +276,16 @@ angular.module('neonDemo.directives')
                         datasetService.getDatabase(),
                         datasetService.getTable());
 
-                $scope.displayActiveDataset();
-            };
-
-            /**
-             * Displays data for any currently active datasets.
-             * @method displayActiveDataset
-             */
-            $scope.displayActiveDataset = function() {
-                var connection = connectionService.getActiveConnection();
-                if(connection) {
-                    $scope.databaseName = datasetService.getDatabase();
-                    $scope.tableName = datasetService.getTable();
-                    $scope.bucketizer.setStartDate(undefined);
-                    $scope.startDateForDisplay = undefined;
-                    $scope.endDateForDisplay = undefined;
-                    $scope.referenceStartDate = undefined;
-                    $scope.referenceEndDate = undefined;
-                    $scope.data = [];
-                    $scope.brush = [];
-                    $scope.queryForChartData();
-                }
+                $scope.databaseName = datasetService.getDatabase();
+                $scope.tableName = datasetService.getTable();
+                $scope.bucketizer.setStartDate(undefined);
+                $scope.startDateForDisplay = undefined;
+                $scope.endDateForDisplay = undefined;
+                $scope.referenceStartDate = undefined;
+                $scope.referenceEndDate = undefined;
+                $scope.data = [];
+                $scope.brush = [];
+                $scope.queryForChartData();
             };
 
             /**
@@ -302,7 +298,7 @@ angular.module('neonDemo.directives')
                     $scope.errorMessage = undefined;
                 }
 
-                $scope.dateField = datasetService.getField("date") || "date";
+                $scope.dateField = datasetService.getMapping("date") || "date";
 
                 var query = new neon.query.Query()
                     .selectFrom($scope.databaseName, $scope.tableName)
@@ -317,19 +313,22 @@ angular.module('neonDemo.directives')
                 query.ignoreFilters([$scope.filterKey]);
 
                 XDATA.activityLogger.logSystemActivity('TimelineSelector - query for data');
-                connectionService.getActiveConnection().executeQuery(query, function(queryResults) {
-                    $scope.$apply(function() {
-                        $scope.updateChartData(queryResults);
-                        XDATA.activityLogger.logSystemActivity('TimelineSelector - data received');
+                var connection = connectionService.getActiveConnection();
+                if(connection) {
+                    connection.executeQuery(query, function(queryResults) {
+                        $scope.$apply(function() {
+                            $scope.updateChartData(queryResults);
+                            XDATA.activityLogger.logSystemActivity('TimelineSelector - data received');
+                        });
+                    }, function() {
+                        $scope.$apply(function() {
+                            // TODO:  Determine how to clear the chart without causing errors.
+                            // $scope.updateChartData({ data: [] });
+                            XDATA.activityLogger.logSystemActivity('TimelineSelector - data requested failed');
+                            $scope.errorMessage = errorNotificationService.showErrorMessage(element, response.responseJSON.error, response.responseJSON.stackTrace);
+                        });
                     });
-                }, function() {
-                    $scope.$apply(function() {
-                        // TODO:  Determine how to clear the chart without causing errors.
-                        // $scope.updateChartData({ data: [] });
-                        XDATA.activityLogger.logSystemActivity('TimelineSelector - data requested failed');
-                        $scope.errorMessage = errorNotificationService.showErrorMessage(element, response.responseJSON.error, response.responseJSON.stackTrace);
-                    });
-                });
+                }
             };
 
             /**
@@ -444,42 +443,48 @@ angular.module('neonDemo.directives')
                     .where($scope.dateField, '!=', null).sortBy($scope.dateField, neon.query.ASCENDING).limit(1);
 
                 XDATA.activityLogger.logSystemActivity('TimelineSelector - query for minimum date');
-                connectionService.getActiveConnection().executeQuery(minDateQuery, function(queryResults) {
-                    if(queryResults.data.length > 0) {
-                        XDATA.activityLogger.logSystemActivity('TimelineSelector - minimum date received');
-                        $scope.referenceStartDate = new Date(queryResults.data[0][$scope.dateField]);
-                        if($scope.referenceEndDate !== undefined) {
-                            $scope.$apply(success);
+                var connection = connectionService.getActiveConnection();
+                if(connection) {
+                    connection.executeQuery(minDateQuery, function(queryResults) {
+                        if(queryResults.data.length > 0) {
+                            XDATA.activityLogger.logSystemActivity('TimelineSelector - minimum date received');
+                            $scope.referenceStartDate = new Date(queryResults.data[0][$scope.dateField]);
+                            if($scope.referenceEndDate !== undefined) {
+                                $scope.$apply(success);
+                            }
                         }
-                    }
-                }, function(response) {
-                    XDATA.activityLogger.logSystemActivity('TimelineSelector - error in query for minimum date');
-                    $scope.referenceStartDate = undefined;
-                    // TODO:  Determine how to clear the chart without causing errors.
-                    // $scope.updateChartData({ data: [] });
-                    $scope.errorMessage = errorNotificationService.showErrorMessage(element, response.responseJSON.error, response.responseJSON.stackTrace);
-                });
+                    }, function(response) {
+                        XDATA.activityLogger.logSystemActivity('TimelineSelector - error in query for minimum date');
+                        $scope.referenceStartDate = undefined;
+                        // TODO:  Determine how to clear the chart without causing errors.
+                        // $scope.updateChartData({ data: [] });
+                        $scope.errorMessage = errorNotificationService.showErrorMessage(element, response.responseJSON.error, response.responseJSON.stackTrace);
+                    });
+                }
 
                 var maxDateQuery = new neon.query.Query()
                     .selectFrom($scope.databaseName, $scope.tableName).ignoreFilters()
                     .where($scope.dateField, '!=', null).sortBy($scope.dateField, neon.query.DESCENDING).limit(1);
 
                 XDATA.activityLogger.logSystemActivity('TimelineSelector - query for maximum date');
-                connectionService.getActiveConnection().executeQuery(maxDateQuery, function(queryResults) {
-                    if(queryResults.data.length > 0) {
-                        XDATA.activityLogger.logSystemActivity('TimelineSelector - maximum date received');
-                        $scope.referenceEndDate = new Date(queryResults.data[0][$scope.dateField]);
-                        if($scope.referenceStartDate !== undefined) {
-                            $scope.$apply(success);
+                var connection = connectionService.getActiveConnection();
+                if(connection) {
+                    connection.executeQuery(maxDateQuery, function(queryResults) {
+                        if(queryResults.data.length > 0) {
+                            XDATA.activityLogger.logSystemActivity('TimelineSelector - maximum date received');
+                            $scope.referenceEndDate = new Date(queryResults.data[0][$scope.dateField]);
+                            if($scope.referenceStartDate !== undefined) {
+                                $scope.$apply(success);
+                            }
                         }
-                    }
-                }, function(response) {
-                    XDATA.activityLogger.logSystemActivity('TimelineSelector - error in query for maximum date');
-                    $scope.referenceEndDate = undefined;
-                    // TODO:  Determine how to clear the chart without causing errors.
-                    // $scope.updateChartData({ data: [] });
-                    $scope.errorMessage = errorNotificationService.showErrorMessage(element, response.responseJSON.error, response.responseJSON.stackTrace);
-                });
+                    }, function(response) {
+                        XDATA.activityLogger.logSystemActivity('TimelineSelector - error in query for maximum date');
+                        $scope.referenceEndDate = undefined;
+                        // TODO:  Determine how to clear the chart without causing errors.
+                        // $scope.updateChartData({ data: [] });
+                        $scope.errorMessage = errorNotificationService.showErrorMessage(element, response.responseJSON.error, response.responseJSON.stackTrace);
+                    });
+                }
             };
 
             /**
@@ -691,7 +696,7 @@ angular.module('neonDemo.directives')
             // Wait for neon to be ready, the create our messenger and intialize the view and data.
             neon.ready(function() {
                 $scope.initialize();
-                onDatasetChanged();
+                $scope.displayActiveDataset();
             });
         }
     };

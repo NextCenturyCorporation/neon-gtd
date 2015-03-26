@@ -122,7 +122,14 @@ angular.module('neonDemo.directives')
              */
             var onDatasetChanged = function() {
                 XDATA.activityLogger.logSystemActivity('TagCloud - received neon dataset changed event');
+                $scope.displayActiveDataset();
+            };
 
+            /**
+             * Displays data for any currently active datasets.
+             * @method displayActiveDataset
+             */
+            $scope.displayActiveDataset = function() {
                 if(!datasetService.hasDataset()) {
                     return;
                 }
@@ -132,23 +139,10 @@ angular.module('neonDemo.directives')
                         datasetService.getDatabase(),
                         datasetService.getTable());
 
-                $scope.displayActiveDataset();
-            };
-
-            /**
-             * Displays data for any currently active datasets.
-             * @method displayActiveDataset
-             */
-            $scope.displayActiveDataset = function() {
-                var connection = connectionService.getActiveConnection();
-                if(connection) {
-                    $scope.databaseName = datasetService.getDatabase();
-                    $scope.tableName = datasetService.getTable();
-                    // check if the field was passed in, otherwise check the mapping. if neither is found leave it empty
-                    $scope.tagField = $scope.tagField || datasetService.getField("tags") || '';
-                    // Pull data.
-                    $scope.queryForTags();
-                }
+                $scope.databaseName = datasetService.getDatabase();
+                $scope.tableName = datasetService.getTable();
+                $scope.tagField = $scope.tagField || datasetService.getMapping("tags") || "";
+                $scope.queryForTags();
             };
 
             /**
@@ -314,7 +308,7 @@ angular.module('neonDemo.directives')
             // Wait for neon to be ready, the create our messenger and intialize the view and data.
             neon.ready(function() {
                 $scope.initialize();
-                onDatasetChanged();
+                $scope.displayActiveDataset();
             });
         }
     };

@@ -146,7 +146,14 @@ angular.module('neonDemo.directives')
              */
             var onDatasetChanged = function() {
                 XDATA.activityLogger.logSystemActivity('CircularHeatForm - received neon dataset changed event');
+                $scope.displayActiveDataset();
+            };
 
+            /**
+             * Displays data for any currently active datasets.
+             * @method displayActiveDataset
+             */
+            $scope.displayActiveDataset = function() {
                 if(!datasetService.hasDataset()) {
                     return;
                 }
@@ -156,20 +163,9 @@ angular.module('neonDemo.directives')
                         datasetService.getDatabase(),
                         datasetService.getTable());
 
-                $scope.displayActiveDataset();
-            };
-
-            /**
-             * Displays data for any currently active datasets.
-             * @method displayActiveDataset
-             */
-            $scope.displayActiveDataset = function() {
-                var connection = connectionService.getActiveConnection();
-                if(connection) {
-                    $scope.databaseName = datasetService.getDatabase();
-                    $scope.tableName = datasetService.getTable();
-                    $scope.queryForChartData();
-                }
+                $scope.databaseName = datasetService.getDatabase();
+                $scope.tableName = datasetService.getTable();
+                $scope.queryForChartData();
             };
 
             /**
@@ -182,7 +178,7 @@ angular.module('neonDemo.directives')
                     $scope.errorMessage = undefined;
                 }
 
-                var dateField = datasetService.getField("date") || DEFAULT_DATE_FIELD;
+                var dateField = datasetService.getMapping("date") || DEFAULT_DATE_FIELD;
 
                 if(!dateField) {
                     $scope.updateChartData({
@@ -209,19 +205,22 @@ angular.module('neonDemo.directives')
                 // then the apply is handled by angular.  Forcing apply inside updateChartData instead is error prone as it
                 // may cause an apply within a digest cycle when triggered by an angular event.
                 XDATA.activityLogger.logSystemActivity('CircularHeatForm - query for data');
-                connectionService.getActiveConnection().executeQuery(query, function(queryResults) {
-                    XDATA.activityLogger.logSystemActivity('CircularHeatForm - data received');
-                    $scope.$apply(function() {
-                        $scope.updateChartData(queryResults);
-                        XDATA.activityLogger.logSystemActivity('CircularHeatForm - display updated');
+                var connection = connectionService.getActiveConnection();
+                if(connection) {
+                    connection.executeQuery(query, function(queryResults) {
+                        XDATA.activityLogger.logSystemActivity('CircularHeatForm - data received');
+                        $scope.$apply(function() {
+                            $scope.updateChartData(queryResults);
+                            XDATA.activityLogger.logSystemActivity('CircularHeatForm - display updated');
+                        });
+                    }, function(response) {
+                        XDATA.activityLogger.logSystemActivity('CircularHeatForm - error received');
+                        $scope.updateChartData({
+                            data: []
+                        });
+                        $scope.errorMessage = errorNotificationService.showErrorMessage(element, response.responseJSON.error, response.responseJSON.stackTrace);
                     });
-                }, function(response) {
-                    XDATA.activityLogger.logSystemActivity('CircularHeatForm - error received');
-                    $scope.updateChartData({
-                        data: []
-                    });
-                    $scope.errorMessage = errorNotificationService.showErrorMessage(element, response.responseJSON.error, response.responseJSON.stackTrace);
-                });
+                }
             };
 
             /**
@@ -296,7 +295,7 @@ angular.module('neonDemo.directives')
             neon.ready(function() {
                 $scope.messenger = new neon.eventing.Messenger();
                 $scope.initialize();
-                onDatasetChanged();
+                $scope.displayActiveDataset();
             });
         }
     };

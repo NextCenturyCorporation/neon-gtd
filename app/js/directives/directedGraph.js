@@ -50,23 +50,24 @@ angular.module('neonDemo.directives')
             };
 
             var onDatasetChanged = function() {
-                $scope.databaseName = datasetService.getDatabase();
-                $scope.tableName = datasetService.getTable();
-                $scope.data = [];
+                $scope.displayActiveDataset();
+            };
 
+            $scope.displayActiveDataset = function() {
                 if(!datasetService.hasDataset()) {
                     return;
                 }
+
+                $scope.databaseName = datasetService.getDatabase();
+                $scope.tableName = datasetService.getTable();
+                $scope.data = [];
 
                 connectionService.connectToDataset(datasetService.getDatastore(),
                         datasetService.getHostname(),
                         datasetService.getDatabase(),
                         datasetService.getTable());
 
-                var connection = connectionService.getActiveConnection();
-                if(connection) {
-                    $scope.render();
-                }
+                $scope.render();
             };
 
             $scope.render = function() {
@@ -90,7 +91,6 @@ angular.module('neonDemo.directives')
                 query = query.groupBy.apply(query, $scope.groupFields);
 
                 var connection = connectionService.getActiveConnection();
-
                 if(connection) {
                     d3.select("#node-click-name").text("");
                     connection.executeQuery(query, $scope.calculateGraphData, function(response) {
@@ -254,6 +254,7 @@ angular.module('neonDemo.directives')
             // Wait for neon to be ready, the create our messenger and intialize the view and data.
             neon.ready(function() {
                 $scope.initialize();
+                $scope.displayActiveDataset();
             });
         }
     };

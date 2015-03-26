@@ -93,22 +93,7 @@ angular.module('neonDemo.directives')
 
             var onDatasetChanged = function() {
                 XDATA.activityLogger.logSystemActivity('SunburstChart - received neon dataset changed event');
-                $scope.databaseName = datasetService.getDatabase();
-                $scope.tableName = datasetService.getTable();
-                $scope.groupFields = [];
-                $scope.valueField = null;
-                $scope.arcValue = charts.SunburstChart.COUNT_PARTITION;
-
-                if(!datasetService.hasDataset()) {
-                    return;
-                }
-
-                connectionService.connectToDataset(datasetService.getDatastore(),
-                        datasetService.getHostname(),
-                        datasetService.getDatabase(),
-                        datasetService.getTable());
-
-                $scope.displayActiveDataset();
+                $scope.displayActiveDataset(false);
             };
 
             $scope.updateChartSize = function() {
@@ -139,16 +124,39 @@ angular.module('neonDemo.directives')
 
             /**
              * Displays data for any currently active datasets.
+             * @param {Boolean} Whether this function was called during visualization initialization.
              * @method displayActiveDataset
              */
-            $scope.displayActiveDataset = function() {
-                var connection = connectionService.getActiveConnection();
-                if(connection) {
-                    $scope.databaseName = datasetService.getDatabase();
-                    $scope.tableName = datasetService.getTable();
-                    $scope.fields = datasetService.getFields();
-                    $scope.queryForData();
+            $scope.displayActiveDataset = function(initializing) {
+                $scope.groupFields = [];
+                $scope.valueField = null;
+                $scope.arcValue = charts.SunburstChart.COUNT_PARTITION;
+
+                if(!datasetService.hasDataset()) {
+                    return;
                 }
+
+                connectionService.connectToDataset(datasetService.getDatastore(),
+                        datasetService.getHostname(),
+                        datasetService.getDatabase(),
+                        datasetService.getTable());
+
+                $scope.databaseName = datasetService.getDatabase();
+                $scope.tableName = datasetService.getTable();
+
+                if(initializing) {
+                    $scope.updateFieldsAndQueryForData();
+                }
+                else {
+                    $scope.$apply(function() {
+                        $scope.updateFieldsAndQueryForData();
+                    });
+                }
+            };
+
+            $scope.updateFieldsAndQueryForData = function() {
+                $scope.fields = datasetService.getDatabaseFields();
+                $scope.queryForData();
             };
 
             $scope.queryForData = function() {
@@ -236,7 +244,7 @@ angular.module('neonDemo.directives')
             neon.ready(function() {
                 $scope.messenger = new neon.eventing.Messenger();
                 initialize();
-                onDatasetChanged();
+                $scope.displayActiveDataset(true);
             });
 
             $scope.addGroup = function() {

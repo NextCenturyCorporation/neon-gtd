@@ -28,7 +28,7 @@
  * @constructor
  */
 angular.module('neonDemo.directives')
-.directive('filterBuilder', ['ConnectionService', 'DatasetService', 'FilterCountService', function(connectionService, datasetService, filterCountService) {
+.directive('filterBuilder', ['DatasetService', 'FilterCountService', function(datasetService, filterCountService) {
     return {
         templateUrl: 'partials/directives/filterBuilder.html',
         restrict: 'EA',
@@ -181,18 +181,11 @@ angular.module('neonDemo.directives')
                     return;
                 }
 
-                connectionService.connectToDataset(datasetService.getDatastore(),
-                        datasetService.getHostname(),
-                        datasetService.getDatabase(),
-                        datasetService.getTable());
-
-                // Query for data only if we have an active connection.
-                var connection = connectionService.getActiveConnection();
-                if(connection) {
-                    var fields = datasetService.getFields();
-                    populateFieldNames(fields);
+                $scope.$apply(function() {
+                    var fields = datasetService.getDatabaseFields();
+                    $scope.fields = _.without(fields, "_id");
                     $scope.selectedField = fields[0];
-                }
+                });
             };
 
             /**
@@ -299,16 +292,6 @@ angular.module('neonDemo.directives')
                     // TODO: Notify the user of the error.
                     XDATA.activityLogger.logSystemActivity('FilterBuilder - failed to change custom Neon filter set');
                 });
-            };
-
-            /**
-             * Helper method for setting the fields available for filter clauses.
-             * @param {Array} fields An array of field name strings.
-             * @method populateFieldNames
-             * @private
-             */
-            var populateFieldNames = function(fields) {
-                $scope.fields = _.without(fields, "_id");
             };
 
             // Wait for neon to be ready, the create our messenger and intialize the view and data.

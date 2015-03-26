@@ -18,6 +18,7 @@ angular.module('neonDemo.directives')
             $scope.databases = [];
             $scope.dbTables = [];
             $scope.tableFields = [];
+            $scope.tableFieldMappings = {};
             $scope.isConnected = false;
             $scope.clearPopover = '';
             $scope.activeServer = "Choose dataset";
@@ -99,6 +100,7 @@ angular.module('neonDemo.directives')
                 // Set table name and initiate connection.
                 $scope.selectedTable = server.selectedTable;
                 $scope.tableFields = server.fields;
+                $scope.tableFieldMappings = server.mappings;
                 $scope.selectTable();
                 $scope.connectToDatabase();
             };
@@ -131,15 +133,25 @@ angular.module('neonDemo.directives')
                         table: $scope.selectedTable
                     });
 
-                connectionService.connectToDataset($scope.datastoreSelect, $scope.hostnameInput, $scope.selectedDb, $scope.selectedTable);
+                $scope.connection.getFieldNames($scope.selectedTable, function(fieldNames) {
+                    $scope.$apply(function() {
+                        datasetService.updateFields(fieldNames);
+                        $scope.tableFields = datasetService.getDatabaseFields();
+                    });
+                    connectionService.connectToDataset($scope.datastoreSelect, $scope.hostnameInput, $scope.selectedDb, $scope.selectedTable);
+                });
+            };
 
-                var mappings = datasetService.getFields();
-                for(var key in $scope.fields) {
-                    if(Object.prototype.hasOwnProperty.call($scope.fields, key)) {
-                        var field = $scope.fields[key];
-                        field.selected = mappings.hasOwnProperty(field.name) ? mappings[field.name] : "";
+            $scope.applyDefaultFields = function() {
+                $scope.$apply(function() {
+                    var mappings = datasetService.getFields();
+                    for(var key in $scope.fields) {
+                        if(Object.prototype.hasOwnProperty.call($scope.fields, key)) {
+                            var field = $scope.fields[key];
+                            field.selected = mappings.hasOwnProperty(field.name) ? mappings[field.name] : "";
+                        }
                     }
-                }
+                });
             };
 
             $scope.selectField = function() {
@@ -189,7 +201,8 @@ angular.module('neonDemo.directives')
                     hostname: $scope.hostnameInput,
                     database: $scope.selectedDb,
                     table: $scope.selectedTable,
-                    fields: $scope.tableFields
+                    fields: $scope.tableFields,
+                    mappings: $scope.tableFieldMappings
                 };
                 datasetService.setActiveDataset(message);
                 $scope.messenger.publish(neon.eventing.channels.ACTIVE_DATASET_CHANGED, message);

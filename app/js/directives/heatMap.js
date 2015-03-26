@@ -290,39 +290,12 @@ angular.module('neonDemo.directives')
 
             /**
              * Event handler for dataset changed events issued over Neon's messaging channels.
-             * @param {Object} message A Neon dataset changed message.
-             * @param {String} message.database The database that was selected.
-             * @param {String} message.table The table within the database that was selected.
              * @method onDatasetChanged
              * @private
              */
-            var onDatasetChanged = function(message) {
+            var onDatasetChanged = function() {
                 XDATA.activityLogger.logSystemActivity('HeatMap - received neon dataset changed event');
-                $scope.initializing = true;
-                $scope.latitudeField = "";
-                $scope.longitudeField = "";
-                $scope.colorByField = "";
-                $scope.sizeByField = "";
-
-                // Clear the zoom Rect from the map before reinitializing it.
-                clearZoomRect();
-
-                $scope.dataBounds = undefined;
-                $scope.hideClearFilterButton();
-
-                // if there is no active connection, try to make one.
-                connectionService.connectToDataset(message.datastore, message.hostname, message.database, message.table);
-                $scope.displayActiveDataset();
-            };
-
-            /**
-             * Helper method for setting the fields available for filter clauses.
-             * @param {Array} fields An array of field name strings.
-             * @method populateFieldNames
-             * @private
-             */
-            var populateFieldNames = function(fields) {
-                $scope.fields = fields;
+                $scope.displayActiveDataset(false);
             };
 
             var boundsToExtent = function(bounds) {
@@ -362,26 +335,52 @@ angular.module('neonDemo.directives')
 
             /**
              * Displays data for any currently active datasets.
+             * @param {Boolean} Whether this function was called during visualization initialization.
              * @method displayActiveDataset
              */
-            $scope.displayActiveDataset = function() {
-                var connection = connectionService.getActiveConnection();
-                if(connection) {
-                    $scope.databaseName = datasetService.getDatabase();
-                    $scope.tableName = datasetService.getTable();
+            $scope.displayActiveDataset = function(initializing) {
+                if(!datasetService.hasDataset()) {
+                    return;
+                }
 
-                    populateFieldNames(datasetService.getFields());
-                    $scope.latitudeField = datasetService.getField("latitude");
-                    $scope.longitudeField = datasetService.getField("longitude");
-                    $scope.colorByField = datasetService.getField("color_by");
-                    $scope.sizeByField = datasetService.getField("size_by");
-                    XDATA.activityLogger.logSystemActivity('HeatMap - field selectors updated');
+                $scope.initializing = true;
 
-                    $timeout(function() {
-                        $scope.initializing = false;
-                        $scope.queryForMapData();
+                // Clear the zoom Rect from the map before reinitializing it.
+                clearZoomRect();
+
+                $scope.dataBounds = undefined;
+                $scope.hideClearFilterButton();
+
+                connectionService.connectToDataset(datasetService.getDatastore(),
+                        datasetService.getHostname(),
+                        datasetService.getDatabase(),
+                        datasetService.getTable());
+
+                $scope.databaseName = datasetService.getDatabase();
+                $scope.tableName = datasetService.getTable();
+
+                if(initializing) {
+                    $scope.updateFieldsAndQueryForMapData();
+                }
+                else {
+                    $scope.$apply(function() {
+                        $scope.updateFieldsAndQueryForMapData();
                     });
                 }
+            };
+
+            $scope.updateFieldsAndQueryForMapData = function() {
+                $scope.fields = datasetService.getDatabaseFields();
+                $scope.latitudeField = datasetService.getMapping("latitude");
+                $scope.longitudeField = datasetService.getMapping("longitude");
+                $scope.colorByField = datasetService.getMapping("color_by");
+                $scope.sizeByField = datasetService.getMapping("size_by");
+                XDATA.activityLogger.logSystemActivity('HeatMap - field selectors updated');
+
+                $timeout(function() {
+                    $scope.initializing = false;
+                    $scope.queryForMapData();
+                });
             };
 
             /**
@@ -396,20 +395,24 @@ angular.module('neonDemo.directives')
 
                 if(!$scope.initializing && $scope.latitudeField !== "" && $scope.longitudeField !== "") {
                     var query = $scope.buildPointQuery();
+
                     XDATA.activityLogger.logSystemActivity('HeatMap - query for map data');
-                    connectionService.getActiveConnection().executeQuery(query, function(queryResults) {
-                        $scope.$apply(function() {
-                            XDATA.activityLogger.logSystemActivity('HeatMap - map data received');
-                            $scope.updateMapData(queryResults);
-                            XDATA.activityLogger.logSystemActivity('HeatMap - rendered map data');
+                    var connection = connectionService.getActiveConnection();
+                    if(connection) {
+                        connection.executeQuery(query, function(queryResults) {
+                            $scope.$apply(function() {
+                                XDATA.activityLogger.logSystemActivity('HeatMap - map data received');
+                                $scope.updateMapData(queryResults);
+                                XDATA.activityLogger.logSystemActivity('HeatMap - rendered map data');
+                            });
+                        }, function(response) {
+                            XDATA.activityLogger.logSystemActivity('HeatMap - Failed to receive map data');
+                            $scope.updateMapData({
+                                data: []
+                            });
+                            $scope.errorMessage = errorNotificationService.showErrorMessage($element, response.responseJSON.error, response.responseJSON.stackTrace);
                         });
-                    }, function(response) {
-                        XDATA.activityLogger.logSystemActivity('HeatMap - Failed to receive map data');
-                        $scope.updateMapData({
-                            data: []
-                        });
-                        $scope.errorMessage = errorNotificationService.showErrorMessage($element, response.responseJSON.error, response.responseJSON.stackTrace);
-                    });
+                    }
                 }
             };
 
@@ -620,7 +623,7 @@ angular.module('neonDemo.directives')
             // Wait for neon to be ready, the create our messenger and intialize the view and data.
             neon.ready(function() {
                 $scope.initialize();
-                $scope.displayActiveDataset();
+                $scope.displayActiveDataset(true);
             });
         }
     };

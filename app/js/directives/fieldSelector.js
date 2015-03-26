@@ -16,7 +16,7 @@
  *
  */
 angular.module('neonDemo.directives')
-.directive('fieldselector', ['ConnectionService', 'DatasetService', function(connectionService, datasetService) {
+.directive('fieldselector', ['DatasetService', function(datasetService) {
     return {
         template: '<label>{{labelText}}</label><select ng-model="targetVar" ng-options="field for field in fields" class="form-control"></select>',
         restrict: 'E',
@@ -43,16 +43,7 @@ angular.module('neonDemo.directives')
             };
 
             var onDatasetChanged = function() {
-                if(!datasetService.hasDataset()) {
-                    return;
-                }
-
-                connectionService.connectToDataset(datasetService.getDatastore(),
-                        datasetService.getHostname(),
-                        datasetService.getDatabase(),
-                        datasetService.getTable());
-
-                $scope.displayActiveDataset();
+                $scope.displayActiveDataset(false);
             };
 
             var onSelectionChange = function(newVal, oldVal) {
@@ -67,17 +58,28 @@ angular.module('neonDemo.directives')
 
             /**
              * Displays data for any currently active datasets.
+             * @param {Boolean} Whether this function was called during visualization initialization.
              * @method displayActiveDataset
              */
-            $scope.displayActiveDataset = function() {
-                var connection = connectionService.getActiveConnection();
-                if(connection) {
-                    $scope.databaseName = datasetService.getDatabase();
-                    $scope.tableName = datasetService.getTable();
-                    $scope.fields = datasetService.getFields();
-                    if($scope.defaultMapping) {
-                        $scope.targetVar = datasetService.getField($scope.defaultMapping);
-                    }
+            $scope.displayActiveDataset = function(initializing) {
+                if(!datasetService.hasDataset()) {
+                    return;
+                }
+
+                $scope.databaseName = datasetService.getDatabase();
+                $scope.tableName = datasetService.getTable();
+
+                if(initializing) {
+                    $scope.fields = datasetService.getDatabaseFields();
+                }
+                else {
+                    $scope.$apply(function() {
+                        $scope.fields = datasetService.getDatabaseFields();
+                    });
+                }
+
+                if($scope.defaultMapping) {
+                    $scope.targetVar = datasetService.getMapping($scope.defaultMapping);
                 }
             };
 
@@ -86,7 +88,7 @@ angular.module('neonDemo.directives')
             // Wait for neon to be ready, the create our messenger and intialize the view and data.
             neon.ready(function() {
                 initialize();
-                onDatasetChanged();
+                $scope.displayActiveDataset(true);
             });
         }
     };

@@ -157,9 +157,15 @@ angular.module('neonDemo.directives')
              */
             var onDatasetChanged = function() {
                 XDATA.activityLogger.logSystemActivity('CountBy- received neon dataset changed event');
-                $scope.databaseName = datasetService.getDatabase();
-                $scope.tableName = datasetService.getTable();
+                $scope.displayActiveDataset(false);
+            };
 
+            /**
+             * Displays data for any currently active datasets.
+             * @param {Boolean} Whether this function was called during visualization initialization.
+             * @method displayActiveDataset
+             */
+            $scope.displayActiveDataset = function(initializing) {
                 if(!datasetService.hasDataset()) {
                     return;
                 }
@@ -169,21 +175,22 @@ angular.module('neonDemo.directives')
                         datasetService.getDatabase(),
                         datasetService.getTable());
 
-                $scope.displayActiveDataset();
+                $scope.databaseName = datasetService.getDatabase();
+                $scope.tableName = datasetService.getTable();
+
+                if(initializing) {
+                    $scope.updateFieldsAndQueryForData();
+                }
+                else {
+                    $scope.$apply(function() {
+                        $scope.updateFieldsAndQueryForData();
+                    });
+                }
             };
 
-            /**
-             * Displays data for any currently active datasets.
-             * @method displayActiveDataset
-             */
-            $scope.displayActiveDataset = function() {
-                var connection = connectionService.getActiveConnection();
-                if(connection) {
-                    $scope.databaseName = datasetService.getDatabase();
-                    $scope.tableName = datasetService.getTable();
-                    $scope.fields = datasetService.getFields();
-                    $scope.queryForData();
-                }
+            $scope.updateFieldsAndQueryForData = function() {
+                $scope.fields = datasetService.getDatabaseFields();
+                $scope.queryForData();
             };
 
             /**
@@ -367,7 +374,7 @@ angular.module('neonDemo.directives')
 
             neon.ready(function() {
                 $scope.initialize();
-                onDatasetChanged();
+                $scope.displayActiveDataset(true);
             });
         }
     };

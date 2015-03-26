@@ -26,16 +26,22 @@ angular.module("neonDemo.services")
             hostname: "",
             database: "",
             table: "",
-            fields: {}
+            fields: [],
+            mappings: {}
         }
 
         service.setActiveDataset = function(dataset) {
-            service.dataset = dataset;
+            service.dataset.name = dataset.name || "Unknown Dataset";
+            service.dataset.datastore = dataset.datastore || "";
+            service.dataset.hostname = dataset.hostname || "";
+            service.dataset.database = dataset.database || "";
+            service.dataset.table = dataset.table || "";
+            service.dataset.fields = dataset.fields || [];
+            service.dataset.mappings = dataset.mappings || {};
         };
 
         service.hasDataset = function() {
-            var dataset = service.dataset;
-            return dataset.datastore && dataset.hostname && dataset.database && dataset.table;
+            return service.dataset.datastore && service.dataset.hostname && service.dataset.database && service.dataset.table;
         };
 
         service.getName = function() {
@@ -58,16 +64,47 @@ angular.module("neonDemo.services")
             return service.dataset.table;
         };
 
-        service.getFields = function() {
-            return service.dataset.fields;
+        service.getDatabaseFields = function() {
+            var databaseFields = [];
+            for(var i = 0; i < service.dataset.fields.length; ++i) {
+                databaseFields.push(service.dataset.fields[i].columnName);
+            }
+            return databaseFields;
         };
 
-        service.getField = function(field) {
-            return service.dataset.fields ? service.dataset.fields[field] : "";
+        service.getPrettyFields = function() {
+            var prettyFields = [];
+            for(var i = 0; i < service.dataset.fields.length; ++i) {
+                prettyFields.push(service.dataset.fields[i].prettyName || service.dataset.fields[i].columnName);
+            }
+            return prettyFields;
         };
 
-        service.setField = function(field, value) {
-            service.dataset.fields[field] = value;
+        service.updateFields = function(fieldNames) {
+            var fieldExists = {};
+            for(var i = 0; i < service.dataset.fields.length; ++i) {
+                fieldExists[service.dataset.fields[i].columnName] = true;
+            }
+
+            for(var i = 0; i < fieldNames.length; ++i) {
+                if(!fieldExists[fieldNames[i]]) {
+                    service.dataset.fields.push({
+                        columnName: fieldNames[i]
+                    });
+                }
+            }
+        };
+
+        service.getMappings = function() {
+            return service.dataset.mappings;
+        };
+
+        service.getMapping = function(key) {
+            return service.dataset.mappings[key];
+        };
+
+        service.setMapping = function(key, field) {
+            service.dataset.mappings[key] = field;
         };
 
         return service;

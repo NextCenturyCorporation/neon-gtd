@@ -104,18 +104,7 @@ angular.module('neonDemo.directives')
 
             var onDatasetChanged = function() {
                 XDATA.activityLogger.logSystemActivity('BarChart - received neon dataset changed event');
-                $scope.initializing = true;
 
-                if(!datasetService.hasDataset()) {
-                    return;
-                }
-
-                connectionService.connectToDataset(datasetService.getDatastore(),
-                        datasetService.getHostname(),
-                        datasetService.getDatabase(),
-                        datasetService.getTable());
-
-                // Pull data.
                 $timeout(function() {
                     $scope.displayActiveDataset();
                     $scope.initializing = false;
@@ -127,12 +116,20 @@ angular.module('neonDemo.directives')
              * @method displayActiveDataset
              */
             $scope.displayActiveDataset = function() {
-                var connection = connectionService.getActiveConnection();
-                if(connection) {
-                    $scope.databaseName = datasetService.getDatabase();
-                    $scope.tableName = datasetService.getTable();
-                    $scope.queryForData(true);
+                if(!datasetService.hasDataset()) {
+                    return;
                 }
+
+                $scope.initializing = true;
+
+                connectionService.connectToDataset(datasetService.getDatastore(),
+                        datasetService.getHostname(),
+                        datasetService.getDatabase(),
+                        datasetService.getTable());
+
+                $scope.databaseName = datasetService.getDatabase();
+                $scope.tableName = datasetService.getTable();
+                $scope.queryForData(true);
             };
 
             $scope.queryForData = function(rebuildChart) {
@@ -141,8 +138,8 @@ angular.module('neonDemo.directives')
                     $scope.errorMessage = undefined;
                 }
 
-                var xAxis = $scope.attrX || datasetService.getField("bar_x_axis");
-                var yAxis = $scope.attrY || datasetService.getField("y_axis");
+                var xAxis = $scope.attrX || datasetService.getMapping("bar_x_axis");
+                var yAxis = $scope.attrY || datasetService.getMapping("y_axis");
 
                 if(xAxis === undefined || xAxis === "" || yAxis === undefined || yAxis === "") {
                     drawBlankChart();
@@ -172,17 +169,20 @@ angular.module('neonDemo.directives')
                 }
 
                 XDATA.activityLogger.logSystemActivity('BarChart - query for data');
-                connectionService.getActiveConnection().executeQuery(query, function(queryResults) {
-                    $scope.$apply(function() {
-                        XDATA.activityLogger.logSystemActivity('BarChart - received query data');
-                        doDrawChart(queryResults, rebuildChart);
-                        XDATA.activityLogger.logSystemActivity('BarChart - rendered results');
+                var connection = connectionService.getActiveConnection();
+                if(connection) {
+                    connection.executeQuery(query, function(queryResults) {
+                        $scope.$apply(function() {
+                            XDATA.activityLogger.logSystemActivity('BarChart - received query data');
+                            doDrawChart(queryResults, rebuildChart);
+                            XDATA.activityLogger.logSystemActivity('BarChart - rendered results');
+                        });
+                    }, function(response) {
+                        XDATA.activityLogger.logSystemActivity('BarChart - query failed');
+                        drawBlankChart();
+                        $scope.errorMessage = errorNotificationService.showErrorMessage($element, response.responseJSON.error, response.responseJSON.stackTrace);
                     });
-                }, function(response) {
-                    XDATA.activityLogger.logSystemActivity('BarChart - query failed');
-                    drawBlankChart();
-                    $scope.errorMessage = errorNotificationService.showErrorMessage($element, response.responseJSON.error, response.responseJSON.stackTrace);
-                });
+                }
             };
 
             var drawBlankChart = function() {
@@ -192,7 +192,7 @@ angular.module('neonDemo.directives')
             };
 
             var clickFilterHandler = function(filterValue) {
-                var xAxis = $scope.attrX || datasetService.getField("bar_x_axis");
+                var xAxis = $scope.attrX || datasetService.getMapping("bar_x_axis");
                 var connection = connectionService.getActiveConnection();
                 if(xAxis !== undefined && xAxis !== "" && $scope.messenger && connection) {
                     var filterClause = neon.query.where(xAxis, '=', filterValue);
@@ -232,8 +232,8 @@ angular.module('neonDemo.directives')
             };
 
             var doDrawChart = function(data, destroy) {
-                var xAxis = $scope.attrX || datasetService.getField("bar_x_axis");
-                var yAxis = $scope.attrY || datasetService.getField("y_axis");
+                var xAxis = $scope.attrX || datasetService.getMapping("bar_x_axis");
+                var yAxis = $scope.attrY || datasetService.getMapping("y_axis");
 
                 if(!yAxis) {
                     yAxis = COUNT_FIELD_NAME;
@@ -264,7 +264,7 @@ angular.module('neonDemo.directives')
             neon.ready(function() {
                 $scope.messenger = new neon.eventing.Messenger();
                 initialize();
-                onDatasetChanged();
+                $scope.displayActiveDataset();
             });
         }
     };

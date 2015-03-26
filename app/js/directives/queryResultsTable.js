@@ -202,6 +202,15 @@ angular.module('neonDemo.directives')
              */
             var onDatasetChanged = function() {
                 XDATA.activityLogger.logSystemActivity('DataView - received neon dataset changed event');
+                $scope.displayActiveDataset(false);
+            };
+
+            /**
+             * Displays data for any currently active datasets.
+             * @param {Boolean} Whether this function was called during visualization initialization.
+             * @method displayActiveDataset
+             */
+            $scope.displayActiveDataset = function(initializing) {
                 $scope.databaseName = datasetService.getDatabase();
                 $scope.tableName = datasetService.getTable();
 
@@ -214,34 +223,20 @@ angular.module('neonDemo.directives')
                         datasetService.getDatabase(),
                         datasetService.getTable());
 
-                $scope.displayActiveDataset();
-            };
-
-            /**
-             * Displays data for any currently active datasets.
-             * @method displayActiveDataset
-             */
-            $scope.displayActiveDataset = function() {
-                var connection = connectionService.getActiveConnection();
-                if(connection) {
-                    $scope.databaseName = datasetService.getDatabase();
-                    $scope.tableName = datasetService.getTable();
+                if(initializing) {
+                    $scope.updateFieldsAndRowsAndCount();
+                }
+                else {
                     $scope.$apply(function() {
-                        populateFieldNames(datasetService.getFields());
-                        $scope.sortByField = datasetService.getField("sort_by") || $scope.fields[0];
-                        updateRowsAndCount();
+                        $scope.updateFieldsAndRowsAndCount();
                     });
                 }
             };
 
-            /**
-             * Helper method for setting the fields available for filter clauses.
-             * @param {Array} fields An array of field name strings.
-             * @method populateFieldNames
-             * @private
-             */
-            var populateFieldNames = function(fields) {
-                $scope.fields = fields;
+            $scope.updateFieldsAndRowsAndCount = function() {
+                $scope.fields = datasetService.getDatabaseFields();
+                $scope.sortByField = datasetService.getMapping("sort_by") || $scope.fields[0];
+                updateRowsAndCount();
             };
 
             /**
@@ -302,19 +297,22 @@ angular.module('neonDemo.directives')
                     .aggregate(neon.query.COUNT, '*', 'count');
 
                 XDATA.activityLogger.logSystemActivity('DataView - query for total rows of data');
-                connectionService.getActiveConnection().executeQuery(query, function(queryResults) {
-                    $scope.$apply(function() {
-                        if(queryResults.data.length > 0) {
-                            $scope.totalRows = queryResults.data[0].count;
-                        } else {
-                            $scope.totalRows = 0;
-                        }
-                        XDATA.activityLogger.logSystemActivity('DataView - received total; updating view');
+                var connection = connectionService.getActiveConnection();
+                if(connection) {
+                    connection.executeQuery(query, function(queryResults) {
+                        $scope.$apply(function() {
+                            if(queryResults.data.length > 0) {
+                                $scope.totalRows = queryResults.data[0].count;
+                            } else {
+                                $scope.totalRows = 0;
+                            }
+                            XDATA.activityLogger.logSystemActivity('DataView - received total; updating view');
+                        });
+                    }, function(response) {
+                        XDATA.activityLogger.logSystemActivity('DataView - received error in query for total rows');
+                        $scope.totalRows = 0;
                     });
-                }, function(response) {
-                    XDATA.activityLogger.logSystemActivity('DataView - received error in query for total rows');
-                    $scope.totalRows = 0;
-                });
+                }
             };
 
             /**
@@ -372,7 +370,7 @@ angular.module('neonDemo.directives')
             // Wait for neon to be ready, the create our messenger and intialize the view and data.
             neon.ready(function() {
                 $scope.initialize();
-                onDatasetChanged();
+                $scope.displayActiveDataset(true);
             });
         }
     };
