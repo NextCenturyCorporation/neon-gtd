@@ -62,10 +62,7 @@ angular.module('neonDemo.directives')
                 $scope.tableName = datasetService.getTable();
                 $scope.data = [];
 
-                connectionService.connectToDataset(datasetService.getDatastore(),
-                        datasetService.getHostname(),
-                        datasetService.getDatabase(),
-                        datasetService.getTable());
+                connectionService.connectToDataset(datasetService.getDatastore(), datasetService.getHostname(), datasetService.getDatabase());
 
                 $scope.render();
             };

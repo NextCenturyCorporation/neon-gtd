@@ -351,10 +351,7 @@ angular.module('neonDemo.directives')
                 $scope.dataBounds = undefined;
                 $scope.hideClearFilterButton();
 
-                connectionService.connectToDataset(datasetService.getDatastore(),
-                        datasetService.getHostname(),
-                        datasetService.getDatabase(),
-                        datasetService.getTable());
+                connectionService.connectToDataset(datasetService.getDatastore(), datasetService.getHostname(), datasetService.getDatabase());
 
                 $scope.databaseName = datasetService.getDatabase();
                 $scope.tableName = datasetService.getTable();

@@ -140,7 +140,7 @@ angular.module('neonDemo.directives')
                         datasetService.updateFields(fieldNames);
                         $scope.tableFields = datasetService.getDatabaseFields();
                     });
-                    connectionService.connectToDataset($scope.datastoreSelect, $scope.hostnameInput, $scope.selectedDb, $scope.selectedTable);
+                    connectionService.connectToDataset($scope.datastoreSelect, $scope.hostnameInput, $scope.selectedDb);
                     // Wait to publish the dataset change until we've updated the field names.
                     $scope.publishDatasetChanged();
                 });

@@ -30,9 +30,8 @@ angular.module('neonDemo.services')
      * @param {String} databaseType
      * @param {String} host
      * @param {String} database
-     * @param {String} table
      */
-    service.connectToDataset = function(databaseType, host, database, table) {
+    service.connectToDataset = function(databaseType, host, database) {
         if(!activeConnection) {
             activeConnection = new neon.query.Connection();
         }
