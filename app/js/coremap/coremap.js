@@ -686,8 +686,7 @@ coreMap.Map.prototype.setupLayers = function() {
     this.pointsLayer.setVisibility(this.defaultLayer === coreMap.Map.POINTS_LAYER);
     if(this.defaultLayer === coreMap.Map.POINTS_LAYER) {
         this.currentLayer = this.pointsLayer;
-    }
-    else {
+    } else {
         this.heatmapLayer.toggle();
         this.currentLayer = this.heatmapLayer;
     }
