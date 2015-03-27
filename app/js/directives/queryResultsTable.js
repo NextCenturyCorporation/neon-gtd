@@ -211,12 +211,12 @@ angular.module('neonDemo.directives')
              * @method displayActiveDataset
              */
             $scope.displayActiveDataset = function(initializing) {
-                $scope.databaseName = datasetService.getDatabase();
-                $scope.tableName = datasetService.getTable();
-
                 if(!datasetService.hasDataset()) {
                     return;
                 }
+
+                $scope.databaseName = datasetService.getDatabase();
+                $scope.tableName = datasetService.getTable();
 
                 connectionService.connectToDataset(datasetService.getDatastore(),
                         datasetService.getHostname(),

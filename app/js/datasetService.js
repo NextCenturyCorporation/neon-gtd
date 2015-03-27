@@ -25,23 +25,19 @@ angular.module("neonDemo.services")
             datastore: "",
             hostname: "",
             database: "",
-            table: "",
-            fields: [],
-            mappings: {}
-        }
+            tables: []
+        };
 
         service.setActiveDataset = function(dataset) {
             service.dataset.name = dataset.name || "Unknown Dataset";
             service.dataset.datastore = dataset.datastore || "";
             service.dataset.hostname = dataset.hostname || "";
             service.dataset.database = dataset.database || "";
-            service.dataset.table = dataset.table || "";
-            service.dataset.fields = dataset.fields || [];
-            service.dataset.mappings = dataset.mappings || {};
+            service.dataset.tables = dataset.tables || [];
         };
 
         service.hasDataset = function() {
-            return service.dataset.datastore && service.dataset.hostname && service.dataset.database && service.dataset.table;
+            return service.dataset.datastore && service.dataset.hostname && service.dataset.database && service.dataset.tables;
         };
 
         service.getName = function() {
@@ -60,35 +56,54 @@ angular.module("neonDemo.services")
             return service.dataset.database;
         };
 
+        /**
+         * @Deprecated
+         */
         service.getTable = function() {
-            return service.dataset.table;
+            return service.dataset.tables ? service.dataset.tables[0].name : "";
+        };
+
+        service.getTables = function() {
+            return service.dataset.tables;
         };
 
         service.getDatabaseFields = function() {
+            if(!service.dataset.tables.length) {
+                return [];
+            }
+
             var databaseFields = [];
-            for(var i = 0; i < service.dataset.fields.length; ++i) {
-                databaseFields.push(service.dataset.fields[i].columnName);
+            for(var i = 0; i < service.dataset.tables[0].fields.length; ++i) {
+                databaseFields.push(service.dataset.tables[0].fields[i].columnName);
             }
             return databaseFields;
         };
 
         service.getPrettyFields = function() {
+            if(!service.dataset.tables.length) {
+                return [];
+            }
+
             var prettyFields = [];
-            for(var i = 0; i < service.dataset.fields.length; ++i) {
-                prettyFields.push(service.dataset.fields[i].prettyName || service.dataset.fields[i].columnName);
+            for(var i = 0; i < service.dataset.tables[0].fields.length; ++i) {
+                prettyFields.push(service.dataset.tables[0].fields[i].prettyName || service.dataset.tables[0].fields[i].columnName);
             }
             return prettyFields;
         };
 
         service.updateFields = function(fieldNames) {
+            if(!service.dataset.tables.length) {
+                return;
+            }
+
             var fieldExists = {};
-            for(var i = 0; i < service.dataset.fields.length; ++i) {
-                fieldExists[service.dataset.fields[i].columnName] = true;
+            for(var i = 0; i < service.dataset.tables[0].fields.length; ++i) {
+                fieldExists[service.dataset.tables[0].fields[i].columnName] = true;
             }
 
             for(var i = 0; i < fieldNames.length; ++i) {
                 if(!fieldExists[fieldNames[i]]) {
-                    service.dataset.fields.push({
+                    service.dataset.tables[0].fields.push({
                         columnName: fieldNames[i]
                     });
                 }
@@ -96,15 +111,27 @@ angular.module("neonDemo.services")
         };
 
         service.getMappings = function() {
-            return service.dataset.mappings;
+            if(!service.dataset.tables.length) {
+                return [];
+            }
+
+            return service.dataset.tables[0].mappings;
         };
 
         service.getMapping = function(key) {
-            return service.dataset.mappings[key];
+            if(!service.dataset.tables.length) {
+                return "";
+            }
+
+            return service.dataset.tables[0].mappings[key];
         };
 
         service.setMapping = function(key, field) {
-            service.dataset.mappings[key] = field;
+            if(!service.dataset.tables.length) {
+                return;
+            }
+
+            service.dataset.tables[0].mappings[key] = field;
         };
 
         return service;

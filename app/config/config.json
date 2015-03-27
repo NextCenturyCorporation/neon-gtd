@@ -83,190 +83,204 @@
         "datastore": "mongo",
         "hostname": "localhost",
         "database": "test",
-        "table": "earthquakes",
-        "fields": [{
-            "columnName": "_id",
-            "prettyName": "Database ID"
-        }, {
-            "columnName": "time",
-            "prettyName": "Time"
-        }, {
-            "columnName": "latitude",
-            "prettyName": "Latitude"
-        }, {
-            "columnName": "longitude",
-            "prettyName": "Longitude"
-        }, {
-            "columnName": "depth",
-            "prettyName": "Depth"
-        }, {
-            "columnName": "mag",
-            "prettyName": "Magnitude"
-        }, {
-            "columnName": "magType",
-            "prettyName": "Magnitude Type"
-        }, {
-            "columnName": "nst",
-            "prettyName": "NST"
-        }, {
-            "columnName": "gap",
-            "prettyName": "Gap"
-        }, {
-            "columnName": "dmin",
-            "prettyName": "DMIN"
-        }, {
-            "columnName": "rms",
-            "prettyName": "RMS"
-        }, {
-            "columnName": "net",
-            "prettyName": "Net"
-        }, {
-            "columnName": "id",
-            "prettyName": "ID"
-        }, {
-            "columnName": "updated",
-            "prettyName": "Updated"
-        }, {
-            "columnName": "place",
-            "prettyName": "Place"
-        }, {
-            "columnName": "type",
-            "prettyName": "Type"
-        }],
-        "mappings": {
-            "date": "time",
-            "latitude": "latitude",
-            "longitude": "longitude",
-            "line_category": "type",
-            "bar_x_axis": "net",
-            "y_axis": "mag",
-            "color_by": "magType",
-            "size_by": "mag",
-            "sort_by": "time"
-        }
-    }, {
+        "tables": [{
+            "name": "earthquakes",
+            "fields": [{
+                "columnName": "_id",
+                "prettyName": "Database ID"
+            }, {
+                "columnName": "time",
+                "prettyName": "Time"
+            }, {
+                "columnName": "latitude",
+                "prettyName": "Latitude"
+            }, {
+                "columnName": "longitude",
+                "prettyName": "Longitude"
+            }, {
+                "columnName": "depth",
+                "prettyName": "Depth"
+            }, {
+                "columnName": "mag",
+                "prettyName": "Magnitude"
+            }, {
+                "columnName": "magType",
+                "prettyName": "Magnitude Type"
+            }, {
+                "columnName": "nst",
+                "prettyName": "NST"
+            }, {
+                "columnName": "gap",
+                "prettyName": "Gap"
+            }, {
+                "columnName": "dmin",
+                "prettyName": "DMIN"
+            }, {
+                "columnName": "rms",
+                "prettyName": "RMS"
+            }, {
+                "columnName": "net",
+                "prettyName": "Net"
+            }, {
+                "columnName": "id",
+                "prettyName": "ID"
+            }, {
+                "columnName": "updated",
+                "prettyName": "Updated"
+            }, {
+                "columnName": "place",
+                "prettyName": "Place"
+            }, {
+                "columnName": "type",
+                "prettyName": "Type"
+            }],
+            "mappings": {
+                "date": "time",
+                "latitude": "latitude",
+                "longitude": "longitude",
+                "line_category": "type",
+                "bar_x_axis": "net",
+                "y_axis": "mag",
+                "color_by": "magType",
+                "size_by": "mag",
+                "sort_by": "time"
+            }
+        }]
+    },
+
+    {
         "name": "South America Tweets",
         "datastore": "mongo",
         "hostname": "localhost",
         "database": "test",
-        "table": "alibaverstock130k",
-        "fields": [{
-            "columnName": "_id",
-            "prettyName": "Database ID"
-        }, {
-            "columnName": "created_at",
-            "prettyName": "Created At"
-        }, {
-            "columnName": "user_id",
-            "prettyName": "User ID"
-        }, {
-            "columnName": "user_name",
-            "prettyName": "User Name"
-        }, {
-            "columnName": "text",
-            "prettyName": "Text"
-        }, {
-            "columnName": "hashtags",
-            "prettyName": "Hashtags"
-        }, {
-            "columnName": "latitude",
-            "prettyName": "Latitude"
-        }, {
-            "columnName": "longitude",
-            "prettyName": "Longitude"
-        }, {
-            "columnName": "country",
-            "prettyName": "Country"
-        }, {
-            "columnName": "place",
-            "prettyName": "Place"
-        }, {
-            "columnName": "place_type",
-            "prettyName": "Place Type"
-        }],
-        "mappings": {
-            "date": "created_at",
-            "latitude": "latitude",
-            "longitude": "longitude",
-            "line_category": "country",
-            "bar_x_axis": "country",
-            "y_axis": "_id",
-            "color_by": "country",
-            "size_by": "foo",
-            "sort_by": "created_at"
-        }
-    }, {
+        "tables": [{
+            "name": "alibaverstock130k",
+            "fields": [{
+                "columnName": "_id",
+                "prettyName": "Database ID"
+            }, {
+                "columnName": "created_at",
+                "prettyName": "Created At"
+            }, {
+                "columnName": "user_id",
+                "prettyName": "User ID"
+            }, {
+                "columnName": "user_name",
+                "prettyName": "User Name"
+            }, {
+                "columnName": "text",
+                "prettyName": "Text"
+            }, {
+                "columnName": "hashtags",
+                "prettyName": "Hashtags"
+            }, {
+                "columnName": "latitude",
+                "prettyName": "Latitude"
+            }, {
+                "columnName": "longitude",
+                "prettyName": "Longitude"
+            }, {
+                "columnName": "country",
+                "prettyName": "Country"
+            }, {
+                "columnName": "place",
+                "prettyName": "Place"
+            }, {
+                "columnName": "place_type",
+                "prettyName": "Place Type"
+            }],
+            "mappings": {
+                "date": "created_at",
+                "latitude": "latitude",
+                "longitude": "longitude",
+                "line_category": "country",
+                "bar_x_axis": "country",
+                "y_axis": "_id",
+                "color_by": "country",
+                "size_by": "foo",
+                "sort_by": "created_at"
+            }
+        }]
+    },
+
+    {
         "name": "Twitter",
         "datastore": "mongo",
         "hostname": "localhost",
         "database": "test",
-        "table": "gbDate",
-        "fields": [{
-            "columnName": "_id",
-            "prettyName": "Database ID"
-        }, {
-            "columnName": "created_at",
-            "prettyName": "Created At"
-        }, {
-            "columnName": "hashtags",
-            "prettyName": "Hashtags"
-        }, {
-            "columnName": "latitude",
-            "prettyName": "Latitude"
-        }, {
-            "columnName": "longitude",
-            "prettyName": "Longitude"
-        }, {
-            "columnName": "sentiment",
-            "prettyName": "Sentiment"
-        }, {
-            "columnName": "sentimentType",
-            "prettyName": "Sentiment Type"
-        }, {
-            "columnName": "text",
-            "prettyName": "Text"
-        }, {
-            "columnName": "user_screen_name",
-            "prettyName": "Screen Name"
-        }, {
-            "columnName": "yyyy-mm",
-            "prettyName": "Month"
-        }, {
-            "columnName": "yyyy-mm-dd",
-            "prettyName": "Day"
-        }],
-        "mappings": {
-            "date": "created_at",
-            "latitude": "latitude",
-            "longitude": "longitude",
-            "line_category": "sentimentType",
-            "bar_x_axis": "sentimentType",
-            "y_axis": "sentiment",
-            "color_by": "sentimentType",
-            "size_by": "sentiment",
-            "sort_by": "created_at"
-        }
-    }, {
+        "tables": [{
+            "name": "gbDate",
+            "fields": [{
+                "columnName": "_id",
+                "prettyName": "Database ID"
+            }, {
+                "columnName": "created_at",
+                "prettyName": "Created At"
+            }, {
+                "columnName": "hashtags",
+                "prettyName": "Hashtags"
+            }, {
+                "columnName": "latitude",
+                "prettyName": "Latitude"
+            }, {
+                "columnName": "longitude",
+                "prettyName": "Longitude"
+            }, {
+                "columnName": "sentiment",
+                "prettyName": "Sentiment"
+            }, {
+                "columnName": "sentimentType",
+                "prettyName": "Sentiment Type"
+            }, {
+                "columnName": "text",
+                "prettyName": "Text"
+            }, {
+                "columnName": "user_screen_name",
+                "prettyName": "Screen Name"
+            }, {
+                "columnName": "yyyy-mm",
+                "prettyName": "Month"
+            }, {
+                "columnName": "yyyy-mm-dd",
+                "prettyName": "Day"
+            }],
+            "mappings": {
+                "date": "created_at",
+                "latitude": "latitude",
+                "longitude": "longitude",
+                "line_category": "sentimentType",
+                "bar_x_axis": "sentimentType",
+                "y_axis": "sentiment",
+                "color_by": "sentimentType",
+                "size_by": "sentiment",
+                "sort_by": "created_at"
+            }
+        }]
+    },
+
+    {
         "name": "Traffic",
         "datastore": "mongo",
         "hostname": "localhost",
         "database": "test",
-        "table": "most_active",
-        "fields": [{
-            "columnName": "_id",
-            "prettyName": "Database ID"
-        }],
-        "mappings": {
-            "date": "created_at",
-            "latitude": "latitude",
-            "longitude": "longitude",
-            "line_category": "user_screen_name",
-            "bar_x_axis": "yyyy-mm",
-            "y_axis": "sentiment",
-            "color_by": "lang_primary",
-            "size_by": "foo",
-            "sort_by": "created_at"
-        }
+        "tables": [{
+            "name": "most_active",
+            "fields": [{
+                "columnName": "_id",
+                "prettyName": "Database ID"
+            }],
+            "mappings": {
+                "date": "created_at",
+                "latitude": "latitude",
+                "longitude": "longitude",
+                "line_category": "user_screen_name",
+                "bar_x_axis": "yyyy-mm",
+                "y_axis": "sentiment",
+                "color_by": "lang_primary",
+                "size_by": "foo",
+                "sort_by": "created_at"
+            }
+        }]
     }],
 
     "layout": [{

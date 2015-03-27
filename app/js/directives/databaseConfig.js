@@ -101,9 +101,9 @@ angular.module('neonDemo.directives')
                 $scope.selectDatabase();
 
                 // Set table name and initiate connection.
-                $scope.selectedTable = server.table;
-                $scope.tableFields = server.fields;
-                $scope.tableFieldMappings = server.mappings;
+                $scope.selectedTable = server.tables[0].name;
+                $scope.tableFields = server.tables[0].fields;
+                $scope.tableFieldMappings = server.tables[0].mappings;
                 $scope.selectTable();
             };
 
