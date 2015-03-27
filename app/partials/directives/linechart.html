@@ -7,9 +7,7 @@
         <div class="arrow"></div>
         <div class="popover-content">
             <div class="form-group">
-                <label>Y-axis</label>
-                <select class="form-control" ng-model="attrY" ng-options="field for field in fields" ng-required="true" ng-disabled="!(fields.length > 0)">
-                </select>
+                <fieldselector target-var="attrY" label-text="'Y-axis'" default-mapping="'y_axis'"></fieldselector>
             </div>
             <div class="form-group">
                 <select class="form-control" ng-model="aggregation" ng-disabled="!(fields.length > 0)">
@@ -19,10 +17,7 @@
                 </select>
             </div>
             <div class="form-group">
-                <label>Categorize by</label>
-                <select class="form-control" ng-model="categoryField" ng-options="field for field in fields" ng-required="true" ng-disabled="!(fields.length > 0)">
-                    <option value="">None</option>
-                </select>
+                <fieldselector target-var="categoryField" label-text="'Categorize by'" default-mapping="'line_category'" default-option="'None'"></fieldselector>
             </div>
         </div>
     </div>

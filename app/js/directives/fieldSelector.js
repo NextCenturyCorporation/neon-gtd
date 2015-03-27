@@ -18,12 +18,13 @@
 angular.module('neonDemo.directives')
 .directive('fieldselector', ['DatasetService', function(datasetService) {
     return {
-        template: '<label>{{labelText}}</label><select ng-model="targetVar" ng-options="field for field in fields" class="form-control"></select>',
+        template: '<label>{{labelText}}</label><select ng-model="targetVar" ng-options="field for field in fields" ng-required="true" ng-disabled="!(fields.length > 0)" class="form-control"><option ng-hide="!(defaultOption)" value="">{{defaultOption}}</option></select>',
         restrict: 'E',
         scope: {
             targetVar: '=',
             labelText: '=',
-            defaultMapping: '='
+            defaultMapping: '=',
+            defaultOption: '='
         },
         link: function($scope) {
             var messenger = new neon.eventing.Messenger();
@@ -77,6 +78,9 @@ angular.module('neonDemo.directives')
                     });
                 }
 
+                if($scope.defaultOption) {
+                    $scope.targetVar = $scope.defaultOption;
+                }
                 if($scope.defaultMapping) {
                     $scope.targetVar = datasetService.getMapping($scope.defaultMapping);
                 }
