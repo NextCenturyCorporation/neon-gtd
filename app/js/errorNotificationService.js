@@ -67,7 +67,7 @@ angular.module("neonDemo.services")
             // Bootstrap Notify Format:  $.notify({ options }, { settings });
             $.notify({
                 icon: "img/Error_512x512.png",
-                message: message
+                message: _.escape(message)
             }, {
                 type: "danger",
                 offset: {
@@ -83,8 +83,8 @@ angular.module("neonDemo.services")
             $.notify({
                 icon: "img/Error_512x512.png",
                 // The title property is a keyword that will be used in the template.
-                title: stacktrace.replace(/\n/g, "<br/>").replace(/\t/g, "&nbsp; "),
-                message: message
+                title: _.escape(stacktrace).replace(/\n/g, "<br>").replace(/\t/g, "&nbsp; "),
+                message: _.escape(message)
             }, {
                 // Display inside the input element.
                 element: element,
