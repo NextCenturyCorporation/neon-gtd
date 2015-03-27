@@ -28,8 +28,6 @@ angular.module('neonDemo.directives')
         },
         link: function($scope) {
             var messenger = new neon.eventing.Messenger();
-            $scope.database = '';
-            $scope.tableName = '';
             $scope.fields = [];
             $scope.tmp = "";
 
@@ -66,9 +64,6 @@ angular.module('neonDemo.directives')
                 if(!datasetService.hasDataset()) {
                     return;
                 }
-
-                $scope.databaseName = datasetService.getDatabase();
-                $scope.tableName = datasetService.getTable();
 
                 if(initializing) {
                     $scope.fields = datasetService.getDatabaseFields();

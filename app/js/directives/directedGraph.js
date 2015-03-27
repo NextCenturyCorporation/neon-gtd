@@ -24,6 +24,15 @@ angular.module('neonDemo.directives')
             startingFields: '='
         },
         link: function($scope, element) {
+            $scope.uniqueChartOptions = 'chart-options-' + uuid();
+            var chartOptions = $(element).find('.chart-options');
+            chartOptions.toggleClass($scope.uniqueChartOptions);
+
+            $scope.databaseName = "";
+            $scope.tables = [];
+            $scope.selectedTable = {
+                name: ""
+            };
             $scope.errorMessage = undefined;
 
             if($scope.startingFields) {
@@ -59,7 +68,8 @@ angular.module('neonDemo.directives')
                 }
 
                 $scope.databaseName = datasetService.getDatabase();
-                $scope.tableName = datasetService.getTable();
+                $scope.tables = datasetService.getTables();
+                $scope.selectedTable = $scope.tables[0];
                 $scope.data = [];
 
                 connectionService.connectToDataset(datasetService.getDatastore(), datasetService.getHostname(), datasetService.getDatabase());
@@ -83,7 +93,7 @@ angular.module('neonDemo.directives')
                 }
 
                 var query = new neon.query.Query()
-                    .selectFrom($scope.databaseName, $scope.tableName);
+                    .selectFrom($scope.databaseName, $scope.selectedTable.name);
 
                 query = query.groupBy.apply(query, $scope.groupFields);
 

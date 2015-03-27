@@ -44,7 +44,10 @@ angular.module('neonDemo.directives')
 
             // Setup scope variables.
             $scope.databaseName = '';
-            $scope.tableName = '';
+            $scope.tables = [];
+            $scope.selectedTable = {
+                name: ""
+            };
             $scope.fields = [];
             $scope.latitudeField = '';
             $scope.longitudeField = '';
@@ -354,7 +357,8 @@ angular.module('neonDemo.directives')
                 connectionService.connectToDataset(datasetService.getDatastore(), datasetService.getHostname(), datasetService.getDatabase());
 
                 $scope.databaseName = datasetService.getDatabase();
-                $scope.tableName = datasetService.getTable();
+                $scope.tables = datasetService.getTables();
+                $scope.selectedTable = $scope.tables[0];
 
                 if(initializing) {
                     $scope.updateFieldsAndQueryForMapData();
@@ -491,7 +495,7 @@ angular.module('neonDemo.directives')
             };
 
             $scope.buildQuery = function() {
-                var query = new neon.query.Query().selectFrom($scope.databaseName, $scope.tableName).limit($scope.limit);
+                var query = new neon.query.Query().selectFrom($scope.databaseName, $scope.selectedTable.name).limit($scope.limit);
                 var groupByFields = [$scope.latitudeField, $scope.longitudeField];
 
                 if($scope.colorByField) {
@@ -511,7 +515,7 @@ angular.module('neonDemo.directives')
             };
 
             $scope.buildPointQuery = function() {
-                var query = new neon.query.Query().selectFrom($scope.databaseName, $scope.tableName).limit($scope.limit);
+                var query = new neon.query.Query().selectFrom($scope.databaseName, $scope.selectedTable.name).limit($scope.limit);
                 return query;
             };
 
@@ -552,7 +556,7 @@ angular.module('neonDemo.directives')
                     filterClause = neon.query.and(topClause, bottomClause, datelineClause);
                 }
 
-                return new neon.query.Filter().selectFrom($scope.databaseName, $scope.tableName).where(filterClause);
+                return new neon.query.Filter().selectFrom($scope.databaseName, $scope.selectedTable.name).where(filterClause);
             };
 
             /**

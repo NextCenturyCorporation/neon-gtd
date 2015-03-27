@@ -36,6 +36,11 @@ angular.module('neonDemo.directives')
         },
         controller: 'neonDemoController',
         link: function($scope, el) {
+            $scope.databaseName = "";
+            $scope.tables = [];
+            $scope.selectedTable = {
+                name: ""
+            };
             $scope.fields = [];
             $scope.selectedField = "Select Field";
             $scope.andClauses = true;
@@ -66,7 +71,7 @@ angular.module('neonDemo.directives')
                 // Adjust the filters whenever the user toggles AND/OR clauses.
                 $scope.$watch('andClauses', function(newVal, oldVal) {
                     if(newVal !== oldVal) {
-                        var filter = $scope.filterTable.buildFilterFromData($scope.databaseName, $scope.tableName, $scope.andClauses);
+                        var filter = $scope.filterTable.buildFilterFromData($scope.databaseName, $scope.selectedTable.name, $scope.andClauses);
 
                         XDATA.activityLogger.logUserActivity('FilterBuilder - Toggle custom Neon filter set operator', 'select_filter_menu_option',
                             XDATA.activityLogger.WF_GETDATA,
@@ -175,7 +180,8 @@ angular.module('neonDemo.directives')
 
                 // Save the new database and table name; Fetch the new table fields.
                 $scope.databaseName = datasetService.getDatabase();
-                $scope.tableName = datasetService.getTable();
+                $scope.tables = datasetService.getTables();
+                $scope.selectedTable = $scope.tables[0];
 
                 if(!datasetService.hasDataset()) {
                     return;
@@ -196,7 +202,7 @@ angular.module('neonDemo.directives')
                 var row = new neon.query.FilterRow($scope.selectedField, $scope.selectedOperator, $scope.selectedValue);
                 $scope.filterTable.addFilterRow(row);
 
-                var filter = $scope.filterTable.buildFilterFromData($scope.databaseName, $scope.tableName, $scope.andClauses);
+                var filter = $scope.filterTable.buildFilterFromData($scope.databaseName, $scope.selectedTable.name, $scope.andClauses);
 
                 XDATA.activityLogger.logUserActivity('FilterBuilder - add custom Neon filter', 'execute_query_filter',
                     XDATA.activityLogger.WF_GETDATA,
@@ -231,7 +237,7 @@ angular.module('neonDemo.directives')
                 var row = $scope.filterTable.removeFilterRow(index);
 
                 // Make the neon call to remove it from the server.
-                var filter = $scope.filterTable.buildFilterFromData($scope.databaseName, $scope.tableName, $scope.andClauses);
+                var filter = $scope.filterTable.buildFilterFromData($scope.databaseName, $scope.selectedTable.name, $scope.andClauses);
 
                 XDATA.activityLogger.logUserActivity('FilterBuilder - reset/clear custom Neon filter', 'remove_query_filter',
                     XDATA.activityLogger.WF_GETDATA, row);
@@ -256,7 +262,7 @@ angular.module('neonDemo.directives')
             $scope.updateFilterRow = function(index) {
                 var row = $scope.filterTable.getFilterRow(index);
                 var oldVal = $scope.filterTable.filterState;
-                var filter = $scope.filterTable.buildFilterFromData($scope.databaseName, $scope.tableName, $scope.andClauses);
+                var filter = $scope.filterTable.buildFilterFromData($scope.databaseName, $scope.selectedTable.name, $scope.andClauses);
 
                 XDATA.activityLogger.logUserActivity('FilterBuilder - update custom Neon filter', 'execute_query_filter',
                     XDATA.activityLogger.WF_GETDATA, row);

@@ -38,8 +38,11 @@ angular.module('neonDemo.directives')
 
             $element.addClass('barchartDirective');
 
-            $scope.database = '';
-            $scope.tableName = '';
+            $scope.databaseName = '';
+            $scope.tables = [];
+            $scope.selectedTable = {
+                name: ""
+            };
             $scope.barType = $scope.barType || 'count';
             $scope.fields = [];
             $scope.xAxisSelect = $scope.fields[0] ? $scope.fields[0] : '';
@@ -75,17 +78,17 @@ angular.module('neonDemo.directives')
                 });
 
                 $scope.$watch('attrX', function() {
-                    if(!$scope.initializing && $scope.databaseName && $scope.tableName) {
+                    if(!$scope.initializing && $scope.databaseName && $scope.selectedTable.name) {
                         $scope.queryForData(true);
                     }
                 });
                 $scope.$watch('attrY', function() {
-                    if(!$scope.initializing && $scope.databaseName && $scope.tableName) {
+                    if(!$scope.initializing && $scope.databaseName && $scope.selectedTable.name) {
                         $scope.queryForData(true);
                     }
                 });
                 $scope.$watch('barType', function() {
-                    if(!$scope.initializing && $scope.databaseName && $scope.tableName) {
+                    if(!$scope.initializing && $scope.databaseName && $scope.selectedTable.name) {
                         $scope.queryForData(false);
                     }
                 });
@@ -125,7 +128,8 @@ angular.module('neonDemo.directives')
                 connectionService.connectToDataset(datasetService.getDatastore(), datasetService.getHostname(), datasetService.getDatabase());
 
                 $scope.databaseName = datasetService.getDatabase();
-                $scope.tableName = datasetService.getTable();
+                $scope.tables = datasetService.getTables();
+                $scope.selectedTable = $scope.tables[0];
                 $scope.queryForData(true);
             };
 
@@ -144,7 +148,7 @@ angular.module('neonDemo.directives')
                 }
 
                 var query = new neon.query.Query()
-                    .selectFrom($scope.databaseName, $scope.tableName)
+                    .selectFrom($scope.databaseName, $scope.selectedTable.name)
                     .where(xAxis, '!=', null)
                     .groupBy(xAxis);
 
@@ -193,7 +197,7 @@ angular.module('neonDemo.directives')
                 var connection = connectionService.getActiveConnection();
                 if(xAxis !== undefined && xAxis !== "" && $scope.messenger && connection) {
                     var filterClause = neon.query.where(xAxis, '=', filterValue);
-                    var filter = new neon.query.Filter().selectFrom($scope.databaseName, $scope.tableName).where(filterClause);
+                    var filter = new neon.query.Filter().selectFrom($scope.databaseName, $scope.selectedTable.name).where(filterClause);
 
                     if(!$scope.filterSet) {
                         $scope.messenger.addFilter($scope.filterKey, filter, function() {

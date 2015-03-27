@@ -42,8 +42,11 @@ angular.module('neonDemo.directives')
             $scope.selectedItem = null;
             $scope.groupFields = [];
             $scope.messenger = new neon.eventing.Messenger();
-            $scope.database = '';
-            $scope.tableName = '';
+            $scope.databaseName = '';
+            $scope.tables = [];
+            $scope.selectedTable = {
+                name: ""
+            };
             $scope.fields = [""];
             $scope.chart = undefined;
             $scope.errorMessage = undefined;
@@ -108,7 +111,7 @@ angular.module('neonDemo.directives')
              * @method buildQuery
              */
             $scope.buildQuery = function() {
-                var query = new neon.query.Query().selectFrom($scope.databaseName, $scope.tableName);
+                var query = new neon.query.Query().selectFrom($scope.databaseName, $scope.selectedTable.name);
                 if($scope.groupFields.length > 0) {
                     query.groupBy.apply(query, $scope.groupFields);
                 }
@@ -139,7 +142,8 @@ angular.module('neonDemo.directives')
                 connectionService.connectToDataset(datasetService.getDatastore(), datasetService.getHostname(), datasetService.getDatabase());
 
                 $scope.databaseName = datasetService.getDatabase();
-                $scope.tableName = datasetService.getTable();
+                $scope.tables = datasetService.getTables();
+                $scope.selectedTable = $scope.tables[0];
 
                 if(initializing) {
                     $scope.updateFieldsAndQueryForData();
@@ -186,7 +190,7 @@ angular.module('neonDemo.directives')
             var buildDataTree = function(data) {
                 var nodes = {};
                 var tree = {
-                    name: $scope.tableName,
+                    name: $scope.selectedTable.name,
                     children: []
                 };
                 var leafObject;

@@ -43,6 +43,10 @@ angular.module('neonDemo.directives')
             var HOUR = "hour";
             var DAY = "day";
 
+            $scope.uniqueChartOptions = 'chart-options-' + uuid();
+            var chartOptions = $(element).find('.chart-options');
+            chartOptions.toggleClass($scope.uniqueChartOptions);
+
             element.addClass('timeline-selector');
 
             // Defaulting the expected date field to 'date'.
@@ -68,6 +72,12 @@ angular.module('neonDemo.directives')
             $scope.collapsed = true;
             $scope.eventProbabilitiesDisplayed = false;
             $scope.errorMessage = undefined;
+
+            $scope.databaseName = "";
+            $scope.tables = [];
+            $scope.selectedTable = {
+                name: ""
+            };
 
             /**
              * Update any book-keeping fields that need to change when the granularity changes.
@@ -207,7 +217,7 @@ angular.module('neonDemo.directives')
                         var endFilterClause = neon.query.where($scope.dateField, '<', $scope.bucketizer.roundUpBucket(endExtent));
                         var clauses = [startFilterClause, endFilterClause];
                         var filterClause = neon.query.and.apply(this, clauses);
-                        var filter = new neon.query.Filter().selectFrom($scope.databaseName, $scope.tableName).where(filterClause);
+                        var filter = new neon.query.Filter().selectFrom($scope.databaseName, $scope.selectedTable.name).where(filterClause);
 
                         XDATA.activityLogger.logSystemActivity('TimelineSelector - Create/Replace neon filter');
 
@@ -274,7 +284,8 @@ angular.module('neonDemo.directives')
                 connectionService.connectToDataset(datasetService.getDatastore(), datasetService.getHostname(), datasetService.getDatabase());
 
                 $scope.databaseName = datasetService.getDatabase();
-                $scope.tableName = datasetService.getTable();
+                $scope.tables = datasetService.getTables();
+                $scope.selectedTable = $scope.tables[0];
                 $scope.bucketizer.setStartDate(undefined);
                 $scope.startDateForDisplay = undefined;
                 $scope.endDateForDisplay = undefined;
@@ -298,7 +309,7 @@ angular.module('neonDemo.directives')
                 $scope.dateField = datasetService.getMapping("date") || "date";
 
                 var query = new neon.query.Query()
-                    .selectFrom($scope.databaseName, $scope.tableName)
+                    .selectFrom($scope.databaseName, $scope.selectedTable.name)
                     .where($scope.dateField, '!=', null);
 
                 $scope.addGroupByGranularityClause(query);
@@ -436,7 +447,7 @@ angular.module('neonDemo.directives')
                 // TODO: neon doesn't yet support a more efficient way to just get the min/max fields without aggregating
                 // TODO: This could be done better with a promise framework - just did this in a pinch for a demo
                 var minDateQuery = new neon.query.Query()
-                    .selectFrom($scope.databaseName, $scope.tableName).ignoreFilters()
+                    .selectFrom($scope.databaseName, $scope.selectedTable.name).ignoreFilters()
                     .where($scope.dateField, '!=', null).sortBy($scope.dateField, neon.query.ASCENDING).limit(1);
 
                 XDATA.activityLogger.logSystemActivity('TimelineSelector - query for minimum date');
@@ -460,7 +471,7 @@ angular.module('neonDemo.directives')
                 }
 
                 var maxDateQuery = new neon.query.Query()
-                    .selectFrom($scope.databaseName, $scope.tableName).ignoreFilters()
+                    .selectFrom($scope.databaseName, $scope.selectedTable.name).ignoreFilters()
                     .where($scope.dateField, '!=', null).sortBy($scope.dateField, neon.query.DESCENDING).limit(1);
 
                 XDATA.activityLogger.logSystemActivity('TimelineSelector - query for maximum date');

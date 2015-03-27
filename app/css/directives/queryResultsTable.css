@@ -87,6 +87,12 @@
     background: #cccccc;
 }
 
+.query-results-directive .chart-options {
+    /* Align with the Sort By and Limit items. */
+    margin-top: 3px;
+    margin-left: 10px;
+}
+
 @media (max-width: 767px) {
     .data-tray h4.pull-left,
     .data-tray .form-inline,

@@ -42,13 +42,7 @@
     padding: 20px;
 }
 
-.tagcloud-container .filter-tags {
-    padding-bottom: 10px;
-    margin-bottom: 10px;
-    border-bottom: 1px solid #e1e1e1;
-}
-.tagcloud-container .filter-tags .filter-reset {
-    display: inline-block;
-    margin-right: 10px;
-    margin-bottom: 10px;
+.tagcloud-container .chart-options {
+    /* Add a bottom margin to make the chart-options element the same size as the filter-reset elements. */
+    margin-bottom: 6px;
 }

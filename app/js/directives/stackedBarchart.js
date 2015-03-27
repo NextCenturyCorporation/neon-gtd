@@ -37,11 +37,18 @@ angular.module('neonDemo.directives')
             barType: '='
         },
         link: function($scope, el) {
+            $scope.uniqueChartOptions = 'chart-options-' + uuid();
+            var chartOptions = $(el).find('.chart-options');
+            chartOptions.toggleClass($scope.uniqueChartOptions);
+
             el.addClass('barchartDirective');
 
             $scope.messenger = new neon.eventing.Messenger();
-            $scope.database = '';
-            $scope.tableName = '';
+            $scope.databaseName = '';
+            $scope.tables = [];
+            $scope.selectedTable = {
+                name: ""
+            };
             $scope.barType = /*$scope.barType ||*/'count'; //Changed because negative values break the display
             $scope.fields = [];
             $scope.xAxisSelect = $scope.fields[0] ? $scope.fields[0] : '';
@@ -62,17 +69,17 @@ angular.module('neonDemo.directives')
                 });
 
                 $scope.$watch('attrX', function() {
-                    if($scope.databaseName && $scope.tableName) {
+                    if($scope.databaseName && $scope.selectedTable.name) {
                         $scope.queryForData();
                     }
                 });
                 $scope.$watch('attrY', function() {
-                    if($scope.databaseName && $scope.tableName) {
+                    if($scope.databaseName && $scope.selectedTable.name) {
                         $scope.queryForData();
                     }
                 });
                 $scope.$watch('barType', function() {
-                    if($scope.databaseName && $scope.tableName) {
+                    if($scope.databaseName && $scope.selectedTable.name) {
                         $scope.queryForData();
                     }
                 });
@@ -92,7 +99,8 @@ angular.module('neonDemo.directives')
                 }
 
                 $scope.databaseName = datasetService.getDatabase();
-                $scope.tableName = datasetService.getTable();
+                $scope.tables = datasetService.getTables();
+                $scope.selectedTable = $scope.tables[0];
 
                 connectionService.connectToDataset(datasetService.getDatastore(), datasetService.getHostname(), datasetService.getDatabase());
 
@@ -112,7 +120,7 @@ angular.module('neonDemo.directives')
                 }
 
                 var query = new neon.query.Query()
-                    .selectFrom($scope.databaseName, $scope.tableName)
+                    .selectFrom($scope.databaseName, $scope.selectedTable.name)
                     .where(xAxis, '!=', null)
                     .where(yAxis, yRuleComparator, yRuleVal)
                     .groupBy(xAxis);

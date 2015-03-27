@@ -33,9 +33,14 @@ angular.module('neonDemo.directives')
         templateUrl: 'partials/directives/queryResultsTable.html',
         restrict: 'EA',
         scope: {
+            navbarItem: '=?',
             showData: '=?'
         },
         link: function($scope, element) {
+            $scope.uniqueChartOptions = 'chart-options-' + uuid();
+            var chartOptions = $(element).find('.chart-options');
+            chartOptions.toggleClass($scope.uniqueChartOptions);
+
             element.addClass('query-results-directive');
 
             // If this widget was launched as a navbar collapsable then showData will be bound to the collapse toggle.
@@ -51,7 +56,10 @@ angular.module('neonDemo.directives')
             $scope.DESCENDING = neon.query.DESCENDING;
 
             $scope.databaseName = '';
-            $scope.tableName = '';
+            $scope.tables = [];
+            $scope.selectedTable = {
+                name: ""
+            };
             $scope.fields = [];
             $scope.sortByField = '';
             $scope.sortDirection = neon.query.ASCENDING;
@@ -117,6 +125,12 @@ angular.module('neonDemo.directives')
                             from: oldVal,
                             to: newVal
                         });
+                });
+
+                $scope.$watch("selectedTable", function(newValue, oldValue) {
+                    if(newValue.name !== oldValue.name) {
+                        // TODO
+                    }
                 });
 
                 // Setup our messenger.
@@ -216,7 +230,8 @@ angular.module('neonDemo.directives')
                 }
 
                 $scope.databaseName = datasetService.getDatabase();
-                $scope.tableName = datasetService.getTable();
+                $scope.tables = datasetService.getTables();
+                $scope.selectedTable = $scope.tables[0];
 
                 connectionService.connectToDataset(datasetService.getDatastore(), datasetService.getHostname(), datasetService.getDatabase());
 
@@ -289,7 +304,7 @@ angular.module('neonDemo.directives')
              * @method queryForData
              */
             $scope.queryForTotalRows = function() {
-                var query = new neon.query.Query().selectFrom($scope.databaseName, $scope.tableName)
+                var query = new neon.query.Query().selectFrom($scope.databaseName, $scope.selectedTable.name)
                     .aggregate(neon.query.COUNT, '*', 'count');
 
                 XDATA.activityLogger.logSystemActivity('DataView - query for total rows of data');
@@ -354,7 +369,7 @@ angular.module('neonDemo.directives')
              * @method buildQuery
              */
             $scope.buildQuery = function() {
-                var query = new neon.query.Query().selectFrom($scope.databaseName, $scope.tableName);
+                var query = new neon.query.Query().selectFrom($scope.databaseName, $scope.selectedTable.name);
                 query.limit($scope.limit);
                 if($scope.sortByField !== "undefined" && $scope.sortByField.length > 0) {
                     query.sortBy($scope.sortByField, $scope.sortDirection);

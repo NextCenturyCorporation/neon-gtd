@@ -55,6 +55,15 @@ angular.module('neonDemo.directives')
             };
         },
         link: function($scope, element) {
+            $scope.uniqueChartOptions = 'chart-options-' + uuid();
+            var chartOptions = $(element).find('.chart-options');
+            chartOptions.toggleClass($scope.uniqueChartOptions);
+
+            $scope.databaseName = "";
+            $scope.tables = [];
+            $scope.selectedTable = {
+                name: ""
+            };
             $scope.days = [];
             $scope.timeofday = [];
             $scope.maxDay = "";
@@ -161,7 +170,8 @@ angular.module('neonDemo.directives')
                 connectionService.connectToDataset(datasetService.getDatastore(), datasetService.getHostname(), datasetService.getDatabase());
 
                 $scope.databaseName = datasetService.getDatabase();
-                $scope.tableName = datasetService.getTable();
+                $scope.tables = datasetService.getTables();
+                $scope.selectedTable = $scope.tables[0];
                 $scope.queryForChartData();
             };
 
@@ -191,7 +201,7 @@ angular.module('neonDemo.directives')
                 var groupByHourClause = new neon.query.GroupByFunctionClause(neon.query.HOUR, $scope.dateField, 'hour');
 
                 var query = new neon.query.Query()
-                    .selectFrom($scope.databaseName, $scope.tableName)
+                    .selectFrom($scope.databaseName, $scope.selectedTable.name)
                     .groupBy(groupByDayClause, groupByHourClause)
                     .where($scope.dateField, '!=', null)
                     .aggregate(neon.query.COUNT, '*', 'count');

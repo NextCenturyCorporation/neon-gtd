@@ -24,8 +24,17 @@ angular.module('neonDemo.directives')
         scope: {
         },
         link: function($scope, el) {
+            $scope.uniqueChartOptions = 'chart-options-' + uuid();
+            var chartOptions = $(el).find('.chart-options');
+            chartOptions.toggleClass($scope.uniqueChartOptions);
+
             el.addClass('countByDirective');
 
+            $scope.databaseName = "";
+            $scope.tables = [];
+            $scope.selectedTable = {
+                name: ""
+            };
             $scope.countField = "";
             $scope.count = 0;
             $scope.fields = [];
@@ -43,8 +52,10 @@ angular.module('neonDemo.directives')
              * @private
              */
             var updateSize = function() {
+                var optionHeight = $(el).find('.chart-options').outerHeight(true);
+                var headerHeight = $(el).find('.count-by-header').outerHeight(true);
                 // Subtract an additional 2 pixels from the table height to account for the its border.
-                $('#' + $scope.tableId).height(el.height() - $(el).find('.count-by-header').outerHeight(true) - 2);
+                $('#' + $scope.tableId).height(el.height() - optionHeight - headerHeight - 2);
                 if($scope.table) {
                     $scope.table.refreshLayout();
                 }
@@ -173,7 +184,8 @@ angular.module('neonDemo.directives')
                 connectionService.connectToDataset(datasetService.getDatastore(), datasetService.getHostname(), datasetService.getDatabase());
 
                 $scope.databaseName = datasetService.getDatabase();
-                $scope.tableName = datasetService.getTable();
+                $scope.tables = datasetService.getTables();
+                $scope.selectedTable = $scope.tables[0];
 
                 if(initializing) {
                     $scope.updateFieldsAndQueryForData();
@@ -269,7 +281,7 @@ angular.module('neonDemo.directives')
                 var connection = connectionService.getActiveConnection();
                 if($scope.messenger && connection) {
                     var filterClause = neon.query.where(field, '=', value);
-                    var filter = new neon.query.Filter().selectFrom($scope.databaseName, $scope.tableName).where(filterClause);
+                    var filter = new neon.query.Filter().selectFrom($scope.databaseName, $scope.selectedTable.name).where(filterClause);
                     if(!$scope.filterSet) {
                         $scope.messenger.addFilter($scope.filterKey, filter, function() {
                             handleSetFilter(field, value);
@@ -345,7 +357,7 @@ angular.module('neonDemo.directives')
              * @method buildQuery
              */
             $scope.buildQuery = function() {
-                var query = new neon.query.Query().selectFrom($scope.databaseName, $scope.tableName)
+                var query = new neon.query.Query().selectFrom($scope.databaseName, $scope.selectedTable.name)
                 .groupBy($scope.countField);
 
                 // The widget displays its own ignored rows with 0.5 opacity.

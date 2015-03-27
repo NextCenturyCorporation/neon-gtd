@@ -44,8 +44,11 @@ angular.module('neonDemo.directives')
 
             $element.addClass('linechartDirective');
 
-            $scope.databaseName = '';
-            $scope.tableName = '';
+            $scope.selectedDatabase = '';
+            $scope.tables = [];
+            $scope.selectedTable = {
+                name: ""
+            };
             $scope.totalType = 'count';
             $scope.fields = [];
             $scope.chart = undefined;
@@ -82,19 +85,19 @@ angular.module('neonDemo.directives')
 
                 $scope.$watch('attrY', function(newValue, oldValue) {
                     onFieldChange('attrY', newValue, oldValue);
-                    if($scope.databaseName && $scope.tableName) {
+                    if($scope.selectedDatabase && $scope.selectedTable.name) {
                         $scope.queryForData();
                     }
                 });
                 $scope.$watch('categoryField', function(newValue, oldValue) {
                     onFieldChange('categoryField', newValue, oldValue);
-                    if($scope.databaseName && $scope.tableName) {
+                    if($scope.selectedDatabase && $scope.selectedTable.name) {
                         $scope.queryForData();
                     }
                 });
                 $scope.$watch('aggregation', function(newValue, oldValue) {
                     onFieldChange('aggregation', newValue, oldValue);
-                    if($scope.databaseName && $scope.tableName) {
+                    if($scope.selectedDatabase && $scope.selectedTable.name) {
                         $scope.queryForData();
                     }
                 });
@@ -136,7 +139,7 @@ angular.module('neonDemo.directives')
                 }
 
                 var query = new neon.query.Query()
-                    .selectFrom($scope.databaseName, $scope.tableName)
+                    .selectFrom($scope.selectedDatabase, $scope.selectedTable.name)
                     .where($scope.attrX, '!=', null);
 
                 query.groupBy.apply(query, groupByClause);
@@ -174,8 +177,9 @@ angular.module('neonDemo.directives')
 
                 connectionService.connectToDataset(datasetService.getDatastore(), datasetService.getHostname(), datasetService.getDatabase());
 
-                $scope.databaseName = datasetService.getDatabase();
-                $scope.tableName = datasetService.getTable();
+                $scope.selectedDatabase = datasetService.getDatabase();
+                $scope.tables = datasetService.getTables();
+                $scope.selectedTable = $scope.tables[0];
                 $scope.attrX = datasetService.getMapping("date") || "";
                 $scope.attrY = datasetService.getMapping("y_axis") || "";
                 $scope.categoryField = datasetService.getMapping("line_category") || "";

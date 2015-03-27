@@ -29,7 +29,10 @@ angular.module('neonDemo.directives')
         link: function($scope, element) {
             element.addClass("tagcloud-container");
             $scope.databaseName = '';
-            $scope.tableName = '';
+            $scope.tables = [];
+            $scope.selectedTable = {
+                name: ""
+            };
             $scope.uniqueChartOptions = 'chart-options-' + uuid();
             var chartOptions = $(element).find('.chart-options');
             chartOptions.toggleClass($scope.uniqueChartOptions);
@@ -137,7 +140,8 @@ angular.module('neonDemo.directives')
                 connectionService.connectToDataset(datasetService.getDatastore(), datasetService.getHostname(), datasetService.getDatabase());
 
                 $scope.databaseName = datasetService.getDatabase();
-                $scope.tableName = datasetService.getTable();
+                $scope.tables = datasetService.getTables();
+                $scope.selectedTable = $scope.tables[0];
                 $scope.tagField = $scope.tagField || datasetService.getMapping("tags") || "";
                 $scope.queryForTags();
             };
@@ -151,7 +155,7 @@ angular.module('neonDemo.directives')
                     var connection = connectionService.getActiveConnection();
                     if(connection) {
                         var host = connection.host_;
-                        var url = neon.serviceUrl('mongotagcloud', 'tagcounts', 'host=' + host + "&db=" + $scope.databaseName + "&collection=" + $scope.tableName + "&arrayfield=" + $scope.tagField + "&limit=40");
+                        var url = neon.serviceUrl('mongotagcloud', 'tagcounts', 'host=' + host + "&db=" + $scope.databaseName + "&collection=" + $scope.selectedTable.name + "&arrayfield=" + $scope.tagField + "&limit=40");
 
                         XDATA.activityLogger.logSystemActivity('TagCloud - query for tag data');
                         neon.util.ajaxUtils.doGet(url, {
@@ -240,7 +244,7 @@ angular.module('neonDemo.directives')
                 } else {
                     filterClause = filterClauses.length > 1 ? neon.query.or.apply(neon.query, filterClauses) : filterClauses[0];
                 }
-                return new neon.query.Filter().selectFrom($scope.databaseName, $scope.tableName).where(filterClause);
+                return new neon.query.Filter().selectFrom($scope.databaseName, $scope.selectedTable.name).where(filterClause);
             };
 
             /**
