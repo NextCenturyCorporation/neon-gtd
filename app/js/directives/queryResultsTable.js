@@ -227,8 +227,6 @@ angular.module('neonDemo.directives')
                 $scope.tables = datasetService.getTables();
                 $scope.selectedTable = $scope.tables[0];
 
-                connectionService.connectToDataset(datasetService.getDatastore(), datasetService.getHostname(), datasetService.getDatabase());
-
                 if(initializing) {
                     $scope.updateFieldsAndRowsAndCount();
                 } else {
