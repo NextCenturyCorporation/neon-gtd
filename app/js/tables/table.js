@@ -254,11 +254,17 @@ tables.Table.prototype.addLinks_ = function() {
     };
 
     var cellSelector = this.tableSelector_;
+    var lastRange = {};
 
     // Add initial links and update links on viewport changes.
     $(cellSelector).find(".slick-cell." + tables.LINKABLE).linky(linkyConfig);
-    this.table_.onViewportChanged.subscribe(function() {
-        $(cellSelector).find("slick-cell." + tables.LINKABLE).linky(linkyConfig);
+    this.table_.onViewportChanged.subscribe(function(args) {
+        var range = this.getRenderedRange();
+        // Skip calls to linky on horizontal scrolls, scrolling where the rendered rows don't change.
+        if (range.top !== lastRange.top || range.bottom !== lastRange.bottom) {
+            $(cellSelector).find(".slick-cell." + tables.LINKABLE).linky(linkyConfig);
+            lastRange = range;
+        }
     });
 };
 
@@ -274,23 +280,6 @@ tables.Table.prototype.draw = function() {
         enableForHeaderCells: true
     }));
     this.addLinks_();
-
-    // Enable links in all text.
-    // TODO: change this to use a passed in config to allow for non-twitter links.
-    var linkyConfig = {
-        mentions: true,
-        hashtags: true,
-        urls: true,
-        linkTo: "twitter"
-    };
-    var cellSelector = this.tableSelector_;
-
-    // Enable links on initial view and then on any viewport changes.  See if there's something more efficient here.
-    $(cellSelector).find('.slick-cell.linkable').linky(linkyConfig);
-    this.table_.onViewportChanged.subscribe(function() {
-        $(cellSelector).find('.slick-cell.linkable').linky(linkyConfig);
-        console.log("viewport changed");
-    });
 
     // Setup some event loggers.
     this.table_.onColumnsResized.subscribe(function() {
