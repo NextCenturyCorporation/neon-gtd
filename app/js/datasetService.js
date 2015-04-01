@@ -56,82 +56,99 @@ angular.module("neonDemo.services")
             return service.dataset.database;
         };
 
-        /**
-         * @Deprecated
-         */
-        service.getTable = function() {
-            return service.dataset.tables ? service.dataset.tables[0].name : "";
-        };
-
         service.getTables = function() {
             return service.dataset.tables;
         };
 
-        service.getDatabaseFields = function() {
-            if(!service.dataset.tables.length) {
+        service.getTableWithName = function(tableName) {
+            for(var i = 0; i < service.dataset.tables.length; ++i) {
+                if(service.dataset.tables[i].name === tableName) {
+                    return service.dataset.tables[i];
+                }
+            }
+
+            return {
+                name: ""
+            };
+        };
+
+        service.getDatabaseFields = function(tableName) {
+            var table = service.getTableWithName(tableName);
+
+            if(!table.name) {
                 return [];
             }
 
             var databaseFields = [];
-            for(var i = 0; i < service.dataset.tables[0].fields.length; ++i) {
-                databaseFields.push(service.dataset.tables[0].fields[i].columnName);
+            for(var i = 0; i < table.fields.length; ++i) {
+                databaseFields.push(table.fields[i].columnName);
             }
             return databaseFields;
         };
 
-        service.getPrettyFields = function() {
-            if(!service.dataset.tables.length) {
+        service.getPrettyFields = function(tableName) {
+            var table = service.getTableWithName(tableName);
+
+            if(!table.name) {
                 return [];
             }
 
             var prettyFields = [];
-            for(var i = 0; i < service.dataset.tables[0].fields.length; ++i) {
-                prettyFields.push(service.dataset.tables[0].fields[i].prettyName || service.dataset.tables[0].fields[i].columnName);
+            for(var i = 0; i < table.fields.length; ++i) {
+                prettyFields.push(table.fields[i].prettyName || table.fields[i].columnName);
             }
             return prettyFields;
         };
 
-        service.updateFields = function(fieldNames) {
-            if(!service.dataset.tables.length) {
-                return;
+        service.updateFields = function(tableName, fieldNames) {
+            var table = service.getTableWithName(tableName);
+
+            if(!table.name) {
+                return [];
             }
 
             var fieldExists = {};
-            for(var i = 0; i < service.dataset.tables[0].fields.length; ++i) {
-                fieldExists[service.dataset.tables[0].fields[i].columnName] = true;
+            for(var i = 0; i < table.fields.length; ++i) {
+                fieldExists[table.fields[i].columnName] = true;
             }
 
             for(var i = 0; i < fieldNames.length; ++i) {
                 if(!fieldExists[fieldNames[i]]) {
-                    service.dataset.tables[0].fields.push({
+                    table.fields.push({
                         columnName: fieldNames[i]
                     });
                 }
             }
         };
 
-        service.getMappings = function() {
-            if(!service.dataset.tables.length) {
+        service.getMappings = function(tableName) {
+            var table = service.getTableWithName(tableName);
+
+            if(!table.name) {
                 return [];
             }
 
-            return service.dataset.tables[0].mappings;
+            return table.mappings;
         };
 
-        service.getMapping = function(key) {
-            if(!service.dataset.tables.length) {
-                return "";
+        service.getMapping = function(tableName, key) {
+            var table = service.getTableWithName(tableName);
+
+            if(!table.name) {
+                return [];
             }
 
-            return service.dataset.tables[0].mappings[key];
+            return table.mappings[key];
         };
 
-        service.setMapping = function(key, field) {
-            if(!service.dataset.tables.length) {
-                return;
+        service.setMapping = function(tableName, key, field) {
+            var table = service.getTableWithName(tableName);
+
+            if(!table.name) {
+                return [];
             }
 
-            service.dataset.tables[0].mappings[key] = field;
+            table.mappings[key] = field;
         };
 
         return service;

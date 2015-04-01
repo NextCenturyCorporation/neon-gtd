@@ -306,7 +306,7 @@ angular.module('neonDemo.directives')
                     $scope.errorMessage = undefined;
                 }
 
-                $scope.dateField = datasetService.getMapping("date") || "date";
+                $scope.dateField = datasetService.getMapping($scope.selectedTable.name, "date") || "date";
 
                 var query = new neon.query.Query()
                     .selectFrom($scope.databaseName, $scope.selectedTable.name)

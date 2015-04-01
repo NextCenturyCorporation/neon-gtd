@@ -113,8 +113,8 @@ angular.module('neonDemo.directives')
                     $scope.errorMessage = undefined;
                 }
 
-                var xAxis = $scope.attrX || datasetService.getMapping("x_axis");
-                var yAxis = $scope.attrY || datasetService.getMapping("y_axis");
+                var xAxis = $scope.attrX || datasetService.getMapping($scope.selectedTable.name, "x_axis");
+                var yAxis = $scope.attrY || datasetService.getMapping($scope.selectedTable.name, "y_axis");
                 if(!yAxis) {
                     yAxis = COUNT_FIELD_NAME;
                 }
@@ -153,8 +153,8 @@ angular.module('neonDemo.directives')
             };
 
             $scope.queryForData = function() {
-                var xAxis = $scope.attrX || datasetService.getMapping("x_axis");
-                var yAxis = $scope.attrY || datasetService.getMapping("y_axis");
+                var xAxis = $scope.attrX || datasetService.getMapping($scope.selectedTable.name, "x_axis");
+                var yAxis = $scope.attrY || datasetService.getMapping($scope.selectedTable.name, "y_axis");
                 if(!yAxis) {
                     yAxis = COUNT_FIELD_NAME;
                 }
@@ -244,8 +244,8 @@ angular.module('neonDemo.directives')
             var doDrawChart = function(data) {
                 charts.BarChart.destroy(el[0], '.barchart');
 
-                var xAxis = datasetService.getMapping("x_axis") || $scope.attrX;
-                var yAxis = datasetService.getMapping("y_axis") || $scope.attrY;
+                var xAxis = datasetService.getMapping($scope.selectedTable.name, "x_axis") || $scope.attrX;
+                var yAxis = datasetService.getMapping($scope.selectedTable.name, "y_axis") || $scope.attrY;
                 if(!yAxis) {
                     yAxis = COUNT_FIELD_NAME;
                 }

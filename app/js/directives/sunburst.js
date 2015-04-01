@@ -155,7 +155,7 @@ angular.module('neonDemo.directives')
             };
 
             $scope.updateFieldsAndQueryForData = function() {
-                $scope.fields = datasetService.getDatabaseFields();
+                $scope.fields = datasetService.getDatabaseFields($scope.selectedTable.name);
                 $scope.queryForData();
             };
 

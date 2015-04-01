@@ -42,6 +42,7 @@ angular.module('neonDemo.directives')
             ];
             $scope.datastoreSelect = $scope.storeSelect || 'mongo';
             $scope.hostnameInput = $scope.hostName || 'localhost';
+            $scope.tableNameToFields = {};
 
             $scope.initialize = function() {
                 $scope.messenger = new neon.eventing.Messenger();
@@ -105,6 +106,8 @@ angular.module('neonDemo.directives')
                 $scope.tableFields = server.tables[0].fields;
                 $scope.tableFieldMappings = server.tables[0].mappings;
                 $scope.selectTable();
+
+                connectionService.connectToDataset($scope.datastoreSelect, $scope.hostnameInput, $scope.selectedDb);
             };
 
             var populateDatabaseDropdown = function(dbs) {
@@ -119,14 +122,39 @@ angular.module('neonDemo.directives')
 
                 if($scope.selectedDb) {
                     $scope.connection.use($scope.selectedDb);
-                    $scope.connection.getTableNames(function(tables) {
+                    $scope.connection.getTableNames(function(tableNames) {
                         $scope.$apply(function() {
-                            populateTableDropdown(tables);
+                            populateTableDropdown(tableNames);
+                            $scope.tableNameToFields = {};
+                            $scope.updateFieldsForTables(tableNames);
                         });
                     });
                 } else {
                     $scope.dbTables = [];
                 }
+            };
+
+            $scope.updateFieldsForTables = function(tableNames) {
+                if(!tableNames.length) {
+                    return;
+                }
+
+                $scope.connection.getFieldNames(tableNames[0], function(fieldNames) {
+                    $scope.$apply(function() {
+                        datasetService.updateFields(tableNames[0], fieldNames);
+                        // Store fields for each table locally because the dataset service ignores tables not included in the dataset.
+                        // TODO Determine how to handle fields from tables in the database that are not included in the dataset.  This may
+                        //      be solved once we update the custom connection interface to support multi-table datasets and field mappings.
+                        $scope.tableNameToFields[tableNames[0]] = fieldNames;
+                    });
+                    // Wait to publish the dataset change until we've updated the field names.
+                    // TODO Trigger the dataset changed event from connection.js.
+                    if(tableNames[0] === $scope.selectedTable) {
+                        $scope.tableFields = datasetService.getDatabaseFields(tableNames[0]);
+                        $scope.publishDatasetChanged();
+                    }
+                    $scope.updateFieldsForTables(tableNames.slice(1));
+                });
             };
 
             $scope.selectTable = function() {
@@ -135,27 +163,11 @@ angular.module('neonDemo.directives')
                         table: $scope.selectedTable
                     });
 
-                $scope.connection.getFieldNames($scope.selectedTable, function(fieldNames) {
-                    $scope.$apply(function() {
-                        datasetService.updateFields(fieldNames);
-                        $scope.tableFields = datasetService.getDatabaseFields();
-                    });
-                    connectionService.connectToDataset($scope.datastoreSelect, $scope.hostnameInput, $scope.selectedDb);
-                    // Wait to publish the dataset change until we've updated the field names.
-                    $scope.publishDatasetChanged();
-                });
-            };
-
-            $scope.applyDefaultFields = function() {
-                $scope.$apply(function() {
-                    var mappings = datasetService.getFields();
-                    for(var key in $scope.fields) {
-                        if(Object.prototype.hasOwnProperty.call($scope.fields, key)) {
-                            var field = $scope.fields[key];
-                            field.selected = mappings.hasOwnProperty(field.name) ? mappings[field.name] : "";
-                        }
-                    }
-                });
+                $scope.tableFields = datasetService.getDatabaseFields($scope.selectedTable);
+                if(!($scope.tableFields.length)) {
+                    $scope.tableFields = $scope.tableNameToFields[$scope.selectedTable];
+                }
+                $scope.tableFieldMappings = datasetService.getMappings($scope.selectedTable);
             };
 
             $scope.selectField = function() {
@@ -185,7 +197,7 @@ angular.module('neonDemo.directives')
                 for(var key in $scope.fields) {
                     if(Object.prototype.hasOwnProperty.call($scope.fields, key)) {
                         var field = $scope.fields[key];
-                        datasetService.setField(field.name, field.selected);
+                        datasetService.setField($scope.selectedTable, field.name, field.selected);
                     }
                 }
                 $scope.connectToDatabase();

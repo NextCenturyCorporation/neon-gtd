@@ -127,12 +127,6 @@ angular.module('neonDemo.directives')
                         });
                 });
 
-                $scope.$watch("selectedTable", function(newValue, oldValue) {
-                    if(newValue.name !== oldValue.name) {
-                        // TODO
-                    }
-                });
-
                 // Setup our messenger.
                 $scope.messenger = new neon.eventing.Messenger();
 
@@ -245,8 +239,8 @@ angular.module('neonDemo.directives')
             };
 
             $scope.updateFieldsAndRowsAndCount = function() {
-                $scope.fields = datasetService.getDatabaseFields();
-                $scope.sortByField = datasetService.getMapping("sort_by") || $scope.fields[0];
+                $scope.fields = datasetService.getDatabaseFields($scope.selectedTable.name);
+                $scope.sortByField = datasetService.getMapping($scope.selectedTable.name, "sort_by") || $scope.fields[0];
                 updateRowsAndCount();
             };
 

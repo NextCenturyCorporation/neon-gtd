@@ -185,7 +185,7 @@ angular.module('neonDemo.directives')
                     $scope.errorMessage = undefined;
                 }
 
-                var dateField = datasetService.getMapping("date") || DEFAULT_DATE_FIELD;
+                var dateField = datasetService.getMapping($scope.selectedTable.name, "date") || DEFAULT_DATE_FIELD;
 
                 if(!dateField) {
                     $scope.updateChartData({

@@ -180,19 +180,22 @@ angular.module('neonDemo.directives')
                 $scope.selectedDatabase = datasetService.getDatabase();
                 $scope.tables = datasetService.getTables();
                 $scope.selectedTable = $scope.tables[0];
-                $scope.attrX = datasetService.getMapping("date") || "";
-                $scope.attrY = datasetService.getMapping("y_axis") || "";
-                $scope.categoryField = datasetService.getMapping("line_category") || "";
+                $scope.attrX = datasetService.getMapping($scope.selectedTable.name, "date") || "";
+                $scope.attrY = datasetService.getMapping($scope.selectedTable.name, "y_axis") || "";
+                $scope.categoryField = datasetService.getMapping($scope.selectedTable.name, "line_category") || "";
                 $scope.aggregation = 'count';
 
                 if(initializing) {
-                    $scope.fields = datasetService.getDatabaseFields();
+                    $scope.updateFieldsAndQueryForData();
                 } else {
                     $scope.$apply(function() {
-                        $scope.fields = datasetService.getDatabaseFields();
+                        $scope.updateFieldsAndQueryForData();
                     });
                 }
+            };
 
+            $scope.updateFieldsAndQueryForData = function() {
+                $scope.fields = datasetService.getDatabaseFields($scope.selectedTable.name);
                 $scope.queryForData();
             };
 

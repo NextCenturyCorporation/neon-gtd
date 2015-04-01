@@ -188,7 +188,7 @@ angular.module('neonDemo.directives')
                 }
 
                 $scope.$apply(function() {
-                    var fields = datasetService.getDatabaseFields();
+                    var fields = datasetService.getDatabaseFields($scope.selectedTable.name);
                     $scope.fields = _.without(fields, "_id");
                     $scope.selectedField = fields[0];
                 });

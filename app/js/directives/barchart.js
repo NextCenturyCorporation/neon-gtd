@@ -45,8 +45,8 @@ angular.module('neonDemo.directives')
             };
             $scope.barType = $scope.barType || 'count';
             $scope.fields = [];
-            $scope.xAxisSelect = $scope.fields[0] ? $scope.fields[0] : '';
-            $scope.initializing = false;
+            $scope.xAxisSelect = "";
+            $scope.updatingChart = false;
             $scope.chart = undefined;
             $scope.filterKey = "barchart-" + uuid();
             $scope.filterSet = undefined;
@@ -78,17 +78,17 @@ angular.module('neonDemo.directives')
                 });
 
                 $scope.$watch('attrX', function() {
-                    if(!$scope.initializing && $scope.databaseName && $scope.selectedTable.name) {
+                    if(!$scope.updatingChart && $scope.databaseName && $scope.selectedTable.name) {
                         $scope.queryForData(true);
                     }
                 });
                 $scope.$watch('attrY', function() {
-                    if(!$scope.initializing && $scope.databaseName && $scope.selectedTable.name) {
+                    if(!$scope.updatingChart && $scope.databaseName && $scope.selectedTable.name) {
                         $scope.queryForData(true);
                     }
                 });
                 $scope.$watch('barType', function() {
-                    if(!$scope.initializing && $scope.databaseName && $scope.selectedTable.name) {
+                    if(!$scope.updatingChart && $scope.databaseName && $scope.selectedTable.name) {
                         $scope.queryForData(false);
                     }
                 });
@@ -109,27 +109,42 @@ angular.module('neonDemo.directives')
                 XDATA.activityLogger.logSystemActivity('BarChart - received neon dataset changed event');
 
                 $timeout(function() {
-                    $scope.displayActiveDataset();
-                    $scope.initializing = false;
+                    $scope.displayActiveDataset(false);
+                    $scope.updatingChart = false;
                 });
             };
 
             /**
              * Displays data for any currently active datasets.
+             * @param {Boolean} Whether this function was called during visualization initialization.
              * @method displayActiveDataset
              */
-            $scope.displayActiveDataset = function() {
+            $scope.displayActiveDataset = function(initializing) {
                 if(!datasetService.hasDataset()) {
                     return;
                 }
 
-                $scope.initializing = true;
+                $scope.updatingChart = true;
 
                 connectionService.connectToDataset(datasetService.getDatastore(), datasetService.getHostname(), datasetService.getDatabase());
 
                 $scope.databaseName = datasetService.getDatabase();
                 $scope.tables = datasetService.getTables();
                 $scope.selectedTable = $scope.tables[0];
+                $scope.attrX = datasetService.getMapping($scope.selectedTable.name, "bar_x_axis") || "";
+                $scope.attrY = datasetService.getMapping($scope.selectedTable.name, "y_axis") || "";
+
+                if(initializing) {
+                    $scope.updateFieldsAndQueryForData();
+                } else {
+                    $scope.$apply(function() {
+                        $scope.updateFieldsAndQueryForData();
+                    });
+                }
+            };
+
+            $scope.updateFieldsAndQueryForData = function() {
+                $scope.fields = datasetService.getDatabaseFields($scope.selectedTable.name);
                 $scope.queryForData(true);
             };
 
@@ -139,8 +154,8 @@ angular.module('neonDemo.directives')
                     $scope.errorMessage = undefined;
                 }
 
-                var xAxis = $scope.attrX || datasetService.getMapping("bar_x_axis");
-                var yAxis = $scope.attrY || datasetService.getMapping("y_axis");
+                var xAxis = $scope.attrX || datasetService.getMapping($scope.selectedTable.name, "bar_x_axis");
+                var yAxis = $scope.attrY || datasetService.getMapping($scope.selectedTable.name, "y_axis");
 
                 if(xAxis === undefined || xAxis === "" || yAxis === undefined || yAxis === "") {
                     drawBlankChart();
@@ -193,7 +208,7 @@ angular.module('neonDemo.directives')
             };
 
             var clickFilterHandler = function(filterValue) {
-                var xAxis = $scope.attrX || datasetService.getMapping("bar_x_axis");
+                var xAxis = $scope.attrX || datasetService.getMapping($scope.selectedTable.name, "bar_x_axis");
                 var connection = connectionService.getActiveConnection();
                 if(xAxis !== undefined && xAxis !== "" && $scope.messenger && connection) {
                     var filterClause = neon.query.where(xAxis, '=', filterValue);
@@ -233,8 +248,8 @@ angular.module('neonDemo.directives')
             };
 
             var doDrawChart = function(data, destroy) {
-                var xAxis = $scope.attrX || datasetService.getMapping("bar_x_axis");
-                var yAxis = $scope.attrY || datasetService.getMapping("y_axis");
+                var xAxis = $scope.attrX || datasetService.getMapping($scope.selectedTable.name, "bar_x_axis");
+                var yAxis = $scope.attrY || datasetService.getMapping($scope.selectedTable.name, "y_axis");
 
                 if(!yAxis) {
                     yAxis = COUNT_FIELD_NAME;
@@ -265,7 +280,7 @@ angular.module('neonDemo.directives')
             neon.ready(function() {
                 $scope.messenger = new neon.eventing.Messenger();
                 initialize();
-                $scope.displayActiveDataset();
+                $scope.displayActiveDataset(true);
             });
         }
     };
