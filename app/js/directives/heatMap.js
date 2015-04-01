@@ -379,7 +379,11 @@ angular.module('neonDemo.directives')
 
                 $timeout(function() {
                     $scope.initializing = false;
-                    $scope.queryForMapData();
+                    if($scope.showFilter) {
+                        $scope.clearFilter();
+                    } else {
+                        $scope.queryForMapData();
+                    }
                 });
             };
 

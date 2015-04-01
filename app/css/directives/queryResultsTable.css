@@ -93,6 +93,11 @@
     margin-left: 10px;
 }
 
+.query-results-directive .query-results-options {
+    /* Set a lower position for the popover due to the extra top margin added to chart-options. */
+    top: 48px;
+}
+
 @media (max-width: 767px) {
     .data-tray h4.pull-left,
     .data-tray .form-inline,

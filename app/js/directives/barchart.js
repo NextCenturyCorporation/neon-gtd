@@ -45,7 +45,6 @@ angular.module('neonDemo.directives')
             };
             $scope.barType = $scope.barType || 'count';
             $scope.fields = [];
-            $scope.xAxisSelect = "";
             $scope.updatingChart = false;
             $scope.chart = undefined;
             $scope.filterKey = "barchart-" + uuid();
@@ -131,8 +130,6 @@ angular.module('neonDemo.directives')
                 $scope.databaseName = datasetService.getDatabase();
                 $scope.tables = datasetService.getTables();
                 $scope.selectedTable = $scope.tables[0];
-                $scope.attrX = datasetService.getMapping($scope.selectedTable.name, "bar_x_axis") || "";
-                $scope.attrY = datasetService.getMapping($scope.selectedTable.name, "y_axis") || "";
 
                 if(initializing) {
                     $scope.updateFieldsAndQueryForData();
@@ -144,7 +141,12 @@ angular.module('neonDemo.directives')
             };
 
             $scope.updateFieldsAndQueryForData = function() {
+                $scope.attrX = datasetService.getMapping($scope.selectedTable.name, "bar_x_axis") || "";
+                $scope.attrY = datasetService.getMapping($scope.selectedTable.name, "y_axis") || "";
                 $scope.fields = datasetService.getDatabaseFields($scope.selectedTable.name);
+                if($scope.filterSet) {
+                    $scope.clearFilterSet();
+                }
                 $scope.queryForData(true);
             };
 

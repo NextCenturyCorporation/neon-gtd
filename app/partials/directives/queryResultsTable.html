@@ -8,7 +8,7 @@
         <div class="popover-content">
             <div class="form-group">
                 <label>Table</label>
-                <select class="form-control" ng-model="selectedTable" ng-options="table.name for table in tables" ng-required="true" ng-disabled="(tables.length == 0)">
+                <select class="form-control" ng-model="selectedTable" ng-options="table.name for table in tables" ng-required="true" ng-disabled="(tables.length == 0)" ng-change="updateFieldsAndRowsAndCount()">
                 </select>
             </div>
         </div>
@@ -26,7 +26,7 @@
 
             <div ng-hide="!(navbarItem)" class="form-group">
                 <label>Table</label>
-                <select class="form-control" ng-model="selectedTable" ng-options="table.name for table in tables" ng-required="true" ng-disabled="(tables.length == 0)">
+                <select class="form-control" ng-model="selectedTable" ng-options="table.name for table in tables" ng-required="true" ng-disabled="(tables.length == 0)" ng-change="updateFieldsAndRowsAndCount()">
                 </select>
             </div>
 

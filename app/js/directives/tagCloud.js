@@ -142,8 +142,16 @@ angular.module('neonDemo.directives')
                 $scope.databaseName = datasetService.getDatabase();
                 $scope.tables = datasetService.getTables();
                 $scope.selectedTable = $scope.tables[0];
+                $scope.updateFieldsAndQueryForTags();
+            };
+
+            $scope.updateFieldsAndQueryForTags = function() {
                 $scope.tagField = $scope.tagField || datasetService.getMapping($scope.selectedTable.name, "tags") || "";
-                $scope.queryForTags();
+                if($scope.showFilter) {
+                    $scope.clearTagFilters();
+                } else {
+                    $scope.queryForTags();
+                }
             };
 
             /**

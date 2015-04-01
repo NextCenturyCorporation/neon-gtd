@@ -51,7 +51,6 @@ angular.module('neonDemo.directives')
             };
             $scope.barType = /*$scope.barType ||*/'count'; //Changed because negative values break the display
             $scope.fields = [];
-            $scope.xAxisSelect = $scope.fields[0] ? $scope.fields[0] : '';
             $scope.errorMessage = undefined;
 
             var COUNT_FIELD_NAME = 'Count';
@@ -90,10 +89,10 @@ angular.module('neonDemo.directives')
             };
 
             var onDatasetChanged = function() {
-                $scope.displayActiveDataset();
+                $scope.displayActiveDataset(false);
             };
 
-            var displayActiveDataset = function() {
+            var displayActiveDataset = function(initializing) {
                 if(!datasetService.hasDataset()) {
                     return;
                 }
@@ -104,7 +103,20 @@ angular.module('neonDemo.directives')
 
                 connectionService.connectToDataset(datasetService.getDatastore(), datasetService.getHostname(), datasetService.getDatabase());
 
-                $scope.queryForData();
+                if(initializing) {
+                    $scope.updateFieldsAndQueryForData();
+                } else {
+                    $scope.$apply(function() {
+                        $scope.updateFieldsAndQueryForData();
+                    });
+                }
+            };
+
+            $scope.updateFieldsAndQueryForData = function() {
+                $scope.attrX = datasetService.getMapping($scope.selectedTable.name, "x_axis") || "";
+                $scope.attrY = datasetService.getMapping($scope.selectedTable.name, "y_axis") || "";
+                $scope.fields = datasetService.getDatabaseFields($scope.selectedTable.name);
+                $scope.queryForData(true);
             };
 
             var queryData = function(yRuleComparator, yRuleVal, next) {
@@ -265,7 +277,7 @@ angular.module('neonDemo.directives')
             neon.ready(function() {
                 $scope.messenger = new neon.eventing.Messenger();
                 initialize();
-                displayActiveDataset();
+                displayActiveDataset(true);
             });
         }
     };

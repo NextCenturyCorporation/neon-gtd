@@ -286,13 +286,19 @@ angular.module('neonDemo.directives')
                 $scope.databaseName = datasetService.getDatabase();
                 $scope.tables = datasetService.getTables();
                 $scope.selectedTable = $scope.tables[0];
+                $scope.resetAndQueryForChartData();
+            };
+
+            $scope.resetAndQueryForChartData = function() {
                 $scope.bucketizer.setStartDate(undefined);
                 $scope.startDateForDisplay = undefined;
                 $scope.endDateForDisplay = undefined;
                 $scope.referenceStartDate = undefined;
                 $scope.referenceEndDate = undefined;
                 $scope.data = [];
-                $scope.brush = [];
+                if($scope.brush.length) {
+                    $scope.clearBrush();
+                }
                 $scope.queryForChartData();
             };
 

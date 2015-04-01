@@ -25,7 +25,7 @@
     <div class="form-inline pull-right">
         <div class="form-group">
             <label>Table</label>
-            <select class="form-control" ng-model="selectedTable" ng-options="table.name for table in tables" ng-required="true" ng-disabled="(tables.length == 0)">
+            <select class="form-control" ng-model="selectedTable" ng-options="table.name for table in tables" ng-required="true" ng-disabled="(tables.length == 0)" ng-change="resetFiltersAndUpdateFields()">
             </select>
         </div>
     </div>

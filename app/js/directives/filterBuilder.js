@@ -175,23 +175,31 @@ angular.module('neonDemo.directives')
              */
             var onDatasetChanged = function() {
                 XDATA.activityLogger.logSystemActivity('FilterBuilder - received neon dataset changed event');
-                // Clear the filter table.
                 $scope.filterTable.clearFilterState();
+
+                if(!datasetService.hasDataset()) {
+                    return;
+                }
 
                 // Save the new database and table name; Fetch the new table fields.
                 $scope.databaseName = datasetService.getDatabase();
                 $scope.tables = datasetService.getTables();
                 $scope.selectedTable = $scope.tables[0];
 
-                if(!datasetService.hasDataset()) {
-                    return;
-                }
-
                 $scope.$apply(function() {
-                    var fields = datasetService.getDatabaseFields($scope.selectedTable.name);
-                    $scope.fields = _.without(fields, "_id");
-                    $scope.selectedField = fields[0];
+                    $scope.updateFields();
                 });
+            };
+
+            $scope.updateFields = function() {
+                var fields = datasetService.getDatabaseFields($scope.selectedTable.name);
+                $scope.fields = _.without(fields, "_id");
+                $scope.selectedField = fields[0];
+            };
+
+            $scope.resetFiltersAndUpdateFields = function() {
+                $scope.resetFilters();
+                $scope.updateFields();
             };
 
             /**
