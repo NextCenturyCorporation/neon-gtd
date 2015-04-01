@@ -261,10 +261,10 @@ tables.Table.prototype.addLinks_ = function() {
 
     // Add initial links and update links on viewport changes.
     $(cellSelector).find(".slick-cell." + tables.LINKABLE).linky(linkyConfig);
-    this.table_.onViewportChanged.subscribe(function(args) {
+    this.table_.onViewportChanged.subscribe(function() {
         var range = this.getRenderedRange();
         // Skip calls to linky on horizontal scrolls, scrolling where the rendered rows don't change.
-        if (range.top !== lastRange.top || range.bottom !== lastRange.bottom) {
+        if((range.top !== lastRange.top) || (range.bottom !== lastRange.bottom)) {
             $(cellSelector).find(".slick-cell." + tables.LINKABLE).linky(linkyConfig);
             lastRange = range;
         }
