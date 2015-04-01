@@ -257,11 +257,17 @@ tables.Table.prototype.addLinks_ = function() {
     };
 
     var cellSelector = this.tableSelector_;
+    var lastRange = {};
 
     // Add initial links and update links on viewport changes.
     $(cellSelector).find(".slick-cell." + tables.LINKABLE).linky(linkyConfig);
-    this.table_.onViewportChanged.subscribe(function() {
-        $(cellSelector).find("slick-cell." + tables.LINKABLE).linky(linkyConfig);
+    this.table_.onViewportChanged.subscribe(function(args) {
+        var range = this.getRenderedRange();
+        // Skip calls to linky on horizontal scrolls, scrolling where the rendered rows don't change.
+        if (range.top !== lastRange.top || range.bottom !== lastRange.bottom) {
+            $(cellSelector).find(".slick-cell." + tables.LINKABLE).linky(linkyConfig);
+            lastRange = range;
+        }
     });
 };
 
