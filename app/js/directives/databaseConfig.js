@@ -42,7 +42,7 @@ angular.module('neonDemo.directives')
             ];
             $scope.datastoreSelect = $scope.storeSelect || 'mongo';
             $scope.hostnameInput = $scope.hostName || 'localhost';
-            $scope.tableNameToFields = {};
+            $scope.tableNameToFieldNames = {};
 
             $scope.initialize = function() {
                 $scope.messenger = new neon.eventing.Messenger();
@@ -97,24 +97,22 @@ angular.module('neonDemo.directives')
                 $scope.hostnameInput = server.hostname;
                 $scope.connectToDataServer();
 
-                // Set database name and get list of tables.
                 $scope.selectedDb = server.database;
-                $scope.selectDatabase();
-
-                // Set table name and initiate connection.
                 $scope.selectedTable = server.tables[0].name;
                 $scope.tableFields = server.tables[0].fields;
                 $scope.tableFieldMappings = server.tables[0].mappings;
-                $scope.selectTable();
 
-                connectionService.connectToDataset($scope.datastoreSelect, $scope.hostnameInput, $scope.selectedDb);
+                $scope.selectDatabase(function() {
+                    // Wait to connect to the new dataset and publish the change until we've updated the field names.
+                    $scope.connectToDatasetAndPublishActiveDatasetChanged();
+                });
             };
 
             var populateDatabaseDropdown = function(dbs) {
                 $scope.databases = dbs;
             };
 
-            $scope.selectDatabase = function() {
+            $scope.selectDatabase = function(updateFieldsCallback) {
                 XDATA.activityLogger.logUserActivity('User selected new database',
                     'connect', XDATA.activityLogger.WF_GETDATA, {
                         database: $scope.selectedDb
@@ -125,35 +123,35 @@ angular.module('neonDemo.directives')
                     $scope.connection.getTableNames(function(tableNames) {
                         $scope.$apply(function() {
                             populateTableDropdown(tableNames);
-                            $scope.tableNameToFields = {};
-                            $scope.updateFieldsForTables(tableNames);
                         });
                     });
+                    $scope.updateFieldsForTables(updateFieldsCallback);
                 } else {
                     $scope.dbTables = [];
                 }
             };
 
-            $scope.updateFieldsForTables = function(tableNames) {
-                if(!tableNames.length) {
-                    return;
-                }
+            $scope.updateFieldsForTables = function(updateFieldsCallback) {
+                $scope.tableNameToFieldNames = {};
 
-                $scope.connection.getFieldNames(tableNames[0], function(fieldNames) {
+                $scope.connection.getTableNamesAndFieldNames(function(tableNamesAndFieldNames) {
                     $scope.$apply(function() {
-                        datasetService.updateFields(tableNames[0], fieldNames);
-                        // Store fields for each table locally because the dataset service ignores tables not included in the dataset.
-                        // TODO Determine how to handle fields from tables in the database that are not included in the dataset.  This may
-                        //      be solved once we update the custom connection interface to support multi-table datasets and field mappings.
-                        $scope.tableNameToFields[tableNames[0]] = fieldNames;
+                        for(var tableName in tableNamesAndFieldNames) {
+                            datasetService.updateFields(tableName, tableNamesAndFieldNames[tableName]);
+                            // Store fields for each table locally because the dataset service ignores tables not included in the dataset.
+                            // TODO Determine how to handle fields from tables in the database that are not included in the dataset.  This may
+                            //      be solved once we update the custom connection interface to support multi-table datasets and field mappings.
+                            $scope.tableNameToFieldNames[tableName] = tableNamesAndFieldNames[tableName];
+
+                            if(tableName === $scope.selectedTable) {
+                                $scope.tableFields = datasetService.getDatabaseFields(tableName);
+                            }
+                        }
+
+                        if(updateFieldsCallback) {
+                            updateFieldsCallback();
+                        }
                     });
-                    // Wait to publish the dataset change until we've updated the field names.
-                    // TODO Trigger the dataset changed event from connection.js.
-                    if(tableNames[0] === $scope.selectedTable) {
-                        $scope.tableFields = datasetService.getDatabaseFields(tableNames[0]);
-                        $scope.publishDatasetChanged();
-                    }
-                    $scope.updateFieldsForTables(tableNames.slice(1));
                 });
             };
 
@@ -164,8 +162,9 @@ angular.module('neonDemo.directives')
                     });
 
                 $scope.tableFields = datasetService.getDatabaseFields($scope.selectedTable);
+                // If the table does not exist in the dataset configuration, use the locally stored field names for the table.
                 if(!($scope.tableFields.length)) {
-                    $scope.tableFields = $scope.tableNameToFields[$scope.selectedTable];
+                    $scope.tableFields = $scope.tableNameToFieldNames[$scope.selectedTable];
                 }
                 $scope.tableFieldMappings = datasetService.getMappings($scope.selectedTable);
             };
@@ -184,23 +183,35 @@ angular.module('neonDemo.directives')
                 $scope.dbTables = tables;
             };
 
-            $scope.publishDatasetChanged = function() {
+            $scope.connectToDatasetAndPublishActiveDatasetChanged = function() {
                 $scope.messenger.clearFiltersSilently(function() {
+                    connectionService.connectToDataset($scope.datastoreSelect, $scope.hostnameInput, $scope.selectedDb);
                     $scope.messenger.publish(neon.eventing.channels.ACTIVE_DATASET_CHANGED, {});
                     XDATA.activityLogger.logSystemActivity('Publishing Neon Active Dataset Change message', {});
                 });
             };
 
             $scope.connectClick = function() {
-                // Set active connection to Custom and connect.
                 $scope.activeServer = "Custom";
+
+                datasetService.setActiveDataset({
+                    datastore: $scope.datastoreSelect,
+                    hostname: $scope.hostnameInput,
+                    database: $scope.selectedDb,
+                    tables: [{
+                        name: $scope.selectedTable
+                    }]
+                });
+
                 for(var key in $scope.fields) {
                     if(Object.prototype.hasOwnProperty.call($scope.fields, key)) {
                         var field = $scope.fields[key];
-                        datasetService.setField($scope.selectedTable, field.name, field.selected);
+                        if(field.selected) {
+                            datasetService.setMapping($scope.selectedTable, field.name, field.selected);
+                        }
                     }
                 }
-                $scope.connectToDatabase();
+
                 XDATA.activityLogger.logUserActivity('User requested new dataset',
                     'connect', XDATA.activityLogger.WF_GETDATA, {
                         datastore: $scope.datastoreSelect,
@@ -208,6 +219,8 @@ angular.module('neonDemo.directives')
                         database: $scope.selectedDb,
                         table: $scope.selectedTable
                     });
+
+                $scope.connectToDatasetAndPublishActiveDatasetChanged();
             };
 
             // Wait for neon to be ready, the create our messenger and intialize the view and data.

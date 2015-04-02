@@ -34,6 +34,11 @@ angular.module("neonDemo.services")
             service.dataset.hostname = dataset.hostname || "";
             service.dataset.database = dataset.database || "";
             service.dataset.tables = dataset.tables || [];
+
+            for(var i = 0; i < service.dataset.tables.length; ++i) {
+                service.dataset.tables[i].fields = service.dataset.tables[i].fields || [];
+                service.dataset.tables[i].mappings = service.dataset.tables[i].mappings || {};
+            }
         };
 
         service.hasDataset = function() {
