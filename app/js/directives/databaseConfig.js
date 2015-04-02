@@ -186,8 +186,16 @@ angular.module('neonDemo.directives')
             $scope.connectToDatasetAndPublishActiveDatasetChanged = function() {
                 $scope.messenger.clearFiltersSilently(function() {
                     connectionService.connectToDataset($scope.datastoreSelect, $scope.hostnameInput, $scope.selectedDb);
-                    $scope.messenger.publish(neon.eventing.channels.ACTIVE_DATASET_CHANGED, {});
-                    XDATA.activityLogger.logSystemActivity('Publishing Neon Active Dataset Change message', {});
+                    $scope.messenger.publish("active_dataset_changed", {
+                        datastore: $scope.datastoreSelect,
+                        hostname: $scope.hostnameInput,
+                        database: $scope.selectedDb
+                    });
+                    XDATA.activityLogger.logSystemActivity('Publishing Neon Active Dataset Change message', {
+                        datastore: $scope.datastoreSelect,
+                        hostname: $scope.hostnameInput,
+                        database: $scope.selectedDb
+                    });
                 });
             };
 

@@ -89,8 +89,11 @@ angular.module('neonDemo.directives')
                 $scope.messenger = new neon.eventing.Messenger();
 
                 $scope.messenger.events({
-                    activeDatasetChanged: onDatasetChanged,
-                    filtersChanged: onFiltersChanged
+                    filtersChanged: onFiltersChanged,
+                    custom: [{
+                        channel: "active_dataset_changed",
+                        callback: onDatasetChanged
+                    }]
                 });
 
                 $scope.$on('$destroy', function() {

@@ -59,8 +59,13 @@ angular.module('neonDemo.directives')
                 $scope.selectedOperator = $scope.filterTable.operatorOptions[0] || '=';
 
                 $scope.messenger.events({
-                    activeConnectionChanged: onConnectionChanged,
-                    activeDatasetChanged: onDatasetChanged
+                    custom: [{
+                        channel: "active_connection_changed",
+                        callback: onConnectionChanged
+                    }, {
+                        channel: "active_dataset_changed",
+                        callback: onDatasetChanged
+                    }]
                 });
 
                 $scope.$on('$destroy', function() {
