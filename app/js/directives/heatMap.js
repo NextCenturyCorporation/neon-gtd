@@ -286,9 +286,11 @@ angular.module('neonDemo.directives')
              * @method onFiltersChanged
              * @private
              */
-            var onFiltersChanged = function() {
+            var onFiltersChanged = function(message) {
                 XDATA.activityLogger.logSystemActivity('HeatMap - received neon filter changed event');
-                $scope.queryForMapData();
+                if(message.filter.databaseName === $scope.databaseName && message.filter.tableName === $scope.selectedTable.name) {
+                    $scope.queryForMapData();
+                }
             };
 
             /**

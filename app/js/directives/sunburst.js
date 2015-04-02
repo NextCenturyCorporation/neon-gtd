@@ -89,9 +89,17 @@ angular.module('neonDemo.directives')
                 });
             };
 
-            var onFiltersChanged = function() {
+            /**
+             * Event handler for filter changed events issued over Neon's messaging channels.
+             * @param {Object} message A Neon filter changed message.
+             * @method onFiltersChanged
+             * @private
+             */
+            var onFiltersChanged = function(message) {
                 XDATA.activityLogger.logSystemActivity('SunburstChart - received neon filter changed event');
-                $scope.queryForData();
+                if(message.filter.databaseName === $scope.databaseName && message.filter.tableName === $scope.selectedTable.name) {
+                    $scope.queryForData();
+                }
             };
 
             var onDatasetChanged = function() {

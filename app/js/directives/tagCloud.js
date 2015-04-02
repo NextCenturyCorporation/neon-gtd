@@ -110,12 +110,15 @@ angular.module('neonDemo.directives')
 
             /**
              * Event handler for filter changed events issued over Neon's messaging channels.
+             * @param {Object} message A Neon filter changed message.
              * @method onFiltersChanged
              * @private
              */
-            var onFiltersChanged = function() {
+            var onFiltersChanged = function(message) {
                 XDATA.activityLogger.logSystemActivity('TagCloud - received neon filter changed event');
-                $scope.queryForTags();
+                if(message.filter.databaseName === $scope.databaseName && message.filter.tableName === $scope.selectedTable.name) {
+                    $scope.queryForTags();
+                }
             };
 
             /**
