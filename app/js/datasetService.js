@@ -22,6 +22,7 @@ angular.module("neonDemo.services")
 
         service.dataset = {
             name: "",
+            layout: "",
             datastore: "",
             hostname: "",
             database: "",
@@ -30,6 +31,7 @@ angular.module("neonDemo.services")
 
         service.setActiveDataset = function(dataset) {
             service.dataset.name = dataset.name || "Unknown Dataset";
+            service.dataset.layout = dataset.layout || "";
             service.dataset.datastore = dataset.datastore || "";
             service.dataset.hostname = dataset.hostname || "";
             service.dataset.database = dataset.database || "";
@@ -47,6 +49,10 @@ angular.module("neonDemo.services")
 
         service.getName = function() {
             return service.dataset.name;
+        };
+
+        service.getLayout = function() {
+            return service.dataset.layout;
         };
 
         service.getDatastore = function() {

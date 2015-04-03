@@ -22,7 +22,7 @@
  * @constructor
  */
 angular.module('neonDemo.controllers')
-.controller('neonDemoController', ['$scope', '$timeout', 'layout', 'FilterCountService', function($scope, $timeout, layout, filterCountService) {
+.controller('neonDemoController', ['$scope', '$timeout', 'FilterCountService', function($scope, $timeout, filterCountService) {
     $scope.seeData = false;
     $scope.createFilters = false;
     $scope.chartOptions = false;
@@ -78,11 +78,8 @@ angular.module('neonDemo.controllers')
         }
     };
 
-    // The gridster configurations for the default visualization layout.
-    $scope.visualizations = layout;
-    for(var i = 0; i < $scope.visualizations.length; ++i) {
-        $scope.visualizations[i].id = uuid();
-    }
+    // No default visualizations.  They will be created once the user connects to a dataset in databaseConfig.js.
+    $scope.visualizations = [];
 
     /**
      * Returns whether or not our gridster setup is currently in mobile mode.

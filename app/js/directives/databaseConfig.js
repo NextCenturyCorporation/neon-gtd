@@ -1,13 +1,14 @@
 'use strict';
 
 angular.module('neonDemo.directives')
-.directive('databaseConfig', ['datasets', 'ConnectionService', 'DatasetService', function(datasets, connectionService, datasetService) {
+.directive('databaseConfig', ['datasets', 'layouts', 'ConnectionService', 'DatasetService', function(datasets, layouts, connectionService, datasetService) {
     return {
         templateUrl: 'partials/directives/databaseConfig.html',
         restrict: 'E',
         scope: {
             storeSelect: '=',
-            hostName: '='
+            hostName: '=',
+            gridsterConfigs: "="
         },
         link: function($scope, el) {
             el.addClass('databaseConfig');
@@ -43,6 +44,7 @@ angular.module('neonDemo.directives')
             $scope.datastoreSelect = $scope.storeSelect || 'mongo';
             $scope.hostnameInput = $scope.hostName || 'localhost';
             $scope.tableNameToFieldNames = {};
+            $scope.layoutName = "";
 
             $scope.initialize = function() {
                 $scope.messenger = new neon.eventing.Messenger();
@@ -186,6 +188,7 @@ angular.module('neonDemo.directives')
             $scope.connectToDatasetAndPublishActiveDatasetChanged = function() {
                 $scope.messenger.clearFiltersSilently(function() {
                     connectionService.connectToDataset($scope.datastoreSelect, $scope.hostnameInput, $scope.selectedDb);
+                    $scope.updateLayout();
                     $scope.messenger.publish("active_dataset_changed", {
                         datastore: $scope.datastoreSelect,
                         hostname: $scope.hostnameInput,
@@ -197,6 +200,24 @@ angular.module('neonDemo.directives')
                         database: $scope.selectedDb
                     });
                 });
+            };
+
+            $scope.updateLayout = function() {
+                var layoutName = datasetService.getLayout();
+
+                // Use the default layout (if it exists) for custom datasets or datasets without a layout.
+                if(!layoutName || !layouts[layoutName]) {
+                    layoutName = "default";
+                }
+
+                if(layouts[layoutName] && $scope.layoutName !== layoutName) {
+                    $scope.gridsterConfigs = layouts[layoutName];
+                    for(var i = 0; i < $scope.gridsterConfigs.length; ++i) {
+                        $scope.gridsterConfigs[i].id = uuid();
+                    }
+                    // Save the layout name so we can avoid resetting the layout if we switch to a dataset that uses the same layout.
+                    $scope.layoutName = layoutName;
+                }
             };
 
             $scope.connectClick = function() {

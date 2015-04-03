@@ -156,6 +156,7 @@
 
     {
         "name": "South America Tweets",
+        "layout": "twitter",
         "datastore": "mongo",
         "hostname": "localhost",
         "database": "test",
@@ -211,6 +212,7 @@
 
     {
         "name": "Twitter",
+        "layout": "twitter",
         "datastore": "mongo",
         "hostname": "localhost",
         "database": "test",
@@ -266,6 +268,7 @@
 
     {
         "name": "Traffic",
+        "layout": "twitter",
         "datastore": "mongo",
         "hostname": "localhost",
         "database": "test",
@@ -291,6 +294,7 @@
 
     {
         "name": "QCR",
+        "layout": "qcr",
         "datastore": "mongo",
         "hostname": "localhost",
         "database": "test",
@@ -341,32 +345,101 @@
         }]
     }],
 
-    "layout": [{
-        "sizeX": 6,
-        "sizeY": 1,
-        "type": "timeline-selector"
-    }, {
-        "sizeX": 4,
-        "sizeY": 2,
-        "type": "heat-map"
-    }, {
-        "sizeX": 2,
-        "sizeY": 2,
-        "type": "circular-heat-form"
-    }, {
-        "sizeX": 2,
-        "sizeY": 2,
-        "type": "linechart"
-    }, {
-        "sizeX": 2,
-        "sizeY": 2,
-        "type": "barchart"
-    }, {
-        "sizeX": 2,
-        "sizeY": 2,
-        "type": "tag-cloud",
-        "bindings": {
-            "tag-field": "'hashtags'"
-        }
-    }]
+    "layouts": {
+        "default": [{
+            "sizeX": 6,
+            "sizeY": 1,
+            "type": "timeline-selector"
+        }, {
+            "sizeX": 4,
+            "sizeY": 2,
+            "type": "heat-map"
+        }, {
+            "sizeX": 2,
+            "sizeY": 2,
+            "type": "circular-heat-form"
+        }, {
+            "sizeX": 2,
+            "sizeY": 2,
+            "type": "linechart"
+        }, {
+            "sizeX": 2,
+            "sizeY": 2,
+            "type": "barchart"
+        }, {
+            "sizeX": 2,
+            "sizeY": 2,
+            "type": "count-by"
+        }],
+
+        "twitter": [{
+            "sizeX": 6,
+            "sizeY": 1,
+            "type": "timeline-selector"
+        }, {
+            "sizeX": 2,
+            "sizeY": 2,
+            "type": "tag-cloud",
+            "bindings": {
+                "tag-field": "'hashtags'"
+            }
+        }, {
+            "sizeX": 2,
+            "sizeY": 2,
+            "type": "heat-map"
+        }, {
+            "sizeX": 2,
+            "sizeY": 2,
+            "type": "circular-heat-form"
+        }, {
+            "sizeX": 2,
+            "sizeY": 2,
+            "type": "linechart"
+        }, {
+            "sizeX": 2,
+            "sizeY": 2,
+            "type": "barchart"
+        }, {
+            "sizeX": 2,
+            "sizeY": 2,
+            "type": "count-by"
+        }],
+
+        "qcr": [{
+            "sizeX": 6,
+            "sizeY": 1,
+            "type": "timeline-selector"
+        }, {
+            "sizeX": 4,
+            "sizeY": 2,
+            "type": "heat-map"
+        }, {
+            "sizeX": 2,
+            "sizeY": 2,
+            "type": "circular-heat-form"
+        }, {
+            "sizeX": 2,
+            "sizeY": 2,
+            "type": "linechart"
+        }, {
+            "sizeX": 2,
+            "sizeY": 2,
+            "type": "barchart"
+        }, {
+            "sizeX": 2,
+            "sizeY": 2,
+            "type": "count-by"
+        }, {
+            "sizeX": 4,
+            "sizeY": 2,
+            "type": "directed-graph"
+        }, {
+            "sizeX": 2,
+            "sizeY": 2,
+            "type": "tag-cloud",
+            "bindings": {
+                "tag-field": "'hashtags'"
+            }
+        }]
+    }
 }

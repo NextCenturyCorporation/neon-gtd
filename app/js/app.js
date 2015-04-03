@@ -86,8 +86,8 @@ angular.element(document).ready(function() {
         var visualizations = (config.visualizations || []);
         neonDemo.constant('visualizations', visualizations);
 
-        var layout = (config.layout || []);
-        neonDemo.constant('layout', layout);
+        var layouts = (config.layouts || {});
+        neonDemo.constant('layouts', layouts);
 
         angular.bootstrap(document, ['neonDemo']);
     });
