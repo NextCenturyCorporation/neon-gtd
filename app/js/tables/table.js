@@ -118,7 +118,8 @@ tables.createColumns = function(data) {
         element.html(columnNameToLongestText[name]).append(sortElement).append(resizeElement);
         columns.push({
             name: name,
-            width: element.outerWidth()
+            // Use a maximum width of 800 pixels for the columns (unless the user chooses to make the column wider).
+            width: Math.min(element.outerWidth(), 800)
         });
     });
 
