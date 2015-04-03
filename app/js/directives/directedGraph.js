@@ -35,8 +35,6 @@ angular.module('neonDemo.directives')
             $scope.selectedTable = {
                 name: ""
             };
-            $scope.fieldsLabel = "Username";
-            $scope.allowMoreFields = true;
             $scope.uniqueId = uuid();
             $scope.selectedUser = "";
             $scope.filterKey = "graph-" + uuid();
