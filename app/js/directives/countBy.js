@@ -191,6 +191,7 @@ angular.module('neonDemo.directives')
                 $scope.databaseName = datasetService.getDatabase();
                 $scope.tables = datasetService.getTables();
                 $scope.selectedTable = $scope.tables[0];
+                $scope.countField = "";
 
                 if(initializing) {
                     $scope.updateFieldsAndQueryForData();
@@ -221,6 +222,9 @@ angular.module('neonDemo.directives')
              */
             $scope.queryForData = function() {
                 if(!$scope.countField) {
+                    $scope.updateData({
+                        data: []
+                    });
                     return;
                 }
 
