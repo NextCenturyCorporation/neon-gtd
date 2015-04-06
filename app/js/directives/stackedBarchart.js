@@ -27,7 +27,7 @@
  * @constructor
  */
 angular.module('neonDemo.directives')
-.directive('stackedbarchart', ['ConnectionService', function(connectionService) {
+.directive('stackedbarchart', ['ConnectionService', 'ErrorNotificationService', function(connectionService, errorNotificationService) {
     return {
         templateUrl: 'partials/directives/barchart.html',
         restrict: 'E',
@@ -45,6 +45,7 @@ angular.module('neonDemo.directives')
             $scope.barType = /*$scope.barType ||*/'count'; //Changed because negative values break the display
             $scope.fields = [];
             $scope.xAxisSelect = $scope.fields[0] ? $scope.fields[0] : '';
+            $scope.errorMessage = undefined;
 
             var COUNT_FIELD_NAME = 'Count';
 
@@ -98,6 +99,11 @@ angular.module('neonDemo.directives')
             };
 
             var queryData = function(yRuleComparator, yRuleVal, next) {
+                if($scope.errorMessage) {
+                    errorNotificationService.hideErrorMessage($scope.errorMessage);
+                    $scope.errorMessage = undefined;
+                }
+
                 var xAxis = $scope.attrX || connectionService.getFieldMapping("x_axis");
                 var yAxis = $scope.attrY || connectionService.getFieldMapping("y_axis");
                 if(!yAxis) {
@@ -128,6 +134,9 @@ angular.module('neonDemo.directives')
 
                 connectionService.getActiveConnection().executeQuery(query, function(queryResults) {
                     next(queryResults);
+                }, function(response) {
+                    $scope.drawBlankChart();
+                    $scope.errorMessage = errorNotificationService.showErrorMessage(el, response.responseJSON.error, response.responseJSON.stackTrace);
                 });
             };
 

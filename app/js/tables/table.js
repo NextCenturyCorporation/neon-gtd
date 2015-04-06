@@ -100,7 +100,10 @@ tables.createColumns = function(data) {
     // Use a hidden jQuery element with the same style as a SlickGrid header to calculate the column width.
     var element = $("<div/>")
         .attr("class", "ui-widget ui-state-default slick-header-column")
-        .css({"white-space": "nowrap", "visibility": "hidden"})
+        .css({
+            "white-space": "nowrap",
+            visibility: "hidden"
+        })
         .appendTo("body");
 
     // Include elements contained within SlickGrid headers to ensure our width calculations will fit the header text.
@@ -115,7 +118,8 @@ tables.createColumns = function(data) {
         element.html(columnNameToLongestText[name]).append(sortElement).append(resizeElement);
         columns.push({
             name: name,
-            width: element.outerWidth()
+            // Use a maximum width of 800 pixels for the columns (unless the user chooses to make the column wider).
+            width: Math.min(element.outerWidth(), 800)
         });
     });
 
@@ -258,10 +262,10 @@ tables.Table.prototype.addLinks_ = function() {
 
     // Add initial links and update links on viewport changes.
     $(cellSelector).find(".slick-cell." + tables.LINKABLE).linky(linkyConfig);
-    this.table_.onViewportChanged.subscribe(function(args) {
+    this.table_.onViewportChanged.subscribe(function() {
         var range = this.getRenderedRange();
         // Skip calls to linky on horizontal scrolls, scrolling where the rendered rows don't change.
-        if (range.top !== lastRange.top || range.bottom !== lastRange.bottom) {
+        if((range.top !== lastRange.top) || (range.bottom !== lastRange.bottom)) {
             $(cellSelector).find(".slick-cell." + tables.LINKABLE).linky(linkyConfig);
             lastRange = range;
         }
@@ -401,7 +405,8 @@ tables.Table.prototype.setActiveCellIfMatchExists = function(field, value) {
     for(var i = 0; i < this.columns_.length; ++i) {
         if(this.columns_[i].field === field) {
             for(var j = 0; j < this.table_.getDataLength(); ++j) {
-                if(this.table_.getCellNode(j, i).innerHTML === value) {
+                var cell = this.table_.getCellNode(j, i);
+                if(cell && cell.innerHTML === value) {
                     this.table_.setActiveCell(j, i);
                 }
             }

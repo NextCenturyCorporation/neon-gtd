@@ -27,7 +27,7 @@
  * @constructor
  */
 angular.module('neonDemo.directives')
-.directive('barchart', ['ConnectionService', '$timeout', function(connectionService, $timeout) {
+.directive('barchart', ['ConnectionService', 'ErrorNotificationService', '$timeout', function(connectionService, errorNotificationService, $timeout) {
     return {
         templateUrl: 'partials/directives/barchart.html',
         restrict: 'EA',
@@ -47,6 +47,7 @@ angular.module('neonDemo.directives')
             $scope.chart = undefined;
             $scope.filterKey = "barchart-" + uuid();
             $scope.filterSet = undefined;
+            $scope.errorMessage = undefined;
 
             var COUNT_FIELD_NAME = 'Count';
 
@@ -132,6 +133,11 @@ angular.module('neonDemo.directives')
             };
 
             $scope.queryForData = function(rebuildChart) {
+                if($scope.errorMessage) {
+                    errorNotificationService.hideErrorMessage($scope.errorMessage);
+                    $scope.errorMessage = undefined;
+                }
+
                 var xAxis = $scope.attrX || connectionService.getFieldMapping("bar_x_axis");
                 var yAxis = $scope.attrY || connectionService.getFieldMapping("y_axis");
 
@@ -169,9 +175,10 @@ angular.module('neonDemo.directives')
                         doDrawChart(queryResults, rebuildChart);
                         XDATA.activityLogger.logSystemActivity('BarChart - rendered results');
                     });
-                }, function() {
+                }, function(response) {
                     XDATA.activityLogger.logSystemActivity('BarChart - query failed');
                     drawBlankChart();
+                    $scope.errorMessage = errorNotificationService.showErrorMessage($element, response.responseJSON.error, response.responseJSON.stackTrace);
                 });
             };
 

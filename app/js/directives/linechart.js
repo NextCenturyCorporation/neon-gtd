@@ -27,7 +27,7 @@
  * @constructor
  */
 angular.module('neonDemo.directives')
-.directive('linechart', ['ConnectionService', function(connectionService) {
+.directive('linechart', ['ConnectionService', 'ErrorNotificationService', function(connectionService, errorNotificationService) {
     var COUNT_FIELD_NAME = 'value';
 
     return {
@@ -55,6 +55,7 @@ angular.module('neonDemo.directives')
             $scope.categoryField = '';
             $scope.aggregation = 'count';
             $scope.seriesLimit = 10;
+            $scope.errorMessage = undefined;
 
             var updateChartSize = function() {
                 if($scope.chart) {
@@ -125,6 +126,11 @@ angular.module('neonDemo.directives')
             };
 
             var query = function(callback) {
+                if($scope.errorMessage) {
+                    errorNotificationService.hideErrorMessage($scope.errorMessage);
+                    $scope.errorMessage = undefined;
+                }
+
                 var yearGroupClause = new neon.query.GroupByFunctionClause(neon.query.YEAR, $scope.attrX, 'year');
                 var monthGroupClause = new neon.query.GroupByFunctionClause(neon.query.MONTH, $scope.attrX, 'month');
                 var dayGroupClause = new neon.query.GroupByFunctionClause(neon.query.DAY, $scope.attrX, 'day');
@@ -151,8 +157,10 @@ angular.module('neonDemo.directives')
                 query.aggregate(neon.query.MIN, $scope.attrX, 'date')
                     .sortBy('date', neon.query.ASCENDING);
 
-                connectionService.getActiveConnection().executeQuery(query, callback, function() {
+                connectionService.getActiveConnection().executeQuery(query, callback, function(response) {
                     XDATA.activityLogger.logSystemActivity('LineChart - query failed');
+                    drawChart();
+                    $scope.errorMessage = errorNotificationService.showErrorMessage($element, response.responseJSON.error, response.responseJSON.stackTrace);
                 });
             };
 

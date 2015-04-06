@@ -31,7 +31,7 @@
  * @constructor
  */
 angular.module('neonDemo.directives')
-.directive('timelineSelector', ['ConnectionService', function(connectionService) {
+.directive('timelineSelector', ['ConnectionService', 'ErrorNotificationService', function(connectionService, errorNotificationService) {
     return {
         templateUrl: 'partials/directives/timelineSelector.html',
         restrict: 'EA',
@@ -67,6 +67,7 @@ angular.module('neonDemo.directives')
             $scope.filterId = 'timelineFilter' + uuid();
             $scope.collapsed = true;
             $scope.eventProbabilitiesDisplayed = false;
+            $scope.errorMessage = undefined;
 
             /**
              * Update any book-keeping fields that need to change when the granularity changes.
@@ -296,6 +297,11 @@ angular.module('neonDemo.directives')
              * @method queryForChartData
              */
             $scope.queryForChartData = function() {
+                if($scope.errorMessage) {
+                    errorNotificationService.hideErrorMessage($scope.errorMessage);
+                    $scope.errorMessage = undefined;
+                }
+
                 if (connectionService.getActiveConnection()) {
                     $scope.dateField = connectionService.getFieldMapping("date");
                     $scope.dateField = $scope.dateField || 'created_at';
@@ -320,8 +326,10 @@ angular.module('neonDemo.directives')
                         });
                     }, function() {
                         $scope.$apply(function() {
-                            $scope.updateChartData([]);
+                            // TODO:  Determine how to clear the chart without causing errors.
+                            // $scope.updateChartData({ data: [] });
                             XDATA.activityLogger.logSystemActivity('TimelineSelector - data requested failed');
+                            $scope.errorMessage = errorNotificationService.showErrorMessage(element, response.responseJSON.error, response.responseJSON.stackTrace);
                         });
                     });
                 }
@@ -427,6 +435,11 @@ angular.module('neonDemo.directives')
             };
 
             $scope.getMinMaxDates = function(success) {
+                if($scope.errorMessage) {
+                    errorNotificationService.hideErrorMessage($scope.errorMessage);
+                    $scope.errorMessage = undefined;
+                }
+
                 // TODO: neon doesn't yet support a more efficient way to just get the min/max fields without aggregating
                 // TODO: This could be done better with a promise framework - just did this in a pinch for a demo
                 var minDateQuery = new neon.query.Query()
@@ -442,6 +455,12 @@ angular.module('neonDemo.directives')
                             $scope.$apply(success);
                         }
                     }
+                }, function(response) {
+                    XDATA.activityLogger.logSystemActivity('TimelineSelector - error in query for minimum date');
+                    $scope.referenceStartDate = undefined;
+                    // TODO:  Determine how to clear the chart without causing errors.
+                    // $scope.updateChartData({ data: [] });
+                    $scope.errorMessage = errorNotificationService.showErrorMessage(element, response.responseJSON.error, response.responseJSON.stackTrace);
                 });
 
                 var maxDateQuery = new neon.query.Query()
@@ -457,6 +476,12 @@ angular.module('neonDemo.directives')
                             $scope.$apply(success);
                         }
                     }
+                }, function(response) {
+                    XDATA.activityLogger.logSystemActivity('TimelineSelector - error in query for maximum date');
+                    $scope.referenceEndDate = undefined;
+                    // TODO:  Determine how to clear the chart without causing errors.
+                    // $scope.updateChartData({ data: [] });
+                    $scope.errorMessage = errorNotificationService.showErrorMessage(element, response.responseJSON.error, response.responseJSON.stackTrace);
                 });
             };
 

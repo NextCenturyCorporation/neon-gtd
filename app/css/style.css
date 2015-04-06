@@ -700,16 +700,6 @@ a.navbar-text:focus{
 }
 
 /* ================
-    ALERTS
-================ */
-
-.alert-danger {
-    background: none;
-    border-color: #C2360D;
-    color: #C2360D;
-}
-
-/* ================
     TABLES
 ================ */
 

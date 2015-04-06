@@ -16,15 +16,15 @@
  */
 
 angular.module('neonDemo.directives')
-.directive('directedGraph', ['ConnectionService', '$timeout', function(connectionService, $timeout) {
+.directive('directedGraph', ['ConnectionService', 'ErrorNotificationService', '$timeout', function(connectionService, errorNotificationService, $timeout) {
     return {
         templateUrl: 'partials/directives/directedGraph.html',
         restrict: 'EA',
         scope: {
             startingFields: '='
         },
-        link: function($scope, el) {
-            el.addClass('directedGraphDirective');
+        link: function($scope, element) {
+            element.addClass('directedGraphDirective');
 
             $scope.fieldsLabel = "Username";
             $scope.allowMoreFields = true;
@@ -38,6 +38,7 @@ angular.module('neonDemo.directives')
             $scope.nonGraphTableName = neon.TABLE_NAME;
             $scope.filterField = neon.GRAPH_FILTER_FIELD;
             $scope.filterKey = "graph-" + uuid();
+            $scope.errorMessage = undefined;
 
             if($scope.startingFields) {
                 $scope.groupFields = $scope.startingFields;
@@ -56,7 +57,7 @@ angular.module('neonDemo.directives')
             }, true);
 
             var updateSize = function() {
-                el.find('#directed-graph-div-' + $scope.uniqueId).height(el.height() - el.find('.config-row-div').outerHeight(true) - 10);
+                element.find('#directed-graph-div-' + $scope.uniqueId).height(element.height() - element.find('.config-row-div').outerHeight(true) - 10);
                 return $timeout(redraw, 250);
             };
 
@@ -82,7 +83,7 @@ angular.module('neonDemo.directives')
                     }
                 });
 
-                el.resize(function() {
+                element.resize(function() {
                     if($scope.resizePromise) {
                         $timeout.cancel($scope.resizePromise);
                     }
@@ -100,7 +101,7 @@ angular.module('neonDemo.directives')
 
             $scope.displayActiveDataset = function() {
                 if(!$scope.graph) {
-                    $scope.graph = new charts.DirectedGraph(el[0], ('#directed-graph-div-' + $scope.uniqueId), {
+                    $scope.graph = new charts.DirectedGraph(element[0], ('#directed-graph-div-' + $scope.uniqueId), {
                         shiftClickHandler: $scope.shiftClickHandler
                     });
                 }
@@ -181,6 +182,11 @@ angular.module('neonDemo.directives')
             };
 
             $scope.queryForData = function() {
+                if($scope.errorMessage) {
+                    errorNotificationService.hideErrorMessage($scope.errorMessage);
+                    $scope.errorMessage = undefined;
+                }
+
                 $scope.queryForUsers($scope.queryForGraphData);
             };
 
@@ -224,7 +230,13 @@ angular.module('neonDemo.directives')
                 var connection = $scope.connectToGraphDataset();
                 if(connection) {
                     d3.select("#node-click-name").text("");
-                    connection.executeQuery(query, $scope.calculateGraphData);
+                    connection.executeQuery(query, $scope.calculateGraphData, function(response) {
+                        $scope.updateGraph({
+                            nodes: [],
+                            links: []
+                        });
+                        $scope.errorMessage = errorNotificationService.showErrorMessage(element, response.responseJSON.error, response.responseJSON.stackTrace);
+                    });
                 } else {
                     d3.select("#node-click-name").text("No database connection.");
                 }
