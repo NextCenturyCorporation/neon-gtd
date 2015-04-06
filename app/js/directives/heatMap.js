@@ -50,7 +50,7 @@ angular.module('neonDemo.directives')
             $scope.longitudeField = '';
             $scope.sizeByField = '';
             $scope.colorByField = '';
-            $scope.showPoints = false;  // Default to the heatmap view.
+            $scope.showPoints = true;  // Default to the points view.
             $scope.cacheMap = false;
             $scope.initializing = true;
             $scope.filterKey = "map" + uuid();
@@ -67,7 +67,8 @@ angular.module('neonDemo.directives')
             $scope.mapId = uuid();
             $element.append('<div id="' + $scope.mapId + '" class="map"></div>');
             $scope.map = new coreMap.Map($scope.mapId, {
-                responsive: false
+                responsive: false,
+                defaultLayer: ($scope.showPoints) ? coreMap.Map.POINTS_LAYER : coreMap.Map.HEATMAP_LAYER
             });
 
             /**

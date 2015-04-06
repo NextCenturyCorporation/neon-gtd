@@ -36,6 +36,7 @@ var coreMap = coreMap || {};
  *     This could be a string name for a simple mapping or a function for a more complex one.</li>
  *     <li>categoryMapping {function | String} - A way to map the data element to color.
  *     This could be a string name for a simple mapping or a function for a more complex one.</li>
+ *     <li>defaultLayer {String} - The layer to display by default.
  *
  * </ul>
  *
@@ -115,6 +116,8 @@ coreMap.Map = function(elementId, opts) {
         this.height = opts.height || coreMap.Map.DEFAULT_HEIGHT;
     }
 
+    this.defaultLayer = (opts.defaultLayer === coreMap.Map.HEATMAP_LAYER) ? coreMap.Map.HEATMAP_LAYER : coreMap.Map.POINTS_LAYER;
+
     this.initializeMap();
     this.setupLayers();
     this.resetZoom();
@@ -142,6 +145,9 @@ coreMap.Map.BOX_OPACITY = 1;
 
 coreMap.Map.SOURCE_PROJECTION = new OpenLayers.Projection("EPSG:4326");
 coreMap.Map.DESTINATION_PROJECTION = new OpenLayers.Projection("EPSG:900913");
+
+coreMap.Map.POINTS_LAYER = 'points';
+coreMap.Map.HEATMAP_LAYER = 'heatmap';
 
 /**
  * Simple close handler to be called if a popup is closed.
@@ -677,9 +683,13 @@ coreMap.Map.prototype.setupLayers = function() {
     this.map.selectControl.activate();
 
     // Default the heatmap to be visible.
-    this.heatmapLayer.toggle();
-    this.pointsLayer.setVisibility(false);
-    this.currentLayer = this.heatmapLayer;
+    this.pointsLayer.setVisibility(this.defaultLayer === coreMap.Map.POINTS_LAYER);
+    if(this.defaultLayer === coreMap.Map.POINTS_LAYER) {
+        this.currentLayer = this.pointsLayer;
+    } else {
+        this.heatmapLayer.toggle();
+        this.currentLayer = this.heatmapLayer;
+    }
 
     // Create a cache reader and writer.  Use default reader
     // settings to read from cache first.
