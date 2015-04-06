@@ -405,7 +405,8 @@ tables.Table.prototype.setActiveCellIfMatchExists = function(field, value) {
     for(var i = 0; i < this.columns_.length; ++i) {
         if(this.columns_[i].field === field) {
             for(var j = 0; j < this.table_.getDataLength(); ++j) {
-                if(this.table_.getCellNode(j, i).innerHTML === value) {
+                var cell = this.table_.getCellNode(j, i);
+                if(cell && cell.innerHTML === value) {
                     this.table_.setActiveCell(j, i);
                 }
             }
