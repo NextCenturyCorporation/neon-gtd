@@ -115,8 +115,10 @@ charts.DirectedGraph.prototype.updateGraph = function(data) {
                 return d.y;
             });
 
-            nodes[0].x = width / 2;
-            nodes[0].y = height / 2;
+            if(nodes.length) {
+                nodes[0].x = width / 2;
+                nodes[0].y = height / 2;
+            }
         });
     };
 

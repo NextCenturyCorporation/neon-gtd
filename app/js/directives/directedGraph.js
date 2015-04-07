@@ -36,7 +36,9 @@ angular.module('neonDemo.directives')
                 name: ""
             };
             $scope.uniqueId = uuid();
-            $scope.selectedUser = "";
+            $scope.nodes = [];
+            $scope.selectedNode = "";
+            $scope.numberOfNodes = 0;
             $scope.filterKey = "graph-" + uuid();
             $scope.errorMessage = undefined;
 
@@ -46,13 +48,13 @@ angular.module('neonDemo.directives')
                 $scope.groupFields = [];
             }
 
-            $scope.$watch('selectedUser', function() {
-                if($scope.selectedUser !== "") {
+            $scope.$watch('selectedNode', function() {
+                if($scope.selectedNode !== "") {
                     if($scope.messenger && $scope.groupFields.length) {
                         $scope.messenger.removeFilter($scope.filterKey);
                     }
                     $scope.groupFields = [];
-                    $scope.addFilter($scope.selectedUser);
+                    $scope.addFilter($scope.selectedNode);
                 }
             }, true);
 
@@ -102,7 +104,7 @@ angular.module('neonDemo.directives')
              */
             var onFiltersChanged = function(message) {
                 if(message.filter.databaseName === $scope.databaseName && message.filter.tableName === $scope.selectedTable.name) {
-                    $scope.render();
+                    $scope.queryForData();
                 }
             };
 
@@ -125,21 +127,18 @@ angular.module('neonDemo.directives')
                 $scope.tables = datasetService.getTables();
                 $scope.selectedTable = $scope.tables[0];
                 $scope.data = [];
-
-                $scope.queryForUsers(function(data) {
-                    $scope.render(data);
-                });
+                $scope.queryForData();
             };
 
             $scope.addFilter = function(value) {
-                $scope.selectedUser = "";
+                $scope.selectedNode = "";
 
                 $scope.groupFields.push(value);
 
                 if($scope.messenger) {
                     var filter = $scope.createFilter();
                     $scope.messenger.addFilter($scope.filterKey, filter, function() {
-                        $scope.render();
+                        $scope.queryForData();
                     });
                 }
             };
@@ -162,30 +161,14 @@ angular.module('neonDemo.directives')
                 if($scope.messenger) {
                     if($scope.groupFields.length === 0) {
                         $scope.messenger.removeFilter($scope.filterKey, function() {
-                            $scope.render();
+                            $scope.queryForData();
                         });
                     } else {
                         var filter = $scope.createFilter();
                         $scope.messenger.replaceFilter($scope.filterKey, filter, function() {
-                            $scope.render();
+                            $scope.queryForData();
                         });
                     }
-                }
-            };
-
-            $scope.render = function(data) {
-                if($scope.groupFields.length > 0) {
-                    // TODO Why is this here?
-                    if($scope.groupFields[$scope.groupFields.length - 1] === "") {
-                        $scope.groupFields.splice($scope.groupFields.length - 1, 1);
-                    }
-                    return $scope.queryForData();
-                }
-
-                if(data) {
-                    return $scope.calculateGraphData(data);
-                } else {
-                    $scope.queryForUsers($scope.calculateGraphData);
                 }
             };
 
@@ -194,10 +177,15 @@ angular.module('neonDemo.directives')
                     errorNotificationService.hideErrorMessage($scope.errorMessage);
                     $scope.errorMessage = undefined;
                 }
-                $scope.queryForUsers($scope.queryForGraphData);
+
+                if($scope.groupFields.length) {
+                    $scope.queryForFilteredData();
+                } else {
+                    $scope.queryForNodes();
+                }
             };
 
-            $scope.queryForUsers = function(next) {
+            $scope.queryForNodes = function() {
                 var query = new neon.query.Query()
                     .selectFrom($scope.databaseName, $scope.selectedTable.name)
                     .withFields(["label"]);
@@ -206,22 +194,27 @@ angular.module('neonDemo.directives')
                 var connection = connectionService.getActiveConnection();
                 if(connection) {
                     connection.executeQuery(query, function(data) {
-                        $scope.users = [];
+                        $scope.nodes = [];
                         for(var i = 0; i < data.data.length; i++) {
-                            if($scope.users.indexOf(data.data[i].label)) {
-                                $scope.users.push(data.data[i].label);
+                            if($scope.nodes.indexOf(data.data[i].label)) {
+                                $scope.nodes.push(data.data[i].label);
                             }
                         }
-                        $scope.graph.setClickableNodes($scope.users);
-
-                        next(data);
+                        $scope.graph.setClickableNodes($scope.nodes);
+                        $scope.createAndShowGraph(data);
+                    }, function(response) {
+                        $scope.updateGraph([], []);
+                        $scope.errorMessage = errorNotificationService.showErrorMessage(element, response.responseJSON.error, response.responseJSON.stackTrace);
                     });
-                } else {
-                    d3.select("#node-click-name").text("No database connection.");
                 }
             };
 
-            $scope.queryForGraphData = function() {
+            $scope.queryForFilteredData = function() {
+                if($scope.errorMessage) {
+                    errorNotificationService.hideErrorMessage($scope.errorMessage);
+                    $scope.errorMessage = undefined;
+                }
+
                 var query = new neon.query.Query()
                     .selectFrom($scope.databaseName, $scope.selectedTable.name);
 
@@ -236,77 +229,67 @@ angular.module('neonDemo.directives')
 
                 var connection = connectionService.getActiveConnection();
                 if(connection) {
-                    d3.select("#node-click-name").text("");
-                    connection.executeQuery(query, $scope.calculateGraphData, function(response) {
-                        $scope.updateGraph({
-                            nodes: [],
-                            links: []
-                        });
+                    connection.executeQuery(query, $scope.createAndShowGraph, function(response) {
+                        $scope.updateGraph([], []);
                         $scope.errorMessage = errorNotificationService.showErrorMessage(element, response.responseJSON.error, response.responseJSON.stackTrace);
                     });
-                } else {
-                    d3.select("#node-click-name").text("No database connection.");
                 }
             };
 
-            $scope.calculateGraphData = function(response) {
-                if(response.data.length === 0) {
-                    d3.select("#node-click-name").text("Unknown user");
-                } else {
-                    var data = response.data;
-                    if(data.length >= 1000) {
-                        d3.select("#node-click-name").text("Limiting display to 1000 records per user");
-                        data = data.slice(0, 1001);
+            $scope.createAndShowGraph = function(response) {
+                var data = response.data;
+                if(data.length >= 500) {
+                    data = data.slice(0, 500);
+                }
+
+                var nodesIndexes = {};
+                var nodes = [];
+                var linksIndexes = {};
+                var links = [];
+
+                var addNodesIfUnique = function(value) {
+                    if(nodesIndexes[value] === undefined) {
+                        nodesIndexes[value] = nodes.length;
+                        var colorGroup;
+                        if($scope.groupFields.indexOf(value) !== -1) {
+                            colorGroup = 1;
+                        } else if($scope.nodes.indexOf(value) !== -1) {
+                            colorGroup = 3;
+                        } else {
+                            colorGroup = 2;
+                        }
+                        nodes.push({
+                            name: value,
+                            group: colorGroup
+                        });
+                    }
+                    return nodesIndexes[value];
+                };
+
+                var addLinkIfUnique = function(node1, node2) {
+                    if(!linksIndexes[node1]) {
+                        linksIndexes[node1] = {};
                     }
 
-                    var nodesIndexes = {};
-                    var nodes = [];
-                    var linksIndexes = {};
-                    var links = [];
+                    if(!linksIndexes[node1][node2]) {
+                        linksIndexes[node1][node2] = links.length;
+                        links.push({
+                            source: node1,
+                            target: node2,
+                            value: 1
+                        });
+                    }
+                };
 
-                    var addNodesIfUnique = function(value) {
-                        if(nodesIndexes[value] === undefined) {
-                            nodesIndexes[value] = nodes.length;
-                            var colorGroup;
-                            if($scope.groupFields.indexOf(value) !== -1) {
-                                colorGroup = 1;
-                            } else if($scope.users.indexOf(value) !== -1) {
-                                colorGroup = 3;
-                            } else {
-                                colorGroup = 2;
-                            }
-                            nodes.push({
-                                name: value,
-                                group: colorGroup
-                            });
-                        }
-                        return nodesIndexes[value];
-                    };
-
-                    var addLinkIfUnique = function(node1, node2) {
-                        if(!linksIndexes[node1]) {
-                            linksIndexes[node1] = {};
-                        }
-
-                        if(!linksIndexes[node1][node2]) {
-                            linksIndexes[node1][node2] = links.length;
-                            links.push({
-                                source: node1,
-                                target: node2,
-                                value: 1
-                            });
-                        }
-                    };
-
-                    var node1;
-                    var node2;
-                    var relatedNodes;
-                    for(var i = 0; i < data.length; i++) {
+                var node1;
+                var node2;
+                var relatedNodes;
+                for(var i = 0; i < data.length; i++) {
+                    if(data[i].label) {
                         node1 = addNodesIfUnique(data[i].label);
                         relatedNodes = (data[i].attributeList ? data[i].attributeList : []);
-                        if(relatedNodes.length >= 1000) {
-                            d3.select("#node-click-name").text("Limiting display to 1000 records");
-                            relatedNodes = relatedNodes.slice(0, 1001);
+                        if(relatedNodes.length >= 500) {
+                            relatedNodes = relatedNodes.slice(0, 500);
                         }
 
                         for(var j = 0; j < relatedNodes.length; j++) {
@@ -314,17 +297,25 @@ angular.module('neonDemo.directives')
                             addLinkIfUnique(node1, node2);
                         }
                     }
-
-                    $scope.graph.setRootNodes($scope.groupFields);
-                    $scope.graph.updateGraph({
-                        nodes: nodes,
-                        links: links
-                    });
                 }
+
+                $scope.graph.setRootNodes($scope.groupFields);
+                $scope.updateGraph(nodes, links);
+            };
+
+            $scope.updateGraph = function(nodes, links) {
+                $scope.$apply(function() {
+                    $scope.numberOfNodes = nodes.length;
+                });
+
+                $scope.graph.updateGraph({
+                    nodes: nodes,
+                    links: links
+                });
             };
 
             $scope.shiftClickHandler = function(item) {
-                if($scope.users.indexOf(item.name) !== -1) {
+                if($scope.nodes.indexOf(item.name) !== -1) {
                     if($scope.groupFields.indexOf(item.name) === -1) {
                         $scope.$apply(function() {
                             $scope.addFilter(item.name);
