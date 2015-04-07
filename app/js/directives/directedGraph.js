@@ -30,15 +30,18 @@ angular.module('neonDemo.directives')
 
             element.addClass('directedGraphDirective');
 
+            $scope.uniqueId = uuid();
             $scope.databaseName = "";
             $scope.tables = [];
             $scope.selectedTable = {
                 name: ""
             };
-            $scope.uniqueId = uuid();
+            $scope.fields = [];
+            $scope.selectedField = "";
             $scope.nodes = [];
             $scope.selectedNode = "";
             $scope.numberOfNodes = 0;
+            $scope.nodeLimit = 500;
             $scope.filterKey = "graph-" + uuid();
             $scope.errorMessage = undefined;
 
@@ -109,10 +112,10 @@ angular.module('neonDemo.directives')
             };
 
             var onDatasetChanged = function() {
-                $scope.displayActiveDataset();
+                $scope.displayActiveDataset(false);
             };
 
-            $scope.displayActiveDataset = function() {
+            $scope.displayActiveDataset = function(initializing) {
                 if(!datasetService.hasDataset()) {
                     return;
                 }
@@ -127,6 +130,18 @@ angular.module('neonDemo.directives')
                 $scope.tables = datasetService.getTables();
                 $scope.selectedTable = $scope.tables[0];
                 $scope.data = [];
+
+                if(initializing) {
+                    $scope.updateFieldsAndQueryForData();
+                } else {
+                    $scope.$apply(function() {
+                        $scope.updateFieldsAndQueryForData();
+                    });
+                }
+            };
+
+            $scope.updateFieldsAndQueryForData = function() {
+                $scope.fields = datasetService.getDatabaseFields($scope.selectedTable.name);
                 $scope.queryForData();
             };
 
@@ -144,9 +159,9 @@ angular.module('neonDemo.directives')
             };
 
             $scope.createFilter = function() {
-                var filterWhereClause = neon.query.where('label', '=', $scope.groupFields[0]);
+                var filterWhereClause = neon.query.where($scope.selectedField, '=', $scope.groupFields[0]);
                 for(var i = 1; i < $scope.groupFields.length; ++i) {
-                    var filterOrClause = neon.query.where('label', '=', $scope.groupFields[i]);
+                    var filterOrClause = neon.query.where($scope.selectedField, '=', $scope.groupFields[i]);
                     filterWhereClause = neon.query.or(filterWhereClause, filterOrClause);
                 }
                 return new neon.query.Filter().selectFrom($scope.databaseName, $scope.selectedTable.name).where(filterWhereClause);
@@ -172,6 +187,15 @@ angular.module('neonDemo.directives')
                 }
             };
 
+            $scope.clearFilters = function() {
+                $scope.groupFields = [];
+                if($scope.messenger) {
+                    $scope.messenger.removeFilter($scope.filterKey, function() {
+                        $scope.queryForData();
+                    });
+                }
+            };
+
             $scope.queryForData = function() {
                 if($scope.errorMessage) {
                     errorNotificationService.hideErrorMessage($scope.errorMessage);
@@ -188,7 +212,7 @@ angular.module('neonDemo.directives')
             $scope.queryForNodes = function() {
                 var query = new neon.query.Query()
                     .selectFrom($scope.databaseName, $scope.selectedTable.name)
-                    .withFields(["label"]);
+                    .withFields([$scope.selectedField]);
                 query.ignoreFilters([$scope.filterKey]);
 
                 var connection = connectionService.getActiveConnection();
@@ -196,8 +220,8 @@ angular.module('neonDemo.directives')
                     connection.executeQuery(query, function(data) {
                         $scope.nodes = [];
                         for(var i = 0; i < data.data.length; i++) {
-                            if($scope.nodes.indexOf(data.data[i].label)) {
-                                $scope.nodes.push(data.data[i].label);
+                            if($scope.nodes.indexOf(data.data[i][$scope.selectedField])) {
+                                $scope.nodes.push(data.data[i][$scope.selectedField]);
                             }
                         }
                         $scope.graph.setClickableNodes($scope.nodes);
@@ -218,10 +242,10 @@ angular.module('neonDemo.directives')
                 var query = new neon.query.Query()
                     .selectFrom($scope.databaseName, $scope.selectedTable.name);
 
-                var where = neon.query.where('label', '=', $scope.groupFields[0]);
+                var where = neon.query.where($scope.selectedField, '=', $scope.groupFields[0]);
                 var orWhere;
                 for(var i = 1; i < $scope.groupFields.length; i++) {
-                    orWhere = neon.query.where('label', '=', $scope.groupFields[i]);
+                    orWhere = neon.query.where($scope.selectedField, '=', $scope.groupFields[i]);
                     where = neon.query.or(where, orWhere);
                 }
                 query = query.where(where);
@@ -285,8 +309,8 @@ angular.module('neonDemo.directives')
                 var node2;
                 var relatedNodes;
                 for(var i = 0; i < data.length; i++) {
-                    if(data[i].label) {
-                        node1 = addNodesIfUnique(data[i].label);
+                    if(data[i][$scope.selectedField]) {
+                        node1 = addNodesIfUnique(data[i][$scope.selectedField]);
                         relatedNodes = (data[i].attributeList ? data[i].attributeList : []);
                         if(relatedNodes.length >= 500) {
                             relatedNodes = relatedNodes.slice(0, 500);
@@ -332,7 +356,7 @@ angular.module('neonDemo.directives')
             // Wait for neon to be ready, the create our messenger and intialize the view and data.
             neon.ready(function() {
                 $scope.initialize();
-                $scope.displayActiveDataset();
+                $scope.displayActiveDataset(true);
             });
         }
     };
