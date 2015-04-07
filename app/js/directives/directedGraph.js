@@ -226,6 +226,9 @@ angular.module('neonDemo.directives')
                                 $scope.nodes.push(node);
                             }
                         }
+                        $scope.nodes.sort(function(a, b) {
+                            return a.toLowerCase().localeCompare(b.toLowerCase())
+                        });
                         $scope.graph.setClickableNodes($scope.nodes);
                         $scope.createAndShowGraph(data);
                     }, function(response) {
