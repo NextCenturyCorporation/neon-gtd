@@ -289,7 +289,7 @@ angular.module('neonDemo.directives')
 
                 $scope.databaseName = datasetService.getDatabase();
                 $scope.tables = datasetService.getTables();
-                $scope.selectedTable = $scope.tables[0];
+                $scope.selectedTable = datasetService.getFirstTableWithMappings(["date"]) || $scope.tables[0];
                 $scope.resetAndQueryForChartData();
             };
 

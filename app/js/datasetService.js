@@ -83,6 +83,23 @@ angular.module("neonDemo.services")
             };
         };
 
+        service.getFirstTableWithMappings = function(keys) {
+            for(var i = 0; i < service.dataset.tables.length; ++i) {
+                var success = true;
+                for(var j = 0; j < keys.length; ++j) {
+                    if(!(service.dataset.tables[i].mappings[keys[j]])) {
+                        success = false;
+                        break;
+                    }
+                }
+                if(success) {
+                    return service.dataset.tables[i];
+                }
+            }
+
+            return undefined;
+        };
+
         service.getDatabaseFields = function(tableName) {
             var table = service.getTableWithName(tableName);
 

@@ -145,7 +145,7 @@ angular.module('neonDemo.directives')
 
                 $scope.databaseName = datasetService.getDatabase();
                 $scope.tables = datasetService.getTables();
-                $scope.selectedTable = $scope.tables[0];
+                $scope.selectedTable = datasetService.getFirstTableWithMappings(["tags"]) || $scope.tables[0];
                 $scope.updateFieldsAndQueryForTags();
             };
 

@@ -188,7 +188,7 @@ angular.module('neonDemo.directives')
 
                 $scope.selectedDatabase = datasetService.getDatabase();
                 $scope.tables = datasetService.getTables();
-                $scope.selectedTable = $scope.tables[0];
+                $scope.selectedTable = datasetService.getFirstTableWithMappings(["date", "y_axis"]) || $scope.tables[0];
 
                 if(initializing) {
                     $scope.updateFieldsAndQueryForData();
