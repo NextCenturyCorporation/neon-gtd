@@ -20,6 +20,10 @@ charts.DirectedGraph = function(rootElement, selector, opts) {
         this.shiftClickHandler = opts.shiftClickHandler;
     }
 
+    if(opts.clickHandler) {
+        this.clickHandler = opts.clickHandler;
+    }
+
     this.clickableValues = opts.clickableValues || [];
     this.rootNodeValues = opts.rootNodeValues || [];
 };
@@ -166,10 +170,10 @@ charts.DirectedGraph.prototype.updateGraph = function(data) {
             me.doubleClickHandler(d);
         }
     }).on("click", function(d) {
-        if(d3.event.shiftKey) {
-            if(me.shiftClickHandler) {
-                me.shiftClickHandler(d);
-            }
+        if(d3.event.shiftKey && me.shiftClickHandler) {
+            me.shiftClickHandler(d);
+        } else if(me.clickHandler) {
+            me.clickHandler(d);
         }
     }).on("mouseover", function(d) {
         var parentOffset = $(me.rootElement).offset();

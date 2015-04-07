@@ -122,7 +122,7 @@ angular.module('neonDemo.directives')
 
                 if(!$scope.graph) {
                     $scope.graph = new charts.DirectedGraph(element[0], ('#directed-graph-div-' + $scope.uniqueId), {
-                        shiftClickHandler: $scope.shiftClickHandler
+                        clickHandler: $scope.createClickHandler
                     });
                 }
 
@@ -343,7 +343,7 @@ angular.module('neonDemo.directives')
                 });
             };
 
-            $scope.shiftClickHandler = function(item) {
+            $scope.createClickHandler = function(item) {
                 if($scope.nodes.indexOf(item.name) !== -1) {
                     if($scope.groupFields.indexOf(item.name) === -1) {
                         $scope.$apply(function() {
