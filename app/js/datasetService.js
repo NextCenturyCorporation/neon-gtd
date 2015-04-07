@@ -115,7 +115,7 @@ angular.module("neonDemo.services")
             var table = service.getTableWithName(tableName);
 
             if(!table.name) {
-                return [];
+                return;
             }
 
             var fieldExists = {};
@@ -146,7 +146,7 @@ angular.module("neonDemo.services")
             var table = service.getTableWithName(tableName);
 
             if(!table.name) {
-                return [];
+                return "";
             }
 
             return table.mappings[key];
@@ -156,7 +156,7 @@ angular.module("neonDemo.services")
             var table = service.getTableWithName(tableName);
 
             if(!table.name) {
-                return [];
+                return;
             }
 
             table.mappings[key] = field;

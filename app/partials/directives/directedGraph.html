@@ -17,13 +17,13 @@
                 </select>
             </div>
             <div class="form-group">
-                <label>Item</label>
-                <select class="form-control" ng-model="selectedNode" ng-options="node for node in nodes track by node" ng-required="false" ng-disabled="(nodes.length == 0)">
+                <label>Filter on {{selectedField}}</label>
+                <select class="form-control" ng-model="selectedNode" ng-options="node for node in nodes track by node" ng-required="false" ng-disabled="(nodes.length == 0) || !(selectedField)">
                     <option value=""></option>
                 </select>
             </div>
             <div class="form-group">
-                <label>Item Limit</label>
+                <label>Graph Node Limit</label>
                 <input type="number" min="50" class="form-control" ng-model="nodeLimit" ng-change="queryForData()"></input>
             </div>
         </div>
