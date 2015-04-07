@@ -40,7 +40,7 @@ angular.module('neonDemo.directives')
             $scope.selectedField = "";
             $scope.nodes = [];
             $scope.selectedNode = "";
-            $scope.numberOfNodes = 0;
+            $scope.numberOfNodesInGraph = 0;
             $scope.nodeLimit = 500;
             $scope.filterKey = "graph-" + uuid();
             $scope.errorMessage = undefined;
@@ -221,8 +221,9 @@ angular.module('neonDemo.directives')
                     connection.executeQuery(query, function(data) {
                         $scope.nodes = [];
                         for(var i = 0; i < data.data.length; i++) {
-                            if($scope.nodes.indexOf(data.data[i][$scope.selectedField])) {
-                                $scope.nodes.push(data.data[i][$scope.selectedField]);
+                            var node = data.data[i][$scope.selectedField];
+                            if($scope.nodes.indexOf(node) < 0) {
+                                $scope.nodes.push(node);
                             }
                         }
                         $scope.graph.setClickableNodes($scope.nodes);
@@ -330,7 +331,7 @@ angular.module('neonDemo.directives')
 
             $scope.updateGraph = function(nodes, links) {
                 $scope.$apply(function() {
-                    $scope.numberOfNodes = nodes.length;
+                    $scope.numberOfNodesInGraph = nodes.length;
                 });
 
                 $scope.graph.updateGraph({
