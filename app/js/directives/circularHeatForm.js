@@ -30,7 +30,7 @@
  * @constructor
  */
 angular.module('neonDemo.directives')
-.directive('circularHeatForm', ['ConnectionService', function(connectionService) {
+.directive('circularHeatForm', ['ConnectionService', 'ErrorNotificationService', function(connectionService, errorNotificationService) {
     return {
         templateUrl: 'partials/directives/circularHeatForm.html',
         restrict: 'EA',
@@ -59,6 +59,7 @@ angular.module('neonDemo.directives')
             $scope.timeofday = [];
             $scope.maxDay = "";
             $scope.maxTime = "";
+            $scope.errorMessage = undefined;
 
             element.addClass('circularheatform');
 
@@ -175,6 +176,11 @@ angular.module('neonDemo.directives')
              * @method queryForChartData
              */
             $scope.queryForChartData = function() {
+                if($scope.errorMessage) {
+                    errorNotificationService.hideErrorMessage($scope.errorMessage);
+                    $scope.errorMessage = undefined;
+                }
+
                 // TODO: Decide how to pass in field mappings.  We can do this through a controller or the
                 // connection service or some mapping service.  Two example below, one commented out.
                 //var dateField = $scope.getDateField();
@@ -212,6 +218,12 @@ angular.module('neonDemo.directives')
                         $scope.updateChartData(queryResults);
                         XDATA.activityLogger.logSystemActivity('CircularHeatForm - display updated');
                     });
+                }, function(response) {
+                    XDATA.activityLogger.logSystemActivity('CircularHeatForm - error received');
+                    $scope.updateChartData({
+                        data: []
+                    });
+                    $scope.errorMessage = errorNotificationService.showErrorMessage(element, response.responseJSON.error, response.responseJSON.stackTrace);
                 });
             };
 

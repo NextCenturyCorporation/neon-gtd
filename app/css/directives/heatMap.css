@@ -105,3 +105,13 @@
 .visualization-widget-mobile .heat-map .olMap {
     height: 400px !important;
 }
+
+/* ================
+    ALERTS
+================ */
+
+.heat-map .alert-danger {
+    background: none;
+    border-color: #C2360D;
+    color: #C2360D;
+}

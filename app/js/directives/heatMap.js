@@ -27,7 +27,7 @@
  * @constructor
  */
 angular.module('neonDemo.directives')
-.directive('heatMap', ['ConnectionService', '$timeout', function(connectionService, $timeout) {
+.directive('heatMap', ['ConnectionService', 'ErrorNotificationService', '$timeout', function(connectionService, errorNotificationService, $timeout) {
     return {
         templateUrl: 'partials/directives/heatMap.html',
         restrict: 'EA',
@@ -50,7 +50,7 @@ angular.module('neonDemo.directives')
             $scope.longitudeField = '';
             $scope.sizeByField = '';
             $scope.colorByField = '';
-            $scope.showPoints = false;  // Default to the heatmap view.
+            $scope.showPoints = true;  // Default to the points view.
             $scope.cacheMap = false;
             $scope.initializing = true;
             $scope.filterKey = "map" + uuid();
@@ -58,6 +58,7 @@ angular.module('neonDemo.directives')
             $scope.dataBounds = undefined;
             $scope.limit = 1000;  // Max points to pull into the map.
             $scope.resizeRedrawDelay = 1500; // Time in ms to wait after a resize event flood to try redrawing the map.
+            $scope.errorMessage = undefined;
 
             // optionsDisplayed is used merely to track the display of the options menu
             // for usability and workflow analysis.
@@ -66,7 +67,8 @@ angular.module('neonDemo.directives')
             $scope.mapId = uuid();
             $element.append('<div id="' + $scope.mapId + '" class="map"></div>');
             $scope.map = new coreMap.Map($scope.mapId, {
-                responsive: false
+                responsive: false,
+                defaultLayer: ($scope.showPoints) ? coreMap.Map.POINTS_LAYER : coreMap.Map.HEATMAP_LAYER
             });
 
             /**
@@ -397,6 +399,11 @@ angular.module('neonDemo.directives')
              * @method queryForMapData
              */
             $scope.queryForMapData = function() {
+                if($scope.errorMessage) {
+                    errorNotificationService.hideErrorMessage($scope.errorMessage);
+                    $scope.errorMessage = undefined;
+                }
+
                 if(!$scope.initializing && $scope.latitudeField !== "" && $scope.longitudeField !== "") {
                     var query = $scope.buildPointQuery();
                     XDATA.activityLogger.logSystemActivity('HeatMap - query for map data');
@@ -405,9 +412,13 @@ angular.module('neonDemo.directives')
                             XDATA.activityLogger.logSystemActivity('HeatMap - map data received');
                             $scope.updateMapData(queryResults);
                             XDATA.activityLogger.logSystemActivity('HeatMap - rendered map data');
-                        }, function() {
-                            XDATA.activityLogger.logSystemActivity('HeatMap - Failed to receive map data');
                         });
+                    }, function(response) {
+                        XDATA.activityLogger.logSystemActivity('HeatMap - Failed to receive map data');
+                        $scope.updateMapData({
+                            data: []
+                        });
+                        $scope.errorMessage = errorNotificationService.showErrorMessage($element, response.responseJSON.error, response.responseJSON.stackTrace);
                     });
                 }
             };

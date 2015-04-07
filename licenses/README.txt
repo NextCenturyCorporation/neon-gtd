@@ -42,6 +42,8 @@ MIT/X11 (mit.txt)
 - Bootstrap
   -- bootstrap.js v3.2.0
   -- bootstrap.min.js v3.2.0
+- Bootstrap Notify
+  -- bootstrap-notify.min.js v3.0.0
 - HTML5 Shiv
   -- html5shiv.js v3.7.0
 - JavaScript Detect Element Resize

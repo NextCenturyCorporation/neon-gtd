@@ -27,7 +27,7 @@
  * @constructor
  */
 angular.module('neonDemo.directives')
-.directive('sunburst', ['ConnectionService', function(connectionService) {
+.directive('sunburst', ['ConnectionService', 'ErrorNotificationService', function(connectionService, errorNotificationService) {
     return {
         templateUrl: 'partials/directives/sunburst.html',
         restrict: 'EA',
@@ -46,6 +46,7 @@ angular.module('neonDemo.directives')
             $scope.tableName = '';
             $scope.fields = [""];
             $scope.chart = undefined;
+            $scope.errorMessage = undefined;
 
             var chartOptions = $element.find('.chart-options');
             chartOptions.toggleClass($scope.uniqueChartOptions);
@@ -154,8 +155,12 @@ angular.module('neonDemo.directives')
             };
 
             $scope.queryForData = function() {
+                if($scope.errorMessage) {
+                    errorNotificationService.hideErrorMessage($scope.errorMessage);
+                    $scope.errorMessage = undefined;
+                }
+
                 var connection = connectionService.getActiveConnection();
-                // if(connection && $scope.groupFields.length > 0) {
                 if(connection) {
                     var query = $scope.buildQuery();
 
@@ -167,6 +172,12 @@ angular.module('neonDemo.directives')
                             doDrawChart(buildDataTree(queryResults));
                             XDATA.activityLogger.logSystemActivity('sunburst - rendered data');
                         });
+                    }, function(response) {
+                        XDATA.activityLogger.logSystemActivity('sunburst - received error');
+                        doDrawChart(buildDataTree({
+                            data: []
+                        }));
+                        $scope.errorMessage = errorNotificationService.showErrorMessage($element, response.responseJSON.error, response.responseJSON.stackTrace);
                     });
                 }
             };

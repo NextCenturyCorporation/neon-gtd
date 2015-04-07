@@ -19,7 +19,7 @@
     display: block;
 }
 
-.add-visualization-button > a {
+.add-visualization-button a {
     background: none;
     border: 0;
     color: #777777;
@@ -28,10 +28,11 @@
     padding-top: 15px;
 }
 
-.add-visualization-button > a:focus,
-.add-visualization-button > a:hover,
-.add-visualization-button > a.collapsed:hover {
+.add-visualization-button a:focus,
+.add-visualization-button a:hover,
+.add-visualization-button a.collapsed:hover {
     color: #39b54a;
+    cursor: pointer;
 }
 
 .add-visualization .modal-body {
