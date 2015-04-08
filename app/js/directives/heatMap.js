@@ -27,7 +27,7 @@
  * @constructor
  */
 angular.module('neonDemo.directives')
-.directive('heatMap', ['ConnectionService', 'DatasetService', 'ErrorNotificationService', '$timeout', function(connectionService, datasetService, errorNotificationService, $timeout) {
+.directive('heatMap', ['ConnectionService', 'DatasetService', 'ErrorNotificationService', 'FilterService', '$timeout', function(connectionService, datasetService, errorNotificationService, filterService, $timeout) {
     return {
         templateUrl: 'partials/directives/heatMap.html',
         restrict: 'EA',
@@ -56,7 +56,7 @@ angular.module('neonDemo.directives')
             $scope.showPoints = false;  // Default to the heatmap view.
             $scope.cacheMap = false;
             $scope.initializing = true;
-            $scope.filterKey = "map" + uuid();
+            $scope.filterKeys = {};
             $scope.showFilter = false;
             $scope.dataBounds = undefined;
             $scope.limit = 1000;  // Max points to pull into the map.
@@ -99,7 +99,7 @@ angular.module('neonDemo.directives')
                 $scope.$on('$destroy', function() {
                     $scope.messenger.removeEvents();
                     if($scope.showFilter) {
-                        $scope.messenger.removeFilter($scope.filterKey);
+                        filterService.removeFilters($scope.messenger, $scope.filterKeys);
                     }
                 });
 
@@ -244,21 +244,23 @@ angular.module('neonDemo.directives')
 
                 // Add a zoomRect handler to the map.
                 $scope.map.onZoomRect = function(bounds) {
-                    var extent = boundsToExtent(bounds);
-                    var filter = $scope.createFilterFromExtent(extent);
+                    $scope.extent = boundsToExtent(bounds);
 
                     XDATA.activityLogger.logUserActivity('HeatMap - user defined geographic filter area', 'execute_visual_filter',
-                        XDATA.activityLogger.WF_GETDATA, extent);
+                        XDATA.activityLogger.WF_GETDATA, $scope.extent);
                     XDATA.activityLogger.logSystemActivity('HeatMap - applying neon filter based on users geographic selection');
-                    $scope.messenger.replaceFilter($scope.filterKey, filter, function() {
+
+                    var relations = datasetService.getRelations($scope.selectedTable.name, [$scope.latitudeField, $scope.longitudeField]);
+
+                    filterService.replaceFilters($scope.messenger, relations, $scope.filterKeys, $scope.createFilterFromExtent, function() {
                         XDATA.activityLogger.logSystemActivity('HeatMap - applied neon filter');
                         $scope.$apply(function() {
                             $scope.queryForMapData();
                             drawZoomRect({
-                                left: extent.minimumLongitude,
-                                bottom: extent.minimumLatitude,
-                                right: extent.maximumLongitude,
-                                top: extent.maximumLatitude
+                                left: $scope.extent.minimumLongitude,
+                                bottom: $scope.extent.minimumLatitude,
+                                right: $scope.extent.maximumLongitude,
+                                top: $scope.extent.maximumLatitude
                             });
 
                             // Show the Clear Filter button.
@@ -362,6 +364,7 @@ angular.module('neonDemo.directives')
                 $scope.databaseName = datasetService.getDatabase();
                 $scope.tables = datasetService.getTables();
                 $scope.selectedTable = datasetService.getFirstTableWithMappings(["latitude", "longitude"]) || $scope.tables[0];
+                $scope.filterKeys = filterService.createFilterKeys("map", $scope.tables);
 
                 if(initializing) {
                     $scope.updateFieldsAndQueryForMapData();
@@ -533,37 +536,43 @@ angular.module('neonDemo.directives')
             };
 
             /**
-             * Create a Neon query to pull data limited to the current extent of the map.
+             * Create and returns a filter using the given table and fields.
+             * @param {String} The name of the table on which to filter
+             * @param {Array} An array containing the name of the latitude and longitude fields as its first and second elements respectively
              * @method createFilterFromExtent
+             * @return {Object} A neon.query.Filter object
              */
-            $scope.createFilterFromExtent = function(extent) {
-                var leftClause = neon.query.where($scope.longitudeField, ">=", extent.minimumLongitude);
-                var rightClause = neon.query.where($scope.longitudeField, "<=", extent.maximumLongitude);
-                var bottomClause = neon.query.where($scope.latitudeField, ">=", extent.minimumLatitude);
-                var topClause = neon.query.where($scope.latitudeField, "<=", extent.maximumLatitude);
+            $scope.createFilterFromExtent = function(tableName, fieldNames) {
+                var latitudeFieldName = fieldNames[0];
+                var longitudeFieldName = fieldNames[1];
+
+                var leftClause = neon.query.where(longitudeFieldName, ">=", $scope.extent.minimumLongitude);
+                var rightClause = neon.query.where(longitudeFieldName, "<=", $scope.extent.maximumLongitude);
+                var bottomClause = neon.query.where(latitudeFieldName, ">=", $scope.extent.minimumLatitude);
+                var topClause = neon.query.where(latitudeFieldName, "<=", $scope.extent.maximumLatitude);
                 var filterClause = neon.query.and(leftClause, rightClause, bottomClause, topClause);
                 var leftDateLine;
                 var rightDateLine;
                 var datelineClause;
 
                 //Deal with different dateline crossing scenarios.
-                if(extent.minimumLongitude < -180 && extent.maximumLongitude > 180) {
+                if($scope.extent.minimumLongitude < -180 && $scope.extent.maximumLongitude > 180) {
                     filterClause = neon.query.and(topClause, bottomClause);
-                } else if(extent.minimumLongitude < -180) {
-                    leftClause = neon.query.where($scope.longitudeField, ">=", extent.minimumLongitude + 360);
-                    leftDateLine = neon.query.where($scope.longitudeField, "<=", 180);
-                    rightDateLine = neon.query.where($scope.longitudeField, ">=", -180);
+                } else if($scope.extent.minimumLongitude < -180) {
+                    leftClause = neon.query.where(longitudeFieldName, ">=", $scope.extent.minimumLongitude + 360);
+                    leftDateLine = neon.query.where(longitudeFieldName, "<=", 180);
+                    rightDateLine = neon.query.where(longitudeFieldName, ">=", -180);
                     datelineClause = neon.query.or(neon.query.and(leftClause, leftDateLine), neon.query.and(rightClause, rightDateLine));
                     filterClause = neon.query.and(topClause, bottomClause, datelineClause);
-                } else if(extent.maximumLongitude > 180) {
-                    rightClause = neon.query.where($scope.longitudeField, "<=", extent.maximumLongitude - 360);
-                    rightDateLine = neon.query.where($scope.longitudeField, ">=", -180);
-                    leftDateLine = neon.query.where($scope.longitudeField, "<=", 180);
+                } else if($scope.extent.maximumLongitude > 180) {
+                    rightClause = neon.query.where(longitudeFieldName, "<=", $scope.extent.maximumLongitude - 360);
+                    rightDateLine = neon.query.where(longitudeFieldName, ">=", -180);
+                    leftDateLine = neon.query.where(longitudeFieldName, "<=", 180);
                     datelineClause = neon.query.or(neon.query.and(leftClause, leftDateLine), neon.query.and(rightClause, rightDateLine));
                     filterClause = neon.query.and(topClause, bottomClause, datelineClause);
                 }
 
-                return new neon.query.Filter().selectFrom($scope.databaseName, $scope.selectedTable.name).where(filterClause);
+                return new neon.query.Filter().selectFrom($scope.databaseName, tableName).where(filterClause);
             };
 
             /**
@@ -574,7 +583,8 @@ angular.module('neonDemo.directives')
                 XDATA.activityLogger.logUserActivity('HeatMap - user removed geographic filter area', 'remove_visual_filter',
                     XDATA.activityLogger.WF_GETDATA);
                 XDATA.activityLogger.logSystemActivity('HeatMap - removing neon filter based on users geographic selection');
-                $scope.messenger.removeFilter($scope.filterKey, function() {
+
+                filterService.removeFilters($scope.messenger, $scope.filterKeys, function() {
                     $scope.$apply(function() {
                         XDATA.activityLogger.logSystemActivity('HeatMap - geographic neon filter removed');
                         clearZoomRect();
