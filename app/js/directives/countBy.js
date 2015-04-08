@@ -308,6 +308,13 @@ angular.module('neonDemo.directives')
                 }
             };
 
+            /**
+             * Creates and returns a filter using the given table and fields.
+             * @param {String} The name of the table on which to filter
+             * @param {Array} An array containing the name of the selected field as its first element
+             * @method createFilter
+             * @return {Object} A neon.query.Filter object
+             */
             $scope.createFilter = function(tableName, fieldNames) {
                 var fieldName = fieldNames[0];
                 var filterClause = neon.query.where(fieldName, '=', $scope.filterValue);
