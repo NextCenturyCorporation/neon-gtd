@@ -392,14 +392,12 @@ angular.module('neonDemo.directives')
              */
             $scope.clearFilter = function() {
                 if($scope.messenger) {
-                    filterService.removeFilters($scope.messenger, $scope.filterKeys, $scope.clearFilterElements);
+                    filterService.removeFilters($scope.messenger, $scope.filterKeys, function() {
+                        $tableDiv.removeClass("filtered");
+                        $scope.table.deselect();
+                        clearFilter();
+                    });
                 }
-            };
-
-            $scope.clearFilterElements = function() {
-                $tableDiv.removeClass("filtered");
-                $scope.table.deselect();
-                clearFilter();
             };
 
             neon.ready(function() {

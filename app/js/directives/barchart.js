@@ -27,7 +27,7 @@
  * @constructor
  */
 angular.module('neonDemo.directives')
-.directive('barchart', ['ConnectionService', 'DatasetService', 'ErrorNotificationService', '$timeout', function(connectionService, datasetService, errorNotificationService, $timeout) {
+.directive('barchart', ['ConnectionService', 'DatasetService', 'ErrorNotificationService', 'FilterService', '$timeout', function(connectionService, datasetService, errorNotificationService, filterService, $timeout) {
     return {
         templateUrl: 'partials/directives/barchart.html',
         restrict: 'EA',
@@ -47,7 +47,7 @@ angular.module('neonDemo.directives')
             $scope.fields = [];
             $scope.updatingChart = false;
             $scope.chart = undefined;
-            $scope.filterKey = "barchart-" + uuid();
+            $scope.filterKeys = {};
             $scope.filterSet = undefined;
             $scope.errorMessage = undefined;
 
@@ -75,7 +75,7 @@ angular.module('neonDemo.directives')
                     $scope.messenger.removeEvents();
                     // Remove our filter if we had an active one.
                     if($scope.filterSet) {
-                        $scope.messenger.removeFilter($scope.filterKey);
+                        filterService.removeFilters($scope.messenger, $scope.filterKeys);
                     }
                 });
 
@@ -134,11 +134,10 @@ angular.module('neonDemo.directives')
                     return;
                 }
 
-                $scope.updatingChart = true;
-
                 $scope.databaseName = datasetService.getDatabase();
                 $scope.tables = datasetService.getTables();
                 $scope.selectedTable = datasetService.getFirstTableWithMappings(["bar_x_axis", "y_axis"]) || $scope.tables[0];
+                $scope.filterKeys = filterService.createFilterKeys("barchart", $scope.tables);
 
                 if(initializing) {
                     $scope.updateFieldsAndQueryForData();
@@ -165,11 +164,14 @@ angular.module('neonDemo.directives')
                     $scope.errorMessage = undefined;
                 }
 
+                $scope.updatingChart = true;
+
                 var xAxis = $scope.attrX || datasetService.getMapping($scope.selectedTable.name, "bar_x_axis");
                 var yAxis = $scope.attrY || datasetService.getMapping($scope.selectedTable.name, "y_axis");
 
                 if(xAxis === undefined || xAxis === "" || yAxis === undefined || yAxis === "") {
                     drawBlankChart();
+                    $scope.updatingChart = false;
                     return;
                 }
 
@@ -178,7 +180,7 @@ angular.module('neonDemo.directives')
                     .where(xAxis, '!=', null)
                     .groupBy(xAxis);
 
-                query.ignoreFilters([$scope.filterKey]);
+                query.ignoreFilters([$scope.filterKeys[$scope.selectedTable.name]]);
 
                 var queryType;
                 if($scope.barType === 'count') {
@@ -203,11 +205,13 @@ angular.module('neonDemo.directives')
                             XDATA.activityLogger.logSystemActivity('BarChart - received query data');
                             doDrawChart(queryResults, rebuildChart);
                             XDATA.activityLogger.logSystemActivity('BarChart - rendered results');
+                            $scope.updatingChart = false;
                         });
                     }, function(response) {
                         XDATA.activityLogger.logSystemActivity('BarChart - query failed');
                         drawBlankChart();
                         $scope.errorMessage = errorNotificationService.showErrorMessage($element, response.responseJSON.error, response.responseJSON.stackTrace);
+                        $scope.updatingChart = false;
                     });
                 }
             };
@@ -218,23 +222,33 @@ angular.module('neonDemo.directives')
                 }, true);
             };
 
-            var clickFilterHandler = function(filterValue) {
+            var clickFilterHandler = function(value) {
                 var xAxis = $scope.attrX || datasetService.getMapping($scope.selectedTable.name, "bar_x_axis");
-                var connection = connectionService.getActiveConnection();
-                if(xAxis !== undefined && xAxis !== "" && $scope.messenger && connection) {
-                    var filterClause = neon.query.where(xAxis, '=', filterValue);
-                    var filter = new neon.query.Filter().selectFrom($scope.databaseName, $scope.selectedTable.name).where(filterClause);
+                if(!xAxis) {
+                    return;
+                }
 
-                    if(!$scope.filterSet) {
-                        $scope.messenger.addFilter($scope.filterKey, filter, function() {
-                            handleFilterSet(xAxis, filterValue);
-                        });
+                var filterExists = $scope.filterSet ? true : false;
+                handleFilterSet(xAxis, value);
+
+                // Store the value for the filter to use during filter creation.
+                $scope.filterValue = value;
+
+                var connection = connectionService.getActiveConnection();
+                if($scope.messenger && connection) {
+                    var relations = datasetService.getRelations($scope.selectedTable.name, [xAxis]);
+                    if(filterExists) {
+                        filterService.replaceFilters($scope.messenger, relations, $scope.filterKeys, $scope.createFilter);
                     } else {
-                        $scope.messenger.replaceFilter($scope.filterKey, filter, function() {
-                            handleFilterSet(xAxis, filterValue);
-                        });
+                        filterService.addFilters($scope.messenger, relations, $scope.filterKeys, $scope.createFilter);
                     }
                 }
+            };
+
+            $scope.createFilter = function(tableName, fieldNames) {
+                var fieldName = fieldNames[0];
+                var filterClause = neon.query.where(fieldName, '=', $scope.filterValue);
+                return new neon.query.Filter().selectFrom($scope.databaseName, tableName).where(filterClause);
             };
 
             var handleFilterSet = function(key, val) {
@@ -251,7 +265,7 @@ angular.module('neonDemo.directives')
 
             $scope.clearFilterSet = function() {
                 if($scope.messenger) {
-                    $scope.messenger.removeFilter($scope.filterKey, function() {
+                    filterService.removeFilters($scope.messenger, $scope.filterKeys, function() {
                         $scope.chart.clearSelectedBar();
                         clearFilterSet();
                     });
