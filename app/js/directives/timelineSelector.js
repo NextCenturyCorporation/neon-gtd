@@ -31,7 +31,7 @@
  * @constructor
  */
 angular.module('neonDemo.directives')
-.directive('timelineSelector', ['ConnectionService', 'DatasetService', 'ErrorNotificationService', function(connectionService, datasetService, errorNotificationService) {
+.directive('timelineSelector', ['ConnectionService', 'DatasetService', 'ErrorNotificationService', 'FilterService', function(connectionService, datasetService, errorNotificationService, filterService) {
     return {
         templateUrl: 'partials/directives/timelineSelector.html',
         restrict: 'EA',
@@ -78,6 +78,7 @@ angular.module('neonDemo.directives')
             $scope.selectedTable = {
                 name: ""
             };
+            $scope.filterKeys = {};
 
             /**
              * Update any book-keeping fields that need to change when the granularity changes.
@@ -193,49 +194,44 @@ angular.module('neonDemo.directives')
                 $scope.$watch('brush', function(newVal) {
                     // If we have a new value and a messenger is ready, set the new filter.
                     if(newVal && $scope.messenger && connectionService.getActiveConnection()) {
-                        var startExtent;
-                        var endExtent;
                         XDATA.activityLogger.logUserActivity('TimelineSelector - Create/Replace temporal filter', 'execute_visual_filter',
                         XDATA.activityLogger.WF_GETDATA);
+
                         // if a single spot was clicked, just reset the timeline - An alternative would be to expand to the minimum width
                         if(undefined === newVal || 2 > newVal.length || newVal[0].getTime() === newVal[1].getTime()) {
                             // may be undefined when a new dataset is being loaded
                             if($scope.bucketizer.getStartDate() !== undefined && $scope.bucketizer.getEndDate() !== undefined) {
-                                startExtent = $scope.bucketizer.getStartDate();
-                                endExtent = $scope.bucketizer.getEndDate();
+                                // Store the extents for the filter to use during filter creation.
+                                $scope.startExtent = $scope.bucketizer.getStartDate();
+                                $scope.endExtent = $scope.bucketizer.getEndDate();
                                 $scope.brush = [];
                                 $scope.extentDirty = true;
                             } else {
                                 return;
                             }
                         } else {
-                            startExtent = newVal[0];
-                            endExtent = newVal[1];
+                            $scope.startExtent = newVal[0];
+                            $scope.endExtent = newVal[1];
                         }
 
-                        var startFilterClause = neon.query.where($scope.dateField, '>=', $scope.bucketizer.zeroOutDate(startExtent));
-                        var endFilterClause = neon.query.where($scope.dateField, '<', $scope.bucketizer.roundUpBucket(endExtent));
-                        var clauses = [startFilterClause, endFilterClause];
-                        var filterClause = neon.query.and.apply(this, clauses);
-                        var filter = new neon.query.Filter().selectFrom($scope.databaseName, $scope.selectedTable.name).where(filterClause);
-
                         XDATA.activityLogger.logSystemActivity('TimelineSelector - Create/Replace neon filter');
+
+                        var relations = datasetService.getRelations($scope.selectedTable.name, [$scope.dateField]);
 
                         if(updatingGranularity) {
                             // If the brush changed because of a granularity change, then don't
                             // update the chart. The granularity change will cause the data to be
                             // updated
-                            $scope.messenger.replaceFilter($scope.filterKey, filter);
+                            filterService.replaceFilters($scope.messenger, relations, $scope.filterKeys, $scope.createFilter);
                             updatingGranularity = false;
                         } else {
                             // Because the timeline ignores its own filter, we just need to update the
                             // chart times and total when this filter is applied
-                            $scope.messenger.replaceFilter($scope.filterKey, filter, $scope.updateChartTimesAndTotal());
+                            filterService.replaceFilters($scope.messenger, relations, $scope.filterKeys, $scope.createFilter, $scope.updateChartTimesAndTotal);
                         }
                     }
                 }, true);
 
-                $scope.filterKey = neon.widget.getInstanceId($scope.filterId);
                 $scope.messenger = new neon.eventing.Messenger();
 
                 $scope.messenger.events({
@@ -250,9 +246,25 @@ angular.module('neonDemo.directives')
                     $scope.messenger.removeEvents();
                     // Remove our filter if we had an active one.
                     if(0 < $scope.brush.length) {
-                        $scope.messenger.removeFilter($scope.filterKey);
+                        filterService.removeFilters($scope.messenger, $scope.filterKeys);
                     }
                 });
+            };
+
+            /**
+             * Creates and returns a filter using the given table and fields.
+             * @param {String} The name of the table on which to filter
+             * @param {Array} An array containing the name of the date field as its first element
+             * @method createFilter
+             * @return {Object} A neon.query.Filter object
+             */
+            $scope.createFilter = function(tableName, fieldNames) {
+                var dateFieldName = fieldNames[0];
+                var startFilterClause = neon.query.where(dateFieldName, '>=', $scope.bucketizer.zeroOutDate($scope.startExtent));
+                var endFilterClause = neon.query.where(dateFieldName, '<', $scope.bucketizer.roundUpBucket($scope.endExtent));
+                var clauses = [startFilterClause, endFilterClause];
+                var filterClause = neon.query.and.apply(this, clauses);
+                return new neon.query.Filter().selectFrom($scope.databaseName, tableName).where(filterClause);
             };
 
             /**
@@ -290,6 +302,7 @@ angular.module('neonDemo.directives')
                 $scope.databaseName = datasetService.getDatabase();
                 $scope.tables = datasetService.getTables();
                 $scope.selectedTable = datasetService.getFirstTableWithMappings(["date"]) || $scope.tables[0];
+                $scope.filterKeys = filterService.createFilterKeys("timeline", $scope.tables);
                 $scope.resetAndQueryForChartData();
             };
 
@@ -328,7 +341,7 @@ angular.module('neonDemo.directives')
                 // TODO: Does this need to be an aggregate on the date field? What is MIN doing or is this just an arbitrary function to include the date with the query?
                 query.aggregate(neon.query.MIN, $scope.dateField, 'date');
                 query.sortBy('date', neon.query.ASCENDING);
-                query.ignoreFilters([$scope.filterKey]);
+                query.ignoreFilters([$scope.filterKeys[$scope.selectedTable.name]]);
 
                 XDATA.activityLogger.logSystemActivity('TimelineSelector - query for data');
                 var connection = connectionService.getActiveConnection();
@@ -708,7 +721,7 @@ angular.module('neonDemo.directives')
                 XDATA.activityLogger.logSystemActivity('TimelineSelector - Removing Neon filter');
 
                 $scope.brush = [];
-                $scope.messenger.removeFilter($scope.filterKey);
+                filterService.removeFilters($scope.messenger, $scope.filterKeys);
             };
 
             // Wait for neon to be ready, the create our messenger and intialize the view and data.
