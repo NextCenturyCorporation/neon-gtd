@@ -32,9 +32,9 @@
 
 <div class="directed-graph {{uniqueId}}">
     <div class="config-row-div">
-        <div class="filter-reset pull-right" ng-repeat="field in groupFields">
-            {{field}}
-            <a class="btn" ng-click="removeFilter(field)">
+        <div class="filter-reset pull-right" ng-repeat="value in graphFilterValues">
+            {{value}}
+            <a class="btn" ng-click="removeFilter(value)">
              <span class="glyphicon glyphicon-remove"></span>
             </a>
         </div>
