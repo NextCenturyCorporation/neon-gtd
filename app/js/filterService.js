@@ -57,9 +57,10 @@ angular.module("neonDemo.services")
          * @param {Object} The map of table names to filter keys used by the messenger
          * @param {Function} The function used to create filters with arguments for the table name and the array of field names in that table
          * @param {Function} The function called once all the filters have been added (optional)
+         * @param {Function} The function called if an error is returned for any of the filter calls (optional)
          * @method addFilters
          */
-        service.addFilters = function(messenger, relations, filterKeys, createFilterFunction, callback) {
+        service.addFilters = function(messenger, relations, filterKeys, createFilterFunction, successCallback, errorCallback) {
 
             var addFilter = function(relationsToAdd) {
                 var relation = relationsToAdd.shift();
@@ -67,10 +68,10 @@ angular.module("neonDemo.services")
                 messenger.addFilter(filterKeys[relation.table], filter, function() {
                     if(relationsToAdd.length) {
                         addFilter(relationsToAdd);
-                    } else if(callback) {
-                        callback();
+                    } else if(successCallback) {
+                        successCallback();
                     }
-                })
+                }, errorCallback);
             };
 
             addFilter(relations);
@@ -83,9 +84,10 @@ angular.module("neonDemo.services")
          * @param {Object} The map of table names to filter keys used by the messenger
          * @param {Function} The function used to create filters with arguments for the table name and the array of field names in that table
          * @param {Function} The function called once all the filters have been replaced (optional)
+         * @param {Function} The function called if an error is returned for any of the filter calls (optional)
          * @method replaceFilters
          */
-        service.replaceFilters = function(messenger, relations, filterKeys, createFilterFunction, callback) {
+        service.replaceFilters = function(messenger, relations, filterKeys, createFilterFunction, successCallback, errorCallback) {
 
             var replaceFilter = function(relationsToReplace) {
                 var relation = relationsToReplace.shift();
@@ -93,10 +95,10 @@ angular.module("neonDemo.services")
                 messenger.replaceFilter(filterKeys[relation.table], filter, function() {
                     if(relationsToReplace.length) {
                         replaceFilter(relationsToReplace);
-                    } else if(callback) {
-                        callback();
+                    } else if(successCallback) {
+                        successCallback();
                     }
-                })
+                }, errorCallback);
             };
 
             replaceFilter(relations);
@@ -107,18 +109,19 @@ angular.module("neonDemo.services")
          * @param {Object} The messenger object used to remove the filters
          * @param {Object} The map of table names to filter keys used by the messenger
          * @param {Function} The function called once all the filters have been removed (optional)
+         * @param {Function} The function called if an error is returned for any of the filter calls (optional)
          * @method removeFilters
          */
-        service.removeFilters = function(messenger, filterKeys, callback) {
+        service.removeFilters = function(messenger, filterKeys, successCallback, errorCallback) {
             var removeFilter = function(filterKeysToRemove) {
                 var filterKey = filterKeysToRemove.shift();
                 messenger.removeFilter(filterKey, function() {
                     if(filterKeysToRemove.length) {
                         removeFilter(filterKeysToRemove);
-                    } else if(callback) {
-                        callback();
+                    } else if(successCallback) {
+                        successCallback();
                     }
-                });
+                }, errorCallback);
             };
 
             var tableNames = Object.keys(filterKeys);
