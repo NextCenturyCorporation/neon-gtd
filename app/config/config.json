@@ -343,6 +343,10 @@
             "mappings": {
                 "graph_nodes": "label"
             }
+        }],
+        "relations": [{
+            "twitter36": "screen_name",
+            "ff": "label"
         }]
     }],
 

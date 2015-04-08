@@ -229,7 +229,8 @@ angular.module('neonDemo.directives')
                     database: $scope.selectedDb,
                     tables: [{
                         name: $scope.selectedTable
-                    }]
+                    }],
+                    relations: []
                 });
 
                 for(var key in $scope.fields) {

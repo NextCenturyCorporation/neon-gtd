@@ -26,7 +26,8 @@ angular.module("neonDemo.services")
             datastore: "",
             hostname: "",
             database: "",
-            tables: []
+            tables: [],
+            relations: []
         };
 
         service.setActiveDataset = function(dataset) {
@@ -36,6 +37,7 @@ angular.module("neonDemo.services")
             service.dataset.hostname = dataset.hostname || "";
             service.dataset.database = dataset.database || "";
             service.dataset.tables = dataset.tables || [];
+            service.dataset.relations = dataset.relations || [];
 
             for(var i = 0; i < service.dataset.tables.length; ++i) {
                 service.dataset.tables[i].fields = service.dataset.tables[i].fields || [];
@@ -169,14 +171,68 @@ angular.module("neonDemo.services")
             return table.mappings[key];
         };
 
-        service.setMapping = function(tableName, key, field) {
+        service.setMapping = function(tableName, key, fieldName) {
             var table = service.getTableWithName(tableName);
 
             if(!table.name) {
                 return;
             }
 
-            table.mappings[key] = field;
+            table.mappings[key] = fieldName;
+        };
+
+        /**
+         * Returns an array of relations for the given table and fields.  The given table is related to another table if
+         * the dataset contains relations mapping each given field name to the other table.
+         * @param {String} The table name
+         * @param {Array} The array of field names
+         * @method getRelations
+         * @return {Array} The array of relation objects which contain the table name ({String} table) and a mapping of
+         * the given field names to the field names in the other tables ({Object} fields).  This array will also contain
+         * the relation object for the table and fields given in the arguments
+         */
+        service.getRelations = function(tableName, fieldNames) {
+            var tablesToFields = {};
+            for(var i = 0; i < fieldNames.length; ++i) {
+                var fieldName = fieldNames[i];
+                for(var j = 0; j < service.dataset.relations.length; ++j) {
+                    if(fieldName === service.dataset.relations[j][tableName]) {
+                        var tableNames = Object.keys(service.dataset.relations[j]);
+                        for(var k = 0; k < tableNames.length; ++k) {
+                            var relationTableName = tableNames[k];
+                            var relationFieldName = service.dataset.relations[j][relationTableName];
+                            if(!(tablesToFields[relationTableName])) {
+                                tablesToFields[relationTableName] = {};
+                            }
+                            tablesToFields[relationTableName][fieldName] = relationFieldName;
+                        }
+                    }
+                }
+            }
+
+            var relationTableNames = Object.keys(tablesToFields);
+            if(relationTableNames.length) {
+                var relations = [];
+                for(var i = 0; i < relationTableNames.length; ++i) {
+                    relations.push({
+                        table: relationTableNames[i],
+                        fields: tablesToFields[relationTableNames[i]]
+                    });
+                }
+                return relations;
+            }
+
+            // If the input fields do not have any related fields in other tables, return an object containing the input table and fields.
+            var inputObject = {
+                table: tableName,
+                fields: {}
+            };
+
+            for(var i = 0; i < fieldNames.length; ++i) {
+                inputObject.fields[fieldNames[i]] = fieldNames[i];
+            }
+
+            return [inputObject];
         };
 
         return service;
