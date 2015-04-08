@@ -17,7 +17,7 @@
  */
 
 angular.module('neonDemo.directives')
-.directive('countBy', ['DIG', 'ConnectionService', 'DatasetService', 'ErrorNotificationService', function(DIG, connectionService, datasetService, errorNotificationService) {
+.directive('countBy', ['DIG', 'ConnectionService', 'DatasetService', 'ErrorNotificationService', 'FilterService', function(DIG, connectionService, datasetService, errorNotificationService, filterService) {
     return {
         templateUrl: 'partials/directives/countby.html',
         restrict: 'EA',
@@ -39,7 +39,7 @@ angular.module('neonDemo.directives')
             $scope.count = 0;
             $scope.fields = [];
             $scope.tableId = 'query-results-' + uuid();
-            $scope.filterKey = "countby-" + uuid();
+            $scope.filterKeys = {};
             $scope.filterSet = undefined;
             $scope.errorMessage = undefined;
 
@@ -85,7 +85,7 @@ angular.module('neonDemo.directives')
                 $scope.$on('$destroy', function() {
                     $scope.messenger.removeEvents();
                     if($scope.filterSet) {
-                        $scope.messenger.removeFilter($scope.filterKey);
+                        filterService.removeFilters($scope.messenger, $scope.filterKeys);
                     }
                 });
 
@@ -188,10 +188,11 @@ angular.module('neonDemo.directives')
                     return;
                 }
 
+                $scope.countField = "";
                 $scope.databaseName = datasetService.getDatabase();
                 $scope.tables = datasetService.getTables();
                 $scope.selectedTable = $scope.tables[0];
-                $scope.countField = "";
+                $scope.filterKeys = filterService.createFilterKeys("countby", $scope.tables);
 
                 if(initializing) {
                     $scope.updateFieldsAndQueryForData();
@@ -290,20 +291,27 @@ angular.module('neonDemo.directives')
              * @param {String} The filter value
              */
             $scope.setFilter = function(field, value) {
+                var filterExists = $scope.filterSet ? true : false;
+                handleSetFilter(field, value);
+
+                // Store the value for the filter to use during filter creation.
+                $scope.filterValue = value;
+
                 var connection = connectionService.getActiveConnection();
                 if($scope.messenger && connection) {
-                    var filterClause = neon.query.where(field, '=', value);
-                    var filter = new neon.query.Filter().selectFrom($scope.databaseName, $scope.selectedTable.name).where(filterClause);
-                    if(!$scope.filterSet) {
-                        $scope.messenger.addFilter($scope.filterKey, filter, function() {
-                            handleSetFilter(field, value);
-                        });
+                    var relations = datasetService.getRelations($scope.selectedTable.name, [field]);
+                    if(filterExists) {
+                        filterService.replaceFilters($scope.messenger, relations, $scope.filterKeys, $scope.createFilter);
                     } else {
-                        $scope.messenger.replaceFilter($scope.filterKey, filter, function() {
-                            handleSetFilter(field, value);
-                        });
+                        filterService.addFilters($scope.messenger, relations, $scope.filterKeys, $scope.createFilter);
                     }
                 }
+            };
+
+            $scope.createFilter = function(tableName, fieldNames) {
+                var fieldName = fieldNames[0];
+                var filterClause = neon.query.where(fieldName, '=', $scope.filterValue);
+                return new neon.query.Filter().selectFrom($scope.databaseName, tableName).where(filterClause);
             };
 
             /**
@@ -373,7 +381,7 @@ angular.module('neonDemo.directives')
                 .groupBy($scope.countField);
 
                 // The widget displays its own ignored rows with 0.5 opacity.
-                query.ignoreFilters([$scope.filterKey]);
+                query.ignoreFilters([$scope.filterKeys[$scope.selectedTable.name]]);
                 query.aggregate(neon.query.COUNT, '*', 'count');
 
                 return query;
@@ -384,12 +392,14 @@ angular.module('neonDemo.directives')
              */
             $scope.clearFilter = function() {
                 if($scope.messenger) {
-                    $scope.messenger.removeFilter($scope.filterKey, function() {
-                        $tableDiv.removeClass("filtered");
-                        $scope.table.deselect();
-                        clearFilter();
-                    });
+                    filterService.removeFilters($scope.messenger, $scope.filterKeys, $scope.clearFilterElements);
                 }
+            };
+
+            $scope.clearFilterElements = function() {
+                $tableDiv.removeClass("filtered");
+                $scope.table.deselect();
+                clearFilter();
             };
 
             neon.ready(function() {

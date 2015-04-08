@@ -130,10 +130,7 @@ angular.module('neonDemo.directives')
                 $scope.databaseName = datasetService.getDatabase();
                 $scope.tables = datasetService.getTables();
                 $scope.selectedTable = datasetService.getFirstTableWithMappings(["graph_nodes"]) || $scope.tables[0];
-                $scope.filterKeys = {};
-                for(var i = 0; i < $scope.tables.length; ++i) {
-                    $scope.filterKeys[$scope.tables[i].name] = "graph-" + $scope.tables[i].name + "-" + uuid();
-                }
+                $scope.filterKeys = filterService.createFilterKeys("graph", $scope.tables);
 
                 if(initializing) {
                     $scope.updateFieldsAndQueryForData();

@@ -21,6 +21,21 @@ angular.module("neonDemo.services")
         var service = {};
 
         /**
+         * Creates and returns a mapping of names from the given tables to unique filter keys for each table.
+         * @param {String} The name of the visualization
+         * @param {Array} The array of table objects
+         * @method createFilterKeys
+         * @return {Object} The mapping of table names to filter keys
+         */
+        service.createFilterKeys = function(visualizationName, tables) {
+            var filterKeys = {};
+            for(var i = 0; i < tables.length; ++i) {
+                filterKeys[tables[i].name] = visualizationName + "-" + tables[i].name + "-" + uuid();
+            }
+            return filterKeys;
+        };
+
+        /**
          * Returns the array of field names contained within the map of fields in the given relation.
          * @param {Object} A relation object containing a map of fields
          * @method getFieldsFromRelation
