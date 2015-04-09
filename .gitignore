@@ -9,3 +9,6 @@ tmp
 .DS_Store
 .idea
 reports
+.orig
+.swp
+config.json
