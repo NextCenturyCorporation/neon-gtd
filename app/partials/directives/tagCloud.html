@@ -9,7 +9,7 @@
         <div class="popover-content">
             <div class="form-group">
                 <label>Table</label>
-                <select class="form-control" ng-model="selectedTable" ng-options="table.name for table in tables" ng-required="true" ng-disabled="(tables.length == 0)" ng-change="updateFieldsAndQueryForTags()">
+                <select class="form-control" ng-model="selectedTable" ng-options="table.name for table in tables" ng-required="true" ng-disabled="(tables.length < 2)" ng-change="updateFieldsAndQueryForTags()">
                 </select>
             </div>
             <div class="form-group" ng-class="{true: '', false: 'hidden'}[showFilter]">
