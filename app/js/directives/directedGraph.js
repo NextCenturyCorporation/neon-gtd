@@ -29,6 +29,7 @@ angular.module('neonDemo.directives')
 
             element.addClass('directedGraphDirective');
 
+            $scope.TIMEOUT_MS = 250;
             $scope.uniqueId = uuid();
             $scope.databaseName = "";
             $scope.tables = [];
@@ -59,8 +60,10 @@ angular.module('neonDemo.directives')
             }, true);
 
             var updateSize = function() {
-                element.find('#directed-graph-div-' + $scope.uniqueId).height(element.height() - element.find('.config-row-div').outerHeight(true) - 10);
-                return $timeout(redraw, 250);
+                var paddingTop = (element.outerHeight(true) - element.height()) / 2;
+                var headerHeight = element.find('.config-row-div').outerHeight(true);
+                element.find('#directed-graph-div-' + $scope.uniqueId).height(element.height() - paddingTop - headerHeight);
+                return $timeout(redraw, $scope.TIMEOUT_MS);
             };
 
             var redraw = function() {
@@ -122,9 +125,9 @@ angular.module('neonDemo.directives')
                         $scope.addOtherFilterValues(whereClause.whereClauses[i]);
                     }
                 } else if(whereClause.lhs === $scope.selectedField) {
-                    for(var i = 0; i < $scope.otherFilterValues.length; ++i) {
-                        if($scope.otherFilterValues[i].value === whereClause.rhs) {
-                            $scope.otherFilterValues[i].count++;
+                    for(var j = 0; j < $scope.otherFilterValues.length; ++j) {
+                        if($scope.otherFilterValues[j].value === whereClause.rhs) {
+                            $scope.otherFilterValues[j].count++;
                             return;
                         }
                     }
@@ -220,7 +223,7 @@ angular.module('neonDemo.directives')
                     fullWhereClause = neon.query.or(fullWhereClause, whereClause);
                 }
                 return new neon.query.Filter().selectFrom($scope.databaseName, tableName).where(fullWhereClause);
-            }
+            };
 
             $scope.removeFilter = function(value) {
                 var index = $scope.graphFilterValues.indexOf(value);
@@ -275,7 +278,7 @@ angular.module('neonDemo.directives')
                             }
                         }
                         $scope.nodes.sort(function(a, b) {
-                            return a.toLowerCase().localeCompare(b.toLowerCase())
+                            return a.toLowerCase().localeCompare(b.toLowerCase());
                         });
                         $scope.graph.setClickableNodes($scope.nodes);
                         $scope.createAndShowGraph(data);
@@ -320,9 +323,9 @@ angular.module('neonDemo.directives')
                 for(var i = 0; i < $scope.graphFilterValues.length; ++i) {
                     allFilterValues.push($scope.graphFilterValues[i]);
                 }
-                for(var i = 0; i < $scope.otherFilterValues.length; ++i) {
-                    if(allFilterValues.indexOf($scope.otherFilterValues[i].value) < 0) {
-                        allFilterValues.push($scope.otherFilterValues[i].value);
+                for(var j = 0; j < $scope.otherFilterValues.length; ++j) {
+                    if(allFilterValues.indexOf($scope.otherFilterValues[j].value) < 0) {
+                        allFilterValues.push($scope.otherFilterValues[j].value);
                     }
                 }
                 return allFilterValues;
@@ -413,8 +416,7 @@ angular.module('neonDemo.directives')
                         $scope.$apply(function() {
                             $scope.addFilter(item.name);
                         });
-                    }
-                    else {
+                    } else {
                         $scope.$apply(function() {
                             $scope.removeFilter(item.name);
                         });
