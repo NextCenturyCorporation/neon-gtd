@@ -30,6 +30,15 @@ angular.module("neonDemo.services")
             relations: []
         };
 
+        /**
+         * Sets the active dataset to the given dataset.
+         * @param {Object} The dataset containing {String} name, {String} layout, {String} datastore, {String} hostname,
+         * {String} database, {Array} tables, and {Array} relations.  Each table is an Object containing {String} name,
+         * {Array} fields, and {Object} mappings.  Each field is an Object containing {String} columnName and {String}
+         * prettyName.  Each mapping key is a unique identifier used by the visualizations and each value is a field
+         * name.  Each relation is an Object with table names as keys and field names as values.
+         * @method setActiveDataset
+         */
         service.setActiveDataset = function(dataset) {
             service.dataset.name = dataset.name || "Unknown Dataset";
             service.dataset.layout = dataset.layout || "";
@@ -45,34 +54,76 @@ angular.module("neonDemo.services")
             }
         };
 
+        /**
+         * Returns whether a dataset is active.
+         * @method hasDataset
+         * @return {Boolean}
+         */
         service.hasDataset = function() {
             return service.dataset.datastore && service.dataset.hostname && service.dataset.database && service.dataset.tables;
         };
 
+        /**
+         * Returns the name of the active dataset.
+         * @method getName
+         * @return {String}
+         */
         service.getName = function() {
             return service.dataset.name;
         };
 
+        /**
+         * Returns the layout for the active dataset.
+         * @method getLayout
+         * @return {String}
+         */
         service.getLayout = function() {
             return service.dataset.layout;
         };
 
+        /**
+         * Returns the datastore for the active dataset.
+         * @method getDatastore
+         * @return {String}
+         */
         service.getDatastore = function() {
             return service.dataset.datastore;
         };
 
+        /**
+         * Returns the hostname for the active dataset.
+         * @method getHostname
+         * @return {String}
+         */
         service.getHostname = function() {
             return service.dataset.hostname;
         };
 
+        /**
+         * Returns the database for the active dataset.
+         * @method getDatabase
+         * @return {String}
+         */
         service.getDatabase = function() {
             return service.dataset.database;
         };
 
+        /**
+         * Returns the tables for the active dataset.
+         * @method getTables
+         * @return {Array} An array of table Objects containing {String} name, {Array} fields, and {Array} mappings.
+         */
         service.getTables = function() {
             return service.dataset.tables;
         };
 
+        /**
+         * Returns the table with the given name or an Object with an empty name if no such table exists in the dataset.
+         * @param {String} The table name
+         * @method getTableWithName
+         * @return {Object} The table containing {String} name, {Array} fields, and {Object} mappings if a match exists
+         * or undefined otherwise.
+         */
         service.getTableWithName = function(tableName) {
             for(var i = 0; i < service.dataset.tables.length; ++i) {
                 if(service.dataset.tables[i].name === tableName) {
@@ -80,11 +131,16 @@ angular.module("neonDemo.services")
                 }
             }
 
-            return {
-                name: ""
-            };
+            return undefined;
         };
 
+        /**
+         * Returns the first table in the dataset containing all the given mappings.
+         * @param {Array} The array of mapping keys that the table must contain.
+         * @method getFirstTableWithMappings
+         * @return {Object} The table containing {String} name, {Array} fields, and {Object} mappings if a match exists
+         * or undefined otherwise.
+         */
         service.getFirstTableWithMappings = function(keys) {
             for(var i = 0; i < service.dataset.tables.length; ++i) {
                 var success = true;
@@ -102,10 +158,16 @@ angular.module("neonDemo.services")
             return undefined;
         };
 
+        /**
+         * Returns the database field names for the table with the given name.
+         * @param {String} The table name
+         * @method getDatabaseFields
+         * @return {Array} The array of database field names if a match exists or an empty array otherwise.
+         */
         service.getDatabaseFields = function(tableName) {
             var table = service.getTableWithName(tableName);
 
-            if(!table.name) {
+            if(!table) {
                 return [];
             }
 
@@ -116,10 +178,16 @@ angular.module("neonDemo.services")
             return databaseFields;
         };
 
+        /**
+         * Returns the pretty field names for the table with the given name.
+         * @param {String} The table name
+         * @method getPrettyFields
+         * @return {Array} The array of pretty field names if a match exists or an empty array otherwise.
+         */
         service.getPrettyFields = function(tableName) {
             var table = service.getTableWithName(tableName);
 
-            if(!table.name) {
+            if(!table) {
                 return [];
             }
 
@@ -130,10 +198,17 @@ angular.module("neonDemo.services")
             return prettyFields;
         };
 
+        /**
+         * Updates the fields for the table with the given name to include all of the given fields it does not already
+         * contain.
+         * @param {String} The table name
+         * @param {Array} The array of database field names to add
+         * @method updateFields
+         */
         service.updateFields = function(tableName, fieldNames) {
             var table = service.getTableWithName(tableName);
 
-            if(!table.name) {
+            if(!table) {
                 return;
             }
 
@@ -151,30 +226,51 @@ angular.module("neonDemo.services")
             }
         };
 
+        /**
+         * Returns the mappings for the table with the given name.
+         * @param {String} The table name
+         * @method getMappings
+         * @return {Object} The mappings if a match exists or an empty object otherwise.
+         */
         service.getMappings = function(tableName) {
             var table = service.getTableWithName(tableName);
 
-            if(!table.name) {
-                return [];
+            if(!table) {
+                return {};
             }
 
             return table.mappings;
         };
 
+        /**
+         * Returns the mapping for the table with the given name and the given key.
+         * @param {String} The table name
+         * @param {String} The mapping key
+         * @method getMapping
+         * @return {String} The field name for the mapping at the given key if a match exists or an empty string
+         * otherwise.
+         */
         service.getMapping = function(tableName, key) {
             var table = service.getTableWithName(tableName);
 
-            if(!table.name) {
+            if(!table) {
                 return "";
             }
 
             return table.mappings[key];
         };
 
+        /**
+         * Sets the mapping for the table with the given name at the given key to the given field name.
+         * @param {String} The table name
+         * @param {String} The mapping key
+         * @param {String} The field name for the given mapping key
+         * @method setMapping
+         */
         service.setMapping = function(tableName, key, fieldName) {
             var table = service.getTableWithName(tableName);
 
-            if(!table.name) {
+            if(!table) {
                 return;
             }
 
