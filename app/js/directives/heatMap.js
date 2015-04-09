@@ -374,7 +374,7 @@ angular.module('neonDemo.directives')
                         $scope.tableName = info.table;
                         // Repopulate the field selectors and get the default values.
                         XDATA.activityLogger.logSystemActivity('HeatMap - query for data field names');
-                        connection.getFieldNames($scope.tableName, function(results) {
+                        connection.getFieldNames($scope.databaseName, $scope.tableName, function(results) {
                             $scope.$apply(function() {
                                 XDATA.activityLogger.logSystemActivity('HeatMap - data field names received');
                                 populateFieldNames(results);

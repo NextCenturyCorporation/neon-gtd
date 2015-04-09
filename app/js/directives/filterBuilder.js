@@ -187,10 +187,10 @@ angular.module('neonDemo.directives')
                 var connection = connectionService.getActiveConnection();
                 if(connection) {
                     XDATA.activityLogger.logSystemActivity('FilterBuilder - query for available fields');
-                    connection.getFieldNames($scope.tableName, function(results) {
+                    connection.getFieldNames($scope.databaseName, $scope.tableName, function(results) {
                         $scope.$apply(function() {
                             populateFieldNames(results);
-                            $scope.selectedField = results[0];
+                            $scope.selectedField = $scope.fields[0];
                             XDATA.activityLogger.logSystemActivity('FilterBuilder - received available fields');
                         });
                     });

@@ -68,7 +68,7 @@ angular.module('neonDemo.directives')
                         var info = connectionService.getActiveDataset();
                         $scope.databaseName = info.database;
                         $scope.tableName = info.table;
-                        connectionService.getActiveConnection().getFieldNames($scope.tableName, function(results) {
+                        connectionService.getActiveConnection().getFieldNames($scope.databaseName, $scope.tableName, function(results) {
                             XDATA.activityLogger.logSystemActivity('FieldSelector - query for available fields');
                             $scope.$apply(function() {
                                 $scope.fields = results;

@@ -179,7 +179,7 @@ angular.module('neonDemo.directives')
                         $scope.attrY = connectionService.getFieldMapping("y_axis");
                         $scope.categoryField = connectionService.getFieldMapping("line_category");
                         $scope.aggregation = 'count';
-                        connection.getFieldNames($scope.tableName, function(results) {
+                        connection.getFieldNames($scope.databaseName, $scope.tableName, function(results) {
                             XDATA.activityLogger.logSystemActivity('LineChart - query for available fields');
                             $scope.$apply(function() {
                                 $scope.fields = results;
