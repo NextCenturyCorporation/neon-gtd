@@ -325,7 +325,7 @@ angular.module('neonDemo.directives')
                             XDATA.activityLogger.logSystemActivity('TimelineSelector - data received');
                         });
                     }, function() {
-                        $scope.$apply(function() {
+                        $scope.$apply(function(response) {
                             // TODO:  Determine how to clear the chart without causing errors.
                             // $scope.updateChartData({ data: [] });
                             XDATA.activityLogger.logSystemActivity('TimelineSelector - data requested failed');

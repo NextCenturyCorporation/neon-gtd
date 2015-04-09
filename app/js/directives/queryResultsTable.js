@@ -369,7 +369,7 @@ angular.module('neonDemo.directives')
             $scope.buildQuery = function() {
                 var query = new neon.query.Query().selectFrom($scope.databaseName, $scope.tableName);
                 query.limit($scope.limit);
-                if($scope.sortByField !== "undefined" && $scope.sortByField.length > 0) {
+                if($scope.sortByField) {
                     query.sortBy($scope.sortByField, $scope.sortDirection);
                 }
 
