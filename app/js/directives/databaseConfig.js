@@ -138,7 +138,9 @@ angular.module('neonDemo.directives')
 
                 $scope.connection.getTableNamesAndFieldNames(function(tableNamesAndFieldNames) {
                     $scope.$apply(function() {
-                        for(var tableName in tableNamesAndFieldNames) {
+                        var tableNames = Object.keys(tableNamesAndFieldNames);
+                        for(var i = 0; i < tableNames.length; ++i) {
+                            var tableName = tableNames[i];
                             datasetService.updateFields(tableName, tableNamesAndFieldNames[tableName]);
                             // Store fields for each table locally because the dataset service ignores tables not included in the dataset.
                             // TODO Determine how to handle fields from tables in the database that are not included in the dataset.  This may

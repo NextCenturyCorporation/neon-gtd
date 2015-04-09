@@ -317,7 +317,7 @@ angular.module('neonDemo.directives')
                             }
                             XDATA.activityLogger.logSystemActivity('DataView - received total; updating view');
                         });
-                    }, function(response) {
+                    }, function() {
                         XDATA.activityLogger.logSystemActivity('DataView - received error in query for total rows');
                         $scope.totalRows = 0;
                     });

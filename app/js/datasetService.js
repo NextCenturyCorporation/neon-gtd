@@ -142,10 +142,10 @@ angular.module("neonDemo.services")
                 fieldExists[table.fields[i].columnName] = true;
             }
 
-            for(var i = 0; i < fieldNames.length; ++i) {
-                if(!fieldExists[fieldNames[i]]) {
+            for(var j = 0; j < fieldNames.length; ++j) {
+                if(!fieldExists[fieldNames[j]]) {
                     table.fields.push({
-                        columnName: fieldNames[i]
+                        columnName: fieldNames[j]
                     });
                 }
             }
@@ -213,7 +213,7 @@ angular.module("neonDemo.services")
             var relationTableNames = Object.keys(tablesToFields);
             if(relationTableNames.length) {
                 var relations = [];
-                for(var i = 0; i < relationTableNames.length; ++i) {
+                for(i = 0; i < relationTableNames.length; ++i) {
                     relations.push({
                         table: relationTableNames[i],
                         fields: tablesToFields[relationTableNames[i]]
@@ -228,7 +228,7 @@ angular.module("neonDemo.services")
                 fields: {}
             };
 
-            for(var i = 0; i < fieldNames.length; ++i) {
+            for(i = 0; i < fieldNames.length; ++i) {
                 inputObject.fields[fieldNames[i]] = fieldNames[i];
             }
 

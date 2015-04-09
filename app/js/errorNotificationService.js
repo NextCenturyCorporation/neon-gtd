@@ -51,7 +51,7 @@ angular.module("neonDemo.services")
          */
         service.hideErrorMessage = function(errorNotification) {
             errorNotification.find('[data-notify="dismiss"]').trigger("click");
-        }
+        };
 
         /**
          * Shows two error message notifications (one temporary in the corner of the dashboard and the other inside a specified element).
@@ -106,18 +106,18 @@ angular.module("neonDemo.services")
             });
 
             var elementErrorNotification = $(element).find(".neon-error-element");
-            var stacktrace = elementErrorNotification.find(".neon-error-stacktrace");
+            var stacktraceElement = elementErrorNotification.find(".neon-error-stacktrace");
 
             // Expand/collapse the stacktrace whenever the user clicks on Details.
-            elementErrorNotification.find(".neon-error-details").on("click", function(e) {
-                if(stacktrace.css("display") !== "none") {
+            elementErrorNotification.find(".neon-error-details").on("click", function() {
+                if(stacktraceElement.css("display") !== "none") {
                     $(this).find("i").removeClass("glyphicon-chevron-down");
                     $(this).find("i").addClass("glyphicon-chevron-up");
-                    stacktrace.slideUp();
+                    stacktraceElement.slideUp();
                 } else {
                     $(this).find("i").removeClass("glyphicon-chevron-up");
                     $(this).find("i").addClass("glyphicon-chevron-down");
-                    stacktrace.slideDown();
+                    stacktraceElement.slideDown();
                 }
             });
 

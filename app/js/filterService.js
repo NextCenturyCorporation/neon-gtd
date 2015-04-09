@@ -61,7 +61,6 @@ angular.module("neonDemo.services")
          * @method addFilters
          */
         service.addFilters = function(messenger, relations, filterKeys, createFilterFunction, successCallback, errorCallback) {
-
             var addFilter = function(relationsToAdd) {
                 var relation = relationsToAdd.shift();
                 var filter = createFilterFunction(relation.table, service.getFieldsFromRelation(relation));
@@ -88,7 +87,6 @@ angular.module("neonDemo.services")
          * @method replaceFilters
          */
         service.replaceFilters = function(messenger, relations, filterKeys, createFilterFunction, successCallback, errorCallback) {
-
             var replaceFilter = function(relationsToReplace) {
                 var relation = relationsToReplace.shift();
                 var filter = createFilterFunction(relation.table, service.getFieldsFromRelation(relation));
