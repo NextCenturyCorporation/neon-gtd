@@ -78,11 +78,13 @@ angular.module('neonDemo.directives')
 
                 // Pull in the databse names.
                 var connection = connectionService.getActiveConnection();
-                connection.getDatabaseNames($scope.selectedDB, function(results) {
-                    $scope.$apply(function() {
-                        populateDatabaseDropdown(results);
+                if(connection) {
+                    connection.getDatabaseNames(function(results) {
+                        $scope.$apply(function() {
+                            populateDatabaseDropdown(results);
+                        });
                     });
-                });
+                }
             };
 
             $scope.connectToPreset = function(server) {
@@ -255,7 +257,7 @@ angular.module('neonDemo.directives')
                         table: $scope.selectedTable
                     });
 
-                $scope.publishDatasetChanged;
+                $scope.publishDatasetChanged();
             };
 
             // Wait for neon to be ready, the create our messenger and intialize the view and data.
