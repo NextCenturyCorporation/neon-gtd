@@ -26,33 +26,18 @@ angular.module('neonDemo.services')
     var service = {};
 
     /**
-     * Establish a Neon connection to a particular datset.
+     * Creates a Neon connection to the given host with the given database type.
      * @param {String} databaseType
      * @param {String} host
-     * @param {String} database
      */
-    service.connectToDataset = function(databaseType, host, database) {
-        if(!activeConnection) {
+    service.createActiveConnection = function(databaseType, host) {
+        if(!activeConnection || activeConnection.databaseType_ !== databaseType || activeConnection.host_ !== host) {
             activeConnection = new neon.query.Connection();
         }
 
-        // Connect to the specified server.
         if(databaseType && host) {
             activeConnection.connect(databaseType, host);
         }
-
-        // Use the given database if present.  If datbase is undefined, this will
-        // will be passed along, clearing out the table database field.
-        activeConnection.use(database);
-    };
-
-    /**
-     * Sets the active connection.  Any client code can ask for the active connection rather than creating a new one.
-     * @param {neon.query.Connection} connection
-     * @method setActiveConnection
-     */
-    service.setActiveConnection = function(connection) {
-        activeConnection = connection;
     };
 
     /**

@@ -239,12 +239,9 @@ angular.module('neonDemo.directives')
                 $scope.messenger = new neon.eventing.Messenger();
 
                 $scope.messenger.events({
-                    filtersChanged: onFiltersChanged,
-                    custom: [{
-                        channel: "active_dataset_changed",
-                        callback: onDatasetChanged
-                    }]
+                    filtersChanged: onFiltersChanged
                 });
+                $scope.messenger.subscribe("dataset_changed", onDatasetChanged);
 
                 $scope.$on('$destroy', function() {
                     $scope.messenger.removeEvents();
@@ -274,7 +271,7 @@ angular.module('neonDemo.directives')
              * @private
              */
             var onDatasetChanged = function() {
-                XDATA.activityLogger.logSystemActivity('TimelineSelector - received neon dataset changed event');
+                XDATA.activityLogger.logSystemActivity('TimelineSelector - received neon-gtd dataset changed event');
                 $scope.displayActiveDataset();
             };
 

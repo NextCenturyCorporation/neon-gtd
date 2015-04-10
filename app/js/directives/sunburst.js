@@ -62,12 +62,9 @@ angular.module('neonDemo.directives')
                 $scope.chart.drawBlank();
 
                 $scope.messenger.events({
-                    filtersChanged: onFiltersChanged,
-                    custom: [{
-                        channel: "active_dataset_changed",
-                        callback: onDatasetChanged
-                    }]
+                    filtersChanged: onFiltersChanged
                 });
+                $scope.messenger.subscribe("dataset_changed", onDatasetChanged);
 
                 $scope.$on('$destroy', function() {
                     $scope.messenger.removeEvents();
@@ -105,8 +102,13 @@ angular.module('neonDemo.directives')
                 }
             };
 
+            /**
+             * Event handler for dataset changed events issued over Neon's messaging channels.
+             * @method onDatasetChanged
+             * @private
+             */
             var onDatasetChanged = function() {
-                XDATA.activityLogger.logSystemActivity('SunburstChart - received neon dataset changed event');
+                XDATA.activityLogger.logSystemActivity('SunburstChart - received neon-gtd dataset changed event');
                 $scope.displayActiveDataset(false);
             };
 
@@ -142,13 +144,13 @@ angular.module('neonDemo.directives')
              * @method displayActiveDataset
              */
             $scope.displayActiveDataset = function(initializing) {
-                $scope.groupFields = [];
-                $scope.valueField = null;
-                $scope.arcValue = charts.SunburstChart.COUNT_PARTITION;
-
                 if(!datasetService.hasDataset()) {
                     return;
                 }
+
+                $scope.groupFields = [];
+                $scope.valueField = null;
+                $scope.arcValue = charts.SunburstChart.COUNT_PARTITION;
 
                 $scope.databaseName = datasetService.getDatabase();
                 $scope.tables = datasetService.getTables();

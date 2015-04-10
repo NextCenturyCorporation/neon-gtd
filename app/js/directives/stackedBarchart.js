@@ -59,12 +59,9 @@ angular.module('neonDemo.directives')
                 drawBlankChart();
 
                 $scope.messenger.events({
-                    filtersChanged: onFiltersChanged,
-                    custom: [{
-                        channel: "active_dataset_changed",
-                        callback: onDatasetChanged
-                    }]
+                    filtersChanged: onFiltersChanged
                 });
+                $scope.messenger.subscribe("dataset_changed", onDatasetChanged);
 
                 $scope.$on('$destroy', function() {
                     $scope.messenger.removeEvents();
@@ -99,10 +96,20 @@ angular.module('neonDemo.directives')
                 }
             };
 
+            /**
+             * Event handler for dataset changed events issued over Neon's messaging channels.
+             * @method onDatasetChanged
+             * @private
+             */
             var onDatasetChanged = function() {
                 $scope.displayActiveDataset(false);
             };
 
+            /**
+             * Displays data for any currently active datasets.
+             * @param {Boolean} Whether this function was called during visualization initialization.
+             * @method displayActiveDataset
+             */
             var displayActiveDataset = function(initializing) {
                 if(!datasetService.hasDataset()) {
                     return;

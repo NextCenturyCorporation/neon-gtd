@@ -38,7 +38,7 @@ angular.module('neonDemo.directives')
             $scope.countField = "";
             $scope.count = 0;
             $scope.fields = [];
-            $scope.tableId = 'query-results-' + uuid();
+            $scope.tableId = 'countby-' + uuid();
             $scope.filterKey = "countby-" + uuid();
             $scope.filterSet = undefined;
             $scope.errorMessage = undefined;
@@ -71,12 +71,9 @@ angular.module('neonDemo.directives')
                 $scope.messenger = new neon.eventing.Messenger();
 
                 $scope.messenger.events({
-                    filtersChanged: onFiltersChanged,
-                    custom: [{
-                        channel: "active_dataset_changed",
-                        callback: onDatasetChanged
-                    }]
+                    filtersChanged: onFiltersChanged
                 });
+                $scope.messenger.subscribe("dataset_changed", onDatasetChanged);
 
                 $scope.$watch('countField', function() {
                     $scope.queryForData();
@@ -162,7 +159,7 @@ angular.module('neonDemo.directives')
              * @private
              */
             var onFiltersChanged = function(message) {
-                XDATA.activityLogger.logSystemActivity('CountBy- received neon filter changed event');
+                XDATA.activityLogger.logSystemActivity('CountBy - received neon filter changed event');
                 if(message.filter.databaseName === $scope.databaseName && message.filter.tableName === $scope.selectedTable.name) {
                     $scope.queryForData();
                 }
@@ -174,7 +171,7 @@ angular.module('neonDemo.directives')
              * @private
              */
             var onDatasetChanged = function() {
-                XDATA.activityLogger.logSystemActivity('CountBy- received neon dataset changed event');
+                XDATA.activityLogger.logSystemActivity('CountBy - received neon-gtd dataset changed event');
                 $scope.displayActiveDataset(false);
             };
 
@@ -336,6 +333,10 @@ angular.module('neonDemo.directives')
              * @method updateData
              */
             $scope.updateData = function(queryResults) {
+                if(!($("#" + $scope.tableId).length)) {
+                    return;
+                }
+
                 var cleanData = $scope.stripIdField(queryResults);
 
                 // If the table is recreated while sorting is set, we must redo the sorting on the new table.

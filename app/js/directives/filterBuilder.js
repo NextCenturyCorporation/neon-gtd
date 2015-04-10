@@ -59,14 +59,9 @@ angular.module('neonDemo.directives')
                 $scope.selectedOperator = $scope.filterTable.operatorOptions[0] || '=';
 
                 $scope.messenger.events({
-                    custom: [{
-                        channel: "active_connection_changed",
-                        callback: onConnectionChanged
-                    }, {
-                        channel: "active_dataset_changed",
-                        callback: onDatasetChanged
-                    }]
+                    connectToHost: onConnectToHost
                 });
+                $scope.messenger.subscribe("dataset_changed", onDatasetChanged);
 
                 $scope.$on('$destroy', function() {
                     $scope.messenger.removeEvents();
@@ -164,12 +159,12 @@ angular.module('neonDemo.directives')
             };
 
             /**
-             * Event handler for connection changed events issued over Neon's messaging channels.
-             * @method onConnectionChanged
+             * Event handler for connect to host events issued over Neon's messaging channels.
+             * @method onConnectToHost
              * @private
              */
-            var onConnectionChanged = function() {
-                XDATA.activityLogger.logSystemActivity('FilterBuilder - received neon connection changed event');
+            var onConnectToHost = function() {
+                XDATA.activityLogger.logSystemActivity('FilterBuilder - received neon connect to host event');
                 $scope.filterTable.clearFilterState();
             };
 
@@ -179,12 +174,13 @@ angular.module('neonDemo.directives')
              * @private
              */
             var onDatasetChanged = function() {
-                XDATA.activityLogger.logSystemActivity('FilterBuilder - received neon dataset changed event');
-                $scope.filterTable.clearFilterState();
+                XDATA.activityLogger.logSystemActivity('FilterBuilder - received neon-gtd dataset changed event');
 
                 if(!datasetService.hasDataset()) {
                     return;
                 }
+
+                $scope.filterTable.clearFilterState();
 
                 // Save the new database and table name; Fetch the new table fields.
                 $scope.databaseName = datasetService.getDatabase();
