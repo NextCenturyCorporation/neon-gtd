@@ -98,6 +98,12 @@ angular.module('neonDemo.directives')
                 sizeY: 2,
                 type: 'query-results-table',
                 icon: 'img/visualizations/ViewData64.png'
+            },{
+                name: 'Filter State',
+                sizeX: 2,
+                sizeY: 2,
+                type: 'filter-state',
+                icon: 'img/visualizations/ViewData64.png'
             }];
 
             /**

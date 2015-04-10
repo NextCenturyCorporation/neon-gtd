@@ -1,0 +1,11 @@
+<div class="filter-state-view">
+    <div ng-if="filterStates.raw.length === 0" class="filter-state-warning">No filters currently set</div>
+    <div ng-repeat="(db, value) in filterStates.formatted">
+        <div ng-repeat="(table, states) in filterStates.formatted[db]">
+            <span class="filter-state-header">{{db}} - {{table}}</span>
+            <ul>
+                <li ng-repeat="state in states" class="filter-state">{{state}}</li>
+            </ul>
+        </div>
+    </div>
+</div>
