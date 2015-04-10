@@ -25,6 +25,8 @@ angular.module('neonDemo.directives')
                 $scope.$on('$destroy', function() {
                     $scope.messenger.removeEvents();
                 });
+
+                $scope.queryForState();
             };
 
             var onDatasetChanged = function(message) {
@@ -38,9 +40,18 @@ angular.module('neonDemo.directives')
             };
 
             $scope.queryForState = function() {
-                if($scope.databaseName && $scope.tableName) {
-                    neon.query.Filter.getFilterState($scope.databaseName, $scope.tableName, $scope.updateFilterStateView, handleFilterStateError);
-                }
+                /*if($scope.databaseName && $scope.tableName) {
+                    queryForDBTableFilters($scope.updateFilterStateView, handleFilterStateError);
+                }*/
+                queryForFullState($scope.updateFilterStateView, handleFilterStateError);
+            };
+
+            var queryForFullState = function(success, failure) {
+                neon.query.Filter.getFilterState('*', '*', success, failure);
+            };
+
+            var queryForDBTableFilters = function(success, failure) {
+                neon.query.Filter.getFilterState($scope.databaseName, $scope.tableName, success, failure);
             };
 
             var handleFilterStateError = function() {
