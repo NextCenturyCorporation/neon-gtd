@@ -127,6 +127,8 @@ charts.BarChart.prototype.setOptsConfiguration = function(opts) {
     }
 
     this.clickHandler = opts.clickHandler;
+
+    this.selectedKey = opts.selectedKey;
 };
 
 charts.BarChart.DEFAULT_HEIGHT_ = 250;

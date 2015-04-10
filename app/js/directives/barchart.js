@@ -76,6 +76,7 @@ angular.module('neonDemo.directives')
 
                 $scope.$watch('attrX', function() {
                     if(!$scope.initializing && $scope.databaseName && $scope.tableName) {
+                        $scope.clearFilterSet();
                         $scope.queryForData(true);
                     }
                 });
@@ -245,6 +246,10 @@ angular.module('neonDemo.directives')
                     responsive: false,
                     clickHandler: clickFilterHandler
                 };
+
+                if($scope.filterSet && $scope.filterSet.value) {
+                    opts.selectedKey = $scope.filterSet.value;
+                }
 
                 // Destroy the old chart and rebuild it.
                 if($scope.chart && destroy) {
