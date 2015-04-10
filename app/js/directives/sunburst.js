@@ -144,7 +144,7 @@ angular.module('neonDemo.directives')
                         $scope.databaseName = info.database;
                         $scope.tableName = info.table;
 
-                        connection.getFieldNames($scope.tableName, function(results) {
+                        connection.getFieldNames($scope.databaseName, $scope.tableName, function(results) {
                             $scope.$apply(function() {
                                 $scope.fields = results;
                                 $scope.queryForData();
