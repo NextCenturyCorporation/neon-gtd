@@ -453,7 +453,8 @@ angular.module('neonDemo.directives')
                 var data = queryResults.data;
                 $scope.map.setData(data);
                 $scope.draw();
-                if($scope.dataBounds === undefined) {
+                // Ignore setting the bounds if there is no data because it can cause OpenLayers errors.
+                if(data.length && !($scope.dataBounds)) {
                     $scope.dataBounds = $scope.computeDataBounds(data);
                     $scope.zoomToDataBounds();
                 }

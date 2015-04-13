@@ -206,10 +206,10 @@ charts.DirectedGraph.prototype.updateGraph = function(data) {
             });
 
         node.attr("cx", function(d) {
-                return d.x;
+                return d.x ? d.x : 0;
             })
             .attr("cy", function(d) {
-                return d.y;
+                return d.y ? d.y : 0;
             });
     });
 };

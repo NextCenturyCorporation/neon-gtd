@@ -348,13 +348,11 @@ angular.module('neonDemo.directives')
                             $scope.updateChartData(queryResults);
                             XDATA.activityLogger.logSystemActivity('TimelineSelector - data received');
                         });
-                    }, function() {
-                        $scope.$apply(function(response) {
-                            // TODO:  Determine how to clear the chart without causing errors.
-                            // $scope.updateChartData({ data: [] });
-                            XDATA.activityLogger.logSystemActivity('TimelineSelector - data requested failed');
-                            $scope.errorMessage = errorNotificationService.showErrorMessage(element, response.responseJSON.error, response.responseJSON.stackTrace);
-                        });
+                    }, function(response) {
+                        XDATA.activityLogger.logSystemActivity('TimelineSelector - data requested failed');
+                        // TODO:  Determine how to clear the chart without causing errors.
+                        // $scope.updateChartData({ data: [] });
+                        $scope.errorMessage = errorNotificationService.showErrorMessage(element, response.responseJSON.error, response.responseJSON.stackTrace);
                     });
                 }
             };
