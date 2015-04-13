@@ -185,10 +185,10 @@ angular.module('neonDemo.directives')
                     return;
                 }
 
-                $scope.countField = "";
                 $scope.databaseName = datasetService.getDatabase();
                 $scope.tables = datasetService.getTables();
                 $scope.selectedTable = $scope.tables[0];
+                $scope.countField = datasetService.getMapping($scope.selectedTable.name, "count_by") || "";
                 $scope.filterKeys = filterService.createFilterKeys("countby", $scope.tables);
 
                 if(initializing) {
