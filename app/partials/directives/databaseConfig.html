@@ -72,7 +72,7 @@
 
             <div class="form-group">
               <label for="database-select">Database Name</label>
-              <select id="database-select" class="form-control" ng-change="selectDatabase()" ng-model="selectedDb" ng-options="db for db in databases" ng-disabled="!(isConnected)">
+              <select id="database-select" class="form-control" ng-change="selectDatabase()" ng-model="selectedDB" ng-options="db for db in databases" ng-disabled="!(isConnected)">
                 <option value="">Select Database</option>
               </select>
             </div>
@@ -111,7 +111,7 @@
       <div class="modal-footer">
         <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
         <button type="button" class="btn btn-primary" data-dismiss="modal" id="database-table-button"
-            ng-disabled="selectedTable === null || selectedDb === null" 
+            ng-disabled="selectedTable === null || selectedDB === null" 
             ng-click="connectClick()">Connect</button>
       </div>
     </div>
