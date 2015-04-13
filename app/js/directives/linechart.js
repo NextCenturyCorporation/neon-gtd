@@ -142,6 +142,11 @@ angular.module('neonDemo.directives')
                     $scope.errorMessage = undefined;
                 }
 
+                if(!$scope.attrY && $scope.aggregation !== "count") {
+                    drawChart();
+                    return;
+                }
+
                 var yearGroupClause = new neon.query.GroupByFunctionClause(neon.query.YEAR, $scope.attrX, 'year');
                 var monthGroupClause = new neon.query.GroupByFunctionClause(neon.query.MONTH, $scope.attrX, 'month');
                 var dayGroupClause = new neon.query.GroupByFunctionClause(neon.query.DAY, $scope.attrX, 'day');
@@ -157,11 +162,11 @@ angular.module('neonDemo.directives')
 
                 query.groupBy.apply(query, groupByClause);
 
-                if($scope.aggregation === 'sum') {
+                if($scope.aggregation === "sum") {
                     query.aggregate(neon.query.SUM, $scope.attrY, COUNT_FIELD_NAME);
-                } else if($scope.aggregation === 'avg') {
+                } else if($scope.aggregation === "average") {
                     query.aggregate(neon.query.AVG, $scope.attrY, COUNT_FIELD_NAME);
-                } else {
+                } else if($scope.aggregation === "count") {
                     query.aggregate(neon.query.COUNT, '*', COUNT_FIELD_NAME);
                 }
 
@@ -262,7 +267,7 @@ angular.module('neonDemo.directives')
                     // Calculate Other series
                     var otherTotal = 0;
                     var otherData = [];
-                    if($scope.aggregation !== 'avg') {
+                    if($scope.aggregation !== 'average') {
                         for(i = $scope.seriesLimit; i < data.length; i++) {
                             otherTotal += data[i].total;
                             for(var d = 0; d < data[i].data.length; d++) {
@@ -325,7 +330,7 @@ angular.module('neonDemo.directives')
                 var resultData = {};
 
                 var series = 'Total';
-                if($scope.aggregation === 'avg') {
+                if($scope.aggregation === 'average') {
                     series = 'Average ' + $scope.attrY;
                 } else if($scope.aggregation === 'sum') {
                     series = $scope.attrY;

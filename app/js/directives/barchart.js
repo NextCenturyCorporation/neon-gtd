@@ -166,21 +166,17 @@ angular.module('neonDemo.directives')
                     $scope.errorMessage = undefined;
                 }
 
-                $scope.updatingChart = true;
-
-                var xAxis = $scope.attrX || datasetService.getMapping($scope.selectedTable.name, "bar_x_axis");
-                var yAxis = $scope.attrY || datasetService.getMapping($scope.selectedTable.name, "y_axis");
-
-                if(xAxis === undefined || xAxis === "" || yAxis === undefined || yAxis === "") {
+                if(!$scope.attrX) {
                     drawBlankChart();
-                    $scope.updatingChart = false;
                     return;
                 }
 
+                $scope.updatingChart = true;
+
                 var query = new neon.query.Query()
                     .selectFrom($scope.databaseName, $scope.selectedTable.name)
-                    .where(xAxis, '!=', null)
-                    .groupBy(xAxis);
+                    .where($scope.attrX, '!=', null)
+                    .groupBy($scope.attrX);
 
                 query.ignoreFilters([$scope.filterKeys[$scope.selectedTable.name]]);
 
@@ -189,14 +185,14 @@ angular.module('neonDemo.directives')
                     queryType = neon.query.COUNT;
                 } else if($scope.barType === 'sum') {
                     queryType = neon.query.SUM;
-                } else if($scope.barType === 'avg') {
+                } else if($scope.barType === 'average') {
                     queryType = neon.query.AVG;
                 }
 
-                if(yAxis) {
-                    query.aggregate(queryType, yAxis, COUNT_FIELD_NAME);
-                } else {
+                if(!$scope.attrY) {
                     query.aggregate(queryType, '*', COUNT_FIELD_NAME);
+                } else {
+                    query.aggregate(queryType, $scope.attrY, COUNT_FIELD_NAME);
                 }
 
                 XDATA.activityLogger.logSystemActivity('BarChart - query for data');
@@ -225,20 +221,19 @@ angular.module('neonDemo.directives')
             };
 
             var clickFilterHandler = function(value) {
-                var xAxis = $scope.attrX || datasetService.getMapping($scope.selectedTable.name, "bar_x_axis");
-                if(!xAxis) {
+                if(!$scope.attrX) {
                     return;
                 }
 
                 var filterExists = $scope.filterSet ? true : false;
-                handleFilterSet(xAxis, value);
+                handleFilterSet($scope.attrX, value);
 
                 // Store the value for the filter to use during filter creation.
                 $scope.filterValue = value;
 
                 var connection = connectionService.getActiveConnection();
                 if($scope.messenger && connection) {
-                    var relations = datasetService.getRelations($scope.selectedTable.name, [xAxis]);
+                    var relations = datasetService.getRelations($scope.selectedTable.name, [$scope.attrX]);
                     if(filterExists) {
                         filterService.replaceFilters($scope.messenger, relations, $scope.filterKeys, $scope.createFilter);
                     } else {
@@ -282,19 +277,10 @@ angular.module('neonDemo.directives')
             };
 
             var doDrawChart = function(data, destroy) {
-                var xAxis = $scope.attrX || datasetService.getMapping($scope.selectedTable.name, "bar_x_axis");
-                var yAxis = $scope.attrY || datasetService.getMapping($scope.selectedTable.name, "y_axis");
-
-                if(!yAxis) {
-                    yAxis = COUNT_FIELD_NAME;
-                } else {
-                    yAxis = COUNT_FIELD_NAME;
-                }
-
                 var opts = {
                     data: data.data,
-                    x: xAxis,
-                    y: yAxis,
+                    x: $scope.attrX,
+                    y: COUNT_FIELD_NAME,
                     responsive: false,
                     clickHandler: clickFilterHandler
                 };
