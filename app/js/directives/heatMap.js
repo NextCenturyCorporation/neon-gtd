@@ -237,6 +237,13 @@ angular.module('neonDemo.directives')
                         $timeout.cancel($scope.resizePromise);
                     }
                     $scope.resizePromise = $timeout(redrawOnResize, $scope.resizeRedrawDelay);
+
+                    // Resize the options element.
+                    var optionsElement = $element.find(".map-options");
+                    // Add the element's margin/padding and y position (with an extra 5 pixles for look) to subtract from its final height.
+                    var yBuffer = optionsElement.outerHeight(true) - optionsElement.height() + parseInt(optionsElement.css("top"), 10) + 5;
+                    var optionsHeight = $element.innerHeight() - yBuffer;
+                    optionsElement.find(".popover-content").css("max-height", optionsHeight + "px");
                 });
 
                 // Add a zoomRect handler to the map.

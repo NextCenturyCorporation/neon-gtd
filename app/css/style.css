@@ -352,6 +352,7 @@ fieldset[disabled] .btn-primary.active {
 }
 .chart-options .popover-content {
     background-color: #FFFFFF;
+    overflow: auto;
     padding: 15px 15px 0;
     border: 1px solid rgba(0, 0, 0, 0.2);
     border-radius: 6px;
