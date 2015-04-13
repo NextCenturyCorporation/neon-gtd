@@ -280,11 +280,14 @@ angular.module('neonDemo.directives')
                 if(filteredData.length) {
                     $scope.queryForFilteredData(filteredData);
                 } else {
-                    $scope.queryForNodes();
+                    $scope.queryForNodeData();
                 }
             };
 
-            $scope.queryForNodes = function() {
+            /**
+             * Query for the list of nodes using the selected field and draw the graph containing those nodes.
+             */
+            $scope.queryForNodeData = function() {
                 var query = new neon.query.Query()
                     .selectFrom($scope.databaseName, $scope.selectedTable.name)
                     .withFields([$scope.selectedField]);
@@ -300,6 +303,8 @@ angular.module('neonDemo.directives')
                                 $scope.nodes.push(node);
                             }
                         }
+
+                        // Sort the nodes so they are displayed in order in the options dropdown.
                         $scope.nodes.sort(function(a, b) {
                             if(typeof a === "string" && typeof b === "string") {
                                 return a.toLowerCase().localeCompare(b.toLowerCase());
@@ -312,6 +317,7 @@ angular.module('neonDemo.directives')
                             }
                             return 0;
                         });
+
                         $scope.graph.setClickableNodes($scope.nodes);
                         $scope.createAndShowGraph(data);
                     }, function(response) {
@@ -321,6 +327,10 @@ angular.module('neonDemo.directives')
                 }
             };
 
+            /**
+             * Query for the list of nodes that link to the filtered nodes and draw the graph containing the network.
+             * @param {Array} The array of filtered nodes as Strings
+             */
             $scope.queryForFilteredData = function(filteredData) {
                 if($scope.errorMessage) {
                     errorNotificationService.hideErrorMessage($scope.errorMessage);
@@ -369,36 +379,42 @@ angular.module('neonDemo.directives')
 
             $scope.createAndShowGraph = function(response) {
                 var data = response.data;
-                if(data.length >= 500) {
-                    data = data.slice(0, 500);
+                if(data.length >= $scope.nodeLimit) {
+                    data = data.slice(0, $scope.nodeLimit);
                 }
 
+                // Maps a node value to a unique node ID to ensure each node we add to the graph is unique.
                 var nodesIndexes = {};
-                var nodes = [];
+                // Maps two node IDs to a unique link ID to ensure each link we add to the graph is unique.
                 var linksIndexes = {};
+                // The nodes to be added to the graph.
+                var nodes = [];
+                // The links to be added to the graph.
                 var links = [];
+                // The array of filtered data strings.
                 var filteredData = $scope.getFilteredData();
 
-                var addNodesIfUnique = function(value) {
+                var addNodeIfUnique = function(value) {
                     if(nodesIndexes[value] === undefined) {
                         nodesIndexes[value] = nodes.length;
-                        var colorGroup;
+                        var colorGroup = 2;
                         if(filteredData.indexOf(value) !== -1) {
                             colorGroup = 1;
                         } else if($scope.nodes.indexOf(value) !== -1) {
                             colorGroup = 3;
-                        } else {
-                            colorGroup = 2;
                         }
+
                         nodes.push({
                             name: value,
                             group: colorGroup
                         });
                     }
-                    return nodesIndexes[value];
                 };
 
-                var addLinkIfUnique = function(node1, node2) {
+                var addLinkIfUnique = function(value1, value2) {
+                    var node1 = nodesIndexes[value1];
+                    var node2 = nodesIndexes[value2];
+
                     if(!linksIndexes[node1]) {
                         linksIndexes[node1] = {};
                     }
@@ -413,20 +429,21 @@ angular.module('neonDemo.directives')
                     }
                 };
 
-                var node1;
-                var node2;
-                var relatedNodes;
+                // Add each unique value from the data to the graph as a node.
                 for(var i = 0; i < data.length; i++) {
-                    if(data[i][$scope.selectedField]) {
-                        node1 = addNodesIfUnique(data[i][$scope.selectedField]);
-                        relatedNodes = (data[i].attributeList ? data[i].attributeList : []);
-                        if(relatedNodes.length >= 500) {
-                            relatedNodes = relatedNodes.slice(0, 500);
+                    var value = data[i][$scope.selectedField];
+                    if(value) {
+                        addNodeIfUnique(value);
+
+                        var relatedNodes = (data[i].attributeList ? data[i].attributeList : []);
+                        if(relatedNodes.length >= $scope.nodeLimit) {
+                            relatedNodes = relatedNodes.slice(0, $scope.nodeLimit);
                         }
 
+                        // Add each related node to the graph as a node with a link to the original node.
                         for(var j = 0; j < relatedNodes.length; j++) {
-                            node2 = addNodesIfUnique(relatedNodes[j]);
-                            addLinkIfUnique(node1, node2);
+                            addNodeIfUnique(relatedNodes[j]);
+                            addLinkIfUnique(value, relatedNodes[j]);
                         }
                     }
                 }
