@@ -60,6 +60,7 @@ angular.module('neonDemo.directives')
             $scope.showFilter = false;
             $scope.dataBounds = undefined;
             $scope.limit = 20000;  // Max points to pull into the map.
+            $scope.dataLength = 0;
             $scope.resizeRedrawDelay = 1500; // Time in ms to wait after a resize event flood to try redrawing the map.
             $scope.errorMessage = undefined;
 
@@ -452,6 +453,7 @@ angular.module('neonDemo.directives')
              */
             $scope.updateMapData = function(queryResults) {
                 var data = queryResults.data;
+                $scope.dataLength = data.length;
                 $scope.map.setData(data);
                 $scope.draw();
                 // Ignore setting the bounds if there is no data because it can cause OpenLayers errors.

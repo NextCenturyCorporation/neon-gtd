@@ -1,7 +1,9 @@
 <div class="chart-options pull-right">
     <a class="btn btn-lg text-muted collapsed" data-toggle="collapse" data-target=".{{uniqueChartOptions}} .directed-graph-options" data-animation=false>
-      <span class="glyphicon glyphicon-cog"></span>
-      <span class="caret"></span>
+        <span class="chart-options-text" ng-hide="(numberOfNodesInGraph < nodeLimit)">{{nodeLimit}} node limit</span>
+        <span class="chart-options-text" ng-hide="(numberOfNodesInGraph > 0)">No data available</span>
+        <span class="glyphicon glyphicon-cog"></span>
+        <span class="caret"></span>
     </a>
     <div class="directed-graph-options popover bottom">
         <div class="arrow"></div>
@@ -38,9 +40,6 @@
              <span class="glyphicon glyphicon-remove"></span>
             </a>
         </div>
-    </div>
-    <div ng-hide="(numberOfNodesInGraph > 0)">
-        No data available
     </div>
     <div id="directed-graph-div-{{uniqueId}}"></div>
 </div>

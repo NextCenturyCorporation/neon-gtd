@@ -4,8 +4,9 @@
         <a class="btn btn-lg text-muted collapsed" data-toggle="collapse" 
             data-target=".{{uniqueChartOptions}} .map-options" data-animation=false
             ng-click="toggleOptionsDisplay()">
-          <span class="glyphicon glyphicon-cog"></span>
-          <span class="caret"></span>
+            <span class="chart-options-text" ng-hide="(dataLength < limit)">{{limit}} data limit</span>
+            <span class="glyphicon glyphicon-cog"></span>
+            <span class="caret"></span>
         </a>
         <div class="map-options popover bottom">
             <div class="arrow"></div>
@@ -27,7 +28,7 @@
                         </select>
                     </div>
                     <div class="form-group">
-                        <label>Point Limit</label>
+                        <label>Data Limit</label>
                         <input type="number" min="1" name="mapOptionsform" class="form-control" ng-model="limit"
                             ng-class="{true: '', false: 'has-error'}[limitInput.$error.number]">
                     </div>
