@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="en" ng-app="neonDemo">
+<html lang="en">
     <head>
         <meta charset="utf-8">
         <meta http-equiv="X-UA-Compatible" content="IE=edge">
@@ -25,6 +25,7 @@
         <link rel="stylesheet" type="text/css" href="css/directives/circularHeatChart.css">
         <link rel="stylesheet" type="text/css" href="css/directives/countBy.css">
         <link rel="stylesheet" type="text/css" href="css/directives/barchart.css">
+        <link rel="stylesheet" type="text/css" href="css/directives/directedGraph.css">
         <link rel="stylesheet" type="text/css" href="css/directives/linechart.css">
         <link rel="stylesheet" type="text/css" href="css/directives/stackedBarChart.css">
         <link rel="stylesheet" type="text/css" href="css/directives/timelineSelector.css">
@@ -56,7 +57,7 @@
                     <div class="clearfix visible-xs"></div>
 
                     <!-- Database Config -->
-                    <database-config></database-config>
+                    <database-config gridster-configs="visualizations"></database-config>
 
                     <!-- Add visualization control -->
                     <div add-visualization gridster-configs="visualizations"></div>
@@ -99,7 +100,7 @@
 
             <div id="data-tray" class="tray data-tray panel panel-default collapse">
                 <div class="container panel-body">
-                    <div query-results-table show-data="seeData"></div>
+                    <div query-results-table show-data="seeData" navbar-item="(true)"></div>
                 </div>
             </div>
 
@@ -179,9 +180,6 @@
         <!-- Include the opencpu library. OpenCPU needs to be included after JQuery and before the app config. -->
         <script src="lib/opencpu/js/opencpu-0.5.js"></script>
 
-        <!-- Configure our main demo application -->
-        <script src="js/appConfig.js"></script>
-
         <!-- In production use:
         <script src="//ajax.googleapis.com/ajax/libs/angularjs/x.x.x/angular.min.js"></script>
         -->
@@ -214,6 +212,7 @@
         <script src="js/neon-extensions/filtertable.js"></script>
         <script src="js/namespaces.js"></script>
         <script src="js/charts/barchart.js"></script>
+        <script src="js/charts/directedGraph.js"></script>
         <script src="js/charts/linechart.js"></script>
         <script src="js/charts/timelineSelectorChart.js"></script>
         <script src="js/coremap/coremap.js"></script>
@@ -223,7 +222,9 @@
         <!-- Include our custom Angular components here for now. -->
         <script src="js/app.js"></script>
         <script src="js/connectionService.js"></script>
+        <script src="js/datasetService.js"></script>
         <script src="js/errorNotificationService.js"></script>
+        <script src="js/filterService.js"></script>
         <script src="js/filterCountService.js"></script>
         <script src="js/neonDemoController.js"></script>
 
@@ -235,8 +236,8 @@
         <script src="js/directives/circularHeatForm.js"></script>
         <script src="js/directives/countBy.js"></script>
         <script src="js/directives/databaseConfig.js"></script>
+        <script src="js/directives/directedGraph.js"></script>
         <script src="js/directives/filterBuilder.js"></script>
-        <script src="js/directives/fieldSelector.js"></script>
         <script src="js/directives/heatMap.js"></script>
         <script src="js/directives/linechart.js"></script>
         <script src="js/directives/poweredByNeon.js"></script>

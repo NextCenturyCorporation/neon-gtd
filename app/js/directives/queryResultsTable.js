@@ -27,15 +27,20 @@
  * @constructor
  */
 angular.module('neonDemo.directives')
-.directive('queryResultsTable', ['ConnectionService', 'ErrorNotificationService',
-    function(connectionService, errorNotificationService) {
+.directive('queryResultsTable', ['DIG', 'ConnectionService', 'DatasetService', 'ErrorNotificationService',
+    function(DIG, connectionService, datasetService, errorNotificationService) {
     return {
         templateUrl: 'partials/directives/queryResultsTable.html',
         restrict: 'EA',
         scope: {
+            navbarItem: '=?',
             showData: '=?'
         },
         link: function($scope, element) {
+            $scope.uniqueChartOptions = 'chart-options-' + uuid();
+            var chartOptions = $(element).find('.chart-options');
+            chartOptions.toggleClass($scope.uniqueChartOptions);
+
             element.addClass('query-results-directive');
 
             // If this widget was launched as a navbar collapsable then showData will be bound to the collapse toggle.
@@ -51,7 +56,10 @@ angular.module('neonDemo.directives')
             $scope.DESCENDING = neon.query.DESCENDING;
 
             $scope.databaseName = '';
-            $scope.tableName = '';
+            $scope.tables = [];
+            $scope.selectedTable = {
+                name: ""
+            };
             $scope.fields = [];
             $scope.sortByField = '';
             $scope.sortDirection = neon.query.ASCENDING;
@@ -123,9 +131,9 @@ angular.module('neonDemo.directives')
                 $scope.messenger = new neon.eventing.Messenger();
 
                 $scope.messenger.events({
-                    activeDatasetChanged: onDatasetChanged,
                     filtersChanged: onFiltersChanged
                 });
+                $scope.messenger.subscribe("dataset_changed", onDatasetChanged);
 
                 $scope.$on('$destroy', function() {
                     $scope.messenger.removeEvents();
@@ -163,7 +171,7 @@ angular.module('neonDemo.directives')
                 var columns = tables.createColumns(data);
                 columns = tables.addLinkabilityToColumns(columns);
 
-                if(neon.DIG_ENABLED) {
+                if(DIG.enabled) {
                     var digColumn = {
                         name: "",
                         field: "dig",
@@ -183,9 +191,11 @@ angular.module('neonDemo.directives')
              * @method onFiltersChanged
              * @private
              */
-            var onFiltersChanged = function() {
+            var onFiltersChanged = function(message) {
                 XDATA.activityLogger.logSystemActivity('DataView - received neon filter changed event');
-                updateRowsAndCount();
+                if(message.addedFilter.databaseName === $scope.databaseName && message.addedFilter.tableName === $scope.selectedTable.name) {
+                    updateRowsAndCount();
+                }
             };
 
             /**
@@ -198,53 +208,41 @@ angular.module('neonDemo.directives')
 
             /**
              * Event handler for dataset changed events issued over Neon's messaging channels.
-             * @param {Object} message A Neon dataset changed message.
-             * @param {String} message.database The database that was selected.
-             * @param {String} message.table The table within the database that was selected.
              * @method onDatasetChanged
              * @private
              */
-            var onDatasetChanged = function(message) {
-                XDATA.activityLogger.logSystemActivity('DataView - received neon dataset changed event');
-                $scope.databaseName = message.database;
-                $scope.tableName = message.table;
-
-                // if there is no active connection, try to make one.
-                connectionService.connectToDataset(message.datastore, message.hostname, message.database, message.table);
-                $scope.displayActiveDataset();
+            var onDatasetChanged = function() {
+                XDATA.activityLogger.logSystemActivity('DataView - received neon-gtd dataset changed event');
+                $scope.displayActiveDataset(false);
             };
 
             /**
              * Displays data for any currently active datasets.
+             * @param {Boolean} Whether this function was called during visualization initialization.
              * @method displayActiveDataset
              */
-            $scope.displayActiveDataset = function() {
-                var connection = connectionService.getActiveConnection();
-                if(connection) {
-                    connectionService.loadMetadata(function() {
-                        var info = connectionService.getActiveDataset();
-                        $scope.databaseName = info.database;
-                        $scope.tableName = info.table;
-                        connection.getFieldNames($scope.databaseName, $scope.tableName, function(results) {
-                            $scope.$apply(function() {
-                                populateFieldNames(results);
-                                $scope.sortByField = connectionService.getFieldMapping("sort_by");
-                                $scope.sortByField = $scope.sortByField || $scope.fields[0];
-                                updateRowsAndCount();
-                            });
-                        });
+            $scope.displayActiveDataset = function(initializing) {
+                if(!datasetService.hasDataset()) {
+                    return;
+                }
+
+                $scope.databaseName = datasetService.getDatabase();
+                $scope.tables = datasetService.getTables();
+                $scope.selectedTable = $scope.tables[0];
+
+                if(initializing) {
+                    $scope.updateFieldsAndRowsAndCount();
+                } else {
+                    $scope.$apply(function() {
+                        $scope.updateFieldsAndRowsAndCount();
                     });
                 }
             };
 
-            /**
-             * Helper method for setting the fields available for filter clauses.
-             * @param {Array} fields An array of field name strings.
-             * @method populateFieldNames
-             * @private
-             */
-            var populateFieldNames = function(fields) {
-                $scope.fields = fields;
+            $scope.updateFieldsAndRowsAndCount = function() {
+                $scope.fields = datasetService.getDatabaseFields($scope.selectedTable.name);
+                $scope.sortByField = datasetService.getMapping($scope.selectedTable.name, "sort_by") || $scope.fields[0];
+                updateRowsAndCount();
             };
 
             /**
@@ -301,23 +299,26 @@ angular.module('neonDemo.directives')
              * @method queryForData
              */
             $scope.queryForTotalRows = function() {
-                var query = new neon.query.Query().selectFrom($scope.databaseName, $scope.tableName)
+                var query = new neon.query.Query().selectFrom($scope.databaseName, $scope.selectedTable.name)
                     .aggregate(neon.query.COUNT, '*', 'count');
 
                 XDATA.activityLogger.logSystemActivity('DataView - query for total rows of data');
-                connectionService.getActiveConnection().executeQuery(query, function(queryResults) {
-                    $scope.$apply(function() {
-                        if(queryResults.data.length > 0) {
-                            $scope.totalRows = queryResults.data[0].count;
-                        } else {
-                            $scope.totalRows = 0;
-                        }
-                        XDATA.activityLogger.logSystemActivity('DataView - received total; updating view');
+                var connection = connectionService.getActiveConnection();
+                if(connection) {
+                    connection.executeQuery(query, function(queryResults) {
+                        $scope.$apply(function() {
+                            if(queryResults.data.length > 0) {
+                                $scope.totalRows = queryResults.data[0].count;
+                            } else {
+                                $scope.totalRows = 0;
+                            }
+                            XDATA.activityLogger.logSystemActivity('DataView - received total; updating view');
+                        });
+                    }, function() {
+                        XDATA.activityLogger.logSystemActivity('DataView - received error in query for total rows');
+                        $scope.totalRows = 0;
                     });
-                }, function(response) {
-                    XDATA.activityLogger.logSystemActivity('DataView - received error in query for total rows');
-                    $scope.totalRows = 0;
-                });
+                }
             };
 
             /**
@@ -333,10 +334,13 @@ angular.module('neonDemo.directives')
              * @method updateData
              */
             $scope.updateData = function(queryResults) {
-                // Handle the new data.
+                if(!($("#" + $scope.tableId).length)) {
+                    return;
+                }
+
                 $scope.tableOptions = $scope.createOptions(queryResults);
 
-                if(neon.DIG_ENABLED) {
+                if(DIG.enabled) {
                     queryResults = $scope.addDigUrlColumnData(queryResults);
                 }
 
@@ -348,7 +352,7 @@ angular.module('neonDemo.directives')
                 data.data.forEach(function(row) {
                     var rowId = row._id;
                     var query = "id=" + rowId;
-                    var element = "<form action=\"" + neon.DIG_SERVER + "/list\" method=\"get\" target=\"" + query + "\">" +
+                    var element = "<form action=\"" + DIG.server + "/list\" method=\"get\" target=\"" + query + "\">" +
                         "<input type=\"hidden\" name=\"id\" value=\"" + rowId + "\">" +
                         "<button class=\"hidden-button\" type=\"submit\" title=\"" + query + "\">" +
                         "<span class=\"glyphicon glyphicon-new-window\"></span></button></form>";
@@ -363,7 +367,7 @@ angular.module('neonDemo.directives')
              * @method buildQuery
              */
             $scope.buildQuery = function() {
-                var query = new neon.query.Query().selectFrom($scope.databaseName, $scope.tableName);
+                var query = new neon.query.Query().selectFrom($scope.databaseName, $scope.selectedTable.name);
                 query.limit($scope.limit);
                 if($scope.sortByField !== "undefined" && $scope.sortByField.length > 0) {
                     query.sortBy($scope.sortByField, $scope.sortDirection);
@@ -375,7 +379,7 @@ angular.module('neonDemo.directives')
             // Wait for neon to be ready, the create our messenger and intialize the view and data.
             neon.ready(function() {
                 $scope.initialize();
-                $scope.displayActiveDataset();
+                $scope.displayActiveDataset(true);
             });
         }
     };

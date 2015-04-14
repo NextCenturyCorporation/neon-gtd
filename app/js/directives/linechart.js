@@ -27,7 +27,7 @@
  * @constructor
  */
 angular.module('neonDemo.directives')
-.directive('linechart', ['ConnectionService', 'ErrorNotificationService', function(connectionService, errorNotificationService) {
+.directive('linechart', ['ConnectionService', 'DatasetService', 'ErrorNotificationService', function(connectionService, datasetService, errorNotificationService) {
     var COUNT_FIELD_NAME = 'value';
 
     return {
@@ -44,8 +44,11 @@ angular.module('neonDemo.directives')
 
             $element.addClass('linechartDirective');
 
-            $scope.databaseName = '';
-            $scope.tableName = '';
+            $scope.selectedDatabase = '';
+            $scope.tables = [];
+            $scope.selectedTable = {
+                name: ""
+            };
             $scope.totalType = 'count';
             $scope.fields = [];
             $scope.chart = undefined;
@@ -66,9 +69,9 @@ angular.module('neonDemo.directives')
 
             var initialize = function() {
                 $scope.messenger.events({
-                    activeDatasetChanged: onDatasetChanged,
                     filtersChanged: onFiltersChanged
                 });
+                $scope.messenger.subscribe("dataset_changed", onDatasetChanged);
 
                 $scope.$on('$destroy', function() {
                     $scope.messenger.removeEvents();
@@ -82,19 +85,19 @@ angular.module('neonDemo.directives')
 
                 $scope.$watch('attrY', function(newValue, oldValue) {
                     onFieldChange('attrY', newValue, oldValue);
-                    if($scope.databaseName && $scope.tableName) {
+                    if($scope.selectedDatabase && $scope.selectedTable.name) {
                         $scope.queryForData();
                     }
                 });
                 $scope.$watch('categoryField', function(newValue, oldValue) {
                     onFieldChange('categoryField', newValue, oldValue);
-                    if($scope.databaseName && $scope.tableName) {
+                    if($scope.selectedDatabase && $scope.selectedTable.name) {
                         $scope.queryForData();
                     }
                 });
                 $scope.$watch('aggregation', function(newValue, oldValue) {
                     onFieldChange('aggregation', newValue, oldValue);
-                    if($scope.databaseName && $scope.tableName) {
+                    if($scope.selectedDatabase && $scope.selectedTable.name) {
                         $scope.queryForData();
                     }
                 });
@@ -110,25 +113,38 @@ angular.module('neonDemo.directives')
                     });
             };
 
-            var onFiltersChanged = function() {
+            /**
+             * Event handler for filter changed events issued over Neon's messaging channels.
+             * @param {Object} message A Neon filter changed message.
+             * @method onFiltersChanged
+             * @private
+             */
+            var onFiltersChanged = function(message) {
                 XDATA.activityLogger.logSystemActivity('LineChart - received neon filter changed event');
-                $scope.queryForData();
+                if(message.addedFilter.databaseName === $scope.databaseName && message.addedFilter.tableName === $scope.selectedTable.name) {
+                    $scope.queryForData();
+                }
             };
 
-            var onDatasetChanged = function(message) {
-                XDATA.activityLogger.logSystemActivity('LineChart - received neon dataset changed event');
-                $scope.databaseName = message.database;
-                $scope.tableName = message.table;
-
-                // if there is no active connection, try to make one.
-                connectionService.connectToDataset(message.datastore, message.hostname, message.database, message.table);
-                $scope.displayActiveDataset();
+            /**
+             * Event handler for dataset changed events issued over Neon's messaging channels.
+             * @method onDatasetChanged
+             * @private
+             */
+            var onDatasetChanged = function() {
+                XDATA.activityLogger.logSystemActivity('LineChart - received neon-gtd dataset changed event');
+                $scope.displayActiveDataset(false);
             };
 
             var query = function(callback) {
                 if($scope.errorMessage) {
                     errorNotificationService.hideErrorMessage($scope.errorMessage);
                     $scope.errorMessage = undefined;
+                }
+
+                if(!$scope.attrY && $scope.aggregation !== "count") {
+                    drawChart();
+                    return;
                 }
 
                 var yearGroupClause = new neon.query.GroupByFunctionClause(neon.query.YEAR, $scope.attrX, 'year');
@@ -141,54 +157,62 @@ angular.module('neonDemo.directives')
                 }
 
                 var query = new neon.query.Query()
-                    .selectFrom($scope.databaseName, $scope.tableName)
+                    .selectFrom($scope.selectedDatabase, $scope.selectedTable.name)
                     .where($scope.attrX, '!=', null);
 
                 query.groupBy.apply(query, groupByClause);
 
-                if($scope.aggregation === 'sum') {
+                if($scope.aggregation === "sum") {
                     query.aggregate(neon.query.SUM, $scope.attrY, COUNT_FIELD_NAME);
-                } else if($scope.aggregation === 'avg') {
+                } else if($scope.aggregation === "average") {
                     query.aggregate(neon.query.AVG, $scope.attrY, COUNT_FIELD_NAME);
-                } else {
+                } else if($scope.aggregation === "count") {
                     query.aggregate(neon.query.COUNT, '*', COUNT_FIELD_NAME);
                 }
 
                 query.aggregate(neon.query.MIN, $scope.attrX, 'date')
                     .sortBy('date', neon.query.ASCENDING);
 
-                connectionService.getActiveConnection().executeQuery(query, callback, function(response) {
-                    XDATA.activityLogger.logSystemActivity('LineChart - query failed');
-                    drawChart();
-                    $scope.errorMessage = errorNotificationService.showErrorMessage($element, response.responseJSON.error, response.responseJSON.stackTrace);
-                });
+                var connection = connectionService.getActiveConnection();
+                if(connection) {
+                    connection.executeQuery(query, callback, function(response) {
+                        XDATA.activityLogger.logSystemActivity('LineChart - query failed');
+                        drawChart();
+                        $scope.errorMessage = errorNotificationService.showErrorMessage($element, response.responseJSON.error, response.responseJSON.stackTrace);
+                    });
+                }
             };
 
             /**
              * Displays data for any currently active datasets.
+             * @param {Boolean} Whether this function was called during visualization initialization.
              * @method displayActiveDataset
              */
-            $scope.displayActiveDataset = function() {
-                var connection = connectionService.getActiveConnection();
-                if(connection) {
-                    connectionService.loadMetadata(function() {
-                        var info = connectionService.getActiveDataset();
-                        $scope.databaseName = info.database;
-                        $scope.tableName = info.table;
-                        $scope.attrX = connectionService.getFieldMapping("date");
-                        $scope.attrY = connectionService.getFieldMapping("y_axis");
-                        $scope.categoryField = connectionService.getFieldMapping("line_category");
-                        $scope.aggregation = 'count';
-                        connection.getFieldNames($scope.databaseName, $scope.tableName, function(results) {
-                            XDATA.activityLogger.logSystemActivity('LineChart - query for available fields');
-                            $scope.$apply(function() {
-                                $scope.fields = results;
-                                XDATA.activityLogger.logSystemActivity('LineChart - received available fields');
-                            });
-                        });
-                        $scope.queryForData();
+            $scope.displayActiveDataset = function(initializing) {
+                if(!datasetService.hasDataset()) {
+                    return;
+                }
+
+                $scope.selectedDatabase = datasetService.getDatabase();
+                $scope.tables = datasetService.getTables();
+                $scope.selectedTable = datasetService.getFirstTableWithMappings(["date", "y_axis"]) || $scope.tables[0];
+
+                if(initializing) {
+                    $scope.updateFieldsAndQueryForData();
+                } else {
+                    $scope.$apply(function() {
+                        $scope.updateFieldsAndQueryForData();
                     });
                 }
+            };
+
+            $scope.updateFieldsAndQueryForData = function() {
+                $scope.attrX = datasetService.getMapping($scope.selectedTable.name, "date") || "";
+                $scope.attrY = datasetService.getMapping($scope.selectedTable.name, "y_axis") || "";
+                $scope.categoryField = datasetService.getMapping($scope.selectedTable.name, "line_category") || "";
+                $scope.aggregation = 'count';
+                $scope.fields = datasetService.getDatabaseFields($scope.selectedTable.name);
+                $scope.queryForData();
             };
 
             $scope.queryForData = function() {
@@ -243,7 +267,7 @@ angular.module('neonDemo.directives')
                     // Calculate Other series
                     var otherTotal = 0;
                     var otherData = [];
-                    if($scope.aggregation !== 'avg') {
+                    if($scope.aggregation !== 'average') {
                         for(i = $scope.seriesLimit; i < data.length; i++) {
                             otherTotal += data[i].total;
                             for(var d = 0; d < data[i].data.length; d++) {
@@ -306,7 +330,7 @@ angular.module('neonDemo.directives')
                 var resultData = {};
 
                 var series = 'Total';
-                if($scope.aggregation === 'avg') {
+                if($scope.aggregation === 'average') {
                     series = 'Average ' + $scope.attrY;
                 } else if($scope.aggregation === 'sum') {
                     series = $scope.attrY;
@@ -393,7 +417,7 @@ angular.module('neonDemo.directives')
             neon.ready(function() {
                 $scope.messenger = new neon.eventing.Messenger();
                 initialize();
-                $scope.displayActiveDataset();
+                $scope.displayActiveDataset(true);
             });
         }
     };

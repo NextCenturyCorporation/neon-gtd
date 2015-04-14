@@ -22,11 +22,26 @@ angular.module('neonDemo.directives')
         templateUrl: "partials/directives/arrayTextForm.html",
         restrict: "E",
         scope: {
-            fields: '='
+            fields: '=',
+            allowMore: '=?',
+            label: '=?',
+            submitHandler: '=?'
         },
         link: function($scope) {
+            if($scope.allowMore === undefined) {
+                $scope.allowMore = true;
+            }
+            $scope.label = $scope.label || ($scope.allowMore ? "Fields" : "Field");
+
             $scope.addField = function() {
                 $scope.fields.push("");
+            };
+
+            $scope.handleSubmit = function() {
+                console.log("handling submit");
+                if($scope.submitHandler) {
+                    $scope.submitHandler.call(this);
+                }
             };
 
             $scope.blur = function($event, $index) {
@@ -35,6 +50,7 @@ angular.module('neonDemo.directives')
                 } else {
                     $scope.fields[ $index ] = $event.currentTarget.value;
                 }
+                $scope.handleSubmit();
             };
         }
     };

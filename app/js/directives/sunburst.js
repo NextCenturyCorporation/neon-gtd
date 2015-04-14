@@ -27,7 +27,7 @@
  * @constructor
  */
 angular.module('neonDemo.directives')
-.directive('sunburst', ['ConnectionService', 'ErrorNotificationService', function(connectionService, errorNotificationService) {
+.directive('sunburst', ['ConnectionService', 'DatasetService', 'ErrorNotificationService', function(connectionService, datasetService, errorNotificationService) {
     return {
         templateUrl: 'partials/directives/sunburst.html',
         restrict: 'EA',
@@ -42,8 +42,11 @@ angular.module('neonDemo.directives')
             $scope.selectedItem = null;
             $scope.groupFields = [];
             $scope.messenger = new neon.eventing.Messenger();
-            $scope.database = '';
-            $scope.tableName = '';
+            $scope.databaseName = '';
+            $scope.tables = [];
+            $scope.selectedTable = {
+                name: ""
+            };
             $scope.fields = [""];
             $scope.chart = undefined;
             $scope.errorMessage = undefined;
@@ -59,9 +62,9 @@ angular.module('neonDemo.directives')
                 $scope.chart.drawBlank();
 
                 $scope.messenger.events({
-                    activeDatasetChanged: onDatasetChanged,
                     filtersChanged: onFiltersChanged
                 });
+                $scope.messenger.subscribe("dataset_changed", onDatasetChanged);
 
                 $scope.$on('$destroy', function() {
                     $scope.messenger.removeEvents();
@@ -86,24 +89,27 @@ angular.module('neonDemo.directives')
                 });
             };
 
-            var onFiltersChanged = function() {
+            /**
+             * Event handler for filter changed events issued over Neon's messaging channels.
+             * @param {Object} message A Neon filter changed message.
+             * @method onFiltersChanged
+             * @private
+             */
+            var onFiltersChanged = function(message) {
                 XDATA.activityLogger.logSystemActivity('SunburstChart - received neon filter changed event');
-                $scope.queryForData();
+                if(message.addedFilter.databaseName === $scope.databaseName && message.addedFilter.tableName === $scope.selectedTable.name) {
+                    $scope.queryForData();
+                }
             };
 
-            var onDatasetChanged = function(message) {
-                XDATA.activityLogger.logSystemActivity('SunburstChart - received neon dataset changed event');
-                $scope.databaseName = message.database;
-                $scope.tableName = message.table;
-                $scope.groupFields = [];
-                $scope.valueField = null;
-                $scope.arcValue = charts.SunburstChart.COUNT_PARTITION;
-
-                // if there is no active connection, try to make one.
-                connectionService.connectToDataset(message.datastore, message.hostname, message.database, message.table);
-
-                // Pull data.
-                $scope.displayActiveDataset();
+            /**
+             * Event handler for dataset changed events issued over Neon's messaging channels.
+             * @method onDatasetChanged
+             * @private
+             */
+            var onDatasetChanged = function() {
+                XDATA.activityLogger.logSystemActivity('SunburstChart - received neon-gtd dataset changed event');
+                $scope.displayActiveDataset(false);
             };
 
             $scope.updateChartSize = function() {
@@ -118,7 +124,7 @@ angular.module('neonDemo.directives')
              * @method buildQuery
              */
             $scope.buildQuery = function() {
-                var query = new neon.query.Query().selectFrom($scope.databaseName, $scope.tableName);
+                var query = new neon.query.Query().selectFrom($scope.databaseName, $scope.selectedTable.name);
                 if($scope.groupFields.length > 0) {
                     query.groupBy.apply(query, $scope.groupFields);
                 }
@@ -134,24 +140,34 @@ angular.module('neonDemo.directives')
 
             /**
              * Displays data for any currently active datasets.
+             * @param {Boolean} Whether this function was called during visualization initialization.
              * @method displayActiveDataset
              */
-            $scope.displayActiveDataset = function() {
-                var connection = connectionService.getActiveConnection();
-                if(connection) {
-                    connectionService.loadMetadata(function() {
-                        var info = connectionService.getActiveDataset();
-                        $scope.databaseName = info.database;
-                        $scope.tableName = info.table;
+            $scope.displayActiveDataset = function(initializing) {
+                if(!datasetService.hasDataset()) {
+                    return;
+                }
 
-                        connection.getFieldNames($scope.databaseName, $scope.tableName, function(results) {
-                            $scope.$apply(function() {
-                                $scope.fields = results;
-                                $scope.queryForData();
-                            });
-                        });
+                $scope.groupFields = [];
+                $scope.valueField = null;
+                $scope.arcValue = charts.SunburstChart.COUNT_PARTITION;
+
+                $scope.databaseName = datasetService.getDatabase();
+                $scope.tables = datasetService.getTables();
+                $scope.selectedTable = $scope.tables[0];
+
+                if(initializing) {
+                    $scope.updateFieldsAndQueryForData();
+                } else {
+                    $scope.$apply(function() {
+                        $scope.updateFieldsAndQueryForData();
                     });
                 }
+            };
+
+            $scope.updateFieldsAndQueryForData = function() {
+                $scope.fields = datasetService.getDatabaseFields($scope.selectedTable.name);
+                $scope.queryForData();
             };
 
             $scope.queryForData = function() {
@@ -185,7 +201,7 @@ angular.module('neonDemo.directives')
             var buildDataTree = function(data) {
                 var nodes = {};
                 var tree = {
-                    name: $scope.tableName,
+                    name: $scope.selectedTable.name,
                     children: []
                 };
                 var leafObject;
@@ -239,7 +255,7 @@ angular.module('neonDemo.directives')
             neon.ready(function() {
                 $scope.messenger = new neon.eventing.Messenger();
                 initialize();
-                $scope.displayActiveDataset();
+                $scope.displayActiveDataset(true);
             });
 
             $scope.addGroup = function() {

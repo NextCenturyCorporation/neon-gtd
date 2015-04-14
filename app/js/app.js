@@ -14,7 +14,8 @@
  * limitations under the License.
  *
  */
-angular.module('neonDemo', [
+
+var neonDemo = angular.module('neonDemo', [
     'neonDemo.controllers',
     'neonDemo.services',
     'neonDemo.directives',
@@ -45,4 +46,49 @@ angular.module('neonDemo.filters', [])
         }
         return number;
     };
+});
+
+var XDATA = {};
+
+angular.element(document).ready(function() {
+    var $http = angular.injector(['ng']).get('$http');
+    $http.get('./config/config.json').success(function(config) {
+        var xdataConfig = (config.xdata || {
+            echoToConsole: false,
+            enableLogging: false,
+            activityLoggerUrl: "",
+            component: "",
+            componentVersion: ""
+        });
+
+        XDATA.activityLogger = new activityLogger('lib/xdatalogger/js/draper.activity_worker-2.1.1.js');
+        XDATA.activityLogger.echo(xdataConfig.echoToConsole).testing(!xdataConfig.enableLogging);
+        XDATA.activityLogger.registerActivityLogger(xdataConfig.activityLoggerUrl, xdataConfig.component, xdataConfig.componentVersion);
+
+        var opencpuConfig = (config.opencpu || {
+            enableOpenCpu: false
+        });
+
+        if(opencpuConfig.enableOpenCpu) {
+            ocpu.enableLogging = opencpuConfig.enableLogging;
+            ocpu.useAlerts = opencpuConfig.useAlerts;
+            ocpu.seturl(opencpuConfig.url);
+        }
+
+        var digConfig = (config.dig || {
+            enabled: false
+        });
+        neonDemo.constant('DIG', digConfig);
+
+        var datasets = (config.datasets || []);
+        neonDemo.value('datasets', datasets);
+
+        var visualizations = (config.visualizations || []);
+        neonDemo.constant('visualizations', visualizations);
+
+        var layouts = (config.layouts || {});
+        neonDemo.constant('layouts', layouts);
+
+        angular.bootstrap(document, ['neonDemo']);
+    });
 });

@@ -30,7 +30,7 @@
  * @constructor
  */
 angular.module('neonDemo.directives')
-.directive('circularHeatForm', ['ConnectionService', 'ErrorNotificationService', function(connectionService, errorNotificationService) {
+.directive('circularHeatForm', ['ConnectionService', 'DatasetService', 'ErrorNotificationService', function(connectionService, datasetService, errorNotificationService) {
     return {
         templateUrl: 'partials/directives/circularHeatForm.html',
         restrict: 'EA',
@@ -55,6 +55,15 @@ angular.module('neonDemo.directives')
             };
         },
         link: function($scope, element) {
+            $scope.uniqueChartOptions = 'chart-options-' + uuid();
+            var chartOptions = $(element).find('.chart-options');
+            chartOptions.toggleClass($scope.uniqueChartOptions);
+
+            $scope.databaseName = "";
+            $scope.tables = [];
+            $scope.selectedTable = {
+                name: ""
+            };
             $scope.days = [];
             $scope.timeofday = [];
             $scope.maxDay = "";
@@ -76,9 +85,9 @@ angular.module('neonDemo.directives')
              */
             $scope.initialize = function() {
                 $scope.messenger.events({
-                    activeDatasetChanged: onDatasetChanged,
                     filtersChanged: onFiltersChanged
                 });
+                $scope.messenger.subscribe("dataset_changed", onDatasetChanged);
 
                 $scope.$on('$destroy', function() {
                     $scope.messenger.removeEvents();
@@ -131,27 +140,24 @@ angular.module('neonDemo.directives')
 
             /**
              * Event handler for filter changed events issued over Neon's messaging channels.
+             * @param {Object} message A Neon filter changed message.
              * @method onFiltersChanged
              * @private
              */
-            var onFiltersChanged = function() {
+            var onFiltersChanged = function(message) {
                 XDATA.activityLogger.logSystemActivity('CircularHeatForm - received neon filter changed event');
-                $scope.queryForChartData();
+                if(message.addedFilter.databaseName === $scope.databaseName && message.addedFilter.tableName === $scope.selectedTable.name) {
+                    $scope.queryForChartData();
+                }
             };
 
             /**
              * Event handler for dataset changed events issued over Neon's messaging channels.
-             * @param {Object} message A Neon dataset changed message.
-             * @param {String} message.database The database that was selected.
-             * @param {String} message.table The table within the database that was selected.
              * @method onDatasetChanged
              * @private
              */
-            var onDatasetChanged = function(message) {
-                XDATA.activityLogger.logSystemActivity('CircularHeatForm - received neon dataset changed event');
-
-                // if there is no active connection, try to make one.
-                connectionService.connectToDataset(message.datastore, message.hostname, message.database, message.table);
+            var onDatasetChanged = function() {
+                XDATA.activityLogger.logSystemActivity('CircularHeatForm - received neon-gtd dataset changed event');
                 $scope.displayActiveDataset();
             };
 
@@ -160,15 +166,14 @@ angular.module('neonDemo.directives')
              * @method displayActiveDataset
              */
             $scope.displayActiveDataset = function() {
-                var connection = connectionService.getActiveConnection();
-                if(connection) {
-                    connectionService.loadMetadata(function() {
-                        var info = connectionService.getActiveDataset();
-                        $scope.databaseName = info.database;
-                        $scope.tableName = info.table;
-                        $scope.queryForChartData();
-                    });
+                if(!datasetService.hasDataset()) {
+                    return;
                 }
+
+                $scope.databaseName = datasetService.getDatabase();
+                $scope.tables = datasetService.getTables();
+                $scope.selectedTable = datasetService.getFirstTableWithMappings(["date"]) || $scope.tables[0];
+                $scope.queryForChartData();
             };
 
             /**
@@ -181,11 +186,7 @@ angular.module('neonDemo.directives')
                     $scope.errorMessage = undefined;
                 }
 
-                // TODO: Decide how to pass in field mappings.  We can do this through a controller or the
-                // connection service or some mapping service.  Two example below, one commented out.
-                //var dateField = $scope.getDateField();
-                var dateField = connectionService.getFieldMapping("date");
-                dateField = dateField || DEFAULT_DATE_FIELD;
+                var dateField = datasetService.getMapping($scope.selectedTable.name, "date") || DEFAULT_DATE_FIELD;
 
                 if(!dateField) {
                     $scope.updateChartData({
@@ -201,7 +202,7 @@ angular.module('neonDemo.directives')
                 var groupByHourClause = new neon.query.GroupByFunctionClause(neon.query.HOUR, $scope.dateField, 'hour');
 
                 var query = new neon.query.Query()
-                    .selectFrom($scope.databaseName, $scope.tableName)
+                    .selectFrom($scope.databaseName, $scope.selectedTable.name)
                     .groupBy(groupByDayClause, groupByHourClause)
                     .where($scope.dateField, '!=', null)
                     .aggregate(neon.query.COUNT, '*', 'count');
@@ -212,19 +213,22 @@ angular.module('neonDemo.directives')
                 // then the apply is handled by angular.  Forcing apply inside updateChartData instead is error prone as it
                 // may cause an apply within a digest cycle when triggered by an angular event.
                 XDATA.activityLogger.logSystemActivity('CircularHeatForm - query for data');
-                connectionService.getActiveConnection().executeQuery(query, function(queryResults) {
-                    XDATA.activityLogger.logSystemActivity('CircularHeatForm - data received');
-                    $scope.$apply(function() {
-                        $scope.updateChartData(queryResults);
-                        XDATA.activityLogger.logSystemActivity('CircularHeatForm - display updated');
+                var connection = connectionService.getActiveConnection();
+                if(connection) {
+                    connection.executeQuery(query, function(queryResults) {
+                        XDATA.activityLogger.logSystemActivity('CircularHeatForm - data received');
+                        $scope.$apply(function() {
+                            $scope.updateChartData(queryResults);
+                            XDATA.activityLogger.logSystemActivity('CircularHeatForm - display updated');
+                        });
+                    }, function(response) {
+                        XDATA.activityLogger.logSystemActivity('CircularHeatForm - error received');
+                        $scope.updateChartData({
+                            data: []
+                        });
+                        $scope.errorMessage = errorNotificationService.showErrorMessage(element, response.responseJSON.error, response.responseJSON.stackTrace);
                     });
-                }, function(response) {
-                    XDATA.activityLogger.logSystemActivity('CircularHeatForm - error received');
-                    $scope.updateChartData({
-                        data: []
-                    });
-                    $scope.errorMessage = errorNotificationService.showErrorMessage(element, response.responseJSON.error, response.responseJSON.stackTrace);
-                });
+                }
             };
 
             /**
