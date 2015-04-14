@@ -1,32 +1,46 @@
-<div class="directed-graph {{uniqueId}}">
-    <div class="config-row-div">
-        <div class="chart-options pull-right">
-            <a class="btn btn-lg text-muted collapsed" data-toggle="collapse" data-target=".{{uniqueId}} .graph-options" data-animation=false
-              ng-click="toggleOptionsDisplay()">
-              <span class="glyphicon glyphicon-cog"></span>
-              <span class="caret"></span>
-            </a>
-            <div class="popover bottom graph-options">
-                <div class="arrow"></div>
-                <div class="popover-content">
-                    <div class="form-group">
-                        <select ng-options="user for user in users track by user" ng-model="selectedUser">
-                            <option value="">Select User</option>
-                        </select>
-                        <div class="clearfix"></div>
-                    </div>
-                </div>
+<div class="chart-options pull-right">
+    <a class="btn btn-lg text-muted collapsed" data-toggle="collapse" data-target=".{{uniqueChartOptions}} .directed-graph-options" data-animation=false>
+      <span class="glyphicon glyphicon-cog"></span>
+      <span class="caret"></span>
+    </a>
+    <div class="directed-graph-options popover bottom">
+        <div class="arrow"></div>
+        <div class="popover-content">
+            <div class="form-group">
+                <label>Table</label>
+                <select class="form-control" ng-model="selectedTable" ng-options="table.name for table in tables" ng-required="true" ng-disabled="(tables.length < 2)" ng-change="updateFieldsAndQueryForData()">
+                </select>
+            </div>
+            <div class="form-group">
+                <label>Field</label>
+                <select class="form-control" ng-model="selectedField" ng-options="field for field in fields" ng-required="true" ng-disabled="(fields.length == 0)" ng-change="clearFilters()">
+                </select>
+            </div>
+            <div class="form-group">
+                <label>Filter on {{selectedField}}</label>
+                <select class="form-control" ng-model="selectedNode" ng-options="node for node in nodes track by node" ng-required="false" ng-disabled="(nodes.length == 0) || !(selectedField)">
+                    <option value=""></option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>Graph Node Limit</label>
+                <input type="number" min="50" class="form-control" ng-model="nodeLimit" ng-change="queryForData()"></input>
             </div>
         </div>
-        <div class="filter-reset pull-right" ng-repeat="field in groupFields">
-            {{field}}
-            <a class="btn" ng-click="removeFilter(field)">
+    </div>
+</div>
+
+<div class="directed-graph {{uniqueId}}">
+    <div class="config-row-div">
+        <div class="filter-reset pull-right" ng-repeat="value in graphFilteredData">
+            {{value}}
+            <a class="btn" ng-click="removeFilter(value)">
              <span class="glyphicon glyphicon-remove"></span>
             </a>
         </div>
-        <div id="node-click-name">
-            Shift-click to view node
-        </div>
+    </div>
+    <div ng-hide="(numberOfNodesInGraph > 0)">
+        No data available
     </div>
     <div id="directed-graph-div-{{uniqueId}}"></div>
 </div>

@@ -9,6 +9,11 @@
             <div class="arrow"></div>
             <div class="popover-content">
                 <div class="form-group">
+                    <label>Table</label>
+                    <select class="form-control" ng-model="selectedTable" ng-options="table.name for table in tables" ng-required="true" ng-disabled="(tables.length < 2)" ng-change="updateFieldsAndQueryForData()">
+                    </select>
+                </div>
+                <div class="form-group">
                     <label>Add a Ring</label>
                     <select class="form-control" ng-model="selectedItem" ng-disabled="!(fields.length > 0)" 
                         ng-options="field for field in fields" ng-change="addGroup()">
@@ -27,10 +32,6 @@
     </div>
 
     <div class="sunburst-ring-controls" ng-show="groupFields.length > 0">
-        <!-- <div class="sunburst-breadcrumb">
-            <span ng-bind="tableName"></span>
-            <span class="glyphicon glyphicon-chevron-right"></span>
-        </div> -->
         <div class="sunburst-transient-breadcrumb" ng-repeat="groupField in groupFields">
             <a class="breadcrumb-title" ng-click="dropGroup(groupField)">
               <span ng-bind="groupField"></span></span>

@@ -10,3 +10,5 @@ tmp
 .idea
 reports
 .orig
+.swp
+config.json

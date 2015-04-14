@@ -32,7 +32,7 @@
     margin: 10px 0px 0px 0px;
 }
 
-.timeline-selector .form-group{
+.timeline-selector .timeseries-selector-form-group {
     margin: 10px 0px 0px 5px;
 }
 
@@ -40,7 +40,7 @@
     margin: 10px 0px 0px 0px;
 }
 
-.timeline-selector select{
+.timeline-selector .timeseries-selector select {
     color: #555555;
     font-size: 12px;
     font-weight: bold;
@@ -82,6 +82,17 @@
     color: #FFFFFF;
     background-color: #C2360D;
     border-color: #AA1E13;
+}
+
+.timeline-selector .chart-options {
+    /* Align with granulatiry buttons. */
+    margin-top: 13px;
+    margin-left: 10px;
+}
+
+.timeline-selector .timeline-options {
+    /* Set a lower position for the popover due to the extra top margin added to chart-options. */
+    top: 53px;
 }
 
 .visualization-widget-mobile .timeline-selector {

@@ -7,15 +7,21 @@
         <div class="arrow"></div>
         <div class="popover-content">
             <div class="form-group">
-                <label>Y-axis</label>
+                <label>Table</label>
+                <select class="form-control" ng-model="selectedTable" ng-options="table.name for table in tables" ng-required="true" ng-disabled="(tables.length < 2)" ng-change="updateFieldsAndQueryForData()">
+                </select>
+            </div>
+            <div class="form-group">
+                <label>Y axis</label>
                 <select class="form-control" ng-model="attrY" ng-options="field for field in fields" ng-required="true" ng-disabled="!(fields.length > 0)">
+                    <option value="" ng-show="(aggregation == 'count')">*</option>
                 </select>
             </div>
             <div class="form-group">
                 <select class="form-control" ng-model="aggregation" ng-disabled="!(fields.length > 0)">
                     <option value="count">Count</option>
                     <option value="sum">Sum</option>
-                    <option value="avg">Average</option>
+                    <option value="average">Average</option>
                 </select>
             </div>
             <div class="form-group">
@@ -37,7 +43,7 @@
     <div class="legend-item legend-item-clickable" title="{{colorMapping.series}}" ng-repeat="colorMapping in colorMappings" ng-click="toggleSeries(colorMapping.series)" ng-class="{true: 'legend-hidden', false: ''}[colorMapping.hidden]">
         <span class="legend-icon" style="background-color: {{colorMapping.color}}"></span>
         <span class="legend-text">{{colorMapping.series}}</span>
-        <span ng-show="aggregation != 'avg'" class="legend-count text-muted">({{colorMapping.total | numberShort}})</span>
+        <span ng-show="aggregation != 'average'" class="legend-count text-muted">({{colorMapping.total | numberShort}})</span>
     </div>
 
 </div>

@@ -20,6 +20,10 @@ charts.DirectedGraph = function(rootElement, selector, opts) {
         this.shiftClickHandler = opts.shiftClickHandler;
     }
 
+    if(opts.clickHandler) {
+        this.clickHandler = opts.clickHandler;
+    }
+
     this.clickableValues = opts.clickableValues || [];
     this.rootNodeValues = opts.rootNodeValues || [];
 };
@@ -115,8 +119,10 @@ charts.DirectedGraph.prototype.updateGraph = function(data) {
                 return d.y;
             });
 
-            nodes[0].x = width / 2;
-            nodes[0].y = height / 2;
+            if(nodes.length) {
+                nodes[0].x = width / 2;
+                nodes[0].y = height / 2;
+            }
         });
     };
 
@@ -164,10 +170,10 @@ charts.DirectedGraph.prototype.updateGraph = function(data) {
             me.doubleClickHandler(d);
         }
     }).on("click", function(d) {
-        if(d3.event.shiftKey) {
-            if(me.shiftClickHandler) {
-                me.shiftClickHandler(d);
-            }
+        if(d3.event.shiftKey && me.shiftClickHandler) {
+            me.shiftClickHandler(d);
+        } else if(me.clickHandler) {
+            me.clickHandler(d);
         }
     }).on("mouseover", function(d) {
         var parentOffset = $(me.rootElement).offset();
@@ -200,10 +206,10 @@ charts.DirectedGraph.prototype.updateGraph = function(data) {
             });
 
         node.attr("cx", function(d) {
-                return d.x;
+                return d.x ? d.x : 0;
             })
             .attr("cy", function(d) {
-                return d.y;
+                return d.y ? d.y : 0;
             });
     });
 };

@@ -17,20 +17,29 @@
  */
 
 angular.module('neonDemo.directives')
-.directive('countBy', ['ConnectionService', 'ErrorNotificationService', function(connectionService, errorNotificationService) {
+.directive('countBy', ['DIG', 'ConnectionService', 'DatasetService', 'ErrorNotificationService', 'FilterService', function(DIG, connectionService, datasetService, errorNotificationService, filterService) {
     return {
         templateUrl: 'partials/directives/countby.html',
         restrict: 'EA',
         scope: {
         },
         link: function($scope, el) {
+            $scope.uniqueChartOptions = 'chart-options-' + uuid();
+            var chartOptions = $(el).find('.chart-options');
+            chartOptions.toggleClass($scope.uniqueChartOptions);
+
             el.addClass('countByDirective');
 
+            $scope.databaseName = "";
+            $scope.tables = [];
+            $scope.selectedTable = {
+                name: ""
+            };
             $scope.countField = "";
             $scope.count = 0;
             $scope.fields = [];
-            $scope.tableId = 'query-results-' + uuid();
-            $scope.filterKey = "countby-" + uuid();
+            $scope.tableId = 'countby-' + uuid();
+            $scope.filterKeys = {};
             $scope.filterSet = undefined;
             $scope.errorMessage = undefined;
 
@@ -43,8 +52,10 @@ angular.module('neonDemo.directives')
              * @private
              */
             var updateSize = function() {
+                var optionHeight = $(el).find('.chart-options').outerHeight(true);
+                var headerHeight = $(el).find('.count-by-header').outerHeight(true);
                 // Subtract an additional 2 pixels from the table height to account for the its border.
-                $('#' + $scope.tableId).height(el.height() - $(el).find('.count-by-header').outerHeight(true) - 2);
+                $('#' + $scope.tableId).height(el.height() - optionHeight - headerHeight - 2);
                 if($scope.table) {
                     $scope.table.refreshLayout();
                 }
@@ -60,9 +71,9 @@ angular.module('neonDemo.directives')
                 $scope.messenger = new neon.eventing.Messenger();
 
                 $scope.messenger.events({
-                    activeDatasetChanged: onDatasetChanged,
                     filtersChanged: onFiltersChanged
                 });
+                $scope.messenger.subscribe("dataset_changed", onDatasetChanged);
 
                 $scope.$watch('countField', function() {
                     $scope.queryForData();
@@ -71,7 +82,7 @@ angular.module('neonDemo.directives')
                 $scope.$on('$destroy', function() {
                     $scope.messenger.removeEvents();
                     if($scope.filterSet) {
-                        $scope.messenger.removeFilter($scope.filterKey);
+                        filterService.removeFilters($scope.messenger, $scope.filterKeys);
                     }
                 });
 
@@ -108,7 +119,7 @@ angular.module('neonDemo.directives')
                     columns[i].width = $tableDiv.outerWidth();
                 }
 
-                if(neon.DIG_ENABLED) {
+                if(DIG.enabled) {
                     var digColumn = {
                         name: "",
                         field: "dig",
@@ -143,55 +154,58 @@ angular.module('neonDemo.directives')
 
             /**
              * Event handler for filter changed events issued over Neon's messaging channels.
+             * @param {Object} message A Neon filter changed message.
              * @method onFiltersChanged
              * @private
              */
-            var onFiltersChanged = function() {
-                $scope.queryForData();
+            var onFiltersChanged = function(message) {
+                XDATA.activityLogger.logSystemActivity('CountBy - received neon filter changed event');
+                if(message.addedFilter.databaseName === $scope.databaseName && message.addedFilter.tableName === $scope.selectedTable.name) {
+                    $scope.queryForData();
+                }
             };
 
             /**
              * Event handler for dataset changed events issued over Neon's messaging channels.
-             * @param {Object} message A Neon dataset changed message.
-             * @param {String} message.database The database that was selected.
-             * @param {String} message.table The table within the database that was selected.
              * @method onDatasetChanged
              * @private
              */
-            var onDatasetChanged = function(message) {
-                XDATA.activityLogger.logSystemActivity('CountBy- received neon dataset changed event');
-                $scope.databaseName = message.database;
-                $scope.tableName = message.table;
-
-                // if there is no active connection, try to make one.
-                connectionService.connectToDataset(message.datastore, message.hostname, message.database, message.table);
-                $scope.displayActiveDataset();
+            var onDatasetChanged = function() {
+                XDATA.activityLogger.logSystemActivity('CountBy - received neon-gtd dataset changed event');
+                $scope.displayActiveDataset(false);
             };
 
             /**
              * Displays data for any currently active datasets.
+             * @param {Boolean} Whether this function was called during visualization initialization.
              * @method displayActiveDataset
              */
-            $scope.displayActiveDataset = function() {
-                var connection = connectionService.getActiveConnection();
-                if(connection) {
-                    connectionService.loadMetadata(function() {
-                        var info = connectionService.getActiveDataset();
-                        $scope.databaseName = info.database;
-                        $scope.tableName = info.table;
-                        connection.getFieldNames($scope.databaseName, $scope.tableName, function(results) {
-                            $scope.$apply(function() {
-                                $scope.fields = results;
-                                // Default to the screen_name field for the twitter36 dataset.
-                                if($.inArray("screen_name", $scope.fields)) {
-                                    $scope.countField = "screen_name";
-                                }
-                                $scope.queryForData();
-                            });
-                        });
-                        $scope.queryForData();
+            $scope.displayActiveDataset = function(initializing) {
+                if(!datasetService.hasDataset()) {
+                    return;
+                }
+
+                $scope.databaseName = datasetService.getDatabase();
+                $scope.tables = datasetService.getTables();
+                $scope.selectedTable = $scope.tables[0];
+                $scope.countField = datasetService.getMapping($scope.selectedTable.name, "count_by") || "";
+                $scope.filterKeys = filterService.createFilterKeys("countby", $scope.tables);
+
+                if(initializing) {
+                    $scope.updateFieldsAndQueryForData();
+                } else {
+                    $scope.$apply(function() {
+                        $scope.updateFieldsAndQueryForData();
                     });
                 }
+            };
+
+            $scope.updateFieldsAndQueryForData = function() {
+                $scope.fields = datasetService.getDatabaseFields($scope.selectedTable.name);
+                if($scope.filterSet) {
+                    $scope.clearFilter();
+                }
+                $scope.queryForData();
             };
 
             /**
@@ -206,6 +220,9 @@ angular.module('neonDemo.directives')
              */
             $scope.queryForData = function() {
                 if(!$scope.countField) {
+                    $scope.updateData({
+                        data: []
+                    });
                     return;
                 }
 
@@ -254,7 +271,7 @@ angular.module('neonDemo.directives')
                     var field = $scope.countField;
                     var value = row[$scope.countField];
                     var query = $scope.countField + "=" + row[$scope.countField];
-                    var element = "<form action=\"" + neon.DIG_SERVER + "/list\" method=\"get\" target=\"" + query + "\">" +
+                    var element = "<form action=\"" + DIG.server + "/list\" method=\"get\" target=\"" + query + "\">" +
                         "<input type=\"hidden\" name=\"field\" value=\"" + field + "\">" +
                         "<input type=\"hidden\" name=\"value\" value=\"" + value + "\">" +
                         "<button class=\"hidden-button\" type=\"submit\" title=\"" + query + "\">" +
@@ -271,20 +288,34 @@ angular.module('neonDemo.directives')
              * @param {String} The filter value
              */
             $scope.setFilter = function(field, value) {
+                var filterExists = $scope.filterSet ? true : false;
+                handleSetFilter(field, value);
+
+                // Store the value for the filter to use during filter creation.
+                $scope.filterValue = value;
+
                 var connection = connectionService.getActiveConnection();
                 if($scope.messenger && connection) {
-                    var filterClause = neon.query.where(field, '=', value);
-                    var filter = new neon.query.Filter().selectFrom($scope.databaseName, $scope.tableName).where(filterClause);
-                    if(!$scope.filterSet) {
-                        $scope.messenger.addFilter($scope.filterKey, filter, function() {
-                            handleSetFilter(field, value);
-                        });
+                    var relations = datasetService.getRelations($scope.selectedTable.name, [field]);
+                    if(filterExists) {
+                        filterService.replaceFilters($scope.messenger, relations, $scope.filterKeys, $scope.createFilter);
                     } else {
-                        $scope.messenger.replaceFilter($scope.filterKey, filter, function() {
-                            handleSetFilter(field, value);
-                        });
+                        filterService.addFilters($scope.messenger, relations, $scope.filterKeys, $scope.createFilter);
                     }
                 }
+            };
+
+            /**
+             * Creates and returns a filter using the given table and fields.
+             * @param {String} The name of the table on which to filter
+             * @param {Array} An array containing the name of the selected field as its first element
+             * @method createFilter
+             * @return {Object} A neon.query.Filter object
+             */
+            $scope.createFilter = function(tableName, fieldNames) {
+                var fieldName = fieldNames[0];
+                var filterClause = neon.query.where(fieldName, '=', $scope.filterValue);
+                return new neon.query.Filter().selectFrom($scope.databaseName, tableName).where(filterClause);
             };
 
             /**
@@ -293,7 +324,7 @@ angular.module('neonDemo.directives')
              */
             $scope.addOnClickListener = function() {
                 $scope.table.addOnClickListener(function(columns, row) {
-                    var columnIndex = neon.DIG_ENABLED ? 1 : 0;
+                    var columnIndex = DIG.enabled ? 1 : 0;
                     var field = columns[columnIndex].field;
 
                     // If the user clicks on the filtered row/cell, clear the filter.
@@ -317,6 +348,10 @@ angular.module('neonDemo.directives')
              * @method updateData
              */
             $scope.updateData = function(queryResults) {
+                if(!($("#" + $scope.tableId).length)) {
+                    return;
+                }
+
                 var cleanData = $scope.stripIdField(queryResults);
 
                 // If the table is recreated while sorting is set, we must redo the sorting on the new table.
@@ -325,7 +360,7 @@ angular.module('neonDemo.directives')
                 $scope.tableOptions = createOptions(cleanData);
 
                 // Add the DIG URLs after the table options have been created because it already includes the column.
-                if(neon.DIG_ENABLED) {
+                if(DIG.enabled) {
                     cleanData = $scope.addDigUrlColumnData(cleanData);
                 }
 
@@ -350,11 +385,11 @@ angular.module('neonDemo.directives')
              * @method buildQuery
              */
             $scope.buildQuery = function() {
-                var query = new neon.query.Query().selectFrom($scope.databaseName, $scope.tableName)
+                var query = new neon.query.Query().selectFrom($scope.databaseName, $scope.selectedTable.name)
                 .groupBy($scope.countField);
 
                 // The widget displays its own ignored rows with 0.5 opacity.
-                query.ignoreFilters([$scope.filterKey]);
+                query.ignoreFilters([$scope.filterKeys[$scope.selectedTable.name]]);
                 query.aggregate(neon.query.COUNT, '*', 'count');
 
                 return query;
@@ -365,7 +400,7 @@ angular.module('neonDemo.directives')
              */
             $scope.clearFilter = function() {
                 if($scope.messenger) {
-                    $scope.messenger.removeFilter($scope.filterKey, function() {
+                    filterService.removeFilters($scope.messenger, $scope.filterKeys, function() {
                         $tableDiv.removeClass("filtered");
                         $scope.table.deselect();
                         clearFilter();
@@ -375,7 +410,7 @@ angular.module('neonDemo.directives')
 
             neon.ready(function() {
                 $scope.initialize();
-                $scope.displayActiveDataset();
+                $scope.displayActiveDataset(true);
             });
         }
     };

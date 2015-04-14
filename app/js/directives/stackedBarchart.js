@@ -27,7 +27,7 @@
  * @constructor
  */
 angular.module('neonDemo.directives')
-.directive('stackedbarchart', ['ConnectionService', 'ErrorNotificationService', function(connectionService, errorNotificationService) {
+.directive('stackedbarchart', ['ConnectionService', 'DatasetService', 'ErrorNotificationService', function(connectionService, datasetService, errorNotificationService) {
     return {
         templateUrl: 'partials/directives/barchart.html',
         restrict: 'E',
@@ -37,14 +37,20 @@ angular.module('neonDemo.directives')
             barType: '='
         },
         link: function($scope, el) {
+            $scope.uniqueChartOptions = 'chart-options-' + uuid();
+            var chartOptions = $(el).find('.chart-options');
+            chartOptions.toggleClass($scope.uniqueChartOptions);
+
             el.addClass('barchartDirective');
 
             $scope.messenger = new neon.eventing.Messenger();
-            $scope.database = '';
-            $scope.tableName = '';
+            $scope.databaseName = '';
+            $scope.tables = [];
+            $scope.selectedTable = {
+                name: ""
+            };
             $scope.barType = /*$scope.barType ||*/'count'; //Changed because negative values break the display
             $scope.fields = [];
-            $scope.xAxisSelect = $scope.fields[0] ? $scope.fields[0] : '';
             $scope.errorMessage = undefined;
 
             var COUNT_FIELD_NAME = 'Count';
@@ -53,49 +59,80 @@ angular.module('neonDemo.directives')
                 drawBlankChart();
 
                 $scope.messenger.events({
-                    activeDatasetChanged: onDatasetChanged,
                     filtersChanged: onFiltersChanged
                 });
+                $scope.messenger.subscribe("dataset_changed", onDatasetChanged);
 
                 $scope.$on('$destroy', function() {
                     $scope.messenger.removeEvents();
                 });
 
                 $scope.$watch('attrX', function() {
-                    if($scope.databaseName && $scope.tableName) {
+                    if($scope.databaseName && $scope.selectedTable.name) {
                         $scope.queryForData();
                     }
                 });
                 $scope.$watch('attrY', function() {
-                    if($scope.databaseName && $scope.tableName) {
+                    if($scope.databaseName && $scope.selectedTable.name) {
                         $scope.queryForData();
                     }
                 });
                 $scope.$watch('barType', function() {
-                    if($scope.databaseName && $scope.tableName) {
+                    if($scope.databaseName && $scope.selectedTable.name) {
                         $scope.queryForData();
                     }
                 });
             };
 
-            var onFiltersChanged = function() {
-                $scope.queryForData();
+            /**
+             * Event handler for filter changed events issued over Neon's messaging channels.
+             * @param {Object} message A Neon filter changed message.
+             * @method onFiltersChanged
+             * @private
+             */
+            var onFiltersChanged = function(message) {
+                if(message.addedFilter.databaseName === $scope.databaseName && message.addedFilter.tableName === $scope.selectedTable.name) {
+                    $scope.queryForData();
+                }
             };
 
-            var onDatasetChanged = function(message) {
-                $scope.databaseName = message.database;
-                $scope.tableName = message.table;
+            /**
+             * Event handler for dataset changed events issued over Neon's messaging channels.
+             * @method onDatasetChanged
+             * @private
+             */
+            var onDatasetChanged = function() {
+                $scope.displayActiveDataset(false);
+            };
 
-                // if there is no active connection, try to make one.
-                connectionService.connectToDataset(message.datastore, message.hostname, message.database, message.table);
+            /**
+             * Displays data for any currently active datasets.
+             * @param {Boolean} Whether this function was called during visualization initialization.
+             * @method displayActiveDataset
+             */
+            var displayActiveDataset = function(initializing) {
+                if(!datasetService.hasDataset()) {
+                    return;
+                }
 
-                // Pull data.
-                var connection = connectionService.getActiveConnection();
-                if(connection) {
-                    connectionService.loadMetadata(function() {
-                        $scope.queryForData();
+                $scope.databaseName = datasetService.getDatabase();
+                $scope.tables = datasetService.getTables();
+                $scope.selectedTable = datasetService.getFirstTableWithMappings(["x_axis", "y_axis"]) || $scope.tables[0];
+
+                if(initializing) {
+                    $scope.updateFieldsAndQueryForData();
+                } else {
+                    $scope.$apply(function() {
+                        $scope.updateFieldsAndQueryForData();
                     });
                 }
+            };
+
+            $scope.updateFieldsAndQueryForData = function() {
+                $scope.attrX = datasetService.getMapping($scope.selectedTable.name, "x_axis") || "";
+                $scope.attrY = datasetService.getMapping($scope.selectedTable.name, "y_axis") || "";
+                $scope.fields = datasetService.getDatabaseFields($scope.selectedTable.name);
+                $scope.queryForData(true);
             };
 
             var queryData = function(yRuleComparator, yRuleVal, next) {
@@ -104,14 +141,14 @@ angular.module('neonDemo.directives')
                     $scope.errorMessage = undefined;
                 }
 
-                var xAxis = $scope.attrX || connectionService.getFieldMapping("x_axis");
-                var yAxis = $scope.attrY || connectionService.getFieldMapping("y_axis");
+                var xAxis = $scope.attrX || datasetService.getMapping($scope.selectedTable.name, "x_axis");
+                var yAxis = $scope.attrY || datasetService.getMapping($scope.selectedTable.name, "y_axis");
                 if(!yAxis) {
                     yAxis = COUNT_FIELD_NAME;
                 }
 
                 var query = new neon.query.Query()
-                    .selectFrom($scope.databaseName, $scope.tableName)
+                    .selectFrom($scope.databaseName, $scope.selectedTable.name)
                     .where(xAxis, '!=', null)
                     .where(yAxis, yRuleComparator, yRuleVal)
                     .groupBy(xAxis);
@@ -132,17 +169,20 @@ angular.module('neonDemo.directives')
                     query.aggregate(queryType, '*', ($scope.barType ? COUNT_FIELD_NAME : yAxis));
                 }
 
-                connectionService.getActiveConnection().executeQuery(query, function(queryResults) {
-                    next(queryResults);
-                }, function(response) {
-                    $scope.drawBlankChart();
-                    $scope.errorMessage = errorNotificationService.showErrorMessage(el, response.responseJSON.error, response.responseJSON.stackTrace);
-                });
+                var connection = connectionService.getActiveConnection();
+                if(connection) {
+                    connection.executeQuery(query, function(queryResults) {
+                        next(queryResults);
+                    }, function(response) {
+                        $scope.drawBlankChart();
+                        $scope.errorMessage = errorNotificationService.showErrorMessage(el, response.responseJSON.error, response.responseJSON.stackTrace);
+                    });
+                }
             };
 
             $scope.queryForData = function() {
-                var xAxis = $scope.attrX || connectionService.getFieldMapping("x_axis");
-                var yAxis = $scope.attrY || connectionService.getFieldMapping("y_axis");
+                var xAxis = $scope.attrX || datasetService.getMapping($scope.selectedTable.name, "x_axis");
+                var yAxis = $scope.attrY || datasetService.getMapping($scope.selectedTable.name, "y_axis");
                 if(!yAxis) {
                     yAxis = COUNT_FIELD_NAME;
                 }
@@ -232,10 +272,8 @@ angular.module('neonDemo.directives')
             var doDrawChart = function(data) {
                 charts.BarChart.destroy(el[0], '.barchart');
 
-                var xAxis = connectionService.getFieldMapping("x_axis");
-                xAxis = xAxis || $scope.attrX;
-                var yAxis = connectionService.getFieldMapping("y_axis");
-                yAxis = yAxis || $scope.attrY;
+                var xAxis = datasetService.getMapping($scope.selectedTable.name, "x_axis") || $scope.attrX;
+                var yAxis = datasetService.getMapping($scope.selectedTable.name, "y_axis") || $scope.attrY;
                 if(!yAxis) {
                     yAxis = COUNT_FIELD_NAME;
                 }
@@ -255,6 +293,7 @@ angular.module('neonDemo.directives')
             neon.ready(function() {
                 $scope.messenger = new neon.eventing.Messenger();
                 initialize();
+                displayActiveDataset(true);
             });
         }
     };
