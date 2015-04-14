@@ -74,6 +74,7 @@
 .query-results-grid .slick-header .slick-header-column{
     color: #555555;
     background: #e1e1e1;
+    cursor: pointer;
 }
 .query-results-grid .slick-header .slick-header-column.ui-state-hover{
     color: #39B54A;
@@ -96,6 +97,10 @@
 .query-results-directive .query-results-options {
     /* Set a lower position for the popover due to the extra top margin added to chart-options. */
     top: 48px;
+}
+
+.query-results-directive .form-inline .form-group input[type="number"] {
+    width: 100px;
 }
 
 @media (max-width: 767px) {

@@ -11,6 +11,41 @@
                 <select class="form-control" ng-model="selectedTable" ng-options="table.name for table in tables" ng-required="true" ng-disabled="(tables.length < 2)" ng-change="updateFieldsAndRowsAndCount()">
                 </select>
             </div>
+
+            <div class="form-group">
+                <label>Add Column</label>
+                <div class="input-group">
+                    <select class="form-control" ng-model="addField" ng-disabled="!(deletedFields.length > 0)" ng-options="field for field in deletedFields">
+                    </select>
+
+                    <div class="input-group-btn">
+                        <button class="btn btn-default" ng-click="addColumn()" ng-disabled="!(deletedFields.length > 0)">&plus;</button>
+                    </div>
+                </div>
+            </div>    
+
+            <div class="form-group">
+                <label>Sort By</label>
+                <div class="input-group">
+                    <select class="form-control" ng-model="sortByField" ng-disabled="!(fields.length > 0)" ng-options="field for field in fields">
+                    </select>
+
+                    <div class="input-group-btn">
+                        <label class="btn btn-default active" ng-class="{true: 'active', false: ''}[sortDirection === ASCENDING]">
+                            <input type="radio" ng-model="sortDirection" style="display:none" ng-value="ASCENDING"> ASC
+                        </label>
+                        <label class="btn btn-default" ng-class="{true: 'active', false: ''}[sortDirection === DESCENDING]">
+                            <input type="radio" ng-model="sortDirection" style="display:none" ng-value="DESCENDING"> DESC
+                        </label>
+                    </div>
+                </div>
+            </div>    
+
+            <div class="form-group">
+                <label>Limit</label>
+                <input type="number" min="1" name="limitInput" class="form-control" ng-model="limit"
+                ng-class="{true: '', false: 'has-error'}[dataTableForm.limitInput.$error.number]">
+            </div>
         </div>
     </div>
 </div>
@@ -30,9 +65,20 @@
                 </select>
             </div>
 
-            <div class="form-input-group">
-                <label>Sort By</label>
+            <div ng-hide="!(navbarItem)" class="form-input-group">
+                <label>Add Column</label>
+                <div class="input-group">
+                    <select class="form-control" ng-model="addField" ng-disabled="!(deletedFields.length > 0)" ng-options="field for field in deletedFields">
+                    </select>
 
+                    <div class="input-group-btn">
+                        <button class="btn btn-default" ng-click="addColumn()" ng-disabled="!(deletedFields.length > 0)">&plus;</button>
+                    </div>
+                </div>
+            </div>    
+
+            <div ng-hide="!(navbarItem)" class="form-input-group">
+                <label>Sort By</label>
                 <div class="input-group">
                     <select class="form-control" ng-model="sortByField" ng-disabled="!(fields.length > 0)" ng-options="field for field in fields">
                     </select>
@@ -48,12 +94,12 @@
                 </div>
             </div>    
 
-
-            <div class="form-group">
+            <div ng-hide="!(navbarItem)" class="form-group">
                 <label>Limit</label>
                 <input type="number" min="1" name="limitInput" class="form-control" ng-model="limit"
                 ng-class="{true: '', false: 'has-error'}[dataTableForm.limitInput.$error.number]">
             </div>
+
             <button type="button" class="btn btn-default refresh" ng-click="refreshData()">
                 <span class="glyphicon glyphicon-refresh"></span>
             </button>

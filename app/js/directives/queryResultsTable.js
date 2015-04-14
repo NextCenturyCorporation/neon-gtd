@@ -27,8 +27,8 @@
  * @constructor
  */
 angular.module('neonDemo.directives')
-.directive('queryResultsTable', ['DIG', 'ConnectionService', 'DatasetService', 'ErrorNotificationService',
-    function(DIG, connectionService, datasetService, errorNotificationService) {
+.directive('queryResultsTable', ['DIG', 'ConnectionService', 'DatasetService', 'ErrorNotificationService', '$compile',
+    function(DIG, connectionService, datasetService, errorNotificationService, $compile) {
     return {
         templateUrl: 'partials/directives/queryResultsTable.html',
         restrict: 'EA',
@@ -61,6 +61,8 @@ angular.module('neonDemo.directives')
                 name: ""
             };
             $scope.fields = [];
+            $scope.deletedFields = [];
+            $scope.addField = "";
             $scope.sortByField = '';
             $scope.sortDirection = neon.query.ASCENDING;
             $scope.limit = 500;
@@ -76,8 +78,8 @@ angular.module('neonDemo.directives')
             $tableDiv.attr("id", $scope.tableId);
 
             var updateSize = function() {
-                var margin = $tableDiv.outerHeight(true) - $tableDiv.height();
-                $tableDiv.height(element.height() - $(element).find('.count-header').outerHeight(true) - margin);
+                var tableBufferY = $tableDiv.outerHeight(true) - $tableDiv.height();
+                $tableDiv.height(element.height() - $(element).find('.count-header').outerHeight(true) - tableBufferY);
                 if($scope.table) {
                     $scope.table.refreshLayout();
                 }
@@ -168,7 +170,7 @@ angular.module('neonDemo.directives')
             };
 
             var createColumns = function(data) {
-                var columns = tables.createColumns(data);
+                var columns = tables.createColumns(data, [$scope.createDeleteColumnButton("")]);
                 columns = tables.addLinkabilityToColumns(columns);
 
                 if(DIG.enabled) {
@@ -241,6 +243,8 @@ angular.module('neonDemo.directives')
 
             $scope.updateFieldsAndRowsAndCount = function() {
                 $scope.fields = datasetService.getDatabaseFields($scope.selectedTable.name);
+                $scope.deletedFields = [];
+                $scope.addField = "";
                 $scope.sortByField = datasetService.getMapping($scope.selectedTable.name, "sort_by") || $scope.fields[0];
                 updateRowsAndCount();
             };
@@ -346,19 +350,48 @@ angular.module('neonDemo.directives')
 
                 $scope.table = new tables.Table("#" + $scope.tableId, $scope.tableOptions).draw();
                 $scope.table.refreshLayout();
+                $scope.createDeleteColumnButtons();
             };
 
             $scope.addDigUrlColumnData = function(data) {
                 data.data.forEach(function(row) {
                     var rowId = row._id;
                     var query = "id=" + rowId;
-                    var element = "<form action=\"" + DIG.server + "/list\" method=\"get\" target=\"" + query + "\">" +
+                    var html = "<form action=\"" + DIG.server + "/list\" method=\"get\" target=\"" + query + "\">" +
                         "<input type=\"hidden\" name=\"id\" value=\"" + rowId + "\">" +
                         "<button class=\"hidden-button\" type=\"submit\" title=\"" + query + "\">" +
                         "<span class=\"glyphicon glyphicon-new-window\"></span></button></form>";
-                    row.dig = element;
+                    row.dig = html;
                 });
                 return data;
+            };
+
+            $scope.createDeleteColumnButtons = function() {
+                element.find(".slick-header-column").each(function() {
+                    var name = $(this).find(".slick-column-name").html();
+                    $(this).append($compile($scope.createDeleteColumnButton(name))($scope));
+                });
+            };
+
+            $scope.createDeleteColumnButton = function(name) {
+                return "<span class=\"pull-right\" ng-click=\"deleteColumn('" + name + "'); $event.stopPropagation();\">&times;</span>";
+            };
+
+            $scope.deleteColumn = function(name) {
+                if($scope.table.deleteColumn(name)) {
+                    $scope.deletedFields.push(name);
+                    $scope.addField = name;
+                    $scope.createDeleteColumnButtons();
+                }
+            };
+
+            $scope.addColumn = function() {
+                if($scope.table.addColumn($scope.addField)) {
+                    var indexToSplice = $scope.deletedFields.indexOf($scope.addField);
+                    $scope.deletedFields.splice(indexToSplice, 1);
+                    $scope.addField = $scope.deletedFields.length > 0 ? $scope.deletedFields[0] : "";
+                    $scope.createDeleteColumnButtons();
+                }
             };
 
             /**
