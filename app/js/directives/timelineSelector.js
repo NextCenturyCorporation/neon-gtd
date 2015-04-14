@@ -451,8 +451,9 @@ angular.module('neonDemo.directives')
                         updateDatesCallback();
                     }
                 } else {
-                    $scope.data = $scope.createTimelineData(queryResults);
-                    $scope.updateChartTimesAndTotal();
+                    // TODO:  Determine how to clear the chart without causing errors.
+                    //$scope.data = $scope.createTimelineData(queryResults);
+                    //$scope.updateChartTimesAndTotal();
                 }
             };
 
