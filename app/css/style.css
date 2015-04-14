@@ -371,6 +371,13 @@ fieldset[disabled] .btn-primary.active {
     display: block;
 }
 
+.chart-options span.chart-options-text {
+    /* Set the top position so the text aligns vertically with the gear icon. */
+    position: relative;
+    top: -1px;
+    margin-right: 5px;
+}
+
 /* Chart legend */
 
 .legend{
