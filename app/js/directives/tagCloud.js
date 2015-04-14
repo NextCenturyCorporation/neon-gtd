@@ -105,7 +105,11 @@ angular.module('neonDemo.directives')
                     }
                 };
 
-                $scope.$watchCollection('filterTags', $scope.setTagFilter);
+                $scope.$watchCollection('filterTags', function(newValue, oldValue) {
+                    if(newValue.length !== oldValue.length || newValue.length > 1) {
+                        $scope.setTagFilter();
+                    }
+                });
             };
 
             /**
