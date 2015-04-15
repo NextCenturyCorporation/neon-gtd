@@ -15,6 +15,10 @@
  *
  */
 
+// Defaulting the Neon SERVER_URL to be under the neon context on the same host machine.
+// Used by neon core server.  Don't delete this or you will probably break everything!
+neon.SERVER_URL = "/neon";
+
 var neonDemo = angular.module('neonDemo', [
     'neonDemo.controllers',
     'neonDemo.services',

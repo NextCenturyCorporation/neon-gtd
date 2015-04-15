@@ -148,7 +148,10 @@ angular.module('neonDemo.directives')
                             var tableNames = Object.keys(tableNamesAndFieldNames);
                             for(var i = 0; i < tableNames.length; ++i) {
                                 var tableName = tableNames[i];
+
+                                // Update the fields for this table if it exists in the active dataset.
                                 datasetService.updateFields(tableName, tableNamesAndFieldNames[tableName]);
+
                                 // Store fields for each table locally because the dataset service ignores tables not included in the dataset.
                                 // TODO Determine how to handle fields from tables in the database that are not included in the dataset.  This may
                                 //      be solved once we update the custom connection interface to support multi-table datasets and field mappings.
@@ -240,6 +243,9 @@ angular.module('neonDemo.directives')
                     }],
                     relations: []
                 });
+
+                // Update the fields for this table in the new custom dataset.
+                datasetService.updateFields($scope.selectedTable, $scope.tableFields);
 
                 $scope.updateLayout();
 
