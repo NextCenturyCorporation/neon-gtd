@@ -161,11 +161,11 @@ angular.module('neonDemo.directives')
                             to: newVal
                         });
                     $scope.map.resetColorMappings();
-                    if(newVal !== oldVal) {
+                    //if(newVal !== oldVal) {
                         $scope.setMapCategoryMapping(newVal);
                         $scope.draw();
                         //$scope.queryForMapData();
-                    }
+                    //}
                 });
 
                 // Toggle the points and clusters view when the user toggles between them.
