@@ -142,14 +142,14 @@ angular.module('neonDemo.directives')
                             from: oldVal,
                             to: newVal
                         });
-                    if(newVal !== oldVal) {
+                    //if(newVal !== oldVal) {
                         // Set the size by field if we are on a point layer.
                         if($scope.showPoints) {
                             $scope.setMapSizeMapping(newVal);
                             $scope.draw();
                         }
                         //$scope.queryForMapData();
-                    }
+                    //}
                 });
 
                 // Update the coloring field used by the map.
@@ -161,11 +161,11 @@ angular.module('neonDemo.directives')
                             to: newVal
                         });
                     $scope.map.resetColorMappings();
-                    if(newVal !== oldVal) {
+                    //if(newVal !== oldVal) {
                         $scope.setMapCategoryMapping(newVal);
                         $scope.draw();
                         //$scope.queryForMapData();
-                    }
+                    //}
                 });
 
                 // Toggle the points and clusters view when the user toggles between them.
