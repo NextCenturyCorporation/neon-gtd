@@ -142,14 +142,14 @@ angular.module('neonDemo.directives')
                             from: oldVal,
                             to: newVal
                         });
-                    if(newVal !== oldVal) {
+                    //if(newVal !== oldVal) {
                         // Set the size by field if we are on a point layer.
                         if($scope.showPoints) {
                             $scope.setMapSizeMapping(newVal);
                             $scope.draw();
                         }
                         //$scope.queryForMapData();
-                    }
+                    //}
                 });
 
                 // Update the coloring field used by the map.
