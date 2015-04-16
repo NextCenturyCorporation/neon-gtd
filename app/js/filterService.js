@@ -45,7 +45,9 @@ angular.module("neonDemo.services")
             var fields = [];
             var keys = Object.keys(relation.fields);
             for(var i = 0; i < keys.length; ++i) {
-                fields.push(relation.fields[keys[i]]);
+                fields.push(relation.fields[keys[i]][0]);
+                // TODO
+                // fields = fields.concat(relation.fields[keys[i]]);
             }
             return fields;
         };

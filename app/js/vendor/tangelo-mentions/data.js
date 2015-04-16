@@ -124,7 +124,7 @@ function tweetersNeon(host, database, collection, params, callback) {
             callback(response);
         } else {
             var query = neonQuery(params.start_time, params.end_time, current_talkers);
-            twitter.neon.executeQuery(query, function (result) {
+            twitter.neon.connection.executeQuery(query, function (result) {
                 var tweets = result.data;
 
                 response.tweeters = response.tweeters.concat(tweets);

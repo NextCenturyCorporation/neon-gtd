@@ -74,3 +74,10 @@
 #tangelo-mentions-tray {
     height: 100%;
 }
+
+/* Overwrite neon navbar styling. */
+.tangelo-mentions .navbar-default .navbar-nav > li > a {
+    border-bottom: none;
+    margin: 0px;
+    padding: 15px;
+}

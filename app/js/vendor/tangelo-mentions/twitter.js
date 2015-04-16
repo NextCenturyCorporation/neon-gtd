@@ -90,7 +90,17 @@ function displayDate(d) {
     return twitter.monthNames[d.getMonth()] + " " + d.getDate() + ", " + d.getFullYear();
 }
 
-function updateGraph() {
+var updateGraph = function() {
+    "use strict";
+
+    if(twitter.neon && twitter.neon.connection && twitter.neon.updateNeonFilter) {
+        twitter.neon.updateNeonFilter(twitter.mentionsCollection, twitter.center.val(), queryForDataAndUpdateGraph);
+    } else {
+        queryForDataAndUpdateGraph();
+    }
+};
+
+var queryForDataAndUpdateGraph = function() {
     "use strict";
 
     var center,
@@ -376,12 +386,19 @@ function updateGraph() {
                 .attr("r", 0.0)
                 .style("fill", "black")
                 .remove();
+
+            // Tick the layout to separate the nodes.
+            var i = 0;
+            while(force.alpha() > 0.01 && i++ < 1000) {
+                force.tick();
+            }
+            // Fix all of the nodes so they don't move automatically (only on user drag).
+            svg.select("g#nodes").selectAll(".node").each(function(nodeData) {
+                nodeData.fixed = true;
+            });
         }
     });
-
-    // Create a NEON filter on the main twitter table for the center of the graph.
-    filterNeonTableOnUser(center);
-}
+};
 
 function advanceTimer() {
     "use strict";
@@ -474,20 +491,18 @@ function firstTimeInitialize(containingElement) {
         // read default data collection names from config file
         twitter.host = defaults.mongoHost || "localhost";
         twitter.mentionsCollection = defaults.mentionsCollection || "twitter_mentions_sa";
-        twitter.neonCollection = defaults.neonCollection || "twitter_sa";
-        twitter.neonFilterField = defaults.neonFilterField || "user";
         twitter.mentionsDatabase = defaults.mentionsDatabase || "year2";
         twitter.centralEntity = defaults.centralEntity || "";
         twitter.initialStartDate = defaults.startDate || "February 11, 2013";
         twitter.initialEndDate = defaults.endDate || "February 12, 2015";
         twitter.backend = defaults.backend || "tangelo";
-        console.log('set mentions collection: ',twitter.mentionsCollection);
-        console.log('set start date:',twitter.initialStartDate);
+        //console.log('set mentions collection: ',twitter.mentionsCollection);
+        //console.log('set start date:',twitter.initialStartDate);
 
-        initializeNeon();
+        initializeNeonConnection();
 
         // make the panel open & close over data content
-        console.log(JSON.stringify(defaults));
+        //console.log(JSON.stringify(defaults));
         $('#control-panel').controlPanel({
             height: defaults.controlPanelHeight || "500px"
         });
@@ -680,47 +695,11 @@ function firstTimeInitialize(containingElement) {
     });
 }
 
-// this method is called when a user clicks on a node in the graph.  There is a
-// mode where the user has elected to re-center around clicked nodes, and this
-// can be enabled/disabled through a UI checkbox, so examine the state variable
-// to decide if any action should be taken. This method is always called because
-// callbacks are alwayw placed on the nodes.
-
-function filterNeonTableOnUser(item) {
-    console.log("filtering on " + item);
-    // twitter.neon = new neon.query.Connection();
-    // twitter.neon.connect(neon.query.Connection.MONGO, twitter.host);
-    // twitter.neon.use(twitter.mentionsDatabase);
-
-    if(twitter.neon && twitter.neon.messenger) {
-        if (item) {
-            var filterClause = neon.query.where(twitter.neonFilterField, '=', item);
-            var filter = new neon.query.Filter().selectFrom(twitter.mentionsDatabase, twitter.neonCollection).where(filterClause);
-            twitter.neon.messenger.replaceFilter('tangelo-mentions-filter-key', filter, function() {
-                console.log("Mentions: neon filter set on " + item);
-            });
-        }
-        else {
-            twitter.neon.messenger.removeFilter('tangelo-mentions-filter-key', function() {
-                console.log("Mentions: neon filter removed");
-            })
-        }
-    }
-}
-
-function clearNeonfilter() {
-    if(twitter.neon && twitter.neon.messenger) {
-        twitter.neon.messenger.removeFilter('tangelo-mentions-filter-key', function() {
-            console.log("Mentions: neon filter removed");
-        });
-    }
-}
-
 function centerOnClickedGraphNode(item) {
     "use strict";
 
     if (twitter.clickCausesFollow) {
-        console.log("centering on:",item);
+        //console.log("centering on:",item);
         // assign the new center of the mentions graph
         twitter.center.val(item);
 
@@ -881,47 +860,61 @@ var processCenterMessage = function (sender, msg) {
     updateGraph();
 };
 
-function initializeNeon() {
+var initializeNeon = function(updateNeonFilterFunction) {
     "use strict";
 
     neon.SERVER_URL = "/neon";
 
-    twitter.neon = new neon.query.Connection();
-    twitter.neon.connect(neon.query.Connection.MONGO, twitter.host);
-    twitter.neon.use(twitter.mentionsDatabase);
-    twitter.neon.messenger = new neon.eventing.Messenger();
+    if(!twitter.neon) {
+        twitter.neon = {};
+    }
+
+    if(updateNeonFilterFunction) {
+        twitter.neon.updateNeonFilter = updateNeonFilterFunction;
+    }
+}
+
+var initializeNeonConnection = function() {
+    "use strict";
+
+    neon.SERVER_URL = "/neon";
+
+    if(!twitter.neon) {
+        twitter.neon = {};
+    }
+
+    twitter.neon.connection = new neon.query.Connection();
+    twitter.neon.connection.connect(neon.query.Connection.MONGO, twitter.host);
 }
 
 function testNeon() {
     "use strict";
 
-    var conn,
-        db,
-        coll,
-        mess,
+    var connection,
+        database,
+        table,
+        messenger,
         filter;
 
     neon.SERVER_URL = "/neon";
 
-    conn = new neon.query.Connection();
-    conn.connect(neon.query.Connection.MONGO, "localhost");
+    connection = new neon.query.Connection();
+    connection.connect(neon.query.Connection.MONGO, "localhost");
 
-    db = "year2";
-    coll = "twitter_mentions_sa";
+    database = "year2";
+    table = "twitter_mentions_sa";
 
-    conn.use(db);
-
-    mess = new neon.eventing.Messenger();
+    messenger = new neon.eventing.Messenger();
     filter = new neon.query.Filter()
-        .selectFrom(db, coll)
+        .selectFrom(database, table)
         .where("source", "=", "monica_nino");
 
-    mess.addSelection("foobar", filter, function () {
+    messenger.addSelection("foobar", filter, function () {
         var query = new neon.query.Query()
-            .selectFrom(db, coll)
+            .selectFrom(database, table)
             .selectionOnly();
 
-        conn.executeQuery(query, function (result) {
+        connection.executeQuery(query, function (result) {
             console.log(result);
         });
     });

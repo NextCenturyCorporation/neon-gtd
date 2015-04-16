@@ -299,8 +299,9 @@ angular.module("neonDemo.services")
                             var relationFieldName = service.dataset.relations[j][relationTableName];
                             if(!(tablesToFields[relationTableName])) {
                                 tablesToFields[relationTableName] = {};
+                                tablesToFields[relationTableName][fieldName] = [];
                             }
-                            tablesToFields[relationTableName][fieldName] = relationFieldName;
+                            tablesToFields[relationTableName][fieldName].push(relationFieldName);
                         }
                     }
                 }

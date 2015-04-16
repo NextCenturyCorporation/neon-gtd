@@ -142,7 +142,7 @@ angular.module('neonDemo.directives')
                     $scope.errorMessage = undefined;
                 }
 
-                if(!$scope.attrY && $scope.aggregation !== "count") {
+                if(!$scope.attrY) {// && $scope.aggregation !== "count") {
                     drawChart();
                     return;
                 }
