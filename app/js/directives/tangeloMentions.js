@@ -56,7 +56,21 @@ angular.module('neonDemo.directives')
             var onFiltersChanged = function(message) {
                 XDATA.activityLogger.logSystemActivity('TangeloMentions - received neon filter changed event');
                 if(message.addedFilter.databaseName === twitter.mentionsDatabase && message.addedFilter.tableName === twitter.mentionsCollection) {
-                    $("#update").click();
+                    if(message.type.toUpperCase() === "ADD" || message.type.toUpperCase() === "REPLACE") {
+                        setMentionsCenterByFilter(message.addedFilter.whereClause);
+                    }
+                    $element.find("#update").click();
+                }
+            };
+
+            var setMentionsCenterByFilter = function(whereClause) {
+                if(whereClause.whereClauses) {
+                    // Currently ignore filters with multiple clauses.
+                    return;
+                } else {
+                    if(whereClause.lhs === "source") {
+                        $element.find("#center").val(whereClause.rhs);
+                    }
                 }
             };
 

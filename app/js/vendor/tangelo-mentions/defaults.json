@@ -1,12 +1,10 @@
 {
-    "mongoHost" : "localhost",
-    "mentionsDatabase" : "year2",
-    "mentionsCollection" : "twitter_mentions_sa",
-    "neonCollection" : "twitter_sa",
-    "neonFilterField" : "user",
+    "mongoHost" : "10.1.93.183",
+    "mentionsDatabase" : "test",
+    "mentionsCollection" : "twitter_mentions",
     "centralEntity" : "",
-    "startDate"	: "February 11, 2013",
-    "endDate" : "February 12, 2015",
+    "startDate"	: "January 01, 2014",
+    "endDate" : "May 12, 2015",
     "backend": "neon",
     "controlPanelHeight": "150px"
 }

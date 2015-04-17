@@ -15,8 +15,8 @@
     },
 
     "dig": {
-        "enabled": false,
-        "server": "http://localhost:9000"
+        "enabled": true,
+        "server": "http://10.1.93.199:8080"
     },
 
     "visualizations": [{
@@ -85,142 +85,50 @@
     }, {
         "name": "Mentions",
         "sizeX": 6,
-        "sizeY": 2,
+        "sizeY": 3,
         "type": "tangelo-mentions",
         "icon": "js/vendor/tangelo-mentions/tangelo-64x64.png"
     }],
 
     "datasets": [{
-        "name": "Local Twitter Test",
-        "layout": "qcr",
-        "datastore": "mongo",
-        "hostname": "localhost",
-        "database": "test",
-        "tables": [{
-            "name": "twitter36",
-            "fields": [{
-                "columnName": "_id",
-                "prettyName": "Database ID"
-            }, {
-                "columnName": "created_at",
-                "prettyName": "Created At"
-            }, {
-                "columnName": "screen_name",
-                "prettyName": "Screen Name"
-            }, {
-                "columnName": "lang",
-                "prettyName": "Language"
-            }, {
-                "columnName": "hashtags",
-                "prettyName": "Hashtags"
-            }, {
-                "columnName": "text",
-                "prettyName": "Text"
-            }],
-            "mappings": {
-                "date": "created_at",
-                "count_by": "screen_name"
-            }
-        }, {
-            "name": "ff",
-            "fields": [{
-                "columnName": "_id",
-                "prettyName": "Database ID"
-            }, {
-                "columnName": "attributeList",
-                "prettyName": "Attribute List"
-            }, {
-                "columnName": "id",
-                "prettyName": "User ID"
-            }, {
-                "columnName": "label",
-                "prettyName": "Label"
-            }, {
-                "columnName": "magnitude",
-                "prettyName": "Magnitude"
-            }],
-            "mappings": {
-                "graph_nodes": "label"
-            }
-        }],
-        "relations": [{
-            "twitter36": "screen_name",
-            "ff": "label"
-        }],
-        "connectOnLoad": true
-    },
-
-    {
-        "name": "Remote Twitter Test",
-        "layout": "qcr",
+        "name": "Neon-Tangelo Demo",
+        "layout": "mentions",
         "datastore": "mongo",
         "hostname": "192.168.0.129",
         "database": "test",
         "tables": [{
-            "name": "twitter36",
-            "fields": [{
-                "columnName": "_id",
-                "prettyName": "Database ID"
-            }, {
-                "columnName": "created_at",
-                "prettyName": "Created At"
-            }, {
-                "columnName": "screen_name",
-                "prettyName": "Screen Name"
-            }, {
-                "columnName": "lang",
-                "prettyName": "Language"
-            }, {
-                "columnName": "hashtags",
-                "prettyName": "Hashtags"
-            }, {
-                "columnName": "text",
-                "prettyName": "Text"
-            }],
+            "name": "twitter36_reimport",
+            "fields": [],
             "mappings": {
                 "date": "created_at",
-                "count_by": "screen_name"
+                "latitude": "latitude",
+                "longitude": "longitude",
+                "color_by": "lang",
+                "size_by": "user_followers_count",
+                "bar_x_axis": "lang",
+                "count_by": "screen_name_tolower"
             }
         }, {
-            "name": "ff",
-            "fields": [{
-                "columnName": "_id",
-                "prettyName": "Database ID"
-            }, {
-                "columnName": "attributeList",
-                "prettyName": "Attribute List"
-            }, {
-                "columnName": "id",
-                "prettyName": "User ID"
-            }, {
-                "columnName": "label",
-                "prettyName": "Label"
-            }, {
-                "columnName": "magnitude",
-                "prettyName": "Magnitude"
-            }],
+            "name": "twitter_mentions",
+            "fields": [],
             "mappings": {
-                "graph_nodes": "label"
+                "date": "created_at",
+                "graph_nodes": "source",
+                "bar_x_axis": "source",
+                "count_by": "source"
             }
         }],
         "relations": [{
-            "twitter36": "screen_name",
-            "ff": "label"
-        }]
-    },
-
-    {
-        "name": "Neon-Tangelo Test",
-        "layout": "qcr",
-        "datastore": "mongo",
-        "hostname": "localhost",
-        "database": "year2",
-        "tables": [{
-            "name": "twitter_sa_small",
-            "fields": [],
-            "mappings": {}
+            "twitter36_reimport": "created_at",
+            "twitter_mentions": "date"
+        }, {
+            "twitter36_reimport": "screen_name_tolower",
+            "twitter_mentions": "source"
+        }, {
+            "twitter36_reimport": "screen_name_tolower",
+            "twitter_mentions": "target"
         }],
-        "relations": []
+        "connectOnLoad": true
     }],
 
     "layouts": {
@@ -248,6 +156,31 @@
             "sizeX": 2,
             "sizeY": 2,
             "type": "count-by"
+        }],
+
+        "mentions": [{
+            "sizeX": 6,
+            "sizeY": 1,
+            "type": "timeline-selector"
+        }, {
+            "sizeX": 4,
+            "sizeY": 3,
+            "type": "tangelo-mentions"
+        }, {
+            "sizeX": 2,
+            "sizeY": 1,
+            "type": "tag-cloud",
+            "bindings": {
+                "tag-field": "'hashtags'"
+            }
+        }, {
+            "sizeX": 2,
+            "sizeY": 2,
+            "type": "count-by"
+        }, {
+            "sizeX": 6,
+            "sizeY": 2,
+            "type": "query-results-table"
         }],
 
         "qcr": [{
@@ -285,6 +218,10 @@
             "bindings": {
                 "tag-field": "'hashtags'"
             }
+        }, {
+            "sizeX": 6,
+            "sizeY": 2,
+            "type": "query-results-table"
         }]
     }
 }
