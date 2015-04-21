@@ -17,7 +17,8 @@
  */
 
 angular.module('neonDemo.directives')
-.directive('countBy', ['DIG', 'ConnectionService', 'DatasetService', 'ErrorNotificationService', 'FilterService', function(DIG, connectionService, datasetService, errorNotificationService, filterService) {
+.directive('countBy', ['external', 'ConnectionService', 'DatasetService', 'ErrorNotificationService', 'FilterService', 'PopupService',
+    function(external, connectionService, datasetService, errorNotificationService, filterService, popupService) {
     return {
         templateUrl: 'partials/directives/countby.html',
         restrict: 'EA',
@@ -29,6 +30,10 @@ angular.module('neonDemo.directives')
             chartOptions.toggleClass($scope.uniqueChartOptions);
 
             el.addClass('countByDirective');
+
+            // Unique field name used for the SlickGrid column containing the URLs for the external apps.
+            // This name should be one that is highly unlikely to be a column name in a real database.
+            $scope.EXTERNAL_APP_FIELD_NAME = "neonExternalApps";
 
             $scope.databaseName = "";
             $scope.tables = [];
@@ -115,19 +120,19 @@ angular.module('neonDemo.directives')
                 var columns = tables.createColumns(data);
                 for(var i = 0; i < columns.length; ++i) {
                     // Since forceFitColumns is enabled, setting this width will force the columns to use as much
-                    // space as possible, which is necessary to keep the first column (dig) as small as possible.
+                    // space as possible, which is necessary to keep the first column as small as possible.
                     columns[i].width = $tableDiv.outerWidth();
                 }
 
-                if(DIG.enabled) {
-                    var digColumn = {
+                if(external.anyEnabled) {
+                    var externalAppColumn = {
                         name: "",
-                        field: "dig",
+                        field: $scope.EXTERNAL_APP_FIELD_NAME,
                         width: "15",
                         cssClass: "centered",
                         ignoreClicks: true
                     };
-                    columns.splice(0, 0, digColumn);
+                    columns.splice(0, 0, externalAppColumn);
                 }
 
                 return columns;
@@ -266,18 +271,34 @@ angular.module('neonDemo.directives')
                 return dataObject;
             };
 
-            $scope.addDigUrlColumnData = function(data) {
-                data.data.forEach(function(row) {
+            $scope.addExternalAppUrlColumnData = function(data) {
+                data.data.forEach(function(row, index) {
+                    var uniqueName = $scope.tableId + "-" + index;
                     var field = $scope.countField;
                     var value = row[$scope.countField];
-                    var query = $scope.countField + "=" + row[$scope.countField];
-                    var element = "<form action=\"" + DIG.server + "/list\" method=\"get\" target=\"" + query + "\">" +
-                        "<input type=\"hidden\" name=\"field\" value=\"" + field + "\">" +
-                        "<input type=\"hidden\" name=\"value\" value=\"" + value + "\">" +
-                        "<button class=\"hidden-button\" type=\"submit\" title=\"" + query + "\">" +
-                        "<span class=\"glyphicon glyphicon-new-window\"></span></button></form>";
-                    row.dig = element;
+                    var query = field + "=" + value;
+
+                    var links = [];
+
+                    if(external.dig.enabled) {
+                        links.push({
+                            action: external.dig.server + "/list",
+                            target: query,
+                            inputs: [{
+                                name: "field",
+                                value: field
+                            }, {
+                                name: "value",
+                                value: value
+                            }],
+                            image: "img/DIG_64.png",
+                            text: "DIG"
+                        });
+                    }
+
+                    row[$scope.EXTERNAL_APP_FIELD_NAME] = popupService.createLinksPopup(uniqueName, "Open External Applications", links);
                 });
+
                 return data;
             };
 
@@ -324,7 +345,7 @@ angular.module('neonDemo.directives')
              */
             $scope.addOnClickListener = function() {
                 $scope.table.addOnClickListener(function(columns, row) {
-                    var columnIndex = DIG.enabled ? 1 : 0;
+                    var columnIndex = external.anyEnabled ? 1 : 0;
                     var field = columns[columnIndex].field;
 
                     // If the user clicks on the filtered row/cell, clear the filter.
@@ -359,9 +380,9 @@ angular.module('neonDemo.directives')
 
                 $scope.tableOptions = createOptions(cleanData);
 
-                // Add the DIG URLs after the table options have been created because it already includes the column.
-                if(DIG.enabled) {
-                    cleanData = $scope.addDigUrlColumnData(cleanData);
+                // Add the URLs for the external applications after the table options have been created because it already includes the column.
+                if(external.anyEnabled) {
+                    cleanData = $scope.addExternalAppUrlColumnData(cleanData);
                 }
 
                 $scope.count = cleanData.data.length;

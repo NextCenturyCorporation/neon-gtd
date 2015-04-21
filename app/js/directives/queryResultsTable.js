@@ -27,8 +27,8 @@
  * @constructor
  */
 angular.module('neonDemo.directives')
-.directive('queryResultsTable', ['DIG', 'ConnectionService', 'DatasetService', 'ErrorNotificationService',
-    function(DIG, connectionService, datasetService, errorNotificationService) {
+.directive('queryResultsTable', ['external', 'ConnectionService', 'DatasetService', 'ErrorNotificationService', 'PopupService',
+    function(external, connectionService, datasetService, errorNotificationService, popupService) {
     return {
         templateUrl: 'partials/directives/queryResultsTable.html',
         restrict: 'EA',
@@ -42,6 +42,10 @@ angular.module('neonDemo.directives')
             chartOptions.toggleClass($scope.uniqueChartOptions);
 
             element.addClass('query-results-directive');
+
+            // Unique field name used for the SlickGrid column containing the URLs for the external apps.
+            // This name should be one that is highly unlikely to be a column name in a real database.
+            $scope.EXTERNAL_APP_FIELD_NAME = "neonExternalApps";
 
             // If this widget was launched as a navbar collapsable then showData will be bound to the collapse toggle.
             // Otherwise show the data automatically on launching the widget.
@@ -171,15 +175,15 @@ angular.module('neonDemo.directives')
                 var columns = tables.createColumns(data);
                 columns = tables.addLinkabilityToColumns(columns);
 
-                if(DIG.enabled) {
-                    var digColumn = {
+                if(external.anyEnabled) {
+                    var externalAppColumn = {
                         name: "",
-                        field: "dig",
+                        field: $scope.EXTERNAL_APP_FIELD_NAME,
                         width: "15",
                         cssClass: "centered",
                         ignoreClicks: true
                     };
-                    columns.splice(0, 0, digColumn);
+                    columns.splice(0, 0, externalAppColumn);
                 }
 
                 return columns;
@@ -340,24 +344,38 @@ angular.module('neonDemo.directives')
 
                 $scope.tableOptions = $scope.createOptions(queryResults);
 
-                if(DIG.enabled) {
-                    queryResults = $scope.addDigUrlColumnData(queryResults);
+                if(external.anyEnabled) {
+                    queryResults = $scope.addExternalAppUrlColumnData(queryResults);
                 }
 
                 $scope.table = new tables.Table("#" + $scope.tableId, $scope.tableOptions).draw();
                 $scope.table.refreshLayout();
             };
 
-            $scope.addDigUrlColumnData = function(data) {
-                data.data.forEach(function(row) {
+            $scope.addExternalAppUrlColumnData = function(data) {
+                data.data.forEach(function(row, index) {
+                    var uniqueName = $scope.tableId + "-" + index;
                     var rowId = row._id;
                     var query = "id=" + rowId;
-                    var element = "<form action=\"" + DIG.server + "/list\" method=\"get\" target=\"" + query + "\">" +
-                        "<input type=\"hidden\" name=\"id\" value=\"" + rowId + "\">" +
-                        "<button class=\"hidden-button\" type=\"submit\" title=\"" + query + "\">" +
-                        "<span class=\"glyphicon glyphicon-new-window\"></span></button></form>";
-                    row.dig = element;
+
+                    var links = [];
+
+                    if(external.dig.enabled) {
+                        links.push({
+                            action: external.dig.server + "/list",
+                            target: query,
+                            inputs: [{
+                                name: "id",
+                                value: rowId
+                            }],
+                            image: "img/DIG_64.png",
+                            text: "DIG"
+                        });
+                    }
+
+                    row[$scope.EXTERNAL_APP_FIELD_NAME] = popupService.createLinksPopup(uniqueName, "Open External Applications", links);
                 });
+
                 return data;
             };
 

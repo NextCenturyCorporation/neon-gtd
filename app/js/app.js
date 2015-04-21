@@ -82,7 +82,11 @@ angular.element(document).ready(function() {
         var digConfig = (config.dig || {
             enabled: false
         });
-        neonDemo.constant('DIG', digConfig);
+        var externalAppConfig = {
+            anyEnabled: digConfig.enabled,
+            dig: digConfig
+        };
+        neonDemo.constant('external', externalAppConfig);
 
         var datasets = (config.datasets || []);
         neonDemo.value('datasets', datasets);

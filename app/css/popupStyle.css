@@ -1,0 +1,105 @@
+/*
+ * Copyright 2014 Next Century Corporation
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+.neon-popup-link {
+    cursor: pointer;
+}
+
+.neon-popup .modal-dialog {
+    margin: 60px auto;
+}
+
+.neon-popup .modal-body {
+    max-height: 405px;
+    overflow-y: auto;
+}
+
+.neon-popup ul {
+    list-style: none;
+    margin: 10px 0px 0px 10px;
+    padding: 0px;
+}
+
+.neon-popup ul li {
+    display: block;
+    float:left;
+    height: 100px;
+    margin: 0px 10px 10px 0px;
+    width: 100px;
+}
+
+.neon-popup ul li img {
+   border: 0px;
+}
+
+.neon-popup ul button {
+    background: rgba(256, 256, 256, 1);
+    border: 1px solid #ffffff;
+    border-radius: 4px;
+    height: 100%;
+    padding: 5px;
+    width: 100px;
+}
+
+.neon-popup ul button:focus,
+.neon-popup ul button:hover {
+    border: 1px solid #7ce98e;
+}
+
+.neon-popup ul button:focus span,
+.neon-popup ul button:hover span {
+    color: #7ce98e;
+}
+
+.neon-popup ul .neon-popup-thumbnail {
+    height: 100%;
+    width: 100px;
+}
+
+.neon-popup ul span {
+    color: #777777;
+    font-weight: bold;
+    height: 30px;
+    letter-spacing: 0.05em;
+    width: 100px;
+}
+
+.neon-popup ul .selected button {
+    background: #39b54a;
+    border: 1px solid #39b54a;
+}
+
+.neon-popup ul .selected span {
+    color: #ffffff;
+}
+
+/* Button styling copied from style.css needed to overwrite styling from jquery.ui.theme.css for popups launched inside SlickGrid tables. */
+.neon-popup .btn {
+    font-size: 12px;
+    font-weight: bold;
+    line-height: 20px;
+    padding: 6px 16px;
+    text-transform: uppercase;
+}
+
+.neon-popup .btn-default {
+    color: #555555;
+}
+
+.neon-popup .btn-default:hover,
+.neon-popup .btn-default:focus,
+.neon-popup .btn-default:active {
+    color: #333333;
+}
