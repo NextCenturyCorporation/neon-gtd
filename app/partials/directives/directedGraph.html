@@ -14,13 +14,19 @@
                 </select>
             </div>
             <div class="form-group">
-                <label>Field</label>
-                <select class="form-control" ng-model="selectedField" ng-options="field for field in fields" ng-required="true" ng-disabled="(fields.length == 0)" ng-change="clearFilters()">
+                <label>Node Field</label>
+                <select class="form-control" ng-model="selectedNodeField" ng-options="field for field in fields" ng-required="true" ng-disabled="(fields.length == 0)" ng-change="clearFilters()">
                 </select>
             </div>
             <div class="form-group">
-                <label>Filter on {{selectedField}}</label>
-                <select class="form-control" ng-model="selectedNode" ng-options="node for node in nodes track by node" ng-required="false" ng-disabled="(nodes.length == 0) || !(selectedField)">
+                <label>Link(s) Field</label>
+                <select class="form-control" ng-model="selectedLinkField" ng-options="field for field in fields" ng-required="false" ng-disabled="(fields.length == 0)" ng-change="clearFilters()">
+                    <option value=""></option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>Filter on {{selectedNodeField}}</label>
+                <select class="form-control" ng-model="selectedNode" ng-options="node for node in nodes track by node" ng-required="false" ng-disabled="(nodes.length == 0) || !(selectedNodeField)">
                     <option value=""></option>
                 </select>
             </div>
