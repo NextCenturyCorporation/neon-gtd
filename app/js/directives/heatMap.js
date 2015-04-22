@@ -114,9 +114,11 @@ angular.module('neonDemo.directives')
                             from: oldVal,
                             to: newVal
                         });
-                    if(newVal && newVal !== oldVal) {
+                    if(newVal) {
                         $scope.map.latitudeMapping = newVal;
-                        $scope.draw();
+                        if(newVal !== oldVal) {
+                            $scope.draw();
+                        }
                     }
                 });
 
@@ -128,9 +130,11 @@ angular.module('neonDemo.directives')
                             from: oldVal,
                             to: newVal
                         });
-                    if(newVal && newVal !== oldVal) {
+                    if(newVal) {
                         $scope.map.longitudeMapping = newVal;
-                        $scope.draw();
+                        if(newVal !== oldVal) {
+                            $scope.draw();
+                        }
                     }
                 });
 
