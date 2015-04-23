@@ -21,7 +21,6 @@
         "jquery.tagcloud": "https://github.com/addywaddy/jquery.tagcloud.js.git",
         "jquery.linky": "0.1.8",
         "mergesort": "https://github.com/justinforce/merge-sort/archive/1.0.zip",
-        "opencpu": "https://github.com/jeroenooms/opencpu.js.git",
         "openlayers": "https://github.com/openlayers/openlayers/releases/download/release-2.13.1/OpenLayers-2.13.1.zip",
         "openlayers-heatmap": "https://github.com/pa7/heatmap.js.git#v1.0",
         "owf": "https://www.owfgoss.org/nexus/content/groups/public/org/ozoneplatform/ozone-widgeting-framework/OWF-bundle/7.0.1/OWF-bundle-7.0.1-GA.zip",
@@ -84,10 +83,6 @@
 
         "mergesort": {
             "js": "**/merge*.js"
-        },
-
-        "opencpu": {
-            "js": "**/opencpu-*.*.js"
         },
 
         "openlayers": {

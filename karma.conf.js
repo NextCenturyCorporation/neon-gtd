@@ -16,7 +16,6 @@ module.exports = function(config){
         '../neon/neon-server/build/js/neon.js',
         'app/lib/jquery/js/jquery.min.js',
         'app/lib/javascript-detect-element-resize/js/jquery.resize.js',
-        'app/lib/opencpu/js/opencpu-0.5.js',
         'app/lib/xdatalogger/js/draper.activity_logger-2.1.1.js',
         'app/lib/xdatalogger/js/draper.activity_worker-2.1.1.js',
         'app/lib/d3/js/d3.min.js',
