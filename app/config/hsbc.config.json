@@ -85,6 +85,86 @@
     }],
 
     "datasets": [{
+        "name": "HSBC 10K",
+        "layout": "hsbc",
+        "datastore": "mongo",
+        "hostname": "52.16.106.169",
+        "database": "dataset10k",
+        "tables": [{
+            "name": "accounts",
+            "fields": [],
+            "mappings": {
+                "date": "account_opened_date",
+                "bar_x_axis": "account_type",
+                "y_axis": "account_type",
+                "line_category": "account_type",
+                "color_by": "account_type",
+                "size_by": "account_risk_rating",
+                "sort_by": "account_opened_date",
+                "count_by": "primary_account_number"
+            }
+        }, {
+            "name": "customers",
+            "fields": [],
+            "mappings": {
+                "date": "customer_start_date",
+                "latitude": "lat",
+                "longitude": "long",
+                "bar_x_axis": "customer_type",
+                "y_axis": "customer_type",
+                "line_category": "customer_type",
+                "color_by": "customer_type",
+                "size_by": "customer_risk_rating",
+                "sort_by": "customer_start_date",
+                "count_by": "customer_type"
+            }
+        }, {
+            "name": "txns",
+            "fields": [],
+            "mappings": {
+                "date": "value_date",
+                "bar_x_axis": "currency",
+                "y_axis": "currency",
+                "line_category": "currency",
+                "color_by": "currency",
+                "size_by": "conv_tran_amt",
+                "sort_by": "value_date",
+                "count_by": "extract_account_num",
+                "graph_nodes": "extract_account_num",
+                "graph_links": "counterparty_acct_no"
+            }
+        }],
+        "relations": [{
+            "accounts": "primary_account_number",
+            "txns": "extract_account_num"
+        }, {
+            "accounts": "country",
+            "customers": "residence_country"
+        }, {
+            "accounts": "address_line_one",
+            "customers": "address_line_1"
+        }, {
+            "accounts": "address_line_two",
+            "customers": "address_line_2"
+        }, {
+            "accounts": "address_line_three",
+            "customers": "address_line_3"
+        }, {
+            "accounts": "city",
+            "customers": "city"
+        }, {
+            "accounts": "postal_code",
+            "customers": "postal_code"
+        }, {
+            "accounts": "phone_number",
+            "customers": "phone_number"
+        }, {
+            "accounts": "email_address",
+            "customers": "email_address"
+        }]
+    },
+
+    {
         "name": "HSBC 100K",
         "layout": "hsbc",
         "datastore": "mongo",
