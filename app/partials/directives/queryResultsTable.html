@@ -51,7 +51,7 @@
 
             <div class="form-group">
                 <label>Limit</label>
-                <input type="number" min="1" name="limitInput" class="form-control" ng-model="limit"
+                <input style="width: 100px;" type="number" min="1" name="limitInput" class="form-control" ng-model="limit"
                 ng-class="{true: '', false: 'has-error'}[dataTableForm.limitInput.$error.number]">
             </div>
             <button type="button" class="btn btn-default refresh" ng-click="refreshData()">
