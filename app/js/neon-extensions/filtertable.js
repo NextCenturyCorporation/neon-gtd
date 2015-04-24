@@ -173,6 +173,21 @@ neon.query.FilterTable.prototype.getFilterRows = function() {
 };
 
 /**
+ * Sets the "and clauses" setting for all FilterRows in the given table to the given value.
+ * @param {String} tableName
+ * @param {Boolean} andClauses True if the compound clause should 'AND' all the FilterRows; false
+ *    if it should 'OR' all the FilterRows
+ * @method setAndClauses
+ */
+neon.query.FilterTable.prototype.setAndClauses = function(tableName, andClauses) {
+    this.initializeFilterStateForTable(tableName);
+    var rows = this.filterState[tableName];
+    for(var i = 0; i < rows.length; ++i) {
+        rows.andClauses = andClauses;
+    }
+};
+
+/**
  * Returns the filter key for the given table in this FilterTable.
  * @param {String} tableName
  * @return {String}
@@ -205,18 +220,16 @@ neon.query.FilterTable.prototype.getFilterState = function(tableName) {
 /**
  * Builds a Neon Filter for each table in this FilterTable based on all of their FilterRows and returns the array of Filters.
  * @param {String} databaseName The database to filter.
- * @param {Boolean} andClauses True if the compound clause should 'AND' all the FilterRows; false
- *    if it should 'OR' all the FilterRows
  * @return {Array}
  * @method buildFiltersFromData
  */
-neon.query.FilterTable.prototype.buildFiltersFromData = function(database, andClauses) {
+neon.query.FilterTable.prototype.buildFiltersFromData = function(database) {
     var filters = [];
 
     var tables = Object.keys(this.filterState);
     for(var i = 0; i < tables.length; ++i) {
         var tableName = tables[i];
-        var filter = neon.query.FilterTable.buildFilterFromData(database, tableName, this.filterState[tableName], andClauses);
+        var filter = neon.query.FilterTable.buildFilterFromData(database, tableName, this.filterState[tableName]);
         filters.push({
             tableName: tableName,
             filter: filter
@@ -232,12 +245,10 @@ neon.query.FilterTable.prototype.buildFiltersFromData = function(database, andCl
  * @param {String} databaseName The database to filter.
  * @param {String} tableName The table to filter.
  * @param {Array} data A data array of FilterRows
- * @param {Boolean} andClauses True if the compound clause should 'AND' all the FilterRows; false
- *    if it should 'OR' all the FilterRows
  * @return {neon.query.where}
  * @method buildFilterFromData
  */
-neon.query.FilterTable.buildFilterFromData = function(databaseName, tableName, data, andClauses) {
+neon.query.FilterTable.buildFilterFromData = function(databaseName, tableName, data) {
     var baseFilter = new neon.query.Filter().selectFrom(databaseName, tableName);
 
     var whereClause;
@@ -248,7 +259,7 @@ neon.query.FilterTable.buildFilterFromData = function(databaseName, tableName, d
         var filterData = data[0];
         whereClause = neon.query.where(filterData.columnValue, filterData.operatorValue, neon.query.FilterTable.parseValue(filterData.value));
     } else {
-        whereClause = neon.query.FilterTable.buildCompoundWhereClause(data, andClauses);
+        whereClause = neon.query.FilterTable.buildCompoundWhereClause(data);
     }
     return baseFilter.where(whereClause);
 };
@@ -257,19 +268,20 @@ neon.query.FilterTable.buildFilterFromData = function(databaseName, tableName, d
  * Takes an array of FilterRows and builds a compound Neon where object suitable for
  * filtering Neon Queries.
  * @param {Array} data A data array of FilterRows
- * @param {Boolean} andClauses True if the compound clause should 'AND' all the FilterRows; false
- *    if it should 'OR' all the FilterRows
  * @return {neon.query.where}
  * @method buildCompoundWhereClause
  * @static
  */
-neon.query.FilterTable.buildCompoundWhereClause = function(data, andClauses) {
+neon.query.FilterTable.buildCompoundWhereClause = function(data) {
     var whereClause;
     var clauses = [];
+    var andClauses = true;
 
     $.each(data, function(index, filterData) {
         var clause = neon.query.where(filterData.columnValue, filterData.operatorValue, neon.query.FilterTable.parseValue(filterData.value));
         clauses.push(clause);
+        // The value of andClauses should be the same for all FilterRows for a table.
+        andClauses = filterData.andClauses;
     });
 
     if(andClauses) {
@@ -316,12 +328,13 @@ neon.query.FilterTable.parseValue = function(value) {
  * @class neon.query.FilterRow
  * @constructor
  */
-neon.query.FilterRow = function(tableName, columnValue, operatorValue, value, columnOptions, operatorOptions) {
+neon.query.FilterRow = function(tableName, columnValue, operatorValue, value, andClauses, columnOptions, operatorOptions) {
     this.tableName = tableName;
-    this.columnOptions = columnOptions;
+    this.columnOptions = columnOptions || [];
     this.columnValue = columnValue;
-    this.operatorOptions = operatorOptions;
+    this.operatorOptions = operatorOptions || [];
     this.operatorValue = operatorValue;
     this.value = value;
+    this.andClauses = typeof andClauses === "undefined" ? true : andClauses;
     this.dirty = false;
 };

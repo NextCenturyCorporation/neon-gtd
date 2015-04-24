@@ -8,15 +8,6 @@
     <h4 class="pull-left">Create Filters</h4>
 
     <div class="pull-right">
-      <div class="btn-group" >
-        <label class="btn btn-default active" ng-class="{true: 'active', false: ''}[andClauses]">
-          <input type="radio" ng-model="andClauses" style="display:none" ng-value="true"> AND
-        </label>
-        <label class="btn btn-default" ng-class="{true: '', false: 'active'}[andClauses]">
-          <input type="radio" ng-model="andClauses" style="display:none" ng-value="false"> OR
-        </label>
-      </div>
-
       <button type="button" class="btn btn-danger" ng-click="resetFilters()">
           Reset
       </button>
@@ -42,6 +33,14 @@
       </div>
       <div class="form-group">
         <input type="text" class="form-control" size="42" placeholder="Value" ng-model="filterRow.value" ng-change="dirtyFilterRow(filterRow)">
+      </div>
+      <div class="btn-group" >
+        <label class="btn btn-default" ng-class="{true: 'active', false: ''}[filterRow.andClauses]">
+            <input type="radio" ng-model="filterRow.andClauses" style="display:none" ng-value="true" ng-change="updateAndClausesForFilterRow(filterRow)">AND
+        </label>
+        <label class="btn btn-default" ng-class="{true: '', false: 'active'}[filterRow.andClauses]">
+            <input type="radio" ng-model="filterRow.andClauses" style="display:none" ng-value="false" ng-change="updateAndClausesForFilterRow(filterRow)">OR
+        </label>
       </div>
       <div class="form-group">
         <button type="button" class="btn btn-default refresh" ng-disabled="!(filterRow.dirty)" ng-click="updateFilterRow(filterRow.tableName, $index)">
@@ -71,6 +70,14 @@
       <div class="form-group">
         <input type="text" class="form-control" id="filter-value" size="42" placeholder="Value"  ng-model="selectedValue" 
           ng-disabled="!(fields.length > 0)" ng-required="true">
+      </div>
+      <div class="btn-group" >
+        <label class="btn btn-default" ng-class="{true: 'active', false: ''}[andClauses]">
+          <input type="radio" ng-model="andClauses" style="display:none" ng-value="true" ng-change="updateAndClauses()">AND
+        </label>
+        <label class="btn btn-default" ng-class="{true: '', false: 'active'}[andClauses]">
+          <input type="radio" ng-model="andClauses" style="display:none" ng-value="false" ng-change="updateAndClauses()">OR
+        </label>
       </div>
       <div class="form-group">
         <button type="button" class="btn btn-primary" ng-click="addFilterRow()">

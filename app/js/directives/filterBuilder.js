@@ -63,26 +63,6 @@ angular.module('neonDemo.directives')
                     $scope.publishRemoveFilterEvents($scope.filterTable.getTableNames());
                 });
 
-                // Adjust the filters whenever the user toggles AND/OR clauses.
-                $scope.$watch('andClauses', function(newVal, oldVal) {
-                    if(newVal !== oldVal) {
-                        var filters = $scope.filterTable.buildFiltersFromData($scope.databaseName, $scope.andClauses);
-
-                        XDATA.activityLogger.logUserActivity('FilterBuilder - Toggle custom Neon filter set operator', 'select_filter_menu_option',
-                            XDATA.activityLogger.WF_GETDATA,
-                            {
-                                operator: newVal
-                            });
-
-                        $scope.publishReplaceFilterEvents(filters, $scope.cleanFilterRowsForTable, function() {
-                            $scope.$apply(function() {
-                                // Error handler:  If the new query failed, reset the previous value of the AND / OR field.
-                                $scope.andClauses = !$scope.andClauses;
-                            });
-                        });
-                    }
-                });
-
                 $scope.$watch('filterTable', function(newVal, oldVal) {
                     if(newVal !== oldVal) {
                         var logData = {
@@ -210,10 +190,10 @@ angular.module('neonDemo.directives')
              */
             $scope.addFilterRow = function() {
                 var tableName = $scope.selectedTableName;
-                var row = new neon.query.FilterRow($scope.selectedTableName, $scope.selectedField, $scope.selectedOperator, $scope.selectedValue, $scope.fields);
+                var row = new neon.query.FilterRow($scope.selectedTableName, $scope.selectedField, $scope.selectedOperator, $scope.selectedValue, $scope.andClauses, $scope.fields);
                 var index = $scope.filterTable.addFilterRow(tableName, row);
 
-                var filters = $scope.filterTable.buildFiltersFromData($scope.databaseName, $scope.andClauses);
+                var filters = $scope.filterTable.buildFiltersFromData($scope.databaseName);
 
                 XDATA.activityLogger.logUserActivity('FilterBuilder - add custom Neon filter', 'execute_query_filter',
                     XDATA.activityLogger.WF_GETDATA, row);
@@ -248,7 +228,7 @@ angular.module('neonDemo.directives')
             $scope.removeFilterRow = function(tableName, index) {
                 var row = $scope.filterTable.removeFilterRow(tableName, index);
 
-                var filters = $scope.filterTable.buildFiltersFromData($scope.databaseName, $scope.andClauses);
+                var filters = $scope.filterTable.buildFiltersFromData($scope.databaseName);
 
                 XDATA.activityLogger.logUserActivity('FilterBuilder - reset/clear custom Neon filter', 'remove_query_filter',
                     XDATA.activityLogger.WF_GETDATA, row);
@@ -272,7 +252,7 @@ angular.module('neonDemo.directives')
             $scope.updateFilterRow = function(tableName, index) {
                 var row = $scope.filterTable.getFilterRow(tableName, index);
                 var oldData = $scope.filterTable.getFilterState(tableName);
-                var filters = $scope.filterTable.buildFiltersFromData($scope.databaseName, $scope.andClauses);
+                var filters = $scope.filterTable.buildFiltersFromData($scope.databaseName);
 
                 XDATA.activityLogger.logUserActivity('FilterBuilder - update custom Neon filter', 'execute_query_filter',
                     XDATA.activityLogger.WF_GETDATA, row);
@@ -359,6 +339,31 @@ angular.module('neonDemo.directives')
                 var filterRows = $scope.filterTable.getFilterState(tableName);
                 for(var i = 0; i < filterRows.length; ++i) {
                     filterRows[i].dirty = false;
+                }
+            };
+
+            $scope.updateAndClauses = function() {
+                var filterRows = $scope.filterTable.getFilterState($scope.selectedTableName);
+                for(var i = 0; i < filterRows.length; ++i) {
+                    if(filterRows[i].andClauses !== $scope.andClauses) {
+                        filterRows[i].dirty = true;
+                    }
+                    filterRows[i].andClauses = $scope.andClauses;
+                }
+            };
+
+            $scope.updateAndClausesForFilterRow = function(filterRow) {
+                var andClauses = filterRow.andClauses;
+                if($scope.selectedTableName === filterRow.tableName) {
+                    $scope.andClauses = andClauses;
+                }
+
+                var filterRows = $scope.filterTable.getFilterState(filterRow.tableName);
+                for(var i = 0; i < filterRows.length; ++i) {
+                    if(filterRows[i].andClauses !== andClauses) {
+                        filterRows[i].dirty = true;
+                    }
+                    filterRows[i].andClauses = andClauses;
                 }
             };
 
