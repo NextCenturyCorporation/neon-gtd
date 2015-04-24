@@ -318,7 +318,15 @@ angular.module('neonDemo.directives')
 
                 var connection = connectionService.getActiveConnection();
                 if(connection) {
-                    connection.executeQuery(query, $scope.createAndShowGraph, function(response) {
+                    connection.executeQuery(query, function(response) {
+                        if(response.data.length) {
+                            $scope.createAndShowGraph(response);
+                        } else if($scope.filteredNodes.length) {
+                            // If the filters cause the query to return no data, remove the most recent filter and query again.  This can happen if the user
+                            // creates a filter in the Filter Builder (which the graph automatically adds as a filter) on a node that doesn't exist.
+                            $scope.removeFilter($scope.filteredNodes[$scope.filteredNodes.length - 1]);
+                        }
+                    }, function(response) {
                         $scope.updateGraph([], []);
                         $scope.errorMessage = errorNotificationService.showErrorMessage(element, response.responseJSON.error, response.responseJSON.stackTrace);
                     });
