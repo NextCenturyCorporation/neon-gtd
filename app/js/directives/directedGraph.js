@@ -39,23 +39,12 @@ angular.module('neonDemo.directives')
             $scope.fields = [];
             $scope.selectedNodeField = "";
             $scope.selectedLinkField = "";
-            $scope.nodes = [];
             $scope.selectedNode = "";
             $scope.numberOfNodesInGraph = 0;
             $scope.nodeLimit = 500;
             $scope.filterKeys = {};
             $scope.errorMessage = undefined;
             $scope.filteredNodes = [];
-
-            $scope.$watch('selectedNode', function() {
-                if($scope.selectedNode !== "") {
-                    if($scope.messenger && $scope.filteredNodes.length) {
-                        filterService.removeFilters($scope.messenger, $scope.filterKeys);
-                    }
-                    $scope.filteredNodes = [];
-                    $scope.addFilter($scope.selectedNode);
-                }
-            }, true);
 
             var updateSize = function() {
                 var paddingTop = (element.outerHeight(true) - element.height()) / 2;
@@ -69,6 +58,16 @@ angular.module('neonDemo.directives')
                     $scope.graph.redraw();
                 }
                 $scope.resizePromise = null;
+            };
+
+            $scope.selectNode = function() {
+                if($scope.selectedNode !== "") {
+                    if($scope.messenger && $scope.filteredNodes.length) {
+                        filterService.removeFilters($scope.messenger, $scope.filterKeys);
+                    }
+                    $scope.filteredNodes = [];
+                    $scope.addFilter($scope.selectedNode);
+                }
             };
 
             $scope.initialize = function() {
@@ -158,19 +157,19 @@ angular.module('neonDemo.directives')
                 $scope.filterKeys = filterService.createFilterKeys("graph", $scope.tables);
 
                 if(initializing) {
-                    $scope.updateFieldsAndQueryForData();
+                    $scope.updateFieldsAndQueryForData(initializing);
                 } else {
                     $scope.$apply(function() {
-                        $scope.updateFieldsAndQueryForData();
+                        $scope.updateFieldsAndQueryForData(initializing);
                     });
                 }
             };
 
-            $scope.updateFieldsAndQueryForData = function() {
+            $scope.updateFieldsAndQueryForData = function(initializing) {
                 $scope.fields = datasetService.getDatabaseFields($scope.selectedTable.name);
                 $scope.selectedNodeField = datasetService.getMapping($scope.selectedTable.name, "graph_nodes") || "";
                 $scope.selectedLinkField = datasetService.getMapping($scope.selectedTable.name, "graph_links") || "";
-                $scope.queryForData();
+                $scope.queryForData(initializing);
             };
 
             $scope.addFilter = function(value) {
@@ -235,7 +234,7 @@ angular.module('neonDemo.directives')
                 }
             };
 
-            $scope.queryForData = function() {
+            $scope.queryForData = function(initializing) {
                 if($scope.errorMessage) {
                     errorNotificationService.hideErrorMessage($scope.errorMessage);
                     $scope.errorMessage = undefined;
@@ -244,54 +243,13 @@ angular.module('neonDemo.directives')
                 if($scope.selectedNodeField) {
                     if($scope.filteredNodes.length) {
                         $scope.queryForFilteredNodeNetwork($scope.filteredNodes);
-                    } else {
-                        $scope.queryForNodeData();
-                    }
-                }
-            };
-
-            /**
-             * Query for the list of nodes using the selected field and draw the graph containing those nodes.
-             */
-            $scope.queryForNodeData = function() {
-                var query = new neon.query.Query()
-                    .selectFrom($scope.databaseName, $scope.selectedTable.name)
-                    .groupBy($scope.selectedNodeField)
-                    .withFields([$scope.selectedNodeField]);
-                query.ignoreFilters([$scope.filterKeys[$scope.selectedTable.name]]);
-                query.aggregate(neon.query.COUNT, '*', 'count');
-
-                var connection = connectionService.getActiveConnection();
-                if(connection) {
-                    connection.executeQuery(query, function(data) {
-                        $scope.nodes = [];
-                        for(var i = 0; i < data.data.length; i++) {
-                            var node = data.data[i][$scope.selectedNodeField];
-                            if($scope.nodes.indexOf(node) < 0) {
-                                $scope.nodes.push(node);
-                            }
-                        }
-
-                        // Sort the nodes so they are displayed in order in the options dropdown.
-                        $scope.nodes.sort(function(a, b) {
-                            if(typeof a === "string" && typeof b === "string") {
-                                return a.toLowerCase().localeCompare(b.toLowerCase());
-                            }
-                            if(a < b) {
-                                return -1;
-                            }
-                            if(b < a) {
-                                return 1;
-                            }
-                            return 0;
+                    } else if(!initializing) {
+                        $scope.numberOfNodesInGraph = 0;
+                        $scope.graph.updateGraph({
+                            nodes: [],
+                            links: []
                         });
-
-                        $scope.graph.setClickableNodes($scope.nodes);
-                        $scope.createAndShowGraph(data);
-                    }, function(response) {
-                        $scope.updateGraph([], []);
-                        $scope.errorMessage = errorNotificationService.showErrorMessage(element, response.responseJSON.error, response.responseJSON.stackTrace);
-                    });
+                    }
                 }
             };
 
@@ -344,10 +302,8 @@ angular.module('neonDemo.directives')
                     if(nodesIndexes[value] === undefined) {
                         nodesIndexes[value] = nodes.length;
                         var colorGroup = 2;
-                        if($scope.filteredNodes.indexOf(value) !== -1) {
+                        if($scope.filteredNodes.indexOf(value) >= 0) {
                             colorGroup = 1;
-                        } else if($scope.nodes.indexOf(value) !== -1) {
-                            colorGroup = 3;
                         }
 
                         nodes.push({
@@ -403,7 +359,6 @@ angular.module('neonDemo.directives')
                     }
                 }
 
-                $scope.graph.setRootNodes($scope.filteredNodes);
                 $scope.updateGraph(nodes, links);
             };
 
@@ -419,16 +374,14 @@ angular.module('neonDemo.directives')
             };
 
             $scope.createClickHandler = function(item) {
-                if($scope.nodes.indexOf(item.name) !== -1) {
-                    if($scope.filteredNodes.indexOf(item.name) === -1) {
-                        $scope.$apply(function() {
-                            $scope.addFilter(item.name);
-                        });
-                    } else {
-                        $scope.$apply(function() {
-                            $scope.removeFilter(item.name);
-                        });
-                    }
+                if($scope.filteredNodes.indexOf(item.name) < 0) {
+                    $scope.$apply(function() {
+                        $scope.addFilter(item.name);
+                    });
+                } else {
+                    $scope.$apply(function() {
+                        $scope.removeFilter(item.name);
+                    });
                 }
             };
 
