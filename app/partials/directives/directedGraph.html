@@ -26,9 +26,12 @@
             </div>
             <div class="form-group">
                 <label>Filter on {{selectedNodeField}}</label>
-                <select class="form-control" ng-model="selectedNode" ng-options="node for node in nodes track by node" ng-required="false" ng-disabled="(nodes.length == 0) || !(selectedNodeField)">
-                    <option value=""></option>
-                </select>
+                <div class="input-group">
+                    <input type="text" class="form-control" placeholder="Enter Node Value" ng-model="selectedNode" ng-disabled="!(selectedNodeField)">
+                    <span class="input-group-btn">
+                        <button class="btn btn-default refresh" ng-click="selectNode()"><span class="glyphicon glyphicon-refresh"></span></button>
+                    </span>
+                </div>
             </div>
             <div class="form-group">
                 <label>Graph Node Limit</label>

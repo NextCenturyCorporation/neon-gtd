@@ -23,9 +23,6 @@ charts.DirectedGraph = function(rootElement, selector, opts) {
     if(opts.clickHandler) {
         this.clickHandler = opts.clickHandler;
     }
-
-    this.clickableValues = opts.clickableValues || [];
-    this.rootNodeValues = opts.rootNodeValues || [];
 };
 
 charts.DirectedGraph.prototype.DEFAULT_WIDTH = 600;
@@ -218,14 +215,6 @@ charts.DirectedGraph.prototype.redraw = function() {
     if(this.data) {
         this.updateGraph(this.data);
     }
-};
-
-charts.DirectedGraph.prototype.setClickableNodes = function(clickableValues) {
-    this.clickableValues = clickableValues;
-};
-
-charts.DirectedGraph.prototype.setRootNodes = function(rootNodeValues) {
-    this.rootNodeValues = rootNodeValues;
 };
 
 charts.DirectedGraph.prototype.handleZoom = function() {
