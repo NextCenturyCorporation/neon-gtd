@@ -74,7 +74,7 @@ angular.module('neonDemo.directives')
                                 operator: newVal
                             });
 
-                        $scope.publishReplaceFilterEvents(filters, undefined, function() {
+                        $scope.publishReplaceFilterEvents(filters, $scope.cleanFilterRowsForTable, function() {
                             $scope.$apply(function() {
                                 // Error handler:  If the new query failed, reset the previous value of the AND / OR field.
                                 $scope.andClauses = !$scope.andClauses;
@@ -201,6 +201,7 @@ angular.module('neonDemo.directives')
                 var fields = datasetService.getDatabaseFields(filterRow.tableName);
                 filterRow.columnOptions = _.without(fields, "_id");
                 filterRow.columnValue = filterRow.columnOptions[0] || "";
+                $scope.dirtyFilterRow(filterRow);
             };
 
             /**
@@ -227,6 +228,7 @@ angular.module('neonDemo.directives')
                             $scope.selectedValue = "";
                         });
                     }
+                    $scope.cleanFilterRowsForTable(successTable);
                 }, function(errorTable) {
                     $scope.$apply(function() {
                         // Error handler:  the addition to the filter failed.  Remove it.
@@ -239,8 +241,9 @@ angular.module('neonDemo.directives')
 
             /**
              * Removes a filter row from the table of filter clauses.
+             * @param {String} tableName
              * @param {Number} index The row to remove.
-             * @method updateFilterRow
+             * @method removeFilterRow
              */
             $scope.removeFilterRow = function(tableName, index) {
                 var row = $scope.filterTable.removeFilterRow(tableName, index);
@@ -250,7 +253,7 @@ angular.module('neonDemo.directives')
                 XDATA.activityLogger.logUserActivity('FilterBuilder - reset/clear custom Neon filter', 'remove_query_filter',
                     XDATA.activityLogger.WF_GETDATA, row);
 
-                $scope.publishReplaceFilterEvents(filters, undefined, function(errorTable) {
+                $scope.publishReplaceFilterEvents(filters, $scope.cleanFilterRowsForTable, function(errorTable) {
                     $scope.$apply(function() {
                         // Error handler:  the removal from the filter failed.  Add it.
                         if(errorTable === tableName) {
@@ -262,6 +265,7 @@ angular.module('neonDemo.directives')
 
             /**
              * Updates a filter row from current visible values and resets the filters on the server.
+             * @param {String} tableName
              * @param {Number} index The row to update and push to the server.
              * @method updateFilterRow
              */
@@ -273,7 +277,7 @@ angular.module('neonDemo.directives')
                 XDATA.activityLogger.logUserActivity('FilterBuilder - update custom Neon filter', 'execute_query_filter',
                     XDATA.activityLogger.WF_GETDATA, row);
 
-                $scope.publishReplaceFilterEvents(filters, undefined, function(errorTable) {
+                $scope.publishReplaceFilterEvents(filters, $scope.cleanFilterRowsForTable, function(errorTable) {
                     $scope.$apply(function() {
                         // Error handler:  If the new query failed, reset the previous value of the AND / OR field.
                         if(errorTable === tableName) {
@@ -335,7 +339,7 @@ angular.module('neonDemo.directives')
                     if(successCallback) {
                         successCallback(tableName);
                     }
-                    if(filters.length) {
+                    if(tableNames.length) {
                         $scope.publishRemoveFilterEvents(tableNames, successCallback)
                     }
                 }, function() {
@@ -345,6 +349,17 @@ angular.module('neonDemo.directives')
                         $scope.publishRemoveFilterEvents(tableNames, successCallback)
                     }
                 });
+            };
+
+            $scope.dirtyFilterRow = function(filterRow) {
+                filterRow.dirty = true;
+            };
+
+            $scope.cleanFilterRowsForTable = function(tableName) {
+                var filterRows = $scope.filterTable.getFilterState(tableName);
+                for(var i = 0; i < filterRows.length; ++i) {
+                    filterRows[i].dirty = false;
+                }
             };
 
             // Wait for neon to be ready, the create our messenger and intialize the view and data.

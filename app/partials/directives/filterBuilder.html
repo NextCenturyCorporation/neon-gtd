@@ -33,18 +33,18 @@
         </select>
       </div>
       <div class="form-group">
-        <select class="form-control" ng-model="filterRow.columnValue" ng-disabled="!(filterRow.columnOptions.length > 0)" ng-options="column for column in filterRow.columnOptions">
+        <select class="form-control" ng-model="filterRow.columnValue" ng-disabled="!(filterRow.columnOptions.length > 0)" ng-options="column for column in filterRow.columnOptions" ng-change="dirtyFilterRow(filterRow)">
         </select>
       </div>
       <div class="form-group">
-        <select class="form-control"  ng-model="filterRow.operatorValue" ng-disabled="!(filterRow.columnOptions.length > 0)" ng-options="operator for operator in filterTable.operatorOptions">
+        <select class="form-control"  ng-model="filterRow.operatorValue" ng-disabled="!(filterRow.columnOptions.length > 0)" ng-options="operator for operator in filterTable.operatorOptions" ng-change="dirtyFilterRow(filterRow)">
         </select>
       </div>
       <div class="form-group">
-        <input type="text" class="form-control" size="42" placeholder="Value" ng-model="filterRow.value">
+        <input type="text" class="form-control" size="42" placeholder="Value" ng-model="filterRow.value" ng-change="dirtyFilterRow(filterRow)">
       </div>
       <div class="form-group">
-        <button type="button" class="btn btn-default refresh" ng-click="updateFilterRow(filterRow.tableName, $index)">
+        <button type="button" class="btn btn-default refresh" ng-disabled="!(filterRow.dirty)" ng-click="updateFilterRow(filterRow.tableName, $index)">
           <span class="glyphicon glyphicon-refresh"></span>
         </button>
       </div>

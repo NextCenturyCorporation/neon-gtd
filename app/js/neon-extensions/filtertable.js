@@ -323,4 +323,5 @@ neon.query.FilterRow = function(tableName, columnValue, operatorValue, value, co
     this.operatorOptions = operatorOptions;
     this.operatorValue = operatorValue;
     this.value = value;
+    this.dirty = false;
 };
