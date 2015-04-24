@@ -455,6 +455,10 @@
             "sizeX": 2,
             "sizeY": 2,
             "type": "count-by"
+        }, {
+            "sizeX": 4,
+            "sizeY": 2,
+            "type": "directed-graph"
         }]
     }
 }
