@@ -188,6 +188,21 @@ neon.query.FilterTable.prototype.setAndClauses = function(tableName, andClauses)
 };
 
 /**
+ * Returns the "and clauses" setting for all FilterRows in the given table, or undefined if no such table exists in this FilterTable.
+ * @param {String} tableName
+ * @return {Boolean} andClauses True if the compound clause should 'AND' all the FilterRows; false
+ *    if it should 'OR' all the FilterRows
+ * @method getAndClauses
+ */
+neon.query.FilterTable.prototype.getAndClauses = function(tableName) {
+    this.initializeFilterStateForTable(tableName);
+    if(this.filterState[tableName].length) {
+        return this.filterState[tableName][0].andClauses;
+    }
+    return undefined;
+};
+
+/**
  * Returns the filter key for the given table in this FilterTable.
  * @param {String} tableName
  * @return {String}

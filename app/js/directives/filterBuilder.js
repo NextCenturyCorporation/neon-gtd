@@ -190,13 +190,35 @@ angular.module('neonDemo.directives')
              */
             $scope.addFilterRow = function() {
                 var tableName = $scope.selectedTableName;
-                var row = new neon.query.FilterRow($scope.selectedTableName, $scope.selectedField, $scope.selectedOperator, $scope.selectedValue, $scope.andClauses, $scope.fields);
-                var index = $scope.filterTable.addFilterRow(tableName, row);
+                var rows = {};
+                rows[tableName] = new neon.query.FilterRow($scope.selectedTableName, $scope.selectedField, $scope.selectedOperator, $scope.selectedValue, $scope.andClauses, $scope.fields);
+
+                var relations = datasetService.getRelations($scope.selectedTableName, [$scope.selectedField]);
+                for(var i = 0; i < relations.length; ++i) {
+                    var relation = relations[i];
+                    if(relation.table !== $scope.selectedTableName) {
+                        var andClauses = $scope.filterTable.getAndClauses(relation.table);
+                        andClauses = typeof andClauses === "undefined" ? $scope.andClauses : andClauses;
+                        var databaseFields = datasetService.getDatabaseFields(relation.table);
+                        var originalFields = Object.keys(relation.fields);
+                        for(var j = 0; j < originalFields.length; ++j) {
+                            var relationField = relation.fields[originalFields[j]];
+                            rows[relation.table] = new neon.query.FilterRow(relation.table, relationField, $scope.selectedOperator, $scope.selectedValue, andClauses, databaseFields);
+                        }
+                    }
+                }
+
+                var indexes = {};
+                var rowTableNames = Object.keys(rows);
+                for(var j = 0; j < rowTableNames.length; ++j) {
+                    var rowTableName = rowTableNames[j];
+                    indexes[rowTableName] = $scope.filterTable.addFilterRow(rowTableName, rows[rowTableName]);
+                }
 
                 var filters = $scope.filterTable.buildFiltersFromData($scope.databaseName);
 
                 XDATA.activityLogger.logUserActivity('FilterBuilder - add custom Neon filter', 'execute_query_filter',
-                    XDATA.activityLogger.WF_GETDATA, row);
+                    XDATA.activityLogger.WF_GETDATA, rows[0]);
 
                 $scope.publishReplaceFilterEvents(filters, function(successTable) {
                     // On succesful filter, reset the user input on the add filter row so it's obvious which rows
@@ -212,8 +234,8 @@ angular.module('neonDemo.directives')
                 }, function(errorTable) {
                     $scope.$apply(function() {
                         // Error handler:  the addition to the filter failed.  Remove it.
-                        if(errorTable === tableName) {
-                            $scope.filterTable.removeFilterRow(tableName, index);
+                        if(indexes[errorTable]) {
+                            $scope.filterTable.removeFilterRow(errorTable, indexes[errorTable]);
                         }
                     });
                 });
@@ -353,6 +375,7 @@ angular.module('neonDemo.directives')
             };
 
             $scope.updateAndClausesForFilterRow = function(filterRow) {
+                filterRow.dirty = true;
                 var andClauses = filterRow.andClauses;
                 if($scope.selectedTableName === filterRow.tableName) {
                     $scope.andClauses = andClauses;
