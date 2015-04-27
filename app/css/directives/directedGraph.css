@@ -1,11 +1,22 @@
 .node {
-  stroke: #fff;
-  stroke-width: 1.5px;
+    stroke: #fff;
+    stroke-width: 1.5px;
 }
 
 .link {
-  stroke: #999;
-  stroke-opacity: .6;
+    stroke: #999;
+    stroke-opacity: .6;
+}
+
+.node-active {
+    fill-opacity: 1;
+    stroke: black;
+    stroke-opacity: 1;
+}
+
+.link-active {
+    stroke-opacity: 1;
+    stroke: black;
 }
 
 div.draw-button-div {
@@ -14,6 +25,7 @@ div.draw-button-div {
 
 div.config-row-div {
     /*padding: 10px 5px 5px 5px;*/
+    
     padding-bottom: 5px;
 }
 
@@ -21,6 +33,7 @@ div.graph-tooltip {
     position: absolute;
     text-align: center;
     /*width: 50px;*/
+    
     height: 20px;
     padding: 5px;
     font: 12px sans-serif;
