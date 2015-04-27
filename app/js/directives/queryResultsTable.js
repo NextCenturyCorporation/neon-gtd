@@ -350,6 +350,7 @@ angular.module('neonDemo.directives')
 
                 $scope.table = new tables.Table("#" + $scope.tableId, $scope.tableOptions).draw();
                 $scope.table.refreshLayout();
+                $scope.table.addOnColumnsReorderedListener($scope.createDeleteColumnButtons);
                 $scope.createDeleteColumnButtons();
             };
 
@@ -374,7 +375,7 @@ angular.module('neonDemo.directives')
             };
 
             $scope.createDeleteColumnButton = function(name) {
-                return "<span class=\"pull-right\" ng-click=\"deleteColumn('" + name + "'); $event.stopPropagation();\">&times;</span>";
+                return "<span class=\"remove-column-button pull-right\" ng-click=\"deleteColumn('" + name + "'); $event.stopPropagation();\">&times;</span>";
             };
 
             $scope.deleteColumn = function(name) {

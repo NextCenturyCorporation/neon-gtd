@@ -399,6 +399,17 @@ tables.Table.prototype.addOnClickListener = function(callback) {
 };
 
 /**
+ * Adds an onColumnsReordered listener to the SlickGrid table using the given callback.
+ * @param {Function} callback
+ */
+tables.Table.prototype.addOnColumnsReorderedListener = function(callback) {
+    var me = this;
+    this.table_.onColumnsReordered.subscribe(function(event, args) {
+        callback();
+    });
+};
+
+/**
  * Deselects the active elements in the table.
  */
 tables.Table.prototype.deselect = function() {
