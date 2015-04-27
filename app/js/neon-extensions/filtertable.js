@@ -164,12 +164,17 @@ neon.query.FilterTable.prototype.getTableNames = function() {
  * @method getFilterRows
  */
 neon.query.FilterTable.prototype.getFilterRows = function() {
-    var rows = [];
+    var allRows = [];
     var tables = Object.keys(this.filterState);
     for(var i = 0; i < tables.length; ++i) {
-        rows = rows.concat(this.filterState[tables[i]]);
+        var rows = this.filterState[tables[i]];
+        // Update the index in each FilterRow representing that row's index in the filter state for its corresponding table for the UI.
+        for(var j = 0; j < rows.length; ++j) {
+            rows[j].index = j;
+        }
+        allRows = allRows.concat(rows);
     }
-    return rows;
+    return allRows;
 };
 
 /**
@@ -324,4 +329,5 @@ neon.query.FilterRow = function(tableName, columnValue, operatorValue, value, co
     this.operatorValue = operatorValue;
     this.value = value;
     this.dirty = false;
+    this.index = 0;
 };
