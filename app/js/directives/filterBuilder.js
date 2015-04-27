@@ -191,19 +191,17 @@ angular.module('neonDemo.directives')
             $scope.addFilterRow = function() {
                 var tableName = $scope.selectedTableName;
                 var rows = {};
-                rows[tableName] = new neon.query.FilterRow($scope.selectedTableName, $scope.selectedField, $scope.selectedOperator, $scope.selectedValue, $scope.andClauses, $scope.fields);
+                rows[tableName] = new neon.query.FilterRow($scope.selectedTableName, $scope.selectedField, $scope.selectedOperator, $scope.selectedValue, $scope.fields);
 
                 var relations = datasetService.getRelations($scope.selectedTableName, [$scope.selectedField]);
                 for(var i = 0; i < relations.length; ++i) {
                     var relation = relations[i];
                     if(relation.table !== $scope.selectedTableName) {
-                        var andClauses = $scope.filterTable.getAndClauses(relation.table);
-                        andClauses = typeof andClauses === "undefined" ? $scope.andClauses : andClauses;
                         var databaseFields = datasetService.getDatabaseFields(relation.table);
                         var originalFields = Object.keys(relation.fields);
                         for(var j = 0; j < originalFields.length; ++j) {
                             var relationField = relation.fields[originalFields[j]];
-                            rows[relation.table] = new neon.query.FilterRow(relation.table, relationField, $scope.selectedOperator, $scope.selectedValue, andClauses, databaseFields);
+                            rows[relation.table] = new neon.query.FilterRow(relation.table, relationField, $scope.selectedOperator, $scope.selectedValue, databaseFields);
                         }
                     }
                 }
@@ -215,7 +213,7 @@ angular.module('neonDemo.directives')
                     indexes[rowTableName] = $scope.filterTable.addFilterRow(rowTableName, rows[rowTableName]);
                 }
 
-                var filters = $scope.filterTable.buildFiltersFromData($scope.databaseName);
+                var filters = $scope.filterTable.buildFiltersFromData($scope.databaseName, $scope.andClauses);
 
                 XDATA.activityLogger.logUserActivity('FilterBuilder - add custom Neon filter', 'execute_query_filter',
                     XDATA.activityLogger.WF_GETDATA, rows[0]);
@@ -250,7 +248,7 @@ angular.module('neonDemo.directives')
             $scope.removeFilterRow = function(tableName, index) {
                 var row = $scope.filterTable.removeFilterRow(tableName, index);
 
-                var filters = $scope.filterTable.buildFiltersFromData($scope.databaseName);
+                var filters = $scope.filterTable.buildFiltersFromData($scope.databaseName, $scope.andClauses);
 
                 XDATA.activityLogger.logUserActivity('FilterBuilder - reset/clear custom Neon filter', 'remove_query_filter',
                     XDATA.activityLogger.WF_GETDATA, row);
@@ -274,7 +272,7 @@ angular.module('neonDemo.directives')
             $scope.updateFilterRow = function(tableName, index) {
                 var row = $scope.filterTable.getFilterRow(tableName, index);
                 var oldData = $scope.filterTable.getFilterState(tableName);
-                var filters = $scope.filterTable.buildFiltersFromData($scope.databaseName);
+                var filters = $scope.filterTable.buildFiltersFromData($scope.databaseName, $scope.andClauses);
 
                 XDATA.activityLogger.logUserActivity('FilterBuilder - update custom Neon filter', 'execute_query_filter',
                     XDATA.activityLogger.WF_GETDATA, row);
@@ -365,28 +363,13 @@ angular.module('neonDemo.directives')
             };
 
             $scope.updateAndClauses = function() {
-                var filterRows = $scope.filterTable.getFilterState($scope.selectedTableName);
-                for(var i = 0; i < filterRows.length; ++i) {
-                    if(filterRows[i].andClauses !== $scope.andClauses) {
-                        filterRows[i].dirty = true;
+                var tableNames = $scope.filterTable.getTableNames();
+                for(var i = 0; i < tableNames.length; ++i) {
+                    var tableName = tableNames[i];
+                    var filterRows = $scope.filterTable.getFilterState(tableName);
+                    for(var j = 0; j < filterRows.length; ++j) {
+                        filterRows[j].dirty = true;
                     }
-                    filterRows[i].andClauses = $scope.andClauses;
-                }
-            };
-
-            $scope.updateAndClausesForFilterRow = function(filterRow) {
-                filterRow.dirty = true;
-                var andClauses = filterRow.andClauses;
-                if($scope.selectedTableName === filterRow.tableName) {
-                    $scope.andClauses = andClauses;
-                }
-
-                var filterRows = $scope.filterTable.getFilterState(filterRow.tableName);
-                for(var i = 0; i < filterRows.length; ++i) {
-                    if(filterRows[i].andClauses !== andClauses) {
-                        filterRows[i].dirty = true;
-                    }
-                    filterRows[i].andClauses = andClauses;
                 }
             };
 
