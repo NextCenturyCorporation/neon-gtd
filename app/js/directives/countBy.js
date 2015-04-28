@@ -281,19 +281,14 @@ angular.module('neonDemo.directives')
                     var links = [];
 
                     if(external.dig.enabled) {
-                        links.push({
-                            action: external.dig.server + "/list",
-                            target: query,
-                            inputs: [{
-                                name: "field",
-                                value: field
-                            }, {
-                                name: "value",
-                                value: value
-                            }],
-                            image: "img/DIG_64.png",
-                            text: "DIG"
-                        });
+                        var form = external.dig.count_by;
+                        form.data = {
+                            server: external.dig.server,
+                            field: field,
+                            value: value,
+                            query: query
+                        };
+                        links.push(form);
                     }
 
                     row[$scope.EXTERNAL_APP_FIELD_NAME] = popupService.createLinksPopup(uniqueName, "Open External Applications", links);

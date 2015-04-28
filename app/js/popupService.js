@@ -20,6 +20,26 @@ angular.module("neonDemo.services")
     function() {
         var service = {};
 
+        service.replaceLinkKeywords = function(links) {
+            var finalLinks = [];
+            for(var i = 0; i < links.length; ++i) {
+                var link = links[i];
+                link.target = link.data.query;
+                link.url = link.url.replace("SERVER", link.data.server);
+                for(var j = 0; j < link.args.length; ++j) {
+                    if(link.data.field) {
+                        link.args[j].value = link.args[j].value.replace("FIELD", link.data.field);
+                    }
+                    if(link.data.value) {
+                        link.args[j].value = link.args[j].value.replace("VALUE", link.data.value);
+                    }
+                }
+                console.log(link.name + "," + link.image + "," + link.url + "," + link.target + "," + link.args[0].name + ","+ link.args[0].value);
+                finalLinks.push(link);
+            }
+            return finalLinks;
+        };
+
         /**
          * Creates and returns the HTML element for a popup modal dialog with the given title containing the given links.
          * @param {String} The unique name used to create the ID for the HTML element for the popup
@@ -27,28 +47,30 @@ angular.module("neonDemo.services")
          * @param {Array} The array of link Objects, each containing:
          * <ul>
          *      <li> {String} image The image for the link </li>
-         *      <li> {String} text The display text for the link </li>
-         *      <li> {String} action The action text for the form containing the link </li>
-         *      <li> {String} target The target text for the form containing the link </li>
-         *      <li> {Array} inputs An array of hidden inputs for the form containing the link, each containing {String} name and {String} value </li>
+         *      <li> {String} name The display name for the link </li>
+         *      <li> {String} url The action url for the form containing the link </li>
+         *      <li> {String} target The target text for the form containing the link (optional) </li>
+         *      <li> {Array} args An array of hidden inputs for the form containing the link, each an Object mapping a {String} name and {String} value </li>
          * </ul>
          * @method createLinksPopup
          * @return {String} The HTML element for the popup
          */
-        service.createLinksPopup = function(uniqueName, title, links) {
+        service.createLinksPopup = function(uniqueName, title, inputLinks) {
+            var links = service.replaceLinkKeywords(inputLinks);
+
             var uniqueId = 'neon-popup-' + uniqueName;
             var anchorElement = '<a data-toggle="modal" data-target="#' + uniqueId + '" class="collapsed dropdown-toggle primary neon-popup-link"><span class="glyphicon glyphicon-link"></span></a>';
 
             var listElements = '';
             for(var i = 0; i < links.length; ++i) {
                 var link = links[i];
-                var thumbnailElement = '<img alt="' + link.text + '" class="img-thumbnail center-block" src="' + link.image + '"><span class="text-uppercase small">' + link.text + '</span>';
-                var buttonElement = '<button type="submit" tabindex="0" title="' + link.text + '">' + thumbnailElement + '</button>';
+                var thumbnailElement = '<img alt="' + link.name + '" class="img-thumbnail center-block" src="' + link.image + '"><span class="text-uppercase small">' + link.name + '</span>';
+                var buttonElement = '<button type="submit" tabindex="0" title="' + link.name + '">' + thumbnailElement + '</button>';
 
-                listElements += '<li><form action="' + link.action + '" method="get" target="' + link.target + '">';
-                for(var j = 0; j < link.inputs.length; ++j) {
-                    var input = link.inputs[i];
-                    listElements += '<input type="hidden" name="' + input.name + '" value="' + input.value + '">';
+                listElements += '<li><form action="' + link.url + '" method="get" target="' + link.target + '">';
+                for(var j = 0; j < link.args.length; ++j) {
+                    var arg = link.args[j];
+                    listElements += '<input type="hidden" name="' + arg.name + '" value="' + arg.value + '">';
                 }
                 listElements += buttonElement + '</form></li>';
             }
