@@ -154,6 +154,7 @@ angular.module('neonDemo.directives')
                 $scope.attrX = datasetService.getMapping($scope.selectedTable.name, "bar_x_axis") || "";
                 $scope.attrY = datasetService.getMapping($scope.selectedTable.name, "y_axis") || "";
                 $scope.fields = datasetService.getDatabaseFields($scope.selectedTable.name);
+                $scope.fields.sort();
                 if($scope.filterSet) {
                     $scope.clearFilterSet();
                 }

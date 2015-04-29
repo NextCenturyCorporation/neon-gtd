@@ -214,6 +214,7 @@ angular.module('neonDemo.directives')
                 $scope.categoryField = datasetService.getMapping($scope.selectedTable.name, "line_category") || "";
                 $scope.aggregation = 'count';
                 $scope.fields = datasetService.getDatabaseFields($scope.selectedTable.name);
+                $scope.fields.sort();
                 $scope.queryForData();
             };
 

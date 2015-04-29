@@ -201,6 +201,7 @@ angular.module('neonDemo.directives')
 
             $scope.updateFieldsAndQueryForData = function() {
                 $scope.fields = datasetService.getDatabaseFields($scope.selectedTable.name);
+                $scope.fields.sort();
                 $scope.countField = datasetService.getMapping($scope.selectedTable.name, "count_by") || "";
                 if($scope.filterSet) {
                     $scope.clearFilter();

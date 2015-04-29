@@ -168,6 +168,7 @@ angular.module('neonDemo.directives')
 
             $scope.updateFieldsAndQueryForData = function() {
                 $scope.fields = datasetService.getDatabaseFields($scope.selectedTable.name);
+                $scope.fields.sort();
                 $scope.selectedNodeField = datasetService.getMapping($scope.selectedTable.name, "graph_nodes") || "";
                 $scope.selectedLinkField = datasetService.getMapping($scope.selectedTable.name, "graph_links") || "";
                 $scope.queryForData();

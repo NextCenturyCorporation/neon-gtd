@@ -132,6 +132,7 @@ angular.module('neonDemo.directives')
                 $scope.attrX = datasetService.getMapping($scope.selectedTable.name, "x_axis") || "";
                 $scope.attrY = datasetService.getMapping($scope.selectedTable.name, "y_axis") || "";
                 $scope.fields = datasetService.getDatabaseFields($scope.selectedTable.name);
+                $scope.fields.sort();
                 $scope.queryForData(true);
             };
 

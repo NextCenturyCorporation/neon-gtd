@@ -241,6 +241,7 @@ angular.module('neonDemo.directives')
 
             $scope.updateFieldsAndRowsAndCount = function() {
                 $scope.fields = datasetService.getDatabaseFields($scope.selectedTable.name);
+                $scope.fields.sort();
                 $scope.sortByField = datasetService.getMapping($scope.selectedTable.name, "sort_by") || $scope.fields[0];
                 updateRowsAndCount();
             };

@@ -47,7 +47,7 @@ angular.module('neonDemo.directives')
             $scope.selectedTable = {
                 name: ""
             };
-            $scope.fields = [""];
+            $scope.fields = [];
             $scope.chart = undefined;
             $scope.errorMessage = undefined;
 
@@ -167,6 +167,7 @@ angular.module('neonDemo.directives')
 
             $scope.updateFieldsAndQueryForData = function() {
                 $scope.fields = datasetService.getDatabaseFields($scope.selectedTable.name);
+                $scope.fields.sort();
                 $scope.queryForData();
             };
 

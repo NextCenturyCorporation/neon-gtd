@@ -387,6 +387,7 @@ angular.module('neonDemo.directives')
 
             $scope.updateFieldsAndQueryForMapData = function() {
                 $scope.fields = datasetService.getDatabaseFields($scope.selectedTable.name);
+                $scope.fields.sort();
                 $scope.latitudeField = datasetService.getMapping($scope.selectedTable.name, "latitude") || "";
                 $scope.longitudeField = datasetService.getMapping($scope.selectedTable.name, "longitude") || "";
                 $scope.colorByField = datasetService.getMapping($scope.selectedTable.name, "color_by") || "";
