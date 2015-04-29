@@ -28,7 +28,7 @@
  * @constructor
  */
 angular.module('neonDemo.directives')
-.directive('filterBuilder', ['ConnectionService', 'FilterCountService', function(connectionService, filterCountService) {
+.directive('filterBuilder', ['DatasetService', 'FilterCountService', function(datasetService, filterCountService) {
     return {
         templateUrl: 'partials/directives/filterBuilder.html',
         restrict: 'EA',
@@ -36,6 +36,11 @@ angular.module('neonDemo.directives')
         },
         controller: 'neonDemoController',
         link: function($scope, el) {
+            $scope.databaseName = "";
+            $scope.tables = [];
+            $scope.selectedTable = {
+                name: ""
+            };
             $scope.fields = [];
             $scope.selectedField = "Select Field";
             $scope.andClauses = true;
@@ -54,9 +59,9 @@ angular.module('neonDemo.directives')
                 $scope.selectedOperator = $scope.filterTable.operatorOptions[0] || '=';
 
                 $scope.messenger.events({
-                    activeConnectionChanged: onConnectionChanged,
-                    activeDatasetChanged: onDatasetChanged
+                    connectToHost: onConnectToHost
                 });
+                $scope.messenger.subscribe("dataset_changed", onDatasetChanged);
 
                 $scope.$on('$destroy', function() {
                     $scope.messenger.removeEvents();
@@ -66,7 +71,7 @@ angular.module('neonDemo.directives')
                 // Adjust the filters whenever the user toggles AND/OR clauses.
                 $scope.$watch('andClauses', function(newVal, oldVal) {
                     if(newVal !== oldVal) {
-                        var filter = $scope.filterTable.buildFilterFromData($scope.databaseName, $scope.tableName, $scope.andClauses);
+                        var filter = $scope.filterTable.buildFilterFromData($scope.databaseName, $scope.selectedTable.name, $scope.andClauses);
 
                         XDATA.activityLogger.logUserActivity('FilterBuilder - Toggle custom Neon filter set operator', 'select_filter_menu_option',
                             XDATA.activityLogger.WF_GETDATA,
@@ -154,47 +159,48 @@ angular.module('neonDemo.directives')
             };
 
             /**
-             * Event handler for connection changed events issued over Neon's messaging channels.
-             * @method onConnectionChanged
+             * Event handler for connect to host events issued over Neon's messaging channels.
+             * @method onConnectToHost
              * @private
              */
-            var onConnectionChanged = function() {
-                XDATA.activityLogger.logSystemActivity('FilterBuilder - received neon connection changed event');
+            var onConnectToHost = function() {
+                XDATA.activityLogger.logSystemActivity('FilterBuilder - received neon connect to host event');
                 $scope.filterTable.clearFilterState();
             };
 
             /**
              * Event handler for dataset changed events issued over Neon's messaging channels.
-             * @param {Object} message A Neon dataset changed message.
-             * @param {String} message.database The database that was selected.
-             * @param {String} message.table The table within the database that was selected.
              * @method onDatasetChanged
              * @private
              */
-            var onDatasetChanged = function(message) {
-                XDATA.activityLogger.logSystemActivity('FilterBuilder - received neon dataset changed event');
-                // Clear the filter table.
+            var onDatasetChanged = function() {
+                XDATA.activityLogger.logSystemActivity('FilterBuilder - received neon-gtd dataset changed event');
+
+                if(!datasetService.hasDataset()) {
+                    return;
+                }
+
                 $scope.filterTable.clearFilterState();
 
                 // Save the new database and table name; Fetch the new table fields.
-                $scope.databaseName = message.database;
-                $scope.tableName = message.table;
+                $scope.databaseName = datasetService.getDatabase();
+                $scope.tables = datasetService.getTables();
+                $scope.selectedTable = $scope.tables[0];
 
-                // if there is no active connection, try to make one.
-                connectionService.connectToDataset(message.datastore, message.hostname, message.database, message.table);
+                $scope.$apply(function() {
+                    $scope.updateFields();
+                });
+            };
 
-                // Query for data only if we have an active connection.
-                var connection = connectionService.getActiveConnection();
-                if(connection) {
-                    XDATA.activityLogger.logSystemActivity('FilterBuilder - query for available fields');
-                    connection.getFieldNames($scope.databaseName, $scope.tableName, function(results) {
-                        $scope.$apply(function() {
-                            populateFieldNames(results);
-                            $scope.selectedField = results[0];
-                            XDATA.activityLogger.logSystemActivity('FilterBuilder - received available fields');
-                        });
-                    });
-                }
+            $scope.updateFields = function() {
+                var fields = datasetService.getDatabaseFields($scope.selectedTable.name);
+                $scope.fields = _.without(fields, "_id");
+                $scope.selectedField = fields[0];
+            };
+
+            $scope.resetFiltersAndUpdateFields = function() {
+                $scope.resetFilters();
+                $scope.updateFields();
             };
 
             /**
@@ -205,7 +211,7 @@ angular.module('neonDemo.directives')
                 var row = new neon.query.FilterRow($scope.selectedField, $scope.selectedOperator, $scope.selectedValue);
                 $scope.filterTable.addFilterRow(row);
 
-                var filter = $scope.filterTable.buildFilterFromData($scope.databaseName, $scope.tableName, $scope.andClauses);
+                var filter = $scope.filterTable.buildFilterFromData($scope.databaseName, $scope.selectedTable.name, $scope.andClauses);
 
                 XDATA.activityLogger.logUserActivity('FilterBuilder - add custom Neon filter', 'execute_query_filter',
                     XDATA.activityLogger.WF_GETDATA,
@@ -240,7 +246,7 @@ angular.module('neonDemo.directives')
                 var row = $scope.filterTable.removeFilterRow(index);
 
                 // Make the neon call to remove it from the server.
-                var filter = $scope.filterTable.buildFilterFromData($scope.databaseName, $scope.tableName, $scope.andClauses);
+                var filter = $scope.filterTable.buildFilterFromData($scope.databaseName, $scope.selectedTable.name, $scope.andClauses);
 
                 XDATA.activityLogger.logUserActivity('FilterBuilder - reset/clear custom Neon filter', 'remove_query_filter',
                     XDATA.activityLogger.WF_GETDATA, row);
@@ -265,7 +271,7 @@ angular.module('neonDemo.directives')
             $scope.updateFilterRow = function(index) {
                 var row = $scope.filterTable.getFilterRow(index);
                 var oldVal = $scope.filterTable.filterState;
-                var filter = $scope.filterTable.buildFilterFromData($scope.databaseName, $scope.tableName, $scope.andClauses);
+                var filter = $scope.filterTable.buildFilterFromData($scope.databaseName, $scope.selectedTable.name, $scope.andClauses);
 
                 XDATA.activityLogger.logUserActivity('FilterBuilder - update custom Neon filter', 'execute_query_filter',
                     XDATA.activityLogger.WF_GETDATA, row);
@@ -301,16 +307,6 @@ angular.module('neonDemo.directives')
                     // TODO: Notify the user of the error.
                     XDATA.activityLogger.logSystemActivity('FilterBuilder - failed to change custom Neon filter set');
                 });
-            };
-
-            /**
-             * Helper method for setting the fields available for filter clauses.
-             * @param {Array} fields An array of field name strings.
-             * @method populateFieldNames
-             * @private
-             */
-            var populateFieldNames = function(fields) {
-                $scope.fields = _.without(fields, "_id");
             };
 
             // Wait for neon to be ready, the create our messenger and intialize the view and data.

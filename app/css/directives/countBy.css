@@ -124,3 +124,8 @@ span.glyphicon:hover {
     color: #39b54a;
 }
 
+.countByDirective .chart-options {
+    /* Add a bottom margin to make the chart-options element the same size as filter-reset elements. */
+    margin-bottom: 6px;
+    margin-left: 10px;
+}

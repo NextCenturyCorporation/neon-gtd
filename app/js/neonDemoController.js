@@ -78,41 +78,8 @@ angular.module('neonDemo.controllers')
         }
     };
 
-    // Define the gridster configurations for the default visualizations.
-    $scope.visualizations = [{
-        id: uuid(),
-        sizeX: 6,
-        sizeY: 1,
-        type: 'timeline-selector'
-    }, {
-        id: uuid(),
-        sizeX: 4,
-        sizeY: 2,
-        type: 'heat-map'
-    }, {
-        id: uuid(),
-        sizeX: 2,
-        sizeY: 2,
-        type: 'circular-heat-form'
-    }, {
-        id: uuid(),
-        sizeX: 2,
-        sizeY: 2,
-        type: 'linechart'
-    }, {
-        id: uuid(),
-        sizeX: 2,
-        sizeY: 2,
-        type: 'barchart'
-    }, {
-        id: uuid(),
-        sizeX: 2,
-        sizeY: 2,
-        type: 'tag-cloud',
-        bindings: {
-            "tag-field": "'hashtags'"
-        }
-    }];
+    // No default visualizations.  They will be created once the user connects to a dataset in databaseConfig.js.
+    $scope.visualizations = [];
 
     /**
      * Returns whether or not our gridster setup is currently in mobile mode.

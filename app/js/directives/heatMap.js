@@ -27,7 +27,7 @@
  * @constructor
  */
 angular.module('neonDemo.directives')
-.directive('heatMap', ['ConnectionService', 'ErrorNotificationService', '$timeout', function(connectionService, errorNotificationService, $timeout) {
+.directive('heatMap', ['ConnectionService', 'DatasetService', 'ErrorNotificationService', 'FilterService', '$timeout', function(connectionService, datasetService, errorNotificationService, filterService, $timeout) {
     return {
         templateUrl: 'partials/directives/heatMap.html',
         restrict: 'EA',
@@ -44,7 +44,10 @@ angular.module('neonDemo.directives')
 
             // Setup scope variables.
             $scope.databaseName = '';
-            $scope.tableName = '';
+            $scope.tables = [];
+            $scope.selectedTable = {
+                name: ""
+            };
             $scope.fields = [];
             $scope.latitudeField = '';
             $scope.longitudeField = '';
@@ -53,10 +56,11 @@ angular.module('neonDemo.directives')
             $scope.showPoints = true;  // Default to the points view.
             $scope.cacheMap = false;
             $scope.initializing = true;
-            $scope.filterKey = "map" + uuid();
+            $scope.filterKeys = {};
             $scope.showFilter = false;
             $scope.dataBounds = undefined;
             $scope.limit = 1000;  // Max points to pull into the map.
+            $scope.dataLength = 0;
             $scope.resizeRedrawDelay = 1500; // Time in ms to wait after a resize event flood to try redrawing the map.
             $scope.errorMessage = undefined;
 
@@ -87,14 +91,14 @@ angular.module('neonDemo.directives')
                 $scope.messenger = new neon.eventing.Messenger();
 
                 $scope.messenger.events({
-                    activeDatasetChanged: onDatasetChanged,
                     filtersChanged: onFiltersChanged
                 });
+                $scope.messenger.subscribe("dataset_changed", onDatasetChanged);
 
                 $scope.$on('$destroy', function() {
                     $scope.messenger.removeEvents();
                     if($scope.showFilter) {
-                        $scope.messenger.removeFilter($scope.filterKey);
+                        filterService.removeFilters($scope.messenger, $scope.filterKeys);
                     }
                 });
 
@@ -110,9 +114,11 @@ angular.module('neonDemo.directives')
                             from: oldVal,
                             to: newVal
                         });
-                    if(newVal && newVal !== oldVal) {
+                    if(newVal) {
                         $scope.map.latitudeMapping = newVal;
-                        $scope.draw();
+                        if(newVal !== oldVal) {
+                            $scope.draw();
+                        }
                     }
                 });
 
@@ -124,9 +130,11 @@ angular.module('neonDemo.directives')
                             from: oldVal,
                             to: newVal
                         });
-                    if(newVal && newVal !== oldVal) {
+                    if(newVal) {
                         $scope.map.longitudeMapping = newVal;
-                        $scope.draw();
+                        if(newVal !== oldVal) {
+                            $scope.draw();
+                        }
                     }
                 });
 
@@ -138,14 +146,14 @@ angular.module('neonDemo.directives')
                             from: oldVal,
                             to: newVal
                         });
-                    if(newVal !== oldVal) {
+                    //if(newVal !== oldVal) {
                         // Set the size by field if we are on a point layer.
                         if($scope.showPoints) {
                             $scope.setMapSizeMapping(newVal);
                             $scope.draw();
                         }
                         //$scope.queryForMapData();
-                    }
+                    //}
                 });
 
                 // Update the coloring field used by the map.
@@ -157,11 +165,11 @@ angular.module('neonDemo.directives')
                             to: newVal
                         });
                     $scope.map.resetColorMappings();
-                    if(newVal !== oldVal) {
+                    //if(newVal !== oldVal) {
                         $scope.setMapCategoryMapping(newVal);
                         $scope.draw();
                         //$scope.queryForMapData();
-                    }
+                    //}
                 });
 
                 // Toggle the points and clusters view when the user toggles between them.
@@ -235,25 +243,34 @@ angular.module('neonDemo.directives')
                         $timeout.cancel($scope.resizePromise);
                     }
                     $scope.resizePromise = $timeout(redrawOnResize, $scope.resizeRedrawDelay);
+
+                    // Resize the options element.
+                    var optionsElement = $element.find(".map-options");
+                    // Add the element's margin/padding and y position (with an extra 5 pixles for look) to subtract from its final height.
+                    var yBuffer = optionsElement.outerHeight(true) - optionsElement.height() + parseInt(optionsElement.css("top"), 10) + 5;
+                    var optionsHeight = $element.innerHeight() - yBuffer;
+                    optionsElement.find(".popover-content").css("max-height", optionsHeight + "px");
                 });
 
                 // Add a zoomRect handler to the map.
                 $scope.map.onZoomRect = function(bounds) {
-                    var extent = boundsToExtent(bounds);
-                    var filter = $scope.createFilterFromExtent(extent);
+                    $scope.extent = boundsToExtent(bounds);
 
                     XDATA.activityLogger.logUserActivity('HeatMap - user defined geographic filter area', 'execute_visual_filter',
-                        XDATA.activityLogger.WF_GETDATA, extent);
+                        XDATA.activityLogger.WF_GETDATA, $scope.extent);
                     XDATA.activityLogger.logSystemActivity('HeatMap - applying neon filter based on users geographic selection');
-                    $scope.messenger.replaceFilter($scope.filterKey, filter, function() {
+
+                    var relations = datasetService.getRelations($scope.selectedTable.name, [$scope.latitudeField, $scope.longitudeField]);
+
+                    filterService.replaceFilters($scope.messenger, relations, $scope.filterKeys, $scope.createFilterFromExtent, function() {
                         XDATA.activityLogger.logSystemActivity('HeatMap - applied neon filter');
                         $scope.$apply(function() {
                             $scope.queryForMapData();
                             drawZoomRect({
-                                left: extent.minimumLongitude,
-                                bottom: extent.minimumLatitude,
-                                right: extent.maximumLongitude,
-                                top: extent.maximumLatitude
+                                left: $scope.extent.minimumLongitude,
+                                bottom: $scope.extent.minimumLatitude,
+                                right: $scope.extent.maximumLongitude,
+                                top: $scope.extent.maximumLatitude
                             });
 
                             // Show the Clear Filter button.
@@ -284,46 +301,21 @@ angular.module('neonDemo.directives')
              * @method onFiltersChanged
              * @private
              */
-            var onFiltersChanged = function() {
+            var onFiltersChanged = function(message) {
                 XDATA.activityLogger.logSystemActivity('HeatMap - received neon filter changed event');
-                $scope.queryForMapData();
+                if(message.addedFilter.databaseName === $scope.databaseName && message.addedFilter.tableName === $scope.selectedTable.name) {
+                    $scope.queryForMapData();
+                }
             };
 
             /**
              * Event handler for dataset changed events issued over Neon's messaging channels.
-             * @param {Object} message A Neon dataset changed message.
-             * @param {String} message.database The database that was selected.
-             * @param {String} message.table The table within the database that was selected.
              * @method onDatasetChanged
              * @private
              */
-            var onDatasetChanged = function(message) {
-                XDATA.activityLogger.logSystemActivity('HeatMap - received neon dataset changed event');
-                $scope.initializing = true;
-                $scope.latitudeField = "";
-                $scope.longitudeField = "";
-                $scope.colorByField = "";
-                $scope.sizeByField = "";
-
-                // Clear the zoom Rect from the map before reinitializing it.
-                clearZoomRect();
-
-                $scope.dataBounds = undefined;
-                $scope.hideClearFilterButton();
-
-                // if there is no active connection, try to make one.
-                connectionService.connectToDataset(message.datastore, message.hostname, message.database, message.table);
-                $scope.displayActiveDataset();
-            };
-
-            /**
-             * Helper method for setting the fields available for filter clauses.
-             * @param {Array} fields An array of field name strings.
-             * @method populateFieldNames
-             * @private
-             */
-            var populateFieldNames = function(fields) {
-                $scope.fields = fields;
+            var onDatasetChanged = function() {
+                XDATA.activityLogger.logSystemActivity('HeatMap - received neon-gtd dataset changed event');
+                $scope.displayActiveDataset(false);
             };
 
             var boundsToExtent = function(bounds) {
@@ -363,35 +355,52 @@ angular.module('neonDemo.directives')
 
             /**
              * Displays data for any currently active datasets.
+             * @param {Boolean} Whether this function was called during visualization initialization.
              * @method displayActiveDataset
              */
-            $scope.displayActiveDataset = function() {
-                var connection = connectionService.getActiveConnection();
-                if(connection) {
-                    connectionService.loadMetadata(function() {
-                        var info = connectionService.getActiveDataset();
-                        $scope.databaseName = info.database;
-                        $scope.tableName = info.table;
-                        // Repopulate the field selectors and get the default values.
-                        XDATA.activityLogger.logSystemActivity('HeatMap - query for data field names');
-                        connection.getFieldNames($scope.databaseName, $scope.tableName, function(results) {
-                            $scope.$apply(function() {
-                                XDATA.activityLogger.logSystemActivity('HeatMap - data field names received');
-                                populateFieldNames(results);
-                                $scope.latitudeField = connectionService.getFieldMapping("latitude");
-                                $scope.longitudeField = connectionService.getFieldMapping("longitude");
-                                $scope.colorByField = connectionService.getFieldMapping("color_by");
-                                $scope.sizeByField = connectionService.getFieldMapping("size_by");
-                                XDATA.activityLogger.logSystemActivity('HeatMap - field selectors updated');
+            $scope.displayActiveDataset = function(initializing) {
+                if(!datasetService.hasDataset()) {
+                    return;
+                }
 
-                                $timeout(function() {
-                                    $scope.initializing = false;
-                                    $scope.queryForMapData();
-                                });
-                            });
-                        });
+                $scope.initializing = true;
+
+                // Clear the zoom Rect from the map before reinitializing it.
+                clearZoomRect();
+
+                $scope.dataBounds = undefined;
+                $scope.hideClearFilterButton();
+
+                $scope.databaseName = datasetService.getDatabase();
+                $scope.tables = datasetService.getTables();
+                $scope.selectedTable = datasetService.getFirstTableWithMappings(["latitude", "longitude"]) || $scope.tables[0];
+                $scope.filterKeys = filterService.createFilterKeys("map", $scope.tables);
+
+                if(initializing) {
+                    $scope.updateFieldsAndQueryForMapData();
+                } else {
+                    $scope.$apply(function() {
+                        $scope.updateFieldsAndQueryForMapData();
                     });
                 }
+            };
+
+            $scope.updateFieldsAndQueryForMapData = function() {
+                $scope.fields = datasetService.getDatabaseFields($scope.selectedTable.name);
+                $scope.latitudeField = datasetService.getMapping($scope.selectedTable.name, "latitude") || "";
+                $scope.longitudeField = datasetService.getMapping($scope.selectedTable.name, "longitude") || "";
+                $scope.colorByField = datasetService.getMapping($scope.selectedTable.name, "color_by") || "";
+                $scope.sizeByField = datasetService.getMapping($scope.selectedTable.name, "size_by") || "";
+                XDATA.activityLogger.logSystemActivity('HeatMap - field selectors updated');
+
+                $timeout(function() {
+                    $scope.initializing = false;
+                    if($scope.showFilter) {
+                        $scope.clearFilter();
+                    } else {
+                        $scope.queryForMapData();
+                    }
+                });
             };
 
             /**
@@ -406,20 +415,24 @@ angular.module('neonDemo.directives')
 
                 if(!$scope.initializing && $scope.latitudeField !== "" && $scope.longitudeField !== "") {
                     var query = $scope.buildPointQuery();
+
                     XDATA.activityLogger.logSystemActivity('HeatMap - query for map data');
-                    connectionService.getActiveConnection().executeQuery(query, function(queryResults) {
-                        $scope.$apply(function() {
-                            XDATA.activityLogger.logSystemActivity('HeatMap - map data received');
-                            $scope.updateMapData(queryResults);
-                            XDATA.activityLogger.logSystemActivity('HeatMap - rendered map data');
+                    var connection = connectionService.getActiveConnection();
+                    if(connection) {
+                        connection.executeQuery(query, function(queryResults) {
+                            $scope.$apply(function() {
+                                XDATA.activityLogger.logSystemActivity('HeatMap - map data received');
+                                $scope.updateMapData(queryResults);
+                                XDATA.activityLogger.logSystemActivity('HeatMap - rendered map data');
+                            });
+                        }, function(response) {
+                            XDATA.activityLogger.logSystemActivity('HeatMap - Failed to receive map data');
+                            $scope.updateMapData({
+                                data: []
+                            });
+                            $scope.errorMessage = errorNotificationService.showErrorMessage($element, response.responseJSON.error, response.responseJSON.stackTrace);
                         });
-                    }, function(response) {
-                        XDATA.activityLogger.logSystemActivity('HeatMap - Failed to receive map data');
-                        $scope.updateMapData({
-                            data: []
-                        });
-                        $scope.errorMessage = errorNotificationService.showErrorMessage($element, response.responseJSON.error, response.responseJSON.stackTrace);
-                    });
+                    }
                 }
             };
 
@@ -444,9 +457,11 @@ angular.module('neonDemo.directives')
              */
             $scope.updateMapData = function(queryResults) {
                 var data = queryResults.data;
+                $scope.dataLength = data.length;
                 $scope.map.setData(data);
                 $scope.draw();
-                if($scope.dataBounds === undefined) {
+                // Ignore setting the bounds if there is no data because it can cause OpenLayers errors.
+                if(data.length && !($scope.dataBounds)) {
                     $scope.dataBounds = $scope.computeDataBounds(data);
                     $scope.zoomToDataBounds();
                 }
@@ -502,7 +517,7 @@ angular.module('neonDemo.directives')
             };
 
             $scope.buildQuery = function() {
-                var query = new neon.query.Query().selectFrom($scope.databaseName, $scope.tableName).limit($scope.limit);
+                var query = new neon.query.Query().selectFrom($scope.databaseName, $scope.selectedTable.name).limit($scope.limit);
                 var groupByFields = [$scope.latitudeField, $scope.longitudeField];
 
                 if($scope.colorByField) {
@@ -522,7 +537,7 @@ angular.module('neonDemo.directives')
             };
 
             $scope.buildPointQuery = function() {
-                var query = new neon.query.Query().selectFrom($scope.databaseName, $scope.tableName).limit($scope.limit);
+                var query = new neon.query.Query().selectFrom($scope.databaseName, $scope.selectedTable.name).limit($scope.limit);
                 return query;
             };
 
@@ -533,37 +548,43 @@ angular.module('neonDemo.directives')
             };
 
             /**
-             * Create a Neon query to pull data limited to the current extent of the map.
+             * Create and returns a filter using the given table and fields.
+             * @param {String} The name of the table on which to filter
+             * @param {Array} An array containing the name of the latitude and longitude fields as its first and second elements respectively
              * @method createFilterFromExtent
+             * @return {Object} A neon.query.Filter object
              */
-            $scope.createFilterFromExtent = function(extent) {
-                var leftClause = neon.query.where($scope.longitudeField, ">=", extent.minimumLongitude);
-                var rightClause = neon.query.where($scope.longitudeField, "<=", extent.maximumLongitude);
-                var bottomClause = neon.query.where($scope.latitudeField, ">=", extent.minimumLatitude);
-                var topClause = neon.query.where($scope.latitudeField, "<=", extent.maximumLatitude);
+            $scope.createFilterFromExtent = function(tableName, fieldNames) {
+                var latitudeFieldName = fieldNames[0];
+                var longitudeFieldName = fieldNames[1];
+
+                var leftClause = neon.query.where(longitudeFieldName, ">=", $scope.extent.minimumLongitude);
+                var rightClause = neon.query.where(longitudeFieldName, "<=", $scope.extent.maximumLongitude);
+                var bottomClause = neon.query.where(latitudeFieldName, ">=", $scope.extent.minimumLatitude);
+                var topClause = neon.query.where(latitudeFieldName, "<=", $scope.extent.maximumLatitude);
                 var filterClause = neon.query.and(leftClause, rightClause, bottomClause, topClause);
                 var leftDateLine;
                 var rightDateLine;
                 var datelineClause;
 
                 //Deal with different dateline crossing scenarios.
-                if(extent.minimumLongitude < -180 && extent.maximumLongitude > 180) {
+                if($scope.extent.minimumLongitude < -180 && $scope.extent.maximumLongitude > 180) {
                     filterClause = neon.query.and(topClause, bottomClause);
-                } else if(extent.minimumLongitude < -180) {
-                    leftClause = neon.query.where($scope.longitudeField, ">=", extent.minimumLongitude + 360);
-                    leftDateLine = neon.query.where($scope.longitudeField, "<=", 180);
-                    rightDateLine = neon.query.where($scope.longitudeField, ">=", -180);
+                } else if($scope.extent.minimumLongitude < -180) {
+                    leftClause = neon.query.where(longitudeFieldName, ">=", $scope.extent.minimumLongitude + 360);
+                    leftDateLine = neon.query.where(longitudeFieldName, "<=", 180);
+                    rightDateLine = neon.query.where(longitudeFieldName, ">=", -180);
                     datelineClause = neon.query.or(neon.query.and(leftClause, leftDateLine), neon.query.and(rightClause, rightDateLine));
                     filterClause = neon.query.and(topClause, bottomClause, datelineClause);
-                } else if(extent.maximumLongitude > 180) {
-                    rightClause = neon.query.where($scope.longitudeField, "<=", extent.maximumLongitude - 360);
-                    rightDateLine = neon.query.where($scope.longitudeField, ">=", -180);
-                    leftDateLine = neon.query.where($scope.longitudeField, "<=", 180);
+                } else if($scope.extent.maximumLongitude > 180) {
+                    rightClause = neon.query.where(longitudeFieldName, "<=", $scope.extent.maximumLongitude - 360);
+                    rightDateLine = neon.query.where(longitudeFieldName, ">=", -180);
+                    leftDateLine = neon.query.where(longitudeFieldName, "<=", 180);
                     datelineClause = neon.query.or(neon.query.and(leftClause, leftDateLine), neon.query.and(rightClause, rightDateLine));
                     filterClause = neon.query.and(topClause, bottomClause, datelineClause);
                 }
 
-                return new neon.query.Filter().selectFrom($scope.databaseName, $scope.tableName).where(filterClause);
+                return new neon.query.Filter().selectFrom($scope.databaseName, tableName).where(filterClause);
             };
 
             /**
@@ -574,7 +595,8 @@ angular.module('neonDemo.directives')
                 XDATA.activityLogger.logUserActivity('HeatMap - user removed geographic filter area', 'remove_visual_filter',
                     XDATA.activityLogger.WF_GETDATA);
                 XDATA.activityLogger.logSystemActivity('HeatMap - removing neon filter based on users geographic selection');
-                $scope.messenger.removeFilter($scope.filterKey, function() {
+
+                filterService.removeFilters($scope.messenger, $scope.filterKeys, function() {
                     $scope.$apply(function() {
                         XDATA.activityLogger.logSystemActivity('HeatMap - geographic neon filter removed');
                         clearZoomRect();
@@ -630,7 +652,7 @@ angular.module('neonDemo.directives')
             // Wait for neon to be ready, the create our messenger and intialize the view and data.
             neon.ready(function() {
                 $scope.initialize();
-                $scope.displayActiveDataset();
+                $scope.displayActiveDataset(true);
             });
         }
     };

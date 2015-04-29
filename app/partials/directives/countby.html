@@ -1,22 +1,41 @@
-<div class="count-by-header row">
-    <div class="filter-reset pull-right" ng-class="{true: 'hidden', false: ''}[filterSet === undefined]">
-        {{filterSet.key}}={{filterSet.value}}
-        <a class="btn" ng-click="clearFilter()">
-            <span class="glyphicon glyphicon-remove"></span>
-        </a>
+<div class="chart-options pull-right">
+    <a class="btn btn-lg text-muted collapsed" data-toggle="collapse" data-target=".{{uniqueChartOptions}} .count-by-options" data-animation=false>
+      <span class="glyphicon glyphicon-cog"></span>
+      <span class="caret"></span>
+    </a>
+    <div class="count-by-options popover bottom">
+        <div class="arrow"></div>
+        <div class="popover-content">
+            <div class="form-group">
+                <label>Table</label>
+                <select class="form-control" ng-model="selectedTable" ng-options="table.name for table in tables" ng-required="true" ng-disabled="(tables.length < 2)" ng-change="updateFieldsAndQueryForData()">
+                </select>
+            </div>
+        </div>
     </div>
+</div>
 
-    <div class="clearfix"></div>
+<div class="filter-reset pull-right" ng-class="{true: 'hidden', false: ''}[filterSet === undefined]">
+    {{filterSet.key}}={{filterSet.value}}
+    <a class="btn" ng-click="clearFilter()">
+        <span class="glyphicon glyphicon-remove"></span>
+    </a>
+</div>
 
-    <div class="count-by-field-selector col-xs-8">
+<div class="clearfix"></div>
+
+<div class="count-by-header">
+    <div class="count-by-field-selector pull-left">
         <select class="form-control" ng-model="countField" ng-disabled="!(fields.length > 0)" ng-options="field for field in fields">
             <option disabled selected value="">Please choose a field</option>
         </select>
     </div>
 
-    <div class="count-by-field-label col-xs-4">
-        <h4 class="count-by-field-count pull-right"><span class="count text-primary ng-binding" ng-bind="count"></span> values</h4>
+    <div class="count-by-field-label pull-right">
+        <h4 class="count-by-field-count pull-right"><span class="count text-primary ng-binding" ng-bind="count"></span></h4>
     </div>
+
+    <div class="clearfix"></div>
 </div>
 
 <div class="count-by-grid">

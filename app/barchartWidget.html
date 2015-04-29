@@ -48,7 +48,6 @@
               loaded first, angular should pick up the included jQuery. -->
         <script src="lib/owf/js/owf-widget-debug.js"></script>
         <script src="/neon/js/neon.js"></script>
-        <script src="js/appConfig.js"></script>
 
         <script src="lib/jquery/js/jquery.min.js"></script>
         <script src="lib/javascript-detect-element-resize/js/jquery.resize.js"></script>
@@ -99,11 +98,6 @@
                 OWF.notifyWidgetReady();
             });
 
-            // Defaulting the Neon SERVER_URL to be under the neon context on the same host machine.
-            // If the neon application is loaded elsewhere, this can be changed as in the following example:
-            // neon.SERVER_URL = "http://localhost:8080/neon"
-            neon.SERVER_URL = "/neon";
-
             var neonDemo = angular.module('neonDemo', [
                 'neonDemo.controllers',
                 'neonDemo.services',
@@ -121,6 +115,5 @@
         <script src="js/filterCountService.js"></script>
         <script src="js/neonDemoController.js"></script>
         <script src="js/directives/barchart.js"></script>
-        <script src="js/directives/fieldSelector.js"></script>
     </body>
 </html>

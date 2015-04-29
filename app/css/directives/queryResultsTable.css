@@ -87,6 +87,17 @@
     background: #cccccc;
 }
 
+.query-results-directive .chart-options {
+    /* Align with the Sort By and Limit items. */
+    margin-top: 3px;
+    margin-left: 10px;
+}
+
+.query-results-directive .query-results-options {
+    /* Set a lower position for the popover due to the extra top margin added to chart-options. */
+    top: 48px;
+}
+
 @media (max-width: 767px) {
     .data-tray h4.pull-left,
     .data-tray .form-inline,

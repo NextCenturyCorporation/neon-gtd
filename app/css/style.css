@@ -352,6 +352,7 @@ fieldset[disabled] .btn-primary.active {
 }
 .chart-options .popover-content {
     background-color: #FFFFFF;
+    overflow: auto;
     padding: 15px 15px 0;
     border: 1px solid rgba(0, 0, 0, 0.2);
     border-radius: 6px;
@@ -368,6 +369,13 @@ fieldset[disabled] .btn-primary.active {
 .chart-options .collapsing{
     position: absolute;
     display: block;
+}
+
+.chart-options span.chart-options-text {
+    /* Set the top position so the text aligns vertically with the gear icon. */
+    position: relative;
+    top: -1px;
+    margin-right: 5px;
 }
 
 /* Chart legend */

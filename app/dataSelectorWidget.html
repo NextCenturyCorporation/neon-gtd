@@ -29,7 +29,7 @@
     <body ng-controller="neonDemoController">
 
         <!-- Database Config -->
-        <database-config></database-config>
+        <database-config gridster-configs="visualizations"></database-config>
 
         <!-- In production use:
         <script src="//ajax.googleapis.com/ajax/libs/angularjs/x.x.x/angular.min.js"></script>
@@ -46,7 +46,6 @@
             OWF.relayFile = 'js/eventing/rpc_relay.uncompressed.html';
         </script>
         <script src="/neon/js/neon.js"></script>
-        <script src="js/appConfig.js"></script>
 
         <script src="lib/jquery/js/jquery.min.js"></script>
         <script src="lib/angular/js/angular.min.js"></script>
@@ -92,11 +91,6 @@
 
                 OWF.notifyWidgetReady();
             });
-
-            // Defaulting the Neon SERVER_URL to be under the neon context on the same host machine.
-            // If the neon application is loaded elsewhere, this can be changed as in the following example:
-            // neon.SERVER_URL = "http://localhost:8080/neon"
-            neon.SERVER_URL = "/neon";
 
             var neonDemo = angular.module('neonDemo', [
                 'neonDemo.controllers',

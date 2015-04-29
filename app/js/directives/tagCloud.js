@@ -19,7 +19,7 @@
  * This directive is for building a tag cloud
  */
 angular.module('neonDemo.directives')
-.directive('tagCloud', ['ConnectionService', '$timeout', function(connectionService, $timeout) {
+.directive('tagCloud', ['ConnectionService', 'DatasetService', 'FilterService', '$timeout', function(connectionService, datasetService, filterService, $timeout) {
     return {
         templateUrl: 'partials/directives/tagCloud.html',
         restrict: 'EA',
@@ -29,7 +29,11 @@ angular.module('neonDemo.directives')
         link: function($scope, element) {
             element.addClass("tagcloud-container");
             $scope.databaseName = '';
-            $scope.tableName = '';
+            $scope.tables = [];
+            $scope.selectedTable = {
+                name: ""
+            };
+
             $scope.uniqueChartOptions = 'chart-options-' + uuid();
             var chartOptions = $(element).find('.chart-options');
             chartOptions.toggleClass($scope.uniqueChartOptions);
@@ -44,6 +48,7 @@ angular.module('neonDemo.directives')
             $scope.filterTags = [];
             $scope.showFilter = false;
             $scope.andTags = true;
+            $scope.filterKeys = {};
 
             /**
              * Initializes the name of the directive's scope variables
@@ -60,7 +65,7 @@ angular.module('neonDemo.directives')
                             or: !newVal
                         });
                     if(newVal !== oldVal) {
-                        $scope.setTagFilter($scope.filterTags);
+                        $scope.setTagFilter();
                     }
                 });
 
@@ -71,21 +76,19 @@ angular.module('neonDemo.directives')
                         XDATA.activityLogger.WF_EXPLORE);
                 });
 
-                $scope.filterKey = "tagcloud" + uuid();
-
                 // Setup our messenger.
                 $scope.messenger = new neon.eventing.Messenger();
 
                 $scope.messenger.events({
-                    activeDatasetChanged: onDatasetChanged,
                     filtersChanged: onFiltersChanged
                 });
+                $scope.messenger.subscribe("dataset_changed", onDatasetChanged);
 
                 $scope.$on('$destroy', function() {
                     $scope.messenger.removeEvents();
                     // Remove our filter if we had an active one.
                     if(0 < $scope.filterTags.length) {
-                        $scope.messenger.removeFilter($scope.filterKey);
+                        filterService.removeFilters($scope.messenger, $scope.filterKeys);
                     }
                 });
 
@@ -102,7 +105,11 @@ angular.module('neonDemo.directives')
                     }
                 };
 
-                $scope.$watchCollection('filterTags', $scope.setTagFilter);
+                $scope.$watchCollection('filterTags', function(newValue, oldValue) {
+                    if(newValue.length !== oldValue.length || newValue.length > 1) {
+                        $scope.setTagFilter();
+                    }
+                });
             };
 
             /**
@@ -111,24 +118,20 @@ angular.module('neonDemo.directives')
              * @method onFiltersChanged
              * @private
              */
-            var onFiltersChanged = function() {
+            var onFiltersChanged = function(message) {
                 XDATA.activityLogger.logSystemActivity('TagCloud - received neon filter changed event');
-                $scope.queryForTags();
+                if(message.addedFilter.databaseName === $scope.databaseName && message.addedFilter.tableName === $scope.selectedTable.name) {
+                    $scope.queryForTags();
+                }
             };
 
             /**
              * Event handler for dataset changed events issued over Neon's messaging channels.
-             * @param {Object} message A Neon dataset changed message.
-             * @param {String} message.database The database that was selected.
-             * @param {String} message.table The table within the database that was selected.
              * @method onDatasetChanged
              * @private
              */
-            var onDatasetChanged = function(message) {
-                XDATA.activityLogger.logSystemActivity('TagCloud - received neon dataset changed event');
-
-                // if there is no active connection, try to make one.
-                connectionService.connectToDataset(message.datastore, message.hostname, message.database, message.table);
+            var onDatasetChanged = function() {
+                XDATA.activityLogger.logSystemActivity('TagCloud - received neon-gtd dataset changed event');
                 $scope.displayActiveDataset();
             };
 
@@ -137,17 +140,23 @@ angular.module('neonDemo.directives')
              * @method displayActiveDataset
              */
             $scope.displayActiveDataset = function() {
-                var connection = connectionService.getActiveConnection();
-                if(connection) {
-                    connectionService.loadMetadata(function() {
-                        var info = connectionService.getActiveDataset();
-                        $scope.databaseName = info.database;
-                        $scope.tableName = info.table;
-                        // check if the field was passed in, otherwise check the mapping. if neither is found leave it empty
-                        $scope.tagField = $scope.tagField || connectionService.getFieldMapping("tags") || '';
-                        // Pull data.
-                        $scope.queryForTags();
-                    });
+                if(!datasetService.hasDataset()) {
+                    return;
+                }
+
+                $scope.databaseName = datasetService.getDatabase();
+                $scope.tables = datasetService.getTables();
+                $scope.selectedTable = datasetService.getFirstTableWithMappings(["tags"]) || $scope.tables[0];
+                $scope.filterKeys = filterService.createFilterKeys("tagcloud", $scope.tables);
+                $scope.updateFieldsAndQueryForTags();
+            };
+
+            $scope.updateFieldsAndQueryForTags = function() {
+                $scope.tagField = $scope.tagField || datasetService.getMapping($scope.selectedTable.name, "tags") || "";
+                if($scope.showFilter) {
+                    $scope.clearTagFilters();
+                } else {
+                    $scope.queryForTags();
                 }
             };
 
@@ -160,7 +169,7 @@ angular.module('neonDemo.directives')
                     var connection = connectionService.getActiveConnection();
                     if(connection) {
                         var host = connection.host_;
-                        var url = neon.serviceUrl('mongotagcloud', 'tagcounts', 'host=' + host + "&db=" + $scope.databaseName + "&collection=" + $scope.tableName + "&arrayfield=" + $scope.tagField + "&limit=40");
+                        var url = neon.serviceUrl('mongotagcloud', 'tagcounts', 'host=' + host + "&db=" + $scope.databaseName + "&collection=" + $scope.selectedTable.name + "&arrayfield=" + $scope.tagField + "&limit=40");
 
                         XDATA.activityLogger.logSystemActivity('TagCloud - query for tag data');
                         neon.util.ajaxUtils.doGet(url, {
@@ -218,48 +227,46 @@ angular.module('neonDemo.directives')
 
             /**
              * Changes the filter to use the ones provided in the first argument.
-             * @param tagNames {Array} an array of tag strings, e.g., ["#lol", "#sad"]
-             * @param oldTagNames {Array} the old array of tag names
              * @method setTagFilter
              */
-            $scope.setTagFilter = function(tagNames, oldTagNames) {
-                if(tagNames !== oldTagNames) {
-                    if(tagNames.length > 0) {
-                        var tagFilter = $scope.createFilterForTags(tagNames);
-                        $scope.applyFilter(tagFilter);
-                    } else {
-                        $scope.clearTagFilters();
-                    }
+            $scope.setTagFilter = function() {
+                if($scope.filterTags.length > 0) {
+                    $scope.applyFilter();
+                } else {
+                    $scope.clearTagFilters();
                 }
             };
 
             /**
              * Creates a filter select object that has a where clause that "or"s all of the tags together
-             * @param tagNames {Array} an array of tag strings that records must have to pass the filter
-             * @returns {Object} a neon select statement
+             * @param {String} The name of the table on which to filter
+             * @param {Array} An array containing the name of the tag field as its first element
              * @method createFilterForTags
+             * @returns {Object} A neon.query.Filter object
              */
-            $scope.createFilterForTags = function(tagNames) {
+            $scope.createFilterForTags = function(tableName, fieldNames) {
+                var tagFieldName = fieldNames[0];
                 var filterClause;
-                var filterClauses = tagNames.map(function(tagName) {
-                    return neon.query.where($scope.tagField, "=", tagName);
+                var filterClauses = $scope.filterTags.map(function(tagName) {
+                    return neon.query.where(tagFieldName, "=", tagName);
                 });
                 if($scope.andTags) {
                     filterClause = filterClauses.length > 1 ? neon.query.and.apply(neon.query, filterClauses) : filterClauses[0];
                 } else {
                     filterClause = filterClauses.length > 1 ? neon.query.or.apply(neon.query, filterClauses) : filterClauses[0];
                 }
-                return new neon.query.Filter().selectFrom($scope.databaseName, $scope.tableName).where(filterClause);
+                return new neon.query.Filter().selectFrom($scope.databaseName, tableName).where(filterClause);
             };
 
             /**
              * Applies the specified filter and updates the visualization on success
-             * @param filter {Object} the neon filter to apply
              * @method applyFilter
              */
-            $scope.applyFilter = function(filter) {
+            $scope.applyFilter = function() {
                 XDATA.activityLogger.logSystemActivity('TagCloud - applying neon filter based on updated tag selections');
-                $scope.messenger.replaceFilter($scope.filterKey, filter, function() {
+
+                var relations = datasetService.getRelations($scope.selectedTable.name, [$scope.tagField]);
+                filterService.replaceFilters($scope.messenger, relations, $scope.filterKeys, $scope.createFilterForTags, function() {
                     XDATA.activityLogger.logSystemActivity('TagCloud - applied neon filter');
                     $scope.$apply(function() {
                         $scope.queryForTags();
@@ -280,7 +287,7 @@ angular.module('neonDemo.directives')
              * @method clearTagFilters
              */
             $scope.clearTagFilters = function() {
-                $scope.messenger.removeFilter($scope.filterKey, function() {
+                filterService.removeFilters($scope.messenger, $scope.filterKeys, function() {
                     $scope.$apply(function() {
                         $scope.showFilter = false;
                         $scope.filterTags = [];

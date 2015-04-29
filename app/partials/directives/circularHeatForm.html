@@ -1,2 +1,19 @@
+<div class="chart-options pull-right">
+    <a class="btn btn-lg text-muted collapsed" data-toggle="collapse" data-target=".{{uniqueChartOptions}} .circular-heat-options" data-animation=false>
+      <span class="glyphicon glyphicon-cog"></span>
+      <span class="caret"></span>
+    </a>
+    <div class="circular-heat-options popover bottom">
+        <div class="arrow"></div>
+        <div class="popover-content">
+            <div class="form-group">
+                <label>Table</label>
+                <select class="form-control" ng-model="selectedTable" ng-options="table.name for table in tables" ng-required="true" ng-disabled="(tables.length < 2)" ng-change="queryForChartData()">
+                </select>
+            </div>
+        </div>
+    </div>
+</div>
+
 <h4>Most active times of the week were <span class="count text-primary" ng-bind="maxTime"></span> and <span class="count text-primary" ng-bind="maxDay"></span></h4>
 <div circular-heat-chart cell-values="data"></div>
