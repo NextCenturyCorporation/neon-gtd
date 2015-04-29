@@ -40,6 +40,7 @@ charts.DirectedGraph.prototype.updateGraph = function (data) {
     me.element = d3.select(me.rootElement).select(me.chartSelector);
 
     var nodes = data.nodes;
+    var links = data.links;
 
     var height = me.getRenderHeight();
     var width = me.getRenderWidth();
@@ -62,20 +63,22 @@ charts.DirectedGraph.prototype.updateGraph = function (data) {
         .append('svg:g');
 
     var force = d3.layout.force()
+        .nodes(nodes)
+        .links(links)
         .charge(-300)
         .linkDistance(100)
         .size([width, height])
         .gravity(0.05);
 
     force
-        .nodes(data.nodes);
+        .nodes(nodes);
 
     var link;
-    if (data.links) {
-        force.links(data.links);
+    if (links) {
+        force.links(links);
 
         link = me.vis.selectAll(".link")
-            .data(data.links)
+            .data(links)
             .enter().append("line")
             .attr("class", "link")
             .style("stroke-width", function (d) {
