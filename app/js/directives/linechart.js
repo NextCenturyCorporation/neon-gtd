@@ -121,7 +121,7 @@ angular.module('neonDemo.directives')
              */
             var onFiltersChanged = function(message) {
                 XDATA.activityLogger.logSystemActivity('LineChart - received neon filter changed event');
-                if(message.addedFilter.databaseName === $scope.selectedDatabase && message.addedFilter.tableName === $scope.selectedTable.name) {
+                if(message.addedFilter && message.addedFilter.databaseName === $scope.selectedDatabase && message.addedFilter.tableName === $scope.selectedTable.name) {
                     $scope.queryForData();
                 }
             };
