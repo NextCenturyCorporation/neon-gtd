@@ -162,7 +162,6 @@ angular.module('neonDemo.directives')
             function formatGraphData() {
                 var nodeMappings = $scope.nodeTable.mappings;
                 var linkMappings = $scope.linkTable.mappings;
-
                 var nodes = [];
                 for (var i = 0; i < $scope.nodes.length; i++) {
                     nodes.push(formatNodeOrLink($scope.nodes[i], nodeMappings));

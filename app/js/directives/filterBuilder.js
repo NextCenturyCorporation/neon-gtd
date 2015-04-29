@@ -195,6 +195,7 @@ angular.module('neonDemo.directives')
             $scope.updateFields = function() {
                 var fields = datasetService.getDatabaseFields($scope.selectedTable.name);
                 $scope.fields = _.without(fields, "_id");
+                $scope.fields.sort();
                 $scope.selectedField = fields[0];
             };
 

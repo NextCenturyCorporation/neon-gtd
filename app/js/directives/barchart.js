@@ -107,7 +107,7 @@ angular.module('neonDemo.directives')
              */
             var onFiltersChanged = function(message) {
                 XDATA.activityLogger.logSystemActivity('BarChart - received neon filter changed event');
-                if(message.addedFilter.databaseName === $scope.databaseName && message.addedFilter.tableName === $scope.selectedTable.name) {
+                if(message.addedFilter && message.addedFilter.databaseName === $scope.databaseName && message.addedFilter.tableName === $scope.selectedTable.name) {
                     $scope.queryForData(false);
                 }
             };
@@ -154,6 +154,7 @@ angular.module('neonDemo.directives')
                 $scope.attrX = datasetService.getMapping($scope.selectedTable.name, "bar_x_axis") || "";
                 $scope.attrY = datasetService.getMapping($scope.selectedTable.name, "y_axis") || "";
                 $scope.fields = datasetService.getDatabaseFields($scope.selectedTable.name);
+                $scope.fields.sort();
                 if($scope.filterSet) {
                     $scope.clearFilterSet();
                 }
@@ -208,8 +209,10 @@ angular.module('neonDemo.directives')
                     }, function(response) {
                         XDATA.activityLogger.logSystemActivity('BarChart - query failed');
                         drawBlankChart();
-                        $scope.errorMessage = errorNotificationService.showErrorMessage($element, response.responseJSON.error, response.responseJSON.stackTrace);
                         $scope.updatingChart = false;
+                        if(response.responseJSON) {
+                            $scope.errorMessage = errorNotificationService.showErrorMessage($element, response.responseJSON.error, response.responseJSON.stackTrace);
+                        }
                     });
                 }
             };
