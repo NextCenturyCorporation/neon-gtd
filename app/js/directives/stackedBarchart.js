@@ -175,7 +175,9 @@ angular.module('neonDemo.directives')
                         next(queryResults);
                     }, function(response) {
                         $scope.drawBlankChart();
-                        $scope.errorMessage = errorNotificationService.showErrorMessage(el, response.responseJSON.error, response.responseJSON.stackTrace);
+                        if(response.responseJSON) {
+                            $scope.errorMessage = errorNotificationService.showErrorMessage(el, response.responseJSON.error, response.responseJSON.stackTrace);
+                        }
                     });
                 }
             };

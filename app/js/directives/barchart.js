@@ -208,8 +208,10 @@ angular.module('neonDemo.directives')
                     }, function(response) {
                         XDATA.activityLogger.logSystemActivity('BarChart - query failed');
                         drawBlankChart();
-                        $scope.errorMessage = errorNotificationService.showErrorMessage($element, response.responseJSON.error, response.responseJSON.stackTrace);
                         $scope.updatingChart = false;
+                        if(response.responseJSON) {
+                            $scope.errorMessage = errorNotificationService.showErrorMessage($element, response.responseJSON.error, response.responseJSON.stackTrace);
+                        }
                     });
                 }
             };

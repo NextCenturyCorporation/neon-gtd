@@ -226,7 +226,9 @@ angular.module('neonDemo.directives')
                         $scope.updateChartData({
                             data: []
                         });
-                        $scope.errorMessage = errorNotificationService.showErrorMessage(element, response.responseJSON.error, response.responseJSON.stackTrace);
+                        if(response.responseJSON) {
+                            $scope.errorMessage = errorNotificationService.showErrorMessage(element, response.responseJSON.error, response.responseJSON.stackTrace);
+                        }
                     });
                 }
             };

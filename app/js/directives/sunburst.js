@@ -193,7 +193,9 @@ angular.module('neonDemo.directives')
                         doDrawChart(buildDataTree({
                             data: []
                         }));
-                        $scope.errorMessage = errorNotificationService.showErrorMessage($element, response.responseJSON.error, response.responseJSON.stackTrace);
+                        if(response.responseJSON) {
+                            $scope.errorMessage = errorNotificationService.showErrorMessage($element, response.responseJSON.error, response.responseJSON.stackTrace);
+                        }
                     });
                 }
             };

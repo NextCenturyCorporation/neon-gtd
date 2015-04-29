@@ -290,7 +290,9 @@ angular.module('neonDemo.directives')
                         $scope.createAndShowGraph(data);
                     }, function(response) {
                         $scope.updateGraph([], []);
-                        $scope.errorMessage = errorNotificationService.showErrorMessage(element, response.responseJSON.error, response.responseJSON.stackTrace);
+                        if(response.responseJSON) {
+                            $scope.errorMessage = errorNotificationService.showErrorMessage(element, response.responseJSON.error, response.responseJSON.stackTrace);
+                        }
                     });
                 }
             };
@@ -320,7 +322,9 @@ angular.module('neonDemo.directives')
                 if(connection) {
                     connection.executeQuery(query, $scope.createAndShowGraph, function(response) {
                         $scope.updateGraph([], []);
-                        $scope.errorMessage = errorNotificationService.showErrorMessage(element, response.responseJSON.error, response.responseJSON.stackTrace);
+                        if(response.responseJSON) {
+                            $scope.errorMessage = errorNotificationService.showErrorMessage(element, response.responseJSON.error, response.responseJSON.stackTrace);
+                        }
                     });
                 }
             };

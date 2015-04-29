@@ -244,10 +244,12 @@ angular.module('neonDemo.directives')
                         });
                     }, function(response) {
                         XDATA.activityLogger.logSystemActivity('CountBy - query failed');
-                        $scope.errorMessage = errorNotificationService.showErrorMessage(el, response.responseJSON.error, response.responseJSON.stackTrace);
                         $scope.updateData({
                             data: []
                         });
+                        if(response.responseJSON) {
+                            $scope.errorMessage = errorNotificationService.showErrorMessage(el, response.responseJSON.error, response.responseJSON.stackTrace);
+                        }
                     });
                 }
             };

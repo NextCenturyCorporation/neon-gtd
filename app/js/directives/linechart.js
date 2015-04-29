@@ -178,7 +178,9 @@ angular.module('neonDemo.directives')
                     connection.executeQuery(query, callback, function(response) {
                         XDATA.activityLogger.logSystemActivity('LineChart - query failed');
                         drawChart();
-                        $scope.errorMessage = errorNotificationService.showErrorMessage($element, response.responseJSON.error, response.responseJSON.stackTrace);
+                        if(response.responseJSON) {
+                            $scope.errorMessage = errorNotificationService.showErrorMessage($element, response.responseJSON.error, response.responseJSON.stackTrace);
+                        }
                     });
                 }
             };
