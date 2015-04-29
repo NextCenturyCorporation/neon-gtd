@@ -16,7 +16,45 @@
 
     "dig": {
         "enabled": true,
-        "server": "http://10.1.93.199:8080"
+        "server": "http://10.1.93.199:8080",
+        "count_by": {
+            "name": "DIG",
+            "image": "img/DIG_64.png",
+            "url": "SERVER/list",
+            "args": [{
+                "name": "field",
+                "value": "FIELD"
+            }, {
+                "name": "value",
+                "value": "VALUE"
+            }]
+        },
+        "data_table": {
+            "name": "DIG",
+            "image": "img/DIG_64.png",
+            "url": "SERVER/list",
+            "args": [{
+                "name": "id",
+                "value": "VALUE"
+            }]
+        }
+    },
+
+    "quickpin": {
+        "enabled": true,
+        "server": "http://10.1.93.174:5000",
+        "count_by": {
+            "name": "Quickpin",
+            "image": "img/Quickpin_64.png",
+            "url": "SERVER/details/VALUE",
+            "args": []
+        },
+        "data_table": {
+            "name": "Quickpin",
+            "image": "img/Quickpin_64.png",
+            "url": "SERVER/details/VALUE",
+            "args": []
+        }
     },
 
     "visualizations": [{

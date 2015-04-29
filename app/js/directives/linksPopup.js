@@ -41,7 +41,7 @@ angular.module('neonDemo.directives')
                         for(var j = 0; j < links.length; ++j) {
                             var link = links[j];
                             link.tab = link.data.query;
-                            link.url = link.url.replace($scope.SERVER, link.data.server);
+                            link.url = link.url.replace($scope.SERVER, link.data.server).replace($scope.VALUE, link.data.value);
                             // Notify angular that this is a trusted URL so angular will inject it into a form's action.
                             link.url = $sce.trustAsResourceUrl(link.url);
                             for(var k = 0; k < link.args.length; ++k) {

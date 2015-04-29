@@ -82,9 +82,13 @@ angular.element(document).ready(function() {
         var digConfig = (config.dig || {
             enabled: false
         });
+        var quickpinConfig = (config.quickpin || {
+            enabled: false
+        });
         var externalAppConfig = {
-            anyEnabled: digConfig.enabled,
-            dig: digConfig
+            anyEnabled: digConfig.enabled || quickpinConfig.enabled,
+            dig: digConfig,
+            quickpin: quickpinConfig
         };
         neonDemo.constant('external', externalAppConfig);
 

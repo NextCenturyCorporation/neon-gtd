@@ -284,28 +284,11 @@ angular.module('neonDemo.directives')
                     var links = [];
 
                     if(external.dig.enabled) {
-                        var form = {
-                            name: external.dig.count_by.name,
-                            image: external.dig.count_by.image,
-                            url: external.dig.count_by.url,
-                            args: [],
-                            data: {
-                                server: external.dig.server,
-                                field: field,
-                                value: value,
-                                query: query
-                            }
-                        };
+                        links.push($scope.createLinkObject(external.dig, field, value, query));
+                    }
 
-                        for(var i = 0; i < external.dig.count_by.args.length; ++i) {
-                            var arg = external.dig.count_by.args[i];
-                            form.args.push({
-                                name: arg.name,
-                                value: arg.value
-                            });
-                        }
-
-                        links.push(form);
+                    if(external.quickpin.enabled) {
+                        links.push($scope.createLinkObject(external.quickpin, field, value, query));
                     }
 
                     var linksIndex = tableLinks.length;
@@ -323,146 +306,171 @@ angular.module('neonDemo.directives')
                 return data;
             };
 
-            /**
-             * Saves the given field and value as the current filter for the
-             * dashboard and this widget.
-             * @param {String} The filter field
-             * @param {String} The filter value
-             */
-            $scope.setFilter = function(field, value) {
-                var filterExists = $scope.filterSet ? true : false;
-                handleSetFilter(field, value);
-
-                // Store the value for the filter to use during filter creation.
-                $scope.filterValue = value;
-
-                var connection = connectionService.getActiveConnection();
-                if($scope.messenger && connection) {
-                    var relations = datasetService.getRelations($scope.selectedTable.name, [field]);
-                    if(filterExists) {
-                        filterService.replaceFilters($scope.messenger, relations, $scope.filterKeys, $scope.createFilter);
-                    } else {
-                        filterService.addFilters($scope.messenger, relations, $scope.filterKeys, $scope.createFilter);
+            $scope.createLinkObject = function(config, field, value, query) {
+                var link = {
+                    name: config.count_by.name,
+                    image: config.count_by.image,
+                    url: config.count_by.url,
+                    args: [],
+                    data: {
+                        server: config.server,
+                        field: field,
+                        value: value,
+                        query: query
                     }
+                };
+
+                for(var i = 0; i < config.count_by.args.length; ++i) {
+                    var arg = config.count_by.args[i];
+                    link.args.push({
+                        name: arg.name,
+                        value: arg.value
+                    });
                 }
+
+                return link;
             };
 
-            /**
-             * Creates and returns a filter using the given table and fields.
-             * @param {String} The name of the table on which to filter
-             * @param {Array} An array containing the name of the selected field as its first element
-             * @method createFilter
-             * @return {Object} A neon.query.Filter object
-             */
-            $scope.createFilter = function(tableName, fieldNames) {
-                var fieldName = fieldNames[0];
-                var filterClause = neon.query.where(fieldName, '=', $scope.filterValue);
-                return new neon.query.Filter().selectFrom($scope.databaseName, tableName).where(filterClause);
-            };
+        /**
+         * Saves the given field and value as the current filter for the
+         * dashboard and this widget.
+         * @param {String} The filter field
+         * @param {String} The filter value
+         */
+        $scope.setFilter = function(field, value) {
+            var filterExists = $scope.filterSet ? true : false;
+            handleSetFilter(field, value);
 
-            /**
-             * Adds an onClick listener for selecting the rows in the table that
-             * sets a filter on the data in the selected row.
-             */
-            $scope.addOnClickListener = function() {
-                $scope.table.addOnClickListener(function(columns, row) {
-                    var columnIndex = external.anyEnabled ? 1 : 0;
-                    var field = columns[columnIndex].field;
+            // Store the value for the filter to use during filter creation.
+            $scope.filterValue = value;
 
-                    // If the user clicks on the filtered row/cell, clear the filter.
-                    if($scope.filterSet !== undefined) {
-                        if($scope.filterSet.key === field && $scope.filterSet.value === row[field]) {
-                            $scope.clearFilter();
-                            return;
-                        }
-                    }
-
-                    $tableDiv.addClass("filtered");
-                    $scope.setFilter(field, row[field]);
-                });
-            };
-
-            /**
-             * Updates the data bound to the table managed by this directive.  This will trigger a change in
-             * the chart's visualization.
-             * @param {Object} queryResults Results returned from a Neon query.
-             * @param {Array} queryResults.data The aggregate numbers for the heat chart cells.
-             * @method updateData
-             */
-            $scope.updateData = function(queryResults) {
-                if(!($("#" + $scope.tableId).length)) {
-                    return;
+            var connection = connectionService.getActiveConnection();
+            if($scope.messenger && connection) {
+                var relations = datasetService.getRelations($scope.selectedTable.name, [field]);
+                if(filterExists) {
+                    filterService.replaceFilters($scope.messenger, relations, $scope.filterKeys, $scope.createFilter);
+                } else {
+                    filterService.addFilters($scope.messenger, relations, $scope.filterKeys, $scope.createFilter);
                 }
+            }
+        };
 
-                var cleanData = $scope.stripIdField(queryResults);
+        /**
+         * Creates and returns a filter using the given table and fields.
+         * @param {String} The name of the table on which to filter
+         * @param {Array} An array containing the name of the selected field as its first element
+         * @method createFilter
+         * @return {Object} A neon.query.Filter object
+         */
+        $scope.createFilter = function(tableName, fieldNames) {
+            var fieldName = fieldNames[0];
+            var filterClause = neon.query.where(fieldName, '=', $scope.filterValue);
+            return new neon.query.Filter().selectFrom($scope.databaseName, tableName).where(filterClause);
+        };
 
-                // If the table is recreated while sorting is set, we must redo the sorting on the new table.
-                var sortInfo = $scope.table ? $scope.table.sortInfo_ : {};
+        /**
+         * Adds an onClick listener for selecting the rows in the table that
+         * sets a filter on the data in the selected row.
+         */
+        $scope.addOnClickListener = function() {
+            $scope.table.addOnClickListener(function(columns, row) {
+                var columnIndex = external.anyEnabled ? 1 : 0;
+                var field = columns[columnIndex].field;
 
-                $scope.tableOptions = createOptions(cleanData);
-
-                // Add the URLs for the external applications after the table options have been created because it already includes the column.
-                if(external.anyEnabled) {
-                    cleanData = $scope.addExternalAppUrlColumnData(cleanData);
-                }
-
-                $scope.count = cleanData.data.length;
-                $scope.table = new tables.Table("#" + $scope.tableId, $scope.tableOptions).draw();
-                $scope.addOnClickListener();
-                updateSize();
-
-                if(sortInfo.hasOwnProperty("field") && sortInfo.hasOwnProperty("sortAsc")) {
-                    $scope.table.sortColumnAndChangeGlyph(sortInfo);
-                }
-
-                // If the table is recreated while a filter is set, we must re-select the filtered row/cells.
+                // If the user clicks on the filtered row/cell, clear the filter.
                 if($scope.filterSet !== undefined) {
-                    $scope.table.setActiveCellIfMatchExists($scope.filterSet.key, $scope.filterSet.value);
+                    if($scope.filterSet.key === field && $scope.filterSet.value === row[field]) {
+                        $scope.clearFilter();
+                        return;
+                    }
                 }
 
-                // Trigger the links popup using the index stored in the button.
-                $(el).find(".links-popup").on("show.bs.modal", function(event) {
-                    var button = $(event.relatedTarget);
-                    var index = button.data("links-index");
-                    $scope.$apply(function() {
-                        $scope.linksIndex = index;
-                    });
-                });
-            };
-
-            /**
-             * Builds a query to pull a limited set of records that match any existing filter sets.
-             * @return neon.query.Query
-             * @method buildQuery
-             */
-            $scope.buildQuery = function() {
-                var query = new neon.query.Query().selectFrom($scope.databaseName, $scope.selectedTable.name)
-                .groupBy($scope.countField);
-
-                // The widget displays its own ignored rows with 0.5 opacity.
-                query.ignoreFilters([$scope.filterKeys[$scope.selectedTable.name]]);
-                query.aggregate(neon.query.COUNT, '*', 'count');
-
-                return query;
-            };
-
-            /**
-             * Removes the current filter from the dashboard and this widget.
-             */
-            $scope.clearFilter = function() {
-                if($scope.messenger) {
-                    filterService.removeFilters($scope.messenger, $scope.filterKeys, function() {
-                        $tableDiv.removeClass("filtered");
-                        $scope.table.deselect();
-                        clearFilter();
-                    });
-                }
-            };
-
-            neon.ready(function() {
-                $scope.initialize();
-                $scope.displayActiveDataset(true);
+                $tableDiv.addClass("filtered");
+                $scope.setFilter(field, row[field]);
             });
-        }
-    };
+        };
+
+        /**
+         * Updates the data bound to the table managed by this directive.  This will trigger a change in
+         * the chart's visualization.
+         * @param {Object} queryResults Results returned from a Neon query.
+         * @param {Array} queryResults.data The aggregate numbers for the heat chart cells.
+         * @method updateData
+         */
+        $scope.updateData = function(queryResults) {
+            if(!($("#" + $scope.tableId).length)) {
+                return;
+            }
+
+            var cleanData = $scope.stripIdField(queryResults);
+
+            // If the table is recreated while sorting is set, we must redo the sorting on the new table.
+            var sortInfo = $scope.table ? $scope.table.sortInfo_ : {};
+
+            $scope.tableOptions = createOptions(cleanData);
+
+            // Add the URLs for the external applications after the table options have been created because it already includes the column.
+            if(external.anyEnabled) {
+                cleanData = $scope.addExternalAppUrlColumnData(cleanData);
+            }
+
+            $scope.count = cleanData.data.length;
+            $scope.table = new tables.Table("#" + $scope.tableId, $scope.tableOptions).draw();
+            $scope.addOnClickListener();
+            updateSize();
+
+            if(sortInfo.hasOwnProperty("field") && sortInfo.hasOwnProperty("sortAsc")) {
+                $scope.table.sortColumnAndChangeGlyph(sortInfo);
+            }
+
+            // If the table is recreated while a filter is set, we must re-select the filtered row/cells.
+            if($scope.filterSet !== undefined) {
+                $scope.table.setActiveCellIfMatchExists($scope.filterSet.key, $scope.filterSet.value);
+            }
+
+            // Trigger the links popup using the index stored in the button.
+            $(el).find(".links-popup").on("show.bs.modal", function(event) {
+                var button = $(event.relatedTarget);
+                var index = button.data("links-index");
+                $scope.$apply(function() {
+                    $scope.linksIndex = index;
+                });
+            });
+        };
+
+        /**
+         * Builds a query to pull a limited set of records that match any existing filter sets.
+         * @return neon.query.Query
+         * @method buildQuery
+         */
+        $scope.buildQuery = function() {
+            var query = new neon.query.Query().selectFrom($scope.databaseName, $scope.selectedTable.name)
+            .groupBy($scope.countField);
+
+            // The widget displays its own ignored rows with 0.5 opacity.
+            query.ignoreFilters([$scope.filterKeys[$scope.selectedTable.name]]);
+            query.aggregate(neon.query.COUNT, '*', 'count');
+
+            return query;
+        };
+
+        /**
+         * Removes the current filter from the dashboard and this widget.
+         */
+        $scope.clearFilter = function() {
+            if($scope.messenger) {
+                filterService.removeFilters($scope.messenger, $scope.filterKeys, function() {
+                    $tableDiv.removeClass("filtered");
+                    $scope.table.deselect();
+                    clearFilter();
+                });
+            }
+        };
+
+        neon.ready(function() {
+            $scope.initialize();
+            $scope.displayActiveDataset(true);
+        });
+    }
+};
 }]);
