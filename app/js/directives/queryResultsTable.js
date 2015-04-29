@@ -27,8 +27,8 @@
  * @constructor
  */
 angular.module('neonDemo.directives')
-.directive('queryResultsTable', ['external', 'ConnectionService', 'DatasetService', 'ErrorNotificationService', 'PopupService',
-    function(external, connectionService, datasetService, errorNotificationService, popupService) {
+.directive('queryResultsTable', ['external', 'ConnectionService', 'DatasetService', 'ErrorNotificationService',
+    function(external, connectionService, datasetService, errorNotificationService) {
     return {
         templateUrl: 'partials/directives/queryResultsTable.html',
         restrict: 'EA',
@@ -67,6 +67,8 @@ angular.module('neonDemo.directives')
             $scope.fields = [];
             $scope.sortByField = '';
             $scope.sortDirection = neon.query.ASCENDING;
+            $scope.links = [];
+            $scope.linksIndex = -1;
             $scope.limit = 500;
             $scope.totalRows = 0;
             $scope.errorMessage = undefined;
@@ -350,28 +352,61 @@ angular.module('neonDemo.directives')
 
                 $scope.table = new tables.Table("#" + $scope.tableId, $scope.tableOptions).draw();
                 $scope.table.refreshLayout();
+
+                // Trigger the links popup using the index stored in the button.
+                $(element).find(".links-popup").on("show.bs.modal", function(event) {
+                    var button = $(event.relatedTarget);
+                    var index = button.data("links-index");
+                    $scope.$apply(function() {
+                        $scope.linksIndex = index;
+                    });
+                });
             };
 
             $scope.addExternalAppUrlColumnData = function(data) {
+                var tableLinks = [];
+
                 data.data.forEach(function(row, index) {
-                    var uniqueName = $scope.tableId + "-" + index;
                     var rowId = row._id;
                     var query = "id=" + rowId;
 
                     var links = [];
 
                     if(external.dig.enabled) {
-                        var form = external.dig.data_table;
-                        form.data = {
-                            server: external.dig.server,
-                            value: rowId,
-                            query: query
+                        var form = {
+                            name: external.dig.data_table.name,
+                            image: external.dig.data_table.image,
+                            url: external.dig.data_table.url,
+                            args: [],
+                            data: {
+                                server: external.dig.server,
+                                value: rowId,
+                                query: query
+                            }
                         };
+
+                        for(var i = 0; i < external.dig.data_table.args.length; ++i) {
+                            var arg = external.dig.data_table.args[i];
+                            form.args.push({
+                                name: arg.name,
+                                value: arg.value
+                            });
+                        }
+
                         links.push(form);
                     }
 
-                    row[$scope.EXTERNAL_APP_FIELD_NAME] = popupService.createLinksPopup(uniqueName, "Open External Applications", links);
+                    var linksIndex = tableLinks.length;
+                    tableLinks.push(links);
+
+                    row[$scope.EXTERNAL_APP_FIELD_NAME] = "<a data-toggle=\"modal\" data-target=\".links-popup\" data-links-index=\"" + linksIndex +
+                        "\" class=\"collapsed dropdown-toggle primary neon-popup-button\">" +
+                        "<span class=\"glyphicon glyphicon-link\"></span></a>";
                 });
+
+                // Links and links index are used by the links popup directive.
+                $scope.links = tableLinks;
+                $scope.linksIndex = -1;
 
                 return data;
             };

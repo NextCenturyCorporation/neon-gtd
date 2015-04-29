@@ -17,8 +17,8 @@
  */
 
 angular.module('neonDemo.directives')
-.directive('countBy', ['external', 'ConnectionService', 'DatasetService', 'ErrorNotificationService', 'FilterService', 'PopupService',
-    function(external, connectionService, datasetService, errorNotificationService, filterService, popupService) {
+.directive('countBy', ['external', 'ConnectionService', 'DatasetService', 'ErrorNotificationService', 'FilterService',
+    function(external, connectionService, datasetService, errorNotificationService, filterService) {
     return {
         templateUrl: 'partials/directives/countby.html',
         restrict: 'EA',
@@ -43,6 +43,8 @@ angular.module('neonDemo.directives')
             $scope.countField = "";
             $scope.count = 0;
             $scope.fields = [];
+            $scope.links = [];
+            $scope.linksIndex = -1;
             $scope.tableId = 'countby-' + uuid();
             $scope.filterKeys = {};
             $scope.filterSet = undefined;
@@ -272,8 +274,9 @@ angular.module('neonDemo.directives')
             };
 
             $scope.addExternalAppUrlColumnData = function(data) {
+                var tableLinks = [];
+
                 data.data.forEach(function(row, index) {
-                    var uniqueName = $scope.tableId + "-" + index;
                     var field = $scope.countField;
                     var value = row[$scope.countField];
                     var query = field + "=" + value;
@@ -281,18 +284,41 @@ angular.module('neonDemo.directives')
                     var links = [];
 
                     if(external.dig.enabled) {
-                        var form = external.dig.count_by;
-                        form.data = {
-                            server: external.dig.server,
-                            field: field,
-                            value: value,
-                            query: query
+                        var form = {
+                            name: external.dig.count_by.name,
+                            image: external.dig.count_by.image,
+                            url: external.dig.count_by.url,
+                            args: [],
+                            data: {
+                                server: external.dig.server,
+                                field: field,
+                                value: value,
+                                query: query
+                            }
                         };
+
+                        for(var i = 0; i < external.dig.count_by.args.length; ++i) {
+                            var arg = external.dig.count_by.args[i];
+                            form.args.push({
+                                name: arg.name,
+                                value: arg.value
+                            });
+                        }
+
                         links.push(form);
                     }
 
-                    row[$scope.EXTERNAL_APP_FIELD_NAME] = popupService.createLinksPopup(uniqueName, "Open External Applications", links);
+                    var linksIndex = tableLinks.length;
+                    tableLinks.push(links);
+
+                    row[$scope.EXTERNAL_APP_FIELD_NAME] = "<a data-toggle=\"modal\" data-target=\".links-popup\" data-links-index=\"" + linksIndex +
+                        "\" class=\"collapsed dropdown-toggle primary neon-popup-button\">" +
+                        "<span class=\"glyphicon glyphicon-link\"></span></a>";
                 });
+
+                // Links and links index are used by the links popup directive.
+                $scope.links = tableLinks;
+                $scope.linksIndex = -1;
 
                 return data;
             };
@@ -393,6 +419,15 @@ angular.module('neonDemo.directives')
                 if($scope.filterSet !== undefined) {
                     $scope.table.setActiveCellIfMatchExists($scope.filterSet.key, $scope.filterSet.value);
                 }
+
+                // Trigger the links popup using the index stored in the button.
+                $(el).find(".links-popup").on("show.bs.modal", function(event) {
+                    var button = $(event.relatedTarget);
+                    var index = button.data("links-index");
+                    $scope.$apply(function() {
+                        $scope.linksIndex = index;
+                    });
+                });
             };
 
             /**

@@ -15,6 +15,8 @@
     </div>
 </div>
 
+<links-popup links-array="links" links-index="linksIndex"></links-popup>
+
 <div class="filter-reset pull-right" ng-class="{true: 'hidden', false: ''}[filterSet === undefined]">
     {{filterSet.key}}={{filterSet.value}}
     <a class="btn" ng-click="clearFilter()">
