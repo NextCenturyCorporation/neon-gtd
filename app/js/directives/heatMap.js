@@ -23,7 +23,8 @@
  *    &lt;heat-map&gt;&lt;/heat-map&gt;<br>
  *    &lt;div heat-map&gt;&lt;/div&gt;
  *
- * @class neonDemo.directives.heatMap
+ * @namespace neonDemo.directives
+ * @class heatMap
  * @constructor
  */
 angular.module('neonDemo.directives')

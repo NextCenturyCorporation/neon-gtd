@@ -27,7 +27,8 @@
  *    &lt;timeline-selector&gt;&lt;/timeline-selector&gt;<br>
  *    &lt;div timeline-selector&gt;&lt;/div&gt;
  *
- * @class neonDemo.directives.timelineSelector
+ * @namespace neonDemo.directives
+ * @class timelineSelector
  * @constructor
  */
 angular.module('neonDemo.directives')

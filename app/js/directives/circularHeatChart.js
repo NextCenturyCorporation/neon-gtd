@@ -24,7 +24,8 @@
  *    &lt;div circular-heat-chart cell-values="data"&gt;&lt;/div&gt;
   *
  * @see neonDemo.charts.circularHeatChart
- * @class neonDemo.directives.circularHeatChart
+ * @namespace neonDemo.directives
+ * @class circularHeatChart
  * @constructor
  */
 angular.module('neonDemo.directives')

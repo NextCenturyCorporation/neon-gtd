@@ -24,7 +24,8 @@
  *    &lt;powered-by-neon&gt;&lt;/powered-by-neon&gt;<br>
  *    &lt;div powered-by-neon&gt;&lt;/div&gt;
  *
- * @class neonDemo.directives.heatMap
+ * @namespace neonDemo.directives
+ * @class heatMap
  * @constructor
  */
 angular.module('neonDemo.directives')

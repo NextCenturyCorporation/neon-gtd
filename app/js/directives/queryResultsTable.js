@@ -23,7 +23,8 @@
  *    &lt;query-results-table&gt;&lt;/query-results-table&gt;<br>
  *    &lt;div query-results-table&gt;&lt;/div&gt;
  *
- * @class neonDemo.directives.queryResultsTable
+ * @namespace neonDemo.directives
+ * @class queryResultsTable
  * @constructor
  */
 angular.module('neonDemo.directives')
