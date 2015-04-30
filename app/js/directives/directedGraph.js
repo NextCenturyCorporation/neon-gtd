@@ -32,9 +32,7 @@ angular.module('neonDemo.directives')
             $scope.TIMEOUT_MS = 250;
             $scope.uniqueId = uuid();
             $scope.databaseName = "";
-            $scope.tableNames = [];
-            $scope.selectedNodeTableName = "";
-            $scope.selectedLinkTableName = "";
+            $scope.tables = [];
             $scope.nodeTable = {};
             $scope.linkTable = {};
             $scope.nodes = [];
@@ -96,24 +94,15 @@ angular.module('neonDemo.directives')
                 }
                 $scope.data = [];
                 $scope.databaseName = datasetService.getDatabase();
-                var tables = datasetService.getTables();
-                for (var i = 0; i < tables.length; i++) {
-                    $scope.tableNames.push(tables[i].name);
-                }
+                $scope.tables = datasetService.getTables();
 
                 if(initializing) {
-                    $scope.updateTablesAndQuery();
+                    $scope.queryForData();
                 } else {
                     $scope.$apply(function() {
-                        $scope.updateTablesAndQuery();
+                        $scope.queryForData();
                     });
                 }
-            };
-
-            $scope.updateTablesAndQuery = function() {
-                $scope.nodeTable = datasetService.getTableWithName($scope.selectedNodeTableName) || "";
-                $scope.linkTable = datasetService.getTableWithName($scope.selectedLinkTableName) || "";
-                $scope.queryForData();
             };
 
             /**

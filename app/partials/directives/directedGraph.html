@@ -10,12 +10,12 @@
         <div class="popover-content">
             <div class="form-group">
                 <label>Node Collection</label>
-                <select class="form-control" ng-model="selectedNodeTableName" ng-options="tableName for tableName in tableNames" ng-required="true" ng-change="updateTablesAndQuery()">
+                <select class="form-control" ng-model="nodeTable" ng-options="table.name for table in tables" ng-required="true" ng-change="queryForData()">
                 </select>
             </div>
             <div class="form-group">
                 <label>Link Collection</label>
-                <select class="form-control" ng-model="selectedLinkTableName" ng-options="tableName for tableName in tableNames" ng-required="true" ng-change="updateTablesAndQuery()">
+                <select class="form-control" ng-model="linkTable" ng-options="table.name for table in tables" ng-required="true" ng-change="queryForData()">
                     <option value=""></option>
                 </select>
             </div>
