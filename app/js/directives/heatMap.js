@@ -303,7 +303,7 @@ angular.module('neonDemo.directives')
              */
             var onFiltersChanged = function(message) {
                 XDATA.activityLogger.logSystemActivity('HeatMap - received neon filter changed event');
-                if(message.addedFilter.databaseName === $scope.databaseName && message.addedFilter.tableName === $scope.selectedTable.name) {
+                if(message.addedFilter && message.addedFilter.databaseName === $scope.databaseName && message.addedFilter.tableName === $scope.selectedTable.name) {
                     $scope.queryForMapData();
                 }
             };
@@ -387,6 +387,7 @@ angular.module('neonDemo.directives')
 
             $scope.updateFieldsAndQueryForMapData = function() {
                 $scope.fields = datasetService.getDatabaseFields($scope.selectedTable.name);
+                $scope.fields.sort();
                 $scope.latitudeField = datasetService.getMapping($scope.selectedTable.name, "latitude") || "";
                 $scope.longitudeField = datasetService.getMapping($scope.selectedTable.name, "longitude") || "";
                 $scope.colorByField = datasetService.getMapping($scope.selectedTable.name, "color_by") || "";
@@ -430,7 +431,9 @@ angular.module('neonDemo.directives')
                             $scope.updateMapData({
                                 data: []
                             });
-                            $scope.errorMessage = errorNotificationService.showErrorMessage($element, response.responseJSON.error, response.responseJSON.stackTrace);
+                            if(response.responseJSON) {
+                                $scope.errorMessage = errorNotificationService.showErrorMessage($element, response.responseJSON.error, response.responseJSON.stackTrace);
+                            }
                         });
                     }
                 }
