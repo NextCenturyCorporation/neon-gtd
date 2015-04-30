@@ -47,7 +47,7 @@ angular.module('neonDemo.directives')
             $scope.selectedTable = {
                 name: ""
             };
-            $scope.fields = [""];
+            $scope.fields = [];
             $scope.chart = undefined;
             $scope.errorMessage = undefined;
 
@@ -97,7 +97,7 @@ angular.module('neonDemo.directives')
              */
             var onFiltersChanged = function(message) {
                 XDATA.activityLogger.logSystemActivity('SunburstChart - received neon filter changed event');
-                if(message.addedFilter.databaseName === $scope.databaseName && message.addedFilter.tableName === $scope.selectedTable.name) {
+                if(message.addedFilter && message.addedFilter.databaseName === $scope.databaseName && message.addedFilter.tableName === $scope.selectedTable.name) {
                     $scope.queryForData();
                 }
             };
@@ -167,6 +167,7 @@ angular.module('neonDemo.directives')
 
             $scope.updateFieldsAndQueryForData = function() {
                 $scope.fields = datasetService.getDatabaseFields($scope.selectedTable.name);
+                $scope.fields.sort();
                 $scope.queryForData();
             };
 
@@ -193,7 +194,9 @@ angular.module('neonDemo.directives')
                         doDrawChart(buildDataTree({
                             data: []
                         }));
-                        $scope.errorMessage = errorNotificationService.showErrorMessage($element, response.responseJSON.error, response.responseJSON.stackTrace);
+                        if(response.responseJSON) {
+                            $scope.errorMessage = errorNotificationService.showErrorMessage($element, response.responseJSON.error, response.responseJSON.stackTrace);
+                        }
                     });
                 }
             };

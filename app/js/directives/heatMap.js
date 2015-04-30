@@ -114,9 +114,11 @@ angular.module('neonDemo.directives')
                             from: oldVal,
                             to: newVal
                         });
-                    if(newVal && newVal !== oldVal) {
+                    if(newVal) {
                         $scope.map.latitudeMapping = newVal;
-                        $scope.draw();
+                        if(newVal !== oldVal) {
+                            $scope.draw();
+                        }
                     }
                 });
 
@@ -128,9 +130,11 @@ angular.module('neonDemo.directives')
                             from: oldVal,
                             to: newVal
                         });
-                    if(newVal && newVal !== oldVal) {
+                    if(newVal) {
                         $scope.map.longitudeMapping = newVal;
-                        $scope.draw();
+                        if(newVal !== oldVal) {
+                            $scope.draw();
+                        }
                     }
                 });
 
@@ -142,14 +146,10 @@ angular.module('neonDemo.directives')
                             from: oldVal,
                             to: newVal
                         });
-                    //if(newVal !== oldVal) {
-                        // Set the size by field if we are on a point layer.
-                        if($scope.showPoints) {
-                            $scope.setMapSizeMapping(newVal);
-                            $scope.draw();
-                        }
-                        //$scope.queryForMapData();
-                    //}
+                    if($scope.showPoints) {
+                        $scope.setMapSizeMapping(newVal);
+                        $scope.draw();
+                    }
                 });
 
                 // Update the coloring field used by the map.
@@ -161,11 +161,8 @@ angular.module('neonDemo.directives')
                             to: newVal
                         });
                     $scope.map.resetColorMappings();
-                    //if(newVal !== oldVal) {
-                        $scope.setMapCategoryMapping(newVal);
-                        $scope.draw();
-                        //$scope.queryForMapData();
-                    //}
+                    $scope.setMapCategoryMapping(newVal);
+                    $scope.draw();
                 });
 
                 // Toggle the points and clusters view when the user toggles between them.
@@ -299,7 +296,7 @@ angular.module('neonDemo.directives')
              */
             var onFiltersChanged = function(message) {
                 XDATA.activityLogger.logSystemActivity('HeatMap - received neon filter changed event');
-                if(message.addedFilter.databaseName === $scope.databaseName && message.addedFilter.tableName === $scope.selectedTable.name) {
+                if(message.addedFilter && message.addedFilter.databaseName === $scope.databaseName && message.addedFilter.tableName === $scope.selectedTable.name) {
                     $scope.queryForMapData();
                 }
             };
@@ -383,6 +380,7 @@ angular.module('neonDemo.directives')
 
             $scope.updateFieldsAndQueryForMapData = function() {
                 $scope.fields = datasetService.getDatabaseFields($scope.selectedTable.name);
+                $scope.fields.sort();
                 $scope.latitudeField = datasetService.getMapping($scope.selectedTable.name, "latitude") || "";
                 $scope.longitudeField = datasetService.getMapping($scope.selectedTable.name, "longitude") || "";
                 $scope.colorByField = datasetService.getMapping($scope.selectedTable.name, "color_by") || "";
@@ -426,7 +424,9 @@ angular.module('neonDemo.directives')
                             $scope.updateMapData({
                                 data: []
                             });
-                            $scope.errorMessage = errorNotificationService.showErrorMessage($element, response.responseJSON.error, response.responseJSON.stackTrace);
+                            if(response.responseJSON) {
+                                $scope.errorMessage = errorNotificationService.showErrorMessage($element, response.responseJSON.error, response.responseJSON.stackTrace);
+                            }
                         });
                     }
                 }

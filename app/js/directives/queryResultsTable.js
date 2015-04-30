@@ -199,7 +199,7 @@ angular.module('neonDemo.directives')
              */
             var onFiltersChanged = function(message) {
                 XDATA.activityLogger.logSystemActivity('DataView - received neon filter changed event');
-                if(message.addedFilter.databaseName === $scope.databaseName && message.addedFilter.tableName === $scope.selectedTable.name) {
+                if(message.addedFilter && message.addedFilter.databaseName === $scope.databaseName && message.addedFilter.tableName === $scope.selectedTable.name) {
                     updateRowsAndCount();
                 }
             };
@@ -247,6 +247,7 @@ angular.module('neonDemo.directives')
 
             $scope.updateFieldsAndRowsAndCount = function() {
                 $scope.fields = datasetService.getDatabaseFields($scope.selectedTable.name);
+                $scope.fields.sort();
                 $scope.sortByField = datasetService.getMapping($scope.selectedTable.name, "sort_by") || $scope.fields[0];
                 updateRowsAndCount();
             };
@@ -294,7 +295,9 @@ angular.module('neonDemo.directives')
                             $scope.updateData({
                                 data: []
                             });
-                            $scope.errorMessage = errorNotificationService.showErrorMessage(element, response.responseJSON.error, response.responseJSON.stackTrace);
+                            if(response.responseJSON) {
+                                $scope.errorMessage = errorNotificationService.showErrorMessage(element, response.responseJSON.error, response.responseJSON.stackTrace);
+                            }
                         });
                     }
                 }

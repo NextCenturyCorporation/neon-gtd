@@ -121,7 +121,7 @@ angular.module('neonDemo.directives')
              */
             var onFiltersChanged = function(message) {
                 XDATA.activityLogger.logSystemActivity('LineChart - received neon filter changed event');
-                if(message.addedFilter.databaseName === $scope.selectedDatabase && message.addedFilter.tableName === $scope.selectedTable.name) {
+                if(message.addedFilter && message.addedFilter.databaseName === $scope.selectedDatabase && message.addedFilter.tableName === $scope.selectedTable.name) {
                     $scope.queryForData();
                 }
             };
@@ -178,7 +178,9 @@ angular.module('neonDemo.directives')
                     connection.executeQuery(query, callback, function(response) {
                         XDATA.activityLogger.logSystemActivity('LineChart - query failed');
                         drawChart();
-                        $scope.errorMessage = errorNotificationService.showErrorMessage($element, response.responseJSON.error, response.responseJSON.stackTrace);
+                        if(response.responseJSON) {
+                            $scope.errorMessage = errorNotificationService.showErrorMessage($element, response.responseJSON.error, response.responseJSON.stackTrace);
+                        }
                     });
                 }
             };
@@ -212,6 +214,7 @@ angular.module('neonDemo.directives')
                 $scope.categoryField = datasetService.getMapping($scope.selectedTable.name, "line_category") || "";
                 $scope.aggregation = 'count';
                 $scope.fields = datasetService.getDatabaseFields($scope.selectedTable.name);
+                $scope.fields.sort();
                 $scope.queryForData();
             };
 
