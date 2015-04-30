@@ -223,9 +223,7 @@ angular.module('neonDemo.directives')
                 }
             };
 
-            /**
-            * Update graph visualization
-            */
+            // Update graph visualization 
             $scope.updateGraph = function() {
                 var graphData = formatGraphData();
                 $scope.$apply(function() {
@@ -235,10 +233,8 @@ angular.module('neonDemo.directives')
                 $scope.graph.updateGraph(graphData);
             };
 
-            /**
-            * Graph data may not exist in the form that the D3 chart wants, and thus might need some formatting.
-            * Also enforce node limit on data.
-            */
+            // Graph data may not exist in the form that the D3 chart wants, and thus might need some formatting.
+            // Also enforce node limit on data.
             function formatGraphData() {
                 var nodeMappings = $scope.nodeTable.mappings;
                 var linkMappings = $scope.linkTable.mappings;
@@ -292,7 +288,7 @@ angular.module('neonDemo.directives')
                 }
             };
 
-            // Wait for neon to be ready, the create our messenger and intialize the view and data.
+            // Wait for neon to be ready, then create our messenger and intialize the view and data.
             neon.ready(function() {
                 $scope.initialize();
                 $scope.displayActiveDataset(true);
