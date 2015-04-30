@@ -147,12 +147,17 @@ angular.module('neonDemo.directives')
 
             /**
             * Graph data may not exist in the form that the D3 chart wants, and thus might need some formatting.
+            * Also enforce node limit on data.
             */
             function formatGraphData() {
                 var nodeMappings = $scope.nodeTable.mappings;
                 var linkMappings = $scope.linkTable.mappings;
                 var nodes = [];
-                for (var i = 0; i < $scope.nodes.length; i++) {
+                var limit = $scope.nodes.length;
+                if ($scope.nodeLimit < limit) {
+                    limit = $scope.nodeLimit;
+                }
+                for (var i = 0; i < limit; i++) {
                     nodes.push(formatNodeOrLink($scope.nodes[i], nodeMappings));
                 }
 
@@ -160,11 +165,15 @@ angular.module('neonDemo.directives')
                 for (var i = 0; i < $scope.links.length; i++) {
                     var link = $scope.links[i];
                     var formattedLink = formatNodeOrLink($scope.links[i], linkMappings);
-                    var sourceNode = nodes.filter(function(node) { return node.id === link.source; })[0];
-                    var targetNode = nodes.filter(function(node) { return node.id === link.target; })[0];
-                    formattedLink.source = sourceNode;
-                    formattedLink.target = targetNode;
-                    links.push(formattedLink);
+                    // Get node associated with the link's source and target ID. Node IDs are assumed to be unique.
+                    var matchingSources = nodes.filter(function(node) { return node.id === link.source; });
+                    var matchingTargets = nodes.filter(function(node) { return node.id === link.target; });
+                    // Due to the enforced node limit, some links may need to be dropped.
+                    if (matchingSources.length > 0 && matchingTargets.length > 0) {
+                        formattedLink.source = matchingSources[0];
+                        formattedLink.target = matchingTargets[0];
+                        links.push(formattedLink);
+                    }
                 }
                 return {nodes: nodes, links: links};
             };
