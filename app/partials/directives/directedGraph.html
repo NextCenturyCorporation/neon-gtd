@@ -9,13 +9,24 @@
         <div class="arrow"></div>
         <div class="popover-content">
             <div class="form-group">
-                <label>Node Collection</label>
-                <select class="form-control" ng-model="nodeTable" ng-options="table.name for table in tables" ng-required="true" ng-change="queryForData()">
+                <label>Table</label>
+                <select class="form-control" ng-model="selectedTable" ng-options="table.name for table in tables" ng-required="true" ng-disabled="(tables.length < 2)" ng-change="updateFieldsAndQueryForData()">
                 </select>
             </div>
             <div class="form-group">
-                <label>Link Collection</label>
-                <select class="form-control" ng-model="linkTable" ng-options="table.name for table in tables" ng-required="true" ng-change="queryForData()">
+                <label>Node Field</label>
+                <select class="form-control" ng-model="selectedNodeField" ng-options="field for field in fields" ng-required="true" ng-disabled="(fields.length == 0)" ng-change="clearFilters()">
+                </select>
+            </div>
+            <div class="form-group">
+                <label>Link(s) Field</label>
+                <select class="form-control" ng-model="selectedLinkField" ng-options="field for field in fields" ng-required="false" ng-disabled="(fields.length == 0)" ng-change="clearFilters()">
+                    <option value=""></option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>Filter on {{selectedNodeField}}</label>
+                <select class="form-control" ng-model="selectedNode" ng-options="node for node in nodes track by node" ng-required="false" ng-disabled="(nodes.length == 0) || !(selectedNodeField)">
                     <option value=""></option>
                 </select>
             </div>

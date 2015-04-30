@@ -1,0 +1,40 @@
+<div class="chart-options pull-right">
+    <a class="btn btn-lg text-muted collapsed" data-toggle="collapse" data-target=".{{uniqueChartOptions}} .directed-graph-options" data-animation=false>
+        <span class="chart-options-text" ng-hide="(numberOfNodesInGraph < nodeLimit)">{{nodeLimit}} node limit</span>
+        <span class="chart-options-text" ng-hide="(numberOfNodesInGraph > 0)">No data available</span>
+        <span class="glyphicon glyphicon-cog"></span>
+        <span class="caret"></span>
+    </a>
+    <div class="directed-graph-options popover bottom">
+        <div class="arrow"></div>
+        <div class="popover-content">
+            <div class="form-group">
+                <label>Node Collection</label>
+                <select class="form-control" ng-model="nodeTable" ng-options="table.name for table in tables" ng-required="true" ng-change="queryForData()">
+                </select>
+            </div>
+            <div class="form-group">
+                <label>Link Collection</label>
+                <select class="form-control" ng-model="linkTable" ng-options="table.name for table in tables" ng-required="true" ng-change="queryForData()">
+                    <option value=""></option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>Graph Node Limit</label>
+                <input type="number" min="50" class="form-control" ng-model="nodeLimit" ng-change="queryForData()"></input>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="directed-graph {{uniqueId}}">
+    <div class="config-row-div">
+        <div class="filter-reset pull-right" ng-repeat="value in filteredNodes">
+            {{value}}
+            <a class="btn" ng-click="removeFilter(value)">
+             <span class="glyphicon glyphicon-remove"></span>
+            </a>
+        </div>
+    </div>
+    <div id="directed-graph-div-{{uniqueId}}"></div>
+</div>
