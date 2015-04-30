@@ -453,6 +453,7 @@ angular.module('neonDemo.directives')
                         updateDatesCallback();
                     }
                 } else {
+                    XDATA.activityLogger.logSystemActivity('TimelineSelector - no data');
                     // TODO:  Determine how to clear the chart without causing errors.
                     //$scope.data = $scope.createTimelineData(queryResults);
                     //$scope.updateChartTimesAndTotal();

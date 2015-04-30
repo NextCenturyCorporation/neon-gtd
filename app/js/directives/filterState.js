@@ -50,10 +50,6 @@ angular.module('neonDemo.directives')
                 neon.query.Filter.getFilterState('*', '*', success, failure);
             };
 
-            var queryForDBTableFilters = function(success, failure) {
-                neon.query.Filter.getFilterState($scope.databaseName, $scope.tableName, success, failure);
-            };
-
             var handleFilterStateError = function() {
                 console.error(arguments);
             };
