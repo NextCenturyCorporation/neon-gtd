@@ -168,21 +168,14 @@ angular.module('neonDemo.directives')
                 if($scope.tagField !== '') {
                     var connection = connectionService.getActiveConnection();
                     if(connection) {
-                        var host = connection.host_;
-                        var url = neon.serviceUrl('mongotagcloud', 'tagcounts', 'host=' + host + "&db=" + $scope.databaseName + "&collection=" + $scope.selectedTable.name + "&arrayfield=" + $scope.tagField + "&limit=40");
-
-                        XDATA.activityLogger.logSystemActivity('TagCloud - query for tag data');
-                        neon.util.ajaxUtils.doGet(url, {
-                            success: function(tagCounts) {
-                                XDATA.activityLogger.logSystemActivity('TagCloud - received tag data');
-                                $scope.$apply(function() {
-                                    $scope.updateTagData(tagCounts);
-                                    XDATA.activityLogger.logSystemActivity('TagCloud - rendered tag data');
-                                });
-                            },
-                            error: function() {
-                                XDATA.activityLogger.logSystemActivity('TagCloud - failed to receive tag data');
-                            }
+                        connection.executeArrayCountQuery($scope.databaseName, $scope.selectedTable.name, $scope.tagField, 40, function(tagCounts) {
+                            XDATA.activityLogger.logSystemActivity('TagCloud - received tag data');
+                            $scope.$apply(function() {
+                                $scope.updateTagData(tagCounts);
+                                XDATA.activityLogger.logSystemActivity('TagCloud - rendered tag data');
+                            });
+                        }, function() {
+                            XDATA.activityLogger.logSystemActivity('TagCloud - failed to receive tag data');
                         });
                     }
                 }
