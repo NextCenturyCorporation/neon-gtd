@@ -17,8 +17,8 @@
  */
 
 angular.module('neonDemo.directives')
-.directive('countBy', ['external', 'ConnectionService', 'DatasetService', 'ErrorNotificationService', 'FilterService',
-    function(external, connectionService, datasetService, errorNotificationService, filterService) {
+.directive('countBy', ['external', 'popupData', 'ConnectionService', 'DatasetService', 'ErrorNotificationService', 'FilterService',
+    function(external, popupData, connectionService, datasetService, errorNotificationService, filterService) {
     return {
         templateUrl: 'partials/directives/countby.html',
         restrict: 'EA',
@@ -43,8 +43,6 @@ angular.module('neonDemo.directives')
             $scope.countField = "";
             $scope.count = 0;
             $scope.fields = [];
-            $scope.links = [];
-            $scope.linksIndex = -1;
             $scope.tableId = 'countby-' + uuid();
             $scope.filterKeys = {};
             $scope.filterSet = undefined;
@@ -317,8 +315,8 @@ angular.module('neonDemo.directives')
                 });
 
                 // Links and links index are used by the links popup directive.
-                $scope.links = tableLinks;
-                $scope.linksIndex = -1;
+                popupData.links.array = tableLinks;
+                popupData.links.index = -1;
 
                 return data;
             };
@@ -420,12 +418,12 @@ angular.module('neonDemo.directives')
                     $scope.table.setActiveCellIfMatchExists($scope.filterSet.key, $scope.filterSet.value);
                 }
 
-                // Trigger the links popup using the index stored in the button.
-                $(el).find(".links-popup").on("show.bs.modal", function(event) {
+                // Trigger the links popup for the application using the index stored in the button.
+                $(".links-popup").on("show.bs.modal", function(event) {
                     var button = $(event.relatedTarget);
                     var index = button.data("links-index");
                     $scope.$apply(function() {
-                        $scope.linksIndex = index;
+                        popupData.links.index = index;
                     });
                 });
             };

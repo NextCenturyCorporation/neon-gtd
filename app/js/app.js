@@ -79,6 +79,13 @@ angular.element(document).ready(function() {
             ocpu.seturl(opencpuConfig.url);
         }
 
+        neonDemo.value('popupData', {
+            links: {
+                array: [],
+                index: -1
+            }
+        });
+
         var digConfig = (config.dig || {
             enabled: false
         });

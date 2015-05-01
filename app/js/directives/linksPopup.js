@@ -16,13 +16,11 @@
  */
 
 angular.module('neonDemo.directives')
-.directive('linksPopup', ['$sce', function($sce) {
+.directive('linksPopup', ['$sce', 'popupData', function($sce, popupData) {
     return {
         templateUrl: 'partials/directives/linksPopup.html',
         restrict: 'EA',
         scope: {
-            linksArray: "=",
-            linksIndex: "="
         },
         link: function($scope, $element) {
             $scope.SERVER = "SERVER";
@@ -32,12 +30,14 @@ angular.module('neonDemo.directives')
             $scope.cleanLinksArray = [];
             $scope.links = [];
 
-            $scope.$watch("linksArray", function(newValue, oldValue) {
+            $scope.$watch(function() {
+                return popupData.links.array;
+            }, function() {
                 var cleanLinksArray = [];
-                if($scope.linksArray && $scope.linksArray.length) {
-                    for(var i = 0; i < $scope.linksArray.length; ++i) {
+                if(popupData.links.array && popupData.links.array.length) {
+                    for(var i = 0; i < popupData.links.array.length; ++i) {
                         var cleanLinks = [];
-                        var links = $scope.linksArray[i];
+                        var links = popupData.links.array[i];
                         for(var j = 0; j < links.length; ++j) {
                             var link = links[j];
                             link.tab = link.data.query;
@@ -60,9 +60,11 @@ angular.module('neonDemo.directives')
                 $scope.cleanLinksArray = cleanLinksArray;
             });
 
-            $scope.$watch("linksIndex", function() {
-                if($scope.cleanLinksArray && $scope.cleanLinksArray.length && $scope.linksIndex >= 0) {
-                    $scope.links = $scope.cleanLinksArray[$scope.linksIndex];
+            $scope.$watch(function() {
+                return popupData.links.index;
+            }, function() {
+                if($scope.cleanLinksArray && $scope.cleanLinksArray.length && popupData.links.index >= 0) {
+                    $scope.links = $scope.cleanLinksArray[popupData.links.index];
                 }
             });
         }

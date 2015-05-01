@@ -27,8 +27,8 @@
  * @constructor
  */
 angular.module('neonDemo.directives')
-.directive('queryResultsTable', ['external', 'ConnectionService', 'DatasetService', 'ErrorNotificationService',
-    function(external, connectionService, datasetService, errorNotificationService) {
+.directive('queryResultsTable', ['external', 'popupData', 'ConnectionService', 'DatasetService', 'ErrorNotificationService',
+    function(external, popupData, connectionService, datasetService, errorNotificationService) {
     return {
         templateUrl: 'partials/directives/queryResultsTable.html',
         restrict: 'EA',
@@ -67,8 +67,6 @@ angular.module('neonDemo.directives')
             $scope.fields = [];
             $scope.sortByField = '';
             $scope.sortDirection = neon.query.ASCENDING;
-            $scope.links = [];
-            $scope.linksIndex = -1;
             $scope.limit = 500;
             $scope.totalRows = 0;
             $scope.errorMessage = undefined;
@@ -353,12 +351,12 @@ angular.module('neonDemo.directives')
                 $scope.table = new tables.Table("#" + $scope.tableId, $scope.tableOptions).draw();
                 $scope.table.refreshLayout();
 
-                // Trigger the links popup using the index stored in the button.
-                $(element).find(".links-popup").on("show.bs.modal", function(event) {
+                // Trigger the links popup for the application using the index stored in the button.
+                $(".links-popup").on("show.bs.modal", function(event) {
                     var button = $(event.relatedTarget);
                     var index = button.data("links-index");
                     $scope.$apply(function() {
-                        $scope.linksIndex = index;
+                        popupData.links.index = index;
                     });
                 });
             };
@@ -405,8 +403,8 @@ angular.module('neonDemo.directives')
                 });
 
                 // Links and links index are used by the links popup directive.
-                $scope.links = tableLinks;
-                $scope.linksIndex = -1;
+                popupData.links.array = tableLinks;
+                popupData.links.index = -1;
 
                 return data;
             };
