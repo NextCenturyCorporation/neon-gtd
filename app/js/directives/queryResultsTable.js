@@ -27,8 +27,8 @@
  * @constructor
  */
 angular.module('neonDemo.directives')
-.directive('queryResultsTable', ['external', 'popupData', 'ConnectionService', 'DatasetService', 'ErrorNotificationService',
-    function(external, popupData, connectionService, datasetService, errorNotificationService) {
+.directive('queryResultsTable', ['external', 'popups', 'ConnectionService', 'DatasetService', 'ErrorNotificationService',
+    function(external, popups, connectionService, datasetService, errorNotificationService) {
     return {
         templateUrl: 'partials/directives/queryResultsTable.html',
         restrict: 'EA',
@@ -140,6 +140,7 @@ angular.module('neonDemo.directives')
                 $scope.messenger.subscribe("dataset_changed", onDatasetChanged);
 
                 $scope.$on('$destroy', function() {
+                    popups.links.deleteData($scope.tableId);
                     $scope.messenger.removeEvents();
                 });
             };
@@ -351,12 +352,13 @@ angular.module('neonDemo.directives')
                 $scope.table = new tables.Table("#" + $scope.tableId, $scope.tableOptions).draw();
                 $scope.table.refreshLayout();
 
-                // Trigger the links popup for the application using the index stored in the button.
+                // Set the displayed link data for the links popup for the application using the source and index stored in to the triggering button.
                 $(".links-popup").on("show.bs.modal", function(event) {
                     var button = $(event.relatedTarget);
+                    var source = button.data("links-source");
                     var index = button.data("links-index");
                     $scope.$apply(function() {
-                        popupData.links.index = index;
+                        popups.links.setView(source, index);
                     });
                 });
             };
@@ -398,13 +400,12 @@ angular.module('neonDemo.directives')
                     tableLinks.push(links);
 
                     row[$scope.EXTERNAL_APP_FIELD_NAME] = "<a data-toggle=\"modal\" data-target=\".links-popup\" data-links-index=\"" + linksIndex +
-                        "\" class=\"collapsed dropdown-toggle primary neon-popup-button\">" +
+                        "\" data-links-source=\"" + $scope.tableId + "\" class=\"collapsed dropdown-toggle primary neon-popup-button\">" +
                         "<span class=\"glyphicon glyphicon-link\"></span></a>";
                 });
 
-                // Links and links index are used by the links popup directive.
-                popupData.links.array = tableLinks;
-                popupData.links.index = -1;
+                // Set the link data for the links popup for this visualization.
+                popups.links.setData($scope.tableId, tableLinks);
 
                 return data;
             };

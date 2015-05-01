@@ -17,8 +17,8 @@
  */
 
 angular.module('neonDemo.directives')
-.directive('countBy', ['external', 'popupData', 'ConnectionService', 'DatasetService', 'ErrorNotificationService', 'FilterService',
-    function(external, popupData, connectionService, datasetService, errorNotificationService, filterService) {
+.directive('countBy', ['external', 'popups', 'ConnectionService', 'DatasetService', 'ErrorNotificationService', 'FilterService',
+    function(external, popups, connectionService, datasetService, errorNotificationService, filterService) {
     return {
         templateUrl: 'partials/directives/countby.html',
         restrict: 'EA',
@@ -85,6 +85,7 @@ angular.module('neonDemo.directives')
                 });
 
                 $scope.$on('$destroy', function() {
+                    popups.links.deleteData($scope.tableId);
                     $scope.messenger.removeEvents();
                     if($scope.filterSet) {
                         filterService.removeFilters($scope.messenger, $scope.filterKeys);
@@ -310,13 +311,12 @@ angular.module('neonDemo.directives')
                     tableLinks.push(links);
 
                     row[$scope.EXTERNAL_APP_FIELD_NAME] = "<a data-toggle=\"modal\" data-target=\".links-popup\" data-links-index=\"" + linksIndex +
-                        "\" class=\"collapsed dropdown-toggle primary neon-popup-button\">" +
+                        "\" data-links-source=\"" + $scope.tableId + "\" class=\"collapsed dropdown-toggle primary neon-popup-button\">" +
                         "<span class=\"glyphicon glyphicon-link\"></span></a>";
                 });
 
-                // Links and links index are used by the links popup directive.
-                popupData.links.array = tableLinks;
-                popupData.links.index = -1;
+                // Set the link data for the links popup for this visualization.
+                popups.links.setData($scope.tableId, tableLinks);
 
                 return data;
             };
@@ -418,12 +418,13 @@ angular.module('neonDemo.directives')
                     $scope.table.setActiveCellIfMatchExists($scope.filterSet.key, $scope.filterSet.value);
                 }
 
-                // Trigger the links popup for the application using the index stored in the button.
+                // Set the displayed link data for the links popup for the application using the source and index stored in to the triggering button.
                 $(".links-popup").on("show.bs.modal", function(event) {
                     var button = $(event.relatedTarget);
+                    var source = button.data("links-source");
                     var index = button.data("links-index");
                     $scope.$apply(function() {
-                        popupData.links.index = index;
+                        popups.links.setView(source, index);
                     });
                 });
             };

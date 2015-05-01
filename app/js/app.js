@@ -79,10 +79,11 @@ angular.element(document).ready(function() {
             ocpu.seturl(opencpuConfig.url);
         }
 
-        neonDemo.value('popupData', {
+        neonDemo.value('popups', {
             links: {
-                array: [],
-                index: -1
+                setData: function() {},
+                setView: function() {},
+                deleteData: function() {}
             }
         });
 
