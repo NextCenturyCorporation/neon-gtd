@@ -265,6 +265,15 @@ tables.Table.createKeyValuePairsString_ = function(object, keys, row, cell, colu
 };
 
 tables.Table.prototype.addLinks_ = function() {
+    var me = this;
+    // Add initial links and update links on viewport changes.
+    me.runLinky_(me.tableSelector_);
+    me.table_.onViewportChanged.subscribe(function() {
+        me.runLinky_(me.tableSelector_);
+    });
+};
+
+tables.Table.prototype.runLinky_ = function(cellSelector) {
     // TODO:  Make this configurable based on the dataset.
     var linkyConfig = {
         mentions: true,
@@ -273,13 +282,9 @@ tables.Table.prototype.addLinks_ = function() {
         linkTo: "twitter"
     };
 
-    var cellSelector = this.tableSelector_;
-
-    // Add initial links and update links on viewport changes.
     $(cellSelector).find(".slick-cell." + tables.LINKABLE).linky(linkyConfig);
-    this.table_.onViewportChanged.subscribe(function() {
-        $(cellSelector).find("slick-cell." + tables.LINKABLE).linky(linkyConfig);
-    });
+    // Remove the linkable class to ensure linky isn't run on this cell again.
+    $(cellSelector).find(".slick-cell." + tables.LINKABLE).removeClass(tables.LINKABLE);
 };
 
 /**
@@ -480,5 +485,6 @@ tables.Table.prototype.addColumn = function(name) {
     }
 
     this.table_.setColumns(this.columns_);
+    this.runLinky_();
     return true;
 };
