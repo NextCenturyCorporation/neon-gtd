@@ -64,6 +64,7 @@ angular.module('neonDemo.directives')
             $scope.selectedTable = {
                 name: ""
             };
+            $scope.fields = [];
             $scope.days = [];
             $scope.timeofday = [];
             $scope.maxDay = "";
@@ -74,9 +75,7 @@ angular.module('neonDemo.directives')
 
             var HOURS_IN_WEEK = 168;
             var HOURS_IN_DAY = 24;
-            // Defaulting the expected date field to 'created_at' as that works best with our twitter datasets.
-            var DEFAULT_DATE_FIELD = 'created_at';
-            $scope.dateField = DEFAULT_DATE_FIELD;
+            $scope.dateField = "";
 
             /**
              * Initializes the name of the date field used to query the current dataset
@@ -158,14 +157,15 @@ angular.module('neonDemo.directives')
              */
             var onDatasetChanged = function() {
                 XDATA.activityLogger.logSystemActivity('CircularHeatForm - received neon-gtd dataset changed event');
-                $scope.displayActiveDataset();
+                $scope.displayActiveDataset(false);
             };
 
             /**
              * Displays data for any currently active datasets.
+             * @param {Boolean} Whether this function was called during visualization initialization.
              * @method displayActiveDataset
              */
-            $scope.displayActiveDataset = function() {
+            $scope.displayActiveDataset = function(initializing) {
                 if(!datasetService.hasDataset()) {
                     return;
                 }
@@ -173,6 +173,20 @@ angular.module('neonDemo.directives')
                 $scope.databaseName = datasetService.getDatabase();
                 $scope.tables = datasetService.getTables();
                 $scope.selectedTable = datasetService.getFirstTableWithMappings(["date"]) || $scope.tables[0];
+
+                if(initializing) {
+                    $scope.updateFieldsAndQueryForChartData();
+                } else {
+                    $scope.$apply(function() {
+                        $scope.updateFieldsAndQueryForChartData();
+                    });
+                }
+            };
+
+            $scope.updateFieldsAndQueryForChartData = function() {
+                $scope.fields = datasetService.getDatabaseFields($scope.selectedTable.name);
+                $scope.fields.sort();
+                $scope.dateField = datasetService.getMapping($scope.selectedTable.name, "date") || "";
                 $scope.queryForChartData();
             };
 
@@ -186,15 +200,11 @@ angular.module('neonDemo.directives')
                     $scope.errorMessage = undefined;
                 }
 
-                var dateField = datasetService.getMapping($scope.selectedTable.name, "date") || DEFAULT_DATE_FIELD;
-
-                if(!dateField) {
+                if(!$scope.dateField) {
                     $scope.updateChartData({
                         data: []
                     });
                     return;
-                } else {
-                    $scope.dateField = dateField;
                 }
 
                 //TODO: NEON-603 Add support for dayOfWeek to query API
@@ -305,7 +315,7 @@ angular.module('neonDemo.directives')
             neon.ready(function() {
                 $scope.messenger = new neon.eventing.Messenger();
                 $scope.initialize();
-                $scope.displayActiveDataset();
+                $scope.displayActiveDataset(true);
             });
         }
     };

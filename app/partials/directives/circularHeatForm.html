@@ -8,7 +8,12 @@
         <div class="popover-content">
             <div class="form-group">
                 <label>Table</label>
-                <select class="form-control" ng-model="selectedTable" ng-options="table.name for table in tables" ng-required="true" ng-disabled="(tables.length < 2)" ng-change="queryForChartData()">
+                <select class="form-control" ng-model="selectedTable" ng-options="table.name for table in tables" ng-required="true" ng-disabled="(tables.length < 2)" ng-change="updateFieldsAndQueryForChartData()">
+                </select>
+            </div>
+            <div class="form-group">
+                <label>Date Field</label>
+                <select class="form-control" ng-model="dateField" ng-options="field for field in fields" ng-required="true" ng-disabled="(fields.length == 0)" ng-change="queryForChartData()">
                 </select>
             </div>
         </div>
