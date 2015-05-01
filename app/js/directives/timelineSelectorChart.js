@@ -23,7 +23,8 @@
  *    &lt;div timeline-selector-chart cell-values="data"&gt;&lt;/div&gt;
  *
  * @see neonDemo.charts.timelineSelectorChart
- * @class neonDemo.directives.timelineSelectorChart
+ * @namespace neonDemo.directives
+ * @class timelineSelectorChart
  * @constructor
  */
 angular.module('neonDemo.directives')

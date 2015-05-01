@@ -24,7 +24,8 @@
  *    &lt;filter-builder&gt;&lt;/filter-builder&gt;<br>
  *    &lt;div filter-builder&gt;&lt;/div&gt;
  *
- * @class neonDemo.directives.filterBuilder
+ * @namespace neonDemo.directives
+ * @class filterBuilder
  * @constructor
  */
 angular.module('neonDemo.directives')

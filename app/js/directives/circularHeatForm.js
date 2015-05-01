@@ -26,7 +26,8 @@
  *    &lt;circular-heat-form&gt;&lt;/circular-heat-form&gt;<br>
  *    &lt;div circular-heat-form&gt;&lt;/div&gt;
  *
- * @class neonDemo.directives.circularHeatForm
+ * @namespace neonDemo.directives
+ * @class circularHeatForm
  * @constructor
  */
 angular.module('neonDemo.directives')
