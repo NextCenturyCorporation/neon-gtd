@@ -12,6 +12,11 @@
                 <select class="form-control" ng-model="selectedTable" ng-options="table.name for table in tables" ng-required="true" ng-disabled="(tables.length < 2)" ng-change="updateFieldsAndQueryForTags()">
                 </select>
             </div>
+            <div class="form-group">
+                <label>Tag Field</label>
+                <select class="form-control" ng-model="tagField" ng-options="field for field in fields" ng-required="true" ng-disabled="(fields.length == 0)" ng-change="queryForTags()">
+                </select>
+            </div>
             <div class="form-group" ng-class="{true: '', false: 'hidden'}[showFilter]">
                 <label>Show records with</label>
                 <div class="btn-group">
