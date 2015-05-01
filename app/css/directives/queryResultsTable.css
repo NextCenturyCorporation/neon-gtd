@@ -111,6 +111,8 @@
 
 .query-results-grid .slick-header .slick-header-column .remove-column-button {
     color: #999999;
+    position: absolute;
+    right: 5px;
 }
 
 .query-results-grid .slick-header .slick-header-column.ui-state-hover .remove-column-button {

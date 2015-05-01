@@ -375,7 +375,7 @@ angular.module('neonDemo.directives')
             };
 
             $scope.createDeleteColumnButton = function(name) {
-                return "<span class=\"remove-column-button pull-right\" ng-click=\"deleteColumn('" + name + "'); $event.stopPropagation();\">&times;</span>";
+                return "<span class=\"remove-column-button\" ng-click=\"deleteColumn('" + name + "'); $event.stopPropagation();\">&times;</span>";
             };
 
             $scope.deleteColumn = function(name) {
