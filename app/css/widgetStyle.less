@@ -1,0 +1,254 @@
+html {
+    height: 100%;
+
+    body {
+        background-color: #FFFFFF;
+        height: 100%;
+    }
+}
+
+.well {
+    background-color: #FFFFFF;
+    box-shadow: none;
+    border: 0;
+    margin: 0;
+}
+
+.well-blank {
+    padding: 20px 20px 0;
+}
+
+.well-map {
+    padding: 0;
+}
+
+.chart-options {
+    .popover {
+        right: 9px;
+        top: 48px;
+    }
+}
+
+.container {
+    max-width: none;
+    width: auto;
+}
+
+.databaseConfig {
+    a {
+        &.dropdown-toggle {
+            border: 0;
+            background-color: #39b54a;
+            color: #FFFFFF;
+            padding: 10px 30px;
+            border-radius: 3px;
+            font-weight: bold;
+
+            &:hover, &:focus {
+                background-color: #2f9f3e;
+                color: #FFFFFF;
+            }
+        }
+    }
+
+    .database-overlay {
+        display: none;
+    }
+
+    .dropdown-menu {
+        .divider {
+            display: none;
+        }
+
+        li {
+            &:last-child {
+                display: none;
+            }
+        }
+    }
+
+    .modal {
+        display: block !important;
+        opacity: 1;
+        position: relative;
+        overflow: auto;
+
+        .modal-dialog {
+            width: auto;
+            margin: 0;
+            transform: none;
+            -webkit-transform: none;
+        }
+
+        .modal-content {
+            box-shadow: none;
+            border: 0;
+            border-radius: 0;
+        }
+
+        .modal-header{
+            border: 0;
+
+            h4 {
+                visibility: hidden;
+            }
+
+            .close {
+                visibility: hidden;
+            }
+        }
+
+        .modal-body{
+            padding-bottom: 5px;
+        }
+
+        .modal-footer{
+            border: 0;
+            margin: 0;
+            padding-top: 0;
+            padding-bottom: 10px;
+
+            .btn-default{
+                display: none;
+            }
+        }
+    }
+
+    .modal-open {
+        overflow: auto;
+    }
+
+    .navbar-nav{
+        margin: 0;
+
+        .open {
+            .dropdown-menu {
+                position: absolute;
+                float: left;
+                margin: 2px 0 0;
+                background-color: #fff;
+                border: 1px solid #ccc;
+                border: 1px solid rgba(0,0,0,.15);
+                box-shadow: 0 6px 12px rgba(0,0,0,.175);
+            }
+        }
+    }
+
+    .overlay-above {
+        position: absolute;
+        z-index: 1051;
+        left: 20px;
+        top: 20px;
+    }
+
+    .popover {
+        &.bottom{
+            margin-top: 0;
+        }
+    }
+}
+
+@media (min-width: 1200px) {
+    .databaseConfig .form-group {
+        float: left;
+        width: 50%;
+        padding: 0 15px;
+    }
+    .databaseConfig .col-md-6 {
+        padding: 0;
+    }
+}
+
+
+/* Filter Builder tray */
+/***********************/
+.filter-tray {
+    .filter{
+        background-color: #f1f1f1;
+    }
+
+    .filter-new {
+        background: none;
+    }
+
+    .form-inline {
+        .form-control {
+            @media (max-width: 767px) {
+                display: inline-block;
+                width: 100%;
+                vertical-align: middle;
+            }
+        }
+
+        .form-group {
+            @media (max-width: 767px) {
+                display: inline-block;
+                margin-bottom: 0;
+                vertical-align: middle;
+                width: 22%;
+                margin: 0;
+                padding-right: 5px;
+            }
+
+            &.pull-right {
+                @media (max-width: 767px) {
+                    display: inline-block;
+                    margin-bottom: 0;
+                    vertical-align: middle;
+                    width: auto;
+                }
+            }
+        }
+    }
+}
+
+.tray {
+    position: relative;
+    display: block;
+    top: auto;
+    background-color: #FFFFFF;
+    border: 0;
+    box-shadow: none;
+    margin: 0;
+
+    .panel-body{
+        padding: 10px 20px;
+        padding-bottom: 0;
+    }
+}
+
+/* Data tray */
+/*************/
+.data-tray {
+    height: 100%;
+}
+
+.tray {
+    .panel-body {
+        height: 100%;
+    }
+}
+
+.query-results-grid {
+    height: 300px;
+    height: calc(100% - 69px) !important;
+    min-height: 150px;
+
+    @media (max-width: 767px) {
+        height: calc(100% - 140px) !important;
+    }
+
+    @media (min-width: 768px) and (max-width: 991px) {
+        height: calc(100% - 108px) !important;
+    }
+}
+
+/* widgets */
+/***********/
+.visualization-widget {
+    display: block;
+    height: 100%;
+    width: 100%;
+    margin: 0px;
+    padding: 0px;
+}

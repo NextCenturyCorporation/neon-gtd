@@ -99,6 +99,7 @@ module.exports = function(grunt) {
 
         less: {
             options: {
+                dumpLineNumbers: 'comments',
                 paths: [
                     'app/components'
                 ]
