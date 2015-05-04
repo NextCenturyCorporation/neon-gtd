@@ -109,10 +109,16 @@ charts.TimelineSelectorChart = function(element, configuration) {
     var wrapBrushHandler = function(brush, handler) {
         return function() {
             if(brush) {
-                XDATA.activityLogger.logUserActivity('End temporal filter selection', 'set_visual_filter_parameters',
-                    XDATA.activityLogger.WF_GETDATA,
-                    brush.extent());
-
+                XDATA.userALE.log({
+                    activity: "select",
+                    action: "drag",
+                    elementId: "timeline-brush",
+                    elementType: "canvas",
+                    elementSub: "timeline-brush",
+                    elementGroup: "chart_group",
+                    source: "user",
+                    tags: ["timeline"]
+                });
                 if(handler) {
                     handler(brush.extent());
                 }

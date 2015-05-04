@@ -67,7 +67,26 @@ angular.element(document).ready(function() {
 
         XDATA.activityLogger = new activityLogger('lib/xdatalogger/js/draper.activity_worker-2.1.1.js');
         XDATA.activityLogger.echo(xdataConfig.echoToConsole).testing(!xdataConfig.enableLogging);
-        XDATA.activityLogger.registerActivityLogger(xdataConfig.activityLoggerUrl, xdataConfig.component, xdataConfig.componentVersion);
+        //XDATA.activityLogger.registerActivityLogger(xdataConfig.activityLoggerUrl, xdataConfig.component, xdataConfig.componentVersion);
+
+        // Configure the user-ale logger.
+        var aleConfig = (config.user_ale || {
+            loggingUrl: "http://192.168.1.100",
+            toolName: "Neon Dashboard",
+            elementGroups: [
+                "top",
+                "map_group",
+                "table_group",
+                "chart_group",
+                "query_group",
+                "graph_group"
+            ],
+            workerUrl: "lib/user-ale/js/userale-worker.js",
+            debug: false,
+            sendLogs: false
+        });
+        XDATA.userALE = new userale(aleConfig);
+        XDATA.userALE.register();
 
         var opencpuConfig = (config.opencpu || {
             enableOpenCpu: false

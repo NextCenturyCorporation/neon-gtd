@@ -95,10 +95,19 @@ angular.module('neonDemo.directives')
                 $scope.gridsterConfigs.push(newVis);
 
                 $scope.displayAlert(visualization.name + " added!");
+                XDATA.userALE.log({
+                    activity: "add",
+                    action: "click",
+                    elementId: "add-" + visualization.name + "-button",
+                    elementType: "button",
+                    elementGroup: "top",
+                    source: "user",
+                    tags: ["add visualization", visualization.name]
+                });
             };
 
             /**
-             * Deselects all visualization configurations in the dialog managed byt his directive.
+             * Deselects all visualization configurations in the dialog managed by this directive.
              * @method deselectAll
              * @private
              */

@@ -33,6 +33,7 @@ angular.module('neonDemo.directives')
         templateUrl: 'partials/directives/barchart.html',
         restrict: 'EA',
         link: function($scope, $element) {
+
             $scope.uniqueChartOptions = 'chart-options-' + uuid();
             var chartOptions = $($element).find('.chart-options');
             chartOptions.toggleClass($scope.uniqueChartOptions);
@@ -107,7 +108,17 @@ angular.module('neonDemo.directives')
              * @private
              */
             var onFiltersChanged = function(message) {
-                XDATA.activityLogger.logSystemActivity('BarChart - received neon filter changed event');
+                XDATA.userALE.log({
+                    activity: "alter",
+                    action: "query",
+                    elementId: "barchart",
+                    elementType: "canvas",
+                    elementSub: "barchart",
+                    elementGroup: "chart_group",
+                    source: "system",
+                    tags: ["filter", "barchart"]
+                });
+
                 if(message.addedFilter && message.addedFilter.databaseName === $scope.databaseName && message.addedFilter.tableName === $scope.selectedTable.name) {
                     $scope.queryForData(false);
                 }
@@ -119,7 +130,16 @@ angular.module('neonDemo.directives')
              * @private
              */
             var onDatasetChanged = function() {
-                XDATA.activityLogger.logSystemActivity('BarChart - received neon-gtd dataset changed event');
+                XDATA.userALE.log({
+                    activity: "alter",
+                    action: "query",
+                    elementId: "barchart",
+                    elementType: "canvas",
+                    elementSub: "barchart",
+                    elementGroup: "chart_group",
+                    source: "system",
+                    tags: ["filter", "barchart"]
+                });
 
                 $timeout(function() {
                     $scope.displayActiveDataset(false);
@@ -197,18 +217,55 @@ angular.module('neonDemo.directives')
                     query.aggregate(queryType, $scope.attrY, COUNT_FIELD_NAME);
                 }
 
-                XDATA.activityLogger.logSystemActivity('BarChart - query for data');
+                XDATA.userALE.log({
+                    activity: "alter",
+                    action: "send",
+                    elementId: "barchart",
+                    elementType: "canvas",
+                    elementSub: "barchart",
+                    elementGroup: "chart_group",
+                    source: "system",
+                    tags: ["receive", "barchart"]
+                });
                 var connection = connectionService.getActiveConnection();
                 if(connection) {
                     connection.executeQuery(query, function(queryResults) {
                         $scope.$apply(function() {
-                            XDATA.activityLogger.logSystemActivity('BarChart - received query data');
+                            
+                            XDATA.userALE.log({
+                                activity: "alter",
+                                action: "receive",
+                                elementId: "barchart",
+                                elementType: "canvas",
+                                elementSub: "barchart",
+                                elementGroup: "chart_group",
+                                source: "system",
+                                tags: ["receive", "barchart"]
+                            });
                             doDrawChart(queryResults, rebuildChart);
-                            XDATA.activityLogger.logSystemActivity('BarChart - rendered results');
+                            XDATA.userALE.log({
+                                activity: "alter",
+                                action: "render",
+                                elementId: "barchart",
+                                elementType: "canvas",
+                                elementSub: "barchart",
+                                elementGroup: "chart_group",
+                                source: "system",
+                                tags: ["render", "barchart"]
+                            });
                             $scope.updatingChart = false;
                         });
                     }, function(response) {
-                        XDATA.activityLogger.logSystemActivity('BarChart - query failed');
+                        XDATA.userALE.log({
+                                activity: "alter",
+                                action: "failed",
+                                elementId: "barchart",
+                                elementType: "canvas",
+                                elementSub: "barchart",
+                                elementGroup: "chart_group",
+                                source: "system",
+                                tags: ["receive", "barchart"]
+                            });
                         drawBlankChart();
                         $scope.updatingChart = false;
                         if(response.responseJSON) {
@@ -239,8 +296,28 @@ angular.module('neonDemo.directives')
                 if($scope.messenger && connection) {
                     var relations = datasetService.getRelations($scope.selectedTable.name, [$scope.attrX]);
                     if(filterExists) {
+                        XDATA.userALE.log({
+                            activity: "alter",
+                            action: "click",
+                            elementId: "barchart",
+                            elementType: "canvas",
+                            elementSub: "barchart-bar",
+                            elementGroup: "chart_group",
+                            source: "user",
+                            tags: ["filter", "barchart"]
+                        });
                         filterService.replaceFilters($scope.messenger, relations, $scope.filterKeys, $scope.createFilter);
                     } else {
+                        XDATA.userALE.log({
+                            activity: "add",
+                            action: "click",
+                            elementId: "barchart",
+                            elementType: "canvas",
+                            elementSub: "barchart-bar",
+                            elementGroup: "chart_group",
+                            source: "user",
+                            tags: ["filter", "barchart"]
+                        });
                         filterService.addFilters($scope.messenger, relations, $scope.filterKeys, $scope.createFilter);
                     }
                 }
@@ -273,6 +350,16 @@ angular.module('neonDemo.directives')
 
             $scope.clearFilterSet = function() {
                 if($scope.messenger) {
+                    XDATA.userALE.log({
+                        activity: "remove",
+                        action: "click",
+                        elementId: "barchart",
+                        elementType: "canvas",
+                        elementSub: "barchart-bar",
+                        elementGroup: "chart_group",
+                        source: "user",
+                        tags: ["filter", "barchart"]
+                    });
                     filterService.removeFilters($scope.messenger, $scope.filterKeys, function() {
                         $scope.chart.clearSelectedBar();
                         clearFilterSet();
