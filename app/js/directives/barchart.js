@@ -71,6 +71,16 @@ angular.module('neonDemo.directives')
                 $scope.messenger.subscribe("dataset_changed", onDatasetChanged);
 
                 $scope.$on('$destroy', function() {
+                    XDATA.userALE.log({
+                        activity: "remove",
+                        action: "click",
+                        elementId: "barchart",
+                        elementType: "button",
+                        elementSub: "barchart-bar",
+                        elementGroup: "chart_group",
+                        source: "user",
+                        tags: ["remove", "barchart"]
+                    });
                     $scope.messenger.removeEvents();
                     // Remove our filter if we had an active one.
                     if($scope.filterSet) {
@@ -80,16 +90,46 @@ angular.module('neonDemo.directives')
 
                 $scope.$watch('attrX', function() {
                     if(!$scope.updatingChart && $scope.databaseName && $scope.selectedTable.name) {
+                        XDATA.userALE.log({
+                            activity: "select",
+                            action: "click",
+                            elementId: "barchart",
+                            elementType: "combobox",
+                            elementSub: "barchart-x-axis",
+                            elementGroup: "chart_group",
+                            source: "user",
+                            tags: ["options", "barchart"]
+                        });
                         $scope.queryForData(true);
                     }
                 });
                 $scope.$watch('attrY', function() {
                     if(!$scope.updatingChart && $scope.databaseName && $scope.selectedTable.name) {
+                        XDATA.userALE.log({
+                            activity: "select",
+                            action: "click",
+                            elementId: "barchart",
+                            elementType: "combobox",
+                            elementSub: "barchart-y-axis",
+                            elementGroup: "chart_group",
+                            source: "user",
+                            tags: ["options", "barchart"]
+                        });
                         $scope.queryForData(true);
                     }
                 });
                 $scope.$watch('barType', function() {
                     if(!$scope.updatingChart && $scope.databaseName && $scope.selectedTable.name) {
+                        XDATA.userALE.log({
+                            activity: "select",
+                            action: "click",
+                            elementId: "barchart",
+                            elementType: "combobox",
+                            elementSub: "barchart-aggregation",
+                            elementGroup: "chart_group",
+                            source: "user",
+                            tags: ["options", "barchart"]
+                        });
                         $scope.queryForData(false);
                     }
                 });
@@ -116,7 +156,7 @@ angular.module('neonDemo.directives')
                     elementSub: "barchart",
                     elementGroup: "chart_group",
                     source: "system",
-                    tags: ["filter", "barchart"]
+                    tags: ["filter-change", "barchart"]
                 });
 
                 if(message.addedFilter && message.addedFilter.databaseName === $scope.databaseName && message.addedFilter.tableName === $scope.selectedTable.name) {
@@ -138,7 +178,7 @@ angular.module('neonDemo.directives')
                     elementSub: "barchart",
                     elementGroup: "chart_group",
                     source: "system",
-                    tags: ["filter", "barchart"]
+                    tags: ["dataset-change", "barchart"]
                 });
 
                 $timeout(function() {
@@ -225,7 +265,7 @@ angular.module('neonDemo.directives')
                     elementSub: "barchart",
                     elementGroup: "chart_group",
                     source: "system",
-                    tags: ["receive", "barchart"]
+                    tags: ["query", "barchart"]
                 });
                 var connection = connectionService.getActiveConnection();
                 if(connection) {
@@ -257,15 +297,15 @@ angular.module('neonDemo.directives')
                         });
                     }, function(response) {
                         XDATA.userALE.log({
-                                activity: "alter",
-                                action: "failed",
-                                elementId: "barchart",
-                                elementType: "canvas",
-                                elementSub: "barchart",
-                                elementGroup: "chart_group",
-                                source: "system",
-                                tags: ["receive", "barchart"]
-                            });
+                            activity: "alter",
+                            action: "failed",
+                            elementId: "barchart",
+                            elementType: "canvas",
+                            elementSub: "barchart",
+                            elementGroup: "chart_group",
+                            source: "system",
+                            tags: ["failed", "barchart"]
+                        });
                         drawBlankChart();
                         $scope.updatingChart = false;
                         if(response.responseJSON) {
@@ -354,8 +394,7 @@ angular.module('neonDemo.directives')
                         activity: "remove",
                         action: "click",
                         elementId: "barchart",
-                        elementType: "canvas",
-                        elementSub: "barchart-bar",
+                        elementType: "button",
                         elementGroup: "chart_group",
                         source: "user",
                         tags: ["filter", "barchart"]

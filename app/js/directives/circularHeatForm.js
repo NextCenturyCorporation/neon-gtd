@@ -146,7 +146,16 @@ angular.module('neonDemo.directives')
              * @private
              */
             var onFiltersChanged = function(message) {
-                XDATA.activityLogger.logSystemActivity('CircularHeatForm - received neon filter changed event');
+                XDATA.userALE.log({
+                    activity: "alter",
+                    action: "query",
+                    elementId: "circularheatform",
+                    elementType: "canvas",
+                    elementSub: "circularheatform",
+                    elementGroup: "chart_group",
+                    source: "system",
+                    tags: ["filter-change", "circularheatform"]
+                });
                 if(message.addedFilter && message.addedFilter.databaseName === $scope.databaseName && message.addedFilter.tableName === $scope.selectedTable.name) {
                     $scope.queryForChartData();
                 }
@@ -158,7 +167,16 @@ angular.module('neonDemo.directives')
              * @private
              */
             var onDatasetChanged = function() {
-                XDATA.activityLogger.logSystemActivity('CircularHeatForm - received neon-gtd dataset changed event');
+                XDATA.userALE.log({
+                    activity: "alter",
+                    action: "query",
+                    elementId: "circularheatform",
+                    elementType: "canvas",
+                    elementSub: "circularheatform",
+                    elementGroup: "chart_group",
+                    source: "system",
+                    tags: ["dataset-change", "circularheatform"]
+                });
                 $scope.displayActiveDataset();
             };
 
@@ -213,17 +231,53 @@ angular.module('neonDemo.directives')
                 // If updateChartData is called from within angular code or triggered by handler within angular,
                 // then the apply is handled by angular.  Forcing apply inside updateChartData instead is error prone as it
                 // may cause an apply within a digest cycle when triggered by an angular event.
-                XDATA.activityLogger.logSystemActivity('CircularHeatForm - query for data');
+                XDATA.userALE.log({
+                    activity: "alter",
+                    action: "query",
+                    elementId: "circularheatform",
+                    elementType: "canvas",
+                    elementSub: "circularheatform",
+                    elementGroup: "chart_group",
+                    source: "system",
+                    tags: ["circularheatform"]
+                });
                 var connection = connectionService.getActiveConnection();
                 if(connection) {
                     connection.executeQuery(query, function(queryResults) {
-                        XDATA.activityLogger.logSystemActivity('CircularHeatForm - data received');
+                        XDATA.userALE.log({
+                            activity: "alter",
+                            action: "receive",
+                            elementId: "circularheatform",
+                            elementType: "canvas",
+                            elementSub: "circularheatform",
+                            elementGroup: "chart_group",
+                            source: "system",
+                            tags: ["circularheatform"]
+                        });
                         $scope.$apply(function() {
                             $scope.updateChartData(queryResults);
-                            XDATA.activityLogger.logSystemActivity('CircularHeatForm - display updated');
+                            XDATA.userALE.log({
+                                activity: "alter",
+                                action: "render",
+                                elementId: "circularheatform",
+                                elementType: "canvas",
+                                elementSub: "circularheatform",
+                                elementGroup: "chart_group",
+                                source: "system",
+                                tags: ["circularheatform"]
+                            });
                         });
                     }, function(response) {
-                        XDATA.activityLogger.logSystemActivity('CircularHeatForm - error received');
+                        XDATA.userALE.log({
+                            activity: "alter",
+                            action: "failed",
+                            elementId: "circularheatform",
+                            elementType: "canvas",
+                            elementSub: "circularheatform",
+                            elementGroup: "chart_group",
+                            source: "system",
+                            tags: ["circularheatform"]
+                        });
                         $scope.updateChartData({
                             data: []
                         });

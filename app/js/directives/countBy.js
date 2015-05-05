@@ -76,10 +76,30 @@ angular.module('neonDemo.directives')
                 $scope.messenger.subscribe("dataset_changed", onDatasetChanged);
 
                 $scope.$watch('countField', function() {
+                    XDATA.userALE.log({
+                        activity: "select",
+                        action: "click",
+                        elementId: "count-by",
+                        elementType: "combobox",
+                        elementSub: "count-by",
+                        elementGroup: "table_group",
+                        source: "user",
+                        tags: ["options", "count-by"]
+                    });
                     $scope.queryForData();
                 });
 
                 $scope.$on('$destroy', function() {
+                    XDATA.userALE.log({
+                        activity: "remove",
+                        action: "click",
+                        elementId: "count-by",
+                        elementType: "datagrid",
+                        elementSub: "count-by",
+                        elementGroup: "table_group",
+                        source: "user",
+                        tags: ["remove", "count-by"]
+                    });
                     $scope.messenger.removeEvents();
                     if($scope.filterSet) {
                         filterService.removeFilters($scope.messenger, $scope.filterKeys);
@@ -159,7 +179,16 @@ angular.module('neonDemo.directives')
              * @private
              */
             var onFiltersChanged = function(message) {
-                XDATA.activityLogger.logSystemActivity('CountBy - received neon filter changed event');
+                XDATA.userALE.log({
+                    activity: "alter",
+                    action: "query",
+                    elementId: "count-by",
+                    elementType: "canvas",
+                    elementSub: "count-by",
+                    elementGroup: "table_group",
+                    source: "system",
+                    tags: ["filter-change", "count-by"]
+                });
                 if(message.addedFilter && message.addedFilter.databaseName === $scope.databaseName && message.addedFilter.tableName === $scope.selectedTable.name) {
                     $scope.queryForData();
                 }
@@ -171,7 +200,16 @@ angular.module('neonDemo.directives')
              * @private
              */
             var onDatasetChanged = function() {
-                XDATA.activityLogger.logSystemActivity('CountBy - received neon-gtd dataset changed event');
+                XDATA.userALE.log({
+                    activity: "alter",
+                    action: "query",
+                    elementId: "count-by",
+                    elementType: "canvas",
+                    elementSub: "count-by",
+                    elementGroup: "table_group",
+                    source: "system",
+                    tags: ["dataset-change", "count-by"]
+                });
                 $scope.displayActiveDataset(false);
             };
 
@@ -236,15 +274,51 @@ angular.module('neonDemo.directives')
                 if(connection) {
                     var query = $scope.buildQuery();
 
-                    XDATA.activityLogger.logSystemActivity('CountBy - query for data');
+                    XDATA.userALE.log({
+                        activity: "alter",
+                        action: "send",
+                        elementId: "count-by",
+                        elementType: "canvas",
+                        elementSub: "count-by",
+                        elementGroup: "table_group",
+                        source: "system",
+                        tags: ["query", "count-by"]
+                    });
                     connection.executeQuery(query, function(queryResults) {
                         $scope.$apply(function() {
-                            XDATA.activityLogger.logSystemActivity('CountBy - received data');
+                            XDATA.userALE.log({
+                                activity: "alter",
+                                action: "receive",
+                                elementId: "count-by",
+                                elementType: "canvas",
+                                elementSub: "count-by",
+                                elementGroup: "table_group",
+                                source: "system",
+                                tags: ["receive", "count-by"]
+                            });
                             $scope.updateData(queryResults);
-                            XDATA.activityLogger.logSystemActivity('CountBy - rendered data');
+                            XDATA.userALE.log({
+                                activity: "alter",
+                                action: "render",
+                                elementId: "count-by",
+                                elementType: "canvas",
+                                elementSub: "count-by",
+                                elementGroup: "table_group",
+                                source: "system",
+                                tags: ["render", "count-by"]
+                            });
                         });
                     }, function(response) {
-                        XDATA.activityLogger.logSystemActivity('CountBy - query failed');
+                        XDATA.userALE.log({
+                            activity: "alter",
+                            action: "failed",
+                            elementId: "count-by",
+                            elementType: "canvas",
+                            elementSub: "count-by",
+                            elementGroup: "table_group",
+                            source: "system",
+                            tags: ["failed", "count-by"]
+                        });
                         $scope.updateData({
                             data: []
                         });
@@ -301,8 +375,28 @@ angular.module('neonDemo.directives')
                 if($scope.messenger && connection) {
                     var relations = datasetService.getRelations($scope.selectedTable.name, [field]);
                     if(filterExists) {
+                        XDATA.userALE.log({
+                            activity: "alter",
+                            action: "click",
+                            elementId: "count-by",
+                            elementType: "datagrid",
+                            elementSub: "row",
+                            elementGroup: "table_group",
+                            source: "user",
+                            tags: ["filter", "count-by"]
+                        });
                         filterService.replaceFilters($scope.messenger, relations, $scope.filterKeys, $scope.createFilter);
                     } else {
+                        XDATA.userALE.log({
+                            activity: "add",
+                            action: "click",
+                            elementId: "count-by",
+                            elementType: "datagrid",
+                            elementSub: "row",
+                            elementGroup: "table_group",
+                            source: "user",
+                            tags: ["filter", "count-by"]
+                        });
                         filterService.addFilters($scope.messenger, relations, $scope.filterKeys, $scope.createFilter);
                     }
                 }
@@ -403,6 +497,15 @@ angular.module('neonDemo.directives')
              */
             $scope.clearFilter = function() {
                 if($scope.messenger) {
+                    XDATA.userALE.log({
+                        activity: "remove",
+                        action: "click",
+                        elementId: "count-by",
+                        elementType: "button",
+                        elementGroup: "table_group",
+                        source: "user",
+                        tags: ["filter", "count-by"]
+                    });
                     filterService.removeFilters($scope.messenger, $scope.filterKeys, function() {
                         $tableDiv.removeClass("filtered");
                         $scope.table.deselect();
