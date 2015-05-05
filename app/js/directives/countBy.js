@@ -302,24 +302,22 @@ angular.module('neonDemo.directives')
                 if($scope.messenger && connection) {
                     var relations = datasetService.getRelations($scope.selectedTable.name, [field]);
                     if(filterExists) {
-                        filterService.replaceFilters($scope.messenger, relations, $scope.filterKeys, $scope.createFilter);
+                        filterService.replaceFilters($scope.messenger, relations, $scope.filterKeys, $scope.createFilterForCount);
                     } else {
-                        filterService.addFilters($scope.messenger, relations, $scope.filterKeys, $scope.createFilter);
+                        filterService.addFilters($scope.messenger, relations, $scope.filterKeys, $scope.createFilterForCount);
                     }
                 }
             };
 
             /**
-             * Creates and returns a filter using the given table and fields.
+             * Creates and returns a filter using the given table and count field using the value set by this visualization.
              * @param {String} The name of the table on which to filter
-             * @param {Array} An array containing the name of the selected field as its first element
-             * @method createFilter
+             * @param {String} The name of the count field on which to filter
+             * @method createFilterForCount
              * @return {Object} A neon.query.Filter object
              */
-            $scope.createFilter = function(tableName, fieldNames) {
-                var fieldName = fieldNames[0];
-                var filterClause = neon.query.where(fieldName, '=', $scope.filterValue);
-                return new neon.query.Filter().selectFrom($scope.databaseName, tableName).where(filterClause);
+            $scope.createFilterForCount = function(tableName, countFieldName) {
+                return neon.query.where(countFieldName, '=', $scope.filterValue);
             };
 
             /**

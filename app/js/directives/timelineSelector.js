@@ -222,12 +222,12 @@ angular.module('neonDemo.directives')
                             // If the brush changed because of a granularity change, then don't
                             // update the chart. The granularity change will cause the data to be
                             // updated
-                            filterService.replaceFilters($scope.messenger, relations, $scope.filterKeys, $scope.createFilter);
+                            filterService.replaceFilters($scope.messenger, relations, $scope.filterKeys, $scope.createFilterClauseForDate);
                             updatingGranularity = false;
                         } else {
                             // Because the timeline ignores its own filter, we just need to update the
                             // chart times and total when this filter is applied
-                            filterService.replaceFilters($scope.messenger, relations, $scope.filterKeys, $scope.createFilter, $scope.updateChartTimesAndTotal);
+                            filterService.replaceFilters($scope.messenger, relations, $scope.filterKeys, $scope.createFilterClauseForDate, $scope.updateChartTimesAndTotal);
                         }
                     }
                 }, true);
@@ -249,19 +249,17 @@ angular.module('neonDemo.directives')
             };
 
             /**
-             * Creates and returns a filter using the given table and fields.
+             * Creates and returns a filter on the given table and date field using the extent set by this visualization.
              * @param {String} The name of the table on which to filter
-             * @param {Array} An array containing the name of the date field as its first element
-             * @method createFilter
+             * @param {String} The name of the date field on which to filter
+             * @method createFilterClauseForDate
              * @return {Object} A neon.query.Filter object
              */
-            $scope.createFilter = function(tableName, fieldNames) {
-                var dateFieldName = fieldNames[0];
+            $scope.createFilterClauseForDate = function(tableName, dateFieldName) {
                 var startFilterClause = neon.query.where(dateFieldName, '>=', $scope.bucketizer.zeroOutDate($scope.startExtent));
                 var endFilterClause = neon.query.where(dateFieldName, '<', $scope.bucketizer.roundUpBucket($scope.endExtent));
                 var clauses = [startFilterClause, endFilterClause];
-                var filterClause = neon.query.and.apply(this, clauses);
-                return new neon.query.Filter().selectFrom($scope.databaseName, tableName).where(filterClause);
+                return neon.query.and.apply(this, clauses);
             };
 
             /**

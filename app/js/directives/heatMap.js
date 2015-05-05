@@ -260,7 +260,7 @@ angular.module('neonDemo.directives')
 
                     var relations = datasetService.getRelations($scope.selectedTable.name, [$scope.latitudeField, $scope.longitudeField]);
 
-                    filterService.replaceFilters($scope.messenger, relations, $scope.filterKeys, $scope.createFilterFromExtent, function() {
+                    filterService.replaceFilters($scope.messenger, relations, $scope.filterKeys, $scope.createFilterClauseForExtent, function() {
                         XDATA.activityLogger.logSystemActivity('HeatMap - applied neon filter');
                         $scope.$apply(function() {
                             $scope.queryForMapData();
@@ -549,13 +549,13 @@ angular.module('neonDemo.directives')
             };
 
             /**
-             * Create and returns a filter using the given table and fields.
+             * Create and returns a filter using the given table and latitude/longitude field names using the extent set by this visualization.
              * @param {String} The name of the table on which to filter
-             * @param {Array} An array containing the name of the latitude and longitude fields as its first and second elements respectively
-             * @method createFilterFromExtent
+             * @param {Array} An array containing the names of the latitude and longitude fields (as its first and second elements) on which to filter
+             * @method createFilterClauseForExtent
              * @return {Object} A neon.query.Filter object
              */
-            $scope.createFilterFromExtent = function(tableName, fieldNames) {
+            $scope.createFilterClauseForExtent = function(tableName, fieldNames) {
                 var latitudeFieldName = fieldNames[0];
                 var longitudeFieldName = fieldNames[1];
 
@@ -563,29 +563,29 @@ angular.module('neonDemo.directives')
                 var rightClause = neon.query.where(longitudeFieldName, "<=", $scope.extent.maximumLongitude);
                 var bottomClause = neon.query.where(latitudeFieldName, ">=", $scope.extent.minimumLatitude);
                 var topClause = neon.query.where(latitudeFieldName, "<=", $scope.extent.maximumLatitude);
-                var filterClause = neon.query.and(leftClause, rightClause, bottomClause, topClause);
-                var leftDateLine;
-                var rightDateLine;
-                var datelineClause;
 
                 //Deal with different dateline crossing scenarios.
                 if($scope.extent.minimumLongitude < -180 && $scope.extent.maximumLongitude > 180) {
-                    filterClause = neon.query.and(topClause, bottomClause);
-                } else if($scope.extent.minimumLongitude < -180) {
-                    leftClause = neon.query.where(longitudeFieldName, ">=", $scope.extent.minimumLongitude + 360);
-                    leftDateLine = neon.query.where(longitudeFieldName, "<=", 180);
-                    rightDateLine = neon.query.where(longitudeFieldName, ">=", -180);
-                    datelineClause = neon.query.or(neon.query.and(leftClause, leftDateLine), neon.query.and(rightClause, rightDateLine));
-                    filterClause = neon.query.and(topClause, bottomClause, datelineClause);
-                } else if($scope.extent.maximumLongitude > 180) {
-                    rightClause = neon.query.where(longitudeFieldName, "<=", $scope.extent.maximumLongitude - 360);
-                    rightDateLine = neon.query.where(longitudeFieldName, ">=", -180);
-                    leftDateLine = neon.query.where(longitudeFieldName, "<=", 180);
-                    datelineClause = neon.query.or(neon.query.and(leftClause, leftDateLine), neon.query.and(rightClause, rightDateLine));
-                    filterClause = neon.query.and(topClause, bottomClause, datelineClause);
+                    return neon.query.and(topClause, bottomClause);
                 }
 
-                return new neon.query.Filter().selectFrom($scope.databaseName, tableName).where(filterClause);
+                if($scope.extent.minimumLongitude < -180) {
+                    leftClause = neon.query.where(longitudeFieldName, ">=", $scope.extent.minimumLongitude + 360);
+                    var leftDateLine = neon.query.where(longitudeFieldName, "<=", 180);
+                    var rightDateLine = neon.query.where(longitudeFieldName, ">=", -180);
+                    var datelineClause = neon.query.or(neon.query.and(leftClause, leftDateLine), neon.query.and(rightClause, rightDateLine));
+                    return neon.query.and(topClause, bottomClause, datelineClause);
+                }
+                
+                if($scope.extent.maximumLongitude > 180) {
+                    rightClause = neon.query.where(longitudeFieldName, "<=", $scope.extent.maximumLongitude - 360);
+                    var rightDateLine = neon.query.where(longitudeFieldName, ">=", -180);
+                    var leftDateLine = neon.query.where(longitudeFieldName, "<=", 180);
+                    var datelineClause = neon.query.or(neon.query.and(leftClause, leftDateLine), neon.query.and(rightClause, rightDateLine));
+                    return neon.query.and(topClause, bottomClause, datelineClause);
+                }
+
+                return neon.query.and(leftClause, rightClause, bottomClause, topClause);
             };
 
             /**
