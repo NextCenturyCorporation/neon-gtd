@@ -15,11 +15,11 @@
             <div class="form-group">
                 <label>Add Column</label>
                 <div class="input-group">
-                    <select class="form-control" ng-model="addField" ng-disabled="!(deletedFields.length > 0)" ng-options="field for field in deletedFields">
+                    <select class="form-control" ng-model="addField" ng-disabled="!(tableNameToDeletedFieldsMap[selectedTable.name].length > 0)" ng-options="field for field in tableNameToDeletedFieldsMap[selectedTable.name]">
                     </select>
 
                     <div class="input-group-btn">
-                        <button class="btn btn-default" ng-click="addColumn()" ng-disabled="!(deletedFields.length > 0)">&plus;</button>
+                        <button class="btn btn-default" ng-click="addColumn()" ng-disabled="!(tableNameToDeletedFieldsMap[selectedTable.name].length > 0)">&plus;</button>
                     </div>
                 </div>
             </div>    
@@ -75,11 +75,11 @@
             <div ng-hide="!(navbarItem)" class="form-input-group">
                 <label>Add Column</label>
                 <div class="input-group">
-                    <select class="form-control" ng-model="addField" ng-disabled="!(deletedFields.length > 0)" ng-options="field for field in deletedFields">
+                    <select class="form-control" ng-model="addField" ng-disabled="!(tableNameToDeletedFieldsMap[selectedTable.name].length > 0)" ng-options="field for field in tableNameToDeletedFieldsMap[selectedTable.name]">
                     </select>
 
                     <div class="input-group-btn">
-                        <button class="btn btn-default" ng-click="addColumn()" ng-disabled="!(deletedFields.length > 0)">&plus;</button>
+                        <button class="btn btn-default" ng-click="addColumn()" ng-disabled="!(tableNameToDeletedFieldsMap[selectedTable.name].length > 0)">&plus;</button>
                     </div>
                 </div>
             </div>    

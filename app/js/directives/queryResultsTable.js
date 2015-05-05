@@ -61,8 +61,8 @@ angular.module('neonDemo.directives')
                 name: ""
             };
             $scope.fields = [];
-            $scope.deletedFields = [];
             $scope.addField = "";
+            $scope.tableNameToDeletedFieldsMap = {};
             $scope.sortByField = '';
             $scope.sortDirection = neon.query.ASCENDING;
             $scope.limit = 500;
@@ -170,7 +170,7 @@ angular.module('neonDemo.directives')
             };
 
             var createColumns = function(data) {
-                var columns = tables.createColumns(data, [$scope.createDeleteColumnButton("")]);
+                var columns = tables.createColumns(data, $scope.tableNameToDeletedFieldsMap[$scope.selectedTable.name], [$scope.createDeleteColumnButton("")]);
                 columns = tables.addLinkabilityToColumns(columns);
 
                 if(DIG.enabled) {
@@ -243,8 +243,16 @@ angular.module('neonDemo.directives')
 
             $scope.updateFieldsAndRowsAndCount = function() {
                 $scope.fields = datasetService.getDatabaseFields($scope.selectedTable.name);
-                $scope.deletedFields = [];
                 $scope.addField = "";
+                if(!($scope.tableNameToDeletedFieldsMap[$scope.selectedTable.name])) {
+                    $scope.tableNameToDeletedFieldsMap[$scope.selectedTable.name] = [];
+                } else if($scope.tableNameToDeletedFieldsMap[$scope.selectedTable.name].length) {
+                    // Remove previously deleted fields from the list of fields.
+                    $scope.fields = $scope.fields.filter(function(field) {
+                        return $scope.tableNameToDeletedFieldsMap[$scope.selectedTable.name].indexOf(field) === -1;
+                    });
+                    $scope.addField = $scope.tableNameToDeletedFieldsMap[$scope.selectedTable.name][0];
+                }
                 $scope.sortByField = datasetService.getMapping($scope.selectedTable.name, "sort_by") || $scope.fields[0];
                 updateRowsAndCount();
             };
@@ -380,7 +388,10 @@ angular.module('neonDemo.directives')
 
             $scope.deleteColumn = function(name) {
                 if($scope.table.deleteColumn(name)) {
-                    $scope.deletedFields.push(name);
+                    var indexToSplice = $scope.fields.indexOf(name);
+                    $scope.fields.splice(indexToSplice, 1);
+                    $scope.sortByField = $scope.sortByField === name ? $scope.fields[0] : $scope.sortByField;
+                    $scope.tableNameToDeletedFieldsMap[$scope.selectedTable.name].push(name);
                     $scope.addField = name;
                     $scope.createDeleteColumnButtons();
                 }
@@ -388,9 +399,10 @@ angular.module('neonDemo.directives')
 
             $scope.addColumn = function() {
                 if($scope.table.addColumn($scope.addField)) {
-                    var indexToSplice = $scope.deletedFields.indexOf($scope.addField);
-                    $scope.deletedFields.splice(indexToSplice, 1);
-                    $scope.addField = $scope.deletedFields.length > 0 ? $scope.deletedFields[0] : "";
+                    var indexToSplice = $scope.tableNameToDeletedFieldsMap[$scope.selectedTable.name].indexOf($scope.addField);
+                    $scope.tableNameToDeletedFieldsMap[$scope.selectedTable.name].splice(indexToSplice, 1);
+                    $scope.fields.push($scope.addField);
+                    $scope.addField = $scope.tableNameToDeletedFieldsMap[$scope.selectedTable.name].length > 0 ? $scope.tableNameToDeletedFieldsMap[$scope.selectedTable.name][0] : "";
                     $scope.createDeleteColumnButtons();
                 }
             };
@@ -401,8 +413,7 @@ angular.module('neonDemo.directives')
              * @method buildQuery
              */
             $scope.buildQuery = function() {
-                var query = new neon.query.Query().selectFrom($scope.databaseName, $scope.selectedTable.name);
-                query.limit($scope.limit);
+                var query = new neon.query.Query().selectFrom($scope.databaseName, $scope.selectedTable.name).limit($scope.limit);
                 if($scope.sortByField !== "undefined" && $scope.sortByField.length > 0) {
                     query.sortBy($scope.sortByField, $scope.sortDirection);
                 }
