@@ -1,117 +1,120 @@
-/*
- * Copyright 2014 Next Century Corporation
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- *
- */
-
-.well-map{
-    padding: 0;
-}
-.well-map .chart-options .popover {
-    top: 45px;
-    position: absolute;
-    z-index: 1000;
-}
+//
+// Copyright 2014 Next Century Corporation
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+//
+//
 
 .heat-map {
     height: 100%;
     width: 100%;
     min-height: 100px;
+
+    .alert {
+        display: none;
+        padding: 6px;
+        margin-top: 3px;
+    }
+
+    .alert-danger {
+        background: none;
+        border-color: #C2360D;
+        color: #C2360D;
+    }
+
+    .legend-item {
+        background-color: #fff;
+        border: 1px #aaa solid;
+        border-radius: 5px;
+        color: #555555;
+        font-size: 14px;
+        margin: 2px;
+        opacity: .8;
+        padding: 3px;
+    }
+
+    .map-field-form {
+        padding: 20px 20px 10px 50px;
+        position: absolute;
+        width: 100%;
+        z-index: 1000;
+
+        .filter-reset{
+            margin-right: 10px;
+        }
+    }
+
+    .olMap {
+        background-color: #b5d0d0;
+        border: 1px solid #bbbbbb;
+        border-radius: 0 0 4px 4px;
+        width: auto !important;
+        height: 100% !important;
+        position: static;
+        margin: 0px !important;
+    }
+
+    .olPopup {
+        font-size: 12px;
+        z-index: 1060;
+
+        table {
+            margin: 2px;
+        }
+
+        td, th {
+            padding: 2px;
+        }
+    }
+
+    .olControlAttribution {
+        bottom: 0;
+        color: #555;
+        text-shadow: 0 1px 0 rgba(255,255,255,0.7);
+    }
+
+    .olControlZoom {
+        top: 20px;
+        left: 20px;
+
+        a {
+            background-color: rgba(57, 181, 74, 0.7);
+            font-size: 20px;
+            font-family: "Open Sans", Helvetica, arial, sans-serif;
+            line-height: 24px;
+
+            &:hover{
+                background-color: rgba(57, 181, 74, 1);
+            }
+        }
+    }
 }
 
-.heat-map .legend-item{
-    background-color: #fff;
-    border: 1px #aaa solid;
-    border-radius: 5px;
-    color: #555555;
-    font-size: 14px;
-    margin: 2px;
-    opacity: .8;
-    padding: 3px;
+.well-map{
+    padding: 0;
+
+    .chart-options {
+        .popover {
+            top: 45px;
+            position: absolute;
+            z-index: 1000;
+        }
+    }
 }
 
-.heat-map .map-field-form {
-    padding: 20px 20px 10px 50px;
-    position: absolute;
-    width: 100%;
-    z-index: 1000;
-}
-
-.heat-map .map-field-form .filter-reset{
-    margin-right: 10px;
-}
-
-.heat-map .alert {
-    display: none;
-    padding: 6px;
-    margin-top: 3px;
-}
-
-.heat-map .olMap {
-    background-color: #b5d0d0;
-    border: 1px solid #bbbbbb;
-    border-radius: 0 0 4px 4px;
-    width: auto !important;
-    height: 100% !important;
-    position: static;
-   margin: 0px !important;
-}
-
-.heat-map .olControlAttribution{
-    bottom: 0;
-    color: #555;
-    text-shadow: 0 1px 0 rgba(255,255,255,0.7);
-}
-
-.heat-map .olControlZoom {
-    top: 20px;
-    left: 20px;
-}
-
-.heat-map .olControlZoom a{
-    background-color: rgba(57, 181, 74, 0.7);
-    font-size: 20px;
-    font-family: "Open Sans", Helvetica, arial, sans-serif;
-    line-height: 24px;
-}
-
-.heat-map .olControlZoom a:hover{
-    background-color: rgba(57, 181, 74, 1);
-}
-
-.heatmap .olPopup {
-    font-size: 12px;
-    z-index: 1060;
-}
-
-.heatmap .olPopup table {
-    margin: 2px;
-}
-
-.heatmap .olPopup td, .olPopup th {
-    padding: 2px;
-}
-
-.visualization-widget-mobile .heat-map .olMap {
-    height: 400px !important;
-}
-
-/* ================
-    ALERTS
-================ */
-
-.heat-map .alert-danger {
-    background: none;
-    border-color: #C2360D;
-    color: #C2360D;
+.visualization-widget-mobile {
+    .heat-map {
+        .olMap {
+            height: 400px !important;
+        }
+    }
 }
