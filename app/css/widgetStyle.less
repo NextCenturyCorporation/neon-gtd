@@ -7,21 +7,6 @@ html {
     }
 }
 
-.well {
-    background-color: #FFFFFF;
-    box-shadow: none;
-    border: 0;
-    margin: 0;
-}
-
-.well-blank {
-    padding: 20px 20px 0;
-}
-
-.well-map {
-    padding: 0;
-}
-
 .chart-options {
     .popover {
         right: 9px;
@@ -32,6 +17,10 @@ html {
 .container {
     max-width: none;
     width: auto;
+}
+
+.data-tray {
+    height: 100%;
 }
 
 .databaseConfig {
@@ -51,6 +40,12 @@ html {
         }
     }
 
+    .col-md-6 {
+        @media (min-width: 1200px) {
+            padding: 0;
+        }
+    }
+
     .database-overlay {
         display: none;
     }
@@ -64,6 +59,14 @@ html {
             &:last-child {
                 display: none;
             }
+        }
+    }
+
+    .form-group {
+        @media (min-width: 1200px) {
+            float: left;
+            width: 50%;
+            padding: 0 15px;
         }
     }
 
@@ -148,20 +151,6 @@ html {
     }
 }
 
-@media (min-width: 1200px) {
-    .databaseConfig .form-group {
-        float: left;
-        width: 50%;
-        padding: 0 15px;
-    }
-    .databaseConfig .col-md-6 {
-        padding: 0;
-    }
-}
-
-
-/* Filter Builder tray */
-/***********************/
 .filter-tray {
     .filter{
         background-color: #f1f1f1;
@@ -202,33 +191,6 @@ html {
     }
 }
 
-.tray {
-    position: relative;
-    display: block;
-    top: auto;
-    background-color: #FFFFFF;
-    border: 0;
-    box-shadow: none;
-    margin: 0;
-
-    .panel-body{
-        padding: 10px 20px;
-        padding-bottom: 0;
-    }
-}
-
-/* Data tray */
-/*************/
-.data-tray {
-    height: 100%;
-}
-
-.tray {
-    .panel-body {
-        height: 100%;
-    }
-}
-
 .query-results-grid {
     height: 300px;
     height: calc(100% - 69px) !important;
@@ -243,8 +205,22 @@ html {
     }
 }
 
-/* widgets */
-/***********/
+.tray {
+    position: relative;
+    display: block;
+    top: auto;
+    background-color: #FFFFFF;
+    border: 0;
+    box-shadow: none;
+    margin: 0;
+
+    .panel-body{
+        padding: 10px 20px;
+        padding-bottom: 0;
+        height: 100%;
+    }
+}
+
 .visualization-widget {
     display: block;
     height: 100%;
@@ -252,3 +228,20 @@ html {
     margin: 0px;
     padding: 0px;
 }
+
+.well {
+    background-color: #FFFFFF;
+    box-shadow: none;
+    border: 0;
+    margin: 0;
+}
+
+.well-blank {
+    padding: 20px 20px 0;
+}
+
+.well-map {
+    padding: 0;
+}
+
+@import 'directives/barchart.less';

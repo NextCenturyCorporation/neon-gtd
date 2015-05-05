@@ -1,0 +1,209 @@
+//
+// Copyright 2013 Next Century Corporation
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+//
+
+svg {
+    .tick {
+        fill: #444444;
+    }
+}
+
+.axis {
+    shape-rendering: crispEdges;
+
+    line, path {
+        stroke: #cccccc;
+        stroke-width: 1px;
+        fill: none;
+        shape-rendering: crispEdges;
+    }
+}
+
+.bar {
+    //provides a slight separation for adjacent bars. the barchart javascript sets the color based on the svg color
+    fill: #39b54a;
+    stroke-opacity: 1;
+}
+
+.barchart{
+    margin: 0 0 0;
+    min-height: 50px;
+    overflow: hidden;
+
+    svg{
+        font-size: 10px;
+    }
+
+
+
+    .dot{
+        stroke-width: 2px;
+    }
+
+    .dot-empty{
+      fill: #FFFFFF;
+    }
+
+    .gridLines {
+        .horizontalGrid {
+            &:first-child {
+                stroke-dasharray: 0;
+            }
+        }
+    }
+
+    .horizontalGrid{
+        fill: none;
+        shape-rendering: crispEdges;
+        stroke: #eeeeee;
+        stroke-width : 1px;
+        stroke-dasharray: 6px;
+    }
+
+    .hover-line {
+        line {
+            stroke: #e1e1e1;
+            fill: none;
+            stroke-width: 1px;
+        }
+
+        text {
+            font-weight: bold;
+            text-shadow: 0 2px 0 #FFFFFF;
+        }
+
+        .hover-date {
+          fill: #555555;
+        }
+    }
+
+    .selectedBar {
+        fill: #39b54a;
+    }
+
+    .unselectedBar {
+        opacity: 0.5;
+    }
+
+    .y {
+        &.axis {
+            text{
+                text-shadow:
+                    1px 1px 0 #FFFFFF,
+                    1px 0px 0 #FFFFFF,
+                    1px -1px 0 #FFFFFF,
+                    -1px 1px 0 #FFFFFF,
+                    -1px 0px 0 #FFFFFF,
+                    -1px -1px 0 #FFFFFF,
+                    0px 2px 0 #FFFFFF,
+                    0px -2px 0 #FFFFFF;
+                font-weight: bold;
+                fill: #555555;
+            }
+
+            .tick {
+                &:first-child, line {
+                    display: none;
+                }
+            }
+
+            path {
+              display: none;
+            }
+        }
+    }
+}
+
+.barchartDirective {
+    margin: auto;
+    padding: 20px;
+    display: block;
+
+    .filter-reset {
+        margin-right: 10px;
+    }
+
+    .well{
+        margin: 0px;
+        padding: 20px;
+        height: 100%;
+        width: 100%;
+    }
+}
+
+#chart {
+    background-color: #FFFFFF;
+}
+
+.chart-div {
+    margin: auto;
+    display: block;
+    min-height: 250px;
+}
+
+.charttooltip {
+    // ensure the tooltip is on top
+    z-index: 10000;
+    position: absolute;
+    padding: 15px;
+    background-color: rgba(255,255,255,0.9);
+    border: 1px solid rgba(0, 0, 0, 0.15);
+    border-radius: 4px;
+    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.176);
+    pointer-events: none;
+    color: #555555;
+}
+
+.error-text {
+    color: red;
+    margin-top: 170px;
+    margin-left: 20px;
+}
+
+.line {
+    fill: none;
+    stroke-width: 2px;
+}
+
+#plot {
+    font-size: 10px;
+    text-align: right;
+    display: block;
+    margin: auto;
+    width: 100%;
+    height: 100%;
+}
+
+.visualization-widget {
+    .barchartDirective {
+        height: 100%;
+        width: 100%;
+    }
+}
+
+.visualization-widget-mobile {
+    .barchartDirective {
+        min-height: 400px;
+        max-height: 400px;
+        width: 100%;
+    }
+}
+
+.x {
+    &.axis {
+        path {
+            display: none;
+        }
+    }
+}
