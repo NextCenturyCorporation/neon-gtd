@@ -87,6 +87,12 @@ angular.module('neonDemo.directives')
                         updateChartSize();
                     });
 
+                $scope.$watch('attrX', function(newValue, oldValue) {
+                    onFieldChange('attrX', newValue, oldValue);
+                    if($scope.selectedDatabase && $scope.selectedTable.name) {
+                        $scope.queryForData();
+                    }
+                });
                 $scope.$watch('attrY', function(newValue, oldValue) {
                     onFieldChange('attrY', newValue, oldValue);
                     if($scope.selectedDatabase && $scope.selectedTable.name) {

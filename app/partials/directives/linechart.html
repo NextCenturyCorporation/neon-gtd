@@ -12,7 +12,12 @@
                 </select>
             </div>
             <div class="form-group">
-                <label>Y axis</label>
+                <label>X Axis (Date Field)</label>
+                <select class="form-control" ng-model="attrX" ng-options="field for field in fields" ng-required="true" ng-disabled="!(fields.length > 0)">
+                </select>
+            </div>
+            <div class="form-group">
+                <label>Y Axis</label>
                 <select class="form-control" ng-model="attrY" ng-options="field for field in fields" ng-required="true" ng-disabled="!(fields.length > 0)">
                     <option value="" ng-show="(aggregation == 'count')">*</option>
                 </select>
