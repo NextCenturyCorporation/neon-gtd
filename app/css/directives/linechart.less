@@ -1,90 +1,138 @@
-.linechart{
-  margin: 0 0 0;
-  min-height: 50px;
-  overflow: hidden;
-}
-.linechart .hover-line line { 
-  stroke: #e1e1e1;  
-  fill: none;
-  stroke-width: 1px;
-}
-.linechart .hover-line text {
-  font-weight: bold;
-  text-shadow: 0 2px 0 #FFFFFF;
-}
-.linechart .hover-line .hover-date {
-  fill: #555555;
-}
-.linechart svg{
-    font-size: 10px;
-}
-.axis path,
-.axis line {
-  fill: none;
-  stroke: #cccccc;
-  shape-rendering: crispEdges;
-}
-
-.x.axis path {
-  display: none;
-}
-
-.linechart .y.axis text{
-  text-shadow:
-    1px 1px 0 #FFFFFF,
-    1px 0px 0 #FFFFFF,
-    1px -1px 0 #FFFFFF,
-    -1px 1px 0 #FFFFFF,
-    -1px 0px 0 #FFFFFF,
-    -1px -1px 0 #FFFFFF,
-    0px 2px 0 #FFFFFF,
-    0px -2px 0 #FFFFFF;
-  font-weight: bold;
-  fill: #555555;
-}
-.linechart .y.axis .tick:first-child,
-.linechart .y.axis path,
-.linechart .y.axis .tick line{
-  display: none;
-}
-
-.linechart .horizontalGrid{
-  fill: none;
-  shape-rendering: crispEdges;
-  stroke: #eeeeee;
-  stroke-width : 1px;
-  stroke-dasharray: 6px;
-}
-.linechart .gridLines .horizontalGrid:first-child{
-  stroke-dasharray: 0;
-}
+//
+// Copyright 2014 Next Century Corporation
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+//
+//
 
 .line {
-  fill: none;
-  stroke-width: 2px;
+    fill: none;
+    stroke-width: 2px;
 }
 
-.linechart .dot{
-  stroke-width: 2px;
-}
+.linechart{
+    margin: 0 0 0;
+    min-height: 50px;
+    overflow: hidden;
 
-.linechart .dot-empty{
-  fill: #FFFFFF;
+    svg{
+            font-size: 10px;
+    }
+
+    .dot{
+        stroke-width: 2px;
+    }
+
+    .dot-empty{
+        fill: #FFFFFF;
+    }
+
+    .gridLines {
+        .horizontalGrid {
+            &:first-child {
+                stroke-dasharray: 0;
+            }
+        }
+    }
+
+    .horizontalGrid{
+        fill: none;
+        shape-rendering: crispEdges;
+        stroke: #eeeeee;
+        stroke-width : 1px;
+        stroke-dasharray: 6px;
+    }
+
+    .hover-line {
+        line {
+            stroke: #e1e1e1;
+            fill: none;
+            stroke-width: 1px;
+        }
+
+        text {
+            font-weight: bold;
+            text-shadow: 0 2px 0 #FFFFFF;
+        }
+
+        .hover-date {
+            fill: #555555;
+        }
+    }
+
+    .y {
+        &.axis {
+            path {
+                display: none;
+            }
+
+            text{
+                text-shadow:
+                    1px 1px 0 #FFFFFF,
+                    1px 0px 0 #FFFFFF,
+                    1px -1px 0 #FFFFFF,
+                    -1px 1px 0 #FFFFFF,
+                    -1px 0px 0 #FFFFFF,
+                    -1px -1px 0 #FFFFFF,
+                    0px 2px 0 #FFFFFF,
+                    0px -2px 0 #FFFFFF;
+                font-weight: bold;
+                fill: #555555;
+            }
+
+            .tick {
+                &:first-child {
+                    display: none;
+                }
+
+                line {
+                    display: none;
+                }
+            }
+        }
+    }
 }
 
 .linechartDirective {
-  margin: 0px;
-  padding: 20px;
-  height: 100%;
-  width: 100%;
+    margin: 0px;
+    padding: 20px;
+    height: 100%;
+    width: 100%;
 }
 
-.visualization-widget .linechartDirective {
-  height: 100%;
-  width: 100%;
+.axis {
+    path, line {
+        fill: none;
+        stroke: #cccccc;
+        shape-rendering: crispEdges;
+    }
 }
 
-.visualization-widget-mobile .linechartDirective {
-  min-height: 400px;
-  width: 100%;
+.x.axis {
+    path {
+        display: none;
+    }
+}
+
+.visualization-widget {
+    .linechartDirective {
+        height: 100%;
+        width: 100%;
+    }
+}
+
+.visualization-widget-mobile {
+    .linechartDirective {
+        min-height: 400px;
+        width: 100%;
+    }
 }
