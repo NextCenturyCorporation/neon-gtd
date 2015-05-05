@@ -36,7 +36,7 @@ angular.module('neonDemo.directives')
         templateUrl: 'partials/directives/circularHeatForm.html',
         restrict: 'EA',
         scope: {
-            filterKey: '='
+            bindDateField: '='
         },
         controller: function($scope) {
             /**
@@ -187,7 +187,7 @@ angular.module('neonDemo.directives')
             $scope.updateFieldsAndQueryForChartData = function() {
                 $scope.fields = datasetService.getDatabaseFields($scope.selectedTable.name);
                 $scope.fields.sort();
-                $scope.dateField = datasetService.getMapping($scope.selectedTable.name, "date") || "";
+                $scope.dateField = $scope.bindDateField || datasetService.getMapping($scope.selectedTable.name, "date") || "";
                 $scope.queryForChartData();
             };
 

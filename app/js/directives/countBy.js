@@ -22,6 +22,7 @@ angular.module('neonDemo.directives')
         templateUrl: 'partials/directives/countby.html',
         restrict: 'EA',
         scope: {
+            bindCountField: '='
         },
         link: function($scope, el) {
             $scope.uniqueChartOptions = 'chart-options-' + uuid();
@@ -202,7 +203,7 @@ angular.module('neonDemo.directives')
             $scope.updateFieldsAndQueryForData = function() {
                 $scope.fields = datasetService.getDatabaseFields($scope.selectedTable.name);
                 $scope.fields.sort();
-                $scope.countField = datasetService.getMapping($scope.selectedTable.name, "count_by") || "";
+                $scope.countField = $scope.bindCountField || datasetService.getMapping($scope.selectedTable.name, "count_by") || "";
                 if($scope.filterSet) {
                     $scope.clearFilter();
                 }

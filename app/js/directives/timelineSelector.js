@@ -37,6 +37,7 @@ angular.module('neonDemo.directives')
         templateUrl: 'partials/directives/timelineSelector.html',
         restrict: 'EA',
         scope: {
+            bindDateField: '='
         },
         link: function($scope, element) {
             var YEAR = "year";
@@ -49,9 +50,6 @@ angular.module('neonDemo.directives')
             chartOptions.toggleClass($scope.uniqueChartOptions);
 
             element.addClass('timeline-selector');
-
-            // Defaulting the expected date field to 'date'.
-            $scope.dateField = 'date';
 
             // Default our time data to an empty array.
             $scope.data = [];
@@ -316,7 +314,7 @@ angular.module('neonDemo.directives')
             $scope.updateFieldsAndQueryForChartData = function() {
                 $scope.fields = datasetService.getDatabaseFields($scope.selectedTable.name);
                 $scope.fields.sort();
-                $scope.dateField = datasetService.getMapping($scope.selectedTable.name, "date") || "date";
+                $scope.dateField = $scope.bindDateField || datasetService.getMapping($scope.selectedTable.name, "date") || "date";
                 $scope.resetAndQueryForChartData();
             };
 

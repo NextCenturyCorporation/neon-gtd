@@ -33,6 +33,10 @@ angular.module('neonDemo.directives')
         templateUrl: 'partials/directives/heatMap.html',
         restrict: 'EA',
         scope: {
+            bindLatitudeField: '=',
+            bindLongitudeField: '=',
+            bindColorField: '=',
+            bindSizeField: '=',
             // map of categories to colors used for the legend
             colorMappings: '&'
         },
@@ -382,10 +386,10 @@ angular.module('neonDemo.directives')
             $scope.updateFieldsAndQueryForMapData = function() {
                 $scope.fields = datasetService.getDatabaseFields($scope.selectedTable.name);
                 $scope.fields.sort();
-                $scope.latitudeField = datasetService.getMapping($scope.selectedTable.name, "latitude") || "";
-                $scope.longitudeField = datasetService.getMapping($scope.selectedTable.name, "longitude") || "";
-                $scope.colorByField = datasetService.getMapping($scope.selectedTable.name, "color_by") || "";
-                $scope.sizeByField = datasetService.getMapping($scope.selectedTable.name, "size_by") || "";
+                $scope.latitudeField = $scope.bindLatitudeField || datasetService.getMapping($scope.selectedTable.name, "latitude") || "";
+                $scope.longitudeField = $scope.bindLongitudeField || datasetService.getMapping($scope.selectedTable.name, "longitude") || "";
+                $scope.colorByField = $scope.bindColorField || datasetService.getMapping($scope.selectedTable.name, "color_by") || "";
+                $scope.sizeByField = $scope.bindSizeField || datasetService.getMapping($scope.selectedTable.name, "size_by") || "";
                 XDATA.activityLogger.logSystemActivity('HeatMap - field selectors updated');
 
                 $timeout(function() {
