@@ -1,64 +1,57 @@
-.sunburst-directive {
-  padding: 20px;
-}
+//
+// Copyright 2014 Next Century Corporation
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+//
+//
 
-.sunburst-directive .form-input-group {
-  margin: 0px 5px 5px 0px;
-  width: auto;
-}
-
-.sunburst-ring-controls  {
-  width:100%;
-  margin-bottom: 10px;
+.sunburst-aggregate-controls {
+    margin: 0px 0px 10px 0px;
 }
 
 .sunburst-breadcrumb {
-  display: inline;
-  margin: 0px 3px;
-  white-space: nowrap;
+    display: inline;
+    margin: 0px 3px;
+    white-space: nowrap;
 }
 
-.sunburst-transient-breadcrumb {
-  display: inline;
-  margin: 0px 0px;
+.sunburst-chart {
+    path {
+        stroke: #fff;
+        fill-rule: evenodd;
+        opacity: .8;
+
+        &:hover {
+          opacity: 1;
+        }
+    }
+
+    text {
+        pointer-events: none;
+    }
 }
 
-.sunburst-transient-breadcrumb .breadcrumb-title {
-  text-decoration: none;
+.sunburst-directive {
+    padding: 20px;
+
+    .form-input-group {
+        margin: 0px 5px 5px 0px;
+        width: auto;
+    }
 }
 
-.sunburst-transient-breadcrumb:hover .breadcrumb-title,
-.sunburst-transient-breadcrumb:focus .breadcrumb-title {
-  color: #a00;
-}
-
-.sunburst-transient-breadcrumb .breadcrumb-remove {
-  color: #a00;
-  display: none;
-  text-decoration: none;
-}
-
-.sunburst-transient-breadcrumb:hover .breadcrumb-remove,
-.sunburst-transient-breadcrumb:focus .breadcrumb-remove {
-  display: inline;
-}
-
-.sunburst-aggregate-controls {
-  margin: 0px 0px 10px 0px;
-}
-
-.sunburst-chart path {
-  stroke: #fff;
-  fill-rule: evenodd;
-  opacity: .8;
-}
-
-.sunburst-chart path:hover {
-  opacity: 1;
-}
-
-.sunburst-chart text {
-  pointer-events: none;
+.sunburst-ring-controls  {
+    width:100%;
+    margin-bottom: 10px;
 }
 
 .sunburst-tooltip {
@@ -85,12 +78,41 @@
   font-weight: bold;
 }
 
-.visualization-widget .sunburst-directive {
-  height: 100%;
-  width: 100%;
+.sunburst-transient-breadcrumb {
+    display: inline;
+    margin: 0px 0px;
+
+    &:hover, &:focus {
+        .breadcrumb-title {
+          color: #a00;
+        }
+
+        .breadcrumb-remove {
+          display: inline;
+        }
+    }
+
+    .breadcrumb-title {
+        text-decoration: none;
+    }
+
+    .breadcrumb-remove {
+        color: #a00;
+        display: none;
+        text-decoration: none;
+    }
 }
 
-.visualization-widget-mobile .sunburst-directive {
-  min-height: 400px;
-  width: 100%;
+.visualization-widget {
+    .sunburst-directive {
+        height: 100%;
+        width: 100%;
+    }
+}
+
+.visualization-widget-mobile {
+    .sunburst-directive {
+        min-height: 400px;
+        width: 100%;
+    }
 }

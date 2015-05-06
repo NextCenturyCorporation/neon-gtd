@@ -1,18 +1,18 @@
-/*
- * Copyright 2014 Next Century Corporation
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- *
- */
+//
+// Copyright 2014 Next Century Corporation
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+//
+//
 
 .timeline-selector {
     display:block;
@@ -22,123 +22,126 @@
     overflow-y: auto;
     height: 100%;
     width: 100%;
+
+    h3 {
+        margin-top: -7px;
+
+        @media (max-width: 767px) {
+            font-size: 17px;
+        }
+
+        @media (max-width: 891px) {
+            font-size: 20px;
+        }
+    }
+
+    h4 {
+        margin: 0px 0px 0px 0px;
+    }
+
+    .btn-group{
+        margin: 0px;
+    }
+
+    .chart-options {
+        /* Align with granulatiry buttons. */
+        margin-top: 13px;
+        margin-left: 10px;
+    }
+
+    .filter-reset{
+        margin: 0px 15px 0px 0px;
+        background-color: #dddddd;
+
+        .btn{
+            border-color: #cccccc;
+            background-color: #e1e1e1;
+        }
+    }
+
+    .text-center{
+        margin: 10px 0px 0px 0px;
+    }
+
+    .timeline-options {
+        /* Set a lower position for the popover due to the extra top margin added to chart-options. */
+        top: 53px;
+    }
+
+    .timeseries-selector {
+        width: 200px;
+
+        select {
+            color: #555555;
+            font-size: 12px;
+            font-weight: bold;
+            text-transform: uppercase;
+        }
+
+        .btn{
+            background-color: #dddddd;
+            border-color: #cccccc;
+            padding-left: 8px;
+            padding-right: 8px;
+
+            .glyphicon{
+                font-size: 12px;
+            }
+        }
+
+        .btn-primary{
+            color: #39b54a;
+
+            &:hover{
+                color: #FFFFFF;
+                background-color: #39b54a;
+                border-color: #2F9F3E;
+            }
+        }
+
+        .btn-danger{
+            color: #C2360D;
+
+            &:hover{
+                color: #FFFFFF;
+                background-color: #C2360D;
+                border-color: #AA1E13;
+            }
+        }
+    }
+
+    .timeseries-selector-form-group {
+        margin: 10px 0px 0px 5px;
+    }
+
+
+
+    .well{
+        height: 100%;
+    }
 }
 
-.timeline-selector h4 {
-    margin: 0px 0px 0px 0px;
-}
-
-.timeline-selector .btn-group{
-    margin: 10px 0px 0px 0px;
-}
-
-.timeline-selector .timeseries-selector-form-group {
-    margin: 10px 0px 0px 5px;
-}
-
-.timeline-selector .text-center{
-    margin: 10px 0px 0px 0px;
-}
-
-.timeline-selector .timeseries-selector select {
-    color: #555555;
-    font-size: 12px;
-    font-weight: bold;
-    text-transform: uppercase;
-}
-
-.timeline-selector .filter-reset{
-    margin: 13px 15px 0px 0px;
-    background-color: #dddddd;
-}
-.timeline-selector .filter-reset .btn{
-    border-color: #cccccc;
-}
-
-.timeline-selector .timeseries-selector{
-    width: 200px;
-}
-.timeline-selector .timeseries-selector .btn{
-    background-color: #dddddd;
-    border-color: #cccccc;
-    padding-left: 8px;
-    padding-right: 8px;
-}
-.timeline-selector .timeseries-selector .btn .glyphicon{
-    font-size: 12px;
-}
-.timeline-selector .timeseries-selector .btn-primary{
-    color: #39b54a;
-}
-.timeline-selector .timeseries-selector .btn-primary:hover{
-    color: #FFFFFF;
-    background-color: #39b54a;
-    border-color: #2F9F3E;
-}
-.timeline-selector .timeseries-selector .btn-danger{
-    color: #C2360D;
-}
-.timeline-selector .timeseries-selector .btn-danger:hover{
-    color: #FFFFFF;
-    background-color: #C2360D;
-    border-color: #AA1E13;
-}
-
-.timeline-selector .chart-options {
-    /* Align with granulatiry buttons. */
-    margin-top: 13px;
-    margin-left: 10px;
-}
-
-.timeline-selector .timeline-options {
-    /* Set a lower position for the popover due to the extra top margin added to chart-options. */
-    top: 53px;
-}
-
-.visualization-widget-mobile .timeline-selector {
-    display:block;
-    margin: 0px;
-    padding: 20px 20px 20px 20px;
-}
-
-
-/* Timeline selector */
-.timeline-selector,
-.timeline-selector .well{
-    height: 100%;
-}
 .timeline-selector-chart{
     height: calc(100% - 61px);
     min-height: 50px;
-}
-.timeline-selector{
-    margin: 0;
-}
-.timeline-selector h3 {
-    margin-top: -7px;
-}
-.timeline-selector .btn-group{
-    margin-top: 0;
-}
-.timeline-selector-chart .brush .mask{
-    fill: #FFFFFF;
-}
-.timeline-selector-chart .axis path {
-    stroke: #FFFFFF;
-}
-.timeline-selector .filter-reset {
-    margin-top: 0px;
-}
-.timeline-selector .filter-reset .btn {
-    background-color: #e1e1e1;
-}
-@media (max-width: 891px) {
-    .timeline-selector h3 {
-        font-size: 20px;
+
+    .brush {
+        .mask {
+            fill: #FFFFFF;
+        }
+    }
+
+    .axis {
+        path {
+            stroke: #FFFFFF;
+        }
     }
 }
-@media (max-width: 767px) {
-    .timeline-selector h3 {
-        font-size: 17px;
+
+.visualization-widget-mobile {
+    .timeline-selector {
+        display:block;
+        margin: 0px;
+        padding: 20px 20px 20px 20px;
     }
 }
