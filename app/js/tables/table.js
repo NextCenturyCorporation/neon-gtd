@@ -287,30 +287,54 @@ tables.Table.prototype.draw = function() {
 
     // Setup some event loggers.
     this.table_.onColumnsResized.subscribe(function() {
-        XDATA.activityLogger.logUserActivity('Grid - user resized columns', 'resize',
-            XDATA.activityLogger.WF_EXPLORE);
+        XDATA.userALE.log({
+            activity: "alter",
+            action: "drag",
+            elementId: "datagrid",
+            elementType: "datagrid",
+            elementGroup: "table_group",
+            source: "user",
+            tags: ["resize-column"]
+        });
     });
 
     // Setup some event loggers.
     this.table_.onColumnsReordered.subscribe(function() {
-        XDATA.activityLogger.logUserActivity('Grid - user reordered columns', 'reorder',
-            XDATA.activityLogger.WF_EXPLORE);
+        XDATA.userALE.log({
+            activity: "alter",
+            action: "drag",
+            elementId: "datagrid",
+            elementType: "datagrid",
+            elementGroup: "table_group",
+            source: "user",
+            tags: ["reorder-column"]
+        });
     });
 
     // Setup some event loggers.
     this.table_.onScroll.subscribe(function() {
-        XDATA.activityLogger.logUserActivity('Grid - user scrolled data view', 'scroll',
-            XDATA.activityLogger.WF_EXPLORE);
+        XDATA.userALE.log({
+            activity: "alter",
+            action: "scroll",
+            elementId: "datagrid",
+            elementType: "datagrid",
+            elementGroup: "table_group",
+            source: "user",
+            tags: ["scroll-datagrid"]
+        });
     });
 
     // Setup some event loggers.
     this.table_.onSort.subscribe(function(e, args) {
-        XDATA.activityLogger.logUserActivity('Grid - user sorted column', 'sort',
-            XDATA.activityLogger.WF_EXPLORE, {
-                column: args.sortCol.field,
-                sortAsc: args.sortAsc,
-                multicolumnSort: args.multiColumnSort
-            });
+        XDATA.userALE.log({
+            activity: "alter",
+            action: "click",
+            elementId: "datagrid",
+            elementType: "datagrid",
+            elementGroup: "table_group",
+            source: "user",
+            tags: ["sort-column", args.sortCol.field]
+        });
     });
 
     return this;

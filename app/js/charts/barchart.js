@@ -538,6 +538,16 @@ charts.BarChart.prototype.showTooltipXaxis_ = function(item) {
     // in the upper left hand side
     this.positionTooltip_(tooltip, [100, 20]);
     $(tooltip[0]).fadeIn(500);
+    XDATA.userALE.log({
+        activity: "show",
+        action: "mouseover",
+        elementId: "barchart",
+        elementType: "canvas",
+        elementSub: "barchart",
+        elementGroup: "chart_group",
+        source: "user",
+        tags: ["tooltip", "barchart"]
+    });
 };
 
 charts.BarChart.prototype.showTooltip_ = function(item, mouseLocation) {
@@ -555,6 +565,16 @@ charts.BarChart.prototype.showTooltip_ = function(item, mouseLocation) {
     $(tooltip[0]).hide();
     this.positionTooltip_(tooltip, mouseLocation);
     $(tooltip[0]).fadeIn(500);
+    XDATA.userALE.log({
+        activity: "show",
+        action: "mouseover",
+        elementId: "barchart",
+        elementType: "canvas",
+        elementSub: "barchart",
+        elementGroup: "chart_group",
+        source: "user",
+        tags: ["tooltip", "barchart"]
+    });
 };
 
 charts.BarChart.prototype.positionTooltip_ = function(tooltip, mouseLocation) {
@@ -568,6 +588,16 @@ charts.BarChart.prototype.positionTooltip_ = function(tooltip, mouseLocation) {
 
 charts.BarChart.prototype.hideTooltip_ = function() {
     $('#' + charts.BarChart.TOOLTIP_ID_).remove();
+    XDATA.userALE.log({
+        activity: "hide",
+        action: "mouseout",
+        elementId: "barchart",
+        elementType: "canvas",
+        elementSub: "barchart",
+        elementGroup: "chart_group",
+        source: "user",
+        tags: ["tooltip", "barchart"]
+    });
 };
 
 charts.BarChart.prototype.drawXAxis_ = function(chart) {

@@ -376,7 +376,7 @@ angular.module('neonDemo.directives')
                     var relations = datasetService.getRelations($scope.selectedTable.name, [field]);
                     if(filterExists) {
                         XDATA.userALE.log({
-                            activity: "alter",
+                            activity: "select",
                             action: "click",
                             elementId: "count-by",
                             elementType: "datagrid",
@@ -388,7 +388,7 @@ angular.module('neonDemo.directives')
                         filterService.replaceFilters($scope.messenger, relations, $scope.filterKeys, $scope.createFilter);
                     } else {
                         XDATA.userALE.log({
-                            activity: "add",
+                            activity: "select",
                             action: "click",
                             elementId: "count-by",
                             elementType: "datagrid",
@@ -498,7 +498,7 @@ angular.module('neonDemo.directives')
             $scope.clearFilter = function() {
                 if($scope.messenger) {
                     XDATA.userALE.log({
-                        activity: "remove",
+                        activity: "deselect",
                         action: "click",
                         elementId: "count-by",
                         elementType: "button",

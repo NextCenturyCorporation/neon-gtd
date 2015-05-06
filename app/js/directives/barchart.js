@@ -259,7 +259,7 @@ angular.module('neonDemo.directives')
 
                 XDATA.userALE.log({
                     activity: "alter",
-                    action: "send",
+                    action: "query",
                     elementId: "barchart",
                     elementType: "canvas",
                     elementSub: "barchart",
@@ -271,7 +271,6 @@ angular.module('neonDemo.directives')
                 if(connection) {
                     connection.executeQuery(query, function(queryResults) {
                         $scope.$apply(function() {
-                            
                             XDATA.userALE.log({
                                 activity: "alter",
                                 action: "receive",
@@ -337,7 +336,7 @@ angular.module('neonDemo.directives')
                     var relations = datasetService.getRelations($scope.selectedTable.name, [$scope.attrX]);
                     if(filterExists) {
                         XDATA.userALE.log({
-                            activity: "alter",
+                            activity: "select",
                             action: "click",
                             elementId: "barchart",
                             elementType: "canvas",
@@ -349,7 +348,7 @@ angular.module('neonDemo.directives')
                         filterService.replaceFilters($scope.messenger, relations, $scope.filterKeys, $scope.createFilter);
                     } else {
                         XDATA.userALE.log({
-                            activity: "add",
+                            activity: "select",
                             action: "click",
                             elementId: "barchart",
                             elementType: "canvas",
@@ -391,7 +390,7 @@ angular.module('neonDemo.directives')
             $scope.clearFilterSet = function() {
                 if($scope.messenger) {
                     XDATA.userALE.log({
-                        activity: "remove",
+                        activity: "deselect",
                         action: "click",
                         elementId: "barchart",
                         elementType: "button",

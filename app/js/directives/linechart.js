@@ -105,13 +105,16 @@ angular.module('neonDemo.directives')
             };
 
             var onFieldChange = function(field, newVal, oldVal) {
-                XDATA.activityLogger.logUserActivity('LineChart - user changed a field selection', 'define_axes',
-                    XDATA.activityLogger.WF_CREATE,
-                    {
-                        field: field,
-                        to: newVal,
-                        from: oldVal
-                    });
+                XDATA.userALE.log({
+                    activity: "select",
+                    action: "click",
+                    elementId: "linechart",
+                    elementType: "combobox",
+                    elementSub: "linechart-" + field,
+                    elementGroup: "chart_group",
+                    source: "user",
+                    tags: ["options", "linechart"]
+                });
             };
 
             /**
@@ -121,7 +124,16 @@ angular.module('neonDemo.directives')
              * @private
              */
             var onFiltersChanged = function(message) {
-                XDATA.activityLogger.logSystemActivity('LineChart - received neon filter changed event');
+                XDATA.userALE.log({
+                    activity: "alter",
+                    action: "query",
+                    elementId: "linechart",
+                    elementType: "canvas",
+                    elementSub: "linechart",
+                    elementGroup: "chart_group",
+                    source: "system",
+                    tags: ["filter-change", "linechart"]
+                });
                 if(message.addedFilter && message.addedFilter.databaseName === $scope.selectedDatabase && message.addedFilter.tableName === $scope.selectedTable.name) {
                     $scope.queryForData();
                 }
@@ -133,7 +145,16 @@ angular.module('neonDemo.directives')
              * @private
              */
             var onDatasetChanged = function() {
-                XDATA.activityLogger.logSystemActivity('LineChart - received neon-gtd dataset changed event');
+                XDATA.userALE.log({
+                    activity: "alter",
+                    action: "query",
+                    elementId: "linechart",
+                    elementType: "canvas",
+                    elementSub: "linechart",
+                    elementGroup: "chart_group",
+                    source: "system",
+                    tags: ["dataset-change", "linechart"]
+                });
                 $scope.displayActiveDataset(false);
             };
 
@@ -177,7 +198,16 @@ angular.module('neonDemo.directives')
                 var connection = connectionService.getActiveConnection();
                 if(connection) {
                     connection.executeQuery(query, callback, function(response) {
-                        XDATA.activityLogger.logSystemActivity('LineChart - query failed');
+                        XDATA.userALE.log({
+                            activity: "alter",
+                            action: "failed",
+                            elementId: "linechart",
+                            elementType: "canvas",
+                            elementSub: "linechart",
+                            elementGroup: "chart_group",
+                            source: "system",
+                            tags: ["failed", "linechart"]
+                        });
                         drawChart();
                         if(response.responseJSON) {
                             $scope.errorMessage = errorNotificationService.showErrorMessage($element, response.responseJSON.error, response.responseJSON.stackTrace);
@@ -220,7 +250,16 @@ angular.module('neonDemo.directives')
             };
 
             $scope.queryForData = function() {
-                XDATA.activityLogger.logSystemActivity('LineChart - query for data');
+                XDATA.userALE.log({
+                    activity: "alter",
+                    action: "query",
+                    elementId: "linechart",
+                    elementType: "canvas",
+                    elementSub: "linechart",
+                    elementGroup: "chart_group",
+                    source: "system",
+                    tags: ["query", "linechart"]
+                });
                 query(function(results) {
                     var i;
                     var minDate;
@@ -300,23 +339,46 @@ angular.module('neonDemo.directives')
                     }
 
                     // Render chart and series lines
-                    XDATA.activityLogger.logSystemActivity('LineChart - query data received');
+                    XDATA.userALE.log({
+                        activity: "alter",
+                        action: "receive",
+                        elementId: "linechart",
+                        elementType: "canvas",
+                        elementSub: "linechart",
+                        elementGroup: "chart_group",
+                        source: "system",
+                        tags: ["receive", "linechart"]
+                    });
                     $scope.$apply(function() {
                         drawChart();
                         drawLine(data);
                         updateChartSize();
-                        XDATA.activityLogger.logSystemActivity('LineChart - query data rendered');
+                        XDATA.userALE.log({
+                            activity: "alter",
+                            action: "render",
+                            elementId: "linechart",
+                            elementType: "canvas",
+                            elementSub: "linechart",
+                            elementGroup: "chart_group",
+                            source: "system",
+                            tags: ["render", "linechart"]
+                        });
                     });
                 });
             };
 
             $scope.toggleSeries = function(series) {
                 var activity = $scope.chart.toggleSeries(series);
-                XDATA.activityLogger.logUserActivity('LineChart - user toggled series', activity,
-                    XDATA.activityLogger.WF_CREATE,
-                    {
-                        plot: series
-                    });
+                XDATA.userALE.log({
+                    activity: activity,
+                    action: "click",
+                    elementId: "linechart",
+                    elementType: "canvas",
+                    elementSub: "linechart",
+                    elementGroup: "chart_group",
+                    source: "system",
+                    tags: ["render", "linechart", series]
+                });
             };
 
             var zeroPadData = function(data, minDate, maxDate) {
