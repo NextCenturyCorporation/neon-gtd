@@ -111,13 +111,13 @@ charts.TimelineSelectorChart = function(element, configuration) {
             if(brush) {
                 XDATA.userALE.log({
                     activity: "select",
-                    action: "drag",
+                    action: "dragstart",
                     elementId: "timeline-brush",
                     elementType: "canvas",
                     elementSub: "timeline-brush",
                     elementGroup: "chart_group",
                     source: "user",
-                    tags: ["timeline"]
+                    tags: ["timeline", "brush"]
                 });
                 if(handler) {
                     handler(brush.extent());
@@ -258,8 +258,16 @@ charts.TimelineSelectorChart = function(element, configuration) {
 
         if(this.brushHandler) {
             this.brush.on("brushstart", function() {
-                XDATA.activityLogger.logUserActivity('Begin temporal filter selection', 'set_visual_filter_parameters',
-                    XDATA.activityLogger.WF_GETDATA);
+                XDATA.userALE.log({
+                    activity: "select",
+                    action: "dragstart",
+                    elementId: "timeline-brush",
+                    elementType: "canvas",
+                    elementSub: "timeline-brush",
+                    elementGroup: "chart_group",
+                    source: "user",
+                    tags: ["timeline", "brush"]
+                });
             });
             this.brush.on("brushend", wrapBrushHandler(this.brush, this.brushHandler));
         }

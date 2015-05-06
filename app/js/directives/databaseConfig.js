@@ -67,11 +67,15 @@ angular.module('neonDemo.directives')
             };
 
             $scope.connectToDataServer = function() {
-                XDATA.activityLogger.logUserActivity('User selected new datastore',
-                    'connect', XDATA.activityLogger.WF_GETDATA, {
-                        datastore: $scope.datastoreSelect,
-                        hostname: $scope.hostnameInput
-                    });
+                XDATA.userALE.log({
+                    activity: "select",
+                    action: "click",
+                    elementId: "dataset-selector",
+                    elementType: "button",
+                    elementGroup: "top",
+                    source: "user",
+                    tags: ["dataset", $scope.datastoreSelect]
+                });
 
                 $scope.showDbTable = true;
 
@@ -102,10 +106,15 @@ angular.module('neonDemo.directives')
             };
 
             $scope.connectToPreset = function(server) {
-                XDATA.activityLogger.logUserActivity('User selected preset dataset',
-                    'connect', XDATA.activityLogger.WF_GETDATA, {
-                        preset: server.name
-                    });
+                XDATA.userALE.log({
+                    activity: "select",
+                    action: "click",
+                    elementId: "dataset-menu",
+                    elementType: "button",
+                    elementGroup: "top",
+                    source: "user",
+                    tags: ["dataset", server.name, "connect"]
+                });
 
                 // Change name of active connection.
                 $scope.activeServer = server.name;
@@ -132,10 +141,15 @@ angular.module('neonDemo.directives')
             };
 
             $scope.selectDatabase = function(updateFieldsCallback) {
-                XDATA.activityLogger.logUserActivity('User selected new database',
-                    'connect', XDATA.activityLogger.WF_GETDATA, {
-                        database: $scope.selectedDB
-                    });
+                XDATA.userALE.log({
+                    activity: "select",
+                    action: "click",
+                    elementId: "database-selector",
+                    elementType: "combobox",
+                    elementGroup: "top",
+                    source: "user",
+                    tags: ["dataset", $scope.selectedDB, "database"]
+                });
 
                 if($scope.selectedDB) {
                     var connection = connectionService.getActiveConnection();
@@ -185,10 +199,15 @@ angular.module('neonDemo.directives')
             };
 
             $scope.selectTable = function() {
-                XDATA.activityLogger.logUserActivity('User selected new table',
-                    'connect', XDATA.activityLogger.WF_GETDATA, {
-                        table: $scope.selectedTable
-                    });
+                XDATA.userALE.log({
+                    activity: "select",
+                    action: "click",
+                    elementId: "table-selector",
+                    elementType: "combobox",
+                    elementGroup: "top",
+                    source: "user",
+                    tags: ["dataset", $scope.selectedTable, "table"]
+                });
 
                 $scope.tableFields = datasetService.getDatabaseFields($scope.selectedTable);
                 // If the table does not exist in the dataset configuration, use the locally stored field names for the table.
@@ -199,13 +218,27 @@ angular.module('neonDemo.directives')
             };
 
             $scope.selectField = function() {
-                XDATA.activityLogger.logUserActivity('User mapped a field',
-                    'connect', XDATA.activityLogger.WF_GETDATA);
+                XDATA.userALE.log({
+                    activity: "select",
+                    action: "click",
+                    elementId: "field-selector",
+                    elementType: "combobox",
+                    elementGroup: "top",
+                    source: "user",
+                    tags: ["dataset", "field", "mapping"]
+                });
             };
 
             $scope.openedCustom = function() {
-                XDATA.activityLogger.logUserActivity('User opened custom connection dialog',
-                    'connect', XDATA.activityLogger.WF_GETDATA);
+                XDATA.userALE.log({
+                    activity: "open",
+                    action: "click",
+                    elementId: "custom-connection",
+                    elementType: "button",
+                    elementGroup: "top",
+                    source: "user",
+                    tags: ["custom", "dataset", "dialog"]
+                });
             };
 
             var populateTableDropdown = function(tables) {
@@ -219,10 +252,15 @@ angular.module('neonDemo.directives')
                         hostname: $scope.hostnameInput,
                         database: $scope.selectedDB
                     });
-                    XDATA.activityLogger.logSystemActivity('Dataset Changed', {
-                        datastore: $scope.datastoreSelect,
-                        hostname: $scope.hostnameInput,
-                        database: $scope.selectedDB
+
+                    XDATA.userALE.log({
+                        activity: "select",
+                        action: "show",
+                        elementId: "dataset-selector",
+                        elementType: "workspace",
+                        elementGroup: "top",
+                        source: "system",
+                        tags: ["connect", "dataset"]
                     });
                 });
             };
@@ -272,13 +310,15 @@ angular.module('neonDemo.directives')
                     }
                 }
 
-                XDATA.activityLogger.logUserActivity('User requested new dataset',
-                    'connect', XDATA.activityLogger.WF_GETDATA, {
-                        datastore: $scope.datastoreSelect,
-                        hostname: $scope.hostnameInput,
-                        database: $scope.selectedDB,
-                        table: $scope.selectedTable
-                    });
+                XDATA.userALE.log({
+                    activity: "close",
+                    action: "click",
+                    elementId: "custom-connect-button",
+                    elementType: "button",
+                    elementGroup: "top",
+                    source: "user",
+                    tags: ["custom", "dataset", "connect"]
+                });
 
                 $scope.publishDatasetChanged();
             };

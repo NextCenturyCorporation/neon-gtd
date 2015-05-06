@@ -166,11 +166,16 @@ angular.module('neonDemo.directives')
                 // Switch bucketizers when the granularity is changed.
                 $scope.$watch('granularity', function(newVal, oldVal) {
                     if(newVal && newVal !== oldVal) {
-                        XDATA.activityLogger.logUserActivity('TimelineSelector - Change timeline resolution', 'define_axes',
-                            XDATA.activityLogger.WF_CREATE,
-                            {
-                                resolution: newVal
-                            });
+                        XDATA.userALE.log({
+                            activity: "alter",
+                            action: "click",
+                            elementId: "timeline-" + newval,
+                            elementType: "button",
+                            elementSub: "timeline-" + newVal,
+                            elementGroup: "chart_group",
+                            source: "user",
+                            tags: ["timeline", "granularity", newVal]
+                        });
                         $scope.startDateForDisplay = undefined;
                         $scope.endDateForDisplay = undefined;
                         $scope.setGranularity(newVal);
@@ -195,8 +200,16 @@ angular.module('neonDemo.directives')
                 $scope.$watch('brush', function(newVal) {
                     // If we have a new value and a messenger is ready, set the new filter.
                     if(newVal && $scope.messenger && connectionService.getActiveConnection()) {
-                        XDATA.activityLogger.logUserActivity('TimelineSelector - Create/Replace temporal filter', 'execute_visual_filter',
-                        XDATA.activityLogger.WF_GETDATA);
+                        XDATA.userALE.log({
+                            activity: "select",
+                            action: "click",
+                            elementId: "timeline-range",
+                            elementType: "canvas",
+                            elementSub: "date-range",
+                            elementGroup: "chart_group",
+                            source: "user",
+                            tags: ["timeline", "date-range"]
+                        });
 
                         // if a single spot was clicked, just reset the timeline - An alternative would be to expand to the minimum width
                         if(undefined === newVal || 2 > newVal.length || newVal[0].getTime() === newVal[1].getTime()) {
@@ -214,8 +227,6 @@ angular.module('neonDemo.directives')
                             $scope.startExtent = newVal[0];
                             $scope.endExtent = newVal[1];
                         }
-
-                        XDATA.activityLogger.logSystemActivity('TimelineSelector - Create/Replace neon filter');
 
                         var relations = datasetService.getRelations($scope.selectedTable.name, [$scope.dateField]);
 
@@ -272,7 +283,16 @@ angular.module('neonDemo.directives')
              * @private
              */
             var onFiltersChanged = function(message) {
-                XDATA.activityLogger.logSystemActivity('TimelineSelector - received neon filter changed event');
+                XDATA.userALE.log({
+                    activity: "alter",
+                    action: "query",
+                    elementId: "timeline",
+                    elementType: "canvas",
+                    elementSub: "timeline",
+                    elementGroup: "chart_group",
+                    source: "system",
+                    tags: ["filter-change", "timeline"]
+                });
                 if(message.addedFilter && message.addedFilter.databaseName === $scope.databaseName && message.addedFilter.tableName === $scope.selectedTable.name) {
                     $scope.queryForChartData();
                 }
@@ -284,7 +304,16 @@ angular.module('neonDemo.directives')
              * @private
              */
             var onDatasetChanged = function() {
-                XDATA.activityLogger.logSystemActivity('TimelineSelector - received neon-gtd dataset changed event');
+                XDATA.userALE.log({
+                    activity: "alter",
+                    action: "query",
+                    elementId: "timeline",
+                    elementType: "canvas",
+                    elementSub: "timeline",
+                    elementGroup: "chart_group",
+                    source: "system",
+                    tags: ["dataset-change", "timeline"]
+                });
                 $scope.displayActiveDataset();
             };
 
@@ -341,16 +370,43 @@ angular.module('neonDemo.directives')
                 query.sortBy('date', neon.query.ASCENDING);
                 query.ignoreFilters([$scope.filterKeys[$scope.selectedTable.name]]);
 
-                XDATA.activityLogger.logSystemActivity('TimelineSelector - query for data');
+                XDATA.userALE.log({
+                    activity: "alter",
+                    action: "query",
+                    elementId: "timeline",
+                    elementType: "canvas",
+                    elementSub: "timeline",
+                    elementGroup: "chart_group",
+                    source: "system",
+                    tags: ["query", "timeline", "data"]
+                });
                 var connection = connectionService.getActiveConnection();
                 if(connection) {
                     connection.executeQuery(query, function(queryResults) {
                         $scope.$apply(function() {
                             $scope.updateChartData(queryResults);
-                            XDATA.activityLogger.logSystemActivity('TimelineSelector - data received');
+                            XDATA.userALE.log({
+                                activity: "alter",
+                                action: "receive",
+                                elementId: "timeline",
+                                elementType: "canvas",
+                                elementSub: "timeline",
+                                elementGroup: "chart_group",
+                                source: "system",
+                                tags: ["receive", "timeline", "data"]
+                            });
                         });
                     }, function(response) {
-                        XDATA.activityLogger.logSystemActivity('TimelineSelector - data requested failed');
+                        XDATA.userALE.log({
+                            activity: "alter",
+                            action: "failed",
+                            elementId: "timeline",
+                            elementType: "canvas",
+                            elementSub: "timeline",
+                            elementGroup: "chart_group",
+                            source: "system",
+                            tags: ["failed", "timeline", "data"]
+                        });
                         // TODO:  Determine how to clear the chart without causing errors.
                         // $scope.updateChartData({ data: [] });
                         if(response.responseJSON) {
@@ -472,19 +528,46 @@ angular.module('neonDemo.directives')
                     .selectFrom($scope.databaseName, $scope.selectedTable.name).ignoreFilters()
                     .where($scope.dateField, '!=', null).sortBy($scope.dateField, neon.query.ASCENDING).limit(1);
 
-                XDATA.activityLogger.logSystemActivity('TimelineSelector - query for minimum date');
+                XDATA.userALE.log({
+                    activity: "alter",
+                    action: "query",
+                    elementId: "timeline",
+                    elementType: "canvas",
+                    elementSub: "timeline",
+                    elementGroup: "chart_group",
+                    source: "system",
+                    tags: ["query", "timeline", "min-date"]
+                });
                 var connection = connectionService.getActiveConnection();
                 if(connection) {
                     connection.executeQuery(minDateQuery, function(queryResults) {
                         if(queryResults.data.length > 0) {
-                            XDATA.activityLogger.logSystemActivity('TimelineSelector - minimum date received');
+                            XDATA.userALE.log({
+                                activity: "alter",
+                                action: "query",
+                                elementId: "timeline",
+                                elementType: "canvas",
+                                elementSub: "timeline",
+                                elementGroup: "chart_group",
+                                source: "system",
+                                tags: ["receive", "timeline", "min-date"]
+                            });
                             $scope.referenceStartDate = new Date(queryResults.data[0][$scope.dateField]);
                             if($scope.referenceEndDate !== undefined) {
                                 $scope.$apply(success);
                             }
                         }
                     }, function(response) {
-                        XDATA.activityLogger.logSystemActivity('TimelineSelector - error in query for minimum date');
+                        XDATA.userALE.log({
+                            activity: "alter",
+                            action: "query",
+                            elementId: "timeline",
+                            elementType: "canvas",
+                            elementSub: "timeline",
+                            elementGroup: "chart_group",
+                            source: "system",
+                            tags: ["failed", "timeline", "min-date"]
+                        });
                         $scope.referenceStartDate = undefined;
                         // TODO:  Determine how to clear the chart without causing errors.
                         // $scope.updateChartData({ data: [] });
@@ -498,18 +581,45 @@ angular.module('neonDemo.directives')
                     .selectFrom($scope.databaseName, $scope.selectedTable.name).ignoreFilters()
                     .where($scope.dateField, '!=', null).sortBy($scope.dateField, neon.query.DESCENDING).limit(1);
 
-                XDATA.activityLogger.logSystemActivity('TimelineSelector - query for maximum date');
+                XDATA.userALE.log({
+                    activity: "alter",
+                    action: "query",
+                    elementId: "timeline",
+                    elementType: "canvas",
+                    elementSub: "timeline",
+                    elementGroup: "chart_group",
+                    source: "system",
+                    tags: ["query", "timeline", "max-date"]
+                });
                 if(connection) {
                     connection.executeQuery(maxDateQuery, function(queryResults) {
                         if(queryResults.data.length > 0) {
-                            XDATA.activityLogger.logSystemActivity('TimelineSelector - maximum date received');
+                            XDATA.userALE.log({
+                                activity: "alter",
+                                action: "query",
+                                elementId: "timeline",
+                                elementType: "canvas",
+                                elementSub: "timeline",
+                                elementGroup: "chart_group",
+                                source: "system",
+                                tags: ["received", "timeline", "max-date"]
+                            });
                             $scope.referenceEndDate = new Date(queryResults.data[0][$scope.dateField]);
                             if($scope.referenceStartDate !== undefined) {
                                 $scope.$apply(success);
                             }
                         }
                     }, function(response) {
-                        XDATA.activityLogger.logSystemActivity('TimelineSelector - error in query for maximum date');
+                        XDATA.userALE.log({
+                            activity: "alter",
+                            action: "query",
+                            elementId: "timeline",
+                            elementType: "canvas",
+                            elementSub: "timeline",
+                            elementGroup: "chart_group",
+                            source: "system",
+                            tags: ["failed", "timeline", "max-date"]
+                        });
                         $scope.referenceEndDate = undefined;
                         // TODO:  Determine how to clear the chart without causing errors.
                         // $scope.updateChartData({ data: [] });
@@ -718,10 +828,15 @@ angular.module('neonDemo.directives')
              * @method clearBrush
              */
             $scope.clearBrush = function() {
-                XDATA.activityLogger.logUserActivity('TimelineSelector - Clear temporal filter', 'remove_visual_filter',
-                    XDATA.activityLogger.WF_GETDATA);
-                XDATA.activityLogger.logSystemActivity('TimelineSelector - Removing Neon filter');
-
+                XDATA.userALE.log({
+                    activity: "deselect",
+                    action: "click",
+                    elementId: "timeline-clear-range",
+                    elementType: "button",
+                    elementGroup: "chart_group",
+                    source: "user",
+                    tags: ["filter", "date-range"]
+                });
                 $scope.brush = [];
                 filterService.removeFilters($scope.messenger, $scope.filterKeys);
             };
