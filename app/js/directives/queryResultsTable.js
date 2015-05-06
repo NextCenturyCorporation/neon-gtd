@@ -380,6 +380,18 @@ angular.module('neonDemo.directives')
                 return query;
             };
 
+            $scope.handleAscButtonClick = function() {
+                if($scope.sortDirection === $scope.DESCENDING) {
+                    $scope.refreshData();
+                }
+            };
+
+            $scope.handleDescButtonClick = function() {
+                if($scope.sortDirection === $scope.ASCENDING) {
+                    $scope.refreshData();
+                }
+            };
+
             // Wait for neon to be ready, the create our messenger and intialize the view and data.
             neon.ready(function() {
                 $scope.initialize();

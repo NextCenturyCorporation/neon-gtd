@@ -65,6 +65,7 @@ angular.module('neonDemo.directives')
             $scope.showFilter = false;
             $scope.dataBounds = undefined;
             $scope.limit = 1000;  // Max points to pull into the map.
+            $scope.previousLimit = $scope.limit;
             $scope.dataLength = 0;
             $scope.resizeRedrawDelay = 1500; // Time in ms to wait after a resize event flood to try redrawing the map.
             $scope.errorMessage = undefined;
@@ -216,16 +217,6 @@ angular.module('neonDemo.directives')
                             from: oldVal,
                             to: newVal
                         });
-                });
-
-                $scope.$watch('limit', function(newVal, oldVal) {
-                    XDATA.activityLogger.logUserActivity('HeatMap - user change number of displayed points', 'set_map_layer_properties',
-                        XDATA.activityLogger.WF_GETDATA,
-                        {
-                            from: oldVal,
-                            to: newVal
-                        });
-                    $scope.queryForMapData();
                 });
 
                 // Setup a basic resize handler to redraw the map and calculate its size if our div changes.
@@ -648,6 +639,17 @@ angular.module('neonDemo.directives')
              */
             $scope.toggleOptionsDisplay = function() {
                 $scope.optionsDisplayed = !$scope.optionsDisplayed;
+            };
+
+            $scope.handleLimitRefreshClick = function() {
+                XDATA.activityLogger.logUserActivity('HeatMap - user change number of displayed points', 'set_map_layer_properties',
+                    XDATA.activityLogger.WF_GETDATA,
+                    {
+                        from: $scope.previousLimit,
+                        to: $scope.limit
+                    });
+                $scope.previousLimit = $scope.limit;
+                $scope.queryForMapData();
             };
 
             // Wait for neon to be ready, the create our messenger and intialize the view and data.

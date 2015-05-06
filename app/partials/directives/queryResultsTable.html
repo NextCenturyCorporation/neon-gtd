@@ -32,17 +32,16 @@
 
             <div class="form-input-group">
                 <label>Sort By</label>
-
                 <div class="input-group">
-                    <select class="form-control" ng-model="sortByField" ng-disabled="!(fields.length > 0)" ng-options="field for field in fields">
+                    <select class="form-control" ng-model="sortByField" ng-disabled="!(fields.length > 0)" ng-options="field for field in fields" ng-change="refreshData()">
                     </select>
 
                     <div class="input-group-btn">
                         <label class="btn btn-default active" ng-class="{true: 'active', false: ''}[sortDirection === ASCENDING]">
-                            <input type="radio" ng-model="sortDirection" style="display:none" ng-value="ASCENDING"> ASC
+                            <input type="radio" ng-model="sortDirection" style="display:none" ng-value="ASCENDING" ng-click="handleAscButtonClick()"> ASC
                         </label>
                         <label class="btn btn-default" ng-class="{true: 'active', false: ''}[sortDirection === DESCENDING]">
-                            <input type="radio" ng-model="sortDirection" style="display:none" ng-value="DESCENDING"> DESC
+                            <input type="radio" ng-model="sortDirection" style="display:none" ng-value="DESCENDING" ng-click="handleDescButtonClick()"> DESC
                         </label>
                     </div>
                 </div>
