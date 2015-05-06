@@ -30,38 +30,43 @@
     width: 100%;
     z-index: 1050;
     opacity: 0;
-}
 
-.visualization-drag-handle:hover, .visualization-drag-handle:focus {
-    background-color: #dddddd;
-    opacity: 0.75;
-}
+    &:hover {
+        background-color: #dddddd;
+        opacity: 0.75;
 
-.visualization-drag-handle button {
-    line-height: 16px;
-    margin: 4px 0px 4px 5px;
-    padding: 0px;
-    height: 16px;
-    width: 16px;
-    z-index: 1065;
-}
+        .glyphicon-remove {
+            opacity: 1;
+            color: #f00;
+        }
 
-.visualization-drag-handle:hover .glyphicon-remove {
-    opacity: 1;
-    color: #f00;
-}
+        .glyphicon-resize-full, .glyphicon-resize-small {
+            opacity: 1;
+            color: #39b54a;
+        }
+    }
 
-.visualization-drag-handle:hover .glyphicon-resize-full, .visualization-drag-handle:hover .glyphicon-resize-small {
-    opacity: 1;
-    color: #39b54a;
+    &:focus {
+        background-color: #dddddd;
+        opacity: 0.75;
+    }
+
+    button {
+        line-height: 16px;
+        margin: 4px 0px 4px 5px;
+        padding: 0px;
+        height: 16px;
+        width: 16px;
+        z-index: 1065;
+    }
 }
 
 .visualization-widget-mobile {
     min-height:200px;
     margin: 0px;
     padding: 0px;
-}
 
-.visualization-widget-mobile .visualization-drag-handle {
-    display:none;
+    .visualization-drag-handle {
+        display:none;
+    }
 }
