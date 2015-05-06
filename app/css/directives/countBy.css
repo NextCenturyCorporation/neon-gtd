@@ -80,6 +80,7 @@
 .count-by-grid .slick-header .slick-header-column{
     color: #eeeeee;
     background: #39b54a;
+    cursor: pointer;
 }
 .count-by-grid .slick-header .slick-header-column.ui-state-hover{
     color: #39b54a;
