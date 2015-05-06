@@ -9,7 +9,7 @@
                 <div>
                     <ul>
                         <li ng-repeat="link in links">
-                        <form action="{{link.url}}" method="get" target="{{link.tab}}">
+                        <form action="{{link.url}}" method="get" target="{{link.name}}-{{link.tab}}">
                             <input ng-repeat="arg in link.args" type="hidden" name="{{arg.name}}" value="{{arg.value}}">
                             <button type="submit" tabindex="0" title="{{link.name}}">
                                 <img alt="{{link.name}}" class="img-thumbnail center-block" ng-src="{{link.image}}">

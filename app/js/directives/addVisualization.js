@@ -21,7 +21,8 @@
  * elements for them to an array of configuration items.  The array of active items
  * can be provide via a two-way binding.
  *
- * @class neonDemo.directives.addVisualization
+ * @namespace neonDemo.directives
+ * @class addVisualization
  * @constructor
  */
 angular.module('neonDemo.directives')

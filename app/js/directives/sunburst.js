@@ -23,7 +23,8 @@
  * neon system events (e.g., data tables changed).  On these events, it requeries the active
  * connection for data and updates applies the change to its scope.  The contained
  * sunburst will update as a result.
- * @class neonDemo.directives.sunburst
+ * @namespace neonDemo.directives
+ * @class sunburst
  * @constructor
  */
 angular.module('neonDemo.directives')

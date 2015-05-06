@@ -16,55 +16,60 @@
  */
 
 angular.module('neonDemo.directives')
-.directive('linksPopup', ['$sce', function($sce) {
+.directive('linksPopup', ['$sce', 'popups', function($sce, popups) {
     return {
         templateUrl: 'partials/directives/linksPopup.html',
         restrict: 'EA',
         scope: {
-            linksArray: "=",
-            linksIndex: "="
         },
         link: function($scope, $element) {
             $scope.SERVER = "SERVER";
             $scope.FIELD = "FIELD";
             $scope.VALUE = "VALUE";
 
-            $scope.cleanLinksArray = [];
+            // Map that stores the array of cleaned link data for all the visualizations by a unique name.
+            $scope.cleanData = {};
+
+            // The links currently displayed in the popup.
             $scope.links = [];
 
-            $scope.$watch("linksArray", function(newValue, oldValue) {
-                var cleanLinksArray = [];
-                if($scope.linksArray && $scope.linksArray.length) {
-                    for(var i = 0; i < $scope.linksArray.length; ++i) {
-                        var cleanLinks = [];
-                        var links = $scope.linksArray[i];
-                        for(var j = 0; j < links.length; ++j) {
-                            var link = links[j];
-                            link.tab = link.data.query;
-                            link.url = link.url.replace($scope.SERVER, link.data.server).replace($scope.VALUE, link.data.value);
-                            // Notify angular that this is a trusted URL so angular will inject it into a form's action.
-                            link.url = $sce.trustAsResourceUrl(link.url);
-                            for(var k = 0; k < link.args.length; ++k) {
-                                if(link.data.field) {
-                                    link.args[k].value = link.args[k].value.replace($scope.FIELD, link.data.field);
-                                }
-                                if(link.data.value) {
-                                    link.args[k].value = link.args[k].value.replace($scope.VALUE, link.data.value);
-                                }
+            popups.links.setData = function(source, data) {
+                var cleanData = [];
+                for(var i = 0; i < data.length; ++i) {
+                    var cleanLinks = [];
+                    var links = data[i];
+                    for(var j = 0; j < links.length; ++j) {
+                        var link = links[j];
+                        link.tab = link.data.query;
+                        link.url = link.url.replace($scope.SERVER, link.data.server).replace($scope.VALUE, link.data.value);
+                        // Notify angular that this is a trusted URL so angular will inject it into a form's action.
+                        link.url = $sce.trustAsResourceUrl(link.url);
+                        for(var k = 0; k < link.args.length; ++k) {
+                            if(link.data.field) {
+                                link.args[k].value = link.args[k].value.replace($scope.FIELD, link.data.field);
                             }
-                            cleanLinks.push(link);
+                            if(link.data.value) {
+                                link.args[k].value = link.args[k].value.replace($scope.VALUE, link.data.value);
+                            }
                         }
-                        cleanLinksArray.push(cleanLinks);
+                        cleanLinks.push(link);
                     }
+                    cleanData.push(cleanLinks);
                 }
-                $scope.cleanLinksArray = cleanLinksArray;
-            });
+                $scope.cleanData[source] = cleanData;
+            };
 
-            $scope.$watch("linksIndex", function() {
-                if($scope.cleanLinksArray && $scope.cleanLinksArray.length && $scope.linksIndex >= 0) {
-                    $scope.links = $scope.cleanLinksArray[$scope.linksIndex];
+            popups.links.setView = function(source, index) {
+                if($scope.cleanData[source] && $scope.cleanData[source].length && index >= 0) {
+                    $scope.links = $scope.cleanData[source][index];
                 }
-            });
+            };
+
+            popups.links.deleteData = function(source) {
+                if($scope.cleanData[source]) {
+                    delete $scope.cleanData[source];
+                }
+            };
         }
     };
 }]);

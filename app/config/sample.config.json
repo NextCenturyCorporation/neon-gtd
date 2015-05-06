@@ -54,9 +54,6 @@
         "sizeX": 2,
         "sizeY": 2,
         "type": "tag-cloud",
-        "bindings": {
-            "tag-field": "'hashtags'"
-        },
         "icon": "img/visualizations/TagCloud64.png"
     }, {
         "name": "Count By",

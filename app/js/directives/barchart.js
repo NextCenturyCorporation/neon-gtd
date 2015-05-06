@@ -23,7 +23,8 @@
  * neon system events (e.g., data tables changed).  On these events, it requeries the active
  * connection for data and updates applies the change to its scope.  The contained
  * barchart will update as a result.
- * @class neonDemo.directives.barchart
+ * @namespace neonDemo.directives
+ * @class barchart
  * @constructor
  */
 angular.module('neonDemo.directives')
@@ -31,6 +32,11 @@ angular.module('neonDemo.directives')
     return {
         templateUrl: 'partials/directives/barchart.html',
         restrict: 'EA',
+        scope: {
+            bindXAxisField: '=',
+            bindYAxisField: '=',
+            bindAggregationField: '='
+        },
         link: function($scope, $element) {
             $scope.uniqueChartOptions = 'chart-options-' + uuid();
             var chartOptions = $($element).find('.chart-options');
@@ -43,7 +49,7 @@ angular.module('neonDemo.directives')
             $scope.selectedTable = {
                 name: ""
             };
-            $scope.barType = $scope.barType || 'count';
+            $scope.barType = $scope.bindAggregationField || 'count';
             $scope.fields = [];
             $scope.updatingChart = false;
             $scope.chart = undefined;
@@ -151,8 +157,8 @@ angular.module('neonDemo.directives')
             };
 
             $scope.updateFieldsAndQueryForData = function() {
-                $scope.attrX = datasetService.getMapping($scope.selectedTable.name, "bar_x_axis") || "";
-                $scope.attrY = datasetService.getMapping($scope.selectedTable.name, "y_axis") || "";
+                $scope.attrX = $scope.bindXAxisField || datasetService.getMapping($scope.selectedTable.name, "bar_x_axis") || "";
+                $scope.attrY = $scope.bindYAxisField || datasetService.getMapping($scope.selectedTable.name, "y_axis") || "";
                 $scope.fields = datasetService.getDatabaseFields($scope.selectedTable.name);
                 $scope.fields.sort();
                 if($scope.filterSet) {

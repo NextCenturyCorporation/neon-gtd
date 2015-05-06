@@ -23,7 +23,8 @@
  *    &lt;heat-map&gt;&lt;/heat-map&gt;<br>
  *    &lt;div heat-map&gt;&lt;/div&gt;
  *
- * @class neonDemo.directives.heatMap
+ * @namespace neonDemo.directives
+ * @class heatMap
  * @constructor
  */
 angular.module('neonDemo.directives')
@@ -32,6 +33,10 @@ angular.module('neonDemo.directives')
         templateUrl: 'partials/directives/heatMap.html',
         restrict: 'EA',
         scope: {
+            bindLatitudeField: '=',
+            bindLongitudeField: '=',
+            bindColorField: '=',
+            bindSizeField: '=',
             // map of categories to colors used for the legend
             colorMappings: '&'
         },
@@ -60,6 +65,7 @@ angular.module('neonDemo.directives')
             $scope.showFilter = false;
             $scope.dataBounds = undefined;
             $scope.limit = 20000;  // Max points to pull into the map.
+            $scope.previousLimit = $scope.limit;
             $scope.dataLength = 0;
             $scope.resizeRedrawDelay = 1500; // Time in ms to wait after a resize event flood to try redrawing the map.
             $scope.errorMessage = undefined;
@@ -211,16 +217,6 @@ angular.module('neonDemo.directives')
                             from: oldVal,
                             to: newVal
                         });
-                });
-
-                $scope.$watch('limit', function(newVal, oldVal) {
-                    XDATA.activityLogger.logUserActivity('HeatMap - user change number of displayed points', 'set_map_layer_properties',
-                        XDATA.activityLogger.WF_GETDATA,
-                        {
-                            from: oldVal,
-                            to: newVal
-                        });
-                    $scope.queryForMapData();
                 });
 
                 // Setup a basic resize handler to redraw the map and calculate its size if our div changes.
@@ -381,10 +377,10 @@ angular.module('neonDemo.directives')
             $scope.updateFieldsAndQueryForMapData = function() {
                 $scope.fields = datasetService.getDatabaseFields($scope.selectedTable.name);
                 $scope.fields.sort();
-                $scope.latitudeField = datasetService.getMapping($scope.selectedTable.name, "latitude") || "";
-                $scope.longitudeField = datasetService.getMapping($scope.selectedTable.name, "longitude") || "";
-                $scope.colorByField = datasetService.getMapping($scope.selectedTable.name, "color_by") || "";
-                $scope.sizeByField = datasetService.getMapping($scope.selectedTable.name, "size_by") || "";
+                $scope.latitudeField = $scope.bindLatitudeField || datasetService.getMapping($scope.selectedTable.name, "latitude") || "";
+                $scope.longitudeField = $scope.bindLongitudeField || datasetService.getMapping($scope.selectedTable.name, "longitude") || "";
+                $scope.colorByField = $scope.bindColorField || datasetService.getMapping($scope.selectedTable.name, "color_by") || "";
+                $scope.sizeByField = $scope.bindSizeField || datasetService.getMapping($scope.selectedTable.name, "size_by") || "";
                 XDATA.activityLogger.logSystemActivity('HeatMap - field selectors updated');
 
                 $timeout(function() {
@@ -659,6 +655,17 @@ angular.module('neonDemo.directives')
              */
             $scope.toggleOptionsDisplay = function() {
                 $scope.optionsDisplayed = !$scope.optionsDisplayed;
+            };
+
+            $scope.handleLimitRefreshClick = function() {
+                XDATA.activityLogger.logUserActivity('HeatMap - user change number of displayed points', 'set_map_layer_properties',
+                    XDATA.activityLogger.WF_GETDATA,
+                    {
+                        from: $scope.previousLimit,
+                        to: $scope.limit
+                    });
+                $scope.previousLimit = $scope.limit;
+                $scope.queryForMapData();
             };
 
             // Wait for neon to be ready, the create our messenger and intialize the view and data.

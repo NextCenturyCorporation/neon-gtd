@@ -56,7 +56,7 @@ var XDATA = {};
 
 angular.element(document).ready(function() {
     var $http = angular.injector(['ng']).get('$http');
-    $http.get('./config/twitter.config.json').success(function(config) {
+    $http.get('./config/config.json').success(function(config) {
         var xdataConfig = (config.xdata || {
             echoToConsole: false,
             enableLogging: false,
@@ -78,6 +78,14 @@ angular.element(document).ready(function() {
             ocpu.useAlerts = opencpuConfig.useAlerts;
             ocpu.seturl(opencpuConfig.url);
         }
+
+        neonDemo.value('popups', {
+            links: {
+                setData: function() {},
+                setView: function() {},
+                deleteData: function() {}
+            }
+        });
 
         var digConfig = (config.dig || {
             enabled: false

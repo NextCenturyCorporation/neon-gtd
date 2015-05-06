@@ -17,12 +17,13 @@
  */
 
 angular.module('neonDemo.directives')
-.directive('countBy', ['external', 'ConnectionService', 'DatasetService', 'ErrorNotificationService', 'FilterService',
-    function(external, connectionService, datasetService, errorNotificationService, filterService) {
+.directive('countBy', ['external', 'popups', 'ConnectionService', 'DatasetService', 'ErrorNotificationService', 'FilterService',
+    function(external, popups, connectionService, datasetService, errorNotificationService, filterService) {
     return {
         templateUrl: 'partials/directives/countby.html',
         restrict: 'EA',
         scope: {
+            bindCountField: '='
         },
         link: function($scope, el) {
             $scope.uniqueChartOptions = 'chart-options-' + uuid();
@@ -43,8 +44,6 @@ angular.module('neonDemo.directives')
             $scope.countField = "";
             $scope.count = 0;
             $scope.fields = [];
-            $scope.links = [];
-            $scope.linksIndex = -1;
             $scope.tableId = 'countby-' + uuid();
             $scope.filterKeys = {};
             $scope.filterSet = undefined;
@@ -87,6 +86,7 @@ angular.module('neonDemo.directives')
                 });
 
                 $scope.$on('$destroy', function() {
+                    popups.links.deleteData($scope.tableId);
                     $scope.messenger.removeEvents();
                     if($scope.filterSet) {
                         filterService.removeFilters($scope.messenger, $scope.filterKeys);
@@ -209,7 +209,7 @@ angular.module('neonDemo.directives')
             $scope.updateFieldsAndQueryForData = function() {
                 $scope.fields = datasetService.getDatabaseFields($scope.selectedTable.name);
                 $scope.fields.sort();
-                $scope.countField = datasetService.getMapping($scope.selectedTable.name, "count_by") || "";
+                $scope.countField = $scope.bindCountField || datasetService.getMapping($scope.selectedTable.name, "count_by") || "";
                 if($scope.filterSet) {
                     $scope.clearFilter();
                 }
@@ -298,13 +298,12 @@ angular.module('neonDemo.directives')
                     tableLinks.push(links);
 
                     row[$scope.EXTERNAL_APP_FIELD_NAME] = "<a data-toggle=\"modal\" data-target=\".links-popup\" data-links-index=\"" + linksIndex +
-                        "\" class=\"collapsed dropdown-toggle primary neon-popup-button\">" +
+                        "\" data-links-source=\"" + $scope.tableId + "\" class=\"collapsed dropdown-toggle primary neon-popup-button\">" +
                         "<span class=\"glyphicon glyphicon-link\"></span></a>";
                 });
 
-                // Links and links index are used by the links popup directive.
-                $scope.links = tableLinks;
-                $scope.linksIndex = -1;
+                // Set the link data for the links popup for this visualization.
+                popups.links.setData($scope.tableId, tableLinks);
 
                 return data;
             };
@@ -432,11 +431,12 @@ angular.module('neonDemo.directives')
             }
 
             // Trigger the links popup using the index stored in the button.
-            $(el).find(".links-popup").on("show.bs.modal", function(event) {
+            $(".links-popup").on("show.bs.modal", function(event) {
                 var button = $(event.relatedTarget);
+                var source = button.data("links-source");
                 var index = button.data("links-index");
                 $scope.$apply(function() {
-                    $scope.linksIndex = index;
+                    popups.links.setView(source, index);
                 });
             });
         };
