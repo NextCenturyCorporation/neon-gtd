@@ -79,10 +79,22 @@ angular.element(document).ready(function() {
             ocpu.seturl(opencpuConfig.url);
         }
 
+        neonDemo.value('popups', {
+            links: {
+                setData: function() {},
+                setView: function() {},
+                deleteData: function() {}
+            }
+        });
+
         var digConfig = (config.dig || {
             enabled: false
         });
-        neonDemo.constant('DIG', digConfig);
+        var externalAppConfig = {
+            anyEnabled: digConfig.enabled,
+            dig: digConfig
+        };
+        neonDemo.constant('external', externalAppConfig);
 
         var datasets = (config.datasets || []);
         neonDemo.value('datasets', datasets);

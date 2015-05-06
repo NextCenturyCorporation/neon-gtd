@@ -28,8 +28,8 @@
  * @constructor
  */
 angular.module('neonDemo.directives')
-.directive('queryResultsTable', ['DIG', 'ConnectionService', 'DatasetService', 'ErrorNotificationService', '$compile',
-    function(DIG, connectionService, datasetService, errorNotificationService, $compile) {
+.directive('queryResultsTable', ['external', 'popups', 'ConnectionService', 'DatasetService', 'ErrorNotificationService', '$compile',
+    function(external, popups, connectionService, datasetService, errorNotificationService, $compile) {
     return {
         templateUrl: 'partials/directives/queryResultsTable.html',
         restrict: 'EA',
@@ -43,6 +43,10 @@ angular.module('neonDemo.directives')
             chartOptions.toggleClass($scope.uniqueChartOptions);
 
             element.addClass('query-results-directive');
+
+            // Unique field name used for the SlickGrid column containing the URLs for the external apps.
+            // This name should be one that is highly unlikely to be a column name in a real database.
+            $scope.EXTERNAL_APP_FIELD_NAME = "neonExternalApps";
 
             // If this widget was launched as a navbar collapsable then showData will be bound to the collapse toggle.
             // Otherwise show the data automatically on launching the widget.
@@ -139,6 +143,7 @@ angular.module('neonDemo.directives')
                 $scope.messenger.subscribe("dataset_changed", onDatasetChanged);
 
                 $scope.$on('$destroy', function() {
+                    popups.links.deleteData($scope.tableId);
                     $scope.messenger.removeEvents();
                 });
             };
@@ -174,15 +179,15 @@ angular.module('neonDemo.directives')
                 var columns = tables.createColumns(data, $scope.tableNameToDeletedFieldsMap[$scope.selectedTable.name], [$scope.createDeleteColumnButton("")]);
                 columns = tables.addLinkabilityToColumns(columns);
 
-                if(DIG.enabled) {
-                    var digColumn = {
+                if(external.anyEnabled) {
+                    var externalAppColumn = {
                         name: "",
-                        field: "dig",
+                        field: $scope.EXTERNAL_APP_FIELD_NAME,
                         width: "15",
                         cssClass: "centered",
                         ignoreClicks: true
                     };
-                    columns.splice(0, 0, digColumn);
+                    columns.splice(0, 0, externalAppColumn);
                 }
 
                 return columns;
@@ -356,26 +361,70 @@ angular.module('neonDemo.directives')
 
                 $scope.tableOptions = $scope.createOptions(queryResults);
 
-                if(DIG.enabled) {
-                    queryResults = $scope.addDigUrlColumnData(queryResults);
+                if(external.anyEnabled) {
+                    queryResults = $scope.addExternalAppUrlColumnData(queryResults);
                 }
 
                 $scope.table = new tables.Table("#" + $scope.tableId, $scope.tableOptions).draw();
                 $scope.table.refreshLayout();
+
+                // Set the displayed link data for the links popup for the application using the source and index stored in to the triggering button.
+                $(".links-popup").on("show.bs.modal", function(event) {
+                    var button = $(event.relatedTarget);
+                    var source = button.data("links-source");
+                    var index = button.data("links-index");
+                    $scope.$apply(function() {
+                        popups.links.setView(source, index);
+                    });
+                });
                 $scope.table.addOnColumnsReorderedListener($scope.createDeleteColumnButtons);
                 $scope.createDeleteColumnButtons();
             };
 
-            $scope.addDigUrlColumnData = function(data) {
-                data.data.forEach(function(row) {
+            $scope.addExternalAppUrlColumnData = function(data) {
+                var tableLinks = [];
+
+                data.data.forEach(function(row, index) {
                     var rowId = row._id;
                     var query = "id=" + rowId;
-                    var html = "<form action=\"" + DIG.server + "/list\" method=\"get\" target=\"" + query + "\">" +
-                        "<input type=\"hidden\" name=\"id\" value=\"" + rowId + "\">" +
-                        "<button class=\"hidden-button\" type=\"submit\" title=\"" + query + "\">" +
-                        "<span class=\"glyphicon glyphicon-new-window\"></span></button></form>";
-                    row.dig = html;
+
+                    var links = [];
+
+                    if(external.dig.enabled) {
+                        var form = {
+                            name: external.dig.data_table.name,
+                            image: external.dig.data_table.image,
+                            url: external.dig.data_table.url,
+                            args: [],
+                            data: {
+                                server: external.dig.server,
+                                value: rowId,
+                                query: query
+                            }
+                        };
+
+                        for(var i = 0; i < external.dig.data_table.args.length; ++i) {
+                            var arg = external.dig.data_table.args[i];
+                            form.args.push({
+                                name: arg.name,
+                                value: arg.value
+                            });
+                        }
+
+                        links.push(form);
+                    }
+
+                    var linksIndex = tableLinks.length;
+                    tableLinks.push(links);
+
+                    row[$scope.EXTERNAL_APP_FIELD_NAME] = "<a data-toggle=\"modal\" data-target=\".links-popup\" data-links-index=\"" + linksIndex +
+                        "\" data-links-source=\"" + $scope.tableId + "\" class=\"collapsed dropdown-toggle primary neon-popup-button\">" +
+                        "<span class=\"glyphicon glyphicon-link\"></span></a>";
                 });
+
+                // Set the link data for the links popup for this visualization.
+                popups.links.setData($scope.tableId, tableLinks);
+
                 return data;
             };
 
