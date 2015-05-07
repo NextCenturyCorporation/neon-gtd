@@ -74,7 +74,7 @@ angular.module('neonDemo.directives')
 
                 // Log whenever the user toggles the options display.
                 $scope.$watch('optionsDisplayed', function(newVal) {
-                    var activity = (newVal === true) ? 'show_options' : 'hide_options';
+                    var activity = (newVal === true) ? 'show' : 'hide';
                     XDATA.userALE.log({
                         activity: activity,
                         action: "click",

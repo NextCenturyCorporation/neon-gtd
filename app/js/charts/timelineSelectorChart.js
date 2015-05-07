@@ -111,7 +111,7 @@ charts.TimelineSelectorChart = function(element, configuration) {
             if(brush) {
                 XDATA.userALE.log({
                     activity: "select",
-                    action: "dragstart",
+                    action: "dragend",
                     elementId: "timeline-brush",
                     elementType: "canvas",
                     elementSub: "timeline-brush",

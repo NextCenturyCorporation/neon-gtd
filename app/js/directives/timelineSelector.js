@@ -169,7 +169,7 @@ angular.module('neonDemo.directives')
                         XDATA.userALE.log({
                             activity: "alter",
                             action: "click",
-                            elementId: "timeline-" + newval,
+                            elementId: "timeline-" + newVal,
                             elementType: "button",
                             elementSub: "timeline-" + newVal,
                             elementGroup: "chart_group",
@@ -208,7 +208,7 @@ angular.module('neonDemo.directives')
                             elementSub: "date-range",
                             elementGroup: "chart_group",
                             source: "user",
-                            tags: ["timeline", "date-range"]
+                            tags: ["timeline", "date-range", "filter"]
                         });
 
                         // if a single spot was clicked, just reset the timeline - An alternative would be to expand to the minimum width
