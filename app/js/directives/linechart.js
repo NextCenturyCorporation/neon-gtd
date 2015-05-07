@@ -35,8 +35,11 @@ angular.module('neonDemo.directives')
         templateUrl: 'partials/directives/linechart.html',
         restrict: 'EA',
         scope: {
-            colorMappings: '&',
-            chartType: '='
+            bindDateField: '=',
+            bindYAxisField: '=',
+            bindCategoryField: '=',
+            bindAggregationField: '=',
+            colorMappings: '&'
         },
         link: function($scope, $element) {
             $scope.uniqueChartOptions = 'chart-options-' + uuid();
@@ -84,6 +87,12 @@ angular.module('neonDemo.directives')
                         updateChartSize();
                     });
 
+                $scope.$watch('attrX', function(newValue, oldValue) {
+                    onFieldChange('attrX', newValue, oldValue);
+                    if($scope.selectedDatabase && $scope.selectedTable.name) {
+                        $scope.queryForData();
+                    }
+                });
                 $scope.$watch('attrY', function(newValue, oldValue) {
                     onFieldChange('attrY', newValue, oldValue);
                     if($scope.selectedDatabase && $scope.selectedTable.name) {
@@ -240,10 +249,10 @@ angular.module('neonDemo.directives')
             };
 
             $scope.updateFieldsAndQueryForData = function() {
-                $scope.attrX = datasetService.getMapping($scope.selectedTable.name, "date") || "";
-                $scope.attrY = datasetService.getMapping($scope.selectedTable.name, "y_axis") || "";
-                $scope.categoryField = datasetService.getMapping($scope.selectedTable.name, "line_category") || "";
-                $scope.aggregation = 'count';
+                $scope.attrX = $scope.bindDateField || datasetService.getMapping($scope.selectedTable.name, "date") || "";
+                $scope.attrY = $scope.bindYAxisField || datasetService.getMapping($scope.selectedTable.name, "y_axis") || "";
+                $scope.categoryField = $scope.bindCategoryField || datasetService.getMapping($scope.selectedTable.name, "line_category") || "";
+                $scope.aggregation = $scope.bindAggregationField || 'count';
                 $scope.fields = datasetService.getDatabaseFields($scope.selectedTable.name);
                 $scope.fields.sort();
                 $scope.queryForData();

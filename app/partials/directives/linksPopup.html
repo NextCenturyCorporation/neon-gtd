@@ -1,0 +1,28 @@
+<div class="modal fade neon-popup links-popup" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+                <h4 class="modal-title" id="customConnectionModalLabel">Open External Applications</h4>
+            </div>
+            <div class="modal-body">
+                <div>
+                    <ul>
+                        <li ng-repeat="link in links">
+                        <form action="{{link.url}}" method="get" target="{{link.tab}}">
+                            <input ng-repeat="arg in link.args" type="hidden" name="{{arg.name}}" value="{{arg.value}}">
+                            <button type="submit" tabindex="0" title="{{link.name}}">
+                                <img alt="{{link.name}}" class="img-thumbnail center-block" ng-src="{{link.image}}">
+                                <span class="text-uppercase small">{{link.name}}</span>
+                            </button>
+                        </form>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>

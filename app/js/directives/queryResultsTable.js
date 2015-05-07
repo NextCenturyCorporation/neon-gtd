@@ -28,8 +28,8 @@
  * @constructor
  */
 angular.module('neonDemo.directives')
-.directive('queryResultsTable', ['DIG', 'ConnectionService', 'DatasetService', 'ErrorNotificationService',
-    function(DIG, connectionService, datasetService, errorNotificationService) {
+.directive('queryResultsTable', ['external', 'popups', 'ConnectionService', 'DatasetService', 'ErrorNotificationService', '$compile',
+    function(external, popups, connectionService, datasetService, errorNotificationService, $compile) {
     return {
         templateUrl: 'partials/directives/queryResultsTable.html',
         restrict: 'EA',
@@ -43,6 +43,10 @@ angular.module('neonDemo.directives')
             chartOptions.toggleClass($scope.uniqueChartOptions);
 
             element.addClass('query-results-directive');
+
+            // Unique field name used for the SlickGrid column containing the URLs for the external apps.
+            // This name should be one that is highly unlikely to be a column name in a real database.
+            $scope.EXTERNAL_APP_FIELD_NAME = "neonExternalApps";
 
             // If this widget was launched as a navbar collapsable then showData will be bound to the collapse toggle.
             // Otherwise show the data automatically on launching the widget.
@@ -62,6 +66,8 @@ angular.module('neonDemo.directives')
                 name: ""
             };
             $scope.fields = [];
+            $scope.addField = "";
+            $scope.tableNameToDeletedFieldsMap = {};
             $scope.sortByField = '';
             $scope.sortDirection = neon.query.ASCENDING;
             $scope.limit = 500;
@@ -77,8 +83,8 @@ angular.module('neonDemo.directives')
             $tableDiv.attr("id", $scope.tableId);
 
             var updateSize = function() {
-                var margin = $tableDiv.outerHeight(true) - $tableDiv.height();
-                $tableDiv.height(element.height() - $(element).find('.count-header').outerHeight(true) - margin);
+                var tableBufferY = $tableDiv.outerHeight(true) - $tableDiv.height();
+                $tableDiv.height(element.height() - $(element).find('.count-header').outerHeight(true) - tableBufferY);
                 if($scope.table) {
                     $scope.table.refreshLayout();
                 }
@@ -137,6 +143,7 @@ angular.module('neonDemo.directives')
                 $scope.messenger.subscribe("dataset_changed", onDatasetChanged);
 
                 $scope.$on('$destroy', function() {
+                    popups.links.deleteData($scope.tableId);
                     $scope.messenger.removeEvents();
                 });
             };
@@ -169,18 +176,18 @@ angular.module('neonDemo.directives')
             };
 
             var createColumns = function(data) {
-                var columns = tables.createColumns(data);
+                var columns = tables.createColumns(data, $scope.tableNameToDeletedFieldsMap[$scope.selectedTable.name], [$scope.createDeleteColumnButton("")]);
                 columns = tables.addLinkabilityToColumns(columns);
 
-                if(DIG.enabled) {
-                    var digColumn = {
+                if(external.anyEnabled) {
+                    var externalAppColumn = {
                         name: "",
-                        field: "dig",
+                        field: $scope.EXTERNAL_APP_FIELD_NAME,
                         width: "15",
                         cssClass: "centered",
                         ignoreClicks: true
                     };
-                    columns.splice(0, 0, digColumn);
+                    columns.splice(0, 0, externalAppColumn);
                 }
 
                 return columns;
@@ -243,6 +250,16 @@ angular.module('neonDemo.directives')
             $scope.updateFieldsAndRowsAndCount = function() {
                 $scope.fields = datasetService.getDatabaseFields($scope.selectedTable.name);
                 $scope.fields.sort();
+                $scope.addField = "";
+                if(!($scope.tableNameToDeletedFieldsMap[$scope.selectedTable.name])) {
+                    $scope.tableNameToDeletedFieldsMap[$scope.selectedTable.name] = [];
+                } else if($scope.tableNameToDeletedFieldsMap[$scope.selectedTable.name].length) {
+                    // Remove previously deleted fields from the list of fields.
+                    $scope.fields = $scope.fields.filter(function(field) {
+                        return $scope.tableNameToDeletedFieldsMap[$scope.selectedTable.name].indexOf(field) === -1;
+                    });
+                    $scope.addField = $scope.tableNameToDeletedFieldsMap[$scope.selectedTable.name][0];
+                }
                 $scope.sortByField = datasetService.getMapping($scope.selectedTable.name, "sort_by") || $scope.fields[0];
                 updateRowsAndCount();
             };
@@ -344,25 +361,106 @@ angular.module('neonDemo.directives')
 
                 $scope.tableOptions = $scope.createOptions(queryResults);
 
-                if(DIG.enabled) {
-                    queryResults = $scope.addDigUrlColumnData(queryResults);
+                if(external.anyEnabled) {
+                    queryResults = $scope.addExternalAppUrlColumnData(queryResults);
                 }
 
                 $scope.table = new tables.Table("#" + $scope.tableId, $scope.tableOptions).draw();
                 $scope.table.refreshLayout();
+
+                // Set the displayed link data for the links popup for the application using the source and index stored in to the triggering button.
+                $(".links-popup").on("show.bs.modal", function(event) {
+                    var button = $(event.relatedTarget);
+                    var source = button.data("links-source");
+                    var index = button.data("links-index");
+                    $scope.$apply(function() {
+                        popups.links.setView(source, index);
+                    });
+                });
+                $scope.table.addOnColumnsReorderedListener($scope.createDeleteColumnButtons);
+                $scope.createDeleteColumnButtons();
             };
 
-            $scope.addDigUrlColumnData = function(data) {
-                data.data.forEach(function(row) {
+            $scope.addExternalAppUrlColumnData = function(data) {
+                var tableLinks = [];
+
+                data.data.forEach(function(row, index) {
                     var rowId = row._id;
                     var query = "id=" + rowId;
-                    var element = "<form action=\"" + DIG.server + "/list\" method=\"get\" target=\"" + query + "\">" +
-                        "<input type=\"hidden\" name=\"id\" value=\"" + rowId + "\">" +
-                        "<button class=\"hidden-button\" type=\"submit\" title=\"" + query + "\">" +
-                        "<span class=\"glyphicon glyphicon-new-window\"></span></button></form>";
-                    row.dig = element;
+
+                    var links = [];
+
+                    if(external.dig.enabled) {
+                        var form = {
+                            name: external.dig.data_table.name,
+                            image: external.dig.data_table.image,
+                            url: external.dig.data_table.url,
+                            args: [],
+                            data: {
+                                server: external.dig.server,
+                                value: rowId,
+                                query: query
+                            }
+                        };
+
+                        for(var i = 0; i < external.dig.data_table.args.length; ++i) {
+                            var arg = external.dig.data_table.args[i];
+                            form.args.push({
+                                name: arg.name,
+                                value: arg.value
+                            });
+                        }
+
+                        links.push(form);
+                    }
+
+                    var linksIndex = tableLinks.length;
+                    tableLinks.push(links);
+
+                    row[$scope.EXTERNAL_APP_FIELD_NAME] = "<a data-toggle=\"modal\" data-target=\".links-popup\" data-links-index=\"" + linksIndex +
+                        "\" data-links-source=\"" + $scope.tableId + "\" class=\"collapsed dropdown-toggle primary neon-popup-button\">" +
+                        "<span class=\"glyphicon glyphicon-link\"></span></a>";
                 });
+
+                // Set the link data for the links popup for this visualization.
+                popups.links.setData($scope.tableId, tableLinks);
+
                 return data;
+            };
+
+            $scope.createDeleteColumnButtons = function() {
+                element.find(".slick-header-column").each(function() {
+                    var name = $(this).find(".slick-column-name").html();
+                    // Check if the name is empty to ignore the external application link column.
+                    if(name) {
+                        $(this).append($compile($scope.createDeleteColumnButton(name))($scope));
+                    }
+                });
+            };
+
+            $scope.createDeleteColumnButton = function(name) {
+                return "<span class=\"remove-column-button\" ng-click=\"deleteColumn('" + name + "'); $event.stopPropagation();\">&times;</span>";
+            };
+
+            $scope.deleteColumn = function(name) {
+                if($scope.table.deleteColumn(name)) {
+                    var indexToSplice = $scope.fields.indexOf(name);
+                    $scope.fields.splice(indexToSplice, 1);
+                    $scope.sortByField = $scope.sortByField === name ? $scope.fields[0] : $scope.sortByField;
+                    $scope.tableNameToDeletedFieldsMap[$scope.selectedTable.name].push(name);
+                    $scope.addField = name;
+                    $scope.createDeleteColumnButtons();
+                }
+            };
+
+            $scope.addColumn = function() {
+                if($scope.table.addColumn($scope.addField)) {
+                    var indexToSplice = $scope.tableNameToDeletedFieldsMap[$scope.selectedTable.name].indexOf($scope.addField);
+                    $scope.tableNameToDeletedFieldsMap[$scope.selectedTable.name].splice(indexToSplice, 1);
+                    $scope.fields.push($scope.addField);
+                    $scope.addField = $scope.tableNameToDeletedFieldsMap[$scope.selectedTable.name].length > 0 ? $scope.tableNameToDeletedFieldsMap[$scope.selectedTable.name][0] : "";
+                    $scope.createDeleteColumnButtons();
+                }
             };
 
             /**
@@ -371,13 +469,24 @@ angular.module('neonDemo.directives')
              * @method buildQuery
              */
             $scope.buildQuery = function() {
-                var query = new neon.query.Query().selectFrom($scope.databaseName, $scope.selectedTable.name);
-                query.limit($scope.limit);
+                var query = new neon.query.Query().selectFrom($scope.databaseName, $scope.selectedTable.name).limit($scope.limit);
                 if($scope.sortByField !== "undefined" && $scope.sortByField.length > 0) {
                     query.sortBy($scope.sortByField, $scope.sortDirection);
                 }
 
                 return query;
+            };
+
+            $scope.handleAscButtonClick = function() {
+                if($scope.sortDirection === $scope.DESCENDING) {
+                    $scope.refreshData();
+                }
+            };
+
+            $scope.handleDescButtonClick = function() {
+                if($scope.sortDirection === $scope.ASCENDING) {
+                    $scope.refreshData();
+                }
             };
 
             // Wait for neon to be ready, the create our messenger and intialize the view and data.

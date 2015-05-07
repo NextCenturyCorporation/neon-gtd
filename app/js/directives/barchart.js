@@ -32,6 +32,11 @@ angular.module('neonDemo.directives')
     return {
         templateUrl: 'partials/directives/barchart.html',
         restrict: 'EA',
+        scope: {
+            bindXAxisField: '=',
+            bindYAxisField: '=',
+            bindAggregationField: '='
+        },
         link: function($scope, $element) {
 
             $scope.uniqueChartOptions = 'chart-options-' + uuid();
@@ -45,7 +50,7 @@ angular.module('neonDemo.directives')
             $scope.selectedTable = {
                 name: ""
             };
-            $scope.barType = $scope.barType || 'count';
+            $scope.barType = $scope.bindAggregationField || 'count';
             $scope.fields = [];
             $scope.updatingChart = false;
             $scope.chart = undefined;
@@ -212,8 +217,8 @@ angular.module('neonDemo.directives')
             };
 
             $scope.updateFieldsAndQueryForData = function() {
-                $scope.attrX = datasetService.getMapping($scope.selectedTable.name, "bar_x_axis") || "";
-                $scope.attrY = datasetService.getMapping($scope.selectedTable.name, "y_axis") || "";
+                $scope.attrX = $scope.bindXAxisField || datasetService.getMapping($scope.selectedTable.name, "bar_x_axis") || "";
+                $scope.attrY = $scope.bindYAxisField || datasetService.getMapping($scope.selectedTable.name, "y_axis") || "";
                 $scope.fields = datasetService.getDatabaseFields($scope.selectedTable.name);
                 $scope.fields.sort();
                 if($scope.filterSet) {
