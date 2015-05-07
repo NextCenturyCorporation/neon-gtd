@@ -257,7 +257,6 @@ angular.module('neonDemo.directives')
                         source: "user",
                         tags: ["options", "map", "limit"]
                     });
-                    $scope.queryForMapData();
                 });
 
                 // Setup a basic resize handler to redraw the map and calculate its size if our div changes.
@@ -811,12 +810,15 @@ angular.module('neonDemo.directives')
             };
 
             $scope.handleLimitRefreshClick = function() {
-                XDATA.activityLogger.logUserActivity('HeatMap - user change number of displayed points', 'set_map_layer_properties',
-                    XDATA.activityLogger.WF_GETDATA,
-                    {
-                        from: $scope.previousLimit,
-                        to: $scope.limit
-                    });
+                XDATA.userALE.log({
+                    activity: "perform",
+                    action: "click",
+                    elementId: "map-limit-refresh-button",
+                    elementType: "button",
+                    elementGroup: "map_group",
+                    source: "user",
+                    tags: ["options", "map", "limit"]
+                });
                 $scope.previousLimit = $scope.limit;
                 $scope.queryForMapData();
             };
