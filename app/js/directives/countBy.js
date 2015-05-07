@@ -58,10 +58,12 @@ angular.module('neonDemo.directives')
              * @private
              */
             var updateSize = function() {
-                var optionHeight = $(el).find('.chart-options').outerHeight(true);
-                var headerHeight = $(el).find('.count-by-header').outerHeight(true);
+                var headerHeight = 0;
+                el.find(".header-container").each(function() {
+                    headerHeight += $(this).outerHeight(true);
+                });
                 // Subtract an additional 2 pixels from the table height to account for the its border.
-                $('#' + $scope.tableId).height(el.height() - optionHeight - headerHeight - 2);
+                $('#' + $scope.tableId).height(el.height() - headerHeight - 2);
                 if($scope.table) {
                     $scope.table.refreshLayout();
                 }

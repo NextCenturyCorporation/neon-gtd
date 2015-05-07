@@ -1,54 +1,64 @@
-<div class="chart-options pull-right">
-    <a class="btn btn-lg text-muted collapsed"
-        data-toggle="collapse" data-target=".{{uniqueChartOptions}} .bar-chart-options"
-        data-animation=false
-        ng-click="toggleChartOptions()">
-      <span class="glyphicon glyphicon-cog"></span>
-      <span class="caret"></span>
-    </a>
-    <div class="bar-chart-options popover bottom">
-        <div class="arrow"></div>
-        <div class="popover-content">
-            <div class="form-group">
-                <label>Table</label>
-                <select class="form-control" ng-model="selectedTable" ng-options="table.name for table in tables" ng-required="true" ng-disabled="(tables.length < 2)" ng-change="updateFieldsAndQueryForData()">
-                </select>
-            </div>
-            <div class="form-group">
-                <label>X axis</label>
-                <select class="form-control" ng-model="attrX" ng-options="field for field in fields" ng-required="true" ng-disabled="!(fields.length > 0)">
-                </select>
-            </div>
-            <div class="form-group">
-                <label>Y axis</label>
-                <select class="form-control" ng-model="attrY" ng-options="field for field in fields" ng-required="true" ng-disabled="!(fields.length > 0)">
-                    <option value="">*</option>
-                </select>
-            </div>
-            <div class="form-group">
-                <select ng-model="barType" class="form-control">
-                    <option value="count">Count</option>
-                    <option value="sum">Sum</option>
-                    <option value="average">Average</option>
-                </select>
+<div class="header-container">
+    <span class="header-text pull-left">{{selectedTable.name}}</span>
+
+    <div class="chart-options pull-right">
+        <a class="btn btn-lg collapsed"
+            data-toggle="collapse" data-target=".{{uniqueChartOptions}} .bar-chart-options"
+            data-animation=false
+            ng-click="toggleChartOptions()">
+          <span class="glyphicon glyphicon-cog"></span>
+          <span class="caret"></span>
+        </a>
+
+        <div class="bar-chart-options popover bottom">
+            <div class="arrow"></div>
+            <div class="popover-content">
+                <div class="form-group">
+                    <label>Table</label>
+                    <select class="form-control" ng-model="selectedTable" ng-options="table.name for table in tables" ng-required="true" ng-disabled="(tables.length < 2)" ng-change="updateFieldsAndQueryForData()">
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>X axis</label>
+                    <select class="form-control" ng-model="attrX" ng-options="field for field in fields" ng-required="true" ng-disabled="!(fields.length > 0)">
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Y axis</label>
+                    <select class="form-control" ng-model="attrY" ng-options="field for field in fields" ng-required="true" ng-disabled="!(fields.length > 0)">
+                        <option value="">*</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <select ng-model="barType" class="form-control">
+                        <option value="count">Count</option>
+                        <option value="sum">Sum</option>
+                        <option value="average">Average</option>
+                    </select>
+                </div>
             </div>
         </div>
     </div>
 </div>
-<div class="filter-reset pull-right" ng-class="{true: 'hidden', false: ''}[filterSet === undefined]">
-    {{filterSet.key}}={{filterSet.value}}
-  <a class="btn" ng-click="clearFilterSet()">
-    <span class="glyphicon glyphicon-remove"></span>
-  </a>
-</div>
 
-<div class="legend">
-    <div class="legend-item">
-        <span class="legend-icon" style="background-color: #39b54a"></span>
-        <span class="legend-text" ng-show="barType === 'average'">Average {{attrY}}</span>
-        <span class="legend-text" ng-show="barType === 'sum'">Sum {{attrY}}</span>
-        <span class="legend-text" ng-show="barType === 'count'">Count</span>
-        <span class="legend-text" >vs {{attrX}}</span>
+<div class="clearfix"></div>
+
+<div class="header-container">
+    <div class="filter-reset pull-right" ng-class="{true: 'hidden', false: ''}[filterSet === undefined]">
+        {{filterSet.key}}={{filterSet.value}}
+      <a class="btn" ng-click="clearFilterSet()">
+        <span class="glyphicon glyphicon-remove"></span>
+      </a>
+    </div>
+
+    <div class="legend">
+        <div class="legend-item">
+            <span class="legend-icon" style="background-color: #39b54a"></span>
+            <span class="legend-text" ng-show="barType === 'average'">Average {{attrY}}</span>
+            <span class="legend-text" ng-show="barType === 'sum'">Sum {{attrY}}</span>
+            <span class="legend-text" ng-show="barType === 'count'">Count</span>
+            <span class="legend-text" >vs {{attrX}}</span>
+        </div>
     </div>
 </div>
 

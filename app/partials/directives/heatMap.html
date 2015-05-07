@@ -1,13 +1,15 @@
-<div class="map-field-form">
+<div class="header-container">
+    <span class="header-text pull-left">{{selectedTable.name}}</span>
 
     <div class="chart-options pull-right">
-        <a class="btn btn-lg text-muted collapsed" data-toggle="collapse" 
+        <a class="btn btn-lg collapsed" data-toggle="collapse" 
             data-target=".{{uniqueChartOptions}} .map-options" data-animation=false
             ng-click="toggleOptionsDisplay()">
-            <span class="chart-options-text" ng-hide="(dataLength < previousLimit)">{{previousLimit}} data limit</span>
+            <span class="header-text" ng-hide="(dataLength < previousLimit)">{{previousLimit}} data limit</span>
             <span class="glyphicon glyphicon-cog"></span>
             <span class="caret"></span>
         </a>
+
         <div class="map-options popover bottom">
             <div class="arrow"></div>
             <div class="popover-content">
@@ -79,7 +81,9 @@
             </div>
         </div>
     </div>
+</div>
 
+<div class="header-container second-header">
     <div class="filter-reset pull-right" ng-class="{true: '', false: 'hidden'}[showFilter]">
         Filter
         <a class="btn" ng-click="clearFilter()">
@@ -108,9 +112,4 @@
             <span class="legend-text text-muted">...and {{colorMappings.length-20}} more</span>
         </div>
     </div>
-
-    <div class="clearfix"></div>
-
-    <span class="alert alert-danger" ng-class="{true: 'show', false: 'hidden'}[error !== undefined && error.length > 0]" ng-bind="error"></span>
-
 </div>

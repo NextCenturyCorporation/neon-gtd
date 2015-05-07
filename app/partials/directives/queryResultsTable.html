@@ -1,69 +1,75 @@
-<div ng-hide="(navbarItem)" class="chart-options pull-right">
-    <a class="btn btn-lg text-muted collapsed" data-toggle="collapse" data-target=".{{uniqueChartOptions}} .query-results-options" data-animation=false>
-      <span class="glyphicon glyphicon-cog"></span>
-      <span class="caret"></span>
-    </a>
-    <div class="query-results-options popover bottom">
-        <div class="arrow"></div>
-        <div class="popover-content">
-            <div class="form-group">
-                <label>Table</label>
-                <select class="form-control" ng-model="selectedTable" ng-options="table.name for table in tables" ng-required="true" ng-disabled="(tables.length < 2)" ng-change="updateFieldsAndRowsAndCount()">
-                </select>
-            </div>
+<div ng-hide="(navbarItem)" class="header-container">
+    <span class="header-text pull-left">{{selectedTable.name}}</span>
 
-            <div class="form-group">
-                <label>Add Column</label>
-                <div class="input-group">
-                    <select class="form-control" ng-model="addField" ng-disabled="!(tableNameToDeletedFieldsMap[selectedTable.name].length > 0)" ng-options="field for field in tableNameToDeletedFieldsMap[selectedTable.name]">
+    <div class="chart-options pull-right">
+        <a class="btn btn-lg collapsed" data-toggle="collapse" data-target=".{{uniqueChartOptions}} .query-results-options" data-animation=false>
+          <span class="glyphicon glyphicon-cog"></span>
+          <span class="caret"></span>
+        </a>
+        <div class="query-results-options popover bottom">
+            <div class="arrow"></div>
+            <div class="popover-content">
+                <div class="form-group">
+                    <label>Table</label>
+                    <select class="form-control" ng-model="selectedTable" ng-options="table.name for table in tables" ng-required="true" ng-disabled="(tables.length < 2)" ng-change="updateFieldsAndRowsAndCount()">
                     </select>
+                </div>
 
-                    <div class="input-group-btn">
-                        <button class="btn btn-default" ng-click="addColumn()" ng-disabled="!(tableNameToDeletedFieldsMap[selectedTable.name].length > 0)">&plus;</button>
+                <div class="form-group">
+                    <label>Add Column</label>
+                    <div class="input-group">
+                        <select class="form-control" ng-model="addField" ng-disabled="!(tableNameToDeletedFieldsMap[selectedTable.name].length > 0)" ng-options="field for field in tableNameToDeletedFieldsMap[selectedTable.name]">
+                        </select>
+
+                        <div class="input-group-btn">
+                            <button class="btn btn-default" ng-click="addColumn()" ng-disabled="!(tableNameToDeletedFieldsMap[selectedTable.name].length > 0)">&plus;</button>
+                        </div>
+                    </div>
+                </div>    
+
+                <div class="form-group">
+                    <label>Sort By</label>
+                    <div class="input-group">
+                        <select class="form-control" ng-model="sortByField" ng-disabled="!(fields.length > 0)" ng-options="field for field in fields" ng-change="refreshData()">
+                        </select>
+
+                        <div class="input-group-btn">
+                            <label class="btn btn-default active" ng-class="{true: 'active', false: ''}[sortDirection === ASCENDING]">
+                                <input type="radio" ng-model="sortDirection" style="display:none" ng-value="ASCENDING" ng-click="handleAscButtonClick()"> ASC
+                            </label>
+                            <label class="btn btn-default" ng-class="{true: 'active', false: ''}[sortDirection === DESCENDING]">
+                                <input type="radio" ng-model="sortDirection" style="display:none" ng-value="DESCENDING" ng-click="handleDescButtonClick()"> DESC
+                            </label>
+                        </div>
+                    </div>
+                </div>    
+
+                <div class="form-group">
+                    <label>Limit</label>
+                    <div class="input-group">
+                        <input type="number" min="1" name="limitInput" class="form-control" ng-model="limit" ng-class="{true: '', false: 'has-error'}[dataTableForm.limitInput.$error.number]">
+                        <div class="input-group-btn">
+                            <button type="button" class="btn btn-default refresh" ng-click="refreshData()">
+                                <span class="glyphicon glyphicon-refresh"></span>
+                            </button>
+                        </div>
                     </div>
                 </div>
-            </div>    
 
-            <div class="form-group">
-                <label>Sort By</label>
-                <div class="input-group">
-                    <select class="form-control" ng-model="sortByField" ng-disabled="!(fields.length > 0)" ng-options="field for field in fields" ng-change="refreshData()">
-                    </select>
-
-                    <div class="input-group-btn">
-                        <label class="btn btn-default active" ng-class="{true: 'active', false: ''}[sortDirection === ASCENDING]">
-                            <input type="radio" ng-model="sortDirection" style="display:none" ng-value="ASCENDING" ng-click="handleAscButtonClick()"> ASC
-                        </label>
-                        <label class="btn btn-default" ng-class="{true: 'active', false: ''}[sortDirection === DESCENDING]">
-                            <input type="radio" ng-model="sortDirection" style="display:none" ng-value="DESCENDING" ng-click="handleDescButtonClick()"> DESC
-                        </label>
-                    </div>
-                </div>
-            </div>    
-
-            <div class="form-group">
-                <label>Limit</label>
-                <div class="input-group">
-                    <input type="number" min="1" name="limitInput" class="form-control" ng-model="limit" ng-class="{true: '', false: 'has-error'}[dataTableForm.limitInput.$error.number]">
-                    <div class="input-group-btn">
-                        <button type="button" class="btn btn-default refresh" ng-click="refreshData()">
-                            <span class="glyphicon glyphicon-refresh"></span>
-                        </button>
-                    </div>
-                </div>
             </div>
-
         </div>
     </div>
 </div>
 
-<div>
-    <h4 class="count-header pull-left">Showing 
-        <span class="count text-primary" ng-bind="tableOptions.data.length"></span> of 
+<div class="clearfix"></div>
+
+<div class="header-container header-container-large">
+    <h4 class="pull-left">Showing 
+        <span class="count count-large text-primary" ng-bind="tableOptions.data.length"></span> of 
         <span ng-bind="totalRows"></span>
     </h4>
 
-    <div class="form-inline pull-right">
+    <div class="form-inline navbar-item-forms pull-right">
         <form name="dataTableForm">
 
             <div ng-hide="!(navbarItem)" class="form-group">
@@ -113,9 +119,8 @@
             </button>
         </form>
     </div>
-
-    <div class="clearfix"></div>
-
-    <div class="query-results-grid"></div>
-
 </div>
+
+<div class="clearfix"></div>
+
+<div class="query-results-grid"></div>

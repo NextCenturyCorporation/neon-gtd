@@ -20,10 +20,6 @@ body{
     max-width: none;
     width: auto;
 }
-.chart-options .popover {
-    right: 9px;
-    top: 48px;
-}
 
 /* Data Selector */
 .databaseConfig .modal-open{
@@ -213,12 +209,6 @@ body{
 }
 .timeline-selector-chart .axis path {
     stroke: #FFFFFF;
-}
-.timeline-selector .filter-reset {
-    margin-top: 0px;
-}
-.timeline-selector .filter-reset .btn {
-    background-color: #e1e1e1;
 }
 @media (max-width: 891px) {
     .timeline-selector h3 {

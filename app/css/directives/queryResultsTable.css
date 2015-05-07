@@ -24,13 +24,8 @@
     padding: 20px;
 }
 
-.count-header {
-    margin: 5px 0px;
-}
-
-/* Needed to align with .tray .container > .pull-right rule from style.css. */
-.tray .container .count-header {
-    margin-top: 10px;
+.navbar-item-forms {
+    margin-top: 5px;
 }
 
 .data-tray .refresh{
@@ -39,7 +34,6 @@
 
 .query-results-grid {
     min-height: 125px;
-    margin: 10px 0;
     background-color: #F1F1F1;
     border: 1px solid #CCCCCC;
     border-radius: 2px;
@@ -92,17 +86,6 @@
 
 .query-results-grid .slick-header .slick-sortable-placeholder {
     background: #cccccc;
-}
-
-.query-results-directive .chart-options {
-    /* Align with the Sort By and Limit items. */
-    margin-top: 3px;
-    margin-left: 10px;
-}
-
-.query-results-directive .query-results-options {
-    /* Set a lower position for the popover due to the extra top margin added to chart-options. */
-    top: 48px;
 }
 
 .query-results-directive .form-inline .form-group input[type="number"] {

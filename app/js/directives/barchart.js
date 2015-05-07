@@ -61,7 +61,11 @@ angular.module('neonDemo.directives')
 
             var updateChartSize = function() {
                 if($scope.chart) {
-                    $element.find('.barchart').height($element.height() - $element.find('.legend').outerHeight(true));
+                    var headerHeight = 0;
+                    $element.find(".header-container").each(function() {
+                        headerHeight += $(this).outerHeight(true);
+                    });
+                    $element.find('.barchart').height($element.height() - headerHeight);
                     $scope.chart.draw();
                 }
             };
