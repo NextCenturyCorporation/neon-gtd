@@ -28,7 +28,8 @@
  * @constructor
  */
 angular.module('neonDemo.directives')
-.directive('sunburst', ['ConnectionService', 'DatasetService', 'ErrorNotificationService', function(connectionService, datasetService, errorNotificationService) {
+.directive('sunburst', ['ConnectionService', 'DatasetService', 'ErrorNotificationService', 'UtilityService',
+function(connectionService, datasetService, errorNotificationService, utilityService) {
     return {
         templateUrl: 'partials/directives/sunburst.html',
         restrict: 'EA',
@@ -37,7 +38,8 @@ angular.module('neonDemo.directives')
         link: function($scope, $element) {
             $element.addClass('sunburst-directive');
 
-            $scope.uniqueChartOptions = 'chart-options-' + uuid();
+            $scope.uniqueChartOptions = utilityService.createUniqueChartOptionsId($element);
+
             $scope.arcValue = "count";
             $scope.valueField = null;
             $scope.selectedItem = null;
@@ -51,9 +53,6 @@ angular.module('neonDemo.directives')
             $scope.fields = [];
             $scope.chart = undefined;
             $scope.errorMessage = undefined;
-
-            var chartOptions = $element.find('.chart-options');
-            chartOptions.toggleClass($scope.uniqueChartOptions);
 
             var initialize = function() {
                 $scope.chart = new charts.SunburstChart($element[0], '.sunburst-chart', {
@@ -74,8 +73,9 @@ angular.module('neonDemo.directives')
                 // This resizes the chart when the div changes.  This rely's on jquery's resize plugin to fire
                 // on the associated element and not just the window.
                 $element.resize(function() {
-                        $scope.updateChartSize();
-                    });
+                    $scope.updateChartSize();
+                    utilityService.resizeOptionsPopover($element);
+                });
 
                 $scope.$watch('valueField', function(newValue, oldValue) {
                     if(newValue !== oldValue) {

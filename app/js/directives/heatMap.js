@@ -28,7 +28,8 @@
  * @constructor
  */
 angular.module('neonDemo.directives')
-.directive('heatMap', ['ConnectionService', 'DatasetService', 'ErrorNotificationService', 'FilterService', '$timeout', function(connectionService, datasetService, errorNotificationService, filterService, $timeout) {
+.directive('heatMap', ['ConnectionService', 'DatasetService', 'ErrorNotificationService', 'FilterService', 'UtilityService', '$timeout',
+function(connectionService, datasetService, errorNotificationService, filterService, utilityService, $timeout) {
     return {
         templateUrl: 'partials/directives/heatMap.html',
         restrict: 'EA',
@@ -43,9 +44,7 @@ angular.module('neonDemo.directives')
         link: function($scope, $element) {
             $element.addClass('heat-map');
 
-            $scope.uniqueChartOptions = 'chart-options-' + uuid();
-            var chartOptions = $($element).find('.chart-options');
-            chartOptions.toggleClass($scope.uniqueChartOptions);
+            $scope.uniqueChartOptions = utilityService.createUniqueChartOptionsId($element);
 
             // Setup scope variables.
             $scope.databaseName = '';
@@ -232,13 +231,7 @@ angular.module('neonDemo.directives')
                         $timeout.cancel($scope.resizePromise);
                     }
                     $scope.resizePromise = $timeout(redrawOnResize, $scope.resizeRedrawDelay);
-
-                    // Resize the options element.
-                    var optionsElement = $element.find(".map-options");
-                    // Add the element's margin/padding and y position (with an extra 5 pixles for look) to subtract from its final height.
-                    var yBuffer = optionsElement.outerHeight(true) - optionsElement.height() + parseInt(optionsElement.css("top"), 10) + 5;
-                    var optionsHeight = $element.innerHeight() - yBuffer;
-                    optionsElement.find(".popover-content").css("max-height", optionsHeight + "px");
+                    utilityService.resizeOptionsPopover($element);
                 });
 
                 // Add a zoomRect handler to the map.

@@ -17,20 +17,18 @@
  */
 
 angular.module('neonDemo.directives')
-.directive('countBy', ['external', 'popups', 'ConnectionService', 'DatasetService', 'ErrorNotificationService', 'FilterService',
-    function(external, popups, connectionService, datasetService, errorNotificationService, filterService) {
+.directive('countBy', ['external', 'popups', 'ConnectionService', 'DatasetService', 'ErrorNotificationService', 'FilterService', 'UtilityService',
+function(external, popups, connectionService, datasetService, errorNotificationService, filterService, utilityService) {
     return {
         templateUrl: 'partials/directives/countby.html',
         restrict: 'EA',
         scope: {
             bindCountField: '='
         },
-        link: function($scope, el) {
-            $scope.uniqueChartOptions = 'chart-options-' + uuid();
-            var chartOptions = $(el).find('.chart-options');
-            chartOptions.toggleClass($scope.uniqueChartOptions);
+        link: function($scope, $element) {
+            $element.addClass('countByDirective');
 
-            el.addClass('countByDirective');
+            $scope.uniqueChartOptions = utilityService.createUniqueChartOptionsId($element);
 
             // Unique field name used for the SlickGrid column containing the URLs for the external apps.
             // This name should be one that is highly unlikely to be a column name in a real database.
@@ -49,7 +47,7 @@ angular.module('neonDemo.directives')
             $scope.filterSet = undefined;
             $scope.errorMessage = undefined;
 
-            var $tableDiv = $(el).find('.count-by-grid');
+            var $tableDiv = $element.find('.count-by-grid');
             $tableDiv.attr("id", $scope.tableId);
 
             /**
@@ -59,11 +57,11 @@ angular.module('neonDemo.directives')
              */
             var updateSize = function() {
                 var headerHeight = 0;
-                el.find(".header-container").each(function() {
+                $element.find(".header-container").each(function() {
                     headerHeight += $(this).outerHeight(true);
                 });
                 // Subtract an additional 2 pixels from the table height to account for the its border.
-                $('#' + $scope.tableId).height(el.height() - headerHeight - 2);
+                $('#' + $scope.tableId).height($element.height() - headerHeight - 2);
                 if($scope.table) {
                     $scope.table.refreshLayout();
                 }
@@ -95,13 +93,9 @@ angular.module('neonDemo.directives')
                     }
                 });
 
-                el.resize(function() {
+                $element.resize(function() {
                     updateSize();
-                });
-
-                // The header is resized whenever filtering is set or cleared.
-                el.find('.count-by-header').resize(function() {
-                    updateSize();
+                    utilityService.resizeOptionsPopover($element);
                 });
             };
 
@@ -258,7 +252,7 @@ angular.module('neonDemo.directives')
                             data: []
                         });
                         if(response.responseJSON) {
-                            $scope.errorMessage = errorNotificationService.showErrorMessage(el, response.responseJSON.error, response.responseJSON.stackTrace);
+                            $scope.errorMessage = errorNotificationService.showErrorMessage($element, response.responseJSON.error, response.responseJSON.stackTrace);
                         }
                     });
                 }

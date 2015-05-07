@@ -28,7 +28,8 @@
  * @constructor
  */
 angular.module('neonDemo.directives')
-.directive('linechart', ['ConnectionService', 'DatasetService', 'ErrorNotificationService', function(connectionService, datasetService, errorNotificationService) {
+.directive('linechart', ['ConnectionService', 'DatasetService', 'ErrorNotificationService', 'UtilityService',
+function(connectionService, datasetService, errorNotificationService, utilityService) {
     var COUNT_FIELD_NAME = 'value';
 
     return {
@@ -42,11 +43,9 @@ angular.module('neonDemo.directives')
             colorMappings: '&'
         },
         link: function($scope, $element) {
-            $scope.uniqueChartOptions = 'chart-options-' + uuid();
-            var chartOptions = $($element).find('.chart-options');
-            chartOptions.toggleClass($scope.uniqueChartOptions);
-
             $element.addClass('linechartDirective');
+
+            $scope.uniqueChartOptions = utilityService.createUniqueChartOptionsId($element);
 
             $scope.selectedDatabase = '';
             $scope.tables = [];
@@ -88,8 +87,9 @@ angular.module('neonDemo.directives')
                 // This resizes the chart when the div changes.  This rely's on jquery's resize plugin to fire
                 // on the associated element and not just the window.
                 $element.resize(function() {
-                        updateChartSize();
-                    });
+                    updateChartSize();
+                    utilityService.resizeOptionsPopover($element);
+                });
 
                 $scope.$watch('attrX', function(newValue, oldValue) {
                     onFieldChange('attrX', newValue, oldValue);
