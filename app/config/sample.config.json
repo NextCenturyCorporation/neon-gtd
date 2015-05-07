@@ -1,4 +1,8 @@
 {
+    "dashboard": {
+        "gridsterColumns": 6
+    },
+
     "xdata": {
         "echoToConsole": false,
         "enableLoggin": false,

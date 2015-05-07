@@ -79,6 +79,10 @@ angular.element(document).ready(function() {
             ocpu.seturl(opencpuConfig.url);
         }
 
+        var dashboardConfig = config.dashboard || {};
+        dashboardConfig.gridsterColumns = dashboardConfig.gridsterColumns ? dashboardConfig.gridsterColumns : 6;
+        neonDemo.constant('config', dashboardConfig);
+
         neonDemo.value('popups', {
             links: {
                 setData: function() {},
