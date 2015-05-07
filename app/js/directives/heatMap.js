@@ -483,7 +483,6 @@ angular.module('neonDemo.directives')
                 $scope.longitudeField = datasetService.getMapping($scope.selectedTable.name, "longitude") || "";
                 $scope.colorByField = datasetService.getMapping($scope.selectedTable.name, "color_by") || "";
                 $scope.sizeByField = datasetService.getMapping($scope.selectedTable.name, "size_by") || "";
-                XDATA.activityLogger.logSystemActivity('HeatMap - field selectors updated');
 
                 $timeout(function() {
                     $scope.initializing = false;

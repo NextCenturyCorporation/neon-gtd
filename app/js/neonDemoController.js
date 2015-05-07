@@ -25,7 +25,6 @@ angular.module('neonDemo.controllers')
 .controller('neonDemoController', ['$scope', '$timeout', 'FilterCountService', function($scope, $timeout, filterCountService) {
     $scope.seeData = false;
     $scope.createFilters = false;
-    $scope.chartOptions = false;
     $scope.filterCount = 0;
 
     /**
@@ -98,13 +97,16 @@ angular.module('neonDemo.controllers')
      */
     $scope.toggleCreateFilters = function() {
         $scope.createFilters = !$scope.createFilters;
-        var action = (true === $scope.createFilters) ? 'show_custom_filters' : 'hide_custom_filters';
-        XDATA.activityLogger.logUserActivity('Neon Demo - Toggle custom filter display', action,
-            XDATA.activityLogger.WF_CREATE,
-            {
-                from: !$scope.createFilters,
-                to: $scope.createFilters
-            });
+        var activity = (true === $scope.createFilters) ? 'show' : 'hide';
+        XDATA.userALE.log({
+            activity: activity,
+            action: "click",
+            elementId: "filter-panel-button",
+            elementType: "button",
+            elementGroup: "top",
+            source: "user",
+            tags: ["filters"]
+        });
 
         if($scope.createFilters && $scope.seeData) {
             // using timeout here to execute a jquery event outside of apply().  This is necessary
@@ -125,13 +127,16 @@ angular.module('neonDemo.controllers')
      */
     $scope.toggleSeeData = function() {
         $scope.seeData = !$scope.seeData;
-        var action = (true === $scope.seeData) ? 'show_data_table' : 'hide_data_table';
-        XDATA.activityLogger.logUserActivity('Neon Demo - Toggle data table display', action,
-            XDATA.activityLogger.WF_CREATE,
-            {
-                from: !$scope.seeData,
-                to: $scope.seeData
-            });
+        var activity = (true === $scope.seeData) ? 'show' : 'hide';
+        XDATA.userALE.log({
+            activity: activity,
+            action: "click",
+            elementId: "data-table-button",
+            elementType: "button",
+            elementGroup: "top",
+            source: "user",
+            tags: ["datagrid"]
+        });
 
         if($scope.createFilters && $scope.seeData) {
             // using timeout here to execute a jquery event outside of apply().  This is necessary
@@ -144,43 +149,10 @@ angular.module('neonDemo.controllers')
         }
     };
 
-    /**
-     * Simple toggle method for tracking which chart is visible.
-     * @method toggleCreateFilters
-     */
-    $scope.toggleChartOptions = function() {
-        $scope.chartOptions = !$scope.chartOptions;
-        var action = (true === $scope.chartOptions) ? 'show_options' : 'hide_options';
-        XDATA.activityLogger.logUserActivity('Neon Demo - Toggle chart options display', action,
-            XDATA.activityLogger.WF_CREATE,
-            {
-                from: !$scope.chartOptions,
-                to: $scope.chartOptions
-            });
-    };
-
     // Watch for changes in the filter counts and update the filter badge binding.
     $scope.$watch(function() {
         return filterCountService.getCount();
     }, function(count) {
         $scope.filterCount = count;
     });
-
-    $scope.$watch('chartType', function(newVal, oldVal) {
-        XDATA.activityLogger.logUserActivity('Neon Demo - Select chart type', 'select_plot_type',
-            XDATA.activityLogger.WF_CREATE,
-            {
-                from: oldVal,
-                to: newVal
-            });
-    }, true);
-
-    $scope.$watch('barType', function(newVal, oldVal) {
-        XDATA.activityLogger.logUserActivity('Neon Demo - Select chart aggregation type', 'define_axes',
-            XDATA.activityLogger.WF_CREATE,
-            {
-                from: oldVal,
-                to: newVal
-            });
-    }, true);
 }]);
