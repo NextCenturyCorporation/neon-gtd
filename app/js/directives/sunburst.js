@@ -97,7 +97,16 @@ angular.module('neonDemo.directives')
              * @private
              */
             var onFiltersChanged = function(message) {
-                XDATA.activityLogger.logSystemActivity('SunburstChart - received neon filter changed event');
+                XDATA.userALE.log({
+                    activity: "alter",
+                    action: "query",
+                    elementId: "sunburst",
+                    elementType: "canvas",
+                    elementSub: "sunburst",
+                    elementGroup: "chart_group",
+                    source: "system",
+                    tags: ["filter-change", "sunburst"]
+                });
                 if(message.addedFilter && message.addedFilter.databaseName === $scope.databaseName && message.addedFilter.tableName === $scope.selectedTable.name) {
                     $scope.queryForData();
                 }
@@ -109,7 +118,16 @@ angular.module('neonDemo.directives')
              * @private
              */
             var onDatasetChanged = function() {
-                XDATA.activityLogger.logSystemActivity('SunburstChart - received neon-gtd dataset changed event');
+                XDATA.userALE.log({
+                    activity: "alter",
+                    action: "query",
+                    elementId: "sunburst",
+                    elementType: "canvas",
+                    elementSub: "sunburst",
+                    elementGroup: "chart_group",
+                    source: "system",
+                    tags: ["dataset-change", "sunburst"]
+                });
                 $scope.displayActiveDataset(false);
             };
 
@@ -182,16 +200,52 @@ angular.module('neonDemo.directives')
                 if(connection) {
                     var query = $scope.buildQuery();
 
-                    XDATA.activityLogger.logSystemActivity('sunburst - query for data');
+                    XDATA.userALE.log({
+                        activity: "alter",
+                        action: "query",
+                        elementId: "sunburst",
+                        elementType: "canvas",
+                        elementSub: "sunburst",
+                        elementGroup: "chart_group",
+                        source: "system",
+                        tags: ["query", "sunburst"]
+                    });
                     connection.executeQuery(query, function(queryResults) {
-                        XDATA.activityLogger.logSystemActivity('sunburst - received data');
+                        XDATA.userALE.log({
+                            activity: "alter",
+                            action: "receive",
+                            elementId: "sunburst",
+                            elementType: "canvas",
+                            elementSub: "sunburst",
+                            elementGroup: "chart_group",
+                            source: "system",
+                            tags: ["receive", "sunburst"]
+                        });
                         $scope.$apply(function() {
                             $scope.updateChartSize();
                             doDrawChart(buildDataTree(queryResults));
-                            XDATA.activityLogger.logSystemActivity('sunburst - rendered data');
+                            XDATA.userALE.log({
+                                activity: "alter",
+                                action: "render",
+                                elementId: "sunburst",
+                                elementType: "canvas",
+                                elementSub: "sunburst",
+                                elementGroup: "chart_group",
+                                source: "system",
+                                tags: ["render", "sunburst"]
+                            });
                         });
                     }, function(response) {
-                        XDATA.activityLogger.logSystemActivity('sunburst - received error');
+                        XDATA.userALE.log({
+                            activity: "alter",
+                            action: "failed",
+                            elementId: "sunburst",
+                            elementType: "canvas",
+                            elementSub: "sunburst",
+                            elementGroup: "chart_group",
+                            source: "system",
+                            tags: ["failed", "sunburst"]
+                        });
                         doDrawChart(buildDataTree({
                             data: []
                         }));

@@ -438,8 +438,7 @@ tables.Table.prototype.addOnClickListener = function(callback) {
  * @param {Function} callback
  */
 tables.Table.prototype.addOnColumnsReorderedListener = function(callback) {
-    var me = this;
-    this.table_.onColumnsReordered.subscribe(function(event, args) {
+    this.table_.onColumnsReordered.subscribe(function() {
         callback();
     });
 };

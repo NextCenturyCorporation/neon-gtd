@@ -153,7 +153,7 @@ angular.module('neonDemo.directives')
                 });
 
                 // Update the sizing field used by the map.
-                $scope.$watch('sizeByField', function(newVal, oldVal) {
+                $scope.$watch('sizeByField', function(newVal) {
                     XDATA.userALE.log({
                         activity: "select",
                         action: "click",
@@ -171,7 +171,7 @@ angular.module('neonDemo.directives')
                 });
 
                 // Update the coloring field used by the map.
-                $scope.$watch('colorByField', function(newVal, oldVal) {
+                $scope.$watch('colorByField', function(newVal) {
                     XDATA.userALE.log({
                         activity: "select",
                         action: "click",
@@ -232,7 +232,7 @@ angular.module('neonDemo.directives')
                 });
 
                 // Log whenever the user toggles the options display.
-                $scope.$watch('optionsDisplayed', function(newVal, oldVal) {
+                $scope.$watch('optionsDisplayed', function(newVal) {
                     var activity = (newVal === true) ? 'show' : 'hide';
                     XDATA.userALE.log({
                         activity: activity,
@@ -246,7 +246,7 @@ angular.module('neonDemo.directives')
                     });
                 });
 
-                $scope.$watch('limit', function(newVal, oldVal) {
+                $scope.$watch('limit', function(newVal) {
                     XDATA.userALE.log({
                         activity: "alter",
                         action: "keydown",
@@ -255,7 +255,7 @@ angular.module('neonDemo.directives')
                         elementSub: "map-limit",
                         elementGroup: "map_group",
                         source: "user",
-                        tags: ["options", "map", "limit"]
+                        tags: ["options", "map", "limit", newVal]
                     });
                 });
 

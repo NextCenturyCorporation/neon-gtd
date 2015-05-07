@@ -27,9 +27,7 @@
         "remarkable-bootstrap-notify": "3.0.0",
         "respond": "1.4.2",
         "slickgrid": "2.1.0",
-        "user-ale": "draperlaboratory/user-ale#67954dc8bcb02c657306ea89193b25e4831bf59e",
-        "xdatalogger": "https://github.com/draperlab/xdatalogger.git",
-        "xdatalogger-worker": "https://raw.githubusercontent.com/draperlab/xdatalogger/master/javascript/draper.activity_worker-2.1.1.js"
+        "user-ale": "draperlaboratory/user-ale#67954dc8bcb02c657306ea89193b25e4831bf59e"
     },
     "resolutions": {
         "jquery": "1.11.x"
@@ -109,10 +107,6 @@
             "js": "**/slick.*.js",
             "css/images": ["**/*.gif", "**/*.png"],
             "css": "**/slick*.css"
-        },
-
-        "xdatalogger": {
-            "js": "**/draper.activity_*-2.1.1.js"
         },
 
         "user-ale": {

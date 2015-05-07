@@ -38,7 +38,6 @@ angular.module('neonDemo.directives')
             bindAggregationField: '='
         },
         link: function($scope, $element) {
-
             $scope.uniqueChartOptions = 'chart-options-' + uuid();
             var chartOptions = $($element).find('.chart-options');
             chartOptions.toggleClass($scope.uniqueChartOptions);

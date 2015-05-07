@@ -87,33 +87,33 @@ angular.module('neonDemo.directives')
                         updateChartSize();
                     });
 
-                $scope.$watch('attrX', function(newValue, oldValue) {
-                    onFieldChange('attrX', newValue, oldValue);
+                $scope.$watch('attrX', function(newValue) {
+                    onFieldChange('attrX', newValue);
                     if($scope.selectedDatabase && $scope.selectedTable.name) {
                         $scope.queryForData();
                     }
                 });
-                $scope.$watch('attrY', function(newValue, oldValue) {
-                    onFieldChange('attrY', newValue, oldValue);
+                $scope.$watch('attrY', function(newValue) {
+                    onFieldChange('attrY', newValue);
                     if($scope.selectedDatabase && $scope.selectedTable.name) {
                         $scope.queryForData();
                     }
                 });
-                $scope.$watch('categoryField', function(newValue, oldValue) {
-                    onFieldChange('categoryField', newValue, oldValue);
+                $scope.$watch('categoryField', function(newValue) {
+                    onFieldChange('categoryField', newValue);
                     if($scope.selectedDatabase && $scope.selectedTable.name) {
                         $scope.queryForData();
                     }
                 });
-                $scope.$watch('aggregation', function(newValue, oldValue) {
-                    onFieldChange('aggregation', newValue, oldValue);
+                $scope.$watch('aggregation', function(newValue) {
+                    onFieldChange('aggregation', newValue);
                     if($scope.selectedDatabase && $scope.selectedTable.name) {
                         $scope.queryForData();
                     }
                 });
             };
 
-            var onFieldChange = function(field, newVal, oldVal) {
+            var onFieldChange = function(field, newValue) {
                 XDATA.userALE.log({
                     activity: "select",
                     action: "click",
@@ -122,7 +122,7 @@ angular.module('neonDemo.directives')
                     elementSub: "linechart-" + field,
                     elementGroup: "chart_group",
                     source: "user",
-                    tags: ["options", "linechart"]
+                    tags: ["options", "linechart", newValue]
                 });
             };
 

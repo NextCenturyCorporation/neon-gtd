@@ -22,7 +22,7 @@ angular.module('neonDemo.directives')
         restrict: 'EA',
         scope: {
         },
-        link: function($scope, $element) {
+        link: function($scope) {
             $scope.SERVER = "SERVER";
             $scope.FIELD = "FIELD";
             $scope.VALUE = "VALUE";

@@ -1,10 +1,19 @@
 {
-    "xdata": {
-        "echoToConsole": false,
-        "enableLoggin": false,
-        "activityLoggerUrl": "http://xd-draper.xdata.data-tactics-corp.com:1337",
-        "component": "Neon Demo",
-        "componentVersion": "1.0.0-SNAPSHOT"
+    "user_ale": {
+        "loggingUrl": "http://192.168.1.100",
+        "toolName": "Neon Dashboard",
+        "toolVersion": "1.1.0",
+        "elementGroups": [
+            "top",
+            "map_group",
+            "table_group",
+            "chart_group",
+            "query_group",
+            "graph_group"
+        ],
+        "workerUrl": "lib/user-ale/js/userale-worker.js",
+        "debug": false,
+        "sendLogs": false
     },
 
     "opencpu": {

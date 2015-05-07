@@ -353,7 +353,7 @@ angular.module('neonDemo.directives')
             $scope.addExternalAppUrlColumnData = function(data) {
                 var tableLinks = [];
 
-                data.data.forEach(function(row, index) {
+                data.data.forEach(function(row) {
                     var field = $scope.countField;
                     var value = row[$scope.countField];
                     var query = field + "=" + value;

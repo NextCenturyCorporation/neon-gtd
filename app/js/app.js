@@ -57,18 +57,6 @@ var XDATA = {};
 angular.element(document).ready(function() {
     var $http = angular.injector(['ng']).get('$http');
     $http.get('./config/config.json').success(function(config) {
-        var xdataConfig = (config.xdata || {
-            echoToConsole: false,
-            enableLogging: false,
-            activityLoggerUrl: "",
-            component: "",
-            componentVersion: ""
-        });
-
-        XDATA.activityLogger = new activityLogger('lib/xdatalogger/js/draper.activity_worker-2.1.1.js');
-        XDATA.activityLogger.echo(xdataConfig.echoToConsole).testing(!xdataConfig.enableLogging);
-        //XDATA.activityLogger.registerActivityLogger(xdataConfig.activityLoggerUrl, xdataConfig.component, xdataConfig.componentVersion);
-
         // Configure the user-ale logger.
         var aleConfig = (config.user_ale || {
             loggingUrl: "http://192.168.1.100",
