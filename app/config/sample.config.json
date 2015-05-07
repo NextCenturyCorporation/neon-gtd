@@ -68,7 +68,7 @@
         "type": "sunburst",
         "icon": "img/visualizations/Sunburst64.png"
     }, {
-        "name": "View Data",
+        "name": "Data Table",
         "sizeX": 6,
         "sizeY": 2,
         "type": "query-results-table",
@@ -176,6 +176,65 @@
             "sizeX": 2,
             "sizeY": 2,
             "type": "count-by"
+        }],
+
+        "example-with-bindings": [{
+            "sizeX": 6,
+            "sizeY": 1,
+            "type": "timeline-selector",
+            "bindings": {
+                "bind-date-field": "'date'"
+            }
+        }, {
+            "sizeX": 4,
+            "sizeY": 2,
+            "type": "heat-map",
+            "bindings": {
+                "bind-latitude-field": "'latitude'",
+                "bind-longitude-field": "'longitude'",
+                "bind-color-field": "'type'",
+                "bind-size-field": "'type'"
+            }
+        }, {
+            "sizeX": 2,
+            "sizeY": 2,
+            "type": "circular-heat-form",
+            "bindings": {
+                "bind-date-field": "'date'"
+            }
+        }, {
+            "sizeX": 2,
+            "sizeY": 2,
+            "type": "linechart",
+            "bindings": {
+                "bind-date-field": "'date'",
+                "bind-y-axis-field": "'type'",
+                "bind-category-field": "'type'",
+                "bind-aggregation-field": "'count'"
+            }
+        }, {
+            "sizeX": 2,
+            "sizeY": 2,
+            "type": "barchart",
+            "bindings": {
+                "bind-x-axis-field": "'type'",
+                "bind-y-axis-field": "'type'",
+                "bind-aggregation-field": "'count'"
+            }
+        }, {
+            "sizeX": 2,
+            "sizeY": 2,
+            "type": "count-by",
+            "bindings": {
+                "bind-count-field": "'type'"
+            }
+        }, {
+            "sizeX": 2,
+            "sizeY": 2,
+            "type": "tag-cloud",
+            "bindings": {
+                "bind-tag-field": "'hashtags'"
+            }
         }]
     }
 }
