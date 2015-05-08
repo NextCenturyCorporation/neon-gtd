@@ -34,6 +34,7 @@ angular.module('neonDemo.directives')
         templateUrl: 'partials/directives/queryResultsTable.html',
         restrict: 'EA',
         scope: {
+            bindTable: '=',
             navbarItem: '=?',
             showData: '=?'
         },
@@ -240,7 +241,7 @@ angular.module('neonDemo.directives')
 
                 $scope.databaseName = datasetService.getDatabase();
                 $scope.tables = datasetService.getTables();
-                $scope.selectedTable = $scope.tables[0];
+                $scope.selectedTable = $scope.bindTable || $scope.tables[0];
 
                 if(initializing) {
                     $scope.updateFieldsAndRowsAndCount();

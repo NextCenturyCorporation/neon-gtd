@@ -37,6 +37,7 @@ angular.module('neonDemo.directives')
             bindLongitudeField: '=',
             bindColorField: '=',
             bindSizeField: '=',
+            bindTable: '=',
             // map of categories to colors used for the legend
             colorMappings: '&'
         },
@@ -362,7 +363,7 @@ angular.module('neonDemo.directives')
 
                 $scope.databaseName = datasetService.getDatabase();
                 $scope.tables = datasetService.getTables();
-                $scope.selectedTable = datasetService.getFirstTableWithMappings(["latitude", "longitude"]) || $scope.tables[0];
+                $scope.selectedTable = $scope.bindTable || datasetService.getFirstTableWithMappings(["latitude", "longitude"]) || $scope.tables[0];
                 $scope.filterKeys = filterService.createFilterKeys("map", $scope.tables);
 
                 if(initializing) {

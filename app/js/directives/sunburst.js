@@ -33,6 +33,7 @@ angular.module('neonDemo.directives')
         templateUrl: 'partials/directives/sunburst.html',
         restrict: 'EA',
         scope: {
+            bindTable: '='
         },
         link: function($scope, $element) {
             $element.addClass('sunburst-directive');
@@ -159,7 +160,7 @@ angular.module('neonDemo.directives')
 
                 $scope.databaseName = datasetService.getDatabase();
                 $scope.tables = datasetService.getTables();
-                $scope.selectedTable = $scope.tables[0];
+                $scope.selectedTable = $scope.bindTable || $scope.tables[0];
 
                 if(initializing) {
                     $scope.updateFieldsAndQueryForData();

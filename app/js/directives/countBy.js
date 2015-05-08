@@ -23,7 +23,8 @@ angular.module('neonDemo.directives')
         templateUrl: 'partials/directives/countby.html',
         restrict: 'EA',
         scope: {
-            bindCountField: '='
+            bindCountField: '=',
+            bindTable: '='
         },
         link: function($scope, el) {
             $scope.uniqueChartOptions = 'chart-options-' + uuid();
@@ -196,7 +197,7 @@ angular.module('neonDemo.directives')
 
                 $scope.databaseName = datasetService.getDatabase();
                 $scope.tables = datasetService.getTables();
-                $scope.selectedTable = $scope.tables[0];
+                $scope.selectedTable = $scope.bindTable || datasetService.getFirstTableWithMappings(["count_by"]) || $scope.tables[0];
                 $scope.filterKeys = filterService.createFilterKeys("countby", $scope.tables);
 
                 if(initializing) {
