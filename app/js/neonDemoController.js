@@ -24,6 +24,7 @@
 angular.module('neonDemo.controllers')
 .controller('neonDemoController', ['$scope', '$timeout', 'config', 'FilterCountService',
 function($scope, $timeout, config, filterCountService) {
+    $scope.hideNavbarItems = config.hideNavbarItems;
     $scope.seeData = false;
     $scope.createFilters = false;
     $scope.chartOptions = false;
@@ -184,4 +185,7 @@ function($scope, $timeout, config, filterCountService) {
                 to: newVal
             });
     }, true);
+
+    // Display the dashboard once the configuration file has been loaded and the controller has finished its initialization.
+    $scope.displayDashboard = true;
 }]);

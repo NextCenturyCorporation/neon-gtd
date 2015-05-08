@@ -79,7 +79,10 @@ angular.element(document).ready(function() {
             ocpu.seturl(opencpuConfig.url);
         }
 
-        var dashboardConfig = config.dashboard || {};
+        var dashboardConfig = config.dashboard || {
+            gridsterColumns: 6,
+            hideNavbarItems: false
+        };
         dashboardConfig.gridsterColumns = dashboardConfig.gridsterColumns ? dashboardConfig.gridsterColumns : 6;
         neonDemo.constant('config', dashboardConfig);
 

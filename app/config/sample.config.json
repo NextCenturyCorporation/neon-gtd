@@ -1,6 +1,7 @@
 {
     "dashboard": {
-        "gridsterColumns": 6
+        "gridsterColumns": 6,
+        "hideNavbarItems": false
     },
 
     "xdata": {
