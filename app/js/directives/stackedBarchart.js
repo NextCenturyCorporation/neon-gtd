@@ -65,6 +65,16 @@ angular.module('neonDemo.directives')
                 $scope.messenger.subscribe("dataset_changed", onDatasetChanged);
 
                 $scope.$on('$destroy', function() {
+                    XDATA.userALE.log({
+                        activity: "remove",
+                        action: "click",
+                        elementId: "stacked-barchart",
+                        elementType: "canvas",
+                        elementSub: "stacked-barchart",
+                        elementGroup: "chart_group",
+                        source: "user",
+                        tags: ["remove", "stacked-barchart"]
+                    });
                     $scope.messenger.removeEvents();
                 });
 

@@ -60,6 +60,17 @@ angular.module('neonDemo.directives')
                 $scope.messenger.subscribe("dataset_changed", onDatasetChanged);
 
                 $scope.$on('$destroy', function() {
+                    XDATA.userALE.log({
+                        activity: "remove",
+                        action: "click",
+                        elementId: "filter-builder",
+                        elementType: "panel",
+                        elementSub: "filter-builder",
+                        elementGroup: "query_group",
+                        source: "user",
+                        tags: ["remove", "filter-builder"]
+                    });
+
                     $scope.messenger.removeEvents();
                     $scope.publishRemoveFilterEvents($scope.filterTable.getTableNames());
                 });

@@ -80,6 +80,17 @@ angular.module('neonDemo.directives')
                 $scope.messenger.subscribe("dataset_changed", onDatasetChanged);
 
                 $scope.$on('$destroy', function() {
+                    XDATA.userALE.log({
+                        activity: "remove",
+                        action: "click",
+                        elementId: "directed-graph",
+                        elementType: "canvas",
+                        elementSub: "directed-graph",
+                        elementGroup: "graph_group",
+                        source: "user",
+                        tags: ["remove", "directed-graph"]
+                    });
+
                     $scope.messenger.removeEvents();
                     if($scope.filteredNodes.length) {
                         filterService.removeFilters($scope.messenger, $scope.filterKeys);

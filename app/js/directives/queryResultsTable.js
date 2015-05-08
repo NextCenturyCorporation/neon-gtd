@@ -152,6 +152,16 @@ angular.module('neonDemo.directives')
                 $scope.messenger.subscribe("dataset_changed", onDatasetChanged);
 
                 $scope.$on('$destroy', function() {
+                    XDATA.userALE.log({
+                        activity: "remove",
+                        action: "click",
+                        elementId: "datagrid",
+                        elementType: "canvas",
+                        elementSub: "datagrid",
+                        elementGroup: "table_group",
+                        source: "user",
+                        tags: ["remove", "datagrid"]
+                    });
                     popups.links.deleteData($scope.tableId);
                     $scope.messenger.removeEvents();
                 });
