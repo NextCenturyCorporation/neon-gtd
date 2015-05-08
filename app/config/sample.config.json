@@ -24,6 +24,18 @@
     },
 
     "visualizations": [{
+        "name": "Filter Builder",
+        "sizeX": 4,
+        "sizeY": 2,
+        "type": "filter-builder",
+        "icon": "img/visualizations/CreateFilter64.png"
+    }, {
+        "name": "Data Table",
+        "sizeX": 6,
+        "sizeY": 2,
+        "type": "query-results-table",
+        "icon": "img/visualizations/ViewData64.png"
+    }, {
         "name": "Timeline",
         "sizeX": 6,
         "sizeY": 1,
@@ -71,12 +83,6 @@
         "sizeY": 2,
         "type": "sunburst",
         "icon": "img/visualizations/Sunburst64.png"
-    }, {
-        "name": "Data Table",
-        "sizeX": 6,
-        "sizeY": 2,
-        "type": "query-results-table",
-        "icon": "img/visualizations/ViewData64.png"
     }, {
         "name": "Graph",
         "sizeX": 4,

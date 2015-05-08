@@ -26,6 +26,7 @@
         <link rel="stylesheet" type="text/css" href="css/directives/circularHeatChart.css">
         <link rel="stylesheet" type="text/css" href="css/directives/circularHeatForm.css">
         <link rel="stylesheet" type="text/css" href="css/directives/countBy.css">
+        <link rel="stylesheet" type="text/css" href="css/directives/filterBuilder.css">
         <link rel="stylesheet" type="text/css" href="css/directives/heatMap.css">
         <link rel="stylesheet" type="text/css" href="css/directives/directedGraph.css">
         <link rel="stylesheet" type="text/css" href="css/directives/linechart.css">
@@ -92,7 +93,15 @@
         <div class="panel-group" id="trays">
 
             <!-- Filter Builder tray -->
-            <div filter-builder></div>
+            <div class="tray-mirror filter-tray collapse">
+                <div class="inner" style="height: 134px"></div>
+            </div>
+
+            <div id="filter-tray" class="tray filter-tray panel panel-default collapse">
+                <div class="container panel-body">
+                    <div filter-builder navbar-item="(true)"></div>
+                </div>
+            </div>
 
             <!-- See Data tray -->
             <div class="tray-mirror data-tray collapse">

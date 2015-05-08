@@ -110,7 +110,7 @@
     padding: 0;
 }
 
-span.glyphicon:focus,
-span.glyphicon:hover {
+.countByDirective span.glyphicon:focus,
+.countByDirective span.glyphicon:hover {
     color: #39b54a;
 }

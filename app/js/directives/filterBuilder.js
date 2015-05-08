@@ -34,15 +34,20 @@ angular.module('neonDemo.directives')
         templateUrl: 'partials/directives/filterBuilder.html',
         restrict: 'EA',
         scope: {
+            navbarItem: '=?'
         },
         controller: 'neonDemoController',
-        link: function($scope, el) {
+        link: function($scope, $element) {
             $scope.databaseName = "";
             $scope.tableNames = [];
             $scope.selectedTableName = "";
             $scope.fields = [];
             $scope.selectedField = "";
             $scope.andClauses = true;
+
+            if(!($scope.navbarItem)) {
+                $element.addClass("filter-directive");
+            }
 
             /**
              * Initializes the name of the date field used to query the current dataset
@@ -81,7 +86,7 @@ angular.module('neonDemo.directives')
                                 XDATA.activityLogger.WF_GETDATA,
                                 logData);
                         }
-                        $(el).find('.tray-mirror.filter-tray .inner').height($('#filter-tray > .container').outerHeight(true));
+                        $element.find('.tray-mirror.filter-tray .inner').height($('#filter-tray > .container').outerHeight(true));
                     }
                 }, true);
 
@@ -149,7 +154,15 @@ angular.module('neonDemo.directives')
              */
             var onDatasetChanged = function() {
                 XDATA.activityLogger.logSystemActivity('FilterBuilder - received neon-gtd dataset changed event');
+                $scope.displayActiveDataset(false);
+            };
 
+            /**
+             * Displays data for any currently active datasets.
+             * @param {Boolean} Whether this function was called during visualization initialization.
+             * @method displayActiveDataset
+             */
+            $scope.displayActiveDataset = function(initializing) {
                 if(!datasetService.hasDataset()) {
                     return;
                 }
@@ -167,9 +180,13 @@ angular.module('neonDemo.directives')
                 }
                 $scope.selectedTableName = $scope.tableNames[0];
 
-                $scope.$apply(function() {
+                if(initializing) {
                     $scope.updateFields();
-                });
+                } else {
+                    $scope.$apply(function() {
+                        $scope.updateFields();
+                    });
+                }
             };
 
             $scope.updateFields = function() {
@@ -378,6 +395,7 @@ angular.module('neonDemo.directives')
             // Wait for neon to be ready, the create our messenger and intialize the view and data.
             neon.ready(function() {
                 $scope.initialize();
+                $scope.displayActiveDataset(true);
             });
         }
     };
