@@ -91,7 +91,11 @@ angular.module("neonDemo.services")
          * <li> {Stirng} table The table name </li>
          * <li> {Object} fields The map of field names to arrays of related field names </li>
          * </ul>
-         * @param {Function} createFilterClauseFunction The function used to create the filter clause for each field name in the given array
+         * @param {Function} createFilterClauseFunction The function used to create the filter clause for each field, with arguments:
+         *  <ul>
+         *      <li> {String} The table name </li>
+         *      <li> {String} or {Array} The field name(s) </li>
+         *  </ul>
          * @method createFilter
          * @return {Object} A neon.query.Filter object
          */
@@ -118,7 +122,11 @@ angular.module("neonDemo.services")
          * @param {Object} messenger The messenger object used to add the filters
          * @param {Array} relations The array of relations containing a database name, a table name, and a map of fields
          * @param {Object} filterKeys The map of table names to filter keys used by the messenger
-         * @param {Function} createFilterClauseFunction The function used to create the filter clause with arguments for the table name and field name(s)
+         * @param {Function} createFilterClauseFunction The function used to create the filter clause for each field, with arguments:
+         *  <ul>
+         *      <li> {String} The table name </li>
+         *      <li> {String} or {Array} The field name(s) </li>
+         *  </ul>
          * @param {Function} successCallback The function called once all the filters have been added (optional)
          * @param {Function} errorCallback The function called if an error is returned for any of the filter calls (optional)
          * @method addFilters
@@ -144,7 +152,11 @@ angular.module("neonDemo.services")
          * @param {Object} messenger The messenger object used to replace the filters
          * @param {Array} relations The array of relations containing a database name, a table name, and a map of fields
          * @param {Object} filterKeys The map of table names to filter keys used by the messenger
-         * @param {Function} createFilterClauseFunction The function used to create the filter clause with arguments for the table name and field name(s)
+         * @param {Function} createFilterClauseFunction The function used to create the filter clause for each field, with arguments:
+         *  <ul>
+         *      <li> {String} The table name </li>
+         *      <li> {String} or {Array} The field name(s) </li>
+         *  </ul>
          * @param {Function} successFunction The function called once all the filters have been replaced (optional)
          * @param {Function} errorFunction The function called if an error is returned for any of the filter calls (optional)
          * @method replaceFilters
