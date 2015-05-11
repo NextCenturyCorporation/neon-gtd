@@ -22,7 +22,7 @@ angular.module('neonDemo.directives')
         restrict: 'EA',
         scope: {
         },
-        link: function($scope) {
+        link: function($scope, element) {
             $scope.SERVER = "SERVER";
             $scope.FIELD = "FIELD";
             $scope.VALUE = "VALUE";
@@ -32,6 +32,50 @@ angular.module('neonDemo.directives')
 
             // The links currently displayed in the popup.
             $scope.links = [];
+
+            $scope.logLinkEvent = function(name) {
+                XDATA.userALE.log({
+                    activity: "perform",
+                    action: "click",
+                    elementId: "link-button-" + name,
+                    elementType: "button",
+                    elementGroup: "top",
+                    source: "user",
+                    tags: ["external", "link"]
+                });
+            };
+
+            $scope.onClose = function(name) {
+                XDATA.userALE.log({
+                    activity: "hide",
+                    action: "click",
+                    elementId: "link-dialog-close-button",
+                    elementType: "dialog box",
+                    elementSub: "close-button",
+                    elementGroup: "top",
+                    source: "user",
+                    tags: ["external", "link"]
+                });
+            };
+
+            $scope.onOpen = function() {
+                XDATA.userALE.log({
+                    activity: "show",
+                    action: "click",
+                    elementId: "link-dialog-open-button",
+                    elementType: "dialog box",
+                    elementSub: "open-button",
+                    elementGroup: "top",
+                    source: "user",
+                    tags: ["external", "link"]
+                });
+            };
+
+            // Add a handler to detect when the dialog is shown so we can log it.
+            $(".links-popup").on("show.bs.modal", $scope.onOpen);
+            $scope.$on('$destroy', function() {
+                $(".links-popup").off("show.bs.modal", $scope.onOpen);
+            });
 
             popups.links.setData = function(source, data) {
                 var cleanData = [];
