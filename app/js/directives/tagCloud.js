@@ -200,7 +200,6 @@ function(connectionService, datasetService, filterService, $timeout) {
              * @method queryForTags
              */
             $scope.queryForTags = function() {
-                console.log("QUERY FOR TAGS IN TAG SCOPE");
                 if($scope.options.tagField !== '') {
                     var connection = connectionService.getActiveConnection();
                     if(connection) {

@@ -71,14 +71,27 @@ function(connectionService, datasetService, errorNotificationService, filterServ
                 }
             }, true);
 
-            var updateSize = function() {
-                var paddingTop = ($element.outerHeight(true) - $element.height()) / 2;
-                var headerHeight = $element.find('.config-row-div').outerHeight(true);
-                $element.find('#directed-graph-div-' + $scope.uniqueId).height($element.height() - paddingTop - headerHeight);
-                return $timeout(redraw, $scope.TIMEOUT_MS);
+            $scope.calculateGraphHeight = function() {
+                var headerHeight = 0;
+                $element.find(".header-container").each(function() {
+                    headerHeight += $(this).outerHeight(true);
+                });
+                return $element.height() - headerHeight;
             };
 
-            var redraw = function() {
+            $scope.calculateGraphWidth = function() {
+                return $element.width();
+            };
+
+            $scope.updateSize = function() {
+                // The D3 graph will resize itself but we need to trigger that resize event by changing the height and widget of the SVG.
+                // Setting the dimensions on the SVG performs better than just setting the dimensions on the directed-graph-container.
+                $element.find(".directed-graph .directed-graph-container svg").attr("height", $scope.calculateGraphHeight());
+                $element.find(".directed-graph .directed-graph-container svg").attr("width", $scope.calculateGraphWidth());
+                return $timeout($scope.redraw, $scope.TIMEOUT_MS);
+            };
+
+            $scope.redraw = function() {
                 if($scope.graph) {
                     $scope.graph.redraw();
                 }
@@ -115,7 +128,7 @@ function(connectionService, datasetService, errorNotificationService, filterServ
                     if($scope.resizePromise) {
                         $timeout.cancel($scope.resizePromise);
                     }
-                    $scope.resizePromise = updateSize();
+                    $scope.resizePromise = $scope.updateSize();
                 });
             };
 
@@ -171,7 +184,9 @@ function(connectionService, datasetService, errorNotificationService, filterServ
                 }
 
                 if(!$scope.graph) {
-                    $scope.graph = new charts.DirectedGraph($element[0], ('#directed-graph-div-' + $scope.uniqueId), {
+                    $scope.graph = new charts.DirectedGraph($element[0], (".directed-graph-container-" + $scope.uniqueId), {
+                        calculateHeight: $scope.calculateGraphHeight,
+                        calculateWidth: $scope.calculateGraphWidth,
                         clickHandler: $scope.createClickHandler
                     });
                 }

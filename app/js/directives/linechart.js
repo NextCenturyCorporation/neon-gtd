@@ -103,6 +103,10 @@ function(connectionService, datasetService, errorNotificationService) {
                     updateChartSize();
                 });
 
+                $element.find(".legend").resize(function() {
+                    updateChartSize();
+                });
+
                 $scope.$watch('options.attrX', function(newValue) {
                     onFieldChange('attrX', newValue);
                     if($scope.selectedDatabase && $scope.options.selectedTable.name) {
