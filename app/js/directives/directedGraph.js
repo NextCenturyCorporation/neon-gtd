@@ -16,18 +16,17 @@
  */
 
 angular.module('neonDemo.directives')
-.directive('directedGraph',['ConnectionService', 'DatasetService', 'ErrorNotificationService', 'FilterService', '$timeout', function(connectionService, datasetService, errorNotificationService, filterService, $timeout) {
+.directive('directedGraph',['ConnectionService', 'DatasetService', 'ErrorNotificationService', 'FilterService', 'UtilityService', '$timeout',
+function(connectionService, datasetService, errorNotificationService, filterService, utilityService, $timeout) {
     return {
         templateUrl: 'partials/directives/directedGraph.html',
         restrict: 'EA',
         scope: {
         },
-        link: function($scope, element) {
-            $scope.uniqueChartOptions = 'chart-options-' + uuid();
-            var chartOptions = $(element).find('.chart-options');
-            chartOptions.toggleClass($scope.uniqueChartOptions);
+        link: function($scope, $element) {
+            $element.addClass('directedGraphDirective');
 
-            element.addClass('directedGraphDirective');
+            $scope.uniqueChartOptions = utilityService.createUniqueChartOptionsId($element);
 
             $scope.TIMEOUT_MS = 250;
             $scope.uniqueId = uuid();
@@ -58,9 +57,9 @@ angular.module('neonDemo.directives')
             }, true);
 
             var updateSize = function() {
-                var paddingTop = (element.outerHeight(true) - element.height()) / 2;
-                var headerHeight = element.find('.config-row-div').outerHeight(true);
-                element.find('#directed-graph-div-' + $scope.uniqueId).height(element.height() - paddingTop - headerHeight);
+                var paddingTop = ($element.outerHeight(true) - $element.height()) / 2;
+                var headerHeight = $element.find('.config-row-div').outerHeight(true);
+                $element.find('#directed-graph-div-' + $scope.uniqueId).height($element.height() - paddingTop - headerHeight);
                 return $timeout(redraw, $scope.TIMEOUT_MS);
             };
 
@@ -97,11 +96,12 @@ angular.module('neonDemo.directives')
                     }
                 });
 
-                element.resize(function() {
+                $element.resize(function() {
                     if($scope.resizePromise) {
                         $timeout.cancel($scope.resizePromise);
                     }
                     $scope.resizePromise = updateSize();
+                    utilityService.resizeOptionsPopover($element);
                 });
             };
 
@@ -157,7 +157,7 @@ angular.module('neonDemo.directives')
                 }
 
                 if(!$scope.graph) {
-                    $scope.graph = new charts.DirectedGraph(element[0], ('#directed-graph-div-' + $scope.uniqueId), {
+                    $scope.graph = new charts.DirectedGraph($element[0], ('#directed-graph-div-' + $scope.uniqueId), {
                         clickHandler: $scope.createClickHandler
                     });
                 }
@@ -303,7 +303,7 @@ angular.module('neonDemo.directives')
                     }, function(response) {
                         $scope.updateGraph([], []);
                         if(response.responseJSON) {
-                            $scope.errorMessage = errorNotificationService.showErrorMessage(element, response.responseJSON.error, response.responseJSON.stackTrace);
+                            $scope.errorMessage = errorNotificationService.showErrorMessage($element, response.responseJSON.error, response.responseJSON.stackTrace);
                         }
                     });
                 }
@@ -343,7 +343,7 @@ angular.module('neonDemo.directives')
                     }, function(response) {
                         $scope.updateGraph([], []);
                         if(response.responseJSON) {
-                            $scope.errorMessage = errorNotificationService.showErrorMessage(element, response.responseJSON.error, response.responseJSON.stackTrace);
+                            $scope.errorMessage = errorNotificationService.showErrorMessage($element, response.responseJSON.error, response.responseJSON.stackTrace);
                         }
                     });
                 }

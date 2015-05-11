@@ -28,7 +28,8 @@
  * @constructor
  */
 angular.module('neonDemo.directives')
-.directive('stackedbarchart', ['ConnectionService', 'DatasetService', 'ErrorNotificationService', function(connectionService, datasetService, errorNotificationService) {
+.directive('stackedbarchart', ['ConnectionService', 'DatasetService', 'ErrorNotificationService', 'UtilityService',
+function(connectionService, datasetService, errorNotificationService, utilityService) {
     return {
         templateUrl: 'partials/directives/barchart.html',
         restrict: 'E',
@@ -37,12 +38,10 @@ angular.module('neonDemo.directives')
             attrY: '=',
             barType: '='
         },
-        link: function($scope, el) {
-            $scope.uniqueChartOptions = 'chart-options-' + uuid();
-            var chartOptions = $(el).find('.chart-options');
-            chartOptions.toggleClass($scope.uniqueChartOptions);
+        link: function($scope, $element) {
+            $element.addClass('barchartDirective');
 
-            el.addClass('barchartDirective');
+            $scope.uniqueChartOptions = utilityService.createUniqueChartOptionsId($element);
 
             $scope.messenger = new neon.eventing.Messenger();
             $scope.databaseName = '';
@@ -53,6 +52,10 @@ angular.module('neonDemo.directives')
             $scope.barType = /*$scope.barType ||*/'count'; //Changed because negative values break the display
             $scope.fields = [];
             $scope.errorMessage = undefined;
+
+            $element.resize(function() {
+                utilityService.resizeOptionsPopover($element);
+            });
 
             var COUNT_FIELD_NAME = 'Count';
 
@@ -188,7 +191,7 @@ angular.module('neonDemo.directives')
                     }, function(response) {
                         $scope.drawBlankChart();
                         if(response.responseJSON) {
-                            $scope.errorMessage = errorNotificationService.showErrorMessage(el, response.responseJSON.error, response.responseJSON.stackTrace);
+                            $scope.errorMessage = errorNotificationService.showErrorMessage($element, response.responseJSON.error, response.responseJSON.stackTrace);
                         }
                     });
                 }
@@ -284,7 +287,7 @@ angular.module('neonDemo.directives')
             };
 
             var doDrawChart = function(data) {
-                charts.BarChart.destroy(el[0], '.barchart');
+                charts.BarChart.destroy($element[0], '.barchart');
 
                 var xAxis = datasetService.getMapping($scope.selectedTable.name, "x_axis") || $scope.attrX;
                 var yAxis = datasetService.getMapping($scope.selectedTable.name, "y_axis") || $scope.attrY;
@@ -301,7 +304,7 @@ angular.module('neonDemo.directives')
                     stacked: true,
                     responsive: false
                 };
-                (new charts.BarChart(el[0], '.barchart', opts)).draw();
+                (new charts.BarChart($element[0], '.barchart', opts)).draw();
             };
 
             neon.ready(function() {

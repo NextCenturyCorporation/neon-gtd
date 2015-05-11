@@ -28,7 +28,8 @@
  * @constructor
  */
 angular.module('neonDemo.directives')
-.directive('barchart', ['ConnectionService', 'DatasetService', 'ErrorNotificationService', 'FilterService', '$timeout', function(connectionService, datasetService, errorNotificationService, filterService, $timeout) {
+.directive('barchart', ['ConnectionService', 'DatasetService', 'ErrorNotificationService', 'FilterService', 'UtilityService', '$timeout',
+function(connectionService, datasetService, errorNotificationService, filterService, utilityService, $timeout) {
     return {
         templateUrl: 'partials/directives/barchart.html',
         restrict: 'EA',
@@ -38,11 +39,9 @@ angular.module('neonDemo.directives')
             bindAggregationField: '='
         },
         link: function($scope, $element) {
-            $scope.uniqueChartOptions = 'chart-options-' + uuid();
-            var chartOptions = $($element).find('.chart-options');
-            chartOptions.toggleClass($scope.uniqueChartOptions);
-
             $element.addClass('barchartDirective');
+
+            $scope.uniqueChartOptions = utilityService.createUniqueChartOptionsId($element);
 
             $scope.databaseName = '';
             $scope.tables = [];
@@ -61,7 +60,11 @@ angular.module('neonDemo.directives')
 
             var updateChartSize = function() {
                 if($scope.chart) {
-                    $element.find('.barchart').height($element.height() - $element.find('.legend').outerHeight(true));
+                    var headerHeight = 0;
+                    $element.find(".header-container").each(function() {
+                        headerHeight += $(this).outerHeight(true);
+                    });
+                    $element.find('.barchart').height($element.height() - headerHeight);
                     $scope.chart.draw();
                 }
             };
@@ -142,6 +145,7 @@ angular.module('neonDemo.directives')
                 // on the associated element and not just the window.
                 $element.resize(function() {
                     updateChartSize();
+                    utilityService.resizeOptionsPopover($element);
                 });
             };
 

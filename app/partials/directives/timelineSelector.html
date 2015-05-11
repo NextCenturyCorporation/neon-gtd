@@ -1,54 +1,67 @@
-<div class="chart-options pull-right">
-    <a class="btn btn-lg text-muted collapsed" data-toggle="collapse" data-target=".{{uniqueChartOptions}} .timeline-options" data-animation=false>
-      <span class="glyphicon glyphicon-cog"></span>
-      <span class="caret"></span>
-    </a>
-    <div class="timeline-options popover bottom">
-        <div class="arrow"></div>
-        <div class="popover-content">
-            <div class="form-group">
-                <label>Table</label>
-                <select class="form-control" ng-model="selectedTable" ng-options="table.name for table in tables" ng-required="true" ng-disabled="(tables.length < 2)" ng-change="updateFieldsAndQueryForChartData()">
-                </select>
-            </div>
-            <div class="form-group">
-                <label>Date Field</label>
-                <select class="form-control" ng-model="dateField" ng-options="field for field in fields" ng-required="true" ng-disabled="(fields.length == 0)" ng-change="resetAndQueryForChartData()">
-                </select>
+<div class="header-container">
+    <span class="header-text pull-left">{{selectedTable.name}}</span>
+
+    <div class="chart-options pull-right">
+        <a class="btn btn-lg collapsed" data-toggle="collapse" data-target=".{{uniqueChartOptions}} .timeline-options" data-animation=false>
+          <span class="glyphicon glyphicon-cog"></span>
+          <span class="caret"></span>
+        </a>
+
+        <div class="timeline-options popover bottom">
+            <div class="arrow"></div>
+            <div class="popover-content">
+                <div class="form-group">
+                    <label>Table</label>
+                    <select class="form-control" ng-model="selectedTable" ng-options="table.name for table in tables" ng-required="true" ng-disabled="(tables.length < 2)" ng-change="updateFieldsAndQueryForChartData()">
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label>Date Field</label>
+                    <select class="form-control" ng-model="dateField" ng-options="field for field in fields" ng-required="true" ng-disabled="(fields.length == 0)" ng-change="resetAndQueryForChartData()">
+                    </select>
+                </div>
+
+                <div class="form-group pull-right timeseries-selector-form-group" ng-hide="!(data.length > 1)">
+                  <div class="input-group timeseries-selector">
+                    <select class="form-control" ng-model="primarySeries"
+                      ng-options="series.name for series in data">
+                    </select>
+                    <span class="input-group-btn">
+                      <button class="btn" type="button" ng-class="{true: 'btn-primary', false: 'btn-danger'}[collapsed]" ng-click="collapsed = !collapsed">
+                        <span class="glyphicon" ng-class="{true: 'glyphicon-plus', false: 'glyphicon-minus'}[collapsed]"></span>
+                      </button>
+                    </span>
+                  </div>
+                </div>
+
+                <div class="form-group">
+                    <label>Date Granularity</label>
+                    <div class="btn-group">
+                      <label class="btn btn-default" ng-class="{true: 'active', false: ''}[granularity === 'year']">
+                        <input type="radio" style="display:none" ng-model="granularity" value="year"> Year
+                      </label>
+                      <label class="btn btn-default" ng-class="{true: 'active', false: ''}[granularity === 'month']">
+                        <input type="radio" style="display:none" ng-model="granularity" value="month"> Month
+                      </label>
+                      <label class="btn btn-default active" ng-class="{true: 'active', false: ''}[granularity === 'day']">
+                        <input type="radio" style="display:none" ng-model="granularity" value="day"> Day
+                      </label>
+                      <label class="btn btn-default" ng-class="{true: 'active', false: ''}[granularity === 'hour']">
+                        <input type="radio" style="display:none" ng-model="granularity" value="hour"> Hour
+                      </label>
+                    </div>
+                    <div class="clearfix"></div>
+                </div>
+
             </div>
         </div>
     </div>
 </div>
 
-  <form>
+<div class="clearfix"></div>
 
-    <div class="form-group pull-right timeseries-selector-form-group" ng-hide="!(data.length > 1)">
-      <div class="input-group timeseries-selector">
-        <select class="form-control" ng-model="primarySeries"
-          ng-options="series.name for series in data">
-        </select>
-        <span class="input-group-btn">
-          <button class="btn" type="button" ng-class="{true: 'btn-primary', false: 'btn-danger'}[collapsed]" ng-click="collapsed = !collapsed">
-            <span class="glyphicon" ng-class="{true: 'glyphicon-plus', false: 'glyphicon-minus'}[collapsed]"></span>
-          </button>
-        </span>
-      </div>
-    </div>
-
-    <div class="btn-group pull-right">
-      <label class="btn btn-default" ng-class="{true: 'active', false: ''}[granularity === 'year']">
-        <input type="radio" style="display:none" ng-model="granularity" value="year"> Year
-      </label>
-      <label class="btn btn-default" ng-class="{true: 'active', false: ''}[granularity === 'month']">
-        <input type="radio" style="display:none" ng-model="granularity" value="month"> Month
-      </label>
-      <label class="btn btn-default active" ng-class="{true: 'active', false: ''}[granularity === 'day']">
-        <input type="radio" style="display:none" ng-model="granularity" value="day"> Day
-      </label>
-      <label class="btn btn-default" ng-class="{true: 'active', false: ''}[granularity === 'hour']">
-        <input type="radio" style="display:none" ng-model="granularity" value="hour"> Hour
-      </label>
-    </div>
+<div class="header-container header-container-large">
     <div class="filter-reset pull-right" ng-class="{true: '', false: 'hidden'}[brush.length > 0]">
       Filter
       <a class="btn" ng-click="clearBrush()">
@@ -56,7 +69,6 @@
       </a>
     </div>
 
-  </form>
   <h4><span class="count count-large text-primary" ng-bind="recordCount | number"></span> records 
   <span ng-bind="(startDateForDisplay) ? ' from ' : ''"></span>
   <span ng-bind="(startDateForDisplay && granularity === 'hour') ? (startDateForDisplay.toISOString() | date: 'MMM d, yyyy HH:mm') : ''"></span>
@@ -69,6 +81,7 @@
   <span ng-bind="(endDateForDisplay && granularity === 'month') ? (endDateForDisplay.toISOString() | date: 'MMMM yyyy') : ''"></span>
   <span ng-bind="(endDateForDisplay && granularity === 'year') ? (endDateForDisplay.toISOString() | date: 'yyyy') : ''"></span>
   <span ng-bind="(startDateForDisplay) ? '(Z)' : ''"></span></h4>
+</div>
 
   <div class="collapsed" ng-class="{true: 'collapsed', false: ''}[collapsed]">
     <div timeline-selector-chart timeline-data='data' timeline-brush='brush' collapsed='collapsed' extent-dirty='extentDirty' primary-series='primarySeries' granularity='granularity'></div>

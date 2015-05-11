@@ -19,25 +19,25 @@
  * This directive is for building a tag cloud
  */
 angular.module('neonDemo.directives')
-.directive('tagCloud', ['ConnectionService', 'DatasetService', 'FilterService', '$timeout', function(connectionService, datasetService, filterService, $timeout) {
+.directive('tagCloud', ['ConnectionService', 'DatasetService', 'FilterService', 'UtilityService', '$timeout',
+function(connectionService, datasetService, filterService, utilityService, $timeout) {
     return {
         templateUrl: 'partials/directives/tagCloud.html',
         restrict: 'EA',
         scope: {
             bindTagField: '='
         },
-        link: function($scope, element) {
-            element.addClass("tagcloud-container");
+        link: function($scope, $element) {
+            $element.addClass("tagcloud-container");
+
+            $scope.uniqueChartOptions = utilityService.createUniqueChartOptionsId($element);
+
             $scope.databaseName = '';
             $scope.tables = [];
             // $scope.selectedTable = {
             //     name: ""
             // };
             $scope.fields = [];
-
-            $scope.uniqueChartOptions = 'chart-options-' + uuid();
-            var chartOptions = $(element).find('.chart-options');
-            chartOptions.toggleClass($scope.uniqueChartOptions);
 
             // data will be a list of tag name/counts in descending order
             $scope.data = [];
@@ -58,6 +58,10 @@ angular.module('neonDemo.directives')
                 tagField: "",
                 andTags: true
             };
+
+            $element.resize(function() {
+                utilityService.resizeOptionsPopover($element);
+            });
 
             /**
              * Initializes the name of the directive's scope variables
@@ -285,7 +289,7 @@ angular.module('neonDemo.directives')
 
                 // style the tags after they are displayed
                 $timeout(function() {
-                    element.find('.tag').tagcloud();
+                    $element.find('.tag').tagcloud();
                 });
             };
 

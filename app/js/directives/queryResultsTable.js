@@ -28,8 +28,8 @@
  * @constructor
  */
 angular.module('neonDemo.directives')
-.directive('queryResultsTable', ['external', 'popups', 'ConnectionService', 'DatasetService', 'ErrorNotificationService', '$compile',
-    function(external, popups, connectionService, datasetService, errorNotificationService, $compile) {
+.directive('queryResultsTable', ['external', 'popups', 'ConnectionService', 'DatasetService', 'ErrorNotificationService', 'UtilityService', '$compile',
+function(external, popups, connectionService, datasetService, errorNotificationService, utilityService, $compile) {
     return {
         templateUrl: 'partials/directives/queryResultsTable.html',
         restrict: 'EA',
@@ -37,12 +37,10 @@ angular.module('neonDemo.directives')
             navbarItem: '=?',
             showData: '=?'
         },
-        link: function($scope, element) {
-            $scope.uniqueChartOptions = 'chart-options-' + uuid();
-            var chartOptions = $(element).find('.chart-options');
-            chartOptions.toggleClass($scope.uniqueChartOptions);
+        link: function($scope, $element) {
+            $element.addClass('query-results-directive');
 
-            element.addClass('query-results-directive');
+            $scope.uniqueChartOptions = utilityService.createUniqueChartOptionsId($element);
 
             // Unique field name used for the SlickGrid column containing the URLs for the external apps.
             // This name should be one that is highly unlikely to be a column name in a real database.
@@ -52,8 +50,9 @@ angular.module('neonDemo.directives')
             // Otherwise show the data automatically on launching the widget.
             if(typeof($scope.showData) === "undefined") {
                 $scope.showData = true;
-                element.resize(function() {
+                $element.resize(function() {
                     updateSize();
+                    utilityService.resizeOptionsPopover($element);
                 });
             }
 
@@ -78,13 +77,17 @@ angular.module('neonDemo.directives')
             // and pass that to the tables.Table object.
             $scope.data = [];
             $scope.tableId = 'query-results-' + uuid();
-            var $tableDiv = $(element).find('.query-results-grid');
+            var $tableDiv = $element.find('.query-results-grid');
 
             $tableDiv.attr("id", $scope.tableId);
 
             var updateSize = function() {
+                var headerHeight = 0;
+                $element.find(".header-container").each(function() {
+                    headerHeight += $(this).outerHeight(true);
+                });
                 var tableBufferY = $tableDiv.outerHeight(true) - $tableDiv.height();
-                $tableDiv.height(element.height() - $(element).find('.count-header').outerHeight(true) - tableBufferY);
+                $tableDiv.height($element.height() - headerHeight - tableBufferY);
                 if($scope.table) {
                     $scope.table.refreshLayout();
                 }
@@ -388,7 +391,7 @@ angular.module('neonDemo.directives')
                                 data: []
                             });
                             if(response.responseJSON) {
-                                $scope.errorMessage = errorNotificationService.showErrorMessage(element, response.responseJSON.error, response.responseJSON.stackTrace);
+                                $scope.errorMessage = errorNotificationService.showErrorMessage($element, response.responseJSON.error, response.responseJSON.stackTrace);
                             }
                         });
                     }
@@ -536,7 +539,7 @@ angular.module('neonDemo.directives')
             };
 
             $scope.createDeleteColumnButtons = function() {
-                element.find(".slick-header-column").each(function() {
+                $element.find(".slick-header-column").each(function() {
                     var name = $(this).find(".slick-column-name").html();
                     // Check if the name is empty to ignore the external application link column.
                     if(name) {

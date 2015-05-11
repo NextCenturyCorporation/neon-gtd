@@ -32,24 +32,23 @@
  * @constructor
  */
 angular.module('neonDemo.directives')
-.directive('timelineSelector', ['ConnectionService', 'DatasetService', 'ErrorNotificationService', 'FilterService', function(connectionService, datasetService, errorNotificationService, filterService) {
+.directive('timelineSelector', ['ConnectionService', 'DatasetService', 'ErrorNotificationService', 'FilterService', 'UtilityService',
+function(connectionService, datasetService, errorNotificationService, filterService, utilityService) {
     return {
         templateUrl: 'partials/directives/timelineSelector.html',
         restrict: 'EA',
         scope: {
             bindDateField: '='
         },
-        link: function($scope, element) {
+        link: function($scope, $element) {
             var YEAR = "year";
             var MONTH = "month";
             var HOUR = "hour";
             var DAY = "day";
 
-            $scope.uniqueChartOptions = 'chart-options-' + uuid();
-            var chartOptions = $(element).find('.chart-options');
-            chartOptions.toggleClass($scope.uniqueChartOptions);
+            $element.addClass('timeline-selector');
 
-            element.addClass('timeline-selector');
+            $scope.uniqueChartOptions = utilityService.createUniqueChartOptionsId($element);
 
             // Default our time data to an empty array.
             $scope.data = [];
@@ -79,6 +78,10 @@ angular.module('neonDemo.directives')
             };
             $scope.fields = [];
             $scope.filterKeys = {};
+
+            $element.resize(function() {
+                utilityService.resizeOptionsPopover($element);
+            });
 
             /**
              * Update any book-keeping fields that need to change when the granularity changes.
@@ -432,7 +435,7 @@ angular.module('neonDemo.directives')
                         // TODO:  Determine how to clear the chart without causing errors.
                         // $scope.updateChartData({ data: [] });
                         if(response.responseJSON) {
-                            $scope.errorMessage = errorNotificationService.showErrorMessage(element, response.responseJSON.error, response.responseJSON.stackTrace);
+                            $scope.errorMessage = errorNotificationService.showErrorMessage($element, response.responseJSON.error, response.responseJSON.stackTrace);
                         }
                     });
                 }
@@ -604,7 +607,7 @@ angular.module('neonDemo.directives')
                         // TODO:  Determine how to clear the chart without causing errors.
                         // $scope.updateChartData({ data: [] });
                         if(response.responseJSON) {
-                            $scope.errorMessage = errorNotificationService.showErrorMessage(element, response.responseJSON.error, response.responseJSON.stackTrace);
+                            $scope.errorMessage = errorNotificationService.showErrorMessage($element, response.responseJSON.error, response.responseJSON.stackTrace);
                         }
                     });
                 }
@@ -656,7 +659,7 @@ angular.module('neonDemo.directives')
                         // TODO:  Determine how to clear the chart without causing errors.
                         // $scope.updateChartData({ data: [] });
                         if(response.responseJSON) {
-                            $scope.errorMessage = errorNotificationService.showErrorMessage(element, response.responseJSON.error, response.responseJSON.stackTrace);
+                            $scope.errorMessage = errorNotificationService.showErrorMessage($element, response.responseJSON.error, response.responseJSON.stackTrace);
                         }
                     });
                 }

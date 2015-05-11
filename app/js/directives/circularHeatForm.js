@@ -31,7 +31,8 @@
  * @constructor
  */
 angular.module('neonDemo.directives')
-.directive('circularHeatForm', ['ConnectionService', 'DatasetService', 'ErrorNotificationService', function(connectionService, datasetService, errorNotificationService) {
+.directive('circularHeatForm', ['ConnectionService', 'DatasetService', 'ErrorNotificationService', 'UtilityService',
+function(connectionService, datasetService, errorNotificationService, utilityService) {
     return {
         templateUrl: 'partials/directives/circularHeatForm.html',
         restrict: 'EA',
@@ -55,10 +56,10 @@ angular.module('neonDemo.directives')
                 return $scope.dateField;
             };
         },
-        link: function($scope, element) {
-            $scope.uniqueChartOptions = 'chart-options-' + uuid();
-            var chartOptions = $(element).find('.chart-options');
-            chartOptions.toggleClass($scope.uniqueChartOptions);
+        link: function($scope, $element) {
+            $element.addClass('circularheatform');
+
+            $scope.uniqueChartOptions = utilityService.createUniqueChartOptionsId($element);
 
             $scope.databaseName = "";
             $scope.tables = [];
@@ -72,11 +73,13 @@ angular.module('neonDemo.directives')
             $scope.maxTime = "";
             $scope.errorMessage = undefined;
 
-            element.addClass('circularheatform');
-
             var HOURS_IN_WEEK = 168;
             var HOURS_IN_DAY = 24;
             $scope.dateField = "";
+
+            $element.resize(function() {
+                utilityService.resizeOptionsPopover($element);
+            });
 
             /**
              * Initializes the name of the date field used to query the current dataset
@@ -302,7 +305,7 @@ angular.module('neonDemo.directives')
                             data: []
                         });
                         if(response.responseJSON) {
-                            $scope.errorMessage = errorNotificationService.showErrorMessage(element, response.responseJSON.error, response.responseJSON.stackTrace);
+                            $scope.errorMessage = errorNotificationService.showErrorMessage($element, response.responseJSON.error, response.responseJSON.stackTrace);
                         }
                     });
                 }
