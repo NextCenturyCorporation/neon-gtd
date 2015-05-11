@@ -1,21 +1,25 @@
 angular.module('neonDemo.directives')
 .directive('optionsMenu', function() {
-
     return {
         templateUrl: 'partials/directives/optionsMenu.html',
         restrict: 'EA',
         transclude: true, 
-        link: function($scope, element) {
+        scope: {
+            parentElement: '=',
+            buttonText: '=?',
+            showButtonText: '=?'
+        },
+        link: function($scope, $element) {
+            // Buffer needed above and below the chart options popover based on popover position, container padding (both set in the CSS), and UX.
+            $scope.CHART_OPTIONS_BUFFER_Y = 65;
+
             $scope.optionsDisplayed = false;
-            $scope.uniqueVisualizationOptions = 'visualization-options-' + uuid();
+            $scope.uniqueVisualizationOptions = 'chart-options-' + uuid();
+            $element.find('.chart-options').addClass($scope.uniqueVisualizationOptions);
 
-            var options = $(element).find('.visualization-options');
-            options.toggleClass($scope.uniqueVisualizationOptions);
-
-            $scope.toggleOptionsDisplay = function(){
+            $scope.toggleOptionsDisplay = function() {
                 $scope.optionsDisplayed = !$scope.optionsDisplayed;
                 var activity = ($scope.optionsDisplayed) ? 'show' : 'hide';
-                console.log(activity)
                 XDATA.userALE.log({
                     activity: activity,
                     action: "click",
@@ -25,11 +29,20 @@ angular.module('neonDemo.directives')
                     source: "user",
                     tags: ["options"]
                 });
-            }
+            };
 
-            $scope.$watch('tagField', function() {
-                console.log("options - tagField changed");
-            })
+            $scope.getButtonText = function() {
+                if($.isFunction($scope.buttonText)) {
+                    return $scope.buttonText();
+                }
+                return $scope.buttonText;
+            };
+
+            $scope.parentElement.resize(function() {
+                var chartOptions = $element.find(".chart-options");
+                var height = $scope.parentElement.innerHeight() - (chartOptions.outerHeight(true) - chartOptions.height() + $scope.CHART_OPTIONS_BUFFER_Y);
+                chartOptions.find(".popover-content").css("max-height", height + "px");
+            });
         }
     }
 });

@@ -19,8 +19,8 @@
  * This directive is for building a tag cloud
  */
 angular.module('neonDemo.directives')
-.directive('tagCloud', ['ConnectionService', 'DatasetService', 'FilterService', 'UtilityService', '$timeout',
-function(connectionService, datasetService, filterService, utilityService, $timeout) {
+.directive('tagCloud', ['ConnectionService', 'DatasetService', 'FilterService', '$timeout',
+function(connectionService, datasetService, filterService, $timeout) {
     return {
         templateUrl: 'partials/directives/tagCloud.html',
         restrict: 'EA',
@@ -30,27 +30,19 @@ function(connectionService, datasetService, filterService, utilityService, $time
         link: function($scope, $element) {
             $element.addClass("tagcloud-container");
 
-            $scope.uniqueChartOptions = utilityService.createUniqueChartOptionsId($element);
+            $scope.element = $element;
+            $scope.showOptionsMenuButtonText = function() {
+                return $scope.filterTags.length === 0 && $scope.data.length === 0;
+            };
 
             $scope.databaseName = '';
             $scope.tables = [];
-            // $scope.selectedTable = {
-            //     name: ""
-            // };
             $scope.fields = [];
-
-            // data will be a list of tag name/counts in descending order
             $scope.data = [];
-
-            // optionsDisplayed is used merely to track the display of the options menu
-            // for usability and workflow analysis.
-            $scope.optionsDisplayed = false;
-
             $scope.filterTags = [];
             $scope.showFilter = false;
-            //$scope.andTags = true;
             $scope.filterKeys = {};
-            //$scope.tagField = '';
+
             $scope.options = {
                 selectedTable: {
                     name: ""
@@ -58,10 +50,6 @@ function(connectionService, datasetService, filterService, utilityService, $time
                 tagField: "",
                 andTags: true
             };
-
-            $element.resize(function() {
-                utilityService.resizeOptionsPopover($element);
-            });
 
             /**
              * Initializes the name of the directive's scope variables
@@ -199,7 +187,7 @@ function(connectionService, datasetService, filterService, utilityService, $time
             $scope.updateFieldsAndQueryForTags = function() {
                 $scope.fields = datasetService.getDatabaseFields($scope.options.selectedTable.name);
                 $scope.fields.sort();
-                $scope.options.tagField = $scope.bindTagField || datasetService.getMapping($scope.options.selectedTable.name, "tags") || "";
+                $scope.options.tagField = $scope.bindTagField || datasetService.getMapping($scope.options.selectedTable.name, "tags") || $scope.fields[0] || "";
                 if($scope.showFilter) {
                     $scope.clearTagFilters();
                 } else {
@@ -399,10 +387,6 @@ function(connectionService, datasetService, filterService, utilityService, $time
                     tags: ["filter", "tag-cloud", tagName]
                 });
                 $scope.filterTags = _.without($scope.filterTags, tagName);
-            };
-
-            $scope.toggleOptionsDisplay = function() {
-                $scope.optionsDisplayed = !$scope.optionsDisplayed;
             };
 
             // Wait for neon to be ready, the create our messenger and intialize the view and data.
