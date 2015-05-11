@@ -33,8 +33,18 @@ angular.module('neonDemo.controllers')
      * @method onStartGridsterLayoutChange
      * @private
      */
-    var onStartGridsterLayoutChange = function() {
+    var onStartGridsterSizeChange = function() {
         $('.gridster-item').css('pointer-events', 'none');
+        XDATA.userALE.log({
+            activity: "alter",
+            action: "dragstart",
+            elementId: "workspace",
+            elementType: "workspace",
+            elementSub: "layout",
+            elementGroup: "top",
+            source: "user",
+            tags: ["visualization", "resize"]
+        });
     };
 
     /**
@@ -43,8 +53,54 @@ angular.module('neonDemo.controllers')
      * @method onStopGridsterLayoutChange
      * @private
      */
-    var onStopGridsterLayoutChange = function() {
+    var onStopGridsterSizeChange = function() {
         $('.gridster-item').css('pointer-events', 'auto');
+        XDATA.userALE.log({
+            activity: "alter",
+            action: "dragend",
+            elementId: "workspace",
+            elementType: "workspace",
+            elementSub: "layout",
+            elementGroup: "top",
+            source: "user",
+            tags: ["visualization", "resize"]
+        });
+    };
+
+    /**
+     * Basic gridster layout hander that will log drag events for the user reordering visualizations.
+     * @method onStartGridsterPositionChange
+     * @private
+     */
+    var onStartGridsterPositionChange = function() {
+        XDATA.userALE.log({
+            activity: "alter",
+            action: "dragstart",
+            elementId: "workspace",
+            elementType: "workspace",
+            elementSub: "layout",
+            elementGroup: "top",
+            source: "user",
+            tags: ["visualization", "reorder"]
+        });
+    };
+
+    /**
+     * Basic gridster layout hander that will log drag events for the user reordering visualizations.
+     * @method onStopGridsterPositionChange
+     * @private
+     */
+    var onStopGridsterPositionChange = function() {
+        XDATA.userALE.log({
+            activity: "alter",
+            action: "dragend",
+            elementId: "workspace",
+            elementType: "workspace",
+            elementSub: "layout",
+            elementGroup: "top",
+            source: "user",
+            tags: ["visualization", "reorder"]
+        });
     };
 
     $scope.gridsterOpts = {
@@ -68,12 +124,14 @@ angular.module('neonDemo.controllers')
             enabled: true,
             //handles: ['n', 'e', 's', 'w', 'ne', 'se', 'sw', 'nw'],
             handles: ['ne', 'se', 'sw', 'nw'],
-            start: onStartGridsterLayoutChange,
-            stop: onStopGridsterLayoutChange
+            start: onStartGridsterSizeChange,
+            stop: onStopGridsterSizeChange
         },
         draggable: {
             enabled: true, // whether dragging items is supported
-            handle: '.visualization-drag-handle' // optional selector for draggable handle
+            handle: '.visualization-drag-handle', // optional selector for draggable handle
+            start: onStartGridsterPositionChange,
+            stop: onStopGridsterPositionChange
         }
     };
 
