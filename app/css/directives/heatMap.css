@@ -14,7 +14,7 @@
  *
  */
 
-.chart-options .popover.map-options {
+.heat-map .chart-options .popover {
     top: 25px;
     right: -15px;
     position: absolute;

@@ -31,41 +31,21 @@
  * @constructor
  */
 angular.module('neonDemo.directives')
-.directive('circularHeatForm', ['ConnectionService', 'DatasetService', 'ErrorNotificationService', 'UtilityService',
-function(connectionService, datasetService, errorNotificationService, utilityService) {
+.directive('circularHeatForm', ['ConnectionService', 'DatasetService', 'ErrorNotificationService',
+function(connectionService, datasetService, errorNotificationService) {
     return {
         templateUrl: 'partials/directives/circularHeatForm.html',
         restrict: 'EA',
         scope: {
             bindDateField: '='
         },
-        controller: function($scope) {
-            /**
-             * Sets the name of the date field to pull from the current dataset.
-             * @method setDateField
-             */
-            $scope.setDateField = function(field) {
-                $scope.dateField = field;
-            };
-
-            /**
-             * Returns the name of the date field used to pull from time data from the current dataset.
-             * @method getDateField
-             */
-            $scope.getDateField = function() {
-                return $scope.dateField;
-            };
-        },
         link: function($scope, $element) {
             $element.addClass('circularheatform');
 
-            $scope.uniqueChartOptions = utilityService.createUniqueChartOptionsId($element);
+            $scope.element = $element;
 
             $scope.databaseName = "";
             $scope.tables = [];
-            $scope.selectedTable = {
-                name: ""
-            };
             $scope.fields = [];
             $scope.days = [];
             $scope.timeofday = [];
@@ -73,13 +53,15 @@ function(connectionService, datasetService, errorNotificationService, utilitySer
             $scope.maxTime = "";
             $scope.errorMessage = undefined;
 
+            $scope.options = {
+                selectedTable: {
+                    name: ""
+                },
+                dateField: ""
+            };
+
             var HOURS_IN_WEEK = 168;
             var HOURS_IN_DAY = 24;
-            $scope.dateField = "";
-
-            $element.resize(function() {
-                utilityService.resizeOptionsPopover($element);
-            });
 
             /**
              * Initializes the name of the date field used to query the current dataset
@@ -168,7 +150,7 @@ function(connectionService, datasetService, errorNotificationService, utilitySer
                     source: "system",
                     tags: ["filter-change", "circularheatform"]
                 });
-                if(message.addedFilter && message.addedFilter.databaseName === $scope.databaseName && message.addedFilter.tableName === $scope.selectedTable.name) {
+                if(message.addedFilter && message.addedFilter.databaseName === $scope.databaseName && message.addedFilter.tableName === $scope.options.selectedTable.name) {
                     $scope.queryForChartData();
                 }
             };
@@ -204,7 +186,7 @@ function(connectionService, datasetService, errorNotificationService, utilitySer
 
                 $scope.databaseName = datasetService.getDatabase();
                 $scope.tables = datasetService.getTables();
-                $scope.selectedTable = datasetService.getFirstTableWithMappings(["date"]) || $scope.tables[0];
+                $scope.options.selectedTable = datasetService.getFirstTableWithMappings(["date"]) || $scope.tables[0];
 
                 if(initializing) {
                     $scope.updateFieldsAndQueryForChartData();
@@ -216,9 +198,9 @@ function(connectionService, datasetService, errorNotificationService, utilitySer
             };
 
             $scope.updateFieldsAndQueryForChartData = function() {
-                $scope.fields = datasetService.getDatabaseFields($scope.selectedTable.name);
+                $scope.fields = datasetService.getDatabaseFields($scope.options.selectedTable.name);
                 $scope.fields.sort();
-                $scope.dateField = $scope.bindDateField || datasetService.getMapping($scope.selectedTable.name, "date") || "";
+                $scope.options.dateField = $scope.bindDateField || datasetService.getMapping($scope.options.selectedTable.name, "date") || "";
                 $scope.queryForChartData();
             };
 
@@ -232,7 +214,7 @@ function(connectionService, datasetService, errorNotificationService, utilitySer
                     $scope.errorMessage = undefined;
                 }
 
-                if(!$scope.dateField) {
+                if(!$scope.options.dateField) {
                     $scope.updateChartData({
                         data: []
                     });
@@ -240,13 +222,13 @@ function(connectionService, datasetService, errorNotificationService, utilitySer
                 }
 
                 //TODO: NEON-603 Add support for dayOfWeek to query API
-                var groupByDayClause = new neon.query.GroupByFunctionClause('dayOfWeek', $scope.dateField, 'day');
-                var groupByHourClause = new neon.query.GroupByFunctionClause(neon.query.HOUR, $scope.dateField, 'hour');
+                var groupByDayClause = new neon.query.GroupByFunctionClause('dayOfWeek', $scope.options.dateField, 'day');
+                var groupByHourClause = new neon.query.GroupByFunctionClause(neon.query.HOUR, $scope.options.dateField, 'hour');
 
                 var query = new neon.query.Query()
-                    .selectFrom($scope.databaseName, $scope.selectedTable.name)
+                    .selectFrom($scope.databaseName, $scope.options.selectedTable.name)
                     .groupBy(groupByDayClause, groupByHourClause)
-                    .where($scope.dateField, '!=', null)
+                    .where($scope.options.dateField, '!=', null)
                     .aggregate(neon.query.COUNT, '*', 'count');
 
                 // Issue the query and provide a success handler that will forcefully apply an update to the chart.

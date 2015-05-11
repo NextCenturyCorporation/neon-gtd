@@ -16,8 +16,8 @@
  */
 
 angular.module('neonDemo.directives')
-.directive('directedGraph',['ConnectionService', 'DatasetService', 'ErrorNotificationService', 'FilterService', 'UtilityService', '$timeout',
-function(connectionService, datasetService, errorNotificationService, filterService, utilityService, $timeout) {
+.directive('directedGraph',['ConnectionService', 'DatasetService', 'ErrorNotificationService', 'FilterService', '$timeout',
+function(connectionService, datasetService, errorNotificationService, filterService, $timeout) {
     return {
         templateUrl: 'partials/directives/directedGraph.html',
         restrict: 'EA',
@@ -26,33 +26,48 @@ function(connectionService, datasetService, errorNotificationService, filterServ
         link: function($scope, $element) {
             $element.addClass('directedGraphDirective');
 
-            $scope.uniqueChartOptions = utilityService.createUniqueChartOptionsId($element);
+            $scope.element = $element;
+
+            $scope.optionsMenuButtonText = function() {
+                if($scope.numberOfNodesInGraph === 0) {
+                    return "No graph data available";
+                } else if($scope.numberOfNodesInGraph >= $scope.options.nodeLimit) {
+                    return $scope.options.nodeLimit + " node limit";
+                }
+                return "";
+            };
+            $scope.showOptionsMenuButtonText = function() {
+                return $scope.numberOfNodesInGraph === 0 ||$scope.numberOfNodesInGraph >= $scope.options.nodeLimit;
+            };
 
             $scope.TIMEOUT_MS = 250;
             $scope.uniqueId = uuid();
             $scope.databaseName = "";
             $scope.tables = [];
-            $scope.selectedTable = {
-                name: ""
-            };
             $scope.fields = [];
-            $scope.selectedNodeField = "";
-            $scope.selectedLinkField = "";
             $scope.nodes = [];
-            $scope.selectedNode = "";
             $scope.numberOfNodesInGraph = 0;
-            $scope.nodeLimit = 500;
             $scope.filterKeys = {};
             $scope.errorMessage = undefined;
             $scope.filteredNodes = [];
 
-            $scope.$watch('selectedNode', function() {
-                if($scope.selectedNode !== "") {
+            $scope.options = {
+                selectedTable: {
+                    name: ""
+                },
+                selectedNodeField: "",
+                selectedLinkField: "",
+                selectedNode: "",
+                nodeLimit: 500
+            };
+
+            $scope.$watch('options.selectedNode', function() {
+                if($scope.options.selectedNode !== "") {
                     if($scope.messenger && $scope.filteredNodes.length) {
                         filterService.removeFilters($scope.messenger, $scope.filterKeys);
                     }
                     $scope.filteredNodes = [];
-                    $scope.addFilter($scope.selectedNode);
+                    $scope.addFilter($scope.options.selectedNode);
                 }
             }, true);
 
@@ -101,7 +116,6 @@ function(connectionService, datasetService, errorNotificationService, filterServ
                         $timeout.cancel($scope.resizePromise);
                     }
                     $scope.resizePromise = updateSize();
-                    utilityService.resizeOptionsPopover($element);
                 });
             };
 
@@ -112,7 +126,7 @@ function(connectionService, datasetService, errorNotificationService, filterServ
              * @private
              */
             var onFiltersChanged = function(message) {
-                if(message.addedFilter && message.addedFilter.databaseName === $scope.databaseName && message.addedFilter.tableName === $scope.selectedTable.name) {
+                if(message.addedFilter && message.addedFilter.databaseName === $scope.databaseName && message.addedFilter.tableName === $scope.options.selectedTable.name) {
                     if(message.type.toUpperCase() === "ADD" || message.type.toUpperCase() === "REPLACE") {
                         if(message.addedFilter.whereClause) {
                             $scope.addFilterWhereClauseToFilterList(message.addedFilter.whereClause);
@@ -132,7 +146,7 @@ function(connectionService, datasetService, errorNotificationService, filterServ
                     for(var i = 0; i < whereClause.whereClauses.length; ++i) {
                         $scope.addFilterWhereClauseToFilterList(whereClause.whereClauses[i]);
                     }
-                } else if(whereClause.lhs === $scope.selectedNodeField && whereClause.lhs && whereClause.rhs) {
+                } else if(whereClause.lhs === $scope.options.selectedNodeField && whereClause.lhs && whereClause.rhs) {
                     $scope.addFilter(whereClause.rhs);
                 }
             };
@@ -165,7 +179,7 @@ function(connectionService, datasetService, errorNotificationService, filterServ
                 $scope.data = [];
                 $scope.databaseName = datasetService.getDatabase();
                 $scope.tables = datasetService.getTables();
-                $scope.selectedTable = datasetService.getFirstTableWithMappings(["graph_nodes"]) || $scope.tables[0];
+                $scope.options.selectedTable = datasetService.getFirstTableWithMappings(["graph_nodes"]) || $scope.tables[0];
                 $scope.filterKeys = filterService.createFilterKeys("graph", $scope.tables);
 
                 if(initializing) {
@@ -178,15 +192,15 @@ function(connectionService, datasetService, errorNotificationService, filterServ
             };
 
             $scope.updateFieldsAndQueryForData = function() {
-                $scope.fields = datasetService.getDatabaseFields($scope.selectedTable.name);
+                $scope.fields = datasetService.getDatabaseFields($scope.options.selectedTable.name);
                 $scope.fields.sort();
-                $scope.selectedNodeField = datasetService.getMapping($scope.selectedTable.name, "graph_nodes") || "";
-                $scope.selectedLinkField = datasetService.getMapping($scope.selectedTable.name, "graph_links") || "";
+                $scope.options.selectedNodeField = datasetService.getMapping($scope.options.selectedTable.name, "graph_nodes") || "";
+                $scope.options.selectedLinkField = datasetService.getMapping($scope.options.selectedTable.name, "graph_links") || "";
                 $scope.queryForData();
             };
 
             $scope.addFilter = function(value) {
-                $scope.selectedNode = "";
+                $scope.options.selectedNode = "";
 
                 var index = $scope.filteredNodes.indexOf(value);
                 if(index >= 0) {
@@ -196,7 +210,7 @@ function(connectionService, datasetService, errorNotificationService, filterServ
                 $scope.filteredNodes.push(value);
 
                 if($scope.messenger) {
-                    var relations = datasetService.getRelations($scope.selectedTable.name, [$scope.selectedNodeField]);
+                    var relations = datasetService.getRelations($scope.options.selectedTable.name, [$scope.options.selectedNodeField]);
                     if($scope.filteredNodes.length === 1) {
                         filterService.addFilters($scope.messenger, relations, $scope.filterKeys, $scope.createFilter, $scope.queryForData);
                     } else if($scope.filteredNodes.length > 1) {
@@ -234,7 +248,7 @@ function(connectionService, datasetService, errorNotificationService, filterServ
                     if($scope.filteredNodes.length === 0) {
                         filterService.removeFilters($scope.messenger, $scope.filterKeys, $scope.queryForData);
                     } else {
-                        var relations = datasetService.getRelations($scope.selectedTable.name, [$scope.selectedNodeField]);
+                        var relations = datasetService.getRelations($scope.options.selectedTable.name, [$scope.options.selectedNodeField]);
                         filterService.replaceFilters($scope.messenger, relations, $scope.filterKeys, $scope.createFilter, $scope.queryForData);
                     }
                 }
@@ -253,7 +267,7 @@ function(connectionService, datasetService, errorNotificationService, filterServ
                     $scope.errorMessage = undefined;
                 }
 
-                if($scope.selectedNodeField) {
+                if($scope.options.selectedNodeField) {
                     if($scope.filteredNodes.length) {
                         $scope.queryForFilteredNodeNetwork($scope.filteredNodes);
                     } else {
@@ -267,10 +281,10 @@ function(connectionService, datasetService, errorNotificationService, filterServ
              */
             $scope.queryForNodeData = function() {
                 var query = new neon.query.Query()
-                    .selectFrom($scope.databaseName, $scope.selectedTable.name)
-                    .groupBy($scope.selectedNodeField)
-                    .withFields([$scope.selectedNodeField]);
-                query.ignoreFilters([$scope.filterKeys[$scope.selectedTable.name]]);
+                    .selectFrom($scope.databaseName, $scope.options.selectedTable.name)
+                    .groupBy($scope.options.selectedNodeField)
+                    .withFields([$scope.options.selectedNodeField]);
+                query.ignoreFilters([$scope.filterKeys[$scope.options.selectedTable.name]]);
                 query.aggregate(neon.query.COUNT, '*', 'count');
 
                 var connection = connectionService.getActiveConnection();
@@ -278,7 +292,7 @@ function(connectionService, datasetService, errorNotificationService, filterServ
                     connection.executeQuery(query, function(data) {
                         $scope.nodes = [];
                         for(var i = 0; i < data.data.length; i++) {
-                            var node = data.data[i][$scope.selectedNodeField];
+                            var node = data.data[i][$scope.options.selectedNodeField];
                             if($scope.nodes.indexOf(node) < 0) {
                                 $scope.nodes.push(node);
                             }
@@ -319,16 +333,16 @@ function(connectionService, datasetService, errorNotificationService, filterServ
                 }
 
                 var query = new neon.query.Query()
-                    .selectFrom($scope.databaseName, $scope.selectedTable.name);
+                    .selectFrom($scope.databaseName, $scope.options.selectedTable.name);
 
-                var where = neon.query.where($scope.selectedNodeField, '=', $scope.filteredNodes[0]);
+                var where = neon.query.where($scope.options.selectedNodeField, '=', $scope.filteredNodes[0]);
                 var orWhere;
                 for(var i = 1; i < $scope.filteredNodes.length; i++) {
-                    orWhere = neon.query.where($scope.selectedNodeField, '=', $scope.filteredNodes[i]);
+                    orWhere = neon.query.where($scope.options.selectedNodeField, '=', $scope.filteredNodes[i]);
                     where = neon.query.or(where, orWhere);
                 }
                 query = query.where(where);
-                query.ignoreFilters([$scope.filterKeys[$scope.selectedTable.name]]);
+                query.ignoreFilters([$scope.filterKeys[$scope.options.selectedTable.name]]);
 
                 var connection = connectionService.getActiveConnection();
                 if(connection) {
@@ -351,8 +365,8 @@ function(connectionService, datasetService, errorNotificationService, filterServ
 
             $scope.createAndShowGraph = function(response) {
                 var data = response.data;
-                if(data.length >= $scope.nodeLimit) {
-                    data = data.slice(0, $scope.nodeLimit);
+                if(data.length >= $scope.options.nodeLimit) {
+                    data = data.slice(0, $scope.options.nodeLimit);
                 }
 
                 // Maps a node value to a unique node ID to ensure each node we add to the graph is unique.
@@ -401,18 +415,18 @@ function(connectionService, datasetService, errorNotificationService, filterServ
 
                 // Add each unique value from the data to the graph as a node.
                 for(var i = 0; i < data.length; i++) {
-                    var value = data[i][$scope.selectedNodeField];
+                    var value = data[i][$scope.options.selectedNodeField];
                     if(value) {
                         addNodeIfUnique(value);
 
-                        if($scope.selectedLinkField) {
-                            var linkedNodes = (data[i][$scope.selectedLinkField] ? data[i][$scope.selectedLinkField] : []);
+                        if($scope.options.selectedLinkField) {
+                            var linkedNodes = (data[i][$scope.options.selectedLinkField] ? data[i][$scope.options.selectedLinkField] : []);
                             if(linkedNodes.constructor !== Array) {
                                 linkedNodes = [linkedNodes];
                             }
 
-                            if(linkedNodes.length >= $scope.nodeLimit) {
-                                linkedNodes = linkedNodes.slice(0, $scope.nodeLimit);
+                            if(linkedNodes.length >= $scope.options.nodeLimit) {
+                                linkedNodes = linkedNodes.slice(0, $scope.options.nodeLimit);
                             }
 
                             // Add each related node to the graph as a node with a link to the original node.

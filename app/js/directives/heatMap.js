@@ -28,8 +28,8 @@
  * @constructor
  */
 angular.module('neonDemo.directives')
-.directive('heatMap', ['ConnectionService', 'DatasetService', 'ErrorNotificationService', 'FilterService', 'UtilityService', '$timeout',
-function(connectionService, datasetService, errorNotificationService, filterService, utilityService, $timeout) {
+.directive('heatMap', ['ConnectionService', 'DatasetService', 'ErrorNotificationService', 'FilterService', '$timeout',
+function(connectionService, datasetService, errorNotificationService, filterService, $timeout) {
     return {
         templateUrl: 'partials/directives/heatMap.html',
         restrict: 'EA',
@@ -44,40 +44,50 @@ function(connectionService, datasetService, errorNotificationService, filterServ
         link: function($scope, $element) {
             $element.addClass('heat-map');
 
-            $scope.uniqueChartOptions = utilityService.createUniqueChartOptionsId($element);
+            $scope.element = $element;
+            $scope.optionsMenuButtonText = function() {
+                if($scope.dataLength >= $scope.previousLimit) {
+                    return $scope.previousLimit + " data limit";
+                }
+                return "";
+            };
+            $scope.showOptionsMenuButtonText = function() {
+                return $scope.dataLength >= $scope.previousLimit;
+            };
 
             // Setup scope variables.
             $scope.databaseName = '';
             $scope.tables = [];
-            $scope.selectedTable = {
-                name: ""
-            };
             $scope.fields = [];
-            $scope.latitudeField = '';
-            $scope.longitudeField = '';
-            $scope.sizeByField = '';
-            $scope.colorByField = '';
-            $scope.showPoints = true;  // Default to the points view.
             $scope.cacheMap = false;
             $scope.initializing = true;
             $scope.filterKeys = {};
             $scope.showFilter = false;
             $scope.dataBounds = undefined;
-            $scope.limit = 1000;  // Max points to pull into the map.
-            $scope.previousLimit = $scope.limit;
             $scope.dataLength = 0;
             $scope.resizeRedrawDelay = 1500; // Time in ms to wait after a resize event flood to try redrawing the map.
             $scope.errorMessage = undefined;
 
-            // optionsDisplayed is used merely to track the display of the options menu
-            // for usability and workflow analysis.
-            $scope.optionsDisplayed = false;
+            $scope.options = {
+                selectedTable: {
+                    name: ""
+                },
+                latitudeField: "",
+                longitudeField: "",
+                sizeByField: "",
+                colorByField: "",
+                showPoints: true, // Default to the points view.
+                limit: 1000
+            };
+
+            $scope.previousLimit = $scope.options.limit;
+
             // Setup our map.
             $scope.mapId = uuid();
             $element.append('<div id="' + $scope.mapId + '" class="map"></div>');
             $scope.map = new coreMap.Map($scope.mapId, {
                 responsive: false,
-                defaultLayer: ($scope.showPoints) ? coreMap.Map.POINTS_LAYER : coreMap.Map.HEATMAP_LAYER
+                defaultLayer: ($scope.options.showPoints) ? coreMap.Map.POINTS_LAYER : coreMap.Map.HEATMAP_LAYER
             });
 
             /**
@@ -122,7 +132,7 @@ function(connectionService, datasetService, errorNotificationService, filterServ
 
                 // Setup the control watches.
                 // Update the latitude field used by the map.
-                $scope.$watch('latitudeField', function(newVal, oldVal) {
+                $scope.$watch('options.latitudeField', function(newVal, oldVal) {
                     XDATA.userALE.log({
                         activity: "select",
                         action: "click",
@@ -142,7 +152,7 @@ function(connectionService, datasetService, errorNotificationService, filterServ
                 });
 
                 // Update the longitude field used by the map.
-                $scope.$watch('longitudeField', function(newVal, oldVal) {
+                $scope.$watch('options.longitudeField', function(newVal, oldVal) {
                     XDATA.userALE.log({
                         activity: "select",
                         action: "click",
@@ -162,7 +172,7 @@ function(connectionService, datasetService, errorNotificationService, filterServ
                 });
 
                 // Update the sizing field used by the map.
-                $scope.$watch('sizeByField', function(newVal) {
+                $scope.$watch('options.sizeByField', function(newVal) {
                     XDATA.userALE.log({
                         activity: "select",
                         action: "click",
@@ -173,14 +183,14 @@ function(connectionService, datasetService, errorNotificationService, filterServ
                         source: "user",
                         tags: ["options", "map", "size-by", newVal]
                     });
-                    if($scope.showPoints) {
+                    if($scope.options.showPoints) {
                         $scope.setMapSizeMapping(newVal);
                         $scope.draw();
                     }
                 });
 
                 // Update the coloring field used by the map.
-                $scope.$watch('colorByField', function(newVal) {
+                $scope.$watch('options.colorByField', function(newVal) {
                     XDATA.userALE.log({
                         activity: "select",
                         action: "click",
@@ -197,19 +207,19 @@ function(connectionService, datasetService, errorNotificationService, filterServ
                 });
 
                 // Toggle the points and clusters view when the user toggles between them.
-                $scope.$watch('showPoints', function(newVal, oldVal) {
+                $scope.$watch('options.showPoints', function(newVal, oldVal) {
                     XDATA.userALE.log({
                         activity: "select",
                         action: "click",
-                        elementId: "layer-" + (($scope.showPoints) ? "points" : "heatmap"),
+                        elementId: "layer-" + (($scope.options.showPoints) ? "points" : "heatmap"),
                         elementType: "radiobutton",
                         elementGroup: "map_group",
                         source: "user",
-                        tags: ["options", "layer", (($scope.showPoints) ? "points" : "heatmap")]
+                        tags: ["options", "layer", (($scope.options.showPoints) ? "points" : "heatmap")]
                     });
                     if(newVal !== oldVal) {
-                        if($scope.showPoints) {
-                            $scope.setMapSizeMapping($scope.sizeByField);
+                        if($scope.options.showPoints) {
+                            $scope.setMapSizeMapping($scope.options.sizeByField);
                         } else {
                             $scope.setMapSizeMapping('');
                         }
@@ -240,34 +250,6 @@ function(connectionService, datasetService, errorNotificationService, filterServ
                     }
                 });
 
-                // Log whenever the user toggles the options display.
-                $scope.$watch('optionsDisplayed', function(newVal) {
-                    var activity = (newVal === true) ? 'show' : 'hide';
-                    XDATA.userALE.log({
-                        activity: activity,
-                        action: "click",
-                        elementId: "map-options",
-                        elementType: "button",
-                        elementSub: "map-options",
-                        elementGroup: "map_group",
-                        source: "user",
-                        tags: ["options", "map"]
-                    });
-                });
-
-                $scope.$watch('limit', function(newVal) {
-                    XDATA.userALE.log({
-                        activity: "alter",
-                        action: "keydown",
-                        elementId: "map-limit",
-                        elementType: "textbox",
-                        elementSub: "map-limit",
-                        elementGroup: "map_group",
-                        source: "user",
-                        tags: ["options", "map", "limit", newVal]
-                    });
-                });
-
                 // Setup a basic resize handler to redraw the map and calculate its size if our div changes.
                 // Since the map redraw can take a while and resize events can come in a flood, we attempt to
                 // redraw only after a second of no consecutive resize events.
@@ -281,7 +263,6 @@ function(connectionService, datasetService, errorNotificationService, filterServ
                         $timeout.cancel($scope.resizePromise);
                     }
                     $scope.resizePromise = $timeout(redrawOnResize, $scope.resizeRedrawDelay);
-                    utilityService.resizeOptionsPopover($element);
                 });
 
                 // Add a zoomRect handler to the map.
@@ -308,7 +289,7 @@ function(connectionService, datasetService, errorNotificationService, filterServ
                         source: "system",
                         tags: ["filter", "map"]
                     });
-                    var relations = datasetService.getRelations($scope.selectedTable.name, [$scope.latitudeField, $scope.longitudeField]);
+                    var relations = datasetService.getRelations($scope.options.selectedTable.name, [$scope.options.latitudeField, $scope.options.longitudeField]);
 
                     filterService.replaceFilters($scope.messenger, relations, $scope.filterKeys, $scope.createFilterFromExtent, function() {
                         $scope.$apply(function() {
@@ -385,7 +366,7 @@ function(connectionService, datasetService, errorNotificationService, filterServ
                     source: "system",
                     tags: ["filter-change", "map"]
                 });
-                if(message.addedFilter && message.addedFilter.databaseName === $scope.databaseName && message.addedFilter.tableName === $scope.selectedTable.name) {
+                if(message.addedFilter && message.addedFilter.databaseName === $scope.databaseName && message.addedFilter.tableName === $scope.options.selectedTable.name) {
                     $scope.queryForMapData();
                 }
             };
@@ -464,7 +445,7 @@ function(connectionService, datasetService, errorNotificationService, filterServ
 
                 $scope.databaseName = datasetService.getDatabase();
                 $scope.tables = datasetService.getTables();
-                $scope.selectedTable = datasetService.getFirstTableWithMappings(["latitude", "longitude"]) || $scope.tables[0];
+                $scope.options.selectedTable = datasetService.getFirstTableWithMappings(["latitude", "longitude"]) || $scope.tables[0];
                 $scope.filterKeys = filterService.createFilterKeys("map", $scope.tables);
 
                 if(initializing) {
@@ -477,12 +458,12 @@ function(connectionService, datasetService, errorNotificationService, filterServ
             };
 
             $scope.updateFieldsAndQueryForMapData = function() {
-                $scope.fields = datasetService.getDatabaseFields($scope.selectedTable.name);
+                $scope.fields = datasetService.getDatabaseFields($scope.options.selectedTable.name);
                 $scope.fields.sort();
-                $scope.latitudeField = $scope.bindLatitudeField || datasetService.getMapping($scope.selectedTable.name, "latitude") || "";
-                $scope.longitudeField = $scope.bindLongitudeField || datasetService.getMapping($scope.selectedTable.name, "longitude") || "";
-                $scope.colorByField = $scope.bindColorField || datasetService.getMapping($scope.selectedTable.name, "color_by") || "";
-                $scope.sizeByField = $scope.bindSizeField || datasetService.getMapping($scope.selectedTable.name, "size_by") || "";
+                $scope.options.latitudeField = $scope.bindLatitudeField || datasetService.getMapping($scope.options.selectedTable.name, "latitude") || "";
+                $scope.options.longitudeField = $scope.bindLongitudeField || datasetService.getMapping($scope.options.selectedTable.name, "longitude") || "";
+                $scope.options.colorByField = $scope.bindColorField || datasetService.getMapping($scope.options.selectedTable.name, "color_by") || "";
+                $scope.options.sizeByField = $scope.bindSizeField || datasetService.getMapping($scope.options.selectedTable.name, "size_by") || "";
 
                 $timeout(function() {
                     $scope.initializing = false;
@@ -504,7 +485,7 @@ function(connectionService, datasetService, errorNotificationService, filterServ
                     $scope.errorMessage = undefined;
                 }
 
-                if(!$scope.initializing && $scope.latitudeField !== "" && $scope.longitudeField !== "") {
+                if(!$scope.initializing && $scope.options.latitudeField !== "" && $scope.options.longitudeField !== "") {
                     var query = $scope.buildPointQuery();
 
                     XDATA.userALE.log({
@@ -621,8 +602,8 @@ function(connectionService, datasetService, errorNotificationService, filterServ
                     var maxLon = -180;
                     var maxLat = -90;
                     data.forEach(function(d) {
-                        var lat = d[$scope.latitudeField];
-                        var lon = d[$scope.longitudeField];
+                        var lat = d[$scope.options.latitudeField];
+                        var lon = d[$scope.options.longitudeField];
                         if(lon < minLon) {
                             minLon = lon;
                         }
@@ -646,18 +627,18 @@ function(connectionService, datasetService, errorNotificationService, filterServ
             };
 
             $scope.buildQuery = function() {
-                var query = new neon.query.Query().selectFrom($scope.databaseName, $scope.selectedTable.name).limit($scope.limit);
-                var groupByFields = [$scope.latitudeField, $scope.longitudeField];
+                var query = new neon.query.Query().selectFrom($scope.databaseName, $scope.options.selectedTable.name).limit($scope.options.limit);
+                var groupByFields = [$scope.options.latitudeField, $scope.options.longitudeField];
 
-                if($scope.colorByField) {
-                    groupByFields.push($scope.colorByField);
-                    query = query.groupBy($scope.latitudeField, $scope.longitudeField, $scope.colorByField);
+                if($scope.options.colorByField) {
+                    groupByFields.push($scope.options.colorByField);
+                    query = query.groupBy($scope.options.latitudeField, $scope.options.longitudeField, $scope.options.colorByField);
                 } else {
-                    query = query.groupBy($scope.latitudeField, $scope.longitudeField);
+                    query = query.groupBy($scope.options.latitudeField, $scope.options.longitudeField);
                 }
 
-                if($scope.sizeByField) {
-                    query.aggregate(neon.query.SUM, $scope.sizeByField, $scope.sizeByField);
+                if($scope.options.sizeByField) {
+                    query.aggregate(neon.query.SUM, $scope.options.sizeByField, $scope.options.sizeByField);
                 } else {
                     query.aggregate(neon.query.COUNT, '*', coreMap.Map.DEFAULT_SIZE_MAPPING);
                 }
@@ -666,7 +647,7 @@ function(connectionService, datasetService, errorNotificationService, filterServ
             };
 
             $scope.buildPointQuery = function() {
-                var query = new neon.query.Query().selectFrom($scope.databaseName, $scope.selectedTable.name).limit($scope.limit);
+                var query = new neon.query.Query().selectFrom($scope.databaseName, $scope.options.selectedTable.name).limit($scope.options.limit);
                 return query;
             };
 
@@ -804,14 +785,6 @@ function(connectionService, datasetService, errorNotificationService, filterServ
                 }
             };
 
-            /**
-             * Toggles whether or not the options menu should be displayed.
-             * @method toggleOptionsDisplay
-             */
-            $scope.toggleOptionsDisplay = function() {
-                $scope.optionsDisplayed = !$scope.optionsDisplayed;
-            };
-
             $scope.handleLimitRefreshClick = function() {
                 XDATA.userALE.log({
                     activity: "perform",
@@ -822,7 +795,7 @@ function(connectionService, datasetService, errorNotificationService, filterServ
                     source: "user",
                     tags: ["options", "map", "limit"]
                 });
-                $scope.previousLimit = $scope.limit;
+                $scope.previousLimit = $scope.options.limit;
                 $scope.queryForMapData();
             };
 

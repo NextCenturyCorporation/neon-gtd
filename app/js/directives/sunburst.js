@@ -28,8 +28,8 @@
  * @constructor
  */
 angular.module('neonDemo.directives')
-.directive('sunburst', ['ConnectionService', 'DatasetService', 'ErrorNotificationService', 'UtilityService',
-function(connectionService, datasetService, errorNotificationService, utilityService) {
+.directive('sunburst', ['ConnectionService', 'DatasetService', 'ErrorNotificationService',
+function(connectionService, datasetService, errorNotificationService) {
     return {
         templateUrl: 'partials/directives/sunburst.html',
         restrict: 'EA',
@@ -38,21 +38,24 @@ function(connectionService, datasetService, errorNotificationService, utilitySer
         link: function($scope, $element) {
             $element.addClass('sunburst-directive');
 
-            $scope.uniqueChartOptions = utilityService.createUniqueChartOptionsId($element);
+            $scope.element = $element;
 
             $scope.arcValue = "count";
-            $scope.valueField = null;
-            $scope.selectedItem = null;
             $scope.groupFields = [];
             $scope.messenger = new neon.eventing.Messenger();
             $scope.databaseName = '';
             $scope.tables = [];
-            $scope.selectedTable = {
-                name: ""
-            };
             $scope.fields = [];
             $scope.chart = undefined;
             $scope.errorMessage = undefined;
+
+            $scope.options = {
+                selectedTable: {
+                    name: ""
+                },
+                selectedItem: "",
+                valueField: ""
+            };
 
             var initialize = function() {
                 $scope.chart = new charts.SunburstChart($element[0], '.sunburst-chart', {
@@ -84,10 +87,9 @@ function(connectionService, datasetService, errorNotificationService, utilitySer
                 // on the associated element and not just the window.
                 $element.resize(function() {
                     $scope.updateChartSize();
-                    utilityService.resizeOptionsPopover($element);
                 });
 
-                $scope.$watch('valueField', function(newValue, oldValue) {
+                $scope.$watch('options.valueField', function(newValue, oldValue) {
                     if(newValue !== oldValue) {
                         $scope.queryForData();
                     }
@@ -117,7 +119,7 @@ function(connectionService, datasetService, errorNotificationService, utilitySer
                     source: "system",
                     tags: ["filter-change", "sunburst"]
                 });
-                if(message.addedFilter && message.addedFilter.databaseName === $scope.databaseName && message.addedFilter.tableName === $scope.selectedTable.name) {
+                if(message.addedFilter && message.addedFilter.databaseName === $scope.databaseName && message.addedFilter.tableName === $scope.options.selectedTable.name) {
                     $scope.queryForData();
                 }
             };
@@ -157,15 +159,15 @@ function(connectionService, datasetService, errorNotificationService, utilitySer
              * @method buildQuery
              */
             $scope.buildQuery = function() {
-                var query = new neon.query.Query().selectFrom($scope.databaseName, $scope.selectedTable.name);
+                var query = new neon.query.Query().selectFrom($scope.databaseName, $scope.options.selectedTable.name);
                 if($scope.groupFields.length > 0) {
                     query.groupBy.apply(query, $scope.groupFields);
                 }
 
                 //take based on selected count or total
                 query.aggregate(neon.query.COUNT, '*', 'count');
-                if($scope.valueField) {
-                    query.aggregate(neon.query.SUM, $scope.valueField, $scope.valueField);
+                if($scope.options.valueField) {
+                    query.aggregate(neon.query.SUM, $scope.options.valueField, $scope.options.valueField);
                 }
 
                 return query;
@@ -182,12 +184,12 @@ function(connectionService, datasetService, errorNotificationService, utilitySer
                 }
 
                 $scope.groupFields = [];
-                $scope.valueField = null;
+                $scope.options.valueField = "";
                 $scope.arcValue = charts.SunburstChart.COUNT_PARTITION;
 
                 $scope.databaseName = datasetService.getDatabase();
                 $scope.tables = datasetService.getTables();
-                $scope.selectedTable = $scope.tables[0];
+                $scope.options.selectedTable = $scope.tables[0];
 
                 if(initializing) {
                     $scope.updateFieldsAndQueryForData();
@@ -199,7 +201,7 @@ function(connectionService, datasetService, errorNotificationService, utilitySer
             };
 
             $scope.updateFieldsAndQueryForData = function() {
-                $scope.fields = datasetService.getDatabaseFields($scope.selectedTable.name);
+                $scope.fields = datasetService.getDatabaseFields($scope.options.selectedTable.name);
                 $scope.fields.sort();
                 $scope.queryForData();
             };
@@ -273,7 +275,7 @@ function(connectionService, datasetService, errorNotificationService, utilitySer
             var buildDataTree = function(data) {
                 var nodes = {};
                 var tree = {
-                    name: $scope.selectedTable.name,
+                    name: $scope.options.selectedTable.name,
                     children: []
                 };
                 var leafObject;
@@ -307,7 +309,7 @@ function(connectionService, datasetService, errorNotificationService, utilitySer
                             } else {
                                 leafObject.name = field + ": " + doc[field];
                                 leafObject.count = doc.count;
-                                leafObject.total = doc[$scope.valueField];
+                                leafObject.total = doc[$scope.options.valueField];
                                 parent.children.push(leafObject);
                             }
                         } else {
@@ -331,10 +333,10 @@ function(connectionService, datasetService, errorNotificationService, utilitySer
             });
 
             $scope.addGroup = function() {
-                if($scope.groupFields.indexOf($scope.selectedItem) === -1 && $scope.selectedItem !== "") {
-                    $scope.groupFields.push($scope.selectedItem);
+                if($scope.groupFields.indexOf($scope.options.selectedItem) === -1 && $scope.options.selectedItem !== "") {
+                    $scope.groupFields.push($scope.options.selectedItem);
                 }
-                $scope.selectedItem = "";
+                $scope.options.selectedItem = "";
                 $scope.queryForData();
             };
 

@@ -1,29 +1,19 @@
 <div class="header-container">
-    <span class="header-text pull-left">{{selectedTable.name}}</span>
+    <span class="header-text pull-left">{{options.selectedTable.name}}</span>
 
-    <div class="chart-options pull-right">
-        <a class="btn btn-lg collapsed" data-toggle="collapse" data-target=".{{uniqueChartOptions}} .count-by-options" data-animation=false>
-            <span class="glyphicon glyphicon-cog"></span>
-            <span class="caret"></span>
-        </a>
-
-        <div class="count-by-options popover bottom">
-            <div class="arrow"></div>
-            <div class="popover-content">
-                <div class="form-group">
-                    <label>Table</label>
-                    <select class="form-control" ng-model="selectedTable" ng-options="table.name for table in tables" ng-required="true" ng-disabled="(tables.length < 2)" ng-change="updateFieldsAndQueryForData()">
-                    </select>
-                </div>
-                <div class="form-group">
-                    <label>Count Field</label>
-                    <select class="form-control" ng-model="countField" ng-disabled="!(fields.length > 0)" ng-options="field for field in fields">
-                        <option disabled selected value="">Please choose a field</option>
-                    </select>
-                </div>
-            </div>
+    <options-menu parent-element="element">
+        <div class="form-group">
+            <label>Table</label>
+            <select class="form-control" ng-model="options.selectedTable" ng-options="table.name for table in tables" ng-required="true" ng-disabled="(tables.length < 2)" ng-change="updateFieldsAndQueryForData()">
+            </select>
         </div>
-    </div>
+        <div class="form-group">
+            <label>Count Field</label>
+            <select class="form-control" ng-model="options.countField" ng-disabled="!(fields.length > 0)" ng-options="field for field in fields">
+                <option disabled selected value="">Please choose a field</option>
+            </select>
+        </div>
+    </options-menu>
 </div>
 
 <div class="clearfix"></div>

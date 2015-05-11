@@ -754,6 +754,12 @@ a.navbar-text:focus{
     border-color: #39b54a;
     box-shadow: 0 1px 1px rgba(0, 0, 0, 0.075) inset, 0 0 8px rgba(57, 181, 74, 0.4);
 }
+
+.form-control.ng-invalid:focus {
+    border-color: #FF0000;
+    box-shadow: 0 1px 1px rgba(0, 0, 0, 0.075) inset, 0 0 8px rgba(255, 0, 0, 0.4);
+}
+
 label{
     font-size: 12px;
     color: #777777;

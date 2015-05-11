@@ -28,8 +28,8 @@
  * @constructor
  */
 angular.module('neonDemo.directives')
-.directive('stackedbarchart', ['ConnectionService', 'DatasetService', 'ErrorNotificationService', 'UtilityService',
-function(connectionService, datasetService, errorNotificationService, utilityService) {
+.directive('stackedbarchart', ['ConnectionService', 'DatasetService', 'ErrorNotificationService',
+function(connectionService, datasetService, errorNotificationService) {
     return {
         templateUrl: 'partials/directives/barchart.html',
         restrict: 'E',
@@ -41,21 +41,22 @@ function(connectionService, datasetService, errorNotificationService, utilitySer
         link: function($scope, $element) {
             $element.addClass('barchartDirective');
 
-            $scope.uniqueChartOptions = utilityService.createUniqueChartOptionsId($element);
+            $scope.element = $element;
 
             $scope.messenger = new neon.eventing.Messenger();
             $scope.databaseName = '';
             $scope.tables = [];
-            $scope.selectedTable = {
-                name: ""
-            };
-            $scope.barType = /*$scope.barType ||*/'count'; //Changed because negative values break the display
             $scope.fields = [];
             $scope.errorMessage = undefined;
 
-            $element.resize(function() {
-                utilityService.resizeOptionsPopover($element);
-            });
+            $scope.options = {
+                selectedTable: {
+                    name: ""
+                },
+                attrX: "",
+                attrY: "",
+                barType: "count"
+            };
 
             var COUNT_FIELD_NAME = 'Count';
 
@@ -81,18 +82,18 @@ function(connectionService, datasetService, errorNotificationService, utilitySer
                     $scope.messenger.removeEvents();
                 });
 
-                $scope.$watch('attrX', function() {
-                    if($scope.databaseName && $scope.selectedTable.name) {
+                $scope.$watch('options.attrX', function() {
+                    if($scope.databaseName && $scope.options.selectedTable.name) {
                         $scope.queryForData();
                     }
                 });
-                $scope.$watch('attrY', function() {
-                    if($scope.databaseName && $scope.selectedTable.name) {
+                $scope.$watch('options.attrY', function() {
+                    if($scope.databaseName && $scope.options.selectedTable.name) {
                         $scope.queryForData();
                     }
                 });
-                $scope.$watch('barType', function() {
-                    if($scope.databaseName && $scope.selectedTable.name) {
+                $scope.$watch('options.barType', function() {
+                    if($scope.databaseName && $scope.options.selectedTable.name) {
                         $scope.queryForData();
                     }
                 });
@@ -105,7 +106,7 @@ function(connectionService, datasetService, errorNotificationService, utilitySer
              * @private
              */
             var onFiltersChanged = function(message) {
-                if(message.addedFilter && message.addedFilter.databaseName === $scope.databaseName && message.addedFilter.tableName === $scope.selectedTable.name) {
+                if(message.addedFilter && message.addedFilter.databaseName === $scope.databaseName && message.addedFilter.tableName === $scope.options.selectedTable.name) {
                     $scope.queryForData();
                 }
             };
@@ -131,7 +132,7 @@ function(connectionService, datasetService, errorNotificationService, utilitySer
 
                 $scope.databaseName = datasetService.getDatabase();
                 $scope.tables = datasetService.getTables();
-                $scope.selectedTable = datasetService.getFirstTableWithMappings(["x_axis", "y_axis"]) || $scope.tables[0];
+                $scope.options.selectedTable = datasetService.getFirstTableWithMappings(["x_axis", "y_axis"]) || $scope.tables[0];
 
                 if(initializing) {
                     $scope.updateFieldsAndQueryForData();
@@ -143,9 +144,9 @@ function(connectionService, datasetService, errorNotificationService, utilitySer
             };
 
             $scope.updateFieldsAndQueryForData = function() {
-                $scope.attrX = datasetService.getMapping($scope.selectedTable.name, "x_axis") || "";
-                $scope.attrY = datasetService.getMapping($scope.selectedTable.name, "y_axis") || "";
-                $scope.fields = datasetService.getDatabaseFields($scope.selectedTable.name);
+                $scope.options.attrX = datasetService.getMapping($scope.options.selectedTable.name, "x_axis") || "";
+                $scope.options.attrY = datasetService.getMapping($scope.options.selectedTable.name, "y_axis") || "";
+                $scope.fields = datasetService.getDatabaseFields($scope.options.selectedTable.name);
                 $scope.fields.sort();
                 $scope.queryForData(true);
             };
@@ -156,32 +157,32 @@ function(connectionService, datasetService, errorNotificationService, utilitySer
                     $scope.errorMessage = undefined;
                 }
 
-                var xAxis = $scope.attrX || datasetService.getMapping($scope.selectedTable.name, "x_axis");
-                var yAxis = $scope.attrY || datasetService.getMapping($scope.selectedTable.name, "y_axis");
+                var xAxis = $scope.options.attrX || datasetService.getMapping($scope.options.selectedTable.name, "x_axis");
+                var yAxis = $scope.options.attrY || datasetService.getMapping($scope.options.selectedTable.name, "y_axis");
                 if(!yAxis) {
                     yAxis = COUNT_FIELD_NAME;
                 }
 
                 var query = new neon.query.Query()
-                    .selectFrom($scope.databaseName, $scope.selectedTable.name)
+                    .selectFrom($scope.databaseName, $scope.options.selectedTable.name)
                     .where(xAxis, '!=', null)
                     .where(yAxis, yRuleComparator, yRuleVal)
                     .groupBy(xAxis);
 
                 var queryType;
-                $scope.barType = 'count';
-                if($scope.barType === 'count') {
+                $scope.options.barType = 'count';
+                if($scope.options.barType === 'count') {
                     queryType = neon.query.COUNT;
-                } else if($scope.barType === 'sum') {
+                } else if($scope.options.barType === 'sum') {
                     queryType = neon.query.SUM;
-                } else if($scope.barType === 'avg') {
+                } else if($scope.options.barType === 'avg') {
                     queryType = neon.query.AVG;
                 }
 
                 if(yAxis) {
-                    query.aggregate(queryType, yAxis, ($scope.barType ? COUNT_FIELD_NAME : yAxis));
+                    query.aggregate(queryType, yAxis, ($scope.options.barType ? COUNT_FIELD_NAME : yAxis));
                 } else {
-                    query.aggregate(queryType, '*', ($scope.barType ? COUNT_FIELD_NAME : yAxis));
+                    query.aggregate(queryType, '*', ($scope.options.barType ? COUNT_FIELD_NAME : yAxis));
                 }
 
                 var connection = connectionService.getActiveConnection();
@@ -198,13 +199,13 @@ function(connectionService, datasetService, errorNotificationService, utilitySer
             };
 
             $scope.queryForData = function() {
-                var xAxis = $scope.attrX || datasetService.getMapping($scope.selectedTable.name, "x_axis");
-                var yAxis = $scope.attrY || datasetService.getMapping($scope.selectedTable.name, "y_axis");
+                var xAxis = $scope.options.attrX || datasetService.getMapping($scope.options.selectedTable.name, "x_axis");
+                var yAxis = $scope.options.attrY || datasetService.getMapping($scope.options.selectedTable.name, "y_axis");
                 if(!yAxis) {
                     yAxis = COUNT_FIELD_NAME;
                 }
 
-                var yField = ($scope.barType ? COUNT_FIELD_NAME : yAxis);
+                var yField = ($scope.options.barType ? COUNT_FIELD_NAME : yAxis);
                 var yMin = yField + "-min";
 
                 var results = {
@@ -289,17 +290,17 @@ function(connectionService, datasetService, errorNotificationService, utilitySer
             var doDrawChart = function(data) {
                 charts.BarChart.destroy($element[0], '.barchart');
 
-                var xAxis = datasetService.getMapping($scope.selectedTable.name, "x_axis") || $scope.attrX;
-                var yAxis = datasetService.getMapping($scope.selectedTable.name, "y_axis") || $scope.attrY;
+                var xAxis = datasetService.getMapping($scope.options.selectedTable.name, "x_axis") || $scope.options.attrX;
+                var yAxis = datasetService.getMapping($scope.options.selectedTable.name, "y_axis") || $scope.options.attrY;
                 if(!yAxis) {
                     yAxis = COUNT_FIELD_NAME;
                 }
-                var yMin = ($scope.barType ? COUNT_FIELD_NAME : yAxis) + "-min";
+                var yMin = ($scope.options.barType ? COUNT_FIELD_NAME : yAxis) + "-min";
 
                 var opts = {
                     data: data.data,
                     x: xAxis,
-                    y: ($scope.barType ? COUNT_FIELD_NAME : yAxis),
+                    y: ($scope.options.barType ? COUNT_FIELD_NAME : yAxis),
                     yMin: yMin,
                     stacked: true,
                     responsive: false

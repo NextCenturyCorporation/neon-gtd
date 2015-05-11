@@ -28,8 +28,8 @@
  * @constructor
  */
 angular.module('neonDemo.directives')
-.directive('linechart', ['ConnectionService', 'DatasetService', 'ErrorNotificationService', 'UtilityService',
-function(connectionService, datasetService, errorNotificationService, utilityService) {
+.directive('linechart', ['ConnectionService', 'DatasetService', 'ErrorNotificationService',
+function(connectionService, datasetService, errorNotificationService) {
     var COUNT_FIELD_NAME = 'value';
 
     return {
@@ -45,23 +45,26 @@ function(connectionService, datasetService, errorNotificationService, utilitySer
         link: function($scope, $element) {
             $element.addClass('linechartDirective');
 
-            $scope.uniqueChartOptions = utilityService.createUniqueChartOptionsId($element);
+            $scope.element = $element;
 
             $scope.selectedDatabase = '';
             $scope.tables = [];
-            $scope.selectedTable = {
-                name: ""
-            };
             $scope.totalType = 'count';
             $scope.fields = [];
             $scope.chart = undefined;
             $scope.colorMappings = [];
-            $scope.attrX = '';
-            $scope.attrY = '';
-            $scope.categoryField = '';
-            $scope.aggregation = 'count';
             $scope.seriesLimit = 10;
             $scope.errorMessage = undefined;
+
+            $scope.options = {
+                selectedTable: {
+                    name: ""
+                },
+                attrX: "",
+                attrY: "",
+                categoryField: "",
+                aggregation: "count"
+            };
 
             var updateChartSize = function() {
                 if($scope.chart) {
@@ -98,30 +101,29 @@ function(connectionService, datasetService, errorNotificationService, utilitySer
                 // on the associated element and not just the window.
                 $element.resize(function() {
                     updateChartSize();
-                    utilityService.resizeOptionsPopover($element);
                 });
 
-                $scope.$watch('attrX', function(newValue) {
+                $scope.$watch('options.attrX', function(newValue) {
                     onFieldChange('attrX', newValue);
-                    if($scope.selectedDatabase && $scope.selectedTable.name) {
+                    if($scope.selectedDatabase && $scope.options.selectedTable.name) {
                         $scope.queryForData();
                     }
                 });
-                $scope.$watch('attrY', function(newValue) {
+                $scope.$watch('options.attrY', function(newValue) {
                     onFieldChange('attrY', newValue);
-                    if($scope.selectedDatabase && $scope.selectedTable.name) {
+                    if($scope.selectedDatabase && $scope.options.selectedTable.name) {
                         $scope.queryForData();
                     }
                 });
-                $scope.$watch('categoryField', function(newValue) {
+                $scope.$watch('options.categoryField', function(newValue) {
                     onFieldChange('categoryField', newValue);
-                    if($scope.selectedDatabase && $scope.selectedTable.name) {
+                    if($scope.selectedDatabase && $scope.options.selectedTable.name) {
                         $scope.queryForData();
                     }
                 });
-                $scope.$watch('aggregation', function(newValue) {
+                $scope.$watch('options.aggregation', function(newValue) {
                     onFieldChange('aggregation', newValue);
-                    if($scope.selectedDatabase && $scope.selectedTable.name) {
+                    if($scope.selectedDatabase && $scope.options.selectedTable.name) {
                         $scope.queryForData();
                     }
                 });
@@ -157,7 +159,7 @@ function(connectionService, datasetService, errorNotificationService, utilitySer
                     source: "system",
                     tags: ["filter-change", "linechart"]
                 });
-                if(message.addedFilter && message.addedFilter.databaseName === $scope.selectedDatabase && message.addedFilter.tableName === $scope.selectedTable.name) {
+                if(message.addedFilter && message.addedFilter.databaseName === $scope.selectedDatabase && message.addedFilter.tableName === $scope.options.selectedTable.name) {
                     $scope.queryForData();
                 }
             };
@@ -187,35 +189,35 @@ function(connectionService, datasetService, errorNotificationService, utilitySer
                     $scope.errorMessage = undefined;
                 }
 
-                if(!$scope.attrY && $scope.aggregation !== "count") {
+                if(!$scope.options.attrY && $scope.options.aggregation !== "count") {
                     drawChart();
                     return;
                 }
 
-                var yearGroupClause = new neon.query.GroupByFunctionClause(neon.query.YEAR, $scope.attrX, 'year');
-                var monthGroupClause = new neon.query.GroupByFunctionClause(neon.query.MONTH, $scope.attrX, 'month');
-                var dayGroupClause = new neon.query.GroupByFunctionClause(neon.query.DAY, $scope.attrX, 'day');
+                var yearGroupClause = new neon.query.GroupByFunctionClause(neon.query.YEAR, $scope.options.attrX, 'year');
+                var monthGroupClause = new neon.query.GroupByFunctionClause(neon.query.MONTH, $scope.options.attrX, 'month');
+                var dayGroupClause = new neon.query.GroupByFunctionClause(neon.query.DAY, $scope.options.attrX, 'day');
 
                 var groupByClause = [yearGroupClause, monthGroupClause, dayGroupClause];
-                if($scope.categoryField) {
-                    groupByClause.push($scope.categoryField);
+                if($scope.options.categoryField) {
+                    groupByClause.push($scope.options.categoryField);
                 }
 
                 var query = new neon.query.Query()
-                    .selectFrom($scope.selectedDatabase, $scope.selectedTable.name)
-                    .where($scope.attrX, '!=', null);
+                    .selectFrom($scope.selectedDatabase, $scope.options.selectedTable.name)
+                    .where($scope.options.attrX, '!=', null);
 
                 query.groupBy.apply(query, groupByClause);
 
-                if($scope.aggregation === "sum") {
-                    query.aggregate(neon.query.SUM, $scope.attrY, COUNT_FIELD_NAME);
-                } else if($scope.aggregation === "average") {
-                    query.aggregate(neon.query.AVG, $scope.attrY, COUNT_FIELD_NAME);
-                } else if($scope.aggregation === "count") {
+                if($scope.options.aggregation === "sum") {
+                    query.aggregate(neon.query.SUM, $scope.options.attrY, COUNT_FIELD_NAME);
+                } else if($scope.options.aggregation === "average") {
+                    query.aggregate(neon.query.AVG, $scope.options.attrY, COUNT_FIELD_NAME);
+                } else if($scope.options.aggregation === "count") {
                     query.aggregate(neon.query.COUNT, '*', COUNT_FIELD_NAME);
                 }
 
-                query.aggregate(neon.query.MIN, $scope.attrX, 'date')
+                query.aggregate(neon.query.MIN, $scope.options.attrX, 'date')
                     .sortBy('date', neon.query.ASCENDING);
 
                 var connection = connectionService.getActiveConnection();
@@ -251,7 +253,7 @@ function(connectionService, datasetService, errorNotificationService, utilitySer
 
                 $scope.selectedDatabase = datasetService.getDatabase();
                 $scope.tables = datasetService.getTables();
-                $scope.selectedTable = datasetService.getFirstTableWithMappings(["date", "y_axis"]) || $scope.tables[0];
+                $scope.options.selectedTable = datasetService.getFirstTableWithMappings(["date", "y_axis"]) || $scope.tables[0];
 
                 if(initializing) {
                     $scope.updateFieldsAndQueryForData();
@@ -263,11 +265,11 @@ function(connectionService, datasetService, errorNotificationService, utilitySer
             };
 
             $scope.updateFieldsAndQueryForData = function() {
-                $scope.attrX = $scope.bindDateField || datasetService.getMapping($scope.selectedTable.name, "date") || "";
-                $scope.attrY = $scope.bindYAxisField || datasetService.getMapping($scope.selectedTable.name, "y_axis") || "";
-                $scope.categoryField = $scope.bindCategoryField || datasetService.getMapping($scope.selectedTable.name, "line_category") || "";
-                $scope.aggregation = $scope.bindAggregationField || 'count';
-                $scope.fields = datasetService.getDatabaseFields($scope.selectedTable.name);
+                $scope.options.attrX = $scope.bindDateField || datasetService.getMapping($scope.options.selectedTable.name, "date") || "";
+                $scope.options.attrY = $scope.bindYAxisField || datasetService.getMapping($scope.options.selectedTable.name, "y_axis") || "";
+                $scope.options.categoryField = $scope.bindCategoryField || datasetService.getMapping($scope.options.selectedTable.name, "line_category") || "";
+                $scope.options.aggregation = $scope.bindAggregationField || "count";
+                $scope.fields = datasetService.getDatabaseFields($scope.options.selectedTable.name);
                 $scope.fields.sort();
                 $scope.queryForData();
             };
@@ -292,8 +294,8 @@ function(connectionService, datasetService, errorNotificationService, utilitySer
                     //this prevents an error in older mongo caused when the xAxis value is invalid as it is not
                     //included as a key in the response
                     for(i = 0; i < results.data.length; i++) {
-                        if(typeof(results.data[i][$scope.attrX]) === 'undefined') {
-                            results.data[i][$scope.attrX] = null;
+                        if(typeof(results.data[i][$scope.options.attrX]) === 'undefined') {
+                            results.data[i][$scope.options.attrX] = null;
                         }
                     }
 
@@ -333,7 +335,7 @@ function(connectionService, datasetService, errorNotificationService, utilitySer
                     // Calculate Other series
                     var otherTotal = 0;
                     var otherData = [];
-                    if($scope.aggregation !== 'average') {
+                    if($scope.options.aggregation !== 'average') {
                         for(i = $scope.seriesLimit; i < data.length; i++) {
                             otherTotal += data[i].total;
                             for(var d = 0; d < data[i].data.length; d++) {
@@ -419,16 +421,16 @@ function(connectionService, datasetService, errorNotificationService, utilitySer
                 var resultData = {};
 
                 var series = 'Total';
-                if($scope.aggregation === 'average') {
-                    series = 'Average ' + $scope.attrY;
-                } else if($scope.aggregation === 'sum') {
-                    series = $scope.attrY;
+                if($scope.options.aggregation === 'average') {
+                    series = 'Average ' + $scope.options.attrY;
+                } else if($scope.options.aggregation === 'sum') {
+                    series = $scope.options.attrY;
                 }
 
                 // Scrape data for unique series
                 for(i = 0; i < data.length; i++) {
-                    if($scope.categoryField) {
-                        series = data[i][$scope.categoryField] !== '' ? data[i][$scope.categoryField] : 'Unknown';
+                    if($scope.options.categoryField) {
+                        series = data[i][$scope.options.categoryField] !== '' ? data[i][$scope.options.categoryField] : 'Unknown';
                     }
 
                     if(!resultData[series]) {
@@ -458,8 +460,8 @@ function(connectionService, datasetService, errorNotificationService, utilitySer
                 for(i = 0; i < data.length; i++) {
                     indexDate = new Date(data[i].date);
 
-                    if($scope.categoryField) {
-                        series = data[i][$scope.categoryField] !== '' ? data[i][$scope.categoryField] : 'Unknown';
+                    if($scope.options.categoryField) {
+                        series = data[i][$scope.options.categoryField] !== '' ? data[i][$scope.options.categoryField] : 'Unknown';
                     }
 
                     resultData[series].data[Math.floor(Math.abs(indexDate - start) / dayMillis)].value = data[i].value;
