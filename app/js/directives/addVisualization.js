@@ -36,6 +36,7 @@ angular.module('neonDemo.directives')
         link: function($scope, $element) {
             $element.addClass('add-visualization');
 
+            $scope.dialogDisplayed = false;
             $scope.visualizations = visualizations;
             $scope.alertMessage = "";
             $scope.alertTimer = null;
@@ -114,6 +115,37 @@ angular.module('neonDemo.directives')
             $scope.deselectAll = function() {
                 _.each($scope.visualizations, function(visualization) {
                     visualization.selected = false;
+                });
+            };
+
+            $scope.onClose = function(name) {
+                $scope.dialogDisplayed = false;
+
+                XDATA.userALE.log({
+                    activity: "hide",
+                    action: "click",
+                    elementId: "add-visualization-dialog-close-button",
+                    elementType: "dialog_box",
+                    elementSub: "close-button",
+                    elementGroup: "top",
+                    source: "user",
+                    tags: ["external", "link"]
+                });
+                $scope.deselectAll();
+            };
+
+            $scope.toggleAddVisualizationDialog = function() {
+                $scope.dialogDisplayed = !$scope.dialogDisplayed;
+
+                XDATA.userALE.log({
+                    activity: ($scope.dialogDisplayed) ? "show" : "hide",
+                    action: "click",
+                    elementId: "add-visualization-dialog-open-button",
+                    elementType: "dialog_box",
+                    elementSub: "open-button",
+                    elementGroup: "top",
+                    source: "user",
+                    tags: ["external", "link"]
                 });
             };
         }
