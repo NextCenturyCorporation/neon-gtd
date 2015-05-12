@@ -28,8 +28,8 @@
  * @constructor
  */
 angular.module('neonDemo.directives')
-.directive('linechart', ['ConnectionService', 'DatasetService', 'ErrorNotificationService',
-function(connectionService, datasetService, errorNotificationService) {
+.directive('linechart', ['ConnectionService', 'DatasetService', 'ErrorNotificationService', '$timeout',
+function(connectionService, datasetService, errorNotificationService, $timeout) {
     var COUNT_FIELD_NAME = 'value';
 
     return {
@@ -100,10 +100,6 @@ function(connectionService, datasetService, errorNotificationService) {
                 // This resizes the chart when the div changes.  This rely's on jquery's resize plugin to fire
                 // on the associated element and not just the window.
                 $element.resize(function() {
-                    updateChartSize();
-                });
-
-                $element.find(".legend").resize(function() {
                     updateChartSize();
                 });
 
@@ -381,7 +377,10 @@ function(connectionService, datasetService, errorNotificationService) {
                     $scope.$apply(function() {
                         drawChart();
                         drawLine(data);
-                        updateChartSize();
+                        // Use a timeout so we resize the chart after the legend renders (since the legend size affects the chart size).
+                        $timeout(function() {
+                            updateChartSize();
+                        }, 100);
                         XDATA.userALE.log({
                             activity: "alter",
                             action: "render",

@@ -151,10 +151,6 @@ function(connectionService, datasetService, errorNotificationService, filterServ
                 $element.resize(function() {
                     updateChartSize();
                 });
-
-                $element.find(".legend").resize(function() {
-                    updateChartSize();
-                });
             };
 
             /**
