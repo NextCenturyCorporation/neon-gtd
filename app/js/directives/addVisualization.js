@@ -37,6 +37,15 @@ angular.module('neonDemo.directives')
             $element.addClass('add-visualization');
 
             $scope.visualizations = visualizations;
+            for(var i = 0; i < $scope.visualizations.length; ++i) {
+                if(!($scope.visualizations[i].minSizeX)) {
+                    $scope.visualizations[i].minSizeX = 2;
+                }
+                if(!($scope.visualizations[i].minSizeY)) {
+                    $scope.visualizations[i].minSizeY = 2;
+                }
+            }
+
             $scope.alertMessage = "";
             $scope.alertTimer = null;
             $scope.alertDelay = 4000;

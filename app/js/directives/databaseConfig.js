@@ -277,6 +277,12 @@ angular.module('neonDemo.directives')
                     $scope.gridsterConfigs = layouts[layoutName];
                     for(var i = 0; i < $scope.gridsterConfigs.length; ++i) {
                         $scope.gridsterConfigs[i].id = uuid();
+                        if(!($scope.gridsterConfigs[i].minSizeX)) {
+                            $scope.gridsterConfigs[i].minSizeX = 2;
+                        }
+                        if(!($scope.gridsterConfigs[i].minSizeY)) {
+                            $scope.gridsterConfigs[i].minSizeY = 2;
+                        }
                     }
                     // Save the layout name so we can avoid resetting the layout if we switch to a dataset that uses the same layout.
                     $scope.layoutName = layoutName;
