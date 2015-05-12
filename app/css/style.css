@@ -212,21 +212,12 @@ a:focus{
     padding: 6px 16px;
     text-transform: uppercase;
 }
-.btn-lg,
-.btn-group-lg > .btn {
-    padding: 10px 20px;
-    font-size: 18px;
-    line-height: 1.33;
-}
 .btn-group .btn,
 .input-group-btn .btn{
     padding: 6px 12px;
 }
 .btn .glyphicon {
     font-size: 14px;
-}
-.btn-lg .glyphicon {
-    font-size: inherit;
 }
 .btn-default{
     color: #555555;
@@ -329,6 +320,7 @@ fieldset[disabled] .btn-primary.active {
 /* Chart dropdown menu */
 
 .chart-options > a{
+    font-size: 16px;
     color: #39b54a;
     border: 0;
     padding: 0;
@@ -375,6 +367,10 @@ fieldset[disabled] .btn-primary.active {
     display: block;
 }
 
+.chart-options .glyphicon {
+    font-size: inherit;
+}
+
 .chart-options span.header-text {
     /* Set the top position so the text aligns vertically with the gear icon. */
     position: relative;
@@ -382,9 +378,10 @@ fieldset[disabled] .btn-primary.active {
     margin-right: 5px;
 }
 
-.header-container {
-    min-height: 25px;
-    margin-bottom: 5px;
+.header-container,
+.footer-container {
+    min-height: 20px;
+    margin: 5px 0px;
 }
 
 .header-container.filter-container {
@@ -396,7 +393,8 @@ fieldset[disabled] .btn-primary.active {
     margin-bottom: 5px;
 }
 
-.header-container span.header-text {
+.header-container span.header-text,
+.footer-container span.footer-text {
     color: #999999;
     font-size: 16px;
     font-weight: bold;

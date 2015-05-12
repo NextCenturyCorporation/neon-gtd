@@ -52,6 +52,14 @@
     z-index: 1000;
 }
 
+.heat-map .footer-container {
+    position: absolute;
+    bottom: 20px;
+    left: 20px;
+    right: 20px;
+    z-index: 1000;
+}
+
 .heat-map .alert {
     display: none;
     padding: 6px;
