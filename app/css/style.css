@@ -337,7 +337,7 @@ fieldset[disabled] .btn-primary.active {
 }
 .chart-options .popover{
     left: auto;
-    right: 5px;
+    right: 0px;
     top: 45px;
     margin-top: 0;
     background: none;

@@ -15,8 +15,8 @@
  */
 
 .heat-map .chart-options .popover {
-    top: 25px;
-    right: -15px;
+    top: 20px;
+    right: -20px;
     position: absolute;
     z-index: 1000;
 }
@@ -47,7 +47,7 @@
 }
 
 .heat-map .header-container.filter-container {
-    top: 50px;
+    top: 55px;
     left: 60px;
     z-index: 1000;
 }
