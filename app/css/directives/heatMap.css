@@ -43,12 +43,13 @@
     top: 20px;
     left: 20px;
     right: 20px;
-    z-index: 1000;
+    z-index: 1005;
 }
 
 .heat-map .header-container.second-header {
     top: 50px;
     left: 60px;
+    z-index: 1000;
 }
 
 .heat-map .alert {
