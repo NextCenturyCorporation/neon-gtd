@@ -46,7 +46,7 @@
     z-index: 1005;
 }
 
-.heat-map .header-container.second-header {
+.heat-map .header-container.filter-container {
     top: 50px;
     left: 60px;
     z-index: 1000;

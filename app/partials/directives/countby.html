@@ -18,8 +18,8 @@
 
 <div class="clearfix"></div>
 
-<div class="header-container header-container-large">
-    <h4 class="pull-left"><span class="count count-large text-primary ng-binding" ng-bind="count"></span> values</h4>
+<div class="header-container filter-container">
+    <h4 class="pull-left"><span class="count text-primary ng-binding" ng-bind="count"></span> values</h4>
 
     <div class="filter-reset pull-right" ng-class="{true: 'hidden', false: ''}[filterSet === undefined]">
         {{filterSet.key}}={{filterSet.value}}

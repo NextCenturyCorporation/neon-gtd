@@ -49,7 +49,7 @@
 
 <div class="clearfix"></div>
 
-<div class="header-container header-container-large">
+<div class="header-container filter-container">
     <div class="filter-reset pull-right" ng-class="{true: '', false: 'hidden'}[brush.length > 0]">
       Filter
       <a class="btn" ng-click="clearBrush()">
@@ -57,7 +57,7 @@
       </a>
     </div>
 
-  <h4><span class="count count-large text-primary" ng-bind="recordCount | number"></span> records 
+  <h4><span class="count text-primary" ng-bind="recordCount | number"></span> records 
   <span ng-bind="(startDateForDisplay) ? ' from ' : ''"></span>
   <span ng-bind="(startDateForDisplay && options.granularity === 'hour') ? (startDateForDisplay.toISOString() | date: 'MMM d, yyyy HH:mm') : ''"></span>
   <span ng-bind="(startDateForDisplay && options.granularity === 'day') ? (startDateForDisplay.toISOString() | date: 'MMMM d, yyyy') : ''"></span>

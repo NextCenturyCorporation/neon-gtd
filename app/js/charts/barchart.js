@@ -134,9 +134,9 @@ charts.BarChart.prototype.setOptsConfiguration = function(opts) {
 charts.BarChart.DEFAULT_HEIGHT_ = 250;
 charts.BarChart.DEFAULT_WIDTH_ = 600;
 charts.BarChart.DEFAULT_MARGIN_ = {
-    top: 20,
+    top: 10,
     bottom: 50,
-    left: 50,
+    left: 30,
     right: 0
 };
 charts.BarChart.TOOLTIP_ID_ = 'tooltip';

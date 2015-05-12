@@ -387,8 +387,8 @@ fieldset[disabled] .btn-primary.active {
     margin-bottom: 5px;
 }
 
-.header-container.header-container-large {
-    min-height: 45px;
+.header-container.filter-container {
+    min-height: 35px;
 }
 
 .header-container h4 {
