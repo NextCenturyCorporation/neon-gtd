@@ -33,6 +33,7 @@ angular.module('neonDemo.directives')
         templateUrl: 'partials/directives/sunburst.html',
         restrict: 'EA',
         scope: {
+            bindTable: '='
         },
         link: function($scope, $element) {
             $element.addClass('sunburst-directive');
@@ -143,7 +144,11 @@ angular.module('neonDemo.directives')
 
             $scope.updateChartSize = function() {
                 if($scope.chart) {
-                    $element.find('.sunburst-chart').height($element.height() - $element.find('.sunburst-header').outerHeight(true));
+                    var headerHeight = 0;
+                    $element.find(".header-container").each(function() {
+                        headerHeight += $(this).outerHeight(true);
+                    });
+                    $element.find('.sunburst-chart').height($element.height() - headerHeight);
                 }
             };
 
@@ -183,7 +188,7 @@ angular.module('neonDemo.directives')
 
                 $scope.databaseName = datasetService.getDatabase();
                 $scope.tables = datasetService.getTables();
-                $scope.selectedTable = $scope.tables[0];
+                $scope.selectedTable = $scope.bindTable || $scope.tables[0];
 
                 if(initializing) {
                     $scope.updateFieldsAndQueryForData();

@@ -35,7 +35,8 @@ angular.module('neonDemo.directives')
         scope: {
             bindXAxisField: '=',
             bindYAxisField: '=',
-            bindAggregationField: '='
+            bindAggregationField: '=',
+            bindTable: '='
         },
         link: function($scope, $element) {
             $scope.uniqueChartOptions = 'chart-options-' + uuid();
@@ -61,7 +62,11 @@ angular.module('neonDemo.directives')
 
             var updateChartSize = function() {
                 if($scope.chart) {
-                    $element.find('.barchart').height($element.height() - $element.find('.legend').outerHeight(true));
+                    var headerHeight = 0;
+                    $element.find(".header-container").each(function() {
+                        headerHeight += $(this).outerHeight(true);
+                    });
+                    $element.find('.barchart').height($element.height() - headerHeight);
                     $scope.chart.draw();
                 }
             };
@@ -203,7 +208,7 @@ angular.module('neonDemo.directives')
 
                 $scope.databaseName = datasetService.getDatabase();
                 $scope.tables = datasetService.getTables();
-                $scope.selectedTable = datasetService.getFirstTableWithMappings(["bar_x_axis", "y_axis"]) || $scope.tables[0];
+                $scope.selectedTable = $scope.bindTable || datasetService.getFirstTableWithMappings(["bar_x_axis", "y_axis"]) || $scope.tables[0];
                 $scope.filterKeys = filterService.createFilterKeys("barchart", $scope.tables);
 
                 if(initializing) {

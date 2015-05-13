@@ -37,7 +37,8 @@ angular.module('neonDemo.directives')
         templateUrl: 'partials/directives/timelineSelector.html',
         restrict: 'EA',
         scope: {
-            bindDateField: '='
+            bindDateField: '=',
+            bindTable: '='
         },
         link: function($scope, element) {
             var YEAR = "year";
@@ -338,7 +339,7 @@ angular.module('neonDemo.directives')
 
                 $scope.databaseName = datasetService.getDatabase();
                 $scope.tables = datasetService.getTables();
-                $scope.selectedTable = datasetService.getFirstTableWithMappings(["date"]) || $scope.tables[0];
+                $scope.selectedTable = $scope.bindTable || datasetService.getFirstTableWithMappings(["date"]) || $scope.tables[0];
                 $scope.filterKeys = filterService.createFilterKeys("timeline", $scope.tables);
 
                 if(initializing) {

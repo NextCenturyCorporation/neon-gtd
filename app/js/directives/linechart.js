@@ -39,6 +39,7 @@ angular.module('neonDemo.directives')
             bindYAxisField: '=',
             bindCategoryField: '=',
             bindAggregationField: '=',
+            bindTable: '=',
             colorMappings: '&'
         },
         link: function($scope, $element) {
@@ -66,7 +67,11 @@ angular.module('neonDemo.directives')
 
             var updateChartSize = function() {
                 if($scope.chart) {
-                    $element.find('.linechart').height($element.height() - $element.find('.legend').outerHeight(true));
+                    var headerHeight = 0;
+                    $element.find(".header-container").each(function() {
+                        headerHeight += $(this).outerHeight(true);
+                    });
+                    $element.find('.linechart').height($element.height() - headerHeight);
                     $scope.chart.redraw();
                 }
             };
@@ -247,7 +252,7 @@ angular.module('neonDemo.directives')
 
                 $scope.selectedDatabase = datasetService.getDatabase();
                 $scope.tables = datasetService.getTables();
-                $scope.selectedTable = datasetService.getFirstTableWithMappings(["date", "y_axis"]) || $scope.tables[0];
+                $scope.selectedTable = $scope.bindTable || datasetService.getFirstTableWithMappings(["date", "y_axis"]) || $scope.tables[0];
 
                 if(initializing) {
                     $scope.updateFieldsAndQueryForData();

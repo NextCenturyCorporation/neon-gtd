@@ -34,6 +34,7 @@ angular.module('neonDemo.directives')
         templateUrl: 'partials/directives/queryResultsTable.html',
         restrict: 'EA',
         scope: {
+            bindTable: '=',
             navbarItem: '=?',
             showData: '=?'
         },
@@ -83,8 +84,12 @@ angular.module('neonDemo.directives')
             $tableDiv.attr("id", $scope.tableId);
 
             var updateSize = function() {
+                var headerHeight = 0;
+                element.find(".header-container").each(function() {
+                    headerHeight += $(this).outerHeight(true);
+                });
                 var tableBufferY = $tableDiv.outerHeight(true) - $tableDiv.height();
-                $tableDiv.height(element.height() - $(element).find('.count-header').outerHeight(true) - tableBufferY);
+                $tableDiv.height(element.height() - headerHeight - tableBufferY);
                 if($scope.table) {
                     $scope.table.refreshLayout();
                 }
@@ -273,7 +278,7 @@ angular.module('neonDemo.directives')
 
                 $scope.databaseName = datasetService.getDatabase();
                 $scope.tables = datasetService.getTables();
-                $scope.selectedTable = $scope.tables[0];
+                $scope.selectedTable = $scope.bindTable || $scope.tables[0];
 
                 if(initializing) {
                     $scope.updateFieldsAndRowsAndCount();

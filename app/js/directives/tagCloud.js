@@ -24,7 +24,8 @@ angular.module('neonDemo.directives')
         templateUrl: 'partials/directives/tagCloud.html',
         restrict: 'EA',
         scope: {
-            bindTagField: '='
+            bindTagField: '=',
+            bindTable: '='
         },
         link: function($scope, element) {
             element.addClass("tagcloud-container");
@@ -186,7 +187,7 @@ angular.module('neonDemo.directives')
 
                 $scope.databaseName = datasetService.getDatabase();
                 $scope.tables = datasetService.getTables();
-                $scope.selectedTable = datasetService.getFirstTableWithMappings(["tags"]) || $scope.tables[0];
+                $scope.selectedTable = $scope.bindTable || datasetService.getFirstTableWithMappings(["tags"]) || $scope.tables[0];
                 $scope.filterKeys = filterService.createFilterKeys("tagcloud", $scope.tables);
 
                 if(initializing) {
