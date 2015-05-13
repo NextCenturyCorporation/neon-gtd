@@ -22,21 +22,21 @@
 }
 
 .neon-popup .modal-body {
-    max-height: 405px;
+    max-height: 410px;
     overflow-y: auto;
 }
 
 .neon-popup ul {
     list-style: none;
-    margin: 10px 0px 0px 10px;
+    margin: 5px 0px 0px 15px;
     padding: 0px;
 }
 
 .neon-popup ul li {
     display: block;
     float:left;
-    height: 100px;
-    margin: 0px 10px 10px 0px;
+    height: 120px;
+    margin: 0px 5px 5px 0px;
     width: 100px;
 }
 
@@ -71,9 +71,9 @@
 .neon-popup ul span {
     color: #777777;
     font-weight: bold;
-    height: 30px;
+    height: 35px;
     letter-spacing: 0.05em;
-    width: 100px;
+    display: inline-block;
 }
 
 .neon-popup ul .selected button {
