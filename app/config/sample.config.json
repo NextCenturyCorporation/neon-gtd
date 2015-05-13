@@ -268,5 +268,14 @@
                 "bind-table": "'myTable'"
             }
         }]
+    },
+
+    "files": {
+        "datasets": [
+            "./config/sample.dataset.config.json"
+        ],
+        "layouts": [
+            "./config/sample.layout.config.json"
+        ]
     }
 }

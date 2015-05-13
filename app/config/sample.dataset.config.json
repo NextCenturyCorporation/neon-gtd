@@ -1,0 +1,11 @@
+{
+    "dataset": {
+        "name": "Sample",
+        "datastore": "mongo",
+        "hostname": "localhost",
+        "database": "sample",
+        "tables": [{
+            "name": "sample"
+        }]
+    }
+}
