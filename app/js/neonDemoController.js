@@ -22,7 +22,9 @@
  * @constructor
  */
 angular.module('neonDemo.controllers')
-.controller('neonDemoController', ['$scope', '$timeout', 'FilterCountService', function($scope, $timeout, filterCountService) {
+.controller('neonDemoController', ['$scope', '$timeout', 'config', 'FilterCountService',
+function($scope, $timeout, config, filterCountService) {
+    $scope.hideNavbarItems = config.hideNavbarItems;
     $scope.seeData = false;
     $scope.createFilters = false;
     $scope.chartOptions = false;
@@ -49,7 +51,7 @@ angular.module('neonDemo.controllers')
     };
 
     $scope.gridsterOpts = {
-        columns: 6, // the width of the grid, in columns
+        columns: config.gridsterColumns, // the width of the grid, in columns
         pushing: true, // whether to push other items out of the way on move or resize
         floating: true, // whether to automatically float items up so they stack (you can temporarily disable if you are adding unsorted items with ng-repeat)
         width: 'auto', // can be an integer or 'auto'. 'auto' scales gridster to be the full width of its containing element
@@ -183,4 +185,7 @@ angular.module('neonDemo.controllers')
                 to: newVal
             });
     }, true);
+
+    // Display the dashboard once the configuration file has been loaded and the controller has finished its initialization.
+    $scope.displayDashboard = true;
 }]);

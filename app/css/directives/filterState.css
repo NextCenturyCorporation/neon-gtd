@@ -1,0 +1,21 @@
+.filterStateDirective {
+    margin: auto;
+    padding: 20px;
+    display: block;
+    height: 100%;
+}
+
+.filter-state-view {
+    height: 100%;
+    overflow: scroll;
+}
+
+.filter-state-warning {
+    font-size: 24px;
+    text-align: center;
+}
+
+.filter-state-header {
+    font-size: larger;
+    font-weight: bold;
+}

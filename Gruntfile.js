@@ -127,6 +127,7 @@ module.exports = function(grunt) {
                 logo: '../app/img/Neon_60x34.png',
                 options: {
                     paths: 'app/js',
+                    exclude: "vendor",
                     outdir: 'docs'
                 }
             }

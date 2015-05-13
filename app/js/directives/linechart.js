@@ -23,7 +23,8 @@
  * neon system events (e.g., data tables changed).  On these events, it requeries the active
  * connection for data and updates applies the change to its scope.  The contained
  * barchart will update as a result.
- * @class neonDemo.directives.linechart
+ * @namespace neonDemo.directives
+ * @class linechart
  * @constructor
  */
 angular.module('neonDemo.directives')
@@ -34,8 +35,12 @@ angular.module('neonDemo.directives')
         templateUrl: 'partials/directives/linechart.html',
         restrict: 'EA',
         scope: {
-            colorMappings: '&',
-            chartType: '='
+            bindDateField: '=',
+            bindYAxisField: '=',
+            bindCategoryField: '=',
+            bindAggregationField: '=',
+            bindTable: '=',
+            colorMappings: '&'
         },
         link: function($scope, $element) {
             $scope.uniqueChartOptions = 'chart-options-' + uuid();
@@ -62,7 +67,11 @@ angular.module('neonDemo.directives')
 
             var updateChartSize = function() {
                 if($scope.chart) {
-                    $element.find('.linechart').height($element.height() - $element.find('.legend').outerHeight(true));
+                    var headerHeight = 0;
+                    $element.find(".header-container").each(function() {
+                        headerHeight += $(this).outerHeight(true);
+                    });
+                    $element.find('.linechart').height($element.height() - headerHeight);
                     $scope.chart.redraw();
                 }
             };
@@ -83,6 +92,12 @@ angular.module('neonDemo.directives')
                         updateChartSize();
                     });
 
+                $scope.$watch('attrX', function(newValue, oldValue) {
+                    onFieldChange('attrX', newValue, oldValue);
+                    if($scope.selectedDatabase && $scope.selectedTable.name) {
+                        $scope.queryForData();
+                    }
+                });
                 $scope.$watch('attrY', function(newValue, oldValue) {
                     onFieldChange('attrY', newValue, oldValue);
                     if($scope.selectedDatabase && $scope.selectedTable.name) {
@@ -121,7 +136,7 @@ angular.module('neonDemo.directives')
              */
             var onFiltersChanged = function(message) {
                 XDATA.activityLogger.logSystemActivity('LineChart - received neon filter changed event');
-                if(message.addedFilter.databaseName === $scope.selectedDatabase && message.addedFilter.tableName === $scope.selectedTable.name) {
+                if(message.addedFilter && message.addedFilter.databaseName === $scope.selectedDatabase && message.addedFilter.tableName === $scope.selectedTable.name) {
                     $scope.queryForData();
                 }
             };
@@ -178,7 +193,9 @@ angular.module('neonDemo.directives')
                     connection.executeQuery(query, callback, function(response) {
                         XDATA.activityLogger.logSystemActivity('LineChart - query failed');
                         drawChart();
-                        $scope.errorMessage = errorNotificationService.showErrorMessage($element, response.responseJSON.error, response.responseJSON.stackTrace);
+                        if(response.responseJSON) {
+                            $scope.errorMessage = errorNotificationService.showErrorMessage($element, response.responseJSON.error, response.responseJSON.stackTrace);
+                        }
                     });
                 }
             };
@@ -195,7 +212,7 @@ angular.module('neonDemo.directives')
 
                 $scope.selectedDatabase = datasetService.getDatabase();
                 $scope.tables = datasetService.getTables();
-                $scope.selectedTable = datasetService.getFirstTableWithMappings(["date", "y_axis"]) || $scope.tables[0];
+                $scope.selectedTable = $scope.bindTable || datasetService.getFirstTableWithMappings(["date", "y_axis"]) || $scope.tables[0];
 
                 if(initializing) {
                     $scope.updateFieldsAndQueryForData();
@@ -207,11 +224,12 @@ angular.module('neonDemo.directives')
             };
 
             $scope.updateFieldsAndQueryForData = function() {
-                $scope.attrX = datasetService.getMapping($scope.selectedTable.name, "date") || "";
-                $scope.attrY = datasetService.getMapping($scope.selectedTable.name, "y_axis") || "";
-                $scope.categoryField = datasetService.getMapping($scope.selectedTable.name, "line_category") || "";
-                $scope.aggregation = 'count';
+                $scope.attrX = $scope.bindDateField || datasetService.getMapping($scope.selectedTable.name, "date") || "";
+                $scope.attrY = $scope.bindYAxisField || datasetService.getMapping($scope.selectedTable.name, "y_axis") || "";
+                $scope.categoryField = $scope.bindCategoryField || datasetService.getMapping($scope.selectedTable.name, "line_category") || "";
+                $scope.aggregation = $scope.bindAggregationField || 'count';
                 $scope.fields = datasetService.getDatabaseFields($scope.selectedTable.name);
+                $scope.fields.sort();
                 $scope.queryForData();
             };
 

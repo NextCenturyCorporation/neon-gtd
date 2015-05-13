@@ -18,24 +18,26 @@
         <!-- Custom Stylesheets -->
         <link href="css/style.css" rel="stylesheet">
         <link href="css/errorStyle.css" rel="stylesheet">
+        <link href="css/popupStyle.css" rel="stylesheet">
 
         <!-- Directive styles -->
         <link rel="stylesheet" type="text/css" href="css/directives/addVisualization.css">
-        <link rel="stylesheet" type="text/css" href="css/directives/circularHeatForm.css">
-        <link rel="stylesheet" type="text/css" href="css/directives/circularHeatChart.css">
-        <link rel="stylesheet" type="text/css" href="css/directives/countBy.css">
         <link rel="stylesheet" type="text/css" href="css/directives/barchart.css">
+        <link rel="stylesheet" type="text/css" href="css/directives/circularHeatChart.css">
+        <link rel="stylesheet" type="text/css" href="css/directives/circularHeatForm.css">
+        <link rel="stylesheet" type="text/css" href="css/directives/countBy.css">
+        <link rel="stylesheet" type="text/css" href="css/directives/filterBuilder.css">
+        <link rel="stylesheet" type="text/css" href="css/directives/heatMap.css">
         <link rel="stylesheet" type="text/css" href="css/directives/directedGraph.css">
         <link rel="stylesheet" type="text/css" href="css/directives/linechart.css">
+        <link rel="stylesheet" type="text/css" href="css/directives/queryResultsTable.css">
         <link rel="stylesheet" type="text/css" href="css/directives/stackedBarChart.css">
+        <link rel="stylesheet" type="text/css" href="css/directives/sunburst.css">
+        <link rel="stylesheet" type="text/css" href="css/directives/tagCloud.css">
         <link rel="stylesheet" type="text/css" href="css/directives/timelineSelector.css">
         <link rel="stylesheet" type="text/css" href="css/directives/timelineSelectorChart.css">
-        <link rel="stylesheet" type="text/css" href="css/directives/heatMap.css">
-        <link rel="stylesheet" type="text/css" href="css/directives/queryResultsTable.css">
-        <link rel="stylesheet" type="text/css" href="css/directives/tagCloud.css">
         <link rel="stylesheet" type="text/css" href="css/directives/visualizationWidget.css">
 
-        <link rel="stylesheet" type="text/css" href="css/directives/sunburst.css">
 
         <!-- HTML5 Shim and Respond.js IE8 support of HTML5 elements and media queries -->
         <!-- WARNING: Respond.js doesn't work if you view the page via file:// -->
@@ -44,7 +46,7 @@
         <script src="lib/respond.min.js"></script>
         <![endif]-->
     </head>
-    <body ng-controller="neonDemoController">
+    <body class="ng-hide" ng-controller="neonDemoController" ng-show="displayDashboard">
 
         <!-- Header -->
         <!-- This could be made into either a directive or a partial -->
@@ -57,12 +59,12 @@
                     <div class="clearfix visible-xs"></div>
 
                     <!-- Database Config -->
-                    <database-config gridster-configs="visualizations"></database-config>
+                    <database-config gridster-configs="visualizations" ng-hide="hideNavbarItems"></database-config>
 
                     <!-- Add visualization control -->
-                    <div add-visualization gridster-configs="visualizations"></div>
+                    <div add-visualization gridster-configs="visualizations" ng-hide="hideNavbarItems"></div>
 
-                    <ul class="nav navbar-nav">
+                    <ul class="nav navbar-nav" ng-hide="hideNavbarItems">
                         <li>
                             <a data-toggle="collapse" data-parent="#trays" href=".filter-tray" class="collapsed"
                                 ng-click="toggleCreateFilters()">
@@ -88,10 +90,18 @@
         </nav>
 
         <!-- Trays -->
-        <div class="panel-group" id="trays">
+        <div class="panel-group" id="trays" ng-hide="hideNavbarItems">
 
             <!-- Filter Builder tray -->
-            <div filter-builder></div>
+            <div class="tray-mirror filter-tray collapse">
+                <div class="inner" style="height: 134px"></div>
+            </div>
+
+            <div id="filter-tray" class="tray filter-tray panel panel-default collapse">
+                <div class="container panel-body">
+                    <div filter-builder navbar-item="(true)"></div>
+                </div>
+            </div>
 
             <!-- See Data tray -->
             <div class="tray-mirror data-tray collapse">
@@ -167,6 +177,8 @@
 
         </div>
 
+        <links-popup></links-popup>
+
         <!-- Include the xdata logging package. -->
         <script src="lib/xdatalogger/js/draper.activity_logger-2.1.1.js"></script>
         <script src="lib/xdatalogger/js/draper.activity_worker-2.1.1.js"></script>
@@ -238,8 +250,10 @@
         <script src="js/directives/databaseConfig.js"></script>
         <script src="js/directives/directedGraph.js"></script>
         <script src="js/directives/filterBuilder.js"></script>
+        <script src="js/directives/filterState.js"></script>
         <script src="js/directives/heatMap.js"></script>
         <script src="js/directives/linechart.js"></script>
+        <script src="js/directives/linksPopup.js"></script>
         <script src="js/directives/poweredByNeon.js"></script>
         <script src="js/directives/queryResultsTable.js"></script>
         <script src="js/directives/stackedBarchart.js"></script>

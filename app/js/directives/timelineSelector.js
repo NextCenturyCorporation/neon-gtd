@@ -27,7 +27,8 @@
  *    &lt;timeline-selector&gt;&lt;/timeline-selector&gt;<br>
  *    &lt;div timeline-selector&gt;&lt;/div&gt;
  *
- * @class neonDemo.directives.timelineSelector
+ * @namespace neonDemo.directives
+ * @class timelineSelector
  * @constructor
  */
 angular.module('neonDemo.directives')
@@ -36,6 +37,8 @@ angular.module('neonDemo.directives')
         templateUrl: 'partials/directives/timelineSelector.html',
         restrict: 'EA',
         scope: {
+            bindDateField: '=',
+            bindTable: '='
         },
         link: function($scope, element) {
             var YEAR = "year";
@@ -48,9 +51,6 @@ angular.module('neonDemo.directives')
             chartOptions.toggleClass($scope.uniqueChartOptions);
 
             element.addClass('timeline-selector');
-
-            // Defaulting the expected date field to 'date'.
-            $scope.dateField = 'date';
 
             // Default our time data to an empty array.
             $scope.data = [];
@@ -78,6 +78,7 @@ angular.module('neonDemo.directives')
             $scope.selectedTable = {
                 name: ""
             };
+            $scope.fields = [];
             $scope.filterKeys = {};
 
             /**
@@ -272,7 +273,7 @@ angular.module('neonDemo.directives')
              */
             var onFiltersChanged = function(message) {
                 XDATA.activityLogger.logSystemActivity('TimelineSelector - received neon filter changed event');
-                if(message.addedFilter.databaseName === $scope.databaseName && message.addedFilter.tableName === $scope.selectedTable.name) {
+                if(message.addedFilter && message.addedFilter.databaseName === $scope.databaseName && message.addedFilter.tableName === $scope.selectedTable.name) {
                     $scope.queryForChartData();
                 }
             };
@@ -284,22 +285,37 @@ angular.module('neonDemo.directives')
              */
             var onDatasetChanged = function() {
                 XDATA.activityLogger.logSystemActivity('TimelineSelector - received neon-gtd dataset changed event');
-                $scope.displayActiveDataset();
+                $scope.displayActiveDataset(false);
             };
 
             /**
              * Displays data for any currently active datasets.
+             * @param {Boolean} Whether this function was called during visualization initialization.
              * @method displayActiveDataset
              */
-            $scope.displayActiveDataset = function() {
+            $scope.displayActiveDataset = function(initializing) {
                 if(!datasetService.hasDataset()) {
                     return;
                 }
 
                 $scope.databaseName = datasetService.getDatabase();
                 $scope.tables = datasetService.getTables();
-                $scope.selectedTable = datasetService.getFirstTableWithMappings(["date"]) || $scope.tables[0];
+                $scope.selectedTable = $scope.bindTable || datasetService.getFirstTableWithMappings(["date"]) || $scope.tables[0];
                 $scope.filterKeys = filterService.createFilterKeys("timeline", $scope.tables);
+
+                if(initializing) {
+                    $scope.updateFieldsAndQueryForChartData();
+                } else {
+                    $scope.$apply(function() {
+                        $scope.updateFieldsAndQueryForChartData();
+                    });
+                }
+            };
+
+            $scope.updateFieldsAndQueryForChartData = function() {
+                $scope.fields = datasetService.getDatabaseFields($scope.selectedTable.name);
+                $scope.fields.sort();
+                $scope.dateField = $scope.bindDateField || datasetService.getMapping($scope.selectedTable.name, "date") || "date";
                 $scope.resetAndQueryForChartData();
             };
 
@@ -326,8 +342,6 @@ angular.module('neonDemo.directives')
                     $scope.errorMessage = undefined;
                 }
 
-                $scope.dateField = datasetService.getMapping($scope.selectedTable.name, "date") || "date";
-
                 var query = new neon.query.Query()
                     .selectFrom($scope.databaseName, $scope.selectedTable.name)
                     .where($scope.dateField, '!=', null);
@@ -352,7 +366,9 @@ angular.module('neonDemo.directives')
                         XDATA.activityLogger.logSystemActivity('TimelineSelector - data requested failed');
                         // TODO:  Determine how to clear the chart without causing errors.
                         // $scope.updateChartData({ data: [] });
-                        $scope.errorMessage = errorNotificationService.showErrorMessage(element, response.responseJSON.error, response.responseJSON.stackTrace);
+                        if(response.responseJSON) {
+                            $scope.errorMessage = errorNotificationService.showErrorMessage(element, response.responseJSON.error, response.responseJSON.stackTrace);
+                        }
                     });
                 }
             };
@@ -451,6 +467,7 @@ angular.module('neonDemo.directives')
                         updateDatesCallback();
                     }
                 } else {
+                    XDATA.activityLogger.logSystemActivity('TimelineSelector - no data');
                     // TODO:  Determine how to clear the chart without causing errors.
                     //$scope.data = $scope.createTimelineData(queryResults);
                     //$scope.updateChartTimesAndTotal();
@@ -485,7 +502,9 @@ angular.module('neonDemo.directives')
                         $scope.referenceStartDate = undefined;
                         // TODO:  Determine how to clear the chart without causing errors.
                         // $scope.updateChartData({ data: [] });
-                        $scope.errorMessage = errorNotificationService.showErrorMessage(element, response.responseJSON.error, response.responseJSON.stackTrace);
+                        if(response.responseJSON) {
+                            $scope.errorMessage = errorNotificationService.showErrorMessage(element, response.responseJSON.error, response.responseJSON.stackTrace);
+                        }
                     });
                 }
 
@@ -508,7 +527,9 @@ angular.module('neonDemo.directives')
                         $scope.referenceEndDate = undefined;
                         // TODO:  Determine how to clear the chart without causing errors.
                         // $scope.updateChartData({ data: [] });
-                        $scope.errorMessage = errorNotificationService.showErrorMessage(element, response.responseJSON.error, response.responseJSON.stackTrace);
+                        if(response.responseJSON) {
+                            $scope.errorMessage = errorNotificationService.showErrorMessage(element, response.responseJSON.error, response.responseJSON.stackTrace);
+                        }
                     });
                 }
             };
@@ -722,7 +743,7 @@ angular.module('neonDemo.directives')
             // Wait for neon to be ready, the create our messenger and intialize the view and data.
             neon.ready(function() {
                 $scope.initialize();
-                $scope.displayActiveDataset();
+                $scope.displayActiveDataset(true);
             });
         }
     };

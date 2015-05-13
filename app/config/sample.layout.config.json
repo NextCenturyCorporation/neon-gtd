@@ -1,0 +1,28 @@
+{
+    "name": "sample",
+    "layout": [{
+        "sizeX": 6,
+        "sizeY": 1,
+        "type": "timeline-selector"
+    }, {
+        "sizeX": 4,
+        "sizeY": 2,
+        "type": "heat-map"
+    }, {
+        "sizeX": 2,
+        "sizeY": 2,
+        "type": "circular-heat-form"
+    }, {
+        "sizeX": 2,
+        "sizeY": 2,
+        "type": "linechart"
+    }, {
+        "sizeX": 2,
+        "sizeY": 2,
+        "type": "barchart"
+    }, {
+        "sizeX": 2,
+        "sizeY": 2,
+        "type": "count-by"
+    }]
+}

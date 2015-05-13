@@ -23,7 +23,8 @@
  *    &lt;heat-map&gt;&lt;/heat-map&gt;<br>
  *    &lt;div heat-map&gt;&lt;/div&gt;
  *
- * @class neonDemo.directives.heatMap
+ * @namespace neonDemo.directives
+ * @class heatMap
  * @constructor
  */
 angular.module('neonDemo.directives')
@@ -32,6 +33,11 @@ angular.module('neonDemo.directives')
         templateUrl: 'partials/directives/heatMap.html',
         restrict: 'EA',
         scope: {
+            bindLatitudeField: '=',
+            bindLongitudeField: '=',
+            bindColorField: '=',
+            bindSizeField: '=',
+            bindTable: '=',
             // map of categories to colors used for the legend
             colorMappings: '&'
         },
@@ -60,6 +66,7 @@ angular.module('neonDemo.directives')
             $scope.showFilter = false;
             $scope.dataBounds = undefined;
             $scope.limit = 1000;  // Max points to pull into the map.
+            $scope.previousLimit = $scope.limit;
             $scope.dataLength = 0;
             $scope.resizeRedrawDelay = 1500; // Time in ms to wait after a resize event flood to try redrawing the map.
             $scope.errorMessage = undefined;
@@ -146,14 +153,10 @@ angular.module('neonDemo.directives')
                             from: oldVal,
                             to: newVal
                         });
-                    //if(newVal !== oldVal) {
-                        // Set the size by field if we are on a point layer.
-                        if($scope.showPoints) {
-                            $scope.setMapSizeMapping(newVal);
-                            $scope.draw();
-                        }
-                        //$scope.queryForMapData();
-                    //}
+                    if($scope.showPoints) {
+                        $scope.setMapSizeMapping(newVal);
+                        $scope.draw();
+                    }
                 });
 
                 // Update the coloring field used by the map.
@@ -165,11 +168,8 @@ angular.module('neonDemo.directives')
                             to: newVal
                         });
                     $scope.map.resetColorMappings();
-                    //if(newVal !== oldVal) {
-                        $scope.setMapCategoryMapping(newVal);
-                        $scope.draw();
-                        //$scope.queryForMapData();
-                    //}
+                    $scope.setMapCategoryMapping(newVal);
+                    $scope.draw();
                 });
 
                 // Toggle the points and clusters view when the user toggles between them.
@@ -218,16 +218,6 @@ angular.module('neonDemo.directives')
                             from: oldVal,
                             to: newVal
                         });
-                });
-
-                $scope.$watch('limit', function(newVal, oldVal) {
-                    XDATA.activityLogger.logUserActivity('HeatMap - user change number of displayed points', 'set_map_layer_properties',
-                        XDATA.activityLogger.WF_GETDATA,
-                        {
-                            from: oldVal,
-                            to: newVal
-                        });
-                    $scope.queryForMapData();
                 });
 
                 // Setup a basic resize handler to redraw the map and calculate its size if our div changes.
@@ -303,7 +293,7 @@ angular.module('neonDemo.directives')
              */
             var onFiltersChanged = function(message) {
                 XDATA.activityLogger.logSystemActivity('HeatMap - received neon filter changed event');
-                if(message.addedFilter.databaseName === $scope.databaseName && message.addedFilter.tableName === $scope.selectedTable.name) {
+                if(message.addedFilter && message.addedFilter.databaseName === $scope.databaseName && message.addedFilter.tableName === $scope.selectedTable.name) {
                     $scope.queryForMapData();
                 }
             };
@@ -373,7 +363,7 @@ angular.module('neonDemo.directives')
 
                 $scope.databaseName = datasetService.getDatabase();
                 $scope.tables = datasetService.getTables();
-                $scope.selectedTable = datasetService.getFirstTableWithMappings(["latitude", "longitude"]) || $scope.tables[0];
+                $scope.selectedTable = $scope.bindTable || datasetService.getFirstTableWithMappings(["latitude", "longitude"]) || $scope.tables[0];
                 $scope.filterKeys = filterService.createFilterKeys("map", $scope.tables);
 
                 if(initializing) {
@@ -387,10 +377,11 @@ angular.module('neonDemo.directives')
 
             $scope.updateFieldsAndQueryForMapData = function() {
                 $scope.fields = datasetService.getDatabaseFields($scope.selectedTable.name);
-                $scope.latitudeField = datasetService.getMapping($scope.selectedTable.name, "latitude") || "";
-                $scope.longitudeField = datasetService.getMapping($scope.selectedTable.name, "longitude") || "";
-                $scope.colorByField = datasetService.getMapping($scope.selectedTable.name, "color_by") || "";
-                $scope.sizeByField = datasetService.getMapping($scope.selectedTable.name, "size_by") || "";
+                $scope.fields.sort();
+                $scope.latitudeField = $scope.bindLatitudeField || datasetService.getMapping($scope.selectedTable.name, "latitude") || "";
+                $scope.longitudeField = $scope.bindLongitudeField || datasetService.getMapping($scope.selectedTable.name, "longitude") || "";
+                $scope.colorByField = $scope.bindColorField || datasetService.getMapping($scope.selectedTable.name, "color_by") || "";
+                $scope.sizeByField = $scope.bindSizeField || datasetService.getMapping($scope.selectedTable.name, "size_by") || "";
                 XDATA.activityLogger.logSystemActivity('HeatMap - field selectors updated');
 
                 $timeout(function() {
@@ -430,7 +421,9 @@ angular.module('neonDemo.directives')
                             $scope.updateMapData({
                                 data: []
                             });
-                            $scope.errorMessage = errorNotificationService.showErrorMessage($element, response.responseJSON.error, response.responseJSON.stackTrace);
+                            if(response.responseJSON) {
+                                $scope.errorMessage = errorNotificationService.showErrorMessage($element, response.responseJSON.error, response.responseJSON.stackTrace);
+                            }
                         });
                     }
                 }
@@ -647,6 +640,17 @@ angular.module('neonDemo.directives')
              */
             $scope.toggleOptionsDisplay = function() {
                 $scope.optionsDisplayed = !$scope.optionsDisplayed;
+            };
+
+            $scope.handleLimitRefreshClick = function() {
+                XDATA.activityLogger.logUserActivity('HeatMap - user change number of displayed points', 'set_map_layer_properties',
+                    XDATA.activityLogger.WF_GETDATA,
+                    {
+                        from: $scope.previousLimit,
+                        to: $scope.limit
+                    });
+                $scope.previousLimit = $scope.limit;
+                $scope.queryForMapData();
             };
 
             // Wait for neon to be ready, the create our messenger and intialize the view and data.

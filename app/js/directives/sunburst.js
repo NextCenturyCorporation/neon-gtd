@@ -23,7 +23,8 @@
  * neon system events (e.g., data tables changed).  On these events, it requeries the active
  * connection for data and updates applies the change to its scope.  The contained
  * sunburst will update as a result.
- * @class neonDemo.directives.sunburst
+ * @namespace neonDemo.directives
+ * @class sunburst
  * @constructor
  */
 angular.module('neonDemo.directives')
@@ -32,6 +33,7 @@ angular.module('neonDemo.directives')
         templateUrl: 'partials/directives/sunburst.html',
         restrict: 'EA',
         scope: {
+            bindTable: '='
         },
         link: function($scope, $element) {
             $element.addClass('sunburst-directive');
@@ -47,7 +49,7 @@ angular.module('neonDemo.directives')
             $scope.selectedTable = {
                 name: ""
             };
-            $scope.fields = [""];
+            $scope.fields = [];
             $scope.chart = undefined;
             $scope.errorMessage = undefined;
 
@@ -97,7 +99,7 @@ angular.module('neonDemo.directives')
              */
             var onFiltersChanged = function(message) {
                 XDATA.activityLogger.logSystemActivity('SunburstChart - received neon filter changed event');
-                if(message.addedFilter.databaseName === $scope.databaseName && message.addedFilter.tableName === $scope.selectedTable.name) {
+                if(message.addedFilter && message.addedFilter.databaseName === $scope.databaseName && message.addedFilter.tableName === $scope.selectedTable.name) {
                     $scope.queryForData();
                 }
             };
@@ -114,7 +116,11 @@ angular.module('neonDemo.directives')
 
             $scope.updateChartSize = function() {
                 if($scope.chart) {
-                    $element.find('.sunburst-chart').height($element.height() - $element.find('.sunburst-header').outerHeight(true));
+                    var headerHeight = 0;
+                    $element.find(".header-container").each(function() {
+                        headerHeight += $(this).outerHeight(true);
+                    });
+                    $element.find('.sunburst-chart').height($element.height() - headerHeight);
                 }
             };
 
@@ -154,7 +160,7 @@ angular.module('neonDemo.directives')
 
                 $scope.databaseName = datasetService.getDatabase();
                 $scope.tables = datasetService.getTables();
-                $scope.selectedTable = $scope.tables[0];
+                $scope.selectedTable = $scope.bindTable || $scope.tables[0];
 
                 if(initializing) {
                     $scope.updateFieldsAndQueryForData();
@@ -167,6 +173,7 @@ angular.module('neonDemo.directives')
 
             $scope.updateFieldsAndQueryForData = function() {
                 $scope.fields = datasetService.getDatabaseFields($scope.selectedTable.name);
+                $scope.fields.sort();
                 $scope.queryForData();
             };
 
@@ -193,7 +200,9 @@ angular.module('neonDemo.directives')
                         doDrawChart(buildDataTree({
                             data: []
                         }));
-                        $scope.errorMessage = errorNotificationService.showErrorMessage($element, response.responseJSON.error, response.responseJSON.stackTrace);
+                        if(response.responseJSON) {
+                            $scope.errorMessage = errorNotificationService.showErrorMessage($element, response.responseJSON.error, response.responseJSON.stackTrace);
+                        }
                     });
                 }
             };

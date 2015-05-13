@@ -24,7 +24,8 @@ angular.module('neonDemo.directives')
         templateUrl: 'partials/directives/tagCloud.html',
         restrict: 'EA',
         scope: {
-            tagField: '='
+            bindTagField: '=',
+            bindTable: '='
         },
         link: function($scope, element) {
             element.addClass("tagcloud-container");
@@ -33,6 +34,7 @@ angular.module('neonDemo.directives')
             $scope.selectedTable = {
                 name: ""
             };
+            $scope.fields = [];
 
             $scope.uniqueChartOptions = 'chart-options-' + uuid();
             var chartOptions = $(element).find('.chart-options');
@@ -120,7 +122,7 @@ angular.module('neonDemo.directives')
              */
             var onFiltersChanged = function(message) {
                 XDATA.activityLogger.logSystemActivity('TagCloud - received neon filter changed event');
-                if(message.addedFilter.databaseName === $scope.databaseName && message.addedFilter.tableName === $scope.selectedTable.name) {
+                if(message.addedFilter && message.addedFilter.databaseName === $scope.databaseName && message.addedFilter.tableName === $scope.selectedTable.name) {
                     $scope.queryForTags();
                 }
             };
@@ -132,27 +134,37 @@ angular.module('neonDemo.directives')
              */
             var onDatasetChanged = function() {
                 XDATA.activityLogger.logSystemActivity('TagCloud - received neon-gtd dataset changed event');
-                $scope.displayActiveDataset();
+                $scope.displayActiveDataset(false);
             };
 
             /**
              * Displays data for any currently active datasets.
+             * @param {Boolean} Whether this function was called during visualization initialization.
              * @method displayActiveDataset
              */
-            $scope.displayActiveDataset = function() {
+            $scope.displayActiveDataset = function(initializing) {
                 if(!datasetService.hasDataset()) {
                     return;
                 }
 
                 $scope.databaseName = datasetService.getDatabase();
                 $scope.tables = datasetService.getTables();
-                $scope.selectedTable = datasetService.getFirstTableWithMappings(["tags"]) || $scope.tables[0];
+                $scope.selectedTable = $scope.bindTable || datasetService.getFirstTableWithMappings(["tags"]) || $scope.tables[0];
                 $scope.filterKeys = filterService.createFilterKeys("tagcloud", $scope.tables);
-                $scope.updateFieldsAndQueryForTags();
+
+                if(initializing) {
+                    $scope.updateFieldsAndQueryForTags();
+                } else {
+                    $scope.$apply(function() {
+                        $scope.updateFieldsAndQueryForTags();
+                    });
+                }
             };
 
             $scope.updateFieldsAndQueryForTags = function() {
-                $scope.tagField = $scope.tagField || datasetService.getMapping($scope.selectedTable.name, "tags") || "";
+                $scope.fields = datasetService.getDatabaseFields($scope.selectedTable.name);
+                $scope.fields.sort();
+                $scope.tagField = $scope.bindTagField || datasetService.getMapping($scope.selectedTable.name, "tags") || "";
                 if($scope.showFilter) {
                     $scope.clearTagFilters();
                 } else {
@@ -321,7 +333,7 @@ angular.module('neonDemo.directives')
             // Wait for neon to be ready, the create our messenger and intialize the view and data.
             neon.ready(function() {
                 $scope.initialize();
-                $scope.displayActiveDataset();
+                $scope.displayActiveDataset(true);
             });
         }
     };

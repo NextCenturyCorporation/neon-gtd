@@ -20,10 +20,6 @@ body{
     max-width: none;
     width: auto;
 }
-.chart-options .popover {
-    right: 9px;
-    top: 48px;
-}
 
 /* Data Selector */
 .databaseConfig .modal-open{
@@ -130,43 +126,8 @@ body{
 .tray .panel-body{
     padding: 10px 20px;
 }
-.filter-tray .filter{
-    background-color: #f1f1f1;
-}
-.filter-tray .filter-new {
-    background: none;
-}
 .tray .panel-body{
     padding-bottom: 0;
-}
-
-@media (max-width: 767px) {
-    .filter-tray .form-inline .form-control {
-        display: inline-block;
-        width: 100%;
-        vertical-align: middle;
-    }
-    /*.filter-tray .form-inline .btn-primary {
-        display: inline-block;
-        width: 100%;
-        vertical-align: middle;
-        padding-left: 0;
-        padding-right: 0;
-    }*/
-    .filter-tray .form-inline .form-group {
-        display: inline-block;
-        margin-bottom: 0;
-        vertical-align: middle;
-        width: 22%;
-        margin: 0;
-        padding-right: 5px;
-    }
-    .filter-tray .form-inline .form-group.pull-right {
-        display: inline-block;
-        margin-bottom: 0;
-        vertical-align: middle;
-        width: auto;
-    }
 }
 
 /* Data tray */
@@ -213,12 +174,6 @@ body{
 }
 .timeline-selector-chart .axis path {
     stroke: #FFFFFF;
-}
-.timeline-selector .filter-reset {
-    margin-top: 0px;
-}
-.timeline-selector .filter-reset .btn {
-    background-color: #e1e1e1;
 }
 @media (max-width: 891px) {
     .timeline-selector h3 {

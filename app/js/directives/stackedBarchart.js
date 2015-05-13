@@ -23,7 +23,8 @@
  * neon system events (e.g., data tables changed).  On these events, it requeries the active
  * connection for data and updates applies the change to its scope.  The contained
  * barchart will update as a result.
- * @class neonDemo.directives.stackedbarchart
+ * @namespace neonDemo.directives
+ * @class stackedbarchart
  * @constructor
  */
 angular.module('neonDemo.directives')
@@ -91,7 +92,7 @@ angular.module('neonDemo.directives')
              * @private
              */
             var onFiltersChanged = function(message) {
-                if(message.addedFilter.databaseName === $scope.databaseName && message.addedFilter.tableName === $scope.selectedTable.name) {
+                if(message.addedFilter && message.addedFilter.databaseName === $scope.databaseName && message.addedFilter.tableName === $scope.selectedTable.name) {
                     $scope.queryForData();
                 }
             };
@@ -132,6 +133,7 @@ angular.module('neonDemo.directives')
                 $scope.attrX = datasetService.getMapping($scope.selectedTable.name, "x_axis") || "";
                 $scope.attrY = datasetService.getMapping($scope.selectedTable.name, "y_axis") || "";
                 $scope.fields = datasetService.getDatabaseFields($scope.selectedTable.name);
+                $scope.fields.sort();
                 $scope.queryForData(true);
             };
 
@@ -175,7 +177,9 @@ angular.module('neonDemo.directives')
                         next(queryResults);
                     }, function(response) {
                         $scope.drawBlankChart();
-                        $scope.errorMessage = errorNotificationService.showErrorMessage(el, response.responseJSON.error, response.responseJSON.stackTrace);
+                        if(response.responseJSON) {
+                            $scope.errorMessage = errorNotificationService.showErrorMessage(el, response.responseJSON.error, response.responseJSON.stackTrace);
+                        }
                     });
                 }
             };

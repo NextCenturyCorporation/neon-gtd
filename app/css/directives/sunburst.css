@@ -7,7 +7,7 @@
   width: auto;
 }
 
-.sunburst-ring-controls  {
+.sunburst-controls  {
   width:100%;
   margin-bottom: 10px;
 }
@@ -41,10 +41,6 @@
 .sunburst-transient-breadcrumb:hover .breadcrumb-remove,
 .sunburst-transient-breadcrumb:focus .breadcrumb-remove {
   display: inline;
-}
-
-.sunburst-aggregate-controls {
-  margin: 0px 0px 10px 0px;
 }
 
 .sunburst-chart path {

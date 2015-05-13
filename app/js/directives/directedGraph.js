@@ -39,6 +39,7 @@ angular.module('neonDemo.directives')
             $scope.fields = [];
             $scope.selectedNodeField = "";
             $scope.selectedLinkField = "";
+            $scope.nodes = [];
             $scope.selectedNode = "";
             $scope.numberOfNodesInGraph = 0;
             $scope.nodeLimit = 500;
@@ -100,7 +101,7 @@ angular.module('neonDemo.directives')
              * @private
              */
             var onFiltersChanged = function(message) {
-                if(message.addedFilter.databaseName === $scope.databaseName && message.addedFilter.tableName === $scope.selectedTable.name) {
+                if(message.addedFilter && message.addedFilter.databaseName === $scope.databaseName && message.addedFilter.tableName === $scope.selectedTable.name) {
                     if(message.type.toUpperCase() === "ADD" || message.type.toUpperCase() === "REPLACE") {
                         if(message.addedFilter.whereClause) {
                             $scope.addFilterWhereClauseToFilterList(message.addedFilter.whereClause);
@@ -167,6 +168,7 @@ angular.module('neonDemo.directives')
 
             $scope.updateFieldsAndQueryForData = function(initializing) {
                 $scope.fields = datasetService.getDatabaseFields($scope.selectedTable.name);
+                $scope.fields.sort();
                 $scope.selectedNodeField = datasetService.getMapping($scope.selectedTable.name, "graph_nodes") || "";
                 $scope.selectedLinkField = datasetService.getMapping($scope.selectedTable.name, "graph_links") || "";
                 $scope.queryForData(initializing);
@@ -254,6 +256,51 @@ angular.module('neonDemo.directives')
             };
 
             /**
+             * Query for the list of nodes using the selected field and draw the graph containing those nodes.
+             */
+            $scope.queryForNodeData = function() {
+                var query = new neon.query.Query()
+                    .selectFrom($scope.databaseName, $scope.selectedTable.name)
+                    .groupBy($scope.selectedNodeField)
+                    .withFields([$scope.selectedNodeField]);
+                query.ignoreFilters([$scope.filterKeys[$scope.selectedTable.name]]);
+                query.aggregate(neon.query.COUNT, '*', 'count');
+
+                var connection = connectionService.getActiveConnection();
+                if(connection) {
+                    connection.executeQuery(query, function(data) {
+                        $scope.nodes = [];
+                        for(var i = 0; i < data.data.length; i++) {
+                            var node = data.data[i][$scope.selectedNodeField];
+                            if($scope.nodes.indexOf(node) < 0) {
+                                $scope.nodes.push(node);
+                            }
+                        }
+
+                        // Sort the nodes so they are displayed in order in the options dropdown.
+                        $scope.nodes.sort(function(a, b) {
+                            if(typeof a === "string" && typeof b === "string") {
+                                return a.toLowerCase().localeCompare(b.toLowerCase());
+                            }
+                            if(a < b) {
+                                return -1;
+                            }
+                            if(b < a) {
+                                return 1;
+                            }
+                            return 0;
+                        });
+
+                        $scope.graph.setClickableNodes($scope.nodes);
+                        $scope.createAndShowGraph(data);
+                    }, function(response) {
+                        $scope.updateGraph([], []);
+                        $scope.errorMessage = errorNotificationService.showErrorMessage(element, response.responseJSON.error, response.responseJSON.stackTrace);
+                    });
+                }
+            };
+
+            /**
              * Query for the list of nodes that link to the filtered nodes and draw the graph containing the network.
              */
             $scope.queryForFilteredNodeNetwork = function() {
@@ -276,9 +323,19 @@ angular.module('neonDemo.directives')
 
                 var connection = connectionService.getActiveConnection();
                 if(connection) {
-                    connection.executeQuery(query, $scope.createAndShowGraph, function(response) {
+                    connection.executeQuery(query, function(response) {
+                        if(response.data.length) {
+                            $scope.createAndShowGraph(response);
+                        } else if($scope.filteredNodes.length) {
+                            // If the filters cause the query to return no data, remove the most recent filter and query again.  This can happen if the user
+                            // creates a filter in the Filter Builder (which the graph automatically adds as a filter) on a node that doesn't exist.
+                            $scope.removeFilter($scope.filteredNodes[$scope.filteredNodes.length - 1]);
+                        }
+                    }, function(response) {
                         $scope.updateGraph([], []);
-                        $scope.errorMessage = errorNotificationService.showErrorMessage(element, response.responseJSON.error, response.responseJSON.stackTrace);
+                        if(response.responseJSON) {
+                            $scope.errorMessage = errorNotificationService.showErrorMessage(element, response.responseJSON.error, response.responseJSON.stackTrace);
+                        }
                     });
                 }
             };
@@ -304,6 +361,8 @@ angular.module('neonDemo.directives')
                         var colorGroup = 2;
                         if($scope.filteredNodes.indexOf(value) >= 0) {
                             colorGroup = 1;
+                        } else if($scope.nodes.indexOf(value) >= 0) {
+                            colorGroup = 3;
                         }
 
                         nodes.push({

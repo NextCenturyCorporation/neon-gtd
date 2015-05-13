@@ -23,7 +23,8 @@
  * neon system events (e.g., data tables changed).  On these events, it requeries the active
  * connection for data and updates applies the change to its scope.  The contained
  * barchart will update as a result.
- * @class neonDemo.directives.barchart
+ * @namespace neonDemo.directives
+ * @class barchart
  * @constructor
  */
 angular.module('neonDemo.directives')
@@ -31,6 +32,12 @@ angular.module('neonDemo.directives')
     return {
         templateUrl: 'partials/directives/barchart.html',
         restrict: 'EA',
+        scope: {
+            bindXAxisField: '=',
+            bindYAxisField: '=',
+            bindAggregationField: '=',
+            bindTable: '='
+        },
         link: function($scope, $element) {
             $scope.uniqueChartOptions = 'chart-options-' + uuid();
             var chartOptions = $($element).find('.chart-options');
@@ -43,7 +50,7 @@ angular.module('neonDemo.directives')
             $scope.selectedTable = {
                 name: ""
             };
-            $scope.barType = $scope.barType || 'count';
+            $scope.barType = $scope.bindAggregationField || 'count';
             $scope.fields = [];
             $scope.updatingChart = false;
             $scope.chart = undefined;
@@ -55,7 +62,11 @@ angular.module('neonDemo.directives')
 
             var updateChartSize = function() {
                 if($scope.chart) {
-                    $element.find('.barchart').height($element.height() - $element.find('.legend').outerHeight(true));
+                    var headerHeight = 0;
+                    $element.find(".header-container").each(function() {
+                        headerHeight += $(this).outerHeight(true);
+                    });
+                    $element.find('.barchart').height($element.height() - headerHeight);
                     $scope.chart.draw();
                 }
             };
@@ -107,7 +118,7 @@ angular.module('neonDemo.directives')
              */
             var onFiltersChanged = function(message) {
                 XDATA.activityLogger.logSystemActivity('BarChart - received neon filter changed event');
-                if(message.addedFilter.databaseName === $scope.databaseName && message.addedFilter.tableName === $scope.selectedTable.name) {
+                if(message.addedFilter && message.addedFilter.databaseName === $scope.databaseName && message.addedFilter.tableName === $scope.selectedTable.name) {
                     $scope.queryForData(false);
                 }
             };
@@ -138,7 +149,7 @@ angular.module('neonDemo.directives')
 
                 $scope.databaseName = datasetService.getDatabase();
                 $scope.tables = datasetService.getTables();
-                $scope.selectedTable = datasetService.getFirstTableWithMappings(["bar_x_axis", "y_axis"]) || $scope.tables[0];
+                $scope.selectedTable = $scope.bindTable || datasetService.getFirstTableWithMappings(["bar_x_axis", "y_axis"]) || $scope.tables[0];
                 $scope.filterKeys = filterService.createFilterKeys("barchart", $scope.tables);
 
                 if(initializing) {
@@ -151,9 +162,10 @@ angular.module('neonDemo.directives')
             };
 
             $scope.updateFieldsAndQueryForData = function() {
-                $scope.attrX = datasetService.getMapping($scope.selectedTable.name, "bar_x_axis") || "";
-                $scope.attrY = datasetService.getMapping($scope.selectedTable.name, "y_axis") || "";
+                $scope.attrX = $scope.bindXAxisField || datasetService.getMapping($scope.selectedTable.name, "bar_x_axis") || "";
+                $scope.attrY = $scope.bindYAxisField || datasetService.getMapping($scope.selectedTable.name, "y_axis") || "";
                 $scope.fields = datasetService.getDatabaseFields($scope.selectedTable.name);
+                $scope.fields.sort();
                 if($scope.filterSet) {
                     $scope.clearFilterSet();
                 }
@@ -208,8 +220,10 @@ angular.module('neonDemo.directives')
                     }, function(response) {
                         XDATA.activityLogger.logSystemActivity('BarChart - query failed');
                         drawBlankChart();
-                        $scope.errorMessage = errorNotificationService.showErrorMessage($element, response.responseJSON.error, response.responseJSON.stackTrace);
                         $scope.updatingChart = false;
+                        if(response.responseJSON) {
+                            $scope.errorMessage = errorNotificationService.showErrorMessage($element, response.responseJSON.error, response.responseJSON.stackTrace);
+                        }
                     });
                 }
             };
