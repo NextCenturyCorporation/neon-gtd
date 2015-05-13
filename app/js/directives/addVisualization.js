@@ -118,7 +118,7 @@ angular.module('neonDemo.directives')
                 });
             };
 
-            $scope.onClose = function(name) {
+            $scope.onClose = function() {
                 $scope.dialogDisplayed = false;
 
                 XDATA.userALE.log({

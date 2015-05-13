@@ -22,7 +22,7 @@ angular.module('neonDemo.directives')
         restrict: 'EA',
         scope: {
         },
-        link: function($scope, element) {
+        link: function($scope) {
             $scope.SERVER = "SERVER";
             $scope.FIELD = "FIELD";
             $scope.VALUE = "VALUE";
@@ -45,7 +45,7 @@ angular.module('neonDemo.directives')
                 });
             };
 
-            $scope.onClose = function(name) {
+            $scope.onClose = function() {
                 XDATA.userALE.log({
                     activity: "hide",
                     action: "click",
