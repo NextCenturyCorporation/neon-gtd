@@ -47,7 +47,7 @@
 }
 
 .heat-map .header-container.filter-container {
-    top: 55px;
+    top: 50px;
     left: 60px;
     z-index: 1000;
 }
@@ -83,7 +83,7 @@
 }
 
 .heat-map .olControlZoom {
-    top: 50px;
+    top: 55px;
     left: 20px;
 }
 

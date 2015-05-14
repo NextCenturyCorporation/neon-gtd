@@ -294,6 +294,7 @@ fieldset[disabled] .btn-primary.active {
     padding-left: 11px;
     border-radius: 4px;
     font-size: 12px;
+    margin-left: 5px;
     margin-bottom: 5px;
 }
 
