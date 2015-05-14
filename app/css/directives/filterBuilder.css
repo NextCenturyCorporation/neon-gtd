@@ -68,24 +68,31 @@
 
 .filter-directive .form-group {
     float: left;
-    width: 25%;
+    width: 22%;
     margin: 2px 0px;
     padding: 0px 2px;
 }
 
-.filter-directive .form-group-small {
-    width: 15%;
-}
-
-.filter-directive .form-group-button {
-    width: 10%;
-    min-width: 60px;
+.filter-directive .form-group label {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
 }
 
 .filter-directive .form-group button,
 .filter-directive .form-group input,
 .filter-directive .form-group select {
     width: 100%;
+}
+
+.filter-directive .form-group-button {
+    width: 12%;
+    min-width: 40px;
+}
+
+.filter-directive .form-group-button .btn {
+    padding: 6px 12px;
+    margin-top: 27px;
 }
 
 @media (min-width: 500px) and (max-width: 767px) {

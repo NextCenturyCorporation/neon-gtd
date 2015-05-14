@@ -37,7 +37,9 @@
     "visualizations": [{
         "name": "Filter Builder",
         "sizeX": 4,
+        "minSizeX": 3,
         "sizeY": 2,
+        "minSizeY": 1,
         "type": "filter-builder",
         "icon": "img/visualizations/CreateFilter64.png"
     }, {

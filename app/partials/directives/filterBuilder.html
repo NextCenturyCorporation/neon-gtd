@@ -38,18 +38,22 @@
 
     <div class="filter form-inline clearfix" ng-repeat="filterRow in filterTable.getFilterRows()">
       <div class="form-group">
+        <label ng-show="!(navbarItem)">Table</label>
         <select class="form-control" ng-model="filterRow.tableName" ng-options="tableName for tableName in tableNames" ng-disabled="(tableNames.length < 2)" ng-change="updateFieldsForFilterRow(filterRow)">
         </select>
       </div>
       <div class="form-group">
+        <label ng-show="!(navbarItem)">Field</label>
         <select class="form-control" ng-model="filterRow.columnValue" ng-disabled="!(filterRow.columnOptions.length > 0) || !(navbarItem)" ng-options="column for column in filterRow.columnOptions" ng-change="dirtyFilterRow(filterRow)">
         </select>
       </div>
-      <div class="form-group form-group-small">
+      <div class="form-group">
+        <label ng-show="!(navbarItem)">Operator</label>
         <select class="form-control"  ng-model="filterRow.operatorValue" ng-disabled="!(filterRow.columnOptions.length > 0) || !(navbarItem)" ng-options="operator for operator in filterTable.operatorOptions" ng-change="dirtyFilterRow(filterRow)">
         </select>
       </div>
       <div class="form-group">
+        <label>Value</label>
         <input type="text" class="form-control" size="42" placeholder="Value" ng-model="filterRow.value" ng-change="dirtyFilterRow(filterRow)" ng-disabled="!(navbarItem)">
       </div>
       <div class="form-group" ng-show="(navbarItem)">
@@ -71,18 +75,22 @@
 
     <div class="filter filter-new form-inline row">
       <div class="form-group">
+        <label ng-show="!(navbarItem)">Table</label>
         <select id="filter-table-selection" class="form-control" ng-model="selectedTableName" ng-options="tableName for tableName in tableNames" ng-disabled="(tableNames.length < 2)" ng-change="updateFields()">
         </select>
       </div>
       <div class="form-group">
+        <label ng-show="!(navbarItem)">Field</label>
         <select id="filter-field-selection" class="form-control" ng-model="selectedField" ng-disabled="!(fields.length > 0)" ng-options="field for field in fields">
         </select>
       </div>
-      <div class="form-group form-group-small">
+      <div class="form-group">
+        <label ng-show="!(navbarItem)">Operator</label>
         <select id="filter-operator-selection" class="form-control"  ng-model="selectedOperator" ng-disabled="!(fields.length > 0)" ng-options="operator for operator in filterTable.operatorOptions">
         </select>
       </div>
       <div class="form-group">
+        <label ng-show="!(navbarItem)">Value</label>
         <input type="text" class="form-control" id="filter-value" size="42" placeholder="Value"  ng-model="selectedValue" 
           ng-disabled="!(fields.length > 0)" ng-required="true">
       </div>
