@@ -80,14 +80,13 @@ function(connectionService, datasetService, errorNotificationService) {
                         source: "user",
                         tags: ["remove", "sunburst"]
                     });
+                    $element.off("resize", updateChartSize);
                     $scope.messenger.removeEvents();
                 });
 
                 // This resizes the chart when the div changes.  This rely's on jquery's resize plugin to fire
                 // on the associated element and not just the window.
-                $element.resize(function() {
-                    $scope.updateChartSize();
-                });
+                $element.resize(updateChartSize);
 
                 $scope.$watch('options.valueField', function(newValue, oldValue) {
                     if(newValue !== oldValue) {
@@ -143,7 +142,7 @@ function(connectionService, datasetService, errorNotificationService) {
                 $scope.displayActiveDataset(false);
             };
 
-            $scope.updateChartSize = function() {
+            var updateChartSize = function() {
                 if($scope.chart) {
                     var headerHeight = 0;
                     $element.find(".header-container").each(function() {

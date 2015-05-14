@@ -94,14 +94,13 @@ function(connectionService, datasetService, errorNotificationService, $timeout) 
                         source: "user",
                         tags: ["remove", "linechart"]
                     });
+                    $element.off("resize", updateChartSize);
                     $scope.messenger.removeEvents();
                 });
 
                 // This resizes the chart when the div changes.  This rely's on jquery's resize plugin to fire
                 // on the associated element and not just the window.
-                $element.resize(function() {
-                    updateChartSize();
-                });
+                $element.resize(updateChartSize);
 
                 $scope.$watch('options.attrX', function(newValue) {
                     onFieldChange('attrX', newValue);

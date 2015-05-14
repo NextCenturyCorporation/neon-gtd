@@ -46,13 +46,23 @@ function(external, popups, connectionService, datasetService, errorNotificationS
             // This name should be one that is highly unlikely to be a column name in a real database.
             $scope.EXTERNAL_APP_FIELD_NAME = "neonExternalApps";
 
+            var updateSize = function() {
+                var headerHeight = 0;
+                $element.find(".header-container").each(function() {
+                    headerHeight += $(this).outerHeight(true);
+                });
+                var tableBufferY = $tableDiv.outerHeight(true) - $tableDiv.height();
+                $tableDiv.height($element.height() - headerHeight - tableBufferY);
+                if($scope.table) {
+                    $scope.table.refreshLayout();
+                }
+            };
+
             // If this widget was launched as a navbar collapsable then showData will be bound to the collapse toggle.
             // Otherwise show the data automatically on launching the widget.
             if(typeof($scope.showData) === "undefined") {
                 $scope.showData = true;
-                $element.resize(function() {
-                    updateSize();
-                });
+                $element.resize(updateSize);
             }
 
             $scope.ASCENDING = neon.query.ASCENDING;
@@ -80,20 +90,7 @@ function(external, popups, connectionService, datasetService, errorNotificationS
             $scope.data = [];
             $scope.tableId = 'query-results-' + uuid();
             var $tableDiv = $element.find('.query-results-grid');
-
             $tableDiv.attr("id", $scope.tableId);
-
-            var updateSize = function() {
-                var headerHeight = 0;
-                $element.find(".header-container").each(function() {
-                    headerHeight += $(this).outerHeight(true);
-                });
-                var tableBufferY = $tableDiv.outerHeight(true) - $tableDiv.height();
-                $tableDiv.height($element.height() - headerHeight - tableBufferY);
-                if($scope.table) {
-                    $scope.table.refreshLayout();
-                }
-            };
 
             /**
              * Initializes the name of the directive's scope variables
@@ -168,6 +165,7 @@ function(external, popups, connectionService, datasetService, errorNotificationS
                         tags: ["remove", "datagrid"]
                     });
                     popups.links.deleteData($scope.tableId);
+                    $element.off("resize", updateSize);
                     $scope.messenger.removeEvents();
                 });
             };

@@ -83,12 +83,19 @@ function(connectionService, datasetService, errorNotificationService, filterServ
                 return $element.width();
             };
 
-            $scope.updateSize = function() {
+            var updateGraphSize = function() {
                 // The D3 graph will resize itself but we need to trigger that resize event by changing the height and widget of the SVG.
                 // Setting the dimensions on the SVG performs better than just setting the dimensions on the directed-graph-container.
                 $element.find(".directed-graph .directed-graph-container svg").attr("height", $scope.calculateGraphHeight());
                 $element.find(".directed-graph .directed-graph-container svg").attr("width", $scope.calculateGraphWidth());
                 return $timeout($scope.redraw, $scope.TIMEOUT_MS);
+            };
+
+            var updateSize = function() {
+                if($scope.resizePromise) {
+                    $timeout.cancel($scope.resizePromise);
+                }
+                $scope.resizePromise = updateGraphSize();
             };
 
             $scope.redraw = function() {
@@ -117,19 +124,14 @@ function(connectionService, datasetService, errorNotificationService, filterServ
                         source: "user",
                         tags: ["remove", "directed-graph"]
                     });
-
+                    $element.off("resize", updateSize);
                     $scope.messenger.removeEvents();
                     if($scope.filteredNodes.length) {
                         filterService.removeFilters($scope.messenger, $scope.filterKeys);
                     }
                 });
 
-                $element.resize(function() {
-                    if($scope.resizePromise) {
-                        $timeout.cancel($scope.resizePromise);
-                    }
-                    $scope.resizePromise = $scope.updateSize();
-                });
+                $element.resize(updateSize);
             };
 
             /**

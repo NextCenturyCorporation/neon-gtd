@@ -110,15 +110,14 @@ function(external, popups, connectionService, datasetService, errorNotificationS
                         tags: ["remove", "count-by"]
                     });
                     popups.links.deleteData($scope.tableId);
+                    $element.off("resize", updateSize);
                     $scope.messenger.removeEvents();
                     if($scope.filterSet) {
                         filterService.removeFilters($scope.messenger, $scope.filterKeys);
                     }
                 });
 
-                $element.resize(function() {
-                    updateSize();
-                });
+                $element.resize(updateSize);
             };
 
             function createOptions(data) {

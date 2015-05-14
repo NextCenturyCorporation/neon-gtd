@@ -121,6 +121,7 @@ function(connectionService, datasetService, errorNotificationService, filterServ
                         source: "user",
                         tags: ["remove", "map"]
                     });
+                    $element.off("resize", updateSize);
                     $scope.messenger.removeEvents();
                     if($scope.showFilter) {
                         filterService.removeFilters($scope.messenger, $scope.filterKeys);
@@ -258,12 +259,14 @@ function(connectionService, datasetService, errorNotificationService, filterServ
                     $scope.resizePromise = null;
                 };
 
-                $element.resize(function() {
+                var updateSize = function() {
                     if($scope.resizePromise) {
                         $timeout.cancel($scope.resizePromise);
                     }
                     $scope.resizePromise = $timeout(redrawOnResize, $scope.resizeRedrawDelay);
-                });
+                };
+
+                $element.resize(updateSize);
 
                 // Add a zoomRect handler to the map.
                 $scope.map.onZoomRect = function(bounds) {
@@ -793,7 +796,7 @@ function(connectionService, datasetService, errorNotificationService, filterServ
                     elementType: "button",
                     elementGroup: "map_group",
                     source: "user",
-                    tags: ["options", "map", "limit"]
+                    tags: ["options", "map", "limit", $scope.options.limit]
                 });
                 $scope.previousLimit = $scope.options.limit;
                 $scope.queryForMapData();

@@ -93,6 +93,7 @@ function(connectionService, datasetService, errorNotificationService, filterServ
                         source: "user",
                         tags: ["remove", "barchart"]
                     });
+                    $element.off("resize", updateChartSize);
                     $scope.messenger.removeEvents();
                     // Remove our filter if we had an active one.
                     if($scope.filterSet) {
@@ -148,9 +149,7 @@ function(connectionService, datasetService, errorNotificationService, filterServ
 
                 // This resizes the chart when the div changes.  This rely's on jquery's resize plugin to fire
                 // on the associated element and not just the window.
-                $element.resize(function() {
-                    updateChartSize();
-                });
+                $element.resize(updateChartSize);
             };
 
             /**
