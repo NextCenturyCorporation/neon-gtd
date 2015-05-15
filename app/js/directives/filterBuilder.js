@@ -29,12 +29,13 @@
  * @constructor
  */
 angular.module('neonDemo.directives')
-.directive('filterBuilder', ['DatasetService', 'FilterCountService', function(datasetService, filterCountService) {
+.directive('filterBuilder', ['DatasetService', function(datasetService) {
     return {
         templateUrl: 'partials/directives/filterBuilder.html',
         restrict: 'EA',
         scope: {
-            navbarItem: '=?'
+            navbarItem: '=?',
+            filterCount: '=?'
         },
         controller: 'neonDemoController',
         link: function($scope, $element) {
@@ -94,7 +95,7 @@ angular.module('neonDemo.directives')
                             count += tableState.length;
                         }
                     }
-                    filterCountService.setCount(count);
+                    $scope.filterCount = count;
                 }, true);
 
                 $scope.$watch('selectedField', function(newVal) {
@@ -333,14 +334,16 @@ angular.module('neonDemo.directives')
                 var oldData = tableName ?  $scope.filterTable.getFilterState(tableName) : {};
                 var filters = $scope.filterTable.buildFiltersFromData($scope.databaseName, $scope.andClauses);
 
-                $scope.publishReplaceFilterEvents(filters, $scope.cleanFilterRowsForTable, function(errorTable) {
-                    $scope.$apply(function() {
-                        // Error handler:  If the new query failed, reset the previous value of the filter.
-                        if(tableName && errorTable === tableName) {
-                            $scope.filterTable.setFilterState(tableName, oldData);
-                        }
+                if(filters.length) {
+                    $scope.publishReplaceFilterEvents(filters, $scope.cleanFilterRowsForTable, function(errorTable) {
+                        $scope.$apply(function() {
+                            // Error handler:  If the new query failed, reset the previous value of the filter.
+                            if(tableName && errorTable === tableName) {
+                                $scope.filterTable.setFilterState(tableName, oldData);
+                            }
+                        });
                     });
-                });
+                }
             };
 
             /**

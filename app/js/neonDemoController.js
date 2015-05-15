@@ -22,8 +22,8 @@
  * @constructor
  */
 angular.module('neonDemo.controllers')
-.controller('neonDemoController', ['$scope', '$timeout', 'config', 'FilterCountService',
-function($scope, $timeout, config, filterCountService) {
+.controller('neonDemoController', ['$scope', '$timeout', 'config',
+function($scope, $timeout, config) {
     $scope.hideNavbarItems = config.hideNavbarItems;
     $scope.seeData = false;
     $scope.createFilters = false;
@@ -208,13 +208,6 @@ function($scope, $timeout, config, filterCountService) {
             }, 5, false);
         }
     };
-
-    // Watch for changes in the filter counts and update the filter badge binding.
-    $scope.$watch(function() {
-        return filterCountService.getCount();
-    }, function(count) {
-        $scope.filterCount = count;
-    });
 
     // Display the dashboard once the configuration file has been loaded and the controller has finished its initialization.
     $scope.displayDashboard = true;
