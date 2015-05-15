@@ -354,7 +354,7 @@ angular.module('neonDemo.directives')
                             source: "user",
                             tags: ["filter", "barchart"]
                         });
-                        filterService.replaceFilters($scope.messenger, relations, $scope.filterKeys, $scope.createFilter);
+                        filterService.replaceFilters($scope.messenger, relations, $scope.filterKeys, $scope.createFilterClauseForXAxis);
                     } else {
                         XDATA.userALE.log({
                             activity: "select",
@@ -366,22 +366,20 @@ angular.module('neonDemo.directives')
                             source: "user",
                             tags: ["filter", "barchart"]
                         });
-                        filterService.addFilters($scope.messenger, relations, $scope.filterKeys, $scope.createFilter);
+                        filterService.addFilters($scope.messenger, relations, $scope.filterKeys, $scope.createFilterClauseForXAxis);
                     }
                 }
             };
 
             /**
-             * Creates and returns a filter using the given table and fields.
+             * Creates and returns a filter using the given table and x-axis field using the value set by this visualization.
              * @param {String} The name of the table on which to filter
-             * @param {Array} An array containing the name of the x-axis field as its first element
-             * @method createFilter
+             * @param {String} The name of the x-axis field on which to filter
+             * @method createFilterClauseForXAxis
              * @return {Object} A neon.query.Filter object
              */
-            $scope.createFilter = function(tableName, fieldNames) {
-                var xAxisName = fieldNames[0];
-                var filterClause = neon.query.where(xAxisName, '=', $scope.filterValue);
-                return new neon.query.Filter().selectFrom($scope.databaseName, tableName).where(filterClause);
+            $scope.createFilterClauseForXAxis = function(tableName, xAxisFieldName) {
+                return neon.query.where(xAxisFieldName, '=', $scope.filterValue);
             };
 
             var handleFilterSet = function(key, val) {

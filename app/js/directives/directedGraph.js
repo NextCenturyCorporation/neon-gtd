@@ -198,28 +198,26 @@ angular.module('neonDemo.directives')
                 if($scope.messenger) {
                     var relations = datasetService.getRelations($scope.selectedTable.name, [$scope.selectedNodeField]);
                     if($scope.filteredNodes.length === 1) {
-                        filterService.addFilters($scope.messenger, relations, $scope.filterKeys, $scope.createFilter, $scope.queryForData);
+                        filterService.addFilters($scope.messenger, relations, $scope.filterKeys, $scope.createFilterClauseForNode, $scope.queryForData);
                     } else if($scope.filteredNodes.length > 1) {
-                        filterService.replaceFilters($scope.messenger, relations, $scope.filterKeys, $scope.createFilter, $scope.queryForData);
+                        filterService.replaceFilters($scope.messenger, relations, $scope.filterKeys, $scope.createFilterClauseForNode, $scope.queryForData);
                     }
                 }
             };
 
             /**
-             * Creates and returns a filter using the given table and fields.
+             * Creates and returns a filter using the given table and node field using the nodes set by this visualization.
              * @param {String} The name of the table on which to filter
-             * @param {Array} An array containing the name of the selected field as its first element
-             * @method createFilter
+             * @param {String} The name of the node field on which to filter
+             * @method createFilterClauseForNode
              * @return {Object} A neon.query.Filter object
              */
-            $scope.createFilter = function(tableName, fieldNames) {
-                var fieldName = fieldNames[0];
-                var fullWhereClause = neon.query.where(fieldName, '=', $scope.filteredNodes[0]);
+            $scope.createFilterClauseForNode = function(tableName, nodeFieldName) {
+                var filterClause = neon.query.where(nodeFieldName, '=', $scope.filteredNodes[0]);
                 for(var i = 1; i < $scope.filteredNodes.length; ++i) {
-                    var whereClause = neon.query.where(fieldName, '=', $scope.filteredNodes[i]);
-                    fullWhereClause = neon.query.or(fullWhereClause, whereClause);
+                    filterClause = neon.query.or(filterClause, neon.query.where(nodeFieldName, '=', $scope.filteredNodes[i]));
                 }
-                return new neon.query.Filter().selectFrom($scope.databaseName, tableName).where(fullWhereClause);
+                return filterClause;
             };
 
             $scope.removeFilter = function(value) {

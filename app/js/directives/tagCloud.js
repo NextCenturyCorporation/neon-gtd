@@ -328,24 +328,23 @@ angular.module('neonDemo.directives')
             };
 
             /**
-             * Creates a filter select object that has a where clause that "or"s all of the tags together
+             * Creates and returns a filter on the given table and tag field using the tags set by this visualization.
              * @param {String} The name of the table on which to filter
-             * @param {Array} An array containing the name of the tag field as its first element
-             * @method createFilterForTags
+             * @param {String} The name of the tag field on which to filter
+             * @method createFilterClauseForTags
              * @returns {Object} A neon.query.Filter object
              */
-            $scope.createFilterForTags = function(tableName, fieldNames) {
-                var tagFieldName = fieldNames[0];
-                var filterClause;
+            $scope.createFilterClauseForTags = function(tableName, tagFieldName) {
                 var filterClauses = $scope.filterTags.map(function(tagName) {
                     return neon.query.where(tagFieldName, "=", tagName);
                 });
-                if($scope.andTags) {
-                    filterClause = filterClauses.length > 1 ? neon.query.and.apply(neon.query, filterClauses) : filterClauses[0];
-                } else {
-                    filterClause = filterClauses.length > 1 ? neon.query.or.apply(neon.query, filterClauses) : filterClauses[0];
+                if(filterClauses.length === 1) {
+                    return filterClauses[0];
                 }
-                return new neon.query.Filter().selectFrom($scope.databaseName, tableName).where(filterClause);
+                if($scope.andTags) {
+                    return neon.query.and.apply(neon.query, filterClauses);
+                }
+                return neon.query.or.apply(neon.query, filterClauses);
             };
 
             /**
@@ -354,7 +353,7 @@ angular.module('neonDemo.directives')
              */
             $scope.applyFilter = function() {
                 var relations = datasetService.getRelations($scope.selectedTable.name, [$scope.tagField]);
-                filterService.replaceFilters($scope.messenger, relations, $scope.filterKeys, $scope.createFilterForTags, function() {
+                filterService.replaceFilters($scope.messenger, relations, $scope.filterKeys, $scope.createFilterClauseForTags, function() {
                     $scope.$apply(function() {
                         $scope.queryForTags();
                         // Show the Clear Filter button.
