@@ -311,9 +311,6 @@ angular.module('neonDemo.directives')
              * @method updateFilterRow
              */
             $scope.updateFilterRow = function(tableName, index) {
-                var oldData = $scope.filterTable.getFilterState(tableName);
-                var filters = $scope.filterTable.buildFiltersFromData($scope.databaseName, $scope.andClauses);
-
                 XDATA.userALE.log({
                     activity: "alter",
                     action: "click",
@@ -324,10 +321,22 @@ angular.module('neonDemo.directives')
                     tags: ["filter-builder", "filter", "update"]
                 });
 
+                $scope.updateFilters(tableName);
+            };
+
+            /**
+             * Updates all the filters.
+             * @param {String} tableName (optional)
+             * @method updateFilters
+             */
+            $scope.updateFilters = function(tableName) {
+                var oldData = tableName ?  $scope.filterTable.getFilterState(tableName) : {};
+                var filters = $scope.filterTable.buildFiltersFromData($scope.databaseName, $scope.andClauses);
+
                 $scope.publishReplaceFilterEvents(filters, $scope.cleanFilterRowsForTable, function(errorTable) {
                     $scope.$apply(function() {
-                        // Error handler:  If the new query failed, reset the previous value of the AND / OR field.
-                        if(errorTable === tableName) {
+                        // Error handler:  If the new query failed, reset the previous value of the filter.
+                        if(tableName && errorTable === tableName) {
                             $scope.filterTable.setFilterState(tableName, oldData);
                         }
                     });
@@ -457,6 +466,22 @@ angular.module('neonDemo.directives')
             };
 
             $scope.updateAndClauses = function() {
+                XDATA.userALE.log({
+                    activity: "alter",
+                    action: "click",
+                    elementId: "filter-builder-and-clauses",
+                    elementType: "button",
+                    elementGroup: "query_group",
+                    source: "user",
+                    tags: ["filter-builder", "filter", "update"]
+                });
+
+                // For the Filter Builder visualization, automatically update all the filters.
+                if(!$scope.navbarItem) {
+                    $scope.updateFilters();
+                    return;
+                }
+
                 var tableNames = $scope.filterTable.getTableNames();
                 for(var i = 0; i < tableNames.length; ++i) {
                     var tableName = tableNames[i];
