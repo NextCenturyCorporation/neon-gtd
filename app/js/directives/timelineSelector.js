@@ -32,7 +32,8 @@
  * @constructor
  */
 angular.module('neonDemo.directives')
-.directive('timelineSelector', ['ConnectionService', 'DatasetService', 'ErrorNotificationService', 'FilterService', function(connectionService, datasetService, errorNotificationService, filterService) {
+.directive('timelineSelector', ['ConnectionService', 'DatasetService', 'ErrorNotificationService', 'FilterService',
+function(connectionService, datasetService, errorNotificationService, filterService) {
     return {
         templateUrl: 'partials/directives/timelineSelector.html',
         restrict: 'EA',
@@ -40,17 +41,15 @@ angular.module('neonDemo.directives')
             bindDateField: '=',
             bindTable: '='
         },
-        link: function($scope, element) {
+        link: function($scope, $element) {
             var YEAR = "year";
             var MONTH = "month";
             var HOUR = "hour";
             var DAY = "day";
 
-            $scope.uniqueChartOptions = 'chart-options-' + uuid();
-            var chartOptions = $(element).find('.chart-options');
-            chartOptions.toggleClass($scope.uniqueChartOptions);
+            $element.addClass('timeline-selector');
 
-            element.addClass('timeline-selector');
+            $scope.element = $element;
 
             // Default our time data to an empty array.
             $scope.data = [];
@@ -64,22 +63,26 @@ angular.module('neonDemo.directives')
             $scope.endDateForDisplay = undefined;
             $scope.referenceStartDate = undefined;
             $scope.referenceEndDate = undefined;
-            $scope.primarySeries = false;
 
-            $scope.granularity = DAY;
             $scope.recordCount = 0;
             $scope.filterId = 'timelineFilter' + uuid();
-            $scope.collapsed = true;
             $scope.eventProbabilitiesDisplayed = false;
             $scope.errorMessage = undefined;
 
             $scope.databaseName = "";
             $scope.tables = [];
-            $scope.selectedTable = {
-                name: ""
-            };
             $scope.fields = [];
             $scope.filterKeys = {};
+
+            $scope.options = {
+                selectedTable: {
+                    name: ""
+                },
+                dateField: "",
+                primarySeries: false,
+                collapsed: true,
+                granularity: DAY
+            };
 
             /**
              * Update any book-keeping fields that need to change when the granularity changes.
@@ -125,7 +128,7 @@ angular.module('neonDemo.directives')
                 // Describing ranges is odd. If an event lasts 2 hours starting at 6am, then it
                 // lasts from 6am to 8am. But if an event starts on the 6th and lasts 2 days, then
                 // it lasts from the 6th to the 7th.
-                if($scope.granularity !== HOUR) {
+                if($scope.options.granularity !== HOUR) {
                     $scope.endDateForDisplay = new Date($scope.endDateForDisplay.getTime() - 1);
                 }
             };
@@ -136,19 +139,19 @@ angular.module('neonDemo.directives')
              * @param {Object} query the query to add the group by clause to
              */
             $scope.addGroupByGranularityClause = function(query) {
-                var yearGroupClause = new neon.query.GroupByFunctionClause(neon.query.YEAR, $scope.dateField, 'year');
-                var monthGroupClause = new neon.query.GroupByFunctionClause(neon.query.MONTH, $scope.dateField, 'month');
-                var dayGroupClause = new neon.query.GroupByFunctionClause(neon.query.DAY, $scope.dateField, 'day');
-                var hourGroupClause = new neon.query.GroupByFunctionClause(neon.query.HOUR, $scope.dateField, 'hour');
+                var yearGroupClause = new neon.query.GroupByFunctionClause(neon.query.YEAR, $scope.options.dateField, 'year');
+                var monthGroupClause = new neon.query.GroupByFunctionClause(neon.query.MONTH, $scope.options.dateField, 'month');
+                var dayGroupClause = new neon.query.GroupByFunctionClause(neon.query.DAY, $scope.options.dateField, 'day');
+                var hourGroupClause = new neon.query.GroupByFunctionClause(neon.query.HOUR, $scope.options.dateField, 'hour');
 
                 // Group by the appropriate granularity.
-                if($scope.granularity === YEAR) {
+                if($scope.options.granularity === YEAR) {
                     query.groupBy(yearGroupClause);
-                } else if($scope.granularity === MONTH) {
+                } else if($scope.options.granularity === MONTH) {
                     query.groupBy(yearGroupClause, monthGroupClause);
-                } else if($scope.granularity === DAY) {
+                } else if($scope.options.granularity === DAY) {
                     query.groupBy(yearGroupClause, monthGroupClause, dayGroupClause);
-                } else if($scope.granularity === HOUR) {
+                } else if($scope.options.granularity === HOUR) {
                     query.groupBy(yearGroupClause, monthGroupClause, dayGroupClause, hourGroupClause);
                 }
             };
@@ -164,7 +167,7 @@ angular.module('neonDemo.directives')
                 var updatingGranularity = false;
 
                 // Switch bucketizers when the granularity is changed.
-                $scope.$watch('granularity', function(newVal, oldVal) {
+                $scope.$watch('options.granularity', function(newVal, oldVal) {
                     if(newVal && newVal !== oldVal) {
                         XDATA.userALE.log({
                             activity: "alter",
@@ -228,7 +231,7 @@ angular.module('neonDemo.directives')
                             $scope.endExtent = newVal[1];
                         }
 
-                        var relations = datasetService.getRelations($scope.selectedTable.name, [$scope.dateField]);
+                        var relations = datasetService.getRelations($scope.options.selectedTable.name, [$scope.options.dateField]);
 
                         if(updatingGranularity) {
                             // If the brush changed because of a granularity change, then don't
@@ -301,7 +304,7 @@ angular.module('neonDemo.directives')
                     source: "system",
                     tags: ["filter-change", "timeline"]
                 });
-                if(message.addedFilter && message.addedFilter.databaseName === $scope.databaseName && message.addedFilter.tableName === $scope.selectedTable.name) {
+                if(message.addedFilter && message.addedFilter.databaseName === $scope.databaseName && message.addedFilter.tableName === $scope.options.selectedTable.name) {
                     $scope.queryForChartData();
                 }
             };
@@ -337,7 +340,7 @@ angular.module('neonDemo.directives')
 
                 $scope.databaseName = datasetService.getDatabase();
                 $scope.tables = datasetService.getTables();
-                $scope.selectedTable = $scope.bindTable || datasetService.getFirstTableWithMappings(["date"]) || $scope.tables[0];
+                $scope.options.selectedTable = $scope.bindTable || datasetService.getFirstTableWithMappings(["date"]) || $scope.tables[0];
                 $scope.filterKeys = filterService.createFilterKeys("timeline", $scope.tables);
 
                 if(initializing) {
@@ -350,9 +353,9 @@ angular.module('neonDemo.directives')
             };
 
             $scope.updateFieldsAndQueryForChartData = function() {
-                $scope.fields = datasetService.getDatabaseFields($scope.selectedTable.name);
+                $scope.fields = datasetService.getDatabaseFields($scope.options.selectedTable.name);
                 $scope.fields.sort();
-                $scope.dateField = $scope.bindDateField || datasetService.getMapping($scope.selectedTable.name, "date") || "date";
+                $scope.options.dateField = $scope.bindDateField || datasetService.getMapping($scope.options.selectedTable.name, "date") || "date";
                 $scope.resetAndQueryForChartData();
             };
 
@@ -380,16 +383,16 @@ angular.module('neonDemo.directives')
                 }
 
                 var query = new neon.query.Query()
-                    .selectFrom($scope.databaseName, $scope.selectedTable.name)
-                    .where($scope.dateField, '!=', null);
+                    .selectFrom($scope.databaseName, $scope.options.selectedTable.name)
+                    .where($scope.options.dateField, '!=', null);
 
                 $scope.addGroupByGranularityClause(query);
 
                 query.aggregate(neon.query.COUNT, '*', 'count');
                 // TODO: Does this need to be an aggregate on the date field? What is MIN doing or is this just an arbitrary function to include the date with the query?
-                query.aggregate(neon.query.MIN, $scope.dateField, 'date');
+                query.aggregate(neon.query.MIN, $scope.options.dateField, 'date');
                 query.sortBy('date', neon.query.ASCENDING);
-                query.ignoreFilters([$scope.filterKeys[$scope.selectedTable.name]]);
+                query.ignoreFilters([$scope.filterKeys[$scope.options.selectedTable.name]]);
 
                 XDATA.userALE.log({
                     activity: "alter",
@@ -431,7 +434,7 @@ angular.module('neonDemo.directives')
                         // TODO:  Determine how to clear the chart without causing errors.
                         // $scope.updateChartData({ data: [] });
                         if(response.responseJSON) {
-                            $scope.errorMessage = errorNotificationService.showErrorMessage(element, response.responseJSON.error, response.responseJSON.stackTrace);
+                            $scope.errorMessage = errorNotificationService.showErrorMessage($element, response.responseJSON.error, response.responseJSON.stackTrace);
                         }
                     });
                 }
@@ -447,15 +450,15 @@ angular.module('neonDemo.directives')
                 // Try to find primary series in new data
                 var i = 0;
                 var primaryIndex = 0;
-                if($scope.primarySeries) {
+                if($scope.options.primarySeries) {
                     for(i = 0; i < $scope.data.length; i++) {
-                        if($scope.primarySeries.name === $scope.data[i].name) {
+                        if($scope.options.primarySeries.name === $scope.data[i].name) {
                             primaryIndex = i;
                             break;
                         }
                     }
                 }
-                $scope.primarySeries = $scope.data[primaryIndex];
+                $scope.options.primarySeries = $scope.data[primaryIndex];
 
                 // Handle bound conditions.
 
@@ -492,7 +495,7 @@ angular.module('neonDemo.directives')
                 // endIdx points to the start of the day/hour just after the buckets we want to count, so do not
                 // include the bucket at endIdx.
                 for(i = startIdx; i < endIdx; i++) {
-                    total += $scope.primarySeries.data[i].value;
+                    total += $scope.options.primarySeries.data[i].value;
                 }
 
                 var displayStartDate = new Date(extentStartDate);
@@ -556,8 +559,8 @@ angular.module('neonDemo.directives')
                 // TODO: neon doesn't yet support a more efficient way to just get the min/max fields without aggregating
                 // TODO: This could be done better with a promise framework - just did this in a pinch for a demo
                 var minDateQuery = new neon.query.Query()
-                    .selectFrom($scope.databaseName, $scope.selectedTable.name).ignoreFilters()
-                    .where($scope.dateField, '!=', null).sortBy($scope.dateField, neon.query.ASCENDING).limit(1);
+                    .selectFrom($scope.databaseName, $scope.options.selectedTable.name).ignoreFilters()
+                    .where($scope.options.dateField, '!=', null).sortBy($scope.options.dateField, neon.query.ASCENDING).limit(1);
 
                 XDATA.userALE.log({
                     activity: "alter",
@@ -583,7 +586,7 @@ angular.module('neonDemo.directives')
                                 source: "system",
                                 tags: ["receive", "timeline", "min-date"]
                             });
-                            $scope.referenceStartDate = new Date(queryResults.data[0][$scope.dateField]);
+                            $scope.referenceStartDate = new Date(queryResults.data[0][$scope.options.dateField]);
                             if($scope.referenceEndDate !== undefined) {
                                 $scope.$apply(success);
                             }
@@ -603,14 +606,14 @@ angular.module('neonDemo.directives')
                         // TODO:  Determine how to clear the chart without causing errors.
                         // $scope.updateChartData({ data: [] });
                         if(response.responseJSON) {
-                            $scope.errorMessage = errorNotificationService.showErrorMessage(element, response.responseJSON.error, response.responseJSON.stackTrace);
+                            $scope.errorMessage = errorNotificationService.showErrorMessage($element, response.responseJSON.error, response.responseJSON.stackTrace);
                         }
                     });
                 }
 
                 var maxDateQuery = new neon.query.Query()
-                    .selectFrom($scope.databaseName, $scope.selectedTable.name).ignoreFilters()
-                    .where($scope.dateField, '!=', null).sortBy($scope.dateField, neon.query.DESCENDING).limit(1);
+                    .selectFrom($scope.databaseName, $scope.options.selectedTable.name).ignoreFilters()
+                    .where($scope.options.dateField, '!=', null).sortBy($scope.options.dateField, neon.query.DESCENDING).limit(1);
 
                 XDATA.userALE.log({
                     activity: "alter",
@@ -635,7 +638,7 @@ angular.module('neonDemo.directives')
                                 source: "system",
                                 tags: ["received", "timeline", "max-date"]
                             });
-                            $scope.referenceEndDate = new Date(queryResults.data[0][$scope.dateField]);
+                            $scope.referenceEndDate = new Date(queryResults.data[0][$scope.options.dateField]);
                             if($scope.referenceStartDate !== undefined) {
                                 $scope.$apply(success);
                             }
@@ -655,7 +658,7 @@ angular.module('neonDemo.directives')
                         // TODO:  Determine how to clear the chart without causing errors.
                         // $scope.updateChartData({ data: [] });
                         if(response.responseJSON) {
-                            $scope.errorMessage = errorNotificationService.showErrorMessage(element, response.responseJSON.error, response.responseJSON.stackTrace);
+                            $scope.errorMessage = errorNotificationService.showErrorMessage($element, response.responseJSON.error, response.responseJSON.stackTrace);
                         }
                     });
                 }
@@ -731,12 +734,12 @@ angular.module('neonDemo.directives')
                 if(!ocpu.connected) {
                     return;
                 }
-                $scope.addMmppTimeSeriesAnalysis($scope.primarySeries.data, $scope.data);
+                $scope.addMmppTimeSeriesAnalysis($scope.options.primarySeries.data, $scope.data);
             };
 
             $scope.addMmppTimeSeriesAnalysis = function(timelineData, graphData) {
                 // The MMPP analysis needs hourly data
-                if($scope.granularity !== HOUR) {
+                if($scope.options.granularity !== HOUR) {
                     return;
                 }
                 // The MMPP code wants a matrix of the counts, with each row being an hour of
@@ -792,12 +795,12 @@ angular.module('neonDemo.directives')
                 var periodLength = 1;
                 var seasonWindow = 1;
                 var trendWindow = 1;
-                if($scope.granularity === DAY) {
+                if($scope.options.granularity === DAY) {
                     // At the day granularity, look for weekly patterns
                     periodLength = 7;
                     seasonWindow = 31;
                     trendWindow = 41;
-                } else if($scope.granularity === HOUR) {
+                } else if($scope.options.granularity === HOUR) {
                     // At the hourly granularity, look for daily patterns
                     periodLength = 24;
                     seasonWindow = 24 * 7 * 2;

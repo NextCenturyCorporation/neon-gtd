@@ -19,7 +19,7 @@
     margin: 0px;
     padding: 20px;
     overflow-x: hidden;
-    overflow-y: auto;
+    overflow-y: scroll;
     height: 100%;
     width: 100%;
 }
@@ -68,7 +68,7 @@
     border-color: #AA1E13;
 }
 
-.timeline-selector .timeline-options.popover {
+.timeline-selector .chart-options .popover {
     /* Set the width so that the date granularity buttons fit on one row. */
     min-width: 306px;
 }

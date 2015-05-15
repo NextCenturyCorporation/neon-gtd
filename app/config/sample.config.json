@@ -52,6 +52,7 @@
         "name": "Timeline",
         "sizeX": 6,
         "sizeY": 1,
+        "minSizeY": 1,
         "type": "timeline-selector",
         "icon": "img/visualizations/Timeline64.png"
     }, {
@@ -178,6 +179,7 @@
         "default": [{
             "sizeX": 6,
             "sizeY": 1,
+            "minSizeY": 1,
             "type": "timeline-selector"
         }, {
             "sizeX": 4,

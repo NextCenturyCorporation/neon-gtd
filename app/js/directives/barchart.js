@@ -28,7 +28,8 @@
  * @constructor
  */
 angular.module('neonDemo.directives')
-.directive('barchart', ['ConnectionService', 'DatasetService', 'ErrorNotificationService', 'FilterService', '$timeout', function(connectionService, datasetService, errorNotificationService, filterService, $timeout) {
+.directive('barchart', ['ConnectionService', 'DatasetService', 'ErrorNotificationService', 'FilterService', '$timeout',
+function(connectionService, datasetService, errorNotificationService, filterService, $timeout) {
     return {
         templateUrl: 'partials/directives/barchart.html',
         restrict: 'EA',
@@ -39,24 +40,27 @@ angular.module('neonDemo.directives')
             bindTable: '='
         },
         link: function($scope, $element) {
-            $scope.uniqueChartOptions = 'chart-options-' + uuid();
-            var chartOptions = $($element).find('.chart-options');
-            chartOptions.toggleClass($scope.uniqueChartOptions);
-
             $element.addClass('barchartDirective');
+
+            $scope.element = $element;
 
             $scope.databaseName = '';
             $scope.tables = [];
-            $scope.selectedTable = {
-                name: ""
-            };
-            $scope.barType = $scope.bindAggregationField || 'count';
             $scope.fields = [];
             $scope.updatingChart = false;
             $scope.chart = undefined;
             $scope.filterKeys = {};
             $scope.filterSet = undefined;
             $scope.errorMessage = undefined;
+
+            $scope.options = {
+                selectedTable: {
+                    name: ""
+                },
+                attrX: "",
+                attrY: "",
+                barType: "count"
+            };
 
             var COUNT_FIELD_NAME = 'Count';
 
@@ -90,6 +94,7 @@ angular.module('neonDemo.directives')
                         source: "user",
                         tags: ["remove", "barchart"]
                     });
+                    $element.off("resize", updateChartSize);
                     $scope.messenger.removeEvents();
                     // Remove our filter if we had an active one.
                     if($scope.filterSet) {
@@ -97,8 +102,8 @@ angular.module('neonDemo.directives')
                     }
                 });
 
-                $scope.$watch('attrX', function() {
-                    if(!$scope.updatingChart && $scope.databaseName && $scope.selectedTable.name) {
+                $scope.$watch('options.attrX', function() {
+                    if(!$scope.updatingChart && $scope.databaseName && $scope.options.selectedTable.name) {
                         XDATA.userALE.log({
                             activity: "select",
                             action: "click",
@@ -112,8 +117,8 @@ angular.module('neonDemo.directives')
                         $scope.queryForData(true);
                     }
                 });
-                $scope.$watch('attrY', function() {
-                    if(!$scope.updatingChart && $scope.databaseName && $scope.selectedTable.name) {
+                $scope.$watch('options.attrY', function() {
+                    if(!$scope.updatingChart && $scope.databaseName && $scope.options.selectedTable.name) {
                         XDATA.userALE.log({
                             activity: "select",
                             action: "click",
@@ -127,8 +132,8 @@ angular.module('neonDemo.directives')
                         $scope.queryForData(true);
                     }
                 });
-                $scope.$watch('barType', function() {
-                    if(!$scope.updatingChart && $scope.databaseName && $scope.selectedTable.name) {
+                $scope.$watch('options.barType', function() {
+                    if(!$scope.updatingChart && $scope.databaseName && $scope.options.selectedTable.name) {
                         XDATA.userALE.log({
                             activity: "select",
                             action: "click",
@@ -145,9 +150,7 @@ angular.module('neonDemo.directives')
 
                 // This resizes the chart when the div changes.  This rely's on jquery's resize plugin to fire
                 // on the associated element and not just the window.
-                $element.resize(function() {
-                    updateChartSize();
-                });
+                $element.resize(updateChartSize);
             };
 
             /**
@@ -168,7 +171,7 @@ angular.module('neonDemo.directives')
                     tags: ["filter-change", "barchart"]
                 });
 
-                if(message.addedFilter && message.addedFilter.databaseName === $scope.databaseName && message.addedFilter.tableName === $scope.selectedTable.name) {
+                if(message.addedFilter && message.addedFilter.databaseName === $scope.databaseName && message.addedFilter.tableName === $scope.options.selectedTable.name) {
                     $scope.queryForData(false);
                 }
             };
@@ -208,7 +211,7 @@ angular.module('neonDemo.directives')
 
                 $scope.databaseName = datasetService.getDatabase();
                 $scope.tables = datasetService.getTables();
-                $scope.selectedTable = $scope.bindTable || datasetService.getFirstTableWithMappings(["bar_x_axis", "y_axis"]) || $scope.tables[0];
+                $scope.options.selectedTable = $scope.bindTable || datasetService.getFirstTableWithMappings(["bar_x_axis", "y_axis"]) || $scope.tables[0];
                 $scope.filterKeys = filterService.createFilterKeys("barchart", $scope.tables);
 
                 if(initializing) {
@@ -221,9 +224,9 @@ angular.module('neonDemo.directives')
             };
 
             $scope.updateFieldsAndQueryForData = function() {
-                $scope.attrX = $scope.bindXAxisField || datasetService.getMapping($scope.selectedTable.name, "bar_x_axis") || "";
-                $scope.attrY = $scope.bindYAxisField || datasetService.getMapping($scope.selectedTable.name, "y_axis") || "";
-                $scope.fields = datasetService.getDatabaseFields($scope.selectedTable.name);
+                $scope.options.attrX = $scope.bindXAxisField || datasetService.getMapping($scope.options.selectedTable.name, "bar_x_axis") || "";
+                $scope.options.attrY = $scope.bindYAxisField || datasetService.getMapping($scope.options.selectedTable.name, "y_axis") || "";
+                $scope.fields = datasetService.getDatabaseFields($scope.options.selectedTable.name);
                 $scope.fields.sort();
                 if($scope.filterSet) {
                     $scope.clearFilterSet();
@@ -237,7 +240,7 @@ angular.module('neonDemo.directives')
                     $scope.errorMessage = undefined;
                 }
 
-                if(!$scope.attrX) {
+                if(!$scope.options.attrX) {
                     drawBlankChart();
                     return;
                 }
@@ -245,25 +248,25 @@ angular.module('neonDemo.directives')
                 $scope.updatingChart = true;
 
                 var query = new neon.query.Query()
-                    .selectFrom($scope.databaseName, $scope.selectedTable.name)
-                    .where($scope.attrX, '!=', null)
-                    .groupBy($scope.attrX);
+                    .selectFrom($scope.databaseName, $scope.options.selectedTable.name)
+                    .where($scope.options.attrX, '!=', null)
+                    .groupBy($scope.options.attrX);
 
-                query.ignoreFilters([$scope.filterKeys[$scope.selectedTable.name]]);
+                query.ignoreFilters([$scope.filterKeys[$scope.options.selectedTable.name]]);
 
                 var queryType;
-                if($scope.barType === 'count') {
+                if($scope.options.barType === 'count') {
                     queryType = neon.query.COUNT;
-                } else if($scope.barType === 'sum') {
+                } else if($scope.options.barType === 'sum') {
                     queryType = neon.query.SUM;
-                } else if($scope.barType === 'average') {
+                } else if($scope.options.barType === 'average') {
                     queryType = neon.query.AVG;
                 }
 
-                if(!$scope.attrY) {
+                if(!$scope.options.attrY) {
                     query.aggregate(queryType, '*', COUNT_FIELD_NAME);
                 } else {
-                    query.aggregate(queryType, $scope.attrY, COUNT_FIELD_NAME);
+                    query.aggregate(queryType, $scope.options.attrY, COUNT_FIELD_NAME);
                 }
 
                 XDATA.userALE.log({
@@ -330,19 +333,19 @@ angular.module('neonDemo.directives')
             };
 
             var clickFilterHandler = function(value) {
-                if(!$scope.attrX) {
+                if(!$scope.options.attrX) {
                     return;
                 }
 
                 var filterExists = $scope.filterSet ? true : false;
-                handleFilterSet($scope.attrX, value);
+                handleFilterSet($scope.options.attrX, value);
 
                 // Store the value for the filter to use during filter creation.
                 $scope.filterValue = value;
 
                 var connection = connectionService.getActiveConnection();
                 if($scope.messenger && connection) {
-                    var relations = datasetService.getRelations($scope.selectedTable.name, [$scope.attrX]);
+                    var relations = datasetService.getRelations($scope.options.selectedTable.name, [$scope.options.attrX]);
                     if(filterExists) {
                         XDATA.userALE.log({
                             activity: "select",
@@ -415,7 +418,7 @@ angular.module('neonDemo.directives')
             var doDrawChart = function(data, destroy) {
                 var opts = {
                     data: data.data,
-                    x: $scope.attrX,
+                    x: $scope.options.attrX,
                     y: COUNT_FIELD_NAME,
                     responsive: false,
                     clickHandler: clickFilterHandler

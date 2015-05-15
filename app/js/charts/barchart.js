@@ -134,8 +134,8 @@ charts.BarChart.prototype.setOptsConfiguration = function(opts) {
 charts.BarChart.DEFAULT_HEIGHT_ = 250;
 charts.BarChart.DEFAULT_WIDTH_ = 600;
 charts.BarChart.DEFAULT_MARGIN_ = {
-    top: 20,
-    bottom: 30,
+    top: 10,
+    bottom: 50,
     left: 30,
     right: 0
 };
@@ -630,7 +630,9 @@ charts.BarChart.prototype.drawXAxis_ = function(chart) {
         });
 
     this.viewboxYMax = this.viewboxYMax + $(this.element[0]).find('g.x')[0].getBoundingClientRect().height;
-    $(this.element[0]).height(this.height - this.margin.bottom + $(this.element[0]).find('g.x')[0].getBoundingClientRect().height);
+    // TODO This resizing conflicts with the resizing done by the barchart directive.  Determine whether to remove resizing and the height
+    // constructor option from this chart or have this chart measure the dynamically-sized header in the barchart directive.
+    //$(this.element[0]).height(this.height - this.margin.bottom + $(this.element[0]).find('g.x')[0].getBoundingClientRect().height);
 
     return axis;
 };

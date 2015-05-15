@@ -79,6 +79,10 @@
   width: 100%;
 }
 
+.linechartDirective .legend .legend-item {
+    margin-top: 5px;
+}
+
 .visualization-widget .linechartDirective {
   height: 100%;
   width: 100%;

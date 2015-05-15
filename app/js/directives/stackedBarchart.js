@@ -28,7 +28,8 @@
  * @constructor
  */
 angular.module('neonDemo.directives')
-.directive('stackedbarchart', ['ConnectionService', 'DatasetService', 'ErrorNotificationService', function(connectionService, datasetService, errorNotificationService) {
+.directive('stackedbarchart', ['ConnectionService', 'DatasetService', 'ErrorNotificationService',
+function(connectionService, datasetService, errorNotificationService) {
     return {
         templateUrl: 'partials/directives/barchart.html',
         restrict: 'E',
@@ -37,22 +38,25 @@ angular.module('neonDemo.directives')
             attrY: '=',
             barType: '='
         },
-        link: function($scope, el) {
-            $scope.uniqueChartOptions = 'chart-options-' + uuid();
-            var chartOptions = $(el).find('.chart-options');
-            chartOptions.toggleClass($scope.uniqueChartOptions);
+        link: function($scope, $element) {
+            $element.addClass('barchartDirective');
 
-            el.addClass('barchartDirective');
+            $scope.element = $element;
 
             $scope.messenger = new neon.eventing.Messenger();
             $scope.databaseName = '';
             $scope.tables = [];
-            $scope.selectedTable = {
-                name: ""
-            };
-            $scope.barType = /*$scope.barType ||*/'count'; //Changed because negative values break the display
             $scope.fields = [];
             $scope.errorMessage = undefined;
+
+            $scope.options = {
+                selectedTable: {
+                    name: ""
+                },
+                attrX: "",
+                attrY: "",
+                barType: "count"
+            };
 
             var COUNT_FIELD_NAME = 'Count';
 
@@ -78,18 +82,18 @@ angular.module('neonDemo.directives')
                     $scope.messenger.removeEvents();
                 });
 
-                $scope.$watch('attrX', function() {
-                    if($scope.databaseName && $scope.selectedTable.name) {
+                $scope.$watch('options.attrX', function() {
+                    if($scope.databaseName && $scope.options.selectedTable.name) {
                         $scope.queryForData();
                     }
                 });
-                $scope.$watch('attrY', function() {
-                    if($scope.databaseName && $scope.selectedTable.name) {
+                $scope.$watch('options.attrY', function() {
+                    if($scope.databaseName && $scope.options.selectedTable.name) {
                         $scope.queryForData();
                     }
                 });
-                $scope.$watch('barType', function() {
-                    if($scope.databaseName && $scope.selectedTable.name) {
+                $scope.$watch('options.barType', function() {
+                    if($scope.databaseName && $scope.options.selectedTable.name) {
                         $scope.queryForData();
                     }
                 });
@@ -102,7 +106,7 @@ angular.module('neonDemo.directives')
              * @private
              */
             var onFiltersChanged = function(message) {
-                if(message.addedFilter && message.addedFilter.databaseName === $scope.databaseName && message.addedFilter.tableName === $scope.selectedTable.name) {
+                if(message.addedFilter && message.addedFilter.databaseName === $scope.databaseName && message.addedFilter.tableName === $scope.options.selectedTable.name) {
                     $scope.queryForData();
                 }
             };
@@ -128,7 +132,7 @@ angular.module('neonDemo.directives')
 
                 $scope.databaseName = datasetService.getDatabase();
                 $scope.tables = datasetService.getTables();
-                $scope.selectedTable = datasetService.getFirstTableWithMappings(["x_axis", "y_axis"]) || $scope.tables[0];
+                $scope.options.selectedTable = datasetService.getFirstTableWithMappings(["x_axis", "y_axis"]) || $scope.tables[0];
 
                 if(initializing) {
                     $scope.updateFieldsAndQueryForData();
@@ -140,9 +144,9 @@ angular.module('neonDemo.directives')
             };
 
             $scope.updateFieldsAndQueryForData = function() {
-                $scope.attrX = datasetService.getMapping($scope.selectedTable.name, "x_axis") || "";
-                $scope.attrY = datasetService.getMapping($scope.selectedTable.name, "y_axis") || "";
-                $scope.fields = datasetService.getDatabaseFields($scope.selectedTable.name);
+                $scope.options.attrX = datasetService.getMapping($scope.options.selectedTable.name, "x_axis") || "";
+                $scope.options.attrY = datasetService.getMapping($scope.options.selectedTable.name, "y_axis") || "";
+                $scope.fields = datasetService.getDatabaseFields($scope.options.selectedTable.name);
                 $scope.fields.sort();
                 $scope.queryForData(true);
             };
@@ -153,32 +157,32 @@ angular.module('neonDemo.directives')
                     $scope.errorMessage = undefined;
                 }
 
-                var xAxis = $scope.attrX || datasetService.getMapping($scope.selectedTable.name, "x_axis");
-                var yAxis = $scope.attrY || datasetService.getMapping($scope.selectedTable.name, "y_axis");
+                var xAxis = $scope.options.attrX || datasetService.getMapping($scope.options.selectedTable.name, "x_axis");
+                var yAxis = $scope.options.attrY || datasetService.getMapping($scope.options.selectedTable.name, "y_axis");
                 if(!yAxis) {
                     yAxis = COUNT_FIELD_NAME;
                 }
 
                 var query = new neon.query.Query()
-                    .selectFrom($scope.databaseName, $scope.selectedTable.name)
+                    .selectFrom($scope.databaseName, $scope.options.selectedTable.name)
                     .where(xAxis, '!=', null)
                     .where(yAxis, yRuleComparator, yRuleVal)
                     .groupBy(xAxis);
 
                 var queryType;
-                $scope.barType = 'count';
-                if($scope.barType === 'count') {
+                $scope.options.barType = 'count';
+                if($scope.options.barType === 'count') {
                     queryType = neon.query.COUNT;
-                } else if($scope.barType === 'sum') {
+                } else if($scope.options.barType === 'sum') {
                     queryType = neon.query.SUM;
-                } else if($scope.barType === 'avg') {
+                } else if($scope.options.barType === 'avg') {
                     queryType = neon.query.AVG;
                 }
 
                 if(yAxis) {
-                    query.aggregate(queryType, yAxis, ($scope.barType ? COUNT_FIELD_NAME : yAxis));
+                    query.aggregate(queryType, yAxis, ($scope.options.barType ? COUNT_FIELD_NAME : yAxis));
                 } else {
-                    query.aggregate(queryType, '*', ($scope.barType ? COUNT_FIELD_NAME : yAxis));
+                    query.aggregate(queryType, '*', ($scope.options.barType ? COUNT_FIELD_NAME : yAxis));
                 }
 
                 var connection = connectionService.getActiveConnection();
@@ -188,20 +192,20 @@ angular.module('neonDemo.directives')
                     }, function(response) {
                         $scope.drawBlankChart();
                         if(response.responseJSON) {
-                            $scope.errorMessage = errorNotificationService.showErrorMessage(el, response.responseJSON.error, response.responseJSON.stackTrace);
+                            $scope.errorMessage = errorNotificationService.showErrorMessage($element, response.responseJSON.error, response.responseJSON.stackTrace);
                         }
                     });
                 }
             };
 
             $scope.queryForData = function() {
-                var xAxis = $scope.attrX || datasetService.getMapping($scope.selectedTable.name, "x_axis");
-                var yAxis = $scope.attrY || datasetService.getMapping($scope.selectedTable.name, "y_axis");
+                var xAxis = $scope.options.attrX || datasetService.getMapping($scope.options.selectedTable.name, "x_axis");
+                var yAxis = $scope.options.attrY || datasetService.getMapping($scope.options.selectedTable.name, "y_axis");
                 if(!yAxis) {
                     yAxis = COUNT_FIELD_NAME;
                 }
 
-                var yField = ($scope.barType ? COUNT_FIELD_NAME : yAxis);
+                var yField = ($scope.options.barType ? COUNT_FIELD_NAME : yAxis);
                 var yMin = yField + "-min";
 
                 var results = {
@@ -284,24 +288,24 @@ angular.module('neonDemo.directives')
             };
 
             var doDrawChart = function(data) {
-                charts.BarChart.destroy(el[0], '.barchart');
+                charts.BarChart.destroy($element[0], '.barchart');
 
-                var xAxis = datasetService.getMapping($scope.selectedTable.name, "x_axis") || $scope.attrX;
-                var yAxis = datasetService.getMapping($scope.selectedTable.name, "y_axis") || $scope.attrY;
+                var xAxis = datasetService.getMapping($scope.options.selectedTable.name, "x_axis") || $scope.options.attrX;
+                var yAxis = datasetService.getMapping($scope.options.selectedTable.name, "y_axis") || $scope.options.attrY;
                 if(!yAxis) {
                     yAxis = COUNT_FIELD_NAME;
                 }
-                var yMin = ($scope.barType ? COUNT_FIELD_NAME : yAxis) + "-min";
+                var yMin = ($scope.options.barType ? COUNT_FIELD_NAME : yAxis) + "-min";
 
                 var opts = {
                     data: data.data,
                     x: xAxis,
-                    y: ($scope.barType ? COUNT_FIELD_NAME : yAxis),
+                    y: ($scope.options.barType ? COUNT_FIELD_NAME : yAxis),
                     yMin: yMin,
                     stacked: true,
                     responsive: false
                 };
-                (new charts.BarChart(el[0], '.barchart', opts)).draw();
+                (new charts.BarChart($element[0], '.barchart', opts)).draw();
             };
 
             neon.ready(function() {

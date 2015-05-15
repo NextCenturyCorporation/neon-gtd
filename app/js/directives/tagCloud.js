@@ -19,7 +19,8 @@
  * This directive is for building a tag cloud
  */
 angular.module('neonDemo.directives')
-.directive('tagCloud', ['ConnectionService', 'DatasetService', 'FilterService', '$timeout', function(connectionService, datasetService, filterService, $timeout) {
+.directive('tagCloud', ['ConnectionService', 'DatasetService', 'FilterService', '$timeout',
+function(connectionService, datasetService, filterService, $timeout) {
     return {
         templateUrl: 'partials/directives/tagCloud.html',
         restrict: 'EA',
@@ -27,30 +28,29 @@ angular.module('neonDemo.directives')
             bindTagField: '=',
             bindTable: '='
         },
-        link: function($scope, element) {
-            element.addClass("tagcloud-container");
+        link: function($scope, $element) {
+            $element.addClass("tagcloud-container");
+
+            $scope.element = $element;
+            $scope.showOptionsMenuButtonText = function() {
+                return $scope.filterTags.length === 0 && $scope.data.length === 0;
+            };
+
             $scope.databaseName = '';
             $scope.tables = [];
-            $scope.selectedTable = {
-                name: ""
-            };
             $scope.fields = [];
-
-            $scope.uniqueChartOptions = 'chart-options-' + uuid();
-            var chartOptions = $(element).find('.chart-options');
-            chartOptions.toggleClass($scope.uniqueChartOptions);
-
-            // data will be a list of tag name/counts in descending order
             $scope.data = [];
-
-            // optionsDisplayed is used merely to track the display of the options menu
-            // for usability and workflow analysis.
-            $scope.optionsDisplayed = false;
-
             $scope.filterTags = [];
             $scope.showFilter = false;
-            $scope.andTags = true;
             $scope.filterKeys = {};
+
+            $scope.options = {
+                selectedTable: {
+                    name: ""
+                },
+                tagField: "",
+                andTags: true
+            };
 
             /**
              * Initializes the name of the directive's scope variables
@@ -59,7 +59,7 @@ angular.module('neonDemo.directives')
              */
             $scope.initialize = function() {
                 // Toggle the points and clusters view when the user toggles between them.
-                $scope.$watch('andTags', function(newVal, oldVal) {
+                $scope.$watch('options.andTags', function(newVal, oldVal) {
                     XDATA.userALE.log({
                         activity: "select",
                         action: "click",
@@ -72,20 +72,6 @@ angular.module('neonDemo.directives')
                     if(newVal !== oldVal) {
                         $scope.setTagFilter();
                     }
-                });
-
-                // Log whenever the user toggles the options display.
-                $scope.$watch('optionsDisplayed', function(newVal) {
-                    var activity = (newVal === true) ? 'show' : 'hide';
-                    XDATA.userALE.log({
-                        activity: activity,
-                        action: "click",
-                        elementId: "tag-cloud-options",
-                        elementType: "button",
-                        elementGroup: "chart_group",
-                        source: "user",
-                        tags: ["options", "tag-cloud"]
-                    });
                 });
 
                 // Setup our messenger.
@@ -151,7 +137,7 @@ angular.module('neonDemo.directives')
                     source: "system",
                     tags: ["filter-change", "tag-cloud"]
                 });
-                if(message.addedFilter && message.addedFilter.databaseName === $scope.databaseName && message.addedFilter.tableName === $scope.selectedTable.name) {
+                if(message.addedFilter && message.addedFilter.databaseName === $scope.databaseName && message.addedFilter.tableName === $scope.options.selectedTable.name) {
                     $scope.queryForTags();
                 }
             };
@@ -187,7 +173,7 @@ angular.module('neonDemo.directives')
 
                 $scope.databaseName = datasetService.getDatabase();
                 $scope.tables = datasetService.getTables();
-                $scope.selectedTable = $scope.bindTable || datasetService.getFirstTableWithMappings(["tags"]) || $scope.tables[0];
+                $scope.options.selectedTable = $scope.bindTable || datasetService.getFirstTableWithMappings(["tags"]) || $scope.tables[0];
                 $scope.filterKeys = filterService.createFilterKeys("tagcloud", $scope.tables);
 
                 if(initializing) {
@@ -200,9 +186,9 @@ angular.module('neonDemo.directives')
             };
 
             $scope.updateFieldsAndQueryForTags = function() {
-                $scope.fields = datasetService.getDatabaseFields($scope.selectedTable.name);
+                $scope.fields = datasetService.getDatabaseFields($scope.options.selectedTable.name);
                 $scope.fields.sort();
-                $scope.tagField = $scope.bindTagField || datasetService.getMapping($scope.selectedTable.name, "tags") || "";
+                $scope.options.tagField = $scope.bindTagField || datasetService.getMapping($scope.options.selectedTable.name, "tags") || $scope.fields[0] || "";
                 if($scope.showFilter) {
                     $scope.clearTagFilters();
                 } else {
@@ -215,11 +201,11 @@ angular.module('neonDemo.directives')
              * @method queryForTags
              */
             $scope.queryForTags = function() {
-                if($scope.tagField !== '') {
+                if($scope.options.tagField !== '') {
                     var connection = connectionService.getActiveConnection();
                     if(connection) {
                         var host = connection.host_;
-                        var url = neon.serviceUrl('mongotagcloud', 'tagcounts', 'host=' + host + "&db=" + $scope.databaseName + "&collection=" + $scope.selectedTable.name + "&arrayfield=" + $scope.tagField + "&limit=40");
+                        var url = neon.serviceUrl('mongotagcloud', 'tagcounts', 'host=' + host + "&db=" + $scope.databaseName + "&collection=" + $scope.options.selectedTable.name + "&arrayfield=" + $scope.options.tagField + "&limit=40");
 
                         XDATA.userALE.log({
                             activity: "alter",
@@ -281,7 +267,7 @@ angular.module('neonDemo.directives')
              * @method updateTagData
              */
             $scope.updateTagData = function(tagCounts) {
-                if($scope.andTags) {
+                if($scope.options.andTags) {
                     $scope.data = tagCounts.filter(function(elem) {
                         return $scope.filterTags.indexOf(elem.tag) === -1;
                     });
@@ -291,7 +277,7 @@ angular.module('neonDemo.directives')
 
                 // style the tags after they are displayed
                 $timeout(function() {
-                    element.find('.tag').tagcloud();
+                    $element.find('.tag').tagcloud();
                 });
             };
 
@@ -352,7 +338,7 @@ angular.module('neonDemo.directives')
              * @method applyFilter
              */
             $scope.applyFilter = function() {
-                var relations = datasetService.getRelations($scope.selectedTable.name, [$scope.tagField]);
+                var relations = datasetService.getRelations($scope.options.selectedTable.name, [$scope.options.tagField]);
                 filterService.replaceFilters($scope.messenger, relations, $scope.filterKeys, $scope.createFilterClauseForTags, function() {
                     $scope.$apply(function() {
                         $scope.queryForTags();
@@ -400,10 +386,6 @@ angular.module('neonDemo.directives')
                     tags: ["filter", "tag-cloud", tagName]
                 });
                 $scope.filterTags = _.without($scope.filterTags, tagName);
-            };
-
-            $scope.toggleOptionsDisplay = function() {
-                $scope.optionsDisplayed = !$scope.optionsDisplayed;
             };
 
             // Wait for neon to be ready, the create our messenger and intialize the view and data.
