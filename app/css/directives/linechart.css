@@ -83,6 +83,11 @@
     margin-top: 5px;
 }
 
+/* Add extra margin to the top of the legend (the first category item) to mimic the styling of the BarChart. */
+.linechartDirective .legend .legend-item:nth-child(2) {
+    margin-top: 10px;
+}
+
 .visualization-widget .linechartDirective {
   height: 100%;
   width: 100%;

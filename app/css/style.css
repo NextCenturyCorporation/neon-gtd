@@ -426,7 +426,7 @@ fieldset[disabled] .btn-primary.active {
 }
 .legend .legend-item .legend-text {
     display: inline-block;
-    max-width: 120px;
+    max-width: 90px;
     overflow: hidden;
     white-space: nowrap;
     text-overflow: ellipsis;
