@@ -42,7 +42,7 @@
             <div class="input-group">
                 <input type="number" min="1" class="form-control" ng-model="options.limit" required>
                 <div class="input-group-btn">
-                    <button type="button" class="btn btn-default refresh" ng-click="refreshData()">
+                    <button type="button" class="btn btn-default refresh" title="Refresh" ng-click="refreshData()">
                         <span class="glyphicon glyphicon-refresh"></span>
                     </button>
                 </div>
@@ -103,7 +103,7 @@
                 ng-class="{true: '', false: 'has-error'}[dataTableForm.limitInput.$error.number]">
             </div>
 
-            <button type="button" class="btn btn-default refresh" ng-click="refreshData()" ng-hide="!(navbarItem)">
+            <button type="button" class="btn btn-default refresh" title="Refresh" ng-click="refreshData()" ng-hide="!(navbarItem)">
                 <span class="glyphicon glyphicon-refresh"></span>
             </button>
         </form>
