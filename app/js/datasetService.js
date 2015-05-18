@@ -45,6 +45,7 @@ angular.module("neonDemo.services")
             service.dataset.datastore = dataset.datastore || "";
             service.dataset.hostname = dataset.hostname || "";
             service.dataset.database = dataset.database || "";
+            service.dataset.mapLayers = dataset.mapLayers || [];
             service.dataset.tables = dataset.tables || [];
             service.dataset.relations = dataset.relations || [];
 
@@ -334,6 +335,24 @@ angular.module("neonDemo.services")
             }
 
             return [relationForInput];
+        };
+
+        /**
+         * Returns the map layer configuration for the active dataset.
+         * @method getDatabase
+         * @return {String}
+         */
+        service.getMapLayers = function() {
+            return service.dataset.mapLayers;
+        };
+
+        /**
+         * Returns the map layer configuration for the active dataset.
+         * @param {object} config A set of layer configuration objects.
+         * @method getDatabase
+         */
+        service.setMapLayers = function(config) {
+            service.dataset.mapLayers = config;
         };
 
         return service;
