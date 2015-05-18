@@ -431,8 +431,9 @@ function(connectionService, datasetService, errorNotificationService, filterServ
                             source: "system",
                             tags: ["failed", "timeline", "data"]
                         });
-                        // TODO:  Determine how to clear the chart without causing errors.
-                        // $scope.updateChartData({ data: [] });
+                        $scope.updateChartData({
+                            data: []
+                        });
                         if(response.responseJSON) {
                             $scope.errorMessage = errorNotificationService.showErrorMessage($element, response.responseJSON.error, response.responseJSON.stackTrace);
                         }
@@ -544,9 +545,8 @@ function(connectionService, datasetService, errorNotificationService, filterServ
                         source: "system",
                         tags: ["timeline", "clear"]
                     });
-                    // TODO:  Determine how to clear the chart without causing errors.
-                    //$scope.data = $scope.createTimelineData(queryResults);
-                    //$scope.updateChartTimesAndTotal();
+                    $scope.data = $scope.createTimelineData(queryResults);
+                    $scope.updateChartTimesAndTotal();
                 }
             };
 
@@ -603,8 +603,9 @@ function(connectionService, datasetService, errorNotificationService, filterServ
                             tags: ["failed", "timeline", "min-date"]
                         });
                         $scope.referenceStartDate = undefined;
-                        // TODO:  Determine how to clear the chart without causing errors.
-                        // $scope.updateChartData({ data: [] });
+                        $scope.updateChartData({
+                            data: []
+                        });
                         if(response.responseJSON) {
                             $scope.errorMessage = errorNotificationService.showErrorMessage($element, response.responseJSON.error, response.responseJSON.stackTrace);
                         }
@@ -655,8 +656,9 @@ function(connectionService, datasetService, errorNotificationService, filterServ
                             tags: ["failed", "timeline", "max-date"]
                         });
                         $scope.referenceEndDate = undefined;
-                        // TODO:  Determine how to clear the chart without causing errors.
-                        // $scope.updateChartData({ data: [] });
+                        $scope.updateChartData({
+                            data: []
+                        });
                         if(response.responseJSON) {
                             $scope.errorMessage = errorNotificationService.showErrorMessage($element, response.responseJSON.error, response.responseJSON.stackTrace);
                         }
