@@ -496,33 +496,13 @@ function(external, popups, connectionService, datasetService, errorNotificationS
                 var tableLinks = [];
 
                 data.data.forEach(function(row) {
-                    var rowId = row._id;
-                    var query = "id=" + rowId;
+                    var id = row._id;
+                    var query = "id=" + id;
 
                     var links = [];
 
                     if(external.dig.enabled) {
-                        var form = {
-                            name: external.dig.data_table.name,
-                            image: external.dig.data_table.image,
-                            url: external.dig.data_table.url,
-                            args: [],
-                            data: {
-                                server: external.dig.server,
-                                value: rowId,
-                                query: query
-                            }
-                        };
-
-                        for(var i = 0; i < external.dig.data_table.args.length; ++i) {
-                            var arg = external.dig.data_table.args[i];
-                            form.args.push({
-                                name: arg.name,
-                                value: arg.value
-                            });
-                        }
-
-                        links.push(form);
+                        links.push($scope.createLinkObject(external.dig, id, query));
                     }
 
                     var linksIndex = tableLinks.length;
@@ -537,6 +517,30 @@ function(external, popups, connectionService, datasetService, errorNotificationS
                 popups.links.setData($scope.tableId, tableLinks);
 
                 return data;
+            };
+
+            $scope.createLinkObject = function(config, id, query) {
+                var link = {
+                    name: config.data_table.name,
+                    image: config.data_table.image,
+                    url: config.data_table.url,
+                    args: [],
+                    data: {
+                        server: config.server,
+                        value: id,
+                        query: query
+                    }
+                };
+
+                for(var i = 0; i < config.data_table.args.length; ++i) {
+                    var arg = config.data_table.args[i];
+                    link.args.push({
+                        name: arg.name,
+                        value: arg.value
+                    });
+                }
+
+                return link;
             };
 
             $scope.createDeleteColumnButtons = function() {

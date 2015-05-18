@@ -359,28 +359,7 @@ function(external, popups, connectionService, datasetService, errorNotificationS
                     var links = [];
 
                     if(external.dig.enabled) {
-                        var form = {
-                            name: external.dig.count_by.name,
-                            image: external.dig.count_by.image,
-                            url: external.dig.count_by.url,
-                            args: [],
-                            data: {
-                                server: external.dig.server,
-                                field: field,
-                                value: value,
-                                query: query
-                            }
-                        };
-
-                        for(var i = 0; i < external.dig.count_by.args.length; ++i) {
-                            var arg = external.dig.count_by.args[i];
-                            form.args.push({
-                                name: arg.name,
-                                value: arg.value
-                            });
-                        }
-
-                        links.push(form);
+                        links.push($scope.createLinkObject(external.dig, field, value, query));
                     }
 
                     var linksIndex = tableLinks.length;
@@ -395,6 +374,31 @@ function(external, popups, connectionService, datasetService, errorNotificationS
                 popups.links.setData($scope.tableId, tableLinks);
 
                 return data;
+            };
+
+            $scope.createLinkObject = function(config, field, value, query) {
+                var link = {
+                    name: config.count_by.name,
+                    image: config.count_by.image,
+                    url: config.count_by.url,
+                    args: [],
+                    data: {
+                        server: config.server,
+                        field: field,
+                        value: value,
+                        query: query
+                    }
+                };
+
+                for(var i = 0; i < config.count_by.args.length; ++i) {
+                    var arg = config.count_by.args[i];
+                    link.args.push({
+                        name: arg.name,
+                        value: arg.value
+                    });
+                }
+
+                return link;
             };
 
             /**
