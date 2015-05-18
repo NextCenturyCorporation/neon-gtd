@@ -189,7 +189,7 @@ function(connectionService, datasetService, errorNotificationService, $timeout) 
                     $scope.errorMessage = undefined;
                 }
 
-                if(!$scope.options.attrX || (!$scope.attrY && $scope.options.aggregation !== "count")) {
+                if(!$scope.options.attrX || (!$scope.options.attrY && $scope.options.aggregation !== "count")) {
                     drawChart();
                     return;
                 }

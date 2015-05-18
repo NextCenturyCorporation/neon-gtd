@@ -263,7 +263,7 @@ function(connectionService, datasetService, errorNotificationService, filterServ
                     queryType = neon.query.AVG;
                 }
 
-                if(!$scope.options.attrY) {
+                if($scope.options.barType === "count" || !$scope.options.attrY) {
                     query.aggregate(queryType, '*', COUNT_FIELD_NAME);
                 } else {
                     query.aggregate(queryType, $scope.options.attrY, COUNT_FIELD_NAME);

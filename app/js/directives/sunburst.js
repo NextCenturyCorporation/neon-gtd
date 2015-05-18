@@ -238,7 +238,7 @@ function(connectionService, datasetService, errorNotificationService) {
                             tags: ["receive", "sunburst"]
                         });
                         $scope.$apply(function() {
-                            $scope.updateChartSize();
+                            updateChartSize();
                             doDrawChart(buildDataTree(queryResults));
                             XDATA.userALE.log({
                                 activity: "alter",
