@@ -1,34 +1,5 @@
 @import 'variables.less';
 
-.menu {
-    list-style: none;
-    border-bottom: 0.1em solid #000000;
-    margin-bottom: 2em;
-    padding: 0 0 0.5em;
-
-    &:before {
-        content: "[";
-    }
-
-    &:after {
-        content: "]";
-    }
-
-    > li {
-        display: inline;
-
-        &:before {
-            content: "|";
-            padding-right: 0.3em;
-        }
-
-        &:nth-child(1):before {
-            content: "";
-            padding: 0;
-        }
-    }
-}
-
 .no-margin {
     margin-left: 0px !important;
     margin-right: 0px !important;
