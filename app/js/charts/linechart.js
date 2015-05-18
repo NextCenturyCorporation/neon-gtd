@@ -469,6 +469,16 @@ charts.LineChart.prototype.drawLine = function(opts) {
             d3.select("#tooltip-container")
                 .style("top", (d3.event.pageY)  + "px")
                 .style("left", (d3.event.pageX + 15) + "px");
+            XDATA.userALE.log({
+                activity: "show",
+                action: "mousemove",
+                elementId: "linechart",
+                elementType: "tooltip",
+                elementSub: "linechart",
+                elementGroup: "chart_group",
+                source: "user",
+                tags: ["tooltip", "linechart"]
+            });
         }
     }).on("mouseout", function() {
         hoverLineGroup.style("opacity", 1e-6);
@@ -476,6 +486,16 @@ charts.LineChart.prototype.drawLine = function(opts) {
             .attr("stroke-opacity", 0)
             .attr("fill-opacity", 0);
         $("#tooltip-container").hide();
+        XDATA.userALE.log({
+                activity: "hide",
+                action: "mouseout",
+                elementId: "linechart",
+                elementType: "tooltip",
+                elementSub: "linechart",
+                elementGroup: "chart_group",
+                source: "user",
+                tags: ["tooltip", "linechart"]
+            });
     });
 };
 
@@ -484,10 +504,10 @@ charts.LineChart.prototype.toggleSeries = function(series) {
     var activity = '';
     if(index >= 0) {
         this.hiddenSeries.splice(index, 1);
-        activity = 'show_plot';
+        activity = 'show';
     } else {
         this.hiddenSeries.push(series);
-        activity = 'hide_plot';
+        activity = 'hide';
     }
 
     if(this.data && this.hiddenSeries.length >= this.data.length) {

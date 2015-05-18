@@ -22,13 +22,8 @@
     padding: 20px;
 }
 
-.circularheatform h4 {
-    height: 12%;
-    margin: 0px;
-}
-
 .circularheatform .circularheatchart {
-    height: 88%;
+    height: 80%;
     width: 100%;
 }
 

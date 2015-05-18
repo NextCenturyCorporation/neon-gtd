@@ -1,10 +1,24 @@
 {
-    "xdata": {
-        "echoToConsole": false,
-        "enableLoggin": false,
-        "activityLoggerUrl": "http://xd-draper.xdata.data-tactics-corp.com:1337",
-        "component": "Neon Demo",
-        "componentVersion": "1.0.0-SNAPSHOT"
+    "user_ale": {
+        "loggingUrl": "http://192.168.1.100",
+        "toolName": "Neon Dashboard",
+        "toolVersion": "1.1.0",
+        "elementGroups": [
+            "top",
+            "map_group",
+            "table_group",
+            "chart_group",
+            "query_group",
+            "graph_group"
+        ],
+        "workerUrl": "lib/user-ale/js/userale-worker.js",
+        "debug": false,
+        "sendLogs": false
+    },
+
+    "dashboard": {
+        "gridsterColumns": 6,
+        "hideNavbarItems": false
     },
 
     "opencpu": {
@@ -58,9 +72,24 @@
     },
 
     "visualizations": [{
+        "name": "Filter Builder",
+        "sizeX": 4,
+        "minSizeX": 3,
+        "sizeY": 2,
+        "minSizeY": 1,
+        "type": "filter-builder",
+        "icon": "img/visualizations/CreateFilter64.png"
+    }, {
+        "name": "Data Table",
+        "sizeX": 6,
+        "sizeY": 2,
+        "type": "query-results-table",
+        "icon": "img/visualizations/ViewData64.png"
+    }, {
         "name": "Timeline",
         "sizeX": 6,
         "sizeY": 1,
+        "minSizeY": 1,
         "type": "timeline-selector",
         "icon": "img/visualizations/Timeline64.png"
     }, {
@@ -92,9 +121,6 @@
         "sizeX": 2,
         "sizeY": 2,
         "type": "tag-cloud",
-        "bindings": {
-            "tag-field": "'hashtags'"
-        },
         "icon": "img/visualizations/TagCloud64.png"
     }, {
         "name": "Count By",
@@ -108,12 +134,6 @@
         "sizeY": 2,
         "type": "sunburst",
         "icon": "img/visualizations/Sunburst64.png"
-    }, {
-        "name": "Data Table",
-        "sizeX": 6,
-        "sizeY": 2,
-        "type": "query-results-table",
-        "icon": "img/visualizations/ViewData64.png"
     }, {
         "name": "Graph",
         "sizeX": 4,
@@ -129,7 +149,65 @@
     }],
 
     "datasets": [{
-        "name": "Neon-Tangelo Demo",
+        "name": "QCR",
+        "layout": "qcr",
+        "datastore": "mongo",
+        "hostname": "localhost",
+        "database": "test",
+        "tables": [{
+            "name": "twitter36",
+            "fields": [{
+                "columnName": "_id",
+                "prettyName": "Database ID"
+            }, {
+                "columnName": "created_at",
+                "prettyName": "Created At"
+            }, {
+                "columnName": "screen_name",
+                "prettyName": "Screen Name"
+            }, {
+                "columnName": "lang",
+                "prettyName": "Language"
+            }, {
+                "columnName": "hashtags",
+                "prettyName": "Hashtags"
+            }, {
+                "columnName": "text",
+                "prettyName": "Text"
+            }],
+            "mappings": {}
+        }, {
+            "name": "ff",
+            "fields": [{
+                "columnName": "_id",
+                "prettyName": "Database ID"
+            }, {
+                "columnName": "attributeList",
+                "prettyName": "Attribute List"
+            }, {
+                "columnName": "id",
+                "prettyName": "User ID"
+            }, {
+                "columnName": "label",
+                "prettyName": "Label"
+            }, {
+                "columnName": "magnitude",
+                "prettyName": "Magnitude"
+            }],
+            "mappings": {
+                "graph_nodes": "label",
+                "graph_links": "attributeList"
+            }
+        }],
+        "relations": [{
+            "twitter36": "screen_name",
+            "ff": "label"
+        }],
+        "connectOnLoad": false
+    },
+
+    {
+        "name": "Neon & Twitter Mentions",
         "layout": "mentions",
         "datastore": "mongo",
         "hostname": "192.168.0.129",
@@ -144,6 +222,7 @@
                 "color_by": "lang",
                 "size_by": "user_followers_count",
                 "bar_x_axis": "lang",
+                "tags": "hashtags",
                 "count_by": "screen_name_tolower"
             }
         }, {
@@ -166,13 +245,14 @@
             "twitter36_reimport": "screen_name_tolower",
             "twitter_mentions": "target"
         }],
-        "connectOnLoad": true
+        "connectOnLoad": false
     }],
 
     "layouts": {
         "default": [{
             "sizeX": 6,
             "sizeY": 1,
+            "minSizeY": 1,
             "type": "timeline-selector"
         }, {
             "sizeX": 4,
@@ -196,9 +276,72 @@
             "type": "count-by"
         }],
 
+        "qcr": [{
+            "sizeX": 6,
+            "sizeY": 1,
+            "minSizeY": 1,
+            "type": "timeline-selector",
+            "bindings": {
+                "bind-date-field": "'created_at'"
+            }
+        }, {
+            "sizeX": 4,
+            "sizeY": 2,
+            "type": "heat-map",
+            "bindings": {
+                "bind-latitude-field": "'latitude'",
+                "bind-longitude-field": "'longitude'"
+            }
+        }, {
+            "sizeX": 2,
+            "sizeY": 2,
+            "type": "circular-heat-form",
+            "bindings": {
+                "bind-date-field": "'created_at'"
+            }
+        }, {
+            "sizeX": 2,
+            "sizeY": 2,
+            "type": "linechart",
+            "bindings": {
+                "bind-date-field": "'created_at'"
+            }
+        }, {
+            "sizeX": 2,
+            "sizeY": 2,
+            "type": "barchart",
+            "bindings": {
+                "bind-x-axis-field": "'lang'"
+            }
+        }, {
+            "sizeX": 2,
+            "sizeY": 2,
+            "type": "count-by",
+            "bindings": {
+                "bind-count-field": "'screen_name'"
+            }
+        }, {
+            "sizeX": 4,
+            "sizeY": 2,
+            "type": "directed-graph"
+        }, {
+            "sizeX": 2,
+            "sizeY": 2,
+            "minSizeY": 1,
+            "type": "tag-cloud",
+            "bindings": {
+                "bind-tag-field": "'hashtags'"
+            }
+        }, {
+            "sizeX": 6,
+            "sizeY": 2,
+            "type": "query-results-table"
+        }],
+
         "mentions": [{
             "sizeX": 6,
             "sizeY": 1,
+            "minSizeY": 1,
             "type": "timeline-selector"
         }, {
             "sizeX": 4,
@@ -207,55 +350,12 @@
         }, {
             "sizeX": 2,
             "sizeY": 1,
-            "type": "tag-cloud",
-            "bindings": {
-                "tag-field": "'hashtags'"
-            }
+            "minSizeY": 1,
+            "type": "tag-cloud"
         }, {
             "sizeX": 2,
             "sizeY": 2,
             "type": "count-by"
-        }, {
-            "sizeX": 6,
-            "sizeY": 2,
-            "type": "query-results-table"
-        }],
-
-        "qcr": [{
-            "sizeX": 6,
-            "sizeY": 1,
-            "type": "timeline-selector"
-        }, {
-            "sizeX": 4,
-            "sizeY": 2,
-            "type": "heat-map"
-        }, {
-            "sizeX": 2,
-            "sizeY": 2,
-            "type": "circular-heat-form"
-        }, {
-            "sizeX": 2,
-            "sizeY": 2,
-            "type": "linechart"
-        }, {
-            "sizeX": 2,
-            "sizeY": 2,
-            "type": "barchart"
-        }, {
-            "sizeX": 2,
-            "sizeY": 2,
-            "type": "count-by"
-        }, {
-            "sizeX": 4,
-            "sizeY": 2,
-            "type": "directed-graph"
-        }, {
-            "sizeX": 2,
-            "sizeY": 2,
-            "type": "tag-cloud",
-            "bindings": {
-                "tag-field": "'hashtags'"
-            }
         }, {
             "sizeX": 6,
             "sizeY": 2,

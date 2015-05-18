@@ -25,17 +25,11 @@
     margin-bottom: 5px;
 }
 
-.count-by-field-count {
-    margin-top: 5px;
-    margin-bottom: 0px;
-}
-
 .data-tray .refresh{
     margin-left: 10px;
 }
 
 .count-by-grid {
-    min-height: 80px;
     background-color: #F1F1F1;
     border: 1px solid #CCCCCC;
     border-radius: 2px;
@@ -105,11 +99,6 @@
   width: 100%;
 }
 
-.filter-reset {
-    margin-bottom: 5px;
-    margin-right: 15px;
-}
-
 .centered {
     text-align: center;
 }
@@ -120,13 +109,7 @@
     padding: 0;
 }
 
-span.glyphicon:focus,
-span.glyphicon:hover {
+.countByDirective span.glyphicon:focus,
+.countByDirective span.glyphicon:hover {
     color: #39b54a;
-}
-
-.countByDirective .chart-options {
-    /* Add a bottom margin to make the chart-options element the same size as filter-reset elements. */
-    margin-bottom: 6px;
-    margin-left: 10px;
 }

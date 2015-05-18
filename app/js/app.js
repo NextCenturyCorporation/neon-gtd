@@ -54,20 +54,74 @@ angular.module('neonDemo.filters', [])
 
 var XDATA = {};
 
+// Start angular once all of the configuration variables have been read from the JSON file(s) and set in the module.
+var startAngular = function() {
+    angular.bootstrap(document, ['neonDemo']);
+};
+
+var saveLayouts = function(layouts) {
+    neonDemo.constant('layouts', layouts);
+};
+
+var readLayoutFiles = function($http, layouts, layoutFiles, callback) {
+    if(layoutFiles.length) {
+        var layoutFile = layoutFiles.shift();
+        $http.get(layoutFile).success(function(layoutConfig) {
+            if(layoutConfig.name && layoutConfig.layout) {
+                layouts[layoutConfig.name] = layoutConfig.layout;
+            }
+            readLayoutFiles($http, layouts, layoutFiles, callback);
+        })
+    } else {
+        saveLayouts(layouts);
+        if(callback) {
+            callback();
+        }
+    }
+};
+
+var saveDatasets = function(datasets) {
+    neonDemo.value('datasets', datasets);
+};
+
+var readDatasetFiles = function($http, datasets, datasetFiles, callback) {
+    if(datasetFiles.length) {
+        var datasetFile = datasetFiles.shift();
+        $http.get(datasetFile).success(function(datasetConfig) {
+            if(datasetConfig.dataset) {
+                datasets.push(datasetConfig.dataset);
+            }
+            readDatasetFiles($http, datasets, datasetFiles, callback);
+        })
+    } else {
+        saveDatasets(datasets);
+        if(callback) {
+            callback();
+        }
+    }
+};
+
 angular.element(document).ready(function() {
     var $http = angular.injector(['ng']).get('$http');
-    $http.get('./config/config.json').success(function(config) {
-        var xdataConfig = (config.xdata || {
-            echoToConsole: false,
-            enableLogging: false,
-            activityLoggerUrl: "",
-            component: "",
-            componentVersion: ""
+    $http.get('./config/twitter.config.json').success(function(config) {
+        // Configure the user-ale logger.
+        var aleConfig = (config.user_ale || {
+            loggingUrl: "http://192.168.1.100",
+            toolName: "Neon Dashboard",
+            elementGroups: [
+                "top",
+                "map_group",
+                "table_group",
+                "chart_group",
+                "query_group",
+                "graph_group"
+            ],
+            workerUrl: "lib/user-ale/js/userale-worker.js",
+            debug: false,
+            sendLogs: false
         });
-
-        XDATA.activityLogger = new activityLogger('lib/xdatalogger/js/draper.activity_worker-2.1.1.js');
-        XDATA.activityLogger.echo(xdataConfig.echoToConsole).testing(!xdataConfig.enableLogging);
-        XDATA.activityLogger.registerActivityLogger(xdataConfig.activityLoggerUrl, xdataConfig.component, xdataConfig.componentVersion);
+        XDATA.userALE = new userale(aleConfig);
+        XDATA.userALE.register();
 
         var opencpuConfig = (config.opencpu || {
             enableOpenCpu: false
@@ -78,6 +132,13 @@ angular.element(document).ready(function() {
             ocpu.useAlerts = opencpuConfig.useAlerts;
             ocpu.seturl(opencpuConfig.url);
         }
+
+        var dashboardConfig = config.dashboard || {
+            gridsterColumns: 6,
+            hideNavbarItems: false
+        };
+        dashboardConfig.gridsterColumns = dashboardConfig.gridsterColumns ? dashboardConfig.gridsterColumns : 6;
+        neonDemo.constant('config', dashboardConfig);
 
         neonDemo.value('popups', {
             links: {
@@ -100,15 +161,19 @@ angular.element(document).ready(function() {
         };
         neonDemo.constant('external', externalAppConfig);
 
-        var datasets = (config.datasets || []);
-        neonDemo.value('datasets', datasets);
-
         var visualizations = (config.visualizations || []);
         neonDemo.constant('visualizations', visualizations);
 
+        var files = (config.files || []);
         var layouts = (config.layouts || {});
-        neonDemo.constant('layouts', layouts);
+        if(!(layouts.default)) {
+            layouts.default = [];
+        }
+        var datasets = (config.datasets || []);
 
-        angular.bootstrap(document, ['neonDemo']);
+        // Read each layout config file and set the layouts, then read each dataset config file and set the datasets, then start angular.
+        readLayoutFiles($http, layouts, (files.layouts || []), function() {
+            readDatasetFiles($http, datasets, (files.datasets || []), startAngular)
+        });
     });
 });

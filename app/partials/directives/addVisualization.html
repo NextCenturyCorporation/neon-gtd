@@ -1,6 +1,7 @@
 <ul class="nav navbar-nav add-visualization-button neon-popup-button">
     <li>
-        <a  data-toggle="modal" data-target="#addVisualizationModel" class="collapsed dropdown-toggle primary">
+        <a  data-toggle="modal" data-target="#addVisualizationModel" class="collapsed dropdown-toggle primary"
+            ng-click="toggleAddVisualizationDialog()">
           <span class="glyphicon glyphicon-plus-sign"></span> Add Visualization
         </a>
     </li>
@@ -34,7 +35,7 @@
                 <div class="alert alert-success pull-left text-left" role="alert" style="display:none"
                     ng-bind="alertMessage"></div>
                 <button type="button" class="btn btn-default" data-dismiss="modal"
-                    ng-click="deselectAll()">Close</button>
+                    ng-click="onClose()">Close</button>
             </div>
         </div>
     </div>

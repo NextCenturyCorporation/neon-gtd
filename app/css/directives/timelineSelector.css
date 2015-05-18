@@ -17,19 +17,11 @@
 .timeline-selector {
     display:block;
     margin: 0px;
-    padding: 15px 20px 0px 20px;
+    padding: 20px;
     overflow-x: hidden;
-    overflow-y: auto;
+    overflow-y: scroll;
     height: 100%;
     width: 100%;
-}
-
-.timeline-selector h4 {
-    margin: 0px 0px 0px 0px;
-}
-
-.timeline-selector .btn-group{
-    margin: 10px 0px 0px 0px;
 }
 
 .timeline-selector .timeseries-selector-form-group {
@@ -45,14 +37,6 @@
     font-size: 12px;
     font-weight: bold;
     text-transform: uppercase;
-}
-
-.timeline-selector .filter-reset{
-    margin: 13px 15px 0px 0px;
-    background-color: #dddddd;
-}
-.timeline-selector .filter-reset .btn{
-    border-color: #cccccc;
 }
 
 .timeline-selector .timeseries-selector{
@@ -84,15 +68,9 @@
     border-color: #AA1E13;
 }
 
-.timeline-selector .chart-options {
-    /* Align with granulatiry buttons. */
-    margin-top: 13px;
-    margin-left: 10px;
-}
-
-.timeline-selector .timeline-options {
-    /* Set a lower position for the popover due to the extra top margin added to chart-options. */
-    top: 53px;
+.timeline-selector .chart-options .popover {
+    /* Set the width so that the date granularity buttons fit on one row. */
+    min-width: 306px;
 }
 
 .visualization-widget-mobile .timeline-selector {

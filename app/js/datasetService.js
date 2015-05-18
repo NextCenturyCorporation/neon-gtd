@@ -299,6 +299,8 @@ angular.module("neonDemo.services")
                             var relationFieldName = service.dataset.relations[j][relationTableName];
                             if(!(tablesToFields[relationTableName])) {
                                 tablesToFields[relationTableName] = {};
+                            }
+                            if(!(tablesToFields[relationTableName][fieldName])) {
                                 tablesToFields[relationTableName][fieldName] = [];
                             }
                             tablesToFields[relationTableName][fieldName].push(relationFieldName);
@@ -312,6 +314,7 @@ angular.module("neonDemo.services")
                 var relations = [];
                 for(i = 0; i < relationTableNames.length; ++i) {
                     relations.push({
+                        database: service.getDatabase(),
                         table: relationTableNames[i],
                         fields: tablesToFields[relationTableNames[i]]
                     });
@@ -319,17 +322,18 @@ angular.module("neonDemo.services")
                 return relations;
             }
 
-            // If the input fields do not have any related fields in other tables, return an object containing the input table and fields.
-            var inputObject = {
+            // If the input fields do not have any related fields in other tables, return a list containing an object for the input table and fields.
+            var relationForInput = {
+                database: service.getDatabase(),
                 table: tableName,
                 fields: {}
             };
 
             for(i = 0; i < fieldNames.length; ++i) {
-                inputObject.fields[fieldNames[i]] = fieldNames[i];
+                relationForInput.fields[fieldNames[i]] = [fieldNames[i]];
             }
 
-            return [inputObject];
+            return [relationForInput];
         };
 
         return service;

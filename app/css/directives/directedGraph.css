@@ -35,6 +35,11 @@ div.directed-graph {
     width: 100%;
 }
 
+div.directed-graph div.directed-graph-container {
+    height: 100%;
+    width: 100%;
+}
+
 .directedGraphDirective {
     padding: 20px;
     height: 100%;

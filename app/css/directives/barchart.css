@@ -180,6 +180,3 @@ svg .tick {
 .barchart .unselectedBar {
   opacity: 0.5;
 }
-.barchartDirective .filter-reset {
-  margin-right: 10px;
-}

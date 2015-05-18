@@ -14,11 +14,9 @@
  *
  */
 
-.well-map{
-    padding: 0;
-}
-.well-map .chart-options .popover {
-    top: 45px;
+.heat-map .chart-options .popover {
+    top: 20px;
+    right: -20px;
     position: absolute;
     z-index: 1000;
 }
@@ -35,20 +33,32 @@
     border-radius: 5px;
     color: #555555;
     font-size: 14px;
-    margin: 2px;
+    margin-top: 0px;
+    margin-right: 2px;
     opacity: .8;
     padding: 3px;
 }
 
-.heat-map .map-field-form {
-    padding: 20px 20px 10px 50px;
+.heat-map .header-container {
     position: absolute;
-    width: 100%;
+    top: 20px;
+    left: 20px;
+    right: 20px;
+    z-index: 1005;
+}
+
+.heat-map .header-container.filter-container {
+    top: 50px;
+    left: 60px;
     z-index: 1000;
 }
 
-.heat-map .map-field-form .filter-reset{
-    margin-right: 10px;
+.heat-map .footer-container {
+    position: absolute;
+    bottom: 15px;
+    left: 20px;
+    right: 20px;
+    z-index: 1000;
 }
 
 .heat-map .alert {
@@ -74,7 +84,7 @@
 }
 
 .heat-map .olControlZoom {
-    top: 20px;
+    top: 50px;
     left: 20px;
 }
 

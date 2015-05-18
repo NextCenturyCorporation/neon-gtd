@@ -28,32 +28,35 @@
  * @constructor
  */
 angular.module('neonDemo.directives')
-.directive('sunburst', ['ConnectionService', 'DatasetService', 'ErrorNotificationService', function(connectionService, datasetService, errorNotificationService) {
+.directive('sunburst', ['ConnectionService', 'DatasetService', 'ErrorNotificationService',
+function(connectionService, datasetService, errorNotificationService) {
     return {
         templateUrl: 'partials/directives/sunburst.html',
         restrict: 'EA',
         scope: {
+            bindTable: '='
         },
         link: function($scope, $element) {
             $element.addClass('sunburst-directive');
 
-            $scope.uniqueChartOptions = 'chart-options-' + uuid();
+            $scope.element = $element;
+
             $scope.arcValue = "count";
-            $scope.valueField = null;
-            $scope.selectedItem = null;
             $scope.groupFields = [];
             $scope.messenger = new neon.eventing.Messenger();
             $scope.databaseName = '';
             $scope.tables = [];
-            $scope.selectedTable = {
-                name: ""
-            };
             $scope.fields = [];
             $scope.chart = undefined;
             $scope.errorMessage = undefined;
 
-            var chartOptions = $element.find('.chart-options');
-            chartOptions.toggleClass($scope.uniqueChartOptions);
+            $scope.options = {
+                selectedTable: {
+                    name: ""
+                },
+                selectedItem: "",
+                valueField: ""
+            };
 
             var initialize = function() {
                 $scope.chart = new charts.SunburstChart($element[0], '.sunburst-chart', {
@@ -68,16 +71,25 @@ angular.module('neonDemo.directives')
                 $scope.messenger.subscribe("dataset_changed", onDatasetChanged);
 
                 $scope.$on('$destroy', function() {
+                    XDATA.userALE.log({
+                        activity: "remove",
+                        action: "click",
+                        elementId: "sunburst",
+                        elementType: "canvas",
+                        elementSub: "sunburst",
+                        elementGroup: "chart_group",
+                        source: "user",
+                        tags: ["remove", "sunburst"]
+                    });
+                    $element.off("resize", updateChartSize);
                     $scope.messenger.removeEvents();
                 });
 
                 // This resizes the chart when the div changes.  This rely's on jquery's resize plugin to fire
                 // on the associated element and not just the window.
-                $element.resize(function() {
-                        $scope.updateChartSize();
-                    });
+                $element.resize(updateChartSize);
 
-                $scope.$watch('valueField', function(newValue, oldValue) {
+                $scope.$watch('options.valueField', function(newValue, oldValue) {
                     if(newValue !== oldValue) {
                         $scope.queryForData();
                     }
@@ -97,8 +109,17 @@ angular.module('neonDemo.directives')
              * @private
              */
             var onFiltersChanged = function(message) {
-                XDATA.activityLogger.logSystemActivity('SunburstChart - received neon filter changed event');
-                if(message.addedFilter && message.addedFilter.databaseName === $scope.databaseName && message.addedFilter.tableName === $scope.selectedTable.name) {
+                XDATA.userALE.log({
+                    activity: "alter",
+                    action: "query",
+                    elementId: "sunburst",
+                    elementType: "canvas",
+                    elementSub: "sunburst",
+                    elementGroup: "chart_group",
+                    source: "system",
+                    tags: ["filter-change", "sunburst"]
+                });
+                if(message.addedFilter && message.addedFilter.databaseName === $scope.databaseName && message.addedFilter.tableName === $scope.options.selectedTable.name) {
                     $scope.queryForData();
                 }
             };
@@ -109,13 +130,26 @@ angular.module('neonDemo.directives')
              * @private
              */
             var onDatasetChanged = function() {
-                XDATA.activityLogger.logSystemActivity('SunburstChart - received neon-gtd dataset changed event');
+                XDATA.userALE.log({
+                    activity: "alter",
+                    action: "query",
+                    elementId: "sunburst",
+                    elementType: "canvas",
+                    elementSub: "sunburst",
+                    elementGroup: "chart_group",
+                    source: "system",
+                    tags: ["dataset-change", "sunburst"]
+                });
                 $scope.displayActiveDataset(false);
             };
 
-            $scope.updateChartSize = function() {
+            var updateChartSize = function() {
                 if($scope.chart) {
-                    $element.find('.sunburst-chart').height($element.height() - $element.find('.sunburst-header').outerHeight(true));
+                    var headerHeight = 0;
+                    $element.find(".header-container").each(function() {
+                        headerHeight += $(this).outerHeight(true);
+                    });
+                    $element.find('.sunburst-chart').height($element.height() - headerHeight);
                 }
             };
 
@@ -125,15 +159,15 @@ angular.module('neonDemo.directives')
              * @method buildQuery
              */
             $scope.buildQuery = function() {
-                var query = new neon.query.Query().selectFrom($scope.databaseName, $scope.selectedTable.name);
+                var query = new neon.query.Query().selectFrom($scope.databaseName, $scope.options.selectedTable.name);
                 if($scope.groupFields.length > 0) {
                     query.groupBy.apply(query, $scope.groupFields);
                 }
 
                 //take based on selected count or total
                 query.aggregate(neon.query.COUNT, '*', 'count');
-                if($scope.valueField) {
-                    query.aggregate(neon.query.SUM, $scope.valueField, $scope.valueField);
+                if($scope.options.valueField) {
+                    query.aggregate(neon.query.SUM, $scope.options.valueField, $scope.options.valueField);
                 }
 
                 return query;
@@ -150,12 +184,12 @@ angular.module('neonDemo.directives')
                 }
 
                 $scope.groupFields = [];
-                $scope.valueField = null;
+                $scope.options.valueField = "";
                 $scope.arcValue = charts.SunburstChart.COUNT_PARTITION;
 
                 $scope.databaseName = datasetService.getDatabase();
                 $scope.tables = datasetService.getTables();
-                $scope.selectedTable = $scope.tables[0];
+                $scope.options.selectedTable = $scope.bindTable || $scope.tables[0];
 
                 if(initializing) {
                     $scope.updateFieldsAndQueryForData();
@@ -167,7 +201,7 @@ angular.module('neonDemo.directives')
             };
 
             $scope.updateFieldsAndQueryForData = function() {
-                $scope.fields = datasetService.getDatabaseFields($scope.selectedTable.name);
+                $scope.fields = datasetService.getDatabaseFields($scope.options.selectedTable.name);
                 $scope.fields.sort();
                 $scope.queryForData();
             };
@@ -182,16 +216,52 @@ angular.module('neonDemo.directives')
                 if(connection) {
                     var query = $scope.buildQuery();
 
-                    XDATA.activityLogger.logSystemActivity('sunburst - query for data');
+                    XDATA.userALE.log({
+                        activity: "alter",
+                        action: "query",
+                        elementId: "sunburst",
+                        elementType: "canvas",
+                        elementSub: "sunburst",
+                        elementGroup: "chart_group",
+                        source: "system",
+                        tags: ["query", "sunburst"]
+                    });
                     connection.executeQuery(query, function(queryResults) {
-                        XDATA.activityLogger.logSystemActivity('sunburst - received data');
+                        XDATA.userALE.log({
+                            activity: "alter",
+                            action: "receive",
+                            elementId: "sunburst",
+                            elementType: "canvas",
+                            elementSub: "sunburst",
+                            elementGroup: "chart_group",
+                            source: "system",
+                            tags: ["receive", "sunburst"]
+                        });
                         $scope.$apply(function() {
                             $scope.updateChartSize();
                             doDrawChart(buildDataTree(queryResults));
-                            XDATA.activityLogger.logSystemActivity('sunburst - rendered data');
+                            XDATA.userALE.log({
+                                activity: "alter",
+                                action: "render",
+                                elementId: "sunburst",
+                                elementType: "canvas",
+                                elementSub: "sunburst",
+                                elementGroup: "chart_group",
+                                source: "system",
+                                tags: ["render", "sunburst"]
+                            });
                         });
                     }, function(response) {
-                        XDATA.activityLogger.logSystemActivity('sunburst - received error');
+                        XDATA.userALE.log({
+                            activity: "alter",
+                            action: "failed",
+                            elementId: "sunburst",
+                            elementType: "canvas",
+                            elementSub: "sunburst",
+                            elementGroup: "chart_group",
+                            source: "system",
+                            tags: ["failed", "sunburst"]
+                        });
                         doDrawChart(buildDataTree({
                             data: []
                         }));
@@ -205,7 +275,7 @@ angular.module('neonDemo.directives')
             var buildDataTree = function(data) {
                 var nodes = {};
                 var tree = {
-                    name: $scope.selectedTable.name,
+                    name: $scope.options.selectedTable.name,
                     children: []
                 };
                 var leafObject;
@@ -239,7 +309,7 @@ angular.module('neonDemo.directives')
                             } else {
                                 leafObject.name = field + ": " + doc[field];
                                 leafObject.count = doc.count;
-                                leafObject.total = doc[$scope.valueField];
+                                leafObject.total = doc[$scope.options.valueField];
                                 parent.children.push(leafObject);
                             }
                         } else {
@@ -263,10 +333,10 @@ angular.module('neonDemo.directives')
             });
 
             $scope.addGroup = function() {
-                if($scope.groupFields.indexOf($scope.selectedItem) === -1 && $scope.selectedItem !== "") {
-                    $scope.groupFields.push($scope.selectedItem);
+                if($scope.groupFields.indexOf($scope.options.selectedItem) === -1 && $scope.options.selectedItem !== "") {
+                    $scope.groupFields.push($scope.options.selectedItem);
                 }
-                $scope.selectedItem = "";
+                $scope.options.selectedItem = "";
                 $scope.queryForData();
             };
 

@@ -1,11 +1,26 @@
 {
-    "xdata": {
-        "echoToConsole": false,
-        "enableLoggin": false,
-        "activityLoggerUrl": "http://xd-draper.xdata.data-tactics-corp.com:1337",
-        "component": "Neon Demo",
-        "componentVersion": "1.0.0-SNAPSHOT"
+    "user_ale": {
+        "loggingUrl": "http://192.168.1.100",
+        "toolName": "Neon Dashboard",
+        "toolVersion": "1.1.0",
+        "elementGroups": [
+            "top",
+            "map_group",
+            "table_group",
+            "chart_group",
+            "query_group",
+            "graph_group"
+        ],
+        "workerUrl": "lib/user-ale/js/userale-worker.js",
+        "debug": false,
+        "sendLogs": false
     },
+
+    "dashboard": {
+        "gridsterColumns": 6,
+        "hideNavbarItems": false
+    },
+
 
     "opencpu": {
         "enableOpenCpu": false,
@@ -20,9 +35,24 @@
     },
 
     "visualizations": [{
+        "name": "Filter Builder",
+        "sizeX": 4,
+        "minSizeX": 3,
+        "sizeY": 2,
+        "minSizeY": 1,
+        "type": "filter-builder",
+        "icon": "img/visualizations/CreateFilter64.png"
+    }, {
+        "name": "Data Table",
+        "sizeX": 6,
+        "sizeY": 2,
+        "type": "query-results-table",
+        "icon": "img/visualizations/ViewData64.png"
+    }, {
         "name": "Timeline",
         "sizeX": 6,
         "sizeY": 1,
+        "minSizeY": 1,
         "type": "timeline-selector",
         "icon": "img/visualizations/Timeline64.png"
     }, {
@@ -67,12 +97,6 @@
         "sizeY": 2,
         "type": "sunburst",
         "icon": "img/visualizations/Sunburst64.png"
-    }, {
-        "name": "View Data",
-        "sizeX": 6,
-        "sizeY": 2,
-        "type": "query-results-table",
-        "icon": "img/visualizations/ViewData64.png"
     }, {
         "name": "Graph",
         "sizeX": 4,
@@ -155,6 +179,7 @@
         "default": [{
             "sizeX": 6,
             "sizeY": 1,
+            "minSizeY": 1,
             "type": "timeline-selector"
         }, {
             "sizeX": 4,
@@ -176,6 +201,95 @@
             "sizeX": 2,
             "sizeY": 2,
             "type": "count-by"
+        }],
+
+        "example-with-bindings": [{
+            "sizeX": 6,
+            "sizeY": 1,
+            "type": "timeline-selector",
+            "bindings": {
+                "bind-table": "'myTable'",
+                "bind-date-field": "'date'"
+            }
+        }, {
+            "sizeX": 4,
+            "sizeY": 2,
+            "type": "heat-map",
+            "bindings": {
+                "bind-table": "'myTable'",
+                "bind-latitude-field": "'latitude'",
+                "bind-longitude-field": "'longitude'",
+                "bind-color-field": "'type'",
+                "bind-size-field": "'type'"
+            }
+        }, {
+            "sizeX": 2,
+            "sizeY": 2,
+            "type": "circular-heat-form",
+            "bindings": {
+                "bind-table": "'myTable'",
+                "bind-date-field": "'date'"
+            }
+        }, {
+            "sizeX": 2,
+            "sizeY": 2,
+            "type": "linechart",
+            "bindings": {
+                "bind-table": "'myTable'",
+                "bind-date-field": "'date'",
+                "bind-y-axis-field": "'type'",
+                "bind-category-field": "'type'",
+                "bind-aggregation-field": "'count'"
+            }
+        }, {
+            "sizeX": 2,
+            "sizeY": 2,
+            "type": "barchart",
+            "bindings": {
+                "bind-table": "'myTable'",
+                "bind-x-axis-field": "'type'",
+                "bind-y-axis-field": "'type'",
+                "bind-aggregation-field": "'count'"
+            }
+        }, {
+            "sizeX": 2,
+            "sizeY": 2,
+            "type": "count-by",
+            "bindings": {
+                "bind-table": "'myTable'",
+                "bind-count-field": "'type'"
+            }
+        }, {
+            "sizeX": 2,
+            "sizeY": 2,
+            "type": "tag-cloud",
+            "bindings": {
+                "bind-table": "'myTable'",
+                "bind-tag-field": "'hashtags'"
+            }
+        }, {
+            "sizeX": 2,
+            "sizeY": 2,
+            "type": "sunburst",
+            "bindings": {
+                "bind-table": "'myTable'"
+            }
+        }, {
+            "sizeX": 6,
+            "sizeY": 2,
+            "type": "query-results-table",
+            "bindings": {
+                "bind-table": "'myTable'"
+            }
         }]
+    },
+
+    "files": {
+        "datasets": [
+            "./config/sample.dataset.config.json"
+        ],
+        "layouts": [
+            "./config/sample.layout.config.json"
+        ]
     }
 }

@@ -9,9 +9,9 @@
                 <div>
                     <ul>
                         <li ng-repeat="link in links">
-                        <form action="{{link.url}}" method="get" target="{{link.name}}-{{link.tab}}">
+                        <form action="{{link.url}}" method="get" target="{{link.name}}-{{link.tab}}" ng-submit="logLinkEvent(link.name)">
                             <input ng-repeat="arg in link.args" type="hidden" name="{{arg.name}}" value="{{arg.value}}">
-                            <button type="submit" tabindex="0" title="{{link.name}}">
+                            <button type="submit" value="submit" tabindex="0" title="{{link.name}}">
                                 <img alt="{{link.name}}" class="img-thumbnail center-block" ng-src="{{link.image}}">
                                 <span class="text-uppercase small">{{link.name}}</span>
                             </button>
@@ -21,7 +21,7 @@
                 </div>
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+                <button type="button" class="btn btn-default" data-dismiss="modal" ng-click="onClose()">Close</button>
             </div>
         </div>
     </div>
