@@ -28,19 +28,19 @@ a {
     color: @accent-bright;
 
     &:hover, &:focus {
-        color: #2F9F3E;
+        color: @accent-dark;
     }
 
     .navbar-text {
         &:hover, &:focus {
             text-decoration: none;
-            color: #333333;
+            color: @mid-text-color;
         }
     }
 }
 
 body{
-    background-color: #F1F1F1;
+    background-color: @main-background;
     font-family: "Open Sans", Helvetica, arial, sans-serif;
 }
 
@@ -51,7 +51,7 @@ h4, .h4,
 h5, .h5,
 h6, .h6 {
     font-family: "Open Sans", Helvetica, arial, sans-serif;
-    color: #888888;
+    color: @main-text-color;
 
 }
 
@@ -74,29 +74,29 @@ label{
 }
 
 .btn-danger{
-    background-color: #C2360D;
-    border-color: #AA1E13;
+    background-color: @error-color;
+    border-color: @error-dark-color;
 
     &:hover, &:focus, &:active, &.active {
-        background-color: #AA1E13;
-        border-color: #AA1E13;
+        background-color: @error-dark-color;
+        border-color: @error-dark-color;
     }
 }
 
 .btn-default {
-    color: #555555;
+    color: @mid-text-color;
 
     &:focus{
-        border-color: #CCCCCC;
-        color: #333333;
+        border-color: @border-color;
+        color: @mid-text-color;
     }
 
     &:hover, &:active{
-        color: #333333;
+        color: @mid-text-color;
     }
 
     &.active {
-        color: #555555;
+        color: @mid-text-color;
     }
 }
 
@@ -126,32 +126,27 @@ label{
 
 .btn-primary {
     background-color: @accent-bright;
-    border-color: #2F9F3E;
+    border-color: @accent-dark;
 
     &:hover, &:focus, &active {
-        background-color: #2f9f3e;
-        border-color: #2f9f3e;
+        background-color: @accent-dark;
+        border-color: @accent-dark;
     }
 
     &.active {
-        background-color: #2f9f3e;
-        border-color: #2f9f3e;
+        background-color: @accent-dark;
+        border-color: @accent-dark;
     }
 
     &.disabled, &[disabled], fieldset[disabled] {
         background-color: @accent-bright;
-        border-color: #2f9f3e;
+        border-color: @accent-dark;
 
         &:hover, &:focus, &:active, &.active {
             background-color: @accent-bright;
-            border-color: #2f9f3e;
+            border-color: @accent-dark;
         }
     }
-}
-
-.btn-success{
-    background-color: #3681CC;
-    border-color: #3681CC;
 }
 
 .chart-options {
@@ -160,7 +155,7 @@ label{
         color: @accent-bright;
 
         &.collapsed {
-            color: #999999;
+            color: @main-text-color;
         }
 
         &:hover {
@@ -201,12 +196,12 @@ label{
     }
 
     .popover-content {
-        background-color: #FFFFFF;
+        background-color: @light-background;
         overflow: auto;
         padding: 15px 15px 0;
-        border: 1px solid rgba(0, 0, 0, 0.2);
+        border: @shadow-border;
         border-radius: 6px;
-        box-shadow: 0 5px 10px rgba(0, 0, 0, 0.2);
+        box-shadow: 0 5px 10px @shadow;
     }
 
     span {
@@ -337,7 +332,6 @@ label{
 .filter-reset {
     font-weight: bold;
     color: @main-text-color;
-    color: rgba(0,0,0,0.5);
     background-color: #e9e9e9;
     padding-left: 11px;
     border-radius: 4px;
@@ -346,16 +340,16 @@ label{
     .btn {
         border: 0;
         padding: 8px;
-        color: #C2360D;
+        color: @error-color;
         border-left: 1px solid #d9d9d9;
         border-radius: 0 4px 4px 0;
         margin-left: 7px;
         line-height: 1;
 
         &:hover {
-            background-color: #C2360D;
-            border-color: #AA1E13;
-            color: #FFFFFF;
+            background-color: @error-color;
+            border-color: @error-dark-color;
+            color: @light-text-color;
         }
 
         .glyphicon {
@@ -391,7 +385,7 @@ label{
         }
 
         &:hover{
-            color: #C2360D;
+            color: @error-color;
         }
     }
 
@@ -433,7 +427,7 @@ label{
     }
 
     .filter{
-        background-color: #e9e9e9;
+        background-color: @main-background;
         padding: 10px;
         border-radius: 4px;
         margin-top: 10px;
@@ -527,7 +521,7 @@ label{
 
 .label-primary{
     background-color: @accent-bright;
-    border-color: #2F9F3E;
+    border-color: @accent-dark;
 }
 
 .legend {
@@ -543,7 +537,7 @@ label{
     }
 
     .legend-item {
-        color: #555555;
+        color: @mid-text-color;
         display: inline-block;
         margin-right: 10px;
         margin-top: 5px;
@@ -609,9 +603,9 @@ label{
     margin-bottom: 0;
 
     .navbar-default{
-        background-color: #FFFFFF;
+        background-color: @light-background;
         border: 0;
-        box-shadow: 0 1px 2px rgba(0, 0, 0, 0.15);
+        box-shadow: 0 1px 2px @shadow;
         z-index: auto;
         top: 0;
         width: 100%;
@@ -655,13 +649,13 @@ label{
                 > .primary{
                     border: 0;
                     background-color: @accent-bright;
-                    color: #FFFFFF;
+                    color: @light-text-color;
                     padding: 15px 30px;
                     font-weight: bold;
 
                     &:hover, &:focus{
-                        background-color: #2f9f3e;
-                        color: #FFFFFF;
+                        background-color: @accent-dark;
+                        color: @light-text-color;
                     }
                 }
             }
@@ -673,11 +667,11 @@ label{
                         float: left;
                         width: auto;
                         margin: 2px 0 0;
-                        background-color: #fff;
-                        border: 1px solid #ccc;
-                        border: 1px solid rgba(0,0,0,.15);
-                        -webkit-box-shadow: 0 6px 12px rgba(0,0,0,.175);
-                        box-shadow: 0 6px 12px rgba(0,0,0,.175);
+                        background-color: @light-background;
+                        border: @border;
+                        border: @shadow-border;
+                        -webkit-box-shadow: 0 6px 12px @shadow;
+                        box-shadow: 0 6px 12px @shadow;
                     }
                 }
             }
@@ -701,17 +695,17 @@ label{
 .open {
     .dropdown-toggle {
         &.btn-danger {
-            background-color: #AA1E13;
-            border-color: #AA1E13;
+            background-color: @error-dark-color;
+            border-color: @error-dark-color;
         }
 
         &.btn-default {
-            color: #555555;
+            color: @mid-text-color;
         }
 
         &.btn-primary{
-            background-color: #2f9f3e;
-            border-color: #2f9f3e;
+            background-color: @accent-dark;
+            border-color: @accent-dark;
         }
     }
 }
@@ -740,7 +734,7 @@ label{
 }
 
 .table-responsive{
-    border: 1px solid #DDDDDD;
+    border: @border;
     border-radius: 4px;
 }
 
@@ -749,7 +743,7 @@ label{
         > tr {
             &:nth-child(2n+1) {
                 > td, > th {
-                    background-color: #F1f1f1;
+                    background-color: @main-background;
                 }
             }
         }
@@ -757,27 +751,23 @@ label{
 }
 
 .text-danger{
-    color: #C2360D;
+    color: @error-color;
 }
 
 .text-primary{
     color: @accent-bright;
 }
 
-.text-success{
-    color: #3681CC;
-}
-
 #tooltip-container {
     display: none;
     position: absolute;
     padding: 12px 15px;
-    color: #555555;
+    color: @mid-text-color;
     font-size: 12px;
-    background-color: rgba(255,255,255,0.9);
-    border: 1px solid rgba(0, 0, 0, 0.15);
+    background-color: @tooltip-background;
+    border: @shadow-border;
     border-radius: 4px;
-    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.176);
+    box-shadow: 0 6px 12px @shadow;
     pointer-events: none;
     z-index: 10000;
 
@@ -785,7 +775,7 @@ label{
         font-weight: bold;
         color: @accent-bright;
         display: block;
-        text-shadow: 0 2px 0 #FFFFFF;
+        text-shadow: 0 2px 0 @text-shadow-color;
     }
 
     .tooltip-date {
@@ -793,14 +783,14 @@ label{
         text-transform: uppercase;
         margin-bottom: 5px;
         font-size: 12px;
-        color: #555555;
+        color: @mid-text-color;
     }
 }
 
 .tray{
     border-top: 0;
     margin-bottom: 30px;
-    background-color: #FAFAFA;
+    background-color: @main-background-lighten;
     border-width: 0 0 1px;
     border-radius: 0;
     position: fixed;
@@ -826,9 +816,9 @@ label{
 }
 
 .well{
-    background-color: #FFFFFF;
-    box-shadow: 0 1px 4px rgba(154, 154, 154, 0.3);
-    border: 1px solid #D6D6D6;
+    background-color: @light-background;
+    box-shadow: 0 1px 4px @shadow;
+    border: @border;
     margin: 0px;
     padding: 20px;
     position: relative;

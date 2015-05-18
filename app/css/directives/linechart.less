@@ -25,7 +25,7 @@
     overflow: hidden;
 
     svg{
-            font-size: 10px;
+        font-size: 10px;
     }
 
     .dot{
@@ -61,11 +61,11 @@
 
         text {
             font-weight: bold;
-            text-shadow: 0 2px 0 #FFFFFF;
+            text-shadow: 0 2px 0 @text-shadow-color;
         }
 
         .hover-date {
-            fill: #555555;
+            fill: @chart-text-color;
         }
     }
 
@@ -77,16 +77,16 @@
 
             text{
                 text-shadow:
-                    1px 1px 0 #FFFFFF,
-                    1px 0px 0 #FFFFFF,
-                    1px -1px 0 #FFFFFF,
-                    -1px 1px 0 #FFFFFF,
-                    -1px 0px 0 #FFFFFF,
-                    -1px -1px 0 #FFFFFF,
-                    0px 2px 0 #FFFFFF,
-                    0px -2px 0 #FFFFFF;
+                    1px 1px 0 @text-shadow-color,
+                    1px 0px 0 @text-shadow-color,
+                    1px -1px 0 @text-shadow-color,
+                    -1px 1px 0 @text-shadow-color,
+                    -1px 0px 0 @text-shadow-color,
+                    -1px -1px 0 @text-shadow-color,
+                    0px 2px 0 @text-shadow-color,
+                    0px -2px 0 @text-shadow-color;
                 font-weight: bold;
-                fill: #555555;
+                fill: @chart-text-color;
             }
 
             .tick {
@@ -112,7 +112,7 @@
 .axis {
     path, line {
         fill: none;
-        stroke: #cccccc;
+        stroke: @chart-axis-color;
         shape-rendering: crispEdges;
     }
 }
@@ -125,14 +125,15 @@
 
 .visualization-widget {
     .linechartDirective {
-        height: 100%;
-        width: 100%;
+        height: @widget-height;
+        width: @widget-width;
     }
 }
 
 .visualization-widget-mobile {
     .linechartDirective {
-        min-height: 400px;
-        width: 100%;
+        min-height: @mobile-widget-height;
+        height: @mobile-widget-height;
+        width: @mobile-widget-width;
     }
 }

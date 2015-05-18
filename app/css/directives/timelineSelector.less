@@ -20,8 +20,8 @@
     padding: 15px 20px 0px 20px;
     overflow-x: hidden;
     overflow-y: auto;
-    height: 100%;
-    width: 100%;
+    height: @widget-height;
+    width: @widget-width;
 
     h3 {
         margin-top: -7px;
@@ -50,12 +50,12 @@
     }
 
     .filter-reset{
-        margin: 0px 15px 0px 0px;
-        background-color: #dddddd;
+        margin: 13px 15px 0px 0px;
+        background-color: @main-background-darker;
 
         .btn{
-            border-color: #cccccc;
-            background-color: #e1e1e1;
+            border-color: @border-color;
+            background-color: @main-background-darker;
         }
     }
 
@@ -80,7 +80,7 @@
 
         .btn{
             background-color: #dddddd;
-            border-color: #cccccc;
+            border-color: @border-color;
             padding-left: 8px;
             padding-right: 8px;
 
@@ -93,19 +93,19 @@
             color: @accent-bright;
 
             &:hover{
-                color: #FFFFFF;
+                color: @light-text-color;
                 background-color: @accent-bright;
                 border-color: #2F9F3E;
             }
         }
 
         .btn-danger{
-            color: #C2360D;
+            color: @error-color;
 
             &:hover{
-                color: #FFFFFF;
-                background-color: #C2360D;
-                border-color: #AA1E13;
+                color: @light-text-color;
+                background-color: @error-color;
+                border-color: @error-dark-color;
             }
         }
     }

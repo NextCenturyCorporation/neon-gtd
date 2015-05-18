@@ -23,7 +23,7 @@ svg {
     shape-rendering: crispEdges;
 
     line, path {
-        stroke: @mid-gray;
+        stroke: @chart-axis-color;
         stroke-width: 1px;
         fill: none;
         shape-rendering: crispEdges;
@@ -80,7 +80,7 @@ svg {
 
         text {
             font-weight: bold;
-            text-shadow: 0 2px 0 #FFFFFF;
+            text-shadow: 0 2px 0 @text-shadow-color;
         }
 
         .hover-date {
@@ -100,16 +100,16 @@ svg {
         &.axis {
             text{
                 text-shadow:
-                    1px 1px 0 #FFFFFF,
-                    1px 0px 0 #FFFFFF,
-                    1px -1px 0 #FFFFFF,
-                    -1px 1px 0 #FFFFFF,
-                    -1px 0px 0 #FFFFFF,
-                    -1px -1px 0 #FFFFFF,
-                    0px 2px 0 #FFFFFF,
-                    0px -2px 0 #FFFFFF;
+                    1px 1px 0 @text-shadow-color,
+                    1px 0px 0 @text-shadow-color,
+                    1px -1px 0 @text-shadow-color,
+                    -1px 1px 0 @text-shadow-color,
+                    -1px 0px 0 @text-shadow-color,
+                    -1px -1px 0 @text-shadow-color,
+                    0px 2px 0 @text-shadow-color,
+                    0px -2px 0 @text-shadow-color;
                 font-weight: bold;
-                fill: #555555;
+                fill: @mid-text-color;
             }
 
             .tick {
@@ -157,10 +157,10 @@ svg {
     z-index: 10000;
     position: absolute;
     padding: 15px;
-    background-color: rgba(255,255,255,0.9);
-    border: 1px solid rgba(0, 0, 0, 0.15);
+    background-color: @tooltip-background;
+    border: @shadow-border;
     border-radius: 4px;
-    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.176);
+    box-shadow: 0 6px 12px @shadow;
     pointer-events: none;
     color: @chart-text-color;
 }

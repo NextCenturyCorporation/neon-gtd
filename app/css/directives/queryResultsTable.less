@@ -126,9 +126,9 @@
     min-height: 125px;
     margin: 10px 0;
     background-color: @main-background;
-    border: 1px solid #CCCCCC;
+    border: @border;
     border-radius: 2px;
-    box-shadow: 0 1px 4px rgba(154, 154, 154, 0.2);
+    box-shadow: 0 1px 4px @shadow;
 
     .slick-row{
         background: @main-background-lighten;
@@ -142,8 +142,8 @@
         border-top: 0;
 
         .slick-header-column{
-            color: #555555;
-            background: #e1e1e1;
+            color: @mid-text-color;
+            background: @main-background-darken;
 
             &.ui-state-hover{
                 color: @accent-bright;
@@ -157,7 +157,7 @@
         }
 
         .slick-sortable-placeholder{
-            background: #cccccc;
+            background: @border-color;
         }
     }
 }

@@ -28,14 +28,14 @@ html {
         &.dropdown-toggle {
             border: 0;
             background-color: @accent-bright;
-            color: #FFFFFF;
+            color: @light-text-color;
             padding: 10px 30px;
             border-radius: 3px;
             font-weight: bold;
 
             &:hover, &:focus {
-                background-color: #2f9f3e;
-                color: #FFFFFF;
+                background-color: @accent-dark;
+                color: @light-text-color;
             }
         }
     }
@@ -129,8 +129,8 @@ html {
                 position: absolute;
                 float: left;
                 margin: 2px 0 0;
-                background-color: #fff;
-                border: 1px solid #ccc;
+                background-color: @light-background;
+                border: 1px solid @border-color;
                 border: 1px solid rgba(0,0,0,.15);
                 box-shadow: 0 6px 12px rgba(0,0,0,.175);
             }
@@ -209,7 +209,7 @@ html {
     position: relative;
     display: block;
     top: auto;
-    background-color: #FFFFFF;
+    background-color: @light-background;
     border: 0;
     box-shadow: none;
     margin: 0;
@@ -230,7 +230,7 @@ html {
 }
 
 .well {
-    background-color: #FFFFFF;
+    background-color: @light-background;
     box-shadow: none;
     border: 0;
     margin: 0;

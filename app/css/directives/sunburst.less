@@ -26,7 +26,7 @@
 
 .sunburst-chart {
     path {
-        stroke: #fff;
+        stroke: #ffffff;
         fill-rule: evenodd;
         opacity: .8;
 
@@ -60,12 +60,12 @@
   left:5px;
   z-index: 10000;
   padding: 10px;
-  background-color: rgba(225,225,225,0.9);
-  border: 1px solid rgba(0, 0, 0, 0.15);
+  background-color: @tooltip-background;
+  border: @shadow-border;
   border-radius: 4px;
-  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.176);
+  box-shadow: 0 6px 12px @shadow;
   pointer-events: none;
-  color: #000;
+  color: @mid-text-color;
   opacity: 0;
 }
 
@@ -84,7 +84,7 @@
 
     &:hover, &:focus {
         .breadcrumb-title {
-          color: #a00;
+          color: @error-dark-color;
         }
 
         .breadcrumb-remove {
@@ -97,7 +97,7 @@
     }
 
     .breadcrumb-remove {
-        color: #a00;
+        color: @error-dark-color;
         display: none;
         text-decoration: none;
     }
@@ -105,14 +105,15 @@
 
 .visualization-widget {
     .sunburst-directive {
-        height: 100%;
-        width: 100%;
+        height: @widget-height;
+        width: @widget-width;
     }
 }
 
 .visualization-widget-mobile {
     .sunburst-directive {
-        min-height: 400px;
-        width: 100%;
+        min-height: @mobile-widget-height;
+        height: @mobile-widget-height;
+        width: @mobile-widget-width;
     }
 }

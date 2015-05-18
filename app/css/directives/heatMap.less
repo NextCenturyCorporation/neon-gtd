@@ -15,8 +15,8 @@
 //
 
 .heat-map {
-    height: 100%;
-    width: 100%;
+    height: @widget-height;
+    width: @widget-width;
     min-height: 100px;
 
     .alert {
@@ -27,15 +27,15 @@
 
     .alert-danger {
         background: none;
-        border-color: #C2360D;
-        color: #C2360D;
+        border-color: @error-color;
+        color: @error-color;
     }
 
     .legend-item {
-        background-color: #fff;
-        border: 1px #aaa solid;
+        background-color: @light-background;
+        border: @border;
         border-radius: 5px;
-        color: #555555;
+        color: @mid-text-color;
         font-size: 14px;
         margin: 2px;
         opacity: .8;
@@ -55,7 +55,7 @@
 
     .olMap {
         background-color: #b5d0d0;
-        border: 1px solid #bbbbbb;
+        border: @border;
         border-radius: 0 0 4px 4px;
         width: auto !important;
         height: 100% !important;
@@ -78,8 +78,8 @@
 
     .olControlAttribution {
         bottom: 0;
-        color: #555;
-        text-shadow: 0 1px 0 rgba(255,255,255,0.7);
+        color: @main-text-color;
+        text-shadow: 0 1px 0 @text-shadow-color;
     }
 
     .olControlZoom {
@@ -87,13 +87,15 @@
         left: 20px;
 
         a {
-            background-color: rgba(57, 181, 74, 0.7);
+            background-color: @accent-bright;
+            opacity: .7;
             font-size: 20px;
             font-family: "Open Sans", Helvetica, arial, sans-serif;
             line-height: 24px;
 
             &:hover{
-                background-color: rgba(57, 181, 74, 1);
+                background-color: @accent-bright;
+                opacity: 1;
             }
         }
     }
@@ -114,7 +116,7 @@
 .visualization-widget-mobile {
     .heat-map {
         .olMap {
-            height: 400px !important;
+            height: @mobile-widget-height !important;
         }
     }
 }
