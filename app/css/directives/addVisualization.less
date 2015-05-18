@@ -37,13 +37,13 @@
     a {
         background: none;
         border: 0;
-        color: #777777;
+        color: @main-text-color;
         display: block;
         padding-bottom: 15px;
         padding-top: 15px;
 
         &:focus, &:hover, &.collapsed:hover {
-            color: #39b54a;
+            color: @accent-bright;
             cursor: pointer;
         }
     }
@@ -67,7 +67,7 @@
     }
 
     button {
-        background: rgba(256, 256, 256, 1);
+        background: @light-background;
         border: 0px;
         border-radius: 4px;
         height: 100%;
@@ -76,17 +76,17 @@
 
         &:focus, &:hover {
             img {
-                border-color: #7ce98e;
+                border-color: @accent-light;
             }
 
             span {
-                color: #7ce98e;
+                color: @accent-light;
             }
         }
     }
 
     span {
-        color: #777777;
+        color: @main-text-color;
         font-weight: bold;
         height: 30px;
         letter-spacing: 0.05em;
@@ -95,11 +95,11 @@
 
     .selected {
         button {
-            background: #39b54a;
+            background: @accent-bright;
         }
 
         span {
-            color: #ffffff;
+            color: @light-text-color;
         }
     }
 

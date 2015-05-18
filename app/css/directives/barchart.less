@@ -15,7 +15,7 @@
 
 svg {
     .tick {
-        fill: #444444;
+        fill: @chart-text-color;
     }
 }
 
@@ -23,7 +23,7 @@ svg {
     shape-rendering: crispEdges;
 
     line, path {
-        stroke: #cccccc;
+        stroke: @mid-gray;
         stroke-width: 1px;
         fill: none;
         shape-rendering: crispEdges;
@@ -32,7 +32,7 @@ svg {
 
 .bar {
     //provides a slight separation for adjacent bars. the barchart javascript sets the color based on the svg color
-    fill: #39b54a;
+    fill: @accent-bright;
     stroke-opacity: 1;
 }
 
@@ -84,12 +84,12 @@ svg {
         }
 
         .hover-date {
-          fill: #555555;
+          fill: @chart-text-color;
         }
     }
 
     .selectedBar {
-        fill: #39b54a;
+        fill: @accent-bright;
     }
 
     .unselectedBar {
@@ -143,7 +143,7 @@ svg {
 }
 
 #chart {
-    background-color: #FFFFFF;
+    background-color: @light-background;
 }
 
 .chart-div {
@@ -162,11 +162,11 @@ svg {
     border-radius: 4px;
     box-shadow: 0 6px 12px rgba(0, 0, 0, 0.176);
     pointer-events: none;
-    color: #555555;
+    color: @chart-text-color;
 }
 
 .error-text {
-    color: red;
+    color: @error-text-color;
     margin-top: 170px;
     margin-left: 20px;
 }
@@ -187,16 +187,16 @@ svg {
 
 .visualization-widget {
     .barchartDirective {
-        height: 100%;
-        width: 100%;
+        height: @widget-height;
+        width: @widget-width;
     }
 }
 
 .visualization-widget-mobile {
     .barchartDirective {
-        min-height: 400px;
-        max-height: 400px;
-        width: 100%;
+        min-height: @mobile-widget-height;
+        max-height: @mobile-widget-height;
+        width: @mobile-widget-width;
     }
 }
 

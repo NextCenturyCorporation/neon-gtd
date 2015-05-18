@@ -125,16 +125,16 @@
 .query-results-grid {
     min-height: 125px;
     margin: 10px 0;
-    background-color: #F1F1F1;
+    background-color: @main-background;
     border: 1px solid #CCCCCC;
     border-radius: 2px;
     box-shadow: 0 1px 4px rgba(154, 154, 154, 0.2);
 
     .slick-row{
-        background: #FAFAFA;
+        background: @main-background-lighten;
 
         &.odd {
-            background: #F1F1F1;
+            background: @main-background;
         }
     }
 
@@ -146,13 +146,13 @@
             background: #e1e1e1;
 
             &.ui-state-hover{
-                color: #39B54A;
-                background: #FFFFFF;
+                color: @accent-bright;
+                background: @light-background;
             }
         }
 
         .slick-header-column-sorted{
-            color: #39B54A;
+            color: @accent-bright;
             font-style: normal;
         }
 
