@@ -54,7 +54,6 @@ angular.module('neonDemo.directives')
             };
 
             var onFiltersChanged = function(message) {
-                // XDATA.activityLogger.logSystemActivity('TangeloMentions - received neon filter changed event');
                 if(message.addedFilter.databaseName === twitter.mentionsDatabase && message.addedFilter.tableName === twitter.mentionsCollection) {
                     if(message.type.toUpperCase() === "ADD" || message.type.toUpperCase() === "REPLACE") {
                         setMentionsCenterByFilter(message.addedFilter.whereClause);
@@ -65,17 +64,23 @@ angular.module('neonDemo.directives')
 
             var setMentionsCenterByFilter = function(whereClause) {
                 if(whereClause.whereClauses) {
-                    // Currently ignore filters with multiple clauses.
-                    return;
+                    // Use the first filter on "source" in compound filters.
+                    for(var i = 0; i < whereClause.whereClauses.length; ++i) {
+                        var success = setMentionsCenterByFilter(whereClause.whereClauses[i]);
+                        if(success) {
+                            return true;
+                        }
+                    }
                 } else {
                     if(whereClause.lhs === "source") {
                         $element.find("#center").val(whereClause.rhs);
+                        return true;
                     }
                 }
+                return false;
             };
 
             var onDatasetChanged = function() {
-                // XDATA.activityLogger.logSystemActivity('TangeloMentions - received neon-gtd dataset changed event');
                 displayActiveDataset();
             };
 
@@ -101,8 +106,7 @@ angular.module('neonDemo.directives')
                         $scope.filterItem = item;
                         // TODO This won't work if the twitter mentions collection is in a different database than the rest of the dataset.
                         var relations = datasetService.getRelations(twitterMentionsCollectionName, ["source"]);
-                        filterService.replaceFilters($scope.messenger, relations, $scope.filterKeys, createNeonFilter, function() {
-                            console.log("Mentions: neon filter set on " + item);
+                        filterService.replaceFilters($scope.messenger, relations, $scope.filterKeys, createNeonFilterClause, function() {
                             if(callback) {
                                 callback();
                             }
@@ -119,7 +123,7 @@ angular.module('neonDemo.directives')
                 }
             };
 
-            var createNeonFilter = function(tableName, fieldNames) {
+            var createNeonFilterClause = function(tableName, fieldNames) {
                 var fieldName = fieldNames[0];
                 var filterClause = neon.query.where(fieldName, '=', $scope.filterItem);
                 return new neon.query.Filter().selectFrom($scope.databaseName, tableName).where(filterClause);
