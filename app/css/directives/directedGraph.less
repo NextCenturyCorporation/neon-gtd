@@ -20,8 +20,8 @@ div {
     }
 
     .directed-graph {
-        height: 100%;
-        width: 100%;
+        height: @widget-height;
+        width: @widget-width;
     }
 
     .draw-button-div {
@@ -34,7 +34,7 @@ div {
         height: 20px;
         padding: 5px;
         font: 12px sans-serif;
-        background: #B0C4DE;
+        background: @tooltip-background;
         border: 0px;
         border-radius: 8px;
         pointer-events: none;
@@ -48,11 +48,11 @@ div {
 }
 
 .node {
-  stroke: #FFFFFF;
+  stroke: @chart-empty-dot-color;
   stroke-width: 1.5px;
 }
 
 .link {
-  stroke: #999999;
+  stroke: @chart-line-color;
   stroke-opacity: .6;
 }

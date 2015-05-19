@@ -52,7 +52,7 @@ svg {
     }
 
     .dot-empty{
-      fill: #FFFFFF;
+      fill: @chart-empty-dot-color;
     }
 
     .gridLines {
@@ -66,14 +66,14 @@ svg {
     .horizontalGrid{
         fill: none;
         shape-rendering: crispEdges;
-        stroke: #eeeeee;
+        stroke: @light-chart-axis-color;
         stroke-width : 1px;
         stroke-dasharray: 6px;
     }
 
     .hover-line {
         line {
-            stroke: #e1e1e1;
+            stroke: @light-chart-axis-color;
             fill: none;
             stroke-width: 1px;
         }

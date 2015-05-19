@@ -52,16 +52,12 @@
 
     .axis {
         path {
-            fill: none;
-            stroke: #bbbbbb;
-            shape-rendering: crispEdges;
-            stroke: #F1F1F1;
-            stroke-width: 3px;
+            display: none;
         }
 
         line {
             fill: none;
-            stroke: #bbbbbb;
+            stroke: @chart-axis-color;
             shape-rendering: crispEdges;
         }
     }
@@ -74,39 +70,33 @@
 
     .brush {
         .extent {
-            fill-opacity: .125;
             fill-opacity: 0;
             shape-rendering: crispEdges;
         }
 
         .mask{
-            fill: #f1f1f1;
+            fill: @main-background;
             fill-opacity: 0.7;
         }
 
         .resize {
             path {
-                fill: #EEEEEE;
-                stroke: #666666;
+                fill: @light-chart-axis-color;
+                stroke: @chart-text-color;
+                stroke-opacity: 0.5;
             }
         }
 
         .resize-divider{
-            fill: black;
+            fill: @chart-text-color;
             fill-opacity: 0.3;
         }
-    }
-
-    .dot{
-        stroke: #f1f1f1;
-        stroke-width: 2px;
-        fill: @accent-bright;
     }
 
     .mini-axis{
       fill: none;
       shape-rendering: crispEdges;
-      stroke: rgba(0,0,0,0.1);
+      stroke: @shadow;
       stroke-width : 1px;
     }
 
@@ -125,7 +115,7 @@
 
     .tick {
         text{
-            fill: #777777;
+            fill: @chart-text-color;
         }
     }
 
