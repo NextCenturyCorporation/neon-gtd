@@ -14,20 +14,11 @@
 //
 //
 
-span {
-    &.glyphicon {
-        &:focus, &:hover {
-            color: @accent-bright;
-        }
-    }
-}
-
 .centered {
     text-align: center;
 }
 
 .count-by-grid {
-    min-height: 80px;
     background-color: @main-background;
     border: @border;
     border-radius: 2px;
@@ -101,21 +92,18 @@ span {
     margin-bottom: 5px;
 }
 
-.count-by-field-count {
-    margin-top: 5px;
-    margin-bottom: 0px;
-}
-
 .countByDirective {
     margin: 0px;
     padding: 20px;
-    height: 100%;
-    width: 100%;
+    height: @widget-height;
+    width: @widget-width;
 
-    .chart-options {
-        // Add a bottom margin to make the chart-options element the same size as filter-reset elements.
-        margin-bottom: 6px;
-        margin-left: 10px;
+    span {
+        &.glyphicon {
+            &:focus, &:hover {
+                color: @accent-bright;
+            }
+        }
     }
 }
 
@@ -123,11 +111,6 @@ span {
     .refresh{
         margin-left: 10px;
     }
-}
-
-.filter-reset {
-    margin-bottom: 5px;
-    margin-right: 15px;
 }
 
 .hidden-button {

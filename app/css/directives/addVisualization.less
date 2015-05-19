@@ -23,11 +23,6 @@
         padding: 10px;
         width: 400px;
     }
-
-    .modal-body {
-        max-height: 405px;
-        overflow-y: auto;
-    }
 }
 
 .add-visualization-button{
@@ -46,65 +41,5 @@
             color: @accent-bright;
             cursor: pointer;
         }
-    }
-}
-
-.add-visualization-list {
-    list-style: none;
-    margin: 10px 0px 0px 10px;
-    padding: 0px;
-
-    > li {
-        display: block;
-        float:left;
-        height: 100px;
-        margin: 0px 10px 10px 0px;
-        width: 100px;
-
-        img {
-           border: 0px;
-        }
-    }
-
-    button {
-        background: @light-background;
-        border: 0px;
-        border-radius: 4px;
-        height: 100%;
-        padding: 5px;
-        width: 100px;
-
-        &:focus, &:hover {
-            img {
-                border-color: @accent-light;
-            }
-
-            span {
-                color: @accent-light;
-            }
-        }
-    }
-
-    span {
-        color: @main-text-color;
-        font-weight: bold;
-        height: 30px;
-        letter-spacing: 0.05em;
-        width: 100px;
-    }
-
-    .selected {
-        button {
-            background: @accent-bright;
-        }
-
-        span {
-            color: @light-text-color;
-        }
-    }
-
-    .visualization-thumbnail {
-        height: 100%;
-        width: 100px;
     }
 }

@@ -17,55 +17,21 @@
 .timeline-selector {
     display:block;
     margin: 0px;
-    padding: 15px 20px 0px 20px;
+    padding: 20px;
     overflow-x: hidden;
-    overflow-y: auto;
+    overflow-y: scroll;
     height: @widget-height;
     width: @widget-width;
 
-    h3 {
-        margin-top: -7px;
-
-        @media (max-width: 767px) {
-            font-size: 17px;
-        }
-
-        @media (max-width: 891px) {
-            font-size: 20px;
-        }
-    }
-
-    h4 {
-        margin: 0px 0px 0px 0px;
-    }
-
-    .btn-group{
-        margin: 10px 0px 0px 0px;
-    }
-
     .chart-options {
-        /* Align with granulatiry buttons. */
-        margin-top: 13px;
-        margin-left: 10px;
-    }
-
-    .filter-reset{
-        margin: 13px 15px 0px 0px;
-        background-color: @main-background-darken;
-
-        .btn{
-            border-color: @border-color;
-            background-color: @main-background-darken;
+        .popover {
+            /* Set the width so that the date granularity buttons fit on one row. */
+            min-width: 306px;
         }
     }
 
     .text-center{
         margin: 10px 0px 0px 0px;
-    }
-
-    .timeline-options {
-        /* Set a lower position for the popover due to the extra top margin added to chart-options. */
-        top: 53px;
     }
 
     .timeseries-selector {
@@ -113,35 +79,12 @@
     .timeseries-selector-form-group {
         margin: 10px 0px 0px 5px;
     }
-
-
-
-    .well{
-        height: 100%;
-    }
-}
-
-.timeline-selector-chart{
-    height: calc(100% - 61px);
-    min-height: 50px;
-
-    .brush {
-        .mask {
-            fill: #FFFFFF;
-        }
-    }
-
-    .axis {
-        path {
-            stroke: #FFFFFF;
-        }
-    }
 }
 
 .visualization-widget-mobile {
     .timeline-selector {
         display:block;
         margin: 0px;
-        padding: 20px 20px 20px 20px;
+        padding: 20px;
     }
 }

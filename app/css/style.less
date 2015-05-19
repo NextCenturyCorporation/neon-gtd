@@ -151,7 +151,9 @@ label{
 
 .chart-options {
     > a {
-        padding: 2px 0px;
+        font-size: 16px;
+        padding: 0;
+        border: 0;
         color: @accent-bright;
 
         &.collapsed {
@@ -176,9 +178,13 @@ label{
         display: block;
     }
 
+    .glyphicon {
+        font-size: inherit;
+    }
+
     .popover{
         left: auto;
-        right: 5px;
+        right: 0px;
         top: 45px;
         margin-top: 0;
 
@@ -207,6 +213,13 @@ label{
     span {
         .chart-options-text {
             // Set the top position so the text aligns vertically with the gear icon.
+            position: relative;
+            top: -1px;
+            margin-right: 5px;
+        }
+
+        .header-text {
+            /* Set the top position so the text aligns vertically with the gear icon. */
             position: relative;
             top: -1px;
             margin-right: 5px;
@@ -302,7 +315,7 @@ label{
 
 .count{
     font-weight: bold;
-    font-size: 120%;
+    font-size: 22px;
     display: inline-block;
 }
 
@@ -312,8 +325,8 @@ label{
 }
 
 .count-large{
-    font-size: 160%;
-    bottom: -4px;
+    font-size: 32px;
+    bottom: -5px;
     display: inline-block;
     margin-right: 5px;
     position: relative;
@@ -325,6 +338,10 @@ label{
     > .active {
         > a {
             background-color: @accent-bright;
+
+            &:hover, &:focus {
+                background-color: @accent-bright;
+            }
         }
     }
 }
@@ -332,16 +349,20 @@ label{
 .filter-reset {
     font-weight: bold;
     color: @main-text-color;
-    background-color: #e9e9e9;
+    background-color: @button-color;
     padding-left: 11px;
     border-radius: 4px;
     font-size: 12px;
+    margin-left: 5px;
+    margin-top: 5px;
+    margin-bottom: 5px;
+
 
     .btn {
         border: 0;
         padding: 8px;
         color: @error-color;
-        border-left: 1px solid #d9d9d9;
+        border-left: @border;
         border-radius: 0 4px 4px 0;
         margin-left: 7px;
         line-height: 1;
@@ -446,10 +467,32 @@ label{
     }
 }
 
+.footer-container {
+    min-height: 20px;
+    margin-top: 5px;
+
+    span {
+        &.footer-text {
+            color: #999999;
+            font-size: 16px;
+            font-weight: bold;
+            line-height: 1.33;
+            text-transform: uppercase;
+        }
+    }
+}
+
 .form-control {
     &:focus {
         border-color: @accent-bright;
         box-shadow: 0 1px 1px rgba(0, 0, 0, 0.075) inset, 0 0 8px rgba(57, 181, 74, 0.4);
+    }
+
+    &.ng-invalid {
+        &:focus {
+            border-color: #FF0000;
+            box-shadow: 0 1px 1px rgba(0, 0, 0, 0.075) inset, 0 0 8px rgba(255, 0, 0, 0.4);
+        }
     }
 }
 
@@ -505,6 +548,30 @@ label{
     z-index: 1060;
 }
 
+.header-container {
+    min-height: 20px;
+    margin-bottom: 5px;
+
+    &.filter-container {
+        min-height: 35px;
+    }
+
+    h4 {
+        margin-top: 5px;
+        margin-bottom: 5px;
+    }
+
+    span {
+        &.header-text {
+            color: #999999;
+            font-size: 16px;
+            font-weight: bold;
+            line-height: 1.33;
+            text-transform: uppercase;
+        }
+    }
+}
+
 .hidden{
     display: none !important;
 }
@@ -553,7 +620,7 @@ label{
 
         .legend-text {
             display: inline-block;
-            max-width: 120px;
+            max-width: 90px;
             overflow: hidden;
             white-space: nowrap;
             text-overflow: ellipsis;
