@@ -86,7 +86,6 @@
     "globals": {
         "$": true,
         "_": true,
-        "activityLogger": true,
         "afterEach": false,
         "angular": false,
         "beforeEach": false,
@@ -110,6 +109,7 @@
         "require": true,
         "Slick": true,
         "tables": true,
+        "userale": true,
         "uuid": true,
         "window": true,
         "XDATA": true

@@ -1,51 +1,53 @@
-<div class="chart-options pull-right">
-    <a class="btn btn-lg text-muted collapsed" data-toggle="collapse" data-target=".{{uniqueChartOptions}} .line-chart-options" data-animation=false>
-      <span class="glyphicon glyphicon-cog"></span>
-      <span class="caret"></span>
-    </a>
-    <div class="line-chart-options popover bottom">
-        <div class="arrow"></div>
-        <div class="popover-content">
-            <div class="form-group">
-                <label>Table</label>
-                <select class="form-control" ng-model="selectedTable" ng-options="table.name for table in tables" ng-required="true" ng-disabled="(tables.length < 2)" ng-change="updateFieldsAndQueryForData()">
-                </select>
-            </div>
-            <div class="form-group">
-                <label>Y axis</label>
-                <select class="form-control" ng-model="attrY" ng-options="field for field in fields" ng-required="true" ng-disabled="!(fields.length > 0)">
-                    <option value="" ng-show="(aggregation == 'count')">*</option>
-                </select>
-            </div>
-            <div class="form-group">
-                <select class="form-control" ng-model="aggregation" ng-disabled="!(fields.length > 0)">
-                    <option value="count">Count</option>
-                    <option value="sum">Sum</option>
-                    <option value="average">Average</option>
-                </select>
-            </div>
-            <div class="form-group">
-                <label>Categorize by</label>
-                <select class="form-control" ng-model="categoryField" ng-options="field for field in fields" ng-required="true" ng-disabled="!(fields.length > 0)">
-                    <option value="">None</option>
-                </select>
-            </div>
+<div class="header-container">
+    <span class="header-text pull-left">{{options.selectedTable.name}}</span>
+
+    <options-menu parent-element="element">
+        <div class="form-group">
+            <label>Table</label>
+            <select class="form-control" ng-model="options.selectedTable" ng-options="table.name for table in tables" ng-required="true" ng-disabled="(tables.length < 2)" ng-change="updateFieldsAndQueryForData()">
+            </select>
         </div>
-    </div>
+        <div class="form-group">
+            <label>Date Field (X Axis)</label>
+            <select class="form-control" ng-model="options.attrX" ng-options="field for field in fields" ng-required="true" ng-disabled="!(fields.length > 0)">
+            </select>
+        </div>
+        <div class="form-group">
+            <label>Aggregation</label>
+            <select class="form-control" ng-model="options.aggregation" ng-disabled="!(fields.length > 0)">
+                <option value="count">Count</option>
+                <option value="sum">Sum</option>
+                <option value="average">Average</option>
+            </select>
+        </div>
+        <div class="form-group" ng-show="(options.aggregation !== 'count')">
+            <label>Value Field (Y Axis)</label>
+            <select class="form-control" ng-model="options.attrY" ng-options="field for field in fields" ng-required="true" ng-disabled="!(fields.length > 0)">
+            </select>
+        </div>
+        <div class="form-group">
+            <label>Group Field</label>
+            <select class="form-control" ng-model="options.categoryField" ng-options="field for field in fields" ng-required="true" ng-disabled="!(fields.length > 0)">
+                <option value="">None</option>
+            </select>
+        </div>
+    </options-menu>
 </div>
 
-<div class="legend legend-right">
+<div class="clearfix"></div>
 
-    <div class="legend-item" ng-class="{true: '', false: 'hidden'}[colorMappings.length >= seriesLimit]">
-        <span class="legend-text text-muted"><strong>Top {{seriesLimit}}</strong></span>
+<div class="header-container filter-container">
+    <div class="legend">
+        <div class="legend-item" ng-class="{true: '', false: 'hidden'}[colorMappings.length >= seriesLimit]">
+            <span class="legend-text text-muted"><strong>Top {{seriesLimit}}</strong></span>
+        </div>
+
+        <div class="legend-item legend-item-clickable" title="{{colorMapping.series}}" ng-repeat="colorMapping in colorMappings" ng-click="toggleSeries(colorMapping.series)" ng-class="{true: 'legend-hidden', false: ''}[colorMapping.hidden]">
+            <span class="legend-icon" style="background-color: {{colorMapping.color}}"></span>
+            <span class="legend-text">{{colorMapping.series}}</span>
+            <span ng-show="options.aggregation != 'average'" class="legend-count text-muted">({{colorMapping.total | numberShort}})</span>
+        </div>
     </div>
-
-    <div class="legend-item legend-item-clickable" title="{{colorMapping.series}}" ng-repeat="colorMapping in colorMappings" ng-click="toggleSeries(colorMapping.series)" ng-class="{true: 'legend-hidden', false: ''}[colorMapping.hidden]">
-        <span class="legend-icon" style="background-color: {{colorMapping.color}}"></span>
-        <span class="legend-text">{{colorMapping.series}}</span>
-        <span ng-show="aggregation != 'average'" class="legend-count text-muted">({{colorMapping.total | numberShort}})</span>
-    </div>
-
 </div>
 
 <div class="clearfix"></div>

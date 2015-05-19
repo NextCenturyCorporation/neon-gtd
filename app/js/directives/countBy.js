@@ -17,25 +17,26 @@
  */
 
 angular.module('neonDemo.directives')
-.directive('countBy', ['DIG', 'ConnectionService', 'DatasetService', 'ErrorNotificationService', 'FilterService', function(DIG, connectionService, datasetService, errorNotificationService, filterService) {
+.directive('countBy', ['external', 'popups', 'ConnectionService', 'DatasetService', 'ErrorNotificationService', 'FilterService',
+function(external, popups, connectionService, datasetService, errorNotificationService, filterService) {
     return {
         templateUrl: 'partials/directives/countby.html',
         restrict: 'EA',
         scope: {
+            bindCountField: '=',
+            bindTable: '='
         },
-        link: function($scope, el) {
-            $scope.uniqueChartOptions = 'chart-options-' + uuid();
-            var chartOptions = $(el).find('.chart-options');
-            chartOptions.toggleClass($scope.uniqueChartOptions);
+        link: function($scope, $element) {
+            $element.addClass('countByDirective');
 
-            el.addClass('countByDirective');
+            $scope.element = $element;
+
+            // Unique field name used for the SlickGrid column containing the URLs for the external apps.
+            // This name should be one that is highly unlikely to be a column name in a real database.
+            $scope.EXTERNAL_APP_FIELD_NAME = "neonExternalApps";
 
             $scope.databaseName = "";
             $scope.tables = [];
-            $scope.selectedTable = {
-                name: ""
-            };
-            $scope.countField = "";
             $scope.count = 0;
             $scope.fields = [];
             $scope.tableId = 'countby-' + uuid();
@@ -43,7 +44,14 @@ angular.module('neonDemo.directives')
             $scope.filterSet = undefined;
             $scope.errorMessage = undefined;
 
-            var $tableDiv = $(el).find('.count-by-grid');
+            $scope.options = {
+                selectedTable: {
+                    name: ""
+                },
+                countField: ""
+            };
+
+            var $tableDiv = $element.find('.count-by-grid');
             $tableDiv.attr("id", $scope.tableId);
 
             /**
@@ -52,10 +60,12 @@ angular.module('neonDemo.directives')
              * @private
              */
             var updateSize = function() {
-                var optionHeight = $(el).find('.chart-options').outerHeight(true);
-                var headerHeight = $(el).find('.count-by-header').outerHeight(true);
+                var headerHeight = 0;
+                $element.find(".header-container").each(function() {
+                    headerHeight += $(this).outerHeight(true);
+                });
                 // Subtract an additional 2 pixels from the table height to account for the its border.
-                $('#' + $scope.tableId).height(el.height() - optionHeight - headerHeight - 2);
+                $('#' + $scope.tableId).height($element.height() - headerHeight - 2);
                 if($scope.table) {
                     $scope.table.refreshLayout();
                 }
@@ -75,25 +85,40 @@ angular.module('neonDemo.directives')
                 });
                 $scope.messenger.subscribe("dataset_changed", onDatasetChanged);
 
-                $scope.$watch('countField', function() {
+                $scope.$watch('options.countField', function() {
+                    XDATA.userALE.log({
+                        activity: "select",
+                        action: "click",
+                        elementId: "count-by",
+                        elementType: "combobox",
+                        elementSub: "count-by",
+                        elementGroup: "table_group",
+                        source: "user",
+                        tags: ["options", "count-by"]
+                    });
                     $scope.queryForData();
                 });
 
                 $scope.$on('$destroy', function() {
+                    XDATA.userALE.log({
+                        activity: "remove",
+                        action: "click",
+                        elementId: "count-by",
+                        elementType: "datagrid",
+                        elementSub: "count-by",
+                        elementGroup: "table_group",
+                        source: "user",
+                        tags: ["remove", "count-by"]
+                    });
+                    popups.links.deleteData($scope.tableId);
+                    $element.off("resize", updateSize);
                     $scope.messenger.removeEvents();
                     if($scope.filterSet) {
                         filterService.removeFilters($scope.messenger, $scope.filterKeys);
                     }
                 });
 
-                el.resize(function() {
-                    updateSize();
-                });
-
-                // The header is resized whenever filtering is set or cleared.
-                el.find('.count-by-header').resize(function() {
-                    updateSize();
-                });
+                $element.resize(updateSize);
             };
 
             function createOptions(data) {
@@ -115,19 +140,19 @@ angular.module('neonDemo.directives')
                 var columns = tables.createColumns(data);
                 for(var i = 0; i < columns.length; ++i) {
                     // Since forceFitColumns is enabled, setting this width will force the columns to use as much
-                    // space as possible, which is necessary to keep the first column (dig) as small as possible.
+                    // space as possible, which is necessary to keep the first column as small as possible.
                     columns[i].width = $tableDiv.outerWidth();
                 }
 
-                if(DIG.enabled) {
-                    var digColumn = {
+                if(external.anyEnabled) {
+                    var externalAppColumn = {
                         name: "",
-                        field: "dig",
+                        field: $scope.EXTERNAL_APP_FIELD_NAME,
                         width: "15",
                         cssClass: "centered",
                         ignoreClicks: true
                     };
-                    columns.splice(0, 0, digColumn);
+                    columns.splice(0, 0, externalAppColumn);
                 }
 
                 return columns;
@@ -159,8 +184,17 @@ angular.module('neonDemo.directives')
              * @private
              */
             var onFiltersChanged = function(message) {
-                XDATA.activityLogger.logSystemActivity('CountBy - received neon filter changed event');
-                if(message.addedFilter && message.addedFilter.databaseName === $scope.databaseName && message.addedFilter.tableName === $scope.selectedTable.name) {
+                XDATA.userALE.log({
+                    activity: "alter",
+                    action: "query",
+                    elementId: "count-by",
+                    elementType: "canvas",
+                    elementSub: "count-by",
+                    elementGroup: "table_group",
+                    source: "system",
+                    tags: ["filter-change", "count-by"]
+                });
+                if(message.addedFilter && message.addedFilter.databaseName === $scope.databaseName && message.addedFilter.tableName === $scope.options.selectedTable.name) {
                     $scope.queryForData();
                 }
             };
@@ -171,7 +205,16 @@ angular.module('neonDemo.directives')
              * @private
              */
             var onDatasetChanged = function() {
-                XDATA.activityLogger.logSystemActivity('CountBy - received neon-gtd dataset changed event');
+                XDATA.userALE.log({
+                    activity: "alter",
+                    action: "query",
+                    elementId: "count-by",
+                    elementType: "canvas",
+                    elementSub: "count-by",
+                    elementGroup: "table_group",
+                    source: "system",
+                    tags: ["dataset-change", "count-by"]
+                });
                 $scope.displayActiveDataset(false);
             };
 
@@ -187,7 +230,7 @@ angular.module('neonDemo.directives')
 
                 $scope.databaseName = datasetService.getDatabase();
                 $scope.tables = datasetService.getTables();
-                $scope.selectedTable = $scope.tables[0];
+                $scope.options.selectedTable = $scope.bindTable || datasetService.getFirstTableWithMappings(["count_by"]) || $scope.tables[0];
                 $scope.filterKeys = filterService.createFilterKeys("countby", $scope.tables);
 
                 if(initializing) {
@@ -200,9 +243,9 @@ angular.module('neonDemo.directives')
             };
 
             $scope.updateFieldsAndQueryForData = function() {
-                $scope.fields = datasetService.getDatabaseFields($scope.selectedTable.name);
+                $scope.fields = datasetService.getDatabaseFields($scope.options.selectedTable.name);
                 $scope.fields.sort();
-                $scope.countField = datasetService.getMapping($scope.selectedTable.name, "count_by") || "";
+                $scope.options.countField = $scope.bindCountField || datasetService.getMapping($scope.options.selectedTable.name, "count_by") || "";
                 if($scope.filterSet) {
                     $scope.clearFilter();
                 }
@@ -220,7 +263,7 @@ angular.module('neonDemo.directives')
              * @method queryForData
              */
             $scope.queryForData = function() {
-                if(!$scope.countField) {
+                if(!$scope.options.countField) {
                     $scope.updateData({
                         data: []
                     });
@@ -236,20 +279,56 @@ angular.module('neonDemo.directives')
                 if(connection) {
                     var query = $scope.buildQuery();
 
-                    XDATA.activityLogger.logSystemActivity('CountBy - query for data');
+                    XDATA.userALE.log({
+                        activity: "alter",
+                        action: "send",
+                        elementId: "count-by",
+                        elementType: "canvas",
+                        elementSub: "count-by",
+                        elementGroup: "table_group",
+                        source: "system",
+                        tags: ["query", "count-by"]
+                    });
                     connection.executeQuery(query, function(queryResults) {
                         $scope.$apply(function() {
-                            XDATA.activityLogger.logSystemActivity('CountBy - received data');
+                            XDATA.userALE.log({
+                                activity: "alter",
+                                action: "receive",
+                                elementId: "count-by",
+                                elementType: "canvas",
+                                elementSub: "count-by",
+                                elementGroup: "table_group",
+                                source: "system",
+                                tags: ["receive", "count-by"]
+                            });
                             $scope.updateData(queryResults);
-                            XDATA.activityLogger.logSystemActivity('CountBy - rendered data');
+                            XDATA.userALE.log({
+                                activity: "alter",
+                                action: "render",
+                                elementId: "count-by",
+                                elementType: "canvas",
+                                elementSub: "count-by",
+                                elementGroup: "table_group",
+                                source: "system",
+                                tags: ["render", "count-by"]
+                            });
                         });
                     }, function(response) {
-                        XDATA.activityLogger.logSystemActivity('CountBy - query failed');
+                        XDATA.userALE.log({
+                            activity: "alter",
+                            action: "failed",
+                            elementId: "count-by",
+                            elementType: "canvas",
+                            elementSub: "count-by",
+                            elementGroup: "table_group",
+                            source: "system",
+                            tags: ["failed", "count-by"]
+                        });
                         $scope.updateData({
                             data: []
                         });
                         if(response.responseJSON) {
-                            $scope.errorMessage = errorNotificationService.showErrorMessage(el, response.responseJSON.error, response.responseJSON.stackTrace);
+                            $scope.errorMessage = errorNotificationService.showErrorMessage($element, response.responseJSON.error, response.responseJSON.stackTrace);
                         }
                     });
                 }
@@ -261,7 +340,7 @@ angular.module('neonDemo.directives')
                 var cleanData = [];
                 for(var i = 0; i < data.length; i++) {
                     var row = {};
-                    row[$scope.countField] = data[i][$scope.countField];
+                    row[$scope.options.countField] = data[i][$scope.options.countField];
                     row.count = data[i].count;
                     cleanData.push(row);
                 }
@@ -269,19 +348,57 @@ angular.module('neonDemo.directives')
                 return dataObject;
             };
 
-            $scope.addDigUrlColumnData = function(data) {
+            $scope.addExternalAppUrlColumnData = function(data) {
+                var tableLinks = [];
+
                 data.data.forEach(function(row) {
-                    var field = $scope.countField;
-                    var value = row[$scope.countField];
-                    var query = $scope.countField + "=" + row[$scope.countField];
-                    var element = "<form action=\"" + DIG.server + "/list\" method=\"get\" target=\"" + query + "\">" +
-                        "<input type=\"hidden\" name=\"field\" value=\"" + field + "\">" +
-                        "<input type=\"hidden\" name=\"value\" value=\"" + value + "\">" +
-                        "<button class=\"hidden-button\" type=\"submit\" title=\"" + query + "\">" +
-                        "<span class=\"glyphicon glyphicon-new-window\"></span></button></form>";
-                    row.dig = element;
+                    var field = $scope.options.countField;
+                    var value = row[$scope.options.countField];
+                    var query = field + "=" + value;
+
+                    var links = [];
+
+                    if(external.dig.enabled) {
+                        links.push($scope.createLinkObject(external.dig, field, value, query));
+                    }
+
+                    var linksIndex = tableLinks.length;
+                    tableLinks.push(links);
+
+                    row[$scope.EXTERNAL_APP_FIELD_NAME] = "<a data-toggle=\"modal\" data-target=\".links-popup\" data-links-index=\"" + linksIndex +
+                        "\" data-links-source=\"" + $scope.tableId + "\" class=\"collapsed dropdown-toggle primary neon-popup-button\">" +
+                        "<span class=\"glyphicon glyphicon-link\"></span></a>";
                 });
+
+                // Set the link data for the links popup for this visualization.
+                popups.links.setData($scope.tableId, tableLinks);
+
                 return data;
+            };
+
+            $scope.createLinkObject = function(config, field, value, query) {
+                var link = {
+                    name: config.count_by.name,
+                    image: config.count_by.image,
+                    url: config.count_by.url,
+                    args: [],
+                    data: {
+                        server: config.server,
+                        field: field,
+                        value: value,
+                        query: query
+                    }
+                };
+
+                for(var i = 0; i < config.count_by.args.length; ++i) {
+                    var arg = config.count_by.args[i];
+                    link.args.push({
+                        name: arg.name,
+                        value: arg.value
+                    });
+                }
+
+                return link;
             };
 
             /**
@@ -299,26 +416,44 @@ angular.module('neonDemo.directives')
 
                 var connection = connectionService.getActiveConnection();
                 if($scope.messenger && connection) {
-                    var relations = datasetService.getRelations($scope.selectedTable.name, [field]);
+                    var relations = datasetService.getRelations($scope.options.selectedTable.name, [field]);
                     if(filterExists) {
-                        filterService.replaceFilters($scope.messenger, relations, $scope.filterKeys, $scope.createFilter);
+                        XDATA.userALE.log({
+                            activity: "select",
+                            action: "click",
+                            elementId: "count-by",
+                            elementType: "datagrid",
+                            elementSub: "row",
+                            elementGroup: "table_group",
+                            source: "user",
+                            tags: ["filter", "count-by"]
+                        });
+                        filterService.replaceFilters($scope.messenger, relations, $scope.filterKeys, $scope.createFilterClauseForCount);
                     } else {
-                        filterService.addFilters($scope.messenger, relations, $scope.filterKeys, $scope.createFilter);
+                        XDATA.userALE.log({
+                            activity: "select",
+                            action: "click",
+                            elementId: "count-by",
+                            elementType: "datagrid",
+                            elementSub: "row",
+                            elementGroup: "table_group",
+                            source: "user",
+                            tags: ["filter", "count-by"]
+                        });
+                        filterService.addFilters($scope.messenger, relations, $scope.filterKeys, $scope.createFilterClauseForCount);
                     }
                 }
             };
 
             /**
-             * Creates and returns a filter using the given table and fields.
+             * Creates and returns a filter using the given table and count field using the value set by this visualization.
              * @param {String} The name of the table on which to filter
-             * @param {Array} An array containing the name of the selected field as its first element
-             * @method createFilter
+             * @param {String} The name of the count field on which to filter
+             * @method createFilterClauseForCount
              * @return {Object} A neon.query.Filter object
              */
-            $scope.createFilter = function(tableName, fieldNames) {
-                var fieldName = fieldNames[0];
-                var filterClause = neon.query.where(fieldName, '=', $scope.filterValue);
-                return new neon.query.Filter().selectFrom($scope.databaseName, tableName).where(filterClause);
+            $scope.createFilterClauseForCount = function(tableName, countFieldName) {
+                return neon.query.where(countFieldName, '=', $scope.filterValue);
             };
 
             /**
@@ -327,7 +462,7 @@ angular.module('neonDemo.directives')
              */
             $scope.addOnClickListener = function() {
                 $scope.table.addOnClickListener(function(columns, row) {
-                    var columnIndex = DIG.enabled ? 1 : 0;
+                    var columnIndex = external.anyEnabled ? 1 : 0;
                     var field = columns[columnIndex].field;
 
                     // If the user clicks on the filtered row/cell, clear the filter.
@@ -362,9 +497,9 @@ angular.module('neonDemo.directives')
 
                 $scope.tableOptions = createOptions(cleanData);
 
-                // Add the DIG URLs after the table options have been created because it already includes the column.
-                if(DIG.enabled) {
-                    cleanData = $scope.addDigUrlColumnData(cleanData);
+                // Add the URLs for the external applications after the table options have been created because it already includes the column.
+                if(external.anyEnabled) {
+                    cleanData = $scope.addExternalAppUrlColumnData(cleanData);
                 }
 
                 $scope.count = cleanData.data.length;
@@ -380,6 +515,16 @@ angular.module('neonDemo.directives')
                 if($scope.filterSet !== undefined) {
                     $scope.table.setActiveCellIfMatchExists($scope.filterSet.key, $scope.filterSet.value);
                 }
+
+                // Set the displayed link data for the links popup for the application using the source and index stored in to the triggering button.
+                $(".links-popup").on("show.bs.modal", function(event) {
+                    var button = $(event.relatedTarget);
+                    var source = button.data("links-source");
+                    var index = button.data("links-index");
+                    $scope.$apply(function() {
+                        popups.links.setView(source, index);
+                    });
+                });
             };
 
             /**
@@ -388,11 +533,10 @@ angular.module('neonDemo.directives')
              * @method buildQuery
              */
             $scope.buildQuery = function() {
-                var query = new neon.query.Query().selectFrom($scope.databaseName, $scope.selectedTable.name)
-                .groupBy($scope.countField);
+                var query = new neon.query.Query().selectFrom($scope.databaseName, $scope.options.selectedTable.name).groupBy($scope.options.countField);
 
                 // The widget displays its own ignored rows with 0.5 opacity.
-                query.ignoreFilters([$scope.filterKeys[$scope.selectedTable.name]]);
+                query.ignoreFilters([$scope.filterKeys[$scope.options.selectedTable.name]]);
                 query.aggregate(neon.query.COUNT, '*', 'count');
 
                 return query;
@@ -403,6 +547,15 @@ angular.module('neonDemo.directives')
              */
             $scope.clearFilter = function() {
                 if($scope.messenger) {
+                    XDATA.userALE.log({
+                        activity: "deselect",
+                        action: "click",
+                        elementId: "count-by",
+                        elementType: "button",
+                        elementGroup: "table_group",
+                        source: "user",
+                        tags: ["filter", "count-by"]
+                    });
                     filterService.removeFilters($scope.messenger, $scope.filterKeys, function() {
                         $tableDiv.removeClass("filtered");
                         $scope.table.deselect();

@@ -1,5 +1,19 @@
 'use strict';
-
+/*
+ * Copyright 2014 Next Century Corporation
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ */
 angular.module('neonDemo.directives')
 .directive('databaseConfig', ['datasets', 'layouts', 'ConnectionService', 'DatasetService', function(datasets, layouts, connectionService, datasetService) {
     return {
@@ -53,11 +67,15 @@ angular.module('neonDemo.directives')
             };
 
             $scope.connectToDataServer = function() {
-                XDATA.activityLogger.logUserActivity('User selected new datastore',
-                    'connect', XDATA.activityLogger.WF_GETDATA, {
-                        datastore: $scope.datastoreSelect,
-                        hostname: $scope.hostnameInput
-                    });
+                XDATA.userALE.log({
+                    activity: "select",
+                    action: "click",
+                    elementId: "dataset-selector",
+                    elementType: "button",
+                    elementGroup: "top",
+                    source: "user",
+                    tags: ["dataset", $scope.datastoreSelect]
+                });
 
                 $scope.showDbTable = true;
 
@@ -88,10 +106,15 @@ angular.module('neonDemo.directives')
             };
 
             $scope.connectToPreset = function(server) {
-                XDATA.activityLogger.logUserActivity('User selected preset dataset',
-                    'connect', XDATA.activityLogger.WF_GETDATA, {
-                        preset: server.name
-                    });
+                XDATA.userALE.log({
+                    activity: "select",
+                    action: "click",
+                    elementId: "dataset-menu",
+                    elementType: "button",
+                    elementGroup: "top",
+                    source: "user",
+                    tags: ["dataset", server.name, "connect"]
+                });
 
                 // Change name of active connection.
                 $scope.activeServer = server.name;
@@ -118,10 +141,15 @@ angular.module('neonDemo.directives')
             };
 
             $scope.selectDatabase = function(updateFieldsCallback) {
-                XDATA.activityLogger.logUserActivity('User selected new database',
-                    'connect', XDATA.activityLogger.WF_GETDATA, {
-                        database: $scope.selectedDB
-                    });
+                XDATA.userALE.log({
+                    activity: "select",
+                    action: "click",
+                    elementId: "database-selector",
+                    elementType: "combobox",
+                    elementGroup: "top",
+                    source: "user",
+                    tags: ["dataset", $scope.selectedDB, "database"]
+                });
 
                 if($scope.selectedDB) {
                     var connection = connectionService.getActiveConnection();
@@ -171,10 +199,15 @@ angular.module('neonDemo.directives')
             };
 
             $scope.selectTable = function() {
-                XDATA.activityLogger.logUserActivity('User selected new table',
-                    'connect', XDATA.activityLogger.WF_GETDATA, {
-                        table: $scope.selectedTable
-                    });
+                XDATA.userALE.log({
+                    activity: "select",
+                    action: "click",
+                    elementId: "table-selector",
+                    elementType: "combobox",
+                    elementGroup: "top",
+                    source: "user",
+                    tags: ["dataset", $scope.selectedTable, "table"]
+                });
 
                 $scope.tableFields = datasetService.getDatabaseFields($scope.selectedTable);
                 // If the table does not exist in the dataset configuration, use the locally stored field names for the table.
@@ -185,13 +218,27 @@ angular.module('neonDemo.directives')
             };
 
             $scope.selectField = function() {
-                XDATA.activityLogger.logUserActivity('User mapped a field',
-                    'connect', XDATA.activityLogger.WF_GETDATA);
+                XDATA.userALE.log({
+                    activity: "select",
+                    action: "click",
+                    elementId: "field-selector",
+                    elementType: "combobox",
+                    elementGroup: "top",
+                    source: "user",
+                    tags: ["dataset", "field", "mapping"]
+                });
             };
 
             $scope.openedCustom = function() {
-                XDATA.activityLogger.logUserActivity('User opened custom connection dialog',
-                    'connect', XDATA.activityLogger.WF_GETDATA);
+                XDATA.userALE.log({
+                    activity: "open",
+                    action: "click",
+                    elementId: "custom-connection",
+                    elementType: "button",
+                    elementGroup: "top",
+                    source: "user",
+                    tags: ["custom", "dataset", "dialog"]
+                });
             };
 
             var populateTableDropdown = function(tables) {
@@ -205,10 +252,15 @@ angular.module('neonDemo.directives')
                         hostname: $scope.hostnameInput,
                         database: $scope.selectedDB
                     });
-                    XDATA.activityLogger.logSystemActivity('Dataset Changed', {
-                        datastore: $scope.datastoreSelect,
-                        hostname: $scope.hostnameInput,
-                        database: $scope.selectedDB
+
+                    XDATA.userALE.log({
+                        activity: "select",
+                        action: "show",
+                        elementId: "dataset-selector",
+                        elementType: "workspace",
+                        elementGroup: "top",
+                        source: "system",
+                        tags: ["connect", "dataset"]
                     });
                 });
             };
@@ -225,6 +277,12 @@ angular.module('neonDemo.directives')
                     $scope.gridsterConfigs = layouts[layoutName];
                     for(var i = 0; i < $scope.gridsterConfigs.length; ++i) {
                         $scope.gridsterConfigs[i].id = uuid();
+                        if(!($scope.gridsterConfigs[i].minSizeX)) {
+                            $scope.gridsterConfigs[i].minSizeX = 2;
+                        }
+                        if(!($scope.gridsterConfigs[i].minSizeY)) {
+                            $scope.gridsterConfigs[i].minSizeY = 2;
+                        }
                     }
                     // Save the layout name so we can avoid resetting the layout if we switch to a dataset that uses the same layout.
                     $scope.layoutName = layoutName;
@@ -258,13 +316,15 @@ angular.module('neonDemo.directives')
                     }
                 }
 
-                XDATA.activityLogger.logUserActivity('User requested new dataset',
-                    'connect', XDATA.activityLogger.WF_GETDATA, {
-                        datastore: $scope.datastoreSelect,
-                        hostname: $scope.hostnameInput,
-                        database: $scope.selectedDB,
-                        table: $scope.selectedTable
-                    });
+                XDATA.userALE.log({
+                    activity: "close",
+                    action: "click",
+                    elementId: "custom-connect-button",
+                    elementType: "button",
+                    elementGroup: "top",
+                    source: "user",
+                    tags: ["custom", "dataset", "connect"]
+                });
 
                 $scope.publishDatasetChanged();
             };

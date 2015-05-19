@@ -134,8 +134,8 @@ charts.BarChart.prototype.setOptsConfiguration = function(opts) {
 charts.BarChart.DEFAULT_HEIGHT_ = 250;
 charts.BarChart.DEFAULT_WIDTH_ = 600;
 charts.BarChart.DEFAULT_MARGIN_ = {
-    top: 20,
-    bottom: 30,
+    top: 10,
+    bottom: 50,
     left: 30,
     right: 0
 };
@@ -538,6 +538,16 @@ charts.BarChart.prototype.showTooltipXaxis_ = function(item) {
     // in the upper left hand side
     this.positionTooltip_(tooltip, [100, 20]);
     $(tooltip[0]).fadeIn(500);
+    XDATA.userALE.log({
+        activity: "show",
+        action: "mouseover",
+        elementId: "barchart",
+        elementType: "tooltip",
+        elementSub: "barchart",
+        elementGroup: "chart_group",
+        source: "user",
+        tags: ["tooltip", "barchart"]
+    });
 };
 
 charts.BarChart.prototype.showTooltip_ = function(item, mouseLocation) {
@@ -555,6 +565,16 @@ charts.BarChart.prototype.showTooltip_ = function(item, mouseLocation) {
     $(tooltip[0]).hide();
     this.positionTooltip_(tooltip, mouseLocation);
     $(tooltip[0]).fadeIn(500);
+    XDATA.userALE.log({
+        activity: "show",
+        action: "mouseover",
+        elementId: "barchart",
+        elementType: "tooltip",
+        elementSub: "barchart",
+        elementGroup: "chart_group",
+        source: "user",
+        tags: ["tooltip", "barchart"]
+    });
 };
 
 charts.BarChart.prototype.positionTooltip_ = function(tooltip, mouseLocation) {
@@ -568,6 +588,16 @@ charts.BarChart.prototype.positionTooltip_ = function(tooltip, mouseLocation) {
 
 charts.BarChart.prototype.hideTooltip_ = function() {
     $('#' + charts.BarChart.TOOLTIP_ID_).remove();
+    XDATA.userALE.log({
+        activity: "hide",
+        action: "mouseout",
+        elementId: "barchart",
+        elementType: "tooltip",
+        elementSub: "barchart",
+        elementGroup: "chart_group",
+        source: "user",
+        tags: ["tooltip", "barchart"]
+    });
 };
 
 charts.BarChart.prototype.drawXAxis_ = function(chart) {
@@ -600,7 +630,9 @@ charts.BarChart.prototype.drawXAxis_ = function(chart) {
         });
 
     this.viewboxYMax = this.viewboxYMax + $(this.element[0]).find('g.x')[0].getBoundingClientRect().height;
-    $(this.element[0]).height(this.height - this.margin.bottom + $(this.element[0]).find('g.x')[0].getBoundingClientRect().height);
+    // TODO This resizing conflicts with the resizing done by the barchart directive.  Determine whether to remove resizing and the height
+    // constructor option from this chart or have this chart measure the dynamically-sized header in the barchart directive.
+    //$(this.element[0]).height(this.height - this.margin.bottom + $(this.element[0]).find('g.x')[0].getBoundingClientRect().height);
 
     return axis;
 };

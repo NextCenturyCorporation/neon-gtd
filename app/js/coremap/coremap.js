@@ -168,6 +168,16 @@ var onPopupClose = function() {
  */
 
 var onFeatureSelect = function(feature) {
+    XDATA.userALE.log({
+        activity: "show",
+        action: "click",
+        elementId: "map",
+        elementType: "tooltip",
+        elementGroup: "map_group",
+        source: "user",
+        tags: ["map", "tooltip"]
+    });
+
     var text = '<div><table class="table table-striped table-condensed">';
     for(var key in feature.attributes) {
         if(Object.prototype.hasOwnProperty.call(feature.attributes, key)) {
@@ -196,6 +206,16 @@ var onFeatureSelect = function(feature) {
  */
 
 var onFeatureUnselect = function(feature) {
+    XDATA.userALE.log({
+        activity: "hide",
+        action: "click",
+        elementId: "map",
+        elementType: "tooltip",
+        elementGroup: "map_group",
+        source: "user",
+        tags: ["map", "tooltip"]
+    });
+
     if(feature.popup) {
         this.map.removePopup(feature.popup);
         feature.popup.destroy();

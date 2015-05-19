@@ -1,37 +1,33 @@
-<div class="sunburst-header clearfix">
-    <div class="chart-options pull-right">
-        <a class="btn btn-lg text-muted collapsed" data-toggle="collapse" 
-            data-target=".{{uniqueChartOptions}} .sunburst-options" data-animation=false>
-          <span class="glyphicon glyphicon-cog"></span>
-          <span class="caret"></span>
-        </a>
-        <div class="sunburst-options popover bottom">
-            <div class="arrow"></div>
-            <div class="popover-content">
-                <div class="form-group">
-                    <label>Table</label>
-                    <select class="form-control" ng-model="selectedTable" ng-options="table.name for table in tables" ng-required="true" ng-disabled="(tables.length < 2)" ng-change="updateFieldsAndQueryForData()">
-                    </select>
-                </div>
-                <div class="form-group">
-                    <label>Add a Ring</label>
-                    <select class="form-control" ng-model="selectedItem" ng-disabled="!(fields.length > 0)" 
-                        ng-options="field for field in fields" ng-change="addGroup()">
-                    <option value="">Add a Ring</option>
-                </select>
-                </div>
-                <div class="form-group"  ng-hide="arcValue === 'Record Count'">
-                    <label>Value Field</label>
-                    <select class="form-control" ng-model="valueField"
-                        ng-options="field for field in fields">
-                        <option value="">Select a Field</option>
-                    </select>
-                </div>
-            </div>
-        </div>
-    </div>
+<div class="header-container">
+    <span class="header-text pull-left">{{options.selectedTable.name}}</span>
 
-    <div class="sunburst-ring-controls" ng-show="groupFields.length > 0">
+    <options-menu parent-element="element">
+        <div class="form-group">
+            <label>Table</label>
+            <select class="form-control" ng-model="options.selectedTable" ng-options="table.name for table in tables" ng-required="true" ng-disabled="(tables.length < 2)" ng-change="updateFieldsAndQueryForData()">
+            </select>
+        </div>
+        <div class="form-group">
+            <label>Add a Ring</label>
+            <select class="form-control" ng-model="options.selectedItem" ng-disabled="!(fields.length > 0)" 
+                ng-options="field for field in fields" ng-change="addGroup()">
+            <option value="">Add a Ring</option>
+        </select>
+        </div>
+        <div class="form-group"  ng-hide="arcValue === 'Record Count'">
+            <label>Value Field</label>
+            <select class="form-control" ng-model="options.valueField"
+                ng-options="field for field in fields">
+                <option value="">Select a Field</option>
+            </select>
+        </div>
+    </options-menu>
+</div>
+
+<div class="clearfix"></div>
+
+<div class="header-container">
+    <div class="sunburst-controls" ng-show="groupFields.length > 0">
         <div class="sunburst-transient-breadcrumb" ng-repeat="groupField in groupFields">
             <a class="breadcrumb-title" ng-click="dropGroup(groupField)">
               <span ng-bind="groupField"></span></span>
@@ -42,22 +38,25 @@
             <span class="glyphicon glyphicon-chevron-right"></span>
         </div>
         <div class="sunburst-breadcrumb">
-            <span ng-bind="(arcValue === 'count') ? arcValue : 'TOTAL (' + valueField + ')'"></span>
+            <span ng-bind="(arcValue === 'count') ? arcValue : 'TOTAL (' + options.valueField + ')'"></span>
         </div>
     </div>
 
-    <div class="sunburst-aggregate-controls" ng-show = "valueField">
+    <div class="sunburst-controls" ng-show = "options.valueField">
         <form>
             <label><input type="radio" ng-model="arcValue" value="count" class="sunburst-chart-selector"> 
                 Count
             </label>
             <label><input type="radio" ng-model="arcValue" value="total" class="sunburst-chart-selector"
-                ng-disabled="!(valueField)"> 
-                <span ng-bind="(valueField) ? 'TOTAL (' + valueField + ')' : 'TOTAL ()'"></span>
+                ng-disabled="!(options.valueField)"> 
+                <span ng-bind="(options.valueField) ? 'TOTAL (' + options.valueField + ')' : 'TOTAL ()'"></span>
             </label>
         </form>
     </div>
 </div>
 
+<div class="clearfix"></div>
+
 <div class="sunburst-tooltip"></div>
+
 <div class="sunburst-chart"></div>

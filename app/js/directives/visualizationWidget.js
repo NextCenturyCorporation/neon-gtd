@@ -23,7 +23,8 @@
  * @example
  *    &lt;div visualization-widget gridster-configs="items" gridster-config-index="0"&gt;&lt;/div&gt;
  *
- * @class neonDemo.directives.visulizationWidget
+ * @namespace neonDemo.directives
+ * @class visulizationWidget
  * @constructor
  */
 angular.module('neonDemo.directives').directive('visualizationWidget', function($compile) {
@@ -70,12 +71,32 @@ angular.module('neonDemo.directives').directive('visualizationWidget', function(
              */
             $scope.toggleSize = function() {
                 if($scope.oldSize) {
+                    XDATA.userALE.log({
+                        activity: "alter",
+                        action: "click",
+                        elementId: "workspace",
+                        elementType: "workspace",
+                        elementSub: "layout",
+                        elementGroup: "top",
+                        source: "user",
+                        tags: ["visualization", "minimize"]
+                    });
                     $scope.gridsterConfigs[$scope.gridsterConfigIndex].sizeX = $scope.oldSize.sizeX;
                     $scope.gridsterConfigs[$scope.gridsterConfigIndex].sizeY = $scope.oldSize.sizeY;
                     $scope.gridsterConfigs[$scope.gridsterConfigIndex].col = $scope.oldSize.col;
                     $scope.gridsterConfigs[$scope.gridsterConfigIndex].row = $scope.oldSize.row;
                     $scope.oldSize = null;
                 } else {
+                    XDATA.userALE.log({
+                        activity: "alter",
+                        action: "click",
+                        elementId: "workspace",
+                        elementType: "workspace",
+                        elementSub: "layout",
+                        elementGroup: "top",
+                        source: "user",
+                        tags: ["visualization", "maximize"]
+                    });
                     $scope.oldSize = {
                         col: $scope.gridsterConfigs[$scope.gridsterConfigIndex].col,
                         row: $scope.gridsterConfigs[$scope.gridsterConfigIndex].row,
