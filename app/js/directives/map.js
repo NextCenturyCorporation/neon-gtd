@@ -78,6 +78,14 @@ angular.module('neonDemo.directives')
             });
 
             /**
+             * Returns the list of tables for which we currently have layers.
+             * @return {Array<string>}
+             */
+            var getLayerTables = function() {
+                return _.uniq(_.pluck($scope.layers, "table"));
+            };
+
+            /**
              * Initializes the name of the directive's scope variables
              * and the Neon Messenger used to monitor data change events.
              * @method initialize
@@ -214,6 +222,8 @@ angular.module('neonDemo.directives')
                         tags: ["filter", "map"]
                     });
                     var relations = datasetService.getRelations($scope.selectedTable.name, [$scope.latitudeField, $scope.longitudeField]);
+                    // TODO build all the relations for all the visible layers.
+
 
                     filterService.replaceFilters($scope.messenger, relations, $scope.filterKeys, $scope.createFilterFromExtent, function() {
                         $scope.$apply(function() {
@@ -290,11 +300,10 @@ angular.module('neonDemo.directives')
                     source: "system",
                     tags: ["filter-change", "map"]
                 });
-                // if(message.addedFilter && message.addedFilter.databaseName === $scope.databaseName && message.addedFilter.tableName === $scope.selectedTable.name) {
-                //     $scope.queryForMapData();
-                // }
-                // TODO Replace the update logic.  If we have a layer against the filtered table, we need to 
-                // query that table and update the appropriate layers.
+                var layerTables = getLayerTables();
+                if (_.contains(layerTables, message.addedFilter.tableName)) {
+                    $scope.queryForMapData(message.addedFilter.tableName);
+                }
             };
 
             /**
@@ -356,6 +365,7 @@ angular.module('neonDemo.directives')
                     for (var i = 0; i < $scope.layers.length; i++) {
                         if ($scope.layers[i].olLayer) {
                             $scope.map.removeLayer($scope.layers[i].olLayer);
+                            delete $scope.layers[i].olLayer;
                         }
                     }
                     $scope.layers = [];
@@ -419,7 +429,7 @@ angular.module('neonDemo.directives')
                             });
                             this.map.addLayer(layer.olLayer);
                         } else if (layer.type === coreMap.Map.CLUSTER_LAYER) {
-                            layer.olLayer = new coreMap.Map.Layer.PointsLayer(layer.table.toUpperCase() + " Points", {
+                            layer.olLayer = new coreMap.Map.Layer.PointsLayer(layer.table.toUpperCase() + " Clusters", {
                                 latitudeMapping: layer.latitudeMapping,
                                 longitudeMapping: layer.longitudeMapping,
                                 sizeMapping: layer.sizeBy,
@@ -434,7 +444,7 @@ angular.module('neonDemo.directives')
                 }
 
                 // Make the necessary table queries.
-                $scope.layerTables = _.uniq(_.pluck($scope.layers, "table"));
+                $scope.layerTables = getLayerTables();
                 for (var i = 0; i < $scope.layerTables.length; i++) {
                     if ($scope.showFilter) {
                         $scope.clearFilter($scope.layerTables[i]);
@@ -448,7 +458,10 @@ angular.module('neonDemo.directives')
                 $scope.fields = datasetService.getDatabaseFields($scope.selectedTable.name);
                 $scope.fields.sort();
 
-                $scope.updateLayersAndQueries();
+                $timeout(function() {
+                    $scope.initializing = false;
+                    $scope.updateLayersAndQueries();
+                });
             };
 
             /**
@@ -738,22 +751,6 @@ angular.module('neonDemo.directives')
                     // Notify the user of the error.
                     $scope.error = "Error: Failed to clear filter.";
                 });
-            };
-
-            /**
-             * Sets the size mapping field used by the map for its layers.  This should be a top level
-             * field in the data objects passed to the map.
-             * @param String mapping
-             * @method setMapSizeMapping
-             */
-            $scope.setMapSizeMapping = function(mapping) {
-                // if(mapping) {
-                //     $scope.map.sizeMapping = mapping;
-                // } else {
-                //     $scope.map.sizeMapping = "";
-                // }
-                // $scope.map.updateRadii();
-                // TODO Replace with logic that sets the maping per layer.
             };
 
             /**

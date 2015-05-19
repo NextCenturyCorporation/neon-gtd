@@ -141,6 +141,7 @@ coreMap.Map.DESTINATION_PROJECTION = new OpenLayers.Projection("EPSG:900913");
 
 coreMap.Map.POINTS_LAYER = 'points';
 coreMap.Map.HEATMAP_LAYER = 'heatmap';
+coreMap.Map.CLUSTER_LAYER = 'cluster';
 
 /**
  * Simple close handler to be called if a popup is closed.

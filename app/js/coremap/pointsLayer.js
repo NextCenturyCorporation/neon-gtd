@@ -9,23 +9,36 @@ coreMap.Map.Layer.PointsLayer = OpenLayers.Class(OpenLayers.Layer.Vector, {
     sizeMapping: '',
     colorMapping: '',
     categoryMapping: '',
+    cluster: false,
 
     /**
      * Override the OpenLayers Contructor
      */
     initialize: function(name, options){
         // Override the style for our specialization.
+        var me = this;
         var extendOptions = options || {};
-        extendOptions.style = {
-            styleMap: new OpenLayers.StyleMap(OpenLayers.Util.applyDefaults({
-                fillColor: "#00FF00",
-                fillOpacity: 0.8,
-                strokeOpacity: 0.8,
-                strokeWidth: 1,
-                pointRadius: 4
-            },
-            OpenLayers.Feature.Vector.style["default"]
-        ))};
+        extendOptions.styleMap = (options.cluster) ? this.createClusterStyle() : this.createPointsStyleMap();
+
+        // Set the clustering strategy if necessary.
+        if (options.cluster) {
+            var ClusterClass = new OpenLayers.Class(OpenLayers.Strategy.Cluster, {
+                attribute: null,
+                shouldCluster: function(cluster, feature) {
+                    var clusterVal = cluster.cluster[0].attributes[me.categoryMapping];
+                    var featureVal = feature.attributes[me.categoryMapping];
+                    var superProto = OpenLayers.Strategy.Cluster.prototype;
+                    return (clusterVal === featureVal && superProto.shouldCluster.apply(this, arguments));
+                },
+                CLASS_NAME: "OpenLayers.Strategy.AttributeCluster"
+            });
+            extendOptions.strategies = [
+                new ClusterClass({
+                    distance: 40,
+                    attribute: this.categoryMapping
+                })
+            ];
+        }
 
         // Call the super constructor, you will have to define the variables geometry, attributes and style
         var args = [name, extendOptions];
@@ -55,6 +68,53 @@ coreMap.Map.Layer.PointsLayer = OpenLayers.Class(OpenLayers.Layer.Vector, {
         ];
         this.visibility = true;
         this.colorScale = d3.scale.ordinal().range(this.colorRange);
+    },
+
+    createPointsStyleMap: function() {
+        return new OpenLayers.StyleMap(OpenLayers.Util.applyDefaults({
+                fillColor: "#00FF00",
+                fillOpacity: 0.8,
+                strokeOpacity: 0.8,
+                strokeWidth: 1,
+                pointRadius: 4
+            },
+            OpenLayers.Feature.Vector.style["default"]
+        ));
+    },
+
+    createClusterStyle: function() {
+        var layer = this;
+        var clusterPointStyle = new OpenLayers.Style({
+                label: "${count}",
+                fillColor: "${fillColor}",
+                fillOpacity: 0.8,
+                strokeOpacity: 0.8,
+                strokeWidth: "${strokeWidth}",
+                pointRadius: "${radius}"
+            }, {
+                context: {
+                    strokeWidth: function(feature) {
+                        return (feature.cluster.length > 1) ? 2 : 1;
+                    },
+                    fillColor: function(feature) {
+                        return (layer.calculateColor(feature.cluster[0].attributes));
+                    },
+                    radius: function(feature) {
+                        var digits = 1;
+                        var count = feature.cluster.length;
+                        while ((count = count / 10) >= 1) {
+                            digits++;
+                        }
+                        return 5 + (5 * digits); 
+                    },
+                    count: function(feature) {
+                        return feature.cluster.length;
+                    }
+                }
+        });
+        return new OpenLayers.StyleMap({
+            "default": clusterPointStyle
+        });
     }
 });
 
@@ -204,7 +264,8 @@ coreMap.Map.Layer.PointsLayer.prototype.updateFeatures = function() {
             mapData.push(me.createPoint(element, longitude, latitude));
         }
     });
-    this.removeAllFeatures();
+    //this.removeAllFeatures();
+    this.destroyFeatures();
     this.addFeatures(mapData);
 };
 
