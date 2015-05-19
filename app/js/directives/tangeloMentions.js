@@ -54,7 +54,7 @@ angular.module('neonDemo.directives')
             };
 
             var onFiltersChanged = function(message) {
-                XDATA.activityLogger.logSystemActivity('TangeloMentions - received neon filter changed event');
+                // XDATA.activityLogger.logSystemActivity('TangeloMentions - received neon filter changed event');
                 if(message.addedFilter.databaseName === twitter.mentionsDatabase && message.addedFilter.tableName === twitter.mentionsCollection) {
                     if(message.type.toUpperCase() === "ADD" || message.type.toUpperCase() === "REPLACE") {
                         setMentionsCenterByFilter(message.addedFilter.whereClause);
@@ -75,7 +75,7 @@ angular.module('neonDemo.directives')
             };
 
             var onDatasetChanged = function() {
-                XDATA.activityLogger.logSystemActivity('TangeloMentions - received neon-gtd dataset changed event');
+                // XDATA.activityLogger.logSystemActivity('TangeloMentions - received neon-gtd dataset changed event');
                 displayActiveDataset();
             };
 
