@@ -25,10 +25,6 @@
     min-height: 35px;
 }
 
-.filter-directive .filter {
-    margin: 10px 0px;
-}
-
 .filter-tray .filter {
     background-color: #e9e9e9;
     padding: 10px;
@@ -67,6 +63,17 @@
     color: #C2360D;
 }
 
+.filter-directive .filter {
+    background-color: #e9e9e9;
+    border-radius: 4px;
+    margin: 5px 0px;
+    padding: 5px;
+}
+
+.filter-directive .filter-new {
+    background: none;
+}
+
 .filter-directive .form-group {
     float: left;
     width: 22%;
@@ -82,7 +89,8 @@
 
 .filter-directive .form-group button,
 .filter-directive .form-group input,
-.filter-directive .form-group select {
+.filter-directive .form-group select,
+.filter-directive .form-group .btn-group {
     width: 100%;
 }
 
@@ -91,12 +99,18 @@
     min-width: 40px;
 }
 
-.filter-directive .form-group-button .btn {
-    padding: 6px 12px;
+.filter-directive .form-group-button .btn,
+.filter-directive .form-group .btn-group .btn {
+    padding: 6px 0px;
+}
+
+.filter-directive .form-group .btn-group .btn {
+    width: 50%;
 }
 
 .filter-directive .labels {
     margin-top: 10px;
+    padding: 0px 5px;
 }
 
 .filter-directive .labels label {
