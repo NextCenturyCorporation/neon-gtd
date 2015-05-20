@@ -7,13 +7,6 @@ html {
     }
 }
 
-.chart-options {
-    .popover {
-        right: 9px;
-        top: 48px;
-    }
-}
-
 .container {
     max-width: none;
     width: auto;
@@ -130,9 +123,9 @@ html {
                 float: left;
                 margin: 2px 0 0;
                 background-color: @light-background;
-                border: 1px solid @border-color;
-                border: 1px solid rgba(0,0,0,.15);
-                box-shadow: 0 6px 12px rgba(0,0,0,.175);
+                border: @border;
+                border: @shadow-border;
+                box-shadow: 0 6px 12px @shadow;
             }
         }
     }
@@ -147,46 +140,6 @@ html {
     .popover {
         &.bottom{
             margin-top: 0;
-        }
-    }
-}
-
-.filter-tray {
-    .filter{
-        background-color: @main-background;
-    }
-
-    .filter-new {
-        background: none;
-    }
-
-    .form-inline {
-        .form-control {
-            @media (max-width: 767px) {
-                display: inline-block;
-                width: 100%;
-                vertical-align: middle;
-            }
-        }
-
-        .form-group {
-            @media (max-width: 767px) {
-                display: inline-block;
-                margin-bottom: 0;
-                vertical-align: middle;
-                width: 22%;
-                margin: 0;
-                padding-right: 5px;
-            }
-
-            &.pull-right {
-                @media (max-width: 767px) {
-                    display: inline-block;
-                    margin-bottom: 0;
-                    vertical-align: middle;
-                    width: auto;
-                }
-            }
         }
     }
 }
@@ -244,4 +197,38 @@ html {
     padding: 0;
 }
 
-@import 'directives/barchart.less';
+//FIXME this was in the css file but not the less file...
+// /* Timeline selector */
+// .timeline-selector,
+// .timeline-selector .well{
+//     height: 100%;
+// }
+// .timeline-selector-chart{
+//     height: calc(100% - 61px);
+//     min-height: 50px;
+// }
+// .timeline-selector{
+//     margin: 0;
+// }
+// .timeline-selector h3 {
+//     margin-top: -7px;
+// }
+// .timeline-selector .btn-group{
+//     margin-top: 0;
+// }
+// .timeline-selector-chart .brush .mask{
+//     fill: #FFFFFF;
+// }
+// .timeline-selector-chart .axis path {
+//     stroke: #FFFFFF;
+// }
+// @media (max-width: 891px) {
+//     .timeline-selector h3 {
+//         font-size: 20px;
+//     }
+// }
+// @media (max-width: 767px) {
+//     .timeline-selector h3 {
+//         font-size: 17px;
+//     }
+// }

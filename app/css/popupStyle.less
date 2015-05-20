@@ -1,0 +1,104 @@
+//
+// Copyright 2013 Next Century Corporation
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+//
+
+.neon-popup-button {
+    cursor: pointer;
+}
+
+.neon-popup {
+    ul {
+        list-style: none;
+        margin: 5px 0px 0px 15px;
+        padding: 0px;
+
+        button {
+            background: @light-background;
+            border: 1px solid @light-background;
+            border-radius: 4px;
+            height: 100%;
+            padding: 5px;
+            width: 100px;
+
+            &:focus, &:hover {
+                border: 1px solid @accent-light;
+
+                span {
+                    color: @accent-light;
+                }
+            }
+        }
+
+        li {
+            display: block;
+            float:left;
+            height: 120px;
+            margin: 0px 5px 5px 0px;
+            width: 100px;
+
+            img {
+               border: 0px;
+            }
+        }
+
+        span {
+            color: @main-text-color;
+            font-weight: bold;
+            height: 35px;
+            letter-spacing: 0.05em;
+            display: inline-block;
+        }
+
+        .neon-popup-thumbnail {
+            height: 100%;
+            width: 100px;
+        }
+
+        .selected {
+            button {
+                background: @accent-bright;
+                border: 1px solid @accent-bright;
+            }
+
+            span {
+                color: @light-text-color;
+            }
+        }
+    }
+
+    .btn {
+        font-size: 12px;
+        font-weight: bold;
+        line-height: 20px;
+        padding: 6px 16px;
+        text-transform: uppercase;
+    }
+
+    .btn-default {
+        color: @main-text-color;
+
+        &:hover, &:focus, &:active {
+            color: @mid-text-color;
+        }
+    }
+
+    .modal-dialog {
+        margin: 60px auto;
+    }
+
+    .modal-body {
+        max-height: 410px;
+        overflow-y: auto;
+    }
+}
