@@ -41,7 +41,5 @@
 <div class="clearfix"></div>
 
 <div class="tagcloud" ng-show="filterTags.length > 0 || data.length > 0">
-    <a ng-click="addTagFilter(tagCount.tag)" class="tag" 
-        ng-repeat="tagCount in data" rel="{{tagCount.count}}"
-        ng-bind="tagCount.tag"></a>
+    <a ng-click="addTagFilter(tagCount.tag)" class="tag" ng-repeat="tagCount in data" rel="{{tagCount.count}}" title="Count:  {{tagCount.count}}" ng-bind="tagCount.tag"></a>
 </div>
