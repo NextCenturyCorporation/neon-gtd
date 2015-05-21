@@ -109,7 +109,7 @@
     padding: 0;
 }
 
-.countByDirective span.glyphicon:focus,
-.countByDirective span.glyphicon:hover {
+.countByDirective .count-by-grid span.glyphicon:focus,
+.countByDirective .count-by-grid span.glyphicon:hover {
     color: #39b54a;
 }

@@ -21,11 +21,9 @@
 <div class="header-container filter-container">
     <h4 class="pull-left"><span class="count text-primary ng-binding" ng-bind="count"></span> values</h4>
 
-    <div class="filter-reset pull-right" ng-class="{true: 'hidden', false: ''}[filterSet === undefined]">
-        {{filterSet.key}}={{filterSet.value}}
-        <a class="btn" ng-click="clearFilter()">
-            <span class="glyphicon glyphicon-remove"></span>
-        </a>
+    <div class="filter-reset pull-right" ng-class="{true: 'hidden', false: ''}[filterSet === undefined]" title="{{filterSet.key}}={{filterSet.value}}">
+        <span class="filter-label">{{filterSet.key}}={{filterSet.value}}</span>
+        <span class="glyphicon glyphicon-remove" ng-click="clearFilter()"></span>
     </div>
 </div>
 

@@ -49,29 +49,27 @@
             <div class="clearfix"></div>
         </div>
 
-        <div ng-class="{true: '', false: 'hidden'}[options.showPoints]">
-            <div class="form-group">
-                <label>Size by</label>
-                <select class="form-control" ng-model="options.sizeByField" ng-disabled="!(fields.length > 0)" ng-options="field for field in fields">
-                    <option value="">No selection</option>
-                </select>
-            </div>
-            <div class="form-group">
-                <label>Color by</label>
-                <select class="form-control" ng-model="options.colorByField" ng-disabled="!(fields.length > 0)" ng-options="field for field in fields">
-                    <option value="">No selection</option>
-                </select>
-            </div>
+        <div class="form-group" ng-show="(options.showPoints)">
+            <label>Size by</label>
+            <select class="form-control" ng-model="options.sizeByField" ng-disabled="!(fields.length > 0)" ng-options="field for field in fields">
+                <option value="">No selection</option>
+            </select>
+        </div>
+
+        <div class="form-group" ng-show="(options.showPoints)">
+            <label>Color by</label>
+            <select class="form-control" ng-model="options.colorByField" ng-disabled="!(fields.length > 0)" ng-options="field for field in fields">
+                <option value="">No selection</option>
+            </select>
         </div>
     </options-menu>
 </div>
 
 <div class="header-container filter-container">
     <div class="filter-reset pull-right" ng-class="{true: '', false: 'hidden'}[showFilter]">
-        Filter
-        <a class="btn" ng-click="clearFilter()">
-            <span class="glyphicon glyphicon-remove"></span>
-        </a>
+        <span class="glyphicon glyphicon-filter"></span>
+        <span class="filter-label">Filter</span>
+        <span class="glyphicon glyphicon-remove" ng-click="clearFilter()"></span>
     </div>
 
     <div class="legend legend-scale" ng-class="{true: 'hidden', false: ''}[options.showPoints]">

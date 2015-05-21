@@ -51,10 +51,8 @@
 
 <div class="header-container filter-container">
     <div class="filter-reset pull-right" ng-class="{true: '', false: 'hidden'}[brush.length > 0]">
-      Filter
-      <a class="btn" ng-click="clearBrush()">
-        <span class="glyphicon glyphicon-remove"></span>
-      </a>
+        <span class="filter-label">Filter</span>
+        <span class="glyphicon glyphicon-remove" ng-click="clearBrush()"></span>
     </div>
 
   <h4 class="pull-left"><span class="count text-primary" ng-bind="recordCount | number"></span> records 

@@ -13,7 +13,7 @@
             </select>
         </div>
         <div class="form-group" ng-class="{true: '', false: 'hidden'}[filterTags.length > 1]">
-            <label>Show rows with</label>
+            <label>Show records with</label>
             <div class="btn-group">
                 <label class="btn btn-default" ng-class="{true: 'active', false: ''}[options.andTags]">
                     <input type="radio" ng-model="options.andTags" style="display:none" ng-value="true">
@@ -32,11 +32,9 @@
 <div class="clearfix"></div>
 
 <div class="header-container filter-container" ng-show="(filterTags.length > 0)">
-    <div class="filter-reset pull-right" ng-repeat="tagName in filterTags">
-        {{tagName}}
-        <a class="btn" ng-click="removeFilter(tagName)">
-         <span class="glyphicon glyphicon-remove"></span>
-        </a>
+    <div class="filter-reset pull-right" ng-repeat="tagName in filterTags" title="{{tagName}}">
+        <span class="filter-label">{{tagName}}</span>
+        <span class="glyphicon glyphicon-remove" ng-click="removeFilter(tagName)"></span>
     </div>
 </div>
 
