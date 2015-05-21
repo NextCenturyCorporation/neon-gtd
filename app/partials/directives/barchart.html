@@ -40,12 +40,9 @@
     </div>
 
     <div class="legend">
-        <div class="legend-item">
+        <div class="legend-item" title="{{getLegendText()}}">
             <span class="legend-icon" style="background-color: #39b54a"></span>
-            <span class="legend-text" ng-show="options.barType === 'average'">Average {{options.attrY}}</span>
-            <span class="legend-text" ng-show="options.barType === 'sum'">Sum {{options.attrY}}</span>
-            <span class="legend-text" ng-show="options.barType === 'count'">Count</span>
-            <span class="legend-text" >vs {{options.attrX}}</span>
+            <span class="legend-text legend-text-large">{{getLegendText()}}</span>
         </div>
     </div>
 </div>

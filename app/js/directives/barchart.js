@@ -441,6 +441,19 @@ function(connectionService, datasetService, errorNotificationService, filterServ
                 updateChartSize();
             };
 
+            $scope.getLegendText = function() {
+                if($scope.options.barType === "average") {
+                    return "Average " + $scope.options.attrY + " vs. " + $scope.options.attrX;
+                }
+                if($scope.options.barType === "sum") {
+                    return "Sum " + $scope.options.attrY + " vs. " + $scope.options.attrX;
+                }
+                if($scope.options.barType === "count") {
+                    return "Count";
+                }
+                return "";
+            };
+
             neon.ready(function() {
                 $scope.messenger = new neon.eventing.Messenger();
                 initialize();

@@ -431,11 +431,17 @@ fieldset[disabled] .btn-primary.active {
 }
 .legend .legend-item .legend-text {
     display: inline-block;
-    max-width: 90px;
+    max-width: 80px;
     overflow: hidden;
     white-space: nowrap;
     text-overflow: ellipsis;
     vertical-align: middle;
+}
+.legend .legend-item .legend-text-small {
+    max-width: 60px;
+}
+.legend .legend-item .legend-text-large {
+    max-width: 120px;
 }
 .legend .legend-item-clickable{
     cursor: pointer;

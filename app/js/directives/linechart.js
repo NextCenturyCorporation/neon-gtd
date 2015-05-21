@@ -49,6 +49,16 @@ function(connectionService, datasetService, errorNotificationService, $timeout) 
 
             $scope.element = $element;
 
+            $scope.optionsMenuButtonText = function() {
+                if($scope.colorMappings.length >= $scope.seriesLimit) {
+                    return "Showing Top " + $scope.seriesLimit;
+                }
+                return "";
+            };
+            $scope.showOptionsMenuButtonText = function() {
+                return $scope.colorMappings.length >= $scope.seriesLimit;
+            };
+
             $scope.selectedDatabase = '';
             $scope.tables = [];
             $scope.totalType = 'count';
@@ -210,12 +220,20 @@ function(connectionService, datasetService, errorNotificationService, $timeout) 
 
                 query.groupBy.apply(query, groupByClause);
 
+                if($scope.options.aggregation === "count") {
+                    query.aggregate(neon.query.COUNT, '*', COUNT_FIELD_NAME);
+                }
                 if($scope.options.aggregation === "sum") {
                     query.aggregate(neon.query.SUM, $scope.options.attrY, COUNT_FIELD_NAME);
-                } else if($scope.options.aggregation === "average") {
+                }
+                if($scope.options.aggregation === "average") {
                     query.aggregate(neon.query.AVG, $scope.options.attrY, COUNT_FIELD_NAME);
-                } else if($scope.options.aggregation === "count") {
-                    query.aggregate(neon.query.COUNT, '*', COUNT_FIELD_NAME);
+                }
+                if($scope.options.aggregation === "min") {
+                    query.aggregate(neon.query.MIN, $scope.options.attrY, COUNT_FIELD_NAME);
+                }
+                if($scope.options.aggregation === "max") {
+                    query.aggregate(neon.query.MAX, $scope.options.attrY, COUNT_FIELD_NAME);
                 }
 
                 query.aggregate(neon.query.MIN, $scope.options.attrX, 'date')
@@ -322,28 +340,63 @@ function(connectionService, datasetService, errorNotificationService, $timeout) 
                         }
                     }
 
-                    // Sort by series total
                     data.sort(function(a, b) {
-                        if(a.total < b.total) {
-                            return 1;
+                        if($scope.options.aggregation === "count" || $scope.options.aggregation === "sum" || $scope.options.aggregation === "average") {
+                            if(a.total < b.total) {
+                                return 1;
+                            }
+                            if(a.total > b.total) {
+                                return -1;
+                            }
                         }
-                        if(a.total > b.total) {
-                            return -1;
+                        if($scope.options.aggregation === "min") {
+                            if(a.min < b.min) {
+                                return -1;
+                            }
+                            if(a.min > b.min) {
+                                return 1;
+                            }
+                        }
+                        if($scope.options.aggregation === "max") {
+                            if(a.max < b.max) {
+                                return 1;
+                            }
+                            if(a.max > b.max) {
+                                return -1;
+                            }
                         }
                         return 0;
                     });
 
                     // Calculate Other series
-                    var otherTotal = 0;
-                    var otherData = [];
+                    var othersCount = data.length - $scope.seriesLimit;
+                    var otherSeries = {
+                        series: othersCount + " Others",
+                        total: 0,
+                        min: -1,
+                        max: -1,
+                        data: []
+                    };
+
+                    // For averages, do not include the combined values of groups outside the top 10 because adding averages together from multiple groups makes no sense.
                     if($scope.options.aggregation !== 'average') {
                         for(i = $scope.seriesLimit; i < data.length; i++) {
-                            otherTotal += data[i].total;
+                            otherSeries.total += data[i].total;
+                            otherSeries.min = otherSeries.min < 0 ? data[i].min : Math.min(otherSeries.min, data[i].min);
+                            otherSeries.max = otherSeries.max < 0 ? data[i].max : Math.max(otherSeries.max, data[i].max);
                             for(var d = 0; d < data[i].data.length; d++) {
-                                if(otherData[d]) {
-                                    otherData[d].value += data[i].data[d].value;
+                                if(otherSeries.data[d]) {
+                                    if($scope.options.aggregation === "count" || $scope.options.aggregation === "sum") {
+                                        otherSeries.data[d].value += data[i].data[d].value;
+                                    }
+                                    if($scope.options.aggregation === "min") {
+                                        otherSeries.data[d].value = Math.min(otherSeries.data[d].value, data[i].data[d].value);
+                                    }
+                                    if($scope.options.aggregation === "max") {
+                                        otherSeries.data[d].value = Math.max(otherSeries.data[d].value, data[i].data[d].value);
+                                    }
                                 } else {
-                                    otherData[d] = {
+                                    otherSeries.data[d] = {
                                         date: data[i].data[d].date,
                                         value: data[i].data[d].value
                                     };
@@ -356,12 +409,8 @@ function(connectionService, datasetService, errorNotificationService, $timeout) 
                     data = data.splice(0, $scope.seriesLimit);
 
                     // Add Other series
-                    if(otherTotal > 0) {
-                        data.push({
-                            series: "Other",
-                            total: otherTotal,
-                            data: otherData
-                        });
+                    if(otherSeries.total > 0) {
+                        data.push(otherSeries);
                     }
 
                     // Render chart and series lines
@@ -375,6 +424,7 @@ function(connectionService, datasetService, errorNotificationService, $timeout) 
                         source: "system",
                         tags: ["receive", "linechart"]
                     });
+
                     $scope.$apply(function() {
                         drawChart();
                         drawLine(data);
@@ -424,11 +474,21 @@ function(connectionService, datasetService, errorNotificationService, $timeout) 
 
                 var resultData = {};
 
-                var series = 'Total';
+                var series = $scope.options.attrY;
+                if($scope.options.aggregation === 'count') {
+                    series = 'Count ' + $scope.options.attrY;;
+                }
                 if($scope.options.aggregation === 'average') {
                     series = 'Average ' + $scope.options.attrY;
-                } else if($scope.options.aggregation === 'sum') {
-                    series = $scope.options.attrY;
+                }
+                if($scope.options.aggregation === 'sum') {
+                    series = 'Sum ' + $scope.options.attrY;
+                }
+                if($scope.options.aggregation === 'min') {
+                    series = 'Minimum ' + $scope.options.attrY;
+                }
+                if($scope.options.aggregation === 'max') {
+                    series = 'Maximum ' + $scope.options.attrY;
                 }
 
                 // Scrape data for unique series
@@ -440,7 +500,10 @@ function(connectionService, datasetService, errorNotificationService, $timeout) 
                     if(!resultData[series]) {
                         resultData[series] = {
                             series: series,
+                            count: 0,
                             total: 0,
+                            min: -1,
+                            max: -1,
                             data: []
                         };
                     }
@@ -468,8 +531,13 @@ function(connectionService, datasetService, errorNotificationService, $timeout) 
                         series = data[i][$scope.options.categoryField] !== '' ? data[i][$scope.options.categoryField] : 'Unknown';
                     }
 
+                    // Set undefined values in the data to 0.
+                    data[i].value = data[i].value ? data[i].value : 0;
+
                     resultData[series].data[Math.floor(Math.abs(indexDate - start) / dayMillis)].value = data[i].value;
                     resultData[series].total += data[i].value;
+                    resultData[series].min = resultData[series].min < 0 ? data[i].value : Math.min(resultData[series].min, data[i].value);
+                    resultData[series].max = resultData[series].max < 0 ? data[i].value : Math.max(resultData[series].max, data[i].value);
                 }
 
                 return resultData;
@@ -507,6 +575,19 @@ function(connectionService, datasetService, errorNotificationService, $timeout) 
                 zeroed.setUTCMilliseconds(0);
                 zeroed.setUTCHours(0);
                 return zeroed;
+            };
+
+            $scope.getLegendItemAggregationText = function(colorMappingObject) {
+                if($scope.options.aggregation === "count" || $scope.options.aggregation === "sum") {
+                    return "(" + colorMappingObject.total + ")";
+                }
+                if($scope.options.aggregation === "min") {
+                    return "(" + colorMappingObject.min + ")";
+                }
+                if($scope.options.aggregation === "max") {
+                    return "(" + colorMappingObject.max + ")";
+                }
+                return "";
             };
 
             neon.ready(function() {

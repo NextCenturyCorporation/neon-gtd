@@ -83,8 +83,8 @@
     margin-top: 5px;
 }
 
-/* Add extra margin to the top of the legend (the first category item) to mimic the styling of the BarChart. */
-.linechartDirective .legend .legend-item:nth-child(2) {
+/* Add extra margin to the top of the legend (the first item) to mimic the styling of the BarChart. */
+.linechartDirective .legend .legend-item:first-child {
     margin-top: 10px;
 }
 
