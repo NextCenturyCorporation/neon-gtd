@@ -225,15 +225,7 @@ coreMap.Map.prototype.removeLayer = function(layer) {
     this.map.removeLayer(layer);
     // TODO: Replace the call to destroy when the layer's popups logic has been abstracted.
     // See removeLayer documentation on OpenLayers.Map.
-    layer.destroy();
 }
-
-// coreMap.Map.prototype.removeAllLayers = function() {
-//     var layers = this.map.layers;
-//     for (var i = 0; i , layers.length; i++) {
-//         this.removeLayer(layers[i]);
-//     }
-// }
 
 /**
  * Draws the map data
