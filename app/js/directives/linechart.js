@@ -41,7 +41,8 @@ function(connectionService, datasetService, errorNotificationService, $timeout) 
             bindCategoryField: '=',
             bindAggregationField: '=',
             bindTable: '=',
-            colorMappings: '&'
+            colorMappings: '&',
+            hideAdvancedOptions: '=?'
         },
         link: function($scope, $element) {
             $element.addClass('linechartDirective');

@@ -38,7 +38,8 @@ function(connectionService, datasetService, errorNotificationService) {
         restrict: 'EA',
         scope: {
             bindDateField: '=',
-            bindTable: '='
+            bindTable: '=',
+            hideAdvancedOptions: '=?'
         },
         link: function($scope, $element) {
             $element.addClass('circularheatform');

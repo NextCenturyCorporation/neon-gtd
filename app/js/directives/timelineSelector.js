@@ -39,7 +39,8 @@ function(connectionService, datasetService, errorNotificationService, filterServ
         restrict: 'EA',
         scope: {
             bindDateField: '=',
-            bindTable: '='
+            bindTable: '=',
+            hideAdvancedOptions: '=?'
         },
         link: function($scope, $element) {
             var YEAR = "year";

@@ -27,7 +27,7 @@
  * @class visulizationWidget
  * @constructor
  */
-angular.module('neonDemo.directives').directive('visualizationWidget', function($compile) {
+angular.module('neonDemo.directives').directive('visualizationWidget', ["config", "$compile", function(config, $compile) {
     var MAXIMIZED_COLUMN_SIZE = 6;
     var MAXIMIZED_ROW_SIZE = 4;
 
@@ -51,6 +51,10 @@ angular.module('neonDemo.directives').directive('visualizationWidget', function(
             // implementated as an attribute directive.
             var widgetElement = document.createElement("div");
             widgetElement.setAttribute($scope.gridsterConfigs[$scope.gridsterConfigIndex].type, "");
+
+            if(config.hideAdvancedOptions) {
+                widgetElement.setAttribute("hide-advanced-options", true);
+            }
 
             // Pass along any bindings.
             if($scope.gridsterConfigs[$scope.gridsterConfigIndex] &&
@@ -119,4 +123,4 @@ angular.module('neonDemo.directives').directive('visualizationWidget', function(
             };
         }
     };
-});
+}]);

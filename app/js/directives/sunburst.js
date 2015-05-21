@@ -34,7 +34,8 @@ function(connectionService, datasetService, errorNotificationService) {
         templateUrl: 'partials/directives/sunburst.html',
         restrict: 'EA',
         scope: {
-            bindTable: '='
+            bindTable: '=',
+            hideAdvancedOptions: '=?'
         },
         link: function($scope, $element) {
             $element.addClass('sunburst-directive');

@@ -37,7 +37,8 @@ function(connectionService, datasetService, errorNotificationService, filterServ
             bindXAxisField: '=',
             bindYAxisField: '=',
             bindAggregationField: '=',
-            bindTable: '='
+            bindTable: '=',
+            hideAdvancedOptions: '=?'
         },
         link: function($scope, $element) {
             $element.addClass('barchartDirective');

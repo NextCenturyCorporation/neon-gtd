@@ -24,7 +24,8 @@ function(external, popups, connectionService, datasetService, errorNotificationS
         restrict: 'EA',
         scope: {
             bindCountField: '=',
-            bindTable: '='
+            bindTable: '=',
+            hideAdvancedOptions: '=?'
         },
         link: function($scope, $element) {
             $element.addClass('countByDirective');

@@ -36,7 +36,8 @@ function(connectionService, datasetService, errorNotificationService) {
         scope: {
             attrX: '=',
             attrY: '=',
-            barType: '='
+            barType: '=',
+            hideAdvancedOptions: '=?'
         },
         link: function($scope, $element) {
             $element.addClass('barchartDirective');

@@ -2,17 +2,20 @@
     <span class="header-text pull-left">{{options.selectedTable.name}}</span>
 
     <options-menu parent-element="element">
-        <div class="form-group">
+        <div class="form-group" ng-show="(hideAdvancedOptions)">
+            <label>No Options Available</label>
+        </div>
+        <div class="form-group" ng-show="!(hideAdvancedOptions)">
             <label>Table</label>
             <select class="form-control" ng-model="options.selectedTable" ng-options="table.name for table in tables" ng-required="true" ng-disabled="(tables.length < 2)" ng-change="updateFieldsAndQueryForData()">
             </select>
         </div>
-        <div class="form-group">
+        <div class="form-group" ng-show="!(hideAdvancedOptions)">
             <label>Date Field (X Axis)</label>
             <select class="form-control" ng-model="options.attrX" ng-options="field for field in fields" ng-required="true" ng-disabled="!(fields.length > 0)">
             </select>
         </div>
-        <div class="form-group">
+        <div class="form-group" ng-show="!(hideAdvancedOptions)">
             <label>Aggregation</label>
             <select class="form-control" ng-model="options.aggregation" ng-disabled="!(fields.length > 0)">
                 <option value="count">Count</option>
@@ -20,12 +23,12 @@
                 <option value="average">Average</option>
             </select>
         </div>
-        <div class="form-group" ng-show="(options.aggregation !== 'count')">
+        <div class="form-group" ng-show="!(hideAdvancedOptions) && (options.aggregation !== 'count')">
             <label>Value Field (Y Axis)</label>
             <select class="form-control" ng-model="options.attrY" ng-options="field for field in fields" ng-required="true" ng-disabled="!(fields.length > 0)">
             </select>
         </div>
-        <div class="form-group">
+        <div class="form-group" ng-show="!(hideAdvancedOptions)">
             <label>Group Field</label>
             <select class="form-control" ng-model="options.categoryField" ng-options="field for field in fields" ng-required="true" ng-disabled="!(fields.length > 0)">
                 <option value="">None</option>

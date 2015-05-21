@@ -2,17 +2,20 @@
     <span class="header-text pull-left">{{options.selectedTable.name}}</span>
 
     <options-menu parent-element="element">
-        <div class="form-group">
+        <div class="form-group" ng-show="(hideAdvancedOptions)">
+            <label>No Options Available</label>
+        </div>
+        <div class="form-group" ng-show="!(hideAdvancedOptions)">
             <label>Table</label>
             <select class="form-control" ng-model="options.selectedTable" ng-options="table.name for table in tables" ng-required="true" ng-disabled="(tables.length < 2)" ng-change="updateFieldsAndQueryForData()">
             </select>
         </div>
-        <div class="form-group">
+        <div class="form-group" ng-show="!(hideAdvancedOptions)">
             <label>Group Field (X Axis)</label>
             <select class="form-control" ng-model="options.attrX" ng-options="field for field in fields" ng-required="true" ng-disabled="!(fields.length > 0)">
             </select>
         </div>
-        <div class="form-group">
+        <div class="form-group" ng-show="!(hideAdvancedOptions)">
             <label>Aggregation</label>
             <select ng-model="options.barType" class="form-control">
                 <option value="count">Count</option>
@@ -20,7 +23,7 @@
                 <option value="average">Average</option>
             </select>
         </div>
-        <div class="form-group" ng-show="(options.barType !== 'count')">
+        <div class="form-group" ng-show="!(hideAdvancedOptions) && (options.barType !== 'count')">
             <label>Value Field (Y Axis)</label>
             <select class="form-control" ng-model="options.attrY" ng-options="field for field in fields" ng-required="true" ng-disabled="!(fields.length > 0)">
             </select>

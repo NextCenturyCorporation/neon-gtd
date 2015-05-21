@@ -36,7 +36,8 @@ function(external, popups, connectionService, datasetService, errorNotificationS
         scope: {
             bindTable: '=',
             navbarItem: '=?',
-            showData: '=?'
+            showData: '=?',
+            hideAdvancedOptions: '=?'
         },
         link: function($scope, $element) {
             $element.addClass('query-results-directive');

@@ -40,12 +40,14 @@ function(connectionService, datasetService, errorNotificationService, filterServ
             bindSizeField: '=',
             bindTable: '=',
             // map of categories to colors used for the legend
-            colorMappings: '&'
+            colorMappings: '&',
+            hideAdvancedOptions: '=?'
         },
         link: function($scope, $element) {
             $element.addClass('heat-map');
 
             $scope.element = $element;
+
             $scope.optionsMenuButtonText = function() {
                 if($scope.dataLength >= $scope.previousLimit) {
                     return $scope.previousLimit + " data limit";

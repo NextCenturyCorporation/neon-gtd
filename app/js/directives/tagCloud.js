@@ -26,12 +26,14 @@ function(connectionService, datasetService, filterService, $timeout) {
         restrict: 'EA',
         scope: {
             bindTagField: '=',
-            bindTable: '='
+            bindTable: '=',
+            hideAdvancedOptions: '=?'
         },
         link: function($scope, $element) {
             $element.addClass("tagcloud-container");
 
             $scope.element = $element;
+
             $scope.showOptionsMenuButtonText = function() {
                 return $scope.filterTags.length === 0 && $scope.data.length === 0;
             };

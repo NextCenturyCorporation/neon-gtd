@@ -2,7 +2,7 @@
     <span class="header-text pull-left">{{options.selectedTable.name}}</span>
 
     <options-menu parent-element="element">
-        <div class="form-group">
+        <div class="form-group" ng-show="!(hideAdvancedOptions)">
             <label>Table</label>
             <select class="form-control" ng-model="options.selectedTable" ng-options="table.name for table in tables" ng-required="true" ng-disabled="(tables.length < 2)" ng-change="updateFieldsAndRowsAndCount()">
             </select>
