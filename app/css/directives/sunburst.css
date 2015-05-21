@@ -30,10 +30,12 @@
 .sunburst-transient-breadcrumb:hover .breadcrumb-title,
 .sunburst-transient-breadcrumb:focus .breadcrumb-title {
   color: #a00;
+  cursor: pointer;
 }
 
 .sunburst-transient-breadcrumb .breadcrumb-remove {
   color: #a00;
+  cursor: pointer;
   display: none;
   text-decoration: none;
 }

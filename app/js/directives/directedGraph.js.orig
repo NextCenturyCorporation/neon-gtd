@@ -16,7 +16,8 @@
  */
 
 angular.module('neonDemo.directives')
-.directive('directedGraph',['ConnectionService', 'DatasetService', 'ErrorNotificationService', 'FilterService', '$timeout', function(connectionService, datasetService, errorNotificationService, filterService, $timeout) {
+.directive('directedGraph',['ConnectionService', 'DatasetService', 'ErrorNotificationService', 'FilterService', '$timeout',
+function(connectionService, datasetService, errorNotificationService, filterService, $timeout) {
     return {
         templateUrl: 'partials/directives/directedGraph.html',
         restrict: 'EA',
@@ -50,6 +51,8 @@ angular.module('neonDemo.directives')
             $scope.errorMessage = undefined;
             $scope.filteredNodes = [];
 
+<<<<<<< HEAD
+=======
             $scope.options = {
                 selectedTable: {
                     name: ""
@@ -59,6 +62,16 @@ angular.module('neonDemo.directives')
                 selectedNode: "",
                 nodeLimit: 500
             };
+
+            $scope.$watch('options.selectedNode', function() {
+                if($scope.options.selectedNode !== "") {
+                    if($scope.messenger && $scope.filteredNodes.length) {
+                        filterService.removeFilters($scope.messenger, $scope.filterKeys);
+                    }
+                    $scope.filteredNodes = [];
+                    $scope.addFilter($scope.options.selectedNode);
+                }
+            }, true);
 
             $scope.calculateGraphHeight = function() {
                 var headerHeight = 0;
@@ -80,6 +93,7 @@ angular.module('neonDemo.directives')
                 return $timeout($scope.redraw, $scope.TIMEOUT_MS);
             };
 
+>>>>>>> origin/master
             var updateSize = function() {
                 if($scope.resizePromise) {
                     $timeout.cancel($scope.resizePromise);
@@ -95,12 +109,12 @@ angular.module('neonDemo.directives')
             };
 
             $scope.selectNode = function() {
-                if($scope.options.selectedNode !== "") {
+                if($scope.selectedNode !== "") {
                     if($scope.messenger && $scope.filteredNodes.length) {
                         filterService.removeFilters($scope.messenger, $scope.filterKeys);
                     }
                     $scope.filteredNodes = [];
-                    $scope.addFilter($scope.options.selectedNode);
+                    $scope.addFilter($scope.selectedNode);
                 }
             };
 
@@ -208,12 +222,21 @@ angular.module('neonDemo.directives')
                 }
             };
 
+<<<<<<< HEAD
             $scope.updateFieldsAndQueryForData = function(initializing) {
+                $scope.fields = datasetService.getDatabaseFields($scope.selectedTable.name);
+                $scope.fields.sort();
+                $scope.selectedNodeField = datasetService.getMapping($scope.selectedTable.name, "graph_nodes") || "";
+                $scope.selectedLinkField = datasetService.getMapping($scope.selectedTable.name, "graph_links") || "";
+                $scope.queryForData(initializing);
+=======
+            $scope.updateFieldsAndQueryForData = function() {
                 $scope.fields = datasetService.getDatabaseFields($scope.options.selectedTable.name);
                 $scope.fields.sort();
                 $scope.options.selectedNodeField = datasetService.getMapping($scope.options.selectedTable.name, "graph_nodes") || "";
                 $scope.options.selectedLinkField = datasetService.getMapping($scope.options.selectedTable.name, "graph_links") || "";
-                $scope.queryForData(initializing);
+                $scope.queryForData();
+>>>>>>> origin/master
             };
 
             $scope.addFilter = function(value) {
@@ -300,18 +323,28 @@ angular.module('neonDemo.directives')
             /**
              * Query for the list of nodes using the selected field but do not draw a graph.
              */
+<<<<<<< HEAD
             $scope.queryForNodeList = function() {
+=======
+            $scope.queryForNodeData = function() {
+                var query = new neon.query.Query()
+                    .selectFrom($scope.databaseName, $scope.options.selectedTable.name)
+                    .groupBy($scope.options.selectedNodeField)
+                    .withFields([$scope.options.selectedNodeField]);
+                query.ignoreFilters([$scope.filterKeys[$scope.options.selectedTable.name]]);
+                query.aggregate(neon.query.COUNT, '*', 'count');
+
+>>>>>>> origin/master
                 var connection = connectionService.getActiveConnection();
                 if(connection) {
                     var query = new neon.query.Query()
-                        .selectFrom($scope.databaseName, $scope.options.selectedTable.name)
-                        .withFields([$scope.options.selectedNodeField])
-                        .groupBy($scope.options.selectedNodeField)
+                        .selectFrom($scope.databaseName, $scope.selectedTable.name)
+                        .withFields([$scope.selectedNodeField])
+                        .groupBy($scope.selectedNodeField)
                         .aggregate(neon.query.COUNT, '*', 'count')
-                        .ignoreFilters([$scope.filterKeys[$scope.options.selectedTable.name]]);
+                        .ignoreFilters([$scope.filterKeys[$scope.selectedTable.name]]);
 
                     connection.executeQuery(query, function(data) {
-                        $scope.nodes = [];
                         for(var i = 0; i < data.data.length; i++) {
                             var node = data.data[i][$scope.options.selectedNodeField];
                             if($scope.nodes.indexOf(node) < 0) {

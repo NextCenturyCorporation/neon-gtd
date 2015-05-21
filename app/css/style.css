@@ -212,21 +212,12 @@ a:focus{
     padding: 6px 16px;
     text-transform: uppercase;
 }
-.btn-lg,
-.btn-group-lg > .btn {
-    padding: 10px 20px;
-    font-size: 18px;
-    line-height: 1.33;
-}
 .btn-group .btn,
 .input-group-btn .btn{
     padding: 6px 12px;
 }
 .btn .glyphicon {
     font-size: 14px;
-}
-.btn-lg .glyphicon {
-    font-size: inherit;
 }
 .btn-default{
     color: #555555;
@@ -303,6 +294,8 @@ fieldset[disabled] .btn-primary.active {
     padding-left: 11px;
     border-radius: 4px;
     font-size: 12px;
+    margin-left: 5px;
+    margin-top: 5px;
     margin-bottom: 5px;
 }
 
@@ -329,6 +322,7 @@ fieldset[disabled] .btn-primary.active {
 /* Chart dropdown menu */
 
 .chart-options > a{
+    font-size: 16px;
     color: #39b54a;
     border: 0;
     padding: 0;
@@ -345,7 +339,7 @@ fieldset[disabled] .btn-primary.active {
 }
 .chart-options .popover{
     left: auto;
-    right: 5px;
+    right: 0px;
     top: 45px;
     margin-top: 0;
     background: none;
@@ -375,6 +369,10 @@ fieldset[disabled] .btn-primary.active {
     display: block;
 }
 
+.chart-options .glyphicon {
+    font-size: inherit;
+}
+
 .chart-options span.header-text {
     /* Set the top position so the text aligns vertically with the gear icon. */
     position: relative;
@@ -382,21 +380,30 @@ fieldset[disabled] .btn-primary.active {
     margin-right: 5px;
 }
 
+.header-container,
+.footer-container {
+    min-height: 20px;
+}
+
 .header-container {
-    min-height: 25px;
     margin-bottom: 5px;
 }
 
-.header-container.header-container-large {
-    min-height: 45px;
+.footer-container {
+    margin-top: 5px;
+}
+
+.header-container.filter-container {
+    min-height: 35px;
 }
 
 .header-container h4 {
-    margin-top: 0px;
+    margin-top: 5px;
     margin-bottom: 5px;
 }
 
-.header-container span.header-text {
+.header-container span.header-text,
+.footer-container span.footer-text {
     color: #999999;
     font-size: 16px;
     font-weight: bold;
@@ -414,12 +421,12 @@ fieldset[disabled] .btn-primary.active {
     color: #555555;
     display: inline-block;
     margin-right: 10px;
-    margin-top: 5px;
+    margin-top: 10px;
     font-size: 12px;
 }
 .legend .legend-item .legend-text {
     display: inline-block;
-    max-width: 120px;
+    max-width: 90px;
     overflow: hidden;
     white-space: nowrap;
     text-overflow: ellipsis;
@@ -680,32 +687,16 @@ a.navbar-text:focus{
     border-color: #39b54a;
     box-shadow: 0 1px 1px rgba(0, 0, 0, 0.075) inset, 0 0 8px rgba(57, 181, 74, 0.4);
 }
+
+.form-control.ng-invalid:focus {
+    border-color: #FF0000;
+    box-shadow: 0 1px 1px rgba(0, 0, 0, 0.075) inset, 0 0 8px rgba(255, 0, 0, 0.4);
+}
+
 label{
     font-size: 12px;
     color: #777777;
     text-transform: uppercase;
-}
-.form-inline .form-group > label,
-.form-inline .form-input-group > label{
-    margin-left: 10px;
-    margin-right: 5px;
-}
-.form-inline .form-group .btn-group label.btn{
-    margin-right: 0px;
-}
-.form-inline .form-group:first-child > label,
-.form-inline .form-input-group:first-child > label{
-    margin-left: 0px;
-}
-.form-inline .form-input-group > label{
-    float: left;
-    margin-top: 9px;
-    margin-right: 10px;
-}
-.form-inline .form-input-group {
-    display: inline-block;
-    margin-bottom: 0;
-    vertical-align: middle;
 }
 
 /* ================

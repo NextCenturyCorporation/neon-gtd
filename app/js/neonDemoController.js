@@ -22,12 +22,11 @@
  * @constructor
  */
 angular.module('neonDemo.controllers')
-.controller('neonDemoController', ['$scope', '$timeout', 'config', 'FilterCountService',
-function($scope, $timeout, config, filterCountService) {
+.controller('neonDemoController', ['$scope', '$timeout', 'config',
+function($scope, $timeout, config) {
     $scope.hideNavbarItems = config.hideNavbarItems;
     $scope.seeData = false;
     $scope.createFilters = false;
-    $scope.chartOptions = false;
     $scope.filterCount = 0;
 
     /**
@@ -36,8 +35,18 @@ function($scope, $timeout, config, filterCountService) {
      * @method onStartGridsterLayoutChange
      * @private
      */
-    var onStartGridsterLayoutChange = function() {
+    var onStartGridsterSizeChange = function() {
         $('.gridster-item').css('pointer-events', 'none');
+        XDATA.userALE.log({
+            activity: "alter",
+            action: "dragstart",
+            elementId: "workspace",
+            elementType: "workspace",
+            elementSub: "layout",
+            elementGroup: "top",
+            source: "user",
+            tags: ["visualization", "resize"]
+        });
     };
 
     /**
@@ -46,8 +55,54 @@ function($scope, $timeout, config, filterCountService) {
      * @method onStopGridsterLayoutChange
      * @private
      */
-    var onStopGridsterLayoutChange = function() {
+    var onStopGridsterSizeChange = function() {
         $('.gridster-item').css('pointer-events', 'auto');
+        XDATA.userALE.log({
+            activity: "alter",
+            action: "dragend",
+            elementId: "workspace",
+            elementType: "workspace",
+            elementSub: "layout",
+            elementGroup: "top",
+            source: "user",
+            tags: ["visualization", "resize"]
+        });
+    };
+
+    /**
+     * Basic gridster layout hander that will log drag events for the user reordering visualizations.
+     * @method onStartGridsterPositionChange
+     * @private
+     */
+    var onStartGridsterPositionChange = function() {
+        XDATA.userALE.log({
+            activity: "alter",
+            action: "dragstart",
+            elementId: "workspace",
+            elementType: "workspace",
+            elementSub: "layout",
+            elementGroup: "top",
+            source: "user",
+            tags: ["visualization", "reorder"]
+        });
+    };
+
+    /**
+     * Basic gridster layout hander that will log drag events for the user reordering visualizations.
+     * @method onStopGridsterPositionChange
+     * @private
+     */
+    var onStopGridsterPositionChange = function() {
+        XDATA.userALE.log({
+            activity: "alter",
+            action: "dragend",
+            elementId: "workspace",
+            elementType: "workspace",
+            elementSub: "layout",
+            elementGroup: "top",
+            source: "user",
+            tags: ["visualization", "reorder"]
+        });
     };
 
     $scope.gridsterOpts = {
@@ -71,12 +126,14 @@ function($scope, $timeout, config, filterCountService) {
             enabled: true,
             //handles: ['n', 'e', 's', 'w', 'ne', 'se', 'sw', 'nw'],
             handles: ['ne', 'se', 'sw', 'nw'],
-            start: onStartGridsterLayoutChange,
-            stop: onStopGridsterLayoutChange
+            start: onStartGridsterSizeChange,
+            stop: onStopGridsterSizeChange
         },
         draggable: {
             enabled: true, // whether dragging items is supported
-            handle: '.visualization-drag-handle' // optional selector for draggable handle
+            handle: '.visualization-drag-handle', // optional selector for draggable handle
+            start: onStartGridsterPositionChange,
+            stop: onStopGridsterPositionChange
         }
     };
 
@@ -100,13 +157,16 @@ function($scope, $timeout, config, filterCountService) {
      */
     $scope.toggleCreateFilters = function() {
         $scope.createFilters = !$scope.createFilters;
-        var action = (true === $scope.createFilters) ? 'show_custom_filters' : 'hide_custom_filters';
-        XDATA.activityLogger.logUserActivity('Neon Demo - Toggle custom filter display', action,
-            XDATA.activityLogger.WF_CREATE,
-            {
-                from: !$scope.createFilters,
-                to: $scope.createFilters
-            });
+        var activity = (true === $scope.createFilters) ? 'show' : 'hide';
+        XDATA.userALE.log({
+            activity: activity,
+            action: "click",
+            elementId: "filter-panel-button",
+            elementType: "button",
+            elementGroup: "top",
+            source: "user",
+            tags: ["filters"]
+        });
 
         if($scope.createFilters && $scope.seeData) {
             // using timeout here to execute a jquery event outside of apply().  This is necessary
@@ -127,13 +187,16 @@ function($scope, $timeout, config, filterCountService) {
      */
     $scope.toggleSeeData = function() {
         $scope.seeData = !$scope.seeData;
-        var action = (true === $scope.seeData) ? 'show_data_table' : 'hide_data_table';
-        XDATA.activityLogger.logUserActivity('Neon Demo - Toggle data table display', action,
-            XDATA.activityLogger.WF_CREATE,
-            {
-                from: !$scope.seeData,
-                to: $scope.seeData
-            });
+        var activity = (true === $scope.seeData) ? 'show' : 'hide';
+        XDATA.userALE.log({
+            activity: activity,
+            action: "click",
+            elementId: "data-table-button",
+            elementType: "button",
+            elementGroup: "top",
+            source: "user",
+            tags: ["datagrid"]
+        });
 
         if($scope.createFilters && $scope.seeData) {
             // using timeout here to execute a jquery event outside of apply().  This is necessary
@@ -145,46 +208,6 @@ function($scope, $timeout, config, filterCountService) {
             }, 5, false);
         }
     };
-
-    /**
-     * Simple toggle method for tracking which chart is visible.
-     * @method toggleCreateFilters
-     */
-    $scope.toggleChartOptions = function() {
-        $scope.chartOptions = !$scope.chartOptions;
-        var action = (true === $scope.chartOptions) ? 'show_options' : 'hide_options';
-        XDATA.activityLogger.logUserActivity('Neon Demo - Toggle chart options display', action,
-            XDATA.activityLogger.WF_CREATE,
-            {
-                from: !$scope.chartOptions,
-                to: $scope.chartOptions
-            });
-    };
-
-    // Watch for changes in the filter counts and update the filter badge binding.
-    $scope.$watch(function() {
-        return filterCountService.getCount();
-    }, function(count) {
-        $scope.filterCount = count;
-    });
-
-    $scope.$watch('chartType', function(newVal, oldVal) {
-        XDATA.activityLogger.logUserActivity('Neon Demo - Select chart type', 'select_plot_type',
-            XDATA.activityLogger.WF_CREATE,
-            {
-                from: oldVal,
-                to: newVal
-            });
-    }, true);
-
-    $scope.$watch('barType', function(newVal, oldVal) {
-        XDATA.activityLogger.logUserActivity('Neon Demo - Select chart aggregation type', 'define_axes',
-            XDATA.activityLogger.WF_CREATE,
-            {
-                from: oldVal,
-                to: newVal
-            });
-    }, true);
 
     // Display the dashboard once the configuration file has been loaded and the controller has finished its initialization.
     $scope.displayDashboard = true;

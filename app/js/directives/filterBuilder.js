@@ -29,12 +29,13 @@
  * @constructor
  */
 angular.module('neonDemo.directives')
-.directive('filterBuilder', ['DatasetService', 'FilterCountService', function(datasetService, filterCountService) {
+.directive('filterBuilder', ['DatasetService', function(datasetService) {
     return {
         templateUrl: 'partials/directives/filterBuilder.html',
         restrict: 'EA',
         scope: {
-            navbarItem: '=?'
+            navbarItem: '=?',
+            filterCount: '=?'
         },
         controller: 'neonDemoController',
         link: function($scope, $element) {
@@ -65,33 +66,28 @@ angular.module('neonDemo.directives')
                 $scope.messenger.subscribe("dataset_changed", onDatasetChanged);
 
                 $scope.$on('$destroy', function() {
+                    XDATA.userALE.log({
+                        activity: "remove",
+                        action: "click",
+                        elementId: "filter-builder",
+                        elementType: "panel",
+                        elementSub: "filter-builder",
+                        elementGroup: "query_group",
+                        source: "user",
+                        tags: ["remove", "filter-builder"]
+                    });
+
                     $scope.messenger.removeEvents();
                     $scope.publishRemoveFilterEvents($scope.filterTable.getTableNames());
                 });
 
                 $scope.$watch('filterTable', function(newVal, oldVal) {
                     if(newVal !== oldVal) {
-                        var logData = {
-                            to: newVal ? newVal.filterState : {},
-                            from: oldVal ? oldVal.filterState : {}
-                        };
-
-                        // Log filter modifications. Determine the activitiy to log for modifications to filters,
-                        // menu selection or new filter text,
-                        // based upon whether the filter value changed or not.
-                        if(logData.to && logData.from) {
-                            var activity = (logData.to.value !== logData.from.value) ? 'enter_filter_text' : 'select_filter_menu_option';
-                            XDATA.activityLogger.logUserActivity('FilterBuilder - Modifying custom Neon filter data',
-                                activity,
-                                XDATA.activityLogger.WF_GETDATA,
-                                logData);
-                        }
                         $element.find('.tray-mirror.filter-tray .inner').height($('#filter-tray > .container').outerHeight(true));
                     }
                 }, true);
 
                 $scope.$watch('filterTable.filterState', function(state) {
-                    XDATA.activityLogger.logSystemActivity('FilterBuilder - updating custom Neon filter count');
                     var count = 0;
                     for(var i = 0; i < $scope.tableNames.length; ++i) {
                         var tableState = state[$scope.tableNames[i]];
@@ -99,41 +95,44 @@ angular.module('neonDemo.directives')
                             count += tableState.length;
                         }
                     }
-                    filterCountService.setCount(count);
+                    $scope.filterCount = count;
                 }, true);
 
-                $scope.$watch('[selectedField, selectedOperator, selectedValue]', function(newVal, oldVal) {
-                    if(newVal !== oldVal) {
-                        var logData = {};
-                        if(newVal) {
-                            logData.to = newVal;
-                        }
-                        if(oldVal) {
-                            logData.from = oldVal;
-                        }
-                        XDATA.activityLogger.logUserActivity('FilterBuilder - Entering new custom Neon filter data',
-                            'select_filter_menu_option',
-                            XDATA.activityLogger.WF_GETDATA,
-                            logData);
-                    }
-                }, true);
+                $scope.$watch('selectedField', function(newVal) {
+                    XDATA.userALE.log({
+                        activity: "select",
+                        action: "click",
+                        elementId: "filter-builder-selected-field",
+                        elementType: "combobox",
+                        elementGroup: "query_group",
+                        source: "user",
+                        tags: ["filter-builder", "field", newVal]
+                    });
+                });
 
-                $scope.$watch('selectedValue', function(newVal, oldVal) {
-                    if(newVal !== oldVal) {
-                        var logData = {};
-                        if(newVal) {
-                            logData.to = newVal;
-                        }
-                        if(oldVal) {
-                            logData.from = oldVal;
-                        }
+                $scope.$watch('selectedOperator', function(newVal) {
+                    XDATA.userALE.log({
+                        activity: "select",
+                        action: "click",
+                        elementId: "filter-builder-selectedOperator",
+                        elementType: "combobox",
+                        elementGroup: "query_group",
+                        source: "user",
+                        tags: ["filter-builder", "operator", newVal]
+                    });
+                });
 
-                        XDATA.activityLogger.logUserActivity('FilterBuilder - Entering new custom Neon filter data',
-                            'enter_filter_text',
-                            XDATA.activityLogger.WF_GETDATA,
-                            logData);
-                    }
-                }, true);
+                $scope.$watch('selectedValue', function(newVal) {
+                    XDATA.userALE.log({
+                        activity: "enter",
+                        action: "keydown",
+                        elementId: "filter-builder-selectedValue",
+                        elementType: "textbox",
+                        elementGroup: "query_group",
+                        source: "user",
+                        tags: ["filter-builder", "value", newVal]
+                    });
+                });
             };
 
             /**
@@ -142,7 +141,6 @@ angular.module('neonDemo.directives')
              * @private
              */
             var onConnectToHost = function() {
-                XDATA.activityLogger.logSystemActivity('FilterBuilder - received neon connect to host event');
                 $scope.filterTable.clearFilterKeys();
                 $scope.filterTable.clearFilterState();
             };
@@ -153,7 +151,16 @@ angular.module('neonDemo.directives')
              * @private
              */
             var onDatasetChanged = function() {
-                XDATA.activityLogger.logSystemActivity('FilterBuilder - received neon-gtd dataset changed event');
+                XDATA.userALE.log({
+                    activity: "alter",
+                    action: "query",
+                    elementId: "filter-builder",
+                    elementType: "panel",
+                    elementSub: "filter-builder",
+                    elementGroup: "query_group",
+                    source: "system",
+                    tags: ["dataset-change", "filter-builder"]
+                });
                 $scope.displayActiveDataset(false);
             };
 
@@ -208,17 +215,19 @@ angular.module('neonDemo.directives')
              * @method addFilterRow
              */
             $scope.addFilterRow = function() {
+                var i = 0;
+                var j = 0;
                 var tableName = $scope.selectedTableName;
                 var rows = {};
                 rows[tableName] = new neon.query.FilterRow($scope.selectedTableName, $scope.selectedField, $scope.selectedOperator, $scope.selectedValue, $scope.fields);
 
                 var relations = datasetService.getRelations($scope.selectedTableName, [$scope.selectedField]);
-                for(var i = 0; i < relations.length; ++i) {
+                for(i = 0; i < relations.length; ++i) {
                     var relation = relations[i];
                     if(relation.table !== $scope.selectedTableName) {
                         var databaseFields = datasetService.getDatabaseFields(relation.table);
                         var originalFields = Object.keys(relation.fields);
-                        for(var j = 0; j < originalFields.length; ++j) {
+                        for(j = 0; j < originalFields.length; ++j) {
                             var relationField = relation.fields[originalFields[j]];
                             rows[relation.table] = new neon.query.FilterRow(relation.table, relationField, $scope.selectedOperator, $scope.selectedValue, databaseFields);
                         }
@@ -227,15 +236,22 @@ angular.module('neonDemo.directives')
 
                 var indexes = {};
                 var rowTableNames = Object.keys(rows);
-                for(var j = 0; j < rowTableNames.length; ++j) {
+                for(j = 0; j < rowTableNames.length; ++j) {
                     var rowTableName = rowTableNames[j];
                     indexes[rowTableName] = $scope.filterTable.addFilterRow(rowTableName, rows[rowTableName]);
                 }
 
                 var filters = $scope.filterTable.buildFiltersFromData($scope.databaseName, $scope.andClauses);
 
-                XDATA.activityLogger.logUserActivity('FilterBuilder - add custom Neon filter', 'execute_query_filter',
-                    XDATA.activityLogger.WF_GETDATA, rows[0]);
+                XDATA.userALE.log({
+                    activity: "add",
+                    action: "click",
+                    elementId: "filter-builder-add-filter",
+                    elementType: "button",
+                    elementGroup: "query_group",
+                    source: "user",
+                    tags: ["filter-builder", "filter", "add"]
+                });
 
                 $scope.publishReplaceFilterEvents(filters, function(successTable) {
                     // On succesful filter, reset the user input on the add filter row so it's obvious which rows
@@ -269,8 +285,15 @@ angular.module('neonDemo.directives')
 
                 var filters = $scope.filterTable.buildFiltersFromData($scope.databaseName, $scope.andClauses);
 
-                XDATA.activityLogger.logUserActivity('FilterBuilder - reset/clear custom Neon filter', 'remove_query_filter',
-                    XDATA.activityLogger.WF_GETDATA, row);
+                XDATA.userALE.log({
+                    activity: "remove",
+                    action: "click",
+                    elementId: "filter-builder-remove-filter",
+                    elementType: "button",
+                    elementGroup: "query_group",
+                    source: "user",
+                    tags: ["filter-builder", "filter", "remove"]
+                });
 
                 $scope.publishReplaceFilterEvents(filters, $scope.cleanFilterRowsForTable, function(errorTable) {
                     $scope.$apply(function() {
@@ -289,21 +312,38 @@ angular.module('neonDemo.directives')
              * @method updateFilterRow
              */
             $scope.updateFilterRow = function(tableName, index) {
-                var row = $scope.filterTable.getFilterRow(tableName, index);
-                var oldData = $scope.filterTable.getFilterState(tableName);
+                XDATA.userALE.log({
+                    activity: "alter",
+                    action: "click",
+                    elementId: "filter-builder-update-filter-" + index,
+                    elementType: "button",
+                    elementGroup: "query_group",
+                    source: "user",
+                    tags: ["filter-builder", "filter", "update"]
+                });
+
+                $scope.updateFilters(tableName);
+            };
+
+            /**
+             * Updates all the filters.
+             * @param {String} tableName (optional)
+             * @method updateFilters
+             */
+            $scope.updateFilters = function(tableName) {
+                var oldData = tableName ?  $scope.filterTable.getFilterState(tableName) : {};
                 var filters = $scope.filterTable.buildFiltersFromData($scope.databaseName, $scope.andClauses);
 
-                XDATA.activityLogger.logUserActivity('FilterBuilder - update custom Neon filter', 'execute_query_filter',
-                    XDATA.activityLogger.WF_GETDATA, row);
-
-                $scope.publishReplaceFilterEvents(filters, $scope.cleanFilterRowsForTable, function(errorTable) {
-                    $scope.$apply(function() {
-                        // Error handler:  If the new query failed, reset the previous value of the AND / OR field.
-                        if(errorTable === tableName) {
-                            $scope.filterTable.setFilterState(tableName, oldData);
-                        }
+                if(filters.length) {
+                    $scope.publishReplaceFilterEvents(filters, $scope.cleanFilterRowsForTable, function(errorTable) {
+                        $scope.$apply(function() {
+                            // Error handler:  If the new query failed, reset the previous value of the filter.
+                            if(tableName && errorTable === tableName) {
+                                $scope.filterTable.setFilterState(tableName, oldData);
+                            }
+                        });
                     });
-                });
+                }
             };
 
             /**
@@ -311,8 +351,15 @@ angular.module('neonDemo.directives')
              * @method resetFilters
              */
             $scope.resetFilters = function() {
-                XDATA.activityLogger.logUserActivity('FilterBuilder - reset/clear all custom Neon filters', 'remove_query_filter',
-                    XDATA.activityLogger.WF_GETDATA);
+                XDATA.userALE.log({
+                    activity: "remove",
+                    action: "click",
+                    elementId: "filter-builder-clear-all",
+                    elementType: "button",
+                    elementGroup: "query_group",
+                    source: "user",
+                    tags: ["filter-builder", "filter", "clear"]
+                });
 
                 $scope.publishRemoveFilterEvents($scope.filterTable.getTableNames(), function(tableName) {
                     $scope.$apply(function() {
@@ -328,23 +375,47 @@ angular.module('neonDemo.directives')
                 var tableName = filterObject.tableName;
                 var filterKey = $scope.filterTable.getFilterKey(tableName);
 
-                XDATA.activityLogger.logSystemActivity('FilterBuilder - create/replace custom Neon filter set');
+                XDATA.userALE.log({
+                    activity: "alter",
+                    action: "filter",
+                    elementId: "filter-builder",
+                    elementType: "panel",
+                    elementGroup: "query_group",
+                    source: "system",
+                    tags: ["filter", "filter-builder"]
+                });
                 $scope.messenger.replaceFilter(filterKey, filter, function() {
-                    XDATA.activityLogger.logSystemActivity('FilterBuilder - custom Neon filter set changed');
+                    XDATA.userALE.log({
+                        activity: "alter",
+                        action: "receive",
+                        elementId: "filter-builder",
+                        elementType: "panel",
+                        elementGroup: "query_group",
+                        source: "system",
+                        tags: ["receive", "filter-builder"]
+                    });
                     if(successCallback) {
                         successCallback(tableName);
                     }
                     if(filters.length) {
-                        $scope.publishReplaceFilterEvents(filters, successCallback, errorCallback)
+                        $scope.publishReplaceFilterEvents(filters, successCallback, errorCallback);
                     }
                 }, function() {
-                    XDATA.activityLogger.logSystemActivity('FilterBuilder - failed to change custom Neon filter set');
+                    XDATA.userALE.log({
+                        activity: "alter",
+                        action: "failed",
+                        elementId: "filter-builder",
+                        elementType: "panel",
+                        elementGroup: "query_group",
+                        source: "system",
+                        tags: ["failed", "filter-builder"]
+                    });
                     // TODO: Notify the user of the error.
                     if(errorCallback) {
                         errorCallback(tableName);
                     }
                     if(filters.length) {
-                        $scope.publishReplaceFilterEvents(filters, successCallback, errorCallback)
+                        $scope.publishReplaceFilterEvents(filters, successCallback, errorCallback);
                     }
                 });
             };
@@ -353,19 +424,35 @@ angular.module('neonDemo.directives')
                 var tableName = tableNames.shift();
                 var filterKey = $scope.filterTable.getFilterKey(tableName);
 
+                XDATA.userALE.log({
+                    activity: "remove",
+                    action: "clear",
+                    elementId: "filter-builder",
+                    elementType: "panel",
+                    elementGroup: "query_group",
+                    source: "system",
+                    tags: ["filter", "filter-builder"]
+                });
                 $scope.messenger.removeFilter(filterKey, function() {
-                    XDATA.activityLogger.logSystemActivity('FilterBuilder - custom Neon filter set changed');
                     if(successCallback) {
                         successCallback(tableName);
                     }
                     if(tableNames.length) {
-                        $scope.publishRemoveFilterEvents(tableNames, successCallback)
+                        $scope.publishRemoveFilterEvents(tableNames, successCallback);
                     }
                 }, function() {
-                    XDATA.activityLogger.logSystemActivity('FilterBuilder - failed to change custom Neon filter set');
+                    XDATA.userALE.log({
+                        activity: "remove",
+                        action: "failed",
+                        elementId: "filter-builder",
+                        elementType: "panel",
+                        elementGroup: "query_group",
+                        source: "system",
+                        tags: ["failed", "filter-builder"]
+                    });
                     // TODO: Notify the user of the error.
-                    if(filters.length) {
-                        $scope.publishRemoveFilterEvents(tableNames, successCallback)
+                    if(tableNames.length) {
+                        $scope.publishRemoveFilterEvents(tableNames, successCallback);
                     }
                 });
             };
@@ -382,6 +469,22 @@ angular.module('neonDemo.directives')
             };
 
             $scope.updateAndClauses = function() {
+                XDATA.userALE.log({
+                    activity: "alter",
+                    action: "click",
+                    elementId: "filter-builder-and-clauses",
+                    elementType: "button",
+                    elementGroup: "query_group",
+                    source: "user",
+                    tags: ["filter-builder", "filter", "update"]
+                });
+
+                // For the Filter Builder visualization, automatically update all the filters.
+                if(!$scope.navbarItem) {
+                    $scope.updateFilters();
+                    return;
+                }
+
                 var tableNames = $scope.filterTable.getTableNames();
                 for(var i = 0; i < tableNames.length; ++i) {
                     var tableName = tableNames[i];

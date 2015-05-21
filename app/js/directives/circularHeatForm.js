@@ -31,7 +31,8 @@
  * @constructor
  */
 angular.module('neonDemo.directives')
-.directive('circularHeatForm', ['ConnectionService', 'DatasetService', 'ErrorNotificationService', function(connectionService, datasetService, errorNotificationService) {
+.directive('circularHeatForm', ['ConnectionService', 'DatasetService', 'ErrorNotificationService',
+function(connectionService, datasetService, errorNotificationService) {
     return {
         templateUrl: 'partials/directives/circularHeatForm.html',
         restrict: 'EA',
@@ -39,33 +40,13 @@ angular.module('neonDemo.directives')
             bindDateField: '=',
             bindTable: '='
         },
-        controller: function($scope) {
-            /**
-             * Sets the name of the date field to pull from the current dataset.
-             * @method setDateField
-             */
-            $scope.setDateField = function(field) {
-                $scope.dateField = field;
-            };
+        link: function($scope, $element) {
+            $element.addClass('circularheatform');
 
-            /**
-             * Returns the name of the date field used to pull from time data from the current dataset.
-             * @method getDateField
-             */
-            $scope.getDateField = function() {
-                return $scope.dateField;
-            };
-        },
-        link: function($scope, element) {
-            $scope.uniqueChartOptions = 'chart-options-' + uuid();
-            var chartOptions = $(element).find('.chart-options');
-            chartOptions.toggleClass($scope.uniqueChartOptions);
+            $scope.element = $element;
 
             $scope.databaseName = "";
             $scope.tables = [];
-            $scope.selectedTable = {
-                name: ""
-            };
             $scope.fields = [];
             $scope.days = [];
             $scope.timeofday = [];
@@ -73,11 +54,15 @@ angular.module('neonDemo.directives')
             $scope.maxTime = "";
             $scope.errorMessage = undefined;
 
-            element.addClass('circularheatform');
+            $scope.options = {
+                selectedTable: {
+                    name: ""
+                },
+                dateField: ""
+            };
 
             var HOURS_IN_WEEK = 168;
             var HOURS_IN_DAY = 24;
-            $scope.dateField = "";
 
             /**
              * Initializes the name of the date field used to query the current dataset
@@ -91,6 +76,16 @@ angular.module('neonDemo.directives')
                 $scope.messenger.subscribe("dataset_changed", onDatasetChanged);
 
                 $scope.$on('$destroy', function() {
+                    XDATA.userALE.log({
+                        activity: "remove",
+                        action: "click",
+                        elementId: "circularheatform",
+                        elementType: "canvas",
+                        elementSub: "circularheatform",
+                        elementGroup: "chart_group",
+                        source: "user",
+                        tags: ["remove", "circularheatform"]
+                    });
                     $scope.messenger.removeEvents();
                 });
             };
@@ -146,8 +141,17 @@ angular.module('neonDemo.directives')
              * @private
              */
             var onFiltersChanged = function(message) {
-                XDATA.activityLogger.logSystemActivity('CircularHeatForm - received neon filter changed event');
-                if(message.addedFilter && message.addedFilter.databaseName === $scope.databaseName && message.addedFilter.tableName === $scope.selectedTable.name) {
+                XDATA.userALE.log({
+                    activity: "alter",
+                    action: "query",
+                    elementId: "circularheatform",
+                    elementType: "canvas",
+                    elementSub: "circularheatform",
+                    elementGroup: "chart_group",
+                    source: "system",
+                    tags: ["filter-change", "circularheatform"]
+                });
+                if(message.addedFilter && message.addedFilter.databaseName === $scope.databaseName && message.addedFilter.tableName === $scope.options.selectedTable.name) {
                     $scope.queryForChartData();
                 }
             };
@@ -158,7 +162,16 @@ angular.module('neonDemo.directives')
              * @private
              */
             var onDatasetChanged = function() {
-                XDATA.activityLogger.logSystemActivity('CircularHeatForm - received neon-gtd dataset changed event');
+                XDATA.userALE.log({
+                    activity: "alter",
+                    action: "query",
+                    elementId: "circularheatform",
+                    elementType: "canvas",
+                    elementSub: "circularheatform",
+                    elementGroup: "chart_group",
+                    source: "system",
+                    tags: ["dataset-change", "circularheatform"]
+                });
                 $scope.displayActiveDataset(false);
             };
 
@@ -174,7 +187,7 @@ angular.module('neonDemo.directives')
 
                 $scope.databaseName = datasetService.getDatabase();
                 $scope.tables = datasetService.getTables();
-                $scope.selectedTable = $scope.bindTable || datasetService.getFirstTableWithMappings(["date"]) || $scope.tables[0];
+                $scope.options.selectedTable = $scope.bindTable || datasetService.getFirstTableWithMappings(["date"]) || $scope.tables[0];
 
                 if(initializing) {
                     $scope.updateFieldsAndQueryForChartData();
@@ -186,9 +199,9 @@ angular.module('neonDemo.directives')
             };
 
             $scope.updateFieldsAndQueryForChartData = function() {
-                $scope.fields = datasetService.getDatabaseFields($scope.selectedTable.name);
+                $scope.fields = datasetService.getDatabaseFields($scope.options.selectedTable.name);
                 $scope.fields.sort();
-                $scope.dateField = $scope.bindDateField || datasetService.getMapping($scope.selectedTable.name, "date") || "";
+                $scope.options.dateField = $scope.bindDateField || datasetService.getMapping($scope.options.selectedTable.name, "date") || "";
                 $scope.queryForChartData();
             };
 
@@ -202,7 +215,7 @@ angular.module('neonDemo.directives')
                     $scope.errorMessage = undefined;
                 }
 
-                if(!$scope.dateField) {
+                if(!$scope.options.dateField) {
                     $scope.updateChartData({
                         data: []
                     });
@@ -210,13 +223,13 @@ angular.module('neonDemo.directives')
                 }
 
                 //TODO: NEON-603 Add support for dayOfWeek to query API
-                var groupByDayClause = new neon.query.GroupByFunctionClause('dayOfWeek', $scope.dateField, 'day');
-                var groupByHourClause = new neon.query.GroupByFunctionClause(neon.query.HOUR, $scope.dateField, 'hour');
+                var groupByDayClause = new neon.query.GroupByFunctionClause('dayOfWeek', $scope.options.dateField, 'day');
+                var groupByHourClause = new neon.query.GroupByFunctionClause(neon.query.HOUR, $scope.options.dateField, 'hour');
 
                 var query = new neon.query.Query()
-                    .selectFrom($scope.databaseName, $scope.selectedTable.name)
+                    .selectFrom($scope.databaseName, $scope.options.selectedTable.name)
                     .groupBy(groupByDayClause, groupByHourClause)
-                    .where($scope.dateField, '!=', null)
+                    .where($scope.options.dateField, '!=', null)
                     .aggregate(neon.query.COUNT, '*', 'count');
 
                 // Issue the query and provide a success handler that will forcefully apply an update to the chart.
@@ -224,22 +237,58 @@ angular.module('neonDemo.directives')
                 // If updateChartData is called from within angular code or triggered by handler within angular,
                 // then the apply is handled by angular.  Forcing apply inside updateChartData instead is error prone as it
                 // may cause an apply within a digest cycle when triggered by an angular event.
-                XDATA.activityLogger.logSystemActivity('CircularHeatForm - query for data');
+                XDATA.userALE.log({
+                    activity: "alter",
+                    action: "query",
+                    elementId: "circularheatform",
+                    elementType: "canvas",
+                    elementSub: "circularheatform",
+                    elementGroup: "chart_group",
+                    source: "system",
+                    tags: ["circularheatform"]
+                });
                 var connection = connectionService.getActiveConnection();
                 if(connection) {
                     connection.executeQuery(query, function(queryResults) {
-                        XDATA.activityLogger.logSystemActivity('CircularHeatForm - data received');
+                        XDATA.userALE.log({
+                            activity: "alter",
+                            action: "receive",
+                            elementId: "circularheatform",
+                            elementType: "canvas",
+                            elementSub: "circularheatform",
+                            elementGroup: "chart_group",
+                            source: "system",
+                            tags: ["circularheatform"]
+                        });
                         $scope.$apply(function() {
                             $scope.updateChartData(queryResults);
-                            XDATA.activityLogger.logSystemActivity('CircularHeatForm - display updated');
+                            XDATA.userALE.log({
+                                activity: "alter",
+                                action: "render",
+                                elementId: "circularheatform",
+                                elementType: "canvas",
+                                elementSub: "circularheatform",
+                                elementGroup: "chart_group",
+                                source: "system",
+                                tags: ["circularheatform"]
+                            });
                         });
                     }, function(response) {
-                        XDATA.activityLogger.logSystemActivity('CircularHeatForm - error received');
+                        XDATA.userALE.log({
+                            activity: "alter",
+                            action: "failed",
+                            elementId: "circularheatform",
+                            elementType: "canvas",
+                            elementSub: "circularheatform",
+                            elementGroup: "chart_group",
+                            source: "system",
+                            tags: ["circularheatform"]
+                        });
                         $scope.updateChartData({
                             data: []
                         });
                         if(response.responseJSON) {
-                            $scope.errorMessage = errorNotificationService.showErrorMessage(element, response.responseJSON.error, response.responseJSON.stackTrace);
+                            $scope.errorMessage = errorNotificationService.showErrorMessage($element, response.responseJSON.error, response.responseJSON.stackTrace);
                         }
                     });
                 }

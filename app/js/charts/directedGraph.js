@@ -37,6 +37,9 @@ charts.DirectedGraph = function(rootElement, selector, opts) {
     if(opts.clickHandler) {
         this.clickHandler = opts.clickHandler;
     }
+
+    this.calculateHeight = opts.calculateHeight;
+    this.calculateWidth = opts.calculateWidth;
 };
 
 charts.DirectedGraph.prototype.DEFAULT_WIDTH = 600;
@@ -243,6 +246,9 @@ charts.DirectedGraph.prototype.clearSVG = function() {
 };
 
 charts.DirectedGraph.prototype.getRenderWidth = function() {
+    if(this.calculateWidth) {
+        return this.calculateWidth();
+    }
     if($(this.element[0]).width() !== 0) {
         return $(this.element[0]).width();
     }
@@ -250,6 +256,9 @@ charts.DirectedGraph.prototype.getRenderWidth = function() {
 };
 
 charts.DirectedGraph.prototype.getRenderHeight = function() {
+    if(this.calculateHeight) {
+        return this.calculateHeight();
+    }
     if($(this.element[0]).height() !== 0) {
         return $(this.element[0]).height();
     }

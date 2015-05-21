@@ -1,15 +1,24 @@
 {
+    "user_ale": {
+        "loggingUrl": "http://192.168.1.100",
+        "toolName": "Neon Dashboard",
+        "toolVersion": "1.1.0",
+        "elementGroups": [
+            "top",
+            "map_group",
+            "table_group",
+            "chart_group",
+            "query_group",
+            "graph_group"
+        ],
+        "workerUrl": "lib/user-ale/js/userale-worker.js",
+        "debug": false,
+        "sendLogs": false
+    },
+
     "dashboard": {
         "gridsterColumns": 6,
         "hideNavbarItems": false
-    },
-
-    "xdata": {
-        "echoToConsole": false,
-        "enableLoggin": false,
-        "activityLoggerUrl": "http://xd-draper.xdata.data-tactics-corp.com:1337",
-        "component": "Neon Demo",
-        "componentVersion": "1.0.0-SNAPSHOT"
     },
 
     "opencpu": {
@@ -27,7 +36,9 @@
     "visualizations": [{
         "name": "Filter Builder",
         "sizeX": 4,
+        "minSizeX": 3,
         "sizeY": 2,
+        "minSizeY": 1,
         "type": "filter-builder",
         "icon": "img/visualizations/CreateFilter64.png"
     }, {
@@ -40,6 +51,7 @@
         "name": "Timeline",
         "sizeX": 6,
         "sizeY": 1,
+        "minSizeY": 1,
         "type": "timeline-selector",
         "icon": "img/visualizations/Timeline64.png"
     }, {
@@ -49,13 +61,13 @@
         "type": "heat-map",
         "icon": "img/visualizations/Map64.png"
     }, {
-        "name": "Linechart",
+        "name": "Line Chart",
         "sizeX": 2,
         "sizeY": 2,
         "type": "linechart",
         "icon": "img/visualizations/LineChart64.png"
     }, {
-        "name": "Barchart",
+        "name": "Bar Chart",
         "sizeX": 2,
         "sizeY": 2,
         "type": "barchart",
@@ -67,19 +79,19 @@
         "type": "circular-heat-form",
         "icon": "img/visualizations/OpsClock64.png"
     }, {
-        "name": "Tag Cloud",
+        "name": "Text Cloud",
         "sizeX": 2,
         "sizeY": 2,
         "type": "tag-cloud",
         "icon": "img/visualizations/TagCloud64.png"
     }, {
-        "name": "Count By",
+        "name": "Count Table",
         "sizeX": 2,
         "sizeY": 2,
         "type": "count-by",
         "icon": "img/visualizations/Count64.png"
     }, {
-        "name": "Sunburst",
+        "name": "Sunburst Chart",
         "sizeX": 2,
         "sizeY": 2,
         "type": "sunburst",
@@ -166,6 +178,7 @@
         "default": [{
             "sizeX": 6,
             "sizeY": 1,
+            "minSizeY": 1,
             "type": "timeline-selector"
         }, {
             "sizeX": 4,

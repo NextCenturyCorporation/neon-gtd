@@ -33,7 +33,6 @@
 }
 
 .query-results-grid {
-    min-height: 125px;
     background-color: #F1F1F1;
     border: 1px solid #CCCCCC;
     border-radius: 2px;
@@ -107,6 +106,33 @@
 .query-results-grid .slick-header .slick-header-column.ui-state-hover .remove-column-button:hover {
     color: #39B54A;
     background: #FFFFFF;
+}
+
+.query-results-directive .form-inline .form-group > label,
+.query-results-directive .form-inline .form-input-group > label{
+    margin-left: 10px;
+    margin-right: 5px;
+}
+
+.query-results-directive .form-inline .form-group .btn-group label.btn{
+    margin-right: 0px;
+}
+
+.query-results-directive .form-inline .form-group:first-child > label,
+.query-results-directive .form-inline .form-input-group:first-child > label{
+    margin-left: 0px;
+}
+
+.query-results-directive .form-inline .form-input-group > label{
+    float: left;
+    margin-top: 9px;
+    margin-right: 10px;
+}
+
+.query-results-directive .form-inline .form-input-group {
+    display: inline-block;
+    margin-bottom: 0;
+    vertical-align: middle;
 }
 
 @media (max-width: 767px) {

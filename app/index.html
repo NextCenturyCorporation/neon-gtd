@@ -99,7 +99,7 @@
 
             <div id="filter-tray" class="tray filter-tray panel panel-default collapse">
                 <div class="container panel-body">
-                    <div filter-builder navbar-item="(true)"></div>
+                    <div filter-builder navbar-item="(true)" filter-count="filterCount"></div>
                 </div>
             </div>
 
@@ -180,8 +180,8 @@
         <links-popup></links-popup>
 
         <!-- Include the xdata logging package. -->
-        <script src="lib/xdatalogger/js/draper.activity_logger-2.1.1.js"></script>
-        <script src="lib/xdatalogger/js/draper.activity_worker-2.1.1.js"></script>
+        <script src="lib/user-ale/js/userale.js"></script>
+        <script src="lib/user-ale/js/userale-worker.js"></script>
 
         <!-- Including neon before angular here as neon has lodash and jquery wrapped into it.  If this is
              loaded first, angular should pick up the included jQuery. -->
@@ -237,7 +237,6 @@
         <script src="js/datasetService.js"></script>
         <script src="js/errorNotificationService.js"></script>
         <script src="js/filterService.js"></script>
-        <script src="js/filterCountService.js"></script>
         <script src="js/neonDemoController.js"></script>
 
         <script src="js/charts/circularHeatChart.js"></script>
@@ -254,6 +253,7 @@
         <script src="js/directives/heatMap.js"></script>
         <script src="js/directives/linechart.js"></script>
         <script src="js/directives/linksPopup.js"></script>
+        <script src="js/directives/optionsMenu.js"></script>
         <script src="js/directives/poweredByNeon.js"></script>
         <script src="js/directives/queryResultsTable.js"></script>
         <script src="js/directives/stackedBarchart.js"></script>

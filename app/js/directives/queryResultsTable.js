@@ -29,7 +29,7 @@
  */
 angular.module('neonDemo.directives')
 .directive('queryResultsTable', ['external', 'popups', 'ConnectionService', 'DatasetService', 'ErrorNotificationService', '$compile',
-    function(external, popups, connectionService, datasetService, errorNotificationService, $compile) {
+function(external, popups, connectionService, datasetService, errorNotificationService, $compile) {
     return {
         templateUrl: 'partials/directives/queryResultsTable.html',
         restrict: 'EA',
@@ -38,24 +38,32 @@ angular.module('neonDemo.directives')
             navbarItem: '=?',
             showData: '=?'
         },
-        link: function($scope, element) {
-            $scope.uniqueChartOptions = 'chart-options-' + uuid();
-            var chartOptions = $(element).find('.chart-options');
-            chartOptions.toggleClass($scope.uniqueChartOptions);
+        link: function($scope, $element) {
+            $element.addClass('query-results-directive');
 
-            element.addClass('query-results-directive');
+            $scope.element = $element;
 
             // Unique field name used for the SlickGrid column containing the URLs for the external apps.
             // This name should be one that is highly unlikely to be a column name in a real database.
             $scope.EXTERNAL_APP_FIELD_NAME = "neonExternalApps";
 
+            var updateSize = function() {
+                var headerHeight = 0;
+                $element.find(".header-container").each(function() {
+                    headerHeight += $(this).outerHeight(true);
+                });
+                var tableBufferY = $tableDiv.outerHeight(true) - $tableDiv.height();
+                $tableDiv.height($element.height() - headerHeight - tableBufferY);
+                if($scope.table) {
+                    $scope.table.refreshLayout();
+                }
+            };
+
             // If this widget was launched as a navbar collapsable then showData will be bound to the collapse toggle.
             // Otherwise show the data automatically on launching the widget.
             if(typeof($scope.showData) === "undefined") {
                 $scope.showData = true;
-                element.resize(function() {
-                    updateSize();
-                });
+                $element.resize(updateSize);
             }
 
             $scope.ASCENDING = neon.query.ASCENDING;
@@ -63,37 +71,27 @@ angular.module('neonDemo.directives')
 
             $scope.databaseName = '';
             $scope.tables = [];
-            $scope.selectedTable = {
-                name: ""
-            };
             $scope.fields = [];
-            $scope.addField = "";
             $scope.tableNameToDeletedFieldsMap = {};
-            $scope.sortByField = '';
-            $scope.sortDirection = neon.query.ASCENDING;
-            $scope.limit = 500;
             $scope.totalRows = 0;
             $scope.errorMessage = undefined;
+
+            $scope.options = {
+                selectedTable: {
+                    name: ""
+                },
+                addField: "",
+                sortByField: "",
+                sortDirection: neon.query.ASCENDING,
+                limit: 500
+            };
 
             // Default our data table to be empty.  Generate a unique ID for it
             // and pass that to the tables.Table object.
             $scope.data = [];
             $scope.tableId = 'query-results-' + uuid();
-            var $tableDiv = $(element).find('.query-results-grid');
-
+            var $tableDiv = $element.find('.query-results-grid');
             $tableDiv.attr("id", $scope.tableId);
-
-            var updateSize = function() {
-                var headerHeight = 0;
-                element.find(".header-container").each(function() {
-                    headerHeight += $(this).outerHeight(true);
-                });
-                var tableBufferY = $tableDiv.outerHeight(true) - $tableDiv.height();
-                $tableDiv.height(element.height() - headerHeight - tableBufferY);
-                if($scope.table) {
-                    $scope.table.refreshLayout();
-                }
-            };
 
             /**
              * Initializes the name of the directive's scope variables
@@ -112,31 +110,40 @@ angular.module('neonDemo.directives')
                     }
                 });
 
-                $scope.$watch('sortByField', function(newVal, oldVal) {
-                    XDATA.activityLogger.logUserActivity('DataView - user set database level sorting field', 'select_filter_menu_option',
-                        XDATA.activityLogger.WF_GETDATA,
-                        {
-                            from: oldVal,
-                            to: newVal
-                        });
+                $scope.$watch('options.sortByField', function(newVal) {
+                    XDATA.userALE.log({
+                        activity: "select",
+                        action: "click",
+                        elementId: "datagrid-sort-by",
+                        elementType: "combobox",
+                        elementGroup: "table_group",
+                        source: "user",
+                        tags: ["options", "datagrid", "sort-by", newVal]
+                    });
                 });
 
-                $scope.$watch('sortDirection', function(newVal, oldVal) {
-                    XDATA.activityLogger.logUserActivity('DataView - user set database level sorting direction', 'select_filter_menu_option',
-                        XDATA.activityLogger.WF_GETDATA,
-                        {
-                            from: oldVal,
-                            to: newVal
-                        });
+                $scope.$watch('options.sortDirection', function(newVal) {
+                    XDATA.userALE.log({
+                        activity: "select",
+                        action: "click",
+                        elementId: "datagrid-sort-direction",
+                        elementType: "radiobutton",
+                        elementGroup: "table_group",
+                        source: "user",
+                        tags: ["options", "datagrid", "sort-direction", newVal]
+                    });
                 });
 
-                $scope.$watch('limit', function(newVal, oldVal) {
-                    XDATA.activityLogger.logUserActivity('DataView - user set max rows to pull from database', 'enter_filter_text',
-                        XDATA.activityLogger.WF_GETDATA,
-                        {
-                            from: oldVal,
-                            to: newVal
-                        });
+                $scope.$watch('options.limit', function(newVal) {
+                    XDATA.userALE.log({
+                        activity: "alter",
+                        action: "keydown",
+                        elementId: "datagrid-limit",
+                        elementType: "textbox",
+                        elementGroup: "table_group",
+                        source: "user",
+                        tags: ["options", "datagrid", "limit", newVal]
+                    });
                 });
 
                 // Setup our messenger.
@@ -148,7 +155,18 @@ angular.module('neonDemo.directives')
                 $scope.messenger.subscribe("dataset_changed", onDatasetChanged);
 
                 $scope.$on('$destroy', function() {
+                    XDATA.userALE.log({
+                        activity: "remove",
+                        action: "click",
+                        elementId: "datagrid",
+                        elementType: "canvas",
+                        elementSub: "datagrid",
+                        elementGroup: "table_group",
+                        source: "user",
+                        tags: ["remove", "datagrid"]
+                    });
                     popups.links.deleteData($scope.tableId);
+                    $element.off("resize", updateSize);
                     $scope.messenger.removeEvents();
                 });
             };
@@ -181,7 +199,7 @@ angular.module('neonDemo.directives')
             };
 
             var createColumns = function(data) {
-                var columns = tables.createColumns(data, $scope.tableNameToDeletedFieldsMap[$scope.selectedTable.name], [$scope.createDeleteColumnButton("")]);
+                var columns = tables.createColumns(data, $scope.tableNameToDeletedFieldsMap[$scope.options.selectedTable.name], [$scope.createDeleteColumnButton("")]);
                 columns = tables.addLinkabilityToColumns(columns);
 
                 if(external.anyEnabled) {
@@ -205,8 +223,17 @@ angular.module('neonDemo.directives')
              * @private
              */
             var onFiltersChanged = function(message) {
-                XDATA.activityLogger.logSystemActivity('DataView - received neon filter changed event');
-                if(message.addedFilter && message.addedFilter.databaseName === $scope.databaseName && message.addedFilter.tableName === $scope.selectedTable.name) {
+                XDATA.userALE.log({
+                    activity: "alter",
+                    action: "query",
+                    elementId: "datagrid",
+                    elementType: "datagrid",
+                    elementSub: "datagrid",
+                    elementGroup: "chart_group",
+                    source: "system",
+                    tags: ["filter-change", "datagrid"]
+                });
+                if(message.addedFilter && message.addedFilter.databaseName === $scope.databaseName && message.addedFilter.tableName === $scope.options.selectedTable.name) {
                     updateRowsAndCount();
                 }
             };
@@ -225,7 +252,16 @@ angular.module('neonDemo.directives')
              * @private
              */
             var onDatasetChanged = function() {
-                XDATA.activityLogger.logSystemActivity('DataView - received neon-gtd dataset changed event');
+                XDATA.userALE.log({
+                    activity: "alter",
+                    action: "query",
+                    elementId: "datagrid",
+                    elementType: "datagrid",
+                    elementSub: "datagrid",
+                    elementGroup: "chart_group",
+                    source: "system",
+                    tags: ["dataset-change", "datagrid"]
+                });
                 $scope.displayActiveDataset(false);
             };
 
@@ -241,7 +277,7 @@ angular.module('neonDemo.directives')
 
                 $scope.databaseName = datasetService.getDatabase();
                 $scope.tables = datasetService.getTables();
-                $scope.selectedTable = $scope.bindTable || $scope.tables[0];
+                $scope.options.selectedTable = $scope.bindTable || $scope.tables[0];
 
                 if(initializing) {
                     $scope.updateFieldsAndRowsAndCount();
@@ -253,19 +289,19 @@ angular.module('neonDemo.directives')
             };
 
             $scope.updateFieldsAndRowsAndCount = function() {
-                $scope.fields = datasetService.getDatabaseFields($scope.selectedTable.name);
+                $scope.fields = datasetService.getDatabaseFields($scope.options.selectedTable.name);
                 $scope.fields.sort();
-                $scope.addField = "";
-                if(!($scope.tableNameToDeletedFieldsMap[$scope.selectedTable.name])) {
-                    $scope.tableNameToDeletedFieldsMap[$scope.selectedTable.name] = [];
-                } else if($scope.tableNameToDeletedFieldsMap[$scope.selectedTable.name].length) {
+                $scope.options.addField = "";
+                if(!($scope.tableNameToDeletedFieldsMap[$scope.options.selectedTable.name])) {
+                    $scope.tableNameToDeletedFieldsMap[$scope.options.selectedTable.name] = [];
+                } else if($scope.tableNameToDeletedFieldsMap[$scope.options.selectedTable.name].length) {
                     // Remove previously deleted fields from the list of fields.
                     $scope.fields = $scope.fields.filter(function(field) {
-                        return $scope.tableNameToDeletedFieldsMap[$scope.selectedTable.name].indexOf(field) === -1;
+                        return $scope.tableNameToDeletedFieldsMap[$scope.options.selectedTable.name].indexOf(field) === -1;
                     });
-                    $scope.addField = $scope.tableNameToDeletedFieldsMap[$scope.selectedTable.name][0];
+                    $scope.options.addField = $scope.tableNameToDeletedFieldsMap[$scope.options.selectedTable.name][0];
                 }
-                $scope.sortByField = datasetService.getMapping($scope.selectedTable.name, "sort_by") || $scope.fields[0];
+                $scope.options.sortByField = datasetService.getMapping($scope.options.selectedTable.name, "sort_by") || $scope.fields[0];
                 updateRowsAndCount();
             };
 
@@ -274,8 +310,15 @@ angular.module('neonDemo.directives')
              * @method refreshData
              */
             $scope.refreshData = function() {
-                XDATA.activityLogger.logUserActivity('DataView - user requested table refresh', 'execute_query_filter',
-                    XDATA.activityLogger.WF_GETDATA);
+                XDATA.userALE.log({
+                    activity: "perform",
+                    action: "click",
+                    elementId: "datagrid-refresh",
+                    elementType: "button",
+                    elementGroup: "table_group",
+                    source: "user",
+                    tags: ["options", "datagrid", "refresh"]
+                });
                 $scope.queryForData();
             };
 
@@ -300,20 +343,56 @@ angular.module('neonDemo.directives')
                     if(connection) {
                         var query = $scope.buildQuery();
 
-                        XDATA.activityLogger.logSystemActivity('DataView - query for data');
+                        XDATA.userALE.log({
+                            activity: "alter",
+                            action: "query",
+                            elementId: "datagrid",
+                            elementType: "datagrid",
+                            elementSub: "data",
+                            elementGroup: "chart_group",
+                            source: "system",
+                            tags: ["query", "datagrid"]
+                        });
                         connection.executeQuery(query, function(queryResults) {
-                            XDATA.activityLogger.logSystemActivity('DataView - received data');
+                            XDATA.userALE.log({
+                                activity: "alter",
+                                action: "receive",
+                                elementId: "datagrid",
+                                elementType: "datagrid",
+                                elementSub: "data",
+                                elementGroup: "chart_group",
+                                source: "system",
+                                tags: ["receive", "datagrid"]
+                            });
                             $scope.$apply(function() {
                                 $scope.updateData(queryResults);
-                                XDATA.activityLogger.logSystemActivity('DataView - rendered data');
+                                XDATA.userALE.log({
+                                    activity: "alter",
+                                    action: "render",
+                                    elementId: "datagrid",
+                                    elementType: "datagrid",
+                                    elementSub: "data",
+                                    elementGroup: "chart_group",
+                                    source: "system",
+                                    tags: ["render", "datagrid"]
+                                });
                             });
                         }, function(response) {
-                            XDATA.activityLogger.logSystemActivity('DataView - received error in query for data');
+                            XDATA.userALE.log({
+                                activity: "alter",
+                                action: "failed",
+                                elementId: "datagrid",
+                                elementType: "datagrid",
+                                elementSub: "data",
+                                elementGroup: "chart_group",
+                                source: "system",
+                                tags: ["failed", "datagrid"]
+                            });
                             $scope.updateData({
                                 data: []
                             });
                             if(response.responseJSON) {
-                                $scope.errorMessage = errorNotificationService.showErrorMessage(element, response.responseJSON.error, response.responseJSON.stackTrace);
+                                $scope.errorMessage = errorNotificationService.showErrorMessage($element, response.responseJSON.error, response.responseJSON.stackTrace);
                             }
                         });
                     }
@@ -325,10 +404,19 @@ angular.module('neonDemo.directives')
              * @method queryForData
              */
             $scope.queryForTotalRows = function() {
-                var query = new neon.query.Query().selectFrom($scope.databaseName, $scope.selectedTable.name)
+                var query = new neon.query.Query().selectFrom($scope.databaseName, $scope.options.selectedTable.name)
                     .aggregate(neon.query.COUNT, '*', 'count');
 
-                XDATA.activityLogger.logSystemActivity('DataView - query for total rows of data');
+                XDATA.userALE.log({
+                    activity: "alter",
+                    action: "query",
+                    elementId: "datagrid",
+                    elementType: "datagrid",
+                    elementSub: "totals",
+                    elementGroup: "chart_group",
+                    source: "system",
+                    tags: ["query", "datagrid"]
+                });
                 var connection = connectionService.getActiveConnection();
                 if(connection) {
                     connection.executeQuery(query, function(queryResults) {
@@ -338,10 +426,28 @@ angular.module('neonDemo.directives')
                             } else {
                                 $scope.totalRows = 0;
                             }
-                            XDATA.activityLogger.logSystemActivity('DataView - received total; updating view');
+                            XDATA.userALE.log({
+                                activity: "alter",
+                                action: "receive",
+                                elementId: "datagrid",
+                                elementType: "datagrid",
+                                elementSub: "totals",
+                                elementGroup: "chart_group",
+                                source: "system",
+                                tags: ["receive", "datagrid"]
+                            });
                         });
                     }, function() {
-                        XDATA.activityLogger.logSystemActivity('DataView - received error in query for total rows');
+                        XDATA.userALE.log({
+                            activity: "alter",
+                            action: "failed",
+                            elementId: "datagrid",
+                            elementType: "datagrid",
+                            elementSub: "totals",
+                            elementGroup: "chart_group",
+                            source: "system",
+                            tags: ["failed", "datagrid"]
+                        });
                         $scope.totalRows = 0;
                     });
                 }
@@ -389,34 +495,14 @@ angular.module('neonDemo.directives')
             $scope.addExternalAppUrlColumnData = function(data) {
                 var tableLinks = [];
 
-                data.data.forEach(function(row, index) {
-                    var rowId = row._id;
-                    var query = "id=" + rowId;
+                data.data.forEach(function(row) {
+                    var id = row._id;
+                    var query = "id=" + id;
 
                     var links = [];
 
                     if(external.dig.enabled) {
-                        var form = {
-                            name: external.dig.data_table.name,
-                            image: external.dig.data_table.image,
-                            url: external.dig.data_table.url,
-                            args: [],
-                            data: {
-                                server: external.dig.server,
-                                value: rowId,
-                                query: query
-                            }
-                        };
-
-                        for(var i = 0; i < external.dig.data_table.args.length; ++i) {
-                            var arg = external.dig.data_table.args[i];
-                            form.args.push({
-                                name: arg.name,
-                                value: arg.value
-                            });
-                        }
-
-                        links.push(form);
+                        links.push($scope.createLinkObject(external.dig, id, query));
                     }
 
                     var linksIndex = tableLinks.length;
@@ -433,8 +519,32 @@ angular.module('neonDemo.directives')
                 return data;
             };
 
+            $scope.createLinkObject = function(config, id, query) {
+                var link = {
+                    name: config.data_table.name,
+                    image: config.data_table.image,
+                    url: config.data_table.url,
+                    args: [],
+                    data: {
+                        server: config.server,
+                        value: id,
+                        query: query
+                    }
+                };
+
+                for(var i = 0; i < config.data_table.args.length; ++i) {
+                    var arg = config.data_table.args[i];
+                    link.args.push({
+                        name: arg.name,
+                        value: arg.value
+                    });
+                }
+
+                return link;
+            };
+
             $scope.createDeleteColumnButtons = function() {
-                element.find(".slick-header-column").each(function() {
+                $element.find(".slick-header-column").each(function() {
                     var name = $(this).find(".slick-column-name").html();
                     // Check if the name is empty to ignore the external application link column.
                     if(name) {
@@ -451,19 +561,39 @@ angular.module('neonDemo.directives')
                 if($scope.table.deleteColumn(name)) {
                     var indexToSplice = $scope.fields.indexOf(name);
                     $scope.fields.splice(indexToSplice, 1);
-                    $scope.sortByField = $scope.sortByField === name ? $scope.fields[0] : $scope.sortByField;
-                    $scope.tableNameToDeletedFieldsMap[$scope.selectedTable.name].push(name);
-                    $scope.addField = name;
+                    $scope.options.sortByField = $scope.options.sortByField === name ? $scope.fields[0] : $scope.options.sortByField;
+                    $scope.tableNameToDeletedFieldsMap[$scope.options.selectedTable.name].push(name);
+                    $scope.options.addField = name;
                     $scope.createDeleteColumnButtons();
+
+                    XDATA.userALE.log({
+                        activity: "remove",
+                        action: "click",
+                        elementId: "column-" + name,
+                        elementType: "datagrid",
+                        elementGroup: "table_group",
+                        source: "user",
+                        tags: ["options", "datagrid", "column", name]
+                    });
                 }
             };
 
             $scope.addColumn = function() {
-                if($scope.table.addColumn($scope.addField)) {
-                    var indexToSplice = $scope.tableNameToDeletedFieldsMap[$scope.selectedTable.name].indexOf($scope.addField);
-                    $scope.tableNameToDeletedFieldsMap[$scope.selectedTable.name].splice(indexToSplice, 1);
-                    $scope.fields.push($scope.addField);
-                    $scope.addField = $scope.tableNameToDeletedFieldsMap[$scope.selectedTable.name].length > 0 ? $scope.tableNameToDeletedFieldsMap[$scope.selectedTable.name][0] : "";
+                if($scope.table.addColumn($scope.options.addField)) {
+                    var indexToSplice = $scope.tableNameToDeletedFieldsMap[$scope.options.selectedTable.name].indexOf($scope.options.addField);
+
+                    XDATA.userALE.log({
+                        activity: "add",
+                        action: "click",
+                        elementId: "column-" + $scope.options.addField,
+                        elementType: "datagrid",
+                        elementGroup: "table_group",
+                        source: "user",
+                        tags: ["options", "datagrid", "column", $scope.options.addField]
+                    });
+                    $scope.tableNameToDeletedFieldsMap[$scope.options.selectedTable.name].splice(indexToSplice, 1);
+                    $scope.fields.push($scope.options.addField);
+                    $scope.options.addField = $scope.tableNameToDeletedFieldsMap[$scope.options.selectedTable.name].length > 0 ? $scope.tableNameToDeletedFieldsMap[$scope.options.selectedTable.name][0] : "";
                     $scope.createDeleteColumnButtons();
                 }
             };
@@ -474,22 +604,22 @@ angular.module('neonDemo.directives')
              * @method buildQuery
              */
             $scope.buildQuery = function() {
-                var query = new neon.query.Query().selectFrom($scope.databaseName, $scope.selectedTable.name).limit($scope.limit);
-                if($scope.sortByField !== "undefined" && $scope.sortByField.length > 0) {
-                    query.sortBy($scope.sortByField, $scope.sortDirection);
+                var query = new neon.query.Query().selectFrom($scope.databaseName, $scope.options.selectedTable.name).limit($scope.options.limit);
+                if($scope.options.sortByField !== "undefined" && $scope.options.sortByField.length > 0) {
+                    query.sortBy($scope.options.sortByField, $scope.options.sortDirection);
                 }
 
                 return query;
             };
 
             $scope.handleAscButtonClick = function() {
-                if($scope.sortDirection === $scope.DESCENDING) {
+                if($scope.options.sortDirection === $scope.DESCENDING) {
                     $scope.refreshData();
                 }
             };
 
             $scope.handleDescButtonClick = function() {
-                if($scope.sortDirection === $scope.ASCENDING) {
+                if($scope.options.sortDirection === $scope.ASCENDING) {
                     $scope.refreshData();
                 }
             };

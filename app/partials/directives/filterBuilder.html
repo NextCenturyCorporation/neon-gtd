@@ -1,5 +1,5 @@
 <div class="header-container header-container-large" ng-show="!(navbarItem)">
-    <span class="count text-primary pull-left">Filters</span>
+    <span class="count text-primary pull-left">Filter Builder</span>
 
     <div class="pull-right">
       <div class="btn-group" >
@@ -36,24 +36,40 @@
 
     <div class="clearfix"></div>
 
-    <div class="filter form-inline clearfix" ng-repeat="filterRow in filterTable.getFilterRows()">
+    <div class="labels form-inline" ng-show="!(navbarItem)">
       <div class="form-group">
-        <select class="form-control" ng-model="filterRow.tableName" ng-options="tableName for tableName in tableNames" ng-disabled="(tableNames.length < 2)" ng-change="updateFieldsForFilterRow(filterRow)">
+        <label ng-show="!(navbarItem)">Table</label>
+      </div>
+      <div class="form-group">
+        <label ng-show="!(navbarItem)">Field</label>
+      </div>
+      <div class="form-group">
+        <label ng-show="!(navbarItem)">Operator</label>
+      </div>
+      <div class="form-group">
+        <label ng-show="!(navbarItem)">Value</label>
+      </div>
+      <div class="clearfix"></div>
+    </div>
+
+    <div class="filter form-inline" ng-repeat="filterRow in filterTable.getFilterRows()">
+      <div class="form-group">
+        <select class="form-control" ng-model="filterRow.tableName" ng-options="tableName for tableName in tableNames" ng-disabled="(tableNames.length < 2) || !(navbarItem)" ng-change="updateFieldsForFilterRow(filterRow)">
         </select>
       </div>
       <div class="form-group">
-        <select class="form-control" ng-model="filterRow.columnValue" ng-disabled="!(filterRow.columnOptions.length > 0) || !(navbarItem)" ng-options="column for column in filterRow.columnOptions" ng-change="dirtyFilterRow(filterRow)">
-        </select>
-      </div>
-      <div class="form-group form-group-small">
-        <select class="form-control"  ng-model="filterRow.operatorValue" ng-disabled="!(filterRow.columnOptions.length > 0) || !(navbarItem)" ng-options="operator for operator in filterTable.operatorOptions" ng-change="dirtyFilterRow(filterRow)">
+        <select class="form-control" ng-model="filterRow.columnValue" ng-disabled="(filterRow.columnOptions.length < 2)" ng-options="column for column in filterRow.columnOptions" ng-change="dirtyFilterRow(filterRow)">
         </select>
       </div>
       <div class="form-group">
-        <input type="text" class="form-control" size="42" placeholder="Value" ng-model="filterRow.value" ng-change="dirtyFilterRow(filterRow)" ng-disabled="!(navbarItem)">
+        <select class="form-control"  ng-model="filterRow.operatorValue" ng-disabled="(filterTable.operatorOptions.length < 2)" ng-options="operator for operator in filterTable.operatorOptions" ng-change="dirtyFilterRow(filterRow)">
+        </select>
+      </div>
+      <div class="form-group">
+        <input type="text" class="form-control" placeholder="Value" ng-model="filterRow.value" ng-change="dirtyFilterRow(filterRow)">
       </div>
       <div class="form-group" ng-show="(navbarItem)">
-        <button type="button" class="btn btn-default refresh" ng-disabled="!(filterRow.dirty)" ng-click="updateFilterRow(filterRow.tableName, filterRow.index)">
+        <button type="button" class="btn btn-default refresh" title="Refresh" ng-disabled="!(filterRow.dirty)" ng-click="updateFilterRow(filterRow.tableName, filterRow.index)">
           <span class="glyphicon glyphicon-refresh"></span>
         </button>
       </div>
@@ -63,28 +79,33 @@
         </button>
       </div>
       <div class="form-group form-group-button" ng-show="!(navbarItem)">
-        <button type="button" class="btn btn-danger" ng-click="removeFilterRow(filterRow.tableName, filterRow.index)">
-          <span class="glyphicon glyphicon-remove"></span>
-        </button>
+          <div class="btn-group">
+              <button type="button" class="btn btn-default refresh" title="Refresh" ng-disabled="!(filterRow.dirty)" ng-click="updateFilterRow(filterRow.tableName, filterRow.index)">
+                  <span class="glyphicon glyphicon-refresh"></span>
+              </button>
+              <button type="button" class="btn btn-danger" ng-click="removeFilterRow(filterRow.tableName, filterRow.index)">
+                  <span class="glyphicon glyphicon-remove"></span>
+              </button>
+          </div>
       </div>
+      <div class="clearfix"></div>
     </div>
 
-    <div class="filter filter-new form-inline row">
+    <div class="filter filter-new form-inline">
       <div class="form-group">
         <select id="filter-table-selection" class="form-control" ng-model="selectedTableName" ng-options="tableName for tableName in tableNames" ng-disabled="(tableNames.length < 2)" ng-change="updateFields()">
         </select>
       </div>
       <div class="form-group">
-        <select id="filter-field-selection" class="form-control" ng-model="selectedField" ng-disabled="!(fields.length > 0)" ng-options="field for field in fields">
-        </select>
-      </div>
-      <div class="form-group form-group-small">
-        <select id="filter-operator-selection" class="form-control"  ng-model="selectedOperator" ng-disabled="!(fields.length > 0)" ng-options="operator for operator in filterTable.operatorOptions">
+        <select id="filter-field-selection" class="form-control" ng-model="selectedField" ng-disabled="(fields.length == 0)" ng-options="field for field in fields">
         </select>
       </div>
       <div class="form-group">
-        <input type="text" class="form-control" id="filter-value" size="42" placeholder="Value"  ng-model="selectedValue" 
-          ng-disabled="!(fields.length > 0)" ng-required="true">
+        <select id="filter-operator-selection" class="form-control"  ng-model="selectedOperator" ng-disabled="(fields.length == 0)" ng-options="operator for operator in filterTable.operatorOptions">
+        </select>
+      </div>
+      <div class="form-group">
+        <input type="text" class="form-control" id="filter-value" size="42" placeholder="Value"  ng-model="selectedValue" ng-disabled="(fields.length == 0)" ng-required="true">
       </div>
       <div class="form-group" ng-show="(navbarItem)">
         <button type="button" class="btn btn-primary" ng-click="addFilterRow()">
@@ -96,6 +117,7 @@
           <span class="glyphicon glyphicon-plus"></span>
         </button>
       </div>
+      <div class="clearfix"></div>
     </div>
 
   </div>
