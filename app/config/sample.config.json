@@ -19,7 +19,8 @@
     "dashboard": {
         "gridsterColumns": 6,
         "hideNavbarItems": false,
-        "hideAdvancedOptions": false
+        "hideAdvancedOptions": false,
+        "hideErrorNotifications": false
     },
 
     "opencpu": {

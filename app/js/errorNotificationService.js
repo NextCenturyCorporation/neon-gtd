@@ -16,8 +16,8 @@
  */
 
 angular.module("neonDemo.services")
-.factory("ErrorNotificationService",
-    function() {
+.factory("ErrorNotificationService", ["config",
+    function(config) {
         var service = {};
 
         // In Bootstrap Notify, {0} = settings.type, {1} = options.title, {2} = options.message, {3} = options.url, {4} = options.target
@@ -50,6 +50,10 @@ angular.module("neonDemo.services")
          * @param {Object} The jQuery element for the error message notification.
          */
         service.hideErrorMessage = function(errorNotification) {
+            if(config.hideErrorNotifications) {
+                return;
+            }
+
             errorNotification.find('[data-notify="dismiss"]').trigger("click");
         };
 
@@ -61,6 +65,10 @@ angular.module("neonDemo.services")
          * @return The jQuery element for the error message notification inside the input element.
          */
         service.showErrorMessage = function(element, message, stacktrace) {
+            if(config.hideErrorNotifications) {
+                return;
+            }
+
             service.hideErrorMessage($(element).find(".neon-error-element"));
 
             // Display a temporary notification in the corner of the dashboard.
@@ -129,4 +137,4 @@ angular.module("neonDemo.services")
 
         return service;
     }
-);
+]);
