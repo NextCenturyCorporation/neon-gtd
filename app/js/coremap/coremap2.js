@@ -125,8 +125,6 @@ coreMap.Map = function(elementId, opts) {
     this.setupLayers();
     this.setupControls();
     this.resetZoom();
-    //this.setData(opts.data || []);
-    //this.heatmapLayer.toggle();
 };
 
 coreMap.Map.DEFAULT_WIDTH = 1024;
@@ -157,88 +155,31 @@ var onPopupClose = function() {
     this.map.selectControl.unselect(this.feature);
 };
 
-/**
- * Feature select handler used to display popups on point layers.
- * @param Object feature An Open Layers feature object.  Should be an object with geometry.
- * @private
- * @method onFeatureSelect
- */
-
-var onFeatureSelect = function(feature) {
-    XDATA.userALE.log({
-        activity: "show",
-        action: "click",
-        elementId: "map",
-        elementType: "tooltip",
-        elementGroup: "map_group",
-        source: "user",
-        tags: ["map", "tooltip"]
-    });
-
-    var text = '<div><table class="table table-striped table-condensed">';
-    for(var key in feature.attributes) {
-        if(Object.prototype.hasOwnProperty.call(feature.attributes, key)) {
-            text += '<tr><th>' + _.escape(key) + '</th><td>' + _.escape(feature.attributes[key]) + '</td>';
-        }
-    }
-    text += '</table></div>';
-
-    var popup = new OpenLayers.Popup.FramedCloud("Data",
-        feature.geometry.getBounds().getCenterLonLat(),
-        null,
-        text,
-        null,
-        false,
-        onPopupClose);
-
-    feature.popup = popup;
-    this.map.addPopup(popup);
-};
-
-/**
- * Feature unselect handler used to remove popups from point layers.
- * @param Object feature An Open Layers feature object.  Should be an object with geometry.
- * @private
- * @method onFeatureUnelect
- */
-
-var onFeatureUnselect = function(feature) {
-    XDATA.userALE.log({
-        activity: "hide",
-        action: "click",
-        elementId: "map",
-        elementType: "tooltip",
-        elementGroup: "map_group",
-        source: "user",
-        tags: ["map", "tooltip"]
-    });
-
-    if(feature.popup) {
-        this.map.removePopup(feature.popup);
-        feature.popup.destroy();
-        feature.popup = null;
-    }
+coreMap.Map.prototype.resetSelectControl = function(layer) {
+    // We remove the control before resetting the selectable layers
+    // partly because select controls interfere with the behavior or map.removeLayer()
+    // if they are active and contain multiple layers when one is removed.
+    this.selectControl.deactivate();
+    this.map.removeControl(this.selectControl);
+    this.selectControl.setLayer(_.values(this.selectableLayers));
+    this.map.addControl(this.selectControl);
+    this.selectControl.activate();
 };
 
 coreMap.Map.prototype.addLayer = function(layer) {
     this.map.addLayer(layer);
     if (layer.CLASS_NAME === "coreMap.Map.Layer.PointsLayer")  {
         this.selectableLayers[layer.id] = layer;
-        this.selectControls[layer.id] = this.createSelectControl(layer);
-        this.map.addControl(this.selectControls[layer.id]);
-        this.selectControls[layer.id].activate();
+        this.resetSelectControl();
     }
-}
+};
 
 coreMap.Map.prototype.removeLayer = function(layer) {
-    if (this.selectControls[layer.id]) {
-        this.selectControls[layer.id].deactivate();
-        this.map.removeControl(this.selectControls[layer.id]);
-        delete this.selectControls[layer.id];
-    }
-
     this.map.removeLayer(layer);
-}
+    if (this.selectableLayers[layer.id]) {
+        this.resetSelectControl();
+    }
+};
 
 /**
  * Draws the map data
@@ -342,14 +283,7 @@ coreMap.Map.prototype.initializeMap = function() {
         width: this.width,
         height: this.height
     });
-    this.map = new OpenLayers.Map(this.elementId, {
-        controls: [
-            new OpenLayers.Control.Navigation(),
-            new OpenLayers.Control.LayerSwitcher({'ascending':false}),
-            new OpenLayers.Control.ScaleLine(),
-            new OpenLayers.Control.MousePosition()
-        ]
-    });
+    this.map = new OpenLayers.Map(this.elementId);
     this.configureFilterOnZoomRectangle();
 };
 
@@ -385,6 +319,7 @@ coreMap.Map.prototype.configureFilterOnZoomRectangle = function() {
 
             // this Handler.Box will intercept the shift-mousedown
             // before Control.MouseDefault gets to see it
+            console.log("setting up box = ", + this.notice.toString());
             this.box = new OpenLayers.Handler.Box(control, {
                 done: this.notice
             }, {
@@ -491,9 +426,18 @@ coreMap.Map.prototype.createSelectControl =  function(layer) {
             tags: ["map", "tooltip"]
         });
         var text = '<div><table class="table table-striped table-condensed">';
-        for(var key in feature.attributes) {
-            if(Object.prototype.hasOwnProperty.call(feature.attributes, key)) {
-                text += '<tr><th>' + _.escape(key) + '</th><td>' + _.escape(feature.attributes[key]) + '</td>';
+        var attributes;
+
+        // If we're on a cluster layer and have a cluster of 1, just show the attributes of the 1 item.
+        if (feature.cluster && feature.cluster.length === 1) {
+            attributes = feature.cluster[0].attributes;
+        } else {
+            attributes = feature.attributes;
+        }
+
+        for(var key in attributes) {
+            if(Object.prototype.hasOwnProperty.call(attributes, key)) {
+                text += '<tr><th>' + _.escape(key) + '</th><td>' + _.escape(attributes[key]) + '</td>';
             }
         }
         text += '</table></div>';
@@ -527,6 +471,7 @@ coreMap.Map.prototype.createSelectControl =  function(layer) {
     };
 
      return new OpenLayers.Control.SelectFeature(layer, {
+        autoActivate: true,
         onSelect: onFeatureSelect,
         onUnselect: onFeatureUnselect
     });
@@ -544,16 +489,30 @@ coreMap.Map.prototype.setupLayers = function() {
     this.map.addLayer(baseLayer);
 
     // lets clients draw boxes on the map
-    this.boxLayer = new OpenLayers.Layer.Boxes();
+    this.boxLayer = new OpenLayers.Layer.Boxes('Filter Box', {
+        visibility: true,
+        displayInLayerSwitcher: false
+    });
     this.map.addLayer(this.boxLayer);
 };
 
 coreMap.Map.prototype.setupControls = function() {
+    this.zoomControl = new OpenLayers.Control.Zoom({
+        autoActivate: true
+    });
+    this.switcher = new OpenLayers.Control.LayerSwitcher({
+        autoActivate: true,
+        ascending:false
+    });
+
     // Create a cache reader and writer.  Use default reader
     // settings to read from cache first.
-    this.cacheReader = new OpenLayers.Control.CacheRead();
+    this.cacheReader = new OpenLayers.Control.CacheRead({ 
+        autoActivate: false
+    });
 
     this.cacheWriter = new OpenLayers.Control.CacheWrite({
+        autoActivate: false,
         imageFormat: "image/png",
         eventListeners: {
             cachefull: function() {
@@ -563,8 +522,11 @@ coreMap.Map.prototype.setupControls = function() {
         }
     });
 
-    this.map.addControl(this.cacheReader);
-    this.map.addControl(this.cacheWriter);
+    this.selectControl = this.createSelectControl([]);
+    this.map.addControls([
+        this.zoomControl, this.switcher, 
+        this.cacheReader, this.cacheWriter, this.selectControl
+    ]);
 }
 
 /**

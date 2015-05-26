@@ -59,6 +59,7 @@
     left: 20px;
     right: 20px;
     z-index: 1000;
+    pointer-events: none;
 }
 
 .map-container .alert {

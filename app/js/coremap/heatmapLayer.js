@@ -42,6 +42,8 @@ coreMap.Map.Layer.HeatmapLayer = OpenLayers.Class(OpenLayers.Layer.Heatmap, {
         var args = [name, map, baseLayer, heatmapOptions, extendOptions];
         OpenLayers.Layer.Heatmap.prototype.initialize.apply(this, args);
 
+        this.alwaysInRange = true;  // Force the layer to always be in range.
+
         // When we are added to a map, add a resize handler on the map so we know when to rerender
         // our canvas.
         this.events.register('added', this, function(event) {
@@ -134,6 +136,3 @@ coreMap.Map.Layer.HeatmapLayer.DEFAULT_SIZE_MAPPING = "count_";
 coreMap.Map.Layer.HeatmapLayer.DEFAULT_OPACITY = 0.8;
 coreMap.Map.Layer.HeatmapLayer.DEFAULT_RADIUS = 10;
 
-// TODO: Keep these here or move back into coreMap?
-coreMap.Map.Layer.HeatmapLayer.SOURCE_PROJECTION = new OpenLayers.Projection("EPSG:4326");
-coreMap.Map.Layer.HeatmapLayer.DESTINATION_PROJECTION = new OpenLayers.Projection("EPSG:900913");
