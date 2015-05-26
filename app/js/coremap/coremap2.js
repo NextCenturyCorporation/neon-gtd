@@ -116,6 +116,9 @@ coreMap.Map = function(elementId, opts) {
         this.height = opts.height || coreMap.Map.DEFAULT_HEIGHT;
     }
 
+    this.selectableLayers = [];
+    this.selectControls = [];
+
     this.defaultLayer = (opts.defaultLayer === coreMap.Map.HEATMAP_LAYER) ? coreMap.Map.HEATMAP_LAYER : coreMap.Map.POINTS_LAYER;
 
     this.initializeMap();
@@ -219,42 +222,31 @@ var onFeatureUnselect = function(feature) {
 
 coreMap.Map.prototype.addLayer = function(layer) {
     this.map.addLayer(layer);
+    if (layer.CLASS_NAME === "coreMap.Map.Layer.PointsLayer")  {
+        this.selectableLayers[layer.id] = layer;
+        this.selectControls[layer.id] = this.createSelectControl(layer);
+        this.map.addControl(this.selectControls[layer.id]);
+        this.selectControls[layer.id].activate();
+    }
 }
 
 coreMap.Map.prototype.removeLayer = function(layer) {
+    if (this.selectControls[layer.id]) {
+        this.selectControls[layer.id].deactivate();
+        this.map.removeControl(this.selectControls[layer.id]);
+        delete this.selectControls[layer.id];
+    }
+
     this.map.removeLayer(layer);
-    // TODO: Replace the call to destroy when the layer's popups logic has been abstracted.
-    // See removeLayer documentation on OpenLayers.Map.
 }
 
 /**
  * Draws the map data
  * @method draw
+ * @deprecated
  */
 coreMap.Map.prototype.draw = function() {
-    var me = this;
-
-    var heatmapData = [];
-    var mapData = [];
-    // me.colors = {};
-    // _.each(this.data, function(element) {
-    //     var longitude = me.getValueFromDataElement(me.longitudeMapping, element);
-    //     var latitude = me.getValueFromDataElement(me.latitudeMapping, element);
-
-    //     if($.isNumeric(latitude) && $.isNumeric(longitude)) {
-    //         heatmapData.push(me.createHeatmapDataPoint(element, longitude, latitude));
-    //         mapData.push(me.createPointsLayerDataPoint(element, longitude, latitude));
-    //     }
-    // });
-
-    // // Remove any popups before resetting data so they do not become orphaned.
-    // me.map.selectControl.unselectAll();
-    // me.heatmapLayer.setDataSet({
-    //     max: 1,
-    //     data: heatmapData
-    // });
-    // me.pointsLayer.removeAllFeatures();
-    // me.pointsLayer.addFeatures(mapData);
+    // DEPRECATED.
 };
 
 /**
@@ -350,7 +342,14 @@ coreMap.Map.prototype.initializeMap = function() {
         width: this.width,
         height: this.height
     });
-    this.map = new OpenLayers.Map(this.elementId);
+    this.map = new OpenLayers.Map(this.elementId, {
+        controls: [
+            new OpenLayers.Control.Navigation(),
+            new OpenLayers.Control.LayerSwitcher({'ascending':false}),
+            new OpenLayers.Control.ScaleLine(),
+            new OpenLayers.Control.MousePosition()
+        ]
+    });
     this.configureFilterOnZoomRectangle();
 };
 
@@ -479,6 +478,60 @@ coreMap.Map.prototype.createHeatmapLayer = function(title, baseLayer, olOptions,
     return new OpenLayers.Layer.Heatmap((title || "Heatmap Layer"), this.map, baseLayer, heatmapOptions, options);
  }
 
+coreMap.Map.prototype.createSelectControl =  function(layer) {
+    var me = this;
+    var onFeatureSelect = function(feature) {
+        XDATA.userALE.log({
+            activity: "show",
+            action: "click",
+            elementId: "map",
+            elementType: "tooltip",
+            elementGroup: "map_group",
+            source: "user",
+            tags: ["map", "tooltip"]
+        });
+        var text = '<div><table class="table table-striped table-condensed">';
+        for(var key in feature.attributes) {
+            if(Object.prototype.hasOwnProperty.call(feature.attributes, key)) {
+                text += '<tr><th>' + _.escape(key) + '</th><td>' + _.escape(feature.attributes[key]) + '</td>';
+            }
+        }
+        text += '</table></div>';
+
+        me.featurePopup = new OpenLayers.Popup.FramedCloud("Data",
+            feature.geometry.getBounds().getCenterLonLat(),
+            null,
+            text,
+            null,
+            false,
+            onPopupClose);
+        me.map.addPopup(me.featurePopup);
+    };
+
+    var onFeatureUnselect = function(feature) {
+        XDATA.userALE.log({
+            activity: "hide",
+            action: "click",
+            elementId: "map",
+            elementType: "tooltip",
+            elementGroup: "map_group",
+            source: "user",
+            tags: ["map", "tooltip"]
+        });
+
+        if(me.featurePopup) {
+            me.map.removePopup(me.featurePopup);
+            me.featurePopup.destroy();
+            me.featurePopup = null;
+        }
+    };
+
+     return new OpenLayers.Control.SelectFeature(layer, {
+        onSelect: onFeatureSelect,
+        onUnselect: onFeatureUnselect
+    });
+};
+
 /**
  * Initializes the map layers and adds the base layer.
  * @method setupLayers
@@ -510,7 +563,6 @@ coreMap.Map.prototype.setupControls = function() {
         }
     });
 
-    //this.cacheWriter.addLayer(baseLayer);
     this.map.addControl(this.cacheReader);
     this.map.addControl(this.cacheWriter);
 }
@@ -558,13 +610,6 @@ coreMap.Map.prototype.resizeToElement = function() {
         width: this.width + 'px',
         height: this.height + 'px'
     });
-
-    // Since the heatmap layer doesn't natively support resizing, we need to update its size prior to
-    // updating the main map view.
-    // TODO: Move this to the heamap layer?  Or loop through our layers and call this on any heatmap layer?
-    // this.heatmapLayer.heatmap.set("width", this.width);
-    // this.heatmapLayer.heatmap.set("height", this.height);
-    // this.heatmapLayer.heatmap.resize();
 
     // The map may resize multiple times if a browser resize event is triggered.  In this case,
     // openlayers elements may have updated before our this method.  In that case, calling

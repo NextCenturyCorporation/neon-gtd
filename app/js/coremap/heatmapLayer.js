@@ -17,6 +17,7 @@
 
 coreMap.Map.Layer = coreMap.Map.HeatmapLayer || {};
 coreMap.Map.Layer.HeatmapLayer = OpenLayers.Class(OpenLayers.Layer.Heatmap, {
+    CLASS_NAME: "coreMap.Map.Layer.HeatmapLayer",
     data: [],
     latitudeMapping: '',
     longitudeMapping: '',

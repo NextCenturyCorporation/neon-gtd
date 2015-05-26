@@ -17,6 +17,7 @@
 
 coreMap.Map.Layer = coreMap.Map.Layer || {};
 coreMap.Map.Layer.PointsLayer = OpenLayers.Class(OpenLayers.Layer.Vector, {
+    CLASS_NAME: "coreMap.Map.Layer.PointsLayer",
     colors: {},
     data: [],
     latitudeMapping: '',
@@ -83,28 +84,6 @@ coreMap.Map.Layer.PointsLayer = OpenLayers.Class(OpenLayers.Layer.Vector, {
         ];
         this.visibility = true;
         this.colorScale = d3.scale.ordinal().range(this.colorRange);
-
-        this.events.register('added', this, function(event) {
-            console.log("layer was added " + event.layer.name);
-            // TODO: Add our controls.
-        });
-
-        this.events.register('removed', this, function(event) {
-            console.log("layer was removed " + event.layer.name);
-            // TODO: remove our controls.
-        });
-    },
-
-    createPointsStyleMap: function() {
-        return new OpenLayers.StyleMap(OpenLayers.Util.applyDefaults({
-                fillColor: "#00FF00",
-                fillOpacity: 0.8,
-                strokeOpacity: 0.8,
-                strokeWidth: 1,
-                pointRadius: 4
-            },
-            OpenLayers.Feature.Vector.style["default"]
-        ));
     },
 
     createClusterStyle: function() {
@@ -140,6 +119,18 @@ coreMap.Map.Layer.PointsLayer = OpenLayers.Class(OpenLayers.Layer.Vector, {
         return new OpenLayers.StyleMap({
             "default": clusterPointStyle
         });
+    },
+
+    createPointsStyleMap: function() {
+        return new OpenLayers.StyleMap(OpenLayers.Util.applyDefaults({
+                fillColor: "#00FF00",
+                fillOpacity: 0.8,
+                strokeOpacity: 0.8,
+                strokeWidth: 1,
+                pointRadius: 4
+            },
+            OpenLayers.Feature.Vector.style["default"]
+        ));
     }
 });
 

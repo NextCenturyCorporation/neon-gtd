@@ -172,6 +172,32 @@
                 "size_by": "mag",
                 "sort_by": "time"
             }
+        }],
+        "mapLayers": [{
+            "database": "test",
+            "table": "earthquakes",
+            "type": "heatmap",
+            "latitudeMapping": "latitude",
+            "longitudeMapping": "longitude",
+            "sizeBy": "mag"
+        }, {
+            "database": "test",
+            "table": "earthquakes",
+            "active":  true,
+            "type": "cluster",
+            "latitudeMapping": "latitude",
+            "longitudeMapping": "longitude",
+            "colorBy": "magType",
+            "sizeBy": "mag"
+        }, {
+            "database": "test",
+            "table": "earthquakes",
+            "active":  true,
+            "type": "points",
+            "latitudeMapping": "latitude",
+            "longitudeMapping": "longitude",
+            "colorBy": "magType",
+            "sizeBy": "mag"
         }]
     }],
 

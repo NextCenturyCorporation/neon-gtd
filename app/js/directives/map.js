@@ -365,6 +365,15 @@ angular.module('neonDemo.directives')
                 }
             };
 
+            var cloneDatasetLayerConfig = function() {
+                var configClone = [];
+                var config = datasetService.getMapLayers() || [];
+                for (var i = 0; i < config.length; i++) {
+                    configClone.push(_.clone(config[i]));
+                }
+                return configClone;
+            }
+
             var drawZoomRect = function(rect) {
                 // Clear the old rect.
                 clearZoomRect();
@@ -429,7 +438,8 @@ angular.module('neonDemo.directives')
             $scope.updateLayersAndQueries = function() {
                 var i = 0;
                 var layer = {};
-                $scope.layers = datasetService.getMapLayers();
+
+                $scope.layers = cloneDatasetLayerConfig();
 
                 // Setup the base layer objects.
                 for (i = 0; i < $scope.layers.length; i++) {
