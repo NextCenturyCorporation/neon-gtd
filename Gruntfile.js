@@ -167,5 +167,5 @@ module.exports = function(grunt) {
 
     grunt.registerTask('compile-less', ['clean:less', 'less']);
     grunt.registerTask('test', ['jshint:console', 'jscs:console', 'karma']);
-    grunt.registerTask('default', ['clean', 'bower:install', 'jshint:xml', 'jscs:xml', 'yuidoc', 'war']);
+    grunt.registerTask('default', ['clean', 'bower:install', 'jshint:xml', 'jscs:xml', 'yuidoc', 'compile-less', 'war']);
 };
