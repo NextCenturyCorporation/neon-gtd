@@ -41,6 +41,7 @@ function(connectionService, datasetService, errorNotificationService, $timeout) 
             bindCategoryField: '=',
             bindAggregationField: '=',
             bindTable: '=',
+            bindDatabase: '=',
             colorMappings: '&',
             hideAdvancedOptions: '=?'
         },
@@ -271,6 +272,9 @@ function(connectionService, datasetService, errorNotificationService, $timeout) 
 
                 $scope.databases = datasetService.getDatabaseNames();
                 $scope.options.database = $scope.databases[0];
+                if($scope.bindDatabase && $scope.databases.indexOf($scope.bindDatabase) >= 0) {
+                    $scope.options.database = $scope.bindDatabase;
+                }
 
                 if(initializing) {
                     $scope.updateTables();
@@ -283,7 +287,11 @@ function(connectionService, datasetService, errorNotificationService, $timeout) 
 
             $scope.updateTables = function() {
                 $scope.tables = datasetService.getTableNames($scope.options.database);
-                $scope.options.table = $scope.bindTable || datasetService.getFirstTableNameWithMappings($scope.options.database, ["date", "y_axis"]) || $scope.tables[0];
+                if($scope.bindTable && $scope.tables.indexOf($scope.bindTable) >= 0) {
+                    $scope.options.table = $scope.bindTable;
+                } else {
+                    $scope.options.table = datasetService.getFirstTableNameWithMappings($scope.options.database, ["date", "y_axis"]) || $scope.tables[0];
+                }
                 $scope.updateFields();
             };
 

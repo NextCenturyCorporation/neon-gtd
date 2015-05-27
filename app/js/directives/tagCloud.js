@@ -27,6 +27,7 @@ function(connectionService, datasetService, filterService, $timeout) {
         scope: {
             bindTagField: '=',
             bindTable: '=',
+            bindDatabase: '=',
             hideAdvancedOptions: '=?'
         },
         link: function($scope, $element) {
@@ -174,6 +175,9 @@ function(connectionService, datasetService, filterService, $timeout) {
 
                 $scope.databases = datasetService.getDatabaseNames();
                 $scope.options.database = $scope.databases[0];
+                if($scope.bindDatabase && $scope.databases.indexOf($scope.bindDatabase) >= 0) {
+                    $scope.options.database = $scope.bindDatabase;
+                }
                 $scope.filterKeys = filterService.createFilterKeys("tagcloud", datasetService.getDatabaseAndTableNames());
 
                 if(initializing) {
@@ -187,7 +191,11 @@ function(connectionService, datasetService, filterService, $timeout) {
 
             $scope.updateTables = function() {
                 $scope.tables = datasetService.getTableNames($scope.options.database);
-                $scope.options.table = $scope.bindTable || datasetService.getFirstTableNameWithMappings($scope.options.database, ["tags"]) || $scope.tables[0];
+                if($scope.bindTable && $scope.tables.indexOf($scope.bindTable) >= 0) {
+                    $scope.options.table = $scope.bindTable;
+                } else {
+                    $scope.options.table = datasetService.getFirstTableNameWithMappings($scope.options.database, ["tags"]) || $scope.tables[0];
+                }
                 $scope.updateFields();
             };
 

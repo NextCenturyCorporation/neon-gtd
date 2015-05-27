@@ -212,6 +212,7 @@
             "sizeY": 1,
             "type": "timeline-selector",
             "bindings": {
+                "bind-database": "'myDatabase'",
                 "bind-table": "'myTable'",
                 "bind-date-field": "'date'"
             }
@@ -220,6 +221,7 @@
             "sizeY": 2,
             "type": "heat-map",
             "bindings": {
+                "bind-database": "'myDatabase'",
                 "bind-table": "'myTable'",
                 "bind-latitude-field": "'latitude'",
                 "bind-longitude-field": "'longitude'",
@@ -231,6 +233,7 @@
             "sizeY": 2,
             "type": "circular-heat-form",
             "bindings": {
+                "bind-database": "'myDatabase'",
                 "bind-table": "'myTable'",
                 "bind-date-field": "'date'"
             }
@@ -239,6 +242,7 @@
             "sizeY": 2,
             "type": "linechart",
             "bindings": {
+                "bind-database": "'myDatabase'",
                 "bind-table": "'myTable'",
                 "bind-date-field": "'date'",
                 "bind-y-axis-field": "'type'",
@@ -250,6 +254,7 @@
             "sizeY": 2,
             "type": "barchart",
             "bindings": {
+                "bind-database": "'myDatabase'",
                 "bind-table": "'myTable'",
                 "bind-x-axis-field": "'type'",
                 "bind-y-axis-field": "'type'",
@@ -260,6 +265,7 @@
             "sizeY": 2,
             "type": "count-by",
             "bindings": {
+                "bind-database": "'myDatabase'",
                 "bind-table": "'myTable'",
                 "bind-count-field": "'type'"
             }
@@ -268,6 +274,7 @@
             "sizeY": 2,
             "type": "tag-cloud",
             "bindings": {
+                "bind-database": "'myDatabase'",
                 "bind-table": "'myTable'",
                 "bind-tag-field": "'hashtags'"
             }
@@ -276,6 +283,7 @@
             "sizeY": 2,
             "type": "sunburst",
             "bindings": {
+                "bind-database": "'myDatabase'",
                 "bind-table": "'myTable'"
             }
         }, {
@@ -283,6 +291,7 @@
             "sizeY": 2,
             "type": "query-results-table",
             "bindings": {
+                "bind-database": "'myDatabase'",
                 "bind-table": "'myTable'"
             }
         }]

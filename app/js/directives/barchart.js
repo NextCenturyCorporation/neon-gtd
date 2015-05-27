@@ -38,6 +38,7 @@ function(connectionService, datasetService, errorNotificationService, filterServ
             bindYAxisField: '=',
             bindAggregationField: '=',
             bindTable: '=',
+            bindDatabase: '=',
             hideAdvancedOptions: '=?'
         },
         link: function($scope, $element) {
@@ -210,7 +211,7 @@ function(connectionService, datasetService, errorNotificationService, filterServ
                 }
 
                 $scope.databases = datasetService.getDatabaseNames();
-                $scope.options.database = $scope.databases[0];
+                $scope.options.database = $scope.bindDatabase || $scope.databases[0];
                 $scope.filterKeys = filterService.createFilterKeys("barchart", datasetService.getDatabaseAndTableNames());
 
                 if(initializing) {

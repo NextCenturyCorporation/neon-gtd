@@ -40,6 +40,7 @@ function(connectionService, datasetService, errorNotificationService, filterServ
         scope: {
             bindDateField: '=',
             bindTable: '=',
+            bindDatabase: '=',
             hideAdvancedOptions: '=?'
         },
         link: function($scope, $element) {
@@ -340,6 +341,9 @@ function(connectionService, datasetService, errorNotificationService, filterServ
 
                 $scope.databases = datasetService.getDatabaseNames();
                 $scope.options.database = $scope.databases[0];
+                if($scope.bindDatabase && $scope.databases.indexOf($scope.bindDatabase) >= 0) {
+                    $scope.options.database = $scope.bindDatabase;
+                }
                 $scope.filterKeys = filterService.createFilterKeys("timeline", datasetService.getDatabaseAndTableNames());
 
                 if(initializing) {
@@ -353,7 +357,11 @@ function(connectionService, datasetService, errorNotificationService, filterServ
 
             $scope.updateTables = function() {
                 $scope.tables = datasetService.getTableNames($scope.options.database);
-                $scope.options.table = $scope.bindTable || datasetService.getFirstTableNameWithMappings($scope.options.database, ["date"]) || $scope.tables[0];
+                if($scope.bindTable && $scope.tables.indexOf($scope.bindTable) >= 0) {
+                    $scope.options.table = $scope.bindTable;
+                } else {
+                    $scope.options.table = datasetService.getFirstTableNameWithMappings($scope.options.database, ["date"]) || $scope.tables[0];
+                }
                 $scope.updateFields();
             };
 

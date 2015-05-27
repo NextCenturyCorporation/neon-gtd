@@ -35,6 +35,7 @@ function(connectionService, datasetService, errorNotificationService) {
         restrict: 'EA',
         scope: {
             bindTable: '=',
+            bindDatabase: '=',
             hideAdvancedOptions: '=?'
         },
         link: function($scope, $element) {
@@ -190,6 +191,9 @@ function(connectionService, datasetService, errorNotificationService) {
 
                 $scope.databases = datasetService.getDatabaseNames();
                 $scope.options.database = $scope.databases[0];
+                if($scope.bindDatabase && $scope.databases.indexOf($scope.bindDatabase) >= 0) {
+                    $scope.options.database = $scope.bindDatabase;
+                }
 
                 if(initializing) {
                     $scope.updateTables();
@@ -202,7 +206,11 @@ function(connectionService, datasetService, errorNotificationService) {
 
             $scope.updateTables = function() {
                 $scope.tables = datasetService.getTableNames($scope.options.database);
-                $scope.options.table = $scope.bindTable || $scope.tables[0];
+                if($scope.bindTable && $scope.tables.indexOf($scope.bindTable) >= 0) {
+                    $scope.options.table = $scope.bindTable;
+                } else {
+                    $scope.options.table = $scope.tables[0];
+                }
                 $scope.updateFields();
             };
 
