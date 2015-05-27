@@ -1,21 +1,26 @@
 <div ng-hide="(navbarItem)" class="header-container">
-    <span class="header-text pull-left">{{options.selectedTable.name}}</span>
+    <span class="header-text pull-left">{{options.table}}</span>
 
     <options-menu parent-element="element">
         <div class="form-group" ng-show="!(hideAdvancedOptions)">
+            <label>Database</label>
+            <select class="form-control" ng-model="options.database" ng-options="database for database in databases" ng-required="true" ng-disabled="(databases.length < 2)" ng-change="updateTables()">
+            </select>
+        </div>
+        <div class="form-group" ng-show="!(hideAdvancedOptions)">
             <label>Table</label>
-            <select class="form-control" ng-model="options.selectedTable" ng-options="table.name for table in tables" ng-required="true" ng-disabled="(tables.length < 2)" ng-change="updateFieldsAndRowsAndCount()">
+            <select class="form-control" ng-model="options.table" ng-options="table for table in tables" ng-required="true" ng-disabled="(tables.length < 2)" ng-change="updateFields()">
             </select>
         </div>
 
         <div class="form-group">
             <label>Add Column</label>
             <div class="input-group">
-                <select class="form-control" ng-model="options.addField" ng-disabled="!(tableNameToDeletedFieldsMap[options.selectedTable.name].length > 0)" ng-options="field for field in tableNameToDeletedFieldsMap[options.selectedTable.name]">
+                <select class="form-control" ng-model="options.addField" ng-disabled="!(tableNameToDeletedFieldsMap[options.table].length > 0)" ng-options="field for field in tableNameToDeletedFieldsMap[options.table]">
                 </select>
 
                 <div class="input-group-btn">
-                    <button class="btn btn-default" ng-click="addColumn()" ng-disabled="!(tableNameToDeletedFieldsMap[options.selectedTable.name].length > 0)">&plus;</button>
+                    <button class="btn btn-default" ng-click="addColumn()" ng-disabled="!(tableNameToDeletedFieldsMap[options.table].length > 0)">&plus;</button>
                 </div>
             </div>
         </div>    
@@ -62,19 +67,24 @@
     <div class="form-inline navbar-item-forms pull-right">
         <form name="dataTableForm">
             <div ng-hide="!(navbarItem)" class="form-group">
+                <label>Database</label>
+                <select class="form-control" ng-model="options.database" ng-options="database for database in databases" ng-required="true" ng-disabled="(databases.length < 2)" ng-change="updateTables()">
+                </select>
+            </div>
+            <div ng-hide="!(navbarItem)" class="form-group">
                 <label>Table</label>
-                <select class="form-control" ng-model="options.selectedTable" ng-options="table.name for table in tables" ng-required="true" ng-disabled="(tables.length < 2)" ng-change="updateFieldsAndRowsAndCount()">
+                <select class="form-control" ng-model="options.table" ng-options="table for table in tables" ng-required="true" ng-disabled="(tables.length < 2)" ng-change="updateFields()">
                 </select>
             </div>
 
             <div ng-hide="!(navbarItem)" class="form-input-group">
                 <label>Add Column</label>
                 <div class="input-group">
-                    <select class="form-control" ng-model="options.addField" ng-disabled="!(tableNameToDeletedFieldsMap[options.selectedTable.name].length > 0)" ng-options="field for field in tableNameToDeletedFieldsMap[options.selectedTable.name]">
+                    <select class="form-control" ng-model="options.addField" ng-disabled="!(tableNameToDeletedFieldsMap[options.table].length > 0)" ng-options="field for field in tableNameToDeletedFieldsMap[options.table]">
                     </select>
 
                     <div class="input-group-btn">
-                        <button class="btn btn-default" ng-click="addColumn()" ng-disabled="!(tableNameToDeletedFieldsMap[options.selectedTable.name].length > 0)">&plus;</button>
+                        <button class="btn btn-default" ng-click="addColumn()" ng-disabled="!(tableNameToDeletedFieldsMap[options.table].length > 0)">&plus;</button>
                     </div>
                 </div>
             </div>    

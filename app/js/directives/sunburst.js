@@ -45,16 +45,16 @@ function(connectionService, datasetService, errorNotificationService) {
             $scope.arcValue = "count";
             $scope.groupFields = [];
             $scope.messenger = new neon.eventing.Messenger();
-            $scope.databaseName = '';
+
+            $scope.databases = [];
             $scope.tables = [];
             $scope.fields = [];
             $scope.chart = undefined;
             $scope.errorMessage = undefined;
 
             $scope.options = {
-                selectedTable: {
-                    name: ""
-                },
+                database: "",
+                table: "",
                 selectedItem: "",
                 valueField: ""
             };
@@ -120,7 +120,7 @@ function(connectionService, datasetService, errorNotificationService) {
                     source: "system",
                     tags: ["filter-change", "sunburst"]
                 });
-                if(message.addedFilter && message.addedFilter.databaseName === $scope.databaseName && message.addedFilter.tableName === $scope.options.selectedTable.name) {
+                if(message.addedFilter && message.addedFilter.databaseName === $scope.options.database && message.addedFilter.tableName === $scope.options.table) {
                     $scope.queryForData();
                 }
             };
@@ -160,7 +160,7 @@ function(connectionService, datasetService, errorNotificationService) {
              * @method buildQuery
              */
             $scope.buildQuery = function() {
-                var query = new neon.query.Query().selectFrom($scope.databaseName, $scope.options.selectedTable.name);
+                var query = new neon.query.Query().selectFrom($scope.options.database, $scope.options.table);
                 if($scope.groupFields.length > 0) {
                     query.groupBy.apply(query, $scope.groupFields);
                 }
@@ -188,21 +188,26 @@ function(connectionService, datasetService, errorNotificationService) {
                 $scope.options.valueField = "";
                 $scope.arcValue = charts.SunburstChart.COUNT_PARTITION;
 
-                $scope.databaseName = datasetService.getDatabase();
-                $scope.tables = datasetService.getTables();
-                $scope.options.selectedTable = $scope.bindTable || $scope.tables[0];
+                $scope.databases = datasetService.getDatabaseNames();
+                $scope.options.database = $scope.databases[0];
 
                 if(initializing) {
-                    $scope.updateFieldsAndQueryForData();
+                    $scope.updateTables();
                 } else {
                     $scope.$apply(function() {
-                        $scope.updateFieldsAndQueryForData();
+                        $scope.updateTables();
                     });
                 }
             };
 
-            $scope.updateFieldsAndQueryForData = function() {
-                $scope.fields = datasetService.getDatabaseFields($scope.options.selectedTable.name);
+            $scope.updateTables = function() {
+                $scope.tables = datasetService.getTableNames($scope.options.database);
+                $scope.options.table = $scope.bindTable || $scope.tables[0];
+                $scope.updateFields();
+            };
+
+            $scope.updateFields = function() {
+                $scope.fields = datasetService.getDatabaseFields($scope.options.database, $scope.options.table);
                 $scope.fields.sort();
                 $scope.queryForData();
             };
@@ -276,7 +281,7 @@ function(connectionService, datasetService, errorNotificationService) {
             var buildDataTree = function(data) {
                 var nodes = {};
                 var tree = {
-                    name: $scope.options.selectedTable.name,
+                    name: $scope.options.table,
                     children: []
                 };
                 var leafObject;

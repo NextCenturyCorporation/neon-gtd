@@ -59,7 +59,7 @@ function(connectionService, datasetService, errorNotificationService, filterServ
             };
 
             // Setup scope variables.
-            $scope.databaseName = '';
+            $scope.databases = [];
             $scope.tables = [];
             $scope.fields = [];
             $scope.cacheMap = false;
@@ -72,9 +72,8 @@ function(connectionService, datasetService, errorNotificationService, filterServ
             $scope.errorMessage = undefined;
 
             $scope.options = {
-                selectedTable: {
-                    name: ""
-                },
+                database: "",
+                table: "",
                 latitudeField: "",
                 longitudeField: "",
                 sizeByField: "",
@@ -323,7 +322,7 @@ function(connectionService, datasetService, errorNotificationService, filterServ
                         source: "system",
                         tags: ["filter", "map"]
                     });
-                    var relations = datasetService.getRelations($scope.options.selectedTable.name, [$scope.options.latitudeField, $scope.options.longitudeField]);
+                    var relations = datasetService.getRelations($scope.options.database, $scope.options.table, [$scope.options.latitudeField, $scope.options.longitudeField]);
 
                     filterService.replaceFilters($scope.messenger, relations, $scope.filterKeys, $scope.createFilterClauseForExtent, function() {
                         $scope.$apply(function() {
@@ -400,7 +399,7 @@ function(connectionService, datasetService, errorNotificationService, filterServ
                     source: "system",
                     tags: ["filter-change", "map"]
                 });
-                if(message.addedFilter && message.addedFilter.databaseName === $scope.databaseName && message.addedFilter.tableName === $scope.options.selectedTable.name) {
+                if(message.addedFilter && message.addedFilter.databaseName === $scope.options.database && message.addedFilter.tableName === $scope.options.table) {
                     $scope.queryForMapData();
                 }
             };
@@ -477,27 +476,32 @@ function(connectionService, datasetService, errorNotificationService, filterServ
                 $scope.dataBounds = undefined;
                 $scope.hideClearFilterButton();
 
-                $scope.databaseName = datasetService.getDatabase();
-                $scope.tables = datasetService.getTables();
-                $scope.options.selectedTable = $scope.bindTable || datasetService.getFirstTableWithMappings(["latitude", "longitude"]) || $scope.tables[0];
-                $scope.filterKeys = filterService.createFilterKeys("map", $scope.tables);
+                $scope.databases = datasetService.getDatabaseNames();
+                $scope.options.database = $scope.databases[0];
+                $scope.filterKeys = filterService.createFilterKeys("map", datasetService.getDatabaseAndTableNames());
 
                 if(initializing) {
-                    $scope.updateFieldsAndQueryForMapData();
+                    $scope.updateTables();
                 } else {
                     $scope.$apply(function() {
-                        $scope.updateFieldsAndQueryForMapData();
+                        $scope.updateTables();
                     });
                 }
             };
 
-            $scope.updateFieldsAndQueryForMapData = function() {
-                $scope.fields = datasetService.getDatabaseFields($scope.options.selectedTable.name);
+            $scope.updateTables = function() {
+                $scope.tables = datasetService.getTableNames($scope.options.database);
+                $scope.options.table = $scope.bindTable || datasetService.getFirstTableNameWithMappings($scope.options.database, ["latitude", "longitude"]) || $scope.tables[0];
+                $scope.updateFields();
+            };
+
+            $scope.updateFields = function() {
+                $scope.fields = datasetService.getDatabaseFields($scope.options.database, $scope.options.table);
                 $scope.fields.sort();
-                $scope.options.latitudeField = $scope.bindLatitudeField || datasetService.getMapping($scope.options.selectedTable.name, "latitude") || "";
-                $scope.options.longitudeField = $scope.bindLongitudeField || datasetService.getMapping($scope.options.selectedTable.name, "longitude") || "";
-                $scope.options.colorByField = $scope.bindColorField || datasetService.getMapping($scope.options.selectedTable.name, "color_by") || "";
-                $scope.options.sizeByField = $scope.bindSizeField || datasetService.getMapping($scope.options.selectedTable.name, "size_by") || "";
+                $scope.options.latitudeField = $scope.bindLatitudeField || datasetService.getMapping($scope.options.database, $scope.options.table, "latitude") || "";
+                $scope.options.longitudeField = $scope.bindLongitudeField || datasetService.getMapping($scope.options.database, $scope.options.table, "longitude") || "";
+                $scope.options.colorByField = $scope.bindColorField || datasetService.getMapping($scope.options.database, $scope.options.table, "color_by") || "";
+                $scope.options.sizeByField = $scope.bindSizeField || datasetService.getMapping($scope.options.database, $scope.options.table, "size_by") || "";
 
                 $timeout(function() {
                     $scope.initializing = false;
@@ -661,7 +665,7 @@ function(connectionService, datasetService, errorNotificationService, filterServ
             };
 
             $scope.buildQuery = function() {
-                var query = new neon.query.Query().selectFrom($scope.databaseName, $scope.options.selectedTable.name).limit($scope.options.limit);
+                var query = new neon.query.Query().selectFrom($scope.options.database, $scope.options.table).limit($scope.options.limit);
                 var groupByFields = [$scope.options.latitudeField, $scope.options.longitudeField];
 
                 if($scope.options.colorByField) {
@@ -681,7 +685,7 @@ function(connectionService, datasetService, errorNotificationService, filterServ
             };
 
             $scope.buildPointQuery = function() {
-                var query = new neon.query.Query().selectFrom($scope.databaseName, $scope.options.selectedTable.name).limit($scope.options.limit);
+                var query = new neon.query.Query().selectFrom($scope.options.database, $scope.options.table).limit($scope.options.limit);
                 return query;
             };
 

@@ -1,10 +1,16 @@
 <div class="header-container">
-    <span class="header-text pull-left">{{options.selectedTable.name}}</span>
+    <span class="header-text pull-left">{{options.table}}</span>
 
     <options-menu parent-element="element" button-text="optionsMenuButtonText" show-button-text="showOptionsMenuButtonText">
         <div class="form-group" ng-show="!(hideAdvancedOptions)">
+            <label>Database</label>
+            <select class="form-control" ng-model="options.database" ng-options="database for database in databases" ng-required="true" ng-disabled="(databases.length < 2)" ng-change="updateTables()">
+            </select>
+        </div>
+
+        <div class="form-group" ng-show="!(hideAdvancedOptions)">
             <label>Table</label>
-            <select class="form-control" ng-model="options.selectedTable" ng-options="table.name for table in tables" ng-required="true" ng-disabled="(tables.length < 2)" ng-change="updateFieldsAndQueryForMapData()">
+            <select class="form-control" ng-model="options.table" ng-options="table for table in tables" ng-required="true" ng-disabled="(tables.length < 2)" ng-change="updateFields()">
             </select>
         </div>
 

@@ -110,69 +110,72 @@
         "name": "Earthquakes",
         "datastore": "mongo",
         "hostname": "localhost",
-        "database": "test",
-        "tables": [{
-            "name": "earthquakes",
-            "fields": [{
-                "columnName": "_id",
-                "prettyName": "Database ID"
-            }, {
-                "columnName": "time",
-                "prettyName": "Time"
-            }, {
-                "columnName": "latitude",
-                "prettyName": "Latitude"
-            }, {
-                "columnName": "longitude",
-                "prettyName": "Longitude"
-            }, {
-                "columnName": "depth",
-                "prettyName": "Depth"
-            }, {
-                "columnName": "mag",
-                "prettyName": "Magnitude"
-            }, {
-                "columnName": "magType",
-                "prettyName": "Magnitude Type"
-            }, {
-                "columnName": "nst",
-                "prettyName": "NST"
-            }, {
-                "columnName": "gap",
-                "prettyName": "Gap"
-            }, {
-                "columnName": "dmin",
-                "prettyName": "DMIN"
-            }, {
-                "columnName": "rms",
-                "prettyName": "RMS"
-            }, {
-                "columnName": "net",
-                "prettyName": "Net"
-            }, {
-                "columnName": "id",
-                "prettyName": "ID"
-            }, {
-                "columnName": "updated",
-                "prettyName": "Updated"
-            }, {
-                "columnName": "place",
-                "prettyName": "Place"
-            }, {
-                "columnName": "type",
-                "prettyName": "Type"
-            }],
-            "mappings": {
-                "date": "time",
-                "latitude": "latitude",
-                "longitude": "longitude",
-                "line_category": "type",
-                "bar_x_axis": "net",
-                "y_axis": "mag",
-                "color_by": "magType",
-                "size_by": "mag",
-                "sort_by": "time"
-            }
+        "databases": [{
+            "name": "test",
+            "tables": [{
+                "name": "earthquakes",
+                "fields": [{
+                    "columnName": "_id",
+                    "prettyName": "Database ID"
+                }, {
+                    "columnName": "time",
+                    "prettyName": "Time"
+                }, {
+                    "columnName": "latitude",
+                    "prettyName": "Latitude"
+                }, {
+                    "columnName": "longitude",
+                    "prettyName": "Longitude"
+                }, {
+                    "columnName": "depth",
+                    "prettyName": "Depth"
+                }, {
+                    "columnName": "mag",
+                    "prettyName": "Magnitude"
+                }, {
+                    "columnName": "magType",
+                    "prettyName": "Magnitude Type"
+                }, {
+                    "columnName": "nst",
+                    "prettyName": "NST"
+                }, {
+                    "columnName": "gap",
+                    "prettyName": "Gap"
+                }, {
+                    "columnName": "dmin",
+                    "prettyName": "DMIN"
+                }, {
+                    "columnName": "rms",
+                    "prettyName": "RMS"
+                }, {
+                    "columnName": "net",
+                    "prettyName": "Net"
+                }, {
+                    "columnName": "id",
+                    "prettyName": "ID"
+                }, {
+                    "columnName": "updated",
+                    "prettyName": "Updated"
+                }, {
+                    "columnName": "place",
+                    "prettyName": "Place"
+                }, {
+                    "columnName": "type",
+                    "prettyName": "Type"
+                }],
+                "mappings": {
+                    "date": "time",
+                    "latitude": "latitude",
+                    "longitude": "longitude",
+                    "line_category": "type",
+                    "bar_x_axis": "net",
+                    "y_axis": "mag",
+                    "color_by": "magType",
+                    "size_by": "mag",
+                    "sort_by": "time",
+                    "count_by": "net"
+                }
+            }]
         }]
     }],
 

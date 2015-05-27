@@ -21,16 +21,21 @@ angular.module("neonDemo.services")
         var service = {};
 
         /**
-         * Creates and returns a mapping of names from the given tables to unique filter keys for each table.
+         * Creates and returns a mapping of names from the given table names to unique filter keys for each table.
          * @param {String} The name of the visualization
-         * @param {Array} The array of table objects
+         * @param {Array} The array of table names
          * @method createFilterKeys
          * @return {Object} The mapping of table names to filter keys
          */
-        service.createFilterKeys = function(visualizationName, tables) {
+        service.createFilterKeys = function(visualizationName, databaseNamesToTableNames) {
             var filterKeys = {};
-            for(var i = 0; i < tables.length; ++i) {
-                filterKeys[tables[i].name] = visualizationName + "-" + tables[i].name + "-" + uuid();
+            var databaseNames = Object.keys(databaseNamesToTableNames);
+            for(var i = 0; i < databaseNames.length; ++i) {
+                filterKeys[databaseNames[i]] = {};
+                var tableNames = databaseNamesToTableNames[databaseNames[i]];
+                for(var j = 0; j < tableNames.length; ++j) {
+                    filterKeys[databaseNames[i]][tableNames[j]] = visualizationName + "-" + databaseNames[i] + "-" + tableNames[j] + "-" + uuid();
+                }
             }
             return filterKeys;
         };
@@ -121,7 +126,7 @@ angular.module("neonDemo.services")
          * Adds filters for the given relations using the given filter keys.
          * @param {Object} messenger The messenger object used to add the filters
          * @param {Array} relations The array of relations containing a database name, a table name, and a map of fields
-         * @param {Object} filterKeys The map of table names to filter keys used by the messenger
+         * @param {Object} filterKeys The map of database and table names to filter keys used by the messenger
          * @param {Function} createFilterClauseFunction The function used to create the filter clause for each field, with arguments:
          *  <ul>
          *      <li> {String} The table name </li>
@@ -135,7 +140,7 @@ angular.module("neonDemo.services")
             var addFilter = function(relationsToAdd) {
                 var relation = relationsToAdd.shift();
                 var filter = service.createFilter(relation, createFilterClauseFunction);
-                messenger.addFilter(filterKeys[relation.table], filter, function() {
+                messenger.addFilter(filterKeys[relation.database][relation.table], filter, function() {
                     if(relationsToAdd.length) {
                         addFilter(relationsToAdd);
                     } else if(successCallback) {
@@ -151,7 +156,7 @@ angular.module("neonDemo.services")
          * Replaces filters for the given relations using the given filter keys.
          * @param {Object} messenger The messenger object used to replace the filters
          * @param {Array} relations The array of relations containing a database name, a table name, and a map of fields
-         * @param {Object} filterKeys The map of table names to filter keys used by the messenger
+         * @param {Object} filterKeys The map of database and table names to filter keys used by the messenger
          * @param {Function} createFilterClauseFunction The function used to create the filter clause for each field, with arguments:
          *  <ul>
          *      <li> {String} The table name </li>
@@ -165,7 +170,7 @@ angular.module("neonDemo.services")
             var replaceFilter = function(relationsToReplace) {
                 var relation = relationsToReplace.shift();
                 var filter = service.createFilter(relation, createFilterClauseFunction);
-                messenger.replaceFilter(filterKeys[relation.table], filter, function() {
+                messenger.replaceFilter(filterKeys[relation.database][relation.table], filter, function() {
                     if(relationsToReplace.length) {
                         replaceFilter(relationsToReplace);
                     } else if(successCallback) {
@@ -180,7 +185,7 @@ angular.module("neonDemo.services")
         /**
          * Removes filters for all the given filter keys.
          * @param {Object} messenger The messenger object used to remove the filters
-         * @param {Object} filterKeys The map of table names to filter keys used by the messenger
+         * @param {Object} filterKeys The map of database and table names to filter keys used by the messenger
          * @param {Function} successCallback The function called once all the filters have been removed (optional)
          * @param {Function} errorCallback The function called if an error is returned for any of the filter calls (optional)
          * @method removeFilters
@@ -197,10 +202,13 @@ angular.module("neonDemo.services")
                 }, errorCallback);
             };
 
-            var tableNames = Object.keys(filterKeys);
             var filterKeysToRemove = [];
-            for(var i = 0; i < tableNames.length; ++i) {
-                filterKeysToRemove.push(filterKeys[tableNames[i]]);
+            var databaseNames = Object.keys(filterKeys);
+            for(var i = 0; i < databaseNames.length; ++i) {
+                var tableNames = Object.keys(filterKeys[databaseNames[i]]);
+                for(var j = 0; j < tableNames.length; ++j) {
+                    filterKeysToRemove.push(filterKeys[databaseNames[i]][tableNames[j]]);
+                }
             }
 
             removeFilter(filterKeysToRemove);

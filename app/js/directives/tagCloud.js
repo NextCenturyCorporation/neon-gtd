@@ -38,7 +38,7 @@ function(connectionService, datasetService, filterService, $timeout) {
                 return $scope.filterTags.length === 0 && $scope.data.length === 0;
             };
 
-            $scope.databaseName = '';
+            $scope.databases = [];
             $scope.tables = [];
             $scope.fields = [];
             $scope.data = [];
@@ -47,9 +47,8 @@ function(connectionService, datasetService, filterService, $timeout) {
             $scope.filterKeys = {};
 
             $scope.options = {
-                selectedTable: {
-                    name: ""
-                },
+                database: "",
+                table: "",
                 tagField: "",
                 andTags: true
             };
@@ -139,7 +138,7 @@ function(connectionService, datasetService, filterService, $timeout) {
                     source: "system",
                     tags: ["filter-change", "tag-cloud"]
                 });
-                if(message.addedFilter && message.addedFilter.databaseName === $scope.databaseName && message.addedFilter.tableName === $scope.options.selectedTable.name) {
+                if(message.addedFilter && message.addedFilter.databaseName === $scope.options.database && message.addedFilter.tableName === $scope.options.table) {
                     $scope.queryForTags();
                 }
             };
@@ -173,24 +172,29 @@ function(connectionService, datasetService, filterService, $timeout) {
                     return;
                 }
 
-                $scope.databaseName = datasetService.getDatabase();
-                $scope.tables = datasetService.getTables();
-                $scope.options.selectedTable = $scope.bindTable || datasetService.getFirstTableWithMappings(["tags"]) || $scope.tables[0];
-                $scope.filterKeys = filterService.createFilterKeys("tagcloud", $scope.tables);
+                $scope.databases = datasetService.getDatabaseNames();
+                $scope.options.database = $scope.databases[0];
+                $scope.filterKeys = filterService.createFilterKeys("tagcloud", datasetService.getDatabaseAndTableNames());
 
                 if(initializing) {
-                    $scope.updateFieldsAndQueryForTags();
+                    $scope.updateTables();
                 } else {
                     $scope.$apply(function() {
-                        $scope.updateFieldsAndQueryForTags();
+                        $scope.updateTables();
                     });
                 }
             };
 
-            $scope.updateFieldsAndQueryForTags = function() {
-                $scope.fields = datasetService.getDatabaseFields($scope.options.selectedTable.name);
+            $scope.updateTables = function() {
+                $scope.tables = datasetService.getTableNames($scope.options.database);
+                $scope.options.table = $scope.bindTable || datasetService.getFirstTableNameWithMappings($scope.options.database, ["tags"]) || $scope.tables[0];
+                $scope.updateFields();
+            };
+
+            $scope.updateFields = function() {
+                $scope.fields = datasetService.getDatabaseFields($scope.options.database, $scope.options.table);
                 $scope.fields.sort();
-                $scope.options.tagField = $scope.bindTagField || datasetService.getMapping($scope.options.selectedTable.name, "tags") || $scope.fields[0] || "";
+                $scope.options.tagField = $scope.bindTagField || datasetService.getMapping($scope.options.database, $scope.options.table, "tags") || $scope.fields[0] || "";
                 if($scope.showFilter) {
                     $scope.clearTagFilters();
                 } else {
@@ -207,7 +211,7 @@ function(connectionService, datasetService, filterService, $timeout) {
                     var connection = connectionService.getActiveConnection();
                     if(connection) {
                         var host = connection.host_;
-                        var url = neon.serviceUrl('mongotagcloud', 'tagcounts', 'host=' + host + "&db=" + $scope.databaseName + "&collection=" + $scope.options.selectedTable.name + "&arrayfield=" + $scope.options.tagField + "&limit=40");
+                        var url = neon.serviceUrl('mongotagcloud', 'tagcounts', 'host=' + host + "&db=" + $scope.options.database + "&collection=" + $scope.options.table + "&arrayfield=" + $scope.options.tagField + "&limit=40");
 
                         XDATA.userALE.log({
                             activity: "alter",
@@ -340,7 +344,7 @@ function(connectionService, datasetService, filterService, $timeout) {
              * @method applyFilter
              */
             $scope.applyFilter = function() {
-                var relations = datasetService.getRelations($scope.options.selectedTable.name, [$scope.options.tagField]);
+                var relations = datasetService.getRelations($scope.options.database, $scope.options.table, [$scope.options.tagField]);
                 filterService.replaceFilters($scope.messenger, relations, $scope.filterKeys, $scope.createFilterClauseForTags, function() {
                     $scope.$apply(function() {
                         $scope.queryForTags();

@@ -3,9 +3,11 @@
         "name": "Sample",
         "datastore": "mongo",
         "hostname": "localhost",
-        "database": "sample",
-        "tables": [{
-            "name": "sample"
+        "databases": [{
+            "name": "sample",
+            "tables": [{
+                "name": "sample"
+            }]
         }]
     }
 }
