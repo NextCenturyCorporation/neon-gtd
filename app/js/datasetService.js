@@ -44,6 +44,7 @@ angular.module("neonDemo.services")
             service.dataset.datastore = dataset.datastore || "";
             service.dataset.hostname = dataset.hostname || "";
             service.dataset.databases = dataset.databases || [];
+            service.dataset.relations = dataset.relations || [];
 
             // Remove databases from the dataset that contain no tables.
             var databaseIndexToRemove = [];
@@ -58,7 +59,6 @@ angular.module("neonDemo.services")
             }
 
             for(var i = 0; i < service.dataset.databases.length; ++i) {
-                service.dataset.databases[i].relations = dataset.databases[i].relations || [];
                 for(var j = 0; j < service.dataset.databases[i].tables.length; ++j) {
                     service.dataset.databases[i].tables[j].fields = service.dataset.databases[i].tables[j].fields || [];
                     service.dataset.databases[i].tables[j].mappings = service.dataset.databases[i].tables[j].mappings || {};
@@ -375,43 +375,67 @@ angular.module("neonDemo.services")
          * the relation object for the table and fields given in the arguments
          */
         service.getRelations = function(databaseName, tableName, fieldNames) {
-            var relations = service.getDatabaseWithName(databaseName).relations;
+            var i, j, k, l;
+            var relations = service.dataset.relations;
 
-            var tablesToFields = {};
-            for(var i = 0; i < fieldNames.length; ++i) {
+            var initializeMap = function(map, key1, key2, key3) {
+                if(!(map[key1])) {
+                    map[key1] = {};
+                }
+                if(!(map[key1][key2])) {
+                    map[key1][key2] = {};
+                }
+                if(!(map[key1][key2][key3])) {
+                    map[key1][key2][key3] = [];
+                }
+                return map;
+            };
+
+            // First we create a mapping of a relation's database/table/field to its related fields.
+            var relationToFields = {};
+
+            // Iterate through each field to find its relations.
+            for(i = 0; i < fieldNames.length; ++i) {
                 var fieldName = fieldNames[i];
-                for(var j = 0; j < relations.length; ++j) {
-                    if(fieldName === relations[j][tableName]) {
-                        var tableNames = Object.keys(relations[j]);
-                        for(var k = 0; k < tableNames.length; ++k) {
-                            var relationTableName = tableNames[k];
-                            var relationFieldName = relations[j][relationTableName];
-                            if(!(tablesToFields[relationTableName])) {
-                                tablesToFields[relationTableName] = {};
+                // Iterate through each relation to compare with the current field.
+                for(j = 0; j < relations.length; ++j) {
+                    var relation = relations[j];
+                    // If the current relation contains a match for the input database/table/field, iterate through the elements in the current relation.
+                    if(relation[databaseName] && fieldName === relation[databaseName][tableName]) {
+                        var databaseNames = Object.keys(relation);
+                        for(k = 0; k < databaseNames.length; ++k) {
+                            var relationDatabaseName = databaseNames[k];
+                            var tableNames = Object.keys(relation[relationDatabaseName]);
+                            for(l = 0; l < tableNames.length; ++l) {
+                                var relationTableName = tableNames[l];
+                                var relationFieldName = relation[relationDatabaseName][relationTableName];
+                                relationToFields = initializeMap(relationToFields, relationDatabaseName, relationTableName, fieldName);
+                                // Add each database/table/field in the current relation to the map.  Note that this will include the input database/table/field.
+                                relationToFields[relationDatabaseName][relationTableName][fieldName].push(relationFieldName);
                             }
-                            if(!(tablesToFields[relationTableName][fieldName])) {
-                                tablesToFields[relationTableName][fieldName] = [];
-                            }
-                            tablesToFields[relationTableName][fieldName].push(relationFieldName);
                         }
                     }
                 }
             }
 
-            var relationTableNames = Object.keys(tablesToFields);
-            if(relationTableNames.length) {
+            var resultDatabaseNames = Object.keys(relationToFields);
+            if(resultDatabaseNames.length) {
                 var results = [];
-                for(i = 0; i < relationTableNames.length; ++i) {
-                    results.push({
-                        database: databaseName,
-                        table: relationTableNames[i],
-                        fields: tablesToFields[relationTableNames[i]]
-                    });
+                // Iterate through the relations for each relation's database/table/field and add a relation object for each database/table pair to the final list of results.
+                for(i = 0; i < resultDatabaseNames.length; ++i) {
+                    var resultTableNames = Object.keys(relationToFields[resultDatabaseNames[i]]);
+                    for(j = 0; j < resultTableNames.length; ++j) {
+                        results.push({
+                            database: resultDatabaseNames[i],
+                            table: resultTableNames[j],
+                            fields: relationToFields[resultDatabaseNames[i]][resultTableNames[j]]
+                        });
+                    }
                 }
                 return results;
             }
 
-            // If the input fields do not have any related fields in other tables, return a list containing an object for the input table and fields.
+            // If the input fields do not have any related fields in other tables, return a list containing a relation object for the input database/table/fields.
             var result = {
                 database: databaseName,
                 table: tableName,
