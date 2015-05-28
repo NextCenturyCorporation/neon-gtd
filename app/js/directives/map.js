@@ -138,6 +138,7 @@ angular.module('neonDemo.directives')
                         source: "user",
                         tags: ["remove", "map"]
                     });
+                    $element.off("resize", updateSize);
                     $scope.messenger.removeEvents();
                     if($scope.showFilter) {
                         filterService.removeFilters($scope.messenger, $scope.filterKeys);
@@ -190,19 +191,14 @@ angular.module('neonDemo.directives')
                     $scope.resizePromise = null;
                 };
 
-                $element.resize(function() {
+                var updateSize = function() {
                     if($scope.resizePromise) {
                         $timeout.cancel($scope.resizePromise);
                     }
                     $scope.resizePromise = $timeout(redrawOnResize, $scope.resizeRedrawDelay);
+                };
 
-                    // Resize the options element.
-                    var optionsElement = $element.find(".map-options");
-                    // Add the element's margin/padding and y position (with an extra 5 pixles for look) to subtract from its final height.
-                    var yBuffer = optionsElement.outerHeight(true) - optionsElement.height() + parseInt(optionsElement.css("top"), 10) + 5;
-                    var optionsHeight = $element.innerHeight() - yBuffer;
-                    optionsElement.find(".popover-content").css("max-height", optionsHeight + "px");
-                });
+                $element.resize(updateSize);
 
                 // Add a zoomRect handler to the map.
                 $scope.map.onZoomRect = function(bounds) {
@@ -240,7 +236,7 @@ angular.module('neonDemo.directives')
                     // TODO build all the relations for all the visible layers.
 
 
-                    filterService.replaceFilters($scope.messenger, relations, $scope.filterKeys, $scope.createFilterFromExtent, function() {
+                    filterService.replaceFilters($scope.messenger, relations, $scope.filterKeys, $scope.createFilterClauseForExtent, function() {
                         $scope.$apply(function() {
                             queryAllLayerTables();
                             drawZoomRect({
@@ -599,10 +595,12 @@ angular.module('neonDemo.directives')
 
                 $scope.draw();
                 // Ignore setting the bounds if there is no data because it can cause OpenLayers errors.
-                if(data.length && !($scope.dataBounds)) {
-                    $scope.dataBounds = $scope.computeDataBounds(data);
-                    $scope.map.zoomToBounds($scope.dataBounds);
-                }
+                // TODO: Determine how to recalculate data bounds when multiple layers are shown.
+                // There is no longer 1 set of data points.
+                // if(data.length && !($scope.dataBounds)) {
+                //     $scope.dataBounds = $scope.computeDataBounds(data);
+                //     $scope.map.zoomToBounds($scope.dataBounds);
+                // }
             };
 
             /**
@@ -625,10 +623,10 @@ angular.module('neonDemo.directives')
                         top: 90
                     };
                 } else {
-                    var minLon = -180;
-                    var minLat = -90;
-                    var maxLon = 180;
-                    var maxLat = 90;
+                    var minLon = 180;
+                    var minLat = 90;
+                    var maxLon = -180;
+                    var maxLat = -90;
                     data.forEach(function(d) {
                         var lat = d[$scope.options.latitudeField];
                         var lon = d[$scope.options.longitudeField];
@@ -666,13 +664,13 @@ angular.module('neonDemo.directives')
             };
 
             /**
-             * Create and returns a filter using the given table and fields.
+             * Create and returns a filter using the given table and latitude/longitude field names using the extent set by the visualization..
              * @param {String} The name of the table on which to filter
-             * @param {Array} An array containing the name of the latitude and longitude fields as its first and second elements respectively
-             * @method createFilterFromExtent
+             * @param {Array} An array containing the names of the latitude and longitude fields (as its first and second elements) on which to filter
+             * @method createFilterClauseForExtent
              * @return {Object} A neon.query.Filter object
              */
-            $scope.createFilterFromExtent = function(tableName, fieldNames) {
+            $scope.createFilterClauseForExtent = function(tableName, fieldNames) {
                 var latitudeFieldName = fieldNames[0];
                 var longitudeFieldName = fieldNames[1];
 
@@ -680,29 +678,29 @@ angular.module('neonDemo.directives')
                 var rightClause = neon.query.where(longitudeFieldName, "<=", $scope.extent.maximumLongitude);
                 var bottomClause = neon.query.where(latitudeFieldName, ">=", $scope.extent.minimumLatitude);
                 var topClause = neon.query.where(latitudeFieldName, "<=", $scope.extent.maximumLatitude);
-                var filterClause = neon.query.and(leftClause, rightClause, bottomClause, topClause);
-                var leftDateLine;
-                var rightDateLine;
-                var datelineClause;
 
                 //Deal with different dateline crossing scenarios.
                 if($scope.extent.minimumLongitude < -180 && $scope.extent.maximumLongitude > 180) {
-                    filterClause = neon.query.and(topClause, bottomClause);
-                } else if($scope.extent.minimumLongitude < -180) {
+                    return neon.query.and(topClause, bottomClause);
+                }
+
+                if($scope.extent.minimumLongitude < -180) {
                     leftClause = neon.query.where(longitudeFieldName, ">=", $scope.extent.minimumLongitude + 360);
                     leftDateLine = neon.query.where(longitudeFieldName, "<=", 180);
                     rightDateLine = neon.query.where(longitudeFieldName, ">=", -180);
                     datelineClause = neon.query.or(neon.query.and(leftClause, leftDateLine), neon.query.and(rightClause, rightDateLine));
-                    filterClause = neon.query.and(topClause, bottomClause, datelineClause);
-                } else if($scope.extent.maximumLongitude > 180) {
-                    rightClause = neon.query.where(longitudeFieldName, "<=", $scope.extent.maximumLongitude - 360);
-                    rightDateLine = neon.query.where(longitudeFieldName, ">=", -180);
-                    leftDateLine = neon.query.where(longitudeFieldName, "<=", 180);
-                    datelineClause = neon.query.or(neon.query.and(leftClause, leftDateLine), neon.query.and(rightClause, rightDateLine));
-                    filterClause = neon.query.and(topClause, bottomClause, datelineClause);
+                    return neon.query.and(topClause, bottomClause, datelineClause);
                 }
 
-                return new neon.query.Filter().selectFrom($scope.databaseName, tableName).where(filterClause);
+                if($scope.extent.maximumLongitude > 180) {
+                    rightClause = neon.query.where(longitudeFieldName, "<=", $scope.extent.maximumLongitude - 360);
+                    var rightDateLine = neon.query.where(longitudeFieldName, ">=", -180);
+                    var leftDateLine = neon.query.where(longitudeFieldName, "<=", 180);
+                    var datelineClause = neon.query.or(neon.query.and(leftClause, leftDateLine), neon.query.and(rightClause, rightDateLine));
+                    return neon.query.and(topClause, bottomClause, datelineClause);
+                }
+
+                return neon.query.and(leftClause, rightClause, bottomClause, topClause);
             };
 
             /**
@@ -786,7 +784,7 @@ angular.module('neonDemo.directives')
                     elementType: "button",
                     elementGroup: "map_group",
                     source: "user",
-                    tags: ["options", "map", "limit"]
+                    tags: ["options", "map", "limit", $scope.options.limit]
                 });
                 $scope.previousLimit = $scope.options.limit;
                 queryAllLayerTables();
