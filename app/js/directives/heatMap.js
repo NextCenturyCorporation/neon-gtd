@@ -636,17 +636,19 @@ function(connectionService, datasetService, errorNotificationService, filterServ
                     data.forEach(function(d) {
                         var lat = d[$scope.options.latitudeField];
                         var lon = d[$scope.options.longitudeField];
-                        if(lon < minLon) {
-                            minLon = lon;
-                        }
-                        if(lon > maxLon) {
-                            maxLon = lon;
-                        }
-                        if(lat < minLat) {
-                            minLat = lat;
-                        }
-                        if(lat > maxLat) {
-                            maxLat = lat;
+                        if($.isNumeric(lat) && $.isNumeric(lon)) {
+                            if(lon < minLon) {
+                                minLon = lon;
+                            }
+                            if(lon > maxLon) {
+                                maxLon = lon;
+                            }
+                            if(lat < minLat) {
+                                minLat = lat;
+                            }
+                            if(lat > maxLat) {
+                                maxLat = lat;
+                            }
                         }
                     });
                     return {
@@ -717,7 +719,7 @@ function(connectionService, datasetService, errorNotificationService, filterServ
                     var datelineClause = neon.query.or(neon.query.and(leftClause, leftDateLine), neon.query.and(rightClause, rightDateLine));
                     return neon.query.and(topClause, bottomClause, datelineClause);
                 }
-                
+
                 if($scope.extent.maximumLongitude > 180) {
                     rightClause = neon.query.where(longitudeFieldName, "<=", $scope.extent.maximumLongitude - 360);
                     var rightDateLine = neon.query.where(longitudeFieldName, ">=", -180);
