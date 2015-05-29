@@ -257,7 +257,7 @@ function(connectionService, datasetService, filterService, $timeout) {
                                     });
                                 });
                             },
-                            error: function() {
+                            error: function(response) {
                                 XDATA.userALE.log({
                                     activity: "alter",
                                     action: "query",
@@ -268,6 +268,10 @@ function(connectionService, datasetService, filterService, $timeout) {
                                     source: "system",
                                     tags: ["failed", "tag-cloud"]
                                 });
+                                $scope.updateTagData([]);
+                                if(response.responseJSON) {
+                                    $scope.errorMessage = errorNotificationService.showErrorMessage($element, response.responseJSON.error, response.responseJSON.stackTrace);
+                                }
                             }
                         });
                     }
