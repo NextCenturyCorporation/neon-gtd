@@ -12,8 +12,21 @@
         </div>
         <div class="form-group" ng-show="!(hideAdvancedOptions)">
             <label>Count Field</label>
-            <select class="form-control" ng-model="options.countField" ng-disabled="!(fields.length > 0)" ng-options="field for field in fields">
+            <select class="form-control" ng-model="options.countField" ng-required="true" ng-disabled="!(fields.length > 0)" ng-options="field for field in fields" ng-change="handleChangeCountField()">
                 <option disabled selected value="">Please choose a field</option>
+            </select>
+        </div>
+        <div class="form-group" ng-show="!(hideAdvancedOptions)">
+            <label>Aggregation</label>
+            <select class="form-control" ng-model="options.aggregation" ng-required="true" ng-disabled="!(fields.length > 0)" ng-change="handleChangeAggregation()">
+                <option value="count">Count</option>
+                <option value="min">Minimum</option>
+                <option value="max">Maximum</option>
+            </select>
+        </div>
+        <div class="form-group" ng-show="!(hideAdvancedOptions) && (options.aggregation !== 'count')">
+            <label>Value Field (Y Axis)</label>
+            <select class="form-control" ng-model="options.aggregationField" ng-required="true" ng-disabled="!(fields.length > 0)" ng-options="field for field in fields" ng-change="handleChangeAggregationField()">
             </select>
         </div>
     </options-menu>
