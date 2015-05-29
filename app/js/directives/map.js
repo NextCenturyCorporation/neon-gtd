@@ -601,6 +601,12 @@ angular.module('neonDemo.directives')
                 //     $scope.dataBounds = $scope.computeDataBounds(data);
                 //     $scope.map.zoomToBounds($scope.dataBounds);
                 // }
+                $scope.map.zoomToBounds({
+                    left: -180,
+                        bottom: -90,
+                        right: 180,
+                        top: 90
+                    });
             };
 
             /**

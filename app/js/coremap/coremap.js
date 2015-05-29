@@ -116,25 +116,19 @@ coreMap.Map = function(elementId, opts) {
         this.height = opts.height || coreMap.Map.DEFAULT_HEIGHT;
     }
 
+    this.selectableLayers = [];
+    this.selectControls = [];
+
     this.defaultLayer = (opts.defaultLayer === coreMap.Map.HEATMAP_LAYER) ? coreMap.Map.HEATMAP_LAYER : coreMap.Map.POINTS_LAYER;
 
     this.initializeMap();
     this.setupLayers();
+    this.setupControls();
     this.resetZoom();
-    this.setData(opts.data || []);
-    this.heatmapLayer.toggle();
 };
 
 coreMap.Map.DEFAULT_WIDTH = 1024;
 coreMap.Map.DEFAULT_HEIGHT = 680;
-coreMap.Map.DEFAULT_LATITUDE_MAPPING = "latitude";
-coreMap.Map.DEFAULT_LONGITUDE_MAPPING = "longitude";
-coreMap.Map.DEFAULT_SIZE_MAPPING = "count_";
-
-coreMap.Map.DEFAULT_OPACITY = 0.8;
-coreMap.Map.DEFAULT_STROKE_WIDTH = 1;
-coreMap.Map.DEFAULT_COLOR = "#00ff00";
-coreMap.Map.DEFAULT_STROKE_COLOR = "#ffffff";
 coreMap.Map.MIN_HEIGHT = 200;
 coreMap.Map.MIN_WIDTH = 200;
 coreMap.Map.MIN_RADIUS = 3;
@@ -148,6 +142,7 @@ coreMap.Map.DESTINATION_PROJECTION = new OpenLayers.Projection("EPSG:900913");
 
 coreMap.Map.POINTS_LAYER = 'points';
 coreMap.Map.HEATMAP_LAYER = 'heatmap';
+coreMap.Map.CLUSTER_LAYER = 'cluster';
 
 /**
  * Simple close handler to be called if a popup is closed.
@@ -160,98 +155,39 @@ var onPopupClose = function() {
     this.map.selectControl.unselect(this.feature);
 };
 
-/**
- * Feature select handler used to display popups on point layers.
- * @param Object feature An Open Layers feature object.  Should be an object with geometry.
- * @private
- * @method onFeatureSelect
- */
-
-var onFeatureSelect = function(feature) {
-    XDATA.userALE.log({
-        activity: "show",
-        action: "click",
-        elementId: "map",
-        elementType: "tooltip",
-        elementGroup: "map_group",
-        source: "user",
-        tags: ["map", "tooltip"]
-    });
-
-    var text = '<div><table class="table table-striped table-condensed">';
-    for(var key in feature.attributes) {
-        if(Object.prototype.hasOwnProperty.call(feature.attributes, key)) {
-            text += '<tr><th>' + _.escape(key) + '</th><td>' + _.escape(feature.attributes[key]) + '</td>';
-        }
-    }
-    text += '</table></div>';
-
-    var popup = new OpenLayers.Popup.FramedCloud("Data",
-        feature.geometry.getBounds().getCenterLonLat(),
-        null,
-        text,
-        null,
-        false,
-        onPopupClose);
-
-    feature.popup = popup;
-    this.map.addPopup(popup);
+coreMap.Map.prototype.resetSelectControl = function(layer) {
+    // We remove the control before resetting the selectable layers
+    // partly because select controls interfere with the behavior or map.removeLayer()
+    // if they are active and contain multiple layers when one is removed.
+    this.selectControl.deactivate();
+    this.map.removeControl(this.selectControl);
+    this.selectControl.setLayer(_.values(this.selectableLayers));
+    this.map.addControl(this.selectControl);
+    this.selectControl.activate();
 };
 
-/**
- * Feature unselect handler used to remove popups from point layers.
- * @param Object feature An Open Layers feature object.  Should be an object with geometry.
- * @private
- * @method onFeatureUnelect
- */
+coreMap.Map.prototype.addLayer = function(layer) {
+    this.map.addLayer(layer);
+    if (layer.CLASS_NAME === "coreMap.Map.Layer.PointsLayer")  {
+        this.selectableLayers[layer.id] = layer;
+        this.resetSelectControl();
+    }
+};
 
-var onFeatureUnselect = function(feature) {
-    XDATA.userALE.log({
-        activity: "hide",
-        action: "click",
-        elementId: "map",
-        elementType: "tooltip",
-        elementGroup: "map_group",
-        source: "user",
-        tags: ["map", "tooltip"]
-    });
-
-    if(feature.popup) {
-        this.map.removePopup(feature.popup);
-        feature.popup.destroy();
-        feature.popup = null;
+coreMap.Map.prototype.removeLayer = function(layer) {
+    this.map.removeLayer(layer);
+    if (this.selectableLayers[layer.id]) {
+        this.resetSelectControl();
     }
 };
 
 /**
  * Draws the map data
  * @method draw
+ * @deprecated
  */
-
 coreMap.Map.prototype.draw = function() {
-    var me = this;
-
-    var heatmapData = [];
-    var mapData = [];
-    me.colors = {};
-    _.each(this.data, function(element) {
-        var longitude = me.getValueFromDataElement(me.longitudeMapping, element);
-        var latitude = me.getValueFromDataElement(me.latitudeMapping, element);
-
-        if($.isNumeric(latitude) && $.isNumeric(longitude)) {
-            heatmapData.push(me.createHeatmapDataPoint(element, longitude, latitude));
-            mapData.push(me.createPointsLayerDataPoint(element, longitude, latitude));
-        }
-    });
-
-    // Remove any popups before resetting data so they do not become orphaned.
-    me.map.selectControl.unselectAll();
-    me.heatmapLayer.setDataSet({
-        max: 1,
-        data: heatmapData
-    });
-    me.pointsLayer.removeAllFeatures();
-    me.pointsLayer.addFeatures(mapData);
+    // DEPRECATED.
 };
 
 /**
@@ -290,66 +226,6 @@ coreMap.Map.prototype.setData = function(mapData) {
 };
 
 /**
- * Updates the internal min/max radii values for the point layer.  These values are simply
- * the minimum and maximum values of the sizeMapping in the current data set.  They will be
- * mapped linearly to the range of allowed sizes between coreMap.Map.MIN_RADIUS and
- * coreMap.Map.MAX_RADIUS.  This function should be called after new data is set to ensure
- * correct display.
- * @method updateRadii
- */
-
-coreMap.Map.prototype.updateRadii = function() {
-    this.minRadius = this.calculateMinRadius();
-    this.maxRadius = this.calculateMaxRadius();
-    this._baseRadiusDiff = coreMap.Map.MAX_RADIUS - coreMap.Map.MIN_RADIUS;
-    this._dataRadiusDiff = this.maxRadius - this.minRadius;
-};
-
-coreMap.Map.prototype.getColorMappings = function() {
-    var me = this;
-
-    // convert to an array that is in alphabetical order for consistent iteration order
-    var sortedColors = [];
-    for(var key in this.colors) {
-        if(Object.prototype.hasOwnProperty.call(this.colors, key)) {
-            var color = me.colors[key];
-            sortedColors.push({
-                color: color,
-                category: key
-            });
-        }
-    }
-
-    return sortedColors;
-};
-
-/**
- * Resets all assigned color mappings.
- * @method resetColorMappings
- */
-
-coreMap.Map.prototype.resetColorMappings = function() {
-    this.colorScale = d3.scale.ordinal().range(this.colorRange);
-};
-
-/**
- * Toggles visibility between the points layer and heatmap layer.
- * @method toggleLayers
- */
-
-coreMap.Map.prototype.toggleLayers = function() {
-    if(this.currentLayer === this.pointsLayer) {
-        this.pointsLayer.setVisibility(false);
-        this.heatmapLayer.toggle();
-        this.currentLayer = this.heatmapLayer;
-    } else {
-        this.heatmapLayer.toggle();
-        this.pointsLayer.setVisibility(true);
-        this.currentLayer = this.pointsLayer;
-    }
-};
-
-/**
  * Registers a listener for a particular map event.
  * @param {String} type A map event type.
  * @param {Object} obj An object that the listener should be registered on.
@@ -359,160 +235,6 @@ coreMap.Map.prototype.toggleLayers = function() {
 
 coreMap.Map.prototype.register = function(type, obj, listener) {
     this.map.events.register(type, obj, listener);
-};
-
-/**
- * Creates a point to be added to the heatmap layer.
- * @param {Object} element One data element of the map's data array.
- * @param {number} longitude The longitude value of the data element
- * @param {number} latitude The latitude value of the data element.
- * @return {Object} an object containing the location and count for the heatmap.
- * @method createHeatmapDataPoint
- */
-
-coreMap.Map.prototype.createHeatmapDataPoint = function(element, longitude, latitude) {
-    var count = this.getValueFromDataElement(this.sizeMapping, element);
-    var point = new OpenLayers.LonLat(longitude, latitude);
-
-    return {
-        lonlat: point,
-        count: count
-    };
-};
-
-/**
- * Creates a point to be added to the points layer, styled appropriately.
- * @param {Object} element One data element of the map's data array.
- * @param {number} longitude The longitude value of the data element
- * @param {number} latitude The latitude value of the data element.
- * @return {OpenLayers.Feature.Vector} the point to be added.
- * @method createPointsLayerDataPoint
- */
-
-coreMap.Map.prototype.createPointsLayerDataPoint = function(element, longitude, latitude) {
-    var point = new OpenLayers.Geometry.Point(longitude, latitude);
-    point.data = element;
-    point.transform(coreMap.Map.SOURCE_PROJECTION, coreMap.Map.DESTINATION_PROJECTION);
-    var feature = new OpenLayers.Feature.Vector(point);
-    feature.style = this.stylePoint(element);
-    feature.attributes = element;
-    return feature;
-};
-
-/**
- * Styles the data element based on the size and color.
- * @param {Object} element One data element of the map's data array.
- * @return {OpenLayers.Symbolizer.Point} The style object
- * @method stylePoint
- */
-
-coreMap.Map.prototype.stylePoint = function(element) {
-    var radius = this.calculateRadius(element);
-    var color = this.calculateColor(element);
-
-    return this.createPointStyleObject(color, radius);
-};
-
-/**
- * Creates the style object for a point
- * @param {String} color The color of the point
- * @param {number} radius The radius of the point
- * @return {OpenLayers.Symbolizer.Point} The style object
- * @method createPointStyleObject
- */
-
-coreMap.Map.prototype.createPointStyleObject = function(color, radius) {
-    color = color || coreMap.Map.DEFAULT_COLOR;
-    radius = radius || coreMap.Map.MIN_RADIUS;
-
-    return new OpenLayers.Symbolizer.Point({
-        fillColor: color,
-        fillOpacity: coreMap.Map.DEFAULT_OPACITY,
-        strokeOpacity: coreMap.Map.DEFAULT_OPACITY,
-        strokeWidth: coreMap.Map.DEFAULT_STROKE_WIDTH,
-        stroke: coreMap.Map.DEFAULT_STROKE_COLOR,
-        pointRadius: radius
-    });
-};
-
-/**
- * Calculate the desired radius of a point.  This will be a proporation of the
- * allowed coreMap.Map.MIN_RADIUS and coreMap.Map.MAX_RADIUS values.
- * @param {Object} element One data element of the map's data array.
- * @return {number} The radius
- * @method calculateRadius
- */
-coreMap.Map.prototype.calculateRadius = function(element) {
-    var dataVal = this.getValueFromDataElement(this.sizeMapping, element);
-    var percentOfDataRange = (dataVal - this.minRadius) / this._dataRadiusDiff;
-    return coreMap.Map.MIN_RADIUS + (percentOfDataRange * this._baseRadiusDiff);
-};
-
-/**
- * Calculate the desired color of a point.
- * @param {Object} element One data element of the map's data array.
- * @return {String} The color
- * @method calculateColor
- */
-
-coreMap.Map.prototype.calculateColor = function(element) {
-    var category = this.getValueFromDataElement(this.categoryMapping, element);
-    var color;
-
-    if(category) {
-        color = this.colorScale(category);
-    } else {
-        category = '(Uncategorized)';
-        color = coreMap.Map.DEFAULT_COLOR;
-    }
-
-    // store the color in the registry so we know the color/category mappings
-    if(!(this.colors.hasOwnProperty(category))) {
-        this.colors[category] = color;
-    }
-
-    return color;
-};
-
-/**
- * Calculate the radius of the smallest element in the data
- * @return {number} The minimum value in the data
- * @method calculateMinRadius
- */
-
-coreMap.Map.prototype.calculateMinRadius = function() {
-    var me = this;
-    return d3.min(me.data, function(el) {
-        return me.getValueFromDataElement(me.sizeMapping, el);
-    });
-};
-
-/**
- * Calculate the radius of the largest element in the data
- * @return {number} The maximum value in the data
- * @method calculateMaxRadius
- */
-
-coreMap.Map.prototype.calculateMaxRadius = function() {
-    var me = this;
-    return d3.max(me.data, function(el) {
-        return me.getValueFromDataElement(me.sizeMapping, el);
-    });
-};
-
-/**
- * Gets a value from a data element using a mapping string or function.
- * @param {String | Function} mapping The mapping from data element object to value.
- * @param {Object} element An element of the data array.
- * @return The value in the data element.
- * @method getValueFromDataElement
- */
-
-coreMap.Map.prototype.getValueFromDataElement = function(mapping, element) {
-    if(typeof mapping === 'function') {
-        return mapping.call(this, element);
-    }
-    return element[mapping];
 };
 
 coreMap.Map.prototype.toggleCaching = function() {
@@ -648,6 +370,70 @@ coreMap.Map.prototype.configureFilterOnZoomRectangle = function() {
     this.map.addControl(control);
 };
 
+coreMap.Map.prototype.createSelectControl =  function(layer) {
+    var me = this;
+    var onFeatureSelect = function(feature) {
+        XDATA.userALE.log({
+            activity: "show",
+            action: "click",
+            elementId: "map",
+            elementType: "tooltip",
+            elementGroup: "map_group",
+            source: "user",
+            tags: ["map", "tooltip"]
+        });
+        var text = '<div><table class="table table-striped table-condensed">';
+        var attributes;
+
+        // If we're on a cluster layer and have a cluster of 1, just show the attributes of the 1 item.
+        if (feature.cluster && feature.cluster.length === 1) {
+            attributes = feature.cluster[0].attributes;
+        } else {
+            attributes = feature.attributes;
+        }
+
+        for(var key in attributes) {
+            if(Object.prototype.hasOwnProperty.call(attributes, key)) {
+                text += '<tr><th>' + _.escape(key) + '</th><td>' + _.escape(attributes[key]) + '</td>';
+            }
+        }
+        text += '</table></div>';
+
+        me.featurePopup = new OpenLayers.Popup.FramedCloud("Data",
+            feature.geometry.getBounds().getCenterLonLat(),
+            null,
+            text,
+            null,
+            false,
+            onPopupClose);
+        me.map.addPopup(me.featurePopup);
+    };
+
+    var onFeatureUnselect = function(feature) {
+        XDATA.userALE.log({
+            activity: "hide",
+            action: "click",
+            elementId: "map",
+            elementType: "tooltip",
+            elementGroup: "map_group",
+            source: "user",
+            tags: ["map", "tooltip"]
+        });
+
+        if(me.featurePopup) {
+            me.map.removePopup(me.featurePopup);
+            me.featurePopup.destroy();
+            me.featurePopup = null;
+        }
+    };
+
+     return new OpenLayers.Control.SelectFeature(layer, {
+        autoActivate: true,
+        onSelect: onFeatureSelect,
+        onUnselect: onFeatureUnselect
+    });
+};
+
 /**
  * Initializes the map layers and adds the base layer.
  * @method setupLayers
@@ -659,63 +445,31 @@ coreMap.Map.prototype.setupLayers = function() {
     });
     this.map.addLayer(baseLayer);
 
-    var style = {
-        styleMap: new OpenLayers.StyleMap(OpenLayers.Util.applyDefaults(
-            {
-                fillColor: "#00FF00",
-                fillOpacity: 0.8,
-                strokeOpacity: 0.8,
-                strokeWidth: 1,
-                pointRadius: 4
-            },
-            OpenLayers.Feature.Vector.style["default"]
-        ))
-    };
     // lets clients draw boxes on the map
-    this.boxLayer = new OpenLayers.Layer.Boxes();
-    this.pointsLayer = new OpenLayers.Layer.Vector("Points Layer", style);
-
-    var heatmapOptions = {
-        visible: true,
-        radius: 10
-    };
-    var options = {
-        isBaseLayer: false,
-        opacity: 0.3,
-        projection: coreMap.Map.SOURCE_PROJECTION
-    };
-    this.heatmapLayer = new OpenLayers.Layer.Heatmap("Heatmap Layer", this.map, baseLayer, heatmapOptions, options);
-
-    this.map.addLayer(this.heatmapLayer);
-    this.map.addLayer(this.pointsLayer);
-    this.map.addLayer(this.boxLayer);
-
-    // Add popup handlers to the points layer.
-    // this.pointsLayer.events.on({
-    //     'featureselected': onFeatureSelect,
-    //     'featureunselected': onFeatureUnselect
-    // });
-    this.map.selectControl = new OpenLayers.Control.SelectFeature(this.pointsLayer, {
-        onSelect: onFeatureSelect,
-        onUnselect: onFeatureUnselect
+    this.boxLayer = new OpenLayers.Layer.Boxes('Filter Box', {
+        visibility: true,
+        displayInLayerSwitcher: false
     });
-    this.map.addControl(this.map.selectControl);
-    this.map.selectControl.activate();
+    this.map.addLayer(this.boxLayer);
+};
 
-    // Default the heatmap to be visible.
-    this.pointsLayer.setVisibility(this.defaultLayer === coreMap.Map.POINTS_LAYER);
-    if(this.defaultLayer === coreMap.Map.POINTS_LAYER) {
-        this.currentLayer = this.pointsLayer;
-    } else {
-        this.heatmapLayer.toggle();
-        this.currentLayer = this.heatmapLayer;
-    }
+coreMap.Map.prototype.setupControls = function() {
+    this.zoomControl = new OpenLayers.Control.Zoom({
+        autoActivate: true
+    });
+    this.switcher = new OpenLayers.Control.LayerSwitcher({
+        autoActivate: true,
+        ascending:false
+    });
 
     // Create a cache reader and writer.  Use default reader
     // settings to read from cache first.
-    this.cacheReader = new OpenLayers.Control.CacheRead();
+    this.cacheReader = new OpenLayers.Control.CacheRead({ 
+        autoActivate: false
+    });
 
     this.cacheWriter = new OpenLayers.Control.CacheWrite({
+        autoActivate: false,
         imageFormat: "image/png",
         eventListeners: {
             cachefull: function() {
@@ -725,10 +479,12 @@ coreMap.Map.prototype.setupLayers = function() {
         }
     });
 
-    //this.cacheWriter.addLayer(baseLayer);
-    this.map.addControl(this.cacheReader);
-    this.map.addControl(this.cacheWriter);
-};
+    this.selectControl = this.createSelectControl([]);
+    this.map.addControls([
+        this.zoomControl, this.switcher, 
+        this.cacheReader, this.cacheWriter, this.selectControl
+    ]);
+}
 
 /**
  * Draws a box with the specified bounds
@@ -773,12 +529,6 @@ coreMap.Map.prototype.resizeToElement = function() {
         width: this.width + 'px',
         height: this.height + 'px'
     });
-
-    // Since the heatmap layer doesn't natively support resizing, we need to update its size prior to
-    // updating the main map view.
-    this.heatmapLayer.heatmap.set("width", this.width);
-    this.heatmapLayer.heatmap.set("height", this.height);
-    this.heatmapLayer.heatmap.resize();
 
     // The map may resize multiple times if a browser resize event is triggered.  In this case,
     // openlayers elements may have updated before our this method.  In that case, calling
