@@ -42,6 +42,7 @@ svg .tick {
     fill: #39b54a;
     /* stroke-width: 6; */
     stroke-opacity: 1;
+    cursor: pointer;
 }
 
 .axis {
