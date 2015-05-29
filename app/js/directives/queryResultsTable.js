@@ -37,6 +37,7 @@ function(external, popups, connectionService, datasetService, errorNotificationS
             bindTable: '=',
             navbarItem: '=?',
             showData: '=?',
+            hideHeader: '=?',
             hideAdvancedOptions: '=?'
         },
         link: function($scope, $element) {

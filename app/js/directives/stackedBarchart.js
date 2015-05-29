@@ -37,6 +37,7 @@ function(connectionService, datasetService, errorNotificationService) {
             attrX: '=',
             attrY: '=',
             barType: '=',
+            hideHeader: '=?',
             hideAdvancedOptions: '=?'
         },
         link: function($scope, $element) {

@@ -42,6 +42,7 @@ function(connectionService, datasetService, errorNotificationService, $timeout) 
             bindAggregationField: '=',
             bindTable: '=',
             colorMappings: '&',
+            hideHeader: '=?',
             hideAdvancedOptions: '=?'
         },
         link: function($scope, $element) {

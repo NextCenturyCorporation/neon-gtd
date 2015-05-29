@@ -21,6 +21,7 @@ angular.module('neonDemo.directives')
         templateUrl: 'partials/directives/directedGraph.html',
         restrict: 'EA',
         scope: {
+            hideHeader: '=?',
             hideAdvancedOptions: '=?'
         },
         link: function($scope, $element) {

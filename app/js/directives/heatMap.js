@@ -41,6 +41,7 @@ function(connectionService, datasetService, errorNotificationService, filterServ
             bindTable: '=',
             // map of categories to colors used for the legend
             colorMappings: '&',
+            hideHeader: '=?',
             hideAdvancedOptions: '=?'
         },
         link: function($scope, $element) {

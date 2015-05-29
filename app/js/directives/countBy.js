@@ -27,6 +27,7 @@ function(external, popups, connectionService, datasetService, errorNotificationS
             bindAggregation: '=',
             bindAggregationField: '=',
             bindTable: '=',
+            hideHeader: '=?',
             hideAdvancedOptions: '=?'
         },
         link: function($scope, $element) {

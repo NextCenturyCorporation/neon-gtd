@@ -40,6 +40,7 @@ function(connectionService, datasetService, errorNotificationService, filterServ
         scope: {
             bindDateField: '=',
             bindTable: '=',
+            hideHeader: '=?',
             hideAdvancedOptions: '=?'
         },
         link: function($scope, $element) {

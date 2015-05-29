@@ -39,6 +39,7 @@ function(connectionService, datasetService, errorNotificationService) {
         scope: {
             bindDateField: '=',
             bindTable: '=',
+            hideHeader: '=?',
             hideAdvancedOptions: '=?'
         },
         link: function($scope, $element) {

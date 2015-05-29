@@ -1,4 +1,4 @@
-<div ng-hide="(navbarItem)" class="header-container">
+<div class="header-container" ng-show="!(navbarItem) && !(hideHeader)">
     <span class="header-text pull-left">{{options.selectedTable.name}}</span>
 
     <options-menu parent-element="element">

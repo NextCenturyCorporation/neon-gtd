@@ -35,6 +35,7 @@ function(connectionService, datasetService, errorNotificationService) {
         restrict: 'EA',
         scope: {
             bindTable: '=',
+            hideHeader: '=?',
             hideAdvancedOptions: '=?'
         },
         link: function($scope, $element) {

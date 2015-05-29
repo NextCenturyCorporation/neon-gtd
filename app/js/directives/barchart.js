@@ -38,6 +38,7 @@ function(connectionService, datasetService, errorNotificationService, filterServ
             bindYAxisField: '=',
             bindAggregationField: '=',
             bindTable: '=',
+            hideHeader: '=?',
             hideAdvancedOptions: '=?'
         },
         link: function($scope, $element) {

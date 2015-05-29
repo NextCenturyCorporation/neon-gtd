@@ -27,6 +27,7 @@ function(connectionService, datasetService, filterService, $timeout) {
         scope: {
             bindTagField: '=',
             bindTable: '=',
+            hideHeader: '=?',
             hideAdvancedOptions: '=?'
         },
         link: function($scope, $element) {

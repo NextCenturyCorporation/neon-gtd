@@ -55,6 +55,9 @@ angular.module('neonDemo.directives').directive('visualizationWidget', ["config"
             if(config.hideAdvancedOptions) {
                 widgetElement.setAttribute("hide-advanced-options", true);
             }
+            if(config.hideHeader) {
+                widgetElement.setAttribute("hide-header", true);
+            }
 
             // Pass along any bindings.
             if($scope.gridsterConfigs[$scope.gridsterConfigIndex] &&
