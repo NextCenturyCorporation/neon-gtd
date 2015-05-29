@@ -132,8 +132,9 @@ angular.module('neonDemo.directives')
                 $scope.tableFieldMappings = server.tables[0].mappings;
                 $scope.updateLayout();
 
-                // Wait to publish the dataset change until we've updated the field names.
-                $scope.selectDatabase($scope.publishDatasetChanged);
+                // TODO:  Review this.  Callback is disabled while datasetService is being fleshed out.  This may be unnecessary.
+                // $scope.selectDatabase($scope.publishDatasetChanged());
+                $scope.selectDatabase();
             };
 
             var populateDatabaseDropdown = function(dbs) {
@@ -326,7 +327,8 @@ angular.module('neonDemo.directives')
                     tags: ["custom", "dataset", "connect"]
                 });
 
-                $scope.publishDatasetChanged();
+                // TODO:  Review this.  Disabled while datasetService is being fleshed out.  This may be unnecessary.
+                //$scope.publishDatasetChanged();
             };
 
             // Wait for neon to be ready, the create our messenger and intialize the view and data.
