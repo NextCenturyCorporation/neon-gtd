@@ -2,6 +2,9 @@
     <span class="header-text pull-left">{{options.selectedTable.name}}</span>
 
     <options-menu parent-element="element" button-text="'No tag data'" show-button-text="showOptionsMenuButtonText">
+        <div class="form-group" ng-show="(hideAdvancedOptions) && (filterTags.length <= 1)">
+            <label>No Options Available</label>
+        </div>
         <div class="form-group" ng-show="!(hideAdvancedOptions)">
             <label>Table</label>
             <select class="form-control" ng-model="options.selectedTable" ng-options="table.name for table in tables" ng-required="true" ng-disabled="(tables.length < 2)" ng-change="updateFieldsAndQueryForTags()">
