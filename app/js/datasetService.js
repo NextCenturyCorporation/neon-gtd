@@ -199,6 +199,26 @@ angular.module("neonDemo.services")
         };
 
         /**
+         * Returns the pretty field name for the field with the given name in the table with the given name.
+         * @param {String} The table name
+         * @param {String} The field name
+         * @method getPrettyFields
+         * @return {String} The pretty field name if a match exists or undefined otherwise.
+         */
+        service.getPrettyField = function(tableName, fieldName) {
+            var table = service.getTableWithName(tableName);
+
+            for(var i = 0; i < table.fields.length; ++i) {
+                var field = table.fields[i];
+                if(field.columnName === fieldName) {
+                    return field.prettyName || field.columnName;
+                }
+            }
+
+            return undefined;
+        };
+
+        /**
          * Updates the fields for the table with the given name to include all of the given fields it does not already
          * contain.
          * @param {String} The table name

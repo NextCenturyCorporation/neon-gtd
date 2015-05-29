@@ -27,6 +27,7 @@ function(external, popups, connectionService, datasetService, errorNotificationS
             bindAggregation: '=',
             bindAggregationField: '=',
             bindTable: '=',
+            usePrettyNames: '=?',
             hideHeader: '=?',
             hideAdvancedOptions: '=?'
         },
@@ -156,16 +157,39 @@ function(external, popups, connectionService, datasetService, errorNotificationS
                 return options;
             }
 
+            var createAggregationColumnName = function() {
+                if($scope.options.aggregation === "count") {
+                    return $scope.usePrettyNames ? "Count" : "count";
+                }
+
+                var aggregationFieldName = $scope.usePrettyNames ? datasetService.getPrettyField($scope.options.selectedTable.name, $scope.options.aggregationField) : $scope.options.aggregationField;
+
+                if($scope.options.aggregation === "min") {
+                    return ($scope.usePrettyNames ? "Min " : "min ") + aggregationFieldName;
+                }
+
+                if($scope.options.aggregation === "max") {
+                    return ($scope.usePrettyNames ? "Max " : "max ") + aggregationFieldName;
+                }
+
+                return "";
+            };
+
             var createColumns = function(data) {
+                var countFieldName = $scope.usePrettyNames ? datasetService.getPrettyField($scope.options.selectedTable.name, $scope.options.countField) : $scope.options.countField;
+
                 // Since forceFitColumns is enabled, setting this width will force the columns to use as much
                 // space as possible, which is necessary to keep the first column as small as possible.
+                var tableWidth = $tableDiv.outerWidth();
+
                 var columns = [{
-                    name: $scope.options.countField,
-                    width: $tableDiv.outerWidth()
+                    name: countFieldName,
+                    field: $scope.options.countField,
+                    width: tableWidth
                 }, {
-                    name: $scope.options.aggregation === "count" ? "count" : $scope.options.aggregation + " " + $scope.options.aggregationField,
+                    name: createAggregationColumnName(),
                     field: $scope.options.aggregation === "count" ? "count" : $scope.options.aggregationField,
-                    width: $tableDiv.outerWidth()
+                    width: tableWidth
                 }]
 
                 if(external.anyEnabled && data.length) {
