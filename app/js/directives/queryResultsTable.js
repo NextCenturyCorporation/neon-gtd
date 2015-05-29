@@ -62,7 +62,7 @@ function(external, popups, connectionService, datasetService, errorNotificationS
 
             // If this widget was launched as a navbar collapsable then showData will be bound to the collapse toggle.
             // Otherwise show the data automatically on launching the widget.
-            if(typeof($scope.showData) === "undefined") {
+            if($scope.showData === undefined) {
                 $scope.showData = true;
                 $element.resize(updateSize);
             }
@@ -606,7 +606,7 @@ function(external, popups, connectionService, datasetService, errorNotificationS
              */
             $scope.buildQuery = function() {
                 var query = new neon.query.Query().selectFrom($scope.databaseName, $scope.options.selectedTable.name).limit($scope.options.limit);
-                if($scope.options.sortByField !== "undefined" && $scope.options.sortByField.length > 0) {
+                if($scope.options.sortByField !== undefined && $scope.options.sortByField.length > 0) {
                     query.sortBy($scope.options.sortByField, $scope.options.sortDirection);
                 }
 
