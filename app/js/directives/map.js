@@ -636,17 +636,19 @@ angular.module('neonDemo.directives')
                     data.forEach(function(d) {
                         var lat = d[$scope.options.latitudeField];
                         var lon = d[$scope.options.longitudeField];
-                        if(lon < minLon) {
-                            minLon = lon;
-                        }
-                        if(lon > maxLon) {
-                            maxLon = lon;
-                        }
-                        if(lat < minLat) {
-                            minLat = lat;
-                        }
-                        if(lat > maxLat) {
-                            maxLat = lat;
+                        if($.isNumeric(lat) && $.isNumeric(lon)) {
+                            if(lon < minLon) {
+                                minLon = lon;
+                            }
+                            if(lon > maxLon) {
+                                maxLon = lon;
+                            }
+                            if(lat < minLat) {
+                                minLat = lat;
+                            }
+                            if(lat > maxLat) {
+                                maxLat = lat;
+                            }
                         }
                     });
                     return {
