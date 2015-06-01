@@ -225,55 +225,52 @@ angular.module('neonDemo.directives')
                         tags: ["filter", "map"]
                     });
 
-                    var relations = [];
                     for (var i = 0; i < $scope.layers.length; i++) {
                         if ($scope.layers[i].active) {
-                            relations.push(datasetService.getRelations($scope.layers[i].table, [$scope.layers[i].latitudeMapping, $scope.layers[i].longitudeMapping]));
+                            var relations = datasetService.getRelations($scope.layers[i].table, [$scope.layers[i].latitudeMapping, $scope.layers[i].longitudeMapping]);
+                            filterService.replaceFilters($scope.messenger, relations, $scope.layers[i].filterKeys, $scope.createFilterClauseForExtent, function() {
+                                $scope.$apply(function() {
+                                    // TODO: Need a way to defer this so we don't reload everything
+                                    // for every filtering layer and related filter.
+                                    queryAllLayerTables();
+                                    drawZoomRect({
+                                        left: $scope.extent.minimumLongitude,
+                                        bottom: $scope.extent.minimumLatitude,
+                                        right: $scope.extent.maximumLongitude,
+                                        top: $scope.extent.maximumLatitude
+                                    });
+
+                                    // Show the Clear Filter button.
+                                    $scope.showFilter = true;
+                                    $scope.error = "";
+                                    XDATA.userALE.log({
+                                        activity: "alter",
+                                        action: "filter",
+                                        elementId: "map",
+                                        elementType: "canvas",
+                                        elementSub: "map-filter-box",
+                                        elementGroup: "map_group",
+                                        source: "system",
+                                        tags: ["render", "map"]
+                                    });
+                                });
+                            }, function() {
+                                XDATA.userALE.log({
+                                    activity: "alter",
+                                    action: "failed",
+                                    elementId: "map",
+                                    elementType: "canvas",
+                                    elementSub: "map",
+                                    elementGroup: "map_group",
+                                    source: "system",
+                                    tags: ["failed", "map", "filter"]
+                                });
+                                // Notify the user of the error.
+                                $scope.error = "Error: Failed to create filter.";
+                            });
                         }
                         
                     }
-                    relations = _.flatten(relations);
-                    // TODO build all the relations for all the visible layers.
-
-
-                    filterService.replaceFilters($scope.messenger, relations, $scope.filterKeys, $scope.createFilterClauseForExtent, function() {
-                        $scope.$apply(function() {
-                            queryAllLayerTables();
-                            drawZoomRect({
-                                left: $scope.extent.minimumLongitude,
-                                bottom: $scope.extent.minimumLatitude,
-                                right: $scope.extent.maximumLongitude,
-                                top: $scope.extent.maximumLatitude
-                            });
-
-                            // Show the Clear Filter button.
-                            $scope.showFilter = true;
-                            $scope.error = "";
-                            XDATA.userALE.log({
-                                activity: "alter",
-                                action: "filter",
-                                elementId: "map",
-                                elementType: "canvas",
-                                elementSub: "map-filter-box",
-                                elementGroup: "map_group",
-                                source: "system",
-                                tags: ["render", "map"]
-                            });
-                        });
-                    }, function() {
-                        XDATA.userALE.log({
-                            activity: "alter",
-                            action: "failed",
-                            elementId: "map",
-                            elementType: "canvas",
-                            elementSub: "map",
-                            elementGroup: "map_group",
-                            source: "system",
-                            tags: ["failed", "map", "filter"]
-                        });
-                        // Notify the user of the error.
-                        $scope.error = "Error: Failed to create filter.";
-                    });
                 };
             };
 
@@ -417,7 +414,6 @@ angular.module('neonDemo.directives')
                 $scope.databaseName = datasetService.getDatabase();
                 $scope.tables = datasetService.getTables();
                 $scope.options.selectedTable = $scope.bindTable || datasetService.getFirstTableWithMappings(["latitude", "longitude"]) || $scope.tables[0];
-                $scope.filterKeys = filterService.createFilterKeys("map", $scope.tables);
 
                 if(initializing) {
                     $scope.updateFieldsAndQueryForMapData();
@@ -468,16 +464,18 @@ angular.module('neonDemo.directives')
                             });
                             this.map.addLayer(layer.olLayer);
                         }
+                        layer.filterKeys = filterService.createFilterKeys("map", $scope.tables);
                     }
                 }
 
                 // Make the necessary table queries.
                 $scope.layerTables = getLayerTables();
-                for (var i = 0; i < $scope.layerTables.length; i++) {
-                    if ($scope.showFilter) {
-                        $scope.clearFilter($scope.layerTables[i]);
-                    } else {
-                        $scope.queryForMapData($scope.layerTables[i]);
+                if ($scope.showFilter) {
+                    $scope.clearFilters();
+                }
+                else {
+                    for (var i = 0; i < $scope.layerTables.length; i++) {
+                         $scope.queryForMapData($scope.layerTables[i]);
                     }
                 }
             };
@@ -493,7 +491,7 @@ angular.module('neonDemo.directives')
             };
 
             /**
-             * Triggers a Neon query that will aggregate the time data for the currently selected dataset.
+             * 
              * @method queryForMapData
              */
             $scope.queryForMapData = function(table) {
@@ -715,7 +713,7 @@ angular.module('neonDemo.directives')
              * Clear Neon query to pull data limited to the current extent of the map.
              * @method clearFilter
              */
-            $scope.clearFilter = function() {
+            $scope.clearFilters = function() {
                 XDATA.userALE.log({
                     activity: "deselect",
                     action: "click",
@@ -737,37 +735,44 @@ angular.module('neonDemo.directives')
                     tags: ["filter", "map"]
                 });
 
-                filterService.removeFilters($scope.messenger, $scope.filterKeys, function() {
-                    $scope.$apply(function() {
+                // Loop over each layer and clear it's associated filters.
+                for (var i = 0; i < $scope.layers.length; i++) {
+                    filterService.removeFilters($scope.messenger, $scope.layers[i].filterKeys, function() {
+                        $scope.$apply(function() {
+                            XDATA.userALE.log({
+                                activity: "deselect",
+                                action: "filter",
+                                elementId: "map",
+                                elementType: "canvas",
+                                elementSub: "map",
+                                elementGroup: "map_group",
+                                source: "system",
+                                tags: ["filter", "map"]
+                            });
+                            
+                        });
+                    }, function() {
                         XDATA.userALE.log({
                             activity: "deselect",
-                            action: "filter",
+                            action: "failed",
                             elementId: "map",
                             elementType: "canvas",
                             elementSub: "map",
                             elementGroup: "map_group",
                             source: "system",
-                            tags: ["filter", "map"]
+                            tags: ["filter", "map", "failed"]
                         });
-                        clearZoomRect();
-                        queryAllLayerTables();
-                        $scope.hideClearFilterButton();
-                        $scope.zoomToDataBounds();
+                        // Notify the user of the error.
+                        $scope.error = "Error: Failed to clear filter.";
                     });
-                }, function() {
-                    XDATA.userALE.log({
-                        activity: "deselect",
-                        action: "failed",
-                        elementId: "map",
-                        elementType: "canvas",
-                        elementSub: "map",
-                        elementGroup: "map_group",
-                        source: "system",
-                        tags: ["filter", "map", "failed"]
-                    });
-                    // Notify the user of the error.
-                    $scope.error = "Error: Failed to clear filter.";
-                });
+                }
+
+                // TODO: Handle the case where some filters fail to be removed.
+                // Update our table queries for the various layers.  Ideally, this should be deferred
+                // until we've received responses from our filter requests.
+                clearZoomRect();
+                $scope.hideClearFilterButton();
+                queryAllLayerTables();
             };
 
             /**
