@@ -49,6 +49,14 @@
 
         .form-group {
             margin-right: 5px;
+
+            &.pull-right {
+                @media (max-width: 499px){
+                    position: absolute;
+                    right: 25px;
+                    margin-top: -50px;
+                }
+            }
         }
     }
 
@@ -56,16 +64,40 @@
         background: none;
     }
 
+    .form-inline {
+        .form-control {
+            @media (min-width: 500px) and (max-width: 767px) {
+                display: inline-block;
+                width: 100%;
+                vertical-align: middle;
+            }
+        }
+
+        .form-group {
+            @media (min-width: 500px) and (max-width: 767px) {
+                display: inline-block;
+                margin-bottom: 0;
+                vertical-align: middle;
+                width: 22%;
+                margin: 0;
+                padding-right: 5px;
+            }
+
+            &.pull-right {
+                @media (min-width: 500px) and (max-width: 767px) {
+                    display: inline-block;
+                    margin-bottom: 0;
+                    vertical-align: middle;
+                    width: auto;
+                }
+            }
+        }
+    }
+
     .refresh {
         margin-right: 10px;
     }
 }
-
-    .filter-tray
-
-        .filter-tray .filter
-
-    .filter-tray
 
 .filter-directive {
     .delete {
@@ -118,72 +150,33 @@
         select {
             width: 100%;
         }
+
         .btn-group {
             width: 100%;
+
+            .btn {
+                padding: 6px 0px;
+                width: 50%;
+            }
         }
     }
-}
 
+    .form-group-button {
+        width: 12%;
+        min-width: 40px;
 
-
-
-.filter-directive .form-group-button {
-    width: 12%;
-    min-width: 40px;
-}
-
-.filter-directive .form-group-button .btn,
-.filter-directive .form-group .btn-group .btn {
-    padding: 6px 0px;
-}
-
-.filter-directive .form-group .btn-group .btn {
-    width: 50%;
-}
-
-.filter-directive .labels {
-    margin-top: 10px;
-    padding: 0px 5px;
-}
-
-.filter-directive .labels label {
-    margin: 0px 2px;
-    height: 15px;
-}
-
-@media (min-width: 500px) and (max-width: 767px) {
-    .filter-tray .form-inline .form-control {
-        display: inline-block;
-        width: 100%;
-        vertical-align: middle;
+        .btn {
+            padding: 6px 0px;
+        }
     }
-    /*.filter-tray .form-inline .btn-primary {
-        display: inline-block;
-        width: 100%;
-        vertical-align: middle;
-        padding-left: 0;
-        padding-right: 0;
-    }*/
-    .filter-tray .form-inline .form-group {
-        display: inline-block;
-        margin-bottom: 0;
-        vertical-align: middle;
-        width: 22%;
-        margin: 0;
-        padding-right: 5px;
-    }
-    .filter-tray .form-inline .form-group.pull-right {
-        display: inline-block;
-        margin-bottom: 0;
-        vertical-align: middle;
-        width: auto;
-    }
-}
 
-@media (max-width: 499px){
-    .filter-tray .filter .form-group.pull-right {
-        position: absolute;
-        right: 25px;
-        margin-top: -50px;
+    .labels {
+        margin-top: 10px;
+        padding: 0px 5px;
+
+        label {
+            margin: 0px 2px;
+            height: 15px;
+        }
     }
 }
