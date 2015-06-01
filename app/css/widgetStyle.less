@@ -173,6 +173,48 @@ html {
     }
 }
 
+.timeline-selector {
+    height: 100%;
+    margin: 0;
+
+    h3 {
+        margin-top: -7px;
+
+        @media (max-width: 891px) {
+            font-size: 20px;
+        }
+
+        @media (max-width: 767px) {
+            font-size: 17px;
+        }
+    }
+
+    .btn-group{
+        margin-top: 0;
+    }
+
+    .well {
+        height: 100%;
+    }
+}
+
+.timeline-selector-chart{
+    height: calc(100% - 61px);
+    min-height: 50px;
+
+    .axis {
+        path {
+            stroke: #FFFFFF;
+        }
+    }
+
+    .brush {
+        .mask{
+            fill: #FFFFFF;
+        }
+    }
+}
+
 .tray {
     position: relative;
     display: block;
@@ -203,47 +245,3 @@ html {
     border: 0;
     margin: 0;
 }
-
-.well-blank {
-    padding: 20px 20px 0;
-}
-
-.well-map {
-    padding: 0;
-}
-
-//FIXME this was in the css file but not the less file...
-// /* Timeline selector */
-// .timeline-selector,
-// .timeline-selector .well{
-//     height: 100%;
-// }
-// .timeline-selector-chart{
-//     height: calc(100% - 61px);
-//     min-height: 50px;
-// }
-// .timeline-selector{
-//     margin: 0;
-// }
-// .timeline-selector h3 {
-//     margin-top: -7px;
-// }
-// .timeline-selector .btn-group{
-//     margin-top: 0;
-// }
-// .timeline-selector-chart .brush .mask{
-//     fill: #FFFFFF;
-// }
-// .timeline-selector-chart .axis path {
-//     stroke: #FFFFFF;
-// }
-// @media (max-width: 891px) {
-//     .timeline-selector h3 {
-//         font-size: 20px;
-//     }
-// }
-// @media (max-width: 767px) {
-//     .timeline-selector h3 {
-//         font-size: 17px;
-//     }
-// }
