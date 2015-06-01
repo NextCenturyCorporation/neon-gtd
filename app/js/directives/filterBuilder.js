@@ -44,7 +44,7 @@ angular.module('neonDemo.directives')
             $scope.selectedTableName = "";
             $scope.fields = [];
             $scope.selectedField = "";
-            $scope.andClauses = true;
+            $scope.andClauses = false;
 
             if(!($scope.navbarItem)) {
                 $element.addClass("filter-directive");
