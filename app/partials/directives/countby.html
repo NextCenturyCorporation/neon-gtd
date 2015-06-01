@@ -1,7 +1,7 @@
 <div class="header-container" ng-show="!(hideHeader)">
     <span class="header-text pull-left">{{options.selectedTable.name}}</span>
 
-    <options-menu parent-element="element">
+    <options-menu parent-element="element" ng-show="!(hideAdvancedOptions)">
         <div class="form-group" ng-show="(hideAdvancedOptions)">
             <label>No Options Available</label>
         </div>
