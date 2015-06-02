@@ -25,18 +25,17 @@ angular.module("neonDemo.services")
             layout: "",
             datastore: "",
             hostname: "",
-            database: "",
-            tables: [],
-            relations: []
+            databases: []
         };
 
         /**
          * Sets the active dataset to the given dataset.
          * @param {Object} The dataset containing {String} name, {String} layout, {String} datastore, {String} hostname,
-         * {String} database, {Array} tables, and {Array} relations.  Each table is an Object containing {String} name,
-         * {Array} fields, and {Object} mappings.  Each field is an Object containing {String} columnName and {String}
-         * prettyName.  Each mapping key is a unique identifier used by the visualizations and each value is a field
-         * name.  Each relation is an Object with table names as keys and field names as values.
+         * and {Array} databases.  Each database is an Object containing {String} name, {Array} tables, and {Array}
+         * relations.  Each table is an Object containing {String} name, {Array} fields, and {Object} mappings.  Each
+         * field is an Object containing {String} columnName and {String} prettyName.  Each mapping key is a unique
+         * identifier used by the visualizations and each value is a field name.  Each relation is an Object with table
+         * names as keys and field names as values.
          * @method setActiveDataset
          */
         service.setActiveDataset = function(dataset) {
@@ -44,13 +43,26 @@ angular.module("neonDemo.services")
             service.dataset.layout = dataset.layout || "";
             service.dataset.datastore = dataset.datastore || "";
             service.dataset.hostname = dataset.hostname || "";
-            service.dataset.database = dataset.database || "";
-            service.dataset.tables = dataset.tables || [];
+            service.dataset.databases = dataset.databases || [];
             service.dataset.relations = dataset.relations || [];
 
-            for(var i = 0; i < service.dataset.tables.length; ++i) {
-                service.dataset.tables[i].fields = service.dataset.tables[i].fields || [];
-                service.dataset.tables[i].mappings = service.dataset.tables[i].mappings || {};
+            // Remove databases from the dataset that contain no tables.
+            var databaseIndexToRemove = [];
+            for(var i = 0; i < service.dataset.databases.length; ++i) {
+                if(!(service.dataset.databases[i].tables || service.dataset.databases[i].tables.length)) {
+                    databaseIndexToRemove.push(i);
+                }
+            }
+
+            for(var i = databaseIndexToRemove.length; i > 0; --i) {
+                service.dataset.databases.splice(i, 1);
+            }
+
+            for(var i = 0; i < service.dataset.databases.length; ++i) {
+                for(var j = 0; j < service.dataset.databases[i].tables.length; ++j) {
+                    service.dataset.databases[i].tables[j].fields = service.dataset.databases[i].tables[j].fields || [];
+                    service.dataset.databases[i].tables[j].mappings = service.dataset.databases[i].tables[j].mappings || {};
+                }
             }
         };
 
@@ -60,7 +72,7 @@ angular.module("neonDemo.services")
          * @return {Boolean}
          */
         service.hasDataset = function() {
-            return service.dataset.datastore && service.dataset.hostname && service.dataset.database && service.dataset.tables;
+            return service.dataset.datastore && service.dataset.hostname && service.dataset.databases.length;
         };
 
         /**
@@ -100,34 +112,39 @@ angular.module("neonDemo.services")
         };
 
         /**
-         * Returns the database for the active dataset.
-         * @method getDatabase
-         * @return {String}
+         * Returns the databases for the active dataset.
+         * @method getDatabases
+         * @return {Array}
          */
-        service.getDatabase = function() {
-            return service.dataset.database;
+        service.getDatabases = function() {
+            return service.dataset.databases;
         };
 
         /**
-         * Returns the tables for the active dataset.
-         * @method getTables
-         * @return {Array} An array of table Objects containing {String} name, {Array} fields, and {Array} mappings.
+         * Returns the names for the databases for the active dataset.
+         * @method getDatabaseNames
+         * @return {Array}
          */
-        service.getTables = function() {
-            return service.dataset.tables;
+        service.getDatabaseNames = function() {
+            var databases = service.getDatabases();
+            var names = [];
+            for(var i = 0; i < databases.length; ++i) {
+                names.push(databases[i].name);
+            }
+            return names;
         };
 
         /**
-         * Returns the table with the given name or an Object with an empty name if no such table exists in the dataset.
-         * @param {String} The table name
-         * @method getTableWithName
-         * @return {Object} The table containing {String} name, {Array} fields, and {Object} mappings if a match exists
+         * Returns the database with the given name or an Object with an empty name if no such database exists in the dataset.
+         * @param {String} The database name
+         * @method getDatabaseWithName
+         * @return {Object} The database containing {String} name, {Array} fields, and {Object} mappings if a match exists
          * or undefined otherwise.
          */
-        service.getTableWithName = function(tableName) {
-            for(var i = 0; i < service.dataset.tables.length; ++i) {
-                if(service.dataset.tables[i].name === tableName) {
-                    return service.dataset.tables[i];
+        service.getDatabaseWithName = function(databaseName) {
+            for(var i = 0; i < service.dataset.databases.length; ++i) {
+                if(service.dataset.databases[i].name === databaseName) {
+                    return service.dataset.databases[i];
                 }
             }
 
@@ -135,23 +152,86 @@ angular.module("neonDemo.services")
         };
 
         /**
-         * Returns the first table in the dataset containing all the given mappings.
-         * @param {Array} The array of mapping keys that the table must contain.
-         * @method getFirstTableWithMappings
+         * Returns the tables for the database with the given name in the active dataset.
+         * @param {String} The database name
+         * @method getTables
+         * @return {Array} An array of table Objects containing {String} name, {Array} fields, and {Array} mappings.
+         */
+        service.getTables = function(databaseName) {
+            return service.getDatabaseWithName(databaseName).tables;
+        };
+
+        /**
+         * Returns the names for the tables for the database with the given name in the active dataset.
+         * @method getTableNames
+         * @return {Array}
+         */
+        service.getTableNames = function(databaseName) {
+            var tables = service.getTables(databaseName);
+            var names = [];
+            for(var i = 0; i < tables.length; ++i) {
+                names.push(tables[i].name);
+            }
+            return names;
+        };
+
+        /**
+         * Returns the table with the given name or an Object with an empty name if no such table exists in the database with the given name.
+         * @param {String} The database name
+         * @param {String} The table name
+         * @method getTableWithName
          * @return {Object} The table containing {String} name, {Array} fields, and {Object} mappings if a match exists
          * or undefined otherwise.
          */
-        service.getFirstTableWithMappings = function(keys) {
-            for(var i = 0; i < service.dataset.tables.length; ++i) {
+        service.getTableWithName = function(databaseName, tableName) {
+            var tables = service.getTables(databaseName);
+            for(var i = 0; i < tables.length; ++i) {
+                if(tables[i].name === tableName) {
+                    return tables[i];
+                }
+            }
+
+            return undefined;
+        };
+
+        /**
+         * Returns a map of database names to an array of table names within that database.
+         * @method getDatabaseAndTableNames
+         * @return {Object}
+         */
+        service.getDatabaseAndTableNames = function() {
+            var databases = service.getDatabases();
+            var names = {};
+            for(var i = 0; i < databases.length; ++i) {
+                names[databases[i].name] = [];
+                var tables = service.getTables(databases[i].name);
+                for(var j = 0; j < tables.length; ++j) {
+                    names[databases[i].name].push(tables[j].name);
+                }
+            }
+            return names;
+        };
+
+        /**
+         * Returns the name of the first table in the database with the given name containing all the given mappings.
+         * @param {String} The database name
+         * @param {Array} The array of mapping keys that the table must contain.
+         * @method getFirstTableWithMappings
+         * @return {String} The name of the table containing {String} name, {Array} fields, and {Object} mappings if a match exists
+         * or undefined otherwise.
+         */
+        service.getFirstTableNameWithMappings = function(databaseName, keys) {
+            var tables = service.getTables(databaseName);
+            for(var i = 0; i < tables.length; ++i) {
                 var success = true;
                 for(var j = 0; j < keys.length; ++j) {
-                    if(!(service.dataset.tables[i].mappings[keys[j]])) {
+                    if(!(tables[i].mappings[keys[j]])) {
                         success = false;
                         break;
                     }
                 }
                 if(success) {
-                    return service.dataset.tables[i];
+                    return tables[i].name;
                 }
             }
 
@@ -160,12 +240,13 @@ angular.module("neonDemo.services")
 
         /**
          * Returns the database field names for the table with the given name.
+         * @param {String} The database name
          * @param {String} The table name
          * @method getDatabaseFields
          * @return {Array} The array of database field names if a match exists or an empty array otherwise.
          */
-        service.getDatabaseFields = function(tableName) {
-            var table = service.getTableWithName(tableName);
+        service.getDatabaseFields = function(databaseName, tableName) {
+            var table = service.getTableWithName(databaseName, tableName);
 
             if(!table) {
                 return [];
@@ -180,12 +261,13 @@ angular.module("neonDemo.services")
 
         /**
          * Returns the pretty field names for the table with the given name.
+         * @param {String} The database name
          * @param {String} The table name
          * @method getPrettyFields
          * @return {Array} The array of pretty field names if a match exists or an empty array otherwise.
          */
-        service.getPrettyFields = function(tableName) {
-            var table = service.getTableWithName(tableName);
+        service.getPrettyFields = function(databaseName, tableName) {
+            var table = service.getTableWithName(databaseName, tableName);
 
             if(!table) {
                 return [];
@@ -221,12 +303,13 @@ angular.module("neonDemo.services")
         /**
          * Updates the fields for the table with the given name to include all of the given fields it does not already
          * contain.
+         * @param {String} The database name
          * @param {String} The table name
          * @param {Array} The array of database field names to add
          * @method updateFields
          */
-        service.updateFields = function(tableName, fieldNames) {
-            var table = service.getTableWithName(tableName);
+        service.updateFields = function(databaseName, tableName, fieldNames) {
+            var table = service.getTableWithName(databaseName, tableName);
 
             if(!table) {
                 return;
@@ -248,12 +331,13 @@ angular.module("neonDemo.services")
 
         /**
          * Returns the mappings for the table with the given name.
+         * @param {String} The database name
          * @param {String} The table name
          * @method getMappings
          * @return {Object} The mappings if a match exists or an empty object otherwise.
          */
-        service.getMappings = function(tableName) {
-            var table = service.getTableWithName(tableName);
+        service.getMappings = function(databaseName, tableName) {
+            var table = service.getTableWithName(databaseName, tableName);
 
             if(!table) {
                 return {};
@@ -264,14 +348,15 @@ angular.module("neonDemo.services")
 
         /**
          * Returns the mapping for the table with the given name and the given key.
+         * @param {String} The database name
          * @param {String} The table name
          * @param {String} The mapping key
          * @method getMapping
          * @return {String} The field name for the mapping at the given key if a match exists or an empty string
          * otherwise.
          */
-        service.getMapping = function(tableName, key) {
-            var table = service.getTableWithName(tableName);
+        service.getMapping = function(databaseName, tableName, key) {
+            var table = service.getTableWithName(databaseName, tableName);
 
             if(!table) {
                 return "";
@@ -282,13 +367,14 @@ angular.module("neonDemo.services")
 
         /**
          * Sets the mapping for the table with the given name at the given key to the given field name.
+         * @param {String} The database name
          * @param {String} The table name
          * @param {String} The mapping key
          * @param {String} The field name for the given mapping key
          * @method setMapping
          */
-        service.setMapping = function(tableName, key, fieldName) {
-            var table = service.getTableWithName(tableName);
+        service.setMapping = function(databaseName, tableName, key, fieldName) {
+            var table = service.getTableWithName(databaseName, tableName);
 
             if(!table) {
                 return;
@@ -298,8 +384,9 @@ angular.module("neonDemo.services")
         };
 
         /**
-         * Returns an array of relations for the given table and fields.  The given table is related to another table if
-         * the dataset contains relations mapping each given field name to the other table.
+         * Returns an array of relations for the given database, table, and fields.  The given table is related to another table if
+         * the database contains relations mapping each given field name to the other table.
+         * @param {String} The database name
          * @param {String} The table name
          * @param {Array} The array of field names
          * @method getRelations
@@ -307,53 +394,79 @@ angular.module("neonDemo.services")
          * the given field names to the field names in the other tables ({Object} fields).  This array will also contain
          * the relation object for the table and fields given in the arguments
          */
-        service.getRelations = function(tableName, fieldNames) {
-            var tablesToFields = {};
-            for(var i = 0; i < fieldNames.length; ++i) {
+        service.getRelations = function(databaseName, tableName, fieldNames) {
+            var i, j, k, l;
+            var relations = service.dataset.relations;
+
+            var initializeMap = function(map, key1, key2, key3) {
+                if(!(map[key1])) {
+                    map[key1] = {};
+                }
+                if(!(map[key1][key2])) {
+                    map[key1][key2] = {};
+                }
+                if(!(map[key1][key2][key3])) {
+                    map[key1][key2][key3] = [];
+                }
+                return map;
+            };
+
+            // First we create a mapping of a relation's database/table/field to its related fields.
+            var relationToFields = {};
+
+            // Iterate through each field to find its relations.
+            for(i = 0; i < fieldNames.length; ++i) {
                 var fieldName = fieldNames[i];
-                for(var j = 0; j < service.dataset.relations.length; ++j) {
-                    if(fieldName === service.dataset.relations[j][tableName]) {
-                        var tableNames = Object.keys(service.dataset.relations[j]);
-                        for(var k = 0; k < tableNames.length; ++k) {
-                            var relationTableName = tableNames[k];
-                            var relationFieldName = service.dataset.relations[j][relationTableName];
-                            if(!(tablesToFields[relationTableName])) {
-                                tablesToFields[relationTableName] = {};
+                // Iterate through each relation to compare with the current field.
+                for(j = 0; j < relations.length; ++j) {
+                    var relation = relations[j];
+                    // If the current relation contains a match for the input database/table/field, iterate through the elements in the current relation.
+                    if(relation[databaseName] && fieldName === relation[databaseName][tableName]) {
+                        var databaseNames = Object.keys(relation);
+                        for(k = 0; k < databaseNames.length; ++k) {
+                            var relationDatabaseName = databaseNames[k];
+                            var tableNames = Object.keys(relation[relationDatabaseName]);
+                            for(l = 0; l < tableNames.length; ++l) {
+                                var relationTableName = tableNames[l];
+                                var relationFieldName = relation[relationDatabaseName][relationTableName];
+                                relationToFields = initializeMap(relationToFields, relationDatabaseName, relationTableName, fieldName);
+                                // Add each database/table/field in the current relation to the map.  Note that this will include the input database/table/field.
+                                relationToFields[relationDatabaseName][relationTableName][fieldName].push(relationFieldName);
                             }
-                            if(!(tablesToFields[relationTableName][fieldName])) {
-                                tablesToFields[relationTableName][fieldName] = [];
-                            }
-                            tablesToFields[relationTableName][fieldName].push(relationFieldName);
                         }
                     }
                 }
             }
 
-            var relationTableNames = Object.keys(tablesToFields);
-            if(relationTableNames.length) {
-                var relations = [];
-                for(i = 0; i < relationTableNames.length; ++i) {
-                    relations.push({
-                        database: service.getDatabase(),
-                        table: relationTableNames[i],
-                        fields: tablesToFields[relationTableNames[i]]
-                    });
+            var resultDatabaseNames = Object.keys(relationToFields);
+            if(resultDatabaseNames.length) {
+                var results = [];
+                // Iterate through the relations for each relation's database/table/field and add a relation object for each database/table pair to the final list of results.
+                for(i = 0; i < resultDatabaseNames.length; ++i) {
+                    var resultTableNames = Object.keys(relationToFields[resultDatabaseNames[i]]);
+                    for(j = 0; j < resultTableNames.length; ++j) {
+                        results.push({
+                            database: resultDatabaseNames[i],
+                            table: resultTableNames[j],
+                            fields: relationToFields[resultDatabaseNames[i]][resultTableNames[j]]
+                        });
+                    }
                 }
-                return relations;
+                return results;
             }
 
-            // If the input fields do not have any related fields in other tables, return a list containing an object for the input table and fields.
-            var relationForInput = {
-                database: service.getDatabase(),
+            // If the input fields do not have any related fields in other tables, return a list containing a relation object for the input database/table/fields.
+            var result = {
+                database: databaseName,
                 table: tableName,
                 fields: {}
             };
 
             for(i = 0; i < fieldNames.length; ++i) {
-                relationForInput.fields[fieldNames[i]] = [fieldNames[i]];
+                result.fields[fieldNames[i]] = [fieldNames[i]];
             }
 
-            return [relationForInput];
+            return [result];
         };
 
         return service;

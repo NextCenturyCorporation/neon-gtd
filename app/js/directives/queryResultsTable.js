@@ -35,6 +35,7 @@ function(external, popups, connectionService, datasetService, errorNotificationS
         restrict: 'EA',
         scope: {
             bindTable: '=',
+            bindDatabase: '=',
             navbarItem: '=?',
             showData: '=?',
             hideHeader: '=?',
@@ -71,7 +72,7 @@ function(external, popups, connectionService, datasetService, errorNotificationS
             $scope.ASCENDING = neon.query.ASCENDING;
             $scope.DESCENDING = neon.query.DESCENDING;
 
-            $scope.databaseName = '';
+            $scope.databases = [];
             $scope.tables = [];
             $scope.fields = [];
             $scope.tableNameToDeletedFieldsMap = {};
@@ -79,9 +80,8 @@ function(external, popups, connectionService, datasetService, errorNotificationS
             $scope.errorMessage = undefined;
 
             $scope.options = {
-                selectedTable: {
-                    name: ""
-                },
+                database: "",
+                table: "",
                 addField: "",
                 sortByField: "",
                 sortDirection: neon.query.ASCENDING,
@@ -201,7 +201,7 @@ function(external, popups, connectionService, datasetService, errorNotificationS
             };
 
             var createColumns = function(data) {
-                var columns = tables.createColumns(data, $scope.tableNameToDeletedFieldsMap[$scope.options.selectedTable.name], [$scope.createDeleteColumnButton("")]);
+                var columns = tables.createColumns(data, $scope.tableNameToDeletedFieldsMap[$scope.options.table], [$scope.createDeleteColumnButton("")]);
                 columns = tables.addLinkabilityToColumns(columns);
 
                 if(external.anyEnabled) {
@@ -235,7 +235,7 @@ function(external, popups, connectionService, datasetService, errorNotificationS
                     source: "system",
                     tags: ["filter-change", "datagrid"]
                 });
-                if(message.addedFilter && message.addedFilter.databaseName === $scope.databaseName && message.addedFilter.tableName === $scope.options.selectedTable.name) {
+                if(message.addedFilter && message.addedFilter.databaseName === $scope.options.database && message.addedFilter.tableName === $scope.options.table) {
                     updateRowsAndCount();
                 }
             };
@@ -277,33 +277,46 @@ function(external, popups, connectionService, datasetService, errorNotificationS
                     return;
                 }
 
-                $scope.databaseName = datasetService.getDatabase();
-                $scope.tables = datasetService.getTables();
-                $scope.options.selectedTable = $scope.bindTable || $scope.tables[0];
+                $scope.databases = datasetService.getDatabaseNames();
+                $scope.options.database = $scope.databases[0];
+                if($scope.bindDatabase && $scope.databases.indexOf($scope.bindDatabase) >= 0) {
+                    $scope.options.database = $scope.bindDatabase;
+                }
 
                 if(initializing) {
-                    $scope.updateFieldsAndRowsAndCount();
+                    $scope.updateTables();
                 } else {
                     $scope.$apply(function() {
-                        $scope.updateFieldsAndRowsAndCount();
+                        $scope.updateTables();
                     });
                 }
             };
 
-            $scope.updateFieldsAndRowsAndCount = function() {
-                $scope.fields = datasetService.getDatabaseFields($scope.options.selectedTable.name);
+            $scope.updateTables = function() {
+                $scope.tables = datasetService.getTableNames($scope.options.database);
+                if($scope.bindTable && $scope.tables.indexOf($scope.bindTable) >= 0) {
+                    $scope.options.table = $scope.bindTable;
+                } else {
+                    $scope.options.table = $scope.tables[0];
+                }
+                $scope.updateFields();
+            };
+
+            $scope.updateFields = function() {
+                $scope.fields = datasetService.getDatabaseFields($scope.options.database, $scope.options.table);
                 $scope.fields.sort();
                 $scope.options.addField = "";
-                if(!($scope.tableNameToDeletedFieldsMap[$scope.options.selectedTable.name])) {
-                    $scope.tableNameToDeletedFieldsMap[$scope.options.selectedTable.name] = [];
-                } else if($scope.tableNameToDeletedFieldsMap[$scope.options.selectedTable.name].length) {
+                if(!($scope.tableNameToDeletedFieldsMap[$scope.options.table])) {
+                    $scope.tableNameToDeletedFieldsMap[$scope.options.table] = [];
+                }
+                if($scope.tableNameToDeletedFieldsMap[$scope.options.table].length) {
                     // Remove previously deleted fields from the list of fields.
                     $scope.fields = $scope.fields.filter(function(field) {
-                        return $scope.tableNameToDeletedFieldsMap[$scope.options.selectedTable.name].indexOf(field) === -1;
+                        return $scope.tableNameToDeletedFieldsMap[$scope.options.table].indexOf(field) === -1;
                     });
-                    $scope.options.addField = $scope.tableNameToDeletedFieldsMap[$scope.options.selectedTable.name][0];
+                    $scope.options.addField = $scope.tableNameToDeletedFieldsMap[$scope.options.table][0];
                 }
-                $scope.options.sortByField = datasetService.getMapping($scope.options.selectedTable.name, "sort_by") || $scope.fields[0];
+                $scope.options.sortByField = datasetService.getMapping($scope.options.database, $scope.options.table, "sort_by") || $scope.fields[0];
                 updateRowsAndCount();
             };
 
@@ -406,7 +419,7 @@ function(external, popups, connectionService, datasetService, errorNotificationS
              * @method queryForData
              */
             $scope.queryForTotalRows = function() {
-                var query = new neon.query.Query().selectFrom($scope.databaseName, $scope.options.selectedTable.name)
+                var query = new neon.query.Query().selectFrom($scope.options.database, $scope.options.table)
                     .aggregate(neon.query.COUNT, '*', 'count');
 
                 XDATA.userALE.log({
@@ -564,7 +577,7 @@ function(external, popups, connectionService, datasetService, errorNotificationS
                     var indexToSplice = $scope.fields.indexOf(name);
                     $scope.fields.splice(indexToSplice, 1);
                     $scope.options.sortByField = $scope.options.sortByField === name ? $scope.fields[0] : $scope.options.sortByField;
-                    $scope.tableNameToDeletedFieldsMap[$scope.options.selectedTable.name].push(name);
+                    $scope.tableNameToDeletedFieldsMap[$scope.options.table].push(name);
                     $scope.options.addField = name;
                     $scope.createDeleteColumnButtons();
 
@@ -582,7 +595,7 @@ function(external, popups, connectionService, datasetService, errorNotificationS
 
             $scope.addColumn = function() {
                 if($scope.table.addColumn($scope.options.addField)) {
-                    var indexToSplice = $scope.tableNameToDeletedFieldsMap[$scope.options.selectedTable.name].indexOf($scope.options.addField);
+                    var indexToSplice = $scope.tableNameToDeletedFieldsMap[$scope.options.table].indexOf($scope.options.addField);
 
                     XDATA.userALE.log({
                         activity: "add",
@@ -593,9 +606,9 @@ function(external, popups, connectionService, datasetService, errorNotificationS
                         source: "user",
                         tags: ["options", "datagrid", "column", $scope.options.addField]
                     });
-                    $scope.tableNameToDeletedFieldsMap[$scope.options.selectedTable.name].splice(indexToSplice, 1);
+                    $scope.tableNameToDeletedFieldsMap[$scope.options.table].splice(indexToSplice, 1);
                     $scope.fields.push($scope.options.addField);
-                    $scope.options.addField = $scope.tableNameToDeletedFieldsMap[$scope.options.selectedTable.name].length > 0 ? $scope.tableNameToDeletedFieldsMap[$scope.options.selectedTable.name][0] : "";
+                    $scope.options.addField = $scope.tableNameToDeletedFieldsMap[$scope.options.table].length > 0 ? $scope.tableNameToDeletedFieldsMap[$scope.options.table][0] : "";
                     $scope.createDeleteColumnButtons();
                 }
             };
@@ -606,7 +619,7 @@ function(external, popups, connectionService, datasetService, errorNotificationS
              * @method buildQuery
              */
             $scope.buildQuery = function() {
-                var query = new neon.query.Query().selectFrom($scope.databaseName, $scope.options.selectedTable.name).limit($scope.options.limit);
+                var query = new neon.query.Query().selectFrom($scope.options.database, $scope.options.table).limit($scope.options.limit);
                 if($scope.options.sortByField !== undefined && $scope.options.sortByField.length > 0) {
                     query.sortBy($scope.options.sortByField, $scope.options.sortDirection);
                 }

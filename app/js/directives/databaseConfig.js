@@ -126,22 +126,38 @@ angular.module('neonDemo.directives')
 
                 datasetService.setActiveDataset(server);
 
-                $scope.selectedDB = server.database;
-                $scope.selectedTable = server.tables[0].name;
-                $scope.tableFields = server.tables[0].fields;
-                $scope.tableFieldMappings = server.tables[0].mappings;
+                $scope.selectedDB = server.databases[0].name;
+                $scope.selectedTable = server.databases[0].tables[0].name;
+                $scope.tableFields = server.databases[0].tables[0].fields;
+                $scope.tableFieldMappings = server.databases[0].tables[0].mappings;
                 $scope.updateLayout();
 
-                // TODO:  Review this.  Callback is disabled while datasetService is being fleshed out.  This may be unnecessary.
-                // $scope.selectDatabase($scope.publishDatasetChanged());
-                $scope.selectDatabase();
+                var databaseNames = [];
+                for(var i = 0; i < server.databases.length; ++i) {
+                    databaseNames.push(server.databases[i].name);
+                }
+
+                // Wait to publish the dataset change until we've updated the field names.
+                $scope.updateDatabases(databaseNames, $scope.publishDatasetChanged);
             };
 
             var populateDatabaseDropdown = function(dbs) {
                 $scope.databases = dbs;
             };
 
-            $scope.selectDatabase = function(updateFieldsCallback) {
+            $scope.connectToDatabase = function(updateFieldsCallback) {
+                var connection = connectionService.getActiveConnection();
+                if(connection) {
+                    connection.getTableNames($scope.selectedDB, function(tableNames) {
+                        $scope.$apply(function() {
+                            populateTableDropdown(tableNames);
+                        });
+                    });
+                    $scope.updateFieldsForTables(updateFieldsCallback);
+                }
+            };
+
+            $scope.selectDatabase = function(updateCallback) {
                 XDATA.userALE.log({
                     activity: "select",
                     action: "click",
@@ -153,46 +169,42 @@ angular.module('neonDemo.directives')
                 });
 
                 if($scope.selectedDB) {
-                    var connection = connectionService.getActiveConnection();
-                    if(connection) {
-                        connection.getTableNames($scope.selectedDB, function(tableNames) {
-                            $scope.$apply(function() {
-                                populateTableDropdown(tableNames);
-                            });
-                        });
-                        $scope.updateFieldsForTables(updateFieldsCallback);
-                    }
+                    $scope.updateDatabases([$scope.selectedDB]);
                 } else {
                     $scope.dbTables = [];
                 }
             };
 
-            $scope.updateFieldsForTables = function(updateFieldsCallback) {
-                $scope.tableNameToFieldNames = {};
+            $scope.updateDatabases = function(databaseNames, updateCallback) {
+                var databaseName = databaseNames.shift();
 
                 var connection = connectionService.getActiveConnection();
                 if(connection) {
-                    connection.getTableNamesAndFieldNames($scope.selectedDB, function(tableNamesAndFieldNames) {
+                    connection.getTableNamesAndFieldNames(databaseName, function(tableNamesAndFieldNames) {
                         $scope.$apply(function() {
                             var tableNames = Object.keys(tableNamesAndFieldNames);
+                            populateTableDropdown(tableNames);
+
                             for(var i = 0; i < tableNames.length; ++i) {
                                 var tableName = tableNames[i];
 
                                 // Update the fields for this table if it exists in the active dataset.
-                                datasetService.updateFields(tableName, tableNamesAndFieldNames[tableName]);
+                                datasetService.updateFields(databaseName, tableName, tableNamesAndFieldNames[tableName]);
 
                                 // Store fields for each table locally because the dataset service ignores tables not included in the dataset.
                                 // TODO Determine how to handle fields from tables in the database that are not included in the dataset.  This may
                                 //      be solved once we update the custom connection interface to support multi-table datasets and field mappings.
                                 $scope.tableNameToFieldNames[tableName] = tableNamesAndFieldNames[tableName];
 
-                                if(tableName === $scope.selectedTable) {
-                                    $scope.tableFields = datasetService.getDatabaseFields(tableName);
+                                if(databaseName === $scope.selectedDB && tableName === $scope.selectedTable) {
+                                    $scope.tableFields = datasetService.getDatabaseFields(databaseName, tableName);
                                 }
                             }
 
-                            if(updateFieldsCallback) {
-                                updateFieldsCallback();
+                            if(databaseNames.length) {
+                                $scope.updateDatabases(databaseNames, updateCallback);
+                            } else if(updateCallback) {
+                                updateCallback();
                             }
                         });
                     });
@@ -210,12 +222,12 @@ angular.module('neonDemo.directives')
                     tags: ["dataset", $scope.selectedTable, "table"]
                 });
 
-                $scope.tableFields = datasetService.getDatabaseFields($scope.selectedTable);
+                $scope.tableFields = datasetService.getDatabaseFields($scope.selectedDB, $scope.selectedTable);
                 // If the table does not exist in the dataset configuration, use the locally stored field names for the table.
                 if(!($scope.tableFields.length)) {
                     $scope.tableFields = $scope.tableNameToFieldNames[$scope.selectedTable];
                 }
-                $scope.tableFieldMappings = datasetService.getMappings($scope.selectedTable);
+                $scope.tableFieldMappings = datasetService.getMappings($scope.selectedDB, $scope.selectedTable);
             };
 
             $scope.selectField = function() {
@@ -250,8 +262,7 @@ angular.module('neonDemo.directives')
                 $scope.messenger.clearFiltersSilently(function() {
                     $scope.messenger.publish("dataset_changed", {
                         datastore: $scope.datastoreSelect,
-                        hostname: $scope.hostnameInput,
-                        database: $scope.selectedDB
+                        hostname: $scope.hostnameInput
                     });
 
                     XDATA.userALE.log({
@@ -296,15 +307,17 @@ angular.module('neonDemo.directives')
                 datasetService.setActiveDataset({
                     datastore: $scope.datastoreSelect,
                     hostname: $scope.hostnameInput,
-                    database: $scope.selectedDB,
-                    tables: [{
-                        name: $scope.selectedTable
-                    }],
-                    relations: []
+                    databases: [{
+                        name: $scope.selectedDB,
+                        tables: [{
+                            name: $scope.selectedTable
+                        }],
+                        relations: []
+                    }]
                 });
 
                 // Update the fields for this table in the new custom dataset.
-                datasetService.updateFields($scope.selectedTable, $scope.tableFields);
+                datasetService.updateFields($scope.selectedDB, $scope.selectedTable, $scope.tableFields);
 
                 $scope.updateLayout();
 
@@ -312,7 +325,7 @@ angular.module('neonDemo.directives')
                     if(Object.prototype.hasOwnProperty.call($scope.fields, key)) {
                         var field = $scope.fields[key];
                         if(field.selected) {
-                            datasetService.setMapping($scope.selectedTable, field.name, field.selected);
+                            datasetService.setMapping($scope.selectedDB, $scope.selectedTable, field.name, field.selected);
                         }
                     }
                 }
@@ -327,8 +340,7 @@ angular.module('neonDemo.directives')
                     tags: ["custom", "dataset", "connect"]
                 });
 
-                // TODO:  Review this.  Disabled while datasetService is being fleshed out.  This may be unnecessary.
-                //$scope.publishDatasetChanged();
+                $scope.publishDatasetChanged();
             };
 
             // Wait for neon to be ready, the create our messenger and intialize the view and data.

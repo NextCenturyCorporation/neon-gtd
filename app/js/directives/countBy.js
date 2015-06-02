@@ -27,6 +27,7 @@ function(external, popups, connectionService, datasetService, errorNotificationS
             bindAggregation: '=',
             bindAggregationField: '=',
             bindTable: '=',
+            bindDatabase: '=',
             usePrettyNames: '=?',
             hideHeader: '=?',
             hideAdvancedOptions: '=?'
@@ -40,7 +41,7 @@ function(external, popups, connectionService, datasetService, errorNotificationS
             // This name should be one that is highly unlikely to be a column name in a real database.
             $scope.EXTERNAL_APP_FIELD_NAME = "neonExternalApps";
 
-            $scope.databaseName = "";
+            $scope.databases = [];
             $scope.tables = [];
             $scope.count = 0;
             $scope.fields = [];
@@ -50,9 +51,8 @@ function(external, popups, connectionService, datasetService, errorNotificationS
             $scope.errorMessage = undefined;
 
             $scope.options = {
-                selectedTable: {
-                    name: ""
-                },
+                database: "",
+                table: "",
                 field: "",
                 aggregation: "",
                 aggregationField: ""
@@ -162,7 +162,7 @@ function(external, popups, connectionService, datasetService, errorNotificationS
                     return $scope.usePrettyNames ? "Count" : "count";
                 }
 
-                var aggregationFieldName = $scope.usePrettyNames ? datasetService.getPrettyField($scope.options.selectedTable.name, $scope.options.aggregationField) : $scope.options.aggregationField;
+                var aggregationFieldName = $scope.usePrettyNames ? datasetService.getPrettyField($scope.options.table, $scope.options.aggregationField) : $scope.options.aggregationField;
 
                 if($scope.options.aggregation === "min") {
                     return ($scope.usePrettyNames ? "Min " : "min ") + aggregationFieldName;
@@ -176,7 +176,7 @@ function(external, popups, connectionService, datasetService, errorNotificationS
             };
 
             var createColumns = function(data) {
-                var fieldName = $scope.usePrettyNames ? datasetService.getPrettyField($scope.options.selectedTable.name, $scope.options.field) : $scope.options.field;
+                var fieldName = $scope.usePrettyNames ? datasetService.getPrettyField($scope.options.table, $scope.options.field) : $scope.options.field;
 
                 // Since forceFitColumns is enabled, setting this width will force the columns to use as much
                 // space as possible, which is necessary to keep the first column as small as possible.
@@ -242,7 +242,7 @@ function(external, popups, connectionService, datasetService, errorNotificationS
                     source: "system",
                     tags: ["filter-change", "count-by"]
                 });
-                if(message.addedFilter && message.addedFilter.databaseName === $scope.databaseName && message.addedFilter.tableName === $scope.options.selectedTable.name) {
+                if(message.addedFilter && message.addedFilter.databaseName === $scope.options.database && message.addedFilter.tableName === $scope.options.table) {
                     $scope.queryForData();
                 }
             };
@@ -276,24 +276,36 @@ function(external, popups, connectionService, datasetService, errorNotificationS
                     return;
                 }
 
-                $scope.databaseName = datasetService.getDatabase();
-                $scope.tables = datasetService.getTables();
-                $scope.options.selectedTable = $scope.bindTable || datasetService.getFirstTableWithMappings(["count_by"]) || $scope.tables[0];
-                $scope.filterKeys = filterService.createFilterKeys("countby", $scope.tables);
+                $scope.databases = datasetService.getDatabaseNames();
+                $scope.options.database = $scope.databases[0];
+                if($scope.bindDatabase && $scope.databases.indexOf($scope.bindDatabase) >= 0) {
+                    $scope.options.database = $scope.bindDatabase;
+                }
+                $scope.filterKeys = filterService.createFilterKeys("countby", datasetService.getDatabaseAndTableNames());
 
                 if(initializing) {
-                    $scope.updateFieldsAndQueryForData();
+                    $scope.updateTables();
                 } else {
                     $scope.$apply(function() {
-                        $scope.updateFieldsAndQueryForData();
+                        $scope.updateTables();
                     });
                 }
             };
 
-            $scope.updateFieldsAndQueryForData = function() {
-                $scope.fields = datasetService.getDatabaseFields($scope.options.selectedTable.name);
+            $scope.updateTables = function() {
+                $scope.tables = datasetService.getTableNames($scope.options.database);
+                if($scope.bindTable && $scope.tables.indexOf($scope.bindTable) >= 0) {
+                    $scope.options.table = $scope.bindTable;
+                } else {
+                    $scope.options.table = datasetService.getFirstTableNameWithMappings($scope.options.database, ["count_by"]) || $scope.tables[0];
+                }
+                $scope.updateFields();
+            };
+
+            $scope.updateFields = function() {
+                $scope.fields = datasetService.getDatabaseFields($scope.options.database, $scope.options.table);
                 $scope.fields.sort();
-                $scope.options.field = $scope.bindCountField || datasetService.getMapping($scope.options.selectedTable.name, "count_by") || "";
+                $scope.options.field = $scope.bindCountField || datasetService.getMapping($scope.options.database, $scope.options.table, "count_by") || "";
                 $scope.options.aggregation = $scope.bindAggregation || "count";
                 $scope.options.aggregationField = $scope.bindAggregationField || "";
                 if($scope.filterSet) {
@@ -470,7 +482,7 @@ function(external, popups, connectionService, datasetService, errorNotificationS
 
                 var connection = connectionService.getActiveConnection();
                 if($scope.messenger && connection) {
-                    var relations = datasetService.getRelations($scope.options.selectedTable.name, [field]);
+                    var relations = datasetService.getRelations($scope.options.database, $scope.options.table, [field]);
                     if(filterExists) {
                         XDATA.userALE.log({
                             activity: "select",
@@ -528,7 +540,9 @@ function(external, popups, connectionService, datasetService, errorNotificationS
                     }
 
                     $tableDiv.addClass("filtered");
-                    $scope.setFilter(field, row[field]);
+                    $scope.$apply(function() {
+                        $scope.setFilter(field, row[field]);
+                    });
                 });
             };
 
@@ -589,10 +603,10 @@ function(external, popups, connectionService, datasetService, errorNotificationS
              * @method buildQuery
              */
             $scope.buildQuery = function() {
-                var query = new neon.query.Query().selectFrom($scope.databaseName, $scope.options.selectedTable.name).groupBy($scope.options.field);
+                var query = new neon.query.Query().selectFrom($scope.options.database, $scope.options.table).groupBy($scope.options.field);
 
                 // The widget displays its own ignored rows with 0.5 opacity.
-                query.ignoreFilters([$scope.filterKeys[$scope.options.selectedTable.name]]);
+                query.ignoreFilters([$scope.filterKeys[$scope.options.database][$scope.options.table]]);
 
                 if($scope.options.aggregation === "count") {
                     query.aggregate(neon.query.COUNT, '*', 'count');

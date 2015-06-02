@@ -41,6 +41,7 @@ function(connectionService, datasetService, errorNotificationService, $timeout) 
             bindCategoryField: '=',
             bindAggregationField: '=',
             bindTable: '=',
+            bindDatabase: '=',
             colorMappings: '&',
             hideHeader: '=?',
             hideAdvancedOptions: '=?'
@@ -52,7 +53,7 @@ function(connectionService, datasetService, errorNotificationService, $timeout) 
 
             $scope.optionsMenuButtonText = function() {
                 if($scope.colorMappings.length >= $scope.seriesLimit) {
-                    return "Showing Top " + $scope.seriesLimit;
+                    return "Top " + $scope.seriesLimit;
                 }
                 return "";
             };
@@ -60,7 +61,7 @@ function(connectionService, datasetService, errorNotificationService, $timeout) 
                 return $scope.colorMappings.length >= $scope.seriesLimit;
             };
 
-            $scope.selectedDatabase = '';
+            $scope.databases = [];
             $scope.tables = [];
             $scope.totalType = 'count';
             $scope.fields = [];
@@ -70,9 +71,8 @@ function(connectionService, datasetService, errorNotificationService, $timeout) 
             $scope.errorMessage = undefined;
 
             $scope.options = {
-                selectedTable: {
-                    name: ""
-                },
+                database: "",
+                table: "",
                 attrX: "",
                 attrY: "",
                 categoryField: "",
@@ -117,25 +117,25 @@ function(connectionService, datasetService, errorNotificationService, $timeout) 
 
                 $scope.$watch('options.attrX', function(newValue) {
                     onFieldChange('attrX', newValue);
-                    if($scope.selectedDatabase && $scope.options.selectedTable.name) {
+                    if($scope.options.database && $scope.options.table) {
                         $scope.queryForData();
                     }
                 });
                 $scope.$watch('options.attrY', function(newValue) {
                     onFieldChange('attrY', newValue);
-                    if($scope.selectedDatabase && $scope.options.selectedTable.name) {
+                    if($scope.options.database && $scope.options.table) {
                         $scope.queryForData();
                     }
                 });
                 $scope.$watch('options.categoryField', function(newValue) {
                     onFieldChange('categoryField', newValue);
-                    if($scope.selectedDatabase && $scope.options.selectedTable.name) {
+                    if($scope.options.database && $scope.options.table) {
                         $scope.queryForData();
                     }
                 });
                 $scope.$watch('options.aggregation', function(newValue) {
                     onFieldChange('aggregation', newValue);
-                    if($scope.selectedDatabase && $scope.options.selectedTable.name) {
+                    if($scope.options.database && $scope.options.table) {
                         $scope.queryForData();
                     }
                 });
@@ -171,7 +171,7 @@ function(connectionService, datasetService, errorNotificationService, $timeout) 
                     source: "system",
                     tags: ["filter-change", "linechart"]
                 });
-                if(message.addedFilter && message.addedFilter.databaseName === $scope.selectedDatabase && message.addedFilter.tableName === $scope.options.selectedTable.name) {
+                if(message.addedFilter && message.addedFilter.databaseName === $scope.options.database && message.addedFilter.tableName === $scope.options.table) {
                     $scope.queryForData();
                 }
             };
@@ -216,7 +216,7 @@ function(connectionService, datasetService, errorNotificationService, $timeout) 
                 }
 
                 var query = new neon.query.Query()
-                    .selectFrom($scope.selectedDatabase, $scope.options.selectedTable.name)
+                    .selectFrom($scope.options.database, $scope.options.table)
                     .where($scope.options.attrX, '!=', null);
 
                 query.groupBy.apply(query, groupByClause);
@@ -271,25 +271,37 @@ function(connectionService, datasetService, errorNotificationService, $timeout) 
                     return;
                 }
 
-                $scope.selectedDatabase = datasetService.getDatabase();
-                $scope.tables = datasetService.getTables();
-                $scope.options.selectedTable = $scope.bindTable || datasetService.getFirstTableWithMappings(["date", "y_axis"]) || $scope.tables[0];
+                $scope.databases = datasetService.getDatabaseNames();
+                $scope.options.database = $scope.databases[0];
+                if($scope.bindDatabase && $scope.databases.indexOf($scope.bindDatabase) >= 0) {
+                    $scope.options.database = $scope.bindDatabase;
+                }
 
                 if(initializing) {
-                    $scope.updateFieldsAndQueryForData();
+                    $scope.updateTables();
                 } else {
                     $scope.$apply(function() {
-                        $scope.updateFieldsAndQueryForData();
+                        $scope.updateTables();
                     });
                 }
             };
 
-            $scope.updateFieldsAndQueryForData = function() {
-                $scope.options.attrX = $scope.bindDateField || datasetService.getMapping($scope.options.selectedTable.name, "date") || "";
-                $scope.options.attrY = $scope.bindYAxisField || datasetService.getMapping($scope.options.selectedTable.name, "y_axis") || "";
-                $scope.options.categoryField = $scope.bindCategoryField || datasetService.getMapping($scope.options.selectedTable.name, "line_category") || "";
+            $scope.updateTables = function() {
+                $scope.tables = datasetService.getTableNames($scope.options.database);
+                if($scope.bindTable && $scope.tables.indexOf($scope.bindTable) >= 0) {
+                    $scope.options.table = $scope.bindTable;
+                } else {
+                    $scope.options.table = datasetService.getFirstTableNameWithMappings($scope.options.database, ["date", "y_axis"]) || $scope.tables[0];
+                }
+                $scope.updateFields();
+            };
+
+            $scope.updateFields = function() {
+                $scope.options.attrX = $scope.bindDateField || datasetService.getMapping($scope.options.database, $scope.options.table, "date") || "";
+                $scope.options.attrY = $scope.bindYAxisField || datasetService.getMapping($scope.options.database, $scope.options.table, "y_axis") || "";
+                $scope.options.categoryField = $scope.bindCategoryField || datasetService.getMapping($scope.options.database, $scope.options.table, "line_category") || "";
                 $scope.options.aggregation = $scope.bindAggregationField || "count";
-                $scope.fields = datasetService.getDatabaseFields($scope.options.selectedTable.name);
+                $scope.fields = datasetService.getDatabaseFields($scope.options.database, $scope.options.table);
                 $scope.fields.sort();
                 $scope.queryForData();
             };
