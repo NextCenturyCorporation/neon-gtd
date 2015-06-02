@@ -100,7 +100,7 @@ angular.module('neonDemo.directives')
              */
             var getLayerDatabaseTableSets = function() {
                 var sets = [];
-                for (var i = 0; i < $scope.layers; i++) {
+                for (var i = 0; i < $scope.layers.length; i++) {
                     if(!sets[$scope.layers[i].database]) {
                         sets[$scope.layers[i].database] = [];
                     }
@@ -108,6 +108,7 @@ angular.module('neonDemo.directives')
                         sets[$scope.layers[i].database].push($scope.layers[i].table);
                     }
                 }
+                return sets;
             };
 
             /**
@@ -325,9 +326,11 @@ angular.module('neonDemo.directives')
                     source: "system",
                     tags: ["filter-change", "map"]
                 });
-                var layerTables = getLayerTables();
-                if(_.contains(layerTables, message.addedFilter.tableName)) {
-                    $scope.queryForMapData(message.addedFilter.tableName);
+                if(message.addedFilter && message.addedFilter.databaseName && message.addedFilter.tableName) {
+                    $scope.queryForMapData(message.addedFilter.databaseName, message.addedFilter.tableName);
+                }
+                if(message.removedFilter && message.removedFilter.databaseName && message.removedFilter.tableName) {
+                    $scope.queryForMapData(message.removedFilter.databaseName, message.removedFilter.tableName);
                 }
             };
 
@@ -428,15 +431,15 @@ angular.module('neonDemo.directives')
                 $scope.clearLayers();
 
                 // Load data for the new dataset.
-                $scope.databaseName = datasetService.getDatabase();
-                $scope.tables = datasetService.getTables();
-                $scope.options.selectedTable = $scope.bindTable || datasetService.getFirstTableWithMappings(["latitude", "longitude"]) || $scope.tables[0];
+                //$scope.databaseName = datasetService.getDatabase();
+                //$scope.tables = datasetService.getTables();
+                //$scope.options.selectedTable = $scope.bindTable || datasetService.getFirstTableWithMappings(["latitude", "longitude"]) || $scope.tables[0];
 
                 if(initializing) {
-                    $scope.updateTables();
+                    $scope.updateLayersAndQueries();
                 } else {
                     $scope.$apply(function() {
-                        $scope.updateTables();
+                        $scope.updateLayersAndQueries();
                     });
                 }
             };
@@ -447,6 +450,7 @@ angular.module('neonDemo.directives')
             $scope.updateLayersAndQueries = function() {
                 var i = 0;
                 var layer = {};
+                var name = "";
 
                 $scope.layers = cloneDatasetLayerConfig();
 
@@ -455,7 +459,8 @@ angular.module('neonDemo.directives')
                     layer = $scope.layers[i];
                     if(!layer.olLayer) {
                         if(layer.type === coreMap.Map.POINTS_LAYER) {
-                            layer.olLayer = new coreMap.Map.Layer.PointsLayer(layer.table.toUpperCase() + " Points", {
+                            name = layer.name || layer.table + " Points";
+                            layer.olLayer = new coreMap.Map.Layer.PointsLayer(name.toUpperCase(), {
                                 latitudeMapping: layer.latitudeMapping,
                                 longitudeMapping: layer.longitudeMapping,
                                 sizeMapping: layer.sizeBy,
@@ -463,7 +468,8 @@ angular.module('neonDemo.directives')
                             });
                             this.map.addLayer(layer.olLayer);
                         } else if(layer.type === coreMap.Map.CLUSTER_LAYER) {
-                            layer.olLayer = new coreMap.Map.Layer.PointsLayer(layer.table.toUpperCase() + " Clusters", {
+                            name = layer.name || layer.table + " Clusters";
+                            layer.olLayer = new coreMap.Map.Layer.PointsLayer(name.toUpperCase(), {
                                 latitudeMapping: layer.latitudeMapping,
                                 longitudeMapping: layer.longitudeMapping,
                                 sizeMapping: layer.sizeBy,
@@ -472,7 +478,8 @@ angular.module('neonDemo.directives')
                             });
                             this.map.addLayer(layer.olLayer);
                         } else if(layer.type === coreMap.Map.HEATMAP_LAYER) {
-                            layer.olLayer = new coreMap.Map.Layer.HeatmapLayer(layer.table.toUpperCase() + " Heatmap",
+                            name = layer.name || layer.table + " Heatmap";
+                            layer.olLayer = new coreMap.Map.Layer.HeatmapLayer(name.toUpperCase(),
                                 $scope.map.map,
                                 $scope.map.map.baseLayer, {
                                 latitudeMapping: layer.latitudeMapping,
@@ -481,18 +488,19 @@ angular.module('neonDemo.directives')
                             });
                             this.map.addLayer(layer.olLayer);
                         }
-                        layer.filterKeys = filterService.createFilterKeys("map", $scope.tables);
+                        layer.filterKeys = filterService.createFilterKeys("map", datasetService.getDatabaseAndTableNames());
                     }
                 }
 
                 // Make the necessary table queries.
-                $scope.layerTables = getLayerTables();
+                //$scope.layerTables = getLayerTables();
                 if($scope.showFilter) {
                     $scope.clearFilters();
                 } else {
-                    for(var i = 0; i < $scope.layerTables.length; i++) {
-                        $scope.queryForMapData($scope.layerTables[i]);
-                    }
+                    // for(var i = 0; i < $scope.layerTables.length; i++) {
+                    //     $scope.queryForMapData($scope.layerTables[i]);
+                    // }
+                    queryAllLayerTables();
                 }
             };
 
@@ -596,11 +604,11 @@ angular.module('neonDemo.directives')
              * @param {Array} queryResults.data The aggregate numbers for the heat chart cells.
              * @method updateMapData
              */
-            $scope.updateMapData = function(table, queryResults) {
+            $scope.updateMapData = function(database, table, queryResults) {
                 var data = queryResults.data;
                 $scope.dataLength = data.length;
                 for(var i = 0; i < $scope.layers.length; i++) {
-                    if($scope.layers[i].table === table && $scope.layers[i].olLayer) {
+                    if($scope.layers[i].database === database && $scope.layers[i].table === table && $scope.layers[i].olLayer) {
                         $scope.layers[i].olLayer.setData(queryResults.data);
                         $scope.layers[i].olLayer.updateFeatures();
                     }
