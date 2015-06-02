@@ -391,7 +391,7 @@ tables.Table.prototype.registerSelectionListener = function(callback) {
     return this;
 };
 
-tables.Table.prototype.sortColumn = function(field, sortAsc) {
+tables.Table.prototype.sortColumn = function(name, field, sortAsc) {
     var data = this.dataView_.getItems();
     // Use a stable sorting algorithm as opposed to the built-in
     // dataView sort which may not be stable.
@@ -400,6 +400,7 @@ tables.Table.prototype.sortColumn = function(field, sortAsc) {
     this.table_.invalidateAllRows();
     this.table_.render();
     this.sortInfo_ = {
+        name: name,
         field: field,
         sortAsc: sortAsc
     };
@@ -408,15 +409,15 @@ tables.Table.prototype.sortColumn = function(field, sortAsc) {
 tables.Table.prototype.addSortSupport_ = function() {
     var me = this;
     this.table_.onSort.subscribe(function(event, args) {
-        me.sortColumn(args.sortCol.field, args.sortAsc);
+        me.sortColumn(args.sortCol.name, args.sortCol.field, args.sortAsc);
     });
 };
 
 tables.Table.prototype.sortColumnAndChangeGlyph = function(sortInfo) {
     // Sort the data in the column.
-    this.sortColumn(sortInfo.field, sortInfo.sortAsc);
+    this.sortColumn(sortInfo.name, sortInfo.field, sortInfo.sortAsc);
     // Change the sort glyph in the column header.
-    this.table_.setSortColumn(sortInfo.field, sortInfo.sortAsc);
+    this.table_.setSortColumn(sortInfo.name, sortInfo.sortAsc);
 };
 
 /**
