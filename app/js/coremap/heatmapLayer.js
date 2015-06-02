@@ -26,7 +26,7 @@ coreMap.Map.Layer.HeatmapLayer = OpenLayers.Class(OpenLayers.Layer.Heatmap, {
     /**
      * Override the OpenLayers Contructor
      */
-    initialize: function(name, map, baseLayer, options){
+    initialize: function(name, map, baseLayer, options) {
         // Override the style for our specialization.
         var me = this;
         var heatmapOptions = {
@@ -54,7 +54,7 @@ coreMap.Map.Layer.HeatmapLayer = OpenLayers.Class(OpenLayers.Layer.Heatmap, {
                 me.heatmap.set("height", this.getSize().h);
                 me.heatmap.resize();
 
-                // If we have data, update the layer so it redraws.  updating an empty layer 
+                // If we have data, update the layer so it redraws.  updating an empty layer
                 // causes exceptions.
                 if(me.data.length > 0) {
                     me.updateLayer();
@@ -69,7 +69,7 @@ coreMap.Map.Layer.HeatmapLayer = OpenLayers.Class(OpenLayers.Layer.Heatmap, {
         });
     },
     destroy: function() {
-        // for now, nothing special to do here. 
+        // for now, nothing special to do here.
         OpenLayers.Layer.Heatmap.prototype.destroy.apply(this, arguments);
     }
 });
@@ -88,8 +88,7 @@ coreMap.Map.Layer.HeatmapLayer.prototype.getValueFromDataElement = function(mapp
     return element[mapping];
 };
 
-
-coreMap.Map.Layer.HeatmapLayer.prototype.setData = function(data){
+coreMap.Map.Layer.HeatmapLayer.prototype.setData = function(data) {
     this.data = data;
     this.updateFeatures();
 };

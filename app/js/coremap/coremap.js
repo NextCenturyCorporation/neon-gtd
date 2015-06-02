@@ -168,7 +168,7 @@ coreMap.Map.prototype.resetSelectControl = function(layer) {
 
 coreMap.Map.prototype.addLayer = function(layer) {
     this.map.addLayer(layer);
-    if (layer.CLASS_NAME === "coreMap.Map.Layer.PointsLayer")  {
+    if(layer.CLASS_NAME === "coreMap.Map.Layer.PointsLayer")  {
         this.selectableLayers[layer.id] = layer;
         this.resetSelectControl();
     }
@@ -176,7 +176,7 @@ coreMap.Map.prototype.addLayer = function(layer) {
 
 coreMap.Map.prototype.removeLayer = function(layer) {
     this.map.removeLayer(layer);
-    if (this.selectableLayers[layer.id]) {
+    if(this.selectableLayers[layer.id]) {
         this.resetSelectControl();
     }
 };
@@ -386,7 +386,7 @@ coreMap.Map.prototype.createSelectControl =  function(layer) {
         var attributes;
 
         // If we're on a cluster layer and have a cluster of 1, just show the attributes of the 1 item.
-        if (feature.cluster && feature.cluster.length === 1) {
+        if(feature.cluster && feature.cluster.length === 1) {
             attributes = feature.cluster[0].attributes;
         } else {
             attributes = feature.attributes;
@@ -427,7 +427,7 @@ coreMap.Map.prototype.createSelectControl =  function(layer) {
         }
     };
 
-     return new OpenLayers.Control.SelectFeature(layer, {
+    return new OpenLayers.Control.SelectFeature(layer, {
         autoActivate: true,
         onSelect: onFeatureSelect,
         onUnselect: onFeatureUnselect
@@ -459,12 +459,12 @@ coreMap.Map.prototype.setupControls = function() {
     });
     this.switcher = new OpenLayers.Control.LayerSwitcher({
         autoActivate: true,
-        ascending:false
+        ascending: false
     });
 
     // Create a cache reader and writer.  Use default reader
     // settings to read from cache first.
-    this.cacheReader = new OpenLayers.Control.CacheRead({ 
+    this.cacheReader = new OpenLayers.Control.CacheRead({
         autoActivate: false
     });
 
@@ -481,7 +481,7 @@ coreMap.Map.prototype.setupControls = function() {
 
     this.selectControl = this.createSelectControl([]);
     this.map.addControls([
-        this.zoomControl, this.switcher, 
+        this.zoomControl, this.switcher,
         this.cacheReader, this.cacheWriter, this.selectControl
     ]);
 }

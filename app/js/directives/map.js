@@ -102,10 +102,10 @@ angular.module('neonDemo.directives')
              */
             var queryAllLayerTables = function() {
                 var layerTables = getLayerTables();
-                for (var i = 0; i < layerTables.length; i++) {
+                for(var i = 0; i < layerTables.length; i++) {
                     $scope.queryForMapData(layerTables[i]);
                 }
-            }
+            };
 
             /**
              * Initializes the name of the directive's scope variables
@@ -225,8 +225,8 @@ angular.module('neonDemo.directives')
                         tags: ["filter", "map"]
                     });
 
-                    for (var i = 0; i < $scope.layers.length; i++) {
-                        if ($scope.layers[i].active) {
+                    for(var i = 0; i < $scope.layers.length; i++) {
+                        if($scope.layers[i].active) {
                             var relations = datasetService.getRelations($scope.layers[i].table, [$scope.layers[i].latitudeMapping, $scope.layers[i].longitudeMapping]);
                             filterService.replaceFilters($scope.messenger, relations, $scope.layers[i].filterKeys, $scope.createFilterClauseForExtent, function() {
                                 $scope.$apply(function() {
@@ -269,7 +269,6 @@ angular.module('neonDemo.directives')
                                 $scope.error = "Error: Failed to create filter.";
                             });
                         }
-                        
                     }
                 };
             };
@@ -309,7 +308,7 @@ angular.module('neonDemo.directives')
                     tags: ["filter-change", "map"]
                 });
                 var layerTables = getLayerTables();
-                if (_.contains(layerTables, message.addedFilter.tableName)) {
+                if(_.contains(layerTables, message.addedFilter.tableName)) {
                     $scope.queryForMapData(message.addedFilter.tableName);
                 }
             };
@@ -361,7 +360,7 @@ angular.module('neonDemo.directives')
             var cloneDatasetLayerConfig = function() {
                 var configClone = [];
                 var config = datasetService.getMapLayers() || [];
-                for (var i = 0; i < config.length; i++) {
+                for(var i = 0; i < config.length; i++) {
                     configClone.push(_.clone(config[i]));
                 }
                 return configClone;
@@ -378,9 +377,9 @@ angular.module('neonDemo.directives')
             };
 
             $scope.clearLayers = function() {
-                if ($scope.layers) {
-                    for (var i = 0; i < $scope.layers.length; i++) {
-                        if ($scope.layers[i].olLayer) {
+                if($scope.layers) {
+                    for(var i = 0; i < $scope.layers.length; i++) {
+                        if($scope.layers[i].olLayer) {
                             $scope.map.removeLayer($scope.layers[i].olLayer);
                             $scope.layers[i].olLayer = undefined;
                         }
@@ -407,8 +406,8 @@ angular.module('neonDemo.directives')
                 $scope.dataBounds = undefined;
                 $scope.hideClearFilterButton();
 
-                // Call removeLayer on all existing layers;
-               $scope.clearLayers();
+                // Call removeLayer on all existing layers.
+                $scope.clearLayers();
 
                 // Load data for the new dataset.
                 $scope.databaseName = datasetService.getDatabase();
@@ -434,10 +433,10 @@ angular.module('neonDemo.directives')
                 $scope.layers = cloneDatasetLayerConfig();
 
                 // Setup the base layer objects.
-                for (i = 0; i < $scope.layers.length; i++) {
+                for(i = 0; i < $scope.layers.length; i++) {
                     layer = $scope.layers[i];
-                    if (!layer.olLayer) {
-                        if (layer.type === coreMap.Map.POINTS_LAYER) {
+                    if(!layer.olLayer) {
+                        if(layer.type === coreMap.Map.POINTS_LAYER) {
                             layer.olLayer = new coreMap.Map.Layer.PointsLayer(layer.table.toUpperCase() + " Points", {
                                 latitudeMapping: layer.latitudeMapping,
                                 longitudeMapping: layer.longitudeMapping,
@@ -445,7 +444,7 @@ angular.module('neonDemo.directives')
                                 categoryMapping: layer.colorBy
                             });
                             this.map.addLayer(layer.olLayer);
-                        } else if (layer.type === coreMap.Map.CLUSTER_LAYER) {
+                        } else if(layer.type === coreMap.Map.CLUSTER_LAYER) {
                             layer.olLayer = new coreMap.Map.Layer.PointsLayer(layer.table.toUpperCase() + " Clusters", {
                                 latitudeMapping: layer.latitudeMapping,
                                 longitudeMapping: layer.longitudeMapping,
@@ -454,7 +453,7 @@ angular.module('neonDemo.directives')
                                 cluster: true
                             });
                             this.map.addLayer(layer.olLayer);
-                        } else if (layer.type === coreMap.Map.HEATMAP_LAYER) {
+                        } else if(layer.type === coreMap.Map.HEATMAP_LAYER) {
                             layer.olLayer = new coreMap.Map.Layer.HeatmapLayer(layer.table.toUpperCase() + " Heatmap",
                                 $scope.map.map,
                                 $scope.map.map.baseLayer, {
@@ -470,12 +469,11 @@ angular.module('neonDemo.directives')
 
                 // Make the necessary table queries.
                 $scope.layerTables = getLayerTables();
-                if ($scope.showFilter) {
+                if($scope.showFilter) {
                     $scope.clearFilters();
-                }
-                else {
-                    for (var i = 0; i < $scope.layerTables.length; i++) {
-                         $scope.queryForMapData($scope.layerTables[i]);
+                } else {
+                    for(var i = 0; i < $scope.layerTables.length; i++) {
+                        $scope.queryForMapData($scope.layerTables[i]);
                     }
                 }
             };
@@ -491,7 +489,6 @@ angular.module('neonDemo.directives')
             };
 
             /**
-             * 
              * @method queryForMapData
              */
             $scope.queryForMapData = function(table) {
@@ -584,8 +581,8 @@ angular.module('neonDemo.directives')
             $scope.updateMapData = function(table, queryResults) {
                 var data = queryResults.data;
                 $scope.dataLength = data.length;
-                for (var i = 0; i < $scope.layers.length; i++) {
-                    if ($scope.layers[i].table === table && $scope.layers[i].olLayer) {
+                for(var i = 0; i < $scope.layers.length; i++) {
+                    if($scope.layers[i].table === table && $scope.layers[i].olLayer) {
                         $scope.layers[i].olLayer.setData(queryResults.data);
                         $scope.layers[i].olLayer.updateFeatures();
                     }
@@ -601,10 +598,10 @@ angular.module('neonDemo.directives')
                 // }
                 $scope.map.zoomToBounds({
                     left: -180,
-                        bottom: -90,
-                        right: 180,
-                        top: 90
-                    });
+                    bottom: -90,
+                    right: 180,
+                    top: 90
+                });
             };
 
             /**
@@ -736,7 +733,7 @@ angular.module('neonDemo.directives')
                 });
 
                 // Loop over each layer and clear it's associated filters.
-                for (var i = 0; i < $scope.layers.length; i++) {
+                for(var i = 0; i < $scope.layers.length; i++) {
                     filterService.removeFilters($scope.messenger, $scope.layers[i].filterKeys, function() {
                         $scope.$apply(function() {
                             XDATA.userALE.log({
@@ -749,7 +746,6 @@ angular.module('neonDemo.directives')
                                 source: "system",
                                 tags: ["filter", "map"]
                             });
-                            
                         });
                     }, function() {
                         XDATA.userALE.log({

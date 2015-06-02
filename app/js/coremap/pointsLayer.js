@@ -30,14 +30,14 @@ coreMap.Map.Layer.PointsLayer = OpenLayers.Class(OpenLayers.Layer.Vector, {
     /**
      * Override the OpenLayers Contructor
      */
-    initialize: function(name, options){
+    initialize: function(name, options) {
         // Override the style for our specialization.
         var me = this;
         var extendOptions = options || {};
         extendOptions.styleMap = (options.cluster) ? this.createClusterStyle() : this.createPointsStyleMap();
 
         // Set the clustering strategy if necessary.
-        if (options.cluster) {
+        if(options.cluster) {
             var ClusterClass = new OpenLayers.Class(OpenLayers.Strategy.Cluster, {
                 attribute: null,
                 shouldCluster: function(cluster, feature) {
@@ -89,35 +89,35 @@ coreMap.Map.Layer.PointsLayer = OpenLayers.Class(OpenLayers.Layer.Vector, {
     createClusterStyle: function() {
         var layer = this;
         var clusterPointStyle = new OpenLayers.Style({
-                label: "${count}",
-                fillColor: "${fillColor}",
-                fillOpacity: 0.8,
-                strokeOpacity: 0.8,
-                strokeWidth: "${strokeWidth}",
-                pointRadius: "${radius}"
-            }, {
-                context: {
-                    strokeWidth: function(feature) {
-                        return (feature.cluster.length > 1) ? 2 : 1;
-                    },
-                    fillColor: function(feature) {
-                        return (layer.calculateColor(feature.cluster[0].attributes));
-                    },
-                    radius: function(feature) {
-                        var digits = 1;
-                        var count = feature.cluster.length;
-                        while ((count = count / 10) >= 1) {
-                            digits++;
-                        }
-                        return 5 + (5 * digits); 
-                    },
-                    count: function(feature) {
-                        return feature.cluster.length;
+            label: "${count}",
+            fillColor: "${fillColor}",
+            fillOpacity: 0.8,
+            strokeOpacity: 0.8,
+            strokeWidth: "${strokeWidth}",
+            pointRadius: "${radius}"
+        }, {
+            context: {
+                strokeWidth: function(feature) {
+                    return (feature.cluster.length > 1) ? 2 : 1;
+                },
+                fillColor: function(feature) {
+                    return (layer.calculateColor(feature.cluster[0].attributes));
+                },
+                radius: function(feature) {
+                    var digits = 1;
+                    var count = feature.cluster.length;
+                    while((count = count / 10) >= 1) {
+                        digits++;
                     }
+                    return 5 + (5 * digits);
+                },
+                count: function(feature) {
+                    return feature.cluster.length;
                 }
+            }
         });
         return new OpenLayers.StyleMap({
-            "default": clusterPointStyle
+            default: clusterPointStyle
         });
     },
 
@@ -140,7 +140,7 @@ coreMap.Map.Layer.PointsLayer = OpenLayers.Class(OpenLayers.Layer.Vector, {
  * @return {String} The color
  * @method calculateColor
  */
-coreMap.Map.Layer.PointsLayer.prototype.calculateColor = function(element){
+coreMap.Map.Layer.PointsLayer.prototype.calculateColor = function(element) {
     var category = this.getValueFromDataElement(this.categoryMapping, element);
     var color;
 
@@ -164,7 +164,7 @@ coreMap.Map.Layer.PointsLayer.prototype.calculateColor = function(element){
  * @return {number} The maximum value in the data
  * @method calculateMaxRadius
  */
-coreMap.Map.Layer.PointsLayer.prototype.calculateMaxRadius = function(){
+coreMap.Map.Layer.PointsLayer.prototype.calculateMaxRadius = function() {
     var me = this;
     return d3.max(me.data, function(el) {
         return me.getValueFromDataElement(me.sizeMapping, el);
@@ -176,8 +176,8 @@ coreMap.Map.Layer.PointsLayer.prototype.calculateMaxRadius = function(){
  * @return {number} The minimum value in the data
  * @method calculateMinRadius
  */
-coreMap.Map.Layer.PointsLayer.prototype.calculateMinRadius = function(){
-     var me = this;
+coreMap.Map.Layer.PointsLayer.prototype.calculateMinRadius = function() {
+    var me = this;
     return d3.min(me.data, function(el) {
         return me.getValueFromDataElement(me.sizeMapping, el);
     });
@@ -190,7 +190,7 @@ coreMap.Map.Layer.PointsLayer.prototype.calculateMinRadius = function(){
  * @return {number} The radius
  * @method calculateRadius
  */
-coreMap.Map.Layer.PointsLayer.prototype.calculateRadius = function(element){
+coreMap.Map.Layer.PointsLayer.prototype.calculateRadius = function(element) {
     var dataVal = this.getValueFromDataElement(this.sizeMapping, element);
     var percentOfDataRange = (dataVal - this.minRadius) / this._dataRadiusDiff;
     return coreMap.Map.Layer.PointsLayer.MIN_RADIUS + (percentOfDataRange * this._baseRadiusDiff);
@@ -204,7 +204,7 @@ coreMap.Map.Layer.PointsLayer.prototype.calculateRadius = function(element){
  * @return {OpenLayers.Feature.Vector} the point to be added.
  * @method createPoint
  */
-coreMap.Map.Layer.PointsLayer.prototype.createPoint = function(element, longitude, latitude){
+coreMap.Map.Layer.PointsLayer.prototype.createPoint = function(element, longitude, latitude) {
     var point = new OpenLayers.Geometry.Point(longitude, latitude);
     point.data = element;
     point.transform(coreMap.Map.Layer.PointsLayer.SOURCE_PROJECTION, coreMap.Map.Layer.PointsLayer.DESTINATION_PROJECTION);
@@ -222,7 +222,7 @@ coreMap.Map.Layer.PointsLayer.prototype.createPoint = function(element, longitud
  * @return {OpenLayers.Symbolizer.Point} The style object
  * @method createPointStyleObject
  */
-coreMap.Map.Layer.PointsLayer.prototype.createPointStyleObject = function(color, radius){
+coreMap.Map.Layer.PointsLayer.prototype.createPointStyleObject = function(color, radius) {
     color = color || coreMap.Map.Layer.PointsLayer.DEFAULT_COLOR;
     radius = radius || coreMap.Map.Layer.PointsLayer.MIN_RADIUS;
 
@@ -256,14 +256,14 @@ coreMap.Map.Layer.PointsLayer.prototype.getValueFromDataElement = function(mappi
  * @return {OpenLayers.Symbolizer.Point} The style object
  * @method stylePoint
  */
-coreMap.Map.Layer.PointsLayer.prototype.stylePoint = function(element){
+coreMap.Map.Layer.PointsLayer.prototype.stylePoint = function(element) {
     var radius = this.calculateRadius(element);
     var color = this.calculateColor(element);
 
     return this.createPointStyleObject(color, radius);
 };
 
-coreMap.Map.Layer.PointsLayer.prototype.setData = function(data){
+coreMap.Map.Layer.PointsLayer.prototype.setData = function(data) {
     this.data = data;
     this.updateRadii();
     this.updateFeatures();
@@ -293,7 +293,7 @@ coreMap.Map.Layer.PointsLayer.prototype.updateFeatures = function() {
  * correct display.
  * @method updateRadii
  */
-coreMap.Map.Layer.PointsLayer.prototype.updateRadii = function(){
+coreMap.Map.Layer.PointsLayer.prototype.updateRadii = function() {
     this.minRadius = this.calculateMinRadius();
     this.maxRadius = this.calculateMaxRadius();
     this._baseRadiusDiff = coreMap.Map.Layer.PointsLayer.MAX_RADIUS - coreMap.Map.Layer.PointsLayer.MIN_RADIUS;
