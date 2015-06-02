@@ -1,67 +1,115 @@
-<div ng-hide="(navbarItem)" class="chart-options pull-right">
-    <a class="btn btn-lg text-muted collapsed" data-toggle="collapse" data-target=".{{uniqueChartOptions}} .query-results-options" data-animation=false>
-      <span class="glyphicon glyphicon-cog"></span>
-      <span class="caret"></span>
-    </a>
-    <div class="query-results-options popover bottom">
-        <div class="arrow"></div>
-        <div class="popover-content">
-            <div class="form-group">
-                <label>Table</label>
-                <select class="form-control" ng-model="selectedTable" ng-options="table.name for table in tables" ng-required="true" ng-disabled="(tables.length < 2)" ng-change="updateFieldsAndRowsAndCount()">
+<div ng-hide="(navbarItem)" class="header-container">
+    <span class="header-text pull-left">{{options.selectedTable.name}}</span>
+
+    <options-menu parent-element="element">
+        <div class="form-group">
+            <label>Table</label>
+            <select class="form-control" ng-model="options.selectedTable" ng-options="table.name for table in tables" ng-required="true" ng-disabled="(tables.length < 2)" ng-change="updateFieldsAndRowsAndCount()">
+            </select>
+        </div>
+
+        <div class="form-group">
+            <label>Add Column</label>
+            <div class="input-group">
+                <select class="form-control" ng-model="options.addField" ng-disabled="!(tableNameToDeletedFieldsMap[options.selectedTable.name].length > 0)" ng-options="field for field in tableNameToDeletedFieldsMap[options.selectedTable.name]">
                 </select>
+
+                <div class="input-group-btn">
+                    <button class="btn btn-default" ng-click="addColumn()" ng-disabled="!(tableNameToDeletedFieldsMap[options.selectedTable.name].length > 0)">&plus;</button>
+                </div>
+            </div>
+        </div>    
+
+        <div class="form-group">
+            <label>Sort By</label>
+            <div class="input-group">
+                <select class="form-control" ng-model="options.sortByField" ng-disabled="!(fields.length > 0)" ng-options="field for field in fields" ng-change="refreshData()">
+                </select>
+
+                <div class="input-group-btn">
+                    <label class="btn btn-default active" ng-class="{true: 'active', false: ''}[options.sortDirection === ASCENDING]">
+                        <input type="radio" ng-model="options.sortDirection" style="display:none" ng-value="ASCENDING" ng-click="handleAscButtonClick()"> ASC
+                    </label>
+                    <label class="btn btn-default" ng-class="{true: 'active', false: ''}[options.sortDirection === DESCENDING]">
+                        <input type="radio" ng-model="options.sortDirection" style="display:none" ng-value="DESCENDING" ng-click="handleDescButtonClick()"> DESC
+                    </label>
+                </div>
+            </div>
+        </div>    
+
+        <div class="form-group">
+            <label>Limit</label>
+            <div class="input-group">
+                <input type="number" min="1" class="form-control" ng-model="options.limit" required>
+                <div class="input-group-btn">
+                    <button type="button" class="btn btn-default refresh" title="Refresh" ng-click="refreshData()">
+                        <span class="glyphicon glyphicon-refresh"></span>
+                    </button>
+                </div>
             </div>
         </div>
-    </div>
+    </options-menu>
 </div>
 
-<div>
-    <h4 class="count-header pull-left">Showing 
+<div class="clearfix"></div>
+
+<div class="header-container filter-container">
+    <h4 class="pull-left">Showing 
         <span class="count text-primary" ng-bind="tableOptions.data.length"></span> of 
         <span ng-bind="totalRows"></span>
     </h4>
 
-    <div class="form-inline pull-right">
+    <div class="form-inline navbar-item-forms pull-right">
         <form name="dataTableForm">
-
             <div ng-hide="!(navbarItem)" class="form-group">
                 <label>Table</label>
-                <select class="form-control" ng-model="selectedTable" ng-options="table.name for table in tables" ng-required="true" ng-disabled="(tables.length < 2)" ng-change="updateFieldsAndRowsAndCount()">
+                <select class="form-control" ng-model="options.selectedTable" ng-options="table.name for table in tables" ng-required="true" ng-disabled="(tables.length < 2)" ng-change="updateFieldsAndRowsAndCount()">
                 </select>
             </div>
 
-            <div class="form-input-group">
-                <label>Sort By</label>
-
+            <div ng-hide="!(navbarItem)" class="form-input-group">
+                <label>Add Column</label>
                 <div class="input-group">
-                    <select class="form-control" ng-model="sortByField" ng-disabled="!(fields.length > 0)" ng-options="field for field in fields">
+                    <select class="form-control" ng-model="options.addField" ng-disabled="!(tableNameToDeletedFieldsMap[options.selectedTable.name].length > 0)" ng-options="field for field in tableNameToDeletedFieldsMap[options.selectedTable.name]">
                     </select>
 
                     <div class="input-group-btn">
-                        <label class="btn btn-default active" ng-class="{true: 'active', false: ''}[sortDirection === ASCENDING]">
-                            <input type="radio" ng-model="sortDirection" style="display:none" ng-value="ASCENDING"> ASC
+                        <button class="btn btn-default" ng-click="addColumn()" ng-disabled="!(tableNameToDeletedFieldsMap[options.selectedTable.name].length > 0)">&plus;</button>
+                    </div>
+                </div>
+            </div>    
+
+            <div ng-hide="!(navbarItem)" class="form-input-group">
+                <label>Sort By</label>
+
+                <div class="input-group">
+                    <select class="form-control" ng-model="options.sortByField" ng-disabled="!(fields.length > 0)" ng-options="field for field in fields" ng-change="refreshData()">
+                    </select>
+
+                    <div class="input-group-btn">
+                        <label class="btn btn-default active" ng-class="{true: 'active', false: ''}[options.sortDirection === ASCENDING]">
+                            <input type="radio" ng-model="options.sortDirection" style="display:none" ng-value="ASCENDING" ng-click="handleAscButtonClick()"> ASC
                         </label>
-                        <label class="btn btn-default" ng-class="{true: 'active', false: ''}[sortDirection === DESCENDING]">
-                            <input type="radio" ng-model="sortDirection" style="display:none" ng-value="DESCENDING"> DESC
+                        <label class="btn btn-default" ng-class="{true: 'active', false: ''}[options.sortDirection === DESCENDING]">
+                            <input type="radio" ng-model="options.sortDirection" style="display:none" ng-value="DESCENDING" ng-click="handleDescButtonClick()"> DESC
                         </label>
                     </div>
                 </div>
             </div>    
 
-
-            <div class="form-group">
+            <div ng-hide="!(navbarItem)" class="form-group">
                 <label>Limit</label>
-                <input type="number" min="1" name="limitInput" class="form-control" ng-model="limit"
+                <input type="number" min="1" name="limitInput" class="form-control" ng-model="options.limit"
                 ng-class="{true: '', false: 'has-error'}[dataTableForm.limitInput.$error.number]">
             </div>
-            <button type="button" class="btn btn-default refresh" ng-click="refreshData()">
+
+            <button type="button" class="btn btn-default refresh" title="Refresh" ng-click="refreshData()" ng-hide="!(navbarItem)">
                 <span class="glyphicon glyphicon-refresh"></span>
             </button>
         </form>
     </div>
-
-    <div class="clearfix"></div>
-
-    <div class="query-results-grid"></div>
-
 </div>
+
+<div class="clearfix"></div>
+
+<div class="query-results-grid"></div>

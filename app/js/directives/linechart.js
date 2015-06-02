@@ -23,46 +23,57 @@
  * neon system events (e.g., data tables changed).  On these events, it requeries the active
  * connection for data and updates applies the change to its scope.  The contained
  * barchart will update as a result.
- * @class neonDemo.directives.linechart
+ * @namespace neonDemo.directives
+ * @class linechart
  * @constructor
  */
 angular.module('neonDemo.directives')
-.directive('linechart', ['ConnectionService', 'DatasetService', 'ErrorNotificationService', function(connectionService, datasetService, errorNotificationService) {
+.directive('linechart', ['ConnectionService', 'DatasetService', 'ErrorNotificationService', '$timeout',
+function(connectionService, datasetService, errorNotificationService, $timeout) {
     var COUNT_FIELD_NAME = 'value';
 
     return {
         templateUrl: 'partials/directives/linechart.html',
         restrict: 'EA',
         scope: {
-            colorMappings: '&',
-            chartType: '='
+            bindDateField: '=',
+            bindYAxisField: '=',
+            bindCategoryField: '=',
+            bindAggregationField: '=',
+            bindTable: '=',
+            colorMappings: '&'
         },
         link: function($scope, $element) {
-            $scope.uniqueChartOptions = 'chart-options-' + uuid();
-            var chartOptions = $($element).find('.chart-options');
-            chartOptions.toggleClass($scope.uniqueChartOptions);
-
             $element.addClass('linechartDirective');
+
+            $scope.element = $element;
 
             $scope.selectedDatabase = '';
             $scope.tables = [];
-            $scope.selectedTable = {
-                name: ""
-            };
             $scope.totalType = 'count';
             $scope.fields = [];
             $scope.chart = undefined;
             $scope.colorMappings = [];
-            $scope.attrX = '';
-            $scope.attrY = '';
-            $scope.categoryField = '';
-            $scope.aggregation = 'count';
             $scope.seriesLimit = 10;
             $scope.errorMessage = undefined;
 
+            $scope.options = {
+                selectedTable: {
+                    name: ""
+                },
+                attrX: "",
+                attrY: "",
+                categoryField: "",
+                aggregation: "count"
+            };
+
             var updateChartSize = function() {
                 if($scope.chart) {
-                    $element.find('.linechart').height($element.height() - $element.find('.legend').outerHeight(true));
+                    var headerHeight = 0;
+                    $element.find(".header-container").each(function() {
+                        headerHeight += $(this).outerHeight(true);
+                    });
+                    $element.find('.linechart').height($element.height() - headerHeight);
                     $scope.chart.redraw();
                 }
             };
@@ -74,43 +85,61 @@ angular.module('neonDemo.directives')
                 $scope.messenger.subscribe("dataset_changed", onDatasetChanged);
 
                 $scope.$on('$destroy', function() {
+                    XDATA.userALE.log({
+                        activity: "remove",
+                        action: "click",
+                        elementId: "linechart",
+                        elementType: "canvas",
+                        elementSub: "linechart",
+                        elementGroup: "chart_group",
+                        source: "user",
+                        tags: ["remove", "linechart"]
+                    });
+                    $element.off("resize", updateChartSize);
                     $scope.messenger.removeEvents();
                 });
 
                 // This resizes the chart when the div changes.  This rely's on jquery's resize plugin to fire
                 // on the associated element and not just the window.
-                $element.resize(function() {
-                        updateChartSize();
-                    });
+                $element.resize(updateChartSize);
 
-                $scope.$watch('attrY', function(newValue, oldValue) {
-                    onFieldChange('attrY', newValue, oldValue);
-                    if($scope.selectedDatabase && $scope.selectedTable.name) {
+                $scope.$watch('options.attrX', function(newValue) {
+                    onFieldChange('attrX', newValue);
+                    if($scope.selectedDatabase && $scope.options.selectedTable.name) {
                         $scope.queryForData();
                     }
                 });
-                $scope.$watch('categoryField', function(newValue, oldValue) {
-                    onFieldChange('categoryField', newValue, oldValue);
-                    if($scope.selectedDatabase && $scope.selectedTable.name) {
+                $scope.$watch('options.attrY', function(newValue) {
+                    onFieldChange('attrY', newValue);
+                    if($scope.selectedDatabase && $scope.options.selectedTable.name) {
                         $scope.queryForData();
                     }
                 });
-                $scope.$watch('aggregation', function(newValue, oldValue) {
-                    onFieldChange('aggregation', newValue, oldValue);
-                    if($scope.selectedDatabase && $scope.selectedTable.name) {
+                $scope.$watch('options.categoryField', function(newValue) {
+                    onFieldChange('categoryField', newValue);
+                    if($scope.selectedDatabase && $scope.options.selectedTable.name) {
+                        $scope.queryForData();
+                    }
+                });
+                $scope.$watch('options.aggregation', function(newValue) {
+                    onFieldChange('aggregation', newValue);
+                    if($scope.selectedDatabase && $scope.options.selectedTable.name) {
                         $scope.queryForData();
                     }
                 });
             };
 
-            var onFieldChange = function(field, newVal, oldVal) {
-                XDATA.activityLogger.logUserActivity('LineChart - user changed a field selection', 'define_axes',
-                    XDATA.activityLogger.WF_CREATE,
-                    {
-                        field: field,
-                        to: newVal,
-                        from: oldVal
-                    });
+            var onFieldChange = function(field, newValue) {
+                XDATA.userALE.log({
+                    activity: "select",
+                    action: "click",
+                    elementId: "linechart",
+                    elementType: "combobox",
+                    elementSub: "linechart-" + field,
+                    elementGroup: "chart_group",
+                    source: "user",
+                    tags: ["options", "linechart", newValue]
+                });
             };
 
             /**
@@ -120,8 +149,17 @@ angular.module('neonDemo.directives')
              * @private
              */
             var onFiltersChanged = function(message) {
-                XDATA.activityLogger.logSystemActivity('LineChart - received neon filter changed event');
-                if(message.addedFilter && message.addedFilter.databaseName === $scope.selectedDatabase && message.addedFilter.tableName === $scope.selectedTable.name) {
+                XDATA.userALE.log({
+                    activity: "alter",
+                    action: "query",
+                    elementId: "linechart",
+                    elementType: "canvas",
+                    elementSub: "linechart",
+                    elementGroup: "chart_group",
+                    source: "system",
+                    tags: ["filter-change", "linechart"]
+                });
+                if(message.addedFilter && message.addedFilter.databaseName === $scope.selectedDatabase && message.addedFilter.tableName === $scope.options.selectedTable.name) {
                     $scope.queryForData();
                 }
             };
@@ -132,7 +170,16 @@ angular.module('neonDemo.directives')
              * @private
              */
             var onDatasetChanged = function() {
-                XDATA.activityLogger.logSystemActivity('LineChart - received neon-gtd dataset changed event');
+                XDATA.userALE.log({
+                    activity: "alter",
+                    action: "query",
+                    elementId: "linechart",
+                    elementType: "canvas",
+                    elementSub: "linechart",
+                    elementGroup: "chart_group",
+                    source: "system",
+                    tags: ["dataset-change", "linechart"]
+                });
                 $scope.displayActiveDataset(false);
             };
 
@@ -142,41 +189,50 @@ angular.module('neonDemo.directives')
                     $scope.errorMessage = undefined;
                 }
 
-                if(!$scope.attrY && $scope.aggregation !== "count") {
+                if(!$scope.options.attrX || (!$scope.options.attrY && $scope.options.aggregation !== "count")) {
                     drawChart();
                     return;
                 }
 
-                var yearGroupClause = new neon.query.GroupByFunctionClause(neon.query.YEAR, $scope.attrX, 'year');
-                var monthGroupClause = new neon.query.GroupByFunctionClause(neon.query.MONTH, $scope.attrX, 'month');
-                var dayGroupClause = new neon.query.GroupByFunctionClause(neon.query.DAY, $scope.attrX, 'day');
+                var yearGroupClause = new neon.query.GroupByFunctionClause(neon.query.YEAR, $scope.options.attrX, 'year');
+                var monthGroupClause = new neon.query.GroupByFunctionClause(neon.query.MONTH, $scope.options.attrX, 'month');
+                var dayGroupClause = new neon.query.GroupByFunctionClause(neon.query.DAY, $scope.options.attrX, 'day');
 
                 var groupByClause = [yearGroupClause, monthGroupClause, dayGroupClause];
-                if($scope.categoryField) {
-                    groupByClause.push($scope.categoryField);
+                if($scope.options.categoryField) {
+                    groupByClause.push($scope.options.categoryField);
                 }
 
                 var query = new neon.query.Query()
-                    .selectFrom($scope.selectedDatabase, $scope.selectedTable.name)
-                    .where($scope.attrX, '!=', null);
+                    .selectFrom($scope.selectedDatabase, $scope.options.selectedTable.name)
+                    .where($scope.options.attrX, '!=', null);
 
                 query.groupBy.apply(query, groupByClause);
 
-                if($scope.aggregation === "sum") {
-                    query.aggregate(neon.query.SUM, $scope.attrY, COUNT_FIELD_NAME);
-                } else if($scope.aggregation === "average") {
-                    query.aggregate(neon.query.AVG, $scope.attrY, COUNT_FIELD_NAME);
-                } else if($scope.aggregation === "count") {
+                if($scope.options.aggregation === "sum") {
+                    query.aggregate(neon.query.SUM, $scope.options.attrY, COUNT_FIELD_NAME);
+                } else if($scope.options.aggregation === "average") {
+                    query.aggregate(neon.query.AVG, $scope.options.attrY, COUNT_FIELD_NAME);
+                } else if($scope.options.aggregation === "count") {
                     query.aggregate(neon.query.COUNT, '*', COUNT_FIELD_NAME);
                 }
 
-                query.aggregate(neon.query.MIN, $scope.attrX, 'date')
+                query.aggregate(neon.query.MIN, $scope.options.attrX, 'date')
                     .sortBy('date', neon.query.ASCENDING);
 
                 var connection = connectionService.getActiveConnection();
                 if(connection) {
                     connection.executeQuery(query, callback, function(response) {
-                        XDATA.activityLogger.logSystemActivity('LineChart - query failed');
+                        XDATA.userALE.log({
+                            activity: "alter",
+                            action: "failed",
+                            elementId: "linechart",
+                            elementType: "canvas",
+                            elementSub: "linechart",
+                            elementGroup: "chart_group",
+                            source: "system",
+                            tags: ["failed", "linechart"]
+                        });
                         drawChart();
                         if(response.responseJSON) {
                             $scope.errorMessage = errorNotificationService.showErrorMessage($element, response.responseJSON.error, response.responseJSON.stackTrace);
@@ -197,7 +253,7 @@ angular.module('neonDemo.directives')
 
                 $scope.selectedDatabase = datasetService.getDatabase();
                 $scope.tables = datasetService.getTables();
-                $scope.selectedTable = datasetService.getFirstTableWithMappings(["date", "y_axis"]) || $scope.tables[0];
+                $scope.options.selectedTable = $scope.bindTable || datasetService.getFirstTableWithMappings(["date", "y_axis"]) || $scope.tables[0];
 
                 if(initializing) {
                     $scope.updateFieldsAndQueryForData();
@@ -209,17 +265,26 @@ angular.module('neonDemo.directives')
             };
 
             $scope.updateFieldsAndQueryForData = function() {
-                $scope.attrX = datasetService.getMapping($scope.selectedTable.name, "date") || "";
-                $scope.attrY = datasetService.getMapping($scope.selectedTable.name, "y_axis") || "";
-                $scope.categoryField = datasetService.getMapping($scope.selectedTable.name, "line_category") || "";
-                $scope.aggregation = 'count';
-                $scope.fields = datasetService.getDatabaseFields($scope.selectedTable.name);
+                $scope.options.attrX = $scope.bindDateField || datasetService.getMapping($scope.options.selectedTable.name, "date") || "";
+                $scope.options.attrY = $scope.bindYAxisField || datasetService.getMapping($scope.options.selectedTable.name, "y_axis") || "";
+                $scope.options.categoryField = $scope.bindCategoryField || datasetService.getMapping($scope.options.selectedTable.name, "line_category") || "";
+                $scope.options.aggregation = $scope.bindAggregationField || "count";
+                $scope.fields = datasetService.getDatabaseFields($scope.options.selectedTable.name);
                 $scope.fields.sort();
                 $scope.queryForData();
             };
 
             $scope.queryForData = function() {
-                XDATA.activityLogger.logSystemActivity('LineChart - query for data');
+                XDATA.userALE.log({
+                    activity: "alter",
+                    action: "query",
+                    elementId: "linechart",
+                    elementType: "canvas",
+                    elementSub: "linechart",
+                    elementGroup: "chart_group",
+                    source: "system",
+                    tags: ["query", "linechart"]
+                });
                 query(function(results) {
                     var i;
                     var minDate;
@@ -229,8 +294,8 @@ angular.module('neonDemo.directives')
                     //this prevents an error in older mongo caused when the xAxis value is invalid as it is not
                     //included as a key in the response
                     for(i = 0; i < results.data.length; i++) {
-                        if(typeof(results.data[i][$scope.attrX]) === 'undefined') {
-                            results.data[i][$scope.attrX] = null;
+                        if(typeof(results.data[i][$scope.options.attrX]) === 'undefined') {
+                            results.data[i][$scope.options.attrX] = null;
                         }
                     }
 
@@ -270,7 +335,7 @@ angular.module('neonDemo.directives')
                     // Calculate Other series
                     var otherTotal = 0;
                     var otherData = [];
-                    if($scope.aggregation !== 'average') {
+                    if($scope.options.aggregation !== 'average') {
                         for(i = $scope.seriesLimit; i < data.length; i++) {
                             otherTotal += data[i].total;
                             for(var d = 0; d < data[i].data.length; d++) {
@@ -299,23 +364,49 @@ angular.module('neonDemo.directives')
                     }
 
                     // Render chart and series lines
-                    XDATA.activityLogger.logSystemActivity('LineChart - query data received');
+                    XDATA.userALE.log({
+                        activity: "alter",
+                        action: "receive",
+                        elementId: "linechart",
+                        elementType: "canvas",
+                        elementSub: "linechart",
+                        elementGroup: "chart_group",
+                        source: "system",
+                        tags: ["receive", "linechart"]
+                    });
                     $scope.$apply(function() {
                         drawChart();
                         drawLine(data);
-                        updateChartSize();
-                        XDATA.activityLogger.logSystemActivity('LineChart - query data rendered');
+                        // Use a timeout so we resize the chart after the legend renders (since the legend size affects the chart size).
+                        $timeout(function() {
+                            updateChartSize();
+                        }, 100);
+                        XDATA.userALE.log({
+                            activity: "alter",
+                            action: "render",
+                            elementId: "linechart",
+                            elementType: "canvas",
+                            elementSub: "linechart",
+                            elementGroup: "chart_group",
+                            source: "system",
+                            tags: ["render", "linechart"]
+                        });
                     });
                 });
             };
 
             $scope.toggleSeries = function(series) {
                 var activity = $scope.chart.toggleSeries(series);
-                XDATA.activityLogger.logUserActivity('LineChart - user toggled series', activity,
-                    XDATA.activityLogger.WF_CREATE,
-                    {
-                        plot: series
-                    });
+                XDATA.userALE.log({
+                    activity: activity,
+                    action: "click",
+                    elementId: "linechart",
+                    elementType: "canvas",
+                    elementSub: "linechart",
+                    elementGroup: "chart_group",
+                    source: "system",
+                    tags: ["render", "linechart", series]
+                });
             };
 
             var zeroPadData = function(data, minDate, maxDate) {
@@ -333,16 +424,16 @@ angular.module('neonDemo.directives')
                 var resultData = {};
 
                 var series = 'Total';
-                if($scope.aggregation === 'average') {
-                    series = 'Average ' + $scope.attrY;
-                } else if($scope.aggregation === 'sum') {
-                    series = $scope.attrY;
+                if($scope.options.aggregation === 'average') {
+                    series = 'Average ' + $scope.options.attrY;
+                } else if($scope.options.aggregation === 'sum') {
+                    series = $scope.options.attrY;
                 }
 
                 // Scrape data for unique series
                 for(i = 0; i < data.length; i++) {
-                    if($scope.categoryField) {
-                        series = data[i][$scope.categoryField] !== '' ? data[i][$scope.categoryField] : 'Unknown';
+                    if($scope.options.categoryField) {
+                        series = data[i][$scope.options.categoryField] !== '' ? data[i][$scope.options.categoryField] : 'Unknown';
                     }
 
                     if(!resultData[series]) {
@@ -372,8 +463,8 @@ angular.module('neonDemo.directives')
                 for(i = 0; i < data.length; i++) {
                     indexDate = new Date(data[i].date);
 
-                    if($scope.categoryField) {
-                        series = data[i][$scope.categoryField] !== '' ? data[i][$scope.categoryField] : 'Unknown';
+                    if($scope.options.categoryField) {
+                        series = data[i][$scope.options.categoryField] !== '' ? data[i][$scope.options.categoryField] : 'Unknown';
                     }
 
                     resultData[series].data[Math.floor(Math.abs(indexDate - start) / dayMillis)].value = data[i].value;

@@ -1,42 +1,41 @@
-<ul class=" nav navbar-nav add-visualization-button">
+<ul class="nav navbar-nav add-visualization-button neon-popup-button">
     <li>
-        <a  data-toggle="modal" data-target="#addVisualizationModel" class="collapsed dropdown-toggle primary">
+        <a  data-toggle="modal" data-target="#addVisualizationModel" class="collapsed dropdown-toggle primary"
+            ng-click="toggleAddVisualizationDialog()">
           <span class="glyphicon glyphicon-plus-sign"></span> Add Visualization
         </a>
     </li>
 </ul>
 
-<div class="modal fade" id="addVisualizationModel" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
+<div class="modal fade neon-popup" id="addVisualizationModel" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
     <div class="modal-dialog">
         <div class="modal-content">
             <div class="modal-header">
                 <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
-                <h4 class="modal-title" id="customConnectionModalLabel">Add Visualization</h4>
+                <h4 class="modal-title">Add Visualization</h4>
             </div>
             <div class="modal-body">
-                <div class="">
-                    <ul class="add-visualization-list">
-                        <li ng-repeat="item in visualizations" 
-                            ng-init="item.selected = false" 
-                            ng-class="(item.selected) ? 'selected' : ''">
-                            <div class="visualization-thumbnail center-block text-center">
-                                <button  ng-click="onItemSelected(item)" 
-                                    tabindex="0">
-                                    <img ng-src="{{(item.icon) ? item.icon : ''}}" 
-                                        alt="{{(item.name) ? item.name : ''}}" 
-                                        class="img-thumbnail center-block">
-                                    <span class="text-uppercase small" ng-bind="item.name"></span>
-                                </button>
-                            </div>
-                        </li>
-                    </ul>
-                </div>
+                <ul>
+                    <li ng-repeat="item in visualizations" 
+                        ng-init="item.selected = false" 
+                        ng-class="(item.selected) ? 'selected' : ''">
+                        <div class="neon-popup-thumbnail center-block text-center">
+                            <button  ng-click="onItemSelected(item)" 
+                                tabindex="0">
+                                <img ng-src="{{(item.icon) ? item.icon : ''}}" 
+                                    alt="{{(item.name) ? item.name : ''}}" 
+                                    class="img-thumbnail center-block">
+                                <span class="text-uppercase small" ng-bind="item.name"></span>
+                            </button>
+                        </div>
+                    </li>
+                </ul>
             </div>
             <div class="modal-footer">
                 <div class="alert alert-success pull-left text-left" role="alert" style="display:none"
                     ng-bind="alertMessage"></div>
                 <button type="button" class="btn btn-default" data-dismiss="modal"
-                    ng-click="deselectAll()">Close</button>
+                    ng-click="onClose()">Close</button>
             </div>
         </div>
     </div>

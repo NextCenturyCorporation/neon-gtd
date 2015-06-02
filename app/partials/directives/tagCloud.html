@@ -1,44 +1,43 @@
-<div class="chart-options pull-right">
-    <a class="btn btn-lg text-muted collapsed" data-toggle="collapse" data-target=".{{uniqueChartOptions}} .tag-cloud-options" data-animation=false
-      ng-click="toggleOptionsDisplay()">
-      <span class="glyphicon glyphicon-cog"></span>
-      <span class="caret"></span>
-    </a>
-    <div class="popover bottom tag-cloud-options">
-        <div class="arrow"></div>
-        <div class="popover-content">
-            <div class="form-group">
-                <label>Table</label>
-                <select class="form-control" ng-model="selectedTable" ng-options="table.name for table in tables" ng-required="true" ng-disabled="(tables.length < 2)" ng-change="updateFieldsAndQueryForTags()">
-                </select>
-            </div>
-            <div class="form-group" ng-class="{true: '', false: 'hidden'}[showFilter]">
-                <label>Show records with</label>
-                <div class="btn-group">
-                    <label class="btn btn-default" ng-class="{true: 'active', false: ''}[andTags]">
-                        <input type="radio" ng-model="andTags" style="display:none" ng-value="true">
-                        All filters
-                    </label>
-                    <label class="btn btn-default" ng-class="{true: '', false: 'active'}[andTags]">
-                        <input type="radio" ng-model="andTags" style="display:none" ng-value="false"> 
-                        Any filters
-                    </label>
-                </div>
-                <div class="clearfix"></div>
-            </div>
+<div class="header-container">
+    <span class="header-text pull-left">{{options.selectedTable.name}}</span>
+
+    <options-menu parent-element="element" button-text="'No tag data'" show-button-text="showOptionsMenuButtonText">
+        <div class="form-group">
+            <label>Table</label>
+            <select class="form-control" ng-model="options.selectedTable" ng-options="table.name for table in tables" ng-required="true" ng-disabled="(tables.length < 2)" ng-change="updateFieldsAndQueryForTags()">
+            </select>
         </div>
+        <div class="form-group">
+            <label>Data Field</label>
+            <select class="form-control" ng-model="options.tagField" ng-options="field for field in fields" ng-required="true" ng-disabled="(fields.length == 0)" ng-change="queryForTags()">
+            </select>
+        </div>
+        <div class="form-group" ng-class="{true: '', false: 'hidden'}[filterTags.length > 1]">
+            <label>Show rows with</label>
+            <div class="btn-group">
+                <label class="btn btn-default" ng-class="{true: 'active', false: ''}[options.andTags]">
+                    <input type="radio" ng-model="options.andTags" style="display:none" ng-value="true">
+                    All filters
+                </label>
+                <label class="btn btn-default" ng-class="{true: '', false: 'active'}[options.andTags]">
+                    <input type="radio" ng-model="options.andTags" style="display:none" ng-value="false"> 
+                    Any filters
+                </label>
+            </div>
+            <div class="clearfix"></div>
+        </div>
+    </options-menu>
+</div>
+
+<div class="clearfix"></div>
+
+<div class="header-container filter-container" ng-show="(filterTags.length > 0)">
+    <div class="filter-reset pull-right" ng-repeat="tagName in filterTags">
+        {{tagName}}
+        <a class="btn" ng-click="removeFilter(tagName)">
+         <span class="glyphicon glyphicon-remove"></span>
+        </a>
     </div>
-</div>
-
-<div class="pull-left ng-hide" ng-show="(filterTags.length <= 0) && (data.length <= 0)">
-    <strong><span class="text-primary">Tag Cloud:</span></strong> No available tag data.
-</div>
-
-<div class="filter-reset pull-right" ng-repeat="tagName in filterTags">
-    {{tagName}}
-    <a class="btn" ng-click="removeFilter(tagName)">
-     <span class="glyphicon glyphicon-remove"></span>
-    </a>
 </div>
 
 <div class="clearfix"></div>
