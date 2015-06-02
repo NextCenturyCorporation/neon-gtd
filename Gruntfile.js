@@ -4,6 +4,37 @@ module.exports = function(grunt) {
     var packageJSON = require('./package.json');
 
     grunt.initConfig({
+        bower: {
+            cleanup: {
+                options: {
+                    targetDir: "app/lib",
+                    layout: "byComponent",
+                    cleanTargetDir: true,
+                    cleanBowerDir: true,
+                    install: false,
+                    copy: false
+                }
+            },
+            install: {
+                options: {
+                    targetDir: "app/lib",
+                    layout: "byComponent",
+                    cleanTargetDir: true,
+                    cleanBowerDir: true,
+                    install: true,
+                    copy: true
+                }
+            }
+        },
+
+        clean: {
+            lib: ["app/lib"],
+            docs: ["docs"],
+            war: ["target"],
+            tests: ["reports"],
+            less: ["app/css/app.css"]
+        },
+
         jshint: {
             options: {
                 jshintrc: '.jshintrc',
@@ -58,29 +89,6 @@ module.exports = function(grunt) {
             }
         },
 
-        bower: {
-            cleanup: {
-                options: {
-                    targetDir: "app/lib",
-                    layout: "byComponent",
-                    cleanTargetDir: true,
-                    cleanBowerDir: true,
-                    install: false,
-                    copy: false
-                }
-            },
-            install: {
-                options: {
-                    targetDir: "app/lib",
-                    layout: "byComponent",
-                    cleanTargetDir: true,
-                    cleanBowerDir: true,
-                    install: true,
-                    copy: true
-                }
-            }
-        },
-
         karma: {
             unit: {
                 options: {
@@ -89,7 +97,19 @@ module.exports = function(grunt) {
             }
         },
 
-        clean: ["app/lib", "docs", "target", "reports"],
+        less: {
+            options: {
+                dumpLineNumbers: 'comments',
+                paths: [
+                    'app/components'
+                ]
+            },
+            gtd: {
+                files: {
+                    'app/css/app.css': 'app/css/app.less'
+                }
+            }
+        },
 
         /*
          * Build a WAR (web archive) without Maven or the JVM installed.
@@ -111,7 +131,9 @@ module.exports = function(grunt) {
                     {
                         expand: true,
                         cwd: ".",
-                        src: ["app/**"],
+                        src: [
+                            "app/**",
+                            "!**/*.less"],
                         dest: ""
                     }
                 ]
@@ -137,11 +159,13 @@ module.exports = function(grunt) {
     grunt.loadNpmTasks('grunt-bower-task');
     grunt.loadNpmTasks('grunt-contrib-clean');
     grunt.loadNpmTasks('grunt-contrib-jshint');
+    grunt.loadNpmTasks('grunt-contrib-less');
+    grunt.loadNpmTasks('grunt-contrib-yuidoc');
     grunt.loadNpmTasks('grunt-jscs');
     grunt.loadNpmTasks('grunt-karma');
-    grunt.loadNpmTasks('grunt-contrib-yuidoc');
     grunt.loadNpmTasks('grunt-war');
 
+    grunt.registerTask('compile-less', ['clean:less', 'less']);
     grunt.registerTask('test', ['jshint:console', 'jscs:console', 'karma']);
-    grunt.registerTask('default', ['clean', 'bower:install', 'jshint:xml', 'jscs:xml', 'yuidoc', 'war']);
+    grunt.registerTask('default', ['clean', 'bower:install', 'jshint:xml', 'jscs:xml', 'yuidoc', 'compile-less', 'war']);
 };

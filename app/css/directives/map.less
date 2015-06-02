@@ -1,0 +1,131 @@
+//
+// Copyright 2015 Next Century Corporation
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+//
+
+.map-container {
+    height: @widget-height;
+    width: @widget-width;
+    min-height: 100px;
+
+    .alert {
+        display: none;
+        padding: 6px;
+        margin-top: 3px;
+    }
+
+    .alert-danger {
+        background: none;
+        border-color: @error-color;
+        color: @error-color;
+    }
+
+    .legend-item {
+        background-color: @light-background;
+        border: @border;
+        border-radius: 5px;
+        color: @mid-text-color;
+        font-size: 14px;
+        margin-top: 0px;
+        margin-right: 2px;
+        opacity: .8;
+        padding: 3px;
+    }
+
+    .chart-options {
+        .popover {
+            top: 20px;
+            right: -20px;
+            position: absolute;
+            z-index: 1000;
+        }
+    }
+
+    .footer-container {
+        position: absolute;
+        bottom: 15px;
+        left: 20px;
+        right: 20px;
+        z-index: 1000;
+        pointer-events: none;
+    }
+
+    .header-container {
+        position: absolute;
+        top: 20px;
+        left: 20px;
+        right: 20px;
+        z-index: 1005;
+
+        &.filter-container {
+            top: 50px;
+            left: 60px;
+            z-index: 1000;
+        }
+    }
+
+    .olMap {
+        background-color: #b5d0d0;
+        border: @border;
+        border-radius: 0 0 4px 4px;
+        width: auto !important;
+        height: 100% !important;
+        position: static;
+        margin: 0px !important;
+    }
+
+    .olPopup {
+        font-size: 12px;
+        z-index: 1060;
+
+        table {
+            margin: 2px;
+        }
+
+        td, th {
+            padding: 2px;
+        }
+    }
+
+    .olControlAttribution {
+        bottom: 0;
+        color: @main-text-color;
+        text-shadow: 0 1px 0 @text-shadow-color;
+    }
+
+    .olControlZoom {
+        top: 50px;
+        left: 20px;
+
+        a {
+            background-color: @accent-bright;
+            opacity: .7;
+            font-size: 20px;
+            font-family: "Open Sans", Helvetica, arial, sans-serif;
+            line-height: 24px;
+
+            &:hover{
+                background-color: @accent-bright;
+                opacity: 1;
+            }
+        }
+    }
+}
+
+.visualization-widget-mobile {
+    .map-container {
+        .olMap {
+            height: @mobile-widget-height !important;
+        }
+    }
+}
