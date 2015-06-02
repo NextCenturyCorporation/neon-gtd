@@ -24,9 +24,8 @@
 .visualization-drag-handle {
     cursor: move;
     position: absolute;
-    padding: 0px 10px;
-    height: 25px;
     width: 100%;
+    height: 10px;
     z-index: 1050;
     opacity: 0;
 
@@ -34,29 +33,43 @@
         background-color: #dddddd;
         opacity: 0.75;
 
-        .glyphicon-remove {
-            opacity: 1;
-            color: #f00;
-        }
+        .visualization-buttons {
+            background-color: #dddddd;
 
-        .glyphicon-resize-full, .glyphicon-resize-small {
-            opacity: 1;
-            color: @accent-bright;
+            .btn {
+                opacity: 1;
+            }
         }
     }
 
-    &:focus {
-        background-color: #dddddd;
-        opacity: 0.75;
-    }
+    .visualization-buttons {
+        position: absolute;
+        margin: 0px auto;
+        left: 0px;
+        right: 0px;
+        border-radius: 10px;
+        /* Width = Resize Button + Remove Button + Margins */
+        width: 60px;
 
-    button {
-        line-height: 16px;
-        margin: 4px 0px 4px 5px;
-        padding: 0px;
-        height: 16px;
-        width: 16px;
-        z-index: 1065;
+        .btn {
+            margin: 4px 0px 4px 8px;
+            padding: 0px;
+            line-height: 0px;
+            z-index: 1065;
+            opacity: 0;
+
+            .glyphicon {
+                font-size: 16px;
+            }
+
+            .glyphicon-remove {
+                color: #f00;
+            }
+
+            .glyphicon-resize-full, .glyphicon-resize-small {
+                color: @accent-bright;
+            }
+        }
     }
 }
 
