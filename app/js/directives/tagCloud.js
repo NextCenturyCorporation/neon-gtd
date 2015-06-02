@@ -207,9 +207,6 @@ function(connectionService, datasetService, filterService, $timeout) {
                 if($scope.options.tagField !== '') {
                     var connection = connectionService.getActiveConnection();
                     if(connection) {
-                        var host = connection.host_;
-                        var url = neon.serviceUrl('mongotagcloud', 'tagcounts', 'host=' + host + "&db=" + $scope.databaseName + "&collection=" + $scope.options.selectedTable.name + "&arrayfield=" + $scope.options.tagField + "&limit=40");
-
                         XDATA.userALE.log({
                             activity: "alter",
                             action: "query",
@@ -220,8 +217,20 @@ function(connectionService, datasetService, filterService, $timeout) {
                             source: "system",
                             tags: ["query", "tag-cloud"]
                         });
-                        neon.util.ajaxUtils.doGet(url, {
-                            success: function(tagCounts) {
+
+                        connection.executeArrayCountQuery($scope.databaseName, $scope.options.selectedTable.name, $scope.options.tagField, 40, function(tagCounts) {
+                            XDATA.userALE.log({
+                                activity: "alter",
+                                action: "query",
+                                elementId: "tag-cloud",
+                                elementType: "tag",
+                                elementSub: "tag-cloud",
+                                elementGroup: "chart_group",
+                                source: "system",
+                                tags: ["receive", "tag-cloud"]
+                            });
+                            $scope.$apply(function() {
+                                $scope.updateTagData(tagCounts);
                                 XDATA.userALE.log({
                                     activity: "alter",
                                     action: "query",
@@ -230,34 +239,20 @@ function(connectionService, datasetService, filterService, $timeout) {
                                     elementSub: "tag-cloud",
                                     elementGroup: "chart_group",
                                     source: "system",
-                                    tags: ["receive", "tag-cloud"]
+                                    tags: ["render", "tag-cloud"]
                                 });
-                                $scope.$apply(function() {
-                                    $scope.updateTagData(tagCounts);
-                                    XDATA.userALE.log({
-                                        activity: "alter",
-                                        action: "query",
-                                        elementId: "tag-cloud",
-                                        elementType: "tag",
-                                        elementSub: "tag-cloud",
-                                        elementGroup: "chart_group",
-                                        source: "system",
-                                        tags: ["render", "tag-cloud"]
-                                    });
-                                });
-                            },
-                            error: function() {
-                                XDATA.userALE.log({
-                                    activity: "alter",
-                                    action: "query",
-                                    elementId: "tag-cloud",
-                                    elementType: "tag",
-                                    elementSub: "tag-cloud",
-                                    elementGroup: "chart_group",
-                                    source: "system",
-                                    tags: ["failed", "tag-cloud"]
-                                });
-                            }
+                            });
+                        }, function() {
+                            XDATA.userALE.log({
+                                activity: "alter",
+                                action: "query",
+                                elementId: "tag-cloud",
+                                elementType: "tag",
+                                elementSub: "tag-cloud",
+                                elementGroup: "chart_group",
+                                source: "system",
+                                tags: ["failed", "tag-cloud"]
+                            });
                         });
                     }
                 }
