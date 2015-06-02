@@ -200,7 +200,7 @@ label{
     .popover{
         left: auto;
         right: 0px;
-        top: 45px;
+        top: 35px;
         margin-top: 0;
 
         background: none;
@@ -211,7 +211,7 @@ label{
 
         > .arrow{
             left: auto;
-            right: 30px;
+            right: 20px;
             top: 0;
         }
     }
@@ -318,14 +318,10 @@ label{
     position: static;
 }
 
-.container{
-    @media (min-width: 1460px) {
-        width: 1430px;
-    }
-
-    @media (min-width: 1860px) {
-        width: 1830px;
-    }
+.container {
+    width: 99%;
+    padding-left: 5px;
+    padding-right: 5px;
 }
 
 .count{
@@ -365,31 +361,35 @@ label{
     font-weight: bold;
     color: @main-text-color;
     background-color: @button-color;
-    padding-left: 11px;
     border-radius: 4px;
-    font-size: 12px;
     margin-left: 5px;
     margin-top: 5px;
     margin-bottom: 5px;
 
+    .filter-label {
+        float: left;
+        font-size: 10px;
+        padding: 8px;
+        max-width: 80px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
 
-    .btn {
-        border: 0;
+    .glyphicon-remove {
+        float: left;
+        font-size: 14px;
         padding: 8px;
         color: @error-color;
+        cursor: pointer;
         border-left: @border;
         border-radius: 0 4px 4px 0;
-        margin-left: 7px;
-        line-height: 1;
+        top: 0px;
 
         &:hover {
             background-color: @error-color;
             border-color: @error-dark-color;
             color: @light-text-color;
-        }
-
-        .glyphicon {
-            font-size: 12px;
         }
     }
 }
@@ -400,7 +400,7 @@ label{
 
     span {
         &.footer-text {
-            color: #999999;
+            color: @main-text-color;
             font-size: 16px;
             font-weight: bold;
             line-height: 1.33;
@@ -424,8 +424,8 @@ label{
 }
 
 .gridster {
-    margin-top: 10px;
-    margin-bottom: 10px;
+    margin-top: 5px;
+    margin-bottom: 5px;
 }
 
 .gridster-item-resizable-handler {
@@ -447,7 +447,7 @@ label{
 
     span {
         &.header-text {
-            color: #999999;
+            color: @main-text-color;
             font-size: 16px;
             font-weight: bold;
             line-height: 1.33;
@@ -495,7 +495,7 @@ label{
         font-size: 12px;
 
         &.legend-hidden{
-            color: #999999;
+            color: @main-text-color;
 
             .legend-icon{
                 background: #e1e1e1 !important;
@@ -504,7 +504,7 @@ label{
 
         .legend-text {
             display: inline-block;
-            max-width: 90px;
+            max-width: 80px;
             overflow: hidden;
             white-space: nowrap;
             text-overflow: ellipsis;
@@ -531,6 +531,14 @@ label{
             &:first-child {
                 margin-left: 0;
             }
+        }
+
+        .legend-text-small {
+            max-width: 60px;
+        }
+
+        .legend-text-large {
+            max-width: 120px;
         }
     }
 
@@ -638,7 +646,8 @@ label{
         }
 
         img{
-            margin-left: 6px;
+            margin-left: 5px;
+            margin-right: 5px;
         }
     }
 }

@@ -39,7 +39,10 @@ function(connectionService, datasetService, errorNotificationService, filterServ
         restrict: 'EA',
         scope: {
             bindDateField: '=',
-            bindTable: '='
+            bindTable: '=',
+            bindDatabase: '=',
+            hideHeader: '=?',
+            hideAdvancedOptions: '=?'
         },
         link: function($scope, $element) {
             var YEAR = "year";
@@ -69,15 +72,14 @@ function(connectionService, datasetService, errorNotificationService, filterServ
             $scope.eventProbabilitiesDisplayed = false;
             $scope.errorMessage = undefined;
 
-            $scope.databaseName = "";
+            $scope.databases = [];
             $scope.tables = [];
             $scope.fields = [];
             $scope.filterKeys = {};
 
             $scope.options = {
-                selectedTable: {
-                    name: ""
-                },
+                database: "",
+                table: "",
                 dateField: "",
                 primarySeries: false,
                 collapsed: true,
@@ -231,7 +233,7 @@ function(connectionService, datasetService, errorNotificationService, filterServ
                             $scope.endExtent = newVal[1];
                         }
 
-                        var relations = datasetService.getRelations($scope.options.selectedTable.name, [$scope.options.dateField]);
+                        var relations = datasetService.getRelations($scope.options.database, $scope.options.table, [$scope.options.dateField]);
 
                         if(updatingGranularity) {
                             // If the brush changed because of a granularity change, then don't
@@ -304,7 +306,7 @@ function(connectionService, datasetService, errorNotificationService, filterServ
                     source: "system",
                     tags: ["filter-change", "timeline"]
                 });
-                if(message.addedFilter && message.addedFilter.databaseName === $scope.databaseName && message.addedFilter.tableName === $scope.options.selectedTable.name) {
+                if(message.addedFilter && message.addedFilter.databaseName === $scope.options.database && message.addedFilter.tableName === $scope.options.table) {
                     $scope.queryForChartData();
                 }
             };
@@ -338,24 +340,36 @@ function(connectionService, datasetService, errorNotificationService, filterServ
                     return;
                 }
 
-                $scope.databaseName = datasetService.getDatabase();
-                $scope.tables = datasetService.getTables();
-                $scope.options.selectedTable = $scope.bindTable || datasetService.getFirstTableWithMappings(["date"]) || $scope.tables[0];
-                $scope.filterKeys = filterService.createFilterKeys("timeline", $scope.tables);
+                $scope.databases = datasetService.getDatabaseNames();
+                $scope.options.database = $scope.databases[0];
+                if($scope.bindDatabase && $scope.databases.indexOf($scope.bindDatabase) >= 0) {
+                    $scope.options.database = $scope.bindDatabase;
+                }
+                $scope.filterKeys = filterService.createFilterKeys("timeline", datasetService.getDatabaseAndTableNames());
 
                 if(initializing) {
-                    $scope.updateFieldsAndQueryForChartData();
+                    $scope.updateTables();
                 } else {
                     $scope.$apply(function() {
-                        $scope.updateFieldsAndQueryForChartData();
+                        $scope.updateTables();
                     });
                 }
             };
 
-            $scope.updateFieldsAndQueryForChartData = function() {
-                $scope.fields = datasetService.getDatabaseFields($scope.options.selectedTable.name);
+            $scope.updateTables = function() {
+                $scope.tables = datasetService.getTableNames($scope.options.database);
+                if($scope.bindTable && $scope.tables.indexOf($scope.bindTable) >= 0) {
+                    $scope.options.table = $scope.bindTable;
+                } else {
+                    $scope.options.table = datasetService.getFirstTableNameWithMappings($scope.options.database, ["date"]) || $scope.tables[0];
+                }
+                $scope.updateFields();
+            };
+
+            $scope.updateFields = function() {
+                $scope.fields = datasetService.getDatabaseFields($scope.options.database, $scope.options.table);
                 $scope.fields.sort();
-                $scope.options.dateField = $scope.bindDateField || datasetService.getMapping($scope.options.selectedTable.name, "date") || "date";
+                $scope.options.dateField = $scope.bindDateField || datasetService.getMapping($scope.options.database, $scope.options.table, "date") || "date";
                 $scope.resetAndQueryForChartData();
             };
 
@@ -383,7 +397,7 @@ function(connectionService, datasetService, errorNotificationService, filterServ
                 }
 
                 var query = new neon.query.Query()
-                    .selectFrom($scope.databaseName, $scope.options.selectedTable.name)
+                    .selectFrom($scope.options.database, $scope.options.table)
                     .where($scope.options.dateField, '!=', null);
 
                 $scope.addGroupByGranularityClause(query);
@@ -392,7 +406,7 @@ function(connectionService, datasetService, errorNotificationService, filterServ
                 // TODO: Does this need to be an aggregate on the date field? What is MIN doing or is this just an arbitrary function to include the date with the query?
                 query.aggregate(neon.query.MIN, $scope.options.dateField, 'date');
                 query.sortBy('date', neon.query.ASCENDING);
-                query.ignoreFilters([$scope.filterKeys[$scope.options.selectedTable.name]]);
+                query.ignoreFilters([$scope.filterKeys[$scope.options.database][$scope.options.table]]);
 
                 XDATA.userALE.log({
                     activity: "alter",
@@ -559,7 +573,7 @@ function(connectionService, datasetService, errorNotificationService, filterServ
                 // TODO: neon doesn't yet support a more efficient way to just get the min/max fields without aggregating
                 // TODO: This could be done better with a promise framework - just did this in a pinch for a demo
                 var minDateQuery = new neon.query.Query()
-                    .selectFrom($scope.databaseName, $scope.options.selectedTable.name).ignoreFilters()
+                    .selectFrom($scope.options.database, $scope.options.table).ignoreFilters()
                     .where($scope.options.dateField, '!=', null).sortBy($scope.options.dateField, neon.query.ASCENDING).limit(1);
 
                 XDATA.userALE.log({
@@ -613,7 +627,7 @@ function(connectionService, datasetService, errorNotificationService, filterServ
                 }
 
                 var maxDateQuery = new neon.query.Query()
-                    .selectFrom($scope.databaseName, $scope.options.selectedTable.name).ignoreFilters()
+                    .selectFrom($scope.options.database, $scope.options.table).ignoreFilters()
                     .where($scope.options.dateField, '!=', null).sortBy($scope.options.dateField, neon.query.DESCENDING).limit(1);
 
                 XDATA.userALE.log({

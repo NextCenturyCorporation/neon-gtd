@@ -38,13 +38,17 @@ angular.module('neonDemo.directives')
             bindColorField: '=',
             bindSizeField: '=',
             bindTable: '=',
+            bindDatabase: '=',
             // map of categories to colors used for the legend
-            colorMappings: '&'
+            colorMappings: '&',
+            hideHeader: '=?',
+            hideAdvancedOptions: '=?'
         },
         link: function($scope, $element) {
             $element.addClass('map-container');
 
             $scope.element = $element;
+
             $scope.optionsMenuButtonText = function() {
                 if($scope.dataLength >= $scope.previousLimit) {
                     return $scope.previousLimit + " data limit";
@@ -56,7 +60,7 @@ angular.module('neonDemo.directives')
             };
 
             // Setup scope variables.
-            $scope.databaseName = '';
+            $scope.databases = [];
             $scope.tables = [];
             $scope.fields = [];
             $scope.cacheMap = false;
@@ -69,9 +73,8 @@ angular.module('neonDemo.directives')
             $scope.errorMessage = undefined;
 
             $scope.options = {
-                selectedTable: {
-                    name: ""
-                },
+                database: "",
+                table: "",
                 latitudeField: "",
                 longitudeField: "",
                 sizeByField: "",
@@ -91,19 +94,34 @@ angular.module('neonDemo.directives')
 
             /**
              * Returns the list of tables for which we currently have layers.
+             * This method attempts to flatten duplicates so we only query tables once for
+             * multiple layers that reference them.
              * @return {Array<string>}
              */
-            var getLayerTables = function() {
-                return _.uniq(_.pluck($scope.layers, "table"));
+            var getLayerDatabaseTableSets = function() {
+                var sets = [];
+                for (var i = 0; i < $scope.layers; i++) {
+                    if(!sets[$scope.layers[i].database]) {
+                        sets[$scope.layers[i].database] = [];
+                    }
+                    if(!_.contains(sets[$scope.layers[i].database], $scope.layers[i].table)) {
+                        sets[$scope.layers[i].database].push($scope.layers[i].table);
+                    }
+                }
             };
 
             /**
              * Triggers a data query against any table displayed in a current map layer.
              */
             var queryAllLayerTables = function() {
-                var layerTables = getLayerTables();
-                for(var i = 0; i < layerTables.length; i++) {
-                    $scope.queryForMapData(layerTables[i]);
+                var sets = getLayerDatabaseTableSets();
+                var keys = _.keys(sets);
+                var tables = [];
+                for(var i = 0; i < keys.length; i++) {
+                    tables = sets[keys[i]];
+                    for (var j = 0; j < tables.length; j++ ) {
+                        $scope.queryForMapData(keys[i], tables[j]);
+                    }
                 }
             };
 
@@ -227,7 +245,7 @@ angular.module('neonDemo.directives')
 
                     for(var i = 0; i < $scope.layers.length; i++) {
                         if($scope.layers[i].active) {
-                            var relations = datasetService.getRelations($scope.layers[i].table, [$scope.layers[i].latitudeMapping, $scope.layers[i].longitudeMapping]);
+                            var relations = datasetService.getRelations($scope.layers[i].database, $scope.layers[i].table, [$scope.layers[i].latitudeMapping, $scope.layers[i].longitudeMapping]);
                             filterService.replaceFilters($scope.messenger, relations, $scope.layers[i].filterKeys, $scope.createFilterClauseForExtent, function() {
                                 $scope.$apply(function() {
                                     // TODO: Need a way to defer this so we don't reload everything
@@ -415,10 +433,10 @@ angular.module('neonDemo.directives')
                 $scope.options.selectedTable = $scope.bindTable || datasetService.getFirstTableWithMappings(["latitude", "longitude"]) || $scope.tables[0];
 
                 if(initializing) {
-                    $scope.updateFieldsAndQueryForMapData();
+                    $scope.updateTables();
                 } else {
                     $scope.$apply(function() {
-                        $scope.updateFieldsAndQueryForMapData();
+                        $scope.updateTables();
                     });
                 }
             };
@@ -491,13 +509,13 @@ angular.module('neonDemo.directives')
             /**
              * @method queryForMapData
              */
-            $scope.queryForMapData = function(table) {
+            $scope.queryForMapData = function(database, table) {
                 if($scope.errorMessage) {
                     errorNotificationService.hideErrorMessage($scope.errorMessage);
                     $scope.errorMessage = undefined;
                 }
 
-                var query = $scope.buildPointQuery(table);
+                var query = $scope.buildPointQuery(database, table);
 
                 XDATA.userALE.log({
                     activity: "alter",
@@ -523,7 +541,7 @@ angular.module('neonDemo.directives')
                                 source: "system",
                                 tags: ["receive", "map"]
                             });
-                            $scope.updateMapData(table, queryResults);
+                            $scope.updateMapData(database, table, queryResults);
 
                             XDATA.userALE.log({
                                 activity: "alter",
@@ -547,7 +565,7 @@ angular.module('neonDemo.directives')
                             source: "system",
                             tags: ["failed", "map"]
                         });
-                        $scope.updateMapData(table, {
+                        $scope.updateMapData(database, table, {
                             data: []
                         });
                         if(response.responseJSON) {
@@ -655,8 +673,8 @@ angular.module('neonDemo.directives')
                 }
             };
 
-            $scope.buildPointQuery = function(table) {
-                var query = new neon.query.Query().selectFrom($scope.databaseName, table).limit($scope.options.limit);
+            $scope.buildPointQuery = function(database, table) {
+                var query = new neon.query.Query().selectFrom(database, table).limit($scope.options.limit);
                 return query;
             };
 

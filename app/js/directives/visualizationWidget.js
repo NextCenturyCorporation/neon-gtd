@@ -27,7 +27,7 @@
  * @class visulizationWidget
  * @constructor
  */
-angular.module('neonDemo.directives').directive('visualizationWidget', function($compile) {
+angular.module('neonDemo.directives').directive('visualizationWidget', ["config", "$compile", function(config, $compile) {
     var MAXIMIZED_COLUMN_SIZE = 6;
     var MAXIMIZED_ROW_SIZE = 4;
 
@@ -37,20 +37,27 @@ angular.module('neonDemo.directives').directive('visualizationWidget', function(
             gridsterConfigs: "=",
             gridsterConfigIndex: "="
         },
-        template: '<div class="visualization-drag-handle">' +
-                '<button type="button" class="btn pull-right" ng-click="remove()" ng-mouseover="$event.stopPropagation()">' +
-                '   <span  class="glyphicon glyphicon-remove"></span>' +
-                '</button>' +
-                '<button type="button" class="btn pull-right" ng-click="toggleSize()"" ng-mouseover="$event.stopPropagation()">' +
+        template: '<div class="visualization-drag-handle"><div class="visualization-buttons">' +
+                '<a class="btn" ng-click="toggleSize()"" ng-mouseover="$event.stopPropagation()">' +
                 '   <span  class="glyphicon" ng-class="(oldSize) ? \'glyphicon-resize-small\' : \'glyphicon-resize-full\'"></span>' +
-                '</button>' +
-            '</div>',
+                '</a>' +
+                '<a class="btn" ng-click="remove()" ng-mouseover="$event.stopPropagation()">' +
+                '   <span  class="glyphicon glyphicon-remove"></span>' +
+                '</a>' +
+                '</div></div>',
 //        templateUrl: "partials/directives/visualizationWidget.html",
         link: function($scope, $element) {
             // Create our widget.  Here, we are assuming the visualization is
             // implementated as an attribute directive.
             var widgetElement = document.createElement("div");
             widgetElement.setAttribute($scope.gridsterConfigs[$scope.gridsterConfigIndex].type, "");
+
+            if(config.hideAdvancedOptions) {
+                widgetElement.setAttribute("hide-advanced-options", true);
+            }
+            if(config.hideHeader) {
+                widgetElement.setAttribute("hide-header", true);
+            }
 
             // Pass along any bindings.
             if($scope.gridsterConfigs[$scope.gridsterConfigIndex] &&
@@ -119,4 +126,4 @@ angular.module('neonDemo.directives').directive('visualizationWidget', function(
             };
         }
     };
-});
+}]);

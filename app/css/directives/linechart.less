@@ -110,7 +110,7 @@
 
 .linechartDirective {
     margin: 0px;
-    padding: 20px;
+    padding: 10px;
     height: 100%;
     width: 100%;
 
@@ -118,7 +118,8 @@
         .legend-item {
             margin-top: 5px;
 
-            &:nth-child(2) {
+            /* Add extra margin to the top of the legend (the first item) to mimic the styling of the Bar Chart. */
+            &:first-child {
                 margin-top: 10px;
             }
         }

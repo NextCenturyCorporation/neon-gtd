@@ -16,12 +16,13 @@
  */
 
 angular.module('neonDemo.directives')
-.directive('directedGraph',['ConnectionService', 'DatasetService', 'ErrorNotificationService', 'FilterService', '$timeout',
-function(connectionService, datasetService, errorNotificationService, filterService, $timeout) {
+.directive('directedGraph',['ConnectionService', 'DatasetService', 'ErrorNotificationService', 'FilterService', '$timeout', function(connectionService, datasetService, errorNotificationService, filterService, $timeout) {
     return {
         templateUrl: 'partials/directives/directedGraph.html',
         restrict: 'EA',
         scope: {
+            hideHeader: '=?',
+            hideAdvancedOptions: '=?'
         },
         link: function($scope, $element) {
             $element.addClass('directedGraphDirective');
@@ -42,7 +43,8 @@ function(connectionService, datasetService, errorNotificationService, filterServ
 
             $scope.TIMEOUT_MS = 250;
             $scope.uniqueId = uuid();
-            $scope.databaseName = "";
+
+            $scope.databases = [];
             $scope.tables = [];
             $scope.fields = [];
             $scope.nodes = [];
@@ -52,24 +54,13 @@ function(connectionService, datasetService, errorNotificationService, filterServ
             $scope.filteredNodes = [];
 
             $scope.options = {
-                selectedTable: {
-                    name: ""
-                },
+                database: "",
+                table: "",
                 selectedNodeField: "",
                 selectedLinkField: "",
                 selectedNode: "",
                 nodeLimit: 500
             };
-
-            $scope.$watch('options.selectedNode', function() {
-                if($scope.options.selectedNode !== "") {
-                    if($scope.messenger && $scope.filteredNodes.length) {
-                        filterService.removeFilters($scope.messenger, $scope.filterKeys);
-                    }
-                    $scope.filteredNodes = [];
-                    $scope.addFilter($scope.options.selectedNode);
-                }
-            }, true);
 
             $scope.calculateGraphHeight = function() {
                 var headerHeight = 0;
@@ -103,6 +94,16 @@ function(connectionService, datasetService, errorNotificationService, filterServ
                     $scope.graph.redraw();
                 }
                 $scope.resizePromise = null;
+            };
+
+            $scope.selectNode = function() {
+                if($scope.options.selectedNode !== "") {
+                    if($scope.messenger && $scope.filteredNodes.length) {
+                        filterService.removeFilters($scope.messenger, $scope.filterKeys);
+                    }
+                    $scope.filteredNodes = [];
+                    $scope.addFilter($scope.options.selectedNode);
+                }
             };
 
             $scope.initialize = function() {
@@ -141,7 +142,7 @@ function(connectionService, datasetService, errorNotificationService, filterServ
              * @private
              */
             var onFiltersChanged = function(message) {
-                if(message.addedFilter && message.addedFilter.databaseName === $scope.databaseName && message.addedFilter.tableName === $scope.options.selectedTable.name) {
+                if(message.addedFilter && message.addedFilter.databaseName === $scope.options.database && message.addedFilter.tableName === $scope.options.table) {
                     if(message.type.toUpperCase() === "ADD" || message.type.toUpperCase() === "REPLACE") {
                         if(message.addedFilter.whereClause) {
                             $scope.addFilterWhereClauseToFilterList(message.addedFilter.whereClause);
@@ -193,27 +194,33 @@ function(connectionService, datasetService, errorNotificationService, filterServ
                     });
                 }
 
+                $scope.nodes = [];
                 $scope.data = [];
-                $scope.databaseName = datasetService.getDatabase();
-                $scope.tables = datasetService.getTables();
-                $scope.options.selectedTable = datasetService.getFirstTableWithMappings(["graph_nodes"]) || $scope.tables[0];
-                $scope.filterKeys = filterService.createFilterKeys("graph", $scope.tables);
+                $scope.databases = datasetService.getDatabaseNames();
+                $scope.options.database = $scope.databases[0];
+                $scope.filterKeys = filterService.createFilterKeys("graph", datasetService.getDatabaseAndTableNames());
 
                 if(initializing) {
-                    $scope.updateFieldsAndQueryForData();
+                    $scope.updateTables(initializing);
                 } else {
                     $scope.$apply(function() {
-                        $scope.updateFieldsAndQueryForData();
+                        $scope.updateTables(initializing);
                     });
                 }
             };
 
-            $scope.updateFieldsAndQueryForData = function() {
-                $scope.fields = datasetService.getDatabaseFields($scope.options.selectedTable.name);
+            $scope.updateTables = function(initializing) {
+                $scope.tables = datasetService.getTableNames($scope.options.database);
+                $scope.options.table = datasetService.getFirstTableNameWithMappings($scope.options.database, ["graph_nodes"]) || $scope.tables[0];
+                $scope.updateFields(initializing);
+            };
+
+            $scope.updateFields = function(initializing) {
+                $scope.fields = datasetService.getDatabaseFields($scope.options.database, $scope.options.table);
                 $scope.fields.sort();
-                $scope.options.selectedNodeField = datasetService.getMapping($scope.options.selectedTable.name, "graph_nodes") || "";
-                $scope.options.selectedLinkField = datasetService.getMapping($scope.options.selectedTable.name, "graph_links") || "";
-                $scope.queryForData();
+                $scope.options.selectedNodeField = datasetService.getMapping($scope.options.database, $scope.options.table, "graph_nodes") || "";
+                $scope.options.selectedLinkField = datasetService.getMapping($scope.options.database, $scope.options.table, "graph_links") || "";
+                $scope.queryForData(initializing);
             };
 
             $scope.addFilter = function(value) {
@@ -227,7 +234,7 @@ function(connectionService, datasetService, errorNotificationService, filterServ
                 $scope.filteredNodes.push(value);
 
                 if($scope.messenger) {
-                    var relations = datasetService.getRelations($scope.options.selectedTable.name, [$scope.options.selectedNodeField]);
+                    var relations = datasetService.getRelations($scope.options.database, $scope.options.table, [$scope.options.selectedNodeField]);
                     if($scope.filteredNodes.length === 1) {
                         filterService.addFilters($scope.messenger, relations, $scope.filterKeys, $scope.createFilterClauseForNode, $scope.queryForData);
                     } else if($scope.filteredNodes.length > 1) {
@@ -263,8 +270,8 @@ function(connectionService, datasetService, errorNotificationService, filterServ
                     if($scope.filteredNodes.length === 0) {
                         filterService.removeFilters($scope.messenger, $scope.filterKeys, $scope.queryForData);
                     } else {
-                        var relations = datasetService.getRelations($scope.options.selectedTable.name, [$scope.options.selectedNodeField]);
-                        filterService.replaceFilters($scope.messenger, relations, $scope.filterKeys, $scope.createFilter, $scope.queryForData);
+                        var relations = datasetService.getRelations($scope.options.database, $scope.options.table, [$scope.options.selectedNodeField]);
+                        filterService.replaceFilters($scope.messenger, relations, $scope.filterKeys, $scope.createFilterClauseForNode, $scope.queryForData);
                     }
                 }
             };
@@ -276,7 +283,7 @@ function(connectionService, datasetService, errorNotificationService, filterServ
                 }
             };
 
-            $scope.queryForData = function() {
+            $scope.queryForData = function(initializing) {
                 if($scope.errorMessage) {
                     errorNotificationService.hideErrorMessage($scope.errorMessage);
                     $scope.errorMessage = undefined;
@@ -285,25 +292,31 @@ function(connectionService, datasetService, errorNotificationService, filterServ
                 if($scope.options.selectedNodeField) {
                     if($scope.filteredNodes.length) {
                         $scope.queryForFilteredNodeNetwork($scope.filteredNodes);
-                    } else {
-                        $scope.queryForNodeData();
+                    } else if(!initializing) {
+                        // Don't call $scope.updateGraph() here.  It will cause an error because we're in a $scope.$apply.
+                        $scope.numberOfNodesInGraph = 0;
+                        $scope.graph.updateGraph({
+                            nodes: [],
+                            links: []
+                        });
+                        $scope.queryForNodeList();
                     }
                 }
             };
 
             /**
-             * Query for the list of nodes using the selected field and draw the graph containing those nodes.
+             * Query for the list of nodes using the selected field but do not draw a graph.
              */
-            $scope.queryForNodeData = function() {
-                var query = new neon.query.Query()
-                    .selectFrom($scope.databaseName, $scope.options.selectedTable.name)
-                    .groupBy($scope.options.selectedNodeField)
-                    .withFields([$scope.options.selectedNodeField]);
-                query.ignoreFilters([$scope.filterKeys[$scope.options.selectedTable.name]]);
-                query.aggregate(neon.query.COUNT, '*', 'count');
-
+            $scope.queryForNodeList = function() {
                 var connection = connectionService.getActiveConnection();
                 if(connection) {
+                    var query = new neon.query.Query()
+                        .selectFrom($scope.options.database, $scope.options.table)
+                        .withFields([$scope.options.selectedNodeField])
+                        .groupBy($scope.options.selectedNodeField)
+                        .aggregate(neon.query.COUNT, '*', 'count')
+                        .ignoreFilters([$scope.filterKeys[$scope.options.database][$scope.options.table]]);
+
                     connection.executeQuery(query, function(data) {
                         $scope.nodes = [];
                         for(var i = 0; i < data.data.length; i++) {
@@ -313,7 +326,7 @@ function(connectionService, datasetService, errorNotificationService, filterServ
                             }
                         }
 
-                        // Sort the nodes so they are displayed in order in the options dropdown.
+                        // Sort the nodes so they are displayed in alphabetical order in the options dropdown.
                         $scope.nodes.sort(function(a, b) {
                             if(typeof a === "string" && typeof b === "string") {
                                 return a.toLowerCase().localeCompare(b.toLowerCase());
@@ -326,11 +339,7 @@ function(connectionService, datasetService, errorNotificationService, filterServ
                             }
                             return 0;
                         });
-
-                        $scope.graph.setClickableNodes($scope.nodes);
-                        $scope.createAndShowGraph(data);
                     }, function(response) {
-                        $scope.updateGraph([], []);
                         if(response.responseJSON) {
                             $scope.errorMessage = errorNotificationService.showErrorMessage($element, response.responseJSON.error, response.responseJSON.stackTrace);
                         }
@@ -348,7 +357,7 @@ function(connectionService, datasetService, errorNotificationService, filterServ
                 }
 
                 var query = new neon.query.Query()
-                    .selectFrom($scope.databaseName, $scope.options.selectedTable.name);
+                    .selectFrom($scope.options.database, $scope.options.table);
 
                 var where = neon.query.where($scope.options.selectedNodeField, '=', $scope.filteredNodes[0]);
                 var orWhere;
@@ -357,7 +366,7 @@ function(connectionService, datasetService, errorNotificationService, filterServ
                     where = neon.query.or(where, orWhere);
                 }
                 query = query.where(where);
-                query.ignoreFilters([$scope.filterKeys[$scope.options.selectedTable.name]]);
+                query.ignoreFilters([$scope.filterKeys[$scope.options.database][$scope.options.table]]);
 
                 var connection = connectionService.getActiveConnection();
                 if(connection) {
@@ -397,9 +406,9 @@ function(connectionService, datasetService, errorNotificationService, filterServ
                     if(nodesIndexes[value] === undefined) {
                         nodesIndexes[value] = nodes.length;
                         var colorGroup = 2;
-                        if($scope.filteredNodes.indexOf(value) !== -1) {
+                        if($scope.filteredNodes.indexOf(value) >= 0) {
                             colorGroup = 1;
-                        } else if($scope.nodes.indexOf(value) !== -1) {
+                        } else if($scope.nodes.indexOf(value) >= 0) {
                             colorGroup = 3;
                         }
 
@@ -456,7 +465,6 @@ function(connectionService, datasetService, errorNotificationService, filterServ
                     }
                 }
 
-                $scope.graph.setRootNodes($scope.filteredNodes);
                 $scope.updateGraph(nodes, links);
             };
 
@@ -472,14 +480,14 @@ function(connectionService, datasetService, errorNotificationService, filterServ
             };
 
             $scope.createClickHandler = function(item) {
-                if($scope.nodes.indexOf(item.name) !== -1) {
-                    if($scope.filteredNodes.indexOf(item.name) === -1) {
+                if($scope.nodes.indexOf(item.name) >= 0) {
+                    if($scope.filteredNodes.indexOf(item.name) >= 0) {
                         $scope.$apply(function() {
-                            $scope.addFilter(item.name);
+                            $scope.removeFilter(item.name);
                         });
                     } else {
                         $scope.$apply(function() {
-                            $scope.removeFilter(item.name);
+                            $scope.addFilter(item.name);
                         });
                     }
                 }

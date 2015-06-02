@@ -1,20 +1,26 @@
-<div class="header-container">
-    <span class="header-text pull-left">{{options.selectedTable.name}}</span>
+<div class="header-container" ng-show="!(hideHeader)">
+    <span class="header-text pull-left">{{options.table}}</span>
 
     <options-menu parent-element="element" button-text="optionsMenuButtonText" show-button-text="showOptionsMenuButtonText">
-        <div class="form-group">
-            <label>Table</label>
-            <select class="form-control" ng-model="options.selectedTable" ng-options="table.name for table in tables" ng-required="true" ng-disabled="(tables.length < 2)" ng-change="updateFieldsAndQueryForMapData()">
+        <div class="form-group" ng-show="!(hideAdvancedOptions)">
+            <label>Database</label>
+            <select class="form-control" ng-model="options.database" ng-options="database for database in databases" ng-required="true" ng-disabled="(databases.length < 2)" ng-change="updateTables()">
             </select>
         </div>
 
-        <div class="form-group">
+        <div class="form-group" ng-show="!(hideAdvancedOptions)">
+            <label>Table</label>
+            <select class="form-control" ng-model="options.table" ng-options="table for table in tables" ng-required="true" ng-disabled="(tables.length < 2)" ng-change="updateFields()">
+            </select>
+        </div>
+
+        <div class="form-group" ng-show="!(hideAdvancedOptions)">
             <label>Latitude</label>
             <select class="form-control" ng-model="options.latitudeField" ng-options="field for field in fields" ng-required="true" ng-disabled="!(fields.length > 0)">
             </select>
         </div>
 
-        <div class="form-group">
+        <div class="form-group" ng-show="!(hideAdvancedOptions)">
             <label>Longitude</label>
             <select class="form-control" ng-model="options.longitudeField" ng-options="field for field in fields" ng-required="true" ng-disabled="!(fields.length > 0)">
             </select>
@@ -49,29 +55,27 @@
             <div class="clearfix"></div>
         </div>
 
-        <div ng-class="{true: '', false: 'hidden'}[options.showPoints]">
-            <div class="form-group">
-                <label>Size by</label>
-                <select class="form-control" ng-model="options.sizeByField" ng-disabled="!(fields.length > 0)" ng-options="field for field in fields">
-                    <option value="">No selection</option>
-                </select>
-            </div>
-            <div class="form-group">
-                <label>Color by</label>
-                <select class="form-control" ng-model="options.colorByField" ng-disabled="!(fields.length > 0)" ng-options="field for field in fields">
-                    <option value="">No selection</option>
-                </select>
-            </div>
+        <div class="form-group" ng-show="!(hideAdvancedOptions) && (options.showPoints)">
+            <label>Size by</label>
+            <select class="form-control" ng-model="options.sizeByField" ng-disabled="!(fields.length > 0)" ng-options="field for field in fields">
+                <option value="">No selection</option>
+            </select>
+        </div>
+
+        <div class="form-group" ng-show="!(hideAdvancedOptions) && (options.showPoints)">
+            <label>Color by</label>
+            <select class="form-control" ng-model="options.colorByField" ng-disabled="!(fields.length > 0)" ng-options="field for field in fields">
+                <option value="">No selection</option>
+            </select>
         </div>
     </options-menu>
 </div>
 
 <div class="header-container filter-container">
     <div class="filter-reset pull-right" ng-class="{true: '', false: 'hidden'}[showFilter]">
-        Filter
-        <a class="btn" ng-click="clearFilter()">
-            <span class="glyphicon glyphicon-remove"></span>
-        </a>
+        <span class="glyphicon glyphicon-filter"></span>
+        <span class="filter-label">Filter</span>
+        <span class="glyphicon glyphicon-remove" ng-click="clearFilter()"></span>
     </div>
 
     <div class="legend legend-scale" ng-class="{true: 'hidden', false: ''}[options.showPoints]">

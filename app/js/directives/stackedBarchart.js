@@ -36,7 +36,9 @@ function(connectionService, datasetService, errorNotificationService) {
         scope: {
             attrX: '=',
             attrY: '=',
-            barType: '='
+            barType: '=',
+            hideHeader: '=?',
+            hideAdvancedOptions: '=?'
         },
         link: function($scope, $element) {
             $element.addClass('barchartDirective');
@@ -44,15 +46,15 @@ function(connectionService, datasetService, errorNotificationService) {
             $scope.element = $element;
 
             $scope.messenger = new neon.eventing.Messenger();
-            $scope.databaseName = '';
+
+            $scope.databases = [];
             $scope.tables = [];
             $scope.fields = [];
             $scope.errorMessage = undefined;
 
             $scope.options = {
-                selectedTable: {
-                    name: ""
-                },
+                database: "",
+                table: "",
                 attrX: "",
                 attrY: "",
                 barType: "count"
@@ -83,17 +85,17 @@ function(connectionService, datasetService, errorNotificationService) {
                 });
 
                 $scope.$watch('options.attrX', function() {
-                    if($scope.databaseName && $scope.options.selectedTable.name) {
+                    if($scope.options.database && $scope.options.table) {
                         $scope.queryForData();
                     }
                 });
                 $scope.$watch('options.attrY', function() {
-                    if($scope.databaseName && $scope.options.selectedTable.name) {
+                    if($scope.options.database && $scope.options.table) {
                         $scope.queryForData();
                     }
                 });
                 $scope.$watch('options.barType', function() {
-                    if($scope.databaseName && $scope.options.selectedTable.name) {
+                    if($scope.options.database && $scope.options.table) {
                         $scope.queryForData();
                     }
                 });
@@ -106,7 +108,7 @@ function(connectionService, datasetService, errorNotificationService) {
              * @private
              */
             var onFiltersChanged = function(message) {
-                if(message.addedFilter && message.addedFilter.databaseName === $scope.databaseName && message.addedFilter.tableName === $scope.options.selectedTable.name) {
+                if(message.addedFilter && message.addedFilter.databaseName === $scope.options.database && message.addedFilter.tableName === $scope.options.table) {
                     $scope.queryForData();
                 }
             };
@@ -130,23 +132,28 @@ function(connectionService, datasetService, errorNotificationService) {
                     return;
                 }
 
-                $scope.databaseName = datasetService.getDatabase();
-                $scope.tables = datasetService.getTables();
-                $scope.options.selectedTable = datasetService.getFirstTableWithMappings(["x_axis", "y_axis"]) || $scope.tables[0];
+                $scope.databases = datasetService.getDatabaseNames();
+                $scope.options.database = $scope.databases[0];
 
                 if(initializing) {
-                    $scope.updateFieldsAndQueryForData();
+                    $scope.updateTables();
                 } else {
                     $scope.$apply(function() {
-                        $scope.updateFieldsAndQueryForData();
+                        $scope.updateTables();
                     });
                 }
             };
 
-            $scope.updateFieldsAndQueryForData = function() {
-                $scope.options.attrX = datasetService.getMapping($scope.options.selectedTable.name, "x_axis") || "";
-                $scope.options.attrY = datasetService.getMapping($scope.options.selectedTable.name, "y_axis") || "";
-                $scope.fields = datasetService.getDatabaseFields($scope.options.selectedTable.name);
+            $scope.updateTables = function() {
+                $scope.tables = datasetService.getTableNames($scope.options.database);
+                $scope.options.table = datasetService.getFirstTableWithMappings($scope.options.database, ["x_axis", "y_axis"]) || $scope.tables[0];
+                $scope.updateFields();
+            };
+
+            $scope.updateFields = function() {
+                $scope.options.attrX = datasetService.getMapping($scope.options.database, $scope.options.table, "x_axis") || "";
+                $scope.options.attrY = datasetService.getMapping($scope.options.database, $scope.options.table, "y_axis") || "";
+                $scope.fields = datasetService.getDatabaseFields($scope.options.database, $scope.options.table);
                 $scope.fields.sort();
                 $scope.queryForData(true);
             };
@@ -157,14 +164,14 @@ function(connectionService, datasetService, errorNotificationService) {
                     $scope.errorMessage = undefined;
                 }
 
-                var xAxis = $scope.options.attrX || datasetService.getMapping($scope.options.selectedTable.name, "x_axis");
-                var yAxis = $scope.options.attrY || datasetService.getMapping($scope.options.selectedTable.name, "y_axis");
+                var xAxis = $scope.options.attrX || datasetService.getMapping($scope.options.database, $scope.options.table, "x_axis");
+                var yAxis = $scope.options.attrY || datasetService.getMapping($scope.options.database, $scope.options.table, "y_axis");
                 if(!yAxis) {
                     yAxis = COUNT_FIELD_NAME;
                 }
 
                 var query = new neon.query.Query()
-                    .selectFrom($scope.databaseName, $scope.options.selectedTable.name)
+                    .selectFrom($scope.options.database, $scope.options.table)
                     .where(xAxis, '!=', null)
                     .where(yAxis, yRuleComparator, yRuleVal)
                     .groupBy(xAxis);
@@ -199,8 +206,8 @@ function(connectionService, datasetService, errorNotificationService) {
             };
 
             $scope.queryForData = function() {
-                var xAxis = $scope.options.attrX || datasetService.getMapping($scope.options.selectedTable.name, "x_axis");
-                var yAxis = $scope.options.attrY || datasetService.getMapping($scope.options.selectedTable.name, "y_axis");
+                var xAxis = $scope.options.attrX || datasetService.getMapping($scope.options.database, $scope.options.table, "x_axis");
+                var yAxis = $scope.options.attrY || datasetService.getMapping($scope.options.database, $scope.options.table, "y_axis");
                 if(!yAxis) {
                     yAxis = COUNT_FIELD_NAME;
                 }
@@ -290,8 +297,8 @@ function(connectionService, datasetService, errorNotificationService) {
             var doDrawChart = function(data) {
                 charts.BarChart.destroy($element[0], '.barchart');
 
-                var xAxis = datasetService.getMapping($scope.options.selectedTable.name, "x_axis") || $scope.options.attrX;
-                var yAxis = datasetService.getMapping($scope.options.selectedTable.name, "y_axis") || $scope.options.attrY;
+                var xAxis = datasetService.getMapping($scope.options.database, $scope.options.table, "x_axis") || $scope.options.attrX;
+                var yAxis = datasetService.getMapping($scope.options.database, $scope.options.table, "y_axis") || $scope.options.attrY;
                 if(!yAxis) {
                     yAxis = COUNT_FIELD_NAME;
                 }

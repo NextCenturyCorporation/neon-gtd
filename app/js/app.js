@@ -135,9 +135,12 @@ angular.element(document).ready(function() {
 
         var dashboardConfig = config.dashboard || {
             gridsterColumns: 6,
-            hideNavbarItems: false
+            gridsterMargins: 10,
+            hideNavbarItems: false,
+            hideAdvancedOptions: false,
+            hideErrorNotifications: false,
+            hideHeader: false
         };
-        dashboardConfig.gridsterColumns = dashboardConfig.gridsterColumns ? dashboardConfig.gridsterColumns : 6;
         neonDemo.constant('config', dashboardConfig);
 
         neonDemo.value('popups', {

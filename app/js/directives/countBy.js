@@ -24,7 +24,13 @@ function(external, popups, connectionService, datasetService, errorNotificationS
         restrict: 'EA',
         scope: {
             bindCountField: '=',
-            bindTable: '='
+            bindAggregation: '=',
+            bindAggregationField: '=',
+            bindTable: '=',
+            bindDatabase: '=',
+            usePrettyNames: '=?',
+            hideHeader: '=?',
+            hideAdvancedOptions: '=?'
         },
         link: function($scope, $element) {
             $element.addClass('countByDirective');
@@ -35,7 +41,7 @@ function(external, popups, connectionService, datasetService, errorNotificationS
             // This name should be one that is highly unlikely to be a column name in a real database.
             $scope.EXTERNAL_APP_FIELD_NAME = "neonExternalApps";
 
-            $scope.databaseName = "";
+            $scope.databases = [];
             $scope.tables = [];
             $scope.count = 0;
             $scope.fields = [];
@@ -45,10 +51,11 @@ function(external, popups, connectionService, datasetService, errorNotificationS
             $scope.errorMessage = undefined;
 
             $scope.options = {
-                selectedTable: {
-                    name: ""
-                },
-                countField: ""
+                database: "",
+                table: "",
+                field: "",
+                aggregation: "",
+                aggregationField: ""
             };
 
             var $tableDiv = $element.find('.count-by-grid');
@@ -85,20 +92,6 @@ function(external, popups, connectionService, datasetService, errorNotificationS
                 });
                 $scope.messenger.subscribe("dataset_changed", onDatasetChanged);
 
-                $scope.$watch('options.countField', function() {
-                    XDATA.userALE.log({
-                        activity: "select",
-                        action: "click",
-                        elementId: "count-by",
-                        elementType: "combobox",
-                        elementSub: "count-by",
-                        elementGroup: "table_group",
-                        source: "user",
-                        tags: ["options", "count-by"]
-                    });
-                    $scope.queryForData();
-                });
-
                 $scope.$on('$destroy', function() {
                     XDATA.userALE.log({
                         activity: "remove",
@@ -121,6 +114,34 @@ function(external, popups, connectionService, datasetService, errorNotificationS
                 $element.resize(updateSize);
             };
 
+            var logOptionsMenuDropdownChange = function(element, value) {
+                XDATA.userALE.log({
+                    activity: "select",
+                    action: "click",
+                    elementId: "count-by",
+                    elementType: "combobox",
+                    elementSub: element,
+                    elementGroup: "table_group",
+                    source: "user",
+                    tags: ["options", "count-by", value]
+                });
+            };
+
+            $scope.handleChangeField = function() {
+                logOptionsMenuDropdownChange("count-field", $scope.options.field);
+                $scope.queryForData();
+            };
+
+            $scope.handleChangeAggregation = function() {
+                logOptionsMenuDropdownChange("aggregation", $scope.options.aggregation);
+                $scope.queryForData();
+            };
+
+            $scope.handleChangeAggregationField = function() {
+                logOptionsMenuDropdownChange("aggregation-field", $scope.options.aggregationField);
+                $scope.queryForData();
+            };
+
             function createOptions(data) {
                 var options = {
                     data: data.data,
@@ -136,15 +157,42 @@ function(external, popups, connectionService, datasetService, errorNotificationS
                 return options;
             }
 
-            var createColumns = function(data) {
-                var columns = tables.createColumns(data);
-                for(var i = 0; i < columns.length; ++i) {
-                    // Since forceFitColumns is enabled, setting this width will force the columns to use as much
-                    // space as possible, which is necessary to keep the first column as small as possible.
-                    columns[i].width = $tableDiv.outerWidth();
+            var createAggregationColumnName = function() {
+                if($scope.options.aggregation === "count") {
+                    return $scope.usePrettyNames ? "Count" : "count";
                 }
 
-                if(external.anyEnabled) {
+                var aggregationFieldName = $scope.usePrettyNames ? datasetService.getPrettyField($scope.options.table, $scope.options.aggregationField) : $scope.options.aggregationField;
+
+                if($scope.options.aggregation === "min") {
+                    return ($scope.usePrettyNames ? "Min " : "min ") + aggregationFieldName;
+                }
+
+                if($scope.options.aggregation === "max") {
+                    return ($scope.usePrettyNames ? "Max " : "max ") + aggregationFieldName;
+                }
+
+                return "";
+            };
+
+            var createColumns = function(data) {
+                var fieldName = $scope.usePrettyNames ? datasetService.getPrettyField($scope.options.table, $scope.options.field) : $scope.options.field;
+
+                // Since forceFitColumns is enabled, setting this width will force the columns to use as much
+                // space as possible, which is necessary to keep the first column as small as possible.
+                var tableWidth = $tableDiv.outerWidth();
+
+                var columns = [{
+                    name: fieldName,
+                    field: $scope.options.field,
+                    width: tableWidth
+                }, {
+                    name: createAggregationColumnName(),
+                    field: $scope.options.aggregation === "count" ? "count" : $scope.options.aggregationField,
+                    width: tableWidth
+                }]
+
+                if(external.anyEnabled && data.length) {
                     var externalAppColumn = {
                         name: "",
                         field: $scope.EXTERNAL_APP_FIELD_NAME,
@@ -194,7 +242,7 @@ function(external, popups, connectionService, datasetService, errorNotificationS
                     source: "system",
                     tags: ["filter-change", "count-by"]
                 });
-                if(message.addedFilter && message.addedFilter.databaseName === $scope.databaseName && message.addedFilter.tableName === $scope.options.selectedTable.name) {
+                if(message.addedFilter && message.addedFilter.databaseName === $scope.options.database && message.addedFilter.tableName === $scope.options.table) {
                     $scope.queryForData();
                 }
             };
@@ -228,24 +276,38 @@ function(external, popups, connectionService, datasetService, errorNotificationS
                     return;
                 }
 
-                $scope.databaseName = datasetService.getDatabase();
-                $scope.tables = datasetService.getTables();
-                $scope.options.selectedTable = $scope.bindTable || datasetService.getFirstTableWithMappings(["count_by"]) || $scope.tables[0];
-                $scope.filterKeys = filterService.createFilterKeys("countby", $scope.tables);
+                $scope.databases = datasetService.getDatabaseNames();
+                $scope.options.database = $scope.databases[0];
+                if($scope.bindDatabase && $scope.databases.indexOf($scope.bindDatabase) >= 0) {
+                    $scope.options.database = $scope.bindDatabase;
+                }
+                $scope.filterKeys = filterService.createFilterKeys("countby", datasetService.getDatabaseAndTableNames());
 
                 if(initializing) {
-                    $scope.updateFieldsAndQueryForData();
+                    $scope.updateTables();
                 } else {
                     $scope.$apply(function() {
-                        $scope.updateFieldsAndQueryForData();
+                        $scope.updateTables();
                     });
                 }
             };
 
-            $scope.updateFieldsAndQueryForData = function() {
-                $scope.fields = datasetService.getDatabaseFields($scope.options.selectedTable.name);
+            $scope.updateTables = function() {
+                $scope.tables = datasetService.getTableNames($scope.options.database);
+                if($scope.bindTable && $scope.tables.indexOf($scope.bindTable) >= 0) {
+                    $scope.options.table = $scope.bindTable;
+                } else {
+                    $scope.options.table = datasetService.getFirstTableNameWithMappings($scope.options.database, ["count_by"]) || $scope.tables[0];
+                }
+                $scope.updateFields();
+            };
+
+            $scope.updateFields = function() {
+                $scope.fields = datasetService.getDatabaseFields($scope.options.database, $scope.options.table);
                 $scope.fields.sort();
-                $scope.options.countField = $scope.bindCountField || datasetService.getMapping($scope.options.selectedTable.name, "count_by") || "";
+                $scope.options.field = $scope.bindCountField || datasetService.getMapping($scope.options.database, $scope.options.table, "count_by") || "";
+                $scope.options.aggregation = $scope.bindAggregation || "count";
+                $scope.options.aggregationField = $scope.bindAggregationField || "";
                 if($scope.filterSet) {
                     $scope.clearFilter();
                 }
@@ -263,7 +325,7 @@ function(external, popups, connectionService, datasetService, errorNotificationS
              * @method queryForData
              */
             $scope.queryForData = function() {
-                if(!$scope.options.countField) {
+                if(!$scope.options.field || ($scope.options.aggregation !== "count" && !$scope.options.aggregationField)) {
                     $scope.updateData({
                         data: []
                     });
@@ -340,8 +402,12 @@ function(external, popups, connectionService, datasetService, errorNotificationS
                 var cleanData = [];
                 for(var i = 0; i < data.length; i++) {
                     var row = {};
-                    row[$scope.options.countField] = data[i][$scope.options.countField];
-                    row.count = data[i].count;
+                    row[$scope.options.field] = data[i][$scope.options.field];
+                    if($scope.options.aggregation === "count") {
+                        row.count = data[i].count;
+                    } else {
+                        row[$scope.options.aggregationField] = data[i][$scope.options.aggregationField];
+                    }
                     cleanData.push(row);
                 }
                 dataObject.data = cleanData;
@@ -352,8 +418,8 @@ function(external, popups, connectionService, datasetService, errorNotificationS
                 var tableLinks = [];
 
                 data.data.forEach(function(row) {
-                    var field = $scope.options.countField;
-                    var value = row[$scope.options.countField];
+                    var field = $scope.options.field;
+                    var value = row[$scope.options.field];
                     var query = field + "=" + value;
 
                     var links = [];
@@ -416,7 +482,7 @@ function(external, popups, connectionService, datasetService, errorNotificationS
 
                 var connection = connectionService.getActiveConnection();
                 if($scope.messenger && connection) {
-                    var relations = datasetService.getRelations($scope.options.selectedTable.name, [field]);
+                    var relations = datasetService.getRelations($scope.options.database, $scope.options.table, [field]);
                     if(filterExists) {
                         XDATA.userALE.log({
                             activity: "select",
@@ -452,8 +518,8 @@ function(external, popups, connectionService, datasetService, errorNotificationS
              * @method createFilterClauseForCount
              * @return {Object} A neon.query.Filter object
              */
-            $scope.createFilterClauseForCount = function(tableName, countFieldName) {
-                return neon.query.where(countFieldName, '=', $scope.filterValue);
+            $scope.createFilterClauseForCount = function(tableName, fieldName) {
+                return neon.query.where(fieldName, '=', $scope.filterValue);
             };
 
             /**
@@ -474,7 +540,9 @@ function(external, popups, connectionService, datasetService, errorNotificationS
                     }
 
                     $tableDiv.addClass("filtered");
-                    $scope.setFilter(field, row[field]);
+                    $scope.$apply(function() {
+                        $scope.setFilter(field, row[field]);
+                    });
                 });
             };
 
@@ -492,13 +560,17 @@ function(external, popups, connectionService, datasetService, errorNotificationS
 
                 var cleanData = $scope.stripIdField(queryResults);
 
-                // If the table is recreated while sorting is set, we must redo the sorting on the new table.
-                var sortInfo = $scope.table ? $scope.table.sortInfo_ : {};
+                // If the table is recreated while sorting is set, we must redo the sorting on the new table; else, sort the table by the aggregation field.
+                var sortInfo = $scope.table ? $scope.table.sortInfo_ : {
+                    name: createAggregationColumnName(),
+                    field: $scope.options.aggregation === "count" ? "count" : $scope.options.aggregationField,
+                    sortAsc: false
+                };
 
                 $scope.tableOptions = createOptions(cleanData);
 
                 // Add the URLs for the external applications after the table options have been created because it already includes the column.
-                if(external.anyEnabled) {
+                if(external.anyEnabled && cleanData.data.length) {
                     cleanData = $scope.addExternalAppUrlColumnData(cleanData);
                 }
 
@@ -507,9 +579,7 @@ function(external, popups, connectionService, datasetService, errorNotificationS
                 $scope.addOnClickListener();
                 updateSize();
 
-                if(sortInfo.hasOwnProperty("field") && sortInfo.hasOwnProperty("sortAsc")) {
-                    $scope.table.sortColumnAndChangeGlyph(sortInfo);
-                }
+                $scope.table.sortColumnAndChangeGlyph(sortInfo);
 
                 // If the table is recreated while a filter is set, we must re-select the filtered row/cells.
                 if($scope.filterSet !== undefined) {
@@ -533,11 +603,20 @@ function(external, popups, connectionService, datasetService, errorNotificationS
              * @method buildQuery
              */
             $scope.buildQuery = function() {
-                var query = new neon.query.Query().selectFrom($scope.databaseName, $scope.options.selectedTable.name).groupBy($scope.options.countField);
+                var query = new neon.query.Query().selectFrom($scope.options.database, $scope.options.table).groupBy($scope.options.field);
 
                 // The widget displays its own ignored rows with 0.5 opacity.
-                query.ignoreFilters([$scope.filterKeys[$scope.options.selectedTable.name]]);
-                query.aggregate(neon.query.COUNT, '*', 'count');
+                query.ignoreFilters([$scope.filterKeys[$scope.options.database][$scope.options.table]]);
+
+                if($scope.options.aggregation === "count") {
+                    query.aggregate(neon.query.COUNT, '*', 'count');
+                }
+                if($scope.options.aggregation === "min") {
+                    query.aggregate(neon.query.MIN, $scope.options.aggregationField, $scope.options.aggregationField);
+                }
+                if($scope.options.aggregation === "max") {
+                    query.aggregate(neon.query.MAX, $scope.options.aggregationField, $scope.options.aggregationField);
+                }
 
                 return query;
             };

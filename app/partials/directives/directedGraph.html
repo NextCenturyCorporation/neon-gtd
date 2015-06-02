@@ -1,28 +1,34 @@
-<div class="header-container">
-    <span class="header-text pull-left">{{options.selectedTable.name}}</span>
+<div class="header-container" ng-show="!(hideHeader)">
+    <span class="header-text pull-left">{{options.table}}</span>
 
     <options-menu parent-element="element" button-text="optionsMenuButtonText" show-button-text="showOptionsMenuButtonText">
-        <div class="form-group">
-            <label>Table</label>
-            <select class="form-control" ng-model="options.selectedTable" ng-options="table.name for table in tables" ng-required="true" ng-disabled="(tables.length < 2)" ng-change="updateFieldsAndQueryForData()">
+        <div class="form-group" ng-show="!(hideAdvancedOptions)">
+            <label>Database</label>
+            <select class="form-control" ng-model="options.database" ng-options="database for database in databases" ng-required="true" ng-disabled="(databases.length < 2)" ng-change="updateTables()">
             </select>
         </div>
 
-        <div class="form-group">
-            <label>Node Field</label>
+        <div class="form-group" ng-show="!(hideAdvancedOptions)">
+            <label>Table</label>
+            <select class="form-control" ng-model="options.table" ng-options="table for table in tables" ng-required="true" ng-disabled="(tables.length < 2)" ng-change="updateFields()">
+            </select>
+        </div>
+
+        <div class="form-group" ng-show="!(hideAdvancedOptions)">
+            <label>Source Node Field</label>
             <select class="form-control" ng-model="options.selectedNodeField" ng-options="field for field in fields" ng-required="true" ng-disabled="(fields.length == 0)" ng-change="clearFilters()">
             </select>
         </div>
 
-        <div class="form-group">
-            <label>Link(s) Field</label>
+        <div class="form-group" ng-show="!(hideAdvancedOptions)">
+            <label>Target Node(s) Field</label>
             <select class="form-control" ng-model="options.selectedLinkField" ng-options="field for field in fields" ng-required="false" ng-disabled="(fields.length == 0)" ng-change="clearFilters()">
                 <option value=""></option>
             </select>
         </div>
         <div class="form-group">
             <label>Filter on {{options.selectedNodeField}}</label>
-            <select class="form-control" ng-model="options.selectedNode" ng-options="node for node in nodes track by node" ng-required="false" ng-disabled="(nodes.length == 0) || !(options.selectedNodeField)">
+            <select class="form-control" ng-model="options.selectedNode" ng-options="node for node in nodes track by node" ng-required="false" ng-disabled="(nodes.length == 0) || !(options.selectedNodeField)" ng-change="selectNode()">
                 <option value=""></option>
             </select>
         </div>
@@ -44,11 +50,9 @@
 <div class="clearfix"></div>
 
 <div class="header-container filter-container" ng-show="(filteredNodes.length > 0)">
-    <div class="filter-reset pull-right" ng-repeat="value in filteredNodes">
-        {{value}}
-        <a class="btn" ng-click="removeFilter(value)">
-         <span class="glyphicon glyphicon-remove"></span>
-        </a>
+    <div class="filter-reset pull-right" ng-repeat="value in filteredNodes" title="{{options.selectedNodeField}}={{value}}">
+        <span class="filter-label">{{options.selectedNodeField}}={{value}}</span>
+        <span class="glyphicon glyphicon-remove" ng-click="removeFilter(value)"></span>
     </div>
 </div>
 
