@@ -171,7 +171,7 @@ function(connectionService, datasetService, errorNotificationService, filterServ
 
                 // Switch bucketizers when the granularity is changed.
                 $scope.$watch('options.granularity', function(newVal, oldVal) {
-                    if(newVal && newVal !== oldVal) {
+                    if(!$scope.loadingData && newVal && newVal !== oldVal) {
                         XDATA.userALE.log({
                             activity: "alter",
                             action: "click",
@@ -348,6 +348,7 @@ function(connectionService, datasetService, errorNotificationService, filterServ
             };
 
             $scope.updateFields = function() {
+                $scope.loadingData = true;
                 $scope.fields = datasetService.getDatabaseFields($scope.options.database, $scope.options.table);
                 $scope.fields.sort();
                 $scope.options.dateField = $scope.bindDateField || datasetService.getMapping($scope.options.database, $scope.options.table, "date") || "date";
@@ -379,12 +380,13 @@ function(connectionService, datasetService, errorNotificationService, filterServ
 
                 var connection = connectionService.getActiveConnection();
 
-                if($scope.loadingData || !connection) {
+                if(!connection) {
+                    $scope.updateChartData({
+                        data: []
+                    });
+                    $scope.loadingData = false;
                     return;
                 }
-
-                // TODO
-                // $scope.loadingData = true;
 
                 var query = new neon.query.Query()
                     .selectFrom($scope.options.database, $scope.options.table)
@@ -879,6 +881,13 @@ function(connectionService, datasetService, errorNotificationService, filterServ
                 });
                 $scope.brush = [];
                 filterService.removeFilters($scope.messenger, $scope.filterKeys);
+            };
+
+            $scope.updateDateField = function() {
+                // TODO Logging
+                if(!$scope.loadingData) {
+                    $scope.resetAndQueryForChartData();
+                }
             };
 
             // Wait for neon to be ready, the create our messenger and intialize the view and data.

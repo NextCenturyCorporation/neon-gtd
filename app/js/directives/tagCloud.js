@@ -183,6 +183,7 @@ function(connectionService, datasetService, errorNotificationService, filterServ
             };
 
             $scope.updateFields = function() {
+                $scope.loadingData = true;
                 $scope.fields = datasetService.getDatabaseFields($scope.options.database, $scope.options.table);
                 $scope.fields.sort();
                 $scope.options.tagField = $scope.bindTagField || datasetService.getMapping($scope.options.database, $scope.options.table, "tags") || $scope.fields[0] || "";
@@ -205,17 +206,11 @@ function(connectionService, datasetService, errorNotificationService, filterServ
 
                 var connection = connectionService.getActiveConnection();
 
-                if($scope.loadingData || !connection) {
-                    return;
-                }
-
-                if(!$scope.options.tagField) {
+                if(!connection || !$scope.options.tagField) {
                     $scope.updateTagData([]);
+                    $scope.loadingData = false;
                     return;
                 }
-
-                // TODO
-                // $scope.loadingData = true;
 
                 XDATA.userALE.log({
                     activity: "alter",
@@ -399,6 +394,13 @@ function(connectionService, datasetService, errorNotificationService, filterServ
                 });
                 $scope.filterTags = _.without($scope.filterTags, tagName);
             };
+
+            $scope.updateTagField = function() {
+                // TODO Logging
+                if(!$scope.loadingData) {
+                    $scope.queryForTags();
+                }
+            }
 
             // Wait for neon to be ready, the create our messenger and intialize the view and data.
             neon.ready(function() {

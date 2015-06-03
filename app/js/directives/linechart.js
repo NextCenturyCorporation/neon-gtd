@@ -117,25 +117,25 @@ function(connectionService, datasetService, errorNotificationService, $timeout) 
 
                 $scope.$watch('options.attrX', function(newValue) {
                     onFieldChange('attrX', newValue);
-                    if($scope.options.database && $scope.options.table) {
+                    if(!$scope.loadingData && $scope.options.database && $scope.options.table) {
                         $scope.queryForData();
                     }
                 });
                 $scope.$watch('options.attrY', function(newValue) {
                     onFieldChange('attrY', newValue);
-                    if($scope.options.database && $scope.options.table) {
+                    if(!$scope.loadingData && $scope.options.database && $scope.options.table) {
                         $scope.queryForData();
                     }
                 });
                 $scope.$watch('options.categoryField', function(newValue) {
                     onFieldChange('categoryField', newValue);
-                    if($scope.options.database && $scope.options.table) {
+                    if(!$scope.loadingData && $scope.options.database && $scope.options.table) {
                         $scope.queryForData();
                     }
                 });
                 $scope.$watch('options.aggregation', function(newValue) {
                     onFieldChange('aggregation', newValue);
-                    if($scope.options.database && $scope.options.table) {
+                    if(!$scope.loadingData && $scope.options.database && $scope.options.table) {
                         $scope.queryForData();
                     }
                 });
@@ -184,17 +184,11 @@ function(connectionService, datasetService, errorNotificationService, $timeout) 
 
                 var connection = connectionService.getActiveConnection();
 
-                if($scope.loadingData || !connection) {
-                    return;
-                }
-
-                if(!$scope.options.attrX || (!$scope.options.attrY && $scope.options.aggregation !== "count")) {
+                if(!connection || !$scope.options.attrX || (!$scope.options.attrY && $scope.options.aggregation !== "count")) {
                     drawChart();
+                    $scope.loadingData = false;
                     return;
                 }
-
-                // TODO
-                // $scope.loadingData = true;
 
                 var yearGroupClause = new neon.query.GroupByFunctionClause(neon.query.YEAR, $scope.options.attrX, 'year');
                 var monthGroupClause = new neon.query.GroupByFunctionClause(neon.query.MONTH, $scope.options.attrX, 'month');
@@ -285,6 +279,7 @@ function(connectionService, datasetService, errorNotificationService, $timeout) 
             };
 
             $scope.updateFields = function() {
+                $scope.loadingData = true;
                 $scope.options.attrX = $scope.bindDateField || datasetService.getMapping($scope.options.database, $scope.options.table, "date") || "";
                 $scope.options.attrY = $scope.bindYAxisField || datasetService.getMapping($scope.options.database, $scope.options.table, "y_axis") || "";
                 $scope.options.categoryField = $scope.bindCategoryField || datasetService.getMapping($scope.options.database, $scope.options.table, "line_category") || "";

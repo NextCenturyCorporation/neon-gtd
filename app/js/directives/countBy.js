@@ -129,17 +129,23 @@ function(external, popups, connectionService, datasetService, errorNotificationS
 
             $scope.handleChangeField = function() {
                 logOptionsMenuDropdownChange("count-field", $scope.options.field);
-                $scope.queryForData();
+                if(!$scope.loadingData) {
+                    $scope.queryForData();
+                }
             };
 
             $scope.handleChangeAggregation = function() {
                 logOptionsMenuDropdownChange("aggregation", $scope.options.aggregation);
-                $scope.queryForData();
+                if(!$scope.loadingData) {
+                    $scope.queryForData();
+                }
             };
 
             $scope.handleChangeAggregationField = function() {
                 logOptionsMenuDropdownChange("aggregation-field", $scope.options.aggregationField);
-                $scope.queryForData();
+                if(!$scope.loadingData) {
+                    $scope.queryForData();
+                }
             };
 
             function createOptions(data) {
@@ -284,6 +290,7 @@ function(external, popups, connectionService, datasetService, errorNotificationS
             };
 
             $scope.updateFields = function() {
+                $scope.loadingData = true;
                 $scope.fields = datasetService.getDatabaseFields($scope.options.database, $scope.options.table);
                 $scope.fields.sort();
                 $scope.options.field = $scope.bindCountField || datasetService.getMapping($scope.options.database, $scope.options.table, "count_by") || "";
@@ -313,19 +320,13 @@ function(external, popups, connectionService, datasetService, errorNotificationS
 
                 var connection = connectionService.getActiveConnection();
 
-                if($scope.loadingData || !connection) {
-                    return;
-                }
-
-                if(!$scope.options.field || ($scope.options.aggregation !== "count" && !$scope.options.aggregationField)) {
+                if(!connection || !$scope.options.field || ($scope.options.aggregation !== "count" && !$scope.options.aggregationField)) {
                     $scope.updateData({
                         data: []
                     });
+                    $scope.loadingData = false;
                     return;
                 }
-
-                // TODO
-                // $scope.loadingData = true;
 
                 var query = $scope.buildQuery();
 

@@ -276,6 +276,7 @@ function(external, popups, connectionService, datasetService, errorNotificationS
             };
 
             $scope.updateFields = function() {
+                $scope.loadingData = true;
                 $scope.fields = datasetService.getDatabaseFields($scope.options.database, $scope.options.table);
                 $scope.fields.sort();
                 $scope.options.addField = "";
@@ -328,12 +329,14 @@ function(external, popups, connectionService, datasetService, errorNotificationS
 
                 var connection = connectionService.getActiveConnection();
 
-                if($scope.loadingData || !connection || !$scope.showData) {
+                if(!connection || !$scope.showData) {
+                    $scope.updateData({
+                        data: []
+                    });
+                    $scope.totalRows = 0;
+                    $scope.loadingData = false;
                     return;
                 }
-
-                // TODO
-                // $scope.loadingData = true;
 
                 var query = $scope.buildQuery();
 

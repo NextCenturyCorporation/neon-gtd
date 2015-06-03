@@ -147,9 +147,9 @@ function(connectionService, datasetService, errorNotificationService, filterServ
                         source: "user",
                         tags: ["options", "map", "latitude"]
                     });
-                    if(newVal) {
+                    if(newVal && newVal !== oldVal) {
                         $scope.map.latitudeMapping = newVal;
-                        if(newVal !== oldVal) {
+                        if(!$scope.loadingData) {
                             $scope.draw();
                         }
                     }
@@ -169,7 +169,7 @@ function(connectionService, datasetService, errorNotificationService, filterServ
                     });
                     if(newVal) {
                         $scope.map.longitudeMapping = newVal;
-                        if(newVal !== oldVal) {
+                        if(!$scope.loadingData && newVal !== oldVal) {
                             $scope.draw();
                         }
                     }
@@ -189,7 +189,9 @@ function(connectionService, datasetService, errorNotificationService, filterServ
                     });
                     if($scope.options.showPoints) {
                         $scope.setMapSizeMapping(newVal);
-                        $scope.draw();
+                        if(!$scope.loadingData) {
+                            $scope.draw();
+                        }
                     }
                 });
 
@@ -207,7 +209,9 @@ function(connectionService, datasetService, errorNotificationService, filterServ
                     });
                     $scope.map.resetColorMappings();
                     $scope.setMapCategoryMapping(newVal);
-                    $scope.draw();
+                    if(!$scope.loadingData) {
+                        $scope.draw();
+                    }
                 });
 
                 // Toggle the points and clusters view when the user toggles between them.
@@ -227,7 +231,9 @@ function(connectionService, datasetService, errorNotificationService, filterServ
                         } else {
                             $scope.setMapSizeMapping('');
                         }
-                        $scope.map.draw();
+                        if(!$scope.loadingData) {
+                            $scope.map.draw();
+                        }
                         $scope.map.toggleLayers();
                     }
                 });
@@ -483,6 +489,7 @@ function(connectionService, datasetService, errorNotificationService, filterServ
             };
 
             $scope.updateFields = function() {
+                $scope.loadingData = true;
                 $scope.fields = datasetService.getDatabaseFields($scope.options.database, $scope.options.table);
                 $scope.fields.sort();
                 $scope.options.latitudeField = $scope.bindLatitudeField || datasetService.getMapping($scope.options.database, $scope.options.table, "latitude") || "";
@@ -511,19 +518,13 @@ function(connectionService, datasetService, errorNotificationService, filterServ
 
                 var connection = connectionService.getActiveConnection();
 
-                if($scope.loadingData || !connection) {
-                    return;
-                }
-                
-                if(!$scope.options.latitudeField || !$scope.options.longitudeField) {
+                if(!connection || !$scope.options.latitudeField || !$scope.options.longitudeField) {
                     $scope.updateMapData({
                         data: []
                     });
+                    $scope.loadingData = false;
                     return;
                 }
-
-                // TODO
-                // $scope.loadingData = true;
 
                 var query = $scope.buildPointQuery();
 

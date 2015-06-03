@@ -93,13 +93,13 @@ function(connectionService, datasetService, errorNotificationService) {
                 $element.resize(updateChartSize);
 
                 $scope.$watch('options.valueField', function(newValue, oldValue) {
-                    if(newValue !== oldValue) {
+                    if(!$scope.loadingData && newValue !== oldValue) {
                         $scope.queryForData();
                     }
                 }, true);
 
                 $scope.$watch('arcValue', function(newValue, oldValue) {
-                    if(newValue !== oldValue) {
+                    if(!$scope.loadingData && ewValue !== oldValue) {
                         $scope.chart.displayPartition(newValue);
                     }
                 });
@@ -197,6 +197,7 @@ function(connectionService, datasetService, errorNotificationService) {
             };
 
             $scope.updateFields = function() {
+                $scope.loadingData = true;
                 $scope.fields = datasetService.getDatabaseFields($scope.options.database, $scope.options.table);
                 $scope.fields.sort();
                 $scope.queryForData();
@@ -210,12 +211,13 @@ function(connectionService, datasetService, errorNotificationService) {
 
                 var connection = connectionService.getActiveConnection();
 
-                if($scope.loadingData || !connection) {
+                if(!connection) {
+                    doDrawChart(buildDataTree({
+                        data: []
+                    }));
+                    $scope.loadingData = false;
                     return;
                 }
-
-                // TODO
-                // $scope.loadingData = true;
 
                 var query = $scope.buildQuery();
 

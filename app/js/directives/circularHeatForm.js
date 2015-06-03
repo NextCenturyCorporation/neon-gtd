@@ -194,6 +194,7 @@ function(connectionService, datasetService, errorNotificationService) {
             };
 
             $scope.updateFields = function() {
+                $scope.loadingData = true;
                 $scope.fields = datasetService.getDatabaseFields($scope.options.database, $scope.options.table);
                 $scope.fields.sort();
                 $scope.options.dateField = $scope.bindDateField || datasetService.getMapping($scope.options.database, $scope.options.table, "date") || "";
@@ -212,19 +213,13 @@ function(connectionService, datasetService, errorNotificationService) {
 
                 var connection = connectionService.getActiveConnection();
 
-                if($scope.loadingData || !connection) {
-                    return;
-                }
-
-                if(!$scope.options.dateField) {
+                if(!connection || !$scope.options.dateField) {
                     $scope.updateChartData({
                         data: []
                     });
+                    $scope.loadingData = false;
                     return;
                 }
-
-                // TODO
-                // $scope.loadingData = true;
 
                 //TODO: NEON-603 Add support for dayOfWeek to query API
                 var groupByDayClause = new neon.query.GroupByFunctionClause('dayOfWeek', $scope.options.dateField, 'day');
@@ -364,6 +359,13 @@ function(connectionService, datasetService, errorNotificationService) {
                 });
 
                 return data;
+            };
+
+            $scope.updateDateField = function() {
+                // TODO Logging
+                if(!$scope.loadingData) {
+                    $scope.queryForChartData();
+                }
             };
 
             // Wait for neon to be ready, the create our messenger and intialize the view and data.

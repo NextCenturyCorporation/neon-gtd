@@ -104,47 +104,49 @@ function(connectionService, datasetService, errorNotificationService, filterServ
                 });
 
                 $scope.$watch('options.attrX', function() {
-                    if($scope.options.database && $scope.options.table) {
-                        XDATA.userALE.log({
-                            activity: "select",
-                            action: "click",
-                            elementId: "barchart",
-                            elementType: "combobox",
-                            elementSub: "barchart-x-axis",
-                            elementGroup: "chart_group",
-                            source: "user",
-                            tags: ["options", "barchart"]
-                        });
+                    XDATA.userALE.log({
+                        activity: "select",
+                        action: "click",
+                        elementId: "barchart",
+                        elementType: "combobox",
+                        elementSub: "barchart-x-axis",
+                        elementGroup: "chart_group",
+                        source: "user",
+                        tags: ["options", "barchart"]
+                    });
+                    if(!$scope.loadingData && $scope.options.database && $scope.options.table) {
                         $scope.queryForData(true);
                     }
                 });
+
                 $scope.$watch('options.attrY', function() {
-                    if($scope.options.database && $scope.options.table) {
-                        XDATA.userALE.log({
-                            activity: "select",
-                            action: "click",
-                            elementId: "barchart",
-                            elementType: "combobox",
-                            elementSub: "barchart-y-axis",
-                            elementGroup: "chart_group",
-                            source: "user",
-                            tags: ["options", "barchart"]
-                        });
+                    XDATA.userALE.log({
+                        activity: "select",
+                        action: "click",
+                        elementId: "barchart",
+                        elementType: "combobox",
+                        elementSub: "barchart-y-axis",
+                        elementGroup: "chart_group",
+                        source: "user",
+                        tags: ["options", "barchart"]
+                    });
+                    if(!$scope.loadingData && $scope.options.database && $scope.options.table) {
                         $scope.queryForData(true);
                     }
                 });
+
                 $scope.$watch('options.barType', function() {
-                    if($scope.options.database && $scope.options.table) {
-                        XDATA.userALE.log({
-                            activity: "select",
-                            action: "click",
-                            elementId: "barchart",
-                            elementType: "combobox",
-                            elementSub: "barchart-aggregation",
-                            elementGroup: "chart_group",
-                            source: "user",
-                            tags: ["options", "barchart"]
-                        });
+                    XDATA.userALE.log({
+                        activity: "select",
+                        action: "click",
+                        elementId: "barchart",
+                        elementType: "combobox",
+                        elementSub: "barchart-aggregation",
+                        elementGroup: "chart_group",
+                        source: "user",
+                        tags: ["options", "barchart"]
+                    });
+                    if(!$scope.loadingData && $scope.options.database && $scope.options.table) {
                         $scope.queryForData(false);
                     }
                 });
@@ -214,6 +216,7 @@ function(connectionService, datasetService, errorNotificationService, filterServ
             };
 
             $scope.updateFields = function() {
+                $scope.loadingData = true;
                 $scope.options.attrX = $scope.bindXAxisField || datasetService.getMapping($scope.options.database, $scope.options.table, "bar_x_axis") || "";
                 $scope.options.attrY = $scope.bindYAxisField || datasetService.getMapping($scope.options.database, $scope.options.table, "y_axis") || "";
                 $scope.fields = datasetService.getDatabaseFields($scope.options.database, $scope.options.table);
@@ -232,17 +235,11 @@ function(connectionService, datasetService, errorNotificationService, filterServ
 
                 var connection = connectionService.getActiveConnection();
 
-                if($scope.loadingData || !connection) {
-                    return;
-                }
-
-                if(!$scope.options.attrX || (!$scope.options.attrY && $scope.options.barType !== "count")) {
+                if(!connection || !$scope.options.attrX || (!$scope.options.attrY && $scope.options.barType !== "count")) {
                     drawBlankChart();
+                    $scope.loadingData = false;
                     return;
                 }
-
-                // TODO
-                // $scope.loadingData = true;
 
                 var query = new neon.query.Query()
                     .selectFrom($scope.options.database, $scope.options.table)

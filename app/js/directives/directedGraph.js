@@ -207,6 +207,7 @@ angular.module('neonDemo.directives')
             };
 
             $scope.updateFields = function(initializing) {
+                $scope.loadingData = true;
                 $scope.fields = datasetService.getDatabaseFields($scope.options.database, $scope.options.table);
                 $scope.fields.sort();
                 $scope.options.selectedNodeField = datasetService.getMapping($scope.options.database, $scope.options.table, "graph_nodes") || "";
@@ -282,12 +283,15 @@ angular.module('neonDemo.directives')
 
                 var connection = connectionService.getActiveConnection();
 
-                if($scope.loadingData || !connection) {
+                if(!connection) {
+                    $scope.numberOfNodesInGraph = 0;
+                    $scope.graph.updateGraph({
+                        nodes: [],
+                        links: []
+                    });
+                    $scope.loadingData = false;
                     return;
                 }
-
-                // TODO
-                // $scope.loadingData = true;
 
                 if($scope.options.selectedNodeField) {
                     if($scope.filteredNodes.length) {
