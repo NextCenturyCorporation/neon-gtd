@@ -129,14 +129,14 @@ angular.module('neonDemo.directives')
                 $scope.selectedTable = server.databases[0].tables[0].name;
                 $scope.tableFields = server.databases[0].tables[0].fields;
                 $scope.tableFieldMappings = server.databases[0].tables[0].mappings;
-                $scope.updateLayout();
 
                 var databaseNames = [];
                 for(var i = 0; i < server.databases.length; ++i) {
                     databaseNames.push(server.databases[i].name);
                 }
 
-                $scope.updateDatabases(databaseNames);
+                // Update the layout (and create new visualizations) after the table/field names are added to the DatasetService so they are available to the new visualizations.
+                $scope.updateDatabases(databaseNames, $scope.updateLayout);
             };
 
             var populateDatabaseDropdown = function(dbs) {
@@ -173,7 +173,7 @@ angular.module('neonDemo.directives')
                 }
             };
 
-            $scope.updateDatabases = function(databaseNames) {
+            $scope.updateDatabases = function(databaseNames, updateCallback) {
                 var databaseName = databaseNames.shift();
 
                 var connection = connectionService.getActiveConnection();
@@ -200,7 +200,9 @@ angular.module('neonDemo.directives')
                             }
 
                             if(databaseNames.length) {
-                                $scope.updateDatabases(databaseNames);
+                                $scope.updateDatabases(databaseNames, updateCallback);
+                            } else if(updateCallback) {
+                                updateCallback();
                             }
                         });
                     });
