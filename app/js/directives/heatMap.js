@@ -65,13 +65,13 @@ function(connectionService, datasetService, errorNotificationService, filterServ
             $scope.tables = [];
             $scope.fields = [];
             $scope.cacheMap = false;
-            $scope.initializing = true;
             $scope.filterKeys = {};
             $scope.showFilter = false;
             $scope.dataBounds = undefined;
             $scope.dataLength = 0;
             $scope.resizeRedrawDelay = 1500; // Time in ms to wait after a resize event flood to try redrawing the map.
             $scope.errorMessage = undefined;
+            $scope.loadingData = false;
 
             $scope.options = {
                 database: "",
@@ -112,7 +112,6 @@ function(connectionService, datasetService, errorNotificationService, filterServ
                 $scope.messenger.events({
                     filtersChanged: onFiltersChanged
                 });
-                $scope.messenger.subscribe("dataset_changed", onDatasetChanged);
 
                 $scope.$on('$destroy', function() {
                     XDATA.userALE.log({
@@ -148,9 +147,9 @@ function(connectionService, datasetService, errorNotificationService, filterServ
                         source: "user",
                         tags: ["options", "map", "latitude"]
                     });
-                    if(newVal) {
+                    if(newVal && newVal !== oldVal) {
                         $scope.map.latitudeMapping = newVal;
-                        if(newVal !== oldVal) {
+                        if(!$scope.loadingData) {
                             $scope.draw();
                         }
                     }
@@ -170,7 +169,7 @@ function(connectionService, datasetService, errorNotificationService, filterServ
                     });
                     if(newVal) {
                         $scope.map.longitudeMapping = newVal;
-                        if(newVal !== oldVal) {
+                        if(!$scope.loadingData && newVal !== oldVal) {
                             $scope.draw();
                         }
                     }
@@ -190,7 +189,9 @@ function(connectionService, datasetService, errorNotificationService, filterServ
                     });
                     if($scope.options.showPoints) {
                         $scope.setMapSizeMapping(newVal);
-                        $scope.draw();
+                        if(!$scope.loadingData) {
+                            $scope.draw();
+                        }
                     }
                 });
 
@@ -208,7 +209,9 @@ function(connectionService, datasetService, errorNotificationService, filterServ
                     });
                     $scope.map.resetColorMappings();
                     $scope.setMapCategoryMapping(newVal);
-                    $scope.draw();
+                    if(!$scope.loadingData) {
+                        $scope.draw();
+                    }
                 });
 
                 // Toggle the points and clusters view when the user toggles between them.
@@ -228,7 +231,9 @@ function(connectionService, datasetService, errorNotificationService, filterServ
                         } else {
                             $scope.setMapSizeMapping('');
                         }
-                        $scope.map.draw();
+                        if(!$scope.loadingData) {
+                            $scope.map.draw();
+                        }
                         $scope.map.toggleLayers();
                     }
                 });
@@ -406,25 +411,6 @@ function(connectionService, datasetService, errorNotificationService, filterServ
                 }
             };
 
-            /**
-             * Event handler for dataset changed events issued over Neon's messaging channels.
-             * @method onDatasetChanged
-             * @private
-             */
-            var onDatasetChanged = function() {
-                XDATA.userALE.log({
-                    activity: "alter",
-                    action: "query",
-                    elementId: "map",
-                    elementType: "canvas",
-                    elementSub: "map",
-                    elementGroup: "map_group",
-                    source: "system",
-                    tags: ["dataset-change", "map"]
-                });
-                $scope.displayActiveDataset(false);
-            };
-
             var boundsToExtent = function(bounds) {
                 var llPoint = new OpenLayers.LonLat(bounds.left, bounds.bottom);
                 var urPoint = new OpenLayers.LonLat(bounds.right, bounds.top);
@@ -466,11 +452,9 @@ function(connectionService, datasetService, errorNotificationService, filterServ
              * @method displayActiveDataset
              */
             $scope.displayActiveDataset = function(initializing) {
-                if(!datasetService.hasDataset()) {
+                if(!datasetService.hasDataset() || $scope.loadingData) {
                     return;
                 }
-
-                $scope.initializing = true;
 
                 // Clear the zoom Rect from the map before reinitializing it.
                 clearZoomRect();
@@ -505,6 +489,7 @@ function(connectionService, datasetService, errorNotificationService, filterServ
             };
 
             $scope.updateFields = function() {
+                $scope.loadingData = true;
                 $scope.fields = datasetService.getDatabaseFields($scope.options.database, $scope.options.table);
                 $scope.fields.sort();
                 $scope.options.latitudeField = $scope.bindLatitudeField || datasetService.getMapping($scope.options.database, $scope.options.table, "latitude") || "";
@@ -513,7 +498,6 @@ function(connectionService, datasetService, errorNotificationService, filterServ
                 $scope.options.sizeByField = $scope.bindSizeField || datasetService.getMapping($scope.options.database, $scope.options.table, "size_by") || "";
 
                 $timeout(function() {
-                    $scope.initializing = false;
                     if($scope.showFilter) {
                         $scope.clearFilter();
                     } else {
@@ -532,74 +516,80 @@ function(connectionService, datasetService, errorNotificationService, filterServ
                     $scope.errorMessage = undefined;
                 }
 
-                if(!$scope.initializing && $scope.options.latitudeField !== "" && $scope.options.longitudeField !== "") {
-                    var query = $scope.buildPointQuery();
+                var connection = connectionService.getActiveConnection();
 
+                if(!connection || !$scope.options.latitudeField || !$scope.options.longitudeField) {
+                    $scope.updateMapData({
+                        data: []
+                    });
+                    $scope.loadingData = false;
+                    return;
+                }
+
+                var query = $scope.buildPointQuery();
+
+                XDATA.userALE.log({
+                    activity: "alter",
+                    action: "query",
+                    elementId: "map",
+                    elementType: "canvas",
+                    elementSub: "map",
+                    elementGroup: "map_group",
+                    source: "system",
+                    tags: ["query", "map"]
+                });
+
+                connection.executeQuery(query, function(queryResults) {
+                    $scope.$apply(function() {
+                        XDATA.userALE.log({
+                            activity: "alter",
+                            action: "receive",
+                            elementId: "map",
+                            elementType: "canvas",
+                            elementSub: "map",
+                            elementGroup: "map_group",
+                            source: "system",
+                            tags: ["receive", "map"]
+                        });
+                        $scope.updateMapData(queryResults);
+                        $scope.loadingData = false;
+                        XDATA.userALE.log({
+                            activity: "alter",
+                            action: "render",
+                            elementId: "map",
+                            elementType: "canvas",
+                            elementSub: "map",
+                            elementGroup: "map_group",
+                            source: "system",
+                            tags: ["render", "map"]
+                        });
+                    });
+                }, function(response) {
                     XDATA.userALE.log({
                         activity: "alter",
-                        action: "query",
+                        action: "failed",
                         elementId: "map",
                         elementType: "canvas",
                         elementSub: "map",
                         elementGroup: "map_group",
                         source: "system",
-                        tags: ["query", "map"]
+                        tags: ["failed", "map"]
                     });
-                    var connection = connectionService.getActiveConnection();
-                    if(connection) {
-                        connection.executeQuery(query, function(queryResults) {
-                            $scope.$apply(function() {
-                                XDATA.userALE.log({
-                                    activity: "alter",
-                                    action: "receive",
-                                    elementId: "map",
-                                    elementType: "canvas",
-                                    elementSub: "map",
-                                    elementGroup: "map_group",
-                                    source: "system",
-                                    tags: ["receive", "map"]
-                                });
-                                $scope.updateMapData(queryResults);
-                                XDATA.userALE.log({
-                                    activity: "alter",
-                                    action: "render",
-                                    elementId: "map",
-                                    elementType: "canvas",
-                                    elementSub: "map",
-                                    elementGroup: "map_group",
-                                    source: "system",
-                                    tags: ["render", "map"]
-                                });
-                            });
-                        }, function(response) {
-                            XDATA.userALE.log({
-                                activity: "alter",
-                                action: "failed",
-                                elementId: "map",
-                                elementType: "canvas",
-                                elementSub: "map",
-                                elementGroup: "map_group",
-                                source: "system",
-                                tags: ["failed", "map"]
-                            });
-                            $scope.updateMapData({
-                                data: []
-                            });
-                            if(response.responseJSON) {
-                                $scope.errorMessage = errorNotificationService.showErrorMessage($element, response.responseJSON.error, response.responseJSON.stackTrace);
-                            }
-                        });
+                    $scope.updateMapData({
+                        data: []
+                    });
+                    $scope.loadingData = false;
+                    if(response.responseJSON) {
+                        $scope.errorMessage = errorNotificationService.showErrorMessage($element, response.responseJSON.error, response.responseJSON.stackTrace);
                     }
-                }
+                });
             };
 
             /**
              * Redraws the map
              */
             $scope.draw = function() {
-                if(!$scope.initializing) {
-                    $scope.map.draw();
-                }
+                $scope.map.draw();
 
                 // color mappings need to be updated after drawing since they are set during drawing
                 $scope.colorMappings = $scope.map.getColorMappings();

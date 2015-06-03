@@ -78,6 +78,7 @@ function(external, popups, connectionService, datasetService, errorNotificationS
             $scope.tableNameToDeletedFieldsMap = {};
             $scope.totalRows = 0;
             $scope.errorMessage = undefined;
+            $scope.loadingData = false;
 
             $scope.options = {
                 database: "",
@@ -108,7 +109,7 @@ function(external, popups, connectionService, datasetService, errorNotificationS
                 // display proper scrolling and sizing behavior if it is rendered while not visible.
                 $scope.$watch('showData', function(newVal) {
                     if(newVal) {
-                        $scope.queryForData();
+                        queryForData();
                     }
                 });
 
@@ -154,7 +155,6 @@ function(external, popups, connectionService, datasetService, errorNotificationS
                 $scope.messenger.events({
                     filtersChanged: onFiltersChanged
                 });
-                $scope.messenger.subscribe("dataset_changed", onDatasetChanged);
 
                 $scope.$on('$destroy', function() {
                     XDATA.userALE.log({
@@ -236,35 +236,8 @@ function(external, popups, connectionService, datasetService, errorNotificationS
                     tags: ["filter-change", "datagrid"]
                 });
                 if(message.addedFilter && message.addedFilter.databaseName === $scope.options.database && message.addedFilter.tableName === $scope.options.table) {
-                    updateRowsAndCount();
+                    queryForData();
                 }
-            };
-
-            /**
-             * Updates the data and the count of total rows in the data
-             */
-            var updateRowsAndCount = function() {
-                $scope.queryForTotalRows();
-                $scope.queryForData();
-            };
-
-            /**
-             * Event handler for dataset changed events issued over Neon's messaging channels.
-             * @method onDatasetChanged
-             * @private
-             */
-            var onDatasetChanged = function() {
-                XDATA.userALE.log({
-                    activity: "alter",
-                    action: "query",
-                    elementId: "datagrid",
-                    elementType: "datagrid",
-                    elementSub: "datagrid",
-                    elementGroup: "chart_group",
-                    source: "system",
-                    tags: ["dataset-change", "datagrid"]
-                });
-                $scope.displayActiveDataset(false);
             };
 
             /**
@@ -273,7 +246,7 @@ function(external, popups, connectionService, datasetService, errorNotificationS
              * @method displayActiveDataset
              */
             $scope.displayActiveDataset = function(initializing) {
-                if(!datasetService.hasDataset()) {
+                if(!datasetService.hasDataset() || $scope.loadingData) {
                     return;
                 }
 
@@ -303,6 +276,7 @@ function(external, popups, connectionService, datasetService, errorNotificationS
             };
 
             $scope.updateFields = function() {
+                $scope.loadingData = true;
                 $scope.fields = datasetService.getDatabaseFields($scope.options.database, $scope.options.table);
                 $scope.fields.sort();
                 $scope.options.addField = "";
@@ -317,7 +291,7 @@ function(external, popups, connectionService, datasetService, errorNotificationS
                     $scope.options.addField = $scope.tableNameToDeletedFieldsMap[$scope.options.table][0];
                 }
                 $scope.options.sortByField = datasetService.getMapping($scope.options.database, $scope.options.table, "sort_by") || $scope.fields[0];
-                updateRowsAndCount();
+                queryForData();
             };
 
             /**
@@ -334,7 +308,7 @@ function(external, popups, connectionService, datasetService, errorNotificationS
                     source: "user",
                     tags: ["options", "datagrid", "refresh"]
                 });
-                $scope.queryForData();
+                queryForData();
             };
 
             /**
@@ -347,78 +321,88 @@ function(external, popups, connectionService, datasetService, errorNotificationS
              * Resets internal "need to query" state to false.
              * @method queryForData
              */
-            $scope.queryForData = function() {
+            var queryForData = function() {
                 if($scope.errorMessage) {
                     errorNotificationService.hideErrorMessage($scope.errorMessage);
                     $scope.errorMessage = undefined;
                 }
 
-                if($scope.showData) {
-                    var connection = connectionService.getActiveConnection();
-                    if(connection) {
-                        var query = $scope.buildQuery();
+                var connection = connectionService.getActiveConnection();
 
+                if(!connection || !$scope.showData) {
+                    $scope.updateData({
+                        data: []
+                    });
+                    $scope.totalRows = 0;
+                    $scope.loadingData = false;
+                    return;
+                }
+
+                var query = $scope.buildQuery();
+
+                XDATA.userALE.log({
+                    activity: "alter",
+                    action: "query",
+                    elementId: "datagrid",
+                    elementType: "datagrid",
+                    elementSub: "data",
+                    elementGroup: "chart_group",
+                    source: "system",
+                    tags: ["query", "datagrid"]
+                });
+
+                connection.executeQuery(query, function(queryResults) {
+                    XDATA.userALE.log({
+                        activity: "alter",
+                        action: "receive",
+                        elementId: "datagrid",
+                        elementType: "datagrid",
+                        elementSub: "data",
+                        elementGroup: "chart_group",
+                        source: "system",
+                        tags: ["receive", "datagrid"]
+                    });
+                    $scope.$apply(function() {
+                        $scope.updateData(queryResults);
+                        queryForTotalRows(connection);
                         XDATA.userALE.log({
                             activity: "alter",
-                            action: "query",
+                            action: "render",
                             elementId: "datagrid",
                             elementType: "datagrid",
                             elementSub: "data",
                             elementGroup: "chart_group",
                             source: "system",
-                            tags: ["query", "datagrid"]
+                            tags: ["render", "datagrid"]
                         });
-                        connection.executeQuery(query, function(queryResults) {
-                            XDATA.userALE.log({
-                                activity: "alter",
-                                action: "receive",
-                                elementId: "datagrid",
-                                elementType: "datagrid",
-                                elementSub: "data",
-                                elementGroup: "chart_group",
-                                source: "system",
-                                tags: ["receive", "datagrid"]
-                            });
-                            $scope.$apply(function() {
-                                $scope.updateData(queryResults);
-                                XDATA.userALE.log({
-                                    activity: "alter",
-                                    action: "render",
-                                    elementId: "datagrid",
-                                    elementType: "datagrid",
-                                    elementSub: "data",
-                                    elementGroup: "chart_group",
-                                    source: "system",
-                                    tags: ["render", "datagrid"]
-                                });
-                            });
-                        }, function(response) {
-                            XDATA.userALE.log({
-                                activity: "alter",
-                                action: "failed",
-                                elementId: "datagrid",
-                                elementType: "datagrid",
-                                elementSub: "data",
-                                elementGroup: "chart_group",
-                                source: "system",
-                                tags: ["failed", "datagrid"]
-                            });
-                            $scope.updateData({
-                                data: []
-                            });
-                            if(response.responseJSON) {
-                                $scope.errorMessage = errorNotificationService.showErrorMessage($element, response.responseJSON.error, response.responseJSON.stackTrace);
-                            }
-                        });
+                    });
+                }, function(response) {
+                    XDATA.userALE.log({
+                        activity: "alter",
+                        action: "failed",
+                        elementId: "datagrid",
+                        elementType: "datagrid",
+                        elementSub: "data",
+                        elementGroup: "chart_group",
+                        source: "system",
+                        tags: ["failed", "datagrid"]
+                    });
+                    $scope.updateData({
+                        data: []
+                    });
+                    $scope.totalRows = 0;
+                    $scope.loadingData = false;
+                    if(response.responseJSON) {
+                        $scope.errorMessage = errorNotificationService.showErrorMessage($element, response.responseJSON.error, response.responseJSON.stackTrace);
                     }
-                }
+                });
             };
 
             /**
              * Triggers a Neon query that will aggregate the time data for the currently selected dataset.
-             * @method queryForData
+             * @method queryForTotalRows
              */
-            $scope.queryForTotalRows = function() {
+            var queryForTotalRows = function(connection) {
                 var query = new neon.query.Query().selectFrom($scope.options.database, $scope.options.table)
                     .aggregate(neon.query.COUNT, '*', 'count');
 
@@ -432,40 +416,40 @@ function(external, popups, connectionService, datasetService, errorNotificationS
                     source: "system",
                     tags: ["query", "datagrid"]
                 });
-                var connection = connectionService.getActiveConnection();
-                if(connection) {
-                    connection.executeQuery(query, function(queryResults) {
-                        $scope.$apply(function() {
-                            if(queryResults.data.length > 0) {
-                                $scope.totalRows = queryResults.data[0].count;
-                            } else {
-                                $scope.totalRows = 0;
-                            }
-                            XDATA.userALE.log({
-                                activity: "alter",
-                                action: "receive",
-                                elementId: "datagrid",
-                                elementType: "datagrid",
-                                elementSub: "totals",
-                                elementGroup: "chart_group",
-                                source: "system",
-                                tags: ["receive", "datagrid"]
-                            });
-                        });
-                    }, function() {
+
+                connection.executeQuery(query, function(queryResults) {
+                    $scope.$apply(function() {
+                        if(queryResults.data.length > 0) {
+                            $scope.totalRows = queryResults.data[0].count;
+                        } else {
+                            $scope.totalRows = 0;
+                        }
+                        $scope.loadingData = false;
                         XDATA.userALE.log({
                             activity: "alter",
-                            action: "failed",
+                            action: "receive",
                             elementId: "datagrid",
                             elementType: "datagrid",
                             elementSub: "totals",
                             elementGroup: "chart_group",
                             source: "system",
-                            tags: ["failed", "datagrid"]
+                            tags: ["receive", "datagrid"]
                         });
-                        $scope.totalRows = 0;
                     });
-                }
+                }, function() {
+                    XDATA.userALE.log({
+                        activity: "alter",
+                        action: "failed",
+                        elementId: "datagrid",
+                        elementType: "datagrid",
+                        elementSub: "totals",
+                        elementGroup: "chart_group",
+                        source: "system",
+                        tags: ["failed", "datagrid"]
+                    });
+                    $scope.totalRows = 0;
+                    $scope.loadingData = false;
+                });
             };
 
             /**

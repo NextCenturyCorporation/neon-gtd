@@ -74,7 +74,7 @@ angular.module('neonDemo.directives').directive('visualizationWidget', ["config"
 
             /**
              * Toggles the visualization widget between default and maximized views.
-             * @method onDatasetChanged
+             * @method toggleSize
              */
             $scope.toggleSize = function() {
                 if($scope.oldSize) {
