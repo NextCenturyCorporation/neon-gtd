@@ -147,9 +147,9 @@ function(connectionService, datasetService, errorNotificationService, filterServ
                         source: "user",
                         tags: ["options", "map", "latitude"]
                     });
-                    if(newVal && newVal !== oldVal) {
+                    if(newVal) {
                         $scope.map.latitudeMapping = newVal;
-                        if(!$scope.loadingData) {
+                        if(!$scope.loadingData && newVal !== oldVal) {
                             $scope.draw();
                         }
                     }
