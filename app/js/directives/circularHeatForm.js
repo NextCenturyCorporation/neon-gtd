@@ -56,6 +56,7 @@ function(connectionService, datasetService, errorNotificationService) {
             $scope.maxDay = "";
             $scope.maxTime = "";
             $scope.errorMessage = undefined;
+            $scope.loadingData = false;
 
             $scope.options = {
                 database: "",
@@ -75,7 +76,6 @@ function(connectionService, datasetService, errorNotificationService) {
                 $scope.messenger.events({
                     filtersChanged: onFiltersChanged
                 });
-                $scope.messenger.subscribe("dataset_changed", onDatasetChanged);
 
                 $scope.$on('$destroy', function() {
                     XDATA.userALE.log({
@@ -159,31 +159,12 @@ function(connectionService, datasetService, errorNotificationService) {
             };
 
             /**
-             * Event handler for dataset changed events issued over Neon's messaging channels.
-             * @method onDatasetChanged
-             * @private
-             */
-            var onDatasetChanged = function() {
-                XDATA.userALE.log({
-                    activity: "alter",
-                    action: "query",
-                    elementId: "circularheatform",
-                    elementType: "canvas",
-                    elementSub: "circularheatform",
-                    elementGroup: "chart_group",
-                    source: "system",
-                    tags: ["dataset-change", "circularheatform"]
-                });
-                $scope.displayActiveDataset(false);
-            };
-
-            /**
              * Displays data for any currently active datasets.
              * @param {Boolean} Whether this function was called during visualization initialization.
              * @method displayActiveDataset
              */
             $scope.displayActiveDataset = function(initializing) {
-                if(!datasetService.hasDataset()) {
+                if(!datasetService.hasDataset() || $scope.loadingData) {
                     return;
                 }
 
@@ -213,6 +194,7 @@ function(connectionService, datasetService, errorNotificationService) {
             };
 
             $scope.updateFields = function() {
+                $scope.loadingData = true;
                 $scope.fields = datasetService.getDatabaseFields($scope.options.database, $scope.options.table);
                 $scope.fields.sort();
                 $scope.options.dateField = $scope.bindDateField || datasetService.getMapping($scope.options.database, $scope.options.table, "date") || "";
@@ -229,10 +211,13 @@ function(connectionService, datasetService, errorNotificationService) {
                     $scope.errorMessage = undefined;
                 }
 
-                if(!$scope.options.dateField) {
+                var connection = connectionService.getActiveConnection();
+
+                if(!connection || !$scope.options.dateField) {
                     $scope.updateChartData({
                         data: []
                     });
+                    $scope.loadingData = false;
                     return;
                 }
 
@@ -261,51 +246,51 @@ function(connectionService, datasetService, errorNotificationService) {
                     source: "system",
                     tags: ["circularheatform"]
                 });
-                var connection = connectionService.getActiveConnection();
-                if(connection) {
-                    connection.executeQuery(query, function(queryResults) {
-                        XDATA.userALE.log({
-                            activity: "alter",
-                            action: "receive",
-                            elementId: "circularheatform",
-                            elementType: "canvas",
-                            elementSub: "circularheatform",
-                            elementGroup: "chart_group",
-                            source: "system",
-                            tags: ["circularheatform"]
-                        });
-                        $scope.$apply(function() {
-                            $scope.updateChartData(queryResults);
-                            XDATA.userALE.log({
-                                activity: "alter",
-                                action: "render",
-                                elementId: "circularheatform",
-                                elementType: "canvas",
-                                elementSub: "circularheatform",
-                                elementGroup: "chart_group",
-                                source: "system",
-                                tags: ["circularheatform"]
-                            });
-                        });
-                    }, function(response) {
-                        XDATA.userALE.log({
-                            activity: "alter",
-                            action: "failed",
-                            elementId: "circularheatform",
-                            elementType: "canvas",
-                            elementSub: "circularheatform",
-                            elementGroup: "chart_group",
-                            source: "system",
-                            tags: ["circularheatform"]
-                        });
-                        $scope.updateChartData({
-                            data: []
-                        });
-                        if(response.responseJSON) {
-                            $scope.errorMessage = errorNotificationService.showErrorMessage($element, response.responseJSON.error, response.responseJSON.stackTrace);
-                        }
+
+                connection.executeQuery(query, function(queryResults) {
+                    XDATA.userALE.log({
+                        activity: "alter",
+                        action: "receive",
+                        elementId: "circularheatform",
+                        elementType: "canvas",
+                        elementSub: "circularheatform",
+                        elementGroup: "chart_group",
+                        source: "system",
+                        tags: ["circularheatform"]
                     });
-                }
+                    $scope.$apply(function() {
+                        $scope.updateChartData(queryResults);
+                        $scope.loadingData = false;
+                        XDATA.userALE.log({
+                            activity: "alter",
+                            action: "render",
+                            elementId: "circularheatform",
+                            elementType: "canvas",
+                            elementSub: "circularheatform",
+                            elementGroup: "chart_group",
+                            source: "system",
+                            tags: ["circularheatform"]
+                        });
+                    });
+                }, function(response) {
+                    XDATA.userALE.log({
+                        activity: "alter",
+                        action: "failed",
+                        elementId: "circularheatform",
+                        elementType: "canvas",
+                        elementSub: "circularheatform",
+                        elementGroup: "chart_group",
+                        source: "system",
+                        tags: ["circularheatform"]
+                    });
+                    $scope.updateChartData({
+                        data: []
+                    });
+                    $scope.loadingData = false;
+                    if(response.responseJSON) {
+                        $scope.errorMessage = errorNotificationService.showErrorMessage($element, response.responseJSON.error, response.responseJSON.stackTrace);
+                    }
+                });
             };
 
             /**
@@ -374,6 +359,13 @@ function(connectionService, datasetService, errorNotificationService) {
                 });
 
                 return data;
+            };
+
+            $scope.updateDateField = function() {
+                // TODO Logging
+                if(!$scope.loadingData) {
+                    $scope.queryForChartData();
+                }
             };
 
             // Wait for neon to be ready, the create our messenger and intialize the view and data.

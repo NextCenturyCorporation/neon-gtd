@@ -53,6 +53,7 @@ function(connectionService, datasetService, errorNotificationService) {
             $scope.fields = [];
             $scope.chart = undefined;
             $scope.errorMessage = undefined;
+            $scope.loadingData = false;
 
             $scope.options = {
                 database: "",
@@ -71,7 +72,6 @@ function(connectionService, datasetService, errorNotificationService) {
                 $scope.messenger.events({
                     filtersChanged: onFiltersChanged
                 });
-                $scope.messenger.subscribe("dataset_changed", onDatasetChanged);
 
                 $scope.$on('$destroy', function() {
                     XDATA.userALE.log({
@@ -93,13 +93,13 @@ function(connectionService, datasetService, errorNotificationService) {
                 $element.resize(updateChartSize);
 
                 $scope.$watch('options.valueField', function(newValue, oldValue) {
-                    if(newValue !== oldValue) {
+                    if(!$scope.loadingData && newValue !== oldValue) {
                         $scope.queryForData();
                     }
                 }, true);
 
                 $scope.$watch('arcValue', function(newValue, oldValue) {
-                    if(newValue !== oldValue) {
+                    if(!$scope.loadingData && ewValue !== oldValue) {
                         $scope.chart.displayPartition(newValue);
                     }
                 });
@@ -125,25 +125,6 @@ function(connectionService, datasetService, errorNotificationService) {
                 if(message.addedFilter && message.addedFilter.databaseName === $scope.options.database && message.addedFilter.tableName === $scope.options.table) {
                     $scope.queryForData();
                 }
-            };
-
-            /**
-             * Event handler for dataset changed events issued over Neon's messaging channels.
-             * @method onDatasetChanged
-             * @private
-             */
-            var onDatasetChanged = function() {
-                XDATA.userALE.log({
-                    activity: "alter",
-                    action: "query",
-                    elementId: "sunburst",
-                    elementType: "canvas",
-                    elementSub: "sunburst",
-                    elementGroup: "chart_group",
-                    source: "system",
-                    tags: ["dataset-change", "sunburst"]
-                });
-                $scope.displayActiveDataset(false);
             };
 
             var updateChartSize = function() {
@@ -182,7 +163,7 @@ function(connectionService, datasetService, errorNotificationService) {
              * @method displayActiveDataset
              */
             $scope.displayActiveDataset = function(initializing) {
-                if(!datasetService.hasDataset()) {
+                if(!datasetService.hasDataset() || $scope.loadingData) {
                     return;
                 }
 
@@ -216,6 +197,7 @@ function(connectionService, datasetService, errorNotificationService) {
             };
 
             $scope.updateFields = function() {
+                $scope.loadingData = true;
                 $scope.fields = datasetService.getDatabaseFields($scope.options.database, $scope.options.table);
                 $scope.fields.sort();
                 $scope.queryForData();
@@ -228,63 +210,73 @@ function(connectionService, datasetService, errorNotificationService) {
                 }
 
                 var connection = connectionService.getActiveConnection();
-                if(connection) {
-                    var query = $scope.buildQuery();
 
+                if(!connection) {
+                    doDrawChart(buildDataTree({
+                        data: []
+                    }));
+                    $scope.loadingData = false;
+                    return;
+                }
+
+                var query = $scope.buildQuery();
+
+                XDATA.userALE.log({
+                    activity: "alter",
+                    action: "query",
+                    elementId: "sunburst",
+                    elementType: "canvas",
+                    elementSub: "sunburst",
+                    elementGroup: "chart_group",
+                    source: "system",
+                    tags: ["query", "sunburst"]
+                });
+
+                connection.executeQuery(query, function(queryResults) {
                     XDATA.userALE.log({
                         activity: "alter",
-                        action: "query",
+                        action: "receive",
                         elementId: "sunburst",
                         elementType: "canvas",
                         elementSub: "sunburst",
                         elementGroup: "chart_group",
                         source: "system",
-                        tags: ["query", "sunburst"]
+                        tags: ["receive", "sunburst"]
                     });
-                    connection.executeQuery(query, function(queryResults) {
+                    $scope.$apply(function() {
+                        updateChartSize();
+                        doDrawChart(buildDataTree(queryResults));
+                        $scope.loadingData = false;
                         XDATA.userALE.log({
                             activity: "alter",
-                            action: "receive",
+                            action: "render",
                             elementId: "sunburst",
                             elementType: "canvas",
                             elementSub: "sunburst",
                             elementGroup: "chart_group",
                             source: "system",
-                            tags: ["receive", "sunburst"]
+                            tags: ["render", "sunburst"]
                         });
-                        $scope.$apply(function() {
-                            updateChartSize();
-                            doDrawChart(buildDataTree(queryResults));
-                            XDATA.userALE.log({
-                                activity: "alter",
-                                action: "render",
-                                elementId: "sunburst",
-                                elementType: "canvas",
-                                elementSub: "sunburst",
-                                elementGroup: "chart_group",
-                                source: "system",
-                                tags: ["render", "sunburst"]
-                            });
-                        });
-                    }, function(response) {
-                        XDATA.userALE.log({
-                            activity: "alter",
-                            action: "failed",
-                            elementId: "sunburst",
-                            elementType: "canvas",
-                            elementSub: "sunburst",
-                            elementGroup: "chart_group",
-                            source: "system",
-                            tags: ["failed", "sunburst"]
-                        });
-                        doDrawChart(buildDataTree({
-                            data: []
-                        }));
-                        if(response.responseJSON) {
-                            $scope.errorMessage = errorNotificationService.showErrorMessage($element, response.responseJSON.error, response.responseJSON.stackTrace);
-                        }
                     });
-                }
+                }, function(response) {
+                    XDATA.userALE.log({
+                        activity: "alter",
+                        action: "failed",
+                        elementId: "sunburst",
+                        elementType: "canvas",
+                        elementSub: "sunburst",
+                        elementGroup: "chart_group",
+                        source: "system",
+                        tags: ["failed", "sunburst"]
+                    });
+                    doDrawChart(buildDataTree({
+                        data: []
+                    }));
+                    $scope.loadingData = false;
+                    if(response.responseJSON) {
+                        $scope.errorMessage = errorNotificationService.showErrorMessage($element, response.responseJSON.error, response.responseJSON.stackTrace);
+                    }
+                });
             };
 
             var buildDataTree = function(data) {

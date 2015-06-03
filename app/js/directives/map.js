@@ -64,13 +64,13 @@ angular.module('neonDemo.directives')
             $scope.tables = [];
             $scope.fields = [];
             $scope.cacheMap = false;
-            $scope.initializing = true;
             $scope.filterKeys = {};
             $scope.showFilter = false;
             $scope.dataBounds = undefined;
             $scope.dataLength = 0;
             $scope.resizeRedrawDelay = 1500; // Time in ms to wait after a resize event flood to try redrawing the map.
             $scope.errorMessage = undefined;
+            $scope.loadingData = false;
 
             $scope.options = {
                 database: "",
@@ -144,7 +144,6 @@ angular.module('neonDemo.directives')
                 $scope.messenger.events({
                     filtersChanged: onFiltersChanged
                 });
-                $scope.messenger.subscribe("dataset_changed", onDatasetChanged);
 
                 $scope.$on('$destroy', function() {
                     XDATA.userALE.log({
@@ -334,25 +333,6 @@ angular.module('neonDemo.directives')
                 }
             };
 
-            /**
-             * Event handler for dataset changed events issued over Neon's messaging channels.
-             * @method onDatasetChanged
-             * @private
-             */
-            var onDatasetChanged = function() {
-                XDATA.userALE.log({
-                    activity: "alter",
-                    action: "query",
-                    elementId: "map",
-                    elementType: "canvas",
-                    elementSub: "map",
-                    elementGroup: "map_group",
-                    source: "system",
-                    tags: ["dataset-change", "map"]
-                });
-                $scope.displayActiveDataset(false);
-            };
-
             var boundsToExtent = function(bounds) {
                 var llPoint = new OpenLayers.LonLat(bounds.left, bounds.bottom);
                 var urPoint = new OpenLayers.LonLat(bounds.right, bounds.top);
@@ -415,11 +395,9 @@ angular.module('neonDemo.directives')
              * @method displayActiveDataset
              */
             $scope.displayActiveDataset = function(initializing) {
-                if(!datasetService.hasDataset()) {
+                if(!datasetService.hasDataset() || $scope.loadingData) {
                     return;
                 }
-
-                $scope.initializing = true;
 
                 // Clear the zoom Rect from the map before reinitializing it.
                 clearZoomRect();
@@ -505,11 +483,9 @@ angular.module('neonDemo.directives')
             };
 
             $scope.updateFieldsAndQueryForMapData = function() {
-                $scope.fields = datasetService.getDatabaseFields($scope.options.selectedTable.name);
-                $scope.fields.sort();
+                $scope.loadingData = true;
 
                 $timeout(function() {
-                    $scope.initializing = false;
                     $scope.updateLayersAndQueries();
                 });
             };
@@ -587,9 +563,7 @@ angular.module('neonDemo.directives')
              * Redraws the map
              */
             $scope.draw = function() {
-                if(!$scope.initializing) {
-                    $scope.map.draw();
-                }
+                $scope.map.draw();
 
                 // color mappings need to be updated after drawing since they are set during drawing
                 //$scope.colorMappings = $scope.map.getColorMappings();
@@ -622,12 +596,12 @@ angular.module('neonDemo.directives')
                 //     $scope.dataBounds = $scope.computeDataBounds(data);
                 //     $scope.map.zoomToBounds($scope.dataBounds);
                 // }
-                $scope.map.zoomToBounds({
-                    left: -180,
-                    bottom: -90,
-                    right: 180,
-                    top: 90
-                });
+                // $scope.map.zoomToBounds({
+                //     left: -180,
+                //     bottom: -90,
+                //     right: 180,
+                //     top: 90
+                // });
             };
 
             /**

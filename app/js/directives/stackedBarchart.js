@@ -68,7 +68,6 @@ function(connectionService, datasetService, errorNotificationService) {
                 $scope.messenger.events({
                     filtersChanged: onFiltersChanged
                 });
-                $scope.messenger.subscribe("dataset_changed", onDatasetChanged);
 
                 $scope.$on('$destroy', function() {
                     XDATA.userALE.log({
@@ -111,15 +110,6 @@ function(connectionService, datasetService, errorNotificationService) {
                 if(message.addedFilter && message.addedFilter.databaseName === $scope.options.database && message.addedFilter.tableName === $scope.options.table) {
                     $scope.queryForData();
                 }
-            };
-
-            /**
-             * Event handler for dataset changed events issued over Neon's messaging channels.
-             * @method onDatasetChanged
-             * @private
-             */
-            var onDatasetChanged = function() {
-                $scope.displayActiveDataset(false);
             };
 
             /**
