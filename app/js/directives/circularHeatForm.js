@@ -59,8 +59,8 @@ function(connectionService, datasetService, errorNotificationService) {
             $scope.loadingData = false;
 
             $scope.options = {
-                database: "",
-                table: "",
+                database: {},
+                table: {},
                 dateField: ""
             };
 
@@ -153,7 +153,7 @@ function(connectionService, datasetService, errorNotificationService) {
                     source: "system",
                     tags: ["filter-change", "circularheatform"]
                 });
-                if(message.addedFilter && message.addedFilter.databaseName === $scope.options.database && message.addedFilter.tableName === $scope.options.table) {
+                if(message.addedFilter && message.addedFilter.databaseName === $scope.options.database.name && message.addedFilter.tableName === $scope.options.table.name) {
                     $scope.queryForChartData();
                 }
             };
@@ -168,10 +168,14 @@ function(connectionService, datasetService, errorNotificationService) {
                     return;
                 }
 
-                $scope.databases = datasetService.getDatabaseNames();
+                $scope.databases = datasetService.getDatabases();
                 $scope.options.database = $scope.databases[0];
-                if($scope.bindDatabase && $scope.databases.indexOf($scope.bindDatabase) >= 0) {
-                    $scope.options.database = $scope.bindDatabase;
+                if($scope.bindDatabase) {
+                    for(var i = 0; i < $scope.databases.length; ++i) {
+                        if($scope.bindDatabase === $scope.databases[i].name) {
+                            $scope.options.database = $scope.databases[i];
+                        }
+                    }
                 }
 
                 if(initializing) {
@@ -184,20 +188,24 @@ function(connectionService, datasetService, errorNotificationService) {
             };
 
             $scope.updateTables = function() {
-                $scope.tables = datasetService.getTableNames($scope.options.database);
-                if($scope.bindTable && $scope.tables.indexOf($scope.bindTable) >= 0) {
-                    $scope.options.table = $scope.bindTable;
-                } else {
-                    $scope.options.table = datasetService.getFirstTableNameWithMappings($scope.options.database, ["date"]) || $scope.tables[0];
+                $scope.tables = datasetService.getTables($scope.options.database.name);
+                $scope.options.table = datasetService.getFirstTableWithMappings($scope.options.database.name, ["date"]) || $scope.tables[0];
+                if($scope.bindTable) {
+                    for(var i = 0; i < $scope.tables.length; ++i) {
+                        if($scope.bindTable === $scope.tables[i].name) {
+                            $scope.options.table = $scope.tables[i];
+                            break;
+                        }
+                    }
                 }
                 $scope.updateFields();
             };
 
             $scope.updateFields = function() {
                 $scope.loadingData = true;
-                $scope.fields = datasetService.getDatabaseFields($scope.options.database, $scope.options.table);
+                $scope.fields = datasetService.getDatabaseFields($scope.options.database.name, $scope.options.table.name);
                 $scope.fields.sort();
-                $scope.options.dateField = $scope.bindDateField || datasetService.getMapping($scope.options.database, $scope.options.table, "date") || "";
+                $scope.options.dateField = $scope.bindDateField || datasetService.getMapping($scope.options.database.name, $scope.options.table.name, "date") || "";
                 $scope.queryForChartData();
             };
 
@@ -226,7 +234,7 @@ function(connectionService, datasetService, errorNotificationService) {
                 var groupByHourClause = new neon.query.GroupByFunctionClause(neon.query.HOUR, $scope.options.dateField, 'hour');
 
                 var query = new neon.query.Query()
-                    .selectFrom($scope.options.database, $scope.options.table)
+                    .selectFrom($scope.options.database.name, $scope.options.table.name)
                     .groupBy(groupByDayClause, groupByHourClause)
                     .where($scope.options.dateField, '!=', null)
                     .aggregate(neon.query.COUNT, '*', 'count');
