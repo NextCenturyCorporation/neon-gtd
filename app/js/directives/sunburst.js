@@ -99,7 +99,7 @@ function(connectionService, datasetService, errorNotificationService) {
                 }, true);
 
                 $scope.$watch('arcValue', function(newValue, oldValue) {
-                    if(!$scope.loadingData && ewValue !== oldValue) {
+                    if(!$scope.loadingData && newValue !== oldValue) {
                         $scope.chart.displayPartition(newValue);
                     }
                 });

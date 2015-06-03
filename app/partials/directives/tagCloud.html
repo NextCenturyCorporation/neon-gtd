@@ -14,7 +14,7 @@
         </div>
         <div class="form-group" ng-show="!(hideAdvancedOptions)">
             <label>Data Field</label>
-            <select class="form-control" ng-model="options.tagField" ng-options="field for field in fields" ng-required="true" ng-disabled="(fields.length == 0)" ng-change="queryForTags()">
+            <select class="form-control" ng-model="options.tagField" ng-options="field for field in fields" ng-required="true" ng-disabled="(fields.length == 0)" ng-change="updateTagField()">
             </select>
         </div>
         <div class="form-group">
