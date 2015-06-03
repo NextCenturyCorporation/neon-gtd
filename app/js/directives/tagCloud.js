@@ -19,8 +19,8 @@
  * This directive is for building a tag cloud
  */
 angular.module('neonDemo.directives')
-.directive('tagCloud', ['ConnectionService', 'DatasetService', 'FilterService', '$timeout',
-function(connectionService, datasetService, filterService, $timeout) {
+.directive('tagCloud', ['ConnectionService', 'DatasetService', 'FilterService', '$timeout', 'ErrorNotificationService',
+function(connectionService, datasetService, filterService, $timeout, errorNotificationService) {
     return {
         templateUrl: 'partials/directives/tagCloud.html',
         restrict: 'EA',
