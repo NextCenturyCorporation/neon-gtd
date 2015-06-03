@@ -51,8 +51,8 @@ function(connectionService, datasetService, errorNotificationService, filterServ
             $scope.loadingData = false;
 
             $scope.options = {
-                database: "",
-                table: "",
+                database: {},
+                table: {},
                 tagField: "",
                 andTags: true
             };
@@ -141,7 +141,7 @@ function(connectionService, datasetService, errorNotificationService, filterServ
                     source: "system",
                     tags: ["filter-change", "tag-cloud"]
                 });
-                if(message.addedFilter && message.addedFilter.databaseName === $scope.options.database && message.addedFilter.tableName === $scope.options.table) {
+                if(message.addedFilter && message.addedFilter.databaseName === $scope.options.database.name && message.addedFilter.tableName === $scope.options.table.name) {
                     $scope.queryForTags();
                 }
             };
@@ -156,10 +156,15 @@ function(connectionService, datasetService, errorNotificationService, filterServ
                     return;
                 }
 
-                $scope.databases = datasetService.getDatabaseNames();
+                $scope.databases = datasetService.getDatabases();
                 $scope.options.database = $scope.databases[0];
-                if($scope.bindDatabase && $scope.databases.indexOf($scope.bindDatabase) >= 0) {
-                    $scope.options.database = $scope.bindDatabase;
+                if($scope.bindDatabase) {
+                    for(var i = 0; i < $scope.databases.length; ++i) {
+                        if($scope.bindDatabase === $scope.databases[i].name) {
+                            $scope.options.database = $scope.databases[i];
+                            break;
+                        }
+                    }
                 }
                 $scope.filterKeys = filterService.createFilterKeys("tagcloud", datasetService.getDatabaseAndTableNames());
 
@@ -173,20 +178,24 @@ function(connectionService, datasetService, errorNotificationService, filterServ
             };
 
             $scope.updateTables = function() {
-                $scope.tables = datasetService.getTableNames($scope.options.database);
-                if($scope.bindTable && $scope.tables.indexOf($scope.bindTable) >= 0) {
-                    $scope.options.table = $scope.bindTable;
-                } else {
-                    $scope.options.table = datasetService.getFirstTableNameWithMappings($scope.options.database, ["tags"]) || $scope.tables[0];
+                $scope.tables = datasetService.getTables($scope.options.database.name);
+                $scope.options.table = datasetService.getFirstTableWithMappings($scope.options.database.name, ["tags"]) || $scope.tables[0];
+                if($scope.bindTable) {
+                    for(var i = 0; i < $scope.tables.length; ++i) {
+                        if($scope.bindTable === $scope.tables[i].name) {
+                            $scope.options.table = $scope.tables[i];
+                            break;
+                        }
+                    }
                 }
                 $scope.updateFields();
             };
 
             $scope.updateFields = function() {
                 $scope.loadingData = true;
-                $scope.fields = datasetService.getDatabaseFields($scope.options.database, $scope.options.table);
+                $scope.fields = datasetService.getDatabaseFields($scope.options.database.name, $scope.options.table.name);
                 $scope.fields.sort();
-                $scope.options.tagField = $scope.bindTagField || datasetService.getMapping($scope.options.database, $scope.options.table, "tags") || $scope.fields[0] || "";
+                $scope.options.tagField = $scope.bindTagField || datasetService.getMapping($scope.options.database.name, $scope.options.table.name, "tags") || $scope.fields[0] || "";
                 if($scope.showFilter) {
                     $scope.clearTagFilters();
                 } else {
@@ -223,7 +232,7 @@ function(connectionService, datasetService, errorNotificationService, filterServ
                     tags: ["query", "tag-cloud"]
                 });
 
-                connection.executeArrayCountQuery($scope.options.database, $scope.options.table, $scope.options.tagField, 40, function(tagCounts) {
+                connection.executeArrayCountQuery($scope.options.database.name, $scope.options.table.name, $scope.options.tagField, 40, function(tagCounts) {
                     XDATA.userALE.log({
                         activity: "alter",
                         action: "query",
@@ -345,7 +354,7 @@ function(connectionService, datasetService, errorNotificationService, filterServ
              * @method applyFilter
              */
             $scope.applyFilter = function() {
-                var relations = datasetService.getRelations($scope.options.database, $scope.options.table, [$scope.options.tagField]);
+                var relations = datasetService.getRelations($scope.options.database.name, $scope.options.table.name, [$scope.options.tagField]);
                 filterService.replaceFilters($scope.messenger, relations, $scope.filterKeys, $scope.createFilterClauseForTags, function() {
                     $scope.$apply(function() {
                         $scope.queryForTags();

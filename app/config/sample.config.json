@@ -114,8 +114,10 @@
         "hostname": "localhost",
         "databases": [{
             "name": "test",
+            "prettyName": "Test",
             "tables": [{
                 "name": "earthquakes",
+                "prettyName": "Earthquakes",
                 "fields": [{
                     "columnName": "_id",
                     "prettyName": "Database ID"

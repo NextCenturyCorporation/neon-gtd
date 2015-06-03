@@ -354,15 +354,15 @@ neon.query.FilterTable.parseValue = function(value) {
  * an operator, and a value.
  *
  * @example
- *    var filterRow = new FilterRow("myDatabase", "myTable", "total", "<", 10);
+ *    var filterRow = new FilterRow({name: "myDatabase", prettyName: "My Database"}, {name: "myTable", prettyName: "My Table"}, "total", "<", 10);
  *
  * @class neon.query.FilterRow
  * @constructor
  */
-neon.query.FilterRow = function(databaseName, tableName, columnValue, operatorValue, value, tableOptions, columnOptions, operatorOptions) {
-    this.databaseName = databaseName;
+neon.query.FilterRow = function(database, table, columnValue, operatorValue, value, tableOptions, columnOptions, operatorOptions) {
+    this.database = database;
     this.tableOptions = tableOptions || [];
-    this.tableName = tableName;
+    this.table = table;
     this.columnOptions = columnOptions || [];
     this.columnValue = columnValue;
     this.operatorOptions = operatorOptions || [];
