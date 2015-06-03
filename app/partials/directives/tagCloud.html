@@ -25,7 +25,7 @@
                     All filters
                 </label>
                 <label class="btn btn-default" ng-class="{true: '', false: 'active'}[options.andTags]" ng-disabled="(filterTags.length <= 1)">
-                    <input type="radio" ng-model="options.andTags" style="display:none" ng-value="false"> 
+                    <input type="radio" ng-model="options.andTags" style="display:none" ng-value="false">
                     Any filters
                 </label>
             </div>
@@ -46,5 +46,5 @@
 <div class="clearfix"></div>
 
 <div class="tagcloud" ng-show="filterTags.length > 0 || data.length > 0">
-    <a ng-click="addTagFilter(tagCount.tag)" class="tag" ng-repeat="tagCount in data" rel="{{tagCount.count}}" title="Count:  {{tagCount.count}}" ng-bind="tagCount.tag"></a>
+    <a ng-click="addTagFilter(tagCount.key)" class="tag" ng-repeat="tagCount in data" rel="{{tagCount.count}}" title="Count:  {{tagCount.count}}" ng-bind="tagCount.key"></a>
 </div>
