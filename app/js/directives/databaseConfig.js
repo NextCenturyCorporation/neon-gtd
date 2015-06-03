@@ -180,12 +180,14 @@ angular.module('neonDemo.directives')
 
                 var connection = connectionService.getActiveConnection();
                 if(connection) {
+                    // This is a temporary solution.
                     if(!datasetService.getDatabaseWithName(databaseName)) {
                         datasetService.dataset.databases.push({
                             name: databaseName,
                             tables: []
                         });
                     }
+                    
                     connection.getTableNamesAndFieldNames(databaseName, function(tableNamesAndFieldNames) {
                         $scope.$apply(function() {
                             var tableNames = Object.keys(tableNamesAndFieldNames);
