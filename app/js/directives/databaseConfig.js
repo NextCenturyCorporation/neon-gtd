@@ -60,7 +60,6 @@ angular.module('neonDemo.directives')
             $scope.datastoreSelect = $scope.storeSelect || 'mongo';
             $scope.hostnameInput = $scope.hostName || 'localhost';
             $scope.tableNameToFieldNames = {};
-            $scope.layoutName = "";
 
             $scope.initialize = function() {
                 $scope.messenger = new neon.eventing.Messenger();
@@ -137,8 +136,7 @@ angular.module('neonDemo.directives')
                     databaseNames.push(server.databases[i].name);
                 }
 
-                // Wait to publish the dataset change until we've updated the field names.
-                $scope.updateDatabases(databaseNames, $scope.publishDatasetChanged);
+                $scope.updateDatabases(databaseNames);
             };
 
             var populateDatabaseDropdown = function(dbs) {
@@ -157,7 +155,7 @@ angular.module('neonDemo.directives')
                 }
             };
 
-            $scope.selectDatabase = function(updateCallback) {
+            $scope.selectDatabase = function() {
                 XDATA.userALE.log({
                     activity: "select",
                     action: "click",
@@ -175,7 +173,7 @@ angular.module('neonDemo.directives')
                 }
             };
 
-            $scope.updateDatabases = function(databaseNames, updateCallback) {
+            $scope.updateDatabases = function(databaseNames) {
                 var databaseName = databaseNames.shift();
 
                 var connection = connectionService.getActiveConnection();
@@ -202,9 +200,7 @@ angular.module('neonDemo.directives')
                             }
 
                             if(databaseNames.length) {
-                                $scope.updateDatabases(databaseNames, updateCallback);
-                            } else if(updateCallback) {
-                                updateCallback();
+                                $scope.updateDatabases(databaseNames);
                             }
                         });
                     });
@@ -258,25 +254,6 @@ angular.module('neonDemo.directives')
                 $scope.dbTables = tables;
             };
 
-            $scope.publishDatasetChanged = function() {
-                $scope.messenger.clearFiltersSilently(function() {
-                    $scope.messenger.publish("dataset_changed", {
-                        datastore: $scope.datastoreSelect,
-                        hostname: $scope.hostnameInput
-                    });
-
-                    XDATA.userALE.log({
-                        activity: "select",
-                        action: "show",
-                        elementId: "dataset-selector",
-                        elementType: "workspace",
-                        elementGroup: "top",
-                        source: "system",
-                        tags: ["connect", "dataset"]
-                    });
-                });
-            };
-
             $scope.updateLayout = function() {
                 var layoutName = datasetService.getLayout();
 
@@ -285,19 +262,17 @@ angular.module('neonDemo.directives')
                     layoutName = "default";
                 }
 
-                if(layouts[layoutName] && $scope.layoutName !== layoutName) {
-                    $scope.gridsterConfigs = layouts[layoutName];
-                    for(var i = 0; i < $scope.gridsterConfigs.length; ++i) {
-                        $scope.gridsterConfigs[i].id = uuid();
-                        if(!($scope.gridsterConfigs[i].minSizeX)) {
-                            $scope.gridsterConfigs[i].minSizeX = 2;
-                        }
-                        if(!($scope.gridsterConfigs[i].minSizeY)) {
-                            $scope.gridsterConfigs[i].minSizeY = 2;
-                        }
+                // Recreate the layout each time to ensure all visualizations are using the new dataset.
+                $scope.gridsterConfigs = layouts[layoutName] ? layouts[layoutName] : [];
+
+                for(var i = 0; i < $scope.gridsterConfigs.length; ++i) {
+                    $scope.gridsterConfigs[i].id = uuid();
+                    if(!($scope.gridsterConfigs[i].minSizeX)) {
+                        $scope.gridsterConfigs[i].minSizeX = 2;
                     }
-                    // Save the layout name so we can avoid resetting the layout if we switch to a dataset that uses the same layout.
-                    $scope.layoutName = layoutName;
+                    if(!($scope.gridsterConfigs[i].minSizeY)) {
+                        $scope.gridsterConfigs[i].minSizeY = 2;
+                    }
                 }
             };
 
@@ -339,8 +314,6 @@ angular.module('neonDemo.directives')
                     source: "user",
                     tags: ["custom", "dataset", "connect"]
                 });
-
-                $scope.publishDatasetChanged();
             };
 
             // Wait for neon to be ready, the create our messenger and intialize the view and data.
