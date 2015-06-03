@@ -55,8 +55,8 @@ angular.module('neonDemo.directives')
             $scope.loadingData = false;
 
             $scope.options = {
-                database: "",
-                table: "",
+                database: {},
+                table: {},
                 selectedNodeField: "",
                 selectedLinkField: "",
                 selectedNode: "",
@@ -142,7 +142,7 @@ angular.module('neonDemo.directives')
              * @private
              */
             var onFiltersChanged = function(message) {
-                if(message.addedFilter && message.addedFilter.databaseName === $scope.options.database && message.addedFilter.tableName === $scope.options.table) {
+                if(message.addedFilter && message.addedFilter.databaseName === $scope.options.database.name && message.addedFilter.tableName === $scope.options.table.name) {
                     if(message.type.toUpperCase() === "ADD" || message.type.toUpperCase() === "REPLACE") {
                         if(message.addedFilter.whereClause) {
                             $scope.addFilterWhereClauseToFilterList(message.addedFilter.whereClause);
@@ -187,7 +187,7 @@ angular.module('neonDemo.directives')
 
                 $scope.nodes = [];
                 $scope.data = [];
-                $scope.databases = datasetService.getDatabaseNames();
+                $scope.databases = datasetService.getDatabases();
                 $scope.options.database = $scope.databases[0];
                 $scope.filterKeys = filterService.createFilterKeys("graph", datasetService.getDatabaseAndTableNames());
 
@@ -201,17 +201,17 @@ angular.module('neonDemo.directives')
             };
 
             $scope.updateTables = function(initializing) {
-                $scope.tables = datasetService.getTableNames($scope.options.database);
-                $scope.options.table = datasetService.getFirstTableNameWithMappings($scope.options.database, ["graph_nodes"]) || $scope.tables[0];
+                $scope.tables = datasetService.getTables($scope.options.database.name);
+                $scope.options.table = datasetService.getFirstTableWithMappings($scope.options.database.name, ["graph_nodes"]) || $scope.tables[0];
                 $scope.updateFields(initializing);
             };
 
             $scope.updateFields = function(initializing) {
                 $scope.loadingData = true;
-                $scope.fields = datasetService.getDatabaseFields($scope.options.database, $scope.options.table);
+                $scope.fields = datasetService.getDatabaseFields($scope.options.database.name, $scope.options.table.name);
                 $scope.fields.sort();
-                $scope.options.selectedNodeField = datasetService.getMapping($scope.options.database, $scope.options.table, "graph_nodes") || "";
-                $scope.options.selectedLinkField = datasetService.getMapping($scope.options.database, $scope.options.table, "graph_links") || "";
+                $scope.options.selectedNodeField = datasetService.getMapping($scope.options.database.name, $scope.options.table.name, "graph_nodes") || "";
+                $scope.options.selectedLinkField = datasetService.getMapping($scope.options.database.name, $scope.options.table.name, "graph_links") || "";
                 $scope.queryForData(initializing);
             };
 
@@ -226,7 +226,7 @@ angular.module('neonDemo.directives')
                 $scope.filteredNodes.push(value);
 
                 if($scope.messenger) {
-                    var relations = datasetService.getRelations($scope.options.database, $scope.options.table, [$scope.options.selectedNodeField]);
+                    var relations = datasetService.getRelations($scope.options.database.name, $scope.options.table.name, [$scope.options.selectedNodeField]);
                     if($scope.filteredNodes.length === 1) {
                         filterService.addFilters($scope.messenger, relations, $scope.filterKeys, $scope.createFilterClauseForNode, $scope.queryForData);
                     } else if($scope.filteredNodes.length > 1) {
@@ -262,7 +262,7 @@ angular.module('neonDemo.directives')
                     if($scope.filteredNodes.length === 0) {
                         filterService.removeFilters($scope.messenger, $scope.filterKeys, $scope.queryForData);
                     } else {
-                        var relations = datasetService.getRelations($scope.options.database, $scope.options.table, [$scope.options.selectedNodeField]);
+                        var relations = datasetService.getRelations($scope.options.database.name, $scope.options.table.name, [$scope.options.selectedNodeField]);
                         filterService.replaceFilters($scope.messenger, relations, $scope.filterKeys, $scope.createFilterClauseForNode, $scope.queryForData);
                     }
                 }
@@ -313,11 +313,11 @@ angular.module('neonDemo.directives')
              */
             var queryForNodeList = function(connection) {
                 var query = new neon.query.Query()
-                    .selectFrom($scope.options.database, $scope.options.table)
+                    .selectFrom($scope.options.database.name, $scope.options.table.name)
                     .withFields([$scope.options.selectedNodeField])
                     .groupBy($scope.options.selectedNodeField)
                     .aggregate(neon.query.COUNT, '*', 'count')
-                    .ignoreFilters([$scope.filterKeys[$scope.options.database][$scope.options.table]]);
+                    .ignoreFilters([$scope.filterKeys[$scope.options.database.name][$scope.options.table.name]]);
 
                 connection.executeQuery(query, function(data) {
                     $scope.nodes = [];
@@ -355,7 +355,7 @@ angular.module('neonDemo.directives')
              */
             var queryForFilteredNodeNetwork = function(connection) {
                 var query = new neon.query.Query()
-                    .selectFrom($scope.options.database, $scope.options.table);
+                    .selectFrom($scope.options.database.name, $scope.options.table.name);
 
                 var where = neon.query.where($scope.options.selectedNodeField, '=', $scope.filteredNodes[0]);
                 var orWhere;
@@ -364,7 +364,7 @@ angular.module('neonDemo.directives')
                     where = neon.query.or(where, orWhere);
                 }
                 query = query.where(where);
-                query.ignoreFilters([$scope.filterKeys[$scope.options.database][$scope.options.table]]);
+                query.ignoreFilters([$scope.filterKeys[$scope.options.database.name][$scope.options.table.name]]);
 
                 connection.executeQuery(query, function(response) {
                     if(response.data.length) {

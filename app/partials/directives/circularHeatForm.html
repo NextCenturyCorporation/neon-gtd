@@ -1,15 +1,15 @@
 <div class="header-container" ng-show="!(hideHeader)">
-    <span class="header-text pull-left">{{options.table}}</span>
+    <span class="header-text pull-left">{{options.table.prettyName}}</span>
 
     <options-menu parent-element="element" ng-show="!(hideAdvancedOptions)">
         <div class="form-group" ng-show="!(hideAdvancedOptions)">
             <label>Database</label>
-            <select class="form-control" ng-model="options.database" ng-options="database for database in databases" ng-required="true" ng-disabled="(databases.length < 2)" ng-change="updateTables()">
+            <select class="form-control" ng-model="options.database" ng-options="database.prettyName for database in databases" ng-required="true" ng-disabled="(databases.length < 2)" ng-change="updateTables()">
             </select>
         </div>
         <div class="form-group" ng-show="!(hideAdvancedOptions)">
             <label>Table</label>
-            <select class="form-control" ng-model="options.table" ng-options="table for table in tables" ng-required="true" ng-disabled="(tables.length < 2)" ng-change="updateFields()">
+            <select class="form-control" ng-model="options.table" ng-options="table.prettyName for table in tables" ng-required="true" ng-disabled="(tables.length < 2)" ng-change="updateFields()">
             </select>
         </div>
         <div class="form-group" ng-show="!(hideAdvancedOptions)">

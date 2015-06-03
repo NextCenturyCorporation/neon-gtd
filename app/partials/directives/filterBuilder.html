@@ -57,11 +57,11 @@
 
     <div class="filter form-inline" ng-repeat="filterRow in filterTable.getFilterRows()">
       <div class="form-group">
-        <select class="form-control" ng-model="filterRow.databaseName" ng-options="databaseName for databaseName in databases" ng-disabled="(databases.length < 2) || !(navbarItem)" ng-change="updateTablesForFilterRow(filterRow)">
+        <select class="form-control" ng-model="filterRow.database" ng-options="database.prettyName for database in databases" ng-disabled="(databases.length < 2) || !(navbarItem)" ng-change="updateTablesForFilterRow(filterRow)">
         </select>
       </div>
       <div class="form-group">
-        <select class="form-control" ng-model="filterRow.tableName" ng-options="table for table in tables" ng-disabled="(tables.length < 2) || !(navbarItem)" ng-change="updateFieldsForFilterRow(filterRow)">
+        <select class="form-control" ng-model="filterRow.table" ng-options="table.prettyName for table in tables" ng-disabled="(tables.length < 2) || !(navbarItem)" ng-change="updateFieldsForFilterRow(filterRow)">
         </select>
       </div>
       <div class="form-group">
@@ -76,21 +76,21 @@
         <input type="text" class="form-control" placeholder="Value" ng-model="filterRow.value" ng-change="dirtyFilterRow(filterRow)">
       </div>
       <div class="form-group" ng-show="(navbarItem)">
-        <button type="button" class="btn btn-default refresh" title="Refresh" ng-disabled="!(filterRow.dirty)" ng-click="updateFilterRow(filterRow.databaseName, filterRow.tableName, filterRow.index)">
+        <button type="button" class="btn btn-default refresh" title="Refresh" ng-disabled="!(filterRow.dirty)" ng-click="updateFilterRow(filterRow.database.name, filterRow.table.name, filterRow.index)">
           <span class="glyphicon glyphicon-refresh"></span>
         </button>
       </div>
       <div class="form-group pull-right" ng-show="(navbarItem)">
-        <button type="button" class="btn delete" title="Remove" ng-click="removeFilterRow(filterRow.databaseName, filterRow.tableName, filterRow.index)">
+        <button type="button" class="btn delete" title="Remove" ng-click="removeFilterRow(filterRow.database.name, filterRow.table.name, filterRow.index)">
           <span class="glyphicon glyphicon-remove"></span>
         </button>
       </div>
       <div class="form-group form-group-button" ng-show="!(navbarItem)">
           <div class="btn-group">
-              <button type="button" class="btn btn-default refresh" title="Refresh" ng-disabled="!(filterRow.dirty)" ng-click="updateFilterRow(filterRow.databaseName, filterRow.tableName, filterRow.index)">
+              <button type="button" class="btn btn-default refresh" title="Refresh" ng-disabled="!(filterRow.dirty)" ng-click="updateFilterRow(filterRow.database.name, filterRow.table.name, filterRow.index)">
                   <span class="glyphicon glyphicon-refresh"></span>
               </button>
-              <button type="button" class="btn btn-danger" title="Remove" ng-click="removeFilterRow(filterRow.databaseName, filterRow.tableName, filterRow.index)">
+              <button type="button" class="btn btn-danger" title="Remove" ng-click="removeFilterRow(filterRow.database.name, filterRow.table.name, filterRow.index)">
                   <span class="glyphicon glyphicon-remove"></span>
               </button>
           </div>
@@ -100,11 +100,11 @@
 
     <div class="filter filter-new form-inline">
       <div class="form-group">
-        <select id="filter-table-selection" class="form-control" ng-model="selectedDatabase" ng-options="database for database in databases" ng-disabled="(databases.length < 2)" ng-change="updateTables()">
+        <select id="filter-table-selection" class="form-control" ng-model="selectedDatabase" ng-options="database.prettyName for database in databases" ng-disabled="(databases.length < 2)" ng-change="updateTables()">
         </select>
       </div>
       <div class="form-group">
-        <select id="filter-table-selection" class="form-control" ng-model="selectedTable" ng-options="table for table in tables" ng-disabled="(tables.length < 2)" ng-change="updateFields()">
+        <select id="filter-table-selection" class="form-control" ng-model="selectedTable" ng-options="table.prettyName for table in tables" ng-disabled="(tables.length < 2)" ng-change="updateFields()">
         </select>
       </div>
       <div class="form-group">

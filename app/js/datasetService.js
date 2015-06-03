@@ -51,6 +51,9 @@ angular.module("neonDemo.services")
             // Remove databases from the dataset that contain no tables.
             var databaseIndexToRemove = [];
             for(var i = 0; i < service.dataset.databases.length; ++i) {
+                if(!service.dataset.databases[i].prettyName) {
+                    service.dataset.databases[i].prettyName = service.dataset.databases[i].name;
+                }
                 if(!(service.dataset.databases[i].tables || service.dataset.databases[i].tables.length)) {
                     databaseIndexToRemove.push(i);
                 }
@@ -62,6 +65,9 @@ angular.module("neonDemo.services")
 
             for(var i = 0; i < service.dataset.databases.length; ++i) {
                 for(var j = 0; j < service.dataset.databases[i].tables.length; ++j) {
+                    if(!service.dataset.databases[i].tables[j].prettyName) {
+                        service.dataset.databases[i].tables[j].prettyName = service.dataset.databases[i].tables[j].name;
+                    }
                     service.dataset.databases[i].tables[j].fields = service.dataset.databases[i].tables[j].fields || [];
                     service.dataset.databases[i].tables[j].mappings = service.dataset.databases[i].tables[j].mappings || {};
                 }
@@ -123,20 +129,6 @@ angular.module("neonDemo.services")
         };
 
         /**
-         * Returns the names for the databases for the active dataset.
-         * @method getDatabaseNames
-         * @return {Array}
-         */
-        service.getDatabaseNames = function() {
-            var databases = service.getDatabases();
-            var names = [];
-            for(var i = 0; i < databases.length; ++i) {
-                names.push(databases[i].name);
-            }
-            return names;
-        };
-
-        /**
          * Returns the database with the given name or an Object with an empty name if no such database exists in the dataset.
          * @param {String} The database name
          * @method getDatabaseWithName
@@ -161,20 +153,6 @@ angular.module("neonDemo.services")
          */
         service.getTables = function(databaseName) {
             return service.getDatabaseWithName(databaseName).tables;
-        };
-
-        /**
-         * Returns the names for the tables for the database with the given name in the active dataset.
-         * @method getTableNames
-         * @return {Array}
-         */
-        service.getTableNames = function(databaseName) {
-            var tables = service.getTables(databaseName);
-            var names = [];
-            for(var i = 0; i < tables.length; ++i) {
-                names.push(tables[i].name);
-            }
-            return names;
         };
 
         /**
@@ -222,7 +200,7 @@ angular.module("neonDemo.services")
          * @return {String} The name of the table containing {String} name, {Array} fields, and {Object} mappings if a match exists
          * or undefined otherwise.
          */
-        service.getFirstTableNameWithMappings = function(databaseName, keys) {
+        service.getFirstTableWithMappings = function(databaseName, keys) {
             var tables = service.getTables(databaseName);
             for(var i = 0; i < tables.length; ++i) {
                 var success = true;
@@ -233,7 +211,7 @@ angular.module("neonDemo.services")
                     }
                 }
                 if(success) {
-                    return tables[i].name;
+                    return tables[i];
                 }
             }
 

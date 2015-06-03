@@ -259,6 +259,20 @@ angular.module('neonDemo.directives')
             $scope.updateLayout = function() {
                 var layoutName = datasetService.getLayout();
 
+                // Log the layout/dataset change.
+                XDATA.userALE.log({
+                    activity: "select",
+                    action: "show",
+                    elementId: "dataset-selector",
+                    elementType: "workspace",
+                    elementGroup: "top",
+                    source: "system",
+                    tags: ["connect", "dataset"]
+                });
+
+                // Clear any old filters prior to loading the new layout and dataset.
+                $scope.messenger.clearFiltersSilently();
+
                 // Use the default layout (if it exists) for custom datasets or datasets without a layout.
                 if(!layoutName || !layouts[layoutName]) {
                     layoutName = "default";
