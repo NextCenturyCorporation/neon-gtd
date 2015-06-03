@@ -269,7 +269,7 @@ function(connectionService, datasetService, errorNotificationService, filterServ
                     if(response.responseJSON) {
                         $scope.errorMessage = errorNotificationService.showErrorMessage($element, response.responseJSON.error, response.responseJSON.stackTrace);
                     }
-                }
+                });
             };
 
             /**
