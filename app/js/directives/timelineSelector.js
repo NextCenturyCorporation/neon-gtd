@@ -71,6 +71,7 @@ function(connectionService, datasetService, errorNotificationService, filterServ
             $scope.filterId = 'timelineFilter' + uuid();
             $scope.eventProbabilitiesDisplayed = false;
             $scope.errorMessage = undefined;
+            $scope.loadingData = false;
 
             $scope.databases = [];
             $scope.tables = [];
@@ -254,7 +255,6 @@ function(connectionService, datasetService, errorNotificationService, filterServ
                 $scope.messenger.events({
                     filtersChanged: onFiltersChanged
                 });
-                $scope.messenger.subscribe("dataset_changed", onDatasetChanged);
 
                 $scope.$on('$destroy', function() {
                     XDATA.userALE.log({
@@ -312,31 +312,12 @@ function(connectionService, datasetService, errorNotificationService, filterServ
             };
 
             /**
-             * Event handler for dataset changed events issued over Neon's messaging channels.
-             * @method onDatasetChanged
-             * @private
-             */
-            var onDatasetChanged = function() {
-                XDATA.userALE.log({
-                    activity: "alter",
-                    action: "query",
-                    elementId: "timeline",
-                    elementType: "canvas",
-                    elementSub: "timeline",
-                    elementGroup: "chart_group",
-                    source: "system",
-                    tags: ["dataset-change", "timeline"]
-                });
-                $scope.displayActiveDataset(false);
-            };
-
-            /**
              * Displays data for any currently active datasets.
              * @param {Boolean} Whether this function was called during visualization initialization.
              * @method displayActiveDataset
              */
             $scope.displayActiveDataset = function(initializing) {
-                if(!datasetService.hasDataset()) {
+                if(!datasetService.hasDataset() || $scope.loadingData) {
                     return;
                 }
 
@@ -396,6 +377,15 @@ function(connectionService, datasetService, errorNotificationService, filterServ
                     $scope.errorMessage = undefined;
                 }
 
+                var connection = connectionService.getActiveConnection();
+
+                if($scope.loadingData || !connection) {
+                    return;
+                }
+
+                // TODO
+                // $scope.loadingData = true;
+
                 var query = new neon.query.Query()
                     .selectFrom($scope.options.database, $scope.options.table)
                     .where($scope.options.dateField, '!=', null);
@@ -418,41 +408,41 @@ function(connectionService, datasetService, errorNotificationService, filterServ
                     source: "system",
                     tags: ["query", "timeline", "data"]
                 });
-                var connection = connectionService.getActiveConnection();
-                if(connection) {
-                    connection.executeQuery(query, function(queryResults) {
-                        $scope.$apply(function() {
-                            $scope.updateChartData(queryResults);
-                            XDATA.userALE.log({
-                                activity: "alter",
-                                action: "receive",
-                                elementId: "timeline",
-                                elementType: "canvas",
-                                elementSub: "timeline",
-                                elementGroup: "chart_group",
-                                source: "system",
-                                tags: ["receive", "timeline", "data"]
-                            });
-                        });
-                    }, function(response) {
+
+                connection.executeQuery(query, function(queryResults) {
+                    $scope.$apply(function() {
+                        $scope.updateChartData(queryResults);
+                        $scope.loadingData = false;
                         XDATA.userALE.log({
                             activity: "alter",
-                            action: "failed",
+                            action: "receive",
                             elementId: "timeline",
                             elementType: "canvas",
                             elementSub: "timeline",
                             elementGroup: "chart_group",
                             source: "system",
-                            tags: ["failed", "timeline", "data"]
+                            tags: ["receive", "timeline", "data"]
                         });
-                        $scope.updateChartData({
-                            data: []
-                        });
-                        if(response.responseJSON) {
-                            $scope.errorMessage = errorNotificationService.showErrorMessage($element, response.responseJSON.error, response.responseJSON.stackTrace);
-                        }
                     });
-                }
+                }, function(response) {
+                    XDATA.userALE.log({
+                        activity: "alter",
+                        action: "failed",
+                        elementId: "timeline",
+                        elementType: "canvas",
+                        elementSub: "timeline",
+                        elementGroup: "chart_group",
+                        source: "system",
+                        tags: ["failed", "timeline", "data"]
+                    });
+                    $scope.updateChartData({
+                        data: []
+                    });
+                    $scope.loadingData = false;
+                    if(response.responseJSON) {
+                        $scope.errorMessage = errorNotificationService.showErrorMessage($element, response.responseJSON.error, response.responseJSON.stackTrace);
+                    }
+                });
             };
 
             /**

@@ -50,8 +50,9 @@ angular.module('neonDemo.directives')
             $scope.nodes = [];
             $scope.numberOfNodesInGraph = 0;
             $scope.filterKeys = {};
-            $scope.errorMessage = undefined;
             $scope.filteredNodes = [];
+            $scope.errorMessage = undefined;
+            $scope.loadingData = false;
 
             $scope.options = {
                 database: "",
@@ -112,7 +113,6 @@ angular.module('neonDemo.directives')
                 $scope.messenger.events({
                     filtersChanged: onFiltersChanged
                 });
-                $scope.messenger.subscribe("dataset_changed", onDatasetChanged);
 
                 $scope.$on('$destroy', function() {
                     XDATA.userALE.log({
@@ -168,21 +168,12 @@ angular.module('neonDemo.directives')
             };
 
             /**
-             * Event handler for dataset changed events issued over Neon's messaging channels.
-             * @method onDatasetChanged
-             * @private
-             */
-            var onDatasetChanged = function() {
-                $scope.displayActiveDataset(false);
-            };
-
-            /**
              * Displays data for any currently active datasets.
              * @param {Boolean} Whether this function was called during visualization initialization.
              * @method displayActiveDataset
              */
             $scope.displayActiveDataset = function(initializing) {
-                if(!datasetService.hasDataset()) {
+                if(!datasetService.hasDataset() || $scope.loadingData) {
                     return;
                 }
 
@@ -289,9 +280,18 @@ angular.module('neonDemo.directives')
                     $scope.errorMessage = undefined;
                 }
 
+                var connection = connectionService.getActiveConnection();
+
+                if($scope.loadingData || !connection) {
+                    return;
+                }
+
+                // TODO
+                // $scope.loadingData = true;
+
                 if($scope.options.selectedNodeField) {
                     if($scope.filteredNodes.length) {
-                        $scope.queryForFilteredNodeNetwork($scope.filteredNodes);
+                        queryForFilteredNodeNetwork(connection);
                     } else if(!initializing) {
                         // Don't call $scope.updateGraph() here.  It will cause an error because we're in a $scope.$apply.
                         $scope.numberOfNodesInGraph = 0;
@@ -299,7 +299,7 @@ angular.module('neonDemo.directives')
                             nodes: [],
                             links: []
                         });
-                        $scope.queryForNodeList();
+                        queryForNodeList(connection);
                     }
                 }
             };
@@ -307,55 +307,49 @@ angular.module('neonDemo.directives')
             /**
              * Query for the list of nodes using the selected field but do not draw a graph.
              */
-            $scope.queryForNodeList = function() {
-                var connection = connectionService.getActiveConnection();
-                if(connection) {
-                    var query = new neon.query.Query()
-                        .selectFrom($scope.options.database, $scope.options.table)
-                        .withFields([$scope.options.selectedNodeField])
-                        .groupBy($scope.options.selectedNodeField)
-                        .aggregate(neon.query.COUNT, '*', 'count')
-                        .ignoreFilters([$scope.filterKeys[$scope.options.database][$scope.options.table]]);
+            var queryForNodeList = function(connection) {
+                var query = new neon.query.Query()
+                    .selectFrom($scope.options.database, $scope.options.table)
+                    .withFields([$scope.options.selectedNodeField])
+                    .groupBy($scope.options.selectedNodeField)
+                    .aggregate(neon.query.COUNT, '*', 'count')
+                    .ignoreFilters([$scope.filterKeys[$scope.options.database][$scope.options.table]]);
 
-                    connection.executeQuery(query, function(data) {
-                        $scope.nodes = [];
-                        for(var i = 0; i < data.data.length; i++) {
-                            var node = data.data[i][$scope.options.selectedNodeField];
-                            if($scope.nodes.indexOf(node) < 0) {
-                                $scope.nodes.push(node);
-                            }
+                connection.executeQuery(query, function(data) {
+                    $scope.nodes = [];
+                    for(var i = 0; i < data.data.length; i++) {
+                        var node = data.data[i][$scope.options.selectedNodeField];
+                        if($scope.nodes.indexOf(node) < 0) {
+                            $scope.nodes.push(node);
                         }
+                    }
 
-                        // Sort the nodes so they are displayed in alphabetical order in the options dropdown.
-                        $scope.nodes.sort(function(a, b) {
-                            if(typeof a === "string" && typeof b === "string") {
-                                return a.toLowerCase().localeCompare(b.toLowerCase());
-                            }
-                            if(a < b) {
-                                return -1;
-                            }
-                            if(b < a) {
-                                return 1;
-                            }
-                            return 0;
-                        });
-                    }, function(response) {
-                        if(response.responseJSON) {
-                            $scope.errorMessage = errorNotificationService.showErrorMessage($element, response.responseJSON.error, response.responseJSON.stackTrace);
+                    // Sort the nodes so they are displayed in alphabetical order in the options dropdown.
+                    $scope.nodes.sort(function(a, b) {
+                        if(typeof a === "string" && typeof b === "string") {
+                            return a.toLowerCase().localeCompare(b.toLowerCase());
                         }
+                        if(a < b) {
+                            return -1;
+                        }
+                        if(b < a) {
+                            return 1;
+                        }
+                        return 0;
                     });
-                }
+                    $scope.loadingData = false;
+                }, function(response) {
+                    $scope.loadingData = false;
+                    if(response.responseJSON) {
+                        $scope.errorMessage = errorNotificationService.showErrorMessage($element, response.responseJSON.error, response.responseJSON.stackTrace);
+                    }
+                });
             };
 
             /**
              * Query for the list of nodes that link to the filtered nodes and draw the graph containing the network.
              */
-            $scope.queryForFilteredNodeNetwork = function() {
-                if($scope.errorMessage) {
-                    errorNotificationService.hideErrorMessage($scope.errorMessage);
-                    $scope.errorMessage = undefined;
-                }
-
+            var queryForFilteredNodeNetwork = function(connection) {
                 var query = new neon.query.Query()
                     .selectFrom($scope.options.database, $scope.options.table);
 
@@ -368,23 +362,22 @@ angular.module('neonDemo.directives')
                 query = query.where(where);
                 query.ignoreFilters([$scope.filterKeys[$scope.options.database][$scope.options.table]]);
 
-                var connection = connectionService.getActiveConnection();
-                if(connection) {
-                    connection.executeQuery(query, function(response) {
-                        if(response.data.length) {
-                            $scope.createAndShowGraph(response);
-                        } else if($scope.filteredNodes.length) {
-                            // If the filters cause the query to return no data, remove the most recent filter and query again.  This can happen if the user
-                            // creates a filter in the Filter Builder (which the graph automatically adds as a filter) on a node that doesn't exist.
-                            $scope.removeFilter($scope.filteredNodes[$scope.filteredNodes.length - 1]);
-                        }
-                    }, function(response) {
-                        $scope.updateGraph([], []);
-                        if(response.responseJSON) {
-                            $scope.errorMessage = errorNotificationService.showErrorMessage($element, response.responseJSON.error, response.responseJSON.stackTrace);
-                        }
-                    });
-                }
+                connection.executeQuery(query, function(response) {
+                    if(response.data.length) {
+                        $scope.createAndShowGraph(response);
+                    } else if($scope.filteredNodes.length) {
+                        // If the filters cause the query to return no data, remove the most recent filter and query again.  This can happen if the user
+                        // creates a filter in the Filter Builder (which the graph automatically adds as a filter) on a node that doesn't exist.
+                        $scope.removeFilter($scope.filteredNodes[$scope.filteredNodes.length - 1]);
+                    }
+                    $scope.loadingData = false;
+                }, function(response) {
+                    $scope.updateGraph([], []);
+                    $scope.loadingData = false;
+                    if(response.responseJSON) {
+                        $scope.errorMessage = errorNotificationService.showErrorMessage($element, response.responseJSON.error, response.responseJSON.stackTrace);
+                    }
+                });
             };
 
             $scope.createAndShowGraph = function(response) {

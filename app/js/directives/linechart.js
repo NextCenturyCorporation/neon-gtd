@@ -69,6 +69,7 @@ function(connectionService, datasetService, errorNotificationService, $timeout) 
             $scope.colorMappings = [];
             $scope.seriesLimit = 10;
             $scope.errorMessage = undefined;
+            $scope.loadingData = false;
 
             $scope.options = {
                 database: "",
@@ -94,7 +95,6 @@ function(connectionService, datasetService, errorNotificationService, $timeout) 
                 $scope.messenger.events({
                     filtersChanged: onFiltersChanged
                 });
-                $scope.messenger.subscribe("dataset_changed", onDatasetChanged);
 
                 $scope.$on('$destroy', function() {
                     XDATA.userALE.log({
@@ -176,35 +176,25 @@ function(connectionService, datasetService, errorNotificationService, $timeout) 
                 }
             };
 
-            /**
-             * Event handler for dataset changed events issued over Neon's messaging channels.
-             * @method onDatasetChanged
-             * @private
-             */
-            var onDatasetChanged = function() {
-                XDATA.userALE.log({
-                    activity: "alter",
-                    action: "query",
-                    elementId: "linechart",
-                    elementType: "canvas",
-                    elementSub: "linechart",
-                    elementGroup: "chart_group",
-                    source: "system",
-                    tags: ["dataset-change", "linechart"]
-                });
-                $scope.displayActiveDataset(false);
-            };
-
             var query = function(callback) {
                 if($scope.errorMessage) {
                     errorNotificationService.hideErrorMessage($scope.errorMessage);
                     $scope.errorMessage = undefined;
                 }
 
+                var connection = connectionService.getActiveConnection();
+
+                if($scope.loadingData || !connection) {
+                    return;
+                }
+
                 if(!$scope.options.attrX || (!$scope.options.attrY && $scope.options.aggregation !== "count")) {
                     drawChart();
                     return;
                 }
+
+                // TODO
+                // $scope.loadingData = true;
 
                 var yearGroupClause = new neon.query.GroupByFunctionClause(neon.query.YEAR, $scope.options.attrX, 'year');
                 var monthGroupClause = new neon.query.GroupByFunctionClause(neon.query.MONTH, $scope.options.attrX, 'month');
@@ -240,25 +230,23 @@ function(connectionService, datasetService, errorNotificationService, $timeout) 
                 query.aggregate(neon.query.MIN, $scope.options.attrX, 'date')
                     .sortBy('date', neon.query.ASCENDING);
 
-                var connection = connectionService.getActiveConnection();
-                if(connection) {
-                    connection.executeQuery(query, callback, function(response) {
-                        XDATA.userALE.log({
-                            activity: "alter",
-                            action: "failed",
-                            elementId: "linechart",
-                            elementType: "canvas",
-                            elementSub: "linechart",
-                            elementGroup: "chart_group",
-                            source: "system",
-                            tags: ["failed", "linechart"]
-                        });
-                        drawChart();
-                        if(response.responseJSON) {
-                            $scope.errorMessage = errorNotificationService.showErrorMessage($element, response.responseJSON.error, response.responseJSON.stackTrace);
-                        }
+                connection.executeQuery(query, callback, function(response) {
+                    XDATA.userALE.log({
+                        activity: "alter",
+                        action: "failed",
+                        elementId: "linechart",
+                        elementType: "canvas",
+                        elementSub: "linechart",
+                        elementGroup: "chart_group",
+                        source: "system",
+                        tags: ["failed", "linechart"]
                     });
-                }
+                    drawChart();
+                    $scope.loadingData = false;
+                    if(response.responseJSON) {
+                        $scope.errorMessage = errorNotificationService.showErrorMessage($element, response.responseJSON.error, response.responseJSON.stackTrace);
+                    }
+                });
             };
 
             /**
@@ -267,7 +255,7 @@ function(connectionService, datasetService, errorNotificationService, $timeout) 
              * @method displayActiveDataset
              */
             $scope.displayActiveDataset = function(initializing) {
-                if(!datasetService.hasDataset()) {
+                if(!datasetService.hasDataset() || $scope.loadingData) {
                     return;
                 }
 
@@ -317,6 +305,7 @@ function(connectionService, datasetService, errorNotificationService, $timeout) 
                     source: "system",
                     tags: ["query", "linechart"]
                 });
+
                 query(function(results) {
                     var i;
                     var minDate;
@@ -441,6 +430,7 @@ function(connectionService, datasetService, errorNotificationService, $timeout) 
                     $scope.$apply(function() {
                         drawChart();
                         drawLine(data);
+                        $scope.loadingData = false;
                         // Use a timeout so we resize the chart after the legend renders (since the legend size affects the chart size).
                         $timeout(function() {
                             updateChartSize();

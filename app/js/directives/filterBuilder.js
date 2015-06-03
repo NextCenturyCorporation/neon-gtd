@@ -64,7 +64,6 @@ angular.module('neonDemo.directives')
                 $scope.messenger.events({
                     connectToHost: onConnectToHost
                 });
-                $scope.messenger.subscribe("dataset_changed", onDatasetChanged);
 
                 $scope.$on('$destroy', function() {
                     XDATA.userALE.log({
@@ -144,25 +143,6 @@ angular.module('neonDemo.directives')
             var onConnectToHost = function() {
                 $scope.filterTable.clearFilterKeys();
                 $scope.filterTable.clearFilterState();
-            };
-
-            /**
-             * Event handler for dataset changed events issued over Neon's messaging channels.
-             * @method onDatasetChanged
-             * @private
-             */
-            var onDatasetChanged = function() {
-                XDATA.userALE.log({
-                    activity: "alter",
-                    action: "query",
-                    elementId: "filter-builder",
-                    elementType: "panel",
-                    elementSub: "filter-builder",
-                    elementGroup: "query_group",
-                    source: "system",
-                    tags: ["dataset-change", "filter-builder"]
-                });
-                $scope.displayActiveDataset(false);
             };
 
             /**
