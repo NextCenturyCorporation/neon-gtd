@@ -1,6 +1,8 @@
-<div class="header-container">
-    <span class="header-text pull-left">{{options.selectedTable.name}}</span>
+<div class="header-container name-container">
+    <span class="header-text">{{options.selectedTable.name}}</span>
+</div>
 
+<div class="header-container menu-container">
     <options-menu parent-element="element" button-text="optionsMenuButtonText" show-button-text="showOptionsMenuButtonText">
         <!-- <div class="form-group">
             <label>Table</label>
@@ -66,14 +68,7 @@
     </options-menu>
 </div>
 
-<div class="header-container filter-container">
-    <div class="filter-reset pull-right" ng-class="{true: '', false: 'hidden'}[showFilter]">
-        Filter
-        <a class="btn" ng-click="clearFilters()">
-            <span class="glyphicon glyphicon-remove"></span>
-        </a>
-    </div>
-
+<div class="header-container legend-container">
     <div class="legend legend-scale" ng-class="{true: 'hidden', false: ''}[options.showPoints]">
         <div class="legend-item">
             <span class="legend-text">High</span>
@@ -97,6 +92,13 @@
     </div>
 </div>
 
+<div class="header-container filter-container">
+    <div class="filter-reset pull-right" ng-class="{true: '', false: 'hidden'}[showFilter]">
+        <span class="filter-label">Filter</span>
+        <span class="glyphicon glyphicon-remove" ng-click="clearFilters()"></span>
+    </div>
+</div>
+
 <div class="footer-container">
-    <span class="footer-text pull-left">SHIFT + DRAG to filter</span>
+    <span class="footer-text">SHIFT + DRAG to filter</span>
 </div>
