@@ -50,14 +50,36 @@ angular.module('neonDemo.directives')
             $scope.element = $element;
 
             $scope.optionsMenuButtonText = function() {
+                var limits = Object.keys($scope.limitedLayers);
+                var text = "";
+                if(limits.length) {
+                    for(var i = 0; i < limits.length; ++i) {
+                        var limitedLayers = $scope.limitedLayers[limits[i]];
+                        if(limitedLayers.length) {
+                            text += text ? "; " : "";
+                            for(var j = 0; j < limitedLayers.length; ++j) {
+                                text += (j ? ", " + limitedLayers[j] : limitedLayers[j]);
+                            }
+                            text += " limit " + limits[i];
+                        }
+                    }
+                }
+                return text;
+                /*
                 if($scope.dataLength >= $scope.previousLimit) {
                     return $scope.previousLimit + " data limit";
                 }
                 return "";
+                */
             };
             $scope.showOptionsMenuButtonText = function() {
-                return $scope.dataLength >= $scope.previousLimit;
+                return Object.keys($scope.limitedLayers).length > 0;
+                //return $scope.dataLength >= $scope.previousLimit;
             };
+
+            $scope.layers = [];
+            $scope.layersByDatabaseAndTable = {};
+            $scope.limitedLayers = {};
 
             // Setup scope variables.
             $scope.databases = [];
@@ -367,6 +389,26 @@ angular.module('neonDemo.directives')
                 return configClone;
             }
 
+            var createLayersByDatabaseAndTableMap = function(layers) {
+                var map = {};
+                for(var i = 0; i < layers.length; ++i) {
+                    var database = layers[i].database;
+                    var table = layers[i].table;
+                    if(!map[database]) {
+                        map[database] = {};
+                    }
+                    // TODO:  We currently use the limit of the first layer for each database/table pair.  We need to determine a better way of structuring the configuration.
+                    if(!map[database][table]) {
+                        map[database][table] = {
+                            names: [],
+                            limit: layers[i].limit
+                        };
+                    }
+                    map[database][table].names.push(layers[i].name);
+                }
+                return map;
+            }
+
             var drawZoomRect = function(rect) {
                 // Clear the old rect.
                 clearZoomRect();
@@ -431,6 +473,8 @@ angular.module('neonDemo.directives')
                 var name = "";
 
                 $scope.layers = cloneDatasetLayerConfig();
+                $scope.layersByDatabaseAndTable = createLayersByDatabaseAndTableMap($scope.layers);
+                $scope.limitedLayers = {};
 
                 // Setup the base layer objects.
                 for(i = 0; i < $scope.layers.length; i++) {
@@ -588,6 +632,26 @@ angular.module('neonDemo.directives')
                     }
                 }
 
+                var layers = findLayersByDatabaseAndTable(database, table);
+                if(data.length >= layers.limit) {
+                    if(!$scope.limitedLayers[layers.limit]) {
+                        $scope.limitedLayers[layers.limit] = [];
+                    }
+                    for(var i = 0; i < layers.names.length; ++i) {
+                        var index = $scope.limitedLayers[layers.limit].indexOf(layers.names[i]);
+                        if(index < 0) {
+                            $scope.limitedLayers[layers.limit].push(layers.names[i]);
+                        }
+                    }
+                } else if($scope.limitedLayers[layers.limit]) {
+                    for(var i = 0; i < layers.names.length; ++i) {
+                        var index = $scope.limitedLayers[layers.limit].indexOf(layers.names[i]);
+                        if(index >= 0) {
+                            $scope.limitedLayers[layers.limit].splice(index, 1);
+                        }
+                    }
+                }
+
                 $scope.draw();
                 // Ignore setting the bounds if there is no data because it can cause OpenLayers errors.
                 // TODO: Determine how to recalculate data bounds when multiple layers are shown.
@@ -655,8 +719,20 @@ angular.module('neonDemo.directives')
                 }
             };
 
+            var findLayersByDatabaseAndTable = function(database, table) {
+                if($scope.layersByDatabaseAndTable[database] && $scope.layersByDatabaseAndTable[database][table]) {
+                    return $scope.layersByDatabaseAndTable[database][table];
+                }
+
+                return {
+                    names: [],
+                    limit: 1000
+                };
+            };
+
             $scope.buildPointQuery = function(database, table) {
-                var query = new neon.query.Query().selectFrom(database, table).limit($scope.options.limit);
+                var layers = findLayersByDatabaseAndTable(database, table);
+                var query = new neon.query.Query().selectFrom(database, table).limit(layers.limit);
                 return query;
             };
 
