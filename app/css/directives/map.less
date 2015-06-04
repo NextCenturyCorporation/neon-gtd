@@ -1,5 +1,5 @@
 //
-// Copyright 2014 Next Century Corporation
+// Copyright 2015 Next Century Corporation
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
 // You may obtain a copy of the License at
@@ -13,7 +13,7 @@
 // limitations under the License.
 //
 
-.heat-map {
+.map-container {
     height: @widget-height;
     width: @widget-width;
     min-height: 100px;
@@ -55,21 +55,32 @@
         position: absolute;
         bottom: 10px;
         left: 10px;
-        right: 10px;
         z-index: 1000;
+        pointer-events: none;
     }
 
     .header-container {
         position: absolute;
-        top: 10px;
-        left: 10px;
-        right: 10px;
         z-index: 1005;
+
+        &.name-container {
+            left: 10px;
+            top: 10px;
+        }
+
+        &.menu-container {
+            right: 10px;
+            top: 10px;
+        }
+
+        &.legend-container {
+            top: 40px;
+            left: 10px;
+        }
 
         &.filter-container {
             top: 40px;
-            left: 45px;
-            z-index: 1000;
+            right: 10px;
         }
     }
 
@@ -119,10 +130,71 @@
             }
         }
     }
+
+    .olControlLayerSwitcher {
+        top: 90px;
+        left: 5px;
+        border: @border; 
+        color: black;
+        
+        .dataLbl {
+            font-size: 18px;
+        }
+
+        .baseLbl {
+            font-size: 18px;
+        }
+
+        .labelSpan {
+            font-size: 16px;
+            color: black;
+        }
+
+        .layersDiv {
+            padding-left: 30px;
+            background-color: rgba(225, 225, 225, 0.7);
+        }
+
+        .minimizeDiv {
+            left: 0px;
+            height: 40px;
+            width: 30px;
+            background-color: darkblue;
+            border-radius: 0px 15px 15px 0px;
+            border: @border; 
+        }
+
+        .maximizeDiv {
+            left: 0px;
+            height: 40px;
+            width: 30px;
+            background-color: darkblue;
+            border-radius: 0px 15px 15px 0px;
+            border: @border;
+        }
+
+        .olAlphaImg {
+            position: absolute !important;
+            left: 6px;
+            top: 10px;
+        }
+
+        input[type=radio] {
+            margin: 4px;
+        }
+
+        input[type=checkbox] {
+            margin: 4px;
+        }
+
+        label {
+            margin: 0px;
+        }
+    }
 }
 
 .visualization-widget-mobile {
-    .heat-map {
+    .map-container {
         .olMap {
             height: @mobile-widget-height !important;
         }

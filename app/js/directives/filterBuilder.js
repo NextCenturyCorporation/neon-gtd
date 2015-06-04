@@ -41,8 +41,8 @@ angular.module('neonDemo.directives')
         link: function($scope, $element) {
             $scope.databases = [];
             $scope.tables = [];
-            $scope.selectedDatabase = "";
-            $scope.selectedTable = "";
+            $scope.selectedDatabase = {};
+            $scope.selectedTable = {};
             $scope.fields = [];
             $scope.selectedField = "";
             $scope.andClauses = false;
@@ -64,7 +64,6 @@ angular.module('neonDemo.directives')
                 $scope.messenger.events({
                     connectToHost: onConnectToHost
                 });
-                $scope.messenger.subscribe("dataset_changed", onDatasetChanged);
 
                 $scope.$on('$destroy', function() {
                     XDATA.userALE.log({
@@ -91,7 +90,7 @@ angular.module('neonDemo.directives')
                 $scope.$watch('filterTable.filterState', function(state) {
                     var count = 0;
                     for(var i = 0; i < $scope.tables.length; ++i) {
-                        var tableState = state[$scope.tables[i]];
+                        var tableState = state[$scope.tables[i].name];
                         if(tableState) {
                             count += tableState.length;
                         }
@@ -147,25 +146,6 @@ angular.module('neonDemo.directives')
             };
 
             /**
-             * Event handler for dataset changed events issued over Neon's messaging channels.
-             * @method onDatasetChanged
-             * @private
-             */
-            var onDatasetChanged = function() {
-                XDATA.userALE.log({
-                    activity: "alter",
-                    action: "query",
-                    elementId: "filter-builder",
-                    elementType: "panel",
-                    elementSub: "filter-builder",
-                    elementGroup: "query_group",
-                    source: "system",
-                    tags: ["dataset-change", "filter-builder"]
-                });
-                $scope.displayActiveDataset(false);
-            };
-
-            /**
              * Displays data for any currently active datasets.
              * @param {Boolean} Whether this function was called during visualization initialization.
              * @method displayActiveDataset
@@ -178,7 +158,7 @@ angular.module('neonDemo.directives')
                 $scope.filterTable.clearFilterKeys();
                 $scope.filterTable.clearFilterState();
 
-                $scope.databases = datasetService.getDatabaseNames();
+                $scope.databases = datasetService.getDatabases();
                 $scope.selectedDatabase = $scope.databases[0];
 
                 if(initializing) {
@@ -191,12 +171,12 @@ angular.module('neonDemo.directives')
             };
 
             $scope.updateTables = function() {
-                $scope.tables = datasetService.getTableNames($scope.selectedDatabase);
+                $scope.tables = datasetService.getTables($scope.selectedDatabase.name);
                 $scope.selectedTable = $scope.tables[0];
 
                 for(var i = 0; i < $scope.databases.length; ++i) {
                     for(var j = 0; j < $scope.tables.length; ++j) {
-                        $scope.filterTable.setFilterKey($scope.databases[i], $scope.tables[j], neon.widget.getInstanceId("filterBuilder") + "-" + $scope.databases[i] + "-" + $scope.tables[j]);
+                        $scope.filterTable.setFilterKey($scope.databases[i].name, $scope.tables[j].name, neon.widget.getInstanceId("filterBuilder") + "-" + $scope.databases[i].name + "-" + $scope.tables[j].name);
                     }
                 }
 
@@ -204,20 +184,20 @@ angular.module('neonDemo.directives')
             };
 
             $scope.updateTablesForFilterRow = function(filterRow) {
-                filterRow.tableOptions = datasetService.getTableNames(filterRow.databaseName);
+                filterRow.tableOptions = datasetService.getTables(filterRow.database.name);
                 filterRow.tableName = filterRow.tableOptions[0];
                 $scope.updateFieldsForFilterRow(filterRow);
             };
 
             $scope.updateFields = function() {
-                var fields = datasetService.getDatabaseFields($scope.selectedDatabase, $scope.selectedTable);
+                var fields = datasetService.getDatabaseFields($scope.selectedDatabase.name, $scope.selectedTable.name);
                 $scope.fields = _.without(fields, "_id");
                 $scope.fields.sort();
                 $scope.selectedField = $scope.fields[0] || "";
             };
 
             $scope.updateFieldsForFilterRow = function(filterRow) {
-                var fields = datasetService.getDatabaseFields(filterRow.databaseName, filterRow.tableName);
+                var fields = datasetService.getDatabaseFields(filterRow.database.name, filterRow.tableName);
                 filterRow.columnOptions = _.without(fields, "_id");
                 filterRow.columnOptions.sort();
                 filterRow.columnValue = filterRow.columnOptions[0] || "";
@@ -229,21 +209,21 @@ angular.module('neonDemo.directives')
              * @method addFilterRow
              */
             $scope.addFilterRow = function() {
-                var databaseName = $scope.selectedDatabase;
-                var tableName = $scope.selectedTable;
+                var database = $scope.selectedDatabase;
+                var table = $scope.selectedTable;
 
                 var rows = {};
-                rows[tableName] = new neon.query.FilterRow(databaseName, tableName, $scope.selectedField, $scope.selectedOperator, $scope.selectedValue, $scope.tables, $scope.fields);
+                rows[table.name] = new neon.query.FilterRow(database, table, $scope.selectedField, $scope.selectedOperator, $scope.selectedValue, $scope.tables, $scope.fields);
 
-                var relations = datasetService.getRelations(databaseName, tableName, [$scope.selectedField]);
+                var relations = datasetService.getRelations(database.name, table.name, [$scope.selectedField]);
                 for(var i = 0; i < relations.length; ++i) {
                     var relation = relations[i];
-                    if(relation.table !== tableName) {
-                        var databaseFields = datasetService.getDatabaseFields(databaseName, relation.table);
+                    if(relation.table !== table.name) {
+                        var databaseFields = datasetService.getDatabaseFields(database.name, relation.table);
                         var originalFields = Object.keys(relation.fields);
                         for(var j = 0; j < originalFields.length; ++j) {
                             var relationField = relation.fields[originalFields[j]];
-                            rows[relation.table] = new neon.query.FilterRow(databaseName, relation.table, relationField, $scope.selectedOperator, $scope.selectedValue, $scope.tables, databaseFields);
+                            rows[relation.table] = new neon.query.FilterRow(database, relation.table, relationField, $scope.selectedOperator, $scope.selectedValue, $scope.tables, databaseFields);
                         }
                     }
                 }
@@ -252,7 +232,7 @@ angular.module('neonDemo.directives')
                 var rowTableNames = Object.keys(rows);
                 for(var k = 0; k < rowTableNames.length; ++k) {
                     var rowTableName = rowTableNames[k];
-                    indexes[rowTableName] = $scope.filterTable.addFilterRow($scope.selectedDatabase, rowTableName, rows[rowTableName]);
+                    indexes[rowTableName] = $scope.filterTable.addFilterRow($scope.selectedDatabase.name, rowTableName, rows[rowTableName]);
                 }
 
                 var filters = $scope.filterTable.buildFiltersFromData($scope.andClauses);
@@ -270,7 +250,7 @@ angular.module('neonDemo.directives')
                 $scope.publishReplaceFilterEvents(filters, function(successDatabase, successTable) {
                     // On succesful filter, reset the user input on the add filter row so it's obvious which rows
                     // are filters and which is the primary Add Filter row.
-                    if(successDatabase === databaseName, successTable === tableName) {
+                    if(successDatabase === database.name, successTable === table.name) {
                         $scope.$apply(function() {
                             $scope.selectedField = $scope.fields[0];
                             $scope.selectedOperator = $scope.filterTable.operatorOptions[0];
