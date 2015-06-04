@@ -1,0 +1,152 @@
+//
+// Copyright 2014 Next Century Corporation
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+//
+
+.line {
+    fill: none;
+    stroke-width: 2px;
+}
+
+.linechart{
+    margin: 0 0 0;
+    min-height: 50px;
+    overflow: hidden;
+
+    svg{
+        font-size: 10px;
+    }
+
+    .dot{
+        stroke-width: 2px;
+    }
+
+    .dot-empty{
+        fill: @chart-empty-dot-color;
+    }
+
+    .gridLines {
+        .horizontalGrid {
+            &:first-child {
+                stroke-dasharray: 0;
+            }
+        }
+    }
+
+    .horizontalGrid{
+        fill: none;
+        shape-rendering: crispEdges;
+        stroke: @light-chart-axis-color;
+        stroke-width : 1px;
+        stroke-dasharray: 6px;
+    }
+
+    .hover-line {
+        line {
+            stroke: @light-chart-axis-color;
+            fill: none;
+            stroke-width: 1px;
+        }
+
+        text {
+            font-weight: bold;
+            text-shadow: 0 2px 0 @text-shadow-color;
+        }
+
+        .hover-date {
+            fill: @chart-text-color;
+        }
+    }
+
+    .y {
+        &.axis {
+            path {
+                display: none;
+            }
+
+            text{
+                text-shadow:
+                    1px 1px 0 @text-shadow-color,
+                    1px 0px 0 @text-shadow-color,
+                    1px -1px 0 @text-shadow-color,
+                    -1px 1px 0 @text-shadow-color,
+                    -1px 0px 0 @text-shadow-color,
+                    -1px -1px 0 @text-shadow-color,
+                    0px 2px 0 @text-shadow-color,
+                    0px -2px 0 @text-shadow-color;
+                font-weight: bold;
+                fill: @chart-text-color;
+            }
+
+            .tick {
+                &:first-child {
+                    display: none;
+                }
+
+                line {
+                    display: none;
+                }
+            }
+        }
+    }
+    .x {
+        &.axis {
+            path {
+                display: none;
+            }
+        }
+    }
+}
+
+.linechartDirective {
+    margin: 0px;
+    padding: 10px;
+    height: 100%;
+    width: 100%;
+
+    .legend {
+        .legend-item {
+            margin-top: 5px;
+
+            /* Add extra margin to the top of the legend (the first item) to mimic the styling of the Bar Chart. */
+            &:first-child {
+                margin-top: 10px;
+            }
+        }
+    }
+}
+
+.axis {
+    path, line {
+        fill: none;
+        stroke: @chart-axis-color;
+        shape-rendering: crispEdges;
+    }
+}
+
+
+
+.visualization-widget {
+    .linechartDirective {
+        height: @widget-height;
+        width: @widget-width;
+    }
+}
+
+.visualization-widget-mobile {
+    .linechartDirective {
+        min-height: @mobile-widget-height;
+        height: @mobile-widget-height;
+        width: @mobile-widget-width;
+    }
+}

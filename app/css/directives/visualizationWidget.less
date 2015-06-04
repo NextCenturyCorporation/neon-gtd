@@ -1,0 +1,84 @@
+//
+// Copyright 2014 Next Century Corporation
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+//
+
+.visualization-widget {
+    display: block;
+    height: 100%;
+    width: 100%;
+    margin: 0px;
+    padding: 0px;
+}
+
+.visualization-drag-handle {
+    cursor: move;
+    position: absolute;
+    width: 100%;
+    height: 10px;
+    z-index: 1050;
+    opacity: 0;
+
+    &:hover {
+        background-color: #dddddd;
+        opacity: 0.75;
+
+        .visualization-buttons {
+            background-color: #dddddd;
+
+            .btn {
+                opacity: 1;
+            }
+        }
+    }
+
+    .visualization-buttons {
+        position: absolute;
+        margin: 0px auto;
+        left: 0px;
+        right: 0px;
+        border-radius: 10px;
+        /* Width = Resize Button + Remove Button + Margins */
+        width: 60px;
+
+        .btn {
+            margin: 4px 0px 4px 8px;
+            padding: 0px;
+            line-height: 0px;
+            z-index: 1065;
+            opacity: 0;
+
+            .glyphicon {
+                font-size: 16px;
+            }
+
+            .glyphicon-remove {
+                color: #f00;
+            }
+
+            .glyphicon-resize-full, .glyphicon-resize-small {
+                color: @accent-bright;
+            }
+        }
+    }
+}
+
+.visualization-widget-mobile {
+    min-height:200px;
+    margin: 0px;
+    padding: 0px;
+
+    .visualization-drag-handle {
+        display:none;
+    }
+}

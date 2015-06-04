@@ -18,7 +18,11 @@
 
     "dashboard": {
         "gridsterColumns": 6,
-        "hideNavbarItems": false
+        "gridsterMargins": 10,
+        "hideNavbarItems": false,
+        "hideAdvancedOptions": false,
+        "hideErrorNotifications": false,
+        "hideHeaders": false
     },
 
     "opencpu": {
@@ -108,69 +112,100 @@
         "name": "Earthquakes",
         "datastore": "mongo",
         "hostname": "localhost",
-        "database": "test",
-        "tables": [{
-            "name": "earthquakes",
-            "fields": [{
-                "columnName": "_id",
-                "prettyName": "Database ID"
-            }, {
-                "columnName": "time",
-                "prettyName": "Time"
-            }, {
-                "columnName": "latitude",
-                "prettyName": "Latitude"
-            }, {
-                "columnName": "longitude",
-                "prettyName": "Longitude"
-            }, {
-                "columnName": "depth",
-                "prettyName": "Depth"
-            }, {
-                "columnName": "mag",
-                "prettyName": "Magnitude"
-            }, {
-                "columnName": "magType",
-                "prettyName": "Magnitude Type"
-            }, {
-                "columnName": "nst",
-                "prettyName": "NST"
-            }, {
-                "columnName": "gap",
-                "prettyName": "Gap"
-            }, {
-                "columnName": "dmin",
-                "prettyName": "DMIN"
-            }, {
-                "columnName": "rms",
-                "prettyName": "RMS"
-            }, {
-                "columnName": "net",
-                "prettyName": "Net"
-            }, {
-                "columnName": "id",
-                "prettyName": "ID"
-            }, {
-                "columnName": "updated",
-                "prettyName": "Updated"
-            }, {
-                "columnName": "place",
-                "prettyName": "Place"
-            }, {
-                "columnName": "type",
-                "prettyName": "Type"
-            }],
-            "mappings": {
-                "date": "time",
-                "latitude": "latitude",
-                "longitude": "longitude",
-                "line_category": "type",
-                "bar_x_axis": "net",
-                "y_axis": "mag",
-                "color_by": "magType",
-                "size_by": "mag",
-                "sort_by": "time"
-            }
+        "databases": [{
+            "name": "test",
+            "prettyName": "Test",
+            "tables": [{
+                "name": "earthquakes",
+                "prettyName": "Earthquakes",
+                "fields": [{
+                    "columnName": "_id",
+                    "prettyName": "Database ID"
+                }, {
+                    "columnName": "time",
+                    "prettyName": "Time"
+                }, {
+                    "columnName": "latitude",
+                    "prettyName": "Latitude"
+                }, {
+                    "columnName": "longitude",
+                    "prettyName": "Longitude"
+                }, {
+                    "columnName": "depth",
+                    "prettyName": "Depth"
+                }, {
+                    "columnName": "mag",
+                    "prettyName": "Magnitude"
+                }, {
+                    "columnName": "magType",
+                    "prettyName": "Magnitude Type"
+                }, {
+                    "columnName": "nst",
+                    "prettyName": "NST"
+                }, {
+                    "columnName": "gap",
+                    "prettyName": "Gap"
+                }, {
+                    "columnName": "dmin",
+                    "prettyName": "DMIN"
+                }, {
+                    "columnName": "rms",
+                    "prettyName": "RMS"
+                }, {
+                    "columnName": "net",
+                    "prettyName": "Net"
+                }, {
+                    "columnName": "id",
+                    "prettyName": "ID"
+                }, {
+                    "columnName": "updated",
+                    "prettyName": "Updated"
+                }, {
+                    "columnName": "place",
+                    "prettyName": "Place"
+                }, {
+                    "columnName": "type",
+                    "prettyName": "Type"
+                }],
+                "mappings": {
+                    "date": "time",
+                    "latitude": "latitude",
+                    "longitude": "longitude",
+                    "line_category": "type",
+                    "bar_x_axis": "net",
+                    "y_axis": "mag",
+                    "color_by": "magType",
+                    "size_by": "mag",
+                    "sort_by": "time",
+                    "count_by": "net"
+                }
+            }]
+        }],
+        "mapLayers": [{
+            "database": "test",
+            "table": "earthquakes",
+            "type": "heatmap",
+            "latitudeMapping": "latitude",
+            "longitudeMapping": "longitude",
+            "sizeBy": "mag"
+        }, {
+            "database": "test",
+            "table": "earthquakes",
+            "active":  true,
+            "type": "cluster",
+            "latitudeMapping": "latitude",
+            "longitudeMapping": "longitude",
+            "colorBy": "magType",
+            "sizeBy": "mag"
+        }, {
+            "database": "test",
+            "table": "earthquakes",
+            "active":  true,
+            "type": "points",
+            "latitudeMapping": "latitude",
+            "longitudeMapping": "longitude",
+            "colorBy": "magType",
+            "sizeBy": "mag"
         }]
     }],
 
@@ -207,6 +242,7 @@
             "sizeY": 1,
             "type": "timeline-selector",
             "bindings": {
+                "bind-database": "'myDatabase'",
                 "bind-table": "'myTable'",
                 "bind-date-field": "'date'"
             }
@@ -215,6 +251,7 @@
             "sizeY": 2,
             "type": "heat-map",
             "bindings": {
+                "bind-database": "'myDatabase'",
                 "bind-table": "'myTable'",
                 "bind-latitude-field": "'latitude'",
                 "bind-longitude-field": "'longitude'",
@@ -226,6 +263,7 @@
             "sizeY": 2,
             "type": "circular-heat-form",
             "bindings": {
+                "bind-database": "'myDatabase'",
                 "bind-table": "'myTable'",
                 "bind-date-field": "'date'"
             }
@@ -234,6 +272,7 @@
             "sizeY": 2,
             "type": "linechart",
             "bindings": {
+                "bind-database": "'myDatabase'",
                 "bind-table": "'myTable'",
                 "bind-date-field": "'date'",
                 "bind-y-axis-field": "'type'",
@@ -245,6 +284,7 @@
             "sizeY": 2,
             "type": "barchart",
             "bindings": {
+                "bind-database": "'myDatabase'",
                 "bind-table": "'myTable'",
                 "bind-x-axis-field": "'type'",
                 "bind-y-axis-field": "'type'",
@@ -255,6 +295,7 @@
             "sizeY": 2,
             "type": "count-by",
             "bindings": {
+                "bind-database": "'myDatabase'",
                 "bind-table": "'myTable'",
                 "bind-count-field": "'type'"
             }
@@ -263,6 +304,7 @@
             "sizeY": 2,
             "type": "tag-cloud",
             "bindings": {
+                "bind-database": "'myDatabase'",
                 "bind-table": "'myTable'",
                 "bind-tag-field": "'hashtags'"
             }
@@ -271,6 +313,7 @@
             "sizeY": 2,
             "type": "sunburst",
             "bindings": {
+                "bind-database": "'myDatabase'",
                 "bind-table": "'myTable'"
             }
         }, {
@@ -278,6 +321,7 @@
             "sizeY": 2,
             "type": "query-results-table",
             "bindings": {
+                "bind-database": "'myDatabase'",
                 "bind-table": "'myTable'"
             }
         }]

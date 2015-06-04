@@ -1,0 +1,241 @@
+//
+// Copyright 2014 Next Century Corporation
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+//
+
+.data-tray {
+    h4 {
+        &.pull-left {
+            @media (max-width: 767px) {
+                float: none !important;
+            }
+
+            @media (min-width: 768px) and (max-width: 991px) {
+                float: none !important;
+            }
+        }
+    }
+
+    .form-inline {
+        @media (max-width: 767px) {
+            float: none !important;
+            margin-top: 15px !important;
+            margin-bottom: 10px;
+        }
+
+        @media (min-width: 768px) and (max-width: 991px) {
+            float: none !important;
+            margin-bottom: 5px;
+        }
+
+        .form-control {
+            @media (max-width: 767px) {
+                display: inline-block;
+                width: 100%;
+                vertical-align: middle;
+            }
+        }
+
+        .form-group {
+            @media (max-width: 767px) {
+                display: inline-block;
+                margin-bottom: 0;
+                vertical-align: middle;
+                width: 20%;
+            }
+
+            > label {
+                @media (max-width: 767px) {
+                    display: block;
+                    margin-top: 0;
+                    margin-left: 0;
+                }
+            }
+        }
+
+        .form-input-group {
+            @media (max-width: 767px) {
+                width: 55%;
+                padding-right: 10px;
+            }
+
+            > label{
+                @media (max-width: 767px) {
+                    float: none !important;
+                }
+            }
+        }
+    }
+
+    .input-group {
+        .form-control {
+            @media (max-width: 767px) {
+                width: 100%;
+            }
+        }
+    }
+
+    .refresh {
+        margin-left: 10px;
+
+        @media (max-width: 767px) {
+            margin-top: 21px;
+        }
+    }
+}
+
+.navbar-item-forms {
+    margin-top: 5px;
+}
+
+.query-results-directive {
+    margin: 0px;
+    height: 100%;
+    width: 100%;
+}
+
+.query-results-grid {
+    background-color: @main-background;
+    border: @border;
+    border-radius: 2px;
+    box-shadow: 0 1px 4px @shadow;
+    box-sizing: content-box;
+    -webkit-box-sizing: content-box;
+    -moz-box-sizing: content-box;
+
+    &:before, &:after {
+        box-sizing: content-box;
+        -webkit-box-sizing: content-box;
+        -moz-box-sizing: content-box;
+    }
+
+    *, *:before, *:after {
+        box-sizing: content-box;
+        -webkit-box-sizing: content-box;
+        -moz-box-sizing: content-box;
+    }
+
+    .form-inline {
+        .form-group {
+            &:first-child {
+                > label {
+                    margin-left: 0px;
+                }
+            }
+
+            > label {
+                margin-left: 10px;
+                margin-right: 5px;
+            }
+
+            input[type="number"] {
+                width: 100px;
+            }
+
+            .btn-group {
+                label {
+                    &.btn {
+                        margin-right: 0px;
+                    }
+                }
+            }
+        }
+
+        .form-input-group {
+            display: inline-block;
+            margin-bottom: 0;
+            vertical-align: middle;
+
+            &:first-child {
+                > label {
+                    margin-left: 0px;
+                }
+            }
+
+            > label {
+                margin-left: 10px;
+                margin-right: 5px;
+                float: left;
+                margin-top: 9px;
+                margin-right: 10px;
+            }
+        }
+    }
+
+    .slick-row{
+        background: @main-background-lighten;
+
+        &.odd {
+            background: @main-background;
+        }
+    }
+
+    .slick-header{
+        border-top: 0;
+
+        .slick-header-column{
+            color: @mid-text-color;
+            background: @main-background-darken;
+            cursor: pointer;
+
+            &.ui-state-hover{
+                color: @accent-bright;
+                background: @light-background;
+
+                .remove-column-button {
+                    color: #999999;
+                    background: #FFFFFF;
+
+                    &:focus, &:hover {
+                        color: #39B54A;
+                        background: #FFFFFF;
+                    }
+                }
+            }
+
+            .remove-column-button {
+                color: #999999;
+                position: absolute;
+                right: 5px;
+            }
+        }
+
+        .slick-header-column-sorted{
+            color: @accent-bright;
+            font-style: normal;
+        }
+
+        .slick-sortable-placeholder{
+            background: @border-color;
+        }
+    }
+}
+
+.slick-sort-indicator {
+    float: none;
+}
+
+.tray {
+    .container {
+        .query-results-grid {
+            min-height: 200px;
+            height: 300px;
+        }
+    }
+}
+
+.visualization-widget {
+    .query-results-directive {
+        padding: 10px;
+    }
+}

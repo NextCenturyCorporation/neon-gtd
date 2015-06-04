@@ -141,13 +141,13 @@ charts.LineChart.prototype.drawChart = function() {
         .attr("transform", "translate(" + me.margin.left + "," + me.margin.top + ")");
 };
 
-charts.LineChart.prototype.calculateColor = function(series, total) {
-    var color = this.colorScale(series);
-    var hidden = this.hiddenSeries.indexOf(series) >= 0 ? true : false;
+charts.LineChart.prototype.calculateColor = function(seriesObject) {
+    var color = this.colorScale(seriesObject.series);
+    var hidden = this.hiddenSeries.indexOf(seriesObject.series) >= 0 ? true : false;
     var index = -1;
 
     for(var i = this.colors.length - 1; i > -1; i--) {
-        if(this.colors[i].series === series) {
+        if(this.colors[i].series === seriesObject.series) {
             index = i;
         }
     }
@@ -155,13 +155,15 @@ charts.LineChart.prototype.calculateColor = function(series, total) {
     // store the color in the registry so we know the color/series mappings
     if(index >= 0) {
         this.colors[index].color = color;
-        this.colors[index].total = total;
+        this.colors[index].total = seriesObject.total;
         this.colors[index].hidden = hidden;
     } else {
         this.colors.push({
             color: color,
-            series: series,
-            total: total,
+            series: seriesObject.series,
+            total: seriesObject.total,
+            min: seriesObject.min,
+            max: seriesObject.max,
             hidden: hidden
         });
     }
@@ -196,7 +198,7 @@ charts.LineChart.prototype.drawLine = function(opts) {
     var fullDataSet = [];
     //get list of all data
     for(i = 0; i < opts.length; i++) {
-        this.calculateColor(opts[i].series, opts[i].total);
+        this.calculateColor(opts[i]);
         if(this.hiddenSeries.indexOf(opts[i].series) === -1) {
             fullDataSet = fullDataSet.concat(opts[i].data);
         }
@@ -284,7 +286,7 @@ charts.LineChart.prototype.drawLine = function(opts) {
                 .attr('y', me.height + 20)
         );
 
-        var color = this.calculateColor(opts[i].series, opts[i].total);
+        var color = this.calculateColor(opts[i]);
 
         me.x.ticks().map(function(bucket) {
             return _.find(data, {
@@ -439,7 +441,7 @@ charts.LineChart.prototype.drawLine = function(opts) {
                 if(me.hiddenSeries.indexOf(opts[i].series) >= 0) {
                     continue;
                 }
-                var color = me.calculateColor(opts[i].series, opts[i].total);
+                var color = me.calculateColor(opts[i]);
                 var xPos = me.x(closerDate);
                 if(opts[i].data.length === 1) {
                     xPos = me.width / 2;

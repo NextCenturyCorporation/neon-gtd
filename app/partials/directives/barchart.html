@@ -1,18 +1,23 @@
-<div class="header-container">
-    <span class="header-text pull-left">{{options.selectedTable.name}}</span>
+<div class="header-container" ng-show="!(hideHeader)">
+    <span class="header-text pull-left">{{options.table.prettyName}}</span>
 
-    <options-menu parent-element="element">
-        <div class="form-group">
-            <label>Table</label>
-            <select class="form-control" ng-model="options.selectedTable" ng-options="table.name for table in tables" ng-required="true" ng-disabled="(tables.length < 2)" ng-change="updateFieldsAndQueryForData()">
+    <options-menu parent-element="element" ng-show="!(hideAdvancedOptions)">
+        <div class="form-group" ng-show="!(hideAdvancedOptions)">
+            <label>Database</label>
+            <select class="form-control" ng-model="options.database" ng-options="database.prettyName for database in databases" ng-required="true" ng-disabled="(databases.length < 2)" ng-change="updateTables()">
             </select>
         </div>
-        <div class="form-group">
+        <div class="form-group" ng-show="!(hideAdvancedOptions)">
+            <label>Table</label>
+            <select class="form-control" ng-model="options.table" ng-options="table.prettyName for table in tables" ng-required="true" ng-disabled="(tables.length < 2)" ng-change="updateFields()">
+            </select>
+        </div>
+        <div class="form-group" ng-show="!(hideAdvancedOptions)">
             <label>Group Field (X Axis)</label>
             <select class="form-control" ng-model="options.attrX" ng-options="field for field in fields" ng-required="true" ng-disabled="!(fields.length > 0)">
             </select>
         </div>
-        <div class="form-group">
+        <div class="form-group" ng-show="!(hideAdvancedOptions)">
             <label>Aggregation</label>
             <select ng-model="options.barType" class="form-control">
                 <option value="count">Count</option>
@@ -20,7 +25,7 @@
                 <option value="average">Average</option>
             </select>
         </div>
-        <div class="form-group" ng-show="(options.barType !== 'count')">
+        <div class="form-group" ng-show="!(hideAdvancedOptions) && (options.barType !== 'count')">
             <label>Value Field (Y Axis)</label>
             <select class="form-control" ng-model="options.attrY" ng-options="field for field in fields" ng-required="true" ng-disabled="!(fields.length > 0)">
             </select>
@@ -31,20 +36,15 @@
 <div class="clearfix"></div>
 
 <div class="header-container filter-container">
-    <div class="filter-reset pull-right" ng-class="{true: 'hidden', false: ''}[filterSet === undefined]">
-        {{filterSet.key}}={{filterSet.value}}
-      <a class="btn" ng-click="clearFilterSet()">
-        <span class="glyphicon glyphicon-remove"></span>
-      </a>
+    <div class="filter-reset pull-right" ng-class="{true: 'hidden', false: ''}[filterSet === undefined]" title="{{filterSet.key}}={{filterSet.value}}">
+        <span class="filter-label">{{filterSet.key}}={{filterSet.value}}</span>
+        <span class="glyphicon glyphicon-remove" ng-click="clearFilterSet()"></span>
     </div>
 
     <div class="legend">
-        <div class="legend-item">
+        <div class="legend-item" title="{{getLegendText()}}">
             <span class="legend-icon" style="background-color: #39b54a"></span>
-            <span class="legend-text" ng-show="options.barType === 'average'">Average {{options.attrY}}</span>
-            <span class="legend-text" ng-show="options.barType === 'sum'">Sum {{options.attrY}}</span>
-            <span class="legend-text" ng-show="options.barType === 'count'">Count</span>
-            <span class="legend-text" >vs {{options.attrX}}</span>
+            <span class="legend-text legend-text-large">{{getLegendText()}}</span>
         </div>
     </div>
 </div>

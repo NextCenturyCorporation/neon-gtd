@@ -19,35 +19,40 @@
  * This directive is for building a tag cloud
  */
 angular.module('neonDemo.directives')
-.directive('tagCloud', ['ConnectionService', 'DatasetService', 'FilterService', '$timeout',
-function(connectionService, datasetService, filterService, $timeout) {
+.directive('tagCloud', ['ConnectionService', 'DatasetService', 'ErrorNotificationService', 'FilterService', '$timeout',
+function(connectionService, datasetService, errorNotificationService, filterService, $timeout) {
     return {
         templateUrl: 'partials/directives/tagCloud.html',
         restrict: 'EA',
         scope: {
             bindTagField: '=',
-            bindTable: '='
+            bindTable: '=',
+            bindDatabase: '=',
+            hideHeader: '=?',
+            hideAdvancedOptions: '=?'
         },
         link: function($scope, $element) {
             $element.addClass("tagcloud-container");
 
             $scope.element = $element;
+
             $scope.showOptionsMenuButtonText = function() {
                 return $scope.filterTags.length === 0 && $scope.data.length === 0;
             };
 
-            $scope.databaseName = '';
+            $scope.databases = [];
             $scope.tables = [];
             $scope.fields = [];
             $scope.data = [];
             $scope.filterTags = [];
             $scope.showFilter = false;
             $scope.filterKeys = {};
+            $scope.errorMessage = undefined;
+            $scope.loadingData = false;
 
             $scope.options = {
-                selectedTable: {
-                    name: ""
-                },
+                database: {},
+                table: {},
                 tagField: "",
                 andTags: true
             };
@@ -80,7 +85,6 @@ function(connectionService, datasetService, filterService, $timeout) {
                 $scope.messenger.events({
                     filtersChanged: onFiltersChanged
                 });
-                $scope.messenger.subscribe("dataset_changed", onDatasetChanged);
 
                 $scope.$on('$destroy', function() {
                     XDATA.userALE.log({
@@ -137,28 +141,9 @@ function(connectionService, datasetService, filterService, $timeout) {
                     source: "system",
                     tags: ["filter-change", "tag-cloud"]
                 });
-                if(message.addedFilter && message.addedFilter.databaseName === $scope.databaseName && message.addedFilter.tableName === $scope.options.selectedTable.name) {
+                if(message.addedFilter && message.addedFilter.databaseName === $scope.options.database.name && message.addedFilter.tableName === $scope.options.table.name) {
                     $scope.queryForTags();
                 }
-            };
-
-            /**
-             * Event handler for dataset changed events issued over Neon's messaging channels.
-             * @method onDatasetChanged
-             * @private
-             */
-            var onDatasetChanged = function() {
-                XDATA.userALE.log({
-                    activity: "alter",
-                    action: "query",
-                    elementId: "tag-cloud",
-                    elementType: "tag",
-                    elementSub: "tag-cloud",
-                    elementGroup: "chart_group",
-                    source: "system",
-                    tags: ["dataset-change", "tag-cloud"]
-                });
-                $scope.displayActiveDataset(false);
             };
 
             /**
@@ -167,28 +152,50 @@ function(connectionService, datasetService, filterService, $timeout) {
              * @method displayActiveDataset
              */
             $scope.displayActiveDataset = function(initializing) {
-                if(!datasetService.hasDataset()) {
+                if(!datasetService.hasDataset() || $scope.loadingData) {
                     return;
                 }
 
-                $scope.databaseName = datasetService.getDatabase();
-                $scope.tables = datasetService.getTables();
-                $scope.options.selectedTable = $scope.bindTable || datasetService.getFirstTableWithMappings(["tags"]) || $scope.tables[0];
-                $scope.filterKeys = filterService.createFilterKeys("tagcloud", $scope.tables);
+                $scope.databases = datasetService.getDatabases();
+                $scope.options.database = $scope.databases[0];
+                if($scope.bindDatabase) {
+                    for(var i = 0; i < $scope.databases.length; ++i) {
+                        if($scope.bindDatabase === $scope.databases[i].name) {
+                            $scope.options.database = $scope.databases[i];
+                            break;
+                        }
+                    }
+                }
+                $scope.filterKeys = filterService.createFilterKeys("tagcloud", datasetService.getDatabaseAndTableNames());
 
                 if(initializing) {
-                    $scope.updateFieldsAndQueryForTags();
+                    $scope.updateTables();
                 } else {
                     $scope.$apply(function() {
-                        $scope.updateFieldsAndQueryForTags();
+                        $scope.updateTables();
                     });
                 }
             };
 
-            $scope.updateFieldsAndQueryForTags = function() {
-                $scope.fields = datasetService.getDatabaseFields($scope.options.selectedTable.name);
+            $scope.updateTables = function() {
+                $scope.tables = datasetService.getTables($scope.options.database.name);
+                $scope.options.table = datasetService.getFirstTableWithMappings($scope.options.database.name, ["tags"]) || $scope.tables[0];
+                if($scope.bindTable) {
+                    for(var i = 0; i < $scope.tables.length; ++i) {
+                        if($scope.bindTable === $scope.tables[i].name) {
+                            $scope.options.table = $scope.tables[i];
+                            break;
+                        }
+                    }
+                }
+                $scope.updateFields();
+            };
+
+            $scope.updateFields = function() {
+                $scope.loadingData = true;
+                $scope.fields = datasetService.getDatabaseFields($scope.options.database.name, $scope.options.table.name);
                 $scope.fields.sort();
-                $scope.options.tagField = $scope.bindTagField || datasetService.getMapping($scope.options.selectedTable.name, "tags") || $scope.fields[0] || "";
+                $scope.options.tagField = $scope.bindTagField || datasetService.getMapping($scope.options.database.name, $scope.options.table.name, "tags") || $scope.fields[0] || "";
                 if($scope.showFilter) {
                     $scope.clearTagFilters();
                 } else {
@@ -201,12 +208,44 @@ function(connectionService, datasetService, filterService, $timeout) {
              * @method queryForTags
              */
             $scope.queryForTags = function() {
-                if($scope.options.tagField !== '') {
-                    var connection = connectionService.getActiveConnection();
-                    if(connection) {
-                        var host = connection.host_;
-                        var url = neon.serviceUrl('mongotagcloud', 'tagcounts', 'host=' + host + "&db=" + $scope.databaseName + "&collection=" + $scope.options.selectedTable.name + "&arrayfield=" + $scope.options.tagField + "&limit=40");
+                if($scope.errorMessage) {
+                    errorNotificationService.hideErrorMessage($scope.errorMessage);
+                    $scope.errorMessage = undefined;
+                }
 
+                var connection = connectionService.getActiveConnection();
+
+                if(!connection || !$scope.options.tagField) {
+                    $scope.updateTagData([]);
+                    $scope.loadingData = false;
+                    return;
+                }
+
+                XDATA.userALE.log({
+                    activity: "alter",
+                    action: "query",
+                    elementId: "tag-cloud",
+                    elementType: "tag",
+                    elementSub: "tag-cloud",
+                    elementGroup: "chart_group",
+                    source: "system",
+                    tags: ["query", "tag-cloud"]
+                });
+
+                connection.executeArrayCountQuery($scope.options.database.name, $scope.options.table.name, $scope.options.tagField, 40, function(tagCounts) {
+                    XDATA.userALE.log({
+                        activity: "alter",
+                        action: "query",
+                        elementId: "tag-cloud",
+                        elementType: "tag",
+                        elementSub: "tag-cloud",
+                        elementGroup: "chart_group",
+                        source: "system",
+                        tags: ["receive", "tag-cloud"]
+                    });
+                    $scope.$apply(function() {
+                        $scope.updateTagData(tagCounts);
+                        $scope.loadingData = false;
                         XDATA.userALE.log({
                             activity: "alter",
                             action: "query",
@@ -215,49 +254,26 @@ function(connectionService, datasetService, filterService, $timeout) {
                             elementSub: "tag-cloud",
                             elementGroup: "chart_group",
                             source: "system",
-                            tags: ["query", "tag-cloud"]
+                            tags: ["render", "tag-cloud"]
                         });
-                        neon.util.ajaxUtils.doGet(url, {
-                            success: function(tagCounts) {
-                                XDATA.userALE.log({
-                                    activity: "alter",
-                                    action: "query",
-                                    elementId: "tag-cloud",
-                                    elementType: "tag",
-                                    elementSub: "tag-cloud",
-                                    elementGroup: "chart_group",
-                                    source: "system",
-                                    tags: ["receive", "tag-cloud"]
-                                });
-                                $scope.$apply(function() {
-                                    $scope.updateTagData(tagCounts);
-                                    XDATA.userALE.log({
-                                        activity: "alter",
-                                        action: "query",
-                                        elementId: "tag-cloud",
-                                        elementType: "tag",
-                                        elementSub: "tag-cloud",
-                                        elementGroup: "chart_group",
-                                        source: "system",
-                                        tags: ["render", "tag-cloud"]
-                                    });
-                                });
-                            },
-                            error: function() {
-                                XDATA.userALE.log({
-                                    activity: "alter",
-                                    action: "query",
-                                    elementId: "tag-cloud",
-                                    elementType: "tag",
-                                    elementSub: "tag-cloud",
-                                    elementGroup: "chart_group",
-                                    source: "system",
-                                    tags: ["failed", "tag-cloud"]
-                                });
-                            }
-                        });
+                    });
+                }, function(response) {
+                    XDATA.userALE.log({
+                        activity: "alter",
+                        action: "query",
+                        elementId: "tag-cloud",
+                        elementType: "tag",
+                        elementSub: "tag-cloud",
+                        elementGroup: "chart_group",
+                        source: "system",
+                        tags: ["failed", "tag-cloud"]
+                    });
+                    $scope.updateTagData([]);
+                    $scope.loadingData = false;
+                    if(response.responseJSON) {
+                        $scope.errorMessage = errorNotificationService.showErrorMessage($element, response.responseJSON.error, response.responseJSON.stackTrace);
                     }
-                }
+                });
             };
 
             /**
@@ -338,7 +354,7 @@ function(connectionService, datasetService, filterService, $timeout) {
              * @method applyFilter
              */
             $scope.applyFilter = function() {
-                var relations = datasetService.getRelations($scope.options.selectedTable.name, [$scope.options.tagField]);
+                var relations = datasetService.getRelations($scope.options.database.name, $scope.options.table.name, [$scope.options.tagField]);
                 filterService.replaceFilters($scope.messenger, relations, $scope.filterKeys, $scope.createFilterClauseForTags, function() {
                     $scope.$apply(function() {
                         $scope.queryForTags();
@@ -387,6 +403,13 @@ function(connectionService, datasetService, filterService, $timeout) {
                 });
                 $scope.filterTags = _.without($scope.filterTags, tagName);
             };
+
+            $scope.updateTagField = function() {
+                // TODO Logging
+                if(!$scope.loadingData) {
+                    $scope.queryForTags();
+                }
+            }
 
             // Wait for neon to be ready, the create our messenger and intialize the view and data.
             neon.ready(function() {
