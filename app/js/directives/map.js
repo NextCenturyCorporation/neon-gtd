@@ -527,7 +527,8 @@ angular.module('neonDemo.directives')
             };
 
             $scope.updateFieldsAndQueryForMapData = function() {
-                $scope.loadingData = true;
+                // TODO:  Determine how to guarantee that loadingData is set to false once queries on all layers are finished.
+                // $scope.loadingData = true;
 
                 $timeout(function() {
                     $scope.updateLayersAndQueries();
@@ -543,6 +544,15 @@ angular.module('neonDemo.directives')
                     $scope.errorMessage = undefined;
                 }
 
+                var connection = connectionService.getActiveConnection();
+
+                if(!connection) {
+                    $scope.updateMapData(database, table, {
+                        data: []
+                    });
+                    return;
+                }
+
                 var query = $scope.buildPointQuery(database, table);
 
                 XDATA.userALE.log({
@@ -555,52 +565,50 @@ angular.module('neonDemo.directives')
                     source: "system",
                     tags: ["query", "map"]
                 });
-                var connection = connectionService.getActiveConnection();
-                if(connection) {
-                    connection.executeQuery(query, function(queryResults) {
-                        $scope.$apply(function() {
-                            XDATA.userALE.log({
-                                activity: "alter",
-                                action: "receive",
-                                elementId: "map",
-                                elementType: "canvas",
-                                elementSub: "map",
-                                elementGroup: "map_group",
-                                source: "system",
-                                tags: ["receive", "map"]
-                            });
-                            $scope.updateMapData(database, table, queryResults);
 
-                            XDATA.userALE.log({
-                                activity: "alter",
-                                action: "render",
-                                elementId: "map",
-                                elementType: "canvas",
-                                elementSub: "map",
-                                elementGroup: "map_group",
-                                source: "system",
-                                tags: ["render", "map"]
-                            });
-                        });
-                    }, function(response) {
+                connection.executeQuery(query, function(queryResults) {
+                    $scope.$apply(function() {
                         XDATA.userALE.log({
                             activity: "alter",
-                            action: "failed",
+                            action: "receive",
                             elementId: "map",
                             elementType: "canvas",
                             elementSub: "map",
                             elementGroup: "map_group",
                             source: "system",
-                            tags: ["failed", "map"]
+                            tags: ["receive", "map"]
                         });
-                        $scope.updateMapData(database, table, {
-                            data: []
+                        $scope.updateMapData(database, table, queryResults);
+
+                        XDATA.userALE.log({
+                            activity: "alter",
+                            action: "render",
+                            elementId: "map",
+                            elementType: "canvas",
+                            elementSub: "map",
+                            elementGroup: "map_group",
+                            source: "system",
+                            tags: ["render", "map"]
                         });
-                        if(response.responseJSON) {
-                            $scope.errorMessage = errorNotificationService.showErrorMessage($element, response.responseJSON.error, response.responseJSON.stackTrace);
-                        }
                     });
-                }
+                }, function(response) {
+                    XDATA.userALE.log({
+                        activity: "alter",
+                        action: "failed",
+                        elementId: "map",
+                        elementType: "canvas",
+                        elementSub: "map",
+                        elementGroup: "map_group",
+                        source: "system",
+                        tags: ["failed", "map"]
+                    });
+                    $scope.updateMapData(database, table, {
+                        data: []
+                    });
+                    if(response.responseJSON) {
+                        $scope.errorMessage = errorNotificationService.showErrorMessage($element, response.responseJSON.error, response.responseJSON.stackTrace);
+                    }
+                });
             };
 
             /**
