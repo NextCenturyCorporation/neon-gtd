@@ -721,6 +721,7 @@ angular.module('neonDemo.directives')
                     source: "user",
                     tags: ["map", "filter"]
                 });
+
                 XDATA.userALE.log({
                     activity: "alter",
                     action: "filter",
@@ -732,43 +733,61 @@ angular.module('neonDemo.directives')
                     tags: ["filter", "map"]
                 });
 
-                // Loop over each layer and clear it's associated filters.
-                for(var i = 0; i < $scope.layers.length; i++) {
-                    filterService.removeFilters($scope.messenger, $scope.layers[i].filterKeys, function() {
-                        $scope.$apply(function() {
-                            XDATA.userALE.log({
-                                activity: "deselect",
-                                action: "filter",
-                                elementId: "map",
-                                elementType: "canvas",
-                                elementSub: "map",
-                                elementGroup: "map_group",
-                                source: "system",
-                                tags: ["filter", "map"]
-                            });
-                        });
-                    }, function() {
-                        XDATA.userALE.log({
-                            activity: "deselect",
-                            action: "failed",
-                            elementId: "map",
-                            elementType: "canvas",
-                            elementSub: "map",
-                            elementGroup: "map_group",
-                            source: "system",
-                            tags: ["filter", "map", "failed"]
-                        });
-                        // Notify the user of the error.
-                        $scope.error = "Error: Failed to clear filter.";
-                    });
+                var layerFilterKeysList = [];
+                for(var i = 0; i < $scope.layers.length; ++i) {
+                    layerFilterKeysList.push($scope.layers[i].filterKeys);
                 }
 
-                // TODO: Handle the case where some filters fail to be removed.
                 // Update our table queries for the various layers.  Ideally, this should be deferred
                 // until we've received responses from our filter requests.
-                clearZoomRect();
-                $scope.hideClearFilterButton();
-                queryAllLayerTables();
+                clearFiltersRecursively(layerFilterKeysList, function() {
+                    clearZoomRect();
+                    $scope.hideClearFilterButton();
+                    queryAllLayerTables();
+                });
+            };
+
+            var clearFiltersRecursively = function(filterKeysList, callback) {
+                var filterKeys = filterKeysList.shift();
+
+                filterService.removeFilters($scope.messenger, filterKeys, function() {
+                    XDATA.userALE.log({
+                        activity: "deselect",
+                        action: "filter",
+                        elementId: "map",
+                        elementType: "canvas",
+                        elementSub: "map",
+                        elementGroup: "map_group",
+                        source: "system",
+                        tags: ["filter", "map"]
+                    });
+
+                    if(filterKeysList.length) {
+                        clearFiltersRecursively(filterKeysList, callback);
+                    } else {
+                        callback();
+                    }
+                }, function() {
+                    XDATA.userALE.log({
+                        activity: "deselect",
+                        action: "failed",
+                        elementId: "map",
+                        elementType: "canvas",
+                        elementSub: "map",
+                        elementGroup: "map_group",
+                        source: "system",
+                        tags: ["filter", "map", "failed"]
+                    });
+
+                    // Notify the user of the error.
+                    $scope.error = "Error: Failed to clear filter.";
+
+                    if(filterKeysList.length) {
+                        clearFiltersRecursively(filterKeysList, callback);
+                    } else {
+                        callback();
+                    }
+                });
             };
 
             /**
