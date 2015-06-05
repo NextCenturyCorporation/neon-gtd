@@ -61,7 +61,7 @@
         </select>
       </div>
       <div class="form-group">
-        <select class="form-control" ng-model="filterRow.table" ng-options="table.prettyName for table in tables" ng-disabled="(tables.length < 2) || !(navbarItem)" ng-change="updateFieldsForFilterRow(filterRow)">
+        <select class="form-control" ng-model="filterRow.table" ng-options="table.prettyName for table in filterRow.tableOptions" ng-disabled="(tables.length < 2) || !(navbarItem)" ng-change="updateFieldsForFilterRow(filterRow)">
         </select>
       </div>
       <div class="form-group">
