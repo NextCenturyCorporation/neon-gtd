@@ -122,7 +122,7 @@ angular.module('neonDemo.directives')
              */
             var getLayerDatabaseTableSets = function() {
                 var sets = [];
-                for (var i = 0; i < $scope.options.layers.length; i++) {
+                for(var i = 0; i < $scope.options.layers.length; i++) {
                     if(!sets[$scope.options.layers[i].database]) {
                         sets[$scope.options.layers[i].database] = [];
                     }
@@ -142,7 +142,7 @@ angular.module('neonDemo.directives')
                 var tables = [];
                 for(var i = 0; i < keys.length; i++) {
                     tables = sets[keys[i]];
-                    for (var j = 0; j < tables.length; j++ ) {
+                    for(var j = 0; j < tables.length; j++) {
                         $scope.queryForMapData(keys[i], tables[j]);
                     }
                 }
@@ -378,7 +378,7 @@ angular.module('neonDemo.directives')
                     configClone.push(_.clone(config[i]));
                 }
                 return configClone;
-            }
+            };
 
             var createLayersByDatabaseAndTableMap = function(layers) {
                 var map = {};
@@ -403,7 +403,7 @@ angular.module('neonDemo.directives')
                     map[database][table].names.push(layers[i].name);
                 }
                 return map;
-            }
+            };
 
             var drawZoomRect = function(rect) {
                 // Clear the old rect.
@@ -637,19 +637,20 @@ angular.module('neonDemo.directives')
                 }
 
                 var layers = findLayersByDatabaseAndTable(database, table);
+                var index;
                 if(data.length >= layers.limit) {
                     if(!$scope.limitedLayers[layers.limit]) {
                         $scope.limitedLayers[layers.limit] = [];
                     }
-                    for(var i = 0; i < layers.names.length; ++i) {
-                        var index = $scope.limitedLayers[layers.limit].indexOf(layers.names[i]);
+                    for(i = 0; i < layers.names.length; ++i) {
+                        index = $scope.limitedLayers[layers.limit].indexOf(layers.names[i]);
                         if(index < 0) {
                             $scope.limitedLayers[layers.limit].push(layers.names[i]);
                         }
                     }
                 } else if($scope.limitedLayers[layers.limit]) {
-                    for(var i = 0; i < layers.names.length; ++i) {
-                        var index = $scope.limitedLayers[layers.limit].indexOf(layers.names[i]);
+                    for(i = 0; i < layers.names.length; ++i) {
+                        index = $scope.limitedLayers[layers.limit].indexOf(layers.names[i]);
                         if(index >= 0) {
                             $scope.limitedLayers[layers.limit].splice(index, 1);
                         }
@@ -730,7 +731,7 @@ angular.module('neonDemo.directives')
                 };
 
                 if($scope.layersByDatabaseAndTable[database] && $scope.layersByDatabaseAndTable[database][table]) {
-                     layers = $scope.layersByDatabaseAndTable[database][table];
+                    layers = $scope.layersByDatabaseAndTable[database][table];
                 }
 
                 if(!layers.limit) {

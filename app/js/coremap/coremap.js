@@ -484,7 +484,7 @@ coreMap.Map.prototype.setupControls = function() {
         this.zoomControl, this.switcher,
         this.cacheReader, this.cacheWriter, this.selectControl
     ]);
-}
+};
 
 /**
  * Draws a box with the specified bounds

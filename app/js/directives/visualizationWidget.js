@@ -16,7 +16,7 @@
  *
  */
 
- /**
+/**
  * This Angular JS directive adds a basic widget that contain Neon visualizations.  Widgets are
  * defined by an Angular Gridster configuration object and include resize handlers, a resize bar,
  * and a simple icon for expanding to a max column/row size.
@@ -45,7 +45,7 @@ angular.module('neonDemo.directives').directive('visualizationWidget', ["config"
                 '   <span  class="glyphicon glyphicon-remove"></span>' +
                 '</a>' +
                 '</div></div>',
-//        templateUrl: "partials/directives/visualizationWidget.html",
+        // templateUrl: "partials/directives/visualizationWidget.html",
         link: function($scope, $element) {
             // Create our widget.  Here, we are assuming the visualization is
             // implementated as an attribute directive.
