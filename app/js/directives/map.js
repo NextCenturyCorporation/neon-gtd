@@ -395,6 +395,11 @@ angular.module('neonDemo.directives')
                             limit: layers[i].limit
                         };
                     }
+
+                    if(!(map[database][table].limit)) {
+                        map[database][table].limit = layers[i].limit;
+                    }
+
                     map[database][table].names.push(layers[i].name);
                 }
                 return map;
@@ -719,14 +724,20 @@ angular.module('neonDemo.directives')
             };
 
             var findLayersByDatabaseAndTable = function(database, table) {
+                var layers = {
+                    names: [],
+                    limit: undefined
+                };
+
                 if($scope.layersByDatabaseAndTable[database] && $scope.layersByDatabaseAndTable[database][table]) {
-                    return $scope.layersByDatabaseAndTable[database][table];
+                     layers = $scope.layersByDatabaseAndTable[database][table];
                 }
 
-                return {
-                    names: [],
-                    limit: 1000
-                };
+                if(!layers.limit) {
+                    layers.limit = 1000;
+                }
+
+                return layers;
             };
 
             $scope.buildPointQuery = function(database, table) {
