@@ -77,7 +77,6 @@ angular.module('neonDemo.directives')
                 //return $scope.dataLength >= $scope.previousLimit;
             };
 
-            $scope.layers = [];
             $scope.layersByDatabaseAndTable = {};
             $scope.limitedLayers = {};
 
@@ -95,6 +94,7 @@ angular.module('neonDemo.directives')
             $scope.loadingData = false;
 
             $scope.options = {
+                layers: [],
                 database: "",
                 table: "",
                 latitudeField: "",
@@ -122,12 +122,12 @@ angular.module('neonDemo.directives')
              */
             var getLayerDatabaseTableSets = function() {
                 var sets = [];
-                for (var i = 0; i < $scope.layers.length; i++) {
-                    if(!sets[$scope.layers[i].database]) {
-                        sets[$scope.layers[i].database] = [];
+                for (var i = 0; i < $scope.options.layers.length; i++) {
+                    if(!sets[$scope.options.layers[i].database]) {
+                        sets[$scope.options.layers[i].database] = [];
                     }
-                    if(!_.contains(sets[$scope.layers[i].database], $scope.layers[i].table)) {
-                        sets[$scope.layers[i].database].push($scope.layers[i].table);
+                    if(!_.contains(sets[$scope.options.layers[i].database], $scope.options.layers[i].table)) {
+                        sets[$scope.options.layers[i].database].push($scope.options.layers[i].table);
                     }
                 }
                 return sets;
@@ -210,19 +210,6 @@ angular.module('neonDemo.directives')
                     }
                 });
 
-                $scope.$watch('options.limit', function(newVal) {
-                    XDATA.userALE.log({
-                        activity: "alter",
-                        action: "keydown",
-                        elementId: "map-limit",
-                        elementType: "textbox",
-                        elementSub: "map-limit",
-                        elementGroup: "map_group",
-                        source: "user",
-                        tags: ["options", "map", "limit", newVal]
-                    });
-                });
-
                 // Setup a basic resize handler to redraw the map and calculate its size if our div changes.
                 // Since the map redraw can take a while and resize events can come in a flood, we attempt to
                 // redraw only after a second of no consecutive resize events.
@@ -265,52 +252,56 @@ angular.module('neonDemo.directives')
                         tags: ["filter", "map"]
                     });
 
-                    for(var i = 0; i < $scope.layers.length; i++) {
-                        if($scope.layers[i].active) {
-                            var relations = datasetService.getRelations($scope.layers[i].database, $scope.layers[i].table, [$scope.layers[i].latitudeMapping, $scope.layers[i].longitudeMapping]);
-                            filterService.replaceFilters($scope.messenger, relations, $scope.layers[i].filterKeys, $scope.createFilterClauseForExtent, function() {
-                                $scope.$apply(function() {
-                                    // TODO: Need a way to defer this so we don't reload everything
-                                    // for every filtering layer and related filter.
-                                    queryAllLayerTables();
-                                    drawZoomRect({
-                                        left: $scope.extent.minimumLongitude,
-                                        bottom: $scope.extent.minimumLatitude,
-                                        right: $scope.extent.maximumLongitude,
-                                        top: $scope.extent.maximumLatitude
-                                    });
-
-                                    // Show the Clear Filter button.
-                                    $scope.showFilter = true;
-                                    $scope.error = "";
-                                    XDATA.userALE.log({
-                                        activity: "alter",
-                                        action: "filter",
-                                        elementId: "map",
-                                        elementType: "canvas",
-                                        elementSub: "map-filter-box",
-                                        elementGroup: "map_group",
-                                        source: "system",
-                                        tags: ["render", "map"]
-                                    });
-                                });
-                            }, function() {
-                                XDATA.userALE.log({
-                                    activity: "alter",
-                                    action: "failed",
-                                    elementId: "map",
-                                    elementType: "canvas",
-                                    elementSub: "map",
-                                    elementGroup: "map_group",
-                                    source: "system",
-                                    tags: ["failed", "map", "filter"]
-                                });
-                                // Notify the user of the error.
-                                $scope.error = "Error: Failed to create filter.";
-                            });
+                    for(var i = 0; i < $scope.options.layers.length; i++) {
+                        if($scope.options.layers[i].active) {
+                            addFiltersForLayer($scope.options.layers[i]);
                         }
                     }
                 };
+            };
+
+            var addFiltersForLayer = function(layer) {
+                var relations = datasetService.getRelations(layer.database, layer.table, [layer.latitudeMapping, layer.longitudeMapping]);
+                filterService.replaceFilters($scope.messenger, relations, layer.filterKeys, $scope.createFilterClauseForExtent, function() {
+                    $scope.$apply(function() {
+                        // TODO: Need a way to defer this so we don't reload everything
+                        // for every filtering layer and related filter.
+                        queryAllLayerTables();
+                        drawZoomRect({
+                            left: $scope.extent.minimumLongitude,
+                            bottom: $scope.extent.minimumLatitude,
+                            right: $scope.extent.maximumLongitude,
+                            top: $scope.extent.maximumLatitude
+                        });
+
+                        // Show the Clear Filter button.
+                        $scope.showFilter = true;
+                        $scope.error = "";
+                        XDATA.userALE.log({
+                            activity: "alter",
+                            action: "filter",
+                            elementId: "map",
+                            elementType: "canvas",
+                            elementSub: "map-filter-box",
+                            elementGroup: "map_group",
+                            source: "system",
+                            tags: ["render", "map"]
+                        });
+                    });
+                }, function() {
+                    XDATA.userALE.log({
+                        activity: "alter",
+                        action: "failed",
+                        elementId: "map",
+                        elementType: "canvas",
+                        elementSub: "map",
+                        elementGroup: "map_group",
+                        source: "system",
+                        tags: ["failed", "map", "filter"]
+                    });
+                    // Notify the user of the error.
+                    $scope.error = "Error: Failed to create filter.";
+                });
             };
 
             var onMapEvent = function(message) {
@@ -420,14 +411,14 @@ angular.module('neonDemo.directives')
             };
 
             $scope.clearLayers = function() {
-                if($scope.layers) {
-                    for(var i = 0; i < $scope.layers.length; i++) {
-                        if($scope.layers[i].olLayer) {
-                            $scope.map.removeLayer($scope.layers[i].olLayer);
-                            $scope.layers[i].olLayer = undefined;
+                if($scope.options.layers) {
+                    for(var i = 0; i < $scope.options.layers.length; i++) {
+                        if($scope.options.layers[i].olLayer) {
+                            $scope.map.removeLayer($scope.options.layers[i].olLayer);
+                            $scope.options.layers[i].olLayer = undefined;
                         }
                     }
-                    $scope.layers = [];
+                    $scope.options.layers = [];
                 }
             };
 
@@ -472,13 +463,13 @@ angular.module('neonDemo.directives')
                 var layer = {};
                 var name = "";
 
-                $scope.layers = cloneDatasetLayerConfig();
-                $scope.layersByDatabaseAndTable = createLayersByDatabaseAndTableMap($scope.layers);
+                $scope.options.layers = cloneDatasetLayerConfig();
+                $scope.layersByDatabaseAndTable = createLayersByDatabaseAndTableMap($scope.options.layers);
                 $scope.limitedLayers = {};
 
                 // Setup the base layer objects.
-                for(i = 0; i < $scope.layers.length; i++) {
-                    layer = $scope.layers[i];
+                for(i = 0; i < $scope.options.layers.length; i++) {
+                    layer = $scope.options.layers[i];
                     if(!layer.olLayer) {
                         if(layer.type === coreMap.Map.POINTS_LAYER) {
                             name = layer.name || layer.table + " Points";
@@ -633,10 +624,10 @@ angular.module('neonDemo.directives')
             $scope.updateMapData = function(database, table, queryResults) {
                 var data = queryResults.data;
                 $scope.dataLength = data.length;
-                for(var i = 0; i < $scope.layers.length; i++) {
-                    if($scope.layers[i].database === database && $scope.layers[i].table === table && $scope.layers[i].olLayer) {
-                        $scope.layers[i].olLayer.setData(queryResults.data);
-                        $scope.layers[i].olLayer.updateFeatures();
+                for(var i = 0; i < $scope.options.layers.length; i++) {
+                    if($scope.options.layers[i].database === database && $scope.options.layers[i].table === table && $scope.options.layers[i].olLayer) {
+                        $scope.options.layers[i].olLayer.setData(queryResults.data);
+                        $scope.options.layers[i].olLayer.updateFeatures();
                     }
                 }
 
@@ -818,8 +809,8 @@ angular.module('neonDemo.directives')
                 });
 
                 var layerFilterKeysList = [];
-                for(var i = 0; i < $scope.layers.length; ++i) {
-                    layerFilterKeysList.push($scope.layers[i].filterKeys);
+                for(var i = 0; i < $scope.options.layers.length; ++i) {
+                    layerFilterKeysList.push($scope.options.layers[i].filterKeys);
                 }
 
                 // Update our table queries for the various layers.  Ideally, this should be deferred
@@ -833,7 +824,16 @@ angular.module('neonDemo.directives')
 
             var clearFiltersRecursively = function(filterKeysList, callback) {
                 var filterKeys = filterKeysList.shift();
+                removeFiltersForKeys(filterKeys, function() {
+                    if(filterKeysList.length) {
+                        clearFiltersRecursively(filterKeysList, callback);
+                    } else {
+                        callback();
+                    }
+                });
+            };
 
+            var removeFiltersForKeys = function(filterKeys, callback) {
                 filterService.removeFilters($scope.messenger, filterKeys, function() {
                     XDATA.userALE.log({
                         activity: "deselect",
@@ -846,9 +846,7 @@ angular.module('neonDemo.directives')
                         tags: ["filter", "map"]
                     });
 
-                    if(filterKeysList.length) {
-                        clearFiltersRecursively(filterKeysList, callback);
-                    } else {
+                    if(callback) {
                         callback();
                     }
                 }, function() {
@@ -866,9 +864,7 @@ angular.module('neonDemo.directives')
                     // Notify the user of the error.
                     $scope.error = "Error: Failed to clear filter.";
 
-                    if(filterKeysList.length) {
-                        clearFiltersRecursively(filterKeysList, callback);
-                    } else {
+                    if(callback) {
                         callback();
                     }
                 });
@@ -898,8 +894,31 @@ angular.module('neonDemo.directives')
                     source: "user",
                     tags: ["options", "map", "limit", $scope.options.limit]
                 });
+
                 $scope.previousLimit = $scope.options.limit;
                 queryAllLayerTables();
+            };
+
+            $scope.updateFilteringOnLayer = function(layer) {
+                XDATA.userALE.log({
+                    activity: "alter",
+                    action: "click",
+                    elementId: "map-layer-active-button",
+                    elementType: "button",
+                    elementGroup: "map_group",
+                    source: "user",
+                    tags: ["options", "map", "layer", layer.name, "active", layer.active]
+                });
+
+                if($scope.zoomRectId) {
+                    if(layer.active) {
+                        addFiltersForLayer(layer);
+                    } else {
+                        removeFiltersForKeys(layer.filterKeys, function() {
+                            $scope.queryForMapData(layer.database, layer.table);
+                        });
+                    }
+                }
             };
 
             // Wait for neon to be ready, the create our messenger and intialize the view and data.

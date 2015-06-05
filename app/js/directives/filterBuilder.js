@@ -193,7 +193,11 @@ angular.module('neonDemo.directives')
                 var fields = datasetService.getDatabaseFields($scope.selectedDatabase.name, $scope.selectedTable.name);
                 $scope.fields = _.without(fields, "_id");
                 $scope.fields.sort();
-                $scope.selectedField = $scope.fields[0] || "";
+                if($scope.fields.indexOf("text") >= 0) {
+                    $scope.selectedField = "text";
+                } else {
+                    $scope.selectedField = $scope.fields[0] || "";
+                }
             };
 
             $scope.updateFieldsForFilterRow = function(filterRow) {
@@ -204,6 +208,32 @@ angular.module('neonDemo.directives')
                 $scope.dirtyFilterRow(filterRow);
             };
 
+            var findRelationInfo = function(relation) {
+                var info = {
+                    database: {},
+                    table: {},
+                    tables: datasetService.getTables(relation.database),
+                    databaseFields: datasetService.getDatabaseFields(relation.database, relation.table),
+                    originalFields: Object.keys(relation.fields)
+                };
+
+                for(var i = 0; i < $scope.databases.length; ++i) {
+                    if($scope.databases[i].name === relation.database) {
+                        info.database = $scope.databases[i];
+                        break;
+                    }
+                }
+
+                for(var i = 0; i < info.tables.length; ++i) {
+                    if(info.tables[i].name === relation.table) {
+                        info.table = info.tables[i];
+                        break;
+                    }
+                }
+
+                return info;
+            };
+
             /**
              * Adds a filter row to the table of filter clauses from the current selections.
              * @method addFilterRow
@@ -212,27 +242,38 @@ angular.module('neonDemo.directives')
                 var database = $scope.selectedDatabase;
                 var table = $scope.selectedTable;
 
-                var rows = {};
-                rows[table.name] = new neon.query.FilterRow(database, table, $scope.selectedField, $scope.selectedOperator, $scope.selectedValue, $scope.tables, $scope.fields);
+                var filterRow = new neon.query.FilterRow(database, table, $scope.selectedField, $scope.selectedOperator, $scope.selectedValue, $scope.tables, $scope.fields);
+                var rows = [{
+                    database: database,
+                    table: table,
+                    row: filterRow
+                }];
 
                 var relations = datasetService.getRelations(database.name, table.name, [$scope.selectedField]);
                 for(var i = 0; i < relations.length; ++i) {
                     var relation = relations[i];
-                    if(relation.table !== table.name) {
-                        var databaseFields = datasetService.getDatabaseFields(database.name, relation.table);
-                        var originalFields = Object.keys(relation.fields);
-                        for(var j = 0; j < originalFields.length; ++j) {
-                            var relationField = relation.fields[originalFields[j]];
-                            rows[relation.table] = new neon.query.FilterRow(database, relation.table, relationField, $scope.selectedOperator, $scope.selectedValue, $scope.tables, databaseFields);
+                    if(relation.database !== database.name || relation.table !== table.name) {
+                        var relationInfo = findRelationInfo(relation);
+                        for(var j = 0; j < relationInfo.originalFields.length; ++j) {
+                            var relationFields = relation.fields[relationInfo.originalFields[j]];
+                            for(var k = 0; k < relationFields.length; ++k) {
+                                var relationFilterRow = new neon.query.FilterRow(relationInfo.database, relationInfo.table, relationFields[k], $scope.selectedOperator, $scope.selectedValue, relationInfo.tables, relationInfo.databaseFields);
+                                rows.push({
+                                    database: relationInfo.database,
+                                    table: relationInfo.table,
+                                    row: relationFilterRow
+                                });
+                            }
                         }
                     }
                 }
 
                 var indexes = {};
-                var rowTableNames = Object.keys(rows);
-                for(var k = 0; k < rowTableNames.length; ++k) {
-                    var rowTableName = rowTableNames[k];
-                    indexes[rowTableName] = $scope.filterTable.addFilterRow($scope.selectedDatabase.name, rowTableName, rows[rowTableName]);
+                for(var l = 0; l < rows.length; ++l) {
+                    if(!indexes[rows[l].database]) {
+                        indexes[rows[l].database] = {};
+                    }
+                    indexes[rows[l].database][rows[l].table] = $scope.filterTable.addFilterRow(rows[l].database.name, rows[l].table.name, rows[l].row);
                 }
 
                 var filters = $scope.filterTable.buildFiltersFromData($scope.andClauses);
@@ -261,8 +302,8 @@ angular.module('neonDemo.directives')
                 }, function(errorDatabase, errorTable) {
                     $scope.$apply(function() {
                         // Error handler:  the addition to the filter failed.  Remove it.
-                        if(indexes[errorTable]) {
-                            $scope.filterTable.removeFilterRow(errorDatabase, errorTable, indexes[errorTable]);
+                        if(indexes[errorDatabase] && indexes[errorDatabase][errorTable]) {
+                            $scope.filterTable.removeFilterRow(errorDatabase, errorTable, indexes[errorDatabase][errorTable]);
                         }
                     });
                 });
