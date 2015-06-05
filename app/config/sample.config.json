@@ -62,8 +62,14 @@
         "name": "Map",
         "sizeX": 4,
         "sizeY": 2,
-        "type": "heat-map",
+        "type": "map",
         "icon": "img/visualizations/Map64.png"
+    }, {
+        "name": "Ops Clock",
+        "sizeX": 2,
+        "sizeY": 2,
+        "type": "circular-heat-form",
+        "icon": "img/visualizations/OpsClock64.png"
     }, {
         "name": "Line Chart",
         "sizeX": 2,
@@ -77,11 +83,11 @@
         "type": "barchart",
         "icon": "img/visualizations/BarChart64.png"
     }, {
-        "name": "Ops Clock",
+        "name": "Sunburst Chart",
         "sizeX": 2,
         "sizeY": 2,
-        "type": "circular-heat-form",
-        "icon": "img/visualizations/OpsClock64.png"
+        "type": "sunburst",
+        "icon": "img/visualizations/Sunburst64.png"
     }, {
         "name": "Text Cloud",
         "sizeX": 2,
@@ -89,17 +95,11 @@
         "type": "tag-cloud",
         "icon": "img/visualizations/TagCloud64.png"
     }, {
-        "name": "Count Table",
+        "name": "Aggregation Table",
         "sizeX": 2,
         "sizeY": 2,
         "type": "count-by",
         "icon": "img/visualizations/Count64.png"
-    }, {
-        "name": "Sunburst Chart",
-        "sizeX": 2,
-        "sizeY": 2,
-        "type": "sunburst",
-        "icon": "img/visualizations/Sunburst64.png"
     }, {
         "name": "Graph",
         "sizeX": 4,
@@ -187,6 +187,7 @@
             "type": "heatmap",
             "latitudeMapping": "latitude",
             "longitudeMapping": "longitude",
+            "limit": 5000,
             "sizeBy": "mag"
         }, {
             "database": "test",
@@ -195,6 +196,7 @@
             "type": "cluster",
             "latitudeMapping": "latitude",
             "longitudeMapping": "longitude",
+            "limit": 5000,
             "colorBy": "magType",
             "sizeBy": "mag"
         }, {
@@ -204,6 +206,7 @@
             "type": "points",
             "latitudeMapping": "latitude",
             "longitudeMapping": "longitude",
+            "limit": 5000,
             "colorBy": "magType",
             "sizeBy": "mag"
         }]
@@ -218,7 +221,7 @@
         }, {
             "sizeX": 4,
             "sizeY": 2,
-            "type": "heat-map"
+            "type": "map"
         }, {
             "sizeX": 2,
             "sizeY": 2,
@@ -249,7 +252,7 @@
         }, {
             "sizeX": 4,
             "sizeY": 2,
-            "type": "heat-map",
+            "type": "map",
             "bindings": {
                 "bind-database": "'myDatabase'",
                 "bind-table": "'myTable'",

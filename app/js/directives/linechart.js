@@ -482,7 +482,7 @@ function(connectionService, datasetService, errorNotificationService, $timeout) 
 
                 var series = $scope.options.attrY;
                 if($scope.options.aggregation === 'count') {
-                    series = 'Count ' + $scope.options.attrY;;
+                    series = 'Count ' + $scope.options.attrY;
                 }
                 if($scope.options.aggregation === 'average') {
                     series = 'Average ' + $scope.options.attrY;

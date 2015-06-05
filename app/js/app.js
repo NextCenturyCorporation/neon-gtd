@@ -71,7 +71,7 @@ var readLayoutFiles = function($http, layouts, layoutFiles, callback) {
                 layouts[layoutConfig.name] = layoutConfig.layout;
             }
             readLayoutFiles($http, layouts, layoutFiles, callback);
-        })
+        });
     } else {
         saveLayouts(layouts);
         if(callback) {
@@ -92,7 +92,7 @@ var readDatasetFiles = function($http, datasets, datasetFiles, callback) {
                 datasets.push(datasetConfig.dataset);
             }
             readDatasetFiles($http, datasets, datasetFiles, callback);
-        })
+        });
     } else {
         saveDatasets(datasets);
         if(callback) {
@@ -172,7 +172,7 @@ angular.element(document).ready(function() {
 
         // Read each layout config file and set the layouts, then read each dataset config file and set the datasets, then start angular.
         readLayoutFiles($http, layouts, (files.layouts || []), function() {
-            readDatasetFiles($http, datasets, (files.datasets || []), startAngular)
+            readDatasetFiles($http, datasets, (files.datasets || []), startAngular);
         });
     });
 });

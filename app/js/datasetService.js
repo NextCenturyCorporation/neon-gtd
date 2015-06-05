@@ -59,11 +59,11 @@ angular.module("neonDemo.services")
                 }
             }
 
-            for(var i = databaseIndexToRemove.length; i > 0; --i) {
+            for(i = databaseIndexToRemove.length; i > 0; --i) {
                 service.dataset.databases.splice(i, 1);
             }
 
-            for(var i = 0; i < service.dataset.databases.length; ++i) {
+            for(i = 0; i < service.dataset.databases.length; ++i) {
                 for(var j = 0; j < service.dataset.databases[i].tables.length; ++j) {
                     if(!service.dataset.databases[i].tables[j].prettyName) {
                         service.dataset.databases[i].tables[j].prettyName = service.dataset.databases[i].tables[j].name;
@@ -375,7 +375,10 @@ angular.module("neonDemo.services")
          * the relation object for the table and fields given in the arguments
          */
         service.getRelations = function(databaseName, tableName, fieldNames) {
-            var i, j, k, l;
+            var i;
+            var j;
+            var k;
+            var l;
             var relations = service.dataset.relations;
 
             var initializeMap = function(map, key1, key2, key3) {

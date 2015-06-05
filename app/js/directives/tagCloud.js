@@ -409,7 +409,7 @@ function(connectionService, datasetService, errorNotificationService, filterServ
                 if(!$scope.loadingData) {
                     $scope.queryForTags();
                 }
-            }
+            };
 
             // Wait for neon to be ready, the create our messenger and intialize the view and data.
             neon.ready(function() {

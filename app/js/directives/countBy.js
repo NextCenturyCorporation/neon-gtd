@@ -196,7 +196,7 @@ function(external, popups, connectionService, datasetService, errorNotificationS
                     name: createAggregationColumnName(),
                     field: $scope.options.aggregation === "count" ? "count" : $scope.options.aggregationField,
                     width: tableWidth
-                }]
+                }];
 
                 if(external.anyEnabled && data.length) {
                     var externalAppColumn = {

@@ -224,7 +224,7 @@ angular.module('neonDemo.directives')
                     }
                 }
 
-                for(var i = 0; i < info.tables.length; ++i) {
+                for(i = 0; i < info.tables.length; ++i) {
                     if(info.tables[i].name === relation.table) {
                         info.table = info.tables[i];
                         break;

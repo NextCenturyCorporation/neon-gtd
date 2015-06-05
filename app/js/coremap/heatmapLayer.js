@@ -35,7 +35,7 @@ coreMap.Map.Layer.HeatmapLayer = OpenLayers.Class(OpenLayers.Layer.Heatmap, {
         };
         var extendOptions = options || {};
         extendOptions.baseLayer = false;
-        extendOptions.projection = new OpenLayers.Projection("EPSG:4326");;
+        extendOptions.projection = new OpenLayers.Projection("EPSG:4326");
         extendOptions.opacity = 0.3;
 
         // Call the super constructor, you will have to define the variables geometry, attributes and style
@@ -59,7 +59,7 @@ coreMap.Map.Layer.HeatmapLayer = OpenLayers.Class(OpenLayers.Layer.Heatmap, {
                 if(me.data.length > 0) {
                     me.updateLayer();
                 }
-            }
+            };
             this.map.events.register('updatesize', this.map, this.resizeHandler);
         });
 

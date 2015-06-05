@@ -1,9 +1,10 @@
+'use strict';
 angular.module('neonDemo.directives')
 .directive('optionsMenu', function() {
     return {
         templateUrl: 'partials/directives/optionsMenu.html',
         restrict: 'EA',
-        transclude: true, 
+        transclude: true,
         scope: {
             parentElement: '=',
             buttonText: '=?',
@@ -44,5 +45,5 @@ angular.module('neonDemo.directives')
                 chartOptions.find(".popover-content").css("max-height", height + "px");
             });
         }
-    }
+    };
 });
