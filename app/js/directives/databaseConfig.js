@@ -186,7 +186,7 @@ angular.module('neonDemo.directives')
                             tables: []
                         });
                     }
-                    
+
                     connection.getTableNamesAndFieldNames(databaseName, function(tableNamesAndFieldNames) {
                         $scope.$apply(function() {
                             var tableNames = Object.keys(tableNamesAndFieldNames);
@@ -234,19 +234,17 @@ angular.module('neonDemo.directives')
                 if(!($scope.tableFields.length)) {
                     $scope.tableFields = $scope.tableNameToFieldNames[$scope.selectedTable];
                 }
-                
+
                 // Iterates through the list of fields and looks for ones that match latitude, longitude, and time.
                 // Backwards instead of forwards because it allows use of one fewer variables and because the final value
                 // winds up with the first match in the list rather than the last.
                 var counter = $scope.tableFields.length - 1;
                 for(; counter >= 0; counter--) {
-                    if($scope.tableFields[counter].search(/latitude|\blat\b/i) != -1) {
+                    if($scope.tableFields[counter].search(/latitude|\blat\b/i) !== -1) {
                         $scope.fields[0].selected = $scope.tableFields[counter];
-                    }
-                    else if($scope.tableFields[counter].search(/longitude|\blong\b|\blon\b/i) != -1) {
+                    } else if($scope.tableFields[counter].search(/longitude|\blong\b|\blon\b/i) !== -1) {
                         $scope.fields[1].selected = $scope.tableFields[counter];
-                    }
-                    else if($scope.tableFields[counter].search(/\bdate\b|time|created|\byyyy|yyyy\b|update/i) != -1) {
+                    } else if($scope.tableFields[counter].search(/\bdate\b|time|created|\byyyy|yyyy\b|update/i) !== -1) {
                         $scope.fields[2].selected = $scope.tableFields[counter];
                     }
                 }
