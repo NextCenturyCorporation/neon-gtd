@@ -179,6 +179,7 @@ angular.module('neonDemo.directives')
                 var connection = connectionService.getActiveConnection();
                 if(connection) {
                     // This is a temporary solution.
+                    // FIXME
                     if(!datasetService.getDatabaseWithName(databaseName)) {
                         datasetService.dataset.databases.push({
                             name: databaseName,
@@ -242,7 +243,7 @@ angular.module('neonDemo.directives')
                     if($scope.tableFields[counter].search(/latitude|\blat\b/i) != -1) {
                         $scope.fields[0].selected = $scope.tableFields[counter];
                     }
-                    else if($scope.tableFields[counter].search(/longitude|\blong\b/i) != -1) {
+                    else if($scope.tableFields[counter].search(/longitude|\blong\b|\blon\b/i) != -1) {
                         $scope.fields[1].selected = $scope.tableFields[counter];
                     }
                     else if($scope.tableFields[counter].search(/\bdate\b|time|created|\byyyy|yyyy\b|update/i) != -1) {
