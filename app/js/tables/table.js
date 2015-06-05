@@ -172,9 +172,9 @@ tables.addLinkabilityToColumns = function(columns) {
 tables.Table.sortComparator_ = function(field, sortAsc) {
     return function(a, b) {
         var result = 0;
-        if(a[field] > b[field]) {
+        if((a[field] && (b[field] === undefined)) || a[field] > b[field]) {
             result = 1;
-        } else if(a[field] < b[field]) {
+        } else if((b[field] && (a[field] === undefined)) || a[field] < b[field]) {
             result = -1;
         }
         return sortAsc ? result : -result;
