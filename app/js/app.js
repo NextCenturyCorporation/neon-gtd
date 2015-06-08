@@ -131,6 +131,7 @@ angular.element(document).ready(function() {
             ocpu.enableLogging = opencpuConfig.enableLogging;
             ocpu.useAlerts = opencpuConfig.useAlerts;
             ocpu.seturl(opencpuConfig.url);
+            ocpu.connected = true;
         }
 
         var dashboardConfig = config.dashboard || {
