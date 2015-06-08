@@ -46,6 +46,7 @@ angular.module("neonDemo.services")
             service.dataset.databases = dataset.databases || [];
 
             service.dataset.mapLayers = dataset.mapLayers || [];
+            service.dataset.mapConfig = dataset.mapConfig || {};
             service.dataset.relations = dataset.relations || [];
 
             // Remove databases from the dataset that contain no tables.
@@ -453,6 +454,24 @@ angular.module("neonDemo.services")
         };
 
         /**
+         * Returns the initial configuration parameters for any maps in this dataset.
+         * @method getMapConfig
+         * @return {String}
+         */
+        service.getMapConfig = function() {
+            return service.dataset.mapConfig;
+        };
+
+        /**
+         * Sets the map layer configuration for the active dataset.
+         * @param {object} config Initial configuration parameters for any maps in this dataset.
+         * @method setMapConfig
+         */
+        service.setMapConfig = function(config) {
+            service.dataset.mapConfig = config;
+        };
+
+        /**
          * Returns the map layer configuration for the active dataset.
          * @method getMapLayers
          * @return {String}
@@ -462,7 +481,7 @@ angular.module("neonDemo.services")
         };
 
         /**
-         * Returns the map layer configuration for the active dataset.
+         * Sets the map layer configuration for the active dataset.
          * @param {object} config A set of layer configuration objects.
          * @method setMapLayers
          */

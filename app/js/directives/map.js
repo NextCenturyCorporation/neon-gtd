@@ -446,10 +446,19 @@ angular.module('neonDemo.directives')
                 // Call removeLayer on all existing layers.
                 $scope.clearLayers();
 
-                // Load data for the new dataset.
-                //$scope.databaseName = datasetService.getDatabase();
-                //$scope.tables = datasetService.getTables();
-                //$scope.options.selectedTable = $scope.bindTable || datasetService.getFirstTableWithMappings(["latitude", "longitude"]) || $scope.tables[0];
+                // Reconfigure the map as necessary.
+                var mapConfig = datasetService.getMapConfig();
+                if (mapConfig && mapConfig.bounds) {
+                    $scope.map.zoomToBounds(mapConfig.bounds);
+                }
+                else {
+                    $scope.map.zoomToBounds({
+                        "left": -180,
+                        "bottom": -90,
+                        "right": 180,
+                        "top": 90
+                    });
+                }
 
                 if(initializing) {
                     $scope.updateLayersAndQueries();
@@ -658,19 +667,6 @@ angular.module('neonDemo.directives')
                 }
 
                 $scope.draw();
-                // Ignore setting the bounds if there is no data because it can cause OpenLayers errors.
-                // TODO: Determine how to recalculate data bounds when multiple layers are shown.
-                // There is no longer 1 set of data points.
-                // if(data.length && !($scope.dataBounds)) {
-                //     $scope.dataBounds = $scope.computeDataBounds(data);
-                //     $scope.map.zoomToBounds($scope.dataBounds);
-                // }
-                // $scope.map.zoomToBounds({
-                //     left: -180,
-                //     bottom: -90,
-                //     right: 180,
-                //     top: 90
-                // });
             };
 
             /**
