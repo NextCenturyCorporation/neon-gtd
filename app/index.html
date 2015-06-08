@@ -31,6 +31,12 @@
             <div class="navbar-default navbar-static-top" data-spy="{true: '', false: 'affix'}[hideNavbarItems]">
                 <div class="container">
 
+                    <div class="pull-left" ng-show="hideNavbarItems">
+                        <span class="navbar-text navbar-title-text">
+                            {{navbarTitle}}
+                        </span>
+                    </div>
+
                     <div powered-by-neon class="pull-right"></div>
 
                     <div class="clearfix visible-xs"></div>
