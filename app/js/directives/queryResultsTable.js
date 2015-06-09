@@ -614,7 +614,6 @@ function(external, popups, connectionService, datasetService, errorNotificationS
                 if($scope.options.sortByField !== undefined && $scope.options.sortByField.length > 0) {
                     query.sortBy($scope.options.sortByField, $scope.options.sortDirection);
                 }
-
                 return query;
             };
 
@@ -635,6 +634,37 @@ function(external, popups, connectionService, datasetService, errorNotificationS
                 $scope.initialize();
                 $scope.displayActiveDataset(true);
             });
+
+            // Begin Daniel's stuff here ===========================================================
+            var csvSuccess = function(queryResults) {
+                window.alert(JSON.stringify(queryResults));
+            }
+
+            var csvFail = function(response) {
+                window.alert(JSON.stringify(response));
+            }
+            $scope.requestExport = function() {
+                /*Not entirely sure if I need this or not. Leaving it here but commented for now.
+                XDATA.userALE.log({
+                    activity: "",
+                    action: "",
+                    elementId: "",
+                    elementType: "",
+                    elementGroup: "",
+                    source: "",
+                    tags: ["", "", ""]
+                });*/
+                var connection = connectionService.getActiveConnection();
+                if(!connection) {
+                    //This is temporary. Come up with better code for if there isn't a connection.
+                    window.alert("No active connection.");
+                    return;
+                }
+                var query = $scope.buildQuery();
+                // With any luck, \/ that line sends out a request to the ExportService, which then does some stuff and sends back "Hello there" or something.
+                connection.executeExport(query, csvSuccess, csvFail, 'queryResultsTable');
+            }
+            // End Daniel's stuff here =============================================================
         }
     };
 }]);
