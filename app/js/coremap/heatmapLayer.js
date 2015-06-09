@@ -31,7 +31,9 @@ coreMap.Map.Layer.HeatmapLayer = OpenLayers.Class(OpenLayers.Layer.Heatmap, {
         var me = this;
         var heatmapOptions = {
             visible: true,
-            radius: 10
+            radius: 10,
+            minOpacity: 0.3,
+            maxOpacity: 0.8
         };
         var extendOptions = options || {};
         extendOptions.baseLayer = false;
@@ -50,9 +52,7 @@ coreMap.Map.Layer.HeatmapLayer = OpenLayers.Class(OpenLayers.Layer.Heatmap, {
             var me = this;
 
             this.resizeHandler = function() {
-                me.heatmap.set("width", this.getSize().w);
-                me.heatmap.set("height", this.getSize().h);
-                me.heatmap.resize();
+                me.heatmap._renderer.setDimensions(this.getSize().w, this.getSize().h);
 
                 // If we have data, update the layer so it redraws.  updating an empty layer
                 // causes exceptions.
