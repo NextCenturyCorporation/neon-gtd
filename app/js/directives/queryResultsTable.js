@@ -637,11 +637,11 @@ function(external, popups, connectionService, datasetService, errorNotificationS
 
             // Begin Daniel's stuff here ===========================================================
             var csvSuccess = function(queryResults) {
-                window.alert(JSON.stringify(queryResults));
+                window.location.assign(queryResults.data);
             }
 
             var csvFail = function(response) {
-                window.alert(JSON.stringify(response));
+                window.alert("Failure.");
             }
             $scope.requestExport = function() {
                 /*Not entirely sure if I need this or not. Leaving it here but commented for now.
