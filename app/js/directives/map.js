@@ -560,7 +560,8 @@ angular.module('neonDemo.directives')
                                 latitudeMapping: layer.latitudeMapping,
                                 longitudeMapping: layer.longitudeMapping,
                                 sizeMapping: layer.sizeBy,
-                                categoryMapping: layer.colorBy
+                                categoryMapping: layer.colorBy,
+                                defaultColor: layer.defaultColor
                             });
                             this.map.addLayer(layer.olLayer);
                         } else if(layer.type === coreMap.Map.CLUSTER_LAYER) {
@@ -570,6 +571,7 @@ angular.module('neonDemo.directives')
                                 longitudeMapping: layer.longitudeMapping,
                                 sizeMapping: layer.sizeBy,
                                 categoryMapping: layer.colorBy,
+                                defaultColor: layer.defaultColor,
                                 cluster: true
                             });
                             this.map.addLayer(layer.olLayer);
