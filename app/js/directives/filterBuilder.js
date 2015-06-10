@@ -51,6 +51,13 @@ angular.module('neonDemo.directives')
                 $element.addClass("filter-directive");
             }
 
+            var findDefaultOperator = function(operators) {
+                if(operators.indexOf("contains") >= 0) {
+                    return "contains";
+                }
+                return operators[0] || "=";
+            };
+
             /**
              * Initializes the name of the date field used to query the current dataset
              * and the Neon Messenger used to monitor data change events.
@@ -59,7 +66,7 @@ angular.module('neonDemo.directives')
             $scope.initialize = function() {
                 $scope.messenger = new neon.eventing.Messenger();
                 $scope.filterTable = new neon.query.FilterTable();
-                $scope.selectedOperator = $scope.filterTable.operatorOptions[0] || '=';
+                $scope.selectedOperator = findDefaultOperator($scope.filterTable.operatorOptions);
 
                 $scope.messenger.events({
                     connectToHost: onConnectToHost
@@ -193,18 +200,21 @@ angular.module('neonDemo.directives')
                 var fields = datasetService.getDatabaseFields($scope.selectedDatabase.name, $scope.selectedTable.name);
                 $scope.fields = _.without(fields, "_id");
                 $scope.fields.sort();
-                if($scope.fields.indexOf("text") >= 0) {
-                    $scope.selectedField = "text";
-                } else {
-                    $scope.selectedField = $scope.fields[0] || "";
+                $scope.selectedField = findDefaultField($scope.fields);
+            };
+
+            var findDefaultField = function(fields) {
+                if(fields.indexOf("text") >= 0) {
+                    return "text";
                 }
+                return fields[0] || "";
             };
 
             $scope.updateFieldsForFilterRow = function(filterRow) {
                 var fields = datasetService.getDatabaseFields(filterRow.database.name, filterRow.tableName);
                 filterRow.columnOptions = _.without(fields, "_id");
                 filterRow.columnOptions.sort();
-                filterRow.columnValue = filterRow.columnOptions[0] || "";
+                filterRow.columnValue = findDefaultField(filterRow.columnOptions);
                 $scope.dirtyFilterRow(filterRow);
             };
 
@@ -241,6 +251,10 @@ angular.module('neonDemo.directives')
             $scope.addFilterRow = function() {
                 var database = $scope.selectedDatabase;
                 var table = $scope.selectedTable;
+
+                if(!database || !table || !$scope.selectedField || !$scope.selectedOperator || !$scope.selectedValue) {
+                    return;
+                }
 
                 var filterRow = new neon.query.FilterRow(database, table, $scope.selectedField, $scope.selectedOperator, $scope.selectedValue, $scope.tables, $scope.fields);
                 var rows = [{
@@ -293,8 +307,8 @@ angular.module('neonDemo.directives')
                     // are filters and which is the primary Add Filter row.
                     if(successDatabase === database.name, successTable === table.name) {
                         $scope.$apply(function() {
-                            $scope.selectedField = $scope.fields[0];
-                            $scope.selectedOperator = $scope.filterTable.operatorOptions[0];
+                            $scope.selectedField = findDefaultField($scope.fields);
+                            $scope.selectedOperator = findDefaultOperator($scope.filterTable.operatorOptions);
                             $scope.selectedValue = "";
                         });
                     }
