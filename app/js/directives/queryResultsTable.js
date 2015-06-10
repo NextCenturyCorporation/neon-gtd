@@ -638,6 +638,7 @@ function(external, popups, connectionService, datasetService, errorNotificationS
             // Begin Daniel's stuff here ===========================================================
             var csvSuccess = function(queryResults) {
                 window.location.assign(queryResults.data);
+                //window.alert(queryResults.data);
             }
 
             var csvFail = function(response) {
