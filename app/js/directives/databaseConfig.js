@@ -302,7 +302,7 @@ angular.module('neonDemo.directives')
                 }
 
                 // Recreate the layout each time to ensure all visualizations are using the new dataset.
-                $scope.gridsterConfigs = layouts[layoutName] ? layouts[layoutName] : [];
+                $scope.gridsterConfigs = layouts[layoutName] ? angular.copy(layouts[layoutName]) : [];
 
                 for(var i = 0; i < $scope.gridsterConfigs.length; ++i) {
                     $scope.gridsterConfigs[i].id = uuid();
