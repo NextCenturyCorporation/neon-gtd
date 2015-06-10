@@ -636,17 +636,32 @@ function(external, popups, connectionService, datasetService, errorNotificationS
             });
 
             var csvSuccess = function(queryResults) {
+                /*XDATA.userALE.log({
+                    activity: "",
+                    action: "",
+                    elementId: "",
+                    elementType: "",
+                    elementGroup: "",
+                    source: "",
+                    tags: ["", "", ""]
+                });*/
                 window.location.assign(queryResults.data);
             };
 
             var csvFail = function(response) {
-                // Temporary. Make a better failure response.
-                window.alert("Failure.");
+                /*XDATA.userALE.log({
+                    activity: "",
+                    action: "",
+                    elementId: "",
+                    elementType: "",
+                    elementGroup: "",
+                    source: "",
+                    tags: ["", "", ""]
+                });*/
             };
 
             $scope.requestExport = function() {
-                /*Not entirely sure if I need this or not. Leaving it here but commented for now.
-                XDATA.userALE.log({
+                /*XDATA.userALE.log({
                     activity: "",
                     action: "",
                     elementId: "",
@@ -662,6 +677,7 @@ function(external, popups, connectionService, datasetService, errorNotificationS
                     return;
                 }
                 var query = $scope.buildQuery();
+                query.limitClause = undefined;
                 connection.executeExport(query, csvSuccess, csvFail, 'queryResultsTable');
             };
         }
