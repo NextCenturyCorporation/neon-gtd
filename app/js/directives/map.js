@@ -181,7 +181,7 @@ angular.module('neonDemo.directives')
                     $element.off("resize", updateSize);
                     $scope.messenger.removeEvents();
                     if($scope.showFilter) {
-                        filterService.removeFilters($scope.messenger, $scope.filterKeys);
+                        $scope.clearFilters();
                     }
                 });
 
@@ -511,7 +511,10 @@ angular.module('neonDemo.directives')
                                 $scope.map.map.baseLayer, {
                                 latitudeMapping: layer.latitudeMapping,
                                 longitudeMapping: layer.longitudeMapping,
-                                sizeMapping: layer.sizeBy
+                                sizeMapping: layer.sizeBy,
+                                radius: 3,
+                                minOpacity: 0.7,
+                                maxOpacity: 1
                             });
                             this.map.addLayer(layer.olLayer);
                         }
@@ -520,13 +523,9 @@ angular.module('neonDemo.directives')
                 }
 
                 // Make the necessary table queries.
-                //$scope.layerTables = getLayerTables();
                 if($scope.showFilter) {
-                    $scope.clearFilters();
+                    $scope.clearFilters(true);
                 } else {
-                    // for(var i = 0; i < $scope.layerTables.length; i++) {
-                    //     $scope.queryForMapData($scope.layerTables[i]);
-                    // }
                     queryAllLayerTables();
                 }
             };
@@ -790,10 +789,12 @@ angular.module('neonDemo.directives')
             };
 
             /**
-             * Clear Neon query to pull data limited to the current extent of the map.
+             * Clear Neon query filters set by the map.
+             * @param {boolean} updateDisplay True, to update the map and layers after the filters are cleared;
+             * false to simply clear the filters
              * @method clearFilter
              */
-            $scope.clearFilters = function() {
+            $scope.clearFilters = function(updateLayers) {
                 XDATA.userALE.log({
                     activity: "deselect",
                     action: "click",
@@ -821,13 +822,18 @@ angular.module('neonDemo.directives')
                     layerFilterKeysList.push($scope.options.layers[i].filterKeys);
                 }
 
-                // Update our table queries for the various layers.  Ideally, this should be deferred
+                // Update our table queries for the various layers.  Defer via recursion
                 // until we've received responses from our filter requests.
-                clearFiltersRecursively(layerFilterKeysList, function() {
-                    clearZoomRect();
-                    $scope.hideClearFilterButton();
-                    queryAllLayerTables();
-                });
+                if (updateLayers) {
+                    clearFiltersRecursively(layerFilterKeysList, function() {
+                        clearZoomRect();
+                        $scope.hideClearFilterButton();
+                        queryAllLayerTables();
+                    });
+                }
+                else {
+                    clearFiltersRecursively(layerFilterKeysList);
+                }
             };
 
             var clearFiltersRecursively = function(filterKeysList, callback) {
@@ -836,7 +842,9 @@ angular.module('neonDemo.directives')
                     if(filterKeysList.length) {
                         clearFiltersRecursively(filterKeysList, callback);
                     } else {
-                        callback();
+                        if (callback) {
+                            callback();
+                        }
                     }
                 });
             };
