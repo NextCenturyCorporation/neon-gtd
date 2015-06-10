@@ -252,14 +252,78 @@ angular.module('neonDemo.directives')
                         tags: ["filter", "map"]
                     });
 
+                    var activeLayers = [];
                     for(var i = 0; i < $scope.options.layers.length; i++) {
                         if($scope.options.layers[i].active) {
-                            addFiltersForLayer($scope.options.layers[i]);
+                            activeLayers.push($scope.options.layers[i]);
                         }
                     }
+                    filterActiveLayersRecursively(activeLayers, function() {
+                        $scope.$apply(function() {
+                            queryAllLayerTables();
+                            drawZoomRect({
+                                left: $scope.extent.minimumLongitude,
+                                bottom: $scope.extent.minimumLatitude,
+                                right: $scope.extent.maximumLongitude,
+                                top: $scope.extent.maximumLatitude
+                            });
+
+                            // Show the Clear Filter button.
+                            $scope.showFilter = true;
+                            $scope.error = "";
+                            XDATA.userALE.log({
+                                activity: "alter",
+                                action: "filter",
+                                elementId: "map",
+                                elementType: "canvas",
+                                elementSub: "map-filter-box",
+                                elementGroup: "map_group",
+                                source: "system",
+                                tags: ["render", "map"]
+                            });
+                        });
+                    })
                 };
             };
 
+            /**
+             * This method will apply filters to all actively filtering layers and trigger a single
+             * callback after all filters have been applied.
+             * @method addFiltersForLayer
+             * @private
+             */
+            var filterActiveLayersRecursively = function(activeLayers, callback) {
+                var layer = activeLayers.shift();
+                var relations = datasetService.getRelations(layer.database, layer.table, [layer.latitudeMapping, layer.longitudeMapping]);
+                filterService.replaceFilters($scope.messenger, relations, layer.filterKeys, $scope.createFilterClauseForExtent, function() {
+                    if (activeLayers.length) {
+                        filterActiveLayersRecursively(activeLayers, callback);
+                    } else {
+                        if (callback) {
+                            callback();
+                        }
+                    }
+                }, function() {
+                    XDATA.userALE.log({
+                        activity: "alter",
+                        action: "failed",
+                        elementId: "map",
+                        elementType: "canvas",
+                        elementSub: "map",
+                        elementGroup: "map_group",
+                        source: "system",
+                        tags: ["failed", "map", "filter"]
+                    });
+                    // Notify the user of the error.
+                    $scope.error = "Error: Failed to create filter.";
+                });
+            }
+
+            /**
+             * This method will apply filters to a particular layer.
+             * @method addFiltersForLayer
+             * @private
+             */
             var addFiltersForLayer = function(layer) {
                 var relations = datasetService.getRelations(layer.database, layer.table, [layer.latitudeMapping, layer.longitudeMapping]);
                 filterService.replaceFilters($scope.messenger, relations, layer.filterKeys, $scope.createFilterClauseForExtent, function() {
@@ -304,6 +368,11 @@ angular.module('neonDemo.directives')
                 });
             };
 
+            /** 
+             * A simple handler for emitting USER-ALE messages from common user events on a map.
+             * @method onMapEvent
+             * @private
+             */
             var onMapEvent = function(message) {
                 var type = message.type;
                 type = type.replace("move", "pan");
