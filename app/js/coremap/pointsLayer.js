@@ -23,6 +23,7 @@ coreMap.Map.Layer.PointsLayer = OpenLayers.Class(OpenLayers.Layer.Vector, {
     latitudeMapping: '',
     longitudeMapping: '',
     sizeMapping: '',
+    defaultColor: '',
     colorMapping: '',
     categoryMapping: '',
     cluster: false,
@@ -148,7 +149,7 @@ coreMap.Map.Layer.PointsLayer.prototype.calculateColor = function(element) {
         color = this.colorScale(category);
     } else {
         category = '(Uncategorized)';
-        color = coreMap.Map.Layer.PointsLayer.DEFAULT_COLOR;
+        color = this.defaultColor || coreMap.Map.Layer.PointsLayer.DEFAULT_COLOR;
     }
 
     // store the color in the registry so we know the color/category mappings
