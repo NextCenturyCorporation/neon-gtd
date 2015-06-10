@@ -635,15 +635,15 @@ function(external, popups, connectionService, datasetService, errorNotificationS
                 $scope.displayActiveDataset(true);
             });
 
-            // Begin Daniel's stuff here ===========================================================
             var csvSuccess = function(queryResults) {
                 window.location.assign(queryResults.data);
-                //window.alert(queryResults.data);
-            }
+            };
 
             var csvFail = function(response) {
+                // Temporary. Make a better failure response.
                 window.alert("Failure.");
-            }
+            };
+
             $scope.requestExport = function() {
                 /*Not entirely sure if I need this or not. Leaving it here but commented for now.
                 XDATA.userALE.log({
@@ -662,10 +662,8 @@ function(external, popups, connectionService, datasetService, errorNotificationS
                     return;
                 }
                 var query = $scope.buildQuery();
-                // With any luck, \/ that line sends out a request to the ExportService, which then does some stuff and sends back "Hello there" or something.
                 connection.executeExport(query, csvSuccess, csvFail, 'queryResultsTable');
-            }
-            // End Daniel's stuff here =============================================================
+            };
         }
     };
 }]);
