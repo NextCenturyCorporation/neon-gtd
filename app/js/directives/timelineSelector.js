@@ -904,6 +904,61 @@ function(connectionService, datasetService, errorNotificationService, filterServ
                 $scope.initialize();
                 $scope.displayActiveDataset(true);
             });
+
+            var csvSuccess = function(queryResults) {
+                /*XDATA.userALE.log({
+                    activity: "",
+                    action: "",
+                    elementId: "",
+                    elementType: "",
+                    elementGroup: "",
+                    source: "",
+                    tags: ["", "", ""]
+                });*/
+                window.location.assign(queryResults.data);
+            };
+
+            var csvFail = function(response) {
+                /*XDATA.userALE.log({
+                    activity: "",
+                    action: "",
+                    elementId: "",
+                    elementType: "",
+                    elementGroup: "",
+                    source: "",
+                    tags: ["", "", ""]
+                });*/
+            };
+
+            $scope.requestExport = function() {
+                /*XDATA.userALE.log({
+                    activity: "",
+                    action: "",
+                    elementId: "",
+                    elementType: "",
+                    elementGroup: "",
+                    source: "",
+                    tags: ["", "", ""]
+                });*/
+                var connection = connectionService.getActiveConnection();
+                if(!connection) {
+                    //This is temporary. Come up with better code for if there isn't a connection.
+                    window.alert("No active connection.");
+                    return;
+                }
+
+                //Copy-pasted from in queryForChartData
+                var query = new neon.query.Query()
+                    .selectFrom($scope.options.database.name, $scope.options.table.name)
+                    .where($scope.options.dateField, '!=', null);
+                $scope.addGroupByGranularityClause(query);
+                query.aggregate(neon.query.COUNT, '*', 'count');
+                query.aggregate(neon.query.MIN, $scope.options.dateField, 'date');
+                query.sortBy('date', neon.query.ASCENDING);
+                query.ignoreFilters([$scope.filterKeys[$scope.options.database.name][$scope.options.table.name]]);
+                
+                connection.executeExport(query, csvSuccess, csvFail, 'timelineSelector');
+            };
         }
     };
 }]);

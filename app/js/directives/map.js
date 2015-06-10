@@ -938,6 +938,49 @@ angular.module('neonDemo.directives')
                 $scope.initialize();
                 $scope.displayActiveDataset(true);
             });
+
+            var csvSuccess = function(queryResults) {
+                /*XDATA.userALE.log({
+                    activity: "",
+                    action: "",
+                    elementId: "",
+                    elementType: "",
+                    elementGroup: "",
+                    source: "",
+                    tags: ["", "", ""]
+                });*/
+            }
+
+            var csvFail = function(response) {
+                /*XDATA.userALE.log({
+                    activity: "",
+                    action: "",
+                    elementId: "",
+                    elementType: "",
+                    elementGroup: "",
+                    source: "",
+                    tags: ["", "", ""]
+                });*/
+            }
+
+            $scope.requestExport = function() {
+                /*XDATA.userALE.log({
+                    activity: "",
+                    action: "",
+                    elementId: "",
+                    elementType: "",
+                    elementGroup: "",
+                    source: "",
+                    tags: ["", "", ""]
+                });*/
+                var connection = connectionService.getActiveConnection();
+                if(!connection) {
+                    //This is temporary. Come up with better code for if there isn't a connection.
+                    window.alert("No active connection.");
+                    return;
+                }
+                // Need to build query and send off request here. Maybe use the query built in $scope.queryForMapData = function( ?
+            }
         }
     };
 }]);
