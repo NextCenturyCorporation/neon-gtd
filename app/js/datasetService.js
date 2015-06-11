@@ -262,6 +262,23 @@ angular.module("neonDemo.services")
         };
 
         /**
+         * Returns the field objects for the table with the given name.
+         * @param {String} The database name
+         * @param {String} The table name
+         * @method getFields
+         * @return {Array} The array of field objects if a match exists or an empty array otherwise.
+         */
+        service.getFields = function(databaseName, tableName) {
+            var table = service.getTableWithName(databaseName, tableName);
+
+            if(!table) {
+                return [];
+            }
+
+            return table.fields;
+        };
+
+        /**
          * Returns the pretty field name for the field with the given name in the table with the given name.
          * @param {String} The table name
          * @param {String} The field name
