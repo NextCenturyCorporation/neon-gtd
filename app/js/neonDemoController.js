@@ -22,12 +22,21 @@
  * @constructor
  */
 angular.module('neonDemo.controllers')
-.controller('neonDemoController', ['$scope', '$timeout', 'config',
-function($scope, $timeout, config) {
+.controller('neonDemoController', ['$scope', '$timeout', 'config', 'datasets',
+function($scope, $timeout, config, datasets) {
     $scope.hideNavbarItems = config.hideNavbarItems;
     $scope.seeData = false;
     $scope.createFilters = false;
     $scope.filterCount = 0;
+
+    if($scope.hideNavbarItems) {
+        for(var i = 0; i < datasets.length; ++i) {
+            if(datasets[i].connectOnLoad) {
+                $scope.navbarTitle = datasets[i].name;
+                break;
+            }
+        }
+    }
 
     /**
      * Basic gridster layout hander that will disable mouse events on gridster items via CSS so mouse handlers

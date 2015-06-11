@@ -181,6 +181,14 @@
                 }
             }]
         }],
+        "mapConfig": {
+            "bounds" : {
+                "left": -180,
+                "bottom": -90,
+                "right": 180,
+                "top": 90
+            }
+        },
         "mapLayers": [{
             "database": "test",
             "table": "earthquakes",

@@ -68,9 +68,9 @@ charts.TimelineSelectorChart = function(element, configuration) {
     this.configure = function(configuration) {
         this.config = configuration || {};
         this.config.margin = this.config.margin || {
-            top: 12,
+            top: 4,
             right: 15,
-            bottom: 20,
+            bottom: 4,
             left: 15
         };
         this.granularity = this.config.granularity || this.granularity;
@@ -233,7 +233,7 @@ charts.TimelineSelectorChart = function(element, configuration) {
         // lengths). But this is accurate enough to place tick marks and make other calculations.
         var approximateBarWidth = 0;
 
-        var baseHeight = 70;
+        var baseHeight = 130;
         $(this.d3element[0]).css("height", (baseHeight * values.length));
         var height = (this.determineHeight(this.d3element) - (this.config.margin.top) - this.config.margin.bottom);
         var chartHeight = baseHeight - this.config.margin.top - this.config.margin.bottom;

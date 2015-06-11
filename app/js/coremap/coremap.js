@@ -404,8 +404,8 @@ coreMap.Map.prototype.createSelectControl =  function(layer) {
             null,
             text,
             null,
-            false,
-            onPopupClose);
+            true,
+            onFeatureUnselect);
         me.map.addPopup(me.featurePopup);
     };
 
