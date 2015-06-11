@@ -7,10 +7,10 @@
         <div class="form-group" ng-repeat="layer in options.layers">
             <label>Filtering on {{layer.name}}</label>
             <div class="btn-group">
-                <label class="btn btn-default" ng-class="{true: 'active', false: ''}[layer.active]">
+                <label class="btn btn-default" ng-class="{true: 'active', false: ''}[layer.active === true]">
                     <input type="radio" style="display:none" ng-model="layer.active" ng-value="true" ng-change="updateFilteringOnLayer(layer)"> Yes
                 </label>
-                <label class="btn btn-default" ng-class="{true: '', false: 'active'}[layer.active]">
+                <label class="btn btn-default" ng-class="{true: '', false: 'active'}[layer.active === true]">
                     <input type="radio" style="display:none" ng-model="layer.active" ng-value="false" ng-change="updateFilteringOnLayer(layer)"> No
                 </label>
             </div>
