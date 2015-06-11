@@ -949,6 +949,7 @@ angular.module('neonDemo.directives')
                     source: "",
                     tags: ["", "", ""]
                 });*/
+                window.location.assign(queryResults.data);
             }
 
             var csvFail = function(response) {
@@ -961,6 +962,7 @@ angular.module('neonDemo.directives')
                     source: "",
                     tags: ["", "", ""]
                 });*/
+                window.alert("Failure.");
             }
 
             $scope.requestExport = function() {
@@ -979,7 +981,9 @@ angular.module('neonDemo.directives')
                     window.alert("No active connection.");
                     return;
                 }
-                // Need to build query and send off request here. Maybe use the query built in $scope.queryForMapData = function( ?
+                var query = $scope.buildPointQuery(database, table);
+                query.limitClause = undefined;
+                connection.executeExport(query, csvSuccess, csvFail, 'map');
             }
         }
     };
