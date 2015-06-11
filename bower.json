@@ -23,7 +23,7 @@
         "mergesort": "https://github.com/justinforce/merge-sort/archive/1.0.zip",
         "opencpu": "https://github.com/NextCenturyCorporation/opencpu.js.git",
         "openlayers": "https://github.com/openlayers/openlayers/releases/download/release-2.13.1/OpenLayers-2.13.1.zip",
-        "openlayers-heatmap": "https://github.com/pa7/heatmap.js.git#v1.0",
+        "heatmapjs": "https://github.com/pa7/heatmap.js.git#v2.0",
         "remarkable-bootstrap-notify": "3.0.0",
         "respond": "1.4.2",
         "slickgrid": "2.1.0",

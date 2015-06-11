@@ -181,7 +181,7 @@ angular.module('neonDemo.directives')
                     $element.off("resize", updateSize);
                     $scope.messenger.removeEvents();
                     if($scope.showFilter) {
-                        filterService.removeFilters($scope.messenger, $scope.filterKeys);
+                        $scope.clearFilters();
                     }
                 });
 
@@ -252,14 +252,78 @@ angular.module('neonDemo.directives')
                         tags: ["filter", "map"]
                     });
 
+                    var activeLayers = [];
                     for(var i = 0; i < $scope.options.layers.length; i++) {
                         if($scope.options.layers[i].active) {
-                            addFiltersForLayer($scope.options.layers[i]);
+                            activeLayers.push($scope.options.layers[i]);
                         }
                     }
+                    filterActiveLayersRecursively(activeLayers, function() {
+                        $scope.$apply(function() {
+                            queryAllLayerTables();
+                            drawZoomRect({
+                                left: $scope.extent.minimumLongitude,
+                                bottom: $scope.extent.minimumLatitude,
+                                right: $scope.extent.maximumLongitude,
+                                top: $scope.extent.maximumLatitude
+                            });
+
+                            // Show the Clear Filter button.
+                            $scope.showFilter = true;
+                            $scope.error = "";
+                            XDATA.userALE.log({
+                                activity: "alter",
+                                action: "filter",
+                                elementId: "map",
+                                elementType: "canvas",
+                                elementSub: "map-filter-box",
+                                elementGroup: "map_group",
+                                source: "system",
+                                tags: ["render", "map"]
+                            });
+                        });
+                    })
                 };
             };
 
+            /**
+             * This method will apply filters to all actively filtering layers and trigger a single
+             * callback after all filters have been applied.
+             * @method addFiltersForLayer
+             * @private
+             */
+            var filterActiveLayersRecursively = function(activeLayers, callback) {
+                var layer = activeLayers.shift();
+                var relations = datasetService.getRelations(layer.database, layer.table, [layer.latitudeMapping, layer.longitudeMapping]);
+                filterService.replaceFilters($scope.messenger, relations, layer.filterKeys, $scope.createFilterClauseForExtent, function() {
+                    if (activeLayers.length) {
+                        filterActiveLayersRecursively(activeLayers, callback);
+                    } else {
+                        if (callback) {
+                            callback();
+                        }
+                    }
+                }, function() {
+                    XDATA.userALE.log({
+                        activity: "alter",
+                        action: "failed",
+                        elementId: "map",
+                        elementType: "canvas",
+                        elementSub: "map",
+                        elementGroup: "map_group",
+                        source: "system",
+                        tags: ["failed", "map", "filter"]
+                    });
+                    // Notify the user of the error.
+                    $scope.error = "Error: Failed to create filter.";
+                });
+            }
+
+            /**
+             * This method will apply filters to a particular layer.
+             * @method addFiltersForLayer
+             * @private
+             */
             var addFiltersForLayer = function(layer) {
                 var relations = datasetService.getRelations(layer.database, layer.table, [layer.latitudeMapping, layer.longitudeMapping]);
                 filterService.replaceFilters($scope.messenger, relations, layer.filterKeys, $scope.createFilterClauseForExtent, function() {
@@ -304,6 +368,11 @@ angular.module('neonDemo.directives')
                 });
             };
 
+            /** 
+             * A simple handler for emitting USER-ALE messages from common user events on a map.
+             * @method onMapEvent
+             * @private
+             */
             var onMapEvent = function(message) {
                 var type = message.type;
                 type = type.replace("move", "pan");
@@ -491,7 +560,8 @@ angular.module('neonDemo.directives')
                                 latitudeMapping: layer.latitudeMapping,
                                 longitudeMapping: layer.longitudeMapping,
                                 sizeMapping: layer.sizeBy,
-                                categoryMapping: layer.colorBy
+                                categoryMapping: layer.colorBy,
+                                defaultColor: layer.defaultColor
                             });
                             this.map.addLayer(layer.olLayer);
                         } else if(layer.type === coreMap.Map.CLUSTER_LAYER) {
@@ -501,6 +571,7 @@ angular.module('neonDemo.directives')
                                 longitudeMapping: layer.longitudeMapping,
                                 sizeMapping: layer.sizeBy,
                                 categoryMapping: layer.colorBy,
+                                defaultColor: layer.defaultColor,
                                 cluster: true
                             });
                             this.map.addLayer(layer.olLayer);
@@ -511,7 +582,10 @@ angular.module('neonDemo.directives')
                                 $scope.map.map.baseLayer, {
                                 latitudeMapping: layer.latitudeMapping,
                                 longitudeMapping: layer.longitudeMapping,
-                                sizeMapping: layer.sizeBy
+                                sizeMapping: layer.sizeBy,
+                                radius: 3,
+                                minOpacity: 0.7,
+                                maxOpacity: 1
                             });
                             this.map.addLayer(layer.olLayer);
                         }
@@ -520,13 +594,9 @@ angular.module('neonDemo.directives')
                 }
 
                 // Make the necessary table queries.
-                //$scope.layerTables = getLayerTables();
                 if($scope.showFilter) {
-                    $scope.clearFilters();
+                    $scope.clearFilters(true);
                 } else {
-                    // for(var i = 0; i < $scope.layerTables.length; i++) {
-                    //     $scope.queryForMapData($scope.layerTables[i]);
-                    // }
                     queryAllLayerTables();
                 }
             };
@@ -790,10 +860,12 @@ angular.module('neonDemo.directives')
             };
 
             /**
-             * Clear Neon query to pull data limited to the current extent of the map.
+             * Clear Neon query filters set by the map.
+             * @param {boolean} updateDisplay True, to update the map and layers after the filters are cleared;
+             * false to simply clear the filters
              * @method clearFilter
              */
-            $scope.clearFilters = function() {
+            $scope.clearFilters = function(updateLayers) {
                 XDATA.userALE.log({
                     activity: "deselect",
                     action: "click",
@@ -821,13 +893,18 @@ angular.module('neonDemo.directives')
                     layerFilterKeysList.push($scope.options.layers[i].filterKeys);
                 }
 
-                // Update our table queries for the various layers.  Ideally, this should be deferred
+                // Update our table queries for the various layers.  Defer via recursion
                 // until we've received responses from our filter requests.
-                clearFiltersRecursively(layerFilterKeysList, function() {
-                    clearZoomRect();
-                    $scope.hideClearFilterButton();
-                    queryAllLayerTables();
-                });
+                if (updateLayers) {
+                    clearFiltersRecursively(layerFilterKeysList, function() {
+                        clearZoomRect();
+                        $scope.hideClearFilterButton();
+                        queryAllLayerTables();
+                    });
+                }
+                else {
+                    clearFiltersRecursively(layerFilterKeysList);
+                }
             };
 
             var clearFiltersRecursively = function(filterKeysList, callback) {
@@ -836,7 +913,9 @@ angular.module('neonDemo.directives')
                     if(filterKeysList.length) {
                         clearFiltersRecursively(filterKeysList, callback);
                     } else {
-                        callback();
+                        if (callback) {
+                            callback();
+                        }
                     }
                 });
             };
