@@ -380,13 +380,16 @@ charts.TimelineSelectorChart = function(element, configuration) {
                     barheight++;
                 }
 
+                var anomalyStyle = style + 'fill: red; stroke: red;';
                 style += 'fill:' + series.color + ';';
 
                 container.selectAll(".bar")
                     .data(series.data)
                 .enter().append("rect")
                     .attr("class", "bar")
-                    .attr("style", style)
+                    .attr("style", function(d) {
+                        return d.anomaly ? anomalyStyle : style;
+                    })
                     .attr("x", function(d) {
                         return x(d.date);
                     })
@@ -449,6 +452,24 @@ charts.TimelineSelectorChart = function(element, configuration) {
                         .attr("style", 'fill:' + series.color + ';')
                         .attr("r", 3)
                         .attr("cx", func)
+                        .attr("cy", function(d) {
+                            return y(d.value);
+                        });
+                } else {
+                    // If a line graph was used and there are anomalies, put a circle on the
+                    // anomalous points
+                    var anomalies = series.data.filter(function(it) {
+                        return it.anomaly === true;
+                    });
+                    container.selectAll("dot")
+                        .data(anomalies)
+                    .enter().append("circle")
+                        .attr("class", "dot")
+                        .attr("style", 'fill:red;')
+                        .attr("r", 3)
+                        .attr("cx", function(d) {
+                            return x(d.date);
+                        })
                         .attr("cy", function(d) {
                             return y(d.value);
                         });
