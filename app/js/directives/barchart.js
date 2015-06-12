@@ -486,18 +486,17 @@ function(connectionService, datasetService, errorNotificationService, filterServ
 
             $scope.requestExport = function() {
                 /*XDATA.userALE.log({
-                    activity: "",
-                    action: "",
-                    elementId: "",
-                    elementType: "",
-                    elementGroup: "",
-                    source: "",
-                    tags: ["", "", ""]
+                    activity: "perform",
+                    action: "click",
+                    elementId: "barchart-export",
+                    elementType: "button",
+                    elementGroup: "chart_group",
+                    source: "user",
+                    tags: ["options", "barchart", "export"]
                 });*/
                 var connection = connectionService.getActiveConnection();
                 if(!connection) {
                     //This is temporary. Come up with better code for if there isn't a connection.
-                    window.alert("No active connection.");
                     return;
                 }
                 // Need to build query and send off request here. Maybe use the query built in $scope.queryForMapData = function( ?

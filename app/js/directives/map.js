@@ -1025,7 +1025,7 @@ angular.module('neonDemo.directives')
                     tags: ["", "", ""]
                 });*/
                 window.location.assign(queryResults.data);
-            }
+            };
 
             var csvFail = function(response) {
                 /*XDATA.userALE.log({
@@ -1037,29 +1037,30 @@ angular.module('neonDemo.directives')
                     source: "",
                     tags: ["", "", ""]
                 });*/
-                window.alert("Failure.");
-            }
+            };
 
             $scope.requestExport = function() {
                 /*XDATA.userALE.log({
-                    activity: "",
-                    action: "",
-                    elementId: "",
-                    elementType: "",
-                    elementGroup: "",
-                    source: "",
-                    tags: ["", "", ""]
+                    activity: "perform",
+                    action: "click",
+                    elementId: "map-export",
+                    elementType: "button",
+                    elementGroup: "map_group",
+                    source: "user",
+                    tags: ["options", "map", "export"]
                 });*/
                 var connection = connectionService.getActiveConnection();
                 if(!connection) {
                     //This is temporary. Come up with better code for if there isn't a connection.
-                    window.alert("No active connection.");
                     return;
                 }
-                var query = $scope.buildPointQuery(database, table);
+                // This is always failing right now because the map executes multiple queries - one for each database/table set.
+                // We're working on figuring out how to resolve the issue.
+                var query = $scope.buildPointQuery($scope.options.database, $scope.options.table);
+                // Set limitClause to undefined because we don't want to limit the number of matching results put into the CSV file.
                 query.limitClause = undefined;
                 connection.executeExport(query, csvSuccess, csvFail, 'map');
-            }
+            };
         }
     };
 }]);

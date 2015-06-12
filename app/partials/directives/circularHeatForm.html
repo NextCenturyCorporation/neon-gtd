@@ -17,6 +17,15 @@
             <select class="form-control" ng-model="options.dateField" ng-options="field for field in fields" ng-required="true" ng-disabled="(fields.length == 0)" ng-change="updateDateField()">
             </select>
         </div>
+
+        <div class="form-group">
+            <div class="input-group">
+                <button type="button" class="btn btn-default export" ng-click="requestExport()">
+                    Export to File
+                </button>
+            </div>
+        </div>
+        
     </options-menu>
 </div>
 

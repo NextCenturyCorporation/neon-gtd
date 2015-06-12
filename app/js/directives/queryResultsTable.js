@@ -673,25 +673,42 @@ function(external, popups, connectionService, datasetService, errorNotificationS
             };
 
             $scope.requestExport = function() {
-                /*XDATA.userALE.log({
-                    activity: "",
-                    action: "",
-                    elementId: "",
-                    elementType: "",
-                    elementGroup: "",
-                    source: "",
-                    tags: ["", "", ""]
-                });*/
+                XDATA.userALE.log({
+                    activity: "perform",
+                    action: "click",
+                    elementId: "datagrid-export",
+                    elementType: "button",
+                    elementGroup: "table_group",
+                    source: "user",
+                    tags: ["options", "datagrid", "export"]
+                });
                 var connection = connectionService.getActiveConnection();
                 if(!connection) {
                     //This is temporary. Come up with better code for if there isn't a connection.
-                    window.alert("No active connection.");
                     return;
                 }
                 var query = $scope.buildQuery();
+                // Set limitClause to undefined because we don't want to limit the number of matching results put into the CSV file.
                 query.limitClause = undefined;
-                connection.executeExport(query, csvSuccess, csvFail, 'queryResultsTable');
+                var data = makeQueryResultsTableExportObject(query);
+                connection.executeExport(data, csvSuccess, csvFail);
             };
+
+            var makeQueryResultsTableExportObject = function(query) {
+                var finalObject = [{
+                    query: query, 
+                    name: "queryResultsTable", 
+                    fields:[]
+                }];
+
+                datasetService.getFields($scope.options.database.name, $scope.options.table.name).forEach(function(field) {
+                        (finalObject[0]).fields.push({query: field.columnName,
+                                                pretty: field.prettyName || "No pretty name?"
+                        });
+                    }
+                );
+                return finalObject;
+            }
         }
     };
 }]);

@@ -647,6 +647,53 @@ function(external, popups, connectionService, datasetService, errorNotificationS
                 $scope.initialize();
                 $scope.displayActiveDataset(true);
             });
+
+            var csvSuccess = function(queryResults) {
+                /*XDATA.userALE.log({
+                    activity: "",
+                    action: "",
+                    elementId: "",
+                    elementType: "",
+                    elementGroup: "",
+                    source: "",
+                    tags: ["", "", ""]
+                });*/
+                window.location.assign(queryResults.data);
+            };
+
+            var csvFail = function(response) {
+                /*XDATA.userALE.log({
+                    activity: "",
+                    action: "",
+                    elementId: "",
+                    elementType: "",
+                    elementGroup: "",
+                    source: "",
+                    tags: ["", "", ""]
+                });*/
+                window.alert("Failure.");
+            };
+
+            $scope.requestExport = function() {
+                XDATA.userALE.log({
+                    activity: "perform",
+                    action: "click",
+                    elementId: "count-by-export",
+                    elementType: "button",
+                    elementGroup: "table_group",
+                    source: "user",
+                    tags: ["options", "count-by", "export"]
+                });
+                var connection = connectionService.getActiveConnection();
+                if(!connection || !$scope.options.field || ($scope.options.aggregation !== "count" && !$scope.options.aggregationField)) {
+                    //This is temporary. Come up with better code for if there isn't a connection.
+                    $scope.errorMessage = errorNotificationService.showErrorMessage($element, "Error: Could not complete query.", 
+                        "There is either no connection, or not all necessary fields are filled out.");
+                    return;
+                }
+                var query = $scope.buildQuery();
+                connection.executeExport(query, csvSuccess, csvFail, 'countBy');
+            };
         }
     };
 }]);

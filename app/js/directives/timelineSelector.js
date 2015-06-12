@@ -931,19 +931,18 @@ function(connectionService, datasetService, errorNotificationService, filterServ
             };
 
             $scope.requestExport = function() {
-                /*XDATA.userALE.log({
-                    activity: "",
-                    action: "",
-                    elementId: "",
-                    elementType: "",
-                    elementGroup: "",
-                    source: "",
-                    tags: ["", "", ""]
-                });*/
+                XDATA.userALE.log({
+                    activity: "perform",
+                    action: "click",
+                    elementId: "timeline-export",
+                    elementType: "button",
+                    elementGroup: "chart_group",
+                    source: "user",
+                    tags: ["options", "timeline", "export"]
+                });
                 var connection = connectionService.getActiveConnection();
                 if(!connection) {
                     //This is temporary. Come up with better code for if there isn't a connection.
-                    window.alert("No active connection.");
                     return;
                 }
 
