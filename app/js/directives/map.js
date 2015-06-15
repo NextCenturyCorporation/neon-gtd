@@ -1054,12 +1054,32 @@ angular.module('neonDemo.directives')
                     //This is temporary. Come up with better code for if there isn't a connection.
                     return;
                 }
-                // This is always failing right now because the map executes multiple queries - one for each database/table set.
-                // We're working on figuring out how to resolve the issue.
-                var query = $scope.buildPointQuery($scope.options.database, $scope.options.table);
-                // Set limitClause to undefined because we don't want to limit the number of matching results put into the CSV file.
-                query.limitClause = undefined;
-                connection.executeExport(query, csvSuccess, csvFail, 'map');
+                var data = makeMapExportObject();
+                connection.executeExport(data, csvSuccess, csvFail);
+            };
+
+            var makeMapExportObject = function() {
+                var finalObject = [];
+                // This is very much like queryAllTableLayers(), except it stores the query built for each database/tablename pair
+                // instead of calling queryForMapData() on them.
+                var sets = getLayerDatabaseTableSets();
+                var keys = _.keys(sets);
+                var tables = [];
+                for(var i = 0; i < keys.length; i++) {
+                    tables = sets[keys[i]];
+                    for(var j = 0; j < tables.length; j++) {
+                        var query = $scope.buildPointQuery(keys[i], tables[j]);
+                        // Set limitClause to undefined because we don't want to limit the number of matching results put into the CSV file.
+                        query.limitClause = undefined;
+                        var tempObject = {query: query, name: "map - " + keys[i] + "_" + tables[j], fields:[]};
+                        datasetService.getFields(keys[i], tables[j]).forEach(function(field) {
+                                tempObject.fields.push({query: field.columnName, pretty: field.prettyName || field.columnName});
+                            }
+                        );
+                        finalObject.push(tempObject);
+                    }
+                }
+                return finalObject;
             };
         }
     };

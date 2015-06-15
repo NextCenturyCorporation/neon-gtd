@@ -612,7 +612,7 @@ function(connectionService, datasetService, errorNotificationService, $timeout) 
                     source: "",
                     tags: ["", "", ""]
                 });*/
-            }
+            };
 
             var csvFail = function(response) {
                 /*XDATA.userALE.log({
@@ -624,7 +624,7 @@ function(connectionService, datasetService, errorNotificationService, $timeout) 
                     source: "",
                     tags: ["", "", ""]
                 });*/
-            }
+            };
 
             $scope.requestExport = function() {
                 /*XDATA.userALE.log({
@@ -643,7 +643,7 @@ function(connectionService, datasetService, errorNotificationService, $timeout) 
                 }
                 // Need to build query and send off request here. Maybe use the query built in $scope.queryForMapData = function( ?
                 connection.executeExport(query, csvSuccess, csvFail, 'linechart');
-            }
+            };
         }
     };
 }]);

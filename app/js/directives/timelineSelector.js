@@ -378,6 +378,26 @@ function(connectionService, datasetService, errorNotificationService, filterServ
             };
 
             /**
+             * Helper method for queryForChartData() and requestExport(). Creates the Query object to be used by those moethods.
+             * @method createChartDataQuery
+             * @return {neon.query.Query} query The Query object to be used by queryForChartData() and requestExport()
+             */
+            $scope.createChartDataQuery = function() {
+                var query = new neon.query.Query()
+                    .selectFrom($scope.options.database.name, $scope.options.table.name)
+                    .where($scope.options.dateField, '!=', null);
+
+                $scope.addGroupByGranularityClause(query);
+
+                query.aggregate(neon.query.COUNT, '*', 'count');
+                // TODO: Does this need to be an aggregate on the date field? What is MIN doing or is this just an arbitrary function to include the date with the query?
+                query.aggregate(neon.query.MIN, $scope.options.dateField, 'date');
+                query.sortBy('date', neon.query.ASCENDING);
+                query.ignoreFilters([$scope.filterKeys[$scope.options.database.name][$scope.options.table.name]]);
+                return query;
+            }
+
+            /**
              * Triggers a Neon query that will aggregate the time data for the currently selected dataset.
              * @method queryForChartData
              */
@@ -397,17 +417,7 @@ function(connectionService, datasetService, errorNotificationService, filterServ
                     return;
                 }
 
-                var query = new neon.query.Query()
-                    .selectFrom($scope.options.database.name, $scope.options.table.name)
-                    .where($scope.options.dateField, '!=', null);
-
-                $scope.addGroupByGranularityClause(query);
-
-                query.aggregate(neon.query.COUNT, '*', 'count');
-                // TODO: Does this need to be an aggregate on the date field? What is MIN doing or is this just an arbitrary function to include the date with the query?
-                query.aggregate(neon.query.MIN, $scope.options.dateField, 'date');
-                query.sortBy('date', neon.query.ASCENDING);
-                query.ignoreFilters([$scope.filterKeys[$scope.options.database.name][$scope.options.table.name]]);
+                var query = $scope.createChartDataQuery();
 
                 XDATA.userALE.log({
                     activity: "alter",
@@ -945,18 +955,34 @@ function(connectionService, datasetService, errorNotificationService, filterServ
                     //This is temporary. Come up with better code for if there isn't a connection.
                     return;
                 }
+                var query = $scope.createChartDataQuery();
+                var data = makeTimelineSelectorExportObject(query)
 
-                //Copy-pasted from in queryForChartData
-                var query = new neon.query.Query()
-                    .selectFrom($scope.options.database.name, $scope.options.table.name)
-                    .where($scope.options.dateField, '!=', null);
-                $scope.addGroupByGranularityClause(query);
-                query.aggregate(neon.query.COUNT, '*', 'count');
-                query.aggregate(neon.query.MIN, $scope.options.dateField, 'date');
-                query.sortBy('date', neon.query.ASCENDING);
-                query.ignoreFilters([$scope.filterKeys[$scope.options.database.name][$scope.options.table.name]]);
-                
-                connection.executeExport(query, csvSuccess, csvFail, 'timelineSelector');
+                // Currently failing. The reason is that the whereClause of the query doesn't like being made by any means other than
+                // direct conversion from JSON. Trying to convert the LikedHashMap it's originally represented as into a WhereClause
+                // causes it to throw up an error.
+                connection.executeExport(data, csvSuccess, csvFail);
+            };
+
+            var makeTimelineSelectorExportObject = function(query) {
+                var finalObject = [{
+                    query: query,
+                    name: "timelineSelector", 
+                    fields: []
+                }];
+                // The timelineSelector always asks for count and date, so it's fine to hard-code these in.
+                (finalObject[0]).fields.push({query: "date", pretty: "Date"});
+                (finalObject[0]).fields.push({query: "count", pretty: "Count"});
+                // GroupBy clauses will always be added to the query in the same order, so this takes advantage
+                // of that to add the pretty names of the clauses in the same order for as many as were added.
+                var counter = 0;
+                var prettyNames = ["Year", "Month", "Day", "Hour"];
+                query.groupByClauses.forEach(function(field) {
+                        (finalObject[0]).fields.push({query: field.name, pretty: prettyNames[counter]});
+                        counter ++;
+                    }
+                );
+                return finalObject;
             };
         }
     };

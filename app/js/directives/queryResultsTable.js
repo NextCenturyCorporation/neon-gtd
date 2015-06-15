@@ -702,9 +702,7 @@ function(external, popups, connectionService, datasetService, errorNotificationS
                 }];
 
                 datasetService.getFields($scope.options.database.name, $scope.options.table.name).forEach(function(field) {
-                        (finalObject[0]).fields.push({query: field.columnName,
-                                                pretty: field.prettyName || "No pretty name?"
-                        });
+                        (finalObject[0]).fields.push({query: field.columnName, pretty: field.prettyName || field.columnName});
                     }
                 );
                 return finalObject;

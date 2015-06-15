@@ -671,7 +671,6 @@ function(external, popups, connectionService, datasetService, errorNotificationS
                     source: "",
                     tags: ["", "", ""]
                 });*/
-                window.alert("Failure.");
             };
 
             $scope.requestExport = function() {
@@ -692,8 +691,27 @@ function(external, popups, connectionService, datasetService, errorNotificationS
                     return;
                 }
                 var query = $scope.buildQuery();
-                connection.executeExport(query, csvSuccess, csvFail, 'countBy');
+                var data = makeCountByExportObject(query);
+                connection.executeExport(data, csvSuccess, csvFail);
             };
+
+            var makeCountByExportObject = function(query) {
+                var finalObject = [{query: query, name: 'countby', fields:[]}];
+                (finalObject[0]).fields.push({query: (query.groupByClauses[0]).field, pretty: capitalizeFirstLetter((query.groupByClauses[0]).field)});
+                var op = '';
+                if($scope.options.aggregation === 'min') {
+                    op = 'Min of ';
+                } else if($scope.options.aggregation === 'max') {
+                    op = 'Max of ';
+                }
+                (finalObject[0]).fields.push({query: (query.aggregates[0]).name, pretty: op + capitalizeFirstLetter((query.aggregates[0]).name)});
+                return finalObject;
+            };
+
+            var capitalizeFirstLetter = function(str) {
+                var first = str[0].toUpperCase();
+                return first + str.slice(1);
+            }
         }
     };
 }]);
