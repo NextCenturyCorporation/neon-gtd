@@ -553,6 +553,7 @@ charts.BarChart.prototype.showTooltipXaxis_ = function(item) {
 charts.BarChart.prototype.showTooltip_ = function(item, mouseLocation) {
     var xValue = this.tickFormat_ ? this.tickFormat_(item.key) : item.key;
     var yValue = this.isStacked ? (item.values - item[this.yMinAttribute_]) : item.values;
+    yValue = d3.format("0,000.00")(yValue);
 
     var tooltip = this.element.append("div")
         .property('id', charts.BarChart.TOOLTIP_ID_)
