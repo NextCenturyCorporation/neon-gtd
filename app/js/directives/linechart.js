@@ -28,8 +28,8 @@
  * @constructor
  */
 angular.module('neonDemo.directives')
-.directive('linechart', ['ConnectionService', 'DatasetService', 'ErrorNotificationService', '$timeout',
-function(connectionService, datasetService, errorNotificationService, $timeout) {
+.directive('linechart', ['ConnectionService', 'DatasetService', 'ErrorNotificationService', '$timeout', '$filter',
+function(connectionService, datasetService, errorNotificationService, $timeout, $filter) {
     var COUNT_FIELD_NAME = 'value';
 
     return {
@@ -585,7 +585,7 @@ function(connectionService, datasetService, errorNotificationService, $timeout) 
 
             $scope.getLegendItemAggregationText = function(colorMappingObject) {
                 if($scope.options.aggregation === "count" || $scope.options.aggregation === "sum") {
-                    return "(" + colorMappingObject.total + ")";
+                    return "(" + $filter('number')(colorMappingObject.total) + ")";
                 }
                 if($scope.options.aggregation === "min") {
                     return "(" + colorMappingObject.min + ")";

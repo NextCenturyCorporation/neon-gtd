@@ -745,6 +745,7 @@ function(connectionService, datasetService, errorNotificationService, filterServ
                 }
 
                 $scope.addStl2TimeSeriesAnalysis(timelineData, graphData);
+                $scope.addAnomalyDetectionAnalysis(timelineData, graphData);
             };
 
             $scope.runMMPP = function() {
@@ -869,6 +870,76 @@ function(connectionService, datasetService, errorNotificationService, filterServ
                     });
                     $scope.$apply();
                 }).fail(function() {
+                    // If the request fails, then just update.
+                    $scope.$apply();
+                });
+            };
+
+            $scope.addAnomalyDetectionAnalysis = function(timelineData, graphData) {
+                var timelineDataFrame = _.map(timelineData, function(it) {
+                    var dateString = it.date.getUTCFullYear() + "-" +
+                        (it.date.getUTCMonth() + 1) + "-" +
+                        it.date.getUTCDate() + " " +
+                        it.date.getUTCHours() + ":" +
+                        it.date.getUTCMinutes() + ":" +
+                        it.date.getUTCSeconds();
+                    return {
+                        timestamp: dateString,
+                        count: it.value
+                    };
+                });
+                ocpu.rpc("nAnomalyDetectionTs", {
+                    data: timelineDataFrame
+                }, function(anomalies) {
+                    // The result is an array of anomolies, where each anomaly has the form:
+                    // {
+                    //   anoms: 105,
+                    //   timestamp: "2015-11-05 13:00:00"
+                    // }
+                    // If there are no anomalies, the array will be empty
+                    if(anomalies.length === 0) {
+                        return;
+                    }
+
+                    var mainData = graphData[0].data;
+                    var anomalyIndex = 0;
+                    var anomalyDate = null;
+                    var dataIndex = 0;
+                    var dataDate = null;
+                    // Both the plain data and the anomalies are in sorted order, so iterate over
+                    // both of them simultaneously
+                    while(dataIndex < mainData.length && anomalyIndex < anomalies.length) {
+                        // Only recalculate the date if the index is changed. This is particularly
+                        // relevant for the anomalyDate because it is more expensive to compute, and
+                        // it should be unchanged for the vast majority of iterations of this loop.
+                        if(anomalyDate === null) {
+                            anomalyDate = new Date(anomalies[anomalyIndex].timestamp + " UTC");
+                        }
+                        if(dataDate === null) {
+                            dataDate = mainData[dataIndex].date;
+                        }
+                        // If there's a match, mark the data. Otherwise, advance the index in the
+                        // array that has the lesser date.
+                        if(anomalyDate.getTime() === mainData[dataIndex].date.getTime()) {
+                            mainData[dataIndex].anomaly = true;
+                            ++dataIndex;
+                            dataDate = null;
+                            ++anomalyIndex;
+                            anomalyDate = null;
+                        } else if(anomalyDate.getTime() < dataDate.getTime()) {
+                            // If the anomaly is older than the data, then try the next anomaly
+                            ++anomalyIndex;
+                            anomalyDate = null;
+                        } else {
+                            // The data must be older than the anomaly, so go to the next entry in
+                            // the data
+                            ++dataIndex;
+                            dataDate = null;
+                        }
+                    }
+                    $scope.$apply();
+                }).fail(function() {
+                    console.log("Got error from Anomaly Detection");
                     // If the request fails, then just update.
                     $scope.$apply();
                 });
