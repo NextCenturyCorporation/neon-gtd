@@ -18,7 +18,7 @@
 coreMap.Map.Layer = coreMap.Map.HeatmapLayer || {};
 /**
  * This module extends an OpenLayers 2 heatmap based upon the Heatmapjs
- * library (http://www.patrick-wied.at/static/heatmapjs/).  
+ * library (http://www.patrick-wied.at/static/heatmapjs/).
  *
  * @namespace coreMap.Map.Layer
  * @class HeatmapLayer
@@ -36,7 +36,6 @@ coreMap.Map.Layer.HeatmapLayer = OpenLayers.Class(OpenLayers.Layer.Heatmap, {
      */
     initialize: function(name, map, baseLayer, options) {
         // Override the style for our specialization.
-        var me = this;
         var heatmapOptions = {
             visible: true,
             radius: 10,
@@ -58,7 +57,7 @@ coreMap.Map.Layer.HeatmapLayer = OpenLayers.Class(OpenLayers.Layer.Heatmap, {
 
         // When we are added to a map, add a resize handler on the map so we know when to rerender
         // our canvas.
-        this.events.register('added', this, function(event) {
+        this.events.register('added', this, function() {
             var me = this;
 
             this.resizeHandler = function() {

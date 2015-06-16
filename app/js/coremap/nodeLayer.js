@@ -36,7 +36,6 @@ coreMap.Map.Layer.NodeLayer = OpenLayers.Class(OpenLayers.Layer.Vector, {
      */
     initialize: function(name, options) {
         // Override the style for our specialization.
-        var me = this;
         var extendOptions = options || {};
         extendOptions.styleMap = this.createNodeStyleMap();
 
@@ -93,7 +92,7 @@ coreMap.Map.Layer.NodeLayer.prototype.calculateLineWidth = function(weight) {
  */
 coreMap.Map.Layer.NodeLayer.prototype.createNode = function(element) {
     var point = new OpenLayers.Geometry.Point(
-        this.getValueFromDataElement(this.longitudeMapping, element), 
+        this.getValueFromDataElement(this.longitudeMapping, element),
         this.getValueFromDataElement(this.latitudeMapping, element)
     );
     point.transform(coreMap.Map.Layer.NodeLayer.SOURCE_PROJECTION, coreMap.Map.Layer.NodeLayer.DESTINATION_PROJECTION);
@@ -156,8 +155,8 @@ coreMap.Map.Layer.NodeLayer.prototype.createWeightedLine = function(pt1, pt2, we
     var point1 = new OpenLayers.Geometry.Point(pt1[0], pt1[1]);
     var point2 = new OpenLayers.Geometry.Point(pt2[0], pt2[1]);
 
-    var line = new OpenLayers.Geometry.LineString([ point1, point2 ]);
-    line.transform(coreMap.Map.Layer.NodeLayer.SOURCE_PROJECTION, 
+    var line = new OpenLayers.Geometry.LineString([point1, point2]);
+    line.transform(coreMap.Map.Layer.NodeLayer.SOURCE_PROJECTION,
         coreMap.Map.Layer.NodeLayer.DESTINATION_PROJECTION);
 
     var featureLine = new OpenLayers.Feature.Vector(line);
@@ -200,12 +199,10 @@ coreMap.Map.Layer.NodeLayer.prototype.setData = function(edges) {
 };
 
 /**
- * Calculate the new node radius and line width outer bounds based upon the provided edge array.
- * @param {Array<Object>} edges The edges of the layer.  These are expected to be weighted and 
- * have both src and target attributes.
+ * Calculate the new node radius and line width outer bounds based upon the current edge data.
  * @method calculateSizes
  */
-coreMap.Map.Layer.NodeLayer.prototype.calculateSizes = function(edges) {
+coreMap.Map.Layer.NodeLayer.prototype.calculateSizes = function() {
     var me = this;
     this.minNodeRadius = this.minLineWidth = Number.MAX_VALUE;
     this.maxNodeRadius = this.maxLineWidth = Number.MIN_VALUE;
@@ -226,7 +223,7 @@ coreMap.Map.Layer.NodeLayer.prototype.calculateSizes = function(edges) {
     this.lineWidthDiff = this.maxLineWidth - this.minLineWidth;
     this.baseRadiusDiff = coreMap.Map.Layer.NodeLayer.MAX_RADIUS - coreMap.Map.Layer.NodeLayer.MIN_RADIUS;
     this.baseLineWidthDiff = coreMap.Map.Layer.NodeLayer.MAX_LINE_WIDTH - coreMap.Map.Layer.NodeLayer.MIN_LINE_WIDTH;
-}
+};
 
 /**
  * Tells the layer to update its graphics based upon the current data associated with the layer.
@@ -246,29 +243,27 @@ coreMap.Map.Layer.NodeLayer.prototype.updateFeatures = function() {
         var tgt = me.getValueFromDataElement(me.targetMapping || coreMap.Map.Layer.NodeLayer.DEFAULT_TGT, element);
         var weight = me.getValueFromDataElement(me.weightMapping || coreMap.Map.Layer.NodeLayer.DEFAULT_WEIGHT_MAPPING, element);
 
-        var pt1 = [ 
+        var pt1 = [
             me.getValueFromDataElement(me.longitudeMapping || coreMap.Map.Layer.NodeLayer.DEFAULT_LONGITUDE_MAPPING, src),
             me.getValueFromDataElement(me.latitudeMapping || coreMap.Map.Layer.NodeLayer.DEFAULT_LATITUDE_MAPPING, src)
-        ]; 
-        var wgt1 = me.getValueFromDataElement(me.weightMapping || coreMap.Map.Layer.NodeLayer.DEFAULT_WEIGHT_MAPPING, src);
+        ];
 
-        var pt2 = [ 
-            me.getValueFromDataElement(me.longitudeMapping || coreMap.Map.Layer.NodeLayer.DEFAULT_LONGITUDE_MAPPING, tgt), 
-            me.getValueFromDataElement(me.latitudeMapping || coreMap.Map.Layer.NodeLayer.DEFAULT_LATITUDE_MAPPING, tgt) 
-        ]; 
-        var wgt2 = me.getValueFromDataElement(me.weightMapping || coreMap.Map.Layer.NodeLayer.DEFAULT_WEIGHT_MAPPING, tgt);
+        var pt2 = [
+            me.getValueFromDataElement(me.longitudeMapping || coreMap.Map.Layer.NodeLayer.DEFAULT_LONGITUDE_MAPPING, tgt),
+            me.getValueFromDataElement(me.latitudeMapping || coreMap.Map.Layer.NodeLayer.DEFAULT_LATITUDE_MAPPING, tgt)
+        ];
 
         // If the line has substance, render it.
-        if (weight > 0) {
+        if(weight > 0) {
             lines.push(me.createWeightedLine(pt1, pt2, weight));
         }
 
         // Add the nodes to the node list if necesary.
-        if (!nodes[pt1]) {
+        if(!nodes[pt1]) {
             nodes[pt1] = me.createNode(src);
         }
-        
-        if (!nodes[pt2]) {
+
+        if(!nodes[pt2]) {
             nodes[pt2] = me.createNode(tgt);
         }
     });

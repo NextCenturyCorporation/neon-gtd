@@ -258,7 +258,7 @@ angular.module('neonDemo.directives')
                             activeLayers.push($scope.options.layers[i]);
                         }
                     }
-                    if (activeLayers.length > 0) {
+                    if(activeLayers.length > 0) {
                         filterActiveLayersRecursively(activeLayers, function() {
                             $scope.$apply(function() {
                                 queryAllLayerTables();
@@ -298,10 +298,10 @@ angular.module('neonDemo.directives')
                 var layer = activeLayers.shift();
                 var relations = datasetService.getRelations(layer.database, layer.table, [layer.latitudeMapping, layer.longitudeMapping]);
                 filterService.replaceFilters($scope.messenger, relations, layer.filterKeys, $scope.createFilterClauseForExtent, function() {
-                    if (activeLayers.length) {
+                    if(activeLayers.length) {
                         filterActiveLayersRecursively(activeLayers, callback);
                     } else {
-                        if (callback) {
+                        if(callback) {
                             callback();
                         }
                     }
@@ -319,7 +319,7 @@ angular.module('neonDemo.directives')
                     // Notify the user of the error.
                     $scope.error = "Error: Failed to create filter.";
                 });
-            }
+            };
 
             /**
              * This method will apply filters to a particular layer.
@@ -370,7 +370,7 @@ angular.module('neonDemo.directives')
                 });
             };
 
-            /** 
+            /**
              * A simple handler for emitting USER-ALE messages from common user events on a map.
              * @method onMapEvent
              * @private
@@ -519,15 +519,14 @@ angular.module('neonDemo.directives')
 
                 // Reconfigure the map as necessary.
                 var mapConfig = datasetService.getMapConfig();
-                if (mapConfig && mapConfig.bounds) {
+                if(mapConfig && mapConfig.bounds) {
                     $scope.map.zoomToBounds(mapConfig.bounds);
-                }
-                else {
+                } else {
                     $scope.map.zoomToBounds({
-                        "left": -180,
-                        "bottom": -90,
-                        "right": 180,
-                        "top": 90
+                        left: -180,
+                        bottom: -90,
+                        right: 180,
+                        top: 90
                     });
                 }
 
@@ -910,14 +909,13 @@ angular.module('neonDemo.directives')
 
                 // Update our table queries for the various layers.  Defer via recursion
                 // until we've received responses from our filter requests.
-                if (updateLayers) {
+                if(updateLayers) {
                     clearFiltersRecursively(layerFilterKeysList, function() {
                         clearZoomRect();
                         $scope.hideClearFilterButton();
                         queryAllLayerTables();
                     });
-                }
-                else {
+                } else {
                     clearFiltersRecursively(layerFilterKeysList);
                 }
             };
@@ -928,7 +926,7 @@ angular.module('neonDemo.directives')
                     if(filterKeysList.length) {
                         clearFiltersRecursively(filterKeysList, callback);
                     } else {
-                        if (callback) {
+                        if(callback) {
                             callback();
                         }
                     }
