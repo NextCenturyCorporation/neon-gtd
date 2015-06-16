@@ -16,6 +16,19 @@
  */
 
 coreMap.Map.Layer = coreMap.Map.Layer || {};
+/**
+ * This module extend an OpenLayers 2 Vector Layer to create a map layer of points.  Each point
+ * can is made from a data array that is passed in via setData() and can be colored by a
+ * category field in the data array or sized by a particular field in each point's data array
+ * By default, all points are displayed.  However, the layer can be configured to cluster points.
+ * Visually, this will collect points within a certain pixel range of one another and display 
+ * a count bubble representing the number of points in a given area.  As a user zoom's in on a map,
+ * the bubbles may begin to separate.
+ *
+ * @namespace coreMap.Map.Layer
+ * @class PointsLayer
+ * @constructor
+ */
 coreMap.Map.Layer.PointsLayer = OpenLayers.Class(OpenLayers.Layer.Vector, {
     CLASS_NAME: "coreMap.Map.Layer.PointsLayer",
     colors: {},

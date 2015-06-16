@@ -16,6 +16,14 @@
  */
 
 coreMap.Map.Layer = coreMap.Map.HeatmapLayer || {};
+/**
+ * This module extends an OpenLayers 2 heatmap based upon the Heatmapjs
+ * library (http://www.patrick-wied.at/static/heatmapjs/).  
+ *
+ * @namespace coreMap.Map.Layer
+ * @class HeatmapLayer
+ * @constructor
+ */
 coreMap.Map.Layer.HeatmapLayer = OpenLayers.Class(OpenLayers.Layer.Heatmap, {
     CLASS_NAME: "coreMap.Map.Layer.HeatmapLayer",
     data: [],
@@ -98,7 +106,6 @@ coreMap.Map.Layer.HeatmapLayer.prototype.setData = function(data) {
  * @return {Object} an object containing the location and count for the heatmap.
  * @method createHeatmapDataPoint
  */
-
 coreMap.Map.Layer.HeatmapLayer.prototype.createHeatmapDataPoint = function(element, longitude, latitude) {
     var count = this.getValueFromDataElement(this.sizeMapping, element);
     var point = new OpenLayers.LonLat(longitude, latitude);

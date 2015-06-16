@@ -258,31 +258,33 @@ angular.module('neonDemo.directives')
                             activeLayers.push($scope.options.layers[i]);
                         }
                     }
-                    filterActiveLayersRecursively(activeLayers, function() {
-                        $scope.$apply(function() {
-                            queryAllLayerTables();
-                            drawZoomRect({
-                                left: $scope.extent.minimumLongitude,
-                                bottom: $scope.extent.minimumLatitude,
-                                right: $scope.extent.maximumLongitude,
-                                top: $scope.extent.maximumLatitude
-                            });
+                    if (activeLayers.length > 0) {
+                        filterActiveLayersRecursively(activeLayers, function() {
+                            $scope.$apply(function() {
+                                queryAllLayerTables();
+                                drawZoomRect({
+                                    left: $scope.extent.minimumLongitude,
+                                    bottom: $scope.extent.minimumLatitude,
+                                    right: $scope.extent.maximumLongitude,
+                                    top: $scope.extent.maximumLatitude
+                                });
 
-                            // Show the Clear Filter button.
-                            $scope.showFilter = true;
-                            $scope.error = "";
-                            XDATA.userALE.log({
-                                activity: "alter",
-                                action: "filter",
-                                elementId: "map",
-                                elementType: "canvas",
-                                elementSub: "map-filter-box",
-                                elementGroup: "map_group",
-                                source: "system",
-                                tags: ["render", "map"]
+                                // Show the Clear Filter button.
+                                $scope.showFilter = true;
+                                $scope.error = "";
+                                XDATA.userALE.log({
+                                    activity: "alter",
+                                    action: "filter",
+                                    elementId: "map",
+                                    elementType: "canvas",
+                                    elementSub: "map-filter-box",
+                                    elementGroup: "map_group",
+                                    source: "system",
+                                    tags: ["render", "map"]
+                                });
                             });
                         });
-                    })
+                    }
                 };
             };
 
@@ -586,6 +588,19 @@ angular.module('neonDemo.directives')
                                 radius: 3,
                                 minOpacity: 0.7,
                                 maxOpacity: 1
+                            });
+                            this.map.addLayer(layer.olLayer);
+                        } else if(layer.type === coreMap.Map.NODE_LAYER) {
+                            name = layer.name || layer.table + " Nodes";
+                            layer.olLayer = new coreMap.Map.Layer.NodeLayer(name.toUpperCase(), {
+                                sourceMapping: layer.sourceMapping,
+                                targetMapping: layer.targetMapping,
+                                weightMapping: layer.weightMapping,
+                                latitudeMapping: layer.latitudeMapping,
+                                longitudeMapping: layer.longitudeMapping,
+                                idMapping: layer.nodeIdMapping,
+                                nodeColor: layer.nodeColor,
+                                lineColor: layer.edgeColor
                             });
                             this.map.addLayer(layer.olLayer);
                         }

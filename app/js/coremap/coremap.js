@@ -48,7 +48,6 @@ var coreMap = coreMap || {};
  *                 {"latitude": "-20", "longitude": 130
  *                ];
  *     var map = new coreMap.Map('map');
- *     map.setData(data);
  *     map.draw();
  *
  * @example
@@ -143,6 +142,7 @@ coreMap.Map.DESTINATION_PROJECTION = new OpenLayers.Projection("EPSG:900913");
 coreMap.Map.POINTS_LAYER = 'points';
 coreMap.Map.HEATMAP_LAYER = 'heatmap';
 coreMap.Map.CLUSTER_LAYER = 'cluster';
+coreMap.Map.NODE_LAYER = 'node';
 
 /**
  * Simple close handler to be called if a popup is closed.
@@ -197,7 +197,6 @@ coreMap.Map.prototype.draw = function() {
 
 coreMap.Map.prototype.reset = function() {
     this.map.selectControl.unSelectAll();
-    this.setData([]);
     this.draw();
     this.resetZoom();
 };
@@ -210,19 +209,6 @@ coreMap.Map.prototype.reset = function() {
 coreMap.Map.prototype.resetZoom = function() {
     this.map.zoomToMaxExtent();
     this.map.setCenter(new OpenLayers.LonLat(0, 0), 1);
-};
-
-/**
- * Sets the map's data.
- * @param mapData the data to be set. This should be an array of points. The points may be specified
- * in any way, This component uses the mapping objects to map each array element to latitude, longitude, size and color.
- * @param {Array} An array of data objects to plot
- * @method setData
- */
-
-coreMap.Map.prototype.setData = function(mapData) {
-    this.data = mapData;
-    this.updateRadii();
 };
 
 /**
