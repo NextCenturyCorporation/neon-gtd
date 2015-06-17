@@ -190,6 +190,33 @@ function(connectionService, datasetService, errorNotificationService, $timeout) 
                     return;
                 }
 
+                var query = $scope.buildQuery();
+
+                connection.executeQuery(query, callback, function(response) {
+                    XDATA.userALE.log({
+                        activity: "alter",
+                        action: "failed",
+                        elementId: "linechart",
+                        elementType: "canvas",
+                        elementSub: "linechart",
+                        elementGroup: "chart_group",
+                        source: "system",
+                        tags: ["failed", "linechart"]
+                    });
+                    drawChart();
+                    $scope.loadingData = false;
+                    if(response.responseJSON) {
+                        $scope.errorMessage = errorNotificationService.showErrorMessage($element, response.responseJSON.error, response.responseJSON.stackTrace);
+                    }
+                });
+            };
+
+            /**
+             * Builds a query for the line chart and returns it.
+             * @method buildQuery
+             * @return A ready-to-be-sent query for the line chart.
+             */
+            $scope.buildQuery = function() {
                 var yearGroupClause = new neon.query.GroupByFunctionClause(neon.query.YEAR, $scope.options.attrX, 'year');
                 var monthGroupClause = new neon.query.GroupByFunctionClause(neon.query.MONTH, $scope.options.attrX, 'month');
                 var dayGroupClause = new neon.query.GroupByFunctionClause(neon.query.DAY, $scope.options.attrX, 'day');
@@ -223,24 +250,8 @@ function(connectionService, datasetService, errorNotificationService, $timeout) 
 
                 query.aggregate(neon.query.MIN, $scope.options.attrX, 'date')
                     .sortBy('date', neon.query.ASCENDING);
-
-                connection.executeQuery(query, callback, function(response) {
-                    XDATA.userALE.log({
-                        activity: "alter",
-                        action: "failed",
-                        elementId: "linechart",
-                        elementType: "canvas",
-                        elementSub: "linechart",
-                        elementGroup: "chart_group",
-                        source: "system",
-                        tags: ["failed", "linechart"]
-                    });
-                    drawChart();
-                    $scope.loadingData = false;
-                    if(response.responseJSON) {
-                        $scope.errorMessage = errorNotificationService.showErrorMessage($element, response.responseJSON.error, response.responseJSON.stackTrace);
-                    }
-                });
+                
+                return query;
             };
 
             /**
@@ -612,6 +623,7 @@ function(connectionService, datasetService, errorNotificationService, $timeout) 
                     source: "",
                     tags: ["", "", ""]
                 });*/
+                window.location.assign(queryResults.data);
             };
 
             var csvFail = function(response) {
@@ -627,7 +639,7 @@ function(connectionService, datasetService, errorNotificationService, $timeout) 
             };
 
             $scope.requestExport = function() {
-                /*XDATA.userALE.log({
+                XDATA.userALE.log({
                     activity: "perform",
                     action: "click",
                     elementId: "linechart-export",
@@ -635,14 +647,62 @@ function(connectionService, datasetService, errorNotificationService, $timeout) 
                     elementGroup: "chart_group",
                     source: "user",
                     tags: ["options", "linechart", "export"]
-                });*/
+                });
                 var connection = connectionService.getActiveConnection();
                 if(!connection) {
                     //This is temporary. Come up with better code for if there isn't a connection.
                     return;
                 }
-                // Need to build query and send off request here. Maybe use the query built in $scope.queryForMapData = function( ?
-                connection.executeExport(query, csvSuccess, csvFail, 'linechart');
+                var query = $scope.buildQuery();
+                var data = makeLinechartExportObject(query);
+                connection.executeExport(data, csvSuccess, csvFail);
+            };
+
+            var makeLinechartExportObject = function(query) {
+                var finalObject = [{
+                    query:query,
+                    name: "linechart",
+                    fields: [],
+                    ignoreFilters: query.ignoreFilters_,
+                    selectionOnly: query.selectionOnly_,
+                    ignoredFilterIds: query.ignoredFilterIds_
+                }];
+
+                (finalObject[0]).fields.push({query: "year", pretty: "Year"});
+                (finalObject[0]).fields.push({query: "month", pretty: "Month"});
+                (finalObject[0]).fields.push({query: "day", pretty: "Day"});
+                var aggr;
+                if($scope.options.aggregation === "count") {
+                    aggr = query.groupByClauses[3].field;
+                    (finalObject[0]).fields.push({query: aggr, pretty: capitalizeFirstLetter(aggr)});
+                    (finalObject[0]).fields.push({query: "value", pretty: "Count"});
+                }
+                else if($scope.options.aggregation === "sum") {
+                    aggr = query.groupByClauses[3].field;
+                    (finalObject[0]).fields.push({query: aggr, pretty: capitalizeFirstLetter(aggr)});
+                    (finalObject[0]).fields.push({query: "value", pretty: "Sum of " + query.aggregates[0].field});
+                } 
+                else if($scope.options.aggregation === "average") {
+                    aggr = query.groupByClauses[3].field;
+                    (finalObject[0]).fields.push({query: aggr, pretty: capitalizeFirstLetter(aggr)});
+                    (finalObject[0]).fields.push({query: "value", pretty: "Average of " + query.aggregates[0].field});
+                } 
+                else if($scope.options.aggregation === "min") {
+                    aggr = query.groupByClauses[3].field;
+                    (finalObject[0]).fields.push({query: aggr, pretty: capitalizeFirstLetter(aggr)});
+                    (finalObject[0]).fields.push({query: "value", pretty: "Min of " + query.aggregates[0].field});
+                } 
+                else if($scope.options.aggregation === "max") {
+                    aggr = query.groupByClauses[3].field;
+                    (finalObject[0]).fields.push({query: aggr, pretty: capitalizeFirstLetter(aggr)});
+                    (finalObject[0]).fields.push({query: "value", pretty: "Max of " + query.aggregates[0].field});
+                }
+                return finalObject;
+            };
+
+            var capitalizeFirstLetter = function(str) {
+                var first = str[0].toUpperCase();
+                return first + str.slice(1);
             };
         }
     };

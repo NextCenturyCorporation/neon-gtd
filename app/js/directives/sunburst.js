@@ -363,6 +363,78 @@ function(connectionService, datasetService, errorNotificationService) {
                 }
                 $scope.queryForData();
             };
+
+            var csvSuccess = function(queryResults) {
+                /*XDATA.userALE.log({
+                    activity: "",
+                    action: "",
+                    elementId: "",
+                    elementType: "",
+                    elementGroup: "",
+                    source: "",
+                    tags: ["", "", ""]
+                });*/
+                window.location.assign(queryResults.data);
+            };
+
+            var csvFail = function(response) {
+                /*XDATA.userALE.log({
+                    activity: "",
+                    action: "",
+                    elementId: "",
+                    elementType: "",
+                    elementGroup: "",
+                    source: "",
+                    tags: ["", "", ""]
+                });*/
+            };
+
+            $scope.requestExport = function() {
+                XDATA.userALE.log({
+                    activity: "perform",
+                    action: "click",
+                    elementId: "sunburst-export",
+                    elementType: "button",
+                    elementGroup: "chart_group",
+                    source: "user",
+                    tags: ["options", "sunburst", "export"]
+                });
+                var connection = connectionService.getActiveConnection();
+                if(!connection) {
+                    //This is temporary. Come up with better code for if there isn't a connection.
+                    return;
+                }
+                var query = $scope.buildQuery();
+                // Sort results by each group field so the resulting file won't be ugly.
+                var sortByArgs = []
+                $scope.groupFields.forEach(function(field) {
+                    sortByArgs.push(field);
+                    sortByArgs.push(neon.query.ASCENDING);
+                });
+                query.sortBy(sortByArgs);
+                var data = makeSunburstExportObject(query);
+                connection.executeExport(data, csvSuccess, csvFail);
+            };
+
+            var makeSunburstExportObject = function(query) {
+                var finalObject = [{
+                    query: query, 
+                    name: 'sunburst', 
+                    fields:[], 
+                    ignoreFilters: query.ignoreFilters_, 
+                    selectionOnly: query.selectionOnly_,
+                    ignoredFilterIds: query.ignoredFilterIds_
+                }];
+                $scope.groupFields.forEach(function(field) {
+                    (finalObject[0]).fields.push({query: field, pretty: capitalizeFirstLetter(field)});
+                });
+                return finalObject;
+            };
+
+            var capitalizeFirstLetter = function(str) {
+                var first = str[0].toUpperCase();
+                return first + str.slice(1);
+            };
         }
     };
 }]);

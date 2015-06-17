@@ -696,7 +696,14 @@ function(external, popups, connectionService, datasetService, errorNotificationS
             };
 
             var makeCountByExportObject = function(query) {
-                var finalObject = [{query: query, name: 'countby', fields:[]}];
+                var finalObject = [{
+                    query: query, 
+                    name: 'countBy', 
+                    fields:[],
+                    ignoreFilters: query.ignoreFilters_,
+                    selectionOnly: query.selectionOnly_,
+                    ignoredFilterIds: query.ignoredFilterIds_
+                }];
                 (finalObject[0]).fields.push({query: (query.groupByClauses[0]).field, pretty: capitalizeFirstLetter((query.groupByClauses[0]).field)});
                 var op = '';
                 if($scope.options.aggregation === 'min') {
@@ -711,7 +718,7 @@ function(external, popups, connectionService, datasetService, errorNotificationS
             var capitalizeFirstLetter = function(str) {
                 var first = str[0].toUpperCase();
                 return first + str.slice(1);
-            }
+            };
         }
     };
 }]);

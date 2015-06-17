@@ -431,17 +431,23 @@ function(connectionService, datasetService, errorNotificationService) {
                     .where($scope.options.dateField, '!=', null)
                     .aggregate(neon.query.COUNT, '*', 'count');
                 var data = makeCircularHeatFormExportObject(query);
-                // Currently failing for the same reason as timelineSelector export is - the server doesn't like the WhereClause.
                 connection.executeExport(data, csvSuccess, csvFail);
             };
 
             var makeCircularHeatFormExportObject = function(query) {
-                var finalObject = [{query: query, name: 'circularHeatForm', fields:[]}];
+                var finalObject = [{
+                    query: query, 
+                    name: 'circularHeatForm', 
+                    fields:[], 
+                    ignoreFilters: query.ignoreFilters_, 
+                    selectionOnly: query.selectionOnly_,
+                    ignoredFilterIds: query.ignoredFilterIds_
+                }];
                 (finalObject[0]).fields.push({query: 'day', pretty: 'Day'});
                 (finalObject[0]).fields.push({query: 'hour', pretty: 'Hour'});
                 (finalObject[0]).fields.push({query: 'count', pretty: 'Count'});
                 return finalObject;
-            }
+            };
         }
     };
 }]);

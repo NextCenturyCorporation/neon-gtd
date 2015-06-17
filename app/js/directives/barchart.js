@@ -236,20 +236,7 @@ function(connectionService, datasetService, errorNotificationService, filterServ
                 $scope.queryForData(true);
             };
 
-            $scope.queryForData = function(rebuildChart) {
-                if($scope.errorMessage) {
-                    errorNotificationService.hideErrorMessage($scope.errorMessage);
-                    $scope.errorMessage = undefined;
-                }
-
-                var connection = connectionService.getActiveConnection();
-
-                if(!connection || !$scope.options.attrX || (!$scope.options.attrY && $scope.options.barType !== "count")) {
-                    drawBlankChart();
-                    $scope.loadingData = false;
-                    return;
-                }
-
+            $scope.buildQuery = function() {
                 var query = new neon.query.Query()
                     .selectFrom($scope.options.database.name, $scope.options.table.name)
                     .where($scope.options.attrX, '!=', null)
@@ -271,6 +258,24 @@ function(connectionService, datasetService, errorNotificationService, filterServ
                 } else {
                     query.aggregate(queryType, $scope.options.attrY, COUNT_FIELD_NAME);
                 }
+                return query;
+            };
+
+            $scope.queryForData = function(rebuildChart) {
+                if($scope.errorMessage) {
+                    errorNotificationService.hideErrorMessage($scope.errorMessage);
+                    $scope.errorMessage = undefined;
+                }
+
+                var connection = connectionService.getActiveConnection();
+
+                if(!connection || !$scope.options.attrX || (!$scope.options.attrY && $scope.options.barType !== "count")) {
+                    drawBlankChart();
+                    $scope.loadingData = false;
+                    return;
+                }
+
+                var query = $scope.buildQuery();
 
                 XDATA.userALE.log({
                     activity: "alter",
@@ -470,6 +475,7 @@ function(connectionService, datasetService, errorNotificationService, filterServ
                     source: "",
                     tags: ["", "", ""]
                 });*/
+                window.location.assign(queryResults.data);
             };
 
             var csvFail = function(response) {
@@ -499,8 +505,36 @@ function(connectionService, datasetService, errorNotificationService, filterServ
                     //This is temporary. Come up with better code for if there isn't a connection.
                     return;
                 }
-                // Need to build query and send off request here. Maybe use the query built in $scope.queryForMapData = function( ?
-                connection.executeExport(query, csvSuccess, csvFail, 'barchart');
+                var query = $scope.buildQuery();
+                var data = makeBarchartExportObject(query);
+                connection.executeExport(data, csvSuccess, csvFail);
+            };
+
+            var makeBarchartExportObject = function(query) {
+                var finalObject = [{
+                    query: query,
+                    name: "barchart",
+                    fields: [],
+                    ignoreFilters: query.ignoreFilters_,
+                    selectionOnly: query.selectionOnly_,
+                    ignoredFilterIds: query.ignoredFilterIds_
+                }];
+                (finalObject[0]).fields.push({query: query.groupByClauses[0].field, pretty: capitalizeFirstLetter(query.groupByClauses[0].field)});
+                if($scope.options.barType === "average") {
+                    (finalObject[0]).fields.push({query: COUNT_FIELD_NAME, pretty: "Average of " + query.aggregates[0].field});
+                }
+                if($scope.options.barType === "sum") {
+                    (finalObject[0]).fields.push({query: COUNT_FIELD_NAME, pretty: "Sum of " + query.aggregates[0].field});
+                }
+                if($scope.options.barType === "count") {
+                    (finalObject[0]).fields.push({query: COUNT_FIELD_NAME, pretty: "Count"});
+                }
+                return finalObject;
+            };
+
+            var capitalizeFirstLetter = function(str) {
+                var first = str[0].toUpperCase();
+                return first + str.slice(1);
             };
         }
     };

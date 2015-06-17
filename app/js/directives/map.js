@@ -1071,7 +1071,14 @@ angular.module('neonDemo.directives')
                         var query = $scope.buildPointQuery(keys[i], tables[j]);
                         // Set limitClause to undefined because we don't want to limit the number of matching results put into the CSV file.
                         query.limitClause = undefined;
-                        var tempObject = {query: query, name: "map - " + keys[i] + "_" + tables[j], fields:[]};
+                        var tempObject = {
+                            query: query, 
+                            name: "map - " + keys[i] + "_" + tables[j], 
+                            fields:[], 
+                            ignoreFilters: query.ignoreFilters_, 
+                            selectionOnly: query.selectionOnly_, 
+                            ignoredFilterIds: query.ignoredFilterIds_
+                        };
                         datasetService.getFields(keys[i], tables[j]).forEach(function(field) {
                                 tempObject.fields.push({query: field.columnName, pretty: field.prettyName || field.columnName});
                             }

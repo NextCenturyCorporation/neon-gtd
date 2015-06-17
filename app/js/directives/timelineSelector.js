@@ -957,10 +957,6 @@ function(connectionService, datasetService, errorNotificationService, filterServ
                 }
                 var query = $scope.createChartDataQuery();
                 var data = makeTimelineSelectorExportObject(query)
-
-                // Currently failing. The reason is that the whereClause of the query doesn't like being made by any means other than
-                // direct conversion from JSON. Trying to convert the LikedHashMap it's originally represented as into a WhereClause
-                // causes it to throw up an error.
                 connection.executeExport(data, csvSuccess, csvFail);
             };
 
@@ -968,11 +964,12 @@ function(connectionService, datasetService, errorNotificationService, filterServ
                 var finalObject = [{
                     query: query,
                     name: "timelineSelector", 
-                    fields: []
+                    fields: [],
+                    ignoreFilters: query.ignoreFilters_,
+                    selectionOnly:query.selectionOnly_,
+                    ignoredFilterIds: query.ignoredFilterIds_
                 }];
                 // The timelineSelector always asks for count and date, so it's fine to hard-code these in.
-                (finalObject[0]).fields.push({query: "date", pretty: "Date"});
-                (finalObject[0]).fields.push({query: "count", pretty: "Count"});
                 // GroupBy clauses will always be added to the query in the same order, so this takes advantage
                 // of that to add the pretty names of the clauses in the same order for as many as were added.
                 var counter = 0;
@@ -982,6 +979,7 @@ function(connectionService, datasetService, errorNotificationService, filterServ
                         counter ++;
                     }
                 );
+                (finalObject[0]).fields.push({query: "count", pretty: "Count"});
                 return finalObject;
             };
         }

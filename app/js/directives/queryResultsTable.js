@@ -698,9 +698,11 @@ function(external, popups, connectionService, datasetService, errorNotificationS
                 var finalObject = [{
                     query: query, 
                     name: "queryResultsTable", 
-                    fields:[]
+                    fields:[],
+                    ignoreFilters: query.ignoreFilters_,
+                    selectionOnly: query.selectionOnly_,
+                    ignoredFilterIds: query.ignoredFilterIds_
                 }];
-
                 datasetService.getFields($scope.options.database.name, $scope.options.table.name).forEach(function(field) {
                         (finalObject[0]).fields.push({query: field.columnName, pretty: field.prettyName || field.columnName});
                     }
