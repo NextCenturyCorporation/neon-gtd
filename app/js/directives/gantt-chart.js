@@ -28,6 +28,7 @@ function(connectionService, datasetService, errorNotificationService, filterServ
         link: function($scope, $element) {
             $element.addClass('gantt-chart');
             $scope.element = $element;
+            $scope.legend = {};
 
             $scope.options = {
                 database: {},
@@ -104,7 +105,19 @@ function(connectionService, datasetService, errorNotificationService, filterServ
             };
 
             var formatData = function(data) {
+                var i;
                 var color = d3.scale.category20();
+                var colorList;
+                if($scope.options.colorField) {
+                    colorList = createFieldList($scope.options.colorField, data);
+                    $scope.legend.colors = [];
+                    for(i = 0; i < colorList.length; i++) {
+                        $scope.legend.colors.push({
+                            color: color(i),
+                            text: colorList[i]
+                        });
+                    }
+                }
 
                 if($scope.options.groupField.length > 0) {
                     $scope.data = [];
@@ -119,7 +132,7 @@ function(connectionService, datasetService, errorNotificationService, filterServ
 
                 var row;
 
-                for(var i = 0; i < data.length; i++) {
+                for(i = 0; i < data.length; i++) {
                     var parent;
                     if(!$scope.tree) {
                         parent = {
@@ -131,16 +144,34 @@ function(connectionService, datasetService, errorNotificationService, filterServ
                         parent = getTreeParent(data[i]);
                     }
 
+                    var colorVal;
+                    if($scope.options.colorField) {
+                        colorVal = color(colorList.indexOf(data[i][$scope.options.colorField]));
+                    } else {
+                        colorVal = color(i);
+                    }
                     row = {
                         name: data[i].Headline,
                         from: data[i].Start,
                         to: data[i].End,
-                        color: color(i)
+                        color: colorVal
                     };
                     parent.tasks.push(row);
                 }
 
                 pushTreeToData();
+            };
+
+            var createFieldList = function(field, data) {
+                var fieldList = [];
+                var value;
+                for(var i = 0; i < data.length; i++) {
+                    value = data[i][field];
+                    if(fieldList.indexOf(value) === -1) {
+                        fieldList.push(value);
+                    }
+                }
+                return fieldList;
             };
 
             var getTreeParent = function(node) {
@@ -349,21 +380,27 @@ function(connectionService, datasetService, errorNotificationService, filterServ
                 });
             };
 
-            $scope.$watch('options.groupField', function() {
+            $scope.$watch('options.groupField', function(newValue) {
+                var length = newValue.length;
                 if(!$scope.options.groupField[0]) {
                     $scope.options.groupField = [];
                 } else if(!$scope.options.groupField[1]) {
-                    delete $scope.options.groupField[1];
-                    delete $scope.options.groupField[2];
-                    delete $scope.options.groupField[3];
+                    $scope.options.groupField.splice(1, 3);
                 } else if(!$scope.options.groupField[2]) {
-                    delete $scope.options.groupField[2];
-                    delete $scope.options.groupField[3];
+                    $scope.options.groupField.splice(2, 2);
                 } else if(!$scope.options.groupField[3]) {
-                    delete $scope.options.groupField[3];
+                    $scope.options.groupField.splice(3, 1);
                 }
 
-                $scope.queryForData();
+                if(length === newValue.length) {
+                    $scope.queryForData();
+                }
+            }, true);
+
+            $scope.$watch('options.colorField', function() {
+                if($scope.options.colorField) {
+                    formatData($scope.queryData);
+                }
             }, true);
 
             neon.ready(function() {

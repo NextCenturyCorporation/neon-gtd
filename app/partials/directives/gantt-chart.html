@@ -11,27 +11,41 @@
             </select>
         </div>
         <div class="form-group" ng-show="!(hideAdvancedOptions)">
-            <label>Group Field 1</label>
+            <label>First grouping</label>
             <select class="form-control" ng-model="options.groupField[0]" ng-options="field for field in fields" ng-disabled="!(fields.length > 0)">
             </select>
         </div>
         <div class="form-group" ng-show="!(hideAdvancedOptions)">
-            <label>Group Field 2</label>
+            <label>Second grouping</label>
             <select class="form-control" ng-model="options.groupField[1]" ng-options="field for field in fields" ng-disabled="!(fields.length > 0) || !options.groupField[0]">
             </select>
         </div>
         <div class="form-group" ng-show="!(hideAdvancedOptions)">
-            <label>Group Field 3</label>
+            <label>Third grouping</label>
             <select class="form-control" ng-model="options.groupField[2]" ng-options="field for field in fields" ng-disabled="!(fields.length > 0) || !options.groupField[1]">
             </select>
         </div>
         <div class="form-group" ng-show="!(hideAdvancedOptions)">
-            <label>Group Field 4</label>
+            <label>Fourth grouping</label>
             <select class="form-control" ng-model="options.groupField[3]" ng-options="field for field in fields" ng-disabled="!(fields.length > 0) || !options.groupField[2]">
+            </select>
+        </div>
+
+        <div class="form-group" ng-show="!(hideAdvancedOptions)">
+            <label>Color by</label>
+            <select class="form-control" ng-model="options.colorField" ng-options="field for field in fields" ng-disabled="!(fields.length > 0)">
             </select>
         </div>
     </options-menu>
 </div>
+
+<div class="legend" ng-hide="!legend.colors">
+    <div class="legend-item" ng-repeat="item in legend.colors" title="{{item.text}}">
+        <span class="legend-icon" style="background-color: {{item.color}}"></span>
+        <span class="legend-text legend-text-large">{{item.text}}</span>
+    </div>
+</div>
+
 <div class="gantt-chart" gantt data="data">
     <gantt-tooltips></gantt-tooltips>
     <gantt-tree enabled="options.groupField.length > 0"></gantt-tree>
