@@ -375,6 +375,13 @@ angular.module('neonDemo.directives')
              */
             var onMapEvent = function(message) {
                 var type = message.type;
+
+                if(type == "zoomend" && $scope.map.featurePopup) {
+                    $scope.map.map.removePopup($scope.map.featurePopup);
+                    $scope.map.featurePopup.destroy();
+                    $scope.map.featurePopup = null;
+                }
+
                 type = type.replace("move", "pan");
                 type = type.replace("zoomend", "zoom");
 
