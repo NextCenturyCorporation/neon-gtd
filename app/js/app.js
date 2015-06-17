@@ -32,12 +32,12 @@ angular.module('neonDemo.directives', [
     //'gantt.sortable',
     //'gantt.movable',
     // 'gantt.drawtask',
-    'gantt.tooltips'
+    'gantt.tooltips',
     // 'gantt.bounds',
     //'gantt.progress',
     //'gantt.table',
-    //'gantt.tree',
-    //'gantt.groups',
+    'gantt.tree',
+    'gantt.groups'
     //'gantt.resizeSensor'
 ]);
 angular.module('neonDemo.controllers', []);

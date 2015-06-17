@@ -12,6 +12,7 @@
         "angular-loader": "1.4.0",
         "angular-mocks": "1.4.0",
         "angular-route": "1.4.0",
+        "angular-ui-tree": "2.5.0",
         "bootstrap": "3.2.0",
         "d3": "3.0.8",
         "html5shiv": "3.7.2",

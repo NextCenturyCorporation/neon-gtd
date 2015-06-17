@@ -16,17 +16,6 @@
  *
  */
 
-/**
- * This directive adds a barchart to the DOM and drives the visualization data from
- * whatever database and table are currently selected in neon.  This directive accomplishes that
- * by using getting a neon connection from a connection service and listening for
- * neon system events (e.g., data tables changed).  On these events, it requeries the active
- * connection for data and updates applies the change to its scope.  The contained
- * barchart will update as a result.
- * @namespace neonDemo.directives
- * @class barchart
- * @constructor
- */
 angular.module('neonDemo.directives')
 .directive('ganttChart', ['ConnectionService', 'DatasetService', 'ErrorNotificationService', 'FilterService',
 function(connectionService, datasetService, errorNotificationService, filterService) {
@@ -38,38 +27,175 @@ function(connectionService, datasetService, errorNotificationService, filterServ
         },
         link: function($scope, $element) {
             $element.addClass('gantt-chart');
+            $scope.element = $element;
 
             $scope.options = {
                 database: {},
-                table: {}
+                table: {},
+                groupField: []
             };
 
             //query for data
             //build config
 
-            var formatData = function(data) {
-                var color = d3.scale.category20();
-                var mainTask = {
-                    name: "Events"
-                };
-                $scope.data = [mainTask];
-
-                var row;
-                var task;
+            var buildTree = function(data) {
+                $scope.tree = {};
 
                 for(var i = 0; i < data.length; i++) {
-                    task = {
-                        parent: 'Events',
-                        tasks: []
+                    var groupValue1;
+                    if($scope.options.groupField[0]) {
+                        groupValue1 = data[i][$scope.options.groupField[0]];
+                        if(!$scope.tree[groupValue1]) {
+                            if($scope.options.groupField.length === 1) {
+                                $scope.tree[data[i][$scope.options.groupField[0]]] = {
+                                    tasks: []
+                                };
+                            } else {
+                                $scope.tree[data[i][$scope.options.groupField[0]]] = {};
+                            }
+                        }
+                    }
+
+                    var groupValue2;
+                    if($scope.options.groupField[1]) {
+                        groupValue2 = data[i][$scope.options.groupField[1]];
+
+                        if(!$scope.tree[groupValue1][groupValue2]) {
+                            if($scope.options.groupField.length === 2) {
+                                $scope.tree[groupValue1][groupValue2] = {
+                                    tasks: []
+                                };
+                            } else {
+                                $scope.tree[groupValue1][groupValue2] = {};
+                            }
+                        }
+                    }
+
+                    var groupValue3;
+                    if($scope.options.groupField[2]) {
+                        groupValue3 = data[i][$scope.options.groupField[2]];
+
+                        if(!$scope.tree[groupValue1][groupValue2][groupValue3]) {
+                            if($scope.options.groupField.length === 3) {
+                                $scope.tree[groupValue1][groupValue2][groupValue3] = {
+                                    tasks: []
+                                };
+                            } else {
+                                $scope.tree[groupValue1][groupValue2][groupValue3] = {};
+                            }
+                        }
+                    }
+
+                    var groupValue4;
+                    if($scope.options.groupField[3]) {
+                        groupValue4 = data[i][$scope.options.groupField[3]];
+
+                        if(!$scope.tree[groupValue1][groupValue2][groupValue3][groupValue4]) {
+                            if($scope.options.groupField.length === 3) {
+                                $scope.tree[groupValue1][groupValue2][groupValue3][groupValue4] = {
+                                    tasks: []
+                                };
+                            } else {
+                                $scope.tree[groupValue1][groupValue2][groupValue3][groupValue4] = {};
+                            }
+                        }
+                    }
+                }
+            };
+
+            var formatData = function(data) {
+                var color = d3.scale.category20();
+
+                if($scope.options.groupField.length > 0) {
+                    $scope.data = [];
+                    buildTree(data);
+                } else {
+                    $scope.tree = undefined;
+                    var mainTask = {
+                        name: "Events"
                     };
+                    $scope.data = [mainTask];
+                }
+
+                var row;
+
+                for(var i = 0; i < data.length; i++) {
+                    var parent;
+                    if(!$scope.tree) {
+                        parent = {
+                            parent: 'Events',
+                            tasks: []
+                        };
+                        $scope.data.push(parent);
+                    } else {
+                        parent = getTreeParent(data[i]);
+                    }
+
                     row = {
                         name: data[i].Headline,
                         from: data[i].Start,
                         to: data[i].End,
                         color: color(i)
                     };
-                    task.tasks.push(row);
-                    $scope.data.push(task);
+                    parent.tasks.push(row);
+                }
+
+                pushTreeToData();
+            };
+
+            var getTreeParent = function(node) {
+                var groupValues = [];
+                var parent;
+                if($scope.options.groupField.length === 1) {
+                    parent = $scope.tree[node[$scope.options.groupField[0]]];
+                } else if($scope.options.groupField.length === 2) {
+                    groupValues[0] = node[$scope.options.groupField[0]];
+                    groupValues[1] = node[$scope.options.groupField[1]];
+                    parent = $scope.tree[groupValues[0]][groupValues[1]];
+                } else if($scope.options.groupField.length === 3) {
+                    groupValues[0] = node[$scope.options.groupField[0]];
+                    groupValues[1] = node[$scope.options.groupField[1]];
+                    groupValues[2] = node[$scope.options.groupField[2]];
+                    parent = $scope.tree[groupValues[0]][groupValues[1]][groupValues[2]];
+                } else if($scope.options.groupField.length === 4) {
+                    groupValues[0] = node[$scope.options.groupField[0]];
+                    groupValues[1] = node[$scope.options.groupField[1]];
+                    groupValues[2] = node[$scope.options.groupField[2]];
+                    groupValues[3] = node[$scope.options.groupField[3]];
+                    parent = $scope.tree[groupValues[0]][groupValues[1]][groupValues[2]][groupValues[3]];
+                }
+                return parent;
+            };
+
+            var pushTreeToData = function() {
+                for(var key in $scope.tree) {
+                    if($scope.tree.hasOwnProperty(key)) {
+                        pushTreeNodeToData($scope.tree[key], key);
+                    }
+                }
+            };
+
+            var pushTreeNodeToData = function(node, nodeName, parentName) {
+                if(node.tasks) {
+                    $scope.data.push({
+                        parent: parentName,
+                        name: nodeName,
+                        tasks: node.tasks
+                    });
+                } else {
+                    var newNode = {
+                        name: nodeName
+                    };
+                    if(parent) {
+                        newNode.parent = parentName;
+                    }
+                    $scope.data.push(newNode);
+
+                    for(var key in node) {
+                        if(node.hasOwnProperty(key)) {
+                            pushTreeNodeToData(node[key], key, nodeName);
+                        }
+                    }
                 }
             };
 
@@ -115,7 +241,6 @@ function(connectionService, datasetService, errorNotificationService, filterServ
                         }
                     }
                 }
-                //$scope.filterKeys = filterService.createFilterKeys("gantt-chart", datasetService.getDatabaseAndTableNames());
 
                 if(initializing) {
                     $scope.updateTables();
@@ -128,8 +253,7 @@ function(connectionService, datasetService, errorNotificationService, filterServ
 
             $scope.updateTables = function() {
                 $scope.tables = datasetService.getTables($scope.options.database.name);
-                //$scope.options.table = datasetService.getFirstTableWithMappings($scope.options.database.name, ["bar_x_axis", "y_axis"]) || $scope.tables[0];
-                $scope.options.table = {name: 'gantt'};
+                $scope.options.table = $scope.tables[0];
                 if($scope.bindTable) {
                     for(var i = 0; i < $scope.tables.length; ++i) {
                         if($scope.bindTable === $scope.tables[i].name) {
@@ -143,13 +267,9 @@ function(connectionService, datasetService, errorNotificationService, filterServ
 
             $scope.updateFields = function() {
                 $scope.loadingData = true;
-                /*$scope.options.attrX = $scope.bindXAxisField || datasetService.getMapping($scope.options.database.name, $scope.options.table.name, "bar_x_axis") || "";
-                $scope.options.attrY = $scope.bindYAxisField || datasetService.getMapping($scope.options.database.name, $scope.options.table.name, "y_axis") || "";
                 $scope.fields = datasetService.getDatabaseFields($scope.options.database.name, $scope.options.table.name);
                 $scope.fields.sort();
-                if($scope.filterSet) {
-                    $scope.clearFilterSet();
-                }*/
+
                 $scope.queryForData();
             };
 
@@ -193,7 +313,8 @@ function(connectionService, datasetService, errorNotificationService, filterServ
                             tags: ["receive", "gantt-chart"]
                         });
 
-                        formatData(queryResults.data);
+                        $scope.queryData = queryResults.data;
+                        formatData($scope.queryData);
                         $scope.loadingData = false;
 
                         XDATA.userALE.log({
@@ -227,6 +348,23 @@ function(connectionService, datasetService, errorNotificationService, filterServ
                     }
                 });
             };
+
+            $scope.$watch('options.groupField', function() {
+                if(!$scope.options.groupField[0]) {
+                    $scope.options.groupField = [];
+                } else if(!$scope.options.groupField[1]) {
+                    delete $scope.options.groupField[1];
+                    delete $scope.options.groupField[2];
+                    delete $scope.options.groupField[3];
+                } else if(!$scope.options.groupField[2]) {
+                    delete $scope.options.groupField[2];
+                    delete $scope.options.groupField[3];
+                } else if(!$scope.options.groupField[3]) {
+                    delete $scope.options.groupField[3];
+                }
+
+                $scope.queryForData();
+            }, true);
 
             neon.ready(function() {
                 $scope.messenger = new neon.eventing.Messenger();
