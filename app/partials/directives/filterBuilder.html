@@ -73,7 +73,8 @@
         </select>
       </div>
       <div class="form-group">
-        <input type="text" class="form-control" placeholder="Value" ng-model="filterRow.value" ng-change="dirtyFilterRow(filterRow)">
+        <input type="text" class="form-control" placeholder="Value" ng-keyup="$event.keyCode == 13 && updateFilterRow(filterRow.database.name, filterRow.table.name, filterRow.index)"
+ng-model="filterRow.value" ng-change="dirtyFilterRow(filterRow)">
       </div>
       <div class="form-group" ng-show="(navbarItem)">
         <button type="button" class="btn btn-default refresh" title="Refresh" ng-disabled="!(filterRow.dirty)" ng-click="updateFilterRow(filterRow.database.name, filterRow.table.name, filterRow.index)">
@@ -116,7 +117,7 @@
         </select>
       </div>
       <div class="form-group">
-        <input type="text" class="form-control" id="filter-value" size="42" placeholder="Value"  ng-model="selectedValue" ng-disabled="(fields.length == 0)" ng-required="true">
+        <input type="text" class="form-control" id="filter-value" size="42" placeholder="Value" ng-keyup="$event.keyCode == 13 && addFilterRow()" ng-model="selectedValue" ng-disabled="(fields.length == 0)" ng-required="true">
       </div>
       <div class="form-group" ng-show="(navbarItem)">
         <button type="button" class="btn btn-primary" title="Add" ng-click="addFilterRow()">

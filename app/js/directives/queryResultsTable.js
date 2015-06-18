@@ -201,7 +201,13 @@ function(external, popups, connectionService, datasetService, errorNotificationS
             };
 
             var createColumns = function(data) {
-                var columns = tables.createColumns(data, $scope.tableNameToDeletedFieldsMap[$scope.options.table.name], [$scope.createDeleteColumnButton("")]);
+                var fieldNames = [];
+                // Add the fields in the order they are listed in the configuration file.
+                datasetService.getFields($scope.options.database.name, $scope.options.table.name).forEach(function(field) {
+                    fieldNames.push(field.columnName);
+                });
+
+                var columns = tables.createColumns(fieldNames, data, $scope.tableNameToDeletedFieldsMap[$scope.options.table.name], [$scope.createDeleteColumnButton("")]);
                 columns = tables.addLinkabilityToColumns(columns);
 
                 if(external.anyEnabled) {
@@ -289,6 +295,12 @@ function(external, popups, connectionService, datasetService, errorNotificationS
                 $scope.options.addField = "";
                 if(!($scope.tableNameToDeletedFieldsMap[$scope.options.table.name])) {
                     $scope.tableNameToDeletedFieldsMap[$scope.options.table.name] = [];
+                    // The first time the data for a table is displayed, add the fields hidden in the configuration to the list of deleted fields for the table.
+                    datasetService.getFields($scope.options.database.name, $scope.options.table.name).forEach(function(field) {
+                        if(field.hide) {
+                            $scope.tableNameToDeletedFieldsMap[$scope.options.table.name].push(field.columnName);
+                        }
+                    });
                 }
                 if($scope.tableNameToDeletedFieldsMap[$scope.options.table.name].length) {
                     // Remove previously deleted fields from the list of fields.

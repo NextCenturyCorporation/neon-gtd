@@ -406,7 +406,7 @@ coreMap.Map.prototype.createSelectControl =  function(layer) {
             null,
             true,
             onFeatureUnselect);
-        me.map.addPopup(me.featurePopup);
+        me.map.addPopup(me.featurePopup, true);
     };
 
     var onFeatureUnselect = function(feature) {

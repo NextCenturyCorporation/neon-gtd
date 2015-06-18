@@ -46,6 +46,7 @@ angular.module("neonDemo.services")
             service.dataset.databases = dataset.databases || [];
 
             service.dataset.mapLayers = dataset.mapLayers || [];
+            service.dataset.mapConfig = dataset.mapConfig || {};
             service.dataset.relations = dataset.relations || [];
 
             // Remove databases from the dataset that contain no tables.
@@ -261,6 +262,23 @@ angular.module("neonDemo.services")
         };
 
         /**
+         * Returns the field objects for the table with the given name.
+         * @param {String} The database name
+         * @param {String} The table name
+         * @method getFields
+         * @return {Array} The array of field objects if a match exists or an empty array otherwise.
+         */
+        service.getFields = function(databaseName, tableName) {
+            var table = service.getTableWithName(databaseName, tableName);
+
+            if(!table) {
+                return [];
+            }
+
+            return table.fields;
+        };
+
+        /**
          * Returns the pretty field name for the field with the given name in the table with the given name.
          * @param {String} The table name
          * @param {String} The field name
@@ -453,6 +471,24 @@ angular.module("neonDemo.services")
         };
 
         /**
+         * Returns the initial configuration parameters for any maps in this dataset.
+         * @method getMapConfig
+         * @return {String}
+         */
+        service.getMapConfig = function() {
+            return service.dataset.mapConfig;
+        };
+
+        /**
+         * Sets the map layer configuration for the active dataset.
+         * @param {object} config Initial configuration parameters for any maps in this dataset.
+         * @method setMapConfig
+         */
+        service.setMapConfig = function(config) {
+            service.dataset.mapConfig = config;
+        };
+
+        /**
          * Returns the map layer configuration for the active dataset.
          * @method getMapLayers
          * @return {String}
@@ -462,7 +498,7 @@ angular.module("neonDemo.services")
         };
 
         /**
-         * Returns the map layer configuration for the active dataset.
+         * Sets the map layer configuration for the active dataset.
          * @param {object} config A set of layer configuration objects.
          * @method setMapLayers
          */
