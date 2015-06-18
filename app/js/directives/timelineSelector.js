@@ -958,7 +958,10 @@ function(connectionService, datasetService, errorNotificationService, filterServ
                     source: "user",
                     tags: ["filter", "date-range"]
                 });
+                $scope.startExtent = $scope.bucketizer.getStartDate();
+                $scope.endExtent = $scope.bucketizer.getEndDate();
                 $scope.brush = [];
+                $scope.extentDirty = true;
                 filterService.removeFilters($scope.messenger, $scope.filterKeys);
             };
 
