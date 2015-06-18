@@ -394,7 +394,7 @@ coreMap.Map.prototype.createSelectControl =  function(layer) {
 
         for(var key in attributes) {
             if(Object.prototype.hasOwnProperty.call(attributes, key)) {
-                text += '<tr><th>' + _.escape(key) + '</th><td>' + _.escape(attributes[key]) + '</td>';
+                text += '<tr><th>' + _.escape(key) + '</th><td>' + attributes[key] + '</td>';
             }
         }
         text += '</table></div>';
@@ -407,6 +407,8 @@ coreMap.Map.prototype.createSelectControl =  function(layer) {
             true,
             onFeatureUnselect);
         me.map.addPopup(me.featurePopup, true);
+
+        $(".olFramedCloudPopupContent td").linky(feature.layer.linkyConfig);
     };
 
     var onFeatureUnselect = function(feature) {
