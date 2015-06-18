@@ -364,7 +364,7 @@ function(connectionService, datasetService, errorNotificationService) {
                 $scope.queryForData();
             };
 
-            var csvSuccess = function(queryResults) {
+            var exportSuccess = function(queryResults) {
                 /*XDATA.userALE.log({
                     activity: "",
                     action: "",
@@ -377,7 +377,7 @@ function(connectionService, datasetService, errorNotificationService) {
                 window.location.assign(queryResults.data);
             };
 
-            var csvFail = function(response) {
+            var exportFail = function(response) {
                 /*XDATA.userALE.log({
                     activity: "",
                     action: "",
@@ -387,6 +387,9 @@ function(connectionService, datasetService, errorNotificationService) {
                     source: "",
                     tags: ["", "", ""]
                 });*/
+                if(response.responseJSON) {
+                    $scope.errorMessage = errorNotificationService.showErrorMessage($element, response.responseJSON.error, response.responseJSON.stackTrace);
+                }
             };
 
             $scope.requestExport = function() {
@@ -404,29 +407,37 @@ function(connectionService, datasetService, errorNotificationService) {
                     //This is temporary. Come up with better code for if there isn't a connection.
                     return;
                 }
+                var data = makeSunburstExportObject();
+                // TODO replace hardcoded 'xlsx' with some sort of option variable.
+                connection.executeExport(data, exportSuccess, exportFail, 'xlsx');
+            };
+
+            var makeSunburstExportObject = function() {
                 var query = $scope.buildQuery();
                 // Sort results by each group field so the resulting file won't be ugly.
-                var sortByArgs = []
+                var sortByArgs = [];
                 $scope.groupFields.forEach(function(field) {
                     sortByArgs.push(field);
                     sortByArgs.push(neon.query.ASCENDING);
                 });
                 query.sortBy(sortByArgs);
-                var data = makeSunburstExportObject(query);
-                connection.executeExport(data, csvSuccess, csvFail);
-            };
 
-            var makeSunburstExportObject = function(query) {
-                var finalObject = [{
-                    query: query, 
-                    name: 'sunburst', 
-                    fields:[], 
-                    ignoreFilters: query.ignoreFilters_, 
-                    selectionOnly: query.selectionOnly_,
-                    ignoredFilterIds: query.ignoredFilterIds_
-                }];
+                var finalObject = {
+                    name: "Sunburst",
+                    data: [{
+                        query: query,
+                        name: 'sunburst',
+                        fields: [],
+                        ignoreFilters: query.ignoreFilters_,
+                        selectionOnly: query.selectionOnly_,
+                        ignoredFilterIds: query.ignoredFilterIds_
+                    }]
+                };
                 $scope.groupFields.forEach(function(field) {
-                    (finalObject[0]).fields.push({query: field, pretty: capitalizeFirstLetter(field)});
+                    (finalObject.data[0]).fields.push({
+                        query: field,
+                        pretty: capitalizeFirstLetter(field)
+                    });
                 });
                 return finalObject;
             };

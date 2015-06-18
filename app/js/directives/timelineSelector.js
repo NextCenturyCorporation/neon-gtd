@@ -395,7 +395,7 @@ function(connectionService, datasetService, errorNotificationService, filterServ
                 query.sortBy('date', neon.query.ASCENDING);
                 query.ignoreFilters([$scope.filterKeys[$scope.options.database.name][$scope.options.table.name]]);
                 return query;
-            }
+            };
 
             /**
              * Triggers a Neon query that will aggregate the time data for the currently selected dataset.
@@ -915,7 +915,7 @@ function(connectionService, datasetService, errorNotificationService, filterServ
                 $scope.displayActiveDataset(true);
             });
 
-            var csvSuccess = function(queryResults) {
+            var exportSuccess = function(queryResults) {
                 /*XDATA.userALE.log({
                     activity: "",
                     action: "",
@@ -928,7 +928,7 @@ function(connectionService, datasetService, errorNotificationService, filterServ
                 window.location.assign(queryResults.data);
             };
 
-            var csvFail = function(response) {
+            var exportFail = function(response) {
                 /*XDATA.userALE.log({
                     activity: "",
                     action: "",
@@ -938,6 +938,9 @@ function(connectionService, datasetService, errorNotificationService, filterServ
                     source: "",
                     tags: ["", "", ""]
                 });*/
+                if(response.responseJSON) {
+                    $scope.errorMessage = errorNotificationService.showErrorMessage($element, response.responseJSON.error, response.responseJSON.stackTrace);
+                }
             };
 
             $scope.requestExport = function() {
@@ -955,31 +958,41 @@ function(connectionService, datasetService, errorNotificationService, filterServ
                     //This is temporary. Come up with better code for if there isn't a connection.
                     return;
                 }
-                var query = $scope.createChartDataQuery();
-                var data = makeTimelineSelectorExportObject(query)
-                connection.executeExport(data, csvSuccess, csvFail);
+                var data = makeTimelineSelectorExportObject();
+                // TODO replace hardcoded 'xlsx' with some sort of option variable.
+                connection.executeExport(data, exportSuccess, exportFail, 'xlsx');
             };
 
-            var makeTimelineSelectorExportObject = function(query) {
-                var finalObject = [{
-                    query: query,
-                    name: "timelineSelector", 
-                    fields: [],
-                    ignoreFilters: query.ignoreFilters_,
-                    selectionOnly:query.selectionOnly_,
-                    ignoredFilterIds: query.ignoredFilterIds_
-                }];
+            var makeTimelineSelectorExportObject = function() {
+                var query = $scope.createChartDataQuery();
+                var finalObject = {
+                    name: "Timeline",
+                    data: [{
+                        query: query,
+                        name: "timelineSelector",
+                        fields: [],
+                        ignoreFilters: query.ignoreFilters_,
+                        selectionOnly: query.selectionOnly_,
+                        ignoredFilterIds: query.ignoredFilterIds_
+                    }]
+                };
                 // The timelineSelector always asks for count and date, so it's fine to hard-code these in.
                 // GroupBy clauses will always be added to the query in the same order, so this takes advantage
                 // of that to add the pretty names of the clauses in the same order for as many as were added.
                 var counter = 0;
                 var prettyNames = ["Year", "Month", "Day", "Hour"];
                 query.groupByClauses.forEach(function(field) {
-                        (finalObject[0]).fields.push({query: field.name, pretty: prettyNames[counter]});
-                        counter ++;
+                        (finalObject.data[0]).fields.push({
+                            query: field.name,
+                            pretty: prettyNames[counter]
+                        });
+                        counter++;
                     }
                 );
-                (finalObject[0]).fields.push({query: "count", pretty: "Count"});
+                (finalObject.data[0]).fields.push({
+                    query: "count",
+                    pretty: "Count"
+                });
                 return finalObject;
             };
         }

@@ -465,7 +465,7 @@ function(connectionService, datasetService, errorNotificationService, filterServ
                 $scope.displayActiveDataset(true);
             });
 
-            var csvSuccess = function(queryResults) {
+            var exportSuccess = function(queryResults) {
                 /*XDATA.userALE.log({
                     activity: "",
                     action: "",
@@ -478,7 +478,7 @@ function(connectionService, datasetService, errorNotificationService, filterServ
                 window.location.assign(queryResults.data);
             };
 
-            var csvFail = function(response) {
+            var exportFail = function(response) {
                 /*XDATA.userALE.log({
                     activity: "",
                     action: "",
@@ -488,6 +488,9 @@ function(connectionService, datasetService, errorNotificationService, filterServ
                     source: "",
                     tags: ["", "", ""]
                 });*/
+                if(response.responseJSON) {
+                    $scope.errorMessage = errorNotificationService.showErrorMessage($element, response.responseJSON.error, response.responseJSON.stackTrace);
+                }
             };
 
             $scope.requestExport = function() {
@@ -505,29 +508,45 @@ function(connectionService, datasetService, errorNotificationService, filterServ
                     //This is temporary. Come up with better code for if there isn't a connection.
                     return;
                 }
-                var query = $scope.buildQuery();
-                var data = makeBarchartExportObject(query);
-                connection.executeExport(data, csvSuccess, csvFail);
+                var data = makeBarchartExportObject();
+                // TODO replace hardcoded 'xlsx' with some sort of option variable.
+                connection.executeExport(data, exportSuccess, exportFail, "xlsx");
             };
 
-            var makeBarchartExportObject = function(query) {
-                var finalObject = [{
-                    query: query,
-                    name: "barchart",
-                    fields: [],
-                    ignoreFilters: query.ignoreFilters_,
-                    selectionOnly: query.selectionOnly_,
-                    ignoredFilterIds: query.ignoredFilterIds_
-                }];
-                (finalObject[0]).fields.push({query: query.groupByClauses[0].field, pretty: capitalizeFirstLetter(query.groupByClauses[0].field)});
+            var makeBarchartExportObject = function() {
+                var query = $scope.buildQuery();
+                var finalObject = {
+                    name: "Bar_Chart",
+                    data: [{
+                        query: query,
+                        name: "barchart",
+                        fields: [],
+                        ignoreFilters: query.ignoreFilters_,
+                        selectionOnly: query.selectionOnly_,
+                        ignoredFilterIds: query.ignoredFilterIds_
+                    }]
+                };
+                (finalObject.data[0]).fields.push({
+                    query: query.groupByClauses[0].field,
+                    pretty: capitalizeFirstLetter(query.groupByClauses[0].field)
+                });
                 if($scope.options.barType === "average") {
-                    (finalObject[0]).fields.push({query: COUNT_FIELD_NAME, pretty: "Average of " + query.aggregates[0].field});
+                    (finalObject.data[0]).fields.push({
+                        query: COUNT_FIELD_NAME,
+                        pretty: "Average of " + query.aggregates[0].field
+                    });
                 }
                 if($scope.options.barType === "sum") {
-                    (finalObject[0]).fields.push({query: COUNT_FIELD_NAME, pretty: "Sum of " + query.aggregates[0].field});
+                    (finalObject.data[0]).fields.push({
+                        query: COUNT_FIELD_NAME,
+                        pretty: "Sum of " + query.aggregates[0].field
+                    });
                 }
                 if($scope.options.barType === "count") {
-                    (finalObject[0]).fields.push({query: COUNT_FIELD_NAME, pretty: "Count"});
+                    (finalObject.data[0]).fields.push({
+                        query: COUNT_FIELD_NAME,
+                        pretty: "Count"
+                    });
                 }
                 return finalObject;
             };

@@ -383,7 +383,7 @@ function(connectionService, datasetService, errorNotificationService) {
                 $scope.displayActiveDataset(true);
             });
 
-            var csvSuccess = function(queryResults) {
+            var exportSuccess = function(queryResults) {
                 /*XDATA.userALE.log({
                     activity: "",
                     action: "",
@@ -396,7 +396,7 @@ function(connectionService, datasetService, errorNotificationService) {
                 window.location.assign(queryResults.data);
             };
 
-            var csvFail = function(response) {
+            var exportFail = function(response) {
                 /*XDATA.userALE.log({
                     activity: "",
                     action: "",
@@ -406,6 +406,9 @@ function(connectionService, datasetService, errorNotificationService) {
                     source: "",
                     tags: ["", "", ""]
                 });*/
+                if(response.responseJSON) {
+                    $scope.errorMessage = errorNotificationService.showErrorMessage($element, response.responseJSON.error, response.responseJSON.stackTrace);
+                }
             };
 
             $scope.requestExport = function() {
@@ -423,6 +426,13 @@ function(connectionService, datasetService, errorNotificationService) {
                     //This is temporary. Come up with better code for if there isn't a connection.
                     return;
                 }
+
+                var data = makeCircularHeatFormExportObject();
+                // TODO replace hardcoded 'xlsx' with some sort of option variable.
+                connection.executeExport(data, exportSuccess, exportFail, "xlsx");
+            };
+
+            var makeCircularHeatFormExportObject = function() {
                 var groupByDayClause = new neon.query.GroupByFunctionClause('dayOfWeek', $scope.options.dateField, 'day');
                 var groupByHourClause = new neon.query.GroupByFunctionClause(neon.query.HOUR, $scope.options.dateField, 'hour');
                 var query = new neon.query.Query()
@@ -430,22 +440,29 @@ function(connectionService, datasetService, errorNotificationService) {
                     .groupBy(groupByDayClause, groupByHourClause)
                     .where($scope.options.dateField, '!=', null)
                     .aggregate(neon.query.COUNT, '*', 'count');
-                var data = makeCircularHeatFormExportObject(query);
-                connection.executeExport(data, csvSuccess, csvFail);
-            };
-
-            var makeCircularHeatFormExportObject = function(query) {
-                var finalObject = [{
-                    query: query, 
-                    name: 'circularHeatForm', 
-                    fields:[], 
-                    ignoreFilters: query.ignoreFilters_, 
-                    selectionOnly: query.selectionOnly_,
-                    ignoredFilterIds: query.ignoredFilterIds_
-                }];
-                (finalObject[0]).fields.push({query: 'day', pretty: 'Day'});
-                (finalObject[0]).fields.push({query: 'hour', pretty: 'Hour'});
-                (finalObject[0]).fields.push({query: 'count', pretty: 'Count'});
+                var finalObject = {
+                    name: 'Ops_Clock',
+                    data: [{
+                        query: query,
+                        name: 'circularHeatForm',
+                        fields: [],
+                        ignoreFilters: query.ignoreFilters_,
+                        selectionOnly: query.selectionOnly_,
+                        ignoredFilterIds: query.ignoredFilterIds_
+                    }]
+                };
+                (finalObject.data[0]).fields.push({
+                    query: 'day',
+                    pretty: 'Day'
+                });
+                (finalObject.data[0]).fields.push({
+                    query: 'hour',
+                    pretty: 'Hour'
+                });
+                (finalObject.data[0]).fields.push({
+                    query: 'count',
+                    pretty: 'Count'
+                });
                 return finalObject;
             };
         }

@@ -250,7 +250,7 @@ function(connectionService, datasetService, errorNotificationService, $timeout) 
 
                 query.aggregate(neon.query.MIN, $scope.options.attrX, 'date')
                     .sortBy('date', neon.query.ASCENDING);
-                
+
                 return query;
             };
 
@@ -613,7 +613,7 @@ function(connectionService, datasetService, errorNotificationService, $timeout) 
                 $scope.displayActiveDataset(true);
             });
 
-            var csvSuccess = function(queryResults) {
+            var exportSuccess = function(queryResults) {
                 /*XDATA.userALE.log({
                     activity: "",
                     action: "",
@@ -626,7 +626,7 @@ function(connectionService, datasetService, errorNotificationService, $timeout) 
                 window.location.assign(queryResults.data);
             };
 
-            var csvFail = function(response) {
+            var exportFail = function(response) {
                 /*XDATA.userALE.log({
                     activity: "",
                     action: "",
@@ -636,6 +636,9 @@ function(connectionService, datasetService, errorNotificationService, $timeout) 
                     source: "",
                     tags: ["", "", ""]
                 });*/
+                if(response.responseJSON) {
+                    $scope.errorMessage = errorNotificationService.showErrorMessage($element, response.responseJSON.error, response.responseJSON.stackTrace);
+                }
             };
 
             $scope.requestExport = function() {
@@ -653,49 +656,87 @@ function(connectionService, datasetService, errorNotificationService, $timeout) 
                     //This is temporary. Come up with better code for if there isn't a connection.
                     return;
                 }
-                var query = $scope.buildQuery();
-                var data = makeLinechartExportObject(query);
-                connection.executeExport(data, csvSuccess, csvFail);
+                var data = makeLinechartExportObject();
+                //TODO replace hardcoded 'xlsx' with some sort of option variable.
+                connection.executeExport(data, exportSuccess, exportFail, 'xlsx');
             };
 
-            var makeLinechartExportObject = function(query) {
-                var finalObject = [{
-                    query:query,
-                    name: "linechart",
-                    fields: [],
-                    ignoreFilters: query.ignoreFilters_,
-                    selectionOnly: query.selectionOnly_,
-                    ignoredFilterIds: query.ignoredFilterIds_
-                }];
-
-                (finalObject[0]).fields.push({query: "year", pretty: "Year"});
-                (finalObject[0]).fields.push({query: "month", pretty: "Month"});
-                (finalObject[0]).fields.push({query: "day", pretty: "Day"});
+            var makeLinechartExportObject = function() {
+                var query = $scope.buildQuery();
+                var finalObject = {
+                    name: "Line_Chart",
+                    data: [{
+                        query: query,
+                        name: "linechart",
+                        fields: [],
+                        ignoreFilters: query.ignoreFilters_,
+                        selectionOnly: query.selectionOnly_,
+                        ignoredFilterIds: query.ignoredFilterIds_
+                    }]
+                };
+                (finalObject.data[0]).fields.push({
+                    query: "year",
+                    pretty: "Year"
+                });
+                (finalObject.data[0]).fields.push({
+                    query: "month",
+                    pretty: "Month"
+                });
+                (finalObject.data[0]).fields.push({
+                    query: "day",
+                    pretty: "Day"
+                });
                 var aggr;
                 if($scope.options.aggregation === "count") {
                     aggr = query.groupByClauses[3].field;
-                    (finalObject[0]).fields.push({query: aggr, pretty: capitalizeFirstLetter(aggr)});
-                    (finalObject[0]).fields.push({query: "value", pretty: "Count"});
-                }
-                else if($scope.options.aggregation === "sum") {
+                    (finalObject.data[0]).fields.push({
+                        query: aggr,
+                        pretty: capitalizeFirstLetter(aggr)
+                    });
+                    (finalObject.data[0]).fields.push({
+                        query: "value",
+                        pretty: "Count"
+                    });
+                } else if($scope.options.aggregation === "sum") {
                     aggr = query.groupByClauses[3].field;
-                    (finalObject[0]).fields.push({query: aggr, pretty: capitalizeFirstLetter(aggr)});
-                    (finalObject[0]).fields.push({query: "value", pretty: "Sum of " + query.aggregates[0].field});
-                } 
-                else if($scope.options.aggregation === "average") {
+                    (finalObject.data[0]).fields.push({
+                        query: aggr,
+                        pretty: capitalizeFirstLetter(aggr)
+                    });
+                    (finalObject.data[0]).fields.push({
+                        query: "value",
+                        pretty: "Sum of " + query.aggregates[0].field
+                    });
+                } else if($scope.options.aggregation === "average") {
                     aggr = query.groupByClauses[3].field;
-                    (finalObject[0]).fields.push({query: aggr, pretty: capitalizeFirstLetter(aggr)});
-                    (finalObject[0]).fields.push({query: "value", pretty: "Average of " + query.aggregates[0].field});
-                } 
-                else if($scope.options.aggregation === "min") {
+                    (finalObject.data[0]).fields.push({
+                        query: aggr,
+                        pretty: capitalizeFirstLetter(aggr)
+                    });
+                    (finalObject.data[0]).fields.push({
+                        query: "value",
+                        pretty: "Average of " + query.aggregates[0].field
+                    });
+                } else if($scope.options.aggregation === "min") {
                     aggr = query.groupByClauses[3].field;
-                    (finalObject[0]).fields.push({query: aggr, pretty: capitalizeFirstLetter(aggr)});
-                    (finalObject[0]).fields.push({query: "value", pretty: "Min of " + query.aggregates[0].field});
-                } 
-                else if($scope.options.aggregation === "max") {
+                    (finalObject.data[0]).fields.push({
+                        query: aggr,
+                        pretty: capitalizeFirstLetter(aggr)
+                    });
+                    (finalObject.data[0]).fields.push({
+                        query: "value",
+                        pretty: "Min of " + query.aggregates[0].field
+                    });
+                } else if($scope.options.aggregation === "max") {
                     aggr = query.groupByClauses[3].field;
-                    (finalObject[0]).fields.push({query: aggr, pretty: capitalizeFirstLetter(aggr)});
-                    (finalObject[0]).fields.push({query: "value", pretty: "Max of " + query.aggregates[0].field});
+                    (finalObject.data[0]).fields.push({
+                        query: aggr,
+                        pretty: capitalizeFirstLetter(aggr)
+                    });
+                    (finalObject.data[0]).fields.push({
+                        query: "value",
+                        pretty: "Max of " + query.aggregates[0].field
+                    });
                 }
                 return finalObject;
             };

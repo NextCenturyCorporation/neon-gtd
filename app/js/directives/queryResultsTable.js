@@ -647,7 +647,7 @@ function(external, popups, connectionService, datasetService, errorNotificationS
                 $scope.displayActiveDataset(true);
             });
 
-            var csvSuccess = function(queryResults) {
+            var exportSuccess = function(queryResults) {
                 /*XDATA.userALE.log({
                     activity: "",
                     action: "",
@@ -660,7 +660,7 @@ function(external, popups, connectionService, datasetService, errorNotificationS
                 window.location.assign(queryResults.data);
             };
 
-            var csvFail = function(response) {
+            var exportFail = function(response) {
                 /*XDATA.userALE.log({
                     activity: "",
                     action: "",
@@ -670,6 +670,9 @@ function(external, popups, connectionService, datasetService, errorNotificationS
                     source: "",
                     tags: ["", "", ""]
                 });*/
+                if(response.responseJSON) {
+                    $scope.errorMessage = errorNotificationService.showErrorMessage($element, response.responseJSON.error, response.responseJSON.stackTrace);
+                }
             };
 
             $scope.requestExport = function() {
@@ -687,28 +690,35 @@ function(external, popups, connectionService, datasetService, errorNotificationS
                     //This is temporary. Come up with better code for if there isn't a connection.
                     return;
                 }
+                var data = makeQueryResultsTableExportObject();
+                // TODO replace hardcoded 'xlsx' with some sort of option variable.
+                connection.executeExport(data, exportSuccess, exportFail, 'xlsx');
+            };
+
+            var makeQueryResultsTableExportObject = function() {
                 var query = $scope.buildQuery();
                 // Set limitClause to undefined because we don't want to limit the number of matching results put into the CSV file.
                 query.limitClause = undefined;
-                var data = makeQueryResultsTableExportObject(query);
-                connection.executeExport(data, csvSuccess, csvFail);
-            };
-
-            var makeQueryResultsTableExportObject = function(query) {
-                var finalObject = [{
-                    query: query, 
-                    name: "queryResultsTable", 
-                    fields:[],
-                    ignoreFilters: query.ignoreFilters_,
-                    selectionOnly: query.selectionOnly_,
-                    ignoredFilterIds: query.ignoredFilterIds_
-                }];
-                datasetService.getFields($scope.options.database.name, $scope.options.table.name).forEach(function(field) {
-                        (finalObject[0]).fields.push({query: field.columnName, pretty: field.prettyName || field.columnName});
-                    }
-                );
+                var finalObject = {
+                    name: "Query_Results_Table",
+                    data: [{
+                        query: query,
+                        name: "queryResultsTable",
+                        fields: [],
+                        ignoreFilters: query.ignoreFilters_,
+                        selectionOnly: query.selectionOnly_,
+                        ignoredFilterIds: query.ignoredFilterIds_
+                    }]
+                };
+                var addField = function(field) {
+                    (finalObject.data[0]).fields.push({
+                        query: field.columnName,
+                        pretty: field.prettyName || field.columnName
+                    });
+                };
+                datasetService.getFields($scope.options.database.name, $scope.options.table.name).forEach(addField);
                 return finalObject;
-            }
+            };
         }
     };
 }]);

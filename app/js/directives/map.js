@@ -282,7 +282,7 @@ angular.module('neonDemo.directives')
                                 tags: ["render", "map"]
                             });
                         });
-                    })
+                    });
                 };
             };
 
@@ -296,10 +296,10 @@ angular.module('neonDemo.directives')
                 var layer = activeLayers.shift();
                 var relations = datasetService.getRelations(layer.database, layer.table, [layer.latitudeMapping, layer.longitudeMapping]);
                 filterService.replaceFilters($scope.messenger, relations, layer.filterKeys, $scope.createFilterClauseForExtent, function() {
-                    if (activeLayers.length) {
+                    if(activeLayers.length) {
                         filterActiveLayersRecursively(activeLayers, callback);
                     } else {
-                        if (callback) {
+                        if(callback) {
                             callback();
                         }
                     }
@@ -317,7 +317,7 @@ angular.module('neonDemo.directives')
                     // Notify the user of the error.
                     $scope.error = "Error: Failed to create filter.";
                 });
-            }
+            };
 
             /**
              * This method will apply filters to a particular layer.
@@ -368,7 +368,7 @@ angular.module('neonDemo.directives')
                 });
             };
 
-            /** 
+            /**
              * A simple handler for emitting USER-ALE messages from common user events on a map.
              * @method onMapEvent
              * @private
@@ -517,15 +517,14 @@ angular.module('neonDemo.directives')
 
                 // Reconfigure the map as necessary.
                 var mapConfig = datasetService.getMapConfig();
-                if (mapConfig && mapConfig.bounds) {
+                if(mapConfig && mapConfig.bounds) {
                     $scope.map.zoomToBounds(mapConfig.bounds);
-                }
-                else {
+                } else {
                     $scope.map.zoomToBounds({
-                        "left": -180,
-                        "bottom": -90,
-                        "right": 180,
-                        "top": 90
+                        left: -180,
+                        bottom: -90,
+                        right: 180,
+                        top: 90
                     });
                 }
 
@@ -895,14 +894,13 @@ angular.module('neonDemo.directives')
 
                 // Update our table queries for the various layers.  Defer via recursion
                 // until we've received responses from our filter requests.
-                if (updateLayers) {
+                if(updateLayers) {
                     clearFiltersRecursively(layerFilterKeysList, function() {
                         clearZoomRect();
                         $scope.hideClearFilterButton();
                         queryAllLayerTables();
                     });
-                }
-                else {
+                } else {
                     clearFiltersRecursively(layerFilterKeysList);
                 }
             };
@@ -913,7 +911,7 @@ angular.module('neonDemo.directives')
                     if(filterKeysList.length) {
                         clearFiltersRecursively(filterKeysList, callback);
                     } else {
-                        if (callback) {
+                        if(callback) {
                             callback();
                         }
                     }
@@ -1014,7 +1012,7 @@ angular.module('neonDemo.directives')
                 $scope.displayActiveDataset(true);
             });
 
-            var csvSuccess = function(queryResults) {
+            var exportSuccess = function(queryResults) {
                 /*XDATA.userALE.log({
                     activity: "",
                     action: "",
@@ -1027,7 +1025,7 @@ angular.module('neonDemo.directives')
                 window.location.assign(queryResults.data);
             };
 
-            var csvFail = function(response) {
+            var exportFail = function(response) {
                 /*XDATA.userALE.log({
                     activity: "",
                     action: "",
@@ -1037,6 +1035,9 @@ angular.module('neonDemo.directives')
                     source: "",
                     tags: ["", "", ""]
                 });*/
+                if(response.responseJSON) {
+                    $scope.errorMessage = errorNotificationService.showErrorMessage($element, response.responseJSON.error, response.responseJSON.stackTrace);
+                }
             };
 
             $scope.requestExport = function() {
@@ -1055,11 +1056,15 @@ angular.module('neonDemo.directives')
                     return;
                 }
                 var data = makeMapExportObject();
-                connection.executeExport(data, csvSuccess, csvFail);
+                // TODO replace hardcoded 'xlsx' with some sort of option variable.
+                connection.executeExport(data, exportSuccess, exportFail, 'xlsx');
             };
 
             var makeMapExportObject = function() {
-                var finalObject = [];
+                var finalObject = {
+                    name: "Map",
+                    data: []
+                };
                 // This is very much like queryAllTableLayers(), except it stores the query built for each database/tablename pair
                 // instead of calling queryForMapData() on them.
                 var sets = getLayerDatabaseTableSets();
@@ -1072,18 +1077,20 @@ angular.module('neonDemo.directives')
                         // Set limitClause to undefined because we don't want to limit the number of matching results put into the CSV file.
                         query.limitClause = undefined;
                         var tempObject = {
-                            query: query, 
-                            name: "map - " + keys[i] + "_" + tables[j], 
-                            fields:[], 
-                            ignoreFilters: query.ignoreFilters_, 
-                            selectionOnly: query.selectionOnly_, 
+                            query: query,
+                            name: "map - " + keys[i] + "_" + tables[j],
+                            fields: [],
+                            ignoreFilters: query.ignoreFilters_,
+                            selectionOnly: query.selectionOnly_,
                             ignoredFilterIds: query.ignoredFilterIds_
                         };
-                        datasetService.getFields(keys[i], tables[j]).forEach(function(field) {
-                                tempObject.fields.push({query: field.columnName, pretty: field.prettyName || field.columnName});
-                            }
-                        );
-                        finalObject.push(tempObject);
+                        for(var count = 0, fields = datasetService.getFields(keys[i], tables[j]); count < fields.length; count++) {
+                            tempObject.fields.push({
+                                query: fields[count].columnName,
+                                pretty: fields[count].prettyName || fields[count].columnName
+                            });
+                        }
+                        finalObject.data.push(tempObject);
                     }
                 }
                 return finalObject;

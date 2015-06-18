@@ -648,7 +648,7 @@ function(external, popups, connectionService, datasetService, errorNotificationS
                 $scope.displayActiveDataset(true);
             });
 
-            var csvSuccess = function(queryResults) {
+            var exportSuccess = function(queryResults) {
                 /*XDATA.userALE.log({
                     activity: "",
                     action: "",
@@ -661,7 +661,7 @@ function(external, popups, connectionService, datasetService, errorNotificationS
                 window.location.assign(queryResults.data);
             };
 
-            var csvFail = function(response) {
+            var exportFail = function(response) {
                 /*XDATA.userALE.log({
                     activity: "",
                     action: "",
@@ -671,6 +671,9 @@ function(external, popups, connectionService, datasetService, errorNotificationS
                     source: "",
                     tags: ["", "", ""]
                 });*/
+                if(response.responseJSON) {
+                    $scope.errorMessage = errorNotificationService.showErrorMessage($element, response.responseJSON.error, response.responseJSON.stackTrace);
+                }
             };
 
             $scope.requestExport = function() {
@@ -686,32 +689,42 @@ function(external, popups, connectionService, datasetService, errorNotificationS
                 var connection = connectionService.getActiveConnection();
                 if(!connection || !$scope.options.field || ($scope.options.aggregation !== "count" && !$scope.options.aggregationField)) {
                     //This is temporary. Come up with better code for if there isn't a connection.
-                    $scope.errorMessage = errorNotificationService.showErrorMessage($element, "Error: Could not complete query.", 
+                    $scope.errorMessage = errorNotificationService.showErrorMessage($element, "Error: Could not complete query.",
                         "There is either no connection, or not all necessary fields are filled out.");
                     return;
                 }
-                var query = $scope.buildQuery();
-                var data = makeCountByExportObject(query);
-                connection.executeExport(data, csvSuccess, csvFail);
+                var data = makeCountByExportObject();
+                // TODO replace hardcoded 'xlsx' with some sort of option variable.
+                connection.executeExport(data, exportSuccess, exportFail, 'xlsx');
             };
 
-            var makeCountByExportObject = function(query) {
-                var finalObject = [{
-                    query: query, 
-                    name: 'countBy', 
-                    fields:[],
-                    ignoreFilters: query.ignoreFilters_,
-                    selectionOnly: query.selectionOnly_,
-                    ignoredFilterIds: query.ignoredFilterIds_
-                }];
-                (finalObject[0]).fields.push({query: (query.groupByClauses[0]).field, pretty: capitalizeFirstLetter((query.groupByClauses[0]).field)});
+            var makeCountByExportObject = function() {
+                var query = $scope.buildQuery();
+                var finalObject = {
+                    name: "Count_By",
+                    data: [{
+                        query: query,
+                        name: 'countBy',
+                        fields: [],
+                        ignoreFilters: query.ignoreFilters_,
+                        selectionOnly: query.selectionOnly_,
+                        ignoredFilterIds: query.ignoredFilterIds_
+                    }]
+                };
+                (finalObject.data[0]).fields.push({
+                    query: (query.groupByClauses[0]).field,
+                    pretty: capitalizeFirstLetter((query.groupByClauses[0]).field)
+                });
                 var op = '';
                 if($scope.options.aggregation === 'min') {
                     op = 'Min of ';
                 } else if($scope.options.aggregation === 'max') {
                     op = 'Max of ';
                 }
-                (finalObject[0]).fields.push({query: (query.aggregates[0]).name, pretty: op + capitalizeFirstLetter((query.aggregates[0]).name)});
+                (finalObject.data[0]).fields.push({
+                    query: (query.aggregates[0]).name,
+                    pretty: op + capitalizeFirstLetter((query.aggregates[0]).name)
+                });
                 return finalObject;
             };
 
