@@ -48,6 +48,12 @@ charts.TimelineSelectorChart = function(element, configuration) {
     this.data = DEFAULT_DATA;
     this.primarySeries = false;
     this.granularity = 'day';
+    this.dateFormats = {
+        year: '%Y',
+        month: '%b %Y',
+        day: '%d-%b-%Y',
+        hour: '%d-%b-%Y %H:%M'
+    };
     this.TOOLTIP_ID = 'tooltip';
 
     var self = this; // for internal d3 functions
@@ -616,8 +622,16 @@ charts.TimelineSelectorChart = function(element, configuration) {
 
     var showTooltip = function(item, mouseEvent) {
         var count = d3.format("0,000.00")(item.value);
+        // Only show the part of the date that makes sense for the selected granularity
+        var dateFormat = self.dateFormats[self.granularity];
+        if(!dateFormat) {
+            dateFormat = self.dateFormats.hour;
+        }
+        var date = d3.time.format.utc(dateFormat)(item.date);
 
-        var html = '<div><strong>Date:</strong> ' + _.escape(item.date.toUTCString()) + '</div>' +
+        // Create the contents of the tooltip (#tooltip-container is reused among the various
+        // visualizations)
+        var html = '<div><strong>Date:</strong> ' + _.escape(date) + '</div>' +
             '<div><strong>Count:</strong> ' + count + '</div>';
         $("#tooltip-container").html(html);
         $("#tooltip-container").show();
