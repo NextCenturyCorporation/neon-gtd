@@ -204,8 +204,7 @@ function(connectionService, datasetService, errorNotificationService, filterServ
 
                 // Watch for brush changes and set the appropriate neon filter.
                 $scope.$watch('brush', function(newVal) {
-                    // If we have a new value and a messenger is ready, set the new filter.
-                    if(newVal && $scope.messenger && connectionService.getActiveConnection()) {
+                    if(newVal.length && $scope.messenger && connectionService.getActiveConnection()) {
                         XDATA.userALE.log({
                             activity: "select",
                             action: "click",
