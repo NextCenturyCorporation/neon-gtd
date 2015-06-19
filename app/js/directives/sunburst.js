@@ -430,7 +430,8 @@ function(connectionService, datasetService, errorNotificationService) {
                         fields: [],
                         ignoreFilters: query.ignoreFilters_,
                         selectionOnly: query.selectionOnly_,
-                        ignoredFilterIds: query.ignoredFilterIds_
+                        ignoredFilterIds: query.ignoredFilterIds_,
+                        type: "query"
                     }]
                 };
                 $scope.groupFields.forEach(function(field) {

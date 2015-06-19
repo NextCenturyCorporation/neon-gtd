@@ -54,7 +54,8 @@ function(connectionService, datasetService, errorNotificationService, filterServ
                 database: {},
                 table: {},
                 tagField: "",
-                andTags: true
+                andTags: true,
+                tagLimit: 40
             };
 
             /**
@@ -232,7 +233,7 @@ function(connectionService, datasetService, errorNotificationService, filterServ
                     tags: ["query", "tag-cloud"]
                 });
 
-                connection.executeArrayCountQuery($scope.options.database.name, $scope.options.table.name, $scope.options.tagField, 40, function(tagCounts) {
+                connection.executeArrayCountQuery($scope.options.database.name, $scope.options.table.name, $scope.options.tagField, $scope.options.tagLimit, function(tagCounts) {
                     XDATA.userALE.log({
                         activity: "alter",
                         action: "query",
@@ -416,6 +417,78 @@ function(connectionService, datasetService, errorNotificationService, filterServ
                 $scope.initialize();
                 $scope.displayActiveDataset(true);
             });
+
+            var exportSuccess = function(queryResults) {
+                /*XDATA.userALE.log({
+                    activity: "",
+                    action: "",
+                    elementId: "",
+                    elementType: "",
+                    elementGroup: "",
+                    source: "",
+                    tags: ["", "", ""]
+                });*/
+                window.location.assign(queryResults.data);
+            };
+
+            var exportFail = function(response) {
+                /*XDATA.userALE.log({
+                    activity: "",
+                    action: "",
+                    elementId: "",
+                    elementType: "",
+                    elementGroup: "",
+                    source: "",
+                    tags: ["", "", ""]
+                });*/
+                if(response.responseJSON) {
+                    $scope.errorMessage = errorNotificationService.showErrorMessage($element, response.responseJSON.error, response.responseJSON.stackTrace);
+                }
+            };
+
+            $scope.requestExport = function() {
+                XDATA.userALE.log({
+                    activity: "perform",
+                    action: "click",
+                    elementId: "sunburst-export",
+                    elementType: "button",
+                    elementGroup: "chart_group",
+                    source: "user",
+                    tags: ["options", "sunburst", "export"]
+                });
+                var connection = connectionService.getActiveConnection();
+                if(!connection) {
+                    //This is temporary. Come up with better code for if there isn't a connection.
+                    return;
+                }
+                var data = makeTagCloudExportObject();
+                // TODO replace hardcoded 'xlsx' with some sort of option variable.
+                connection.executeExport(data, exportSuccess, exportFail, 'xlsx');
+            };
+
+            var makeTagCloudExportObject = function() {
+                var finalObject = {
+                    name: "Tag_Cloud",
+                    data: [{
+                        database: $scope.options.database.name,
+                        table: $scope.options.table.name,
+                        field: $scope.options.tagField,
+                        limit: $scope.options.tagLimit,
+                        name: "tagCloud",
+                        fields: [],
+                        type: "arraycount"
+                    }]
+                };
+                (finalObject.data[0]).fields.push({
+                    query: "key",
+                    pretty: "Key"
+                });
+                (finalObject.data[0]).fields.push({
+                    query: "count",
+                    pretty: "Count"
+                });
+                return finalObject;
+            };
         }
     };
 }]);

@@ -973,7 +973,8 @@ function(connectionService, datasetService, errorNotificationService, filterServ
                         fields: [],
                         ignoreFilters: query.ignoreFilters_,
                         selectionOnly: query.selectionOnly_,
-                        ignoredFilterIds: query.ignoredFilterIds_
+                        ignoredFilterIds: query.ignoredFilterIds_,
+                        type: "query"
                     }]
                 };
                 // The timelineSelector always asks for count and date, so it's fine to hard-code these in.

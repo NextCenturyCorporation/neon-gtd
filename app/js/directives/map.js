@@ -1082,7 +1082,8 @@ angular.module('neonDemo.directives')
                             fields: [],
                             ignoreFilters: query.ignoreFilters_,
                             selectionOnly: query.selectionOnly_,
-                            ignoredFilterIds: query.ignoredFilterIds_
+                            ignoredFilterIds: query.ignoredFilterIds_,
+                            type: "query"
                         };
                         for(var count = 0, fields = datasetService.getFields(keys[i], tables[j]); count < fields.length; count++) {
                             tempObject.fields.push({
