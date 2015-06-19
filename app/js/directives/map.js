@@ -377,6 +377,13 @@ angular.module('neonDemo.directives')
              */
             var onMapEvent = function(message) {
                 var type = message.type;
+
+                if(type == "zoomend" && $scope.map.featurePopup) {
+                    $scope.map.map.removePopup($scope.map.featurePopup);
+                    $scope.map.featurePopup.destroy();
+                    $scope.map.featurePopup = null;
+                }
+
                 type = type.replace("move", "pan");
                 type = type.replace("zoomend", "zoom");
 
@@ -411,9 +418,6 @@ angular.module('neonDemo.directives')
                 });
                 if(message.addedFilter && message.addedFilter.databaseName && message.addedFilter.tableName) {
                     $scope.queryForMapData(message.addedFilter.databaseName, message.addedFilter.tableName);
-                }
-                if(message.removedFilter && message.removedFilter.databaseName && message.removedFilter.tableName) {
-                    $scope.queryForMapData(message.removedFilter.databaseName, message.removedFilter.tableName);
                 }
             };
 

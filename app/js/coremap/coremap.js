@@ -130,7 +130,7 @@ coreMap.Map.DEFAULT_WIDTH = 1024;
 coreMap.Map.DEFAULT_HEIGHT = 680;
 coreMap.Map.MIN_HEIGHT = 200;
 coreMap.Map.MIN_WIDTH = 200;
-coreMap.Map.MIN_RADIUS = 3;
+coreMap.Map.MIN_RADIUS = 5;
 coreMap.Map.MAX_RADIUS = 13;
 coreMap.Map.BOX_COLOR = "#39b54a";
 coreMap.Map.BOX_WIDTH = 2;
@@ -392,7 +392,7 @@ coreMap.Map.prototype.createSelectControl =  function(layer) {
             null,
             true,
             onFeatureUnselect);
-        me.map.addPopup(me.featurePopup);
+        me.map.addPopup(me.featurePopup, true);
     };
 
     var onFeatureUnselect = function(feature) {
