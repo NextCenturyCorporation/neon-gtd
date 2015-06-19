@@ -19,8 +19,8 @@
  * This directive is for building a tag cloud
  */
 angular.module('neonDemo.directives')
-.directive('tagCloud', ['ConnectionService', 'DatasetService', 'ErrorNotificationService', 'FilterService', '$timeout',
-function(connectionService, datasetService, errorNotificationService, filterService, $timeout) {
+.directive('tagCloud', ['ConnectionService', 'DatasetService', 'ErrorNotificationService', 'FilterService', 'ExportService', '$timeout',
+function(connectionService, datasetService, errorNotificationService, filterService, exportService, $timeout) {
     return {
         templateUrl: 'partials/directives/tagCloud.html',
         restrict: 'EA',
@@ -87,6 +87,9 @@ function(connectionService, datasetService, errorNotificationService, filterServ
                     filtersChanged: onFiltersChanged
                 });
 
+                $scope.exportID = uuid();
+                exportService.register($scope.exportID, makeTagCloudExportObject);
+
                 $scope.$on('$destroy', function() {
                     XDATA.userALE.log({
                         activity: "remove",
@@ -103,6 +106,7 @@ function(connectionService, datasetService, errorNotificationService, filterServ
                     if(0 < $scope.filterTags.length) {
                         filterService.removeFilters($scope.messenger, $scope.filterKeys);
                     }
+                    exportService.unregister($scope.exportID);
                 });
 
                 // setup tag cloud color/size changes
@@ -412,12 +416,6 @@ function(connectionService, datasetService, errorNotificationService, filterServ
                 }
             };
 
-            // Wait for neon to be ready, the create our messenger and intialize the view and data.
-            neon.ready(function() {
-                $scope.initialize();
-                $scope.displayActiveDataset(true);
-            });
-
             var exportSuccess = function(queryResults) {
                 /*XDATA.userALE.log({
                     activity: "",
@@ -463,7 +461,7 @@ function(connectionService, datasetService, errorNotificationService, filterServ
                 }
                 var data = makeTagCloudExportObject();
                 // TODO replace hardcoded 'xlsx' with some sort of option variable.
-                connection.executeExport(data, exportSuccess, exportFail, 'xlsx');
+                connection.executeExport(data, exportSuccess, exportFail, exportService.getFileFormat());
             };
 
             var makeTagCloudExportObject = function() {
@@ -489,6 +487,12 @@ function(connectionService, datasetService, errorNotificationService, filterServ
                 });
                 return finalObject;
             };
+
+            // Wait for neon to be ready, the create our messenger and intialize the view and data.
+            neon.ready(function() {
+                $scope.initialize();
+                $scope.displayActiveDataset(true);
+            });
         }
     };
 }]);

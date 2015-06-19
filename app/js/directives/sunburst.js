@@ -28,8 +28,8 @@
  * @constructor
  */
 angular.module('neonDemo.directives')
-.directive('sunburst', ['ConnectionService', 'DatasetService', 'ErrorNotificationService',
-function(connectionService, datasetService, errorNotificationService) {
+.directive('sunburst', ['ConnectionService', 'DatasetService', 'ErrorNotificationService', 'ExportService',
+function(connectionService, datasetService, errorNotificationService, exportService) {
     return {
         templateUrl: 'partials/directives/sunburst.html',
         restrict: 'EA',
@@ -73,6 +73,9 @@ function(connectionService, datasetService, errorNotificationService) {
                     filtersChanged: onFiltersChanged
                 });
 
+                $scope.exportID = uuid();
+                exportService.register($scope.exportID, makeSunburstExportObject);
+
                 $scope.$on('$destroy', function() {
                     XDATA.userALE.log({
                         activity: "remove",
@@ -86,6 +89,7 @@ function(connectionService, datasetService, errorNotificationService) {
                     });
                     $element.off("resize", updateChartSize);
                     $scope.messenger.removeEvents();
+                    exportService.unregister($scope.exportID);
                 });
 
                 // This resizes the chart when the div changes.  This rely's on jquery's resize plugin to fire
@@ -342,12 +346,6 @@ function(connectionService, datasetService, errorNotificationService) {
                 $scope.chart.drawData(data);
             };
 
-            neon.ready(function() {
-                $scope.messenger = new neon.eventing.Messenger();
-                initialize();
-                $scope.displayActiveDataset(true);
-            });
-
             $scope.addGroup = function() {
                 if($scope.groupFields.indexOf($scope.options.selectedItem) === -1 && $scope.options.selectedItem !== "") {
                     $scope.groupFields.push($scope.options.selectedItem);
@@ -409,7 +407,7 @@ function(connectionService, datasetService, errorNotificationService) {
                 }
                 var data = makeSunburstExportObject();
                 // TODO replace hardcoded 'xlsx' with some sort of option variable.
-                connection.executeExport(data, exportSuccess, exportFail, 'xlsx');
+                connection.executeExport(data, exportSuccess, exportFail, exportService.getFileFormat());
             };
 
             var makeSunburstExportObject = function() {
@@ -447,6 +445,12 @@ function(connectionService, datasetService, errorNotificationService) {
                 var first = str[0].toUpperCase();
                 return first + str.slice(1);
             };
+
+            neon.ready(function() {
+                $scope.messenger = new neon.eventing.Messenger();
+                initialize();
+                $scope.displayActiveDataset(true);
+            });
         }
     };
 }]);

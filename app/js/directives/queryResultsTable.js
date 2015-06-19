@@ -28,8 +28,8 @@
  * @constructor
  */
 angular.module('neonDemo.directives')
-.directive('queryResultsTable', ['external', 'popups', 'ConnectionService', 'DatasetService', 'ErrorNotificationService', '$compile',
-function(external, popups, connectionService, datasetService, errorNotificationService, $compile) {
+.directive('queryResultsTable', ['external', 'popups', 'ConnectionService', 'DatasetService', 'ErrorNotificationService', 'ExportService', '$compile',
+function(external, popups, connectionService, datasetService, errorNotificationService, exportService, $compile) {
     return {
         templateUrl: 'partials/directives/queryResultsTable.html',
         restrict: 'EA',
@@ -156,6 +156,9 @@ function(external, popups, connectionService, datasetService, errorNotificationS
                     filtersChanged: onFiltersChanged
                 });
 
+                $scope.exportID = uuid();
+                exportService.register($scope.exportID, makeQueryResultsTableExportObject);
+
                 $scope.$on('$destroy', function() {
                     XDATA.userALE.log({
                         activity: "remove",
@@ -170,6 +173,7 @@ function(external, popups, connectionService, datasetService, errorNotificationS
                     popups.links.deleteData($scope.tableId);
                     $element.off("resize", updateSize);
                     $scope.messenger.removeEvents();
+                    exportService.unregister($scope.exportID);
                 });
             };
 
@@ -641,12 +645,6 @@ function(external, popups, connectionService, datasetService, errorNotificationS
                 }
             };
 
-            // Wait for neon to be ready, the create our messenger and intialize the view and data.
-            neon.ready(function() {
-                $scope.initialize();
-                $scope.displayActiveDataset(true);
-            });
-
             var exportSuccess = function(queryResults) {
                 /*XDATA.userALE.log({
                     activity: "",
@@ -692,7 +690,7 @@ function(external, popups, connectionService, datasetService, errorNotificationS
                 }
                 var data = makeQueryResultsTableExportObject();
                 // TODO replace hardcoded 'xlsx' with some sort of option variable.
-                connection.executeExport(data, exportSuccess, exportFail, 'xlsx');
+                connection.executeExport(data, exportSuccess, exportFail, exportService.getFileFormat());
             };
 
             var makeQueryResultsTableExportObject = function() {
@@ -720,6 +718,12 @@ function(external, popups, connectionService, datasetService, errorNotificationS
                 datasetService.getFields($scope.options.database.name, $scope.options.table.name).forEach(addField);
                 return finalObject;
             };
+
+            // Wait for neon to be ready, the create our messenger and intialize the view and data.
+            neon.ready(function() {
+                $scope.initialize();
+                $scope.displayActiveDataset(true);
+            });
         }
     };
 }]);

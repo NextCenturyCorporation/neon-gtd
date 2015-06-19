@@ -28,8 +28,8 @@
  * @constructor
  */
 angular.module('neonDemo.directives')
-.directive('linechart', ['ConnectionService', 'DatasetService', 'ErrorNotificationService', '$timeout',
-function(connectionService, datasetService, errorNotificationService, $timeout) {
+.directive('linechart', ['ConnectionService', 'DatasetService', 'ErrorNotificationService', 'ExportService', '$timeout',
+function(connectionService, datasetService, errorNotificationService, exportService, $timeout) {
     var COUNT_FIELD_NAME = 'value';
 
     return {
@@ -96,6 +96,9 @@ function(connectionService, datasetService, errorNotificationService, $timeout) 
                     filtersChanged: onFiltersChanged
                 });
 
+                $scope.exportID = uuid();
+                exportService.register($scope.exportID, makeLinechartExportObject);
+
                 $scope.$on('$destroy', function() {
                     XDATA.userALE.log({
                         activity: "remove",
@@ -109,6 +112,7 @@ function(connectionService, datasetService, errorNotificationService, $timeout) 
                     });
                     $element.off("resize", updateChartSize);
                     $scope.messenger.removeEvents();
+                    exportService.unregister($scope.exportID);
                 });
 
                 // This resizes the chart when the div changes.  This rely's on jquery's resize plugin to fire
@@ -607,12 +611,6 @@ function(connectionService, datasetService, errorNotificationService, $timeout) 
                 return "";
             };
 
-            neon.ready(function() {
-                $scope.messenger = new neon.eventing.Messenger();
-                initialize();
-                $scope.displayActiveDataset(true);
-            });
-
             var exportSuccess = function(queryResults) {
                 /*XDATA.userALE.log({
                     activity: "",
@@ -658,7 +656,7 @@ function(connectionService, datasetService, errorNotificationService, $timeout) 
                 }
                 var data = makeLinechartExportObject();
                 //TODO replace hardcoded 'xlsx' with some sort of option variable.
-                connection.executeExport(data, exportSuccess, exportFail, 'xlsx');
+                connection.executeExport(data, exportSuccess, exportFail, exportService.getFileFormat());
             };
 
             var makeLinechartExportObject = function() {
@@ -746,6 +744,12 @@ function(connectionService, datasetService, errorNotificationService, $timeout) 
                 var first = str[0].toUpperCase();
                 return first + str.slice(1);
             };
+
+            neon.ready(function() {
+                $scope.messenger = new neon.eventing.Messenger();
+                initialize();
+                $scope.displayActiveDataset(true);
+            });
         }
     };
 }]);

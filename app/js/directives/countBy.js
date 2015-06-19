@@ -17,8 +17,8 @@
  */
 
 angular.module('neonDemo.directives')
-.directive('countBy', ['external', 'popups', 'ConnectionService', 'DatasetService', 'ErrorNotificationService', 'FilterService',
-function(external, popups, connectionService, datasetService, errorNotificationService, filterService) {
+.directive('countBy', ['external', 'popups', 'ConnectionService', 'DatasetService', 'ErrorNotificationService', 'FilterService', 'ExportService',
+function(external, popups, connectionService, datasetService, errorNotificationService, filterService, exportService) {
     return {
         templateUrl: 'partials/directives/countby.html',
         restrict: 'EA',
@@ -92,6 +92,9 @@ function(external, popups, connectionService, datasetService, errorNotificationS
                     filtersChanged: onFiltersChanged
                 });
 
+                $scope.exportID = uuid();
+                exportService.register($scope.exportID, makeCountByExportObject);
+
                 $scope.$on('$destroy', function() {
                     XDATA.userALE.log({
                         activity: "remove",
@@ -109,6 +112,7 @@ function(external, popups, connectionService, datasetService, errorNotificationS
                     if($scope.filterSet) {
                         filterService.removeFilters($scope.messenger, $scope.filterKeys);
                     }
+                    exportService.unregister($scope.exportID);
                 });
 
                 $element.resize(updateSize);
@@ -643,11 +647,6 @@ function(external, popups, connectionService, datasetService, errorNotificationS
                 }
             };
 
-            neon.ready(function() {
-                $scope.initialize();
-                $scope.displayActiveDataset(true);
-            });
-
             var exportSuccess = function(queryResults) {
                 /*XDATA.userALE.log({
                     activity: "",
@@ -695,7 +694,7 @@ function(external, popups, connectionService, datasetService, errorNotificationS
                 }
                 var data = makeCountByExportObject();
                 // TODO replace hardcoded 'xlsx' with some sort of option variable.
-                connection.executeExport(data, exportSuccess, exportFail, 'xlsx');
+                connection.executeExport(data, exportSuccess, exportFail, exportService.getFileFormat());
             };
 
             var makeCountByExportObject = function() {
@@ -733,6 +732,11 @@ function(external, popups, connectionService, datasetService, errorNotificationS
                 var first = str[0].toUpperCase();
                 return first + str.slice(1);
             };
+
+            neon.ready(function() {
+                $scope.initialize();
+                $scope.displayActiveDataset(true);
+            });
         }
     };
 }]);

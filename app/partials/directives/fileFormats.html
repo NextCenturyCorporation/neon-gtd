@@ -1,0 +1,7 @@
+<div class="form-group">
+	<div class="btn-group button-group-pad">
+        <label class="btn btn-default" ng-repeat="format in formats" ng-class="{true: 'active', false: ''}[format.selected]">
+            <input type="radio" style="display:none" ng-model="format.selected" ng-change="selectFormat(format)"> {{format.name.toUpperCase()}}
+        </label>
+    </div>
+</div>

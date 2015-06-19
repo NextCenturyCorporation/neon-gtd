@@ -28,7 +28,8 @@
  * @constructor
  */
 angular.module('neonDemo.directives')
-.directive('map', ['ConnectionService', 'DatasetService', 'ErrorNotificationService', 'FilterService', '$timeout', function(connectionService, datasetService, errorNotificationService, filterService, $timeout) {
+.directive('map', ['ConnectionService', 'DatasetService', 'ErrorNotificationService', 'FilterService', 'ExportService', '$timeout', 
+    function(connectionService, datasetService, errorNotificationService, filterService, exportService, $timeout) {
     return {
         templateUrl: 'partials/directives/map.html',
         restrict: 'EA',
@@ -167,6 +168,9 @@ angular.module('neonDemo.directives')
                     filtersChanged: onFiltersChanged
                 });
 
+                $scope.exportID = uuid();
+                exportService.register($scope.exportID, makeMapExportObject);
+
                 $scope.$on('$destroy', function() {
                     XDATA.userALE.log({
                         activity: "remove",
@@ -183,6 +187,7 @@ angular.module('neonDemo.directives')
                     if($scope.showFilter) {
                         $scope.clearFilters();
                     }
+                    exportService.unregister($scope.exportID);
                 });
 
                 // Enable the tooltips.
@@ -1006,12 +1011,6 @@ angular.module('neonDemo.directives')
                 }
             };
 
-            // Wait for neon to be ready, the create our messenger and intialize the view and data.
-            neon.ready(function() {
-                $scope.initialize();
-                $scope.displayActiveDataset(true);
-            });
-
             var exportSuccess = function(queryResults) {
                 /*XDATA.userALE.log({
                     activity: "",
@@ -1057,7 +1056,7 @@ angular.module('neonDemo.directives')
                 }
                 var data = makeMapExportObject();
                 // TODO replace hardcoded 'xlsx' with some sort of option variable.
-                connection.executeExport(data, exportSuccess, exportFail, 'xlsx');
+                connection.executeExport(data, exportSuccess, exportFail, exportService.getFileFormat());
             };
 
             var makeMapExportObject = function() {
@@ -1096,6 +1095,12 @@ angular.module('neonDemo.directives')
                 }
                 return finalObject;
             };
+
+            // Wait for neon to be ready, the create our messenger and intialize the view and data.
+            neon.ready(function() {
+                $scope.initialize();
+                $scope.displayActiveDataset(true);
+            });
         }
     };
 }]);

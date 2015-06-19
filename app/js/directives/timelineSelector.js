@@ -32,8 +32,8 @@
  * @constructor
  */
 angular.module('neonDemo.directives')
-.directive('timelineSelector', ['ConnectionService', 'DatasetService', 'ErrorNotificationService', 'FilterService',
-function(connectionService, datasetService, errorNotificationService, filterService) {
+.directive('timelineSelector', ['ConnectionService', 'DatasetService', 'ErrorNotificationService', 'FilterService', 'ExportService',
+function(connectionService, datasetService, errorNotificationService, filterService, exportService) {
     return {
         templateUrl: 'partials/directives/timelineSelector.html',
         restrict: 'EA',
@@ -256,6 +256,9 @@ function(connectionService, datasetService, errorNotificationService, filterServ
                     filtersChanged: onFiltersChanged
                 });
 
+                $scope.exportID = uuid();
+                exportService.register($scope.exportID, makeTimelineSelectorExportObject);
+
                 $scope.$on('$destroy', function() {
                     XDATA.userALE.log({
                         activity: "remove",
@@ -272,6 +275,7 @@ function(connectionService, datasetService, errorNotificationService, filterServ
                     if(0 < $scope.brush.length) {
                         filterService.removeFilters($scope.messenger, $scope.filterKeys);
                     }
+                    exportService.unregister($scope.exportID);
                 });
             };
 
@@ -909,12 +913,6 @@ function(connectionService, datasetService, errorNotificationService, filterServ
                 }
             };
 
-            // Wait for neon to be ready, the create our messenger and intialize the view and data.
-            neon.ready(function() {
-                $scope.initialize();
-                $scope.displayActiveDataset(true);
-            });
-
             var exportSuccess = function(queryResults) {
                 /*XDATA.userALE.log({
                     activity: "",
@@ -960,7 +958,7 @@ function(connectionService, datasetService, errorNotificationService, filterServ
                 }
                 var data = makeTimelineSelectorExportObject();
                 // TODO replace hardcoded 'xlsx' with some sort of option variable.
-                connection.executeExport(data, exportSuccess, exportFail, 'xlsx');
+                connection.executeExport(data, exportSuccess, exportFail, exportService.getFileFormat());
             };
 
             var makeTimelineSelectorExportObject = function() {
@@ -996,6 +994,12 @@ function(connectionService, datasetService, errorNotificationService, filterServ
                 });
                 return finalObject;
             };
+
+            // Wait for neon to be ready, the create our messenger and intialize the view and data.
+            neon.ready(function() {
+                $scope.initialize();
+                $scope.displayActiveDataset(true);
+            });
         }
     };
 }]);

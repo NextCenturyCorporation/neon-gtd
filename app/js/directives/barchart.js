@@ -28,8 +28,8 @@
  * @constructor
  */
 angular.module('neonDemo.directives')
-.directive('barchart', ['ConnectionService', 'DatasetService', 'ErrorNotificationService', 'FilterService',
-function(connectionService, datasetService, errorNotificationService, filterService) {
+.directive('barchart', ['ConnectionService', 'DatasetService', 'ErrorNotificationService', 'FilterService', 'ExportService',
+function(connectionService, datasetService, errorNotificationService, filterService, exportService) {
     return {
         templateUrl: 'partials/directives/barchart.html',
         restrict: 'EA',
@@ -84,6 +84,9 @@ function(connectionService, datasetService, errorNotificationService, filterServ
                     filtersChanged: onFiltersChanged
                 });
 
+                $scope.exportID = uuid();
+                exportService.register($scope.exportID, makeBarchartExportObject);
+
                 $scope.$on('$destroy', function() {
                     XDATA.userALE.log({
                         activity: "remove",
@@ -101,6 +104,7 @@ function(connectionService, datasetService, errorNotificationService, filterServ
                     if($scope.filterSet) {
                         filterService.removeFilters($scope.messenger, $scope.filterKeys);
                     }
+                    exportService.unregister($scope.exportID);
                 });
 
                 $scope.$watch('options.attrX', function() {
@@ -459,12 +463,6 @@ function(connectionService, datasetService, errorNotificationService, filterServ
                 return "";
             };
 
-            neon.ready(function() {
-                $scope.messenger = new neon.eventing.Messenger();
-                initialize();
-                $scope.displayActiveDataset(true);
-            });
-
             var exportSuccess = function(queryResults) {
                 /*XDATA.userALE.log({
                     activity: "",
@@ -510,7 +508,7 @@ function(connectionService, datasetService, errorNotificationService, filterServ
                 }
                 var data = makeBarchartExportObject();
                 // TODO replace hardcoded 'xlsx' with some sort of option variable.
-                connection.executeExport(data, exportSuccess, exportFail, "xlsx");
+                connection.executeExport(data, exportSuccess, exportFail, exportService.getFileFormat());
             };
 
             var makeBarchartExportObject = function() {
@@ -556,6 +554,12 @@ function(connectionService, datasetService, errorNotificationService, filterServ
                 var first = str[0].toUpperCase();
                 return first + str.slice(1);
             };
+
+            neon.ready(function() {
+                $scope.messenger = new neon.eventing.Messenger();
+                initialize();
+                $scope.displayActiveDataset(true);
+            });
         }
     };
 }]);

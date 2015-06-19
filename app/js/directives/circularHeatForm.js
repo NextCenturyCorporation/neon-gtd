@@ -31,8 +31,8 @@
  * @constructor
  */
 angular.module('neonDemo.directives')
-.directive('circularHeatForm', ['ConnectionService', 'DatasetService', 'ErrorNotificationService',
-function(connectionService, datasetService, errorNotificationService) {
+.directive('circularHeatForm', ['ConnectionService', 'DatasetService', 'ErrorNotificationService', 'ExportService',
+function(connectionService, datasetService, errorNotificationService, exportService) {
     return {
         templateUrl: 'partials/directives/circularHeatForm.html',
         restrict: 'EA',
@@ -77,6 +77,9 @@ function(connectionService, datasetService, errorNotificationService) {
                     filtersChanged: onFiltersChanged
                 });
 
+                $scope.exportID = uuid();
+                exportService.register($scope.exportID, makeCircularHeatFormExportObject);
+
                 $scope.$on('$destroy', function() {
                     XDATA.userALE.log({
                         activity: "remove",
@@ -89,6 +92,7 @@ function(connectionService, datasetService, errorNotificationService) {
                         tags: ["remove", "circularheatform"]
                     });
                     $scope.messenger.removeEvents();
+                    exportService.unregister($scope.exportID);
                 });
             };
 
@@ -376,13 +380,6 @@ function(connectionService, datasetService, errorNotificationService) {
                 }
             };
 
-            // Wait for neon to be ready, the create our messenger and intialize the view and data.
-            neon.ready(function() {
-                $scope.messenger = new neon.eventing.Messenger();
-                $scope.initialize();
-                $scope.displayActiveDataset(true);
-            });
-
             var exportSuccess = function(queryResults) {
                 /*XDATA.userALE.log({
                     activity: "",
@@ -429,7 +426,7 @@ function(connectionService, datasetService, errorNotificationService) {
 
                 var data = makeCircularHeatFormExportObject();
                 // TODO replace hardcoded 'xlsx' with some sort of option variable.
-                connection.executeExport(data, exportSuccess, exportFail, "xlsx");
+                connection.executeExport(data, exportSuccess, exportFail, exportService.getFileFormat());
             };
 
             var makeCircularHeatFormExportObject = function() {
@@ -466,6 +463,13 @@ function(connectionService, datasetService, errorNotificationService) {
                 });
                 return finalObject;
             };
+
+            // Wait for neon to be ready, the create our messenger and intialize the view and data.
+            neon.ready(function() {
+                $scope.messenger = new neon.eventing.Messenger();
+                $scope.initialize();
+                $scope.displayActiveDataset(true);
+            });
         }
     };
 }]);
