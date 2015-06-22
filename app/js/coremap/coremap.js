@@ -133,9 +133,9 @@ coreMap.Map.MIN_HEIGHT = 200;
 coreMap.Map.MIN_WIDTH = 200;
 coreMap.Map.MIN_RADIUS = 5;
 coreMap.Map.MAX_RADIUS = 13;
-coreMap.Map.BOX_COLOR = "#39b54a";
-coreMap.Map.BOX_WIDTH = 2;
-coreMap.Map.BOX_OPACITY = 1;
+coreMap.Map.BOX_COLOR = "#f20101";
+coreMap.Map.BOX_WIDTH = 4;
+coreMap.Map.BOX_OPACITY = 0.9;
 
 coreMap.Map.SOURCE_PROJECTION = new OpenLayers.Projection("EPSG:4326");
 coreMap.Map.DESTINATION_PROJECTION = new OpenLayers.Projection("EPSG:900913");
