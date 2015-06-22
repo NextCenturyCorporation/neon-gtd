@@ -25,7 +25,6 @@ var coreMap = coreMap || {};
  * @param {String} elementId id of a div or span which the map component will replace.
  * @param {Object} opts A collection of optional key/value pairs used for configuration parameters:
  * <ul>
- *     <li>data - An array of data to display in the map</li>
  *     <li>width - The width of the map in pixels.</li>
  *     <li>height - The height of the map in pixels.</li>
  *     <li>onZoomRect - A zoom handler that will be called when the user selects an area to which
@@ -35,15 +34,10 @@ var coreMap = coreMap || {};
  * @constructor
  *
  * @example
- *     var data = [
- *                 {"latitude": "50", "longitude": -100},
- *                 {"latitude": "-20", "longitude": 130
- *                ];
  *     var map = new coreMap.Map('map');
  *
  * @example
  *     var opts = {
- *            data: {[50,30,5], [20,-120,10]},
  *            latitudeMapping: function(element){ return element[0]; },
  *            longitudeMapping: function(element){ return element[1]; },
  *            sizeMapping: function(element){ return element[2]; }
@@ -133,7 +127,7 @@ coreMap.Map.prototype.removeLayer = function(layer) {
 };
 
 /**
- * Resets the map. This clears all the data, zooms all the way out and centers the map.
+ * Resets the map. This clears all selection popups, zooms all the way out and centers the map.
  * @method reset
  */
 
@@ -175,7 +169,9 @@ coreMap.Map.prototype.toggleCaching = function() {
     }
 };
 
-// clear the LocaleStorage used by the browser to store data for this.
+/**
+ * Clear the LocaleStorage used by the browser to store data for this.
+ */
 coreMap.Map.prototype.clearCache = function() {
     OpenLayers.Control.CacheWrite.clearCache();
 };

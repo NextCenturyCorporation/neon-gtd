@@ -127,12 +127,10 @@ coreMap.Map.Layer.PointsLayer = OpenLayers.Class(OpenLayers.Layer.Vector, {
                 radius: function(feature) {
                     // Here, we are basing the size of the cluster on the number of
                     // digits in the total feature count.
-                    var digits = 1;
                     var count = feature.cluster.length;
-                    while((count = count / 10) >= 1) {
-                        digits++;
-                    }
-                    return 5 + (5 * digits);
+                    var digits = Math.log10(count);
+                    digits = (digits >= 1) ? digits : 1;
+                    return Math.floor(5 + (5 * digits));
                 },
                 count: function(feature) {
                     return feature.cluster.length;
