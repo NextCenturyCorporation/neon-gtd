@@ -569,7 +569,13 @@ angular.module('neonDemo.directives')
                                 sizeMapping: layer.sizeBy,
                                 categoryMapping: layer.colorBy,
                                 defaultColor: layer.defaultColor,
-                                linkyConfig: (layer.linkyConfig ? layer.linkyConfig : {mentions: false,hashtags: false,urls: false,linkTo: "twitter"})
+                                linkyConfig: (layer.linkyConfig ? layer.linkyConfig :
+                                    {
+                                        mentions: false,
+                                        hashtags: false,
+                                        urls: false,
+                                        linkTo: "twitter"
+                                    })
                             });
                             this.map.addLayer(layer.olLayer);
                         } else if(layer.type === coreMap.Map.CLUSTER_LAYER) {
@@ -581,7 +587,13 @@ angular.module('neonDemo.directives')
                                 categoryMapping: layer.colorBy,
                                 defaultColor: layer.defaultColor,
                                 cluster: true,
-                                linkyConfig: (layer.linkyConfig ? layer.linkyConfig : {mentions: false, hashtags: false, urls: false, linkTo: "twitter"})
+                                linkyConfig: (layer.linkyConfig ? layer.linkyConfig :
+                                    {
+                                        mentions: false,
+                                        hashtags: false,
+                                        urls: false,
+                                        linkTo: "twitter"
+                                    })
                             });
                             this.map.addLayer(layer.olLayer);
                         } else if(layer.type === coreMap.Map.HEATMAP_LAYER) {
