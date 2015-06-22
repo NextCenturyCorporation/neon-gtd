@@ -224,7 +224,7 @@ coreMap.Map.Layer.PointsLayer.prototype.calculateRadius = function(element) {
 coreMap.Map.Layer.PointsLayer.prototype.createPoint = function(element, longitude, latitude) {
     var point = new OpenLayers.Geometry.Point(longitude, latitude);
     point.data = element;
-    point.transform(coreMap.Map.Layer.PointsLayer.SOURCE_PROJECTION, coreMap.Map.Layer.PointsLayer.DESTINATION_PROJECTION);
+    point.transform(coreMap.Map.SOURCE_PROJECTION, coreMap.Map.DESTINATION_PROJECTION);
 
     var feature = new OpenLayers.Feature.Vector(point);
     feature.style = this.stylePoint(element);
@@ -324,6 +324,3 @@ coreMap.Map.Layer.PointsLayer.DEFAULT_STROKE_COLOR = "#ffffff";
 coreMap.Map.Layer.PointsLayer.MIN_RADIUS = 5;
 coreMap.Map.Layer.PointsLayer.MAX_RADIUS = 15;
 
-// TODO: Keep these here or move back into coreMap?
-coreMap.Map.Layer.PointsLayer.SOURCE_PROJECTION = new OpenLayers.Projection("EPSG:4326");
-coreMap.Map.Layer.PointsLayer.DESTINATION_PROJECTION = new OpenLayers.Projection("EPSG:900913");

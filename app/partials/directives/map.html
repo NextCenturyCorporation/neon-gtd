@@ -15,30 +15,6 @@
     </options-menu>
 </div>
 
-<div class="header-container legend-container">
-    <div class="legend legend-scale" ng-class="{true: 'hidden', false: ''}[options.showPoints]">
-        <div class="legend-item">
-            <span class="legend-text">High</span>
-            <span class="legend-icon" style="background-color: #fb5c44"></span>
-            <span class="legend-icon" style="background-color: #e9ed3d"></span>
-            <span class="legend-icon" style="background-color: #65f13d"></span>
-            <span class="legend-icon" style="background-color: #55cde9"></span>
-            <span class="legend-icon" style="background-color: #6374e5"></span>
-            <span class="legend-text">Low</span>
-        </div>
-    </div>
-
-    <div class="legend" ng-class="{true: '', false: 'hidden'}[options.showPoints]">
-        <div class="legend-item" title="{{colorMapping.category}}" ng-repeat="colorMapping in colorMappings|limitTo:20">
-            <span class="legend-icon" style="background-color: {{colorMapping.color}}"></span>
-            <span class="legend-text">{{colorMapping.category}}</span>
-        </div>
-        <div class="legend-item" ng-class="{true: '', false: 'hidden'}[colorMappings.length > 20]">
-            <span class="legend-text text-muted">...and {{colorMappings.length-20}} more</span>
-        </div>
-    </div>
-</div>
-
 <div class="header-container filter-container">
     <div class="filter-reset pull-right" ng-class="{true: '', false: 'hidden'}[showFilter]">
         <span class="filter-label">Filter</span>

@@ -36,12 +36,16 @@ coreMap.Map.Layer.HeatmapLayer = OpenLayers.Class(OpenLayers.Layer.Heatmap, {
      */
     initialize: function(name, map, baseLayer, options) {
         // Override the style for our specialization.
+        var blur = (options && options.blur) ? options.blur : coreMap.Map.Layer.HeatmapLayer.DEFAULT_BLUR;
+        var minOpacity = (options && options.minOpacity) ? options.minOpacity : coreMap.Map.Layer.HeatmapLayer.DEFAULT_MIN_OPACITY;
+        var maxOpacity = (options && options.maxOpacity) ? options.maxOpacity : coreMap.Map.Layer.HeatmapLayer.DEFAULT_MAX_OPACITY;
+        maxOpacity = Math.max(minOpacity, maxOpacity);
         var heatmapOptions = {
             visible: true,
             radius: coreMap.Map.Layer.HeatmapLayer.DEFAULT_RADIUS,
-            minOpacity: coreMap.Map.Layer.HeatmapLayer.DEFAULT_MIN_OPACITY,
-            maxOpacity: coreMap.Map.Layer.HeatmapLayer.DEFAULT_MAX_OPACITY,
-            blur: coreMap.Map.Layer.HeatmapLayer.DEFAULT_BLUR,
+            minOpacity: minOpacity,
+            maxOpacity: maxOpacity,
+            blur: blur,
             valueField: coreMap.Map.Layer.HeatmapLayer.DEFAULT_INTENSITY_MAPPING
         };
         var extendOptions = options || {};

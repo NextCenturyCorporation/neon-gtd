@@ -99,7 +99,7 @@ coreMap.Map.Layer.NodeLayer.prototype.createNode = function(element) {
         this.getValueFromDataElement(this.longitudeMapping, element),
         this.getValueFromDataElement(this.latitudeMapping, element)
     );
-    point.transform(coreMap.Map.Layer.NodeLayer.SOURCE_PROJECTION, coreMap.Map.Layer.NodeLayer.DESTINATION_PROJECTION);
+    point.transform(coreMap.Map.SOURCE_PROJECTION, coreMap.Map.DESTINATION_PROJECTION);
 
     var feature = new OpenLayers.Feature.Vector(point);
     feature.style = this.styleNode(element);
@@ -162,8 +162,8 @@ coreMap.Map.Layer.NodeLayer.prototype.createWeightedLine = function(pt1, pt2, we
     var point2 = new OpenLayers.Geometry.Point(pt2[0], pt2[1]);
 
     var line = new OpenLayers.Geometry.LineString([point1, point2]);
-    line.transform(coreMap.Map.Layer.NodeLayer.SOURCE_PROJECTION,
-        coreMap.Map.Layer.NodeLayer.DESTINATION_PROJECTION);
+    line.transform(coreMap.Map.SOURCE_PROJECTION,
+        coreMap.Map.DESTINATION_PROJECTION);
 
     var featureLine = new OpenLayers.Feature.Vector(line);
     featureLine.style = this.createLineStyleObject(this.lineColor || coreMap.Map.Layer.NodeLayer.DEFAULT_LINE_COLOR, wt);
@@ -293,6 +293,3 @@ coreMap.Map.Layer.NodeLayer.MAX_RADIUS = 13;
 coreMap.Map.Layer.NodeLayer.MIN_LINE_WIDTH = 1;
 coreMap.Map.Layer.NodeLayer.MAX_LINE_WIDTH = 13;
 
-// TODO: Keep these here or move back into coreMap?
-coreMap.Map.Layer.NodeLayer.SOURCE_PROJECTION = new OpenLayers.Projection("EPSG:4326");
-coreMap.Map.Layer.NodeLayer.DESTINATION_PROJECTION = new OpenLayers.Projection("EPSG:900913");

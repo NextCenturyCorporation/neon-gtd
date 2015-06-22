@@ -20,8 +20,8 @@
  * a Neon connection should be plotted.
  *
  * @example
- *    &lt;heat-map&gt;&lt;/heat-map&gt;<br>
- *    &lt;div heat-map&gt;&lt;/div&gt;
+ *    &lt;map&gt;&lt;/map&gt;<br>
+ *    &lt;div map&gt;&lt;/div&gt;
  *
  * @namespace neonDemo.directives
  * @class map
@@ -33,12 +33,6 @@ angular.module('neonDemo.directives')
         templateUrl: 'partials/directives/map.html',
         restrict: 'EA',
         scope: {
-            bindLatitudeField: '=',
-            bindLongitudeField: '=',
-            bindColorField: '=',
-            bindSizeField: '=',
-            bindTable: '=',
-            bindDatabase: '=',
             // map of categories to colors used for the legend
             colorMappings: '&',
             hideHeader: '=?',
@@ -65,25 +59,15 @@ angular.module('neonDemo.directives')
                     }
                 }
                 return text;
-                /*
-                if($scope.dataLength >= $scope.previousLimit) {
-                    return $scope.previousLimit + " data limit";
-                }
-                return "";
-                */
             };
             $scope.showOptionsMenuButtonText = function() {
                 return Object.keys($scope.limitedLayers).length > 0;
-                //return $scope.dataLength >= $scope.previousLimit;
             };
 
             $scope.layersByDatabaseAndTable = {};
             $scope.limitedLayers = {};
 
             // Setup scope variables.
-            $scope.databases = [];
-            $scope.tables = [];
-            $scope.fields = [];
             $scope.cacheMap = false;
             $scope.filterKeys = {};
             $scope.showFilter = false;
@@ -94,18 +78,8 @@ angular.module('neonDemo.directives')
             $scope.loadingData = false;
 
             $scope.options = {
-                layers: [],
-                database: "",
-                table: "",
-                latitudeField: "",
-                longitudeField: "",
-                sizeByField: "",
-                colorByField: "",
-                showPoints: true, // Default to the points view.
-                limit: 1000
+                layers: []
             };
-
-            $scope.previousLimit = $scope.options.limit;
 
             // Setup our map.
             $scope.mapId = uuid();
@@ -300,10 +274,8 @@ angular.module('neonDemo.directives')
                 filterService.replaceFilters($scope.messenger, relations, layer.filterKeys, $scope.createFilterClauseForExtent, function() {
                     if(activeLayers.length) {
                         filterActiveLayersRecursively(activeLayers, callback);
-                    } else {
-                        if(callback) {
-                            callback();
-                        }
+                    } else if(callback) {
+                        callback();
                     }
                 }, function() {
                     XDATA.userALE.log({
@@ -378,12 +350,15 @@ angular.module('neonDemo.directives')
             var onMapEvent = function(message) {
                 var type = message.type;
 
-                if(type == "zoomend" && $scope.map.featurePopup) {
+                if(type === "zoomend" && $scope.map.featurePopup) {
                     $scope.map.map.removePopup($scope.map.featurePopup);
                     $scope.map.featurePopup.destroy();
                     $scope.map.featurePopup = null;
                 }
 
+                // For convencience in analysing the user logs through user-ale,
+                // move (move start, move, move end) and zoom (zoom end) events are renamed
+                // here to match preferred testing nomenclature.
                 type = type.replace("move", "pan");
                 type = type.replace("zoomend", "zoom");
 
@@ -422,14 +397,14 @@ angular.module('neonDemo.directives')
             };
 
             var boundsToExtent = function(bounds) {
-                var llPoint = new OpenLayers.LonLat(bounds.left, bounds.bottom);
-                var urPoint = new OpenLayers.LonLat(bounds.right, bounds.top);
+                var lowerLeftPoint = new OpenLayers.LonLat(bounds.left, bounds.bottom);
+                var upperRightPoint = new OpenLayers.LonLat(bounds.right, bounds.top);
 
-                var minLon = Math.min(llPoint.lon, urPoint.lon);
-                var maxLon = Math.max(llPoint.lon, urPoint.lon);
+                var minLon = Math.min(lowerLeftPoint.lon, upperRightPoint.lon);
+                var maxLon = Math.max(lowerLeftPoint.lon, upperRightPoint.lon);
 
-                var minLat = Math.min(llPoint.lat, urPoint.lat);
-                var maxLat = Math.max(llPoint.lat, urPoint.lat);
+                var minLat = Math.min(lowerLeftPoint.lat, upperRightPoint.lat);
+                var maxLat = Math.max(lowerLeftPoint.lat, upperRightPoint.lat);
 
                 return {
                     minimumLatitude: minLat,
@@ -560,8 +535,8 @@ angular.module('neonDemo.directives')
                     layer = $scope.options.layers[i];
                     if(!layer.olLayer) {
                         if(layer.type === coreMap.Map.POINTS_LAYER) {
-                            name = layer.name || layer.table + " Points";
-                            layer.olLayer = new coreMap.Map.Layer.PointsLayer(name.toUpperCase(), {
+                            layer.name = (layer.name || layer.table + " Points").toUpperCase();
+                            layer.olLayer = new coreMap.Map.Layer.PointsLayer(layer.name, {
                                 latitudeMapping: layer.latitudeMapping,
                                 longitudeMapping: layer.longitudeMapping,
                                 sizeMapping: layer.sizeBy,
@@ -570,8 +545,8 @@ angular.module('neonDemo.directives')
                             });
                             this.map.addLayer(layer.olLayer);
                         } else if(layer.type === coreMap.Map.CLUSTER_LAYER) {
-                            name = layer.name || layer.table + " Clusters";
-                            layer.olLayer = new coreMap.Map.Layer.PointsLayer(name.toUpperCase(), {
+                            layer.name = (layer.name || layer.table + " Clusters").toUpperCase();
+                            layer.olLayer = new coreMap.Map.Layer.PointsLayer(layer.name, {
                                 latitudeMapping: layer.latitudeMapping,
                                 longitudeMapping: layer.longitudeMapping,
                                 sizeMapping: layer.sizeBy,
@@ -581,21 +556,18 @@ angular.module('neonDemo.directives')
                             });
                             this.map.addLayer(layer.olLayer);
                         } else if(layer.type === coreMap.Map.HEATMAP_LAYER) {
-                            name = layer.name || layer.table + " Heatmap";
-                            layer.olLayer = new coreMap.Map.Layer.HeatmapLayer(name.toUpperCase(),
+                            layer.name = (layer.name || layer.table + " Heatmap").toUpperCase();
+                            layer.olLayer = new coreMap.Map.Layer.HeatmapLayer(layer.name,
                                 $scope.map.map,
                                 $scope.map.map.baseLayer, {
                                 latitudeMapping: layer.latitudeMapping,
                                 longitudeMapping: layer.longitudeMapping,
-                                sizeMapping: layer.sizeBy,
-                                radius: 3,
-                                minOpacity: 0.7,
-                                maxOpacity: 1
+                                sizeMapping: layer.sizeBy
                             });
                             this.map.addLayer(layer.olLayer);
                         } else if(layer.type === coreMap.Map.NODE_LAYER) {
-                            name = layer.name || layer.table + " Nodes";
-                            layer.olLayer = new coreMap.Map.Layer.NodeLayer(name.toUpperCase(), {
+                            layer.name = (layer.name || layer.table + " Nodes").toUpperCase();
+                            layer.olLayer = new coreMap.Map.Layer.NodeLayer(layer.name, {
                                 sourceMapping: layer.sourceMapping,
                                 targetMapping: layer.targetMapping,
                                 weightMapping: layer.weightMapping,
@@ -708,10 +680,6 @@ angular.module('neonDemo.directives')
              * Redraws the map
              */
             $scope.draw = function() {
-                $scope.map.draw();
-
-                // color mappings need to be updated after drawing since they are set during drawing
-                //$scope.colorMappings = $scope.map.getColorMappings();
                 // TODO: Puzzle out where this goes when there's no longer 2 fixed layers.
                 $scope.colorMappings = [];
             };
@@ -929,10 +897,8 @@ angular.module('neonDemo.directives')
                 removeFiltersForKeys(filterKeys, function() {
                     if(filterKeysList.length) {
                         clearFiltersRecursively(filterKeysList, callback);
-                    } else {
-                        if(callback) {
-                            callback();
-                        }
+                    } else if(callback) {
+                        callback();
                     }
                 });
             };
@@ -986,21 +952,6 @@ angular.module('neonDemo.directives')
                 } else {
                     $scope.map.categoryMapping = undefined;
                 }
-            };
-
-            $scope.handleLimitRefreshClick = function() {
-                XDATA.userALE.log({
-                    activity: "perform",
-                    action: "click",
-                    elementId: "map-limit-refresh-button",
-                    elementType: "button",
-                    elementGroup: "map_group",
-                    source: "user",
-                    tags: ["options", "map", "limit", $scope.options.limit]
-                });
-
-                $scope.previousLimit = $scope.options.limit;
-                queryAllLayerTables();
             };
 
             $scope.updateFilteringOnLayer = function(layer) {

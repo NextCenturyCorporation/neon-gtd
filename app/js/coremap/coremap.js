@@ -446,7 +446,7 @@ coreMap.Map.prototype.zoomToBounds = function(bounds) {
 };
 
 /**
- * Resize the map to its element size. Adjust the heatmap canvas to match.  This should be called
+ * Resize the map to its element size. This should be called
  * when the window resizes on the containing element resizes
  */
 coreMap.Map.prototype.resizeToElement = function() {
