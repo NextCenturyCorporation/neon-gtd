@@ -424,6 +424,12 @@ tables.Table.prototype.addSortSupport_ = function() {
     });
 };
 
+tables.Table.prototype.registerSortListener = function(callback) {
+    this.table_.onSort.subscribe(function(event, args) {
+        callback(event, args);
+    });
+};
+
 tables.Table.prototype.sortColumnAndChangeGlyph = function(sortInfo) {
     // Sort the data in the column.
     this.sortColumn(sortInfo.name, sortInfo.field, sortInfo.sortAsc);

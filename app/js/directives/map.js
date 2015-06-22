@@ -92,6 +92,8 @@ angular.module('neonDemo.directives')
             $scope.resizeRedrawDelay = 1500; // Time in ms to wait after a resize event flood to try redrawing the map.
             $scope.errorMessage = undefined;
             $scope.loadingData = false;
+            $scope.selectedPointLayer = {};
+            $scope.selectionEvent = "QUERY_RESULTS_SELECTION_EVENT";
 
             $scope.options = {
                 layers: [],
@@ -165,6 +167,10 @@ angular.module('neonDemo.directives')
 
                 $scope.messenger.events({
                     filtersChanged: onFiltersChanged
+                });
+
+                $scope.messenger.subscribe($scope.selectionEvent, function(data) {
+                    $scope.createPoint(data);
                 });
 
                 $scope.$on('$destroy', function() {
@@ -1025,6 +1031,54 @@ angular.module('neonDemo.directives')
                     }
                 }
             };
+
+            // Creates a point on the map layer "Selected Point" for the given data
+            $scope.createPoint = function(data) {
+                if(data._id) {
+                    // Remove previously selected point, if exists
+                    if($scope.selectedPointLayer.name) {
+                        $scope.map.removeLayer($scope.selectedPointLayer);
+                    }
+
+                    var latMapping = "latitude",
+                        lonMapping = "longitude",
+                        pointsLayer = _.find(datasetService.getMapLayers(), {type: "points"});
+
+                    if(pointsLayer) {
+                        latMapping = pointsLayer.latitudeMapping;
+                        lonMapping = pointsLayer.longitudeMapping;
+                    }
+
+                    var point = new OpenLayers.Geometry.Point(data[lonMapping], data[latMapping]);
+                    point.transform(coreMap.Map.Layer.PointsLayer.SOURCE_PROJECTION, coreMap.Map.Layer.PointsLayer.DESTINATION_PROJECTION);
+
+                    var feature = new OpenLayers.Feature.Vector(point);
+
+                    var layer = new OpenLayers.Layer.Vector("Selected Point", {
+                        styleMap: new OpenLayers.StyleMap({
+                            "default": {
+                                graphicName: "star",
+                                strokeOpacity: 0.8,
+                                strokeWidth: 1,
+                                fillColor: "#FFA500",
+                                fillOpacity: 0.8,
+                                pointRadius: 10
+                            }
+                        }),
+                        rendererOptions: {
+                            zIndexing: true
+                        }
+                    });
+
+                    layer.addFeatures(feature);
+                    $scope.map.addLayer(layer);
+                    layer.setZIndex(999);
+                    $scope.selectedPointLayer = layer;
+                } else if($scope.selectedPointLayer.name) {
+                    $scope.map.removeLayer($scope.selectedPointLayer);
+                    $scope.selectedPointLayer = {};
+                }
+                };
 
             // Wait for neon to be ready, the create our messenger and intialize the view and data.
             neon.ready(function() {

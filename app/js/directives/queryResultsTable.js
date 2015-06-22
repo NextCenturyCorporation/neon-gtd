@@ -28,8 +28,8 @@
  * @constructor
  */
 angular.module('neonDemo.directives')
-.directive('queryResultsTable', ['external', 'popups', 'ConnectionService', 'DatasetService', 'ErrorNotificationService', '$compile',
-function(external, popups, connectionService, datasetService, errorNotificationService, $compile) {
+.directive('queryResultsTable', ['external', 'popups', 'ConnectionService', 'DatasetService', 'ErrorNotificationService', '$compile', '$timeout',
+function(external, popups, connectionService, datasetService, errorNotificationService, $compile, $timeout) {
     return {
         templateUrl: 'partials/directives/queryResultsTable.html',
         restrict: 'EA',
@@ -71,6 +71,8 @@ function(external, popups, connectionService, datasetService, errorNotificationS
 
             $scope.ASCENDING = neon.query.ASCENDING;
             $scope.DESCENDING = neon.query.DESCENDING;
+
+            $scope.selectionEvent = "QUERY_RESULTS_SELECTION_EVENT";
 
             $scope.databases = [];
             $scope.tables = [];
@@ -472,6 +474,54 @@ function(external, popups, connectionService, datasetService, errorNotificationS
             };
 
             /**
+             * Adds an onClick listener for selecting a row in the table that
+             * publishes the row to a channel
+             */
+            $scope.addOnClickListener = function() {
+                $scope.table.addOnClickListener(function(columns, row) {
+                    var columnIndex = external.anyEnabled ? 1 : 0;
+                    var field = columns[columnIndex].field;
+
+                    // Deselect the row if already selected
+                    if($scope.selectedRow !== undefined) {
+                        if($scope.selectedRow.key === field && $scope.selectedRow.value === row[field]) {
+                            $scope.clearSelection();
+                            return;
+                        }
+                    }
+
+                    $scope.$apply(function() {
+                        $scope.messenger.publish($scope.selectionEvent, row);
+                        $tableDiv.addClass("row-selected");
+                        $scope.selectedRow = {
+                            key: field,
+                            value: row[field]
+                        };
+                    });
+                });
+            };
+
+            /**
+             * Adds a sort listener in order to clear any row selection on column reorders
+             */
+            $scope.addSortListener = function() {
+                $scope.table.registerSortListener(function(event, args) {
+                    $scope.clearSelection();
+                });
+            };
+
+            $scope.clearSelection = function() {
+                $scope.messenger.publish($scope.selectionEvent, {});
+                $scope.selectedRow = {};
+                $tableDiv.removeClass("row-selected");
+
+                // Delay deselection or the row won't deselect
+                $timeout(function() {
+                    $scope.table.deselect();
+                }, 100);
+            }
+
+            /**
              * Refresh query forces a fresh query for data given the current sorting and limiting selections.
              * @method refreshQuery
              */
@@ -495,6 +545,14 @@ function(external, popups, connectionService, datasetService, errorNotificationS
                 }
 
                 $scope.table = new tables.Table("#" + $scope.tableId, $scope.tableOptions).draw();
+
+                // Enable row selection for Twitter data
+                if(queryResults.data.length && queryResults.data[0].hashtags) {
+                    $scope.addOnClickListener();
+                    $scope.clearSelection();
+                    $scope.addSortListener();
+                }
+
                 $scope.table.refreshLayout();
 
                 // Set the displayed link data for the links popup for the application using the source and index stored in to the triggering button.
