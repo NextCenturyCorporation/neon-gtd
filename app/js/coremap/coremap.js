@@ -382,22 +382,43 @@ coreMap.Map.prototype.createSelectControl =  function(layer) {
             source: "user",
             tags: ["map", "tooltip"]
         });
-        var text = '<div><table class="table table-striped table-condensed">';
-        var attributes;
+        var text;
 
-        // If we're on a cluster layer and have a cluster of 1, just show the attributes of the 1 item.
-        if(feature.cluster && feature.cluster.length === 1) {
-            attributes = feature.cluster[0].attributes;
-        } else {
-            attributes = feature.attributes;
-        }
+        // If we're on a twitter cluster layer, show specific fields
+        if(feature.cluster && feature.cluster[0].attributes.hashtags) {
+            text = '<div><table class="table table-striped table-condensed table-bordered">';
+            text += '<tr><th>user_name</th><th>created_at</th><th>text</th>';
 
-        for(var key in attributes) {
-            if(Object.prototype.hasOwnProperty.call(attributes, key)) {
-                text += '<tr><th>' + _.escape(key) + '</th><td>' + attributes[key] + '</td>';
+            for(var i = 0; i < feature.cluster.length; i++) {
+                if(Object.prototype.hasOwnProperty.call(feature.cluster[i].attributes, "user_name")) {
+                    text += '<tr><td>' + feature.cluster[i].attributes["user_name"] + '</td>';
+                }
+                if(Object.prototype.hasOwnProperty.call(feature.cluster[i].attributes, "created_at")) {
+                    text += '<td>' + feature.cluster[i].attributes["created_at"] + '</td>';
+                }
+                if(Object.prototype.hasOwnProperty.call(feature.cluster[i].attributes, "text")) {
+                    text += '<td>' + feature.cluster[i].attributes["text"] + '</td>';
+                }
             }
+            text += '</table></div>';
+        } else {
+            var attributes;
+            text = '<div><table class="table table-striped table-condensed">';
+
+            // If we're on a cluster layer and have a cluster of 1, just show the attributes of the 1 item.
+            if(feature.cluster && feature.cluster.length == 1) {
+                attributes = feature.cluster[0].attributes;
+            } else {
+                attributes = feature.attributes;
+            }
+
+            for(var key in attributes) {
+                if(Object.prototype.hasOwnProperty.call(attributes, key)) {
+                    text += '<tr><th>' + _.escape(key) + '</th><td>' + attributes[key] + '</td>';
+                }
+            }
+            text += '</table></div>';
         }
-        text += '</table></div>';
 
         me.featurePopup = new OpenLayers.Popup.FramedCloud("Data",
             feature.geometry.getBounds().getCenterLonLat(),
