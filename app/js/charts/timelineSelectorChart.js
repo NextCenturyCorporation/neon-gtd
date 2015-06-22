@@ -48,6 +48,13 @@ charts.TimelineSelectorChart = function(element, configuration) {
     this.data = DEFAULT_DATA;
     this.primarySeries = false;
     this.granularity = 'day';
+    this.dateFormats = {
+        year: '%Y',
+        month: '%b %Y',
+        day: '%d-%b-%Y',
+        hour: '%d-%b-%Y %H:%M'
+    };
+    this.TOOLTIP_ID = 'tooltip';
 
     var self = this; // for internal d3 functions
 
@@ -510,7 +517,22 @@ charts.TimelineSelectorChart = function(element, configuration) {
         }
 
         var gBrush = context.append("g")
-            .attr("class", "brush");
+            .attr("class", "brush")
+            .on('mousemove', function() {
+                var mouseLocation = d3.mouse(this);
+                var graph_x = x.invert(mouseLocation[0]);
+
+                var bisect = d3.bisector(function(d) {
+                    return d.date;
+                }).right;
+                var dataIndex = bisect(values[0].data, graph_x) - 1;
+                if(dataIndex >= 0 && dataIndex < values[0].data.length) {
+                    showTooltip(values[0].data[dataIndex], d3.event);
+                }
+            })
+            .on('mouseout', function() {
+                hideTooltip();
+            });
 
         gBrush.append("rect")
             .attr("x", width + this.config.margin.right)
@@ -596,6 +618,53 @@ charts.TimelineSelectorChart = function(element, configuration) {
         var brushElement = this.svg.select(".brush");
         brushElement.call(this.brush.extent(extent));
         this.updateMask.apply(brushElement[0][0]);
+    };
+
+    var showTooltip = function(item, mouseEvent) {
+        var count = d3.format("0,000.00")(item.value);
+        // Only show the part of the date that makes sense for the selected granularity
+        var dateFormat = self.dateFormats[self.granularity];
+        if(!dateFormat) {
+            dateFormat = self.dateFormats.hour;
+        }
+        var date = d3.time.format.utc(dateFormat)(item.date);
+
+        // Create the contents of the tooltip (#tooltip-container is reused among the various
+        // visualizations)
+        var html = '<div><strong>Date:</strong> ' + _.escape(date) + '</div>' +
+            '<div><strong>Count:</strong> ' + count + '</div>';
+        $("#tooltip-container").html(html);
+        $("#tooltip-container").show();
+        positionTooltip(d3.select('#tooltip-container'), mouseEvent);
+        XDATA.userALE.log({
+            activity: "show",
+            action: "mouseover",
+            elementId: "timeline",
+            elementType: "tooltip",
+            elementSub: "timeline",
+            elementGroup: "chart_group",
+            source: "user",
+            tags: ["tooltip", "timeline"]
+        });
+    };
+
+    var positionTooltip = function(tooltip, mouseEvent) {
+        tooltip.style('top', mouseEvent.pageY + 'px')
+            .style('left', mouseEvent.pageX + 'px');
+    };
+
+    var hideTooltip = function() {
+        $("#tooltip-container").hide();
+        XDATA.userALE.log({
+            activity: "hide",
+            action: "mouseout",
+            elementId: "timeline",
+            elementType: "tooltip",
+            elementSub: "timeline",
+            elementGroup: "chart_group",
+            source: "user",
+            tags: ["tooltip", "timeline"]
+        });
     };
 
     // initialization

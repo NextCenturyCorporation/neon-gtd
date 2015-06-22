@@ -107,13 +107,15 @@ tables.createColumns = function(knownColumnNames, data, ignoreColumnNames, heade
 
     data.forEach(function(row) {
         Object.keys(row).forEach(function(dataColumnName) {
-            if(columnNameToInfo[dataColumnName] && row[dataColumnName]) {
-                // This is not technically correct since we're using a variable-width font but it's faster than calculating the width of the text by inserting it into a DOM element using jQuery.
-                if(columnNameToInfo[dataColumnName].text.length < row[dataColumnName].length) {
-                    columnNameToInfo[dataColumnName].text = row[dataColumnName];
+            if(row[dataColumnName]) {
+                if(columnNameToInfo[dataColumnName]) {
+                    // This is not technically correct since we're using a variable-width font but it's faster than calculating the width of the text by inserting it into a DOM element using jQuery.
+                    if(columnNameToInfo[dataColumnName].text.length < row[dataColumnName].length) {
+                        columnNameToInfo[dataColumnName].text = row[dataColumnName];
+                    }
+                } else {
+                    addColumnName(dataColumnName);
                 }
-            } else {
-                addColumnName(dataColumnName);
             }
         });
     });

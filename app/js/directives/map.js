@@ -417,9 +417,6 @@ angular.module('neonDemo.directives')
                 if(message.addedFilter && message.addedFilter.databaseName && message.addedFilter.tableName) {
                     $scope.queryForMapData(message.addedFilter.databaseName, message.addedFilter.tableName);
                 }
-                if(message.removedFilter && message.removedFilter.databaseName && message.removedFilter.tableName) {
-                    $scope.queryForMapData(message.removedFilter.databaseName, message.removedFilter.tableName);
-                }
             };
 
             var boundsToExtent = function(bounds) {
