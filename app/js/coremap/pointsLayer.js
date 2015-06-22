@@ -316,7 +316,7 @@ coreMap.Map.Layer.PointsLayer.DEFAULT_OPACITY = 0.8;
 coreMap.Map.Layer.PointsLayer.DEFAULT_STROKE_WIDTH = 1;
 coreMap.Map.Layer.PointsLayer.DEFAULT_COLOR = "#00ff00";
 coreMap.Map.Layer.PointsLayer.DEFAULT_STROKE_COLOR = "#ffffff";
-coreMap.Map.Layer.PointsLayer.MIN_RADIUS = 3;
+coreMap.Map.Layer.PointsLayer.MIN_RADIUS = 5;
 coreMap.Map.Layer.PointsLayer.MAX_RADIUS = 13;
 
 // TODO: Keep these here or move back into coreMap?

@@ -417,9 +417,6 @@ angular.module('neonDemo.directives')
                 if(message.addedFilter && message.addedFilter.databaseName && message.addedFilter.tableName) {
                     $scope.queryForMapData(message.addedFilter.databaseName, message.addedFilter.tableName);
                 }
-                if(message.removedFilter && message.removedFilter.databaseName && message.removedFilter.tableName) {
-                    $scope.queryForMapData(message.removedFilter.databaseName, message.removedFilter.tableName);
-                }
             };
 
             var boundsToExtent = function(bounds) {
@@ -569,7 +566,13 @@ angular.module('neonDemo.directives')
                                 sizeMapping: layer.sizeBy,
                                 categoryMapping: layer.colorBy,
                                 defaultColor: layer.defaultColor,
-                                linkyConfig: (layer.linkyConfig ? layer.linkyConfig : {mentions: false,hashtags: false,urls: false,linkTo: "twitter"})
+                                linkyConfig: (layer.linkyConfig ? layer.linkyConfig :
+                                    {
+                                        mentions: false,
+                                        hashtags: false,
+                                        urls: false,
+                                        linkTo: "twitter"
+                                    })
                             });
                             this.map.addLayer(layer.olLayer);
                         } else if(layer.type === coreMap.Map.CLUSTER_LAYER) {
@@ -581,7 +584,13 @@ angular.module('neonDemo.directives')
                                 categoryMapping: layer.colorBy,
                                 defaultColor: layer.defaultColor,
                                 cluster: true,
-                                linkyConfig: (layer.linkyConfig ? layer.linkyConfig : {mentions: false, hashtags: false, urls: false, linkTo: "twitter"})
+                                linkyConfig: (layer.linkyConfig ? layer.linkyConfig :
+                                    {
+                                        mentions: false,
+                                        hashtags: false,
+                                        urls: false,
+                                        linkTo: "twitter"
+                                    })
                             });
                             this.map.addLayer(layer.olLayer);
                         } else if(layer.type === coreMap.Map.HEATMAP_LAYER) {
