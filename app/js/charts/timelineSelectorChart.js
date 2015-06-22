@@ -141,15 +141,6 @@ charts.TimelineSelectorChart = function(element, configuration) {
     };
 
     /**
-     * Removes the brush end handler from the timeline's brush.
-     * @method removeBrushHandler
-     */
-    this.removeBrushHandler = function() {
-        this.brushHandler = undefined;
-        this.brush.on("brushend");
-    };
-
-    /**
      * Clears the brush from the timeline.
      * @method clearBrush
      */

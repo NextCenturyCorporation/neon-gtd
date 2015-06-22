@@ -28,6 +28,12 @@ angular.module("neonDemo.services")
             databases: []
         };
 
+        // Use the Dataset Service to save settings for specific databases/tables and publish messages to all visualizations if those settings change.
+        service.messenger = new neon.eventing.Messenger();
+
+        // The Dataset Service saves the brush used to filter the date for each database/table.
+        service.DATE_CHANGED = "date_changed";
+
         /**
          * Sets the active dataset to the given dataset.
          * @param {Object} The dataset containing {String} name, {String} layout, {String} datastore, {String} hostname,
@@ -51,28 +57,32 @@ angular.module("neonDemo.services")
 
             // Remove databases from the dataset that contain no tables.
             var databaseIndexToRemove = [];
-            for(var i = 0; i < service.dataset.databases.length; ++i) {
-                if(!service.dataset.databases[i].prettyName) {
-                    service.dataset.databases[i].prettyName = service.dataset.databases[i].name;
+            service.dataset.databases.forEach(function(database, index) {
+                if(!database.prettyName) {
+                    database.prettyName = database.name;
                 }
-                if(!(service.dataset.databases[i].tables || service.dataset.databases[i].tables.length)) {
-                    databaseIndexToRemove.push(i);
+                if(!(database.tables || database.tables.length)) {
+                    databaseIndexToRemove.push(index);
                 }
-            }
+            });
 
-            for(i = databaseIndexToRemove.length; i > 0; --i) {
-                service.dataset.databases.splice(i, 1);
-            }
+            databaseIndexToRemove.forEach(function(index) {
+                service.dataset.databases.splice(index, 1);
+            });
 
-            for(i = 0; i < service.dataset.databases.length; ++i) {
-                for(var j = 0; j < service.dataset.databases[i].tables.length; ++j) {
-                    if(!service.dataset.databases[i].tables[j].prettyName) {
-                        service.dataset.databases[i].tables[j].prettyName = service.dataset.databases[i].tables[j].name;
+            service.dataset.databases.forEach(function(database) {
+                database.tables.forEach(function(table) {
+                    if(!table.prettyName) {
+                        table.prettyName = table.name;
                     }
-                    service.dataset.databases[i].tables[j].fields = service.dataset.databases[i].tables[j].fields || [];
-                    service.dataset.databases[i].tables[j].mappings = service.dataset.databases[i].tables[j].mappings || {};
-                }
-            }
+                    table.fields = table.fields || [];
+                    table.mappings = table.mappings || {};
+                    // Create a filter key for each database/table pair with a date mapping.
+                    if(table.mappings["date"]) {
+                        table.dateFilterKey = "date-" + database.name + "-" + table.name + "-" + uuid();
+                    }
+                });
+            });
         };
 
         /**
@@ -504,6 +514,53 @@ angular.module("neonDemo.services")
          */
         service.setMapLayers = function(config) {
             service.dataset.mapLayers = config;
+        };
+
+        /**
+         * Returns the map of date filter keys for this dataset.
+         * @method getDateFilterKeys
+         * @return {Object}
+         */
+        service.getDateFilterKeys = function() {
+            var dateFilterKeys = {};
+            service.dataset.databases.forEach(function(database) {
+                dateFilterKeys[database.name] = {};
+                database.tables.forEach(function(table) {
+                    dateFilterKeys[database.name][table.name] = table.dateFilterKey ? table.dateFilterKey : "";
+                });
+            });
+            return dateFilterKeys;
+        };
+
+        /**
+         * Sets the date brush for the database and table with the given names to the given brush and publishes a date changed message.
+         * @param {String} databaseName
+         * @param {String} tableName
+         * @param {Array} brush
+         * @method setDateBrush
+         */
+        service.setDateBrush = function(databaseName, tableName, brush) {
+            var table = service.getTableWithName(databaseName, tableName);
+            if(table) {
+                table.dateBrush = brush;
+            }
+            service.messenger.publish(service.DATE_CHANGED, {
+                databaseName: databaseName,
+                tableName: tableName,
+                brush: brush
+            });
+        };
+
+        /**
+         * Returns the date brush for the database and table with the given names or an empty array if no brush has been set.
+         * @param {String} databaseName
+         * @param {String} tableName
+         * @method getDateBrush
+         * @return {Array}
+         */
+        service.getDateBrush = function(databaseName, tableName) {
+            var table = service.getTableWithName(databaseName, tableName);
+            return (table && table.dateBrush) ? table.dateBrush : [];
         };
 
         return service;
