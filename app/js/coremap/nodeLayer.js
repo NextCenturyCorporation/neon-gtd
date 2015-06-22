@@ -18,18 +18,22 @@
 coreMap.Map.Layer = coreMap.Map.Layer || {};
 coreMap.Map.Layer.NodeLayer = OpenLayers.Class(OpenLayers.Layer.Vector, {
     CLASS_NAME: "coreMap.Map.Layer.NodeLayer",
-    nodeColor: '',
-    lineColor: '',
+    baseLineWidthDiff: 0,
+    baseRadiusDiff: 0,
     edges: [],
-    latitudeMapping: '',
-    longitudeMapping: '',
-    nodeWeightMapping: '',
     edgeWeightMapping: '',
     categoryMapping: '',
-    minNodeRadius: 0,
+    latitudeMapping: '',
+    lineColor: '',
+    lineWidthDiff: 0,
+    longitudeMapping: '',
     maxNodeRadius: 0,
-    minLineWidth: 0,
+    minNodeRadius: 0,
     maxLineWidth: 0,
+    minLineWidth: 0,
+    nodeColor: '',
+    nodeRadiusDiff: 0,
+    nodeWeightMapping: '',
 
     /**
      * Override the OpenLayers Contructor
@@ -147,6 +151,8 @@ coreMap.Map.Layer.NodeLayer.prototype.createLineStyleObject = function(color, wi
  * determines the thickness of the line.
  * @param {Array<Number>} pt1 The [latitude, longitude] pair of the source node
  * @param {Array<Number>} pt2 The [latitude, longitude] pair of the target node
+ * @param {Number} weight The weight of the line.  This will be compared to other
+ * datapoints to calculate an appropriate line width for rendering.
  * @return {OpenLayers.Feature.Vector} the line to be added.
  * @method createWeightedLine
  */
@@ -160,8 +166,7 @@ coreMap.Map.Layer.NodeLayer.prototype.createWeightedLine = function(pt1, pt2, we
         coreMap.Map.Layer.NodeLayer.DESTINATION_PROJECTION);
 
     var featureLine = new OpenLayers.Feature.Vector(line);
-    featureLine.style = this.createLineStyleObject(this.lineColor || coreMap.Map.Layer.NodeLayer.DEFAULT_LINE_COLOR,
-        wt);
+    featureLine.style = this.createLineStyleObject(this.lineColor || coreMap.Map.Layer.NodeLayer.DEFAULT_LINE_COLOR, wt);
 
     return featureLine;
 };
@@ -207,8 +212,8 @@ coreMap.Map.Layer.NodeLayer.prototype.calculateSizes = function() {
     this.minNodeRadius = this.minLineWidth = Number.MAX_VALUE;
     this.maxNodeRadius = this.maxLineWidth = Number.MIN_VALUE;
     _.each(this.edges, function(element) {
-        var src = me.getValueFromDataElement(me.sourceMapping || coreMap.Map.Layer.NodeLayer.DEFAULT_SRC, element);
-        var tgt = me.getValueFromDataElement(me.targetMapping || coreMap.Map.Layer.NodeLayer.DEFAULT_TGT, element);
+        var src = me.getValueFromDataElement(me.sourceMapping || coreMap.Map.Layer.NodeLayer.DEFAULT_SOURCE, element);
+        var tgt = me.getValueFromDataElement(me.targetMapping || coreMap.Map.Layer.NodeLayer.DEFAULT_TARGET, element);
         var weight = me.getValueFromDataElement(me.weightMapping || coreMap.Map.Layer.NodeLayer.DEFAULT_WEIGHT_MAPPING, element);
         var srcWeight = me.getValueFromDataElement(me.weightMapping || coreMap.Map.Layer.NodeLayer.DEFAULT_WEIGHT_MAPPING, src);
         var tgtWeight = me.getValueFromDataElement(me.weightMapping || coreMap.Map.Layer.NodeLayer.DEFAULT_WEIGHT_MAPPING, tgt);
@@ -239,8 +244,8 @@ coreMap.Map.Layer.NodeLayer.prototype.updateFeatures = function() {
     // Initialize the weighted values.
     this.calculateSizes(this.edges);
     _.each(this.edges, function(element) {
-        var src = me.getValueFromDataElement(me.sourceMapping || coreMap.Map.Layer.NodeLayer.DEFAULT_SRC, element);
-        var tgt = me.getValueFromDataElement(me.targetMapping || coreMap.Map.Layer.NodeLayer.DEFAULT_TGT, element);
+        var src = me.getValueFromDataElement(me.sourceMapping || coreMap.Map.Layer.NodeLayer.DEFAULT_SOURCE, element);
+        var tgt = me.getValueFromDataElement(me.targetMapping || coreMap.Map.Layer.NodeLayer.DEFAULT_TARGET, element);
         var weight = me.getValueFromDataElement(me.weightMapping || coreMap.Map.Layer.NodeLayer.DEFAULT_WEIGHT_MAPPING, element);
 
         var pt1 = [
@@ -275,8 +280,8 @@ coreMap.Map.Layer.NodeLayer.prototype.updateFeatures = function() {
 coreMap.Map.Layer.NodeLayer.DEFAULT_LATITUDE_MAPPING = "latitude";
 coreMap.Map.Layer.NodeLayer.DEFAULT_LONGITUDE_MAPPING = "longitude";
 coreMap.Map.Layer.NodeLayer.DEFAULT_WEIGHT_MAPPING = "wgt";
-coreMap.Map.Layer.NodeLayer.DEFAULT_SRC = "from";
-coreMap.Map.Layer.NodeLayer.DEFAULT_TGT = "to";
+coreMap.Map.Layer.NodeLayer.DEFAULT_SOURCE = "from";
+coreMap.Map.Layer.NodeLayer.DEFAULT_TARGET = "to";
 
 coreMap.Map.Layer.NodeLayer.DEFAULT_OPACITY = 0.8;
 coreMap.Map.Layer.NodeLayer.DEFAULT_STROKE_WIDTH = 1;

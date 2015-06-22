@@ -28,16 +28,8 @@ var coreMap = coreMap || {};
  *     <li>data - An array of data to display in the map</li>
  *     <li>width - The width of the map in pixels.</li>
  *     <li>height - The height of the map in pixels.</li>
- *     <li>latitudeMapping {function | String} - A way to map the data element to latitude.
- *     This could be a string name for a simple mapping or a function for a more complex one.</li>
- *     <li>longitudeMapping {function | String} - A way to map the data element to longitude.
- *     This could be a string name for a simple mapping or a function for a more complex one.</li>
- *     <li>sizeMapping {function | String} - A way to map the data element to size.
- *     This could be a string name for a simple mapping or a function for a more complex one.</li>
- *     <li>categoryMapping {function | String} - A way to map the data element to color.
- *     This could be a string name for a simple mapping or a function for a more complex one.</li>
- *     <li>defaultLayer {String} - The layer to display by default.
- *
+ *     <li>onZoomRect - A zoom handler that will be called when the user selects an area to which
+ *     to zoom and a zoom rectangle is displayed.<li>
  * </ul>
  *
  * @constructor
@@ -48,7 +40,6 @@ var coreMap = coreMap || {};
  *                 {"latitude": "-20", "longitude": 130
  *                ];
  *     var map = new coreMap.Map('map');
- *     map.draw();
  *
  * @example
  *     var opts = {
@@ -56,9 +47,8 @@ var coreMap = coreMap || {};
  *            latitudeMapping: function(element){ return element[0]; },
  *            longitudeMapping: function(element){ return element[1]; },
  *            sizeMapping: function(element){ return element[2]; }
- *                };
+ *     };
  *     var map = new coreMap.Map('map', opts);
- *     map.draw();
  *
  **/
 
@@ -67,41 +57,7 @@ coreMap.Map = function(elementId, opts) {
 
     this.elementId = elementId;
     this.selector = $("#" + elementId);
-
-    // mapping of categories to colors
-    this.colors = {};
-
-    this.latitudeMapping = opts.latitudeMapping || coreMap.Map.DEFAULT_LATITUDE_MAPPING;
-    this.longitudeMapping = opts.longitudeMapping || coreMap.Map.DEFAULT_LONGITUDE_MAPPING;
-    this.sizeMapping = opts.sizeMapping || coreMap.Map.DEFAULT_SIZE_MAPPING;
-
-    this.categoryMapping = opts.categoryMapping;
     this.onZoomRect = opts.onZoomRect;
-
-    //this.colorScale = d3.scale.category20();
-    this.colorRange = [
-        '#39b54a',
-        '#C23333',
-        '#3662CC',
-        "#ff7f0e",
-        "#9467bd",
-        "#8c564b",
-        "#e377c2",
-        "#7f7f7f",
-        "#bcbd22",
-        "#17becf",
-        "#98df8a",
-        "#ff9896",
-        "#aec7e8",
-        "#ffbb78",
-        "#c5b0d5",
-        "#c49c94",
-        "#f7b6d2",
-        "#c7c7c7",
-        "#dbdb8d",
-        "#9edae5"
-    ];
-    this.colorScale = d3.scale.ordinal().range(this.colorRange);
     this.responsive = true;
 
     if(opts.responsive === false) {
@@ -117,9 +73,6 @@ coreMap.Map = function(elementId, opts) {
 
     this.selectableLayers = [];
     this.selectControls = [];
-
-    this.defaultLayer = (opts.defaultLayer === coreMap.Map.HEATMAP_LAYER) ? coreMap.Map.HEATMAP_LAYER : coreMap.Map.POINTS_LAYER;
-
     this.initializeMap();
     this.setupLayers();
     this.setupControls();
@@ -130,8 +83,6 @@ coreMap.Map.DEFAULT_WIDTH = 1024;
 coreMap.Map.DEFAULT_HEIGHT = 680;
 coreMap.Map.MIN_HEIGHT = 200;
 coreMap.Map.MIN_WIDTH = 200;
-coreMap.Map.MIN_RADIUS = 5;
-coreMap.Map.MAX_RADIUS = 13;
 coreMap.Map.BOX_COLOR = "#39b54a";
 coreMap.Map.BOX_WIDTH = 2;
 coreMap.Map.BOX_OPACITY = 1;
@@ -182,22 +133,12 @@ coreMap.Map.prototype.removeLayer = function(layer) {
 };
 
 /**
- * Draws the map data
- * @method draw
- * @deprecated
- */
-coreMap.Map.prototype.draw = function() {
-    // DEPRECATED.
-};
-
-/**
  * Resets the map. This clears all the data, zooms all the way out and centers the map.
  * @method reset
  */
 
 coreMap.Map.prototype.reset = function() {
     this.map.selectControl.unSelectAll();
-    this.draw();
     this.resetZoom();
 };
 
@@ -517,9 +458,9 @@ coreMap.Map.prototype.resizeToElement = function() {
     });
 
     // The map may resize multiple times if a browser resize event is triggered.  In this case,
-    // openlayers elements may have updated before our this method.  In that case, calling
-    // updateSize() is a no-op and will not recenter or redraw our heatmap layer.  To get around
-    // this we shift the view by a pixel and recenter.
+    // openlayers elements may have updated before this method.  In that case, calling
+    // updateSize() is a no-op and will not recenter or redraw layers that render based upon
+    // the current map extent.  To get around this we shift the view by a pixel and recenter.
     if(this.width !== this.map.getSize().w || this.height !== this.map.getSize().h) {
         this.map.updateSize();
     } else {

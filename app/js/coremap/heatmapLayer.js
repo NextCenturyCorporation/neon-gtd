@@ -38,11 +38,11 @@ coreMap.Map.Layer.HeatmapLayer = OpenLayers.Class(OpenLayers.Layer.Heatmap, {
         // Override the style for our specialization.
         var heatmapOptions = {
             visible: true,
-            radius: 10,
-            minOpacity: 0.3,
-            maxOpacity: 0.8,
-            blur: 0.85,
-            valueField: 'count'
+            radius: coreMap.Map.Layer.HeatmapLayer.DEFAULT_RADIUS,
+            minOpacity: coreMap.Map.Layer.HeatmapLayer.DEFAULT_MIN_OPACITY,
+            maxOpacity: coreMap.Map.Layer.HeatmapLayer.DEFAULT_MAX_OPACITY,
+            blur: coreMap.Map.Layer.HeatmapLayer.DEFAULT_BLUR,
+            valueField: coreMap.Map.Layer.HeatmapLayer.DEFAULT_INTENSITY_MAPPING
         };
         var extendOptions = options || {};
         extendOptions.baseLayer = false;
@@ -53,7 +53,9 @@ coreMap.Map.Layer.HeatmapLayer = OpenLayers.Class(OpenLayers.Layer.Heatmap, {
         var args = [name, map, baseLayer, heatmapOptions, extendOptions];
         OpenLayers.Layer.Heatmap.prototype.initialize.apply(this, args);
 
-        this.alwaysInRange = true;  // Force the layer to always be in range.
+        // Let OpenLayers know the display of this layer is not scale-dependent by setting "always in range"
+        // to true.  We want the later to be active at any map scale.
+        this.alwaysInRange = true;
 
         // When we are added to a map, add a resize handler on the map so we know when to rerender
         // our canvas.
@@ -132,9 +134,10 @@ coreMap.Map.Layer.HeatmapLayer.prototype.updateFeatures = function() {
     });
 };
 
+coreMap.Map.Layer.HeatmapLayer.DEFAULT_BLUR = 0.85;
 coreMap.Map.Layer.HeatmapLayer.DEFAULT_LATITUDE_MAPPING = "latitude";
 coreMap.Map.Layer.HeatmapLayer.DEFAULT_LONGITUDE_MAPPING = "longitude";
-coreMap.Map.Layer.HeatmapLayer.DEFAULT_SIZE_MAPPING = "count_";
-coreMap.Map.Layer.HeatmapLayer.DEFAULT_OPACITY = 0.8;
+coreMap.Map.Layer.HeatmapLayer.DEFAULT_MAX_OPACITY = 0.8;
+coreMap.Map.Layer.HeatmapLayer.DEFAULT_MIN_OPACITY = 0.3;
 coreMap.Map.Layer.HeatmapLayer.DEFAULT_RADIUS = 10;
-
+coreMap.Map.Layer.HeatmapLayer.DEFAULT_INTENSITY_MAPPING = "count";
