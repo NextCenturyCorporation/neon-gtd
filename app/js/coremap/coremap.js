@@ -83,9 +83,9 @@ coreMap.Map.DEFAULT_WIDTH = 1024;
 coreMap.Map.DEFAULT_HEIGHT = 680;
 coreMap.Map.MIN_HEIGHT = 200;
 coreMap.Map.MIN_WIDTH = 200;
-coreMap.Map.BOX_COLOR = "#39b54a";
-coreMap.Map.BOX_WIDTH = 2;
-coreMap.Map.BOX_OPACITY = 1;
+coreMap.Map.BOX_COLOR = "#f20101";
+coreMap.Map.BOX_WIDTH = 4;
+coreMap.Map.BOX_OPACITY = 0.9;
 
 coreMap.Map.SOURCE_PROJECTION = new OpenLayers.Projection("EPSG:4326");
 coreMap.Map.DESTINATION_PROJECTION = new OpenLayers.Projection("EPSG:900913");
@@ -321,7 +321,7 @@ coreMap.Map.prototype.createSelectControl =  function(layer) {
 
         for(var key in attributes) {
             if(Object.prototype.hasOwnProperty.call(attributes, key)) {
-                text += '<tr><th>' + _.escape(key) + '</th><td>' + _.escape(attributes[key]) + '</td>';
+                text += '<tr><th>' + _.escape(key) + '</th><td>' + attributes[key] + '</td>';
             }
         }
         text += '</table></div>';
@@ -334,6 +334,8 @@ coreMap.Map.prototype.createSelectControl =  function(layer) {
             true,
             onFeatureUnselect);
         me.map.addPopup(me.featurePopup, true);
+
+        $(".olFramedCloudPopupContent td").linky(feature.layer.linkyConfig);
     };
 
     var onFeatureUnselect = function(feature) {

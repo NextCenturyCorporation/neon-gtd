@@ -40,6 +40,13 @@ coreMap.Map.Layer.PointsLayer = OpenLayers.Class(OpenLayers.Layer.Vector, {
     colorMapping: '',
     categoryMapping: '',
     cluster: false,
+    linkyConfig: {
+        mentions: false,
+        hashtags: false,
+        urls: false,
+        linkTo: "twitter"
+    },
+
 
     /**
      * Override the OpenLayers Contructor
