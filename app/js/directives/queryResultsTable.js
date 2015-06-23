@@ -485,12 +485,32 @@ function(external, popups, connectionService, datasetService, errorNotificationS
                     // Deselect the row if already selected
                     if($scope.selectedRow !== undefined) {
                         if($scope.selectedRow.key === field && $scope.selectedRow.value === row[field]) {
+                            XDATA.userALE.log({
+                                activity: "deselect",
+                                action: "click",
+                                elementId: "row",
+                                elementType: "datagrid",
+                                elementGroup: "table_group",
+                                source: "user",
+                                tags: ["datagrid", "row"]
+                            });
+                            
                             $scope.clearSelection();
                             return;
                         }
                     }
 
                     $scope.$apply(function() {
+                        XDATA.userALE.log({
+                            activity: "select",
+                            action: "click",
+                            elementId: "row",
+                            elementType: "datagrid",
+                            elementGroup: "table_group",
+                            source: "user",
+                            tags: ["datagrid", "row"]
+                        });
+
                         $scope.messenger.publish($scope.selectionEvent, row);
                         $tableDiv.addClass("row-selected");
                         $scope.selectedRow = {
@@ -506,6 +526,16 @@ function(external, popups, connectionService, datasetService, errorNotificationS
              */
             $scope.addSortListener = function() {
                 $scope.table.registerSortListener(function(event, args) {
+                    XDATA.userALE.log({
+                        activity: "deselect",
+                        action: "click",
+                        elementId: "row",
+                        elementType: "datagrid",
+                        elementGroup: "table_group",
+                        source: "system",
+                        tags: ["datagrid", "row"]
+                    });
+
                     $scope.clearSelection();
                 });
             };

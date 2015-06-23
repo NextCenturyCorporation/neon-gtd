@@ -1032,7 +1032,11 @@ angular.module('neonDemo.directives')
                 }
             };
 
-            // Creates a point on the map layer "Selected Point" for the given data
+            /**
+             * Creates a point on map layer "Selected Point" for the given data
+             * @param {Object} data
+             * @method createPoint
+             */
             $scope.createPoint = function(data) {
                 if(data._id) {
                     // Remove previously selected point, if exists
