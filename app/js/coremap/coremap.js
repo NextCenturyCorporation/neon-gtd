@@ -384,7 +384,10 @@ coreMap.Map.prototype.createSelectControl =  function(layer) {
         });
         var text;
 
-        // If we're on a twitter cluster layer, show specific fields
+        /* If we're on a twitter cluster layer, show specific fields.
+         * Limitations:
+         *  - Assumes data has certain column name
+         */
         if(feature.cluster && feature.cluster[0].attributes.hashtags) {
             text = '<div><table class="table table-striped table-condensed table-bordered">';
             text += '<tr><th>user_name</th><th>created_at</th><th>text</th>';
