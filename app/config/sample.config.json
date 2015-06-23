@@ -22,7 +22,8 @@
         "hideNavbarItems": false,
         "hideAdvancedOptions": false,
         "hideErrorNotifications": false,
-        "hideHeaders": false
+        "hideHeaders": false,
+        "hideCloseButton": false
     },
 
     "opencpu": {

@@ -38,10 +38,10 @@ angular.module('neonDemo.directives').directive('visualizationWidget', ["config"
             gridsterConfigIndex: "="
         },
         template: '<div class="visualization-drag-handle"><div class="visualization-buttons">' +
-                '<a class="btn" ng-click="toggleSize()"" ng-mouseover="$event.stopPropagation()">' +
+                '<a class="btn" ng-click="toggleSize()" ng-class="{center: hideCloseButton}" ng-mouseover="$event.stopPropagation()">' +
                 '   <span  class="glyphicon" ng-class="(oldSize) ? \'glyphicon-resize-small\' : \'glyphicon-resize-full\'"></span>' +
                 '</a>' +
-                '<a class="btn" ng-click="remove()" ng-mouseover="$event.stopPropagation()">' +
+                '<a class="btn" ng-click="remove()" ng-hide="hideCloseButton" ng-mouseover="$event.stopPropagation()">' +
                 '   <span  class="glyphicon glyphicon-remove"></span>' +
                 '</a>' +
                 '</div></div>',
@@ -57,6 +57,9 @@ angular.module('neonDemo.directives').directive('visualizationWidget', ["config"
             }
             if(config.hideHeader) {
                 widgetElement.setAttribute("hide-header", true);
+            }
+            if(config.hideCloseButton) {
+                $scope.hideCloseButton = config.hideCloseButton;
             }
 
             // Pass along any bindings.
