@@ -226,18 +226,16 @@ function(connectionService, datasetService, errorNotificationService, filterServ
                             }
                         }
 
-                        var relations = datasetService.getRelations($scope.options.database.name, $scope.options.table.name, [$scope.options.dateField]);
-
                         if(updatingGranularity) {
                             // If the brush changed because of a granularity change, then don't
                             // update the chart. The granularity change will cause the data to be
                             // updated
-                            filterService.replaceFilters($scope.messenger, relations, $scope.filterKeys, $scope.createFilterClauseForDate);
+                            replaceDateFilters();
                             updatingGranularity = false;
                         } else {
                             // Because the timeline ignores its own filter, we just need to update the
                             // chart times and total when this filter is applied
-                            filterService.replaceFilters($scope.messenger, relations, $scope.filterKeys, $scope.createFilterClauseForDate, $scope.updateChartTimesAndTotal);
+                            replaceDateFilters($scope.updateChartTimesAndTotal);
                         }
                     }
                 }, true);
@@ -266,6 +264,15 @@ function(connectionService, datasetService, errorNotificationService, filterServ
                         filterService.removeFilters($scope.messenger, $scope.filterKeys);
                     }
                 });
+            };
+
+            var replaceDateFilters = function(callback) {
+                if($scope.brush === datasetService.getDateBrush($scope.options.database.name, $scope.options.table.name)) {
+                    return;
+                }
+
+                var relations = datasetService.getRelations($scope.options.database.name, $scope.options.table.name, [$scope.options.dateField]);
+                filterService.replaceFilters($scope.messenger, relations, $scope.filterKeys, $scope.createFilterClauseForDate, callback);
             };
 
             /**
@@ -302,7 +309,14 @@ function(connectionService, datasetService, errorNotificationService, filterServ
                     source: "system",
                     tags: ["filter-change", "timeline"]
                 });
+
                 if(message.addedFilter && message.addedFilter.databaseName === $scope.options.database.name && message.addedFilter.tableName === $scope.options.table.name) {
+                    // If the filter changed event was triggered by a change in the global date filter, ignore the filter changed event.
+                    // We don't need to re-query and we'll update the brush in response to the date changed event.
+                    var whereClauses = message.addedFilter.whereClause.whereClauses;
+                    if(whereClauses && whereClauses.length === 2 && whereClauses[0].lhs === $scope.options.dateField && whereClauses[1].lhs === $scope.options.dateField) {
+                        return;
+                    }
                     $scope.queryForChartData();
                 }
             };
@@ -310,7 +324,7 @@ function(connectionService, datasetService, errorNotificationService, filterServ
             /**
              * Event handler for date changed events issued over Neon's messaging channels.
              * @param {Object} message A Neon date changed message.
-             * @method onFiltersChanged
+             * @method onDateChanged
              * @private
              */
             var onDateChanged = function(message) {
