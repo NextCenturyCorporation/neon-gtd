@@ -169,8 +169,8 @@ angular.module('neonDemo.directives')
                     filtersChanged: onFiltersChanged
                 });
 
-                $scope.messenger.subscribe($scope.selectionEvent, function(data) {
-                    $scope.createPoint(data);
+                $scope.messenger.subscribe($scope.selectionEvent, function(msg) {
+                    $scope.createPoint(msg);
                 });
 
                 $scope.$on('$destroy', function() {
@@ -1034,11 +1034,11 @@ angular.module('neonDemo.directives')
 
             /**
              * Creates a point on map layer "Selected Point" for the given data
-             * @param {Object} data
+             * @param {Object} msg
              * @method createPoint
              */
-            $scope.createPoint = function(data) {
-                if(data._id) {
+            $scope.createPoint = function(msg) {
+                if(msg.data) {
                     // Remove previously selected point, if exists
                     if($scope.selectedPointLayer.name) {
                         $scope.map.removeLayer($scope.selectedPointLayer);
@@ -1046,14 +1046,14 @@ angular.module('neonDemo.directives')
 
                     var latMapping = "latitude",
                         lonMapping = "longitude",
-                        pointsLayer = _.find(datasetService.getMapLayers(), {type: "points"});
+                        pointsLayer = _.find(datasetService.getMapLayers(), {type: "points", database: msg.database, table: msg.table});
 
                     if(pointsLayer) {
                         latMapping = pointsLayer.latitudeMapping;
                         lonMapping = pointsLayer.longitudeMapping;
                     }
 
-                    var point = new OpenLayers.Geometry.Point(data[lonMapping], data[latMapping]);
+                    var point = new OpenLayers.Geometry.Point(msg.data[lonMapping], msg.data[latMapping]);
                     point.transform(coreMap.Map.Layer.PointsLayer.SOURCE_PROJECTION, coreMap.Map.Layer.PointsLayer.DESTINATION_PROJECTION);
 
                     var feature = new OpenLayers.Feature.Vector(point);
@@ -1082,7 +1082,7 @@ angular.module('neonDemo.directives')
                     $scope.map.removeLayer($scope.selectedPointLayer);
                     $scope.selectedPointLayer = {};
                 }
-                };
+            };
 
             // Wait for neon to be ready, the create our messenger and intialize the view and data.
             neon.ready(function() {

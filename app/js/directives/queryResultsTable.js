@@ -479,25 +479,20 @@ function(external, popups, connectionService, datasetService, errorNotificationS
              */
             $scope.addOnClickListener = function() {
                 $scope.table.addOnClickListener(function(columns, row) {
-                    var columnIndex = external.anyEnabled ? 1 : 0;
-                    var field = columns[columnIndex].field;
-
                     // Deselect the row if already selected
-                    if($scope.selectedRow !== undefined) {
-                        if($scope.selectedRow.key === field && $scope.selectedRow.value === row[field]) {
-                            XDATA.userALE.log({
-                                activity: "deselect",
-                                action: "click",
-                                elementId: "row",
-                                elementType: "datagrid",
-                                elementGroup: "table_group",
-                                source: "user",
-                                tags: ["datagrid", "row"]
-                            });
-                            
-                            $scope.clearSelection();
-                            return;
-                        }
+                    if($scope.selectedRowId !== undefined && $scope.selectedRowId === row._id) {
+                        XDATA.userALE.log({
+                            activity: "deselect",
+                            action: "click",
+                            elementId: "row",
+                            elementType: "datagrid",
+                            elementGroup: "table_group",
+                            source: "user",
+                            tags: ["datagrid", "row"]
+                        });
+                        
+                        $scope.clearSelection();
+                        return;
                     }
 
                     $scope.$apply(function() {
@@ -511,12 +506,13 @@ function(external, popups, connectionService, datasetService, errorNotificationS
                             tags: ["datagrid", "row"]
                         });
 
-                        $scope.messenger.publish($scope.selectionEvent, row);
+                        $scope.messenger.publish($scope.selectionEvent, {
+                            data: row,
+                            database: $scope.options.database.name,
+                            table: $scope.options.table.name
+                        });
                         $tableDiv.addClass("row-selected");
-                        $scope.selectedRow = {
-                            key: field,
-                            value: row[field]
-                        };
+                        $scope.selectedRowId = row._id;
                     });
                 });
             };
@@ -542,7 +538,7 @@ function(external, popups, connectionService, datasetService, errorNotificationS
 
             $scope.clearSelection = function() {
                 $scope.messenger.publish($scope.selectionEvent, {});
-                $scope.selectedRow = {};
+                $scope.selectedRowId = undefined;
                 $tableDiv.removeClass("row-selected");
 
                 // Delay deselection or the row won't deselect
