@@ -719,13 +719,13 @@ function(external, popups, connectionService, datasetService, errorNotificationS
             };
 
             $scope.handleAscButtonClick = function() {
-                if($scope.options.sortDirection === $scope.DESCENDING) {
+                if($scope.options.sortDirection === $scope.ASCENDING) {
                     $scope.refreshData();
                 }
             };
 
             $scope.handleDescButtonClick = function() {
-                if($scope.options.sortDirection === $scope.ASCENDING) {
+                if($scope.options.sortDirection === $scope.DESCENDING) {
                     $scope.refreshData();
                 }
             };
