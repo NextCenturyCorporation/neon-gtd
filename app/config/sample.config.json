@@ -30,6 +30,9 @@
         "enableOpenCpu": false,
         "enableLogging": false,
         "useAlerts": false,
+        "enableAnomalyDetection": true,
+        "enableStl2": false,
+        "enableMmpp": false,
         "url": "http://neon-opencpu/ocpu/library/NeonAngularDemo/R"
     },
 
