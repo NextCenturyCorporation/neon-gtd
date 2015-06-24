@@ -31,7 +31,7 @@ angular.module("neonDemo.services")
         // Use the Dataset Service to save settings for specific databases/tables and publish messages to all visualizations if those settings change.
         service.messenger = new neon.eventing.Messenger();
 
-        // The Dataset Service saves the brush used to filter the date for each database/table.
+        // The Dataset Service saves the brush extent used to filter the date for each database/table.
         service.DATE_CHANGED = "date_changed";
 
         /**
@@ -78,7 +78,7 @@ angular.module("neonDemo.services")
                     table.fields = table.fields || [];
                     table.mappings = table.mappings || {};
                     // Create a filter key for each database/table pair with a date mapping.
-                    if(table.mappings["date"]) {
+                    if(table.mappings.date) {
                         table.dateFilterKey = "date-" + database.name + "-" + table.name + "-" + uuid();
                     }
                 });
@@ -533,34 +533,34 @@ angular.module("neonDemo.services")
         };
 
         /**
-         * Sets the date brush for the database and table with the given names to the given brush and publishes a date changed message.
+         * Sets the date brush extent for the database and table with the given names to the given brush and publishes a date changed message.
          * @param {String} databaseName
          * @param {String} tableName
-         * @param {Array} brush
-         * @method setDateBrush
+         * @param {Array} brushExtent
+         * @method setDateBrushExtent
          */
-        service.setDateBrush = function(databaseName, tableName, brush) {
+        service.setDateBrushExtent = function(databaseName, tableName, brushExtent) {
             var table = service.getTableWithName(databaseName, tableName);
             if(table) {
-                table.dateBrush = brush;
+                table.dateBrushExtent = brushExtent;
             }
             service.messenger.publish(service.DATE_CHANGED, {
                 databaseName: databaseName,
                 tableName: tableName,
-                brush: brush
+                brushExtent: brushExtent
             });
         };
 
         /**
-         * Returns the date brush for the database and table with the given names or an empty array if no brush has been set.
+         * Returns the date brush extent for the database and table with the given names or an empty array if no brush extent has been set.
          * @param {String} databaseName
          * @param {String} tableName
-         * @method getDateBrush
+         * @method getDateBrushExtent
          * @return {Array}
          */
-        service.getDateBrush = function(databaseName, tableName) {
+        service.getDateBrushExtent = function(databaseName, tableName) {
             var table = service.getTableWithName(databaseName, tableName);
-            return (table && table.dateBrush) ? table.dateBrush : [];
+            return (table && table.dateBrushExtent) ? table.dateBrushExtent : [];
         };
 
         return service;
