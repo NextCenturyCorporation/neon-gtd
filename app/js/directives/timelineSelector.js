@@ -937,7 +937,6 @@ function(connectionService, datasetService, errorNotificationService, filterServ
                     }
                     $scope.$apply();
                 }).fail(function() {
-                    console.log("Got error from Anomaly Detection");
                     // If the request fails, then just update.
                     $scope.$apply();
                 });
