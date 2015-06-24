@@ -533,21 +533,34 @@ angular.module("neonDemo.services")
         };
 
         /**
-         * Sets the date brush extent for the database and table with the given names to the given brush and publishes a date changed message.
+         * Publishes a date changed message with the given database name, table name, and brush extent.
          * @param {String} databaseName
          * @param {String} tableName
          * @param {Array} brushExtent
-         * @method setDateBrushExtent
+         * @method publishDateChanged
+         * @private
          */
-        service.setDateBrushExtent = function(databaseName, tableName, brushExtent) {
-            var table = service.getTableWithName(databaseName, tableName);
-            if(table) {
-                table.dateBrushExtent = brushExtent;
-            }
+        var publishDateChanged = function(databaseName, tableName, brushExtent) {
             service.messenger.publish(service.DATE_CHANGED, {
                 databaseName: databaseName,
                 tableName: tableName,
                 brushExtent: brushExtent
+            });
+        };
+
+        /**
+         * Sets the date brush extent for the databases and tables in the given relations to the given brush extent and publishes a date changed message for each.
+         * @param {Array} relations
+         * @param {Array} brushExtent
+         * @method setDateBrushExtentForRelations
+         */
+        service.setDateBrushExtentForRelations = function(relations, brushExtent) {
+            relations.forEach(function(relation) {
+                var table = service.getTableWithName(relation.database, relation.table);
+                if(table) {
+                    table.dateBrushExtent = brushExtent;
+                    publishDateChanged(relation.database, relation.table, brushExtent);
+                }
             });
         };
 
@@ -561,6 +574,21 @@ angular.module("neonDemo.services")
         service.getDateBrushExtent = function(databaseName, tableName) {
             var table = service.getTableWithName(databaseName, tableName);
             return (table && table.dateBrushExtent) ? table.dateBrushExtent : [];
+        };
+
+        /**
+         * Removes the date brush extent for the databases and tables in the given relations and publishes a date changed message for each.
+         * @param {Array} relations
+         * @method removeDateBrushExtentForRelations
+         */
+        service.removeDateBrushExtentForRelations = function(relations) {
+            relations.forEach(function(relation) {
+                var table = service.getTableWithName(relation.database, relation.table);
+                if(table) {
+                    table.dateBrushExtent = [];
+                    publishDateChanged(relation.database, relation.table, []);
+                }
+            });
         };
 
         return service;
