@@ -24,6 +24,9 @@ charts.LineChart = function(rootElement, selector, opts) {
     this.yAttribute = opts.y;
     this.margin = $.extend({}, charts.LineChart.DEFAULT_MARGIN, opts.margin || {});
 
+    this.brush = undefined;
+    this.brushHandler = undefined;
+
     this.hiddenSeries = [];
 
     this.colors = [];
@@ -184,7 +187,7 @@ charts.LineChart.prototype.getColorMappings = function() {
     return me.colors;
 };
 
-charts.LineChart.prototype.drawLine = function(opts) {
+charts.LineChart.prototype.drawLines = function(opts) {
     /* jshint loopfunc:true */
     var me = this;
     var i = 0;
@@ -501,6 +504,194 @@ charts.LineChart.prototype.drawLine = function(opts) {
     });
 };
 
+/**
+ * Returns a function that runs the given brush handler using the extent from the given D3 brush and logs the event.
+ * @param {Object} brush
+ * @param {Function} brushHandler
+ * @method runBrushHandler
+ * @return {Function}
+ */
+charts.LineChart.prototype.runBrushHandler = function(brush, brushHandler) {
+    return function() {
+        XDATA.userALE.log({
+            activity: "select",
+            action: "dragend",
+            elementId: "linechart-brush",
+            elementType: "canvas",
+            elementSub: "linechart-brush",
+            elementGroup: "chart_group",
+            source: "user",
+            tags: ["linechart", "brush"]
+        });
+        if(brushHandler) {
+            brushHandler(brush.extent());
+        }
+    };
+};
+
+/**
+ * Sets the brush handler function for this line chart to run the given function and log the event.
+ * @param {Function} brushHandler
+ * @method setBrushHandler
+ */
+charts.LineChart.prototype.setBrushHandler = function(brushHandler) {
+    this.brushHandler = brushHandler;
+    if(this.brush) {
+        this.brush.on("brushend", this.runBrushHandler(this.brush, this.brushHandler));
+    }
+};
+
+/**
+ * Draws the brush:  the highlighted filtered area.  Used the corresponding function in the timeline chart for reference.
+ * @method drawBrush
+ */
+charts.LineChart.prototype.drawBrush = function() {
+    var me = this;
+
+    this.brush = d3.svg.brush().x(this.x).on("brush", function() {
+        me.drawBrushMasks(this, me.brush);
+    });
+
+    if(this.brushHandler) {
+        this.brush.on("brushstart", function() {
+            XDATA.userALE.log({
+                activity: "select",
+                action: "dragstart",
+                elementId: "linechart-brush",
+                elementType: "canvas",
+                elementSub: "linechart-brush",
+                elementGroup: "chart_group",
+                source: "user",
+                tags: ["linechart", "brush"]
+            });
+        });
+        this.brush.on("brushend", this.runBrushHandler(this.brush, this.brushHandler));
+    }
+
+    var d3Brush = this.svg.append("g").attr("class", "brush");
+
+    d3Brush.append("rect")
+        .attr("x", this.width + this.margin.right)
+        .attr("y", -6)
+        .attr("width", this.width)
+        .attr("height", this.height + 7)
+        .attr("class", "mask mask-east");
+
+    d3Brush.append("rect")
+        .attr("x", this.width + this.margin.left)
+        .attr("y", -6)
+        .attr("width", this.width)
+        .attr("height", this.height + 7)
+        .attr("class", "mask mask-west");
+
+    d3Brush.call(this.brush);
+
+    d3Brush.selectAll("rect").attr("y", -6).attr("height", this.height + 7);
+
+    d3Brush.selectAll(".e").append("rect")
+        .attr("y", -6)
+        .attr("width", 1)
+        .attr("height", this.height + 6)
+        .attr("class", "resize-divider");
+
+    d3Brush.selectAll(".w").append("rect")
+        .attr("x", -1)
+        .attr("y", -6)
+        .attr("width", 1)
+        .attr("height", this.height + 6)
+        .attr("class", "resize-divider");
+
+    var height = this.height;
+    d3Brush.selectAll(".resize").append("path").attr("d", function(d) {
+        var e = +(d === "e");
+        var x = e ? 1 : -1;
+        var y = height / 3;
+        return "M" + (0.5 * x) + "," + y +
+            "A6,6 0 0 " + e + " " + (6.5 * x) + "," + (y + 6) +
+            "V" + (2 * y - 6) +
+            "A6,6 0 0 " + e + " " + (0.5 * x) + "," + (2 * y) +
+            "Z" +
+            "M" + (2.5 * x) + "," + (y + 8) +
+            "V" + (2 * y - 8) +
+            "M" + (4.5 * x) + "," + (y + 8) +
+            "V" + (2 * y - 8);
+    });
+};
+
+/**
+ * Draws the brush masks:  the grayed unfiltered areas outside the brush.  Used the corresponding function in the timeline chart for reference.
+ * @param {Object} element
+ * @param {Object} brush
+ * @method drawBrushMasks
+ */
+charts.LineChart.prototype.drawBrushMasks = function(element, brush) {
+    if(d3.event) {
+        var timeFunction = d3.time.day.utc;
+        var oldExtent = brush.extent();
+        var newExtent;
+
+        if(!oldExtent[0] || !oldExtent[1]) {
+            return;
+        }
+
+        if(d3.event.mode === "move") {
+            var startDay = timeFunction.round(oldExtent[0]);
+            var range = timeFunction.range(oldExtent[0], oldExtent[1]);
+            var endDay = timeFunction.offset(startDay, range.length);
+            newExtent = [startDay, endDay];
+        } else {
+            newExtent = oldExtent.map(timeFunction.round);
+
+            if(newExtent[0] >= newExtent[1]) {
+                newExtent[0] = timeFunction.floor(oldExtent[0]);
+                newExtent[1] = timeFunction.ceil(oldExtent[1]);
+            }
+        }
+
+        if(newExtent[0] < newExtent[1]) {
+            d3.select(element).call(brush.extent(newExtent));
+        }
+    }
+
+    var brushElement = $(element);
+    var extentX = brushElement.find(".extent").attr("x");
+    var extentWidth = brushElement.find(".extent").attr("width");
+    var width = parseInt(brushElement.find(".mask-west").attr("width").replace("px", ""), 10);
+
+    if(extentWidth === "0" || !extentWidth) {
+        brushElement.find(".mask-west").attr("x", (0 - (width + 50)));
+        brushElement.find(".mask-east").attr("x", (width + 50));
+    } else {
+        brushElement.find(".mask-west").attr("x", (parseFloat(extentX) - width));
+        brushElement.find(".mask-east").attr("x", (parseFloat(extentX) + parseFloat(extentWidth)));
+    }
+};
+
+/**
+ * Clears the D3 brush.
+ * @method clearBrush
+ */
+charts.LineChart.prototype.clearBrush = function() {
+    this.brush.clear();
+    d3.select(this.element).select(".brush").call(this.brush);
+};
+
+/**
+ * Renders the given brush extent.
+ * @param {Array} extent
+ * @method renderBrushExtent
+ */
+charts.LineChart.prototype.renderBrushExtent = function(extent) {
+    if(!extent) {
+        this.clearBrush();
+        return;
+    }
+
+    var brushElement = this.svg.select(".brush");
+    brushElement.call(this.brush.extent(extent));
+    this.drawBrushMasks(brushElement[0][0], this.brush);
+};
+
 charts.LineChart.prototype.toggleSeries = function(series) {
     var index = this.hiddenSeries.indexOf(series);
     var activity = '';
@@ -516,16 +707,28 @@ charts.LineChart.prototype.toggleSeries = function(series) {
         this.hiddenSeries.splice(0);
     }
 
-    this.redraw();
+    this.draw();
 
     return activity;
 };
 
-charts.LineChart.prototype.redraw = function() {
-    var me = this;
-    me.drawChart();
-    if(me.data) {
-        me.drawLine(me.data);
+/**
+ * Draws this line chart.  Sets its data to the new data if given.
+ * @param {Array} data (Optional)
+ * @method draw
+ */
+charts.LineChart.prototype.draw = function(data) {
+    var extent = this.brush ? this.brush.extent() : undefined;
+    this.drawChart();
+    if(data) {
+        this.data = data;
+    }
+    if(this.data) {
+        this.drawLines(this.data);
+    }
+    this.drawBrush();
+    if(extent) {
+        this.renderBrushExtent(extent);
     }
 };
 
@@ -533,7 +736,7 @@ charts.LineChart.prototype.redrawOnResize = function() {
     var me = this;
 
     function drawChart() {
-        me.redraw();
+        me.draw();
     }
 
     // Debounce is needed because browser resizes fire this resize even multiple times.

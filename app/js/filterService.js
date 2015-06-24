@@ -108,7 +108,7 @@ angular.module("neonDemo.services")
          *      <li> {String} or {Array} The field name(s) </li>
          *  </ul>
          * @method createFilter
-         * @return {Object} A neon.query.Filter object
+         * @return {Object} A neon.query.Filter object or undefined if no filter clause could be created
          */
         service.createFilter = function(relation, createFilterClauseFunction) {
             // Creates a list of arguments for the filter clause creation function.  Each element is either a {String} or an {Array} depending on the number
@@ -119,17 +119,26 @@ angular.module("neonDemo.services")
                 table: relation.table
             };
 
-            var filterClause;
+            var filterClause = undefined;
             if(argumentFieldsList.length === 1) {
                 filterClause = createFilterClauseFunction(relationDatabaseAndTableName, argumentFieldsList[0]);
             } else {
                 var filterClauses = [];
                 for(var i = 0; i < argumentFieldsList.length; ++i) {
-                    filterClauses.push(createFilterClauseFunction(relationDatabaseAndTableName, argumentFieldsList[i]));
+                    var result = createFilterClauseFunction(relationDatabaseAndTableName, argumentFieldsList[i]);
+                    if(result) {
+                        filterClauses.push(result);
+                    }
                 }
-                filterClause = neon.query.or.apply(neon.query, filterClauses);
+                if(filterClauses.length) {
+                    filterClause = neon.query.or.apply(neon.query, filterClauses);
+                }
             }
-            return new neon.query.Filter().selectFrom(relation.database, relation.table).where(filterClause);
+
+            if(filterClause) {
+                return new neon.query.Filter().selectFrom(relation.database, relation.table).where(filterClause);
+            }
+            return undefined;
         };
 
         /**
@@ -148,14 +157,23 @@ angular.module("neonDemo.services")
          */
         service.addFilters = function(messenger, relations, filterKeys, createFilterClauseFunction, successCallback, errorCallback) {
             var addFilter = function(relationsToAdd) {
-                var relation = relationsToAdd.shift();
-                var filter = service.createFilter(relation, createFilterClauseFunction);
-                messenger.addFilter(filterKeys[relation.database][relation.table], filter, function() {
+                var addNextFilter = function() {
                     if(relationsToAdd.length) {
                         addFilter(relationsToAdd);
                     } else if(successCallback) {
                         successCallback();
                     }
+                };
+
+                var relation = relationsToAdd.shift();
+                var filter = service.createFilter(relation, createFilterClauseFunction);
+                if(!filter) {
+                    addNextFilter();
+                    return;
+                }
+
+                messenger.addFilter(filterKeys[relation.database][relation.table], filter, function() {
+                    addNextFilter();
                 }, errorCallback);
             };
 
@@ -178,14 +196,23 @@ angular.module("neonDemo.services")
          */
         service.replaceFilters = function(messenger, relations, filterKeys, createFilterClauseFunction, successCallback, errorCallback) {
             var replaceFilter = function(relationsToReplace) {
-                var relation = relationsToReplace.shift();
-                var filter = service.createFilter(relation, createFilterClauseFunction);
-                messenger.replaceFilter(filterKeys[relation.database][relation.table], filter, function() {
+                var replaceNextFilter = function() {
                     if(relationsToReplace.length) {
                         replaceFilter(relationsToReplace);
                     } else if(successCallback) {
                         successCallback();
                     }
+                };
+
+                var relation = relationsToReplace.shift();
+                var filter = service.createFilter(relation, createFilterClauseFunction);
+                if(!filter) {
+                    replaceNextFilter();
+                    return;
+                }
+
+                messenger.replaceFilter(filterKeys[relation.database][relation.table], filter, function() {
+                    replaceNextFilter();
                 }, errorCallback);
             };
 

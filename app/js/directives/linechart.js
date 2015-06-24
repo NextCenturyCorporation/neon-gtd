@@ -28,8 +28,8 @@
  * @constructor
  */
 angular.module('neonDemo.directives')
-.directive('linechart', ['ConnectionService', 'DatasetService', 'ErrorNotificationService', '$timeout', '$filter',
-function(connectionService, datasetService, errorNotificationService, $timeout, $filter) {
+.directive('linechart', ['ConnectionService', 'DatasetService', 'ErrorNotificationService', 'FilterService', '$timeout', '$filter',
+function(connectionService, datasetService, errorNotificationService, filterService, $timeout, $filter) {
     var COUNT_FIELD_NAME = 'value';
 
     return {
@@ -65,7 +65,9 @@ function(connectionService, datasetService, errorNotificationService, $timeout, 
             $scope.tables = [];
             $scope.totalType = 'count';
             $scope.fields = [];
+            $scope.filterKeys = {};
             $scope.chart = undefined;
+            $scope.brushExtent = [];
             $scope.colorMappings = [];
             $scope.seriesLimit = 10;
             $scope.errorMessage = undefined;
@@ -87,7 +89,8 @@ function(connectionService, datasetService, errorNotificationService, $timeout, 
                         headerHeight += $(this).outerHeight(true);
                     });
                     $element.find('.linechart').height($element.height() - headerHeight);
-                    $scope.chart.redraw();
+                    // Redraw the line chart.
+                    $scope.chart.draw();
                 }
             };
 
@@ -95,6 +98,7 @@ function(connectionService, datasetService, errorNotificationService, $timeout, 
                 $scope.messenger.events({
                     filtersChanged: onFiltersChanged
                 });
+                $scope.messenger.subscribe(datasetService.DATE_CHANGED, onDateChanged);
 
                 $scope.$on('$destroy', function() {
                     XDATA.userALE.log({
@@ -109,6 +113,9 @@ function(connectionService, datasetService, errorNotificationService, $timeout, 
                     });
                     $element.off("resize", updateChartSize);
                     $scope.messenger.removeEvents();
+                    if($scope.brushExtent.length) {
+                        filterService.removeFilters($scope.messenger, $scope.filterKeys);
+                    }
                 });
 
                 // This resizes the chart when the div changes.  This rely's on jquery's resize plugin to fire
@@ -171,8 +178,45 @@ function(connectionService, datasetService, errorNotificationService, $timeout, 
                     source: "system",
                     tags: ["filter-change", "linechart"]
                 });
+
                 if(message.addedFilter && message.addedFilter.databaseName === $scope.options.database.name && message.addedFilter.tableName === $scope.options.table.name) {
+                    // If the filter changed event was triggered by a change in the global date filter, ignore the filter changed event.
+                    // We don't need to re-query and we'll update the brush extent extent in response to the date changed event.
+                    var whereClauses = message.addedFilter.whereClause ? message.addedFilter.whereClause.whereClauses : undefined;
+                    if(whereClauses && whereClauses.length === 2 && whereClauses[0].lhs === $scope.options.attrX && whereClauses[1].lhs === $scope.options.attrX) {
+                        return;
+                    }
                     $scope.queryForData();
+                }
+            };
+
+            /**
+             * Event handler for date changed events issued over Neon's messaging channels.
+             * @param {Object} message A Neon date changed message.
+             * @method onDateChanged
+             * @private
+             */
+            var onDateChanged = function(message) {
+                XDATA.userALE.log({
+                    activity: "alter",
+                    action: "receive",
+                    elementId: "linechart-range",
+                    elementType: "canvas",
+                    elementSub: "date-range",
+                    elementGroup: "chart_group",
+                    source: "system",
+                    tags: ["linechart", "date-range", "filter-change"]
+                });
+
+                if($scope.options.database.name === message.databaseName && $scope.options.table.name === message.tableName && $scope.brushExtent !== message.brushExtent) {
+                    $scope.brushExtent = message.brushExtent;
+                    renderBrushExtent();
+                }
+            };
+
+            var renderBrushExtent = function() {
+                if($scope.chart) {
+                    $scope.chart.renderBrushExtent($scope.brushExtent);
                 }
             };
 
@@ -185,7 +229,7 @@ function(connectionService, datasetService, errorNotificationService, $timeout, 
                 var connection = connectionService.getActiveConnection();
 
                 if(!connection || !$scope.options.attrX || (!$scope.options.attrY && $scope.options.aggregation !== "count")) {
-                    drawChart();
+                    drawLineChart();
                     $scope.loadingData = false;
                     return;
                 }
@@ -222,7 +266,8 @@ function(connectionService, datasetService, errorNotificationService, $timeout, 
                 }
 
                 query.aggregate(neon.query.MIN, $scope.options.attrX, 'date')
-                    .sortBy('date', neon.query.ASCENDING);
+                    .sortBy('date', neon.query.ASCENDING)
+                    .ignoreFilters([$scope.filterKeys[$scope.options.database.name][$scope.options.table.name]]);
 
                 connection.executeQuery(query, callback, function(response) {
                     XDATA.userALE.log({
@@ -235,7 +280,7 @@ function(connectionService, datasetService, errorNotificationService, $timeout, 
                         source: "system",
                         tags: ["failed", "linechart"]
                     });
-                    drawChart();
+                    drawLineChart();
                     $scope.loadingData = false;
                     if(response.responseJSON) {
                         $scope.errorMessage = errorNotificationService.showErrorMessage($element, response.responseJSON.error, response.responseJSON.stackTrace);
@@ -262,6 +307,7 @@ function(connectionService, datasetService, errorNotificationService, $timeout, 
                         }
                     }
                 }
+                $scope.filterKeys = filterService.createFilterKeys("linechart", datasetService.getDatabaseAndTableNames(), datasetService.getDateFilterKeys());
 
                 if(initializing) {
                     $scope.updateTables();
@@ -294,6 +340,14 @@ function(connectionService, datasetService, errorNotificationService, $timeout, 
                 $scope.options.aggregation = $scope.bindAggregationField || "count";
                 $scope.fields = datasetService.getDatabaseFields($scope.options.database.name, $scope.options.table.name);
                 $scope.fields.sort();
+
+                var globalBrushExtent = datasetService.getDateBrushExtent($scope.options.database.name, $scope.options.table.name);
+                if($scope.brushExtent !== globalBrushExtent) {
+                    $scope.brushExtent = globalBrushExtent;
+                    renderBrushExtent();
+                } else if($scope.brushExtent.length) {
+                    $scope.removeBrush();
+                }
                 $scope.queryForData();
             };
 
@@ -431,8 +485,7 @@ function(connectionService, datasetService, errorNotificationService, $timeout, 
                     });
 
                     $scope.$apply(function() {
-                        drawChart();
-                        drawLine(data);
+                        drawLineChart(data);
                         $scope.loadingData = false;
                         // Use a timeout so we resize the chart after the legend renders (since the legend size affects the chart size).
                         $timeout(function() {
@@ -549,7 +602,12 @@ function(connectionService, datasetService, errorNotificationService, $timeout, 
                 return resultData;
             };
 
-            var drawChart = function() {
+            /**
+             * Creates and draws a new line chart with the given data, if any.
+             * @param {Array} data
+             * @method drawLineChart
+             */
+            var drawLineChart = function(data) {
                 var opts = {
                     x: "date",
                     y: "value",
@@ -561,12 +619,14 @@ function(connectionService, datasetService, errorNotificationService, $timeout, 
                     $scope.chart.destroy();
                 }
                 $scope.chart = new charts.LineChart($element[0], '.linechart', opts);
-                $scope.chart.drawChart();
-            };
-
-            var drawLine = function(data) {
-                $scope.chart.drawLine(data);
+                $scope.chart.setBrushHandler(function(data) {
+                    $scope.$apply(function() {
+                        updateBrush(data);
+                    });
+                });
+                $scope.chart.draw(data);
                 $scope.colorMappings = $scope.chart.getColorMappings();
+                renderBrushExtent();
             };
 
             /**
@@ -594,6 +654,83 @@ function(connectionService, datasetService, errorNotificationService, $timeout, 
                     return "(" + colorMappingObject.max + ")";
                 }
                 return "";
+            };
+
+            /**
+             * Updates the brush extent in this visualization's chart and the dataset service.
+             * @param {Array} brushExtent
+             * @method updateBrush
+             */
+            var updateBrush = function(brushExtent) {
+                XDATA.userALE.log({
+                    activity: "select",
+                    action: "click",
+                    elementId: "linechart-range",
+                    elementType: "canvas",
+                    elementSub: "date-range",
+                    elementGroup: "chart_group",
+                    source: "user",
+                    tags: ["filter", "date-range"]
+                });
+
+                if(!brushExtent || brushExtent.length < 2 || brushExtent[0].getTime() === brushExtent[1].getTime()) {
+                    $scope.removeBrush();
+                    return;
+                }
+
+                $scope.brushExtent = brushExtent;
+                renderBrushExtent();
+
+                if($scope.brushExtent === datasetService.getDateBrushExtent($scope.options.database.name, $scope.options.table.name)) {
+                    return;
+                }
+
+                var relations = datasetService.getRelations($scope.options.database.name, $scope.options.table.name, [$scope.options.attrX]);
+                datasetService.setDateBrushExtentForRelations(relations, $scope.brushExtent);
+                filterService.replaceFilters($scope.messenger, relations, $scope.filterKeys, createFilterClauseForDate, updateLegend);
+            };
+
+            /**
+             * Removes the brush extent from this visualization's chart and the dataset service.
+             * @method removeBrush
+             */
+            $scope.removeBrush = function() {
+                XDATA.userALE.log({
+                    activity: "deselect",
+                    action: "click",
+                    elementId: "linechart-clear-range",
+                    elementType: "button",
+                    elementGroup: "chart_group",
+                    source: "user",
+                    tags: ["filter", "date-range"]
+                });
+
+                $scope.brushExtent = [];
+                renderBrushExtent();
+                filterService.removeFilters($scope.messenger, $scope.filterKeys);
+                var relations = datasetService.getRelations($scope.options.database.name, $scope.options.table.name, [$scope.options.attrX]);
+                datasetService.removeDateBrushExtentForRelations(relations);
+            };
+
+            /**
+             * Creates and returns a filter on the given date field using the brush extent set by this visualization.
+             * @param {Object} databaseAndTableName Contains the database and table name
+             * @param {String} dateFieldName The name of the date field on which to filter
+             * @method createFilterClauseForDate
+             * @return {Object} A neon.query.Filter object or undefined if a filter clause could not be created
+             */
+            var createFilterClauseForDate = function(databaseAndTableName, dateFieldName) {
+                if($scope.brushExtent.length < 2) {
+                    return undefined;
+                }
+
+                var startFilterClause = neon.query.where(dateFieldName, ">=", $scope.brushExtent[0]);
+                var endFilterClause = neon.query.where(dateFieldName, ">=", $scope.brushExtent[1]);
+                return neon.query.and.apply(this, [startFilterClause, endFilterClause]);
+            };
+
+            var updateLegend = function() {
+                // TODO
             };
 
             neon.ready(function() {
