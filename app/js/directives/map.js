@@ -530,7 +530,6 @@ angular.module('neonDemo.directives')
             $scope.updateLayersAndQueries = function() {
                 var i = 0;
                 var layer = {};
-                var name = "";
 
                 $scope.options.layers = cloneDatasetLayerConfig();
                 $scope.layersByDatabaseAndTable = createLayersByDatabaseAndTableMap($scope.options.layers);
@@ -1008,9 +1007,13 @@ angular.module('neonDemo.directives')
                         $scope.map.removeLayer($scope.selectedPointLayer);
                     }
 
-                    var latMapping = "latitude",
-                        lonMapping = "longitude",
-                        pointsLayer = _.find(datasetService.getMapLayers(), {type: "points", database: msg.database, table: msg.table});
+                    var latMapping = "latitude";
+                    var lonMapping = "longitude";
+                    var pointsLayer = _.find(datasetService.getMapLayers(), {
+                        type: "points",
+                        database: msg.database,
+                        table: msg.table
+                    });
 
                     if(pointsLayer) {
                         latMapping = pointsLayer.latitudeMapping;
@@ -1024,7 +1027,7 @@ angular.module('neonDemo.directives')
 
                     var layer = new OpenLayers.Layer.Vector("Selected Point", {
                         styleMap: new OpenLayers.StyleMap({
-                            "default": {
+                            default: {
                                 graphicName: "star",
                                 strokeOpacity: 0.8,
                                 strokeWidth: 1,

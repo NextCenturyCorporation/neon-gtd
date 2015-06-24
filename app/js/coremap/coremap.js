@@ -90,17 +90,11 @@ coreMap.Map.CLUSTER_LAYER = 'cluster';
 coreMap.Map.NODE_LAYER = 'node';
 
 /**
- * Simple close handler to be called if a popup is closed.
- * @param Object evet A close event.
- * @private
- * @method onPopupClose
+ * Resets the select control by temporarily removing it from the map
+ * before syncing to the current list of selectable layers.
+ * @method removeLayer
  */
-
-var onPopupClose = function() {
-    this.map.selectControl.unselect(this.feature);
-};
-
-coreMap.Map.prototype.resetSelectControl = function(layer) {
+coreMap.Map.prototype.resetSelectControl = function() {
     // We remove the control before resetting the selectable layers
     // partly because select controls interfere with the behavior or map.removeLayer()
     // if they are active and contain multiple layers when one is removed.
@@ -111,6 +105,12 @@ coreMap.Map.prototype.resetSelectControl = function(layer) {
     this.selectControl.activate();
 };
 
+/**
+ * Adds a layer to the map and the layer select control if it's a
+ * layer type supported by the control.
+ * @param {Object} An OpenLayers layer object or variant.
+ * @method addLayer
+ */
 coreMap.Map.prototype.addLayer = function(layer) {
     this.map.addLayer(layer);
     if(layer.CLASS_NAME === "coreMap.Map.Layer.PointsLayer")  {
@@ -119,6 +119,12 @@ coreMap.Map.prototype.addLayer = function(layer) {
     }
 };
 
+/**
+ * Removes a layer from the map and updates the select controls to
+ * clean up any spurious layer popups.
+ * @param {Object} An OpenLayers layer object or variant.
+ * @method removeLayer
+ */
 coreMap.Map.prototype.removeLayer = function(layer) {
     this.map.removeLayer(layer);
     if(this.selectableLayers[layer.id]) {
@@ -317,13 +323,13 @@ coreMap.Map.prototype.createSelectControl =  function(layer) {
 
             for(var i = 0; i < feature.cluster.length; i++) {
                 if(Object.prototype.hasOwnProperty.call(feature.cluster[i].attributes, "user_name")) {
-                    text += '<tr><td>' + feature.cluster[i].attributes["user_name"] + '</td>';
+                    text += '<tr><td>' + feature.cluster[i].attributes.user_name + '</td>';
                 }
                 if(Object.prototype.hasOwnProperty.call(feature.cluster[i].attributes, "created_at")) {
-                    text += '<td>' + feature.cluster[i].attributes["created_at"] + '</td>';
+                    text += '<td>' + feature.cluster[i].attributes.created_at + '</td>';
                 }
                 if(Object.prototype.hasOwnProperty.call(feature.cluster[i].attributes, "text")) {
-                    text += '<td>' + feature.cluster[i].attributes["text"] + '</td>';
+                    text += '<td>' + feature.cluster[i].attributes.text + '</td>';
                 }
             }
             text += '</table></div>';
@@ -332,7 +338,7 @@ coreMap.Map.prototype.createSelectControl =  function(layer) {
             text = '<div><table class="table table-striped table-condensed">';
 
             // If we're on a cluster layer and have a cluster of 1, just show the attributes of the 1 item.
-            if(feature.cluster && feature.cluster.length == 1) {
+            if(feature.cluster && feature.cluster.length === 1) {
                 attributes = feature.cluster[0].attributes;
             } else {
                 attributes = feature.attributes;
@@ -358,7 +364,7 @@ coreMap.Map.prototype.createSelectControl =  function(layer) {
         $(".olFramedCloudPopupContent td").linky(feature.layer.linkyConfig);
     };
 
-    var onFeatureUnselect = function(feature) {
+    var onFeatureUnselect = function() {
         XDATA.userALE.log({
             activity: "hide",
             action: "click",

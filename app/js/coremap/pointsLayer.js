@@ -47,7 +47,6 @@ coreMap.Map.Layer.PointsLayer = OpenLayers.Class(OpenLayers.Layer.Vector, {
         linkTo: "twitter"
     },
 
-
     /**
      * Override the OpenLayers Contructor
      */
