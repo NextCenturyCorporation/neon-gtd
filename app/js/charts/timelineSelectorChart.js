@@ -378,6 +378,10 @@ charts.TimelineSelectorChart = function(element, configuration) {
             var style = 'stroke:' + series.color + ';';
             var chartType = '';
 
+            // For now, all anomalies are shown as red, but this could be changed to be a
+            // configurable parameter that is passed in with the series, like series.color.
+            var anomalyColor = 'red';
+
             // If type is bar AND the data isn't too long, render a bar plot
             if(series.type === 'bar' && series.data.length < width) {
                 var barheight = 0;
@@ -387,7 +391,7 @@ charts.TimelineSelectorChart = function(element, configuration) {
                     barheight++;
                 }
 
-                var anomalyStyle = style + 'fill: red; stroke: red;';
+                var anomalyStyle = style + 'fill: ' + anomalyColor + '; stroke: ' + anomalyColor + ';';
                 style += 'fill:' + series.color + ';';
 
                 container.selectAll(".bar")
@@ -472,7 +476,7 @@ charts.TimelineSelectorChart = function(element, configuration) {
                         .data(anomalies)
                     .enter().append("circle")
                         .attr("class", "dot")
-                        .attr("style", 'fill:red;')
+                        .attr("style", 'fill:' + anomalyColor + ';')
                         .attr("r", 3)
                         .attr("cx", function(d) {
                             return x(d.date);
