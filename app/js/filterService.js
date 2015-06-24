@@ -119,7 +119,7 @@ angular.module("neonDemo.services")
                 }
                 filterClause = neon.query.or.apply(neon.query, filterClauses);
             }
-            return new neon.query.Filter().selectFrom(relation.database, relation.table).where(filterClause);
+            return new neon.query.Filter().selectFrom(relation.database, relation.table).name("Test").where(filterClause);
         };
 
         /**
