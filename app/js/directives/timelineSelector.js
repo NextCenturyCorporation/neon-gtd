@@ -555,7 +555,9 @@ function(connectionService, datasetService, errorNotificationService, filterServ
 
                 var displayStartDate = new Date(extentStartDate);
                 var displayEndDate = new Date(extentEndDate);
-                $scope.setDisplayDates(displayStartDate, displayEndDate);
+                neon.safeApply($scope, function() {
+                    $scope.setDisplayDates(displayStartDate, displayEndDate);
+                });
 
                 $scope.recordCount = total;
             };
