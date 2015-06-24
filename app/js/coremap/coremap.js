@@ -390,18 +390,30 @@ coreMap.Map.prototype.createSelectControl =  function(layer) {
          */
         if(feature.cluster && feature.cluster[0].attributes.hashtags) {
             text = '<div><table class="table table-striped table-condensed table-bordered">';
-            text += '<tr><th>user_name</th><th>created_at</th><th>text</th>';
+            text += '<tr><th>user_name</th><th>created_at</th><th>text</th></tr>';
 
             for(var i = 0; i < feature.cluster.length; i++) {
+                text += '<tr>';
+
                 if(Object.prototype.hasOwnProperty.call(feature.cluster[i].attributes, "user_name")) {
-                    text += '<tr><td>' + feature.cluster[i].attributes["user_name"] + '</td>';
+                    text += '<td>' + feature.cluster[i].attributes["user_name"] + '</td>';
+                } else {
+                    text += '<td></td>';
                 }
+
                 if(Object.prototype.hasOwnProperty.call(feature.cluster[i].attributes, "created_at")) {
                     text += '<td>' + feature.cluster[i].attributes["created_at"] + '</td>';
+                } else {
+                    text += '<td></td>';
                 }
+                
                 if(Object.prototype.hasOwnProperty.call(feature.cluster[i].attributes, "text")) {
                     text += '<td>' + feature.cluster[i].attributes["text"] + '</td>';
+                } else {
+                    text += '<td></td>';
                 }
+
+                text += '</tr>';
             }
             text += '</table></div>';
         } else {
