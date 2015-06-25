@@ -628,6 +628,15 @@ angular.module('neonDemo.directives')
                     $scope.errorMessage = undefined;
                 }
 
+                // Check if this Map has a layer with the given database and table.  If no such layer exists, the query is unnecessary so ignore it.
+                var hasLayer = $scope.options.layers.some(function(layer) {
+                    return layer.database === database && layer.table === table;
+                });
+
+                if(!hasLayer) {
+                    return;
+                }
+
                 var connection = connectionService.getActiveConnection();
 
                 if(!connection) {
