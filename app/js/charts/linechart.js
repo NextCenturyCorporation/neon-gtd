@@ -155,20 +155,21 @@ charts.LineChart.prototype.calculateColor = function(seriesObject) {
         }
     }
 
+    var colorObject = {
+        color: color,
+        series: seriesObject.series,
+        total: seriesObject.total,
+        min: seriesObject.min,
+        max: seriesObject.max,
+        data: seriesObject.data,
+        hidden: hidden
+    };
+
     // store the color in the registry so we know the color/series mappings
     if(index >= 0) {
-        this.colors[index].color = color;
-        this.colors[index].total = seriesObject.total;
-        this.colors[index].hidden = hidden;
+        this.colors[index] = colorObject;
     } else {
-        this.colors.push({
-            color: color,
-            series: seriesObject.series,
-            total: seriesObject.total,
-            min: seriesObject.min,
-            max: seriesObject.max,
-            hidden: hidden
-        });
+        this.colors.push(colorObject);
     }
 
     return color;

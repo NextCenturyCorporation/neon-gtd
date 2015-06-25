@@ -69,6 +69,7 @@ function(connectionService, datasetService, errorNotificationService, filterServ
             $scope.chart = undefined;
             $scope.brushExtent = [];
             $scope.colorMappings = [];
+            $scope.dateStringToDataIndex = {};
             $scope.seriesLimit = 10;
             $scope.errorMessage = undefined;
             $scope.loadingData = false;
@@ -520,6 +521,8 @@ function(connectionService, datasetService, errorNotificationService, filterServ
             };
 
             var zeroPadData = function(data, minDate, maxDate) {
+                $scope.dateStringToDataIndex = {};
+
                 data = data.data;
 
                 var i = 0;
@@ -597,6 +600,9 @@ function(connectionService, datasetService, errorNotificationService, filterServ
                     resultData[series].total += data[i].value;
                     resultData[series].min = resultData[series].min < 0 ? data[i].value : Math.min(resultData[series].min, data[i].value);
                     resultData[series].max = resultData[series].max < 0 ? data[i].value : Math.max(resultData[series].max, data[i].value);
+
+                    // Save the mapping from date string to data index so we can find the data index using the brush extent while calculating aggregations for brushed line charts.
+                    $scope.dateStringToDataIndex[indexDate.toDateString()] = Math.floor(Math.abs(indexDate - start) / dayMillis);
                 }
 
                 return resultData;
@@ -643,15 +649,43 @@ function(connectionService, datasetService, errorNotificationService, filterServ
                 return zeroed;
             };
 
+            var calculateBrushedAggregationValue = function(data, calculateFunction) {
+                var start = $scope.dateStringToDataIndex[$scope.brushExtent[0].toDateString()];
+                var end = $scope.dateStringToDataIndex[$scope.brushExtent[1].toDateString()];
+                var value = 0;
+                for(var i = start; i < end; ++i) {
+                    value = calculateFunction(data[i].value, value);
+                }
+                return value;
+            };
+
             $scope.getLegendItemAggregationText = function(colorMappingObject) {
                 if($scope.options.aggregation === "count" || $scope.options.aggregation === "sum") {
-                    return "(" + $filter('number')(colorMappingObject.total) + ")";
+                    var total = colorMappingObject.total;
+                    if($scope.brushExtent.length >= 2) {
+                        total = calculateBrushedAggregationValue(colorMappingObject.data, function(indexValue, aggregationValue) {
+                            return indexValue + aggregationValue;
+                        });
+                    }
+                    return "(" + $filter('number')(total) + ")";
                 }
                 if($scope.options.aggregation === "min") {
-                    return "(" + colorMappingObject.min + ")";
+                    var min = colorMappingObject.min;
+                    if($scope.brushExtent.length >= 2) {
+                        total = calculateBrushedAggregationValue(colorMappingObject.data, function(indexValue, aggregationValue) {
+                            return Math.min(indexValue, aggregationValue);
+                        });
+                    }
+                    return "(" + min + ")";
                 }
                 if($scope.options.aggregation === "max") {
-                    return "(" + colorMappingObject.max + ")";
+                    var max = colorMappingObject.max;
+                    if($scope.brushExtent.length >= 2) {
+                        total = calculateBrushedAggregationValue(colorMappingObject.data, function(indexValue, aggregationValue) {
+                            return Math.max(indexValue, aggregationValue);
+                        });
+                    }
+                    return "(" + max + ")";
                 }
                 return "";
             };
@@ -687,7 +721,7 @@ function(connectionService, datasetService, errorNotificationService, filterServ
 
                 var relations = datasetService.getRelations($scope.options.database.name, $scope.options.table.name, [$scope.options.attrX]);
                 datasetService.setDateBrushExtentForRelations(relations, $scope.brushExtent);
-                filterService.replaceFilters($scope.messenger, relations, $scope.filterKeys, createFilterClauseForDate, updateLegend);
+                filterService.replaceFilters($scope.messenger, relations, $scope.filterKeys, createFilterClauseForDate);
             };
 
             /**
@@ -727,10 +761,6 @@ function(connectionService, datasetService, errorNotificationService, filterServ
                 var startFilterClause = neon.query.where(dateFieldName, ">=", $scope.brushExtent[0]);
                 var endFilterClause = neon.query.where(dateFieldName, ">=", $scope.brushExtent[1]);
                 return neon.query.and.apply(this, [startFilterClause, endFilterClause]);
-            };
-
-            var updateLegend = function() {
-                // TODO
             };
 
             neon.ready(function() {
