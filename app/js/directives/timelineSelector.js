@@ -340,6 +340,7 @@ function(connectionService, datasetService, errorNotificationService, filterServ
                 if($scope.options.database.name === message.databaseName && $scope.options.table.name === message.tableName && $scope.brush !== message.brushExtent) {
                     $scope.brush = message.brushExtent;
                     $scope.extentDirty = true;
+                    $scope.updateChartTimesAndTotal();
                 }
             };
 
