@@ -157,7 +157,7 @@ function(external, popups, connectionService, datasetService, errorNotificationS
                 });
 
                 $scope.exportID = uuid();
-                exportService.register($scope.exportID, makeQueryResultsTableExportObject);
+                exportService.register($scope.exportID, $scope.makeQueryResultsTableExportObject);
 
                 $scope.$on('$destroy', function() {
                     XDATA.userALE.log({
@@ -645,35 +645,11 @@ function(external, popups, connectionService, datasetService, errorNotificationS
                 }
             };
 
-            var exportSuccess = function(queryResults) {
-                /*XDATA.userALE.log({
-                    activity: "",
-                    action: "",
-                    elementId: "",
-                    elementType: "",
-                    elementGroup: "",
-                    source: "",
-                    tags: ["", "", ""]
-                });*/
-                window.location.assign(queryResults.data);
-            };
-
-            var exportFail = function(response) {
-                /*XDATA.userALE.log({
-                    activity: "",
-                    action: "",
-                    elementId: "",
-                    elementType: "",
-                    elementGroup: "",
-                    source: "",
-                    tags: ["", "", ""]
-                });*/
-                if(response.responseJSON) {
-                    $scope.errorMessage = errorNotificationService.showErrorMessage($element, response.responseJSON.error, response.responseJSON.stackTrace);
-                }
-            };
-
-            $scope.requestExport = function() {
+            /**
+             * Creates and returns an object that contains information needed to export the data in this widget.
+             * @return {Object} An object containing all the information needed to export the data in this widget.
+             */
+            $scope.makeQueryResultsTableExportObject = function() {
                 XDATA.userALE.log({
                     activity: "perform",
                     action: "click",
@@ -683,17 +659,6 @@ function(external, popups, connectionService, datasetService, errorNotificationS
                     source: "user",
                     tags: ["options", "datagrid", "export"]
                 });
-                var connection = connectionService.getActiveConnection();
-                if(!connection) {
-                    //This is temporary. Come up with better code for if there isn't a connection.
-                    return;
-                }
-                var data = makeQueryResultsTableExportObject();
-                // TODO replace hardcoded 'xlsx' with some sort of option variable.
-                connection.executeExport(data, exportSuccess, exportFail, exportService.getFileFormat());
-            };
-
-            var makeQueryResultsTableExportObject = function() {
                 var query = $scope.buildQuery();
                 // Set limitClause to undefined because we don't want to limit the number of matching results put into the CSV file.
                 query.limitClause = undefined;
@@ -710,7 +675,7 @@ function(external, popups, connectionService, datasetService, errorNotificationS
                     }]
                 };
                 var addField = function(field) {
-                    (finalObject.data[0]).fields.push({
+                    finalObject.data[0].fields.push({
                         query: field.columnName,
                         pretty: field.prettyName || field.columnName
                     });

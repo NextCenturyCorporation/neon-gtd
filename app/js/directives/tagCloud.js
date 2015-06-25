@@ -88,7 +88,7 @@ function(connectionService, datasetService, errorNotificationService, filterServ
                 });
 
                 $scope.exportID = uuid();
-                exportService.register($scope.exportID, makeTagCloudExportObject);
+                exportService.register($scope.exportID, $scope.makeTagCloudExportObject);
 
                 $scope.$on('$destroy', function() {
                     XDATA.userALE.log({
@@ -416,55 +416,20 @@ function(connectionService, datasetService, errorNotificationService, filterServ
                 }
             };
 
-            var exportSuccess = function(queryResults) {
-                /*XDATA.userALE.log({
-                    activity: "",
-                    action: "",
-                    elementId: "",
-                    elementType: "",
-                    elementGroup: "",
-                    source: "",
-                    tags: ["", "", ""]
-                });*/
-                window.location.assign(queryResults.data);
-            };
-
-            var exportFail = function(response) {
-                /*XDATA.userALE.log({
-                    activity: "",
-                    action: "",
-                    elementId: "",
-                    elementType: "",
-                    elementGroup: "",
-                    source: "",
-                    tags: ["", "", ""]
-                });*/
-                if(response.responseJSON) {
-                    $scope.errorMessage = errorNotificationService.showErrorMessage($element, response.responseJSON.error, response.responseJSON.stackTrace);
-                }
-            };
-
-            $scope.requestExport = function() {
+            /**
+             * Creates and returns an object that contains information needed to export the data in this widget.
+             * @return {Object} An object containing all the information needed to export the data in this widget.
+             */
+            $scope.makeTagCloudExportObject = function() {
                 XDATA.userALE.log({
                     activity: "perform",
                     action: "click",
-                    elementId: "sunburst-export",
+                    elementId: "tag-cloud-export",
                     elementType: "button",
                     elementGroup: "chart_group",
                     source: "user",
-                    tags: ["options", "sunburst", "export"]
+                    tags: ["options", "tag-cloud", "export"]
                 });
-                var connection = connectionService.getActiveConnection();
-                if(!connection) {
-                    //This is temporary. Come up with better code for if there isn't a connection.
-                    return;
-                }
-                var data = makeTagCloudExportObject();
-                // TODO replace hardcoded 'xlsx' with some sort of option variable.
-                connection.executeExport(data, exportSuccess, exportFail, exportService.getFileFormat());
-            };
-
-            var makeTagCloudExportObject = function() {
                 var finalObject = {
                     name: "Tag_Cloud",
                     data: [{
@@ -477,11 +442,11 @@ function(connectionService, datasetService, errorNotificationService, filterServ
                         type: "arraycount"
                     }]
                 };
-                (finalObject.data[0]).fields.push({
+                finalObject.data[0].fields.push({
                     query: "key",
                     pretty: "Key"
                 });
-                (finalObject.data[0]).fields.push({
+                finalObject.data[0].fields.push({
                     query: "count",
                     pretty: "Count"
                 });

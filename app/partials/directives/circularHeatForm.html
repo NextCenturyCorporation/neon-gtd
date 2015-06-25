@@ -1,7 +1,7 @@
 <div class="header-container" ng-show="!(hideHeader)">
     <span class="header-text pull-left">{{options.table.prettyName}}</span>
 
-    <options-menu parent-element="element" ng-show="!(hideAdvancedOptions)">
+    <options-menu parent-element="element" export-function="makeCircularHeatFormExportObject" ng-show="!(hideAdvancedOptions)">
         <div class="form-group" ng-show="!(hideAdvancedOptions)">
             <label>Database</label>
             <select class="form-control" ng-model="options.database" ng-options="database.prettyName for database in databases" ng-required="true" ng-disabled="(databases.length < 2)" ng-change="updateTables()">
@@ -17,15 +17,6 @@
             <select class="form-control" ng-model="options.dateField" ng-options="field for field in fields" ng-required="true" ng-disabled="(fields.length == 0)" ng-change="updateDateField()">
             </select>
         </div>
-
-        <div class="form-group">
-            <div class="input-group">
-                <button type="button" class="btn btn-default export" ng-click="requestExport()">
-                    Export to File
-                </button>
-            </div>
-        </div>
-        
     </options-menu>
 </div>
 

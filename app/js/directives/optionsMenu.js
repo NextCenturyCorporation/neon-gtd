@@ -1,6 +1,6 @@
 'use strict';
 angular.module('neonDemo.directives')
-.directive('optionsMenu', function() {
+.directive('optionsMenu', ['ConnectionService', 'ErrorNotificationService', 'ExportService', function(connectionService, errorNotificationService, exportService) {
     return {
         templateUrl: 'partials/directives/optionsMenu.html',
         restrict: 'EA',
@@ -8,7 +8,8 @@ angular.module('neonDemo.directives')
         scope: {
             parentElement: '=',
             buttonText: '=?',
-            showButtonText: '=?'
+            showButtonText: '=?',
+            exportFunction: '=?'
         },
         link: function($scope, $element) {
             // Buffer needed above and below the chart options popover based on popover position, container padding (both set in the CSS), and UX.
@@ -44,6 +45,29 @@ angular.module('neonDemo.directives')
                 var height = $scope.parentElement.innerHeight() - (chartOptions.outerHeight(true) - chartOptions.height() + $scope.CHART_OPTIONS_BUFFER_Y);
                 chartOptions.find(".popover-content").css("max-height", height + "px");
             });
+
+            var exportSuccess = function(queryResults) {
+                window.location.assign("/neon/services/exportservice/generateZip/" + queryResults.data);
+            };
+
+            var exportFail = function(response) {
+                if(response.responseJSON) {
+                    $scope.errorMessage = errorNotificationService.showErrorMessage($element, response.responseJSON.error, response.responseJSON.stackTrace);
+                }
+            };
+
+            $scope.requestExport = function() {
+                if($scope.exportFunction === undefined) {
+                    return;
+                }
+                var connection = connectionService.getActiveConnection();
+                if(!connection) {
+                    //This is temporary. Come up with better code for if there isn't a connection.
+                    return;
+                }
+                var data = $scope.exportFunction();
+                connection.executeExport(data, exportSuccess, exportFail, exportService.getFileFormat());
+            };
         }
     };
-});
+}]);

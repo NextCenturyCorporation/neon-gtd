@@ -28,7 +28,7 @@
  * @constructor
  */
 angular.module('neonDemo.directives')
-.directive('map', ['ConnectionService', 'DatasetService', 'ErrorNotificationService', 'FilterService', 'ExportService', '$timeout', 
+.directive('map', ['ConnectionService', 'DatasetService', 'ErrorNotificationService', 'FilterService', 'ExportService', '$timeout',
     function(connectionService, datasetService, errorNotificationService, filterService, exportService, $timeout) {
     return {
         templateUrl: 'partials/directives/map.html',
@@ -169,7 +169,7 @@ angular.module('neonDemo.directives')
                 });
 
                 $scope.exportID = uuid();
-                exportService.register($scope.exportID, makeMapExportObject);
+                exportService.register($scope.exportID, $scope.makeMapExportObject);
 
                 $scope.$on('$destroy', function() {
                     XDATA.userALE.log({
@@ -1011,36 +1011,12 @@ angular.module('neonDemo.directives')
                 }
             };
 
-            var exportSuccess = function(queryResults) {
-                /*XDATA.userALE.log({
-                    activity: "",
-                    action: "",
-                    elementId: "",
-                    elementType: "",
-                    elementGroup: "",
-                    source: "",
-                    tags: ["", "", ""]
-                });*/
-                window.location.assign(queryResults.data);
-            };
-
-            var exportFail = function(response) {
-                /*XDATA.userALE.log({
-                    activity: "",
-                    action: "",
-                    elementId: "",
-                    elementType: "",
-                    elementGroup: "",
-                    source: "",
-                    tags: ["", "", ""]
-                });*/
-                if(response.responseJSON) {
-                    $scope.errorMessage = errorNotificationService.showErrorMessage($element, response.responseJSON.error, response.responseJSON.stackTrace);
-                }
-            };
-
-            $scope.requestExport = function() {
-                /*XDATA.userALE.log({
+            /**
+             * Creates and returns an object that contains information needed to export the data in this widget.
+             * @return {Object} An object containing all the information needed to export the data in this widget.
+             */
+            $scope.makeMapExportObject = function() {
+                XDATA.userALE.log({
                     activity: "perform",
                     action: "click",
                     elementId: "map-export",
@@ -1048,18 +1024,7 @@ angular.module('neonDemo.directives')
                     elementGroup: "map_group",
                     source: "user",
                     tags: ["options", "map", "export"]
-                });*/
-                var connection = connectionService.getActiveConnection();
-                if(!connection) {
-                    //This is temporary. Come up with better code for if there isn't a connection.
-                    return;
-                }
-                var data = makeMapExportObject();
-                // TODO replace hardcoded 'xlsx' with some sort of option variable.
-                connection.executeExport(data, exportSuccess, exportFail, exportService.getFileFormat());
-            };
-
-            var makeMapExportObject = function() {
+                });
                 var finalObject = {
                     name: "Map",
                     data: []

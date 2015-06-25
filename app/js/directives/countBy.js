@@ -93,7 +93,7 @@ function(external, popups, connectionService, datasetService, errorNotificationS
                 });
 
                 $scope.exportID = uuid();
-                exportService.register($scope.exportID, makeCountByExportObject);
+                exportService.register($scope.exportID, $scope.makeCountByExportObject);
 
                 $scope.$on('$destroy', function() {
                     XDATA.userALE.log({
@@ -647,35 +647,11 @@ function(external, popups, connectionService, datasetService, errorNotificationS
                 }
             };
 
-            var exportSuccess = function(queryResults) {
-                /*XDATA.userALE.log({
-                    activity: "",
-                    action: "",
-                    elementId: "",
-                    elementType: "",
-                    elementGroup: "",
-                    source: "",
-                    tags: ["", "", ""]
-                });*/
-                window.location.assign(queryResults.data);
-            };
-
-            var exportFail = function(response) {
-                /*XDATA.userALE.log({
-                    activity: "",
-                    action: "",
-                    elementId: "",
-                    elementType: "",
-                    elementGroup: "",
-                    source: "",
-                    tags: ["", "", ""]
-                });*/
-                if(response.responseJSON) {
-                    $scope.errorMessage = errorNotificationService.showErrorMessage($element, response.responseJSON.error, response.responseJSON.stackTrace);
-                }
-            };
-
-            $scope.requestExport = function() {
+            /**
+             * Creates and returns an object that contains information needed to export the data in this widget.
+             * @return {Object} An object containing all the information needed to export the data in this widget.
+             */
+            $scope.makeCountByExportObject = function() {
                 XDATA.userALE.log({
                     activity: "perform",
                     action: "click",
@@ -685,19 +661,6 @@ function(external, popups, connectionService, datasetService, errorNotificationS
                     source: "user",
                     tags: ["options", "count-by", "export"]
                 });
-                var connection = connectionService.getActiveConnection();
-                if(!connection || !$scope.options.field || ($scope.options.aggregation !== "count" && !$scope.options.aggregationField)) {
-                    //This is temporary. Come up with better code for if there isn't a connection.
-                    $scope.errorMessage = errorNotificationService.showErrorMessage($element, "Error: Could not complete query.",
-                        "There is either no connection, or not all necessary fields are filled out.");
-                    return;
-                }
-                var data = makeCountByExportObject();
-                // TODO replace hardcoded 'xlsx' with some sort of option variable.
-                connection.executeExport(data, exportSuccess, exportFail, exportService.getFileFormat());
-            };
-
-            var makeCountByExportObject = function() {
                 var query = $scope.buildQuery();
                 var finalObject = {
                     name: "Count_By",
@@ -711,7 +674,7 @@ function(external, popups, connectionService, datasetService, errorNotificationS
                         type: "query"
                     }]
                 };
-                (finalObject.data[0]).fields.push({
+                finalObject.data[0].fields.push({
                     query: (query.groupByClauses[0]).field,
                     pretty: capitalizeFirstLetter((query.groupByClauses[0]).field)
                 });
@@ -721,13 +684,18 @@ function(external, popups, connectionService, datasetService, errorNotificationS
                 } else if($scope.options.aggregation === 'max') {
                     op = 'Max of ';
                 }
-                (finalObject.data[0]).fields.push({
+                finalObject.data[0].fields.push({
                     query: (query.aggregates[0]).name,
                     pretty: op + capitalizeFirstLetter((query.aggregates[0]).name)
                 });
                 return finalObject;
             };
 
+            /**
+             * Helper function for makeBarchartExportObject that capitalizes the first letter of a string.
+             * @param str {String} The string to capitalize the first letter of.
+             * @return {String} The string given, but with its first letter capitalized.
+             */
             var capitalizeFirstLetter = function(str) {
                 var first = str[0].toUpperCase();
                 return first + str.slice(1);

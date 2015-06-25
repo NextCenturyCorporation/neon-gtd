@@ -1,6 +1,6 @@
 'use strict';
 /*
- * Copyright 2014 Next Century Corporation
+ * Copyright 2015 Next Century Corporation
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -15,43 +15,36 @@
  *
  */
 
-// THE DOCUMENTATION STUFF ON THIS FILE IS INCORRECT.
-
 /**
- * This Angular JS directive adds a simple Powered By Neon link to a page along with an About Neon modal
- * that will appear when the link is clicked.  As the modal has a custom id, it is intended that only
- * one of these is included in the page for now.
- *
- * @example
- *    &lt;powered-by-neon&gt;&lt;/powered-by-neon&gt;<br>
- *    &lt;div powered-by-neon&gt;&lt;/div&gt;
+ * This Angular JS directive adds a group of buttons to a page that allow the user to select what type of file clicking export
+ * buttons on that page will output.
  *
  * @namespace neonDemo.directives
- * @class heatMap
  * @constructor
  */
 angular.module('neonDemo.directives')
-.directive('fileFormats', ['ConnectionService', 'ErrorNotificationService', 'ExportService',
-	function(connectionService, errorNotificationService, exportService) {
+.directive('fileFormats', ['ExportService', function(exportService) {
     return {
         templateUrl: 'partials/directives/fileFormats.html',
         restrict: 'EA',
         link: function($scope) {
-        	$scope.formats = [{
-        		name: 'csv',
-        		selected: false
-        	}, {
-        		name: 'xlsx',
-        		selected: false
-        	}];
+            // Which one of these is made with "selected: true" should be the same as
+            // the declared initial value for format inside of exportService.js
+            $scope.formats = [{
+                name: 'csv',
+                selected: true
+            }, {
+                name: 'xlsx',
+                selected: false
+            }];
 
-        	$scope.selectFormat = function(fileFormat) {
-        		$scope.formats.forEach(function(format) {
-        			format.selected = false;
-        		});
-        		fileFormat.selected = true;
-        		exportService.setFileFormat(fileFormat.name);
-        	};
+            $scope.selectFormat = function(fileFormat) {
+                $scope.formats.forEach(function(format) {
+                    format.selected = false;
+                });
+                fileFormat.selected = true;
+                exportService.setFileFormat(fileFormat.name);
+            };
         }
     };
 }]);

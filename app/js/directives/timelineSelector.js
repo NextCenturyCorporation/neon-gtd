@@ -257,7 +257,7 @@ function(connectionService, datasetService, errorNotificationService, filterServ
                 });
 
                 $scope.exportID = uuid();
-                exportService.register($scope.exportID, makeTimelineSelectorExportObject);
+                exportService.register($scope.exportID, $scope.makeTimelineSelectorExportObject);
 
                 $scope.$on('$destroy', function() {
                     XDATA.userALE.log({
@@ -913,35 +913,11 @@ function(connectionService, datasetService, errorNotificationService, filterServ
                 }
             };
 
-            var exportSuccess = function(queryResults) {
-                /*XDATA.userALE.log({
-                    activity: "",
-                    action: "",
-                    elementId: "",
-                    elementType: "",
-                    elementGroup: "",
-                    source: "",
-                    tags: ["", "", ""]
-                });*/
-                window.location.assign(queryResults.data);
-            };
-
-            var exportFail = function(response) {
-                /*XDATA.userALE.log({
-                    activity: "",
-                    action: "",
-                    elementId: "",
-                    elementType: "",
-                    elementGroup: "",
-                    source: "",
-                    tags: ["", "", ""]
-                });*/
-                if(response.responseJSON) {
-                    $scope.errorMessage = errorNotificationService.showErrorMessage($element, response.responseJSON.error, response.responseJSON.stackTrace);
-                }
-            };
-
-            $scope.requestExport = function() {
+            /**
+             * Creates and returns an object that contains information needed to export the data in this widget.
+             * @return {Object} An object containing all the information needed to export the data in this widget.
+             */
+            $scope.makeTimelineSelectorExportObject = function() {
                 XDATA.userALE.log({
                     activity: "perform",
                     action: "click",
@@ -951,17 +927,6 @@ function(connectionService, datasetService, errorNotificationService, filterServ
                     source: "user",
                     tags: ["options", "timeline", "export"]
                 });
-                var connection = connectionService.getActiveConnection();
-                if(!connection) {
-                    //This is temporary. Come up with better code for if there isn't a connection.
-                    return;
-                }
-                var data = makeTimelineSelectorExportObject();
-                // TODO replace hardcoded 'xlsx' with some sort of option variable.
-                connection.executeExport(data, exportSuccess, exportFail, exportService.getFileFormat());
-            };
-
-            var makeTimelineSelectorExportObject = function() {
                 var query = $scope.createChartDataQuery();
                 var finalObject = {
                     name: "Timeline",
@@ -981,14 +946,14 @@ function(connectionService, datasetService, errorNotificationService, filterServ
                 var counter = 0;
                 var prettyNames = ["Year", "Month", "Day", "Hour"];
                 query.groupByClauses.forEach(function(field) {
-                        (finalObject.data[0]).fields.push({
+                        finalObject.data[0].fields.push({
                             query: field.name,
                             pretty: prettyNames[counter]
                         });
                         counter++;
                     }
                 );
-                (finalObject.data[0]).fields.push({
+                finalObject.data[0].fields.push({
                     query: "count",
                     pretty: "Count"
                 });

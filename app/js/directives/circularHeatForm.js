@@ -78,7 +78,7 @@ function(connectionService, datasetService, errorNotificationService, exportServ
                 });
 
                 $scope.exportID = uuid();
-                exportService.register($scope.exportID, makeCircularHeatFormExportObject);
+                exportService.register($scope.exportID, $scope.makeCircularHeatFormExportObject);
 
                 $scope.$on('$destroy', function() {
                     XDATA.userALE.log({
@@ -380,35 +380,11 @@ function(connectionService, datasetService, errorNotificationService, exportServ
                 }
             };
 
-            var exportSuccess = function(queryResults) {
-                /*XDATA.userALE.log({
-                    activity: "",
-                    action: "",
-                    elementId: "",
-                    elementType: "",
-                    elementGroup: "",
-                    source: "",
-                    tags: ["", "", ""]
-                });*/
-                window.location.assign(queryResults.data);
-            };
-
-            var exportFail = function(response) {
-                /*XDATA.userALE.log({
-                    activity: "",
-                    action: "",
-                    elementId: "",
-                    elementType: "",
-                    elementGroup: "",
-                    source: "",
-                    tags: ["", "", ""]
-                });*/
-                if(response.responseJSON) {
-                    $scope.errorMessage = errorNotificationService.showErrorMessage($element, response.responseJSON.error, response.responseJSON.stackTrace);
-                }
-            };
-
-            $scope.requestExport = function() {
+            /**
+             * Creates and returns an object that contains information needed to export the data in this widget.
+             * @return {Object} An object containing all the information needed to export the data in this widget.
+             */
+            $scope.makeCircularHeatFormExportObject = function() {
                 XDATA.userALE.log({
                     activity: "perform",
                     action: "click",
@@ -418,18 +394,6 @@ function(connectionService, datasetService, errorNotificationService, exportServ
                     source: "user",
                     tags: ["options", "circularheatform", "export"]
                 });
-                var connection = connectionService.getActiveConnection();
-                if(!connection) {
-                    //This is temporary. Come up with better code for if there isn't a connection.
-                    return;
-                }
-
-                var data = makeCircularHeatFormExportObject();
-                // TODO replace hardcoded 'xlsx' with some sort of option variable.
-                connection.executeExport(data, exportSuccess, exportFail, exportService.getFileFormat());
-            };
-
-            var makeCircularHeatFormExportObject = function() {
                 var groupByDayClause = new neon.query.GroupByFunctionClause('dayOfWeek', $scope.options.dateField, 'day');
                 var groupByHourClause = new neon.query.GroupByFunctionClause(neon.query.HOUR, $scope.options.dateField, 'hour');
                 var query = new neon.query.Query()
@@ -449,15 +413,15 @@ function(connectionService, datasetService, errorNotificationService, exportServ
                         type: "query"
                     }]
                 };
-                (finalObject.data[0]).fields.push({
+                finalObject.data[0].fields.push({
                     query: 'day',
                     pretty: 'Day'
                 });
-                (finalObject.data[0]).fields.push({
+                finalObject.data[0].fields.push({
                     query: 'hour',
                     pretty: 'Hour'
                 });
-                (finalObject.data[0]).fields.push({
+                finalObject.data[0].fields.push({
                     query: 'count',
                     pretty: 'Count'
                 });

@@ -85,7 +85,7 @@ function(connectionService, datasetService, errorNotificationService, filterServ
                 });
 
                 $scope.exportID = uuid();
-                exportService.register($scope.exportID, makeBarchartExportObject);
+                exportService.register($scope.exportID, $scope.makeBarchartExportObject);
 
                 $scope.$on('$destroy', function() {
                     XDATA.userALE.log({
@@ -463,36 +463,12 @@ function(connectionService, datasetService, errorNotificationService, filterServ
                 return "";
             };
 
-            var exportSuccess = function(queryResults) {
-                /*XDATA.userALE.log({
-                    activity: "",
-                    action: "",
-                    elementId: "",
-                    elementType: "",
-                    elementGroup: "",
-                    source: "",
-                    tags: ["", "", ""]
-                });*/
-                window.location.assign(queryResults.data);
-            };
-
-            var exportFail = function(response) {
-                /*XDATA.userALE.log({
-                    activity: "",
-                    action: "",
-                    elementId: "",
-                    elementType: "",
-                    elementGroup: "",
-                    source: "",
-                    tags: ["", "", ""]
-                });*/
-                if(response.responseJSON) {
-                    $scope.errorMessage = errorNotificationService.showErrorMessage($element, response.responseJSON.error, response.responseJSON.stackTrace);
-                }
-            };
-
-            $scope.requestExport = function() {
-                /*XDATA.userALE.log({
+            /**
+             * Creates and returns an object that contains information needed to export the data in this widget.
+             * @return {Object} An object containing all the information needed to export the data in this widget.
+             */
+            $scope.makeBarchartExportObject = function() {
+                XDATA.userALE.log({
                     activity: "perform",
                     action: "click",
                     elementId: "barchart-export",
@@ -500,18 +476,7 @@ function(connectionService, datasetService, errorNotificationService, filterServ
                     elementGroup: "chart_group",
                     source: "user",
                     tags: ["options", "barchart", "export"]
-                });*/
-                var connection = connectionService.getActiveConnection();
-                if(!connection) {
-                    //This is temporary. Come up with better code for if there isn't a connection.
-                    return;
-                }
-                var data = makeBarchartExportObject();
-                // TODO replace hardcoded 'xlsx' with some sort of option variable.
-                connection.executeExport(data, exportSuccess, exportFail, exportService.getFileFormat());
-            };
-
-            var makeBarchartExportObject = function() {
+                });
                 var query = $scope.buildQuery();
                 var finalObject = {
                     name: "Bar_Chart",
@@ -525,24 +490,24 @@ function(connectionService, datasetService, errorNotificationService, filterServ
                         type: "query"
                     }]
                 };
-                (finalObject.data[0]).fields.push({
+                finalObject.data[0].fields.push({
                     query: query.groupByClauses[0].field,
                     pretty: capitalizeFirstLetter(query.groupByClauses[0].field)
                 });
                 if($scope.options.barType === "average") {
-                    (finalObject.data[0]).fields.push({
+                    finalObject.data[0].fields.push({
                         query: COUNT_FIELD_NAME,
                         pretty: "Average of " + query.aggregates[0].field
                     });
                 }
                 if($scope.options.barType === "sum") {
-                    (finalObject.data[0]).fields.push({
+                    finalObject.data[0].fields.push({
                         query: COUNT_FIELD_NAME,
                         pretty: "Sum of " + query.aggregates[0].field
                     });
                 }
                 if($scope.options.barType === "count") {
-                    (finalObject.data[0]).fields.push({
+                    finalObject.data[0].fields.push({
                         query: COUNT_FIELD_NAME,
                         pretty: "Count"
                     });
@@ -550,6 +515,11 @@ function(connectionService, datasetService, errorNotificationService, filterServ
                 return finalObject;
             };
 
+            /**
+             * Helper function for makeBarchartExportObject that capitalizes the first letter of a string.
+             * @param str {String} The string to capitalize the first letter of.
+             * @return {String} The string given, but with its first letter capitalized.
+             */
             var capitalizeFirstLetter = function(str) {
                 var first = str[0].toUpperCase();
                 return first + str.slice(1);
