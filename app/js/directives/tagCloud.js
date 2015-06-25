@@ -330,13 +330,13 @@ function(connectionService, datasetService, errorNotificationService, filterServ
             };
 
             /**
-             * Creates and returns a filter on the given table and tag field using the tags set by this visualization.
-             * @param {String} The name of the table on which to filter
-             * @param {String} The name of the tag field on which to filter
+             * Creates and returns a filter on the given tag field using the tags set by this visualization.
+             * @param {Object} databaseAndTableName Contains the database and table name
+             * @param {String} tagFieldName The name of the tag field on which to filter
              * @method createFilterClauseForTags
-             * @returns {Object} A neon.query.Filter object
+             * @return {Object} A neon.query.Filter object
              */
-            $scope.createFilterClauseForTags = function(tableName, tagFieldName) {
+            $scope.createFilterClauseForTags = function(databaseAndTableName, tagFieldName) {
                 var filterClauses = $scope.filterTags.map(function(tagName) {
                     return neon.query.where(tagFieldName, "=", tagName);
                 });

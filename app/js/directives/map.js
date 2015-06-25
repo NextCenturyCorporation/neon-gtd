@@ -414,6 +414,7 @@ angular.module('neonDemo.directives')
                     source: "system",
                     tags: ["filter-change", "map"]
                 });
+
                 if(message.addedFilter && message.addedFilter.databaseName && message.addedFilter.tableName) {
                     $scope.queryForMapData(message.addedFilter.databaseName, message.addedFilter.tableName);
                 }
@@ -824,13 +825,13 @@ angular.module('neonDemo.directives')
             };
 
             /**
-             * Create and returns a filter using the given table and latitude/longitude field names using the extent set by the visualization..
-             * @param {String} The name of the table on which to filter
-             * @param {Array} An array containing the names of the latitude and longitude fields (as its first and second elements) on which to filter
+             * Creates and returns a filter on the given latitude/longitude fields using the extent set by this visualization.
+             * @param {Object} databaseAndTableName Contains the database and table name
+             * @param {Array} fieldNames An array containing the names of the latitude and longitude fields (as its first and second elements) on which to filter
              * @method createFilterClauseForExtent
              * @return {Object} A neon.query.Filter object
              */
-            $scope.createFilterClauseForExtent = function(tableName, fieldNames) {
+            $scope.createFilterClauseForExtent = function(databaseAndTableName, fieldNames) {
                 var latitudeFieldName = fieldNames[0];
                 var longitudeFieldName = fieldNames[1];
 

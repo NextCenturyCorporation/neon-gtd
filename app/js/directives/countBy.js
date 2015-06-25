@@ -512,13 +512,13 @@ function(external, popups, connectionService, datasetService, errorNotificationS
             };
 
             /**
-             * Creates and returns a filter using the given table and count field using the value set by this visualization.
-             * @param {String} The name of the table on which to filter
-             * @param {String} The name of the count field on which to filter
+             * Creates and returns a filter on the given field using the value set by this visualization.
+             * @param {Object} databaseAndTableName Contains the database and table name
+             * @param {String} fieldName The name of the field on which to filter
              * @method createFilterClauseForCount
              * @return {Object} A neon.query.Filter object
              */
-            $scope.createFilterClauseForCount = function(tableName, fieldName) {
+            $scope.createFilterClauseForCount = function(databaseAndTableName, fieldName) {
                 return neon.query.where(fieldName, '=', $scope.filterValue);
             };
 

@@ -376,13 +376,13 @@ function(connectionService, datasetService, errorNotificationService, filterServ
             };
 
             /**
-             * Creates and returns a filter using the given table and x-axis field using the value set by this visualization.
-             * @param {String} The name of the table on which to filter
-             * @param {String} The name of the x-axis field on which to filter
+             * Creates and returns a filter on the given x-axis field using the value set by this visualization.
+             * @param {Object} databaseAndTableName Contains the database and table name
+             * @param {String} xAxisFieldName The name of the x-axis field on which to filter
              * @method createFilterClauseForXAxis
              * @return {Object} A neon.query.Filter object
              */
-            $scope.createFilterClauseForXAxis = function(tableName, xAxisFieldName) {
+            $scope.createFilterClauseForXAxis = function(databaseAndTableName, xAxisFieldName) {
                 return neon.query.where(xAxisFieldName, '=', $scope.filterValue);
             };
 
