@@ -48,6 +48,12 @@ charts.TimelineSelectorChart = function(element, configuration) {
     this.data = DEFAULT_DATA;
     this.primarySeries = false;
     this.granularity = 'day';
+    this.granularityZoomExtents = {
+        year: 2,
+        month: 3,
+        day: 16,
+        hour: 50
+    };
     this.dateFormats = {
         year: '%Y',
         month: '%b %Y',
@@ -75,7 +81,7 @@ charts.TimelineSelectorChart = function(element, configuration) {
     this.configure = function(configuration) {
         this.config = configuration || {};
         this.config.margin = this.config.margin || {
-            top: 4,
+            top: 30,
             right: 15,
             bottom: 4,
             left: 15
@@ -215,6 +221,12 @@ charts.TimelineSelectorChart = function(element, configuration) {
         if(extentWidth === "0" || extentWidth === 0 || extentWidth === undefined) {
             brushElement.find('.mask-west').attr('x', (0 - (width + 50)));
             brushElement.find('.mask-east').attr('x', width + 50);
+        } else if(xPos > width) {
+            brushElement.find('.mask-west').attr('x', 0);
+            brushElement.find('.mask-east').attr('x', (width + self.config.margin.right));
+        } else if(xPos < 0) {
+            brushElement.find('.mask-west').attr('x', width + self.config.margin.left);
+            brushElement.find('.mask-east').attr('x', 0);
         } else {
             // Otherwise, update mask positions to new extent location
             brushElement.find('.mask-west').attr('x', parseFloat(xPos) - width);
@@ -240,7 +252,7 @@ charts.TimelineSelectorChart = function(element, configuration) {
         // lengths). But this is accurate enough to place tick marks and make other calculations.
         var approximateBarWidth = 0;
 
-        var baseHeight = 130;
+        var baseHeight = 150;
         $(this.d3element[0]).css("height", (baseHeight * values.length));
         var height = (this.determineHeight(this.d3element) - (this.config.margin.top) - this.config.margin.bottom);
         var chartHeight = baseHeight - this.config.margin.top - this.config.margin.bottom;
@@ -327,17 +339,86 @@ charts.TimelineSelectorChart = function(element, configuration) {
         // Append our chart graphics
         this.svg = d3.select(this.element)
             .attr("class", "timeline-selector-chart")
-            .append("svg");
+            .append("svg")
+            .attr("height", height + 60);
 
         this.svg.append("defs").append("clipPath")
             .attr("id", "clip")
             .append("rect")
             .attr("width", width)
-            .attr("height", height);
+            .attr("height", height + 60);
+
+        this.zoom = d3.behavior.zoom()
+            .on("zoom", function() {
+                me.svg.selectAll(".x.axis").call(xAxis);
+
+                x.domain([Math.max(xMin, x.domain()[0]), Math.min(xMax, x.domain()[1])]);
+
+                me.renderExtent(me.brush.extent());
+
+                for(var i = 0; i < me.data.length; i++) {
+                    var elements = me.svg.selectAll("g." + me.data[i].name).selectAll("." + me.data[i].type);
+
+                    if(me.data[i].type == "bar" && me.data[i].data.length < width) {
+                        elements.attr("x", function(d) {
+                            return x(d.date);
+                        });
+                    } else {
+                        var chartType = '';
+
+                        var y = d3.scale.linear().range([chartHeight, 0]);
+                        
+                        // Use lowest value or 0 for Y-axis domain, whichever is less (e.g. if negative)
+                        var minY = d3.min(me.data[i].data.map(function(d) {
+                            return d.value;
+                        }));
+                        minY = minY < 0 ? minY : 0;
+
+                        y.domain([minY, d3.max(me.data[i].data.map(function(d) {
+                            return d.value;
+                        }))]);
+
+                        if(me.data[i].type === 'line') {
+                            chartType = d3.svg.line()
+                                .x(function(d) {
+                                    return x(d.date);
+                                })
+                                .y(function(d) {
+                                    return y(d.value);
+                                });
+                        } else {
+                            chartType = d3.svg.area()
+                                .x(function(d) {
+                                    return x(d.date);
+                                })
+                                .y0(function(d) {
+                                    return y(Math.min(0, d.value));
+                                })
+                                .y1(function(d) {
+                                    return y(Math.max(0, d.value));
+                                });
+                        }
+
+                        elements.attr("d", chartType);
+
+                        me.svg.selectAll("g." + me.data[i].name)
+                            .selectAll(".dot")
+                            .attr("cx", function(d) {
+                                return x(d.date);
+                            })
+                            .attr("cy", function(d) {
+                                return y(d.value);
+                            });
+                    }
+                }
+            })
+            .scaleExtent([1, Infinity])
+            .x(x);
 
         var context = this.svg.append("g")
             .attr("class", "context")
-            .attr("transform", "translate(" + this.config.margin.left + "," + this.config.margin.top + ")");
+            .attr("transform", "translate(" + this.config.margin.left + "," + this.config.margin.top + ")")
+            .call(this.zoom);
 
         context.append("g")
             .attr("class", "x axis")

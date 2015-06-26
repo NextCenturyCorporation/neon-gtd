@@ -165,10 +165,6 @@ function(connectionService, datasetService, errorNotificationService, filterServ
              * @method initialize
              */
             $scope.initialize = function() {
-                // The brush handler needs to behave differently when the brush changes as part of a
-                // granularity change.
-                var updatingGranularity = false;
-
                 // Switch bucketizers when the granularity is changed.
                 $scope.$watch('options.granularity', function(newVal, oldVal) {
                     if(!$scope.loadingData && newVal && newVal !== oldVal) {
@@ -188,7 +184,6 @@ function(connectionService, datasetService, errorNotificationService, filterServ
                         $scope.updateDates();
 
                         if(0 < $scope.brush.length) {
-                            updatingGranularity = true;
                             var newBrushStart = $scope.bucketizer.roundDownBucket($scope.brush[0]);
                             var newBrushEnd = $scope.bucketizer.roundUpBucket($scope.brush[1]);
 
@@ -235,12 +230,11 @@ function(connectionService, datasetService, errorNotificationService, filterServ
 
                         var relations = datasetService.getRelations($scope.options.database.name, $scope.options.table.name, [$scope.options.dateField]);
 
-                        if(updatingGranularity) {
+                        if($scope.loadingData) {
                             // If the brush changed because of a granularity change, then don't
                             // update the chart. The granularity change will cause the data to be
                             // updated
                             filterService.replaceFilters($scope.messenger, relations, $scope.filterKeys, $scope.createFilterClauseForDate);
-                            updatingGranularity = false;
                         } else {
                             // Because the timeline ignores its own filter, we just need to update the
                             // chart times and total when this filter is applied
@@ -515,7 +509,9 @@ function(connectionService, datasetService, errorNotificationService, filterServ
 
                 var displayStartDate = new Date(extentStartDate);
                 var displayEndDate = new Date(extentEndDate);
-                $scope.setDisplayDates(displayStartDate, displayEndDate);
+                neon.safeApply($scope, function() {
+                    $scope.setDisplayDates(displayStartDate, displayEndDate)
+                });
 
                 $scope.recordCount = total;
             };
