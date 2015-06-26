@@ -82,6 +82,18 @@
                 border-radius: 4px;
                 padding: 5px 5px 2px;
             }
+
+            .layer-options {
+                .btn {
+                    &.active {
+                        color: @accent-bright;
+                    }
+
+                    .glyphicon {
+                        margin-right: 5px;
+                    }
+                }
+            }
         }
 
         &.legend-container {
@@ -139,67 +151,6 @@
                 background-color: @accent-bright;
                 opacity: 1;
             }
-        }
-    }
-
-    .olControlLayerSwitcher {
-        top: 90px;
-        left: 5px;
-        border: @border; 
-        color: black;
-        
-        .dataLbl {
-            font-size: 18px;
-        }
-
-        .baseLbl {
-            font-size: 18px;
-        }
-
-        .labelSpan {
-            font-size: 16px;
-            color: black;
-        }
-
-        .layersDiv {
-            padding-left: 30px;
-            background-color: rgba(225, 225, 225, 0.7);
-        }
-
-        .minimizeDiv {
-            left: 0px;
-            height: 40px;
-            width: 30px;
-            background-color: darkblue;
-            border-radius: 0px 15px 15px 0px;
-            border: @border; 
-        }
-
-        .maximizeDiv {
-            left: 0px;
-            height: 40px;
-            width: 30px;
-            background-color: darkblue;
-            border-radius: 0px 15px 15px 0px;
-            border: @border;
-        }
-
-        .olAlphaImg {
-            position: absolute !important;
-            left: 6px;
-            top: 10px;
-        }
-
-        input[type=radio] {
-            margin: 4px;
-        }
-
-        input[type=checkbox] {
-            margin: 4px;
-        }
-
-        label {
-            margin: 0px;
         }
     }
 }

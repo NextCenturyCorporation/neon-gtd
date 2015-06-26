@@ -120,6 +120,31 @@ coreMap.Map.prototype.addLayer = function(layer) {
 };
 
 /**
+ * Returns a layer from the map with the given name.
+ * @param {String} name The name of an OpenLayers layer.
+ * @method getLayer
+ * @return {Object} An OpenLayers layer object or variant or undefined if no layer with the given name exists.
+ */
+coreMap.Map.prototype.getLayer = function(name) {
+    var layers = this.map.getLayersByName(name);
+    return layers.length ? layers[0] : undefined;
+};
+
+/**
+ * Sets the visibility for a layer from the map with the given name.
+ * @param {String} name The name of an OpenLayers layer.
+ * @param {String} visibility The new visibility setting for the OpenLayers layer.
+ * @method setLayerVisibility
+ * @return {Object} An OpenLayers layer object or variant.
+ */
+coreMap.Map.prototype.setLayerVisibility = function(name, visibility) {
+    var layer = this.getLayer(name);
+    if(layer) {
+        layer.setVisibility(visibility);
+    }
+};
+
+/**
  * Removes a layer from the map and updates the select controls to
  * clean up any spurious layer popups.
  * @param {Object} An OpenLayers layer object or variant.
@@ -424,10 +449,6 @@ coreMap.Map.prototype.setupControls = function() {
     this.zoomControl = new OpenLayers.Control.Zoom({
         autoActivate: true
     });
-    this.switcher = new OpenLayers.Control.LayerSwitcher({
-        autoActivate: true,
-        ascending: false
-    });
 
     // Create a cache reader and writer.  Use default reader
     // settings to read from cache first.
@@ -447,10 +468,7 @@ coreMap.Map.prototype.setupControls = function() {
     });
 
     this.selectControl = this.createSelectControl([]);
-    this.map.addControls([
-        this.zoomControl, this.switcher,
-        this.cacheReader, this.cacheWriter, this.selectControl
-    ]);
+    this.map.addControls([this.zoomControl, this.cacheReader, this.cacheWriter, this.selectControl]);
 };
 
 /**

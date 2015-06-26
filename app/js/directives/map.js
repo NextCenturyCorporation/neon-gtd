@@ -436,6 +436,23 @@ angular.module('neonDemo.directives')
                 return configClone;
             };
 
+            var createLayerName = function(layer) {
+                var type = "";
+                if(layer.type === coreMap.Map.POINTS_LAYER) {
+                    type = " Points";
+                }
+                if(layer.type === coreMap.Map.CLUSTER_LAYER) {
+                    type = " Clusters";
+                }
+                if(layer.type === coreMap.Map.HEATMAP_LAYER) {
+                    type = " Heatmap";
+                }
+                if(layer.type === coreMap.Map.NODE_LAYER) {
+                    type = " Nodes";
+                }
+                return (layer.name || layer.table + type).toUpperCase();
+            };
+
             var createLayersByDatabaseAndTableMap = function(layers) {
                 var map = {};
                 for(var i = 0; i < layers.length; ++i) {
@@ -456,7 +473,10 @@ angular.module('neonDemo.directives')
                         map[database][table].limit = layers[i].limit;
                     }
 
+                    layers[i].name = createLayerName(layers[i]);
                     map[database][table].names.push(layers[i].name);
+
+                    layers[i].visible = true;
                 }
                 return map;
             };
@@ -540,7 +560,6 @@ angular.module('neonDemo.directives')
                     layer = $scope.options.layers[i];
                     if(!layer.olLayer) {
                         if(layer.type === coreMap.Map.POINTS_LAYER) {
-                            layer.name = (layer.name || layer.table + " Points").toUpperCase();
                             layer.olLayer = new coreMap.Map.Layer.PointsLayer(layer.name, {
                                 latitudeMapping: layer.latitudeMapping,
                                 longitudeMapping: layer.longitudeMapping,
@@ -557,7 +576,6 @@ angular.module('neonDemo.directives')
                             });
                             this.map.addLayer(layer.olLayer);
                         } else if(layer.type === coreMap.Map.CLUSTER_LAYER) {
-                            layer.name = (layer.name || layer.table + " Clusters").toUpperCase();
                             layer.olLayer = new coreMap.Map.Layer.PointsLayer(layer.name, {
                                 latitudeMapping: layer.latitudeMapping,
                                 longitudeMapping: layer.longitudeMapping,
@@ -575,7 +593,6 @@ angular.module('neonDemo.directives')
                             });
                             this.map.addLayer(layer.olLayer);
                         } else if(layer.type === coreMap.Map.HEATMAP_LAYER) {
-                            layer.name = (layer.name || layer.table + " Heatmap").toUpperCase();
                             layer.olLayer = new coreMap.Map.Layer.HeatmapLayer(layer.name,
                                 $scope.map.map,
                                 $scope.map.map.baseLayer, {
@@ -585,7 +602,6 @@ angular.module('neonDemo.directives')
                             });
                             this.map.addLayer(layer.olLayer);
                         } else if(layer.type === coreMap.Map.NODE_LAYER) {
-                            layer.name = (layer.name || layer.table + " Nodes").toUpperCase();
                             layer.olLayer = new coreMap.Map.Layer.NodeLayer(layer.name, {
                                 sourceMapping: layer.sourceMapping,
                                 targetMapping: layer.targetMapping,
@@ -1002,6 +1018,20 @@ angular.module('neonDemo.directives')
                         });
                     }
                 }
+            };
+
+            $scope.updateLayerVisibility = function(layer) {
+                XDATA.userALE.log({
+                    activity: "alter",
+                    action: "click",
+                    elementId: "map-layer-active-button",
+                    elementType: "button",
+                    elementGroup: "map_group",
+                    source: "user",
+                    tags: ["options", "map", "layer", layer.name, "active", layer.active]
+                });
+
+                $scope.map.setLayerVisibility(layer.name, layer.visible);
             };
 
             /**
