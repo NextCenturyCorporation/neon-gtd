@@ -221,7 +221,18 @@ function(connectionService, datasetService, errorNotificationService, filterServ
                 }
             };
 
-            var query = function(callback) {
+            $scope.queryForData = function() {
+                XDATA.userALE.log({
+                    activity: "alter",
+                    action: "query",
+                    elementId: "linechart",
+                    elementType: "canvas",
+                    elementSub: "linechart",
+                    elementGroup: "chart_group",
+                    source: "system",
+                    tags: ["query", "linechart"]
+                });
+
                 if($scope.errorMessage) {
                     errorNotificationService.hideErrorMessage($scope.errorMessage);
                     $scope.errorMessage = undefined;
@@ -270,23 +281,7 @@ function(connectionService, datasetService, errorNotificationService, filterServ
                     .sortBy('date', neon.query.ASCENDING)
                     .ignoreFilters([$scope.filterKeys[$scope.options.database.name][$scope.options.table.name]]);
 
-                connection.executeQuery(query, callback, function(response) {
-                    XDATA.userALE.log({
-                        activity: "alter",
-                        action: "failed",
-                        elementId: "linechart",
-                        elementType: "canvas",
-                        elementSub: "linechart",
-                        elementGroup: "chart_group",
-                        source: "system",
-                        tags: ["failed", "linechart"]
-                    });
-                    drawLineChart();
-                    $scope.loadingData = false;
-                    if(response.responseJSON) {
-                        $scope.errorMessage = errorNotificationService.showErrorMessage($element, response.responseJSON.error, response.responseJSON.stackTrace);
-                    }
-                });
+                connection.executeQuery(query, handleQuerySuccess, handleQueryFailure);
             };
 
             /**
@@ -352,158 +347,190 @@ function(connectionService, datasetService, errorNotificationService, filterServ
                 $scope.queryForData();
             };
 
-            $scope.queryForData = function() {
+            /**
+             * Compares the two given data points for a sort function based on the current aggregation type.
+             * @param {Array} a
+             * @param {Array} b
+             * @method compareData
+             * @return {Integer}
+             */
+            var compareData = function(a, b) {
+                if($scope.options.aggregation === "count" || $scope.options.aggregation === "sum" || $scope.options.aggregation === "average") {
+                    if(a.total < b.total) {
+                        return 1;
+                    }
+                    if(a.total > b.total) {
+                        return -1;
+                    }
+                }
+                if($scope.options.aggregation === "min") {
+                    if(a.min < b.min) {
+                        return -1;
+                    }
+                    if(a.min > b.min) {
+                        return 1;
+                    }
+                }
+                if($scope.options.aggregation === "max") {
+                    if(a.max < b.max) {
+                        return 1;
+                    }
+                    if(a.max > b.max) {
+                        return -1;
+                    }
+                }
+                return 0;
+            };
+
+            /**
+             * Creates and returns the "other series" representing the combined groups outside the "top 10" (the value of the seriesLimit) from the given data.
+             * @param {Array} data
+             * @method createOtherSeries
+             * @return {Object}
+             */
+            var createOtherSeries = function(data) {
+                var count = data.length - $scope.seriesLimit;
+                var otherSeries = {
+                    series: count + " Others",
+                    total: 0,
+                    min: -1,
+                    max: -1,
+                    data: []
+                };
+
+                // For averages, do not include the combined values of groups outside the top 10 because adding averages together from multiple groups makes no sense.
+                if($scope.options.aggregation !== 'average') {
+                    for(var i = $scope.seriesLimit; i < data.length; i++) {
+                        otherSeries.total += data[i].total;
+                        otherSeries.min = otherSeries.min < 0 ? data[i].min : Math.min(otherSeries.min, data[i].min);
+                        otherSeries.max = otherSeries.max < 0 ? data[i].max : Math.max(otherSeries.max, data[i].max);
+                        for(var d = 0; d < data[i].data.length; d++) {
+                            if(otherSeries.data[d]) {
+                                if($scope.options.aggregation === "count" || $scope.options.aggregation === "sum") {
+                                    otherSeries.data[d].value += data[i].data[d].value;
+                                }
+                                if($scope.options.aggregation === "min") {
+                                    otherSeries.data[d].value = Math.min(otherSeries.data[d].value, data[i].data[d].value);
+                                }
+                                if($scope.options.aggregation === "max") {
+                                    otherSeries.data[d].value = Math.max(otherSeries.data[d].value, data[i].data[d].value);
+                                }
+                            } else {
+                                otherSeries.data[d] = {
+                                    date: data[i].data[d].date,
+                                    value: data[i].data[d].value
+                                };
+                            }
+                        }
+                    }
+                }
+
+                return otherSeries;
+            };
+
+            /**
+             * Draws a new line chart with the given results from the successful query.
+             * @param {Object} results
+             * @method handleQuerySuccess
+             */
+            var handleQuerySuccess = function(results) {
+                var minDate;
+                var maxDate;
+
+                //this prevents an error in older mongo caused when the xAxis value is invalid as it is not
+                //included as a key in the response
+                for(var i = 0; i < results.data.length; i++) {
+                    if(typeof(results.data[i][$scope.options.attrX]) === 'undefined') {
+                        results.data[i][$scope.options.attrX] = null;
+                    }
+                }
+
+                if(results.data.length > 0) {
+                    var range = d3.extent(results.data, function(d) {
+                        return new Date(d.date);
+                    });
+                    minDate = range[0];
+                    maxDate = range[1];
+                } else {
+                    minDate = new Date();
+                    maxDate = new Date();
+                }
+
+                var data = [];
+                var series = [];
+                var zeroedData = zeroPadData(results, minDate, maxDate);
+
+                for(series in zeroedData) {
+                    if(Object.prototype.hasOwnProperty.call(zeroedData, series)) {
+                        data.push(zeroedData[series]);
+                    }
+                }
+
+                data.sort(compareData);
+
+                // The "other series" is the line representing the combined groups outside the "top 10" (the value of the seriesLimit).
+                var otherSeries = createOtherSeries(data);
+
+                data = data.splice(0, $scope.seriesLimit);
+
+                if(otherSeries.total > 0) {
+                    data.push(otherSeries);
+                }
+
                 XDATA.userALE.log({
                     activity: "alter",
-                    action: "query",
+                    action: "receive",
                     elementId: "linechart",
                     elementType: "canvas",
                     elementSub: "linechart",
                     elementGroup: "chart_group",
                     source: "system",
-                    tags: ["query", "linechart"]
+                    tags: ["receive", "linechart"]
                 });
 
-                query(function(results) {
-                    var i;
-                    var minDate;
-                    var maxDate;
-                    var range;
-
-                    //this prevents an error in older mongo caused when the xAxis value is invalid as it is not
-                    //included as a key in the response
-                    for(i = 0; i < results.data.length; i++) {
-                        if(typeof(results.data[i][$scope.options.attrX]) === 'undefined') {
-                            results.data[i][$scope.options.attrX] = null;
-                        }
-                    }
-
-                    if(results.data.length > 0) {
-                        range = d3.extent(results.data, function(d) {
-                            return new Date(d.date);
-                        });
-                        minDate = range[0];
-                        maxDate = range[1];
-                    } else {
-                        minDate = new Date();
-                        maxDate = new Date();
-                    }
-
-                    var data = [];
-                    var series = [];
-                    var zeroedData = zeroPadData(results, minDate, maxDate);
-
-                    // Convert results to array
-                    for(series in zeroedData) {
-                        if(Object.prototype.hasOwnProperty.call(zeroedData, series)) {
-                            data.push(zeroedData[series]);
-                        }
-                    }
-
-                    data.sort(function(a, b) {
-                        if($scope.options.aggregation === "count" || $scope.options.aggregation === "sum" || $scope.options.aggregation === "average") {
-                            if(a.total < b.total) {
-                                return 1;
-                            }
-                            if(a.total > b.total) {
-                                return -1;
-                            }
-                        }
-                        if($scope.options.aggregation === "min") {
-                            if(a.min < b.min) {
-                                return -1;
-                            }
-                            if(a.min > b.min) {
-                                return 1;
-                            }
-                        }
-                        if($scope.options.aggregation === "max") {
-                            if(a.max < b.max) {
-                                return 1;
-                            }
-                            if(a.max > b.max) {
-                                return -1;
-                            }
-                        }
-                        return 0;
-                    });
-
-                    // Calculate Other series
-                    var othersCount = data.length - $scope.seriesLimit;
-                    var otherSeries = {
-                        series: othersCount + " Others",
-                        total: 0,
-                        min: -1,
-                        max: -1,
-                        data: []
-                    };
-
-                    // For averages, do not include the combined values of groups outside the top 10 because adding averages together from multiple groups makes no sense.
-                    if($scope.options.aggregation !== 'average') {
-                        for(i = $scope.seriesLimit; i < data.length; i++) {
-                            otherSeries.total += data[i].total;
-                            otherSeries.min = otherSeries.min < 0 ? data[i].min : Math.min(otherSeries.min, data[i].min);
-                            otherSeries.max = otherSeries.max < 0 ? data[i].max : Math.max(otherSeries.max, data[i].max);
-                            for(var d = 0; d < data[i].data.length; d++) {
-                                if(otherSeries.data[d]) {
-                                    if($scope.options.aggregation === "count" || $scope.options.aggregation === "sum") {
-                                        otherSeries.data[d].value += data[i].data[d].value;
-                                    }
-                                    if($scope.options.aggregation === "min") {
-                                        otherSeries.data[d].value = Math.min(otherSeries.data[d].value, data[i].data[d].value);
-                                    }
-                                    if($scope.options.aggregation === "max") {
-                                        otherSeries.data[d].value = Math.max(otherSeries.data[d].value, data[i].data[d].value);
-                                    }
-                                } else {
-                                    otherSeries.data[d] = {
-                                        date: data[i].data[d].date,
-                                        value: data[i].data[d].value
-                                    };
-                                }
-                            }
-                        }
-                    }
-
-                    // Trim data to only top results
-                    data = data.splice(0, $scope.seriesLimit);
-
-                    // Add Other series
-                    if(otherSeries.total > 0) {
-                        data.push(otherSeries);
-                    }
-
-                    // Render chart and series lines
+                $scope.$apply(function() {
+                    drawLineChart(data);
+                    $scope.loadingData = false;
+                    // Use a timeout so we resize the chart after the legend renders (since the legend size affects the chart size).
+                    $timeout(function() {
+                        updateChartSize();
+                    }, 100);
                     XDATA.userALE.log({
                         activity: "alter",
-                        action: "receive",
+                        action: "render",
                         elementId: "linechart",
                         elementType: "canvas",
                         elementSub: "linechart",
                         elementGroup: "chart_group",
                         source: "system",
-                        tags: ["receive", "linechart"]
-                    });
-
-                    $scope.$apply(function() {
-                        drawLineChart(data);
-                        $scope.loadingData = false;
-                        // Use a timeout so we resize the chart after the legend renders (since the legend size affects the chart size).
-                        $timeout(function() {
-                            updateChartSize();
-                        }, 100);
-                        XDATA.userALE.log({
-                            activity: "alter",
-                            action: "render",
-                            elementId: "linechart",
-                            elementType: "canvas",
-                            elementSub: "linechart",
-                            elementGroup: "chart_group",
-                            source: "system",
-                            tags: ["render", "linechart"]
-                        });
+                        tags: ["render", "linechart"]
                     });
                 });
+            };
+
+            /**
+             * Draws a blank line chart and displays the error in the given response from the failed query.
+             * @param {Object} response
+             * @method handleQueryFailure
+             */
+            var handleQueryFailure = function(response) {
+                XDATA.userALE.log({
+                    activity: "alter",
+                    action: "failed",
+                    elementId: "linechart",
+                    elementType: "canvas",
+                    elementSub: "linechart",
+                    elementGroup: "chart_group",
+                    source: "system",
+                    tags: ["failed", "linechart"]
+                });
+
+                drawLineChart();
+                $scope.loadingData = false;
+
+                if(response.responseJSON) {
+                    $scope.errorMessage = errorNotificationService.showErrorMessage($element, response.responseJSON.error, response.responseJSON.stackTrace);
+                }
             };
 
             $scope.toggleSeries = function(series) {
@@ -649,16 +676,33 @@ function(connectionService, datasetService, errorNotificationService, filterServ
                 return zeroed;
             };
 
-            var calculateBrushedAggregationValue = function(data, calculateFunction) {
+            /**
+             * Uses the given function to calculate the aggregated value of the given data between the start and end extent of the brush.
+             * @param {Array} data
+             * @param {Function} calculationFunction
+             * @method calculateBrushedAggregationValue
+             * @return {Number}
+             */
+            var calculateBrushedAggregationValue = function(data, calculationFunction) {
+                if($scope.brushExtent.length < 2) {
+                    return 0;
+                }
+
                 var start = $scope.dateStringToDataIndex[$scope.brushExtent[0].toDateString()];
                 var end = $scope.dateStringToDataIndex[$scope.brushExtent[1].toDateString()];
                 var value = 0;
                 for(var i = start; i < end; ++i) {
-                    value = calculateFunction(data[i].value, value);
+                    value = calculationFunction(data[i].value, value);
                 }
                 return value;
             };
 
+            /**
+             * Returns the text to display in the legend containing the aggregated value for the given object.
+             * @param {Object} colorMappingObject
+             * @method getLegendItemAggregationText
+             * @return {String}
+             */
             $scope.getLegendItemAggregationText = function(colorMappingObject) {
                 if($scope.options.aggregation === "count" || $scope.options.aggregation === "sum") {
                     var total = colorMappingObject.total;
