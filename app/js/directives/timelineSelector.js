@@ -220,6 +220,9 @@ function(connectionService, datasetService, errorNotificationService, filterServ
                             }
                         }
 
+                        // Needed to redraw the brush for the case in which the user clicks on a point inside an existing brush.
+                        $scope.extentDirty = true;
+
                         if($scope.loadingData) {
                             // If the brush changed because of a granularity change, then don't
                             // update the chart. The granularity change will cause the data to be

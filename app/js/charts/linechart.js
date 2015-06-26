@@ -27,6 +27,14 @@ charts.LineChart = function(rootElement, selector, opts) {
     this.brush = undefined;
     this.brushHandler = undefined;
 
+    // The old extent of the brush saved on brushstart.
+    this.oldExtent = [];
+
+    // The data index over which the user is currently hovering changed on mousemove and mouseout.
+    this.dataIndex = -1;
+
+    this.xDomain = [];
+
     this.hiddenSeries = [];
 
     this.colors = [];
@@ -211,9 +219,10 @@ charts.LineChart.prototype.drawLines = function(opts) {
     me.x = d3.time.scale.utc()
     .range([0, (me.width - (me.margin.left + me.margin.right))], 0.25);
 
-    me.x.domain(d3.extent(fullDataSet, function(d) {
+    me.xDomain = d3.extent(fullDataSet, function(d) {
         return d[me.xAttribute];
-    }));
+    });
+    me.x.domain(me.xDomain);
 
     var xAxis = d3.svg.axis()
         .scale(me.x)
@@ -424,6 +433,7 @@ charts.LineChart.prototype.drawLines = function(opts) {
                 dataDate = opts[0].data[dataIndex][me.xAttribute];
                 closerDate = dataDate;
                 closerIndex = dataIndex;
+                me.dataIndex = dataIndex;
 
                 if(dataIndex > 0) {
                     dataIndexLeft = (dataIndex - 1);
@@ -491,6 +501,7 @@ charts.LineChart.prototype.drawLines = function(opts) {
         me.svg.selectAll("circle.dot-hover")
             .attr("stroke-opacity", 0)
             .attr("fill-opacity", 0);
+        me.dataIndex = -1;
         $("#tooltip-container").hide();
         XDATA.userALE.log({
                 activity: "hide",
@@ -506,13 +517,13 @@ charts.LineChart.prototype.drawLines = function(opts) {
 };
 
 /**
- * Returns a function that runs the given brush handler using the extent from the given D3 brush and logs the event.
- * @param {Object} brush
+ * Returns a function that runs the given brush handler using the extent from the D3 brush in the given linechart and logs the event.
+ * @param {Object} linechart
  * @param {Function} brushHandler
  * @method runBrushHandler
  * @return {Function}
  */
-charts.LineChart.prototype.runBrushHandler = function(brush, brushHandler) {
+charts.LineChart.prototype.runBrushHandler = function(linechart, brushHandler) {
     return function() {
         XDATA.userALE.log({
             activity: "select",
@@ -524,8 +535,19 @@ charts.LineChart.prototype.runBrushHandler = function(brush, brushHandler) {
             source: "user",
             tags: ["linechart", "brush"]
         });
+
+        // If the user clicks on a date inside the brush without moving the brush, change the brush to contain only that date.
+        if(linechart.dataIndex >= 0 && linechart.oldExtent[0]) {
+            var extent = linechart.brush.extent();
+            if(linechart.oldExtent[0].toDateString() === extent[0].toDateString() && linechart.oldExtent[1].toDateString() === extent[1].toDateString()) {
+                var startDate = linechart.data[0].data[linechart.dataIndex].date;
+                var endDate = linechart.data[0].data.length === linechart.dataIndex + 1 ? linechart.xDomain[1] : linechart.data[0].data[linechart.dataIndex + 1].date;
+                linechart.brush.extent([startDate, endDate]);
+            }
+        }
+
         if(brushHandler) {
-            brushHandler(brush.extent());
+            brushHandler(linechart.brush.extent());
         }
     };
 };
@@ -538,7 +560,7 @@ charts.LineChart.prototype.runBrushHandler = function(brush, brushHandler) {
 charts.LineChart.prototype.setBrushHandler = function(brushHandler) {
     this.brushHandler = brushHandler;
     if(this.brush) {
-        this.brush.on("brushend", this.runBrushHandler(this.brush, this.brushHandler));
+        this.brush.on("brushend", this.runBrushHandler(this, this.brushHandler));
     }
 };
 
@@ -555,6 +577,7 @@ charts.LineChart.prototype.drawBrush = function() {
 
     if(this.brushHandler) {
         this.brush.on("brushstart", function() {
+            me.oldExtent = me.brush.extent();
             XDATA.userALE.log({
                 activity: "select",
                 action: "dragstart",
@@ -566,7 +589,7 @@ charts.LineChart.prototype.drawBrush = function() {
                 tags: ["linechart", "brush"]
             });
         });
-        this.brush.on("brushend", this.runBrushHandler(this.brush, this.brushHandler));
+        this.brush.on("brushend", this.runBrushHandler(this, this.brushHandler));
     }
 
     var d3Brush = this.svg.append("g").attr("class", "brush");
