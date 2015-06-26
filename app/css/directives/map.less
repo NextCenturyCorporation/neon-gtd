@@ -44,7 +44,7 @@
 
     .chart-options {
         .popover {
-            top: 25px;
+            top: 30px;
             right: -10px;
             position: absolute;
             width: 250px;
@@ -72,6 +72,16 @@
             right: 10px;
             top: 10px;
             z-index: 1010;
+
+            /* Give the menu container a background to make it more readable.  Make it the same height (30 px) and color of the filter reset notifications. */
+            div.chart-options a {
+                background-color: @button-color;
+                border-style: solid;
+                border-width: 1px;
+                border-color: @button-border-color;
+                border-radius: 4px;
+                padding: 5px 5px 2px;
+            }
         }
 
         &.legend-container {
