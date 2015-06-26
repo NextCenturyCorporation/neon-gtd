@@ -759,7 +759,9 @@ function(connectionService, datasetService, errorNotificationService, filterServ
                 $scope.brushExtent = brushExtent;
                 renderBrushExtent();
 
-                if($scope.brushExtent === datasetService.getDateBrushExtent($scope.options.database.name, $scope.options.table.name)) {
+                var globalBrushExtent = datasetService.getDateBrushExtent($scope.options.database.name, $scope.options.table.name);
+                // We're comparing the date strings here because comparing the date objects doesn't seem to work.
+                if(globalBrushExtent.length && $scope.brushExtent[0].toDateString() === globalBrushExtent[0].toDateString() && $scope.brushExtent[1].toDateString() === globalBrushExtent[1].toDateString()) {
                     return;
                 }
 

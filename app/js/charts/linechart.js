@@ -222,6 +222,8 @@ charts.LineChart.prototype.drawLines = function(opts) {
     me.xDomain = d3.extent(fullDataSet, function(d) {
         return d[me.xAttribute];
     });
+    // Add one day to the end of the x-axis so users can hover over and filter on the end date.
+    me.xDomain[1] = d3.time.day.utc.offset(me.xDomain[1], 1);
     me.x.domain(me.xDomain);
 
     var xAxis = d3.svg.axis()
@@ -414,49 +416,27 @@ charts.LineChart.prototype.drawLines = function(opts) {
             var graph_x = me.x.invert(mouse_x);
             var format = d3.time.format.utc('%e %B %Y');
             var numFormat = d3.format("0,000.00");
-            var html = '';
-            var bisect;
-            var dataIndex;
-            var dataIndexLeft;
-            var dataDate;
-            var dataDateLeft;
-            var closerIndex;
-            var closerDate;
+            var dataIndex = 0;
 
             if(opts[0].data.length > 1) {
-                bisect = d3.bisector(function(d) {
+                var bisect = d3.bisector(function(d) {
                     return d[me.xAttribute];
                 }).right;
                 dataIndex = bisect(opts[0].data, graph_x);
                 // Adjust for out of range mouse events; Typical during a resize and some orientations.
-                dataIndex = (dataIndex < opts[0].data.length) ? dataIndex : (opts[0].data.length - 1);
-                dataDate = opts[0].data[dataIndex][me.xAttribute];
-                closerDate = dataDate;
-                closerIndex = dataIndex;
+                dataIndex = (dataIndex < opts[0].data.length) ? Math.max(0, dataIndex - 1) : (opts[0].data.length - 1);
                 me.dataIndex = dataIndex;
-
-                if(dataIndex > 0) {
-                    dataIndexLeft = (dataIndex - 1);
-                    dataDateLeft = opts[0].data[dataIndexLeft][me.xAttribute];
-                    var compare = ((me.x(dataDate) - me.x(dataDateLeft)) / 2) + me.x(dataDateLeft);
-                    if(mouse_x < compare) {
-                        closerDate = dataDateLeft;
-                        closerIndex = dataIndexLeft;
-                    }
-                }
-            } else {
-                closerIndex = 0;
-                closerDate = opts[0].data[closerIndex][me.xAttribute];
             }
 
-            html = '<span class="tooltip-date">' + format(closerDate) + '</span>';
+            var dataDate = opts[0].data[dataIndex][me.xAttribute];
+            var html = '<span class="tooltip-date">' + format(dataDate) + '</span>';
 
             for(var i = 0; i < opts.length; i++) {
                 if(me.hiddenSeries.indexOf(opts[i].series) >= 0) {
                     continue;
                 }
                 var color = me.calculateColor(opts[i]);
-                var xPos = me.x(closerDate);
+                var xPos = me.x(dataDate);
                 if(opts[i].data.length === 1) {
                     xPos = me.width / 2;
                 }
@@ -465,16 +445,16 @@ charts.LineChart.prototype.drawLines = function(opts) {
                     .attr("stroke-opacity", 1)
                     .attr("fill-opacity", 1)
                     .attr("cx", xPos)
-                    .attr("cy", me.y(opts[i].data[closerIndex].value));
+                    .attr("cy", me.y(opts[i].data[dataIndex].value));
 
                 html += ('<span style="color: ' + color + '">' + opts[i].series + ": " +
-                    numFormat(Math.round(opts[i].data[closerIndex].value * 100) / 100) + '</span>');
+                    numFormat(Math.round(opts[i].data[dataIndex].value * 100) / 100) + '</span>');
             }
 
             if(opts[0].data.length === 1) {
                 hoverLine.attr("x1", me.width / 2).attr("x2", me.width / 2);
             } else {
-                hoverLine.attr("x1", me.x(closerDate)).attr("x2", me.x(closerDate));
+                hoverLine.attr("x1", me.x(dataDate)).attr("x2", me.x(dataDate));
             }
 
             hoverLineGroup.style("opacity", 1);
