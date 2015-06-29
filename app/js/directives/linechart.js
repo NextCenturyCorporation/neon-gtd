@@ -218,14 +218,12 @@ function(connectionService, datasetService, errorNotificationService, filterServ
 
                 if($scope.options.database.name === message.databaseName && $scope.options.table.name === message.tableName && $scope.brushExtent !== message.brushExtent) {
                     renderBrushExtent(message.brushExtent);
+                    $scope.queryForData();
                 }
             };
 
             var renderBrushExtent = function(brushExtent) {
                 $scope.brushExtent = brushExtent || [];
-                if($scope.chart) {
-                    $scope.chart.renderBrushExtent($scope.brushExtent);
-                }
             };
 
             $scope.queryForData = function() {
@@ -285,8 +283,7 @@ function(connectionService, datasetService, errorNotificationService, filterServ
                 }
 
                 query.aggregate(neon.query.MIN, $scope.options.attrX, 'date')
-                    .sortBy('date', neon.query.ASCENDING)
-                    .ignoreFilters([$scope.filterKeys[$scope.options.database.name][$scope.options.table.name]]);
+                    .sortBy('date', neon.query.ASCENDING);
 
                 connection.executeQuery(query, handleQuerySuccess, handleQueryFailure);
             };
@@ -664,7 +661,6 @@ function(connectionService, datasetService, errorNotificationService, filterServ
                 $scope.chart.draw(data);
                 $scope.colorMappings = $scope.chart.getColorMappings();
                 $scope.noData = !data || !data.length;
-                renderBrushExtent();
             };
 
             /**
@@ -771,7 +767,7 @@ function(connectionService, datasetService, errorNotificationService, filterServ
 
                 var relations = datasetService.getRelations($scope.options.database.name, $scope.options.table.name, [$scope.options.attrX]);
                 datasetService.setDateBrushExtentForRelations(relations, $scope.brushExtent);
-                filterService.replaceFilters($scope.messenger, relations, $scope.filterKeys, createFilterClauseForDate);
+                filterService.replaceFilters($scope.messenger, relations, $scope.filterKeys, createFilterClauseForDate, $scope.queryForData);
             };
 
             /**
@@ -790,9 +786,9 @@ function(connectionService, datasetService, errorNotificationService, filterServ
                 });
 
                 renderBrushExtent([]);
-                filterService.removeFilters($scope.messenger, $scope.filterKeys);
                 var relations = datasetService.getRelations($scope.options.database.name, $scope.options.table.name, [$scope.options.attrX]);
                 datasetService.removeDateBrushExtentForRelations(relations);
+                filterService.removeFilters($scope.messenger, $scope.filterKeys, $scope.queryForData);
             };
 
             /**
@@ -808,7 +804,7 @@ function(connectionService, datasetService, errorNotificationService, filterServ
                 }
 
                 var startFilterClause = neon.query.where(dateFieldName, ">=", $scope.brushExtent[0]);
-                var endFilterClause = neon.query.where(dateFieldName, ">=", $scope.brushExtent[1]);
+                var endFilterClause = neon.query.where(dateFieldName, "<", $scope.brushExtent[1]);
                 return neon.query.and.apply(this, [startFilterClause, endFilterClause]);
             };
 
