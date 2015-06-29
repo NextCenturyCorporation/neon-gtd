@@ -220,6 +220,12 @@ function(connectionService, datasetService, errorNotificationService, filterServ
                             }
                         }
 
+                        // If the brush is over the whole timeline, remove the brush and filter instead.
+                        if($scope.bucketizer.getStartDate().toDateString() === newVal[0].toDateString() && $scope.bucketizer.getEndDate().toDateString() === newVal[1].toDateString()) {
+                            removeBrushFromTimelineAndDatasetService();
+                            return;
+                        }
+
                         // Needed to redraw the brush for the case in which the user clicks on a point inside an existing brush.
                         $scope.extentDirty = true;
 
@@ -1001,6 +1007,7 @@ function(connectionService, datasetService, errorNotificationService, filterServ
                 $scope.extentDirty = true;
                 var relations = datasetService.getRelations($scope.options.database.name, $scope.options.table.name, [$scope.options.dateField]);
                 datasetService.removeDateBrushExtentForRelations(relations);
+                filterService.removeFilters($scope.messenger, $scope.filterKeys);
             };
 
             /**
@@ -1019,7 +1026,6 @@ function(connectionService, datasetService, errorNotificationService, filterServ
                 });
 
                 removeBrushFromTimelineAndDatasetService();
-                filterService.removeFilters($scope.messenger, $scope.filterKeys);
             };
 
             $scope.updateDateField = function() {

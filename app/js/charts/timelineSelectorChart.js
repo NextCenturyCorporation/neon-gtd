@@ -189,27 +189,27 @@ charts.TimelineSelectorChart = function(element, configuration) {
             var extent1;
 
             if(typeof extent0[0] === 'undefined' || typeof extent0[1] === 'undefined') {
-                return;
-            }
-
-            // if dragging, preserve the width of the extent
-            if(d3.event.mode === "move") {
-                var d0 = timeFunction.round(extent0[0]);
-                var range = timeFunction.range(extent0[0], extent0[1]);
-                var d1 = timeFunction.offset(d0, range.length);
-                extent1 = [d0, d1];
+                d3.select(this).call(brush.clear());
             } else {
-                extent1 = extent0.map(timeFunction.round);
+                // if dragging, preserve the width of the extent
+                if(d3.event.mode === "move") {
+                    var d0 = timeFunction.round(extent0[0]);
+                    var range = timeFunction.range(extent0[0], extent0[1]);
+                    var d1 = timeFunction.offset(d0, range.length);
+                    extent1 = [d0, d1];
+                } else {
+                    extent1 = extent0.map(timeFunction.round);
 
-                // if empty when rounded, use floor & ceil instead
-                if(extent1[0] >= extent1[1]) {
-                    extent1[0] = timeFunction.floor(extent0[0]);
-                    extent1[1] = timeFunction.ceil(extent0[1]);
+                    // if empty when rounded, use floor & ceil instead
+                    if(extent1[0] >= extent1[1]) {
+                        extent1[0] = timeFunction.floor(extent0[0]);
+                        extent1[1] = timeFunction.ceil(extent0[1]);
+                    }
                 }
-            }
 
-            if(extent1[0] < extent1[1]) {
-                d3.select(this).call(brush.extent(extent1));
+                if(extent1[0] < extent1[1]) {
+                    d3.select(this).call(brush.extent(extent1));
+                }
             }
         }
 
