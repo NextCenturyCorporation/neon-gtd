@@ -123,6 +123,9 @@ function(connectionService, datasetService, errorNotificationService, filterServ
                 // on the associated element and not just the window.
                 $element.resize(updateChartSize);
 
+                // The size of the legend will change whenever the filter notification is added or removed so the chart may need to be resized and redrawn.
+                $element.find(".legend").resize(updateChartSize);
+
                 $scope.$watch('options.attrX', function(newValue) {
                     onFieldChange('attrX', newValue);
                     if(!$scope.loadingData && $scope.options.database.name && $scope.options.table.name) {
@@ -210,12 +213,12 @@ function(connectionService, datasetService, errorNotificationService, filterServ
                 });
 
                 if($scope.options.database.name === message.databaseName && $scope.options.table.name === message.tableName && $scope.brushExtent !== message.brushExtent) {
-                    $scope.brushExtent = message.brushExtent;
-                    renderBrushExtent();
+                    renderBrushExtent(message.brushExtent);
                 }
             };
 
-            var renderBrushExtent = function() {
+            var renderBrushExtent = function(brushExtent) {
+                $scope.brushExtent = brushExtent || [];
                 if($scope.chart) {
                     $scope.chart.renderBrushExtent($scope.brushExtent);
                 }
@@ -339,8 +342,7 @@ function(connectionService, datasetService, errorNotificationService, filterServ
 
                 var globalBrushExtent = datasetService.getDateBrushExtent($scope.options.database.name, $scope.options.table.name);
                 if($scope.brushExtent !== globalBrushExtent) {
-                    $scope.brushExtent = globalBrushExtent;
-                    renderBrushExtent();
+                    renderBrushExtent(globalBrushExtent);
                 } else if($scope.brushExtent.length) {
                     $scope.removeBrush();
                 }
@@ -756,8 +758,7 @@ function(connectionService, datasetService, errorNotificationService, filterServ
                     return;
                 }
 
-                $scope.brushExtent = brushExtent;
-                renderBrushExtent();
+                renderBrushExtent(brushExtent);
 
                 var globalBrushExtent = datasetService.getDateBrushExtent($scope.options.database.name, $scope.options.table.name);
                 // We're comparing the date strings here because comparing the date objects doesn't seem to work.
@@ -785,8 +786,7 @@ function(connectionService, datasetService, errorNotificationService, filterServ
                     tags: ["filter", "date-range"]
                 });
 
-                $scope.brushExtent = [];
-                renderBrushExtent();
+                renderBrushExtent([]);
                 filterService.removeFilters($scope.messenger, $scope.filterKeys);
                 var relations = datasetService.getRelations($scope.options.database.name, $scope.options.table.name, [$scope.options.attrX]);
                 datasetService.removeDateBrushExtentForRelations(relations);

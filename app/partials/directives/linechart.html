@@ -44,12 +44,12 @@
 <div class="clearfix"></div>
 
 <div class="header-container filter-container">
-    <div class="filter-reset pull-right" ng-class="{true: '', false: 'hidden'}[brushExtent.length > 0]">
-        <span class="filter-label">Filter</span>
-        <span class="glyphicon glyphicon-remove" ng-click="removeBrush()"></span>
-    </div>
-
     <div class="legend">
+        <div class="filter-reset pull-right" ng-class="{true: '', false: 'hidden'}[brushExtent.length > 0]">
+            <span class="filter-label">Filter</span>
+            <span class="glyphicon glyphicon-remove" ng-click="removeBrush()"></span>
+        </div>
+
         <div class="legend-item legend-item-clickable" title="{{colorMapping.series}} {{getLegendItemAggregationText(colorMapping)}}" ng-repeat="colorMapping in colorMappings" ng-click="toggleSeries(colorMapping.series)" ng-class="{true: 'legend-hidden', false: ''}[colorMapping.hidden]">
             <span class="legend-icon" style="background-color: {{colorMapping.color}}"></span>
             <span class="legend-text">{{colorMapping.series}}</span>
