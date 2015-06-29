@@ -222,8 +222,12 @@ charts.LineChart.prototype.drawLines = function(opts) {
     me.xDomain = d3.extent(fullDataSet, function(d) {
         return d[me.xAttribute];
     });
-    // Add one day to the end of the x-axis so users can hover over and filter on the end date.
-    me.xDomain[1] = d3.time.day.utc.offset(me.xDomain[1], 1);
+
+    // If no data exists then the min and max of the domain will be undefined.
+    if(me.xDomain[1]) {
+        // Add one day to the end of the x-axis so users can hover over and filter on the end date.
+        me.xDomain[1] = d3.time.day.utc.offset(me.xDomain[1], 1);
+    }
     me.x.domain(me.xDomain);
 
     var xAxis = d3.svg.axis()

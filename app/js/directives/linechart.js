@@ -52,13 +52,16 @@ function(connectionService, datasetService, errorNotificationService, filterServ
             $scope.element = $element;
 
             $scope.optionsMenuButtonText = function() {
+                if($scope.noData) {
+                    return "No Data";
+                }
                 if($scope.colorMappings.length >= $scope.seriesLimit) {
                     return "Top " + $scope.seriesLimit;
                 }
                 return "";
             };
             $scope.showOptionsMenuButtonText = function() {
-                return $scope.colorMappings.length >= $scope.seriesLimit;
+                return $scope.noData || $scope.colorMappings.length >= $scope.seriesLimit;
             };
 
             $scope.databases = [];
@@ -73,6 +76,7 @@ function(connectionService, datasetService, errorNotificationService, filterServ
             $scope.seriesLimit = 10;
             $scope.errorMessage = undefined;
             $scope.loadingData = false;
+            $scope.noData = true;
 
             $scope.options = {
                 database: {},
@@ -460,7 +464,7 @@ function(connectionService, datasetService, errorNotificationService, filterServ
 
                 var data = [];
                 var series = [];
-                var zeroedData = zeroPadData(results, minDate, maxDate);
+                var zeroedData = zeroPadData(results.data, minDate, maxDate);
 
                 for(series in zeroedData) {
                     if(Object.prototype.hasOwnProperty.call(zeroedData, series)) {
@@ -551,8 +555,6 @@ function(connectionService, datasetService, errorNotificationService, filterServ
 
             var zeroPadData = function(data, minDate, maxDate) {
                 $scope.dateStringToDataIndex = {};
-
-                data = data.data;
 
                 var i = 0;
                 var start = zeroOutDate(minDate);
@@ -661,6 +663,7 @@ function(connectionService, datasetService, errorNotificationService, filterServ
                 });
                 $scope.chart.draw(data);
                 $scope.colorMappings = $scope.chart.getColorMappings();
+                $scope.noData = !data || !data.length;
                 renderBrushExtent();
             };
 
