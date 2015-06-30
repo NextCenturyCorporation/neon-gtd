@@ -78,6 +78,10 @@ function(connectionService, datasetService, errorNotificationService, filterServ
             $scope.tables = [];
             $scope.fields = [];
             $scope.filterKeys = {};
+            $scope.filter = {
+                start: undefined,
+                end: undefined
+            };
 
             $scope.options = {
                 database: {},
@@ -86,6 +90,26 @@ function(connectionService, datasetService, errorNotificationService, filterServ
                 primarySeries: false,
                 collapsed: true,
                 granularity: DAY
+            };
+
+            $scope.handleDateTimePicked = function() {
+                $scope.filter.start = $scope.filter.start || $scope.bucketizer.getStartDate();
+                $scope.filter.end = $scope.filter.end || $scope.bucketizer.getEndDate();
+
+                if($scope.filter.start.toDateString() === $scope.bucketizer.getStartDate().toDateString() && $scope.filter.end.toDateString() === $scope.bucketizer.getEndDate().toDateString()) {
+                    if($scope.brush.length) {
+                        $scope.clearBrush();
+                    }
+                    return;
+                }
+
+                $scope.brush = [$scope.filter.start, $scope.filter.end];
+                $scope.extentDirty = true;
+            };
+
+            $scope.cancelDateTimePicked = function() {
+                $scope.filter.start = $scope.brush.length ? $scope.brush[0] : $scope.bucketizer.getStartDate();
+                $scope.filter.end = $scope.brush.length ? $scope.brush[1] : $scope.bucketizer.getEndDate();
             };
 
             /**
@@ -114,6 +138,8 @@ function(connectionService, datasetService, errorNotificationService, filterServ
                     var endDateBucket = $scope.bucketizer.getBucketIndex($scope.referenceEndDate);
                     var afterEndDate = $scope.bucketizer.getDateForBucket(endDateBucket + 1);
                     $scope.bucketizer.setEndDate(afterEndDate);
+                    $scope.filter.start = $scope.bucketizer.getStartDate();
+                    $scope.filter.end = $scope.bucketizer.getEndDate();
                 }
             };
 
@@ -160,12 +186,23 @@ function(connectionService, datasetService, errorNotificationService, filterServ
                 }
             };
 
+            var resizeDateTimePickerDropdown = function() {
+                var headerHeight = 0;
+                $element.find(".header-container").each(function() {
+                    headerHeight += $(this).outerHeight(true);
+                });
+                var height = $element.height() - headerHeight;
+                $element.find(".dropdown-menu").css("max-height", height + "px");
+            };
+
             /**
              * Initializes the name of the date field used to query the current dataset
              * and the Neon Messenger used to monitor data change events.
              * @method initialize
              */
             $scope.initialize = function() {
+                $element.resize(resizeDateTimePickerDropdown);
+
                 // Switch bucketizers when the granularity is changed.
                 $scope.$watch('options.granularity', function(newVal, oldVal) {
                     if(!$scope.loadingData && newVal && newVal !== oldVal) {
@@ -182,6 +219,7 @@ function(connectionService, datasetService, errorNotificationService, filterServ
                         $scope.startDateForDisplay = undefined;
                         $scope.endDateForDisplay = undefined;
                         $scope.setGranularity(newVal);
+
                         $scope.updateDates();
 
                         if(0 < $scope.brush.length) {
@@ -229,6 +267,9 @@ function(connectionService, datasetService, errorNotificationService, filterServ
                             $scope.endExtent = newVal[1];
                         }
 
+                        $scope.filter.start = $scope.brush.length ? $scope.brush[0] : $scope.bucketizer.getStartDate();
+                        $scope.filter.end = $scope.brush.length ? $scope.brush[1] : $scope.bucketizer.getEndDate();
+
                         var relations = datasetService.getRelations($scope.options.database.name, $scope.options.table.name, [$scope.options.dateField]);
 
                         if($scope.loadingData) {
@@ -266,6 +307,7 @@ function(connectionService, datasetService, errorNotificationService, filterServ
                     if(0 < $scope.brush.length) {
                         filterService.removeFilters($scope.messenger, $scope.filterKeys);
                     }
+                    $element.off("resize", resizeDateTimePickerDropdown);
                 });
             };
 
@@ -959,6 +1001,8 @@ function(connectionService, datasetService, errorNotificationService, filterServ
                 $scope.startExtent = $scope.bucketizer.getStartDate();
                 $scope.endExtent = $scope.bucketizer.getEndDate();
                 $scope.brush = [];
+                $scope.filter.start = $scope.bucketizer.getStartDate();
+                $scope.filter.end = $scope.bucketizer.getEndDate();
                 $scope.extentDirty = true;
                 filterService.removeFilters($scope.messenger, $scope.filterKeys);
             };

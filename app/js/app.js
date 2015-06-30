@@ -24,7 +24,8 @@ var neonDemo = angular.module('neonDemo', [
     'neonDemo.services',
     'neonDemo.directives',
     'neonDemo.filters',
-    'gridster'
+    'gridster',
+    'ui.bootstrap.datetimepicker'
 ]);
 
 angular.module('neonDemo.directives', []);
