@@ -24,6 +24,17 @@ charts.LineChart = function(rootElement, selector, opts) {
     this.yAttribute = opts.y;
     this.margin = $.extend({}, charts.LineChart.DEFAULT_MARGIN, opts.margin || {});
 
+    this.brush = undefined;
+    this.brushHandler = undefined;
+
+    // The old extent of the brush saved on brushstart.
+    this.oldExtent = [];
+
+    // The data index over which the user is currently hovering changed on mousemove and mouseout.
+    this.dataIndex = -1;
+
+    this.xDomain = [];
+
     this.hiddenSeries = [];
 
     this.colors = [];
@@ -152,20 +163,21 @@ charts.LineChart.prototype.calculateColor = function(seriesObject) {
         }
     }
 
+    var colorObject = {
+        color: color,
+        series: seriesObject.series,
+        total: seriesObject.total,
+        min: seriesObject.min,
+        max: seriesObject.max,
+        data: seriesObject.data,
+        hidden: hidden
+    };
+
     // store the color in the registry so we know the color/series mappings
     if(index >= 0) {
-        this.colors[index].color = color;
-        this.colors[index].total = seriesObject.total;
-        this.colors[index].hidden = hidden;
+        this.colors[index] = colorObject;
     } else {
-        this.colors.push({
-            color: color,
-            series: seriesObject.series,
-            total: seriesObject.total,
-            min: seriesObject.min,
-            max: seriesObject.max,
-            hidden: hidden
-        });
+        this.colors.push(colorObject);
     }
 
     return color;
@@ -184,7 +196,7 @@ charts.LineChart.prototype.getColorMappings = function() {
     return me.colors;
 };
 
-charts.LineChart.prototype.drawLine = function(opts) {
+charts.LineChart.prototype.drawLines = function(opts) {
     /* jshint loopfunc:true */
     var me = this;
     var i = 0;
@@ -207,9 +219,16 @@ charts.LineChart.prototype.drawLine = function(opts) {
     me.x = d3.time.scale.utc()
     .range([0, (me.width - (me.margin.left + me.margin.right))], 0.25);
 
-    me.x.domain(d3.extent(fullDataSet, function(d) {
+    me.xDomain = d3.extent(fullDataSet, function(d) {
         return d[me.xAttribute];
-    }));
+    });
+
+    // If no data exists then the min and max of the domain will be undefined.
+    if(me.xDomain[1]) {
+        // Add one day to the end of the x-axis so users can hover over and filter on the end date.
+        me.xDomain[1] = d3.time.day.utc.offset(me.xDomain[1], 1);
+    }
+    me.x.domain(me.xDomain);
 
     var xAxis = d3.svg.axis()
         .scale(me.x)
@@ -401,48 +420,27 @@ charts.LineChart.prototype.drawLine = function(opts) {
             var graph_x = me.x.invert(mouse_x);
             var format = d3.time.format.utc('%e %B %Y');
             var numFormat = d3.format("0,000.00");
-            var html = '';
-            var bisect;
-            var dataIndex;
-            var dataIndexLeft;
-            var dataDate;
-            var dataDateLeft;
-            var closerIndex;
-            var closerDate;
+            var dataIndex = 0;
 
             if(opts[0].data.length > 1) {
-                bisect = d3.bisector(function(d) {
+                var bisect = d3.bisector(function(d) {
                     return d[me.xAttribute];
                 }).right;
                 dataIndex = bisect(opts[0].data, graph_x);
                 // Adjust for out of range mouse events; Typical during a resize and some orientations.
-                dataIndex = (dataIndex < opts[0].data.length) ? dataIndex : (opts[0].data.length - 1);
-                dataDate = opts[0].data[dataIndex][me.xAttribute];
-                closerDate = dataDate;
-                closerIndex = dataIndex;
-
-                if(dataIndex > 0) {
-                    dataIndexLeft = (dataIndex - 1);
-                    dataDateLeft = opts[0].data[dataIndexLeft][me.xAttribute];
-                    var compare = ((me.x(dataDate) - me.x(dataDateLeft)) / 2) + me.x(dataDateLeft);
-                    if(mouse_x < compare) {
-                        closerDate = dataDateLeft;
-                        closerIndex = dataIndexLeft;
-                    }
-                }
-            } else {
-                closerIndex = 0;
-                closerDate = opts[0].data[closerIndex][me.xAttribute];
+                dataIndex = (dataIndex < opts[0].data.length) ? Math.max(0, dataIndex - 1) : (opts[0].data.length - 1);
+                me.dataIndex = dataIndex;
             }
 
-            html = '<span class="tooltip-date">' + format(closerDate) + '</span>';
+            var dataDate = opts[0].data[dataIndex][me.xAttribute];
+            var html = '<span class="tooltip-date">' + format(dataDate) + '</span>';
 
             for(var i = 0; i < opts.length; i++) {
                 if(me.hiddenSeries.indexOf(opts[i].series) >= 0) {
                     continue;
                 }
                 var color = me.calculateColor(opts[i]);
-                var xPos = me.x(closerDate);
+                var xPos = me.x(dataDate);
                 if(opts[i].data.length === 1) {
                     xPos = me.width / 2;
                 }
@@ -451,16 +449,16 @@ charts.LineChart.prototype.drawLine = function(opts) {
                     .attr("stroke-opacity", 1)
                     .attr("fill-opacity", 1)
                     .attr("cx", xPos)
-                    .attr("cy", me.y(opts[i].data[closerIndex].value));
+                    .attr("cy", me.y(opts[i].data[dataIndex].value));
 
                 html += ('<span style="color: ' + color + '">' + opts[i].series + ": " +
-                    numFormat(Math.round(opts[i].data[closerIndex].value * 100) / 100) + '</span>');
+                    numFormat(Math.round(opts[i].data[dataIndex].value * 100) / 100) + '</span>');
             }
 
             if(opts[0].data.length === 1) {
                 hoverLine.attr("x1", me.width / 2).attr("x2", me.width / 2);
             } else {
-                hoverLine.attr("x1", me.x(closerDate)).attr("x2", me.x(closerDate));
+                hoverLine.attr("x1", me.x(dataDate)).attr("x2", me.x(dataDate));
             }
 
             hoverLineGroup.style("opacity", 1);
@@ -487,6 +485,7 @@ charts.LineChart.prototype.drawLine = function(opts) {
         me.svg.selectAll("circle.dot-hover")
             .attr("stroke-opacity", 0)
             .attr("fill-opacity", 0);
+        me.dataIndex = -1;
         $("#tooltip-container").hide();
         XDATA.userALE.log({
                 activity: "hide",
@@ -499,6 +498,206 @@ charts.LineChart.prototype.drawLine = function(opts) {
                 tags: ["tooltip", "linechart"]
             });
     });
+};
+
+/**
+ * Returns a function that runs the given brush handler using the extent from the D3 brush in the given linechart and logs the event.
+ * @param {Object} linechart
+ * @param {Function} brushHandler
+ * @method runBrushHandler
+ * @return {Function}
+ */
+charts.LineChart.prototype.runBrushHandler = function(linechart, brushHandler) {
+    return function() {
+        XDATA.userALE.log({
+            activity: "select",
+            action: "dragend",
+            elementId: "linechart-brush",
+            elementType: "canvas",
+            elementSub: "linechart-brush",
+            elementGroup: "chart_group",
+            source: "user",
+            tags: ["linechart", "brush"]
+        });
+
+        // If the user clicks on a date inside the brush without moving the brush, change the brush to contain only that date.
+        if(linechart.dataIndex >= 0 && linechart.oldExtent[0]) {
+            var extent = linechart.brush.extent();
+            if(linechart.oldExtent[0].toDateString() === extent[0].toDateString() && linechart.oldExtent[1].toDateString() === extent[1].toDateString()) {
+                var startDate = linechart.data[0].data[linechart.dataIndex].date;
+                var endDate = linechart.data[0].data.length === linechart.dataIndex + 1 ? linechart.xDomain[1] : linechart.data[0].data[linechart.dataIndex + 1].date;
+                linechart.brush.extent([startDate, endDate]);
+            }
+        }
+
+        if(brushHandler) {
+            brushHandler(linechart.brush.extent());
+        }
+    };
+};
+
+/**
+ * Sets the brush handler function for this line chart to run the given function and log the event.
+ * @param {Function} brushHandler
+ * @method setBrushHandler
+ */
+charts.LineChart.prototype.setBrushHandler = function(brushHandler) {
+    this.brushHandler = brushHandler;
+    if(this.brush) {
+        this.brush.on("brushend", this.runBrushHandler(this, this.brushHandler));
+    }
+};
+
+/**
+ * Draws the brush:  the highlighted filtered area.  Used the corresponding function in the timeline chart for reference.
+ * @method drawBrush
+ */
+charts.LineChart.prototype.drawBrush = function() {
+    var me = this;
+
+    this.brush = d3.svg.brush().x(this.x).on("brush", function() {
+        me.drawBrushMasks(this, me.brush);
+    });
+
+    if(this.brushHandler) {
+        this.brush.on("brushstart", function() {
+            me.oldExtent = me.brush.extent();
+            XDATA.userALE.log({
+                activity: "select",
+                action: "dragstart",
+                elementId: "linechart-brush",
+                elementType: "canvas",
+                elementSub: "linechart-brush",
+                elementGroup: "chart_group",
+                source: "user",
+                tags: ["linechart", "brush"]
+            });
+        });
+        this.brush.on("brushend", this.runBrushHandler(this, this.brushHandler));
+    }
+
+    var d3Brush = this.svg.append("g").attr("class", "brush");
+
+    d3Brush.append("rect")
+        .attr("x", this.width + this.margin.right)
+        .attr("y", -6)
+        .attr("width", this.width)
+        .attr("height", this.height + 7)
+        .attr("class", "mask mask-east");
+
+    d3Brush.append("rect")
+        .attr("x", this.width + this.margin.left)
+        .attr("y", -6)
+        .attr("width", this.width)
+        .attr("height", this.height + 7)
+        .attr("class", "mask mask-west");
+
+    d3Brush.call(this.brush);
+
+    d3Brush.selectAll("rect").attr("y", -6).attr("height", this.height + 7);
+
+    d3Brush.selectAll(".e").append("rect")
+        .attr("y", -6)
+        .attr("width", 1)
+        .attr("height", this.height + 6)
+        .attr("class", "resize-divider");
+
+    d3Brush.selectAll(".w").append("rect")
+        .attr("x", -1)
+        .attr("y", -6)
+        .attr("width", 1)
+        .attr("height", this.height + 6)
+        .attr("class", "resize-divider");
+
+    var height = this.height;
+    d3Brush.selectAll(".resize").append("path").attr("d", function(d) {
+        var e = +(d === "e");
+        var x = e ? 1 : -1;
+        var y = height / 3;
+        return "M" + (0.5 * x) + "," + y +
+            "A6,6 0 0 " + e + " " + (6.5 * x) + "," + (y + 6) +
+            "V" + (2 * y - 6) +
+            "A6,6 0 0 " + e + " " + (0.5 * x) + "," + (2 * y) +
+            "Z" +
+            "M" + (2.5 * x) + "," + (y + 8) +
+            "V" + (2 * y - 8) +
+            "M" + (4.5 * x) + "," + (y + 8) +
+            "V" + (2 * y - 8);
+    });
+};
+
+/**
+ * Draws the brush masks:  the grayed unfiltered areas outside the brush.  Used the corresponding function in the timeline chart for reference.
+ * @param {Object} element
+ * @param {Object} brush
+ * @method drawBrushMasks
+ */
+charts.LineChart.prototype.drawBrushMasks = function(element, brush) {
+    if(d3.event) {
+        var timeFunction = d3.time.day.utc;
+        var oldExtent = brush.extent();
+        var newExtent;
+
+        if(!oldExtent[0] || !oldExtent[1]) {
+            return;
+        }
+
+        if(d3.event.mode === "move") {
+            var startDay = timeFunction.round(oldExtent[0]);
+            var range = timeFunction.range(oldExtent[0], oldExtent[1]);
+            var endDay = timeFunction.offset(startDay, range.length);
+            newExtent = [startDay, endDay];
+        } else {
+            newExtent = oldExtent.map(timeFunction.round);
+
+            if(newExtent[0] >= newExtent[1]) {
+                newExtent[0] = timeFunction.floor(oldExtent[0]);
+                newExtent[1] = timeFunction.ceil(oldExtent[1]);
+            }
+        }
+
+        if(newExtent[0] < newExtent[1]) {
+            d3.select(element).call(brush.extent(newExtent));
+        }
+    }
+
+    var brushElement = $(element);
+    var extentX = brushElement.find(".extent").attr("x");
+    var extentWidth = brushElement.find(".extent").attr("width");
+    var width = parseInt(brushElement.find(".mask-west").attr("width").replace("px", ""), 10);
+
+    if(extentWidth === "0" || !extentWidth) {
+        brushElement.find(".mask-west").attr("x", (0 - (width + 50)));
+        brushElement.find(".mask-east").attr("x", (width + 50));
+    } else {
+        brushElement.find(".mask-west").attr("x", (parseFloat(extentX) - width));
+        brushElement.find(".mask-east").attr("x", (parseFloat(extentX) + parseFloat(extentWidth)));
+    }
+};
+
+/**
+ * Clears the D3 brush.
+ * @method clearBrush
+ */
+charts.LineChart.prototype.clearBrush = function() {
+    this.brush.clear();
+    d3.select(this.element).select(".brush").call(this.brush);
+};
+
+/**
+ * Renders the given brush extent.
+ * @param {Array} extent
+ * @method renderBrushExtent
+ */
+charts.LineChart.prototype.renderBrushExtent = function(extent) {
+    if(!extent) {
+        this.clearBrush();
+        return;
+    }
+
+    var brushElement = this.svg.select(".brush");
+    brushElement.call(this.brush.extent(extent));
+    this.drawBrushMasks(brushElement[0][0], this.brush);
 };
 
 charts.LineChart.prototype.toggleSeries = function(series) {
@@ -516,16 +715,28 @@ charts.LineChart.prototype.toggleSeries = function(series) {
         this.hiddenSeries.splice(0);
     }
 
-    this.redraw();
+    this.draw();
 
     return activity;
 };
 
-charts.LineChart.prototype.redraw = function() {
-    var me = this;
-    me.drawChart();
-    if(me.data) {
-        me.drawLine(me.data);
+/**
+ * Draws this line chart.  Sets its data to the new data if given.
+ * @param {Array} data (Optional)
+ * @method draw
+ */
+charts.LineChart.prototype.draw = function(data) {
+    var extent = this.brush ? this.brush.extent() : undefined;
+    this.drawChart();
+    if(data) {
+        this.data = data;
+    }
+    if(this.data) {
+        this.drawLines(this.data);
+    }
+    this.drawBrush();
+    if(extent) {
+        this.renderBrushExtent(extent);
     }
 };
 
@@ -533,7 +744,7 @@ charts.LineChart.prototype.redrawOnResize = function() {
     var me = this;
 
     function drawChart() {
-        me.redraw();
+        me.draw();
     }
 
     // Debounce is needed because browser resizes fire this resize even multiple times.

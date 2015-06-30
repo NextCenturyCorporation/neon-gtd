@@ -55,6 +55,13 @@ charts.TimelineSelectorChart = function(element, configuration) {
         hour: '%d-%b-%Y %H:%M'
     };
     this.TOOLTIP_ID = 'tooltip';
+    this.xDomain = [];
+
+    // The old extent of the brush saved on brushstart.
+    this.oldExtent = [];
+
+    // The data index over which the user is currently hovering changed on mousemove and mouseout.
+    this.dataIndex = -1;
 
     var self = this; // for internal d3 functions
 
@@ -107,15 +114,15 @@ charts.TimelineSelectorChart = function(element, configuration) {
     /**
      * Since the default brush handlers return no data, this will allow client code to assign a handler to the brush end event.
      * This function wraps that handler and injects the current brush extent into its arguments.
-     * @param {d3.svg.brush} brush The brush to query for extents.
-     * @param {function} handler A brush handler.  The extent date objects will be passed to the handler as an array in a single argument
-     * @return {function}
+     * @param {Object} timeline This timeline chart.
+     * @param {Function} handler A brush handler.  The extent date objects will be passed to the handler as an array in a single argument
+     * @return {Function}
      * @method wrapBrushHandler
      * @private
      */
-    var wrapBrushHandler = function(brush, handler) {
+    var wrapBrushHandler = function(timeline, handler) {
         return function() {
-            if(brush) {
+            if(timeline.brush) {
                 XDATA.userALE.log({
                     activity: "select",
                     action: "dragend",
@@ -126,8 +133,19 @@ charts.TimelineSelectorChart = function(element, configuration) {
                     source: "user",
                     tags: ["timeline", "brush"]
                 });
+
+                // If the user clicks on a date inside the brush without moving the brush, change the brush to contain only that date.
+                if(timeline.dataIndex >= 0 && timeline.oldExtent[0]) {
+                    var extent = timeline.brush.extent();
+                    if(timeline.oldExtent[0].toDateString() === extent[0].toDateString() && timeline.oldExtent[1].toDateString() === extent[1].toDateString()) {
+                        var startDate = timeline.data[0].data[timeline.dataIndex].date;
+                        var endDate = timeline.data[0].data.length === timeline.dataIndex + 1 ? timeline.xDomain[1] : timeline.data[0].data[timeline.dataIndex + 1].date;
+                        timeline.brush.extent([startDate, endDate]);
+                    }
+                }
+
                 if(handler) {
-                    handler(brush.extent());
+                    handler(timeline.brush.extent());
                 }
             }
         };
@@ -142,18 +160,9 @@ charts.TimelineSelectorChart = function(element, configuration) {
         if(typeof(handler) === 'function') {
             this.brushHandler = handler;
             if(this.brush) {
-                this.brush.on("brushend", wrapBrushHandler(this.brush, handler));
+                this.brush.on("brushend", wrapBrushHandler(this, handler));
             }
         }
-    };
-
-    /**
-     * Removes the brush end handler from the timeline's brush.
-     * @method removeBrushHandler
-     */
-    this.removeBrushHandler = function() {
-        this.brushHandler = undefined;
-        this.brush.on("brushend");
     };
 
     /**
@@ -180,27 +189,27 @@ charts.TimelineSelectorChart = function(element, configuration) {
             var extent1;
 
             if(typeof extent0[0] === 'undefined' || typeof extent0[1] === 'undefined') {
-                return;
-            }
-
-            // if dragging, preserve the width of the extent
-            if(d3.event.mode === "move") {
-                var d0 = timeFunction.round(extent0[0]);
-                var range = timeFunction.range(extent0[0], extent0[1]);
-                var d1 = timeFunction.offset(d0, range.length);
-                extent1 = [d0, d1];
+                d3.select(this).call(brush.clear());
             } else {
-                extent1 = extent0.map(timeFunction.round);
+                // if dragging, preserve the width of the extent
+                if(d3.event.mode === "move") {
+                    var d0 = timeFunction.round(extent0[0]);
+                    var range = timeFunction.range(extent0[0], extent0[1]);
+                    var d1 = timeFunction.offset(d0, range.length);
+                    extent1 = [d0, d1];
+                } else {
+                    extent1 = extent0.map(timeFunction.round);
 
-                // if empty when rounded, use floor & ceil instead
-                if(extent1[0] >= extent1[1]) {
-                    extent1[0] = timeFunction.floor(extent0[0]);
-                    extent1[1] = timeFunction.ceil(extent0[1]);
+                    // if empty when rounded, use floor & ceil instead
+                    if(extent1[0] >= extent1[1]) {
+                        extent1[0] = timeFunction.floor(extent0[0]);
+                        extent1[1] = timeFunction.ceil(extent0[1]);
+                    }
                 }
-            }
 
-            if(extent1[0] < extent1[1]) {
-                d3.select(this).call(brush.extent(extent1));
+                if(extent1[0] < extent1[1]) {
+                    d3.select(this).call(brush.extent(extent1));
+                }
             }
         }
 
@@ -265,6 +274,7 @@ charts.TimelineSelectorChart = function(element, configuration) {
 
         if(this.brushHandler) {
             this.brush.on("brushstart", function() {
+                me.oldExtent = me.brush.extent();
                 XDATA.userALE.log({
                     activity: "select",
                     action: "dragstart",
@@ -276,7 +286,7 @@ charts.TimelineSelectorChart = function(element, configuration) {
                     tags: ["timeline", "brush"]
                 });
             });
-            this.brush.on("brushend", wrapBrushHandler(this.brush, this.brushHandler));
+            this.brush.on("brushend", wrapBrushHandler(this, this.brushHandler));
         }
 
         //var heightRange = y.range()[0];
@@ -302,7 +312,8 @@ charts.TimelineSelectorChart = function(element, configuration) {
             return d3.time[me.granularity].utc.offset(d.date, 1);
         }));
 
-        x.domain([xMin, xMax]);
+        this.xDomain = [xMin, xMax];
+        x.domain(this.xDomain);
 
         var xAxis = d3.svg.axis().scale(x).orient("bottom");
 
@@ -532,10 +543,12 @@ charts.TimelineSelectorChart = function(element, configuration) {
                 var dataIndex = bisect(values[0].data, graph_x) - 1;
                 if(dataIndex >= 0 && dataIndex < values[0].data.length) {
                     showTooltip(values[0].data[dataIndex], d3.event);
+                    me.dataIndex = dataIndex;
                 }
             })
             .on('mouseout', function() {
                 hideTooltip();
+                me.dataIndex = -1;
             });
 
         gBrush.append("rect")
