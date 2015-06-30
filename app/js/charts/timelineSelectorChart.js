@@ -48,12 +48,6 @@ charts.TimelineSelectorChart = function(element, configuration) {
     this.data = DEFAULT_DATA;
     this.primarySeries = false;
     this.granularity = 'day';
-    this.granularityZoomExtents = {
-        year: 2,
-        month: 3,
-        day: 16,
-        hour: 50
-    };
     this.dateFormats = {
         year: '%Y',
         month: '%b %Y',
@@ -81,9 +75,15 @@ charts.TimelineSelectorChart = function(element, configuration) {
     this.configure = function(configuration) {
         this.config = configuration || {};
         this.config.margin = this.config.margin || {
-            top: 30,
+            top: 10,
             right: 15,
-            bottom: 4,
+            bottom: 99,
+            left: 15
+        };
+        this.config.margin2 = this.config.margin2 || {
+            top: 175,
+            right: 15,
+            bottom: 18,
             left: 15
         };
         this.granularity = this.config.granularity || this.granularity;
@@ -169,6 +169,9 @@ charts.TimelineSelectorChart = function(element, configuration) {
     this.clearBrush = function() {
         this.brush.clear();
         d3.select(this.element).select('.brush').call(this.brush);
+        if(this.data.length && this.data[0].data) {
+            this.render(this.data);
+        }
     };
 
     /**
@@ -206,19 +209,19 @@ charts.TimelineSelectorChart = function(element, configuration) {
             }
 
             if(extent1[0] < extent1[1]) {
-                d3.select(this).call(brush.extent(extent1));
+                d3.select(".brush").call(brush.extent(extent1));
             }
         }
 
         // Update mask
-        var brushElement = $(this);
+        var brushElement = $(".brush");
         var xPos = brushElement.find('.extent').attr('x');
 
         var extentWidth = brushElement.find('.extent').attr('width');
         var width = parseInt(brushElement.find('.mask-west').attr('width').replace('px', ''), 10);
 
         // If brush extent has been cleared, reset mask positions
-        if((parseInt(extentWidth) === 0 && parseInt(xPos) === 0) || extentWidth === undefined) {
+        if(extentWidth === "0" || extentWidth === 0 || extentWidth === undefined) {
             brushElement.find('.mask-west').attr('x', (0 - (width + 50)));
             brushElement.find('.mask-east').attr('x', width + 50);
         } else {
@@ -241,16 +244,16 @@ charts.TimelineSelectorChart = function(element, configuration) {
     this.render = function(values) {
         var me = this;
         var i = 0;
-        var zoomPreviousScale = 1;
         var width = this.determineWidth(this.d3element) - this.config.margin.left - this.config.margin.right;
         // Depending on the granularity, the bars are not all the same width (months are different
         // lengths). But this is accurate enough to place tick marks and make other calculations.
         var approximateBarWidth = 0;
 
-        var baseHeight = 150;
+        var baseHeight = 250;
         $(this.d3element[0]).css("height", (baseHeight * values.length));
-        var height = (this.determineHeight(this.d3element) - (this.config.margin.top) - this.config.margin.bottom);
-        var chartHeight = baseHeight - this.config.margin.top - this.config.margin.bottom;
+        var height = (baseHeight - (this.config.margin.top) - this.config.margin.bottom);
+        var height2 = (baseHeight - (this.config.margin2.top) - this.config.margin2.bottom);
+        var svgHeight = this.determineHeight(this.d3element);
 
         var fullDataSet = [];
         if(values && values.length > 0) {
@@ -266,9 +269,125 @@ charts.TimelineSelectorChart = function(element, configuration) {
 
         // Setup the axes and their scales.
         var x = d3.time.scale.utc().range([0, width]);
+        var x2 = d3.time.scale.utc().range([0, width]);
 
         // Save the brush as an instance variable to allow interaction on it by client code.
-        this.brush = d3.svg.brush().x(x).on("brush", this.updateMask);
+        this.brush = d3.svg.brush().x(x2).on("brush", function() {
+            x.domain(me.brush.empty() ? x2.domain() : me.brush.extent());
+
+            for(i = 0; i < me.data.length; i++) {
+                var series = me.data[i];
+
+                var focus = me.svg.select(".focus-" + series.name);
+                focus.selectAll(".x.axis").call(xAxis);
+
+                var y = d3.scale.linear().range([height, 0]);
+
+                var dataShown = _.filter(series.data, function(obj) {
+                    return (x.domain()[0] <= obj.date && obj.date <= x.domain()[1]);
+                });
+
+                var minY = d3.min(dataShown.map(function(d) {
+                    return d.value;
+                }));
+                minY = minY < 0 ? minY : 0;
+
+                y.domain([minY, d3.max(dataShown.map(function(d) {
+                    return d.value;
+                }))]);
+
+                if(series.type === 'bar' && series.data.length < width) {
+                    var barheight = 0;
+
+                    if(dataShown.length < 60) {
+                        barheight++;
+                    }
+
+                    focus.selectAll(".bar")
+                        .attr("x", function(d) {
+                            return x(d.date);
+                        })
+                        .attr("width", function(d) {
+                            return x(d3.time[me.granularity].utc.offset(d.date, 1)) - x(d.date);
+                        })
+                        .attr("y", function(d) {
+                            return y(Math.max(0, d.value));
+                        })
+                        .attr("height", function(d) {
+                            var height = y(d.value) - y(0);
+                            var offset = height / height || 0;
+                            var calculatedHeight = Math.abs(height) + (offset * barheight);
+                            return calculatedHeight;
+                        });
+                } else {
+                    var chartType = '';
+
+                    // If type is line, render a line plot
+                    if(series.type === 'line') {
+                        chartType = d3.svg.line()
+                            .x(function(d) {
+                                return x(d.date);
+                            })
+                            .y(function(d) {
+                                return y(d.value);
+                            });
+                    } else {
+                        // Otherwise, default to area, e.g. for bars whose data is too long
+                        chartType = d3.svg.area()
+                            .x(function(d) {
+                                return x(d.date);
+                            })
+                            .y0(function(d) {
+                                return y(Math.min(0, d.value));
+                            })
+                            .y1(function(d) {
+                                return y(Math.max(0, d.value));
+                            });
+                    }
+
+                    focus.selectAll("." + series.type)
+                        .attr("d", chartType);
+
+                    if(series.data.length < 80) {
+                        var func = function(d) {
+                            return x(d.date);
+                        };
+                        if(series.data.length === 1) {
+                            func = width / 2;
+                        }
+
+                        focus.selectAll(".dot")
+                            .attr("cx", func)
+                            .attr("cy", function(d) {
+                                return y(d.value);
+                            });
+                    } else {
+                        focus.selectAll(".dot")
+                            .attr("cx", function(d) {
+                                return x(d.date);
+                            })
+                            .attr("cy", function(d) {
+                                return y(d.value);
+                            });
+                    }
+                }
+
+                var xOffset = approximateBarWidth / 2;
+                if(series.type === 'bar') {
+                    xOffset = 0;
+                }
+
+                me.svg.selectAll("g." + series.name + " .mini-axis")
+                    .attr({
+                        x1: 0,
+                        x2: width - (xOffset * 2),
+                        y1: y(0),
+                        y2: y(0)
+                    });
+            }
+
+            me.updateMask();
+        });
 
         if(this.brushHandler) {
             this.brush.on("brushstart", function() {
@@ -290,7 +409,7 @@ charts.TimelineSelectorChart = function(element, configuration) {
         function resizePath(d) {
             var e = +(d === "e");
             var x = e ? 1 : -1;
-            var y = height / 3;
+            var y = height2 / 3;
             return "M" + (0.5 * x) + "," + y +
                 "A6,6 0 0 " + e + " " + (6.5 * x) + "," + (y + 6) +
                 "V" + (2 * y - 6) +
@@ -310,8 +429,10 @@ charts.TimelineSelectorChart = function(element, configuration) {
         }));
 
         x.domain([xMin, xMax]);
+        x2.domain(x.domain());
 
         var xAxis = d3.svg.axis().scale(x).orient("bottom");
+        var xAxis2 = d3.svg.axis().scale(x2).orient("bottom");
 
         // We don't want the ticks to be too close together, so calculate the most ticks that
         // comfortably fit on the timeline
@@ -322,10 +443,12 @@ charts.TimelineSelectorChart = function(element, configuration) {
         if(x.ticks(minimumTickRange).length < maximumNumberOfTicks) {
             // There's enough room to do one tick per bucket
             xAxis.ticks(minimumTickRange);
+            xAxis2.ticks(minimumTickRange);
         } else {
             // One tick per bucket at this granularity is too many; let D3 figure out tick spacing.
             // Note that D3 may give us a few more ticks than we specify if it feels like it.
             xAxis.ticks(maximumNumberOfTicks);
+            xAxis2.ticks(maximumNumberOfTicks);
         }
 
         // Clear the old contents by replacing innerhtml.
@@ -335,160 +458,23 @@ charts.TimelineSelectorChart = function(element, configuration) {
         this.svg = d3.select(this.element)
             .attr("class", "timeline-selector-chart")
             .append("svg")
-            .attr("height", height + 60)
-            .attr("width", width);
+            .attr("height", svgHeight + this.config.margin.left + this.config.margin.right)
+            .attr("width", width + this.config.margin.left + this.config.margin.right);
 
         this.svg.append("defs").append("clipPath")
             .attr("id", "clip")
             .append("rect")
             .attr("width", width)
-            .attr("height", height + 60);
-
-        this.zoom = d3.behavior.zoom()
-            .on("zoom", function() {
-                var numBars;
-                var brushExtentWidth = parseInt($(".brush .extent").attr('width'));
-                var brushExtentXPos = parseInt($(".brush .extent").attr('x'));
-                brushExtentXPos = (brushExtentXPos < 0) ? 0 : brushExtentXPos;
-
-                // Calculate how many bars are actually shown on the screen at this zoom level for this granularity
-                if(me.granularity === "hour") {
-                    numBars = Math.ceil((x.domain()[1] - x.domain()[0]) / (1000*60*60));
-                } else if(me.granularity === "day") {
-                    numBars = Math.ceil((x.domain()[1] - x.domain()[0]) / (1000*60*60*24));
-                } else if(me.granularity === "month") {
-                    numBars = Math.ceil((x.domain()[1] - x.domain()[0]) / (1000*60*60*24*30.5));
-                } else {
-                    //numBars = Math.ceil((x.domain()[1] - x.domain()[0]) / (1000*60*60*24*365));
-
-                    // Disable zooming for yearly
-                    me.zoom.scaleExtent([1, 1]);
-                    return;
-                }
-
-                // Stop zooming if there is just as many ticks as there are bars
-                // or the brush goes off the screen
-                if(numBars < me.svg.selectAll(".x.axis .tick")[0].length) {
-                    me.zoom.scaleExtent([1, me.zoom.scale()]);
-                    zoomPreviousScale = me.zoom.scale();
-                    return;
-                } else if(((brushExtentWidth + brushExtentXPos + 20) > width ||
-                    ((brushExtentXPos - 20) <= 0 && brushExtentWidth > 0)) &&
-                    zoomPreviousScale <= me.zoom.scale()) {
-
-                    me.zoom.scaleExtent([1, me.zoom.scale()]);
-                    zoomPreviousScale = me.zoom.scale();
-                    return;
-                } else {
-                    me.zoom.scaleExtent([1, Infinity]);
-                    zoomPreviousScale = me.zoom.scale();
-                }
-
-                me.svg.selectAll(".x.axis").call(xAxis);
-
-                x.domain([Math.max(xMin, x.domain()[0]), Math.min(xMax, x.domain()[1])]);
-
-                me.renderExtent(me.brush.extent());
-
-                for(var i = 0; i < me.data.length; i++) {
-                    var elements = me.svg.selectAll("g." + me.data[i].name).selectAll("." + me.data[i].type);
-
-                    var y = d3.scale.linear().range([chartHeight, 0]);
-                    var yAxis = d3.svg.axis().scale(y).orient("right").ticks(2);
-
-                    var dataShown = _.filter(me.data[i].data, function(obj) {
-                        return (x.domain()[0] <= obj.date && obj.date <= x.domain()[1]);
-                    });
-
-                    // Use lowest value or 0 for Y-axis domain, whichever is less (e.g. if negative)
-                    var minY = d3.min(dataShown.map(function(d) {
-                        return d.value;
-                    }));
-                    minY = minY < 0 ? minY : 0;
-
-                    y.domain([minY, d3.max(dataShown.map(function(d) {
-                        return d.value;
-                    }))]);
-                    
-                    me.svg.selectAll(".y.axis.series-y")
-                        .call(yAxis);
-
-                    if(me.data[i].type == "bar" && me.data[i].data.length < width) {
-                        var barheight = 0;
-
-                        if(me.data[i].data.length < 60) {
-                            barheight++;
-                        }
-
-                        elements.attr("x", function(d) {
-                            return x(d.date);
-                        })
-                        .attr("y", function(d) {
-                            return y(Math.max(0, d.value));
-                        })
-                        .attr("height", function(d) {
-                            var height = y(d.value) - y(0);
-                            var offset = height / height || 0;
-                            var calculatedHeight = Math.abs(height) + (offset * barheight);
-                            return calculatedHeight;
-                        });
-                    } else {
-                        var chartType = '';
-
-                        if(me.data[i].type === 'line') {
-                            chartType = d3.svg.line()
-                                .x(function(d) {
-                                    return x(d.date);
-                                })
-                                .y(function(d) {
-                                    return y(d.value);
-                                });
-                        } else {
-                            chartType = d3.svg.area()
-                                .x(function(d) {
-                                    return x(d.date);
-                                })
-                                .y0(function(d) {
-                                    return y(Math.min(0, d.value));
-                                })
-                                .y1(function(d) {
-                                    return y(Math.max(0, d.value));
-                                });
-                        }
-
-                        elements.attr("d", chartType);
-
-                        me.svg.selectAll("g." + me.data[i].name)
-                            .selectAll(".dot")
-                            .attr("cx", function(d) {
-                                return x(d.date);
-                            })
-                            .attr("cy", function(d) {
-                                return y(d.value);
-                            });
-                    }
-
-                    var xOffset = approximateBarWidth / 2;
-                    if(me.data[i].type === 'bar') {
-                        xOffset = 0;
-                    }
-
-                    me.svg.selectAll("g." + me.data[i].name + " .mini-axis")
-                        .attr({
-                            x1: 0,
-                            x2: width - (xOffset * 2),
-                            y1: y(0),
-                            y2: y(0)
-                        });
-                }
-            })
-            .scaleExtent([1, Infinity])
-            .x(x);
+            .attr("height", svgHeight);
 
         var context = this.svg.append("g")
             .attr("class", "context")
-            .attr("transform", "translate(" + this.config.margin.left + "," + this.config.margin.top + ")")
-            .call(this.zoom);
+            .attr("transform", "translate(" + this.config.margin2.left + "," + this.config.margin2.top + ")");
+
+        context.append("g")
+            .attr("class", "x axis")
+            .attr("transform", "translate(0," + height2 + ")")
+            .call(xAxis2);
 
         context.selectAll('.major text')
             .attr('transform', 'translate(' + (approximateBarWidth / 2) + ',0)');
@@ -504,16 +490,35 @@ charts.TimelineSelectorChart = function(element, configuration) {
                 xOffset = 0;
             }
 
-            var container = context.append("g")
-                .attr("class", series.name)
-                .attr("transform", "translate(" + xOffset + "," + ((chartHeight + me.config.margin.top + me.config.margin.bottom) * seriesPos) + ")");
+            var focus = me.svg.append("g")
+                .attr("class", "focus-" + series.name)
+                .attr("transform", "translate(" + me.config.margin.left + "," + me.config.margin.top + ")");
 
-            container.append("g")
+            focus.append("g")
                 .attr("class", "x axis")
-                .attr("transform", "translate(0," + chartHeight + ")")
+                .attr("transform", "translate(0," + height + ")")
                 .call(xAxis);
 
-            var y = d3.scale.linear().range([chartHeight, 0]);
+            focus.selectAll('.major text')
+                .attr('transform', 'translate(' + (approximateBarWidth / 2) + ',0)');
+
+            focus.selectAll('.major line')
+                .attr('transform', 'translate(' + (approximateBarWidth / 2) + ',0)');
+
+            var focusContainer = focus.append("g")
+                .attr("class", series.name)
+                .attr("transform", "translate(" + xOffset + "," + ((height + me.config.margin.top + me.config.margin.bottom) * seriesPos) + ")");
+
+            
+            var contextContainer;
+            if(series.name === me.primarySeries.name) {
+                contextContainer = context.append("g")
+                    .attr("class", series.name)
+                    .attr("transform", "translate(" + xOffset + "," + ((height2 + me.config.margin2.top + me.config.margin2.bottom) * seriesPos) + ")");
+            }
+
+            var y = d3.scale.linear().range([height, 0]);
+            var y2 = d3.scale.linear().range([height2, 0]);
             var yAxis = d3.svg.axis().scale(y).orient("right").ticks(2);
 
             // Use lowest value or 0 for Y-axis domain, whichever is less (e.g. if negative)
@@ -525,9 +530,14 @@ charts.TimelineSelectorChart = function(element, configuration) {
             y.domain([minY, d3.max(series.data.map(function(d) {
                 return d.value;
             }))]);
+            y2.domain(y.domain());
 
             var style = 'stroke:' + series.color + ';';
-            var chartType = '';
+            var chartTypeFocus = '', chartTypeContext = '';
+
+            // For now, all anomalies are shown as red, but this could be changed to be a
+            // configurable parameter that is passed in with the series, like series.color.
+            var anomalyColor = 'red';
 
             // If type is bar AND the data isn't too long, render a bar plot
             if(series.type === 'bar' && series.data.length < width) {
@@ -538,10 +548,10 @@ charts.TimelineSelectorChart = function(element, configuration) {
                     barheight++;
                 }
 
-                var anomalyStyle = style + 'fill: red; stroke: red;';
+                var anomalyStyle = style + 'fill: ' + anomalyColor + '; stroke: ' + anomalyColor + ';';
                 style += 'fill:' + series.color + ';';
 
-                container.selectAll(".bar")
+                focusContainer.selectAll(".bar")
                     .data(series.data)
                 .enter().append("rect")
                     .attr("class", "bar")
@@ -557,27 +567,63 @@ charts.TimelineSelectorChart = function(element, configuration) {
                     .attr("y", function(d) {
                         return y(Math.max(0, d.value));
                     })
-                    //.attr("height", function(d) { return (barheight) - y(d.value); });
                     .attr("height", function(d) {
                         var height = y(d.value) - y(0);
                         var offset = height / height || 0;
                         var calculatedHeight = Math.abs(height) + (offset * barheight);
                         return calculatedHeight;
                     });
+
+                focusContainer.append("g")
+                    .attr("class", "y axis series-y")
+                    .attr("transform", "translate(0," + ((height + me.config.margin.top + me.config.margin.bottom) * seriesPos) + ")")
+                    .call(yAxis);
+
+                if(contextContainer) {
+                    contextContainer.selectAll(".bar")
+                        .data(series.data)
+                    .enter().append("rect")
+                        .attr("class", "bar")
+                        .attr("style", function(d) {
+                            return d.anomaly ? anomalyStyle : style;
+                        })
+                        .attr("x", function(d) {
+                            return x2(d.date);
+                        })
+                        .attr("width", function(d) {
+                            return x2(d3.time[me.granularity].utc.offset(d.date, 1)) - x2(d.date);
+                        })
+                        .attr("y", function(d) {
+                            return y2(Math.max(0, d.value));
+                        })
+                        .attr("height", function(d) {
+                            var height = y2(d.value) - y2(0);
+                            var offset = height / height || 0;
+                            var calculatedHeight = Math.abs(height) + (offset * barheight);
+                            return calculatedHeight;
+                        });
+                }
             } else {
                 // If type is line, render a line plot
                 if(series.type === 'line') {
-                    chartType = d3.svg.line()
+                    chartTypeFocus = d3.svg.line()
                         .x(function(d) {
                             return x(d.date);
                         })
                         .y(function(d) {
                             return y(d.value);
                         });
+                    chartTypeContext = d3.svg.line()
+                        .x(function(d) {
+                            return x2(d.date);
+                        })
+                        .y(function(d) {
+                            return y2(d.value);
+                        });
                 } else {
                     // Otherwise, default to area, e.g. for bars whose data is too long
                     style += 'fill:' + series.color + ';';
-                    chartType = d3.svg.area()
+                    chartTypeFocus = d3.svg.area()
                         .x(function(d) {
                             return x(d.date);
                         })
@@ -587,43 +633,78 @@ charts.TimelineSelectorChart = function(element, configuration) {
                         .y1(function(d) {
                             return y(Math.max(0, d.value));
                         });
+                    chartTypeContext = d3.svg.area()
+                        .x(function(d) {
+                            return x2(d.date);
+                        })
+                        .y0(function(d) {
+                            return y2(Math.min(0, d.value));
+                        })
+                        .y1(function(d) {
+                            return y2(Math.max(0, d.value));
+                        });
                 }
 
-                container.append("path")
+                focusContainer.append("path")
                     .datum(series.data)
                     .attr("class", series.type)
-                    .attr("d", chartType)
+                    .attr("d", chartTypeFocus)
                     .attr("style", style);
 
+                if(contextContainer) {
+                    contextContainer.append("path")
+                        .datum(series.data)
+                        .attr("class", series.type)
+                        .attr("d", chartTypeContext)
+                        .attr("style", style);
+                }
+
                 if(series.data.length < 80) {
-                    var func = function(d) {
+                    var funcFocus = function(d) {
                         return x(d.date);
+                    };
+                    var funcContext = function(d) {
+                        return x2(d.date);
                     };
                     if(series.data.length === 1) {
                         func = width / 2;
                     }
 
-                    container.selectAll("dot")
+                    focusContainer.selectAll("dot")
                         .data(series.data)
                     .enter().append("circle")
                         .attr("class", "dot")
                         .attr("style", 'fill:' + series.color + ';')
                         .attr("r", 3)
-                        .attr("cx", func)
+                        .attr("cx", funcFocus)
                         .attr("cy", function(d) {
                             return y(d.value);
                         });
+
+                    if(contextContainer) {
+                        contextContainer.selectAll("dot")
+                            .data(series.data)
+                        .enter().append("circle")
+                            .attr("class", "dot")
+                            .attr("style", 'fill:' + series.color + ';')
+                            .attr("r", 3)
+                            .attr("cx", funcContext)
+                            .attr("cy", function(d) {
+                                return y2(d.value);
+                            });
+                    }
                 } else {
                     // If a line graph was used and there are anomalies, put a circle on the
                     // anomalous points
                     var anomalies = series.data.filter(function(it) {
                         return it.anomaly === true;
                     });
-                    container.selectAll("dot")
+
+                    focusContainer.selectAll("dot")
                         .data(anomalies)
                     .enter().append("circle")
                         .attr("class", "dot")
-                        .attr("style", 'fill:red;')
+                        .attr("style", 'fill:' + anomalyColor + ';')
                         .attr("r", 3)
                         .attr("cx", function(d) {
                             return x(d.date);
@@ -631,10 +712,25 @@ charts.TimelineSelectorChart = function(element, configuration) {
                         .attr("cy", function(d) {
                             return y(d.value);
                         });
+
+                    if(contextContainer) {
+                        contextContainer.selectAll("dot")
+                            .data(anomalies)
+                        .enter().append("circle")
+                            .attr("class", "dot")
+                            .attr("style", 'fill:' + anomalyColor + ';')
+                            .attr("r", 3)
+                            .attr("cx", function(d) {
+                                return x2(d.date);
+                            })
+                            .attr("cy", function(d) {
+                                return y2(d.value);
+                            });
+                    }
                 }
             }
 
-            container.append("line")
+            focusContainer.append("line")
                 .attr({
                     class: "mini-axis",
                     x1: 0,
@@ -647,7 +743,6 @@ charts.TimelineSelectorChart = function(element, configuration) {
                 name: series.name,
                 color: series.color,
                 yAxis: yAxis,
-                container: container,
                 index: seriesPos
             });
 
@@ -671,7 +766,7 @@ charts.TimelineSelectorChart = function(element, configuration) {
             .attr("class", "brush")
             .on('mousemove', function() {
                 var mouseLocation = d3.mouse(this);
-                var graph_x = x.invert(mouseLocation[0]);
+                var graph_x = x2.invert(mouseLocation[0]);
 
                 var bisect = d3.bisector(function(d) {
                     return d.date;
@@ -686,30 +781,30 @@ charts.TimelineSelectorChart = function(element, configuration) {
             });
 
         gBrush.append("rect")
-            .attr("x", width + this.config.margin.right)
+            .attr("x", width + this.config.margin2.right)
             .attr("y", -6)
             .attr("width", width)
-            .attr("height", height + 7)
+            .attr("height", height2 + 7)
             .attr("class", "mask mask-east");
 
         gBrush.append("rect")
-            .attr("x", (0 - (width + this.config.margin.left)))
+            .attr("x", (0 - (width + this.config.margin2.left)))
             .attr("y", -6)
             .attr("width", width)
-            .attr("height", height + 7)
+            .attr("height", height2 + 7)
             .attr("class", "mask mask-west");
 
         gBrush.call(this.brush);
 
         gBrush.selectAll("rect")
             .attr("y", -6)
-            .attr("height", height + 7);
+            .attr("height", height2 + 7);
 
         gBrush.selectAll(".e")
             .append("rect")
             .attr("y", -6)
             .attr("width", 1)
-            .attr("height", height + 6)
+            .attr("height", height2 + 6)
             .attr("class", "resize-divider");
 
         gBrush.selectAll(".w")
@@ -717,7 +812,7 @@ charts.TimelineSelectorChart = function(element, configuration) {
             .attr("x", -1)
             .attr("y", -6)
             .attr("width", 1)
-            .attr("height", height + 6)
+            .attr("height", height2 + 6)
             .attr("class", "resize-divider");
 
         gBrush.selectAll(".resize")
@@ -725,15 +820,15 @@ charts.TimelineSelectorChart = function(element, configuration) {
             .attr("d", resizePath);
 
         for(i = 0; i < charts.length; i++) {
-            context.append("g")
+            /*context.append("g")
                 .attr("class", "y axis series-y")
                 .attr("transform", "translate(0," + ((chartHeight + this.config.margin.top + this.config.margin.bottom) * charts[i].index) + ")")
-                .call(charts[i].yAxis);
+                .call(charts[i].yAxis);*/
 
             context.append("text")
                 .attr("class", "series-title")
                 .attr("fill", charts[i].color)
-                .attr("transform", "translate(0," + (((chartHeight + this.config.margin.top + this.config.margin.bottom) * charts[i].index) - 5) + ")")
+                .attr("transform", "translate(0," + (((height2 + this.config.margin2.top + this.config.margin2.bottom) * charts[i].index) - 5) + ")")
                 .text(charts[i].name);
         }
     };
