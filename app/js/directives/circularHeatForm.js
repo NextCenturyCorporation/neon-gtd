@@ -77,8 +77,7 @@ function(connectionService, datasetService, errorNotificationService, exportServ
                     filtersChanged: onFiltersChanged
                 });
 
-                $scope.exportID = uuid();
-                exportService.register($scope.exportID, $scope.makeCircularHeatFormExportObject);
+                $scope.exportID = exportService.register($scope.makeCircularHeatFormExportObject);
 
                 $scope.$on('$destroy', function() {
                     XDATA.userALE.log({
@@ -401,11 +400,12 @@ function(connectionService, datasetService, errorNotificationService, exportServ
                     .groupBy(groupByDayClause, groupByHourClause)
                     .where($scope.options.dateField, '!=', null)
                     .aggregate(neon.query.COUNT, '*', 'count');
+                query.limitClause = exportService.getLimitClause();
                 var finalObject = {
                     name: 'Ops_Clock',
                     data: [{
                         query: query,
-                        name: 'circularHeatForm',
+                        name: $scope.exportID + " - circularHeatForm",
                         fields: [],
                         ignoreFilters: query.ignoreFilters_,
                         selectionOnly: query.selectionOnly_,

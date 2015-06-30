@@ -84,8 +84,7 @@ function(connectionService, datasetService, errorNotificationService, filterServ
                     filtersChanged: onFiltersChanged
                 });
 
-                $scope.exportID = uuid();
-                exportService.register($scope.exportID, $scope.makeBarchartExportObject);
+                $scope.exportID = exportService.register($scope.makeBarchartExportObject);
 
                 $scope.$on('$destroy', function() {
                     XDATA.userALE.log({
@@ -478,11 +477,12 @@ function(connectionService, datasetService, errorNotificationService, filterServ
                     tags: ["options", "barchart", "export"]
                 });
                 var query = $scope.buildQuery();
+                query.limitClause = exportService.getLimitClause();
                 var finalObject = {
                     name: "Bar_Chart",
                     data: [{
                         query: query,
-                        name: "barchart",
+                        name: $scope.exportID + " - barchart",
                         fields: [],
                         ignoreFilters: query.ignoreFilters_,
                         selectionOnly: query.selectionOnly_,

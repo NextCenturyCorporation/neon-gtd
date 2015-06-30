@@ -87,8 +87,7 @@ function(connectionService, datasetService, errorNotificationService, filterServ
                     filtersChanged: onFiltersChanged
                 });
 
-                $scope.exportID = uuid();
-                exportService.register($scope.exportID, $scope.makeTagCloudExportObject);
+                $scope.exportID = exportService.register($scope.makeTagCloudExportObject);
 
                 $scope.$on('$destroy', function() {
                     XDATA.userALE.log({
@@ -437,7 +436,7 @@ function(connectionService, datasetService, errorNotificationService, filterServ
                         table: $scope.options.table.name,
                         field: $scope.options.tagField,
                         limit: $scope.options.tagLimit,
-                        name: "tagCloud",
+                        name: $scope.exportID + " - tagCloud",
                         fields: [],
                         type: "arraycount"
                     }]

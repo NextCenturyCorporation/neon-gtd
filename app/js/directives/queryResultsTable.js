@@ -156,8 +156,7 @@ function(external, popups, connectionService, datasetService, errorNotificationS
                     filtersChanged: onFiltersChanged
                 });
 
-                $scope.exportID = uuid();
-                exportService.register($scope.exportID, $scope.makeQueryResultsTableExportObject);
+                $scope.exportID = exportService.register($scope.makeQueryResultsTableExportObject);
 
                 $scope.$on('$destroy', function() {
                     XDATA.userALE.log({
@@ -660,13 +659,12 @@ function(external, popups, connectionService, datasetService, errorNotificationS
                     tags: ["options", "datagrid", "export"]
                 });
                 var query = $scope.buildQuery();
-                // Set limitClause to undefined because we don't want to limit the number of matching results put into the CSV file.
-                query.limitClause = undefined;
+                query.limitClause = exportService.getLimitClause();
                 var finalObject = {
                     name: "Query_Results_Table",
                     data: [{
                         query: query,
-                        name: "queryResultsTable",
+                        name: $scope.exportID + " - queryResultsTable",
                         fields: [],
                         ignoreFilters: query.ignoreFilters_,
                         selectionOnly: query.selectionOnly_,

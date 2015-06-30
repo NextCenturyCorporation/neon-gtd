@@ -92,8 +92,7 @@ function(external, popups, connectionService, datasetService, errorNotificationS
                     filtersChanged: onFiltersChanged
                 });
 
-                $scope.exportID = uuid();
-                exportService.register($scope.exportID, $scope.makeCountByExportObject);
+                $scope.exportID = exportService.register($scope.makeCountByExportObject);
 
                 $scope.$on('$destroy', function() {
                     XDATA.userALE.log({
@@ -662,11 +661,12 @@ function(external, popups, connectionService, datasetService, errorNotificationS
                     tags: ["options", "count-by", "export"]
                 });
                 var query = $scope.buildQuery();
+                query.limitClause = exportService.getLimitClause();
                 var finalObject = {
                     name: "Count_By",
                     data: [{
                         query: query,
-                        name: 'countBy',
+                        name: $scope.exportID + " - countBy",
                         fields: [],
                         ignoreFilters: query.ignoreFilters_,
                         selectionOnly: query.selectionOnly_,

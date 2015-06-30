@@ -256,8 +256,7 @@ function(connectionService, datasetService, errorNotificationService, filterServ
                     filtersChanged: onFiltersChanged
                 });
 
-                $scope.exportID = uuid();
-                exportService.register($scope.exportID, $scope.makeTimelineSelectorExportObject);
+                $scope.exportID = exportService.register($scope.makeTimelineSelectorExportObject);
 
                 $scope.$on('$destroy', function() {
                     XDATA.userALE.log({
@@ -928,11 +927,12 @@ function(connectionService, datasetService, errorNotificationService, filterServ
                     tags: ["options", "timeline", "export"]
                 });
                 var query = $scope.createChartDataQuery();
+                query.limitClause = exportService.getLimitClause();
                 var finalObject = {
                     name: "Timeline",
                     data: [{
                         query: query,
-                        name: "timelineSelector",
+                        name: $scope.exportID + " - timelineSelector",
                         fields: [],
                         ignoreFilters: query.ignoreFilters_,
                         selectionOnly: query.selectionOnly_,

@@ -168,8 +168,7 @@ angular.module('neonDemo.directives')
                     filtersChanged: onFiltersChanged
                 });
 
-                $scope.exportID = uuid();
-                exportService.register($scope.exportID, $scope.makeMapExportObject);
+                $scope.exportID = exportService.register($scope.makeMapExportObject);
 
                 $scope.$on('$destroy', function() {
                     XDATA.userALE.log({
@@ -1038,11 +1037,10 @@ angular.module('neonDemo.directives')
                     tables = sets[keys[i]];
                     for(var j = 0; j < tables.length; j++) {
                         var query = $scope.buildPointQuery(keys[i], tables[j]);
-                        // Set limitClause to undefined because we don't want to limit the number of matching results put into the CSV file.
-                        query.limitClause = undefined;
+                        query.limitClause = exportService.getLimitClause();
                         var tempObject = {
                             query: query,
-                            name: "map - " + keys[i] + "_" + tables[j],
+                            name: $scope.exportID + " - map_" + keys[i] + "_" + tables[j],
                             fields: [],
                             ignoreFilters: query.ignoreFilters_,
                             selectionOnly: query.selectionOnly_,

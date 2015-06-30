@@ -73,8 +73,7 @@ function(connectionService, datasetService, errorNotificationService, exportServ
                     filtersChanged: onFiltersChanged
                 });
 
-                $scope.exportID = uuid();
-                exportService.register($scope.exportID, $scope.makeSunburstExportObject);
+                $scope.exportID = exportService.register($scope.makeSunburstExportObject);
 
                 $scope.$on('$destroy', function() {
                     XDATA.userALE.log({
@@ -377,6 +376,7 @@ function(connectionService, datasetService, errorNotificationService, exportServ
                     tags: ["options", "sunburst", "export"]
                 });
                 var query = $scope.buildQuery();
+                query.limitClause = exportService.getLimitClause();
                 // Sort results by each group field so the resulting file won't be ugly.
                 var sortByArgs = [];
                 $scope.groupFields.forEach(function(field) {
@@ -389,7 +389,7 @@ function(connectionService, datasetService, errorNotificationService, exportServ
                     name: "Sunburst",
                     data: [{
                         query: query,
-                        name: 'sunburst',
+                        name: $scope.exportID + " - sunburst",
                         fields: [],
                         ignoreFilters: query.ignoreFilters_,
                         selectionOnly: query.selectionOnly_,

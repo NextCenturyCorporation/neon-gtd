@@ -36,6 +36,14 @@
                             {{navbarTitle}}
                         </span>
                     </div>
+                    
+                    <options-menu parent-element="element" class="navbar-text pull-right" ng-show="!(hideAdvancedOptions)">
+                        <!-- Buttons to select file format -->
+                        <label>Export Format</label>
+                        <div file-formats gridster-configs="visualizations" ng-hide="hideNavbarItems"></div>
+                        <!-- Export option -->
+                        <div export-widgets gridster-configs="visualizations" ng-hide="hideNavbarItems"></div>
+                    </options-menu>
 
                     <div powered-by-neon class="pull-right"></div>
 
@@ -46,12 +54,6 @@
 
                     <!-- Add visualization control -->
                     <div add-visualization gridster-configs="visualizations" ng-hide="hideNavbarItems"></div>
-
-                    <!-- Add export option -->
-                    <div export-widgets gridster-configs="visualizations" ng-hide="hideNavbarItems"></div>
-
-                    <!-- Add buttons to select file format -->
-                    <div file-formats gridster-configs="visualizations" ng-hide="hideNavbarItems"></div>
 
                     <!--
                     <ul class="nav navbar-nav" ng-hide="hideNavbarItems">

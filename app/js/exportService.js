@@ -25,23 +25,33 @@ angular.module('neonDemo.services')
 .factory('ExportService', function() {
     var widgets = [];
 
-    // This should match up with the name field of the entry with "selected" initialized to true
+    // This should match up with the value field of the entry that has selected initialized to true
     // in the formats array of fileFormats.js.
-    var format = 'csv';
+    var format = 0;
+
+    // The limit clause with which to replace the limit clauses on queries when exporting.
+     var limitClause = {
+        limit: 100000
+    };
 
     var service = {};
+
+    // The current widget registration number. Incremented when a new widget is registered.
+    var widgetNumber = -1;
 
     /**
      * Registers a function to this service, so that it can be executed as part of a bulk operation. Should be called by visualization
      * widgets upon being created.
-     * @param uuid {String} The unique of ID of the registering widget, to be used as a key for unregistering.
      * @param bundleFunction {Function} The function to register.
+     * @return {Number} The registration ID of the widget that called this method.
      */
-    service.register = function(uuid, bundleFunction) {
+    service.register = function(bundleFunction) {
+        widgetNumber += 1;
         widgets.push({
-            id: uuid,
+            id: widgetNumber,
             callback: bundleFunction
         });
+        return widgetNumber;
     };
 
     /**
@@ -68,19 +78,29 @@ angular.module('neonDemo.services')
     };
 
     /**
-     * Sets the file format in which widgets should request exports - extension only, e.g. "csv".
-     * @param {String} fileFormat The new file format in which widgets should request exports.
+     * Sets the file format in which widgets should request exports, given as a number that corresponds to an extension (for a list of
+     * numeric values and which file extensions they correspond to, check in fileFormats.js or ExportService.groovy).
+     * @param {Number} fileFormat The new file format in which widgets should request exports.
      */
     service.setFileFormat = function(fileFormat) {
         format = fileFormat;
     };
 
     /**
-     * Returns the file format in which widgets should request exports.
-     * @return {String} The file formats in which widgets should request exports.
+     * Returns the numeric value of the file format in which widgets should request exports.
+     * @return {Number} The file format in which widgets should request exports.
      */
     service.getFileFormat = function() {
         return format;
+    };
+
+    /**
+     * Returns the limit clause that should be given to queries going to export.
+     * We want to remove limits on data returned as much as possible, but also don't want to overwhelm the server's memory.
+     * @return {Object} The limit clause that should be given to queries going to export.
+     */
+    service.getLimitClause = function() {
+        return limitClause;
     };
 
     return service;

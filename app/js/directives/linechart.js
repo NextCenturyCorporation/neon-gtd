@@ -96,8 +96,7 @@ function(connectionService, datasetService, errorNotificationService, exportServ
                     filtersChanged: onFiltersChanged
                 });
 
-                $scope.exportID = uuid();
-                exportService.register($scope.exportID, $scope.makeLinechartExportObject);
+                $scope.exportID = exportService.register($scope.makeLinechartExportObject);
 
                 $scope.$on('$destroy', function() {
                     XDATA.userALE.log({
@@ -626,11 +625,12 @@ function(connectionService, datasetService, errorNotificationService, exportServ
                     tags: ["options", "linechart", "export"]
                 });
                 var query = $scope.buildQuery();
+                query.limitClause = exportService.getLimitClause();
                 var finalObject = {
                     name: "Line_Chart",
                     data: [{
                         query: query,
-                        name: "linechart",
+                        name: $scope.exportID + " - linechart",
                         fields: [],
                         ignoreFilters: query.ignoreFilters_,
                         selectionOnly: query.selectionOnly_,
