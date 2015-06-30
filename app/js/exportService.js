@@ -30,7 +30,7 @@ angular.module('neonDemo.services')
     var format = 0;
 
     // The limit clause with which to replace the limit clauses on queries when exporting.
-     var limitClause = {
+    var limitClause = {
         limit: 100000
     };
 

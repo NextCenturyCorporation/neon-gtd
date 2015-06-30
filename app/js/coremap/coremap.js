@@ -25,41 +25,24 @@ var coreMap = coreMap || {};
  * @param {String} elementId id of a div or span which the map component will replace.
  * @param {Object} opts A collection of optional key/value pairs used for configuration parameters:
  * <ul>
- *     <li>data - An array of data to display in the map</li>
  *     <li>width - The width of the map in pixels.</li>
  *     <li>height - The height of the map in pixels.</li>
- *     <li>latitudeMapping {function | String} - A way to map the data element to latitude.
- *     This could be a string name for a simple mapping or a function for a more complex one.</li>
- *     <li>longitudeMapping {function | String} - A way to map the data element to longitude.
- *     This could be a string name for a simple mapping or a function for a more complex one.</li>
- *     <li>sizeMapping {function | String} - A way to map the data element to size.
- *     This could be a string name for a simple mapping or a function for a more complex one.</li>
- *     <li>categoryMapping {function | String} - A way to map the data element to color.
- *     This could be a string name for a simple mapping or a function for a more complex one.</li>
- *     <li>defaultLayer {String} - The layer to display by default.
- *
+ *     <li>onZoomRect - A zoom handler that will be called when the user selects an area to which
+ *     to zoom and a zoom rectangle is displayed.<li>
  * </ul>
  *
  * @constructor
  *
  * @example
- *     var data = [
- *                 {"latitude": "50", "longitude": -100},
- *                 {"latitude": "-20", "longitude": 130
- *                ];
  *     var map = new coreMap.Map('map');
- *     map.setData(data);
- *     map.draw();
  *
  * @example
  *     var opts = {
- *            data: {[50,30,5], [20,-120,10]},
  *            latitudeMapping: function(element){ return element[0]; },
  *            longitudeMapping: function(element){ return element[1]; },
  *            sizeMapping: function(element){ return element[2]; }
- *                };
+ *     };
  *     var map = new coreMap.Map('map', opts);
- *     map.draw();
  *
  **/
 
@@ -68,41 +51,7 @@ coreMap.Map = function(elementId, opts) {
 
     this.elementId = elementId;
     this.selector = $("#" + elementId);
-
-    // mapping of categories to colors
-    this.colors = {};
-
-    this.latitudeMapping = opts.latitudeMapping || coreMap.Map.DEFAULT_LATITUDE_MAPPING;
-    this.longitudeMapping = opts.longitudeMapping || coreMap.Map.DEFAULT_LONGITUDE_MAPPING;
-    this.sizeMapping = opts.sizeMapping || coreMap.Map.DEFAULT_SIZE_MAPPING;
-
-    this.categoryMapping = opts.categoryMapping;
     this.onZoomRect = opts.onZoomRect;
-
-    //this.colorScale = d3.scale.category20();
-    this.colorRange = [
-        '#39b54a',
-        '#C23333',
-        '#3662CC',
-        "#ff7f0e",
-        "#9467bd",
-        "#8c564b",
-        "#e377c2",
-        "#7f7f7f",
-        "#bcbd22",
-        "#17becf",
-        "#98df8a",
-        "#ff9896",
-        "#aec7e8",
-        "#ffbb78",
-        "#c5b0d5",
-        "#c49c94",
-        "#f7b6d2",
-        "#c7c7c7",
-        "#dbdb8d",
-        "#9edae5"
-    ];
-    this.colorScale = d3.scale.ordinal().range(this.colorRange);
     this.responsive = true;
 
     if(opts.responsive === false) {
@@ -118,9 +67,6 @@ coreMap.Map = function(elementId, opts) {
 
     this.selectableLayers = [];
     this.selectControls = [];
-
-    this.defaultLayer = (opts.defaultLayer === coreMap.Map.HEATMAP_LAYER) ? coreMap.Map.HEATMAP_LAYER : coreMap.Map.POINTS_LAYER;
-
     this.initializeMap();
     this.setupLayers();
     this.setupControls();
@@ -131,11 +77,9 @@ coreMap.Map.DEFAULT_WIDTH = 1024;
 coreMap.Map.DEFAULT_HEIGHT = 680;
 coreMap.Map.MIN_HEIGHT = 200;
 coreMap.Map.MIN_WIDTH = 200;
-coreMap.Map.MIN_RADIUS = 3;
-coreMap.Map.MAX_RADIUS = 13;
-coreMap.Map.BOX_COLOR = "#39b54a";
-coreMap.Map.BOX_WIDTH = 2;
-coreMap.Map.BOX_OPACITY = 1;
+coreMap.Map.BOX_COLOR = "#f20101";
+coreMap.Map.BOX_WIDTH = 4;
+coreMap.Map.BOX_OPACITY = 0.9;
 
 coreMap.Map.SOURCE_PROJECTION = new OpenLayers.Projection("EPSG:4326");
 coreMap.Map.DESTINATION_PROJECTION = new OpenLayers.Projection("EPSG:900913");
@@ -143,19 +87,14 @@ coreMap.Map.DESTINATION_PROJECTION = new OpenLayers.Projection("EPSG:900913");
 coreMap.Map.POINTS_LAYER = 'points';
 coreMap.Map.HEATMAP_LAYER = 'heatmap';
 coreMap.Map.CLUSTER_LAYER = 'cluster';
+coreMap.Map.NODE_LAYER = 'node';
 
 /**
- * Simple close handler to be called if a popup is closed.
- * @param Object evet A close event.
- * @private
- * @method onPopupClose
+ * Resets the select control by temporarily removing it from the map
+ * before syncing to the current list of selectable layers.
+ * @method removeLayer
  */
-
-var onPopupClose = function() {
-    this.map.selectControl.unselect(this.feature);
-};
-
-coreMap.Map.prototype.resetSelectControl = function(layer) {
+coreMap.Map.prototype.resetSelectControl = function() {
     // We remove the control before resetting the selectable layers
     // partly because select controls interfere with the behavior or map.removeLayer()
     // if they are active and contain multiple layers when one is removed.
@@ -166,6 +105,12 @@ coreMap.Map.prototype.resetSelectControl = function(layer) {
     this.selectControl.activate();
 };
 
+/**
+ * Adds a layer to the map and the layer select control if it's a
+ * layer type supported by the control.
+ * @param {Object} An OpenLayers layer object or variant.
+ * @method addLayer
+ */
 coreMap.Map.prototype.addLayer = function(layer) {
     this.map.addLayer(layer);
     if(layer.CLASS_NAME === "coreMap.Map.Layer.PointsLayer")  {
@@ -174,6 +119,37 @@ coreMap.Map.prototype.addLayer = function(layer) {
     }
 };
 
+/**
+ * Returns a layer from the map with the given name.
+ * @param {String} name The name of an OpenLayers layer.
+ * @method getLayer
+ * @return {Object} An OpenLayers layer object or variant or undefined if no layer with the given name exists.
+ */
+coreMap.Map.prototype.getLayer = function(name) {
+    var layers = this.map.getLayersByName(name);
+    return layers.length ? layers[0] : undefined;
+};
+
+/**
+ * Sets the visibility for a layer from the map with the given name.
+ * @param {String} name The name of an OpenLayers layer.
+ * @param {String} visibility The new visibility setting for the OpenLayers layer.
+ * @method setLayerVisibility
+ * @return {Object} An OpenLayers layer object or variant.
+ */
+coreMap.Map.prototype.setLayerVisibility = function(name, visibility) {
+    var layer = this.getLayer(name);
+    if(layer) {
+        layer.setVisibility(visibility);
+    }
+};
+
+/**
+ * Removes a layer from the map and updates the select controls to
+ * clean up any spurious layer popups.
+ * @param {Object} An OpenLayers layer object or variant.
+ * @method removeLayer
+ */
 coreMap.Map.prototype.removeLayer = function(layer) {
     this.map.removeLayer(layer);
     if(this.selectableLayers[layer.id]) {
@@ -182,23 +158,12 @@ coreMap.Map.prototype.removeLayer = function(layer) {
 };
 
 /**
- * Draws the map data
- * @method draw
- * @deprecated
- */
-coreMap.Map.prototype.draw = function() {
-    // DEPRECATED.
-};
-
-/**
- * Resets the map. This clears all the data, zooms all the way out and centers the map.
+ * Resets the map. This clears all selection popups, zooms all the way out and centers the map.
  * @method reset
  */
 
 coreMap.Map.prototype.reset = function() {
     this.map.selectControl.unSelectAll();
-    this.setData([]);
-    this.draw();
     this.resetZoom();
 };
 
@@ -210,19 +175,6 @@ coreMap.Map.prototype.reset = function() {
 coreMap.Map.prototype.resetZoom = function() {
     this.map.zoomToMaxExtent();
     this.map.setCenter(new OpenLayers.LonLat(0, 0), 1);
-};
-
-/**
- * Sets the map's data.
- * @param mapData the data to be set. This should be an array of points. The points may be specified
- * in any way, This component uses the mapping objects to map each array element to latitude, longitude, size and color.
- * @param {Array} An array of data objects to plot
- * @method setData
- */
-
-coreMap.Map.prototype.setData = function(mapData) {
-    this.data = mapData;
-    this.updateRadii();
 };
 
 /**
@@ -248,7 +200,9 @@ coreMap.Map.prototype.toggleCaching = function() {
     }
 };
 
-// clear the LocaleStorage used by the browser to store data for this.
+/**
+ * Clear the LocaleStorage used by the browser to store data for this.
+ */
 coreMap.Map.prototype.clearCache = function() {
     OpenLayers.Control.CacheWrite.clearCache();
 };
@@ -382,22 +336,58 @@ coreMap.Map.prototype.createSelectControl =  function(layer) {
             source: "user",
             tags: ["map", "tooltip"]
         });
-        var text = '<div><table class="table table-striped table-condensed">';
-        var attributes;
+        var text;
 
-        // If we're on a cluster layer and have a cluster of 1, just show the attributes of the 1 item.
-        if(feature.cluster && feature.cluster.length === 1) {
-            attributes = feature.cluster[0].attributes;
-        } else {
-            attributes = feature.attributes;
-        }
+        /* If we're on a twitter cluster layer, show specific fields.
+         * Limitations:
+         *  - Assumes data has certain column name
+         */
+        if(feature.cluster && feature.cluster[0].attributes.hashtags) {
+            text = '<div><table class="table table-striped table-condensed table-bordered">';
+            text += '<tr><th>screen_name</th><th>created_at</th><th>text</th></tr>';
 
-        for(var key in attributes) {
-            if(Object.prototype.hasOwnProperty.call(attributes, key)) {
-                text += '<tr><th>' + _.escape(key) + '</th><td>' + _.escape(attributes[key]) + '</td>';
+            for(var i = 0; i < feature.cluster.length; i++) {
+                text += '<tr>';
+
+                if(Object.prototype.hasOwnProperty.call(feature.cluster[i].attributes, "screen_name")) {
+                    text += '<td>' + feature.cluster[i].attributes.screen_name + '</td>';
+                } else {
+                    text += '<td></td>';
+                }
+
+                if(Object.prototype.hasOwnProperty.call(feature.cluster[i].attributes, "created_at")) {
+                    text += '<td>' + feature.cluster[i].attributes.created_at + '</td>';
+                } else {
+                    text += '<td></td>';
+                }
+
+                if(Object.prototype.hasOwnProperty.call(feature.cluster[i].attributes, "text")) {
+                    text += '<td>' + feature.cluster[i].attributes.text + '</td>';
+                } else {
+                    text += '<td></td>';
+                }
+
+                text += '</tr>';
             }
+            text += '</table></div>';
+        } else {
+            var attributes;
+            text = '<div><table class="table table-striped table-condensed">';
+
+            // If we're on a cluster layer and have a cluster of 1, just show the attributes of the 1 item.
+            if(feature.cluster && feature.cluster.length === 1) {
+                attributes = feature.cluster[0].attributes;
+            } else {
+                attributes = feature.attributes;
+            }
+
+            for(var key in attributes) {
+                if(Object.prototype.hasOwnProperty.call(attributes, key)) {
+                    text += '<tr><th>' + _.escape(key) + '</th><td>' + attributes[key] + '</td>';
+                }
+            }
+            text += '</table></div>';
         }
-        text += '</table></div>';
 
         me.featurePopup = new OpenLayers.Popup.FramedCloud("Data",
             feature.geometry.getBounds().getCenterLonLat(),
@@ -406,10 +396,12 @@ coreMap.Map.prototype.createSelectControl =  function(layer) {
             null,
             true,
             onFeatureUnselect);
-        me.map.addPopup(me.featurePopup);
+        me.map.addPopup(me.featurePopup, true);
+
+        $(".olFramedCloudPopupContent td").linky(feature.layer.linkyConfig);
     };
 
-    var onFeatureUnselect = function(feature) {
+    var onFeatureUnselect = function() {
         XDATA.userALE.log({
             activity: "hide",
             action: "click",
@@ -457,10 +449,6 @@ coreMap.Map.prototype.setupControls = function() {
     this.zoomControl = new OpenLayers.Control.Zoom({
         autoActivate: true
     });
-    this.switcher = new OpenLayers.Control.LayerSwitcher({
-        autoActivate: true,
-        ascending: false
-    });
 
     // Create a cache reader and writer.  Use default reader
     // settings to read from cache first.
@@ -480,10 +468,7 @@ coreMap.Map.prototype.setupControls = function() {
     });
 
     this.selectControl = this.createSelectControl([]);
-    this.map.addControls([
-        this.zoomControl, this.switcher,
-        this.cacheReader, this.cacheWriter, this.selectControl
-    ]);
+    this.map.addControls([this.zoomControl, this.cacheReader, this.cacheWriter, this.selectControl]);
 };
 
 /**
@@ -519,7 +504,7 @@ coreMap.Map.prototype.zoomToBounds = function(bounds) {
 };
 
 /**
- * Resize the map to its element size. Adjust the heatmap canvas to match.  This should be called
+ * Resize the map to its element size. This should be called
  * when the window resizes on the containing element resizes
  */
 coreMap.Map.prototype.resizeToElement = function() {
@@ -531,9 +516,9 @@ coreMap.Map.prototype.resizeToElement = function() {
     });
 
     // The map may resize multiple times if a browser resize event is triggered.  In this case,
-    // openlayers elements may have updated before our this method.  In that case, calling
-    // updateSize() is a no-op and will not recenter or redraw our heatmap layer.  To get around
-    // this we shift the view by a pixel and recenter.
+    // openlayers elements may have updated before this method.  In that case, calling
+    // updateSize() is a no-op and will not recenter or redraw layers that render based upon
+    // the current map extent.  To get around this we shift the view by a pixel and recenter.
     if(this.width !== this.map.getSize().w || this.height !== this.map.getSize().h) {
         this.map.updateSize();
     } else {

@@ -37,11 +37,11 @@ angular.module('neonDemo.directives')
             $scope.formats = [{
                 name: 'csv',
                 selected: true,
-                value = 0
+                value: 0
             }, {
                 name: 'xlsx',
                 selected: false,
-                value = 1
+                value: 1
             }];
 
             $scope.selectFormat = function(fileFormat) {
@@ -49,7 +49,7 @@ angular.module('neonDemo.directives')
                     format.selected = false;
                 });
                 fileFormat.selected = true;
-                exportService.setFileFormat(fileformat.value);
+                exportService.setFileFormat(fileFormat.value);
             };
         }
     };

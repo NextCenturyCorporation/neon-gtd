@@ -32,8 +32,8 @@
  * @constructor
  */
 angular.module('neonDemo.directives')
-.directive('timelineSelector', ['ConnectionService', 'DatasetService', 'ErrorNotificationService', 'FilterService', 'ExportService',
-function(connectionService, datasetService, errorNotificationService, filterService, exportService) {
+.directive('timelineSelector', ['ConnectionService', 'DatasetService', 'ErrorNotificationService', 'FilterService', 'ExportService', 'opencpu',
+function(connectionService, datasetService, errorNotificationService, filterService, exportService, opencpu) {
     return {
         templateUrl: 'partials/directives/timelineSelector.html',
         restrict: 'EA',
@@ -53,6 +53,7 @@ function(connectionService, datasetService, errorNotificationService, filterServ
             $element.addClass('timeline-selector');
 
             $scope.element = $element;
+            $scope.opencpu = opencpu;
 
             // Default our time data to an empty array.
             $scope.data = [];
@@ -165,10 +166,6 @@ function(connectionService, datasetService, errorNotificationService, filterServ
              * @method initialize
              */
             $scope.initialize = function() {
-                // The brush handler needs to behave differently when the brush changes as part of a
-                // granularity change.
-                var updatingGranularity = false;
-
                 // Switch bucketizers when the granularity is changed.
                 $scope.$watch('options.granularity', function(newVal, oldVal) {
                     if(!$scope.loadingData && newVal && newVal !== oldVal) {
@@ -188,7 +185,6 @@ function(connectionService, datasetService, errorNotificationService, filterServ
                         $scope.updateDates();
 
                         if(0 < $scope.brush.length) {
-                            updatingGranularity = true;
                             var newBrushStart = $scope.bucketizer.roundDownBucket($scope.brush[0]);
                             var newBrushEnd = $scope.bucketizer.roundUpBucket($scope.brush[1]);
 
@@ -204,8 +200,7 @@ function(connectionService, datasetService, errorNotificationService, filterServ
 
                 // Watch for brush changes and set the appropriate neon filter.
                 $scope.$watch('brush', function(newVal) {
-                    // If we have a new value and a messenger is ready, set the new filter.
-                    if(newVal && $scope.messenger && connectionService.getActiveConnection()) {
+                    if(newVal.length && $scope.messenger && connectionService.getActiveConnection()) {
                         XDATA.userALE.log({
                             activity: "select",
                             action: "click",
@@ -236,12 +231,11 @@ function(connectionService, datasetService, errorNotificationService, filterServ
 
                         var relations = datasetService.getRelations($scope.options.database.name, $scope.options.table.name, [$scope.options.dateField]);
 
-                        if(updatingGranularity) {
+                        if($scope.loadingData) {
                             // If the brush changed because of a granularity change, then don't
                             // update the chart. The granularity change will cause the data to be
                             // updated
                             filterService.replaceFilters($scope.messenger, relations, $scope.filterKeys, $scope.createFilterClauseForDate);
-                            updatingGranularity = false;
                         } else {
                             // Because the timeline ignores its own filter, we just need to update the
                             // chart times and total when this filter is applied
@@ -757,7 +751,12 @@ function(connectionService, datasetService, errorNotificationService, filterServ
                     return;
                 }
 
-                $scope.addStl2TimeSeriesAnalysis(timelineData, graphData);
+                if($scope.opencpu.enableStl2) {
+                    $scope.addStl2TimeSeriesAnalysis(timelineData, graphData);
+                }
+                if($scope.opencpu.enableAnomalyDetection) {
+                    $scope.addAnomalyDetectionAnalysis(timelineData, graphData);
+                }
             };
 
             $scope.runMMPP = function() {
@@ -887,6 +886,75 @@ function(connectionService, datasetService, errorNotificationService, filterServ
                 });
             };
 
+            $scope.addAnomalyDetectionAnalysis = function(timelineData, graphData) {
+                var timelineDataFrame = _.map(timelineData, function(it) {
+                    var dateString = it.date.getUTCFullYear() + "-" +
+                        (it.date.getUTCMonth() + 1) + "-" +
+                        it.date.getUTCDate() + " " +
+                        it.date.getUTCHours() + ":" +
+                        it.date.getUTCMinutes() + ":" +
+                        it.date.getUTCSeconds();
+                    return {
+                        timestamp: dateString,
+                        count: it.value
+                    };
+                });
+                ocpu.rpc("nAnomalyDetectionTs", {
+                    data: timelineDataFrame
+                }, function(anomalies) {
+                    // The result is an array of anomolies, where each anomaly has the form:
+                    // {
+                    //   anoms: 105,
+                    //   timestamp: "2015-11-05 13:00:00"
+                    // }
+                    // If there are no anomalies, the array will be empty
+                    if(anomalies.length === 0) {
+                        return;
+                    }
+
+                    var mainData = graphData[0].data;
+                    var anomalyIndex = 0;
+                    var anomalyDate = null;
+                    var dataIndex = 0;
+                    var dataDate = null;
+                    // Both the plain data and the anomalies are in sorted order, so iterate over
+                    // both of them simultaneously
+                    while(dataIndex < mainData.length && anomalyIndex < anomalies.length) {
+                        // Only recalculate the date if the index is changed. This is particularly
+                        // relevant for the anomalyDate because it is more expensive to compute, and
+                        // it should be unchanged for the vast majority of iterations of this loop.
+                        if(anomalyDate === null) {
+                            anomalyDate = new Date(anomalies[anomalyIndex].timestamp + " UTC");
+                        }
+                        if(dataDate === null) {
+                            dataDate = mainData[dataIndex].date;
+                        }
+                        // If there's a match, mark the data. Otherwise, advance the index in the
+                        // array that has the lesser date.
+                        if(anomalyDate.getTime() === mainData[dataIndex].date.getTime()) {
+                            mainData[dataIndex].anomaly = true;
+                            ++dataIndex;
+                            dataDate = null;
+                            ++anomalyIndex;
+                            anomalyDate = null;
+                        } else if(anomalyDate.getTime() < dataDate.getTime()) {
+                            // If the anomaly is older than the data, then try the next anomaly
+                            ++anomalyIndex;
+                            anomalyDate = null;
+                        } else {
+                            // The data must be older than the anomaly, so go to the next entry in
+                            // the data
+                            ++dataIndex;
+                            dataDate = null;
+                        }
+                    }
+                    $scope.$apply();
+                }).fail(function() {
+                    // If the request fails, then just update.
+                    $scope.$apply();
+                });
+            };
+
             /**
              * Clears the timeline brush and filter.
              * @method clearBrush
@@ -901,7 +969,10 @@ function(connectionService, datasetService, errorNotificationService, filterServ
                     source: "user",
                     tags: ["filter", "date-range"]
                 });
+                $scope.startExtent = $scope.bucketizer.getStartDate();
+                $scope.endExtent = $scope.bucketizer.getEndDate();
                 $scope.brush = [];
+                $scope.extentDirty = true;
                 filterService.removeFilters($scope.messenger, $scope.filterKeys);
             };
 
