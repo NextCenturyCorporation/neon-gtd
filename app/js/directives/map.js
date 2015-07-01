@@ -1064,20 +1064,7 @@ angular.module('neonDemo.directives')
                     point.transform(coreMap.Map.SOURCE_PROJECTION, coreMap.Map.DESTINATION_PROJECTION);
 
                     var feature = new OpenLayers.Feature.Vector(point);
-
-                    var layer = new OpenLayers.Layer.Vector("Selected Point", {
-                        styleMap: new OpenLayers.StyleMap({
-                            default: {
-                                graphicName: "star",
-                                strokeOpacity: 0.8,
-                                strokeWidth: 1,
-                                fillColor: "#FFA500",
-                                fillOpacity: 0.8,
-                                pointRadius: 10
-                            }
-                        })
-                    });
-
+                    var layer = new coreMap.Map.Layer.SelectedPointsLayer("Selected Points");
                     layer.addFeatures(feature);
                     $scope.map.addLayer(layer);
                     $scope.selectedPointLayer = layer;
