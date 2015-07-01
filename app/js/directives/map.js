@@ -1051,29 +1051,12 @@ angular.module('neonDemo.directives')
                     }
 
                     var point = new OpenLayers.Geometry.Point(msg.data[lonMapping], msg.data[latMapping]);
-                    point.transform(coreMap.Map.Layer.PointsLayer.SOURCE_PROJECTION, coreMap.Map.Layer.PointsLayer.DESTINATION_PROJECTION);
+                    point.transform(coreMap.Map.SOURCE_PROJECTION, coreMap.Map.DESTINATION_PROJECTION);
 
                     var feature = new OpenLayers.Feature.Vector(point);
-
-                    var layer = new OpenLayers.Layer.Vector("Selected Point", {
-                        styleMap: new OpenLayers.StyleMap({
-                            default: {
-                                graphicName: "star",
-                                strokeOpacity: 0.8,
-                                strokeWidth: 1,
-                                fillColor: "#FFA500",
-                                fillOpacity: 0.8,
-                                pointRadius: 10
-                            }
-                        }),
-                        rendererOptions: {
-                            zIndexing: true
-                        }
-                    });
-
+                    var layer = new coreMap.Map.Layer.SelectedPointsLayer("Selected Points");
                     layer.addFeatures(feature);
                     $scope.map.addLayer(layer);
-                    layer.setZIndex(999);
                     $scope.selectedPointLayer = layer;
                 } else if($scope.selectedPointLayer.name) {
                     $scope.map.removeLayer($scope.selectedPointLayer);
