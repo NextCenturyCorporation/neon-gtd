@@ -26,7 +26,7 @@ function(connectionService, datasetService, errorNotificationService, filterServ
 
         },
         link: function($scope, $element) {
-            $element.addClass('gantt-chart');
+            $element.addClass('gantt-chart-directive');
             $scope.element = $element;
             $scope.legend = {};
 
