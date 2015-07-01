@@ -84,7 +84,8 @@ function(connectionService, datasetService, errorNotificationService, filterServ
                 dateField: "",
                 primarySeries: false,
                 collapsed: true,
-                granularity: DAY
+                granularity: DAY,
+                showZoom: false
             };
 
             /**

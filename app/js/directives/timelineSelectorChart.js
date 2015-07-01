@@ -37,11 +37,14 @@ angular.module('neonDemo.directives')
             extentDirty: '=',
             collapsed: '=',
             primarySeries: '=',
-            granularity: '='
+            granularity: '=',
+            zoom: '='
         },
         link: function($scope, $element) {
             // Initialize the chart.
             $scope.chart = new charts.TimelineSelectorChart($element[0]);
+
+            $scope.autoToggleZoom = true;
 
             // Add a brush handler.
             $scope.chart.addBrushHandler(function(data) {
@@ -49,6 +52,11 @@ angular.module('neonDemo.directives')
                 // angular's digest cycle.
                 $scope.$apply(function() {
                     $scope.timelineBrush = data;
+
+                    if($scope.autoToggleZoom) {
+                        $scope.zoom = true;
+                        $scope.autoToggleZoom = false;
+                    }
                 });
             });
 
@@ -110,6 +118,10 @@ angular.module('neonDemo.directives')
                     $scope.chart.render($scope.timelineData);
                     $scope.chart.renderExtent($scope.timelineBrush);
                 }
+            });
+
+            $scope.$watch('zoom', function(newVal) {
+                $scope.chart.toggleZoom(newVal);
             });
         }
     };
