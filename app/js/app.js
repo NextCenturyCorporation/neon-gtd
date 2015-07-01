@@ -154,6 +154,10 @@ angular.element(document).ready(function() {
         }
         neonDemo.constant('opencpu', opencpuConfig);
 
+        var helpConfig = (config.help || {
+            guide: undefined,
+            video: undefined
+        });
         var dashboardConfig = config.dashboard || {
             gridsterColumns: 6,
             gridsterMargins: 10,
@@ -162,6 +166,7 @@ angular.element(document).ready(function() {
             hideErrorNotifications: false,
             hideHeader: false
         };
+        dashboardConfig.help = helpConfig;
         neonDemo.constant('config', dashboardConfig);
 
         neonDemo.value('popups', {
