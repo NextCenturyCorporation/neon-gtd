@@ -170,16 +170,6 @@ angular.module('neonDemo.directives')
 
                 // Handle toggling map caching.
                 $scope.$watch('cacheMap', function(newVal, oldVal) {
-                    XDATA.userALE.log({
-                        activity: "select",
-                        action: "click",
-                        elementId: "map-cache",
-                        elementType: "checkbox",
-                        elementSub: "map-cache",
-                        elementGroup: "map_group",
-                        source: "user",
-                        tags: ["options", "map", "tile-cache"]
-                    });
                     if(newVal !== oldVal) {
                         if(newVal) {
                             $scope.map.clearCache();

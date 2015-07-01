@@ -118,11 +118,11 @@ function(external, popups, connectionService, datasetService, errorNotificationS
                 $scope.$watch('options.sortByField', function(newVal) {
                     XDATA.userALE.log({
                         activity: "select",
-                        action: "click",
+                        action: ($scope.loadingData) ? "reset" : "click",
                         elementId: "datagrid-sort-by",
                         elementType: "combobox",
                         elementGroup: "table_group",
-                        source: "user",
+                        source: ($scope.loadingData) ? "system" : "user",
                         tags: ["options", "datagrid", "sort-by", newVal]
                     });
                 });
@@ -130,11 +130,11 @@ function(external, popups, connectionService, datasetService, errorNotificationS
                 $scope.$watch('options.sortDirection', function(newVal) {
                     XDATA.userALE.log({
                         activity: "select",
-                        action: "click",
+                        action: ($scope.loadingData) ? "reset" : "click",
                         elementId: "datagrid-sort-direction",
                         elementType: "radiobutton",
                         elementGroup: "table_group",
-                        source: "user",
+                        source: ($scope.loadingData) ? "system" : "user",
                         tags: ["options", "datagrid", "sort-direction", newVal]
                     });
                 });
@@ -142,11 +142,11 @@ function(external, popups, connectionService, datasetService, errorNotificationS
                 $scope.$watch('options.limit', function(newVal) {
                     XDATA.userALE.log({
                         activity: "alter",
-                        action: "keydown",
+                        action: ($scope.loadingData) ? "reset" : "keydown",
                         elementId: "datagrid-limit",
                         elementType: "textbox",
                         elementGroup: "table_group",
-                        source: "user",
+                        source: ($scope.loadingData) ? "system" : "user",
                         tags: ["options", "datagrid", "limit", newVal]
                     });
                 });

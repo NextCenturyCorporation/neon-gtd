@@ -157,14 +157,24 @@ function(connectionService, datasetService, errorNotificationService, filterServ
             };
 
             var onFieldChange = function(field, newValue) {
+                var source = "user"; 
+                var action = "click";
+
+                // Override the default action if a field changes while loading data during
+                // intialization or a dataset change.
+                if ($scope.loadingData) {
+                    source = "system";
+                    action = "reset"
+                }
+
                 XDATA.userALE.log({
                     activity: "select",
-                    action: "click",
+                    action: action,
                     elementId: "linechart",
                     elementType: "combobox",
                     elementSub: "linechart-" + field,
                     elementGroup: "chart_group",
-                    source: "user",
+                    source: source,
                     tags: ["options", "linechart", newValue]
                 });
             };
