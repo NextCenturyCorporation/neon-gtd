@@ -513,18 +513,8 @@ angular.module('neonDemo.directives')
                 // Call removeLayer on all existing layers.
                 $scope.clearLayers();
 
-                // Reconfigure the map as necessary.
-                var mapConfig = datasetService.getMapConfig();
-                if(mapConfig && mapConfig.bounds) {
-                    $scope.map.zoomToBounds(mapConfig.bounds);
-                } else {
-                    $scope.map.zoomToBounds({
-                        left: -180,
-                        bottom: -90,
-                        right: 180,
-                        top: 90
-                    });
-                }
+                // Set the map viewing bounds
+                $scope.setDefaultView();
 
                 if(initializing) {
                     $scope.updateLayersAndQueries();
@@ -1061,6 +1051,25 @@ angular.module('neonDemo.directives')
                 } else if($scope.selectedPointLayer.name) {
                     $scope.map.removeLayer($scope.selectedPointLayer);
                     $scope.selectedPointLayer = {};
+                }
+            };
+
+            /**
+             * Sets the maps viewing bounds to either those defined in the configuration file or
+             * all the way zoomed out
+             * @method setDefaultView
+             */
+            $scope.setDefaultView = function() {
+                var mapConfig = datasetService.getMapConfig();
+                if(mapConfig && mapConfig.bounds) {
+                    $scope.map.zoomToBounds(mapConfig.bounds);
+                } else {
+                    $scope.map.zoomToBounds({
+                        left: -180,
+                        bottom: -90,
+                        right: 180,
+                        top: 90
+                    });
                 }
             };
 
