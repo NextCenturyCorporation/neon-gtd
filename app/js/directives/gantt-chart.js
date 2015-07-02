@@ -1,7 +1,7 @@
 'use strict';
 
 /*
- * Copyright 2014 Next Century Corporation
+ * Copyright 2015 Next Century Corporation
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -29,6 +29,8 @@ function(connectionService, datasetService, errorNotificationService, filterServ
             $element.addClass('gantt-chart-directive');
             $scope.element = $element;
             $scope.legend = {};
+            $scope.filterKeys = filterService.createFilterKeys("gantt-chart", datasetService.getDatabaseAndTableNames());
+            $scope.filterSet = {};
 
             $scope.options = {
                 database: {},
@@ -36,8 +38,42 @@ function(connectionService, datasetService, errorNotificationService, filterServ
                 groupField: []
             };
 
-            //query for data
-            //build config
+            $scope.registerHooks = function(ganttApi) {
+                ganttApi.directives.on.new($scope, function(dName, dScope, dElement) {
+                    if(dName === "ganttTaskContent") {
+                        console.log("Bound");
+
+                        dElement.attr('data-id', dScope.task.model.id);
+                        dElement.bind('click', function(event) {
+                            var clickedElement = $(event.currentTarget);
+                            $scope.filterById(clickedElement.attr('data-id'));
+                        });
+                    }
+                });
+            };
+
+            $scope.filterById = function(id) {
+                console.log("Trying to filter _id = " + id);
+
+                var connection = connectionService.getActiveConnection();
+                if($scope.messenger && connection) {
+                    var relations = datasetService.getRelations($scope.options.database.name, $scope.options.table.name, ['_id']);
+                    filterService.addFilters($scope.messenger, relations, $scope.filterKeys, function() {
+                        return neon.query.where('_id', '=', id);
+                    }, function() {
+                        $scope.filterSet.key = "_id";
+                        $scope.filterSet.value = id;
+                        $scope.queryForData();
+                    });
+                }
+            };
+
+            $scope.removeFilter = function() {
+                filterService.removeFilters($scope.messenger, $scope.filterKeys, function() {
+                    $scope.filterSet = {};
+                    $scope.queryForData();
+                });
+            };
 
             var buildTree = function(data) {
                 $scope.tree = {};
@@ -151,6 +187,7 @@ function(connectionService, datasetService, errorNotificationService, filterServ
                         colorVal = color(i);
                     }
                     row = {
+                        id: data[i]._id,
                         name: data[i].Headline,
                         from: data[i].Start,
                         to: data[i].End,

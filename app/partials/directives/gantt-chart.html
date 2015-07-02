@@ -39,14 +39,22 @@
     </options-menu>
 </div>
 
-<div class="legend" ng-hide="!legend.colors">
-    <div class="legend-item" ng-repeat="item in legend.colors" title="{{item.text}}">
-        <span class="legend-icon" style="background-color: {{item.color}}"></span>
-        <span class="legend-text legend-text-large">{{item.text}}</span>
+<div class="header-container filter-container">
+    <div class="filter-reset pull-right" ng-show="filterSet.key && filterSet.value" title="{{filterSet.key}}={{filterSet.value}}">
+        <span class="filter-label">{{filterSet.key}}={{filterSet.value}}</span>
+        <span class="glyphicon glyphicon-remove" ng-click="removeFilter()"></span>
+    </div>
+
+    <div class="legend" ng-hide="!legend.colors">
+        <div class="legend-item" ng-repeat="item in legend.colors" title="{{item.text}}">
+            <span class="legend-icon" style="background-color: {{item.color}}"></span>
+            <span class="legend-text legend-text-large">{{item.text}}</span>
+        </div>
     </div>
 </div>
 
-<div class="gantt-chart" gantt data="data">
+
+<div class="gantt-chart" gantt data="data" api="registerHooks">
     <gantt-tooltips></gantt-tooltips>
     <gantt-tree enabled="options.groupField.length > 0"></gantt-tree>
     <gantt-groups></gantt-groups>
