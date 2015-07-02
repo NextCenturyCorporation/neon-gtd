@@ -77,6 +77,7 @@ function(connectionService, datasetService, errorNotificationService, filterServ
             $scope.errorMessage = undefined;
             $scope.loadingData = false;
             $scope.noData = true;
+            $scope.data = [];
 
             $scope.options = {
                 database: {},
@@ -218,7 +219,7 @@ function(connectionService, datasetService, errorNotificationService, filterServ
 
                 if($scope.options.database.name === message.databaseName && $scope.options.table.name === message.tableName && $scope.brushExtent !== message.brushExtent) {
                     renderBrushExtent(message.brushExtent);
-                    $scope.queryForData();
+                    updateLineChartForBrushExtent();
                 }
             };
 
@@ -247,7 +248,6 @@ function(connectionService, datasetService, errorNotificationService, filterServ
 
                 if(!connection || !$scope.options.attrX || (!$scope.options.attrY && $scope.options.aggregation !== "count")) {
                     drawLineChart();
-                    $scope.loadingData = false;
                     return;
                 }
 
@@ -437,15 +437,21 @@ function(connectionService, datasetService, errorNotificationService, filterServ
              * @method handleQuerySuccess
              */
             var handleQuerySuccess = function(results) {
-                createSeriesAndDrawLineChart(results.data);
+                $scope.data = results.data;
+
+                var seriesData = createLineSeriesData(results.data);
+
+                $scope.$apply(function() {
+                    drawLineChart(seriesData);
+                });
             };
 
             /**
-             * Creates the line series data using the given data and draws a new line chart.
+             * Creates the line series data using the given data.
              * @param {Object} data
-             * @method createSeriesAndDrawLineChart
+             * @method createLineSeriesData
              */
-            var createSeriesAndDrawLineChart = function(data) {
+            var createLineSeriesData = function(data) {
                 var minDate;
                 var maxDate;
 
@@ -499,24 +505,7 @@ function(connectionService, datasetService, errorNotificationService, filterServ
                     tags: ["receive", "linechart"]
                 });
 
-                $scope.$apply(function() {
-                    drawLineChart(seriesData);
-                    $scope.loadingData = false;
-                    // Use a timeout so we resize the chart after the legend renders (since the legend size affects the chart size).
-                    $timeout(function() {
-                        updateChartSize();
-                    }, 100);
-                    XDATA.userALE.log({
-                        activity: "alter",
-                        action: "render",
-                        elementId: "linechart",
-                        elementType: "canvas",
-                        elementSub: "linechart",
-                        elementGroup: "chart_group",
-                        source: "system",
-                        tags: ["render", "linechart"]
-                    });
-                });
+                return seriesData;
             };
 
             /**
@@ -537,7 +526,6 @@ function(connectionService, datasetService, errorNotificationService, filterServ
                 });
 
                 drawLineChart();
-                $scope.loadingData = false;
 
                 if(response.responseJSON) {
                     $scope.errorMessage = errorNotificationService.showErrorMessage($element, response.responseJSON.error, response.responseJSON.stackTrace);
@@ -669,6 +657,23 @@ function(connectionService, datasetService, errorNotificationService, filterServ
                 $scope.chart.draw(data);
                 $scope.colorMappings = $scope.chart.getColorMappings();
                 $scope.noData = !data || !data.length;
+                $scope.loadingData = false;
+
+                // Use a timeout so we resize the chart after the legend renders (since the legend size affects the chart size).
+                $timeout(function() {
+                    updateChartSize();
+                }, 100);
+
+                XDATA.userALE.log({
+                    activity: "alter",
+                    action: "render",
+                    elementId: "linechart",
+                    elementType: "canvas",
+                    elementSub: "linechart",
+                    elementGroup: "chart_group",
+                    source: "system",
+                    tags: ["render", "linechart"]
+                });
             };
 
             /**
@@ -775,7 +780,28 @@ function(connectionService, datasetService, errorNotificationService, filterServ
 
                 var relations = datasetService.getRelations($scope.options.database.name, $scope.options.table.name, [$scope.options.attrX]);
                 datasetService.setDateBrushExtentForRelations(relations, $scope.brushExtent);
-                filterService.replaceFilters($scope.messenger, relations, $scope.filterKeys, createFilterClauseForDate, $scope.queryForData);
+                filterService.replaceFilters($scope.messenger, relations, $scope.filterKeys, createFilterClauseForDate, updateLineChartForBrushExtent);
+            };
+
+            /**
+             * Redraws the line chart using the data from the previous query within the current brush extent.
+             * @method updateLineChartForBrushExtent
+             */
+            var updateLineChartForBrushExtent = function() {
+                var startIndex = 0;
+                var endIndex = $scope.data.length;
+                $scope.data.forEach(function(datum, index) {
+                    var date = zeroOutDate(new Date(datum.date));
+                    if(date < $scope.brushExtent[0]) {
+                        startIndex = index + 1;
+                    }
+                    if(date < $scope.brushExtent[1]) {
+                        endIndex = index + 1;
+                    }
+                });
+
+                var seriesData = createLineSeriesData($scope.data.slice(startIndex, endIndex));
+                drawLineChart(seriesData);
             };
 
             /**
@@ -796,7 +822,7 @@ function(connectionService, datasetService, errorNotificationService, filterServ
                 renderBrushExtent([]);
                 var relations = datasetService.getRelations($scope.options.database.name, $scope.options.table.name, [$scope.options.attrX]);
                 datasetService.removeDateBrushExtentForRelations(relations);
-                filterService.removeFilters($scope.messenger, $scope.filterKeys, $scope.queryForData);
+                filterService.removeFilters($scope.messenger, $scope.filterKeys, updateLineChartForBrushExtent);
             };
 
             /**
