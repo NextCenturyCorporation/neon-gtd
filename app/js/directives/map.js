@@ -150,12 +150,12 @@ angular.module('neonDemo.directives')
                 $scope.$on('$destroy', function() {
                     XDATA.userALE.log({
                         activity: "remove",
-                        action: "click",
+                        action: "remove",
                         elementId: "map",
                         elementType: "canvas",
                         elementSub: "map",
                         elementGroup: "map_group",
-                        source: "user",
+                        source: "system",
                         tags: ["remove", "map"]
                     });
                     $element.off("resize", updateSize);

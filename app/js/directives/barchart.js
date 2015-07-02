@@ -87,12 +87,11 @@ function(connectionService, datasetService, errorNotificationService, filterServ
                 $scope.$on('$destroy', function() {
                     XDATA.userALE.log({
                         activity: "remove",
-                        action: "click",
+                        action: "remove",
                         elementId: "barchart",
-                        elementType: "button",
-                        elementSub: "barchart-bar",
+                        elementType: "canvas",
                         elementGroup: "chart_group",
-                        source: "user",
+                        source: "system",
                         tags: ["remove", "barchart"]
                     });
                     $element.off("resize", updateChartSize);

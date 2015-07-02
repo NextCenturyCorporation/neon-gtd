@@ -170,12 +170,12 @@ function(connectionService, datasetService, errorNotificationService, filterServ
                     if(!$scope.loadingData && newVal && newVal !== oldVal) {
                         XDATA.userALE.log({
                             activity: "alter",
-                            action: "click",
+                            action: ($scope.loadingData) ? "reset" : "click",
                             elementId: "timeline-" + newVal,
                             elementType: "button",
                             elementSub: "timeline-" + newVal,
                             elementGroup: "chart_group",
-                            source: "user",
+                            source: ($scope.loadingData) ? "system" : "user",
                             tags: ["timeline", "granularity", newVal]
                         });
                         $scope.startDateForDisplay = undefined;
@@ -202,12 +202,12 @@ function(connectionService, datasetService, errorNotificationService, filterServ
                     if(newVal !== oldVal && $scope.messenger && connectionService.getActiveConnection()) {
                         XDATA.userALE.log({
                             activity: "select",
-                            action: "click",
+                            action: ($scope.loadingData) ? "reset" : "click",
                             elementId: "timeline-range",
                             elementType: "canvas",
                             elementSub: "date-range",
                             elementGroup: "chart_group",
-                            source: "user",
+                            source: ($scope.loadingData) ? "system" : "user",
                             tags: ["timeline", "date-range", "filter"]
                         });
 
@@ -252,12 +252,12 @@ function(connectionService, datasetService, errorNotificationService, filterServ
                 $scope.$on('$destroy', function() {
                     XDATA.userALE.log({
                         activity: "remove",
-                        action: "click",
+                        action: "remove",
                         elementId: "timeline",
                         elementType: "canvas",
                         elementSub: "timeline",
                         elementGroup: "chart_group",
-                        source: "user",
+                        source: "system",
                         tags: ["remove", "timeline"]
                     });
                     $scope.messenger.removeEvents();

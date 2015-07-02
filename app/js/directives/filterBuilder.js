@@ -75,12 +75,12 @@ angular.module('neonDemo.directives')
                 $scope.$on('$destroy', function() {
                     XDATA.userALE.log({
                         activity: "remove",
-                        action: "click",
+                        action: "remove",
                         elementId: "filter-builder",
                         elementType: "panel",
                         elementSub: "filter-builder",
                         elementGroup: "query_group",
-                        source: "user",
+                        source: "system",
                         tags: ["remove", "filter-builder"]
                     });
 

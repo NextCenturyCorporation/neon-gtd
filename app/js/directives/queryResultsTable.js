@@ -161,12 +161,12 @@ function(external, popups, connectionService, datasetService, errorNotificationS
                 $scope.$on('$destroy', function() {
                     XDATA.userALE.log({
                         activity: "remove",
-                        action: "click",
+                        action: "remove",
                         elementId: "datagrid",
                         elementType: "canvas",
                         elementSub: "datagrid",
                         elementGroup: "table_group",
-                        source: "user",
+                        source: "system",
                         tags: ["remove", "datagrid"]
                     });
                     popups.links.deleteData($scope.tableId);
