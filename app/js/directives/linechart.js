@@ -78,6 +78,7 @@ function(connectionService, datasetService, errorNotificationService, filterServ
             $scope.loadingData = false;
             $scope.noData = true;
             $scope.data = [];
+            $scope.queryOnRemoveBrush = false;
 
             $scope.options = {
                 database: {},
@@ -135,24 +136,28 @@ function(connectionService, datasetService, errorNotificationService, filterServ
                     onFieldChange('attrX', newValue);
                     if(!$scope.loadingData && $scope.options.database.name && $scope.options.table.name) {
                         $scope.queryForData();
+                        $scope.queryOnRemoveBrush = $scope.queryOnRemoveBrush || ($scope.brushExtent.length > 0);
                     }
                 });
                 $scope.$watch('options.attrY', function(newValue) {
                     onFieldChange('attrY', newValue);
                     if(!$scope.loadingData && $scope.options.database.name && $scope.options.table.name) {
                         $scope.queryForData();
+                        $scope.queryOnRemoveBrush = $scope.queryOnRemoveBrush || ($scope.brushExtent.length > 0);
                     }
                 });
                 $scope.$watch('options.categoryField', function(newValue) {
                     onFieldChange('categoryField', newValue);
                     if(!$scope.loadingData && $scope.options.database.name && $scope.options.table.name) {
                         $scope.queryForData();
+                        $scope.queryOnRemoveBrush = $scope.queryOnRemoveBrush || ($scope.brushExtent.length > 0);
                     }
                 });
                 $scope.$watch('options.aggregation', function(newValue) {
                     onFieldChange('aggregation', newValue);
                     if(!$scope.loadingData && $scope.options.database.name && $scope.options.table.name) {
                         $scope.queryForData();
+                        $scope.queryOnRemoveBrush = $scope.queryOnRemoveBrush || ($scope.brushExtent.length > 0);
                     }
                 });
             };
@@ -196,6 +201,7 @@ function(connectionService, datasetService, errorNotificationService, filterServ
                         return;
                     }
                     $scope.queryForData();
+                    $scope.queryOnRemoveBrush = $scope.queryOnRemoveBrush || ($scope.brushExtent.length > 0);
                 }
             };
 
@@ -219,7 +225,11 @@ function(connectionService, datasetService, errorNotificationService, filterServ
 
                 if($scope.options.database.name === message.databaseName && $scope.options.table.name === message.tableName && $scope.brushExtent !== message.brushExtent) {
                     renderBrushExtent(message.brushExtent);
-                    updateLineChartForBrushExtent();
+                    if(message.brushExtent.length) {
+                        updateLineChartForBrushExtent();
+                    } else {
+                        updateLineChartForWholeExtent();
+                    }
                 }
             };
 
@@ -347,6 +357,7 @@ function(connectionService, datasetService, errorNotificationService, filterServ
                 } else if($scope.brushExtent.length) {
                     $scope.removeBrush();
                 }
+                $scope.queryOnRemoveBrush = false;
                 $scope.queryForData();
             };
 
@@ -790,18 +801,36 @@ function(connectionService, datasetService, errorNotificationService, filterServ
             var updateLineChartForBrushExtent = function() {
                 var startIndex = 0;
                 var endIndex = $scope.data.length;
-                $scope.data.forEach(function(datum, index) {
-                    var date = zeroOutDate(new Date(datum.date));
-                    if(date < $scope.brushExtent[0]) {
-                        startIndex = index + 1;
-                    }
-                    if(date < $scope.brushExtent[1]) {
-                        endIndex = index + 1;
-                    }
-                });
+                if($scope.brushExtent.length >= 2) {
+                    $scope.data.forEach(function(datum, index) {
+                        var date = zeroOutDate(new Date(datum.date));
+                        if(date < $scope.brushExtent[0]) {
+                            startIndex = index + 1;
+                        }
+                        if(date < $scope.brushExtent[1]) {
+                            endIndex = index + 1;
+                        }
+                    });
+                }
 
                 var seriesData = createLineSeriesData($scope.data.slice(startIndex, endIndex));
                 drawLineChart(seriesData);
+            };
+
+            /**
+             * Redraws the line chart using the data from the previous query.
+             * @method updateLineChartForWholeExtent
+             */
+            var updateLineChartForWholeExtent = function() {
+                // If the user changed a field or filter while the chart contained data filtered by date then the chart will need to query for new data since the saved data from
+                // the previous query will be stale.  Otherwise use the data from the previous query and the current brush extent to redraw the chart.
+                if($scope.queryOnRemoveBrush) {
+                    $scope.queryOnRemoveBrush = false;
+                    $scope.queryForData();
+                } else {
+                    var seriesData = createLineSeriesData($scope.data);
+                    drawLineChart(seriesData);
+                }
             };
 
             /**
@@ -822,7 +851,7 @@ function(connectionService, datasetService, errorNotificationService, filterServ
                 renderBrushExtent([]);
                 var relations = datasetService.getRelations($scope.options.database.name, $scope.options.table.name, [$scope.options.attrX]);
                 datasetService.removeDateBrushExtentForRelations(relations);
-                filterService.removeFilters($scope.messenger, $scope.filterKeys, updateLineChartForBrushExtent);
+                filterService.removeFilters($scope.messenger, $scope.filterKeys, updateLineChartForWholeExtent);
             };
 
             /**
