@@ -56,6 +56,9 @@ charts.TimelineSelectorChart = function(element, configuration) {
     };
     this.TOOLTIP_ID = 'tooltip';
     this.xDomain = [];
+    this.x = [];
+    this.y = [];
+    this.highlight = undefined;
 
     // The old extent of the brush saved on brushstart.
     this.oldExtent = [];
@@ -267,10 +270,10 @@ charts.TimelineSelectorChart = function(element, configuration) {
         }
 
         // Setup the axes and their scales.
-        var x = d3.time.scale.utc().range([0, width]);
+        this.x = d3.time.scale.utc().range([0, width]);
 
         // Save the brush as an instance variable to allow interaction on it by client code.
-        this.brush = d3.svg.brush().x(x).on("brush", this.updateMask);
+        this.brush = d3.svg.brush().x(this.x).on("brush", this.updateMask);
 
         if(this.brushHandler) {
             this.brush.on("brushstart", function() {
@@ -313,9 +316,9 @@ charts.TimelineSelectorChart = function(element, configuration) {
         }));
 
         this.xDomain = [xMin, xMax];
-        x.domain(this.xDomain);
+        this.x.domain(this.xDomain);
 
-        var xAxis = d3.svg.axis().scale(x).orient("bottom");
+        var xAxis = d3.svg.axis().scale(this.x).orient("bottom");
 
         // We don't want the ticks to be too close together, so calculate the most ticks that
         // comfortably fit on the timeline
@@ -323,7 +326,7 @@ charts.TimelineSelectorChart = function(element, configuration) {
         // We don't want to have more ticks than buckets (e.g., monthly buckets with daily ticks
         // look funny)
         var minimumTickRange = d3.time[me.granularity].utc.range;
-        if(x.ticks(minimumTickRange).length < maximumNumberOfTicks) {
+        if(this.x.ticks(minimumTickRange).length < maximumNumberOfTicks) {
             // There's enough room to do one tick per bucket
             xAxis.ticks(minimumTickRange);
         } else {
@@ -373,8 +376,8 @@ charts.TimelineSelectorChart = function(element, configuration) {
                 .attr("class", series.name)
                 .attr("transform", "translate(" + xOffset + "," + ((chartHeight + me.config.margin.top + me.config.margin.bottom) * seriesPos) + ")");
 
-            var y = d3.scale.linear().range([chartHeight, 0]);
-            var yAxis = d3.svg.axis().scale(y).orient("right").ticks(2);
+            me.y = d3.scale.linear().range([chartHeight, 0]);
+            var yAxis = d3.svg.axis().scale(me.y).orient("right").ticks(2);
 
             // Use lowest value or 0 for Y-axis domain, whichever is less (e.g. if negative)
             var minY = d3.min(series.data.map(function(d) {
@@ -382,7 +385,7 @@ charts.TimelineSelectorChart = function(element, configuration) {
             }));
             minY = minY < 0 ? minY : 0;
 
-            y.domain([minY, d3.max(series.data.map(function(d) {
+            me.y.domain([minY, d3.max(series.data.map(function(d) {
                 return d.value;
             }))]);
 
@@ -413,17 +416,16 @@ charts.TimelineSelectorChart = function(element, configuration) {
                         return d.anomaly ? anomalyStyle : style;
                     })
                     .attr("x", function(d) {
-                        return x(d.date);
+                        return me.x(d.date);
                     })
                     .attr("width", function(d) {
-                        return x(d3.time[me.granularity].utc.offset(d.date, 1)) - x(d.date);
+                        return me.x(d3.time[me.granularity].utc.offset(d.date, 1)) - me.x(d.date);
                     })
                     .attr("y", function(d) {
-                        return y(Math.max(0, d.value));
+                        return me.y(Math.max(0, d.value));
                     })
-                    //.attr("height", function(d) { return (barheight) - y(d.value); });
                     .attr("height", function(d) {
-                        var height = y(d.value) - y(0);
+                        var height = me.y(d.value) - me.y(0);
                         var offset = height / height || 0;
                         var calculatedHeight = Math.abs(height) + (offset * barheight);
                         return calculatedHeight;
@@ -433,23 +435,23 @@ charts.TimelineSelectorChart = function(element, configuration) {
                 if(series.type === 'line') {
                     chartType = d3.svg.line()
                         .x(function(d) {
-                            return x(d.date);
+                            return me.x(d.date);
                         })
                         .y(function(d) {
-                            return y(d.value);
+                            return me.y(d.value);
                         });
                 } else {
                     // Otherwise, default to area, e.g. for bars whose data is too long
                     style += 'fill:' + series.color + ';';
                     chartType = d3.svg.area()
                         .x(function(d) {
-                            return x(d.date);
+                            return me.x(d.date);
                         })
                         .y0(function(d) {
-                            return y(Math.min(0, d.value));
+                            return me.y(Math.min(0, d.value));
                         })
                         .y1(function(d) {
-                            return y(Math.max(0, d.value));
+                            return me.y(Math.max(0, d.value));
                         });
                 }
 
@@ -461,7 +463,7 @@ charts.TimelineSelectorChart = function(element, configuration) {
 
                 if(series.data.length < 80) {
                     var func = function(d) {
-                        return x(d.date);
+                        return me.x(d.date);
                     };
                     if(series.data.length === 1) {
                         func = width / 2;
@@ -475,7 +477,7 @@ charts.TimelineSelectorChart = function(element, configuration) {
                         .attr("r", 3)
                         .attr("cx", func)
                         .attr("cy", function(d) {
-                            return y(d.value);
+                            return me.y(d.value);
                         });
                 } else {
                     // If a line graph was used and there are anomalies, put a circle on the
@@ -490,10 +492,10 @@ charts.TimelineSelectorChart = function(element, configuration) {
                         .attr("style", 'fill:' + anomalyColor + ';')
                         .attr("r", 3)
                         .attr("cx", function(d) {
-                            return x(d.date);
+                            return me.x(d.date);
                         })
                         .attr("cy", function(d) {
-                            return y(d.value);
+                            return me.y(d.value);
                         });
                 }
             }
@@ -503,9 +505,16 @@ charts.TimelineSelectorChart = function(element, configuration) {
                     class: "mini-axis",
                     x1: 0,
                     x2: width - (xOffset * 2),
-                    y1: y(0),
-                    y2: y(0)
+                    y1: me.y(0),
+                    y2: me.y(0)
                 });
+
+            // Append the highlight bar after the other bars so it is drawn on top.
+            me.highlight = container.append("rect")
+                .attr("class", "highlight")
+                .attr("x", 0).attr("width", 0)
+                .attr("y", -1).attr("height", chartHeight + 2)
+                .style("visibility", "hidden");
 
             charts.push({
                 name: series.name,
@@ -535,7 +544,7 @@ charts.TimelineSelectorChart = function(element, configuration) {
             .attr("class", "brush")
             .on('mousemove', function() {
                 var mouseLocation = d3.mouse(this);
-                var graph_x = x.invert(mouseLocation[0]);
+                var graph_x = me.x.invert(mouseLocation[0]);
 
                 var bisect = d3.bisector(function(d) {
                     return d.date;
@@ -544,11 +553,20 @@ charts.TimelineSelectorChart = function(element, configuration) {
                 if(dataIndex >= 0 && dataIndex < values[0].data.length) {
                     showTooltip(values[0].data[dataIndex], d3.event);
                     me.dataIndex = dataIndex;
+
+                    // Update the highlight bar.
+                    // TODO Create x, width, y, and height functions to combine the calculations for both the highlight bar and the other bars.
+                    var x = me.x(values[0].data[dataIndex].date);
+                    var width = me.x(d3.time[me.granularity].utc.offset(values[0].data[dataIndex].date, 1)) - x;
+                    var y = me.y(Math.max(0, values[0].data[dataIndex].value));
+                    var height = Math.abs(me.y(values[0].data[dataIndex].value) - me.y(0));
+                    me.highlight.attr("x", x - 1).attr("width", width + 2).attr("y", y - 1).attr("height", height + 2).style("visibility", "visible");
                 }
             })
             .on('mouseout', function() {
                 hideTooltip();
                 me.dataIndex = -1;
+                me.highlight.style("visibility", "hidden");
             });
 
         gBrush.append("rect")
@@ -653,6 +671,7 @@ charts.TimelineSelectorChart = function(element, configuration) {
         $("#tooltip-container").html(html);
         $("#tooltip-container").show();
         positionTooltip(d3.select('#tooltip-container'), mouseEvent);
+
         XDATA.userALE.log({
             activity: "show",
             action: "mouseover",

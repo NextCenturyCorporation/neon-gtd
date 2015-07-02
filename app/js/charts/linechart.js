@@ -235,6 +235,12 @@ charts.LineChart.prototype.drawLines = function(opts) {
         .orient("bottom")
         .ticks(Math.round(me.width / 100));
 
+    var highlight = me.svg.append("rect")
+        .attr("class", "highlight")
+        .attr("x", 0).attr("width", 0)
+        .attr("y", 0).attr("height", me.height)
+        .style("visibility", "hidden");
+
     me.svg.append("g")
         .attr("class", "x axis")
         .attr("transform", "translate(0," + (me.height - (me.margin.top + me.margin.bottom)) + ")")
@@ -272,21 +278,6 @@ charts.LineChart.prototype.drawLines = function(opts) {
                 }
             });
 
-    // Hover line.
-    var hoverLineGroup = me.svg.append("g")
-        .attr("class", "hover-line");
-    var hoverLine = hoverLineGroup
-        .append("line")
-            .attr("x1", 10).attr("x2", 10)
-            .attr("y1", 0).attr("y2", me.height);
-    // Add a date to appear on hover.
-    hoverLineGroup.append('text')
-        .attr("class", "hover-text hover-date")
-        .attr('y', me.height + 20);
-
-    // Hide hover line by default.
-    hoverLineGroup.style("opacity", 1e-6);
-
     var cls;
     var data;
     var line;
@@ -298,12 +289,6 @@ charts.LineChart.prototype.drawLines = function(opts) {
         }
         cls = (opts[i].series ? " " + opts[i].series : "");
         data = opts[i].data;
-
-        hoverSeries.push(
-            hoverLineGroup.append('text')
-                .attr("class", "hover-text")
-                .attr('y', me.height + 20)
-        );
 
         var color = this.calculateColor(opts[i]);
 
@@ -421,6 +406,8 @@ charts.LineChart.prototype.drawLines = function(opts) {
             var format = d3.time.format.utc('%e %B %Y');
             var numFormat = d3.format("0,000.00");
             var dataIndex = 0;
+            var prevDataDate = undefined;
+            var nextDataDate = undefined;
 
             if(opts[0].data.length > 1) {
                 var bisect = d3.bisector(function(d) {
@@ -430,6 +417,8 @@ charts.LineChart.prototype.drawLines = function(opts) {
                 // Adjust for out of range mouse events; Typical during a resize and some orientations.
                 dataIndex = (dataIndex < opts[0].data.length) ? Math.max(0, dataIndex - 1) : (opts[0].data.length - 1);
                 me.dataIndex = dataIndex;
+                prevDataDate = dataIndex > 0 ? opts[0].data[dataIndex - 1][me.xAttribute] : undefined;
+                nextDataDate = dataIndex < (opts[0].data.length - 1) ? opts[0].data[dataIndex + 1][me.xAttribute] : undefined;
             }
 
             var dataDate = opts[0].data[dataIndex][me.xAttribute];
@@ -456,12 +445,18 @@ charts.LineChart.prototype.drawLines = function(opts) {
             }
 
             if(opts[0].data.length === 1) {
-                hoverLine.attr("x1", me.width / 2).attr("x2", me.width / 2);
+                if(me.width > 50) {
+                    highlight.attr("x", (me.width / 2 - 25)).attr("width", 50);
+                } else {
+                    highlight.attr("x", 0).attr("width", me.width);
+                }
             } else {
-                hoverLine.attr("x1", me.x(dataDate)).attr("x2", me.x(dataDate));
+                var x = prevDataDate ? me.x(prevDataDate) : me.x(dataDate);
+                var width = (nextDataDate ? me.x(nextDataDate) : me.x(dataDate)) - x;
+                highlight.attr("x", x).attr("width", width);
             }
 
-            hoverLineGroup.style("opacity", 1);
+            highlight.style("visibility", "visible");
 
             $("#tooltip-container").html(html);
             $("#tooltip-container").show();
@@ -481,7 +476,7 @@ charts.LineChart.prototype.drawLines = function(opts) {
             });
         }
     }).on("mouseout", function() {
-        hoverLineGroup.style("opacity", 1e-6);
+        highlight.style("visibility", "hidden");
         me.svg.selectAll("circle.dot-hover")
             .attr("stroke-opacity", 0)
             .attr("fill-opacity", 0);
