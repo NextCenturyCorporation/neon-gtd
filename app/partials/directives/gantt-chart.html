@@ -15,19 +15,19 @@
             <select class="form-control" ng-model="options.groupField[0]" ng-options="field for field in fields" ng-disabled="!(fields.length > 0)">
             </select>
         </div>
-        <div class="form-group" ng-show="!(hideAdvancedOptions)">
+        <div class="form-group" ng-show="!(hideAdvancedOptions) && options.groupField[0]">
             <label>Second grouping</label>
-            <select class="form-control" ng-model="options.groupField[1]" ng-options="field for field in fields" ng-disabled="!(fields.length > 0) || !options.groupField[0]">
+            <select class="form-control" ng-model="options.groupField[1]" ng-options="field for field in fields">
             </select>
         </div>
-        <div class="form-group" ng-show="!(hideAdvancedOptions)">
+        <div class="form-group" ng-show="!(hideAdvancedOptions) && options.groupField[1]">
             <label>Third grouping</label>
-            <select class="form-control" ng-model="options.groupField[2]" ng-options="field for field in fields" ng-disabled="!(fields.length > 0) || !options.groupField[1]">
+            <select class="form-control" ng-model="options.groupField[2]" ng-options="field for field in fields">
             </select>
         </div>
-        <div class="form-group" ng-show="!(hideAdvancedOptions)">
+        <div class="form-group" ng-show="!(hideAdvancedOptions) && options.groupField[2]">
             <label>Fourth grouping</label>
-            <select class="form-control" ng-model="options.groupField[3]" ng-options="field for field in fields" ng-disabled="!(fields.length > 0) || !options.groupField[2]">
+            <select class="form-control" ng-model="options.groupField[3]" ng-options="field for field in fields">
             </select>
         </div>
 
@@ -36,16 +36,35 @@
             <select class="form-control" ng-model="options.colorField" ng-options="field for field in fields" ng-disabled="!(fields.length > 0)">
             </select>
         </div>
+
+        <div class="form-group" ng-show="!(hideAdvancedOptions)">
+            {{fields}}
+            <label>Title Field</label>
+            <select class="form-control" ng-model="bindings.rowTitleField" ng-options="field for field in fields" ng-disabled="!(fields.length > 0)">
+            </select>
+        </div>
+
+        <div class="form-group" ng-show="!(hideAdvancedOptions)">
+            <label>Start Field</label>
+            <select class="form-control" ng-model="bindings.startField" ng-options="field for field in fields" ng-disabled="!(fields.length > 0)">
+            </select>
+        </div>
+
+        <div class="form-group" ng-show="!(hideAdvancedOptions)">
+            <label>End Field</label>
+            <select class="form-control" ng-model="bindings.endField" ng-options="field for field in fields" ng-disabled="!(fields.length > 0)">
+            </select>
+        </div>
     </options-menu>
 </div>
 
-<div class="header-container filter-container">
+<div class="header-container filter-container" ng-show="(filterSet.key && filterSet.value) || legent.colors">
     <div class="filter-reset pull-right" ng-show="filterSet.key && filterSet.value" title="{{filterSet.key}}={{filterSet.value}}">
         <span class="filter-label">{{filterSet.key}}={{filterSet.value}}</span>
         <span class="glyphicon glyphicon-remove" ng-click="removeFilter()"></span>
     </div>
 
-    <div class="legend" ng-hide="!legend.colors">
+    <div class="legend" ng-show="legend.colors">
         <div class="legend-item" ng-repeat="item in legend.colors" title="{{item.text}}">
             <span class="legend-icon" style="background-color: {{item.color}}"></span>
             <span class="legend-text legend-text-large">{{item.text}}</span>

@@ -23,7 +23,7 @@ function(connectionService, datasetService, errorNotificationService, filterServ
         templateUrl: 'partials/directives/gantt-chart.html',
         restrict: 'EA',
         scope: {
-
+            bindRowTitleField: "="
         },
         link: function($scope, $element) {
             $element.addClass('gantt-chart-directive');
@@ -31,6 +31,12 @@ function(connectionService, datasetService, errorNotificationService, filterServ
             $scope.legend = {};
             $scope.filterKeys = filterService.createFilterKeys("gantt-chart", datasetService.getDatabaseAndTableNames());
             $scope.filterSet = {};
+
+            $scope.bindings = {
+                rowTitleField: ($scope.bindRowTitleField || "_id"),
+                startField: ($scope.BindStartField || "Start"),
+                endField: ($scope.BindEndField || "End")
+            };
 
             $scope.options = {
                 database: {},
@@ -188,9 +194,9 @@ function(connectionService, datasetService, errorNotificationService, filterServ
                     }
                     row = {
                         id: data[i]._id,
-                        name: data[i].Headline,
-                        from: data[i].Start,
-                        to: data[i].End,
+                        name: data[i][$scope.bindings.rowTitleField],
+                        from: data[i][$scope.bindings.startField],
+                        to: data[i][$scope.bindings.endField],
                         color: colorVal
                     };
                     parent.tasks.push(row);
@@ -438,6 +444,20 @@ function(connectionService, datasetService, errorNotificationService, filterServ
                 if($scope.options.colorField) {
                     formatData($scope.queryData);
                 }
+            }, true);
+
+            $scope.$watch('bindings', function() {
+                if(!$scope.bindings.startField) {
+                    $scope.bindings.startField = ($scope.BindStartField || "Start");
+                }
+                if(!$scope.bindings.endField) {
+                    $scope.bindings.endField = ($scope.BindEndField || "End");
+                }
+                if(!$scope.bindings.rowTitleField) {
+                    $scope.bindings.rowTitleField = ($scope.bindRowTitleField || "_id");
+                }
+
+                $scope.queryForData();
             }, true);
 
             neon.ready(function() {
