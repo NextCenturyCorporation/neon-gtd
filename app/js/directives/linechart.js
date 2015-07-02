@@ -176,6 +176,26 @@ function(connectionService, datasetService, errorNotificationService, filterServ
             };
 
             /**
+             * Returns whether the added or removed filter in the given message is a date filter on this linechart's x-axis/date field.
+             * @param {Object} message
+             * @method isDateFiltersChangedMessage
+             * @return {Boolean}
+             */
+            var isDateFiltersChangedMessage = function(message) {
+                var whereClauses = undefined;
+                if(message.addedFilter.whereClause) {
+                    whereClauses = message.addedFilter.whereClause.whereClauses;
+                }
+                if(message.removedFilter.whereClause) {
+                    whereClauses = message.removedFilter.whereClause.whereClauses;
+                }
+                if(whereClauses && whereClauses.length === 2 && whereClauses[0].lhs === $scope.options.attrX && whereClauses[1].lhs === $scope.options.attrX) {
+                    return true;
+                }
+                return false;
+            }
+
+            /**
              * Event handler for filter changed events issued over Neon's messaging channels.
              * @param {Object} message A Neon filter changed message.
              * @method onFiltersChanged
@@ -196,8 +216,7 @@ function(connectionService, datasetService, errorNotificationService, filterServ
                 if(message.addedFilter && message.addedFilter.databaseName === $scope.options.database.name && message.addedFilter.tableName === $scope.options.table.name) {
                     // If the filter changed event was triggered by a change in the global date filter, ignore the filter changed event.
                     // We don't need to re-query and we'll update the brush extent extent in response to the date changed event.
-                    var whereClauses = message.addedFilter.whereClause ? message.addedFilter.whereClause.whereClauses : undefined;
-                    if(whereClauses && whereClauses.length === 2 && whereClauses[0].lhs === $scope.options.attrX && whereClauses[1].lhs === $scope.options.attrX) {
+                    if(isDateFiltersChangedMessage(message)) {
                         return;
                     }
                     $scope.queryForData();
@@ -225,7 +244,7 @@ function(connectionService, datasetService, errorNotificationService, filterServ
 
                 if($scope.options.database.name === message.databaseName && $scope.options.table.name === message.tableName && $scope.brushExtent !== message.brushExtent) {
                     renderBrushExtent(message.brushExtent);
-                    if(message.brushExtent.length) {
+                    if($scope.brushExtent.length) {
                         updateLineChartForBrushExtent();
                     } else {
                         updateLineChartForWholeExtent();
