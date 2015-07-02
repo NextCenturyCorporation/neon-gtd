@@ -104,7 +104,7 @@ angular.module("neonDemo.services")
          * @method createFilter
          * @return {Object} A neon.query.Filter object
          */
-        service.createFilter = function(relation, createFilterClauseFunction) {
+        service.createFilter = function(relation, createFilterClauseFunction, filterName) {
             // Creates a list of arguments for the filter clause creation function.  Each element is either a {String} or an {Array} depending on the number
             // of field keys in relation.fields.
             var argumentFieldsList = service.getArgumentFieldsList(relation);
@@ -119,7 +119,12 @@ angular.module("neonDemo.services")
                 }
                 filterClause = neon.query.or.apply(neon.query, filterClauses);
             }
-            return new neon.query.Filter().selectFrom(relation.database, relation.table).name("Test").where(filterClause);
+            var query = new neon.query.Filter().selectFrom(relation.database, relation.table).where(filterClause);
+            if(filterName) {
+
+                query = query.name(filterName);
+            }
+            return query;
         };
 
         /**
@@ -136,10 +141,10 @@ angular.module("neonDemo.services")
          * @param {Function} errorCallback The function called if an error is returned for any of the filter calls (optional)
          * @method addFilters
          */
-        service.addFilters = function(messenger, relations, filterKeys, createFilterClauseFunction, successCallback, errorCallback) {
+        service.addFilters = function(messenger, relations, filterKeys, createFilterClauseFunction, filterName, successCallback, errorCallback) {
             var addFilter = function(relationsToAdd) {
                 var relation = relationsToAdd.shift();
-                var filter = service.createFilter(relation, createFilterClauseFunction);
+                var filter = service.createFilter(relation, createFilterClauseFunction, filterNameString);
                 messenger.addFilter(filterKeys[relation.database][relation.table], filter, function() {
                     if(relationsToAdd.length) {
                         addFilter(relationsToAdd);
@@ -149,6 +154,7 @@ angular.module("neonDemo.services")
                 }, errorCallback);
             };
 
+            var filterNameString = getFilterNameString(filterName, relations);
             addFilter(relations);
         };
 
@@ -166,10 +172,10 @@ angular.module("neonDemo.services")
          * @param {Function} errorFunction The function called if an error is returned for any of the filter calls (optional)
          * @method replaceFilters
          */
-        service.replaceFilters = function(messenger, relations, filterKeys, createFilterClauseFunction, successCallback, errorCallback) {
+        service.replaceFilters = function(messenger, relations, filterKeys, createFilterClauseFunction, filterName, successCallback, errorCallback) {
             var replaceFilter = function(relationsToReplace) {
                 var relation = relationsToReplace.shift();
-                var filter = service.createFilter(relation, createFilterClauseFunction);
+                var filter = service.createFilter(relation, createFilterClauseFunction, filterNameString);
                 messenger.replaceFilter(filterKeys[relation.database][relation.table], filter, function() {
                     if(relationsToReplace.length) {
                         replaceFilter(relationsToReplace);
@@ -179,6 +185,7 @@ angular.module("neonDemo.services")
                 }, errorCallback);
             };
 
+            var filterNameString = getFilterNameString(filterName, relations);
             replaceFilter(relations);
         };
 
@@ -212,6 +219,27 @@ angular.module("neonDemo.services")
             }
 
             removeFilter(filterKeysToRemove);
+        };
+
+        var getFilterNameString = function(name, relations) {
+            if(typeof name === 'object') {
+                if(name.visName) {
+                    var tableString;
+                    if(relations.length > 0) {
+                        tableString = relations[0].table;
+                    }
+                    for(var i = 1; i < relations.length; i++) {
+                        tableString += ("/" + relations[i].table);
+                    }
+                    tableString += " - ";
+
+                    return name.visName + ": " + tableString + (name.text ? name.text : "");
+                } else {
+                    return null;
+                }
+            } else {
+                return name;
+            }
         };
 
         return service;

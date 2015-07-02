@@ -30,9 +30,9 @@
 
         <!-- Header -->
         <!-- This could be made into either a directive or a partial -->
-        <nav role="navigation" class="navbar" ng-hide="hideNavbarItems">
-            <div class="navbar-default navbar-static-top" data-spy="{true: '', false: 'affix'}[hideNavbarItems]">
-                <div class="container">
+        <nav role="navigation" class="navbar">
+            <div class="navbar-default navbar-fixed-top" data-spy="{true: '', false: 'affix'}[hideNavbarItems]">
+                <div class="container" ng-hide="hideNavbarItems">
 
                     <div class="pull-left" ng-show="hideNavbarItems">
                         <span class="navbar-text navbar-title-text">
@@ -51,8 +51,15 @@
                     <div add-visualization gridster-configs="visualizations" ng-hide="hideNavbarItems"></div>
                     </ul>
                 </div>
+
+                <!-- FILTER STATUS TRAY -->
+                <div class="container" ng-show="showFilterStatusTray">
+                    <filter-tray></filter-tray>
+                </div>
             </div>
         </nav>
+
+
 
         <!-- DASHBOARD CONTENT -->
         <div class="container">
@@ -153,6 +160,7 @@
         <script src="js/directives/directedGraph.js"></script>
         <script src="js/directives/filterBuilder.js"></script>
         <script src="js/directives/filterState.js"></script>
+        <script src="js/directives/filterTray.js"></script>
         <script src="js/directives/gantt-chart.js"></script>
         <script src="js/directives/linechart.js"></script>
         <script src="js/directives/linksPopup.js"></script>

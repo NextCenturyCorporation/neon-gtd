@@ -282,7 +282,7 @@ angular.module('neonDemo.directives')
                                 tags: ["render", "map"]
                             });
                         });
-                    })
+                    });
                 };
             };
 
@@ -295,11 +295,13 @@ angular.module('neonDemo.directives')
             var filterActiveLayersRecursively = function(activeLayers, callback) {
                 var layer = activeLayers.shift();
                 var relations = datasetService.getRelations(layer.database, layer.table, [layer.latitudeMapping, layer.longitudeMapping]);
-                filterService.replaceFilters($scope.messenger, relations, layer.filterKeys, $scope.createFilterClauseForExtent, function() {
-                    if (activeLayers.length) {
+                filterService.replaceFilters($scope.messenger, relations, layer.filterKeys, $scope.createFilterClauseForExtent, {
+                    visName: "Map"
+                }, function() {
+                    if(activeLayers.length) {
                         filterActiveLayersRecursively(activeLayers, callback);
                     } else {
-                        if (callback) {
+                        if(callback) {
                             callback();
                         }
                     }
@@ -317,7 +319,7 @@ angular.module('neonDemo.directives')
                     // Notify the user of the error.
                     $scope.error = "Error: Failed to create filter.";
                 });
-            }
+            };
 
             /**
              * This method will apply filters to a particular layer.
@@ -368,7 +370,7 @@ angular.module('neonDemo.directives')
                 });
             };
 
-            /** 
+            /**
              * A simple handler for emitting USER-ALE messages from common user events on a map.
              * @method onMapEvent
              * @private

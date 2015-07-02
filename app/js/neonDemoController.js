@@ -25,6 +25,7 @@ angular.module('neonDemo.controllers')
 .controller('neonDemoController', ['$scope', '$timeout', 'config', 'datasets',
 function($scope, $timeout, config, datasets) {
     $scope.hideNavbarItems = config.hideNavbarItems;
+    $scope.showFilterStatusTray = config.showFilterStatusTray;
     $scope.seeData = false;
     $scope.createFilters = false;
     $scope.filterCount = 0;

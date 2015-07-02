@@ -236,19 +236,33 @@ function(connectionService, datasetService, errorNotificationService, filterServ
 
                         var relations = datasetService.getRelations($scope.options.database.name, $scope.options.table.name, [$scope.options.dateField]);
 
+                        var nameIncludeTime = $scope.options.granularity === HOUR;
+                        var filterNameObj = {
+                            visName: "Timeline",
+                            text: getDateString($scope.startExtent, nameIncludeTime) + " to " + getDateString($scope.endExtent, nameIncludeTime)
+                        };
+
                         if(updatingGranularity) {
                             // If the brush changed because of a granularity change, then don't
                             // update the chart. The granularity change will cause the data to be
                             // updated
-                            filterService.replaceFilters($scope.messenger, relations, $scope.filterKeys, $scope.createFilterClauseForDate);
+                            filterService.replaceFilters($scope.messenger, relations, $scope.filterKeys, $scope.createFilterClauseForDate, filterNameObj);
                             updatingGranularity = false;
                         } else {
                             // Because the timeline ignores its own filter, we just need to update the
                             // chart times and total when this filter is applied
-                            filterService.replaceFilters($scope.messenger, relations, $scope.filterKeys, $scope.createFilterClauseForDate, $scope.updateChartTimesAndTotal);
+                            filterService.replaceFilters($scope.messenger, relations, $scope.filterKeys, $scope.createFilterClauseForDate, filterNameObj, $scope.updateChartTimesAndTotal);
                         }
                     }
                 }, true);
+
+                var getDateString = function(date, includeTime) {
+                    var dateString = (date.getMonth() + 1) + "/" + date.getDate() + "/" + date.getFullYear();
+                    if(includeTime) {
+                        dateString = dateString + " " + date.getHours() + ":" + (date.getMinutes() < 10 ? "0" : "") + date.getMinutes();
+                    }
+                    return dateString;
+                };
 
                 $scope.messenger = new neon.eventing.Messenger();
 

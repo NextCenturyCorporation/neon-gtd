@@ -150,6 +150,7 @@ angular.element(document).ready(function() {
             gridsterColumns: 6,
             gridsterMargins: 10,
             hideNavbarItems: false,
+            showFilterStatusTray: false,
             hideAdvancedOptions: false,
             hideErrorNotifications: false,
             hideHeader: false
