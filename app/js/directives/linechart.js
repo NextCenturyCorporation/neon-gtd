@@ -157,14 +157,14 @@ function(connectionService, datasetService, errorNotificationService, filterServ
             };
 
             var onFieldChange = function(field, newValue) {
-                var source = "user"; 
+                var source = "user";
                 var action = "click";
 
                 // Override the default action if a field changes while loading data during
                 // intialization or a dataset change.
-                if ($scope.loadingData) {
+                if($scope.loadingData) {
                     source = "system";
-                    action = "reset"
+                    action = "reset";
                 }
 
                 XDATA.userALE.log({
@@ -715,8 +715,9 @@ function(connectionService, datasetService, errorNotificationService, filterServ
              * @return {String}
              */
             $scope.getLegendItemAggregationText = function(colorMappingObject) {
+                var total = 0;
                 if($scope.options.aggregation === "count" || $scope.options.aggregation === "sum") {
-                    var total = colorMappingObject.total;
+                    total = colorMappingObject.total;
                     if($scope.brushExtent.length >= 2) {
                         total = calculateBrushedAggregationValue(colorMappingObject.data, function(indexValue, aggregationValue) {
                             return indexValue + aggregationValue;

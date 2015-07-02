@@ -130,14 +130,14 @@ function(connectionService, datasetService, errorNotificationService, filterServ
             };
 
             var onFieldChange = function(field, newValue) {
-                var source = "user"; 
+                var source = "user";
                 var action = "click";
 
                 // Override the default action if a field changes while loading data during
                 // intialization or a dataset change.
-                if ($scope.loadingData) {
+                if($scope.loadingData) {
                     source = "system";
-                    action = "reset"
+                    action = "reset";
                 }
 
                 XDATA.userALE.log({
