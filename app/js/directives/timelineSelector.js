@@ -32,8 +32,8 @@
  * @constructor
  */
 angular.module('neonDemo.directives')
-.directive('timelineSelector', ['ConnectionService', 'DatasetService', 'ErrorNotificationService', 'FilterService',
-function(connectionService, datasetService, errorNotificationService, filterService) {
+.directive('timelineSelector', ['ConnectionService', 'DatasetService', 'ErrorNotificationService', 'FilterService', 'opencpu',
+function(connectionService, datasetService, errorNotificationService, filterService, opencpu) {
     return {
         templateUrl: 'partials/directives/timelineSelector.html',
         restrict: 'EA',
@@ -53,6 +53,7 @@ function(connectionService, datasetService, errorNotificationService, filterServ
             $element.addClass('timeline-selector');
 
             $scope.element = $element;
+            $scope.opencpu = opencpu;
 
             // Default our time data to an empty array.
             $scope.data = [];
@@ -757,8 +758,12 @@ function(connectionService, datasetService, errorNotificationService, filterServ
                     return;
                 }
 
-                $scope.addStl2TimeSeriesAnalysis(timelineData, graphData);
-                $scope.addAnomalyDetectionAnalysis(timelineData, graphData);
+                if($scope.opencpu.enableStl2) {
+                    $scope.addStl2TimeSeriesAnalysis(timelineData, graphData);
+                }
+                if($scope.opencpu.enableAnomalyDetection) {
+                    $scope.addAnomalyDetectionAnalysis(timelineData, graphData);
+                }
             };
 
             $scope.runMMPP = function() {

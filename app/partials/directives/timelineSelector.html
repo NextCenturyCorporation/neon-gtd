@@ -95,7 +95,7 @@
     <div timeline-selector-chart timeline-data='data' timeline-brush='brush' collapsed='options.collapsed' extent-dirty='extentDirty' primary-series='options.primarySeries' granularity='options.granularity' show-focus='options.showFocus'></div>
   </div>
 
-  <div class="text-center" ng-class="{true: '', false: 'hidden'}[options.granularity === 'hour' && !eventProbabilitiesDisplayed &&!options.collapsed]">
+  <div class="text-center" ng-class="{true: '', false: 'hidden'}[opencpu.enableMmpp && options.granularity === 'hour' && !eventProbabilitiesDisplayed &&!options.collapsed]">
     <a class="btn" ng-click="runMMPP()">
       Click to run event probability analysis (this may take a few minutes) <span class="glyphicon glyphicon-transfer"></span>
     </a>

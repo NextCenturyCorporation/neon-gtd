@@ -152,6 +152,7 @@ angular.element(document).ready(function() {
             ocpu.seturl(opencpuConfig.url);
             ocpu.connected = true;
         }
+        neonDemo.constant('opencpu', opencpuConfig);
 
         var dashboardConfig = config.dashboard || {
             gridsterColumns: 6,
