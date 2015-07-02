@@ -354,10 +354,10 @@ function(connectionService, datasetService, errorNotificationService, filterServ
              * Compares the two given data points for a sort function based on the current aggregation type.
              * @param {Array} a
              * @param {Array} b
-             * @method compareData
+             * @method compareSeriesData
              * @return {Integer}
              */
-            var compareData = function(a, b) {
+            var compareSeriesData = function(a, b) {
                 if($scope.options.aggregation === "count" || $scope.options.aggregation === "sum" || $scope.options.aggregation === "average") {
                     if(a.total < b.total) {
                         return 1;
@@ -388,12 +388,12 @@ function(connectionService, datasetService, errorNotificationService, filterServ
             /**
              * Creates and returns the "other series" representing the combined groups outside the "top 10" (the value of the seriesLimit) from the given data.
              * @param {Array} data
-             * @method createOtherSeries
+             * @method createOtherSeriesData
              * @return {Object}
              */
-            var createOtherSeries = function(data) {
+            var createOtherSeriesData = function(data) {
                 var count = data.length - $scope.seriesLimit;
-                var otherSeries = {
+                var otherSeriesData = {
                     series: count + " Others",
                     total: 0,
                     min: -1,
@@ -404,22 +404,22 @@ function(connectionService, datasetService, errorNotificationService, filterServ
                 // For averages, do not include the combined values of groups outside the top 10 because adding averages together from multiple groups makes no sense.
                 if($scope.options.aggregation !== 'average') {
                     for(var i = $scope.seriesLimit; i < data.length; i++) {
-                        otherSeries.total += data[i].total;
-                        otherSeries.min = otherSeries.min < 0 ? data[i].min : Math.min(otherSeries.min, data[i].min);
-                        otherSeries.max = otherSeries.max < 0 ? data[i].max : Math.max(otherSeries.max, data[i].max);
+                        otherSeriesData.total += data[i].total;
+                        otherSeriesData.min = otherSeriesData.min < 0 ? data[i].min : Math.min(otherSeriesData.min, data[i].min);
+                        otherSeriesData.max = otherSeriesData.max < 0 ? data[i].max : Math.max(otherSeriesData.max, data[i].max);
                         for(var d = 0; d < data[i].data.length; d++) {
-                            if(otherSeries.data[d]) {
+                            if(otherSeriesData.data[d]) {
                                 if($scope.options.aggregation === "count" || $scope.options.aggregation === "sum") {
-                                    otherSeries.data[d].value += data[i].data[d].value;
+                                    otherSeriesData.data[d].value += data[i].data[d].value;
                                 }
                                 if($scope.options.aggregation === "min") {
-                                    otherSeries.data[d].value = Math.min(otherSeries.data[d].value, data[i].data[d].value);
+                                    otherSeriesData.data[d].value = Math.min(otherSeriesData.data[d].value, data[i].data[d].value);
                                 }
                                 if($scope.options.aggregation === "max") {
-                                    otherSeries.data[d].value = Math.max(otherSeries.data[d].value, data[i].data[d].value);
+                                    otherSeriesData.data[d].value = Math.max(otherSeriesData.data[d].value, data[i].data[d].value);
                                 }
                             } else {
-                                otherSeries.data[d] = {
+                                otherSeriesData.data[d] = {
                                     date: data[i].data[d].date,
                                     value: data[i].data[d].value
                                 };
@@ -428,7 +428,7 @@ function(connectionService, datasetService, errorNotificationService, filterServ
                     }
                 }
 
-                return otherSeries;
+                return otherSeriesData;
             };
 
             /**
@@ -437,19 +437,28 @@ function(connectionService, datasetService, errorNotificationService, filterServ
              * @method handleQuerySuccess
              */
             var handleQuerySuccess = function(results) {
+                createSeriesAndDrawLineChart(results.data);
+            };
+
+            /**
+             * Creates the line series data using the given data and draws a new line chart.
+             * @param {Object} data
+             * @method createSeriesAndDrawLineChart
+             */
+            var createSeriesAndDrawLineChart = function(data) {
                 var minDate;
                 var maxDate;
 
                 //this prevents an error in older mongo caused when the xAxis value is invalid as it is not
                 //included as a key in the response
-                for(var i = 0; i < results.data.length; i++) {
-                    if(typeof(results.data[i][$scope.options.attrX]) === 'undefined') {
-                        results.data[i][$scope.options.attrX] = null;
+                for(var i = 0; i < data.length; i++) {
+                    if(typeof(data[i][$scope.options.attrX]) === 'undefined') {
+                        data[i][$scope.options.attrX] = null;
                     }
                 }
 
-                if(results.data.length > 0) {
-                    var range = d3.extent(results.data, function(d) {
+                if(data.length > 0) {
+                    var range = d3.extent(data, function(d) {
                         return new Date(d.date);
                     });
                     minDate = range[0];
@@ -459,25 +468,24 @@ function(connectionService, datasetService, errorNotificationService, filterServ
                     maxDate = new Date();
                 }
 
-                var data = [];
-                var series = [];
-                var zeroedData = zeroPadData(results.data, minDate, maxDate);
+                var seriesData = [];
+                var zeroedData = zeroPadData(data, minDate, maxDate);
 
-                for(series in zeroedData) {
+                for(var series in zeroedData) {
                     if(Object.prototype.hasOwnProperty.call(zeroedData, series)) {
-                        data.push(zeroedData[series]);
+                        seriesData.push(zeroedData[series]);
                     }
                 }
 
-                data.sort(compareData);
+                seriesData.sort(compareSeriesData);
 
                 // The "other series" is the line representing the combined groups outside the "top 10" (the value of the seriesLimit).
-                var otherSeries = createOtherSeries(data);
+                var otherSeriesData = createOtherSeriesData(seriesData);
 
-                data = data.splice(0, $scope.seriesLimit);
+                seriesData = seriesData.splice(0, $scope.seriesLimit);
 
-                if(otherSeries.total > 0) {
-                    data.push(otherSeries);
+                if(otherSeriesData.total > 0) {
+                    seriesData.push(otherSeriesData);
                 }
 
                 XDATA.userALE.log({
@@ -492,7 +500,7 @@ function(connectionService, datasetService, errorNotificationService, filterServ
                 });
 
                 $scope.$apply(function() {
-                    drawLineChart(data);
+                    drawLineChart(seriesData);
                     $scope.loadingData = false;
                     // Use a timeout so we resize the chart after the legend renders (since the legend size affects the chart size).
                     $timeout(function() {
