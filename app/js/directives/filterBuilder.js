@@ -85,7 +85,10 @@ angular.module('neonDemo.directives')
                     });
 
                     $scope.messenger.removeEvents();
-                    $scope.publishRemoveFilterEvents($scope.filterTable.getDatabaseAndTableNames());
+                    var databaseAndTableNames = $scope.filterTable.getDatabaseAndTableNames();
+                    if(databaseAndTableNames.length) {
+                        $scope.publishRemoveFilterEvents($scope.filterTable.getDatabaseAndTableNames());
+                    }
                 });
 
                 $scope.$watch('filterTable', function(newVal, oldVal) {
@@ -413,12 +416,15 @@ angular.module('neonDemo.directives')
                     tags: ["filter-builder", "filter", "clear"]
                 });
 
-                $scope.publishRemoveFilterEvents($scope.filterTable.getDatabaseAndTableNames(), function(successDatabase, successTable) {
-                    $scope.$apply(function() {
-                        // Remove the visible filter list.
-                        $scope.filterTable.clearFilterState(successDatabase, successTable);
+                var databaseAndTableNames = $scope.filterTable.getDatabaseAndTableNames();
+                if(databaseAndTableNames.length) {
+                    $scope.publishRemoveFilterEvents(databaseAndTableNames, function(successDatabase, successTable) {
+                        $scope.$apply(function() {
+                            // Remove the visible filter list.
+                            $scope.filterTable.clearFilterState(successDatabase, successTable);
+                        });
                     });
-                });
+                }
             };
 
             $scope.publishReplaceFilterEvents = function(filters, successCallback, errorCallback) {
