@@ -85,7 +85,7 @@ function(connectionService, datasetService, errorNotificationService, filterServ
                 primarySeries: false,
                 collapsed: true,
                 granularity: DAY,
-                showZoom: false
+                showFocus: "on_filter"
             };
 
             /**
@@ -243,6 +243,21 @@ function(connectionService, datasetService, errorNotificationService, filterServ
                         }
                     }
                 }, true);
+                
+                $scope.$watch('options.showFocus', function(newVal, oldVal) {
+                    if(!$scope.loadingData && newVal && newVal !== oldVal) {
+                        XDATA.userALE.log({
+                            activity: "alter",
+                            action: "click",
+                            elementId: "timeline-showFocus-" + newVal,
+                            elementType: "button",
+                            elementSub: "timeline-showFocus-" + newVal,
+                            elementGroup: "chart_group",
+                            source: "user",
+                            tags: ["timeline", "showFocus", newVal]
+                        });
+                    }
+                });
 
                 $scope.messenger = new neon.eventing.Messenger();
 
@@ -505,7 +520,9 @@ function(connectionService, datasetService, errorNotificationService, filterServ
                 // endIdx points to the start of the day/hour just after the buckets we want to count, so do not
                 // include the bucket at endIdx.
                 for(i = startIdx; i < endIdx; i++) {
-                    total += $scope.options.primarySeries.data[i].value;
+                    if($scope.options.primarySeries.data[i]) {
+                        total += $scope.options.primarySeries.data[i].value;
+                    }
                 }
 
                 var displayStartDate = new Date(extentStartDate);

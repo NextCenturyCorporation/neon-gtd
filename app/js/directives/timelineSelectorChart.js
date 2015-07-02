@@ -38,13 +38,11 @@ angular.module('neonDemo.directives')
             collapsed: '=',
             primarySeries: '=',
             granularity: '=',
-            zoom: '='
+            showFocus: '='
         },
         link: function($scope, $element) {
             // Initialize the chart.
             $scope.chart = new charts.TimelineSelectorChart($element[0]);
-
-            $scope.autoToggleZoom = true;
 
             // Add a brush handler.
             $scope.chart.addBrushHandler(function(data) {
@@ -53,9 +51,8 @@ angular.module('neonDemo.directives')
                 $scope.$apply(function() {
                     $scope.timelineBrush = data;
 
-                    if($scope.autoToggleZoom) {
-                        $scope.zoom = true;
-                        $scope.autoToggleZoom = false;
+                    if($scope.showFocus === "on_filter") {
+                        $scope.chart.toggleFocus(true);
                     }
                 });
             });
@@ -95,6 +92,10 @@ angular.module('neonDemo.directives')
             $scope.$watch('timelineBrush', function(newVal) {
                 if(newVal && newVal.length === 0) {
                     $scope.chart.clearBrush();
+
+                    if($scope.showFocus === "on_filter") {
+                        $scope.chart.toggleFocus(false);
+                    }
                 }
             });
 
@@ -120,8 +121,14 @@ angular.module('neonDemo.directives')
                 }
             });
 
-            $scope.$watch('zoom', function(newVal) {
-                $scope.chart.toggleZoom(newVal);
+            $scope.$watch('showFocus', function(newVal, oldVal) {
+                if(newVal === 'always') {
+                    $scope.chart.toggleFocus(true);
+                } else if(newVal === 'never') {
+                    $scope.chart.toggleFocus(false);
+                } else if(newVal === 'on_filter' && $scope.timelineBrush.length > 0) {
+                    $scope.chart.toggleFocus(true);
+                }
             });
         }
     };
