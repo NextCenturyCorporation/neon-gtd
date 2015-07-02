@@ -38,7 +38,6 @@
         </div>
 
         <div class="form-group" ng-show="!(hideAdvancedOptions)">
-            {{fields}}
             <label>Title Field</label>
             <select class="form-control" ng-model="bindings.rowTitleField" ng-options="field for field in fields" ng-disabled="!(fields.length > 0)">
             </select>
