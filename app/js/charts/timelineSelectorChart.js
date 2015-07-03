@@ -45,6 +45,7 @@ charts.TimelineSelectorChart = function(element, configuration) {
     this.element = element;
     this.d3element = d3.select(element);
     this.brushHandler = undefined;
+    this.hoverListener = undefined;
     this.data = DEFAULT_DATA;
     this.primarySeries = false;
     this.granularity = 'day';
@@ -64,7 +65,7 @@ charts.TimelineSelectorChart = function(element, configuration) {
     this.oldExtent = [];
 
     // The data index over which the user is currently hovering changed on mousemove and mouseout.
-    this.dataIndex = -1;
+    this.hoverIndex = -1;
 
     var self = this; // for internal d3 functions
 
@@ -138,11 +139,11 @@ charts.TimelineSelectorChart = function(element, configuration) {
                 });
 
                 // If the user clicks on a date inside the brush without moving the brush, change the brush to contain only that date.
-                if(timeline.dataIndex >= 0 && timeline.oldExtent[0]) {
+                if(timeline.hoverIndex >= 0 && timeline.oldExtent[0]) {
                     var extent = timeline.brush.extent();
                     if(timeline.oldExtent[0].toDateString() === extent[0].toDateString() && timeline.oldExtent[1].toDateString() === extent[1].toDateString()) {
-                        var startDate = timeline.data[0].data[timeline.dataIndex].date;
-                        var endDate = timeline.data[0].data.length === timeline.dataIndex + 1 ? timeline.xDomain[1] : timeline.data[0].data[timeline.dataIndex + 1].date;
+                        var startDate = timeline.data[0].data[timeline.hoverIndex].date;
+                        var endDate = timeline.data[0].data.length === timeline.hoverIndex + 1 ? timeline.xDomain[1] : timeline.data[0].data[timeline.hoverIndex + 1].date;
                         timeline.brush.extent([startDate, endDate]);
                     }
                 }
@@ -232,6 +233,49 @@ charts.TimelineSelectorChart = function(element, configuration) {
             brushElement.find('.mask-west').attr('x', parseFloat(xPos) - width);
             brushElement.find('.mask-east').attr('x', parseFloat(xPos) + parseFloat(extentWidth));
         }
+    };
+
+    /**
+     * Selects the given date by highlighting it in the chart.
+     * @param {Date} date
+     * @method selectDate
+     */
+    this.selectDate = function(date) {
+        var index = -1;
+
+        for(var i = 0; i < this.data[0].data.length; ++i) {
+            if(this.data[0].data[i].date.toDateString() === date.toDateString()) {
+                index = i;
+                break;
+            }
+        }
+
+        if(index >= 0) {
+            this.selectDateWithIndex(index, date);
+        }
+    };
+
+    /**
+     * Selects the given date with the given index in the data by highlighting it in the chart.
+     * @param {Number} index
+     * @param {Date} date
+     * @method selectDateWithIndex
+     */
+    this.selectDateWithIndex = function(index, date) {
+        // TODO Create x, width, y, and height functions to combine the calculations for both the highlight bar and the other bars.
+        var x = this.x(date);
+        var width = this.x(d3.time[this.granularity].utc.offset(date, 1)) - x;
+        var y = this.y(Math.max(0, this.data[0].data[index].value));
+        var height = Math.abs(this.y(this.data[0].data[index].value) - this.y(0));
+        this.highlight.attr("x", x - 1).attr("width", width + 2).attr("y", y - 1).attr("height", height + 2).style("visibility", "visible");
+    };
+
+    /**
+     * Deselects the date by removing the highlighting in the chart.
+     * @method deselectDate
+     */
+    this.deselectDate = function() {
+        this.highlight.style("visibility", "hidden");
     };
 
     /**
@@ -549,24 +593,25 @@ charts.TimelineSelectorChart = function(element, configuration) {
                 var bisect = d3.bisector(function(d) {
                     return d.date;
                 }).right;
-                var dataIndex = bisect(values[0].data, graph_x) - 1;
-                if(dataIndex >= 0 && dataIndex < values[0].data.length) {
-                    showTooltip(values[0].data[dataIndex], d3.event);
-                    me.dataIndex = dataIndex;
+                var index = bisect(values[0].data, graph_x) - 1;
+                if(index >= 0 && index < values[0].data.length) {
+                    me.hoverIndex = index;
+                    me.selectDateWithIndex(index, values[0].data[index].date);
+                    showTooltip(values[0].data[index], d3.event);
 
-                    // Update the highlight bar.
-                    // TODO Create x, width, y, and height functions to combine the calculations for both the highlight bar and the other bars.
-                    var x = me.x(values[0].data[dataIndex].date);
-                    var width = me.x(d3.time[me.granularity].utc.offset(values[0].data[dataIndex].date, 1)) - x;
-                    var y = me.y(Math.max(0, values[0].data[dataIndex].value));
-                    var height = Math.abs(me.y(values[0].data[dataIndex].value) - me.y(0));
-                    me.highlight.attr("x", x - 1).attr("width", width + 2).attr("y", y - 1).attr("height", height + 2).style("visibility", "visible");
+                    if(me.hoverListener) {
+                        me.hoverListener(values[0].data[index].date);
+                    }
                 }
             })
             .on('mouseout', function() {
+                me.hoverIndex = -1;
+                me.deselectDate();
                 hideTooltip();
-                me.dataIndex = -1;
-                me.highlight.style("visibility", "hidden");
+
+                if(me.hoverListener) {
+                    me.hoverListener();
+                }
             });
 
         gBrush.append("rect")
@@ -685,8 +730,8 @@ charts.TimelineSelectorChart = function(element, configuration) {
     };
 
     var positionTooltip = function(tooltip, mouseEvent) {
-        tooltip.style('top', mouseEvent.pageY + 'px')
-            .style('left', mouseEvent.pageX + 'px');
+        tooltip.style('top', (mouseEvent.pageY - ($("#tooltip-container").outerHeight(true) / 2)) + 'px')
+            .style('left', (mouseEvent.pageX + 10) + 'px');
     };
 
     var hideTooltip = function() {
@@ -701,6 +746,10 @@ charts.TimelineSelectorChart = function(element, configuration) {
             source: "user",
             tags: ["tooltip", "timeline"]
         });
+    };
+
+    this.setHoverListener = function(hoverListener) {
+        this.hoverListener = hoverListener;
     };
 
     // initialization
