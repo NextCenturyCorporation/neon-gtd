@@ -59,7 +59,7 @@ charts.TimelineSelectorChart = function(element, configuration) {
     this.xDomain = [];
     this.x = [];
     this.y = [];
-    this.highlight = undefined;
+    this.highlights = [];
 
     // The old extent of the brush saved on brushstart.
     this.oldExtent = [];
@@ -141,7 +141,7 @@ charts.TimelineSelectorChart = function(element, configuration) {
                 // If the user clicks on a date inside the brush without moving the brush, change the brush to contain only that date.
                 if(timeline.hoverIndex >= 0 && timeline.oldExtent[0]) {
                     var extent = timeline.brush.extent();
-                    if(timeline.oldExtent[0].toDateString() === extent[0].toDateString() && timeline.oldExtent[1].toDateString() === extent[1].toDateString()) {
+                    if(timeline.datesEqual(timeline.oldExtent[0], extent[0]) && timeline.datesEqual(timeline.oldExtent[1], extent[1])) {
                         var startDate = timeline.data[0].data[timeline.hoverIndex].date;
                         var endDate = timeline.data[0].data.length === timeline.hoverIndex + 1 ? timeline.xDomain[1] : timeline.data[0].data[timeline.hoverIndex + 1].date;
                         timeline.brush.extent([startDate, endDate]);
@@ -236,38 +236,57 @@ charts.TimelineSelectorChart = function(element, configuration) {
     };
 
     /**
-     * Selects the given date by highlighting it in the chart.
-     * @param {Date} date
+     * Selects the date range with the given start and end date by highlighting it in the chart.
+     * @param {Date} startDate
+     * @param {Date} endDate
      * @method selectDate
      */
-    this.selectDate = function(date) {
-        var index = -1;
+    this.selectDate = function(startDate, endDate) {
+        var startIndex = startDate < this.data[0].data[0].date ? 0 : -1;
+        var endIndex = endDate > this.data[0].data[this.data[0].data.length - 1].date ? this.data[0].data.length - 1 : -1;
 
-        for(var i = 0; i < this.data[0].data.length; ++i) {
-            if(this.data[0].data[i].date.toDateString() === date.toDateString()) {
-                index = i;
-                break;
+        var datesEqual = this.datesEqual;
+        this.data[0].data.forEach(function(datum, index) {
+            if(datum.date <= startDate || datesEqual(datum.date, startDate)) {
+                startIndex = index;
             }
+            if(datum.date <= endDate || datesEqual(datum.date, endDate)) {
+                endIndex = index;
+            }
+        });
+
+        if(startIndex < 0 || endIndex < 0) {
+            this.deselectDate();
+            return;
         }
 
-        if(index >= 0) {
-            this.selectDateWithIndex(index, date);
-        }
+        // If the start and end dates are the same, add one to the end index because it is exclusive.
+        endIndex = startIndex === endIndex ? endIndex + 1 : endIndex;
+        this.selectIndexedDates(startIndex, endIndex);
+    };
+
+    this.datesEqual = function(a, b) {
+        return a.toDateString() === b.toDateString();
     };
 
     /**
-     * Selects the given date with the given index in the data by highlighting it in the chart.
-     * @param {Number} index
-     * @param {Date} date
-     * @method selectDateWithIndex
+     * Selects the date range with the given start and end index in the data by highlighting it in the chart.
+     * @param {Number} startIndex
+     * @param {Number} endIndex
+     * @method selectIndexedDates
      */
-    this.selectDateWithIndex = function(index, date) {
-        // TODO Create x, width, y, and height functions to combine the calculations for both the highlight bar and the other bars.
-        var x = this.x(date);
-        var width = this.x(d3.time[this.granularity].utc.offset(date, 1)) - x;
-        var y = this.y(Math.max(0, this.data[0].data[index].value));
-        var height = Math.abs(this.y(this.data[0].data[index].value) - this.y(0));
-        this.highlight.attr("x", x - 1).attr("width", width + 2).attr("y", y - 1).attr("height", height + 2).style("visibility", "visible");
+    this.selectIndexedDates = function(startIndex, endIndex) {
+        this.clearHighlights();
+
+        for(var i = startIndex; i < endIndex; ++i) {
+            var date = this.data[0].data[i].date;
+            // TODO Create x, width, y, and height functions to combine the calculations for both the highlight bar and the other bars.
+            var x = this.x(date);
+            var width = this.x(d3.time[this.granularity].utc.offset(date, 1)) - x;
+            var y = this.y(Math.max(0, this.data[0].data[i].value));
+            var height = Math.abs(this.y(this.data[0].data[i].value) - this.y(0));
+            this.highlights[i].attr("x", x - 1).attr("width", width + 2).attr("y", y - 1).attr("height", height + 2).style("visibility", "visible");
+        }
     };
 
     /**
@@ -275,7 +294,17 @@ charts.TimelineSelectorChart = function(element, configuration) {
      * @method deselectDate
      */
     this.deselectDate = function() {
-        this.highlight.style("visibility", "hidden");
+        this.clearHighlights();
+    };
+
+    /**
+     * Removes the highlights from the chart.
+     * @method clearHighlights
+     */
+    this.clearHighlights = function() {
+        this.highlights.forEach(function(highlight) {
+            highlight.style("visibility", "hidden");
+        });
     };
 
     /**
@@ -553,12 +582,16 @@ charts.TimelineSelectorChart = function(element, configuration) {
                     y2: me.y(0)
                 });
 
-            // Append the highlight bar after the other bars so it is drawn on top.
-            me.highlight = container.append("rect")
-                .attr("class", "highlight")
-                .attr("x", 0).attr("width", 0)
-                .attr("y", -1).attr("height", chartHeight + 2)
-                .style("visibility", "hidden");
+            // Append the highlight bars after the other bars so it is drawn on top.
+            me.highlights = [];
+            series.data.forEach(function(datum) {
+                var highlight = container.append("rect")
+                    .attr("class", "highlight")
+                    .attr("x", 0).attr("width", 0)
+                    .attr("y", -1).attr("height", chartHeight + 2)
+                    .style("visibility", "hidden");
+                me.highlights.push(highlight);
+            });
 
             charts.push({
                 name: series.name,
@@ -596,11 +629,25 @@ charts.TimelineSelectorChart = function(element, configuration) {
                 var index = bisect(values[0].data, graph_x) - 1;
                 if(index >= 0 && index < values[0].data.length) {
                     me.hoverIndex = index;
-                    me.selectDateWithIndex(index, values[0].data[index].date);
+                    me.selectIndexedDates(index, index + 1);
                     showTooltip(values[0].data[index], d3.event);
 
                     if(me.hoverListener) {
-                        me.hoverListener(values[0].data[index].date);
+                        var start = values[0].data[index].date;
+                        var end = values[0].data[index].date;
+                        if(me.granularity === "hour") {
+                            end = new Date(start.getFullYear(), start.getMonth(), start.getDate(), start.getHours() + 1);
+                        }
+                        if(me.granularity === "day") {
+                            end = new Date(start.getFullYear(), start.getMonth(), start.getDate() + 1);
+                        }
+                        if(me.granularity === "month") {
+                            end = new Date(start.getFullYear(), start.getMonth() + 2, 0);
+                        }
+                        if(me.granularity === "year") {
+                            end = new Date(start.getFullYear() + 2, 0, 0);
+                        }
+                        me.hoverListener(values[0].data[index].date, end);
                     }
                 }
             })

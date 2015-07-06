@@ -203,47 +203,71 @@ charts.LineChart.prototype.getColorMappings = function() {
 };
 
 /**
- * Selects the given date by highlighting it in the chart.
- * @param {Date} date
+ * Selects the date range with the given start and end date by highlighting it in the chart.
+ * @param {Date} startDate
+ * @param {Date} endDate
  * @method selectDate
  */
-charts.LineChart.prototype.selectDate = function(date) {
-    var index = -1;
+charts.LineChart.prototype.selectDate = function(startDate, endDate) {
+    var startIndex = startDate < this.data[0].data[0].date ? 0 : -1;
+    var endIndex = endDate > this.data[0].data[this.data[0].data.length - 1].date ? this.data[0].data.length - 1 : -1;
 
-    for(var i = 0; i < this.data[0].data.length; ++i) {
-        if(this.data[0].data[i].date.toDateString() === date.toDateString()) {
-            index = i;
-            break;
+    var datesEqual = this.datesEqual;
+    this.data[0].data.forEach(function(datum, index) {
+        if(datum.date <= startDate || datesEqual(datum.date, startDate)) {
+            startIndex = index;
         }
+        if(datum.date <= endDate || datesEqual(datum.date, endDate)) {
+            endIndex = index;
+        }
+    });
+
+    if(startIndex < 0 || endIndex < 0) {
+        this.deselectDate();
+        return;
     }
 
-    if(index >= 0) {
-        this.selectDateWithIndex(index, date);
-    }
+    // If the start and end dates are the same, add one to the end index because it is exclusive.
+    endIndex = startIndex === endIndex ? endIndex + 1 : endIndex;
+    this.selectIndexedDates(startIndex, endIndex);
+};
+
+charts.LineChart.prototype.datesEqual = function(a, b) {
+    return a.toDateString() === b.toDateString();
 };
 
 /**
- * Selects the given date with the given index in the data by highlighting it in the chart.
- * @param {Number} index
- * @param {Date} date
- * @method selectDateWithIndex
+ * Selects the date range with the given start and end index in the data by highlighting it in the chart.
+ * @param {Number} startIndex
+ * @param {Number} endIndex
+ * @method selectIndexedDates
  */
-charts.LineChart.prototype.selectDateWithIndex = function(index, date) {
-    for(var i = 0; i < this.data.length; ++i) {
-        if(this.hiddenSeries.indexOf(this.data[i].series) >= 0) {
-            continue;
+charts.LineChart.prototype.selectIndexedDates = function(startIndex, endIndex) {
+    var me = this;
+    this.clearHoverCircles();
+    this.data.forEach(function(seriesObject) {
+        if(me.hiddenSeries.indexOf(seriesObject.series) >= 0) {
+            return;
         }
 
-        this.hoverCircles[this.data[i].series]
-            .attr("stroke-opacity", 1)
-            .attr("fill-opacity", 1)
-            .attr("cx", this.data[i].data.length > 1 ? this.x(date) : this.width / 2)
-            .attr("cy", this.y(this.data[i].data[index].value));
-    }
+        for(var i = startIndex; i < endIndex; ++i) {
+            var date = me.data[0].data[i].date;
+            me.hoverCircles[seriesObject.series][i]
+                .attr("stroke-opacity", 1)
+                .attr("fill-opacity", 1)
+                .attr("cx", seriesObject.data.length > 1 ? me.x(date) : me.width / 2)
+                .attr("cy", me.y(seriesObject.data[i].value));
+        }
+    });
 
-    var dateX = this.data[0].data.length > 1 ? this.x(date) : this.width / 2;
-    var highlightX = Math.max(0, dateX - (charts.LineChart.DEFAULT_HIGHLIGHT_WIDTH / 2));
-    var width = Math.min(this.width, charts.LineChart.DEFAULT_HIGHLIGHT_WIDTH);
+    var startDate = me.data[0].data[startIndex].date;
+    var endDate = me.data[0].data[endIndex - 1].date;
+    var startDateX = this.data[0].data.length > 1 ? this.x(startDate) : this.width / 2;
+    var endDateX = this.data[0].data.length > 1 ? this.x(endDate) : this.width / 2;
+
+    // Use a single highlight rectangle for the whole selected date range.
+    var highlightX = Math.max(0, startDateX - (charts.LineChart.DEFAULT_HIGHLIGHT_WIDTH / 2));
+    var width = Math.min(this.width, (endDateX - startDateX) + charts.LineChart.DEFAULT_HIGHLIGHT_WIDTH);
     this.highlight.attr("x", highlightX).attr("width", width).style("visibility", "visible");
 };
 
@@ -283,6 +307,14 @@ charts.LineChart.prototype.showTooltip = function(index, date) {
  */
 charts.LineChart.prototype.deselectDate = function() {
     this.highlight.style("visibility", "hidden");
+    this.clearHoverCircles();
+};
+
+/**
+ * Removes the hover circles from the chart.
+ * @method clearHoverCircles
+ */
+charts.LineChart.prototype.clearHoverCircles = function() {
     this.svg.selectAll("circle.dot-hover")
         .attr("stroke-opacity", 0)
         .attr("fill-opacity", 0);
@@ -450,8 +482,9 @@ charts.LineChart.prototype.drawLines = function(opts) {
                 });
         }
 
-        me.hoverCircles[opts[i].series] =
-            me.svg.append("circle")
+        me.hoverCircles[opts[i].series] = [];
+        data.forEach(function(datum) {
+            var hoverCircle = me.svg.append("circle")
                 .attr("class", "dot dot-hover")
                 .attr("stroke", color)
                 .attr("fill", color)
@@ -460,6 +493,8 @@ charts.LineChart.prototype.drawLines = function(opts) {
                 .attr("r", 4)
                 .attr("cx", 0)
                 .attr("cy", 0);
+            me.hoverCircles[opts[i].series].push(hoverCircle);
+        });
     }
 
     me.svg.append("g")
@@ -505,7 +540,7 @@ charts.LineChart.prototype.drawLines = function(opts) {
             }
 
             me.hoverIndex = index;
-            me.selectDateWithIndex(index, opts[0].data[index][me.xAttribute]);
+            me.selectIndexedDates(index, index + 1);
             me.showTooltip(index, opts[0].data[index][me.xAttribute]);
 
             XDATA.userALE.log({
@@ -520,7 +555,9 @@ charts.LineChart.prototype.drawLines = function(opts) {
             });
 
             if(me.hoverListener) {
-                me.hoverListener(opts[0].data[index][me.xAttribute]);
+                var start = opts[0].data[index][me.xAttribute];
+                var end = new Date(start.getFullYear(), start.getMonth(), start.getDate() + 1);
+                me.hoverListener(start, end);
             }
         }
     }).on("mouseout", function() {
@@ -568,7 +605,7 @@ charts.LineChart.prototype.runBrushHandler = function(linechart, brushHandler) {
         // If the user clicks on a date inside the brush without moving the brush, change the brush to contain only that date.
         if(linechart.hoverIndex >= 0 && linechart.oldExtent[0]) {
             var extent = linechart.brush.extent();
-            if(linechart.oldExtent[0].toDateString() === extent[0].toDateString() && linechart.oldExtent[1].toDateString() === extent[1].toDateString()) {
+            if(linechart.datesEqual(linechart.oldExtent[0], extent[0]) && linechart.datesEqual(linechart.oldExtent[1], extent[1])) {
                 var startDate = linechart.data[0].data[linechart.hoverIndex].date;
                 var endDate = linechart.data[0].data.length === linechart.hoverIndex + 1 ? linechart.xDomain[1] : linechart.data[0].data[linechart.hoverIndex + 1].date;
                 linechart.brush.extent([startDate, endDate]);

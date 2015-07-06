@@ -131,16 +131,17 @@ angular.module('neonDemo.directives')
                     tags: ["timeline", "date-range"]
                 });
 
-                if(message.date) {
-                    $scope.chart.selectDate(message.date);
+                if(message.start && message.end) {
+                    $scope.chart.selectDate(message.start, message.end);
                 } else {
                     $scope.chart.deselectDate();
                 }
             };
 
-            var onHover = function(date) {
+            var onHover = function(startDate, endDate) {
                 $scope.messenger.publish('date_selected', {
-                    date: date
+                    start: startDate,
+                    end: endDate
                 });
             };
 

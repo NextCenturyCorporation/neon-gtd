@@ -252,8 +252,8 @@ function(connectionService, datasetService, errorNotificationService, filterServ
                 });
 
                 if($scope.chart) {
-                    if(message.date) {
-                        $scope.chart.selectDate(message.date);
+                    if(message.start && message.end) {
+                        $scope.chart.selectDate(message.start, message.end);
                     } else {
                         $scope.chart.deselectDate();
                     }
@@ -674,9 +674,10 @@ function(connectionService, datasetService, errorNotificationService, filterServ
                 return resultData;
             };
 
-            var onHover = function(date) {
+            var onHover = function(startDate, endDate) {
                 $scope.messenger.publish("date_selected", {
-                    date: date
+                    start: startDate,
+                    end: endDate
                 });
             };
 
