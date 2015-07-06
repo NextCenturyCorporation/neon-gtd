@@ -77,6 +77,8 @@ function(connectionService, datasetService, errorNotificationService, filterServ
             $scope.errorMessage = undefined;
             $scope.loadingData = false;
             $scope.noData = true;
+            $scope.data = [];
+            $scope.queryOnChangeBrush = false;
 
             $scope.options = {
                 database: {},
@@ -134,24 +136,28 @@ function(connectionService, datasetService, errorNotificationService, filterServ
                     onFieldChange('attrX', newValue);
                     if(!$scope.loadingData && $scope.options.database.name && $scope.options.table.name) {
                         $scope.queryForData();
+                        $scope.queryOnChangeBrush = $scope.queryOnChangeBrush || ($scope.brushExtent.length > 0);
                     }
                 });
                 $scope.$watch('options.attrY', function(newValue) {
                     onFieldChange('attrY', newValue);
                     if(!$scope.loadingData && $scope.options.database.name && $scope.options.table.name) {
                         $scope.queryForData();
+                        $scope.queryOnChangeBrush = $scope.queryOnChangeBrush || ($scope.brushExtent.length > 0);
                     }
                 });
                 $scope.$watch('options.categoryField', function(newValue) {
                     onFieldChange('categoryField', newValue);
                     if(!$scope.loadingData && $scope.options.database.name && $scope.options.table.name) {
                         $scope.queryForData();
+                        $scope.queryOnChangeBrush = $scope.queryOnChangeBrush || ($scope.brushExtent.length > 0);
                     }
                 });
                 $scope.$watch('options.aggregation', function(newValue) {
                     onFieldChange('aggregation', newValue);
                     if(!$scope.loadingData && $scope.options.database.name && $scope.options.table.name) {
                         $scope.queryForData();
+                        $scope.queryOnChangeBrush = $scope.queryOnChangeBrush || ($scope.brushExtent.length > 0);
                     }
                 });
             };
@@ -168,6 +174,26 @@ function(connectionService, datasetService, errorNotificationService, filterServ
                     tags: ["options", "linechart", newValue]
                 });
             };
+
+            /**
+             * Returns whether the added or removed filter in the given message is a date filter on this linechart's x-axis/date field.
+             * @param {Object} message
+             * @method isDateFiltersChangedMessage
+             * @return {Boolean}
+             */
+            var isDateFiltersChangedMessage = function(message) {
+                var whereClauses = undefined;
+                if(message.addedFilter.whereClause) {
+                    whereClauses = message.addedFilter.whereClause.whereClauses;
+                }
+                if(message.removedFilter.whereClause) {
+                    whereClauses = message.removedFilter.whereClause.whereClauses;
+                }
+                if(whereClauses && whereClauses.length === 2 && whereClauses[0].lhs === $scope.options.attrX && whereClauses[1].lhs === $scope.options.attrX) {
+                    return true;
+                }
+                return false;
+            }
 
             /**
              * Event handler for filter changed events issued over Neon's messaging channels.
@@ -190,11 +216,11 @@ function(connectionService, datasetService, errorNotificationService, filterServ
                 if(message.addedFilter && message.addedFilter.databaseName === $scope.options.database.name && message.addedFilter.tableName === $scope.options.table.name) {
                     // If the filter changed event was triggered by a change in the global date filter, ignore the filter changed event.
                     // We don't need to re-query and we'll update the brush extent extent in response to the date changed event.
-                    var whereClauses = message.addedFilter.whereClause ? message.addedFilter.whereClause.whereClauses : undefined;
-                    if(whereClauses && whereClauses.length === 2 && whereClauses[0].lhs === $scope.options.attrX && whereClauses[1].lhs === $scope.options.attrX) {
+                    if(isDateFiltersChangedMessage(message)) {
                         return;
                     }
                     $scope.queryForData();
+                    $scope.queryOnChangeBrush = $scope.queryOnChangeBrush || ($scope.brushExtent.length > 0);
                 }
             };
 
@@ -218,7 +244,7 @@ function(connectionService, datasetService, errorNotificationService, filterServ
 
                 if($scope.options.database.name === message.databaseName && $scope.options.table.name === message.tableName && $scope.brushExtent !== message.brushExtent) {
                     renderBrushExtent(message.brushExtent);
-                    $scope.queryForData();
+                    updateLineChartForBrushExtent();
                 }
             };
 
@@ -247,7 +273,6 @@ function(connectionService, datasetService, errorNotificationService, filterServ
 
                 if(!connection || !$scope.options.attrX || (!$scope.options.attrY && $scope.options.aggregation !== "count")) {
                     drawLineChart();
-                    $scope.loadingData = false;
                     return;
                 }
 
@@ -347,6 +372,7 @@ function(connectionService, datasetService, errorNotificationService, filterServ
                 } else if($scope.brushExtent.length) {
                     $scope.removeBrush();
                 }
+                $scope.queryOnChangeBrush = false;
                 $scope.queryForData();
             };
 
@@ -354,10 +380,10 @@ function(connectionService, datasetService, errorNotificationService, filterServ
              * Compares the two given data points for a sort function based on the current aggregation type.
              * @param {Array} a
              * @param {Array} b
-             * @method compareData
+             * @method compareSeriesData
              * @return {Integer}
              */
-            var compareData = function(a, b) {
+            var compareSeriesData = function(a, b) {
                 if($scope.options.aggregation === "count" || $scope.options.aggregation === "sum" || $scope.options.aggregation === "average") {
                     if(a.total < b.total) {
                         return 1;
@@ -388,12 +414,12 @@ function(connectionService, datasetService, errorNotificationService, filterServ
             /**
              * Creates and returns the "other series" representing the combined groups outside the "top 10" (the value of the seriesLimit) from the given data.
              * @param {Array} data
-             * @method createOtherSeries
+             * @method createOtherSeriesData
              * @return {Object}
              */
-            var createOtherSeries = function(data) {
+            var createOtherSeriesData = function(data) {
                 var count = data.length - $scope.seriesLimit;
-                var otherSeries = {
+                var otherSeriesData = {
                     series: count + " Others",
                     total: 0,
                     min: -1,
@@ -404,22 +430,22 @@ function(connectionService, datasetService, errorNotificationService, filterServ
                 // For averages, do not include the combined values of groups outside the top 10 because adding averages together from multiple groups makes no sense.
                 if($scope.options.aggregation !== 'average') {
                     for(var i = $scope.seriesLimit; i < data.length; i++) {
-                        otherSeries.total += data[i].total;
-                        otherSeries.min = otherSeries.min < 0 ? data[i].min : Math.min(otherSeries.min, data[i].min);
-                        otherSeries.max = otherSeries.max < 0 ? data[i].max : Math.max(otherSeries.max, data[i].max);
+                        otherSeriesData.total += data[i].total;
+                        otherSeriesData.min = otherSeriesData.min < 0 ? data[i].min : Math.min(otherSeriesData.min, data[i].min);
+                        otherSeriesData.max = otherSeriesData.max < 0 ? data[i].max : Math.max(otherSeriesData.max, data[i].max);
                         for(var d = 0; d < data[i].data.length; d++) {
-                            if(otherSeries.data[d]) {
+                            if(otherSeriesData.data[d]) {
                                 if($scope.options.aggregation === "count" || $scope.options.aggregation === "sum") {
-                                    otherSeries.data[d].value += data[i].data[d].value;
+                                    otherSeriesData.data[d].value += data[i].data[d].value;
                                 }
                                 if($scope.options.aggregation === "min") {
-                                    otherSeries.data[d].value = Math.min(otherSeries.data[d].value, data[i].data[d].value);
+                                    otherSeriesData.data[d].value = Math.min(otherSeriesData.data[d].value, data[i].data[d].value);
                                 }
                                 if($scope.options.aggregation === "max") {
-                                    otherSeries.data[d].value = Math.max(otherSeries.data[d].value, data[i].data[d].value);
+                                    otherSeriesData.data[d].value = Math.max(otherSeriesData.data[d].value, data[i].data[d].value);
                                 }
                             } else {
-                                otherSeries.data[d] = {
+                                otherSeriesData.data[d] = {
                                     date: data[i].data[d].date,
                                     value: data[i].data[d].value
                                 };
@@ -428,7 +454,7 @@ function(connectionService, datasetService, errorNotificationService, filterServ
                     }
                 }
 
-                return otherSeries;
+                return otherSeriesData;
             };
 
             /**
@@ -437,19 +463,34 @@ function(connectionService, datasetService, errorNotificationService, filterServ
              * @method handleQuerySuccess
              */
             var handleQuerySuccess = function(results) {
+                $scope.data = results.data;
+
+                var seriesData = createLineSeriesData(results.data);
+
+                $scope.$apply(function() {
+                    drawLineChart(seriesData);
+                });
+            };
+
+            /**
+             * Creates the line series data using the given data.
+             * @param {Object} data
+             * @method createLineSeriesData
+             */
+            var createLineSeriesData = function(data) {
                 var minDate;
                 var maxDate;
 
                 //this prevents an error in older mongo caused when the xAxis value is invalid as it is not
                 //included as a key in the response
-                for(var i = 0; i < results.data.length; i++) {
-                    if(typeof(results.data[i][$scope.options.attrX]) === 'undefined') {
-                        results.data[i][$scope.options.attrX] = null;
+                for(var i = 0; i < data.length; i++) {
+                    if(typeof(data[i][$scope.options.attrX]) === 'undefined') {
+                        data[i][$scope.options.attrX] = null;
                     }
                 }
 
-                if(results.data.length > 0) {
-                    var range = d3.extent(results.data, function(d) {
+                if(data.length > 0) {
+                    var range = d3.extent(data, function(d) {
                         return new Date(d.date);
                     });
                     minDate = range[0];
@@ -459,25 +500,24 @@ function(connectionService, datasetService, errorNotificationService, filterServ
                     maxDate = new Date();
                 }
 
-                var data = [];
-                var series = [];
-                var zeroedData = zeroPadData(results.data, minDate, maxDate);
+                var seriesData = [];
+                var zeroedData = zeroPadData(data, minDate, maxDate);
 
-                for(series in zeroedData) {
+                for(var series in zeroedData) {
                     if(Object.prototype.hasOwnProperty.call(zeroedData, series)) {
-                        data.push(zeroedData[series]);
+                        seriesData.push(zeroedData[series]);
                     }
                 }
 
-                data.sort(compareData);
+                seriesData.sort(compareSeriesData);
 
                 // The "other series" is the line representing the combined groups outside the "top 10" (the value of the seriesLimit).
-                var otherSeries = createOtherSeries(data);
+                var otherSeriesData = createOtherSeriesData(seriesData);
 
-                data = data.splice(0, $scope.seriesLimit);
+                seriesData = seriesData.splice(0, $scope.seriesLimit);
 
-                if(otherSeries.total > 0) {
-                    data.push(otherSeries);
+                if(otherSeriesData.total > 0) {
+                    seriesData.push(otherSeriesData);
                 }
 
                 XDATA.userALE.log({
@@ -491,24 +531,7 @@ function(connectionService, datasetService, errorNotificationService, filterServ
                     tags: ["receive", "linechart"]
                 });
 
-                $scope.$apply(function() {
-                    drawLineChart(data);
-                    $scope.loadingData = false;
-                    // Use a timeout so we resize the chart after the legend renders (since the legend size affects the chart size).
-                    $timeout(function() {
-                        updateChartSize();
-                    }, 100);
-                    XDATA.userALE.log({
-                        activity: "alter",
-                        action: "render",
-                        elementId: "linechart",
-                        elementType: "canvas",
-                        elementSub: "linechart",
-                        elementGroup: "chart_group",
-                        source: "system",
-                        tags: ["render", "linechart"]
-                    });
-                });
+                return seriesData;
             };
 
             /**
@@ -529,7 +552,6 @@ function(connectionService, datasetService, errorNotificationService, filterServ
                 });
 
                 drawLineChart();
-                $scope.loadingData = false;
 
                 if(response.responseJSON) {
                     $scope.errorMessage = errorNotificationService.showErrorMessage($element, response.responseJSON.error, response.responseJSON.stackTrace);
@@ -661,6 +683,23 @@ function(connectionService, datasetService, errorNotificationService, filterServ
                 $scope.chart.draw(data);
                 $scope.colorMappings = $scope.chart.getColorMappings();
                 $scope.noData = !data || !data.length;
+                $scope.loadingData = false;
+
+                // Use a timeout so we resize the chart after the legend renders (since the legend size affects the chart size).
+                $timeout(function() {
+                    updateChartSize();
+                }, 100);
+
+                XDATA.userALE.log({
+                    activity: "alter",
+                    action: "render",
+                    elementId: "linechart",
+                    elementType: "canvas",
+                    elementSub: "linechart",
+                    elementGroup: "chart_group",
+                    source: "system",
+                    tags: ["render", "linechart"]
+                });
             };
 
             /**
@@ -767,7 +806,39 @@ function(connectionService, datasetService, errorNotificationService, filterServ
 
                 var relations = datasetService.getRelations($scope.options.database.name, $scope.options.table.name, [$scope.options.attrX]);
                 datasetService.setDateBrushExtentForRelations(relations, $scope.brushExtent);
-                filterService.replaceFilters($scope.messenger, relations, $scope.filterKeys, createFilterClauseForDate, $scope.queryForData);
+                filterService.replaceFilters($scope.messenger, relations, $scope.filterKeys, createFilterClauseForDate, updateLineChartForBrushExtent);
+            };
+
+            /**
+             * Redraws the line chart using the data from the previous query within the current brush extent.
+             * @method updateLineChartForBrushExtent
+             */
+            var updateLineChartForBrushExtent = function() {
+                // If the user changed a field or filter while the chart contained data filtered by date then the chart will need to query for new data since the saved data from
+                // the previous query will be stale.  Otherwise use the data from the previous query and the current brush extent to redraw the chart.
+                if($scope.queryOnChangeBrush) {
+                    $scope.queryForData();
+                    // We need to query for new data until there is no date filter and we query for the whole dataset.
+                    $scope.queryOnChangeBrush = $scope.brushExtent.length >= 2 ? true : false;
+                    return;
+                }
+
+                var startIndex = 0;
+                var endIndex = $scope.data.length;
+                if($scope.brushExtent.length >= 2) {
+                    $scope.data.forEach(function(datum, index) {
+                        var date = zeroOutDate(new Date(datum.date));
+                        if(date < $scope.brushExtent[0]) {
+                            startIndex = index + 1;
+                        }
+                        if(date < $scope.brushExtent[1]) {
+                            endIndex = index + 1;
+                        }
+                    });
+                }
+
+                var seriesData = createLineSeriesData($scope.data.slice(startIndex, endIndex));
+                drawLineChart(seriesData);
             };
 
             /**
@@ -788,7 +859,7 @@ function(connectionService, datasetService, errorNotificationService, filterServ
                 renderBrushExtent([]);
                 var relations = datasetService.getRelations($scope.options.database.name, $scope.options.table.name, [$scope.options.attrX]);
                 datasetService.removeDateBrushExtentForRelations(relations);
-                filterService.removeFilters($scope.messenger, $scope.filterKeys, $scope.queryForData);
+                filterService.removeFilters($scope.messenger, $scope.filterKeys, updateLineChartForBrushExtent);
             };
 
             /**

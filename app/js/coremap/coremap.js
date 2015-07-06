@@ -113,7 +113,7 @@ coreMap.Map.prototype.resetSelectControl = function() {
  */
 coreMap.Map.prototype.addLayer = function(layer) {
     this.map.addLayer(layer);
-    if(layer.CLASS_NAME === "coreMap.Map.Layer.PointsLayer")  {
+    if(layer.CLASS_NAME === "coreMap.Map.Layer.PointsLayer" || layer.CLASS_NAME === "coreMap.Map.Layer.SelectedPointsLayer")  {
         this.selectableLayers[layer.id] = layer;
         this.resetSelectControl();
     }
