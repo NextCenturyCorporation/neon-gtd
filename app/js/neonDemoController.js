@@ -137,8 +137,7 @@ function($scope, $timeout, config, datasets) {
         defaultSizeY: 2, // the default height of a gridster item, if not specified
         resizable: {
             enabled: true,
-            //handles: ['n', 'e', 's', 'w', 'ne', 'se', 'sw', 'nw'],
-            handles: ['ne', 'se', 'sw', 'nw'],
+            handles: ['e', 's', 'w', 'ne', 'se', 'sw', 'nw'],
             start: onStartGridsterSizeChange,
             stop: onStopGridsterSizeChange
         },

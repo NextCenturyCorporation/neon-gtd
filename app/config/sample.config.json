@@ -22,13 +22,17 @@
         "hideNavbarItems": false,
         "hideAdvancedOptions": false,
         "hideErrorNotifications": false,
-        "hideHeaders": false
+        "hideHeaders": false,
+        "hideCloseButton": false
     },
 
     "opencpu": {
         "enableOpenCpu": false,
         "enableLogging": false,
         "useAlerts": false,
+        "enableAnomalyDetection": true,
+        "enableStl2": false,
+        "enableMmpp": false,
         "url": "http://neon-opencpu/ocpu/library/NeonAngularDemo/R"
     },
 
@@ -206,7 +210,13 @@
             "longitudeMapping": "longitude",
             "limit": 5000,
             "colorBy": "magType",
-            "sizeBy": "mag"
+            "sizeBy": "mag",
+            "linkyConfig": {
+              "mentions": false,
+              "hashtags": false,
+              "urls": false,
+              "linkTo": "twitter"
+            }
         }, {
             "database": "test",
             "table": "earthquakes",
@@ -216,7 +226,13 @@
             "longitudeMapping": "longitude",
             "limit": 5000,
             "colorBy": "magType",
-            "sizeBy": "mag"
+            "sizeBy": "mag",
+            "linkyConfig": {
+              "mentions": false,
+              "hashtags": false,
+              "urls": false,
+              "linkTo": "twitter"
+            }
         }]
     }],
 

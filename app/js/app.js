@@ -19,6 +19,25 @@
 // Used by neon core server.  Don't delete this or you will probably break everything!
 neon.SERVER_URL = "/neon";
 
+/**
+ * Utility that calls the given function in an $apply if the given $scope is not in the apply/digest phase or just calls the given function normally otherwise.
+ * @param {Object} $scope The $scope of an angular directive.
+ * @param {Fucntion} func The function to call.
+ * @method safeApply
+ */
+neon.safeApply = function($scope, func) {
+    if(!$scope || !func || typeof func !== "function") {
+        return;
+    }
+
+    var phase = $scope.$root.$$phase;
+    if(phase === "$apply" || phase === "$digest") {
+        func();
+    } else {
+        $scope.$apply(func);
+    }
+};
+
 var neonDemo = angular.module('neonDemo', [
     'neonDemo.controllers',
     'neonDemo.services',
@@ -145,6 +164,7 @@ angular.element(document).ready(function() {
             ocpu.seturl(opencpuConfig.url);
             ocpu.connected = true;
         }
+        neonDemo.constant('opencpu', opencpuConfig);
 
         var dashboardConfig = config.dashboard || {
             gridsterColumns: 6,

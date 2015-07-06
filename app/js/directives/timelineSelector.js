@@ -32,8 +32,8 @@
  * @constructor
  */
 angular.module('neonDemo.directives')
-.directive('timelineSelector', ['ConnectionService', 'DatasetService', 'ErrorNotificationService', 'FilterService',
-function(connectionService, datasetService, errorNotificationService, filterService) {
+.directive('timelineSelector', ['ConnectionService', 'DatasetService', 'ErrorNotificationService', 'FilterService', 'opencpu',
+function(connectionService, datasetService, errorNotificationService, filterService, opencpu) {
     return {
         templateUrl: 'partials/directives/timelineSelector.html',
         restrict: 'EA',
@@ -53,6 +53,7 @@ function(connectionService, datasetService, errorNotificationService, filterServ
             $element.addClass('timeline-selector');
 
             $scope.element = $element;
+            $scope.opencpu = opencpu;
 
             // Default our time data to an empty array.
             $scope.data = [];
@@ -68,7 +69,6 @@ function(connectionService, datasetService, errorNotificationService, filterServ
             $scope.referenceEndDate = undefined;
 
             $scope.recordCount = 0;
-            $scope.filterId = 'timelineFilter' + uuid();
             $scope.eventProbabilitiesDisplayed = false;
             $scope.errorMessage = undefined;
             $scope.loadingData = false;
@@ -165,21 +165,17 @@ function(connectionService, datasetService, errorNotificationService, filterServ
              * @method initialize
              */
             $scope.initialize = function() {
-                // The brush handler needs to behave differently when the brush changes as part of a
-                // granularity change.
-                var updatingGranularity = false;
-
                 // Switch bucketizers when the granularity is changed.
                 $scope.$watch('options.granularity', function(newVal, oldVal) {
                     if(!$scope.loadingData && newVal && newVal !== oldVal) {
                         XDATA.userALE.log({
                             activity: "alter",
-                            action: "click",
+                            action: ($scope.loadingData) ? "reset" : "click",
                             elementId: "timeline-" + newVal,
                             elementType: "button",
                             elementSub: "timeline-" + newVal,
                             elementGroup: "chart_group",
-                            source: "user",
+                            source: ($scope.loadingData) ? "system" : "user",
                             tags: ["timeline", "granularity", newVal]
                         });
                         $scope.startDateForDisplay = undefined;
@@ -188,7 +184,6 @@ function(connectionService, datasetService, errorNotificationService, filterServ
                         $scope.updateDates();
 
                         if(0 < $scope.brush.length) {
-                            updatingGranularity = true;
                             var newBrushStart = $scope.bucketizer.roundDownBucket($scope.brush[0]);
                             var newBrushEnd = $scope.bucketizer.roundUpBucket($scope.brush[1]);
 
@@ -203,102 +198,118 @@ function(connectionService, datasetService, errorNotificationService, filterServ
                 });
 
                 // Watch for brush changes and set the appropriate neon filter.
-                $scope.$watch('brush', function(newVal) {
-                    // If we have a new value and a messenger is ready, set the new filter.
-                    if(newVal && $scope.messenger && connectionService.getActiveConnection()) {
+                $scope.$watch('brush', function(newVal, oldVal) {
+                    if(newVal !== oldVal && $scope.messenger && connectionService.getActiveConnection()) {
                         XDATA.userALE.log({
                             activity: "select",
-                            action: "click",
+                            action: ($scope.loadingData) ? "reset" : "click",
                             elementId: "timeline-range",
                             elementType: "canvas",
                             elementSub: "date-range",
                             elementGroup: "chart_group",
-                            source: "user",
+                            source: ($scope.loadingData) ? "system" : "user",
                             tags: ["timeline", "date-range", "filter"]
                         });
 
-                        // if a single spot was clicked, just reset the timeline - An alternative would be to expand to the minimum width
-                        if(undefined === newVal || 2 > newVal.length || newVal[0].getTime() === newVal[1].getTime()) {
+                        if(2 > newVal.length || newVal[0].getTime() === newVal[1].getTime()) {
                             // may be undefined when a new dataset is being loaded
-                            if($scope.bucketizer.getStartDate() !== undefined && $scope.bucketizer.getEndDate() !== undefined) {
-                                // Store the extents for the filter to use during filter creation.
-                                $scope.startExtent = $scope.bucketizer.getStartDate();
-                                $scope.endExtent = $scope.bucketizer.getEndDate();
-                                $scope.brush = [];
-                                $scope.extentDirty = true;
+                            if($scope.bucketizer.getStartDate() !== undefined && $scope.bucketizer.getEndDate() !== undefined && $scope.brush.length) {
+                                removeBrushFromTimelineAndDatasetService();
                             } else {
                                 return;
                             }
-                        } else {
-                            $scope.startExtent = newVal[0];
-                            $scope.endExtent = newVal[1];
                         }
 
-                        var relations = datasetService.getRelations($scope.options.database.name, $scope.options.table.name, [$scope.options.dateField]);
+                        // If the brush is over the whole timeline, remove the brush and filter instead.
+                        if($scope.bucketizer.getStartDate().toDateString() === newVal[0].toDateString() && $scope.bucketizer.getEndDate().toDateString() === newVal[1].toDateString()) {
+                            removeBrushFromTimelineAndDatasetService();
+                            return;
+                        }
 
-                        var nameIncludeTime = $scope.options.granularity === HOUR;
-                        var filterNameObj = {
-                            visName: "Timeline",
-                            text: getDateString($scope.startExtent, nameIncludeTime) + " to " + getDateString($scope.endExtent, nameIncludeTime)
-                        };
+                        // Needed to redraw the brush for the case in which the user clicks on a point inside an existing brush.
+                        $scope.extentDirty = true;
 
-                        if(updatingGranularity) {
+                        if($scope.loadingData) {
                             // If the brush changed because of a granularity change, then don't
                             // update the chart. The granularity change will cause the data to be
                             // updated
-                            filterService.replaceFilters($scope.messenger, relations, $scope.filterKeys, $scope.createFilterClauseForDate, filterNameObj);
-                            updatingGranularity = false;
+                            replaceDateFilters();
                         } else {
                             // Because the timeline ignores its own filter, we just need to update the
                             // chart times and total when this filter is applied
-                            filterService.replaceFilters($scope.messenger, relations, $scope.filterKeys, $scope.createFilterClauseForDate, filterNameObj, $scope.updateChartTimesAndTotal);
+                            replaceDateFilters($scope.updateChartTimesAndTotal);
                         }
                     }
                 }, true);
-
-                var getDateString = function(date, includeTime) {
-                    var dateString = (date.getMonth() + 1) + "/" + date.getDate() + "/" + date.getFullYear();
-                    if(includeTime) {
-                        dateString = dateString + " " + date.getHours() + ":" + (date.getMinutes() < 10 ? "0" : "") + date.getMinutes();
-                    }
-                    return dateString;
-                };
 
                 $scope.messenger = new neon.eventing.Messenger();
 
                 $scope.messenger.events({
                     filtersChanged: onFiltersChanged
                 });
+                $scope.messenger.subscribe(datasetService.DATE_CHANGED, onDateChanged);
 
                 $scope.$on('$destroy', function() {
                     XDATA.userALE.log({
                         activity: "remove",
-                        action: "click",
+                        action: "remove",
                         elementId: "timeline",
                         elementType: "canvas",
                         elementSub: "timeline",
                         elementGroup: "chart_group",
-                        source: "user",
+                        source: "system",
                         tags: ["remove", "timeline"]
                     });
                     $scope.messenger.removeEvents();
                     // Remove our filter if we had an active one.
-                    if(0 < $scope.brush.length) {
+                    if($scope.brush.length) {
                         filterService.removeFilters($scope.messenger, $scope.filterKeys);
                     }
                 });
             };
 
             /**
-             * Creates and returns a filter on the given table and date field using the extent set by this visualization.
-             * @param {String} The name of the table on which to filter
-             * @param {String} The name of the date field on which to filter
+             * If this timeline's brush extent does not match the brush extent saved in the Dataset Service, replace the date filters on this timeline's date
+             * field and all related fields and save the brush extent in the Dataset Service for each field.
+             * @param {Function} callback A function to be called after date filters are replaced.  Ignored if the date filters do not need to be updated.
+             * @methd replaceDateFilters
+             */
+            var replaceDateFilters = function(callback) {
+                if($scope.brush === datasetService.getDateBrushExtent($scope.options.database.name, $scope.options.table.name)) {
+                    return;
+                }
+
+                var nameIncludeTime = $scope.options.granularity === HOUR;
+                var filterNameObj = {
+                    visName: "Timeline",
+                    text: getDateString($scope.startExtent, nameIncludeTime) + " to " + getDateString($scope.endExtent, nameIncludeTime)
+                };
+
+                var relations = datasetService.getRelations($scope.options.database.name, $scope.options.table.name, [$scope.options.dateField]);
+                datasetService.setDateBrushExtentForRelations(relations, $scope.brush);
+                filterService.replaceFilters($scope.messenger, relations, $scope.filterKeys, $scope.createFilterClauseForDate, filterNameObj, callback);
+            };
+
+            var getDateString = function(date, includeTime) {
+                var dateString = (date.getMonth() + 1) + "/" + date.getDate() + "/" + date.getFullYear();
+                if(includeTime) {
+                    dateString = dateString + " " + date.getHours() + ":" + (date.getMinutes() < 10 ? "0" : "") + date.getMinutes();
+                }
+                return dateString;
+            };
+
+            /**
+             * Creates and returns a filter on the given date field using the brush extent set by this visualization.
+             * @param {Object} databaseAndTableName Contains the database and table name
+             * @param {String} dateFieldName The name of the date field on which to filter
              * @method createFilterClauseForDate
              * @return {Object} A neon.query.Filter object
              */
-            $scope.createFilterClauseForDate = function(tableName, dateFieldName) {
-                var startFilterClause = neon.query.where(dateFieldName, '>=', $scope.bucketizer.zeroOutDate($scope.startExtent));
-                var endFilterClause = neon.query.where(dateFieldName, '<', $scope.bucketizer.roundUpBucket($scope.endExtent));
+            $scope.createFilterClauseForDate = function(databaseAndTableName, dateFieldName) {
+                var startDate = $scope.brush.length < 2 ? $scope.bucketizer.getStartDate() : $scope.brush[0];
+                var endDate = $scope.brush.length < 2 ? $scope.bucketizer.getEndDate() : $scope.brush[1];
+                var startFilterClause = neon.query.where(dateFieldName, '>=', $scope.bucketizer.zeroOutDate(startDate));
+                var endFilterClause = neon.query.where(dateFieldName, '<', $scope.bucketizer.roundUpBucket(endDate));
                 var clauses = [startFilterClause, endFilterClause];
                 return neon.query.and.apply(this, clauses);
             };
@@ -320,8 +331,40 @@ function(connectionService, datasetService, errorNotificationService, filterServ
                     source: "system",
                     tags: ["filter-change", "timeline"]
                 });
+
                 if(message.addedFilter && message.addedFilter.databaseName === $scope.options.database.name && message.addedFilter.tableName === $scope.options.table.name) {
+                    // If the filter changed event was triggered by a change in the global date filter, ignore the filter changed event.
+                    // We don't need to re-query and we'll update the brush extent in response to the date changed event.
+                    var whereClauses = message.addedFilter.whereClause ? message.addedFilter.whereClause.whereClauses : undefined;
+                    if(whereClauses && whereClauses.length === 2 && whereClauses[0].lhs === $scope.options.dateField && whereClauses[1].lhs === $scope.options.dateField) {
+                        return;
+                    }
                     $scope.queryForChartData();
+                }
+            };
+
+            /**
+             * Event handler for date changed events issued over Neon's messaging channels.
+             * @param {Object} message A Neon date changed message.
+             * @method onDateChanged
+             * @private
+             */
+            var onDateChanged = function(message) {
+                XDATA.userALE.log({
+                    activity: "alter",
+                    action: "receive",
+                    elementId: "timeline-range",
+                    elementType: "canvas",
+                    elementSub: "date-range",
+                    elementGroup: "chart_group",
+                    source: "system",
+                    tags: ["timeline", "date-range", "filter-change"]
+                });
+
+                if($scope.options.database.name === message.databaseName && $scope.options.table.name === message.tableName && $scope.brush !== message.brushExtent) {
+                    $scope.brush = message.brushExtent;
+                    $scope.extentDirty = true;
+                    $scope.updateChartTimesAndTotal();
                 }
             };
 
@@ -345,7 +388,7 @@ function(connectionService, datasetService, errorNotificationService, filterServ
                         }
                     }
                 }
-                $scope.filterKeys = filterService.createFilterKeys("timeline", datasetService.getDatabaseAndTableNames());
+                $scope.filterKeys = filterService.createFilterKeys("timeline", datasetService.getDatabaseAndTableNames(), datasetService.getDateFilterKeys());
 
                 if(initializing) {
                     $scope.updateTables();
@@ -385,9 +428,15 @@ function(connectionService, datasetService, errorNotificationService, filterServ
                 $scope.referenceStartDate = undefined;
                 $scope.referenceEndDate = undefined;
                 $scope.data = [];
-                if($scope.brush.length) {
+
+                var globalBrushExtent = datasetService.getDateBrushExtent($scope.options.database.name, $scope.options.table.name);
+                if($scope.brush !== globalBrushExtent) {
+                    $scope.brush = globalBrushExtent;
+                    $scope.extentDirty = true;
+                } else if($scope.brush.length) {
                     $scope.clearBrush();
                 }
+
                 $scope.queryForChartData();
             };
 
@@ -530,7 +579,9 @@ function(connectionService, datasetService, errorNotificationService, filterServ
 
                 var displayStartDate = new Date(extentStartDate);
                 var displayEndDate = new Date(extentEndDate);
-                $scope.setDisplayDates(displayStartDate, displayEndDate);
+                neon.safeApply($scope, function() {
+                    $scope.setDisplayDates(displayStartDate, displayEndDate);
+                });
 
                 $scope.recordCount = total;
             };
@@ -758,8 +809,12 @@ function(connectionService, datasetService, errorNotificationService, filterServ
                     return;
                 }
 
-                $scope.addStl2TimeSeriesAnalysis(timelineData, graphData);
-                $scope.addAnomalyDetectionAnalysis(timelineData, graphData);
+                if($scope.opencpu.enableStl2) {
+                    $scope.addStl2TimeSeriesAnalysis(timelineData, graphData);
+                }
+                if($scope.opencpu.enableAnomalyDetection) {
+                    $scope.addAnomalyDetectionAnalysis(timelineData, graphData);
+                }
             };
 
             $scope.runMMPP = function() {
@@ -953,10 +1008,20 @@ function(connectionService, datasetService, errorNotificationService, filterServ
                     }
                     $scope.$apply();
                 }).fail(function() {
-                    console.log("Got error from Anomaly Detection");
                     // If the request fails, then just update.
                     $scope.$apply();
                 });
+            };
+
+            /**
+             * Removes the brush from this visualization and the dataset service.
+             */
+            var removeBrushFromTimelineAndDatasetService = function() {
+                $scope.brush = [];
+                $scope.extentDirty = true;
+                var relations = datasetService.getRelations($scope.options.database.name, $scope.options.table.name, [$scope.options.dateField]);
+                datasetService.removeDateBrushExtentForRelations(relations);
+                filterService.removeFilters($scope.messenger, $scope.filterKeys);
             };
 
             /**
@@ -973,8 +1038,8 @@ function(connectionService, datasetService, errorNotificationService, filterServ
                     source: "user",
                     tags: ["filter", "date-range"]
                 });
-                $scope.brush = [];
-                filterService.removeFilters($scope.messenger, $scope.filterKeys);
+
+                removeBrushFromTimelineAndDatasetService();
             };
 
             $scope.updateDateField = function() {

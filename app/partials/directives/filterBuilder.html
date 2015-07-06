@@ -109,15 +109,16 @@ ng-model="filterRow.value" ng-change="dirtyFilterRow(filterRow)">
         </select>
       </div>
       <div class="form-group">
-        <select id="filter-field-selection" class="form-control" ng-model="selectedField" ng-disabled="(fields.length == 0)" ng-options="field for field in fields">
+        <select id="filter-field-selection" class="form-control" ng-model="selectedField" ng-disabled="(fields.length == 0)" ng-options="field for field in fields"
+        ng-change="onSelectedFieldChange()">
         </select>
       </div>
       <div class="form-group">
-        <select id="filter-operator-selection" class="form-control"  ng-model="selectedOperator" ng-disabled="(fields.length == 0)" ng-options="operator for operator in filterTable.operatorOptions">
+        <select id="filter-operator-selection" class="form-control"  ng-model="selectedOperator" ng-disabled="(fields.length == 0)" ng-options="operator for operator in filterTable.operatorOptions" ng-change="onSelectedOperatorChange()">
         </select>
       </div>
       <div class="form-group">
-        <input type="text" class="form-control" id="filter-value" size="42" placeholder="Value" ng-keyup="$event.keyCode == 13 && addFilterRow()" ng-model="selectedValue" ng-disabled="(fields.length == 0)" ng-required="true">
+        <input type="text" class="form-control" id="filter-value" size="42" placeholder="Value" ng-keyup="$event.keyCode == 13 && addFilterRow()" ng-model="selectedValue" ng-disabled="(fields.length == 0)" ng-required="true" ng-change="onSelectedValueChange()">
       </div>
       <div class="form-group" ng-show="(navbarItem)">
         <button type="button" class="btn btn-primary" title="Add" ng-click="addFilterRow()">

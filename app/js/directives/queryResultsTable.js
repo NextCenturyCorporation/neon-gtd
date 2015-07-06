@@ -28,8 +28,8 @@
  * @constructor
  */
 angular.module('neonDemo.directives')
-.directive('queryResultsTable', ['external', 'popups', 'ConnectionService', 'DatasetService', 'ErrorNotificationService', '$compile',
-function(external, popups, connectionService, datasetService, errorNotificationService, $compile) {
+.directive('queryResultsTable', ['external', 'popups', 'ConnectionService', 'DatasetService', 'ErrorNotificationService', '$compile', '$timeout',
+function(external, popups, connectionService, datasetService, errorNotificationService, $compile, $timeout) {
     return {
         templateUrl: 'partials/directives/queryResultsTable.html',
         restrict: 'EA',
@@ -71,6 +71,8 @@ function(external, popups, connectionService, datasetService, errorNotificationS
 
             $scope.ASCENDING = neon.query.ASCENDING;
             $scope.DESCENDING = neon.query.DESCENDING;
+
+            $scope.selectionEvent = "QUERY_RESULTS_SELECTION_EVENT";
 
             $scope.databases = [];
             $scope.tables = [];
@@ -116,11 +118,11 @@ function(external, popups, connectionService, datasetService, errorNotificationS
                 $scope.$watch('options.sortByField', function(newVal) {
                     XDATA.userALE.log({
                         activity: "select",
-                        action: "click",
+                        action: ($scope.loadingData) ? "reset" : "click",
                         elementId: "datagrid-sort-by",
                         elementType: "combobox",
                         elementGroup: "table_group",
-                        source: "user",
+                        source: ($scope.loadingData) ? "system" : "user",
                         tags: ["options", "datagrid", "sort-by", newVal]
                     });
                 });
@@ -128,11 +130,11 @@ function(external, popups, connectionService, datasetService, errorNotificationS
                 $scope.$watch('options.sortDirection', function(newVal) {
                     XDATA.userALE.log({
                         activity: "select",
-                        action: "click",
+                        action: ($scope.loadingData) ? "reset" : "click",
                         elementId: "datagrid-sort-direction",
                         elementType: "radiobutton",
                         elementGroup: "table_group",
-                        source: "user",
+                        source: ($scope.loadingData) ? "system" : "user",
                         tags: ["options", "datagrid", "sort-direction", newVal]
                     });
                 });
@@ -140,11 +142,11 @@ function(external, popups, connectionService, datasetService, errorNotificationS
                 $scope.$watch('options.limit', function(newVal) {
                     XDATA.userALE.log({
                         activity: "alter",
-                        action: "keydown",
+                        action: ($scope.loadingData) ? "reset" : "keydown",
                         elementId: "datagrid-limit",
                         elementType: "textbox",
                         elementGroup: "table_group",
-                        source: "user",
+                        source: ($scope.loadingData) ? "system" : "user",
                         tags: ["options", "datagrid", "limit", newVal]
                     });
                 });
@@ -159,12 +161,12 @@ function(external, popups, connectionService, datasetService, errorNotificationS
                 $scope.$on('$destroy', function() {
                     XDATA.userALE.log({
                         activity: "remove",
-                        action: "click",
+                        action: "remove",
                         elementId: "datagrid",
                         elementType: "canvas",
                         elementSub: "datagrid",
                         elementGroup: "table_group",
-                        source: "user",
+                        source: "system",
                         tags: ["remove", "datagrid"]
                     });
                     popups.links.deleteData($scope.tableId);
@@ -472,9 +474,78 @@ function(external, popups, connectionService, datasetService, errorNotificationS
             };
 
             /**
-             * Refresh query forces a fresh query for data given the current sorting and limiting selections.
-             * @method refreshQuery
+             * Adds an onClick listener for selecting a row in the table that
+             * publishes the row to a channel
              */
+            $scope.addOnClickListener = function() {
+                $scope.table.addOnClickListener(function(columns, row) {
+                    // Deselect the row if already selected
+                    if($scope.selectedRowId !== undefined && $scope.selectedRowId === row._id) {
+                        XDATA.userALE.log({
+                            activity: "deselect",
+                            action: "click",
+                            elementId: "row",
+                            elementType: "datagrid",
+                            elementGroup: "table_group",
+                            source: "user",
+                            tags: ["datagrid", "row"]
+                        });
+
+                        $scope.clearSelection();
+                        return;
+                    }
+
+                    $scope.$apply(function() {
+                        XDATA.userALE.log({
+                            activity: "select",
+                            action: "click",
+                            elementId: "row",
+                            elementType: "datagrid",
+                            elementGroup: "table_group",
+                            source: "user",
+                            tags: ["datagrid", "row"]
+                        });
+
+                        $scope.messenger.publish($scope.selectionEvent, {
+                            data: row,
+                            database: $scope.options.database.name,
+                            table: $scope.options.table.name
+                        });
+                        $tableDiv.addClass("row-selected");
+                        $scope.selectedRowId = row._id;
+                    });
+                });
+            };
+
+            /**
+             * Adds a sort listener in order to clear any row selection on column reorders
+             */
+            $scope.addSortListener = function() {
+                $scope.table.registerSortListener(function() {
+                    XDATA.userALE.log({
+                        activity: "deselect",
+                        action: "click",
+                        elementId: "row",
+                        elementType: "datagrid",
+                        elementGroup: "table_group",
+                        source: "system",
+                        tags: ["datagrid", "row"]
+                    });
+
+                    $scope.clearSelection();
+                });
+            };
+
+            $scope.clearSelection = function() {
+                $scope.messenger.publish($scope.selectionEvent, {});
+                $scope.selectedRowId = undefined;
+                $tableDiv.removeClass("row-selected");
+
+                // Delay deselection or the row won't deselect
+                $timeout(function() {
+                    $scope.table.deselect();
+                }, 100);
+            };
 
             /**
              * Updates the data bound to the table managed by this directive.  This will trigger a change in
@@ -495,6 +566,18 @@ function(external, popups, connectionService, datasetService, errorNotificationS
                 }
 
                 $scope.table = new tables.Table("#" + $scope.tableId, $scope.tableOptions).draw();
+
+                /* Enable row selection for Twitter data.
+                 * Limitations:
+                 *  - Assumes data has certain column name
+                 *  - It is only guaranteed to work correctly if there is only one data table showing this collection
+                 */
+                if(queryResults.data.length && queryResults.data[0].hashtags) {
+                    $scope.addOnClickListener();
+                    $scope.clearSelection();
+                    $scope.addSortListener();
+                }
+
                 $scope.table.refreshLayout();
 
                 // Set the displayed link data for the links popup for the application using the source and index stored in to the triggering button.
@@ -631,13 +714,13 @@ function(external, popups, connectionService, datasetService, errorNotificationS
             };
 
             $scope.handleAscButtonClick = function() {
-                if($scope.options.sortDirection === $scope.DESCENDING) {
+                if($scope.options.sortDirection === $scope.ASCENDING) {
                     $scope.refreshData();
                 }
             };
 
             $scope.handleDescButtonClick = function() {
-                if($scope.options.sortDirection === $scope.ASCENDING) {
+                if($scope.options.sortDirection === $scope.DESCENDING) {
                     $scope.refreshData();
                 }
             };

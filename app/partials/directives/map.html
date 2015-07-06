@@ -1,110 +1,26 @@
-<div class="header-container name-container">
-    <span class="header-text">{{options.selectedTable.name}}</span>
-</div>
-
 <div class="header-container menu-container">
     <options-menu parent-element="element" button-text="optionsMenuButtonText" show-button-text="showOptionsMenuButtonText">
-        <div class="form-group" ng-repeat="layer in options.layers">
-            <label>Filtering on {{layer.name}}</label>
+        <div class="form-group layer-options" ng-repeat="layer in options.layers">
+            <label>{{layer.name}}</label>
             <div class="btn-group">
+                <label class="btn btn-default" ng-class="{true: 'active', false: ''}[layer.visible === true]">
+                    <input type="checkbox" style="display:none" ng-model="layer.visible" ng-change="updateLayerVisibility(layer)">
+                    <span class="glyphicon glyphicon-eye-open"></span> Visible
+                </label>
                 <label class="btn btn-default" ng-class="{true: 'active', false: ''}[layer.active === true]">
-                    <input type="radio" style="display:none" ng-model="layer.active" ng-value="true" ng-change="updateFilteringOnLayer(layer)"> Yes
-                </label>
-                <label class="btn btn-default" ng-class="{true: '', false: 'active'}[layer.active === true]">
-                    <input type="radio" style="display:none" ng-model="layer.active" ng-value="false" ng-change="updateFilteringOnLayer(layer)"> No
+                    <input type="checkbox" style="display:none" ng-model="layer.active" ng-change="updateFilteringOnLayer(layer)">
+                    <span class="glyphicon glyphicon-filter"></span> Filter
                 </label>
             </div>
             <div class="clearfix"></div>
         </div>
-
-        <!-- <div class="form-group">
-            <label>Table</label>
-            <select class="form-control" ng-model="options.selectedTable" ng-options="table.name for table in tables" ng-required="true" ng-disabled="(tables.length < 2)" ng-change="updateFieldsAndQueryForMapData()">
-            </select>
-        </div> -->
-
-        <!-- <div class="form-group">
-            <label>Latitude</label>
-            <select class="form-control" ng-model="options.latitudeField" ng-options="field for field in fields" ng-required="true" ng-disabled="!(fields.length > 0)">
-            </select>
+        <div class="form-group reset-options">
+            <button type="button" class="btn btn-default" title="Reset Map View" ng-click="setDefaultView()">
+              Reset View
+            </button>
         </div>
 
-        <div class="form-group">
-            <label>Longitude</label>
-            <select class="form-control" ng-model="options.longitudeField" ng-options="field for field in fields" ng-required="true" ng-disabled="!(fields.length > 0)">
-            </select>
-        </div> -->
-
-        <!--
-        <div class="form-group">
-            <label>Data Limit</label>
-            <div class="input-group">
-                <input type="number" min="1" class="form-control" ng-model="options.limit" required>
-                <div class="input-group-btn">
-                    <button type="button" class="btn btn-default refresh" title="Refresh" ng-click="handleLimitRefreshClick()">
-                        <span class="glyphicon glyphicon-refresh"></span>
-                    </button>
-                </div>
-            </div>
-        </div>
-        -->
-
-        <!-- <div class="form-group">
-            <label>Map Layer</label>
-            <div class="btn-group">
-              <label class="btn btn-default" ng-class="{true: '', false: 'active'}[options.showPoints]"
-                  data-toggle="tooltip" data-placement="top" title="Clusters" data-container="body" data-trigger="hover focus">
-                <input type="radio" ng-model="options.showPoints" style="display:none" ng-value="false"> 
-                <span class="glyphicon glyphicon-cloud"></span>
-              </label>
-              <label class="btn btn-default" ng-class="{true: 'active', false: ''}[options.showPoints]" 
-                  data-toggle="tooltip" data-placement="top" title="Points"  data-container="body" data-trigger="hover focus">
-                <input type="radio" ng-model="options.showPoints" style="display:none" ng-value="true">
-                <span class="glyphicon glyphicon-map-marker"></span>
-              </label>
-            </div>
-            <div class="clearfix"></div>
-        </div>
-
-        <div ng-class="{true: '', false: 'hidden'}[options.showPoints]">
-            <div class="form-group">
-                <label>Size by</label>
-                <select class="form-control" ng-model="options.sizeByField" ng-disabled="!(fields.length > 0)" ng-options="field for field in fields">
-                    <option value="">No selection</option>
-                </select>
-            </div>
-            <div class="form-group">
-                <label>Color by</label>
-                <select class="form-control" ng-model="options.colorByField" ng-disabled="!(fields.length > 0)" ng-options="field for field in fields">
-                    <option value="">No selection</option>
-                </select>
-            </div>
-        </div> -->
     </options-menu>
-</div>
-
-<div class="header-container legend-container">
-    <div class="legend legend-scale" ng-class="{true: 'hidden', false: ''}[options.showPoints]">
-        <div class="legend-item">
-            <span class="legend-text">High</span>
-            <span class="legend-icon" style="background-color: #fb5c44"></span>
-            <span class="legend-icon" style="background-color: #e9ed3d"></span>
-            <span class="legend-icon" style="background-color: #65f13d"></span>
-            <span class="legend-icon" style="background-color: #55cde9"></span>
-            <span class="legend-icon" style="background-color: #6374e5"></span>
-            <span class="legend-text">Low</span>
-        </div>
-    </div>
-
-    <div class="legend" ng-class="{true: '', false: 'hidden'}[options.showPoints]">
-        <div class="legend-item" title="{{colorMapping.category}}" ng-repeat="colorMapping in colorMappings|limitTo:20">
-            <span class="legend-icon" style="background-color: {{colorMapping.color}}"></span>
-            <span class="legend-text">{{colorMapping.category}}</span>
-        </div>
-        <div class="legend-item" ng-class="{true: '', false: 'hidden'}[colorMappings.length > 20]">
-            <span class="legend-text text-muted">...and {{colorMappings.length-20}} more</span>
-        </div>
-    </div>
 </div>
 
 <div class="header-container filter-container">

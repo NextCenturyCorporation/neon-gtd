@@ -39,11 +39,16 @@ angular.module('neonDemo.directives')
                 return $scope.buttonText;
             };
 
-            $scope.parentElement.resize(function() {
+            var resizeMenu = function() {
                 var chartOptions = $element.find(".chart-options");
                 var height = $scope.parentElement.innerHeight() - (chartOptions.outerHeight(true) - chartOptions.height() + $scope.CHART_OPTIONS_BUFFER_Y);
                 chartOptions.find(".popover-content").css("max-height", height + "px");
-            });
+            };
+
+            $scope.parentElement.resize(resizeMenu);
+
+            // Resize the options menu to reflect the initial size of the parent element.
+            resizeMenu();
         }
     };
 });
