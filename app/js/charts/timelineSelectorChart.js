@@ -711,7 +711,7 @@ charts.TimelineSelectorChart = function(element, configuration) {
                 var bisect = d3.bisector(function(d) {
                     return d.date;
                 }).right;
-                var index = bisect(values[0].data, graph_x) - 1;
+                var index = values[0] ? bisect(values[0].data, graph_x) - 1 : -1;
                 if(index >= 0 && index < values[0].data.length) {
                     me.hoverIndex = index;
                     me.selectIndexedDates(index, index + 1);
