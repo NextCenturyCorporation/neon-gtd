@@ -23,7 +23,13 @@
         "hideAdvancedOptions": false,
         "hideErrorNotifications": false,
         "hideHeaders": false,
-        "hideCloseButton": false
+        "hideCloseButton": false,
+        "showVideoOnLoad": false
+    },
+
+    "help": {
+        "guide": "",
+        "video": ""
     },
 
     "opencpu": {
