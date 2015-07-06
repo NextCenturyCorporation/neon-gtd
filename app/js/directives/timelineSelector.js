@@ -254,18 +254,25 @@ function(connectionService, datasetService, errorNotificationService, filterServ
                         if(undefined === newVal || 2 > newVal.length || newVal[0].getTime() === newVal[1].getTime()) {
                             // may be undefined when a new dataset is being loaded
                             if($scope.bucketizer.getStartDate() !== undefined && $scope.bucketizer.getEndDate() !== undefined) {
-                                // Store the extents for the filter to use during filter creation.
-                                $scope.startExtent = $scope.bucketizer.getStartDate();
-                                $scope.endExtent = $scope.bucketizer.getEndDate();
-                                $scope.brush = [];
-                                $scope.extentDirty = true;
-                            } else {
-                                return;
+                                $scope.clearBrush();
                             }
-                        } else {
-                            $scope.startExtent = newVal[0];
-                            $scope.endExtent = newVal[1];
+                            return;
                         }
+
+                        if($scope.brush[0] < $scope.bucketizer.getStartDate()) {
+                            $scope.brush[0] = $scope.bucketizer.getStartDate();
+                        }
+                        if($scope.brush[1] > $scope.bucketizer.getEndDate()) {
+                            $scope.brush[1] = $scope.bucketizer.getEndDate();
+                        }
+
+                        if($scope.brush[0].toDateString() === $scope.bucketizer.getStartDate().toDateString() && $scope.brush[1].toDateString() === $scope.bucketizer.getEndDate().toDateString()) {
+                            $scope.clearBrush();
+                            return;
+                        }
+
+                        $scope.startExtent = $scope.brush[0];
+                        $scope.endExtent = $scope.brush[1];
 
                         $scope.filter.start = $scope.brush.length ? $scope.brush[0] : $scope.bucketizer.getStartDate();
                         $scope.filter.end = $scope.brush.length ? $scope.brush[1] : $scope.bucketizer.getEndDate();
