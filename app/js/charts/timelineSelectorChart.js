@@ -385,7 +385,7 @@ charts.TimelineSelectorChart = function(element, configuration) {
         this.svg.append("defs").append("clipPath")
             .attr("id", "clip")
             .append("rect")
-            .attr("width", this.width)
+            .attr("width", this.width - this.config.marginFocus.left - this.config.marginFocus.right)
             .attr("height", svgHeight);
 
         var context = this.svg.append("g")
@@ -450,6 +450,11 @@ charts.TimelineSelectorChart = function(element, configuration) {
                     hideTooltip();
                 });
 
+            var axis = me.drawFocusChart(series);
+            var yFocus = axis.y;
+            var yAxis = axis.yAxis;
+            var yContext = d3.scale.linear().range([heightContext, 0]);
+            yContext.domain(yFocus.domain());
             
             var contextContainer;
 
@@ -458,70 +463,32 @@ charts.TimelineSelectorChart = function(element, configuration) {
                 contextContainer = context.append("g")
                     .attr("class", series.name)
                     .attr("transform", "translate(" + xOffset + "," + ((heightContext + me.config.marginContext.top + me.config.marginContext.bottom) * seriesPos) + ")");
-            }
+            
+                var style = 'stroke:' + series.color + ';';
+                var chartTypeFocus = '', chartTypeContext = '';
 
-            var yFocus = d3.scale.linear().range([me.heightFocus, 0]);
-            var yContext = d3.scale.linear().range([heightContext, 0]);
-            var yAxis = d3.svg.axis().scale(yFocus).orient("right").ticks(2);
+                // For now, all anomalies are shown as red, but this could be changed to be a
+                // configurable parameter that is passed in with the series, like series.color.
+                var anomalyColor = 'red';
 
-            // Use lowest value or 0 for Y-axis domain, whichever is less (e.g. if negative)
-            var minY = d3.min(series.data.map(function(d) {
-                return d.value;
-            }));
-            minY = minY < 0 ? minY : 0;
+                // If type is bar AND the data isn't too long, render a bar plot
+                if(series.type === 'bar' && series.data.length < me.width) {
+                    var barheight = 0;
 
-            yFocus.domain([minY, d3.max(series.data.map(function(d) {
-                return d.value;
-            }))]);
-            yContext.domain(yFocus.domain());
+                    if(series.data.length < 60) {
+                        style = 'stroke:#f1f1f1;';
+                        barheight++;
+                    }
 
-            var style = 'stroke:' + series.color + ';';
-            var chartTypeFocus = '', chartTypeContext = '';
+                    var anomalyStyle = style + 'fill: ' + anomalyColor + '; stroke: ' + anomalyColor + ';';
+                    style += 'fill:' + series.color + ';';
 
-            // For now, all anomalies are shown as red, but this could be changed to be a
-            // configurable parameter that is passed in with the series, like series.color.
-            var anomalyColor = 'red';
-
-            // If type is bar AND the data isn't too long, render a bar plot
-            if(series.type === 'bar' && series.data.length < me.width) {
-                var barheight = 0;
-
-                if(series.data.length < 60) {
-                    style = 'stroke:#f1f1f1;';
-                    barheight++;
-                }
-
-                var anomalyStyle = style + 'fill: ' + anomalyColor + '; stroke: ' + anomalyColor + ';';
-                style += 'fill:' + series.color + ';';
-
-                focusContainer.selectAll(".bar")
-                    .data(series.data)
-                .enter().append("rect")
-                    .attr("class", "bar")
-                    .attr("style", function(d) {
-                        return d.anomaly ? anomalyStyle : style;
-                    })
-                    .attr("x", function(d) {
-                        return me.xFocus(d.date);
-                    })
-                    .attr("width", function(d) {
-                        return me.xFocus(d3.time[me.granularity].utc.offset(d.date, 1)) - me.xFocus(d.date);
-                    })
-                    .attr("y", function(d) {
-                        return yFocus(Math.max(0, d.value));
-                    })
-                    .attr("height", function(d) {
-                        var height = yFocus(d.value) - yFocus(0);
-                        var offset = height / height || 0;
-                        var calculatedHeight = Math.abs(height) + (offset * barheight);
-                        return calculatedHeight;
-                    });
-
-                if(contextContainer) {
                     contextContainer.selectAll(".bar")
                         .data(series.data)
                     .enter().append("rect")
-                        .attr("class", "bar")
+                        .attr("class", function(d) {
+                            return "bar " + d.date;
+                        })
                         .attr("style", function(d) {
                             return d.anomaly ? anomalyStyle : style;
                         })
@@ -540,118 +507,62 @@ charts.TimelineSelectorChart = function(element, configuration) {
                             var calculatedHeight = Math.abs(height) + (offset * barheight);
                             return calculatedHeight;
                         });
-                }
-            } else {
-                // If type is line, render a line plot
-                if(series.type === 'line') {
-                    chartTypeFocus = d3.svg.line()
-                        .x(function(d) {
-                            return me.xFocus(d.date);
-                        })
-                        .y(function(d) {
-                            return yFocus(d.value);
-                        });
-                    chartTypeContext = d3.svg.line()
-                        .x(function(d) {
-                            return me.xContext(d.date);
-                        })
-                        .y(function(d) {
-                            return yContext(d.value);
-                        });
                 } else {
-                    // Otherwise, default to area, e.g. for bars whose data is too long
-                    style += 'fill:' + series.color + ';';
-                    chartTypeFocus = d3.svg.area()
-                        .x(function(d) {
-                            return me.xFocus(d.date);
-                        })
-                        .y0(function(d) {
-                            return yFocus(Math.min(0, d.value));
-                        })
-                        .y1(function(d) {
-                            return yFocus(Math.max(0, d.value));
-                        });
-                    chartTypeContext = d3.svg.area()
-                        .x(function(d) {
-                            return me.xContext(d.date);
-                        })
-                        .y0(function(d) {
-                            return yContext(Math.min(0, d.value));
-                        })
-                        .y1(function(d) {
-                            return yContext(Math.max(0, d.value));
-                        });
-                }
+                    // If type is line, render a line plot
+                    if(series.type === 'line') {
+                        chartTypeContext = d3.svg.line()
+                            .x(function(d) {
+                                return me.xContext(d.date);
+                            })
+                            .y(function(d) {
+                                return yContext(d.value);
+                            });
+                    } else {
+                        // Otherwise, default to area, e.g. for bars whose data is too long
+                        style += 'fill:' + series.color + ';';
+                        chartTypeContext = d3.svg.area()
+                            .x(function(d) {
+                                return me.xContext(d.date);
+                            })
+                            .y0(function(d) {
+                                return yContext(Math.min(0, d.value));
+                            })
+                            .y1(function(d) {
+                                return yContext(Math.max(0, d.value));
+                            });
+                    }
 
-                focusContainer.append("path")
-                    .datum(series.data)
-                    .attr("class", series.type)
-                    .attr("d", chartTypeFocus)
-                    .attr("style", style);
-
-                if(contextContainer) {
                     contextContainer.append("path")
                         .datum(series.data)
                         .attr("class", series.type)
                         .attr("d", chartTypeContext)
                         .attr("style", style);
-                }
 
-                if(series.data.length < 80) {
-                    var funcFocus = function(d) {
-                        return me.xFocus(d.date);
-                    };
-                    var funcContext = function(d) {
-                        return me.xContext(d.date);
-                    };
-                    if(series.data.length === 1) {
-                        func = width / 2;
-                    }
+                    if(series.data.length < 80) {
+                        var func = function(d) {
+                            return me.xContext(d.date);
+                        };
+                        if(series.data.length === 1) {
+                            func = width / 2;
+                        }
 
-                    focusContainer.selectAll("dot")
-                        .data(series.data)
-                    .enter().append("circle")
-                        .attr("class", "dot")
-                        .attr("style", 'fill:' + series.color + ';')
-                        .attr("r", 3)
-                        .attr("cx", funcFocus)
-                        .attr("cy", function(d) {
-                            return yFocus(d.value);
-                        });
-
-                    if(contextContainer) {
                         contextContainer.selectAll("dot")
                             .data(series.data)
                         .enter().append("circle")
                             .attr("class", "dot")
                             .attr("style", 'fill:' + series.color + ';')
                             .attr("r", 3)
-                            .attr("cx", funcContext)
+                            .attr("cx", func)
                             .attr("cy", function(d) {
                                 return yContext(d.value);
                             });
-                    }
-                } else {
-                    // If a line graph was used and there are anomalies, put a circle on the
-                    // anomalous points
-                    var anomalies = series.data.filter(function(it) {
-                        return it.anomaly === true;
-                    });
-
-                    focusContainer.selectAll("dot")
-                        .data(anomalies)
-                    .enter().append("circle")
-                        .attr("class", "dot")
-                        .attr("style", 'fill:' + anomalyColor + ';')
-                        .attr("r", 3)
-                        .attr("cx", function(d) {
-                            return me.xFocus(d.date);
-                        })
-                        .attr("cy", function(d) {
-                            return yFocus(d.value);
+                    } else {
+                        // If a line graph was used and there are anomalies, put a circle on the
+                        // anomalous points
+                        var anomalies = series.data.filter(function(it) {
+                            return it.anomaly === true;
                         });
 
-                    if(contextContainer) {
                         contextContainer.selectAll("dot")
                             .data(anomalies)
                         .enter().append("circle")
@@ -814,8 +725,172 @@ charts.TimelineSelectorChart = function(element, configuration) {
         this.updateMask.apply(brushElement[0][0]);
     };
 
+    /*
+     * Draws all the necessary components for the focus chart using only the data within the brushed area (if any)
+     * @param {Object} series An object containing all the necessary information to draw the data on a graph
+     * @param {String} series.color Hex color for the graph
+     * @param {String} series.data An array of objects that consist of a date and value field
+     * @param {String} series.name Name of the series
+     * @param {String} series.type Type of graph to draw (bar or line)
+     * @return {Object} An object consisting of y (the y scale of the graph) and yAxis (the y axis of the graph)
+     * @method drawFocusChart
+     */
+    this.drawFocusChart = function(series) {
+        var me = this;
+
+        me.svg.select(".focus-" + series.name).select(".x.axis").call(me.xAxisFocus);
+        
+        var focus = me.svg.select(".focus-" + series.name + " ." + series.name);
+
+        var y = d3.scale.linear().range([me.heightFocus, 0]);
+
+        // Get only the data in the brushed area
+        var dataShown = _.filter(series.data, function(obj) {
+            return (me.xFocus.domain()[0] <= obj.date && obj.date < me.xFocus.domain()[1]);
+        });
+
+        // Use lowest value or 0 for Y-axis domain, whichever is less (e.g. if negative)
+        var minY = d3.min(dataShown.map(function(d) {
+            return d.value;
+        }));
+        minY = minY < 0 ? minY : 0;
+
+        y.domain([minY, d3.max(dataShown.map(function(d) {
+            return d.value;
+        }))]);
+
+        var yAxis = d3.svg.axis().scale(y).orient("right").ticks(2);
+
+        focus.select(".y.axis.series-y").call(yAxis);
+
+        var style = 'stroke:' + series.color + ';';
+        
+        // For now, all anomalies are shown as red, but this could be changed to be a
+        // configurable parameter that is passed in with the series, like series.color.
+        var anomalyColor = 'red';
+
+        // If type is bar AND the data isn't too long, render a bar plot
+        if(series.type === 'bar' && series.data.length < me.width) {
+            var barheight = 0;
+
+            if(series.data.length < 60) {
+                style = 'stroke:#f1f1f1;';
+                barheight++;
+            }
+
+            var anomalyStyle = style + 'fill: ' + anomalyColor + '; stroke: ' + anomalyColor + ';';
+            style += 'fill:' + series.color + ';';
+
+            focus.selectAll("rect.bar").remove();
+
+            focus.selectAll("rect.bar")
+                .data(dataShown)
+            .enter().append("rect")
+                .attr("class", function(d) {
+                    return "bar " + d.date;
+                })
+                .attr("style", function(d) {
+                    return d.anomaly ? anomalyStyle : style;
+                })
+                .attr("x", function(d) {
+                    return me.xFocus(d.date);
+                })
+                .attr("width", function(d) {
+                    return me.xFocus(d3.time[me.granularity].utc.offset(d.date, 1)) - me.xFocus(d.date);
+                })
+                .attr("y", function(d) {
+                    return y(Math.max(0, d.value));
+                })
+                .attr("height", function(d) {
+                    var height = y(d.value) - y(0);
+                    var offset = height / height || 0;
+                    var calculatedHeight = Math.abs(height) + (offset * barheight);
+                    return calculatedHeight;
+                });
+        } else {
+            var chartType = '';
+
+            // If type is line, render a line plot
+            if(series.type === 'line') {
+                chartType = d3.svg.line()
+                    .x(function(d) {
+                        return me.xFocus(d.date);
+                    })
+                    .y(function(d) {
+                        return y(d.value);
+                    });
+            } else {
+                // Otherwise, default to area, e.g. for bars whose data is too long
+                style += 'fill:' + series.color + ';';
+                chartType = d3.svg.area()
+                    .x(function(d) {
+                        return me.xFocus(d.date);
+                    })
+                    .y0(function(d) {
+                        return y(Math.min(0, d.value));
+                    })
+                    .y1(function(d) {
+                        return y(Math.max(0, d.value));
+                    });
+            }
+
+            focus.selectAll("path." + series.type).remove();
+
+            focus.append("path")
+                .datum(dataShown)
+                .attr("class", series.type)
+                .attr("d", chartType)
+                .attr("style", style);
+
+            if(series.data.length < 80) {
+                var func = function(d) {
+                    return me.xFocus(d.date);
+                };
+                if(series.data.length === 1) {
+                    func = width / 2;
+                }
+
+                focus.selectAll("circle.dot").remove();
+
+                focus.selectAll("circle.dot")
+                    .data(dataShown)
+                .enter().append("circle")
+                    .attr("class", "dot")
+                    .attr("style", 'fill:' + series.color + ';')
+                    .attr("r", 3)
+                    .attr("cx", func)
+                    .attr("cy", function(d) {
+                        return y(d.value);
+                    });
+            } else {
+                // If a line graph was used and there are anomalies, put a circle on the
+                // anomalous points
+                var anomalies = dataShown.filter(function(it) {
+                    return it.anomaly === true;
+                });
+
+                focus.selectAll("circle.dot").remove();
+
+                focus.selectAll("circle.dot")
+                    .data(anomalies)
+                .enter().append("circle")
+                    .attr("class", "dot")
+                    .attr("style", 'fill:' + anomalyColor + ';')
+                    .attr("r", 3)
+                    .attr("cx", function(d) {
+                        return me.xFocus(d.date);
+                    })
+                    .attr("cy", function(d) {
+                        return y(d.value);
+                    });
+            }
+        }
+
+        return {y: y, yAxis: yAxis};
+    }
+
     /**
-     * Redraws the focus chart to show only the brushed area
+     * Updates the x axis as well as redraws the focus chart
      * @method updateFocusChart
      * @private
      */
@@ -831,106 +906,8 @@ charts.TimelineSelectorChart = function(element, configuration) {
         for(var i = 0; i < me.data.length; i++) {
             var series = me.data[i];
 
-            var focus = me.svg.select(".focus-" + series.name);
-            focus.select(".x.axis").call(me.xAxisFocus);
-
-            var y = d3.scale.linear().range([me.heightFocus, 0]);
-
-            // Get only the data in the brushed area
-            var dataShown = _.filter(series.data, function(obj) {
-                return (me.xFocus.domain()[0] <= obj.date && obj.date <= me.xFocus.domain()[1]);
-            });
-
-            // Use lowest value or 0 for Y-axis domain, whichever is less (e.g. if negative)
-            var minY = d3.min(dataShown.map(function(d) {
-                return d.value;
-            }));
-            minY = minY < 0 ? minY : 0;
-
-            y.domain([minY, d3.max(dataShown.map(function(d) {
-                return d.value;
-            }))]);
-
-            var yAxis = d3.svg.axis().scale(y).orient("right").ticks(2);
-
-            focus.select(".y.axis.series-y").call(yAxis);
-
-            // If type is bar AND the data isn't too long, render a bar plot
-            if(series.type === 'bar' && series.data.length < me.width) {
-                var barheight = 0;
-
-                if(dataShown.length < 60) {
-                    barheight++;
-                }
-
-                focus.selectAll("rect.bar")
-                    .attr("x", function(d) {
-                        return me.xFocus(d.date);
-                    })
-                    .attr("width", function(d) {
-                        return me.xFocus(d3.time[me.granularity].utc.offset(d.date, 1)) - me.xFocus(d.date);
-                    })
-                    .attr("y", function(d) {
-                        return y(Math.max(0, d.value));
-                    })
-                    .attr("height", function(d) {
-                        var height = y(d.value) - y(0);
-                        var offset = height / height || 0;
-                        var calculatedHeight = Math.abs(height) + (offset * barheight);
-                        return calculatedHeight;
-                    });
-            } else {
-                var chartType = '';
-
-                // If type is line, render a line plot
-                if(series.type === 'line') {
-                    chartType = d3.svg.line()
-                        .x(function(d) {
-                            return me.xFocus(d.date);
-                        })
-                        .y(function(d) {
-                            return y(d.value);
-                        });
-                } else {
-                    // Otherwise, default to area, e.g. for bars whose data is too long
-                    chartType = d3.svg.area()
-                        .x(function(d) {
-                            return me.xFocus(d.date);
-                        })
-                        .y0(function(d) {
-                            return y(Math.min(0, d.value));
-                        })
-                        .y1(function(d) {
-                            return y(Math.max(0, d.value));
-                        });
-                }
-
-                focus.selectAll("path." + series.type)
-                    .attr("d", chartType);
-
-                if(series.data.length < 80) {
-                    var func = function(d) {
-                        return me.xFocus(d.date);
-                    };
-                    if(series.data.length === 1) {
-                        func = me.width / 2;
-                    }
-
-                    focus.selectAll("circle.dot")
-                        .attr("cx", func)
-                        .attr("cy", function(d) {
-                            return y(d.value);
-                        });
-                } else {
-                    focus.selectAll("circle.dot")
-                        .attr("cx", function(d) {
-                            return me.xFocus(d.date);
-                        })
-                        .attr("cy", function(d) {
-                            return y(d.value);
-                        });
-                }
-            }
+            var axis = me.drawFocusChart(series);
+            var y = axis.y;
 
             var xOffset = me.approximateBarWidth / 2;
             if(series.type === 'bar') {

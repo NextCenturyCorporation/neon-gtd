@@ -250,7 +250,7 @@ function(connectionService, datasetService, errorNotificationService, filterServ
                         XDATA.userALE.log({
                             activity: "alter",
                             action: "click",
-                            elementId: "timeline-showFocus-" + newVal,
+                            elementId: "timeline",
                             elementType: "button",
                             elementSub: "timeline-showFocus-" + newVal,
                             elementGroup: "chart_group",
