@@ -106,16 +106,17 @@ function(connectionService, datasetService, errorNotificationService, filterServ
                     filtersChanged: onFiltersChanged
                 });
                 $scope.messenger.subscribe(datasetService.DATE_CHANGED, onDateChanged);
+                $scope.messenger.subscribe("date_selected", onDateSelected);
 
                 $scope.$on('$destroy', function() {
                     XDATA.userALE.log({
                         activity: "remove",
-                        action: "click",
+                        action: "remove",
                         elementId: "linechart",
                         elementType: "canvas",
                         elementSub: "linechart",
                         elementGroup: "chart_group",
-                        source: "user",
+                        source: "system",
                         tags: ["remove", "linechart"]
                     });
                     $element.off("resize", updateChartSize);
@@ -163,14 +164,24 @@ function(connectionService, datasetService, errorNotificationService, filterServ
             };
 
             var onFieldChange = function(field, newValue) {
+                var source = "user";
+                var action = "click";
+
+                // Override the default action if a field changes while loading data during
+                // intialization or a dataset change.
+                if($scope.loadingData) {
+                    source = "system";
+                    action = "reset";
+                }
+
                 XDATA.userALE.log({
                     activity: "select",
-                    action: "click",
+                    action: action,
                     elementId: "linechart",
                     elementType: "combobox",
                     elementSub: "linechart-" + field,
                     elementGroup: "chart_group",
-                    source: "user",
+                    source: source,
                     tags: ["options", "linechart", newValue]
                 });
             };
@@ -245,6 +256,33 @@ function(connectionService, datasetService, errorNotificationService, filterServ
                 if($scope.options.database.name === message.databaseName && $scope.options.table.name === message.tableName && $scope.brushExtent !== message.brushExtent) {
                     renderBrushExtent(message.brushExtent);
                     updateLineChartForBrushExtent();
+                }
+            };
+
+            /**
+             * Event handler for date selected events issued over Neon's messaging channels.
+             * @param {Object} message A Neon date selected message.
+             * @method onDateSelected
+             * @private
+             */
+            var onDateSelected = function(message) {
+                XDATA.userALE.log({
+                    activity: "select",
+                    action: "receive",
+                    elementId: "linechart-range",
+                    elementType: "canvas",
+                    elementSub: "date-range",
+                    elementGroup: "chart_group",
+                    source: "system",
+                    tags: ["linechart", "date-range"]
+                });
+
+                if($scope.chart) {
+                    if(message.start && message.end) {
+                        $scope.chart.selectDate(message.start, message.end);
+                    } else {
+                        $scope.chart.deselectDate();
+                    }
                 }
             };
 
@@ -658,6 +696,13 @@ function(connectionService, datasetService, errorNotificationService, filterServ
                 return resultData;
             };
 
+            var onHover = function(startDate, endDate) {
+                $scope.messenger.publish("date_selected", {
+                    start: startDate,
+                    end: endDate
+                });
+            };
+
             /**
              * Creates and draws a new line chart with the given data, if any.
              * @param {Array} data
@@ -667,6 +712,7 @@ function(connectionService, datasetService, errorNotificationService, filterServ
                 var opts = {
                     x: "date",
                     y: "value",
+                    hoverListener: onHover,
                     responsive: true
                 };
 
@@ -744,8 +790,9 @@ function(connectionService, datasetService, errorNotificationService, filterServ
              * @return {String}
              */
             $scope.getLegendItemAggregationText = function(colorMappingObject) {
+                var total = 0;
                 if($scope.options.aggregation === "count" || $scope.options.aggregation === "sum") {
-                    var total = colorMappingObject.total;
+                    total = colorMappingObject.total;
                     if($scope.brushExtent.length >= 2) {
                         total = calculateBrushedAggregationValue(colorMappingObject.data, function(indexValue, aggregationValue) {
                             return indexValue + aggregationValue;

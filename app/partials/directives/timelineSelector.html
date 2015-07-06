@@ -99,7 +99,7 @@
 </div>
 
   <div class="collapsed" ng-class="{true: 'collapsed', false: ''}[options.collapsed]">
-    <div timeline-selector-chart timeline-data='data' timeline-brush='brush' collapsed='options.collapsed' extent-dirty='extentDirty' primary-series='options.primarySeries' granularity='options.granularity'></div>
+    <div timeline-selector-chart timeline-data='data' timeline-brush='brush' collapsed='options.collapsed' extent-dirty='extentDirty' primary-series='options.primarySeries' granularity='options.granularity' messenger='messenger'></div>
   </div>
 
   <div class="text-center" ng-class="{true: '', false: 'hidden'}[opencpu.enableMmpp && options.granularity === 'hour' && !eventProbabilitiesDisplayed &&!options.collapsed]">

@@ -119,7 +119,7 @@ angular.module("neonDemo.services")
                 table: relation.table
             };
 
-            var filterClause = undefined;
+            var filterClause;
             if(argumentFieldsList.length === 1) {
                 filterClause = createFilterClauseFunction(relationDatabaseAndTableName, argumentFieldsList[0]);
             } else {

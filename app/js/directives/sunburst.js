@@ -76,12 +76,12 @@ function(connectionService, datasetService, errorNotificationService) {
                 $scope.$on('$destroy', function() {
                     XDATA.userALE.log({
                         activity: "remove",
-                        action: "click",
+                        action: "remove",
                         elementId: "sunburst",
                         elementType: "canvas",
                         elementSub: "sunburst",
                         elementGroup: "chart_group",
-                        source: "user",
+                        source: "system",
                         tags: ["remove", "sunburst"]
                     });
                     $element.off("resize", updateChartSize);

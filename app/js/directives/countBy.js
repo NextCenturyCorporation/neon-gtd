@@ -95,12 +95,12 @@ function(external, popups, connectionService, datasetService, errorNotificationS
                 $scope.$on('$destroy', function() {
                     XDATA.userALE.log({
                         activity: "remove",
-                        action: "click",
+                        action: "remove",
                         elementId: "count-by",
                         elementType: "datagrid",
                         elementSub: "count-by",
                         elementGroup: "table_group",
-                        source: "user",
+                        source: "system",
                         tags: ["remove", "count-by"]
                     });
                     popups.links.deleteData($scope.tableId);

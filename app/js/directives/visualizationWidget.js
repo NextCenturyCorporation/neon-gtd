@@ -125,6 +125,16 @@ angular.module('neonDemo.directives').directive('visualizationWidget', ["config"
              * @method remove
              */
             $scope.remove = function() {
+                XDATA.userALE.log({
+                        activity: "remove",
+                        action: "click",
+                        elementId: "workspace",
+                        elementType: "workspace",
+                        elementSub: $scope.gridsterConfigs[$scope.gridsterConfigIndex].type,
+                        elementGroup: "top",
+                        source: "user",
+                        tags: ["remove", $scope.gridsterConfigs[$scope.gridsterConfigIndex].type]
+                    });
                 $scope.gridsterConfigs.splice($scope.gridsterConfigIndex, 1);
             };
         }

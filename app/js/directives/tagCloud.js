@@ -67,11 +67,12 @@ function(connectionService, datasetService, errorNotificationService, filterServ
                 $scope.$watch('options.andTags', function(newVal, oldVal) {
                     XDATA.userALE.log({
                         activity: "select",
-                        action: "click",
-                        elementId: (newVal) ? "all-filters-button" : "any-filters-button",
-                        elementType: "radiobutton",
+                        action: ($scope.loadingData) ? "reset" : "click",
+                        elementId: "tag-cloud-options",
+                        elementType: "button",
+                        elementSub: (newVal) ? "all-filters" : "any-filters",
                         elementGroup: "chart_group",
-                        source: "user",
+                        source: ($scope.loadingData) ? "system" : "user",
                         tags: ["options", "tag-cloud"]
                     });
                     if(newVal !== oldVal) {
@@ -89,12 +90,12 @@ function(connectionService, datasetService, errorNotificationService, filterServ
                 $scope.$on('$destroy', function() {
                     XDATA.userALE.log({
                         activity: "remove",
-                        action: "click",
+                        action: "remove",
                         elementId: "tag-cloud",
                         elementType: "canvas",
                         elementSub: "tag-cloud",
                         elementGroup: "chart_group",
-                        source: "user",
+                        source: "system",
                         tags: ["remove", "tag-cloud"]
                     });
                     $scope.messenger.removeEvents();

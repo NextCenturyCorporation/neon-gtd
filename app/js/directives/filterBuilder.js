@@ -85,17 +85,20 @@ angular.module('neonDemo.directives')
                 $scope.$on('$destroy', function() {
                     XDATA.userALE.log({
                         activity: "remove",
-                        action: "click",
+                        action: "remove",
                         elementId: "filter-builder",
                         elementType: "panel",
                         elementSub: "filter-builder",
                         elementGroup: "query_group",
-                        source: "user",
+                        source: "system",
                         tags: ["remove", "filter-builder"]
                     });
 
                     $scope.messenger.removeEvents();
-                    $scope.publishRemoveFilterEvents($scope.filterTable.getDatabaseAndTableNames());
+                    var databaseAndTableNames = $scope.filterTable.getDatabaseAndTableNames();
+                    if(databaseAndTableNames.length) {
+                        $scope.publishRemoveFilterEvents($scope.filterTable.getDatabaseAndTableNames());
+                    }
                     $element.off("resize", resizeDateTimePickerDropdowns);
                 });
 
@@ -115,44 +118,6 @@ angular.module('neonDemo.directives')
                     }
                     $scope.filterCount = count;
                 }, true);
-
-                $scope.$watch('selectedField', function(newVal) {
-                    XDATA.userALE.log({
-                        activity: "select",
-                        action: "click",
-                        elementId: "filter-builder-selected-field",
-                        elementType: "combobox",
-                        elementGroup: "query_group",
-                        source: "user",
-                        tags: ["filter-builder", "field", newVal]
-                    });
-
-                    $scope.selectedFieldIsDate = datasetService.hasDataset() && $scope.selectedField === datasetService.getMapping($scope.selectedDatabase.name, $scope.selectedTable.name, "date");
-                });
-
-                $scope.$watch('selectedOperator', function(newVal) {
-                    XDATA.userALE.log({
-                        activity: "select",
-                        action: "click",
-                        elementId: "filter-builder-selectedOperator",
-                        elementType: "combobox",
-                        elementGroup: "query_group",
-                        source: "user",
-                        tags: ["filter-builder", "operator", newVal]
-                    });
-                });
-
-                $scope.$watch('selectedValue', function(newVal) {
-                    XDATA.userALE.log({
-                        activity: "enter",
-                        action: "keydown",
-                        elementId: "filter-builder-selectedValue",
-                        elementType: "textbox",
-                        elementGroup: "query_group",
-                        source: "user",
-                        tags: ["filter-builder", "value", newVal]
-                    });
-                });
             };
 
             /**
@@ -214,6 +179,44 @@ angular.module('neonDemo.directives')
                 $scope.fields = _.without(fields, "_id");
                 $scope.fields.sort();
                 $scope.selectedField = findDefaultField($scope.fields);
+            };
+
+            $scope.onSelectedFieldChange = function() {
+                XDATA.userALE.log({
+                    activity: "select",
+                    action: "click",
+                    elementId: "filter-builder-selected-field",
+                    elementType: "combobox",
+                    elementGroup: "query_group",
+                    source: "user",
+                    tags: ["filter-builder", "field", $scope.selectedfield]
+                });
+
+                $scope.selectedFieldIsDate = datasetService.hasDataset() && $scope.selectedField === datasetService.getMapping($scope.selectedDatabase.name, $scope.selectedTable.name, "date");
+            };
+
+            $scope.onSelectedOperatorChange = function() {
+                XDATA.userALE.log({
+                    activity: "select",
+                    action: "click",
+                    elementId: "filter-builder-selectedOperator",
+                    elementType: "combobox",
+                    elementGroup: "query_group",
+                    source: "user",
+                    tags: ["filter-builder", "operator", $scope.selectedOperator]
+                });
+            };
+
+            $scope.onSelectedValueChange = function() {
+                XDATA.userALE.log({
+                    activity: "enter",
+                    action: "keydown",
+                    elementId: "filter-builder-selectedValue",
+                    elementType: "textbox",
+                    elementGroup: "query_group",
+                    source: "user",
+                    tags: ["filter-builder", "value", $scope.selectedValue]
+                });
             };
 
             var findDefaultField = function(fields) {
@@ -428,12 +431,15 @@ angular.module('neonDemo.directives')
                     tags: ["filter-builder", "filter", "clear"]
                 });
 
-                $scope.publishRemoveFilterEvents($scope.filterTable.getDatabaseAndTableNames(), function(successDatabase, successTable) {
-                    $scope.$apply(function() {
-                        // Remove the visible filter list.
-                        $scope.filterTable.clearFilterState(successDatabase, successTable);
+                var databaseAndTableNames = $scope.filterTable.getDatabaseAndTableNames();
+                if(databaseAndTableNames.length) {
+                    $scope.publishRemoveFilterEvents(databaseAndTableNames, function(successDatabase, successTable) {
+                        $scope.$apply(function() {
+                            // Remove the visible filter list.
+                            $scope.filterTable.clearFilterState(successDatabase, successTable);
+                        });
                     });
-                });
+                }
             };
 
             $scope.publishReplaceFilterEvents = function(filters, successCallback, errorCallback) {

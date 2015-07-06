@@ -150,12 +150,12 @@ angular.module('neonDemo.directives')
                 $scope.$on('$destroy', function() {
                     XDATA.userALE.log({
                         activity: "remove",
-                        action: "click",
+                        action: "remove",
                         elementId: "map",
                         elementType: "canvas",
                         elementSub: "map",
                         elementGroup: "map_group",
-                        source: "user",
+                        source: "system",
                         tags: ["remove", "map"]
                     });
                     $element.off("resize", updateSize);
@@ -170,16 +170,6 @@ angular.module('neonDemo.directives')
 
                 // Handle toggling map caching.
                 $scope.$watch('cacheMap', function(newVal, oldVal) {
-                    XDATA.userALE.log({
-                        activity: "select",
-                        action: "click",
-                        elementId: "map-cache",
-                        elementType: "checkbox",
-                        elementSub: "map-cache",
-                        elementGroup: "map_group",
-                        source: "user",
-                        tags: ["options", "map", "tile-cache"]
-                    });
                     if(newVal !== oldVal) {
                         if(newVal) {
                             $scope.map.clearCache();
@@ -523,18 +513,8 @@ angular.module('neonDemo.directives')
                 // Call removeLayer on all existing layers.
                 $scope.clearLayers();
 
-                // Reconfigure the map as necessary.
-                var mapConfig = datasetService.getMapConfig();
-                if(mapConfig && mapConfig.bounds) {
-                    $scope.map.zoomToBounds(mapConfig.bounds);
-                } else {
-                    $scope.map.zoomToBounds({
-                        left: -180,
-                        bottom: -90,
-                        right: 180,
-                        top: 90
-                    });
-                }
+                // Set the map viewing bounds
+                $scope.setDefaultView();
 
                 if(initializing) {
                     $scope.updateLayersAndQueries();
@@ -1071,6 +1051,25 @@ angular.module('neonDemo.directives')
                 } else if($scope.selectedPointLayer.name) {
                     $scope.map.removeLayer($scope.selectedPointLayer);
                     $scope.selectedPointLayer = {};
+                }
+            };
+
+            /**
+             * Sets the maps viewing bounds to either those defined in the configuration file or
+             * all the way zoomed out
+             * @method setDefaultView
+             */
+            $scope.setDefaultView = function() {
+                var mapConfig = datasetService.getMapConfig();
+                if(mapConfig && mapConfig.bounds) {
+                    $scope.map.zoomToBounds(mapConfig.bounds);
+                } else {
+                    $scope.map.zoomToBounds({
+                        left: -180,
+                        bottom: -90,
+                        right: 180,
+                        top: 90
+                    });
                 }
             };
 

@@ -116,21 +116,21 @@
         </select>
       </div>
       <div class="form-group">
-        <select id="filter-field-selection" class="form-control" ng-model="selectedField" ng-options="field for field in fields" ng-disabled="(fields.length == 0)">
+        <select id="filter-field-selection" class="form-control" ng-model="selectedField" ng-disabled="(fields.length == 0)" ng-options="field for field in fields" ng-change="onSelectedFieldChange()">
         </select>
       </div>
       <div class="form-group">
-        <select id="filter-operator-selection" class="form-control"  ng-model="selectedOperator" ng-options="operator for operator in filterTable.operatorOptions" ng-disabled="(fields.length == 0)">
+        <select id="filter-operator-selection" class="form-control"  ng-model="selectedOperator" ng-options="operator for operator in filterTable.operatorOptions" ng-disabled="(fields.length == 0)" ng-change="onSelectedOperatorChange()">
         </select>
       </div>
       <div class="form-group">
-        <input type="text" class="form-control" id="filter-value" size="42" placeholder="Value" ng-keyup="$event.keyCode == 13 && addFilterRow()" ng-model="selectedValue" ng-disabled="(fields.length == 0)" ng-required="true" ng-show="!(selectedFieldIsDate)">
+        <input type="text" class="form-control" id="filter-value" size="42" placeholder="Value" ng-keyup="$event.keyCode == 13 && addFilterRow()" ng-model="selectedValue" ng-disabled="(fields.length == 0)" ng-required="true" ng-show="!(selectedFieldIsDate)" ng-change="onSelectedValueChange()">
         <div class="neon-datetimepicker dropdown" ng-show="(selectedFieldIsDate)">
             <button class="btn btn-default dropdown-toggle" id="date-dropdown" role="button" data-toggle="dropdown" data-target="#" href="#">
                 <span class="glyphicon glyphicon-calendar"></span> {{selectedValue ? selectedValue.toDateString() : "Choose"}}
             </button>
             <ul class="dropdown-menu" role="menu">
-                <datetimepicker data-ng-model="selectedValue" data-datetimepicker-config="{ dropdownSelector: '#date-dropdown', startView: 'year', minView: 'hour' }"/>
+                <datetimepicker data-ng-model="selectedValue" data-on-set-time="onSelectedValueChange()" data-datetimepicker-config="{ dropdownSelector: '#date-dropdown', startView: 'year', minView: 'hour' }"/>
             </ul>
         </div>
       </div>

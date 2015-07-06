@@ -117,12 +117,12 @@ angular.module('neonDemo.directives')
                 $scope.$on('$destroy', function() {
                     XDATA.userALE.log({
                         activity: "remove",
-                        action: "click",
+                        action: "remove",
                         elementId: "directed-graph",
                         elementType: "canvas",
                         elementSub: "directed-graph",
                         elementGroup: "graph_group",
-                        source: "user",
+                        source: "system",
                         tags: ["remove", "directed-graph"]
                     });
                     $element.off("resize", updateSize);
