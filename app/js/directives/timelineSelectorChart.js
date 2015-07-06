@@ -96,6 +96,10 @@ angular.module('neonDemo.directives')
                     if($scope.showFocus === "on_filter") {
                         $scope.chart.toggleFocus(false);
                     }
+                } else if(newVal) {
+                    if($scope.showFocus === "on_filter") {
+                        $scope.chart.toggleFocus(true);
+                    }
                 }
             });
 

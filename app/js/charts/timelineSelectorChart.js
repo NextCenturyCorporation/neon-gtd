@@ -222,8 +222,9 @@ charts.TimelineSelectorChart = function(element, configuration) {
                     }
                 }
 
-            if(extent1[0] < extent1[1]) {
-                d3.select(".brush").call(brush.extent(extent1));
+                if(extent1[0] < extent1[1]) {
+                    d3.select(".brush").call(brush.extent(extent1));
+                }
             }
         }
 
@@ -358,13 +359,9 @@ charts.TimelineSelectorChart = function(element, configuration) {
             return d3.time[me.granularity].utc.offset(d.date, 1);
         }));
 
-<<<<<<< HEAD
-        this.xFocus.domain([xMin, xMax]);
-        this.xContext.domain(this.xFocus.domain());
-=======
         this.xDomain = [xMin, xMax];
-        x.domain(this.xDomain);
->>>>>>> master
+        this.xFocus.domain(this.xDomain);
+        this.xContext.domain(this.xDomain);
 
         this.xAxisFocus = d3.svg.axis().scale(this.xFocus).orient("bottom");
         var xAxisContext = d3.svg.axis().scale(this.xContext).orient("bottom");
@@ -918,6 +915,7 @@ charts.TimelineSelectorChart = function(element, configuration) {
         }
 
         me.xFocus.domain(me.brush.empty() ? me.xContext.domain() : me.brush.extent());
+        me.xDomain = [me.xFocus.domain()[0], me.xFocus.domain()[1]];
 
         for(var i = 0; i < me.data.length; i++) {
             var series = me.data[i];
