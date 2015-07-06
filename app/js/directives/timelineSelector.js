@@ -374,7 +374,7 @@ function(connectionService, datasetService, errorNotificationService, filterServ
                 if(message.addedFilter.whereClause) {
                     whereClauses = message.addedFilter.whereClause.whereClauses;
                 }
-                if(message.removedFilter.whereClause) {
+                else if(message.removedFilter.whereClause) {
                     whereClauses = message.removedFilter.whereClause.whereClauses;
                 }
                 if(whereClauses && whereClauses.length === 2 && whereClauses[0].lhs === $scope.options.dateField && whereClauses[1].lhs === $scope.options.dateField) {
