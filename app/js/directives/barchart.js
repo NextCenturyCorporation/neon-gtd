@@ -103,49 +103,22 @@ function(connectionService, datasetService, errorNotificationService, filterServ
                     }
                 });
 
-                $scope.$watch('options.attrX', function() {
-                    XDATA.userALE.log({
-                        activity: "select",
-                        action: "click",
-                        elementId: "barchart",
-                        elementType: "combobox",
-                        elementSub: "barchart-x-axis",
-                        elementGroup: "chart_group",
-                        source: "user",
-                        tags: ["options", "barchart"]
-                    });
+                $scope.$watch('options.attrX', function(newValue) {
+                    onFieldChange('attrX', newValue);
                     if(!$scope.loadingData && $scope.options.database.name && $scope.options.table.name) {
                         $scope.queryForData(true);
                     }
                 });
 
-                $scope.$watch('options.attrY', function() {
-                    XDATA.userALE.log({
-                        activity: "select",
-                        action: "click",
-                        elementId: "barchart",
-                        elementType: "combobox",
-                        elementSub: "barchart-y-axis",
-                        elementGroup: "chart_group",
-                        source: "user",
-                        tags: ["options", "barchart"]
-                    });
+                $scope.$watch('options.attrY', function(newValue) {
+                    onFieldChange('attrY', newValue);
                     if(!$scope.loadingData && $scope.options.database.name && $scope.options.table.name) {
                         $scope.queryForData(true);
                     }
                 });
 
-                $scope.$watch('options.barType', function() {
-                    XDATA.userALE.log({
-                        activity: "select",
-                        action: "click",
-                        elementId: "barchart",
-                        elementType: "combobox",
-                        elementSub: "barchart-aggregation",
-                        elementGroup: "chart_group",
-                        source: "user",
-                        tags: ["options", "barchart"]
-                    });
+                $scope.$watch('options.barType', function(newValue) {
+                    onFieldChange('aggregation', newValue);
                     if(!$scope.loadingData && $scope.options.database.name && $scope.options.table.name) {
                         $scope.queryForData(false);
                     }
@@ -154,6 +127,29 @@ function(connectionService, datasetService, errorNotificationService, filterServ
                 // This resizes the chart when the div changes.  This rely's on jquery's resize plugin to fire
                 // on the associated element and not just the window.
                 $element.resize(updateChartSize);
+            };
+
+            var onFieldChange = function(field, newValue) {
+                var source = "user";
+                var action = "click";
+
+                // Override the default action if a field changes while loading data during
+                // intialization or a dataset change.
+                if($scope.loadingData) {
+                    source = "system";
+                    action = "reset";
+                }
+
+                XDATA.userALE.log({
+                    activity: "select",
+                    action: action,
+                    elementId: "barchart",
+                    elementType: "combobox",
+                    elementSub: "barchart-" + field,
+                    elementGroup: "chart_group",
+                    source: source,
+                    tags: ["options", "barchart", newValue]
+                });
             };
 
             /**
@@ -376,13 +372,13 @@ function(connectionService, datasetService, errorNotificationService, filterServ
             };
 
             /**
-             * Creates and returns a filter using the given table and x-axis field using the value set by this visualization.
-             * @param {String} The name of the table on which to filter
-             * @param {String} The name of the x-axis field on which to filter
+             * Creates and returns a filter on the given x-axis field using the value set by this visualization.
+             * @param {Object} databaseAndTableName Contains the database and table name
+             * @param {String} xAxisFieldName The name of the x-axis field on which to filter
              * @method createFilterClauseForXAxis
              * @return {Object} A neon.query.Filter object
              */
-            $scope.createFilterClauseForXAxis = function(tableName, xAxisFieldName) {
+            $scope.createFilterClauseForXAxis = function(databaseAndTableName, xAxisFieldName) {
                 return neon.query.where(xAxisFieldName, '=', $scope.filterValue);
             };
 

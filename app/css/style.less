@@ -226,14 +226,7 @@ label{
     }
 
     span {
-        .chart-options-text {
-            // Set the top position so the text aligns vertically with the gear icon.
-            position: relative;
-            top: -1px;
-            margin-right: 5px;
-        }
-
-        .header-text {
+        &.header-text {
             /* Set the top position so the text aligns vertically with the gear icon. */
             position: relative;
             top: -1px;
@@ -362,17 +355,18 @@ label{
     color: @main-text-color;
     background-color: @button-color;
     border-style: solid;
-    border-width: thin;
+    border-width: 1px;
     border-color: @button-border-color;
     border-radius: 4px;
     margin-left: 5px;
     margin-top: 5px;
     margin-bottom: 5px;
 
+    /* Add padding so the height of the filter label and glyphicon equals the height of the filter-container (30 px). */
     .filter-label {
         float: left;
-        font-size: 12px;
-        padding: 8px;
+        font-size: 14px;
+        padding: 4px 8px;
         max-width: 80px;
         overflow: hidden;
         text-overflow: ellipsis;
@@ -382,7 +376,7 @@ label{
     .glyphicon-remove {
         float: left;
         font-size: 14px;
-        padding: 8px;
+        padding: 7px 8px;
         color: @error-color;
         cursor: pointer;
         border-left: @border;
@@ -831,4 +825,29 @@ label{
     margin-top: 15px;
     margin-bottom: 15px;
     font-weight: bold;
+}
+
+.brush {
+    .extent {
+        fill-opacity: 0;
+        shape-rendering: crispEdges;
+    }
+
+    .mask{
+        fill: @main-background;
+        fill-opacity: 0.7;
+    }
+
+    .resize {
+        path {
+            fill: @light-chart-axis-color;
+            stroke: @chart-text-color;
+            stroke-opacity: 0.5;
+        }
+    }
+
+    .resize-divider{
+        fill: @chart-text-color;
+        fill-opacity: 0.3;
+    }
 }
