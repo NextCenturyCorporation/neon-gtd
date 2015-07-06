@@ -431,7 +431,11 @@ angular.module('neonDemo.directives')
                 var filterObject = filters.shift();
                 var filter = filterObject.filter;
 
-                filter.name("Filter Builder: " + filter.whereClause.lhs + " " + filter.whereClause.operator + " " + filter.whereClause.rhs);
+                if(filter.whereClause.lhs) {
+                    filter.name("Filter Builder: " + filter.whereClause.lhs + " " + filter.whereClause.operator + " " + filter.whereClause.rhs);
+                } else if(filter.whereClause.whereClauses) {
+                    filter.name("Filter Builder: " + filter.whereClause.whereClauses.length + " filters");
+                }
 
                 var databaseName = filterObject.databaseName;
                 var tableName = filterObject.tableName;
