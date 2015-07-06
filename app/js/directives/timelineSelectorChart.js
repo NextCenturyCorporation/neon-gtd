@@ -38,7 +38,8 @@ angular.module('neonDemo.directives')
             collapsed: '=',
             primarySeries: '=',
             granularity: '=',
-            showFocus: '='
+            showFocus: '=',
+            messenger: '='
         },
         link: function($scope, $element) {
             // Initialize the chart.
@@ -133,6 +134,43 @@ angular.module('neonDemo.directives')
                 } else if(newVal === 'on_filter' && $scope.timelineBrush.length > 0) {
                     $scope.chart.toggleFocus(true);
                 }
+            });
+
+            /**
+             * Event handler for date selected events issued over Neon's messaging channels.
+             * @param {Object} message A Neon date selected message.
+             * @method onDateSelected
+             * @private
+             */
+            var onDateSelected = function(message) {
+                XDATA.userALE.log({
+                    activity: "select",
+                    action: "receive",
+                    elementId: "timeline-range",
+                    elementType: "canvas",
+                    elementSub: "date-range",
+                    elementGroup: "chart_group",
+                    source: "system",
+                    tags: ["timeline", "date-range"]
+                });
+
+                if(message.start && message.end) {
+                    $scope.chart.selectDate(message.start, message.end);
+                } else {
+                    $scope.chart.deselectDate();
+                }
+            };
+
+            var onHover = function(startDate, endDate) {
+                $scope.messenger.publish('date_selected', {
+                    start: startDate,
+                    end: endDate
+                });
+            };
+
+            $scope.$watch("messenger", function() {
+                $scope.messenger.subscribe("date_selected", onDateSelected);
+                $scope.chart.setHoverListener(onHover);
             });
         }
     };

@@ -45,6 +45,7 @@ angular.module('neonDemo.directives')
             $scope.selectedTable = {};
             $scope.fields = [];
             $scope.selectedField = "";
+            $scope.selectedFieldIsDate = false;
             $scope.andClauses = true;
 
             if(!($scope.navbarItem)) {
@@ -58,12 +59,21 @@ angular.module('neonDemo.directives')
                 return operators[0] || "=";
             };
 
+            var resizeDateTimePickerDropdowns = function() {
+                $element.find(".filter").each(function() {
+                    var height = $element.height() - $(this).position().top - $(this).height() - 5;
+                    $(this).find(".dropdown-menu").css("max-height", height + "px");
+                });
+            };
+
             /**
              * Initializes the name of the date field used to query the current dataset
              * and the Neon Messenger used to monitor data change events.
              * @method initialize
              */
             $scope.initialize = function() {
+                $element.resize(resizeDateTimePickerDropdowns);
+
                 $scope.messenger = new neon.eventing.Messenger();
                 $scope.filterTable = new neon.query.FilterTable();
                 $scope.selectedOperator = findDefaultOperator($scope.filterTable.operatorOptions);
@@ -89,6 +99,7 @@ angular.module('neonDemo.directives')
                     if(databaseAndTableNames.length) {
                         $scope.publishRemoveFilterEvents($scope.filterTable.getDatabaseAndTableNames());
                     }
+                    $element.off("resize", resizeDateTimePickerDropdowns);
                 });
 
                 $scope.$watch('filterTable', function(newVal, oldVal) {
@@ -180,6 +191,8 @@ angular.module('neonDemo.directives')
                     source: "user",
                     tags: ["filter-builder", "field", $scope.selectedfield]
                 });
+
+                $scope.selectedFieldIsDate = datasetService.hasDataset() && $scope.selectedField === datasetService.getMapping($scope.selectedDatabase.name, $scope.selectedTable.name, "date");
             };
 
             $scope.onSelectedOperatorChange = function() {
@@ -260,6 +273,7 @@ angular.module('neonDemo.directives')
                 }
 
                 var filterRow = new neon.query.FilterRow(database, table, $scope.selectedField, $scope.selectedOperator, $scope.selectedValue, $scope.tables, $scope.fields);
+                filterRow.isDate = $scope.selectedFieldIsDate;
                 var rows = [{
                     database: database,
                     table: table,
@@ -275,6 +289,7 @@ angular.module('neonDemo.directives')
                             var relationFields = relation.fields[relationInfo.originalFields[j]];
                             for(var k = 0; k < relationFields.length; ++k) {
                                 var relationFilterRow = new neon.query.FilterRow(relationInfo.database, relationInfo.table, relationFields[k], $scope.selectedOperator, $scope.selectedValue, relationInfo.tables, relationInfo.databaseFields);
+                                relationFilterRow.isDate = datasetService.hasDataset() && relationFields[k] === datasetService.getMapping(relationInfo.database, relationInfo.table, "date");
                                 rows.push({
                                     database: relationInfo.database,
                                     table: relationInfo.table,

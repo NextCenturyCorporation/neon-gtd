@@ -689,7 +689,7 @@ label{
 
 .overlay-above{
     position: relative;
-    z-index: 1050;
+    z-index: 1049;
 }
 
 .overlay-container {
@@ -849,5 +849,59 @@ label{
     .resize-divider{
         fill: @chart-text-color;
         fill-opacity: 0.3;
+    }
+}
+
+.neon-datetimepicker {
+    .btn-default {
+        font-size: 14px;
+        font-weight: bold;
+        color: @main-text-color;
+        background-color: @button-color;
+        border-style: solid;
+        border-width: 1px;
+        border-color: @button-border-color;
+        border-radius: 4px;
+        padding: 3px 6px;
+
+        &:hover {
+            color: @accent-bright;
+        }
+
+        .glyphicon {
+            margin-right: 2px;
+            top: 2px;
+        }
+
+        &.reset {
+            color: @error-color;
+
+            &:hover {
+                background-color: @error-color;
+                border-color: @error-dark-color;
+                color: @light-text-color;
+            }
+
+            &.disabled {
+                color: #ccc;
+                opacity: 0.5;
+            }
+        }
+    }
+
+    .dropdown-menu {
+        right: 0;
+        left: auto;
+        overflow-y: scroll;
+        padding: 10px;
+
+        /* Match the width of the datetimepickers. */
+        label {
+            width: 320px;
+        }
+
+        .table-responsive {
+            display: inline-block;
+        }
     }
 }

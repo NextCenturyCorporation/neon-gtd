@@ -43,7 +43,8 @@ var neonDemo = angular.module('neonDemo', [
     'neonDemo.services',
     'neonDemo.directives',
     'neonDemo.filters',
-    'gridster'
+    'gridster',
+    'ui.bootstrap.datetimepicker'
 ]);
 
 angular.module('neonDemo.directives', []);
@@ -154,6 +155,10 @@ angular.element(document).ready(function() {
         }
         neonDemo.constant('opencpu', opencpuConfig);
 
+        var helpConfig = (config.help || {
+            guide: undefined,
+            video: undefined
+        });
         var dashboardConfig = config.dashboard || {
             gridsterColumns: 6,
             gridsterMargins: 10,
@@ -162,6 +167,7 @@ angular.element(document).ready(function() {
             hideErrorNotifications: false,
             hideHeader: false
         };
+        dashboardConfig.help = helpConfig;
         neonDemo.constant('config', dashboardConfig);
 
         neonDemo.value('popups', {
