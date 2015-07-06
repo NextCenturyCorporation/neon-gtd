@@ -231,9 +231,9 @@ angular.module("neonDemo.services")
                     for(var i = 1; i < relations.length; i++) {
                         tableString += ("/" + relations[i].table);
                     }
-                    tableString += " - ";
+                    tableString += ": ";
 
-                    return name.visName + ": " + tableString + (name.text ? name.text : "");
+                    return name.visName + " - " + tableString + (name.text ? name.text : "");
                 } else {
                     return null;
                 }

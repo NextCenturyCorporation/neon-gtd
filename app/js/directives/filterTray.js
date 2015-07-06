@@ -40,7 +40,7 @@ angular.module('neonDemo.directives')
                     $scope.messenger.removeEvents();
                 });
 
-                $scope.queryForState();
+                //$scope.queryForState();
             };
 
             var onDatasetChanged = function(message) {

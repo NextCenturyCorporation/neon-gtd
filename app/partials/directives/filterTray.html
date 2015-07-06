@@ -1,1 +1,5 @@
-<div ng-repeat="filter in filters.formatted">{{filter}}</div>
+<div class="filter-tray-filters" ng-show="filters.formatted.length > 0">
+    <div ng-repeat="filter in filters.formatted" class="filter-tray-filter">
+        {{filter}}
+    </div>
+</div>
