@@ -46,7 +46,7 @@
         <!-- Header -->
         <!-- This could be made into either a directive or a partial -->
         <nav role="navigation" class="navbar">
-            <div class="navbar-default navbar-static-top" data-spy="{true: '', false: 'affix'}[hideNavbarItems]">
+            <div class="navbar-default navbar-static-top" ng-class="{true: '', false: 'affix'}[hideNavbarItems == true]">
                 <div class="container">
 
                     <div class="pull-left" ng-show="hideNavbarItems">
@@ -78,7 +78,7 @@
                     <database-config gridster-configs="visualizations" ng-hide="hideNavbarItems"></database-config>
 
                     <!-- Add visualization control -->
-                    <div add-visualization gridster-configs="visualizations" ng-hide="hideNavbarItems"></div>
+                    <div add-visualization gridster-configs="visualizations" ng-hide="hideNavbarItems || hideAddVisualizationsButton"></div>
 
                     <!--
                     <ul class="nav navbar-nav" ng-hide="hideNavbarItems">
@@ -108,7 +108,9 @@
         </nav>
 
         <!-- Trays -->
+        <!--
         <div class="panel-group" id="trays" ng-hide="hideNavbarItems">
+        -->
 
             <!-- Filter Builder tray -->
             <!--
@@ -178,7 +180,9 @@
 
             </div> -->
 
+        <!--
         </div>
+        -->
 
         <!-- DASHBOARD CONTENT -->
         <div class="container">

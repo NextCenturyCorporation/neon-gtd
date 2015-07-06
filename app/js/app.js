@@ -163,6 +163,7 @@ angular.element(document).ready(function() {
             gridsterColumns: 6,
             gridsterMargins: 10,
             hideNavbarItems: false,
+            hideAddVisualizationsButton: false,
             hideAdvancedOptions: false,
             hideErrorNotifications: false,
             hideHeader: false
