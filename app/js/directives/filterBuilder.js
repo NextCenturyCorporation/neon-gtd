@@ -430,6 +430,9 @@ angular.module('neonDemo.directives')
             $scope.publishReplaceFilterEvents = function(filters, successCallback, errorCallback) {
                 var filterObject = filters.shift();
                 var filter = filterObject.filter;
+
+                filter.name("Filter Builder: " + filter.whereClause.lhs + " " + filter.whereClause.operator + " " + filter.whereClause.rhs);
+
                 var databaseName = filterObject.databaseName;
                 var tableName = filterObject.tableName;
                 var filterKey = $scope.filterTable.getFilterKey(databaseName, tableName);

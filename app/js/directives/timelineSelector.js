@@ -279,14 +279,15 @@ function(connectionService, datasetService, errorNotificationService, filterServ
                     return;
                 }
 
+                var relations = datasetService.getRelations($scope.options.database.name, $scope.options.table.name, [$scope.options.dateField]);
+                datasetService.setDateBrushExtentForRelations(relations, $scope.brush);
+
                 var nameIncludeTime = $scope.options.granularity === HOUR;
                 var filterNameObj = {
                     visName: "Timeline",
-                    text: getDateString($scope.startExtent, nameIncludeTime) + " to " + getDateString($scope.endExtent, nameIncludeTime)
+                    text: getDateString($scope.startDateForDisplay, nameIncludeTime) + " to " + getDateString($scope.endDateForDisplay, nameIncludeTime)
                 };
 
-                var relations = datasetService.getRelations($scope.options.database.name, $scope.options.table.name, [$scope.options.dateField]);
-                datasetService.setDateBrushExtentForRelations(relations, $scope.brush);
                 filterService.replaceFilters($scope.messenger, relations, $scope.filterKeys, $scope.createFilterClauseForDate, filterNameObj, callback);
             };
 

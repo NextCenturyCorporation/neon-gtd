@@ -778,7 +778,21 @@ function(connectionService, datasetService, errorNotificationService, filterServ
 
                 var relations = datasetService.getRelations($scope.options.database.name, $scope.options.table.name, [$scope.options.attrX]);
                 datasetService.setDateBrushExtentForRelations(relations, $scope.brushExtent);
-                filterService.replaceFilters($scope.messenger, relations, $scope.filterKeys, createFilterClauseForDate, $scope.queryForData);
+
+                var filterNameObj = {
+                    visName: "LineChart",
+                    text: getDateString($scope.brushExtent[0], false) + " to " + getDateString($scope.brushExtent[1], false)
+                };
+
+                filterService.replaceFilters($scope.messenger, relations, $scope.filterKeys, createFilterClauseForDate, filterNameObj, $scope.queryForData);
+            };
+
+            var getDateString = function(date, includeTime) {
+                var dateString = (date.getMonth() + 1) + "/" + date.getDate() + "/" + date.getFullYear();
+                if(includeTime) {
+                    dateString = dateString + " " + date.getHours() + ":" + (date.getMinutes() < 10 ? "0" : "") + date.getMinutes();
+                }
+                return dateString;
             };
 
             /**

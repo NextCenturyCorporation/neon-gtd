@@ -300,7 +300,9 @@ angular.module('neonDemo.directives')
              */
             var addFiltersForLayer = function(layer) {
                 var relations = datasetService.getRelations(layer.database, layer.table, [layer.latitudeMapping, layer.longitudeMapping]);
-                filterService.replaceFilters($scope.messenger, relations, layer.filterKeys, $scope.createFilterClauseForExtent, function() {
+                filterService.replaceFilters($scope.messenger, relations, layer.filterKeys, $scope.createFilterClauseForExtent, {
+                    visName: "Map"
+                }, function() {
                     $scope.$apply(function() {
                         // TODO: Need a way to defer this so we don't reload everything
                         // for every filtering layer and related filter.
