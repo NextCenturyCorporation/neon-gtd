@@ -50,6 +50,22 @@
             </div>
             <div class="clearfix"></div>
         </div>
+
+        <div class="form-group">
+            <label>Show Focus</label>
+            <div class="btn-group">
+                <label class="btn btn-default" ng-class="{true: 'active', false: ''}[options.showFocus === 'on_filter']">
+                    <input type="radio" style="display:none" ng-model="options.showFocus" value="on_filter"> On Filter
+                </label>
+                <label class="btn btn-default" ng-class="{true: 'active', false: ''}[options.showFocus === 'always']">
+                    <input type="radio" style="display:none" ng-model="options.showFocus" value="always"> Always
+                </label>
+                <label class="btn btn-default" ng-class="{true: 'active', false: ''}[options.showFocus === 'never']">
+                    <input type="radio" style="display:none" ng-model="options.showFocus" value="never"> Never
+                </label>
+            </div>
+            <div class="clearfix"></div>
+        </div>
     </options-menu>
 </div>
 
@@ -76,7 +92,7 @@
 </div>
 
   <div class="collapsed" ng-class="{true: 'collapsed', false: ''}[options.collapsed]">
-    <div timeline-selector-chart timeline-data='data' timeline-brush='brush' collapsed='options.collapsed' extent-dirty='extentDirty' primary-series='options.primarySeries' granularity='options.granularity'></div>
+    <div timeline-selector-chart timeline-data='data' timeline-brush='brush' collapsed='options.collapsed' extent-dirty='extentDirty' primary-series='options.primarySeries' granularity='options.granularity' show-focus='options.showFocus'></div>
   </div>
 
   <div class="text-center" ng-class="{true: '', false: 'hidden'}[opencpu.enableMmpp && options.granularity === 'hour' && !eventProbabilitiesDisplayed &&!options.collapsed]">

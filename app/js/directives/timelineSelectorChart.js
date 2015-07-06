@@ -37,7 +37,8 @@ angular.module('neonDemo.directives')
             extentDirty: '=',
             collapsed: '=',
             primarySeries: '=',
-            granularity: '='
+            granularity: '=',
+            showFocus: '='
         },
         link: function($scope, $element) {
             // Initialize the chart.
@@ -49,6 +50,10 @@ angular.module('neonDemo.directives')
                 // angular's digest cycle.
                 $scope.$apply(function() {
                     $scope.timelineBrush = data;
+
+                    if($scope.showFocus === "on_filter") {
+                        $scope.chart.toggleFocus(true);
+                    }
                 });
             });
 
@@ -87,6 +92,14 @@ angular.module('neonDemo.directives')
             $scope.$watch('timelineBrush', function(newVal) {
                 if(newVal && newVal.length === 0) {
                     $scope.chart.clearBrush();
+
+                    if($scope.showFocus === "on_filter") {
+                        $scope.chart.toggleFocus(false);
+                    }
+                } else if(newVal) {
+                    if($scope.showFocus === "on_filter") {
+                        $scope.chart.toggleFocus(true);
+                    }
                 }
             });
 
@@ -109,6 +122,16 @@ angular.module('neonDemo.directives')
                     $scope.chart.updatePrimarySeries(newVal);
                     $scope.chart.render($scope.timelineData);
                     $scope.chart.renderExtent($scope.timelineBrush);
+                }
+            });
+
+            $scope.$watch('showFocus', function(newVal, oldVal) {
+                if(newVal === 'always') {
+                    $scope.chart.toggleFocus(true);
+                } else if(newVal === 'never') {
+                    $scope.chart.toggleFocus(false);
+                } else if(newVal === 'on_filter' && $scope.timelineBrush.length > 0) {
+                    $scope.chart.toggleFocus(true);
                 }
             });
         }

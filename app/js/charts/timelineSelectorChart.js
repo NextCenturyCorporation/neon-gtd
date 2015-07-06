@@ -44,6 +44,7 @@ charts.TimelineSelectorChart = function(element, configuration) {
     // Cache our element.
     this.element = element;
     this.d3element = d3.select(element);
+    this.baseHeight = 250;
     this.brushHandler = undefined;
     this.data = DEFAULT_DATA;
     this.primarySeries = false;
@@ -70,21 +71,32 @@ charts.TimelineSelectorChart = function(element, configuration) {
      * override defaults.
      * @param {Object} configuration
      * @param {Number} configuration.height
-     * @param {Object} configuration.margin Margin overrides for each side
-     * @param {Number} configuration.margin.bottom
-     * @param {Number} configuration.margin.left
-     * @param {Number} configuration.margin.right
-     * @param {Number} configuration.margin.top
+     * @param {Object} configuration.marginFocus Margin overrides for each side on the focus chart
+     * @param {Number} configuration.marginFocus.bottom
+     * @param {Number} configuration.marginFocus.left
+     * @param {Number} configuration.marginFocus.right
+     * @param {Number} configuration.marginFocus.top
+     * @param {Object} configuration.marginContext Margin overrides for each side on the context chart
+     * @param {Number} configuration.marginContext.bottom
+     * @param {Number} configuration.marginContext.left
+     * @param {Number} configuration.marginContext.right
+     * @param {Number} configuration.marginContext.top
      * @param {Number} configuration.width
      * @return charts.TimelineSelectorChart
      * @method configure
      */
     this.configure = function(configuration) {
         this.config = configuration || {};
-        this.config.margin = this.config.margin || {
-            top: 4,
+        this.config.marginFocus = this.config.marginFocus || {
+            top: 0,
             right: 15,
-            bottom: 4,
+            bottom: this.baseHeight,
+            left: 15
+        };
+        this.config.marginContext = this.config.marginContext || {
+            top: 22,
+            right: 15,
+            bottom: 18,
             left: 15
         };
         this.granularity = this.config.granularity || this.granularity;
@@ -172,10 +184,13 @@ charts.TimelineSelectorChart = function(element, configuration) {
     this.clearBrush = function() {
         this.brush.clear();
         d3.select(this.element).select('.brush').call(this.brush);
+        if(this.data.length && this.data[0].data) {
+            this.render(this.data);
+        }
     };
 
     /**
-     * Updates the positions of the east and west timeline masks for unselected areas.
+     * Updates the positions of the east and west timeline masks for unselected areas
      * @method updateMask
      */
     this.updateMask = function() {
@@ -208,13 +223,13 @@ charts.TimelineSelectorChart = function(element, configuration) {
                 }
 
                 if(extent1[0] < extent1[1]) {
-                    d3.select(this).call(brush.extent(extent1));
+                    d3.select(".brush").call(brush.extent(extent1));
                 }
             }
         }
 
         // Update mask
-        var brushElement = $(this);
+        var brushElement = $(".brush");
         var xPos = brushElement.find('.extent').attr('x');
 
         var extentWidth = brushElement.find('.extent').attr('width');
@@ -228,6 +243,38 @@ charts.TimelineSelectorChart = function(element, configuration) {
             // Otherwise, update mask positions to new extent location
             brushElement.find('.mask-west').attr('x', parseFloat(xPos) - width);
             brushElement.find('.mask-east').attr('x', parseFloat(xPos) + parseFloat(extentWidth));
+        }
+
+        updateFocusChart();
+    };
+
+    /**
+     * Shows/Hides the focus graph
+     * @param {boolean} showFocus Set to true to show the focus graph. False otherwise.
+     * @method toggleFocus
+     */
+    this.toggleFocus = function(showFocus) {
+        if(showFocus) {
+            this.configure({
+                marginFocus: {
+                    top: 22,
+                    right: 15,
+                    bottom: 99,
+                    left: 15
+                },
+                marginContext: {
+                    top: 185,
+                    right: 15,
+                    bottom: 18,
+                    left: 15
+                }
+            });
+        } else {
+            this.configure();
+        }
+
+        if(this.data.length && this.data[0].data) {
+            this.redrawChart();
         }
     };
 
@@ -244,15 +291,15 @@ charts.TimelineSelectorChart = function(element, configuration) {
     this.render = function(values) {
         var me = this;
         var i = 0;
-        var width = this.determineWidth(this.d3element) - this.config.margin.left - this.config.margin.right;
+        this.width = this.determineWidth(this.d3element) - this.config.marginFocus.left - this.config.marginFocus.right;
         // Depending on the granularity, the bars are not all the same width (months are different
         // lengths). But this is accurate enough to place tick marks and make other calculations.
-        var approximateBarWidth = 0;
+        this.approximateBarWidth = 0;
 
-        var baseHeight = 130;
-        $(this.d3element[0]).css("height", (baseHeight * values.length));
-        var height = (this.determineHeight(this.d3element) - (this.config.margin.top) - this.config.margin.bottom);
-        var chartHeight = baseHeight - this.config.margin.top - this.config.margin.bottom;
+        $(this.d3element[0]).css("height", (this.baseHeight * values.length));
+        this.heightFocus = (this.baseHeight - (this.config.marginFocus.top) - this.config.marginFocus.bottom);
+        var heightContext = (this.baseHeight - (this.config.marginContext.top) - this.config.marginContext.bottom);
+        var svgHeight = this.determineHeight(this.d3element);
 
         var fullDataSet = [];
         if(values && values.length > 0) {
@@ -260,17 +307,18 @@ charts.TimelineSelectorChart = function(element, configuration) {
             // Get list of all data to calculate min/max and domain
             for(i = 0; i < values.length; i++) {
                 fullDataSet = fullDataSet.concat(values[i].data);
-                if(values[i].data && !approximateBarWidth) {
-                    approximateBarWidth = (width / values[i].data.length);
+                if(values[i].data && !this.approximateBarWidth) {
+                    this.approximateBarWidth = (this.width / values[i].data.length);
                 }
             }
         }
 
         // Setup the axes and their scales.
-        var x = d3.time.scale.utc().range([0, width]);
+        this.xFocus = d3.time.scale.utc().range([0, this.width]);
+        this.xContext = d3.time.scale.utc().range([0, this.width]);
 
         // Save the brush as an instance variable to allow interaction on it by client code.
-        this.brush = d3.svg.brush().x(x).on("brush", this.updateMask);
+        this.brush = d3.svg.brush().x(this.xContext).on("brush", this.updateMask);
 
         if(this.brushHandler) {
             this.brush.on("brushstart", function() {
@@ -289,11 +337,10 @@ charts.TimelineSelectorChart = function(element, configuration) {
             this.brush.on("brushend", wrapBrushHandler(this, this.brushHandler));
         }
 
-        //var heightRange = y.range()[0];
         function resizePath(d) {
             var e = +(d === "e");
             var x = e ? 1 : -1;
-            var y = height / 3;
+            var y = heightContext / 3;
             return "M" + (0.5 * x) + "," + y +
                 "A6,6 0 0 " + e + " " + (6.5 * x) + "," + (y + 6) +
                 "V" + (2 * y - 6) +
@@ -313,23 +360,27 @@ charts.TimelineSelectorChart = function(element, configuration) {
         }));
 
         this.xDomain = [xMin, xMax];
-        x.domain(this.xDomain);
+        this.xFocus.domain(this.xDomain);
+        this.xContext.domain(this.xDomain);
 
-        var xAxis = d3.svg.axis().scale(x).orient("bottom");
+        this.xAxisFocus = d3.svg.axis().scale(this.xFocus).orient("bottom");
+        var xAxisContext = d3.svg.axis().scale(this.xContext).orient("bottom");
 
         // We don't want the ticks to be too close together, so calculate the most ticks that
         // comfortably fit on the timeline
-        var maximumNumberOfTicks = Math.round(width / 100);
+        var maximumNumberOfTicks = Math.round(this.width / 100);
         // We don't want to have more ticks than buckets (e.g., monthly buckets with daily ticks
         // look funny)
-        var minimumTickRange = d3.time[me.granularity].utc.range;
-        if(x.ticks(minimumTickRange).length < maximumNumberOfTicks) {
+        var minimumTickRange = d3.time[this.granularity].utc.range;
+        if(this.xFocus.ticks(minimumTickRange).length < maximumNumberOfTicks) {
             // There's enough room to do one tick per bucket
-            xAxis.ticks(minimumTickRange);
+            this.xAxisFocus.ticks(minimumTickRange);
+            xAxisContext.ticks(minimumTickRange);
         } else {
             // One tick per bucket at this granularity is too many; let D3 figure out tick spacing.
             // Note that D3 may give us a few more ticks than we specify if it feels like it.
-            xAxis.ticks(maximumNumberOfTicks);
+            this.xAxisFocus.ticks(maximumNumberOfTicks);
+            xAxisContext.ticks(maximumNumberOfTicks);
         }
 
         // Clear the old contents by replacing innerhtml.
@@ -338,180 +389,220 @@ charts.TimelineSelectorChart = function(element, configuration) {
         // Append our chart graphics
         this.svg = d3.select(this.element)
             .attr("class", "timeline-selector-chart")
-            .append("svg");
+            .append("svg")
+            .attr("height", svgHeight + this.config.marginFocus.left + this.config.marginFocus.right)
+            .attr("width", this.width + this.config.marginFocus.left + this.config.marginFocus.right);
 
         this.svg.append("defs").append("clipPath")
             .attr("id", "clip")
             .append("rect")
-            .attr("width", width)
-            .attr("height", height);
+            .attr("width", this.width - this.config.marginFocus.left - this.config.marginFocus.right)
+            .attr("height", svgHeight);
 
         var context = this.svg.append("g")
             .attr("class", "context")
-            .attr("transform", "translate(" + this.config.margin.left + "," + this.config.margin.top + ")");
+            .attr("transform", "translate(" + this.config.marginContext.left + "," + this.config.marginContext.top + ")");
 
         context.append("g")
             .attr("class", "x axis")
-            .attr("transform", "translate(0," + (height + 2) + ")")
-            .call(xAxis);
+            .attr("transform", "translate(0," + heightContext + ")")
+            .call(xAxisContext);
 
         context.selectAll('.major text')
-            .attr('transform', 'translate(' + (approximateBarWidth / 2) + ',0)');
+            .attr('transform', 'translate(' + (this.approximateBarWidth / 2) + ',0)');
 
         context.selectAll('.major line')
-            .attr('transform', 'translate(' + (approximateBarWidth / 2) + ',0)');
+            .attr('transform', 'translate(' + (this.approximateBarWidth / 2) + ',0)');
 
         // Render a series
         var seriesPos = 0;
         var createSeries = function(series) {
-            var xOffset = approximateBarWidth / 2;
+            var xOffset = me.approximateBarWidth / 2;
             if(series.type === 'bar') {
                 xOffset = 0;
             }
 
-            var container = context.append("g")
+            var focus = me.svg.append("g")
+                .attr("class", "focus-" + series.name)
+                .attr("transform", "translate(" + me.config.marginFocus.left + "," + me.config.marginFocus.top + ")");
+
+            // Prevents the x-axis from being shown
+            if(me.config.marginFocus.bottom === me.baseHeight) {
+                focus.attr("display", "none");
+            }
+
+            focus.append("g")
+                .attr("class", "x axis")
+                .attr("transform", "translate(0," + me.heightFocus + ")")
+                .call(me.xAxisFocus);
+
+            focus.selectAll('.major text')
+                .attr('transform', 'translate(' + (me.approximateBarWidth / 2) + ',0)');
+
+            focus.selectAll('.major line')
+                .attr('transform', 'translate(' + (me.approximateBarWidth / 2) + ',0)');
+
+            var focusContainer = focus.append("g")
                 .attr("class", series.name)
-                .attr("transform", "translate(" + xOffset + "," + ((chartHeight + me.config.margin.top + me.config.margin.bottom) * seriesPos) + ")");
+                .attr("transform", "translate(" + xOffset + "," + ((me.heightFocus + (me.config.marginFocus.top * 2) + me.config.marginFocus.bottom) * seriesPos) + ")")
+                .on('mousemove', function() {
+                    var mouseLocation = d3.mouse(this);
+                    var graph_x = me.xFocus.invert(mouseLocation[0]);
 
-            var y = d3.scale.linear().range([chartHeight, 0]);
-            var yAxis = d3.svg.axis().scale(y).orient("right").ticks(2);
+                    var bisect = d3.bisector(function(d) {
+                        return d.date;
+                    }).right;
+                    var dataIndex = bisect(values[0].data, graph_x) - 1;
+                    if(dataIndex >= 0 && dataIndex < values[0].data.length) {
+                        showTooltip(values[0].data[dataIndex], d3.event);
+                    }
+                })
+                .on('mouseout', function() {
+                    hideTooltip();
+                });
 
-            // Use lowest value or 0 for Y-axis domain, whichever is less (e.g. if negative)
-            var minY = d3.min(series.data.map(function(d) {
-                return d.value;
-            }));
-            minY = minY < 0 ? minY : 0;
+            var axis = me.drawFocusChart(series);
+            var yFocus = axis.y;
+            var yAxis = axis.yAxis;
+            var yContext = d3.scale.linear().range([heightContext, 0]);
+            yContext.domain(yFocus.domain());
+            
+            var contextContainer;
 
-            y.domain([minY, d3.max(series.data.map(function(d) {
-                return d.value;
-            }))]);
+            // Only had context timeline on first chart (for when there are multiple charts)
+            if(series.name === me.primarySeries.name) {
+                contextContainer = context.append("g")
+                    .attr("class", series.name)
+                    .attr("transform", "translate(" + xOffset + "," + ((heightContext + me.config.marginContext.top + me.config.marginContext.bottom) * seriesPos) + ")");
+            
+                var style = 'stroke:' + series.color + ';';
+                var chartTypeFocus = '', chartTypeContext = '';
 
-            var style = 'stroke:' + series.color + ';';
-            var chartType = '';
+                // For now, all anomalies are shown as red, but this could be changed to be a
+                // configurable parameter that is passed in with the series, like series.color.
+                var anomalyColor = 'red';
 
-            // For now, all anomalies are shown as red, but this could be changed to be a
-            // configurable parameter that is passed in with the series, like series.color.
-            var anomalyColor = 'red';
+                // If type is bar AND the data isn't too long, render a bar plot
+                if(series.type === 'bar' && series.data.length < me.width) {
+                    var barheight = 0;
 
-            // If type is bar AND the data isn't too long, render a bar plot
-            if(series.type === 'bar' && series.data.length < width) {
-                var barheight = 0;
+                    if(series.data.length < 60) {
+                        style = 'stroke:#f1f1f1;';
+                        barheight++;
+                    }
+                    
+                    var anomalyStyle = style + 'fill: ' + anomalyColor + '; stroke: ' + anomalyColor + ';';
+                    style += 'fill:' + series.color + ';';
 
-                if(series.data.length < 60) {
-                    style = 'stroke:#f1f1f1;';
-                    barheight++;
-                }
-
-                var anomalyStyle = style + 'fill: ' + anomalyColor + '; stroke: ' + anomalyColor + ';';
-                style += 'fill:' + series.color + ';';
-
-                container.selectAll(".bar")
-                    .data(series.data)
-                .enter().append("rect")
-                    .attr("class", "bar")
-                    .attr("style", function(d) {
-                        return d.anomaly ? anomalyStyle : style;
-                    })
-                    .attr("x", function(d) {
-                        return x(d.date);
-                    })
-                    .attr("width", function(d) {
-                        return x(d3.time[me.granularity].utc.offset(d.date, 1)) - x(d.date);
-                    })
-                    .attr("y", function(d) {
-                        return y(Math.max(0, d.value));
-                    })
-                    //.attr("height", function(d) { return (barheight) - y(d.value); });
-                    .attr("height", function(d) {
-                        var height = y(d.value) - y(0);
-                        var offset = height / height || 0;
-                        var calculatedHeight = Math.abs(height) + (offset * barheight);
-                        return calculatedHeight;
-                    });
-            } else {
-                // If type is line, render a line plot
-                if(series.type === 'line') {
-                    chartType = d3.svg.line()
-                        .x(function(d) {
-                            return x(d.date);
+                    contextContainer.selectAll(".bar")
+                        .data(series.data)
+                    .enter().append("rect")
+                        .attr("class", function(d) {
+                            return "bar " + d.date;
                         })
-                        .y(function(d) {
-                            return y(d.value);
+                        .attr("style", function(d) {
+                            return d.anomaly ? anomalyStyle : style;
+                        })
+                        .attr("x", function(d) {
+                            return me.xContext(d.date);
+                        })
+                        .attr("width", function(d) {
+                            return me.xContext(d3.time[me.granularity].utc.offset(d.date, 1)) - me.xContext(d.date);
+                        })
+                        .attr("y", function(d) {
+                            return yContext(Math.max(0, d.value));
+                        })
+                        .attr("height", function(d) {
+                            var height = yContext(d.value) - yContext(0);
+                            var offset = height / height || 0;
+                            var calculatedHeight = Math.abs(height) + (offset * barheight);
+                            return calculatedHeight;
                         });
                 } else {
-                    // Otherwise, default to area, e.g. for bars whose data is too long
-                    style += 'fill:' + series.color + ';';
-                    chartType = d3.svg.area()
-                        .x(function(d) {
-                            return x(d.date);
-                        })
-                        .y0(function(d) {
-                            return y(Math.min(0, d.value));
-                        })
-                        .y1(function(d) {
-                            return y(Math.max(0, d.value));
-                        });
-                }
-
-                container.append("path")
-                    .datum(series.data)
-                    .attr("class", series.type)
-                    .attr("d", chartType)
-                    .attr("style", style);
-
-                if(series.data.length < 80) {
-                    var func = function(d) {
-                        return x(d.date);
-                    };
-                    if(series.data.length === 1) {
-                        func = width / 2;
+                    // If type is line, render a line plot
+                    if(series.type === 'line') {
+                        chartTypeContext = d3.svg.line()
+                            .x(function(d) {
+                                return me.xContext(d.date);
+                            })
+                            .y(function(d) {
+                                return yContext(d.value);
+                            });
+                    } else {
+                        // Otherwise, default to area, e.g. for bars whose data is too long
+                        style += 'fill:' + series.color + ';';
+                        chartTypeContext = d3.svg.area()
+                            .x(function(d) {
+                                return me.xContext(d.date);
+                            })
+                            .y0(function(d) {
+                                return yContext(Math.min(0, d.value));
+                            })
+                            .y1(function(d) {
+                                return yContext(Math.max(0, d.value));
+                            });
                     }
 
-                    container.selectAll("dot")
-                        .data(series.data)
-                    .enter().append("circle")
-                        .attr("class", "dot")
-                        .attr("style", 'fill:' + series.color + ';')
-                        .attr("r", 3)
-                        .attr("cx", func)
-                        .attr("cy", function(d) {
-                            return y(d.value);
+                    contextContainer.append("path")
+                        .datum(series.data)
+                        .attr("class", series.type)
+                        .attr("d", chartTypeContext)
+                        .attr("style", style);
+
+                    if(series.data.length < 80) {
+                        var func = function(d) {
+                            return me.xContext(d.date);
+                        };
+                        if(series.data.length === 1) {
+                            func = width / 2;
+                        }
+
+                        contextContainer.selectAll("dot")
+                            .data(series.data)
+                        .enter().append("circle")
+                            .attr("class", "dot")
+                            .attr("style", 'fill:' + series.color + ';')
+                            .attr("r", 3)
+                            .attr("cx", func)
+                            .attr("cy", function(d) {
+                                return yContext(d.value);
+                            });
+                    } else {
+                        // If a line graph was used and there are anomalies, put a circle on the
+                        // anomalous points
+                        var anomalies = series.data.filter(function(it) {
+                            return it.anomaly === true;
                         });
-                } else {
-                    // If a line graph was used and there are anomalies, put a circle on the
-                    // anomalous points
-                    var anomalies = series.data.filter(function(it) {
-                        return it.anomaly === true;
-                    });
-                    container.selectAll("dot")
-                        .data(anomalies)
-                    .enter().append("circle")
-                        .attr("class", "dot")
-                        .attr("style", 'fill:' + anomalyColor + ';')
-                        .attr("r", 3)
-                        .attr("cx", function(d) {
-                            return x(d.date);
-                        })
-                        .attr("cy", function(d) {
-                            return y(d.value);
-                        });
+
+                        contextContainer.selectAll("dot")
+                            .data(anomalies)
+                        .enter().append("circle")
+                            .attr("class", "dot")
+                            .attr("style", 'fill:' + anomalyColor + ';')
+                            .attr("r", 3)
+                            .attr("cx", function(d) {
+                                return me.xContext(d.date);
+                            })
+                            .attr("cy", function(d) {
+                                return yContext(d.value);
+                            });
+                    }
                 }
             }
 
-            container.append("line")
+            focusContainer.append("line")
                 .attr({
                     class: "mini-axis",
                     x1: 0,
-                    x2: width - (xOffset * 2),
-                    y1: y(0),
-                    y2: y(0)
+                    x2: me.width - (xOffset * 2),
+                    y1: yFocus(0),
+                    y2: yFocus(0)
                 });
 
             charts.push({
                 name: series.name,
                 color: series.color,
                 yAxis: yAxis,
-                container: container,
                 index: seriesPos
             });
 
@@ -535,7 +626,7 @@ charts.TimelineSelectorChart = function(element, configuration) {
             .attr("class", "brush")
             .on('mousemove', function() {
                 var mouseLocation = d3.mouse(this);
-                var graph_x = x.invert(mouseLocation[0]);
+                var graph_x = me.xContext.invert(mouseLocation[0]);
 
                 var bisect = d3.bisector(function(d) {
                     return d.date;
@@ -552,30 +643,30 @@ charts.TimelineSelectorChart = function(element, configuration) {
             });
 
         gBrush.append("rect")
-            .attr("x", width + this.config.margin.right)
+            .attr("x", this.width + this.config.marginContext.right)
             .attr("y", -6)
-            .attr("width", width)
-            .attr("height", height + 7)
+            .attr("width", this.width)
+            .attr("height", heightContext + 7)
             .attr("class", "mask mask-east");
 
         gBrush.append("rect")
-            .attr("x", (0 - (width + this.config.margin.left)))
+            .attr("x", (0 - (this.width + this.config.marginContext.left)))
             .attr("y", -6)
-            .attr("width", width)
-            .attr("height", height + 7)
+            .attr("width", this.width)
+            .attr("height", heightContext + 7)
             .attr("class", "mask mask-west");
 
         gBrush.call(this.brush);
 
         gBrush.selectAll("rect")
             .attr("y", -6)
-            .attr("height", height + 7);
+            .attr("height", heightContext + 7);
 
         gBrush.selectAll(".e")
             .append("rect")
             .attr("y", -6)
             .attr("width", 1)
-            .attr("height", height + 6)
+            .attr("height", heightContext + 6)
             .attr("class", "resize-divider");
 
         gBrush.selectAll(".w")
@@ -583,7 +674,7 @@ charts.TimelineSelectorChart = function(element, configuration) {
             .attr("x", -1)
             .attr("y", -6)
             .attr("width", 1)
-            .attr("height", height + 6)
+            .attr("height", heightContext + 6)
             .attr("class", "resize-divider");
 
         gBrush.selectAll(".resize")
@@ -591,16 +682,26 @@ charts.TimelineSelectorChart = function(element, configuration) {
             .attr("d", resizePath);
 
         for(i = 0; i < charts.length; i++) {
-            context.append("g")
+            var focus = me.svg.select(".focus-" + charts[i].name);
+
+            focus.append("g")
                 .attr("class", "y axis series-y")
-                .attr("transform", "translate(0," + ((chartHeight + this.config.margin.top + this.config.margin.bottom) * charts[i].index) + ")")
+                .attr("transform", "translate(0," + ((me.heightFocus + (this.config.marginFocus.top * 2) + this.config.marginFocus.bottom) * charts[i].index) + ")")
                 .call(charts[i].yAxis);
 
-            context.append("text")
+            focus.append("text")
                 .attr("class", "series-title")
                 .attr("fill", charts[i].color)
-                .attr("transform", "translate(0," + (((chartHeight + this.config.margin.top + this.config.margin.bottom) * charts[i].index) - 5) + ")")
-                .text(charts[i].name);
+                .attr("transform", "translate(0," + (((me.heightFocus + (this.config.marginFocus.top * 2) + this.config.marginFocus.bottom) * charts[i].index) - 5) + ")")
+                .text(charts[i].name + " - Filtered");
+        }
+
+        if(this.primarySeries) {
+            context.append("text")
+                .attr("class", "series-title")
+                .attr("fill", this.primarySeries.color)
+                .attr("transform", "translate(0, 5)")
+                .text(this.primarySeries.name);
         }
     };
 
@@ -635,6 +736,206 @@ charts.TimelineSelectorChart = function(element, configuration) {
         var brushElement = this.svg.select(".brush");
         brushElement.call(this.brush.extent(extent));
         this.updateMask.apply(brushElement[0][0]);
+    };
+
+    /*
+     * Draws all the necessary components for the focus chart using only the data within the brushed area (if any)
+     * @param {Object} series An object containing all the necessary information to draw the data on a graph
+     * @param {String} series.color Hex color for the graph
+     * @param {String} series.data An array of objects that consist of a date and value field
+     * @param {String} series.name Name of the series
+     * @param {String} series.type Type of graph to draw (bar or line)
+     * @return {Object} An object consisting of y (the y scale of the graph) and yAxis (the y axis of the graph)
+     * @method drawFocusChart
+     */
+    this.drawFocusChart = function(series) {
+        var me = this;
+
+        me.svg.select(".focus-" + series.name).select(".x.axis").call(me.xAxisFocus);
+        
+        var focus = me.svg.select(".focus-" + series.name + " ." + series.name);
+
+        var y = d3.scale.linear().range([me.heightFocus, 0]);
+
+        // Get only the data in the brushed area
+        var dataShown = _.filter(series.data, function(obj) {
+            return (me.xFocus.domain()[0] <= obj.date && obj.date < me.xFocus.domain()[1]);
+        });
+
+        // Use lowest value or 0 for Y-axis domain, whichever is less (e.g. if negative)
+        var minY = d3.min(dataShown.map(function(d) {
+            return d.value;
+        }));
+        minY = minY < 0 ? minY : 0;
+
+        y.domain([minY, d3.max(dataShown.map(function(d) {
+            return d.value;
+        }))]);
+
+        var yAxis = d3.svg.axis().scale(y).orient("right").ticks(2);
+
+        focus.select(".y.axis.series-y").call(yAxis);
+
+        var style = 'stroke:' + series.color + ';';
+        
+        // For now, all anomalies are shown as red, but this could be changed to be a
+        // configurable parameter that is passed in with the series, like series.color.
+        var anomalyColor = 'red';
+
+        // If type is bar AND the data isn't too long, render a bar plot
+        if(series.type === 'bar' && series.data.length < me.width) {
+            var barheight = 0;
+
+            if(series.data.length < 60) {
+                style = 'stroke:#f1f1f1;';
+                barheight++;
+            }
+
+            var anomalyStyle = style + 'fill: ' + anomalyColor + '; stroke: ' + anomalyColor + ';';
+            style += 'fill:' + series.color + ';';
+
+            focus.selectAll("rect.bar").remove();
+
+            focus.selectAll("rect.bar")
+                .data(dataShown)
+            .enter().append("rect")
+                .attr("class", function(d) {
+                    return "bar " + d.date;
+                })
+                .attr("style", function(d) {
+                    return d.anomaly ? anomalyStyle : style;
+                })
+                .attr("x", function(d) {
+                    return me.xFocus(d.date);
+                })
+                .attr("width", function(d) {
+                    return me.xFocus(d3.time[me.granularity].utc.offset(d.date, 1)) - me.xFocus(d.date);
+                })
+                .attr("y", function(d) {
+                    return y(Math.max(0, d.value));
+                })
+                .attr("height", function(d) {
+                    var height = y(d.value) - y(0);
+                    var offset = height / height || 0;
+                    var calculatedHeight = Math.abs(height) + (offset * barheight);
+                    return calculatedHeight;
+                });
+        } else {
+            var chartType = '';
+
+            // If type is line, render a line plot
+            if(series.type === 'line') {
+                chartType = d3.svg.line()
+                    .x(function(d) {
+                        return me.xFocus(d.date);
+                    })
+                    .y(function(d) {
+                        return y(d.value);
+                    });
+            } else {
+                // Otherwise, default to area, e.g. for bars whose data is too long
+                style += 'fill:' + series.color + ';';
+                chartType = d3.svg.area()
+                    .x(function(d) {
+                        return me.xFocus(d.date);
+                    })
+                    .y0(function(d) {
+                        return y(Math.min(0, d.value));
+                    })
+                    .y1(function(d) {
+                        return y(Math.max(0, d.value));
+                    });
+            }
+
+            focus.selectAll("path." + series.type).remove();
+
+            focus.append("path")
+                .datum(dataShown)
+                .attr("class", series.type)
+                .attr("d", chartType)
+                .attr("style", style);
+
+            if(series.data.length < 80) {
+                var func = function(d) {
+                    return me.xFocus(d.date);
+                };
+                if(series.data.length === 1) {
+                    func = width / 2;
+                }
+
+                focus.selectAll("circle.dot").remove();
+
+                focus.selectAll("circle.dot")
+                    .data(dataShown)
+                .enter().append("circle")
+                    .attr("class", "dot")
+                    .attr("style", 'fill:' + series.color + ';')
+                    .attr("r", 3)
+                    .attr("cx", func)
+                    .attr("cy", function(d) {
+                        return y(d.value);
+                    });
+            } else {
+                // If a line graph was used and there are anomalies, put a circle on the
+                // anomalous points
+                var anomalies = dataShown.filter(function(it) {
+                    return it.anomaly === true;
+                });
+
+                focus.selectAll("circle.dot").remove();
+
+                focus.selectAll("circle.dot")
+                    .data(anomalies)
+                .enter().append("circle")
+                    .attr("class", "dot")
+                    .attr("style", 'fill:' + anomalyColor + ';')
+                    .attr("r", 3)
+                    .attr("cx", function(d) {
+                        return me.xFocus(d.date);
+                    })
+                    .attr("cy", function(d) {
+                        return y(d.value);
+                    });
+            }
+        }
+
+        return {y: y, yAxis: yAxis};
+    }
+
+    /**
+     * Updates the x axis as well as redraws the focus chart
+     * @method updateFocusChart
+     * @private
+     */
+    var updateFocusChart = function() {
+        var me = self;
+
+        if(me.data.length && !me.data[0].data) {
+            return;
+        }
+
+        me.xFocus.domain(me.brush.empty() ? me.xContext.domain() : me.brush.extent());
+        me.xDomain = [me.xFocus.domain()[0], me.xFocus.domain()[1]];
+
+        for(var i = 0; i < me.data.length; i++) {
+            var series = me.data[i];
+
+            var axis = me.drawFocusChart(series);
+            var y = axis.y;
+
+            var xOffset = me.approximateBarWidth / 2;
+            if(series.type === 'bar') {
+                xOffset = 0;
+            }
+
+            me.svg.selectAll("g." + series.name + " .mini-axis")
+                .attr({
+                    x1: 0,
+                    x2: me.width - (xOffset * 2),
+                    y1: y(0),
+                    y2: y(0)
+                });
+        }
     };
 
     var showTooltip = function(item, mouseEvent) {
