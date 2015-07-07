@@ -121,7 +121,10 @@ function(connectionService, datasetService, errorNotificationService, filterServ
                     return;
                 }
 
-                $scope.brush = [$scope.filter.start, $scope.filter.end];
+                // Convert the datetimepicker dates from local time to UTC to match the other dates used throughout the application.
+                var utcStart = new Date(Date.UTC($scope.filter.start.getFullYear(), $scope.filter.start.getMonth(), $scope.filter.start.getDate(), $scope.filter.start.getHours()));
+                var utcEnd = new Date(Date.UTC($scope.filter.end.getFullYear(), $scope.filter.end.getMonth(), $scope.filter.end.getDate() + 1, $scope.filter.end.getHours()));
+                $scope.brush = [utcStart, utcEnd];
                 $scope.extentDirty = true;
             };
 
