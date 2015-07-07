@@ -84,7 +84,7 @@ charts.LineChart.DEFAULT_MARGIN = {
     right: 0
 };
 charts.LineChart.DEFAULT_STYLE = {};
-charts.LineChart.DEFAULT_HIGHLIGHT_WIDTH = 20;
+charts.LineChart.DEFAULT_HIGHLIGHT_WIDTH = 4;
 
 charts.LineChart.prototype.determineWidth = function(element) {
     if(this.userSetWidth) {
