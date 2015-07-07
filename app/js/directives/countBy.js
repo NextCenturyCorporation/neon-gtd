@@ -494,7 +494,9 @@ function(external, popups, connectionService, datasetService, errorNotificationS
                             source: "user",
                             tags: ["filter", "count-by"]
                         });
-                        filterService.replaceFilters($scope.messenger, relations, $scope.filterKeys, $scope.createFilterClauseForCount);
+                        filterService.replaceFilters($scope.messenger, relations, $scope.filterKeys, $scope.createFilterClauseForCount, {
+                            visName: "Count By"
+                        });
                     } else {
                         XDATA.userALE.log({
                             activity: "select",
@@ -506,7 +508,9 @@ function(external, popups, connectionService, datasetService, errorNotificationS
                             source: "user",
                             tags: ["filter", "count-by"]
                         });
-                        filterService.addFilters($scope.messenger, relations, $scope.filterKeys, $scope.createFilterClauseForCount);
+                        filterService.addFilters($scope.messenger, relations, $scope.filterKeys, $scope.createFilterClauseForCount, {
+                            visName: "Count By"
+                        });
                     }
                 }
             };

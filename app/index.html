@@ -54,7 +54,7 @@
 
                 <!-- FILTER STATUS TRAY -->
                 <div class="container" ng-show="showFilterStatusTray">
-                    <filter-tray></filter-tray>
+                    <filter-tray bound-parent="'nav.navbar'" update-parent-size="!hiseNavbarItems"></filter-tray>
                 </div>
             </div>
         </nav>
@@ -163,7 +163,6 @@
         <script src="js/directives/filterBuilder.js"></script>
         <script src="js/directives/filterState.js"></script>
         <script src="js/directives/filterTray.js"></script>
-        <script src="js/directives/gantt-chart.js"></script>
         <script src="js/directives/linechart.js"></script>
         <script src="js/directives/linksPopup.js"></script>
         <script src="js/directives/map.js"></script>
