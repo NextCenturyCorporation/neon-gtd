@@ -440,12 +440,12 @@ angular.module("neonDemo.services")
                                 var relationFieldName = relation[relationDatabaseName][relationTableName];
                                 relationToFields = initializeMapAsNeeded(relationToFields, relationDatabaseName, relationTableName);
 
-                                var existingIndex = relationFields[relationDatabaseName][relationTableName].map(function(object) {
+                                var existingIndex = relationToFields[relationDatabaseName][relationTableName].map(function(object) {
                                     return object.initial;
                                 }).indexOf(fieldName);
                                 if(existingIndex >= 0) {
                                     // If the database/table/field exists in the relation, add another related field.
-                                    relationFields[relationDatabaseName][relationTableName][existingIndex].related.push(relationFieldName);
+                                    relationToFields[relationDatabaseName][relationTableName][existingIndex].related.push(relationFieldName);
                                 } else {
                                     // Else create a new object for the database/table/field in the relation and add its related field.
                                     relationToFields[relationDatabaseName][relationTableName].push({
