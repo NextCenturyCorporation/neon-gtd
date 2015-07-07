@@ -18,7 +18,7 @@
     margin: 0px;
     padding: 10px;
     overflow-x: hidden;
-    overflow-y: scroll;
+    overflow-y: auto;
     height: @widget-height;
     width: @widget-width;
 
@@ -77,6 +77,34 @@
 
     .timeseries-selector-form-group {
         margin: 10px 0px 0px 5px;
+    }
+
+    .highlight {
+        fill: gold;
+    }
+
+    .neon-datetimepicker {
+        margin-top: 5px;
+
+        .dropdown-menu {
+            /* Match the width of two datetimepickers plus margin/padding/scrollbar. */
+            width: 682px;
+
+            label {
+                &.start-date {
+                    width: 320px;
+                }
+
+                &.end-date {
+                    width: 185px;
+                }
+            }
+
+            button {
+                margin-left: 5px;
+                margin-bottom: 5px;
+            }
+        }
     }
 }
 

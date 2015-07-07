@@ -26,9 +26,11 @@ angular.module('neonDemo.controllers')
 function($scope, $timeout, config, datasets) {
     $scope.hideNavbarItems = config.hideNavbarItems;
     $scope.showFilterStatusTray = config.showFilterStatusTray;
+    $scope.hideAddVisualizationsButton = config.hideAddVisualizationsButton;
     $scope.seeData = false;
     $scope.createFilters = false;
     $scope.filterCount = 0;
+    $scope.help = config.help;
 
     if($scope.hideNavbarItems) {
         for(var i = 0; i < datasets.length; ++i) {
@@ -223,4 +225,16 @@ function($scope, $timeout, config, datasets) {
 
     // Display the dashboard once the configuration file has been loaded and the controller has finished its initialization.
     $scope.displayDashboard = true;
+
+    // Pause the video if the modal is closed.
+    $("#videoModal").on("hidden.bs.modal", function() {
+        $("#helpVideo")[0].pause();
+    });
+
+    if(config.showVideoOnLoad && config.help.video) {
+        neon.ready(function() {
+            $("#videoModal").modal("show");
+            $("#helpVideo").attr("autoplay", "");
+        });
+    }
 }]);
