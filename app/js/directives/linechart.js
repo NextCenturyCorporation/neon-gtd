@@ -728,7 +728,7 @@ function(connectionService, datasetService, errorNotificationService, filterServ
                 });
                 $scope.chart.draw(data);
                 $scope.colorMappings = $scope.chart.getColorMappings();
-                $scope.noData = !data || !data.length;
+                $scope.noData = !data || !data.length || !data.data || !data.data.length;
                 $scope.loadingData = false;
 
                 // Use a timeout so we resize the chart after the legend renders (since the legend size affects the chart size).
@@ -867,6 +867,14 @@ function(connectionService, datasetService, errorNotificationService, filterServ
                     $scope.queryForData();
                     // We need to query for new data until there is no date filter and we query for the whole dataset.
                     $scope.queryOnChangeBrush = $scope.brushExtent.length >= 2 ? true : false;
+                    return;
+                }
+
+                // If the brush extent does not overlap with the date range of the data, just draw an empty chart.
+                if($scope.brushExtent[1] < new Date($scope.data[0].date) || $scope.brushExtent[0] > new Date($scope.data[$scope.data.length - 1].date)) {
+                    drawLineChart({
+                        data: []
+                    });
                     return;
                 }
 

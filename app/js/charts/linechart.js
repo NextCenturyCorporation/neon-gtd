@@ -209,7 +209,7 @@ charts.LineChart.prototype.getColorMappings = function() {
  * @method selectDate
  */
 charts.LineChart.prototype.selectDate = function(startDate, endDate) {
-    if(!this.data || !this.data.length) {
+    if(!this.data || !this.data.length || !this.data[0].data || !this.data[0].data.length) {
         return;
     }
 
@@ -310,7 +310,9 @@ charts.LineChart.prototype.showTooltip = function(index, date) {
  * @method deselectDate
  */
 charts.LineChart.prototype.deselectDate = function() {
-    this.highlight.style("visibility", "hidden");
+    if(this.highlight) {
+        this.highlight.style("visibility", "hidden");
+    }
     this.clearHoverCircles();
 };
 
@@ -817,12 +819,12 @@ charts.LineChart.prototype.draw = function(data) {
     if(data) {
         this.data = data;
     }
-    if(this.data) {
+    if(this.data && this.data.length && this.data[0].data && this.data[0].data.length) {
         this.drawLines(this.data);
-    }
-    this.drawBrush();
-    if(extent) {
-        this.renderBrushExtent(extent);
+        this.drawBrush();
+        if(extent) {
+            this.renderBrushExtent(extent);
+        }
     }
 };
 
