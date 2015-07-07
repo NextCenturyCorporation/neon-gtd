@@ -226,7 +226,7 @@ charts.LineChart.prototype.selectDate = function(startDate, endDate) {
         }
     });
 
-    if(startIndex < 0 || endIndex < 0) {
+    if(startIndex < 0 || endIndex < 0 || endDate < this.data[0].data[0].date || startDate > this.data[0].data[this.data[0].data.length - 1].date) {
         this.deselectDate();
         return;
     }
