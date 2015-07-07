@@ -21,7 +21,7 @@ angular.module('neonDemo.directives')
         restrict: 'EA',
         scope: {
             boundParent: '=',
-            updateParentHeight: '='
+            includeParentHeight: '='
         },
         link: function($scope, el) {
             var init = function() {
@@ -88,7 +88,10 @@ angular.module('neonDemo.directives')
             //calculate normal height of navbar (min-height) and add the size of the filter tray.
             var updateContainerHeight = function() {
                 var height = $(el).parent().height();
-                var minHeight = parseInt($scope.container.css("min-height"), 10);
+                var minHeight = 0;
+                if($scope.includeParentHeight) {
+                    minHeight = parseInt($scope.container.css("min-height"), 10);
+                }
                 var newHeight = minHeight + height;
                 $scope.container.height(newHeight);
             };

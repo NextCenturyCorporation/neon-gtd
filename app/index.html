@@ -79,12 +79,10 @@
                     <!-- Add visualization control -->
                     <div add-visualization gridster-configs="visualizations" ng-hide="hideNavbarItems || hideAddVisualizationsButton"></div>
                 </div>
-            </div>
-        </nav>
 
                 <!-- FILTER STATUS TRAY -->
                 <div class="container" ng-show="showFilterStatusTray">
-                    <filter-tray bound-parent="'nav.navbar'" update-parent-size="!hideNavbarItems"></filter-tray>
+                    <filter-tray bound-parent="'nav.navbar'" include-parent-height="!hideNavbarItems"></filter-tray>
                 </div>
             </div>
         </nav>
@@ -129,9 +127,6 @@
         <script src="lib/angular/js/angular.min.js"></script>
         <script src="lib/angular-gridster/js/angular-gridster.min.js"></script>
         <script src="lib/moment/js/moment.min.js"></script>
-        <script src="lib/angular-moment/js/angular-moment.min.js"></script>
-        <script src="lib/angular-gantt/js/angular-gantt.min.js"></script>
-        <script src="lib/angular-gantt/js/angular-gantt-plugins.min.js"></script>
         <script src="lib/angular-ui-tree/js/angular-ui-tree.min.js"></script>
         <script src="lib/javascript-detect-element-resize/js/jquery.resize.js"></script>
 
