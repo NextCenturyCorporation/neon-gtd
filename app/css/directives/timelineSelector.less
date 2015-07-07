@@ -89,6 +89,21 @@
         .dropdown-menu {
             /* Match the width of two datetimepickers plus margin/padding/scrollbar. */
             width: 682px;
+
+            label {
+                &.start-date {
+                    width: 320px;
+                }
+
+                &.end-date {
+                    width: 185px;
+                }
+            }
+
+            button {
+                margin-left: 5px;
+                margin-bottom: 5px;
+            }
         }
     }
 }

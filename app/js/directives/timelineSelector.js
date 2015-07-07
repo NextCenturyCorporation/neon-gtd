@@ -92,11 +92,27 @@ function(connectionService, datasetService, errorNotificationService, filterServ
                 showFocus: "on_filter"
             };
 
-            $scope.handleDateTimePicked = function() {
+            var datesEqual = function(a, b) {
+                return a.toDateString() === b.toDateString();
+            };
+
+            $scope.handleDateTimePickChange = function() {
+                if($scope.brush.length && datesEqual($scope.filter.start, $scope.brush[0]) && datesEqual($scope.filter.end, $scope.brush[1])) {
+                    $element.find(".save-button").addClass("disabled");
+                } else if(!$scope.brush.length && datesEqual($scope.filter.start, $scope.bucketizer.getStartDate()) && datesEqual($scope.filter.end, $scope.bucketizer.getEndDate())) {
+                    $element.find(".save-button").addClass("disabled");
+                } else {
+                    $element.find(".save-button").removeClass("disabled");
+                }
+            };
+
+            $scope.handleDateTimePickSave = function() {
                 $scope.filter.start = $scope.filter.start || $scope.bucketizer.getStartDate();
                 $scope.filter.end = $scope.filter.end || $scope.bucketizer.getEndDate();
+                $element.find(".save-button").addClass("disabled");
+                $element.find(".neon-datetimepicker").removeClass("open");
 
-                if($scope.filter.start.toDateString() === $scope.bucketizer.getStartDate().toDateString() && $scope.filter.end.toDateString() === $scope.bucketizer.getEndDate().toDateString()) {
+                if(datesEqual($scope.filter.start, $scope.bucketizer.getStartDate()) && datesEqual($scope.filter.end, $scope.bucketizer.getEndDate())) {
                     if($scope.brush.length) {
                         $scope.clearBrush();
                     }
@@ -107,9 +123,11 @@ function(connectionService, datasetService, errorNotificationService, filterServ
                 $scope.extentDirty = true;
             };
 
-            $scope.cancelDateTimePicked = function() {
+            $scope.handleDateTimePickCancel = function() {
                 $scope.filter.start = $scope.brush.length ? $scope.brush[0] : $scope.bucketizer.getStartDate();
                 $scope.filter.end = $scope.brush.length ? $scope.brush[1] : $scope.bucketizer.getEndDate();
+                $element.find(".save-button").addClass("disabled");
+                $element.find(".neon-datetimepicker").removeClass("open");
             };
 
             /**
@@ -201,6 +219,10 @@ function(connectionService, datasetService, errorNotificationService, filterServ
              * @method initialize
              */
             $scope.initialize = function() {
+                $element.find(".neon-datetimepicker").on("hide.bs.dropdown", function() {
+                    return false;
+                });
+
                 $element.resize(resizeDateTimePickerDropdown);
 
                 // Switch bucketizers when the granularity is changed.
@@ -265,7 +287,7 @@ function(connectionService, datasetService, errorNotificationService, filterServ
                             $scope.brush[1] = $scope.bucketizer.getEndDate();
                         }
 
-                        if($scope.brush[0].toDateString() === $scope.bucketizer.getStartDate().toDateString() && $scope.brush[1].toDateString() === $scope.bucketizer.getEndDate().toDateString()) {
+                        if(datesEqual($scope.brush[0], $scope.bucketizer.getStartDate()) && datesEqual($scope.brush[1], $scope.bucketizer.getEndDate())) {
                             removeBrushFromTimelineAndDatasetService();
                             return;
                         }
