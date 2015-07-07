@@ -209,6 +209,10 @@ charts.LineChart.prototype.getColorMappings = function() {
  * @method selectDate
  */
 charts.LineChart.prototype.selectDate = function(startDate, endDate) {
+    if(!this.data || !this.data.length) {
+        return;
+    }
+
     var startIndex = startDate < this.data[0].data[0].date ? 0 : -1;
     var endIndex = endDate > this.data[0].data[this.data[0].data.length - 1].date ? this.data[0].data.length - 1 : -1;
 
