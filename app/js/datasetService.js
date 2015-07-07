@@ -409,15 +409,12 @@ angular.module("neonDemo.services")
             var l;
             var relations = service.dataset.relations;
 
-            var initializeMap = function(map, key1, key2, key3) {
+            var initializeMapAsNeeded = function(map, key1, key2) {
                 if(!(map[key1])) {
                     map[key1] = {};
                 }
                 if(!(map[key1][key2])) {
-                    map[key1][key2] = {};
-                }
-                if(!(map[key1][key2][key3])) {
-                    map[key1][key2][key3] = [];
+                    map[key1][key2] = [];
                 }
                 return map;
             };
@@ -434,15 +431,28 @@ angular.module("neonDemo.services")
                     // If the current relation contains a match for the input database/table/field, iterate through the elements in the current relation.
                     if(relation[databaseName] && fieldName === relation[databaseName][tableName]) {
                         var databaseNames = Object.keys(relation);
+                        // Add each database/table/field in the current relation to the map.  Note that this will include the input database/table/field.
                         for(k = 0; k < databaseNames.length; ++k) {
                             var relationDatabaseName = databaseNames[k];
                             var tableNames = Object.keys(relation[relationDatabaseName]);
                             for(l = 0; l < tableNames.length; ++l) {
                                 var relationTableName = tableNames[l];
                                 var relationFieldName = relation[relationDatabaseName][relationTableName];
-                                relationToFields = initializeMap(relationToFields, relationDatabaseName, relationTableName, fieldName);
-                                // Add each database/table/field in the current relation to the map.  Note that this will include the input database/table/field.
-                                relationToFields[relationDatabaseName][relationTableName][fieldName].push(relationFieldName);
+                                relationToFields = initializeMapAsNeeded(relationToFields, relationDatabaseName, relationTableName);
+
+                                var existingIndex = relationFields[relationDatabaseName][relationTableName].map(function(object) {
+                                    return object.initial;
+                                }).indexOf(fieldName);
+                                if(existingIndex >= 0) {
+                                    // If the database/table/field exists in the relation, add another related field.
+                                    relationFields[relationDatabaseName][relationTableName][existingIndex].related.push(relationFieldName);
+                                } else {
+                                    // Else create a new object for the database/table/field in the relation and add its related field.
+                                    relationToFields[relationDatabaseName][relationTableName].push({
+                                        initial: fieldName,
+                                        related: [relationFieldName]
+                                    });
+                                }
                             }
                         }
                     }
@@ -470,11 +480,14 @@ angular.module("neonDemo.services")
             var result = {
                 database: databaseName,
                 table: tableName,
-                fields: {}
+                fields: []
             };
 
             for(i = 0; i < fieldNames.length; ++i) {
-                result.fields[fieldNames[i]] = [fieldNames[i]];
+                result.fields.push({
+                    initial: fieldNames[i],
+                    related: [fieldNames[i]]
+                });
             }
 
             return [result];
