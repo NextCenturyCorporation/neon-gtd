@@ -42,7 +42,9 @@ function(connectionService, datasetService, errorNotificationService, filterServ
             bindTable: '=',
             bindDatabase: '=',
             hideHeader: '=?',
-            hideAdvancedOptions: '=?'
+            hideAdvancedOptions: '=?',
+            overrideStartDate: '=?',
+            overrideEndDate: '=?'
         },
         link: function($scope, $element) {
             var YEAR = "year";
@@ -310,7 +312,7 @@ function(connectionService, datasetService, errorNotificationService, filterServ
                         }
                     }
                 }, true);
-                
+
                 $scope.$watch('options.showFocus', function(newVal, oldVal) {
                     if(!$scope.loadingData && newVal && newVal !== oldVal) {
                         XDATA.userALE.log({
@@ -392,18 +394,17 @@ function(connectionService, datasetService, errorNotificationService, filterServ
              * @return {Boolean}
              */
             var isDateFiltersChangedMessage = function(message) {
-                var whereClauses = undefined;
+                var whereClauses;
                 if(message.addedFilter.whereClause) {
                     whereClauses = message.addedFilter.whereClause.whereClauses;
-                }
-                else if(message.removedFilter.whereClause) {
+                } else if(message.removedFilter.whereClause) {
                     whereClauses = message.removedFilter.whereClause.whereClauses;
                 }
                 if(whereClauses && whereClauses.length === 2 && whereClauses[0].lhs === $scope.options.dateField && whereClauses[1].lhs === $scope.options.dateField) {
                     return true;
                 }
                 return false;
-            }
+            };
 
             /**
              * Event handler for filter changed events issued over Neon's messaging channels.
@@ -728,26 +729,46 @@ function(connectionService, datasetService, errorNotificationService, filterServ
                     $scope.errorMessage = undefined;
                 }
 
-                // TODO: neon doesn't yet support a more efficient way to just get the min/max fields without aggregating
-                // TODO: This could be done better with a promise framework - just did this in a pinch for a demo
-                var minDateQuery = new neon.query.Query()
-                    .selectFrom($scope.options.database.name, $scope.options.table.name).ignoreFilters()
-                    .where($scope.options.dateField, '!=', null).sortBy($scope.options.dateField, neon.query.ASCENDING).limit(1);
-
-                XDATA.userALE.log({
-                    activity: "alter",
-                    action: "query",
-                    elementId: "timeline",
-                    elementType: "canvas",
-                    elementSub: "timeline",
-                    elementGroup: "chart_group",
-                    source: "system",
-                    tags: ["query", "timeline", "min-date"]
-                });
                 var connection = connectionService.getActiveConnection();
-                if(connection) {
-                    connection.executeQuery(minDateQuery, function(queryResults) {
-                        if(queryResults.data.length > 0) {
+
+                if($scope.overrideStartDate) {
+                    $scope.referenceStartDate = new Date($scope.overrideStartDate);
+                } else {
+                    // TODO: neon doesn't yet support a more efficient way to just get the min/max fields without aggregating
+                    // TODO: This could be done better with a promise framework - just did this in a pinch for a demo
+                    var minDateQuery = new neon.query.Query()
+                        .selectFrom($scope.options.database.name, $scope.options.table.name).ignoreFilters()
+                        .where($scope.options.dateField, '!=', null).sortBy($scope.options.dateField, neon.query.ASCENDING).limit(1);
+
+                    XDATA.userALE.log({
+                        activity: "alter",
+                        action: "query",
+                        elementId: "timeline",
+                        elementType: "canvas",
+                        elementSub: "timeline",
+                        elementGroup: "chart_group",
+                        source: "system",
+                        tags: ["query", "timeline", "min-date"]
+                    });
+                    if(connection) {
+                        connection.executeQuery(minDateQuery, function(queryResults) {
+                            if(queryResults.data.length > 0) {
+                                XDATA.userALE.log({
+                                    activity: "alter",
+                                    action: "query",
+                                    elementId: "timeline",
+                                    elementType: "canvas",
+                                    elementSub: "timeline",
+                                    elementGroup: "chart_group",
+                                    source: "system",
+                                    tags: ["receive", "timeline", "min-date"]
+                                });
+                                $scope.referenceStartDate = new Date(queryResults.data[0][$scope.options.dateField]);
+                                if($scope.referenceEndDate !== undefined) {
+                                    $scope.$apply(success);
+                                }
+                            }
+                        }, function(response) {
                             XDATA.userALE.log({
                                 activity: "alter",
                                 action: "query",
@@ -756,51 +777,60 @@ function(connectionService, datasetService, errorNotificationService, filterServ
                                 elementSub: "timeline",
                                 elementGroup: "chart_group",
                                 source: "system",
-                                tags: ["receive", "timeline", "min-date"]
+                                tags: ["failed", "timeline", "min-date"]
                             });
-                            $scope.referenceStartDate = new Date(queryResults.data[0][$scope.options.dateField]);
-                            if($scope.referenceEndDate !== undefined) {
-                                $scope.$apply(success);
+                            $scope.referenceStartDate = undefined;
+                            $scope.updateChartData({
+                                data: []
+                            });
+                            if(response.responseJSON) {
+                                $scope.errorMessage = errorNotificationService.showErrorMessage($element, response.responseJSON.error, response.responseJSON.stackTrace);
                             }
-                        }
-                    }, function(response) {
-                        XDATA.userALE.log({
-                            activity: "alter",
-                            action: "query",
-                            elementId: "timeline",
-                            elementType: "canvas",
-                            elementSub: "timeline",
-                            elementGroup: "chart_group",
-                            source: "system",
-                            tags: ["failed", "timeline", "min-date"]
                         });
-                        $scope.referenceStartDate = undefined;
-                        $scope.updateChartData({
-                            data: []
-                        });
-                        if(response.responseJSON) {
-                            $scope.errorMessage = errorNotificationService.showErrorMessage($element, response.responseJSON.error, response.responseJSON.stackTrace);
-                        }
-                    });
+                    }
                 }
 
-                var maxDateQuery = new neon.query.Query()
-                    .selectFrom($scope.options.database.name, $scope.options.table.name).ignoreFilters()
-                    .where($scope.options.dateField, '!=', null).sortBy($scope.options.dateField, neon.query.DESCENDING).limit(1);
+                if($scope.overrideEndDate) {
+                    $scope.referenceEndDate = new Date($scope.overrideEndDate);
 
-                XDATA.userALE.log({
-                    activity: "alter",
-                    action: "query",
-                    elementId: "timeline",
-                    elementType: "canvas",
-                    elementSub: "timeline",
-                    elementGroup: "chart_group",
-                    source: "system",
-                    tags: ["query", "timeline", "max-date"]
-                });
-                if(connection) {
-                    connection.executeQuery(maxDateQuery, function(queryResults) {
-                        if(queryResults.data.length > 0) {
+                    if($scope.referenceStartDate !== undefined) {
+                        success();
+                    }
+                } else {
+                    var maxDateQuery = new neon.query.Query()
+                        .selectFrom($scope.options.database.name, $scope.options.table.name).ignoreFilters()
+                        .where($scope.options.dateField, '!=', null).sortBy($scope.options.dateField, neon.query.DESCENDING).limit(1);
+
+                    XDATA.userALE.log({
+                        activity: "alter",
+                        action: "query",
+                        elementId: "timeline",
+                        elementType: "canvas",
+                        elementSub: "timeline",
+                        elementGroup: "chart_group",
+                        source: "system",
+                        tags: ["query", "timeline", "max-date"]
+                    });
+
+                    if(connection) {
+                        connection.executeQuery(maxDateQuery, function(queryResults) {
+                            if(queryResults.data.length > 0) {
+                                XDATA.userALE.log({
+                                    activity: "alter",
+                                    action: "query",
+                                    elementId: "timeline",
+                                    elementType: "canvas",
+                                    elementSub: "timeline",
+                                    elementGroup: "chart_group",
+                                    source: "system",
+                                    tags: ["received", "timeline", "max-date"]
+                                });
+                                $scope.referenceEndDate = new Date(queryResults.data[0][$scope.options.dateField]);
+                                if($scope.referenceStartDate !== undefined) {
+                                    $scope.$apply(success);
+                                }
+                            }
+                        }, function(response) {
                             XDATA.userALE.log({
                                 activity: "alter",
                                 action: "query",
@@ -809,32 +839,17 @@ function(connectionService, datasetService, errorNotificationService, filterServ
                                 elementSub: "timeline",
                                 elementGroup: "chart_group",
                                 source: "system",
-                                tags: ["received", "timeline", "max-date"]
+                                tags: ["failed", "timeline", "max-date"]
                             });
-                            $scope.referenceEndDate = new Date(queryResults.data[0][$scope.options.dateField]);
-                            if($scope.referenceStartDate !== undefined) {
-                                $scope.$apply(success);
+                            $scope.referenceEndDate = undefined;
+                            $scope.updateChartData({
+                                data: []
+                            });
+                            if(response.responseJSON) {
+                                $scope.errorMessage = errorNotificationService.showErrorMessage($element, response.responseJSON.error, response.responseJSON.stackTrace);
                             }
-                        }
-                    }, function(response) {
-                        XDATA.userALE.log({
-                            activity: "alter",
-                            action: "query",
-                            elementId: "timeline",
-                            elementType: "canvas",
-                            elementSub: "timeline",
-                            elementGroup: "chart_group",
-                            source: "system",
-                            tags: ["failed", "timeline", "max-date"]
                         });
-                        $scope.referenceEndDate = undefined;
-                        $scope.updateChartData({
-                            data: []
-                        });
-                        if(response.responseJSON) {
-                            $scope.errorMessage = errorNotificationService.showErrorMessage($element, response.responseJSON.error, response.responseJSON.stackTrace);
-                        }
-                    });
+                    }
                 }
             };
 
