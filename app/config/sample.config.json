@@ -277,7 +277,9 @@
             "bindings": {
                 "bind-database": "'myDatabase'",
                 "bind-table": "'myTable'",
-                "bind-date-field": "'date'"
+                "bind-date-field": "'date'",
+                "override-start-date": "'1/1/2013'",
+                "override-end-date": "1388534399000"
             }
         }, {
             "sizeX": 4,
