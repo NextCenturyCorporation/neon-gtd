@@ -11,8 +11,8 @@
         </label>
       </div>
 
-      <button type="button" class="btn btn-danger" title="Reset All Filters" ng-click="resetFilters()">
-          Reset
+      <button type="button" class="btn btn-danger" title="Reset Filter Builder" ng-disabled="filterTable.getFilterRows().length == 0" ng-click="resetFilters()">
+          Reset Filter Builder
       </button>
     </div>
 </div>
@@ -29,7 +29,7 @@
         </label>
       </div>
 
-      <button type="button" class="btn btn-danger" title="Reset All Filters" ng-click="resetFilters()">
+      <button type="button" class="btn btn-danger" title="Reset Filter Builder" ng-disabled="filterTable.getFilterRows().length == 0" ng-click="resetFilters()">
           Reset
       </button>
     </div>
