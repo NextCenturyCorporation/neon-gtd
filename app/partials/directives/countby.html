@@ -41,6 +41,7 @@
 
 <div class="header-container filter-container">
     <h4 class="pull-left"><span class="count text-primary ng-binding" ng-bind="count"></span> values</h4>
+    <h4 class="pull-right" ng-show="tableOptions.data.length >= options.limitCount">Limited to {{options.limitCount}} rows</h4>
 
     <div class="filter-reset pull-right" ng-class="{true: 'hidden', false: ''}[filterSet === undefined]" title="{{filterSet.key}}={{filterSet.value}}">
         <span class="filter-label">{{filterSet.key}}={{filterSet.value}}</span>
