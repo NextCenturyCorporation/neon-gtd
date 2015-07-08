@@ -242,17 +242,6 @@ function(connectionService, datasetService, errorNotificationService, filterServ
              * @private
              */
             var onDateChanged = function(message) {
-                XDATA.userALE.log({
-                    activity: "alter",
-                    action: "receive",
-                    elementId: "linechart-range",
-                    elementType: "canvas",
-                    elementSub: "date-range",
-                    elementGroup: "chart_group",
-                    source: "system",
-                    tags: ["linechart", "date-range", "filter-change"]
-                });
-
                 if($scope.options.database.name === message.databaseName && $scope.options.table.name === message.tableName && $scope.brushExtent !== message.brushExtent) {
                     renderBrushExtent(message.brushExtent);
                     updateLineChartForBrushExtent();
@@ -266,17 +255,6 @@ function(connectionService, datasetService, errorNotificationService, filterServ
              * @private
              */
             var onDateSelected = function(message) {
-                XDATA.userALE.log({
-                    activity: "select",
-                    action: "receive",
-                    elementId: "linechart-range",
-                    elementType: "canvas",
-                    elementSub: "date-range",
-                    elementGroup: "chart_group",
-                    source: "system",
-                    tags: ["linechart", "date-range"]
-                });
-
                 if($scope.chart) {
                     if(message.start && message.end) {
                         $scope.chart.selectDate(message.start, message.end);
@@ -697,6 +675,17 @@ function(connectionService, datasetService, errorNotificationService, filterServ
             };
 
             var onHover = function(startDate, endDate) {
+                XDATA.userALE.log({
+                    activity: "select",
+                    action: "mouseover",
+                    elementId: "linechart-range",
+                    elementType: "canvas",
+                    elementSub: "date-range",
+                    elementGroup: "chart_group",
+                    source: "user",
+                    tags: ["linechart", "date-range", "highlight"]
+                });
+
                 $scope.messenger.publish("date_selected", {
                     start: startDate,
                     end: endDate

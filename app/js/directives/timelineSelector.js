@@ -266,17 +266,6 @@ function(connectionService, datasetService, errorNotificationService, filterServ
                 // Watch for brush changes and set the appropriate neon filter.
                 $scope.$watch('brush', function(newVal) {
                     if(newVal.length && $scope.messenger && connectionService.getActiveConnection()) {
-                        XDATA.userALE.log({
-                            activity: "select",
-                            action: ($scope.loadingData) ? "reset" : "click",
-                            elementId: "timeline-range",
-                            elementType: "canvas",
-                            elementSub: "date-range",
-                            elementGroup: "chart_group",
-                            source: ($scope.loadingData) ? "system" : "user",
-                            tags: ["timeline", "date-range", "filter"]
-                        });
-
                         if(2 > newVal.length || newVal[0].getTime() === newVal[1].getTime()) {
                             // may be undefined when a new dataset is being loaded
                             if($scope.bucketizer.getStartDate() !== undefined && $scope.bucketizer.getEndDate() !== undefined && $scope.brush.length) {
@@ -444,17 +433,6 @@ function(connectionService, datasetService, errorNotificationService, filterServ
              * @private
              */
             var onDateChanged = function(message) {
-                XDATA.userALE.log({
-                    activity: "alter",
-                    action: "receive",
-                    elementId: "timeline-range",
-                    elementType: "canvas",
-                    elementSub: "date-range",
-                    elementGroup: "chart_group",
-                    source: "system",
-                    tags: ["timeline", "date-range", "filter-change"]
-                });
-
                 if($scope.options.database.name === message.databaseName && $scope.options.table.name === message.tableName && $scope.brush !== message.brushExtent) {
                     $scope.brush = message.brushExtent;
                     $scope.extentDirty = true;

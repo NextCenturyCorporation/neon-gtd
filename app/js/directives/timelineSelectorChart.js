@@ -50,6 +50,17 @@ angular.module('neonDemo.directives')
                 // Wrap our data change in $apply since this is fired from a D3 event and outside of
                 // angular's digest cycle.
                 $scope.$apply(function() {
+                    XDATA.userALE.log({
+                        activity: "select",
+                        action: "click",
+                        elementId: "timeline-range",
+                        elementType: "canvas",
+                        elementSub: "date-range",
+                        elementGroup: "chart_group",
+                        source: "user",
+                        tags: ["timeline", "date-range", "filter"]
+                    });
+
                     $scope.timelineBrush = data;
 
                     if($scope.showFocus === "on_filter") {
@@ -143,17 +154,6 @@ angular.module('neonDemo.directives')
              * @private
              */
             var onDateSelected = function(message) {
-                XDATA.userALE.log({
-                    activity: "select",
-                    action: "receive",
-                    elementId: "timeline-range",
-                    elementType: "canvas",
-                    elementSub: "date-range",
-                    elementGroup: "chart_group",
-                    source: "system",
-                    tags: ["timeline", "date-range"]
-                });
-
                 if(message.start && message.end) {
                     $scope.chart.selectDate(message.start, message.end);
                 } else {
@@ -162,6 +162,17 @@ angular.module('neonDemo.directives')
             };
 
             var onHover = function(startDate, endDate) {
+                XDATA.userALE.log({
+                    activity: "select",
+                    action: "mouseover",
+                    elementId: "timeline-range",
+                    elementType: "canvas",
+                    elementSub: "date-range",
+                    elementGroup: "chart_group",
+                    source: "user",
+                    tags: ["timeline", "date-range", "highlight"]
+                });
+
                 $scope.messenger.publish('date_selected', {
                     start: startDate,
                     end: endDate
