@@ -132,17 +132,17 @@ function(connectionService, datasetService, errorNotificationService, filterServ
              * @private
              */
             var onFiltersChanged = function(message) {
-                XDATA.userALE.log({
-                    activity: "alter",
-                    action: "query",
-                    elementId: "tag-cloud",
-                    elementType: "tag",
-                    elementSub: "tag-cloud",
-                    elementGroup: "chart_group",
-                    source: "system",
-                    tags: ["filter-change", "tag-cloud"]
-                });
                 if(message.addedFilter && message.addedFilter.databaseName === $scope.options.database.name && message.addedFilter.tableName === $scope.options.table.name) {
+                    XDATA.userALE.log({
+                        activity: "alter",
+                        action: "query",
+                        elementId: "tag-cloud",
+                        elementType: "tag",
+                        elementSub: "tag-cloud",
+                        elementGroup: "chart_group",
+                        source: "system",
+                        tags: ["filter-change", "tag-cloud"]
+                    });
                     $scope.queryForTags();
                 }
             };

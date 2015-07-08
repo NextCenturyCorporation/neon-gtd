@@ -158,18 +158,17 @@ function(connectionService, datasetService, errorNotificationService, filterServ
              * @private
              */
             var onFiltersChanged = function(message) {
-                XDATA.userALE.log({
-                    activity: "alter",
-                    action: "query",
-                    elementId: "barchart",
-                    elementType: "canvas",
-                    elementSub: "barchart",
-                    elementGroup: "chart_group",
-                    source: "system",
-                    tags: ["filter-change", "barchart"]
-                });
-
                 if(message.addedFilter && message.addedFilter.databaseName === $scope.options.database.name && message.addedFilter.tableName === $scope.options.table.name) {
+                    XDATA.userALE.log({
+                        activity: "alter",
+                        action: "query",
+                        elementId: "barchart",
+                        elementType: "canvas",
+                        elementSub: "barchart",
+                        elementGroup: "chart_group",
+                        source: "system",
+                        tags: ["filter-change", "barchart"]
+                    });
                     $scope.queryForData(false);
                 }
             };

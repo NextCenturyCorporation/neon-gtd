@@ -233,17 +233,17 @@ function(external, popups, connectionService, datasetService, errorNotificationS
              * @private
              */
             var onFiltersChanged = function(message) {
-                XDATA.userALE.log({
-                    activity: "alter",
-                    action: "query",
-                    elementId: "datagrid",
-                    elementType: "datagrid",
-                    elementSub: "datagrid",
-                    elementGroup: "chart_group",
-                    source: "system",
-                    tags: ["filter-change", "datagrid"]
-                });
                 if(message.addedFilter && message.addedFilter.databaseName === $scope.options.database.name && message.addedFilter.tableName === $scope.options.table.name) {
+                    XDATA.userALE.log({
+                        activity: "alter",
+                        action: "query",
+                        elementId: "datagrid",
+                        elementType: "datagrid",
+                        elementSub: "datagrid",
+                        elementGroup: "chart_group",
+                        source: "system",
+                        tags: ["filter-change", "datagrid"]
+                    });
                     queryForData();
                 }
             };

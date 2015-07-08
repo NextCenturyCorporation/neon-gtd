@@ -377,18 +377,17 @@ angular.module('neonDemo.directives')
              * @private
              */
             var onFiltersChanged = function(message) {
-                XDATA.userALE.log({
-                    activity: "alter",
-                    action: "query",
-                    elementId: "map",
-                    elementType: "canvas",
-                    elementSub: "map",
-                    elementGroup: "map_group",
-                    source: "system",
-                    tags: ["filter-change", "map"]
-                });
-
                 if(message.addedFilter && message.addedFilter.databaseName && message.addedFilter.tableName) {
+                    XDATA.userALE.log({
+                        activity: "alter",
+                        action: "query",
+                        elementId: "map",
+                        elementType: "canvas",
+                        elementSub: "map",
+                        elementGroup: "map_group",
+                        source: "system",
+                        tags: ["filter-change", "map"]
+                    });
                     $scope.queryForMapData(message.addedFilter.databaseName, message.addedFilter.tableName);
                 }
             };

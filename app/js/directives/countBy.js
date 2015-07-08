@@ -238,17 +238,17 @@ function(external, popups, connectionService, datasetService, errorNotificationS
              * @private
              */
             var onFiltersChanged = function(message) {
-                XDATA.userALE.log({
-                    activity: "alter",
-                    action: "query",
-                    elementId: "count-by",
-                    elementType: "canvas",
-                    elementSub: "count-by",
-                    elementGroup: "table_group",
-                    source: "system",
-                    tags: ["filter-change", "count-by"]
-                });
                 if(message.addedFilter && message.addedFilter.databaseName === $scope.options.database.name && message.addedFilter.tableName === $scope.options.table.name) {
+                    XDATA.userALE.log({
+                        activity: "alter",
+                        action: "query",
+                        elementId: "count-by",
+                        elementType: "canvas",
+                        elementSub: "count-by",
+                        elementGroup: "table_group",
+                        source: "system",
+                        tags: ["filter-change", "count-by"]
+                    });
                     $scope.queryForData();
                 }
             };
