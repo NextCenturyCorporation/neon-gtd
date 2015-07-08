@@ -675,17 +675,6 @@ function(connectionService, datasetService, errorNotificationService, filterServ
             };
 
             var onHover = function(startDate, endDate) {
-                XDATA.userALE.log({
-                    activity: "select",
-                    action: "mouseover",
-                    elementId: "linechart-range",
-                    elementType: "canvas",
-                    elementSub: "date-range",
-                    elementGroup: "chart_group",
-                    source: "user",
-                    tags: ["linechart", "date-range", "highlight"]
-                });
-
                 $scope.messenger.publish("date_selected", {
                     start: startDate,
                     end: endDate

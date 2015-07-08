@@ -394,9 +394,9 @@ charts.TimelineSelectorChart = function(element, configuration) {
      * Performs behavior for hovering over the given datum at the given context timeline index.
      * @param {Object} datum
      * @param {Number} contextIndex
-     * @method onHoverStart
+     * @method onHover
      */
-    this.onHoverStart = function(datum, contextIndex) {
+    this.onHover = function(datum, contextIndex) {
         this.hoverIndex = contextIndex;
         this.selectIndexedDates(contextIndex, contextIndex + 1);
         showTooltip(datum, d3.event);
@@ -421,10 +421,38 @@ charts.TimelineSelectorChart = function(element, configuration) {
     };
 
     /**
+     * Performs behavior for hovering onto all data.
+     * @method onHoverStart
+     */
+    this.onHoverStart = function() {
+        XDATA.userALE.log({
+            activity: "show",
+            action: "mouseover",
+            elementId: "timeline",
+            elementType: "tooltip",
+            elementSub: "timeline",
+            elementGroup: "chart_group",
+            source: "user",
+            tags: ["tooltip", "highlight", "timeline"]
+        });
+    };
+
+    /**
      * Performs behavior for hovering off of all data.
      * @method onHoverEnd
      */
     this.onHoverEnd = function() {
+        XDATA.userALE.log({
+            activity: "hide",
+            action: "mouseout",
+            elementId: "timeline",
+            elementType: "tooltip",
+            elementSub: "timeline",
+            elementGroup: "chart_group",
+            source: "user",
+            tags: ["tooltip", "highlight", "timeline"]
+        });
+
         this.hoverIndex = -1;
         this.deselectDate();
         hideTooltip();
@@ -605,8 +633,11 @@ charts.TimelineSelectorChart = function(element, configuration) {
                     var index = me.findHoverIndexInData(this, values, me.xFocus);
                     if(index >= 0 && index < values[0].data.length) {
                         var contextIndex = me.contextDateToIndex[values[0].data[index].date.toDateString()];
-                        me.onHoverStart(values[0].data[index], contextIndex);
+                        me.onHover(values[0].data[index], contextIndex);
                     }
+                })
+                .on('mouseover', function() {
+                    me.onHoverStart();
                 })
                 .on('mouseout', function() {
                     me.onHoverEnd();
@@ -794,8 +825,11 @@ charts.TimelineSelectorChart = function(element, configuration) {
             .on('mousemove', function() {
                 var index = me.findHoverIndexInData(this, values, me.xContext);
                 if(index >= 0 && index < values[0].data.length) {
-                    me.onHoverStart(values[0].data[index], index);
+                    me.onHover(values[0].data[index], index);
                 }
+            })
+            .on('mouseover', function() {
+                me.onHoverStart();
             })
             .on('mouseout', function() {
                 me.onHoverEnd();
@@ -1129,17 +1163,6 @@ charts.TimelineSelectorChart = function(element, configuration) {
         $("#tooltip-container").html(html);
         $("#tooltip-container").show();
         positionTooltip(d3.select('#tooltip-container'), mouseEvent);
-
-        XDATA.userALE.log({
-            activity: "show",
-            action: "mouseover",
-            elementId: "timeline",
-            elementType: "tooltip",
-            elementSub: "timeline",
-            elementGroup: "chart_group",
-            source: "user",
-            tags: ["tooltip", "timeline"]
-        });
     };
 
     var positionTooltip = function(tooltip, mouseEvent) {
@@ -1149,16 +1172,6 @@ charts.TimelineSelectorChart = function(element, configuration) {
 
     var hideTooltip = function() {
         $("#tooltip-container").hide();
-        XDATA.userALE.log({
-            activity: "hide",
-            action: "mouseout",
-            elementId: "timeline",
-            elementType: "tooltip",
-            elementSub: "timeline",
-            elementGroup: "chart_group",
-            source: "user",
-            tags: ["tooltip", "timeline"]
-        });
     };
 
     this.setHoverListener = function(hoverListener) {
