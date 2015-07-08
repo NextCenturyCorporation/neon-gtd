@@ -112,17 +112,17 @@ function(connectionService, datasetService, errorNotificationService) {
              * @private
              */
             var onFiltersChanged = function(message) {
-                XDATA.userALE.log({
-                    activity: "alter",
-                    action: "query",
-                    elementId: "sunburst",
-                    elementType: "canvas",
-                    elementSub: "sunburst",
-                    elementGroup: "chart_group",
-                    source: "system",
-                    tags: ["filter-change", "sunburst"]
-                });
                 if(message.addedFilter && message.addedFilter.databaseName === $scope.options.database.name && message.addedFilter.tableName === $scope.options.table.name) {
+                    XDATA.userALE.log({
+                        activity: "alter",
+                        action: "query",
+                        elementId: "sunburst",
+                        elementType: "canvas",
+                        elementSub: "sunburst",
+                        elementGroup: "chart_group",
+                        source: "system",
+                        tags: ["filter-change", "sunburst"]
+                    });
                     $scope.queryForData();
                 }
             };

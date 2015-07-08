@@ -229,11 +229,4 @@ function($scope, $timeout, config, datasets) {
     $("#videoModal").on("hidden.bs.modal", function() {
         $("#helpVideo")[0].pause();
     });
-
-    if(config.showVideoOnLoad && config.help.video) {
-        neon.ready(function() {
-            $("#videoModal").modal("show");
-            $("#helpVideo").attr("autoplay", "");
-        });
-    }
 }]);

@@ -162,17 +162,6 @@ angular.module('neonDemo.directives')
             };
 
             var onHover = function(startDate, endDate) {
-                XDATA.userALE.log({
-                    activity: "select",
-                    action: "mouseover",
-                    elementId: "timeline-range",
-                    elementType: "canvas",
-                    elementSub: "date-range",
-                    elementGroup: "chart_group",
-                    source: "user",
-                    tags: ["timeline", "date-range", "highlight"]
-                });
-
                 $scope.messenger.publish('date_selected', {
                     start: startDate,
                     end: endDate

@@ -549,23 +549,23 @@ charts.LineChart.prototype.drawLines = function(opts) {
             me.selectIndexedDates(index, index + 1);
             me.showTooltip(index, opts[0].data[index][me.xAttribute]);
 
-            XDATA.userALE.log({
-                activity: "show",
-                action: "mousemove",
-                elementId: "linechart",
-                elementType: "tooltip",
-                elementSub: "linechart",
-                elementGroup: "chart_group",
-                source: "user",
-                tags: ["tooltip", "linechart"]
-            });
-
             if(me.hoverListener) {
                 var start = opts[0].data[index][me.xAttribute];
                 var end = new Date(start.getFullYear(), start.getMonth(), start.getDate() + 1);
                 me.hoverListener(start, end);
             }
         }
+    }).on("mouseover", function() {
+        XDATA.userALE.log({
+            activity: "show",
+            action: "mouseover",
+            elementId: "linechart",
+            elementType: "tooltip",
+            elementSub: "linechart",
+            elementGroup: "chart_group",
+            source: "user",
+            tags: ["tooltip", "highlight", "linechart"]
+        });
     }).on("mouseout", function() {
         me.hoverIndex = -1;
         me.deselectDate();
@@ -579,7 +579,7 @@ charts.LineChart.prototype.drawLines = function(opts) {
             elementSub: "linechart",
             elementGroup: "chart_group",
             source: "user",
-            tags: ["tooltip", "linechart"]
+            tags: ["tooltip", "highlight", "linechart"]
         });
 
         if(me.hoverListener) {
