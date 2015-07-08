@@ -202,5 +202,13 @@ angular.element(document).ready(function() {
         readLayoutFiles($http, layouts, (files.layouts || []), function() {
             readDatasetFiles($http, datasets, (files.datasets || []), startAngular);
         });
+
+        // Keep the autoplay video code here because when it was in the neonDemoController the dashboard would start playing the video whenever the dataset was changed.
+        if(dashboardConfig.showVideoOnLoad && dashboardConfig.help.video) {
+            neon.ready(function() {
+                $("#videoModal").modal("show");
+                $("#helpVideo").attr("autoplay", "");
+            });
+        }
     });
 });
