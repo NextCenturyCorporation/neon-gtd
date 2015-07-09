@@ -30,7 +30,8 @@ function(external, popups, connectionService, datasetService, errorNotificationS
             bindDatabase: '=',
             usePrettyNames: '=?',
             hideHeader: '=?',
-            hideAdvancedOptions: '=?'
+            hideAdvancedOptions: '=?',
+            limitCount: '=?'
         },
         link: function($scope, $element) {
             $element.addClass('countByDirective');
@@ -57,7 +58,7 @@ function(external, popups, connectionService, datasetService, errorNotificationS
                 field: "",
                 aggregation: "",
                 aggregationField: "",
-                limitCount: 16000
+                limitCount: $scope.limitCount || 16000
             };
 
             var $tableDiv = $element.find('.count-by-grid');
