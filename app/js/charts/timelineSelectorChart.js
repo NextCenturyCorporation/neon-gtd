@@ -233,7 +233,7 @@ charts.TimelineSelectorChart = function(element, configuration) {
         }
 
         // Update mask
-        var brushElement = $(".brush");
+        var brushElement = $(this);
         var xPos = brushElement.find('.extent').attr('x');
 
         var extentWidth = brushElement.find('.extent').attr('width');
@@ -313,7 +313,7 @@ charts.TimelineSelectorChart = function(element, configuration) {
     };
 
     this.datesEqual = function(a, b) {
-        return a.toDateString() === b.toDateString();
+        return a.toUTCString() === b.toUTCString();
     };
 
     /**
@@ -345,7 +345,7 @@ charts.TimelineSelectorChart = function(element, configuration) {
         for(var i = startIndex; i < endIndex; ++i) {
             this.showHighlight(this.data[0].data[i].date, this.data[0].data[i].value, this.contextHighlights[i], this.xContext, this.yContext);
 
-            var focusIndex = this.focusDateToIndex[this.data[0].data[i].date.toDateString()];
+            var focusIndex = this.focusDateToIndex[this.data[0].data[i].date.toUTCString()];
             if(focusIndex >= 0) {
                 this.showHighlight(this.data[0].data[i].date, this.data[0].data[i].value, this.focusHighlights[focusIndex], this.xFocus, this.yFocus);
             }
@@ -632,7 +632,7 @@ charts.TimelineSelectorChart = function(element, configuration) {
                 .on('mousemove', function() {
                     var index = me.findHoverIndexInData(this, values, me.xFocus);
                     if(index >= 0 && index < values[0].data.length) {
-                        var contextIndex = me.contextDateToIndex[values[0].data[index].date.toDateString()];
+                        var contextIndex = me.contextDateToIndex[values[0].data[index].date.toUTCString()];
                         me.onHover(values[0].data[index], contextIndex);
                     }
                 })
@@ -773,7 +773,7 @@ charts.TimelineSelectorChart = function(element, configuration) {
 
                 me.contextDateToIndex = {};
                 series.data.forEach(function(datum, index) {
-                    me.contextDateToIndex[datum.date.toDateString()] = index;
+                    me.contextDateToIndex[datum.date.toUTCString()] = index;
                 });
 
                 // Append the highlight bars after the other bars so it is drawn on top.
@@ -952,7 +952,10 @@ charts.TimelineSelectorChart = function(element, configuration) {
 
         // Get only the data in the brushed area
         var dataShown = _.filter(series.data, function(obj) {
-            return (me.xFocus.domain()[0] <= obj.date && obj.date < me.xFocus.domain()[1]);
+            if(me.granularity !== 'hour') {
+                return (me.xFocus.domain()[0] <= obj.date && obj.date < me.xFocus.domain()[1]);
+            }
+            return (me.xFocus.domain()[0] <= obj.date && obj.date <= me.xFocus.domain()[1]);
         });
 
         // Use lowest value or 0 for Y-axis domain, whichever is less (e.g. if negative)
@@ -1094,7 +1097,7 @@ charts.TimelineSelectorChart = function(element, configuration) {
 
         me.focusDateToIndex = {};
         dataShown.forEach(function(datum, index) {
-            me.focusDateToIndex[datum.date.toDateString()] = index;
+            me.focusDateToIndex[datum.date.toUTCString()] = index;
         });
 
         // Append the highlight bars after the other bars so it is drawn on top.

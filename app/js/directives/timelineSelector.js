@@ -95,7 +95,7 @@ function(connectionService, datasetService, errorNotificationService, filterServ
             };
 
             var datesEqual = function(a, b) {
-                return a.toDateString() === b.toDateString();
+                return a.toUTCString() === b.toUTCString();
             };
 
             $scope.handleDateTimePickChange = function() {
