@@ -831,8 +831,10 @@ function(connectionService, datasetService, errorNotificationService, filterServ
                 }
 
                 var relations = datasetService.getRelations($scope.options.database.name, $scope.options.table.name, [$scope.options.attrX]);
-                datasetService.setDateBrushExtentForRelations(relations, $scope.brushExtent);
-                filterService.replaceFilters($scope.messenger, relations, $scope.filterKeys, createFilterClauseForDate, updateLineChartForBrushExtent);
+                filterService.replaceFilters($scope.messenger, relations, $scope.filterKeys, createFilterClauseForDate, function() {
+                    updateLineChartForBrushExtent();
+                    datasetService.setDateBrushExtentForRelations(relations, $scope.brushExtent);
+                });
             };
 
             /**
@@ -892,8 +894,10 @@ function(connectionService, datasetService, errorNotificationService, filterServ
 
                 renderBrushExtent([]);
                 var relations = datasetService.getRelations($scope.options.database.name, $scope.options.table.name, [$scope.options.attrX]);
-                datasetService.removeDateBrushExtentForRelations(relations);
-                filterService.removeFilters($scope.messenger, $scope.filterKeys, updateLineChartForBrushExtent);
+                filterService.removeFilters($scope.messenger, $scope.filterKeys, function() {
+                    updateLineChartForBrushExtent();
+                    datasetService.removeDateBrushExtentForRelations(relations);
+                });
             };
 
             /**

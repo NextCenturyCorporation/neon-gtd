@@ -359,8 +359,12 @@ function(connectionService, datasetService, errorNotificationService, filterServ
                 }
 
                 var relations = datasetService.getRelations($scope.options.database.name, $scope.options.table.name, [$scope.options.dateField]);
-                datasetService.setDateBrushExtentForRelations(relations, $scope.brush);
-                filterService.replaceFilters($scope.messenger, relations, $scope.filterKeys, $scope.createFilterClauseForDate, callback);
+                filterService.replaceFilters($scope.messenger, relations, $scope.filterKeys, $scope.createFilterClauseForDate, function() {
+                    if(callback) {
+                        callback();
+                    }
+                    datasetService.setDateBrushExtentForRelations(relations, $scope.brush);
+                });
             };
 
             /**
@@ -1111,8 +1115,9 @@ function(connectionService, datasetService, errorNotificationService, filterServ
                 $scope.filter.start = $scope.bucketizer.getStartDate();
                 $scope.filter.end = $scope.bucketizer.getEndDate();
                 var relations = datasetService.getRelations($scope.options.database.name, $scope.options.table.name, [$scope.options.dateField]);
-                datasetService.removeDateBrushExtentForRelations(relations);
-                filterService.removeFilters($scope.messenger, $scope.filterKeys);
+                filterService.removeFilters($scope.messenger, $scope.filterKeys, function() {
+                    datasetService.removeDateBrushExtentForRelations(relations);
+                });
             };
 
             /**
