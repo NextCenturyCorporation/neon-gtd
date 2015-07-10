@@ -753,8 +753,8 @@ function(connectionService, datasetService, errorNotificationService, filterServ
                     return 0;
                 }
 
-                var start = $scope.dateStringToDataIndex[$scope.brushExtent[0].toDateString()];
-                var end = $scope.dateStringToDataIndex[$scope.brushExtent[1].toDateString()];
+                var start = $scope.dateStringToDataIndex[$scope.brushExtent[0].toDateString()] || 0;
+                var end = $scope.dateStringToDataIndex[$scope.brushExtent[1].toDateString()] || data.length;
                 var value = 0;
                 for(var i = start; i < end; ++i) {
                     value = calculationFunction(data[i].value, value);

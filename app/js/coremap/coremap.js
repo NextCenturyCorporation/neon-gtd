@@ -575,7 +575,8 @@ coreMap.Map.prototype.doAttributesExist = function(data, layer) {
     var allExist = true;
 
     _.forEach(data, function(el) {
-        if(!layer.areValuesInDataElement(el)) {
+        // Check for undefined because a value could exist in the layer and just be false.
+        if(layer.areValuesInDataElement(el) === undefined) {
             allExist = false;
         }
     });
