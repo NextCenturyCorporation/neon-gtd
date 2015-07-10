@@ -626,6 +626,8 @@ function(connectionService, datasetService, errorNotificationService, exportServ
                 });
                 var query = $scope.buildQuery();
                 query.limitClause = exportService.getLimitClause();
+                query.ignoreFilters_ = exportService.getIgnoreFilters();
+                query.ignoredFilterIds_ = exportService.getignoredFilterIds();
                 var finalObject = {
                     name: "Line_Chart",
                     data: [{

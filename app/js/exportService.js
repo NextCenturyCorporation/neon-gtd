@@ -34,6 +34,10 @@ angular.module('neonDemo.services')
         limit: 100000
     };
 
+    // These will tell a query to not ignore any filters - useful for visualizations like the timeline that ignore their own filters by default.
+    var ignoreFilters_ = false;
+    var ignoredFilterIds_ = [];
+
     var service = {};
 
     // The current widget registration number. Incremented when a new widget is registered.
@@ -102,6 +106,24 @@ angular.module('neonDemo.services')
     service.getLimitClause = function() {
         return limitClause;
     };
+
+    /**
+     * Returns the limit clause that should be given to queries going to export.
+     * For visualizations like the timeline, this works with getIgnoredFilterIds to ensure the export will contain only "active" data.
+     * @return {boolean} Whether or not queries going to export should ignore filters.
+     */
+    service.getIgnoreFilters = function() {
+        return ignoreFilters_;
+    }
+
+    /**
+     * Returns the list of ignored filter ids that should be given to queries going to export.
+     * For visualizations like the timeline, this works with getIgnoreFilters to ensure the export will contain only "active" data.
+     * @return {Array} The list of filter ids to ignore that should be given to queries going to export.
+     */
+    service.getIgnoredFilterIds = function() {
+        return ignoredFilterIds_;
+    }
 
     return service;
 });

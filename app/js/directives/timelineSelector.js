@@ -999,6 +999,8 @@ function(connectionService, datasetService, errorNotificationService, filterServ
                 });
                 var query = $scope.createChartDataQuery();
                 query.limitClause = exportService.getLimitClause();
+                query.ignoreFilters_ = exportService.getIgnoreFilters();
+                query.ignoredFilterIds_ = exportService.getignoredFilterIds();
                 var finalObject = {
                     name: "Timeline",
                     data: [{
