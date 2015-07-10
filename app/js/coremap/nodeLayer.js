@@ -186,6 +186,25 @@ coreMap.Map.Layer.NodeLayer.prototype.getValueFromDataElement = function(mapping
 };
 
 /**
+ * Checks if the mappings exist in the data element
+ * @param {Object} element An element of the data array.
+ * @return {Boolean} True if element contains all the mappings, false otherwise
+ * @method areValuesInDataElement
+ */
+coreMap.Map.Layer.NodeLayer.prototype.areValuesInDataElement = function(element) {
+    if(element[this.sourceMapping] && element[this.targetMapping] && element[this.weightMapping]) {
+
+        if(element[this.sourceMapping][this.latitudeMapping] && element[this.sourceMapping][this.longitudeMapping] &&
+            element[this.targetMapping][this.latitudeMapping] && element[this.targetMapping][this.longitudeMapping]) {
+
+            return true;
+        }
+    }
+
+    return false;
+};
+
+/**
  * Styles the data element based on the size and color.
  * @param {Object} element One data element of the map's data array.
  * @return {OpenLayers.Symbolizer.Point} The style object

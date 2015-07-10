@@ -269,6 +269,20 @@ coreMap.Map.Layer.PointsLayer.prototype.getValueFromDataElement = function(mappi
 };
 
 /**
+ * Checks if the mappings exist in the data element
+ * @param {Object} element An element of the data array.
+ * @return {Boolean} True if element contains all the mappings, false otherwise
+ * @method areValuesInDataElement
+ */
+coreMap.Map.Layer.PointsLayer.prototype.areValuesInDataElement = function(element) {
+    if(element[this.latitudeMapping] && element[this.longitudeMapping]) {
+        return true;
+    }
+
+    return false;
+};
+
+/**
  * Styles the data element based on the size and color.
  * @param {Object} element One data element of the map's data array.
  * @return {OpenLayers.Symbolizer.Point} The style object

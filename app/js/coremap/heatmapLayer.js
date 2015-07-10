@@ -98,6 +98,20 @@ coreMap.Map.Layer.HeatmapLayer.prototype.getValueFromDataElement = function(mapp
     return element[mapping];
 };
 
+/**
+ * Checks if the mappings exist in the data element
+ * @param {Object} element An element of the data array.
+ * @return {Boolean} True if element contains all the mappings, false otherwise
+ * @method areValuesInDataElement
+ */
+coreMap.Map.Layer.HeatmapLayer.prototype.areValuesInDataElement = function(element) {
+    if(element[this.latitudeMapping] && element[this.longitudeMapping]) {
+        return true;
+    }
+
+    return false;
+};
+
 coreMap.Map.Layer.HeatmapLayer.prototype.setData = function(data) {
     this.data = data;
     this.updateFeatures();
