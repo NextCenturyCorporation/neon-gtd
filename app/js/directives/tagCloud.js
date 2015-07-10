@@ -436,7 +436,7 @@ function(connectionService, datasetService, errorNotificationService, filterServ
                         table: $scope.options.table.name,
                         field: $scope.options.tagField,
                         limit: $scope.options.tagLimit,
-                        name: $scope.exportID + " - tagCloud",
+                        name: "tagCloud-" + $scope.exportID,
                         fields: [],
                         type: "arraycount"
                     }]

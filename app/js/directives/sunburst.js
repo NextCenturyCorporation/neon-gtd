@@ -389,7 +389,7 @@ function(connectionService, datasetService, errorNotificationService, exportServ
                     name: "Sunburst",
                     data: [{
                         query: query,
-                        name: $scope.exportID + " - sunburst",
+                        name: "sunburst-" + $scope.exportID,
                         fields: [],
                         ignoreFilters: query.ignoreFilters_,
                         selectionOnly: query.selectionOnly_,

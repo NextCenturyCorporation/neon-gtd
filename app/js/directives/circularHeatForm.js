@@ -405,7 +405,7 @@ function(connectionService, datasetService, errorNotificationService, exportServ
                     name: 'Ops_Clock',
                     data: [{
                         query: query,
-                        name: $scope.exportID + " - circularHeatForm",
+                        name: "circularHeatForm-" + $scope.exportID,
                         fields: [],
                         ignoreFilters: query.ignoreFilters_,
                         selectionOnly: query.selectionOnly_,

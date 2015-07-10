@@ -666,7 +666,7 @@ function(external, popups, connectionService, datasetService, errorNotificationS
                     name: "Count_By",
                     data: [{
                         query: query,
-                        name: $scope.exportID + " - countBy",
+                        name: "countBy-" + $scope.exportID,
                         fields: [],
                         ignoreFilters: query.ignoreFilters_,
                         selectionOnly: query.selectionOnly_,

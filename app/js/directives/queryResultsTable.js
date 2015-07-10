@@ -752,7 +752,7 @@ function(external, popups, connectionService, datasetService, errorNotificationS
                     name: "Query_Results_Table",
                     data: [{
                         query: query,
-                        name: $scope.exportID + " - queryResultsTable",
+                        name: "queryResultsTable-" + $scope.exportID,
                         fields: [],
                         ignoreFilters: query.ignoreFilters_,
                         selectionOnly: query.selectionOnly_,

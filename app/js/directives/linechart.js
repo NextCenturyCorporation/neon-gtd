@@ -630,7 +630,7 @@ function(connectionService, datasetService, errorNotificationService, exportServ
                     name: "Line_Chart",
                     data: [{
                         query: query,
-                        name: $scope.exportID + " - linechart",
+                        name: "linechart-" + $scope.exportID,
                         fields: [],
                         ignoreFilters: query.ignoreFilters_,
                         selectionOnly: query.selectionOnly_,

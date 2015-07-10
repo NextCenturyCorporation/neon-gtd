@@ -482,7 +482,7 @@ function(connectionService, datasetService, errorNotificationService, filterServ
                     name: "Bar_Chart",
                     data: [{
                         query: query,
-                        name: $scope.exportID + " - barchart",
+                        name: "barchart-" + $scope.exportID,
                         fields: [],
                         ignoreFilters: query.ignoreFilters_,
                         selectionOnly: query.selectionOnly_,

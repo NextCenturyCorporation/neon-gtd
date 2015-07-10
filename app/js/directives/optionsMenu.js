@@ -57,7 +57,7 @@ angular.module('neonDemo.directives')
             };
 
             $scope.requestExport = function() {
-                if($scope.exportFunction === undefined) {
+                if(!$scope.exportFunction) {
                     return;
                 }
                 var connection = connectionService.getActiveConnection();

@@ -1123,7 +1123,7 @@ angular.module('neonDemo.directives')
                         query.limitClause = exportService.getLimitClause();
                         var tempObject = {
                             query: query,
-                            name: $scope.exportID + " - map_" + keys[i] + "_" + tables[j],
+                            name: "map_" + keys[i] + "_" + tables[j] + "-" + $scope.exportID,
                             fields: [],
                             ignoreFilters: query.ignoreFilters_,
                             selectionOnly: query.selectionOnly_,
