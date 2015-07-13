@@ -78,7 +78,7 @@ angular.module('neonDemo.directives')
             $scope.loadingData = false;
             $scope.selectedPointLayer = {};
             $scope.selectionEvent = "QUERY_RESULTS_SELECTION_EVENT";
-            $scope.dateSelectedEvent = "animation_date_selected";
+            $scope.animationDateSelectedEvent = "animation_date_selected";
 
             $scope.mapLayers = [coreMap.Map.POINTS_LAYER, coreMap.Map.CLUSTER_LAYER, coreMap.Map.HEATMAP_LAYER, coreMap.Map.NODE_LAYER];
 
@@ -150,7 +150,8 @@ angular.module('neonDemo.directives')
                     $scope.createPoint(msg);
                 });
 
-                $scope.messenger.subscribe($scope.dateSelectedEvent, onDateSelected);
+                $scope.messenger.subscribe('date_selected', onDateSelected);
+                $scope.messenger.subscribe($scope.animationDateSelectedEvent, onDateSelected);
 
                 $scope.$on('$destroy', function() {
                     XDATA.userALE.log({
@@ -382,12 +383,11 @@ angular.module('neonDemo.directives')
              * @private
              */
             var onDateSelected = function(message) {
-                if(message.start && message.end) {
-                    // TODO: Set a date range on any node layers to start.
-                    console.log('setting filter on any node layers.');
-                } else {
-                    // TODO: Clear any date range filters.
-                    console.log('clearing map date range');
+                // Set a date range on any node layers to start.
+                for (var i = 0; i < $scope.options.layers.length; i++) {
+                    if ($scope.options.layers[i].type === coreMap.Map.NODE_LAYER) {
+                        $scope.options.layers[i].olLayer.setDateFilter(message);
+                    }
                 }
             };
 

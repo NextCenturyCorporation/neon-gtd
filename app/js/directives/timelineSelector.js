@@ -51,7 +51,6 @@ function($interval, connectionService, datasetService, errorNotificationService,
             var MONTH = "month";
             var HOUR = "hour";
             var DAY = "day";
-            var ANIMATION_DELAY = 250;
             var DATE_ANIMATION_CHANNEL = 'animation_date_selected';
 
             $element.addClass('timeline-selector');
@@ -95,7 +94,8 @@ function($interval, connectionService, datasetService, errorNotificationService,
                 granularity: DAY,
                 showFocus: "on_filter",
                 animatingTime: false,
-                animationFrame: 0
+                animationFrame: 0,
+                animationFrameDelay: 250
             };
 
             var datesEqual = function(a, b) {
@@ -103,35 +103,30 @@ function($interval, connectionService, datasetService, errorNotificationService,
             };
 
             $scope.playTimeAnimation = function() {
-                console.log('play');
-
-                // TODO: Determine frame data and 
+                // Set the frame and start the animation loop.
                 if (!$scope.options.animationStartDate) {
                     $scope.options.animationFrame = 0;
                 }
 
                 $scope.options.animatingTime = true;
-                $scope.options.animationTimeout = $interval($scope.doTimeAnimation, ANIMATION_DELAY);
+                $scope.options.animationTimeout = $interval($scope.doTimeAnimation, $scope.options.animationFrameDelay);
             };
 
             $scope.pauseTimeAnimation = function() {
-                console.log('pause');
                 $interval.cancel($scope.options.animationTimeout);
                 $scope.options.animatingTime = false;
             };
 
             $scope.stopTimeAnimation = function() {
-                console.log('stop');
                 $interval.cancel($scope.options.animationTimeout);
                 $scope.options.animatingTime = false;
 
-                // TODO: Clear the current step data.
+                // Clear the current step data.
                 $scope.options.animationFrame = 0;
                 $scope.animationMessenger.publish(DATE_ANIMATION_CHANNEL, {});
             }
 
             $scope.stepTimeAnimation = function() {
-                console.log('step');
                 if ($scope.options.animatingTime) {
                     $scope.pauseTimeAnimation();
                 }
@@ -139,7 +134,6 @@ function($interval, connectionService, datasetService, errorNotificationService,
             };
 
             $scope.doTimeAnimation = function() {
-                console.log('animation action');
                 // Get the time range for the current animation frame and publish it.
                 if ($scope.options.animationFrame >= $scope.bucketizer.getNumBuckets()) {
                     $scope.options.animationFrame = 0;
@@ -148,7 +142,6 @@ function($interval, connectionService, datasetService, errorNotificationService,
                     start: $scope.bucketizer.getDateForBucket($scope.options.animationFrame),
                     end: $scope.bucketizer.getDateForBucket($scope.options.animationFrame + 1)
                 };
-                console.log(dateSelected);
                 $scope.animationMessenger.publish(DATE_ANIMATION_CHANNEL, dateSelected);
 
                 // Advance the animation step data.
