@@ -66,17 +66,15 @@
 
             .chart-options {
                 .popover {
-                    top: 30px;
-                    right: 30px;
+                    max-width: none;
+                    padding: 10px 0px 0px;
                     position: absolute;
-
-                    .popover-content {
-                        width: 300px;
-                    }
+                    top: 30px;
+                    right: -10px;
                 }
 
                 .arrow {
-                    right: -15px;
+                    right: 25px;
                 }
 
                 /* Give the menu container a background to make it more readable.  Make it the same height (30 px) and color of the filter reset notifications. */
@@ -93,11 +91,11 @@
             .instructions-container {
                 label {
                     font-size: 14px;
+                    margin-bottom: 0px;
                 }
 
                 .glyphicon {
                     top: 2px;
-                    margin-right: 5px;
                 }
             }
 
@@ -113,19 +111,57 @@
                     border-color: @border-color;
                     border-radius: 4px;
                     padding: 10px;
+                    /* Make the width match the width of five columns + the padding + the borders. */
+                    width: 862px;
 
-                    > .btn-group {
-                        margin-bottom: 50px;
+                    &.new-layer {
+                        background-color: @main-background-lighten;
+                    }
 
-                        .btn {
-                            width: 50%;
+                    .layer-options-row {
+                        height: 60px;
+                        margin-top: 10px;
 
-                            &.active {
-                                color: @accent-bright;
+                        &:first-child {
+                            margin-top: 0px;
+                        }
+
+                        .layer-options-col {
+                            float: left;
+                            width: 160px;
+                            margin-left: 10px;
+
+                            &:first-child {
+                                margin-left: 0px;
                             }
 
-                            .glyphicon {
-                                margin-right: 5px;
+                            &.btn-group {
+                                /* Make the layer options buttons vertically align with the dropdowns. */
+                                margin-top: 25px;
+
+                                .btn {
+                                    /* Make the combined width of the three layer options buttons match the width of the column. */
+                                    padding: 5px 18px;
+
+                                    &.btn-default {
+                                        &.active, &.active&:hover, &.active&:focus {
+                                            color: #FFFFFF;
+                                            background-color: @accent-dark;
+                                            border-color: @accent-dark;
+                                        }
+                                    }
+
+                                    &.one-btn {
+                                        font-size: 14px;
+                                        padding: 5px;
+                                        width: 100%;
+                                    }
+                                }
+
+                                .glyphicon {
+                                    font-size: 16px;
+                                    top: 2px;
+                                }
                             }
                         }
                     }
@@ -136,19 +172,15 @@
                     }
                 }
             }
-
-            .reset-options {
-                margin-top: 30px;
-            }
         }
 
         &.legend-container {
-            top: 40px;
+            top: 50px;
             left: 10px;
         }
 
         &.filter-container {
-            top: 40px;
+            top: 50px;
             right: 10px;
         }
     }
@@ -183,7 +215,7 @@
     }
 
     .olControlZoom {
-        top: 40px;
+        top: 50px;
         left: 10px;
 
         a {
