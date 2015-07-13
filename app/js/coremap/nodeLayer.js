@@ -142,7 +142,7 @@ coreMap.Map.Layer.NodeLayer.prototype.createLineStyleObject = function(color, wi
         strokeColor: color || coreMap.Map.Layer.NodeLayer.DEFAULT_STROKE_COLOR,
         strokeOpacity: coreMap.Map.Layer.NodeLayer.DEFAULT_OPACITY,
         strokeWidth: width || coreMap.Map.Layer.NodeLayer.DEFAULT_STROKE_WIDTH,
-        strokeLinecap: "round"
+        strokeLinecap: "butt"
     });
 };
 
@@ -155,14 +155,19 @@ coreMap.Map.Layer.NodeLayer.prototype.createLineStyleObject = function(color, wi
  * @method createArrowStyleObject
  */
 coreMap.Map.Layer.NodeLayer.prototype.createArrowStyleObject = function(color, width, angle) {
-    OpenLayers.Renderer.symbol.arrow = [0,6, 3,3, 6,6, 0,6];
+    var arrowWidth = width + 7;
+    if(width % 2 === 0) {
+        arrowWidth += 1;
+    }
+
+    OpenLayers.Renderer.symbol.arrow = [0,0, 0,arrowWidth, (arrowWidth / 2),width, arrowWidth,arrowWidth, 0,arrowWidth];
 
     color = color || coreMap.Map.Layer.NodeLayer.DEFAULT_COLOR;
 
     return new OpenLayers.Symbolizer.Point({
         strokeColor: color || coreMap.Map.Layer.NodeLayer.DEFAULT_STROKE_COLOR,
         fillColor: color || coreMap.Map.Layer.NodeLayer.DEFAULT_STROKE_COLOR,
-        strokeOpacity: coreMap.Map.Layer.NodeLayer.DEFAULT_OPACITY,
+        strokeOpacity: 0,
         strokeWidth: 1,
         graphicName: "arrow",
         pointRadius: (width || coreMap.Map.Layer.NodeLayer.DEFAULT_STROKE_WIDTH) * 2,
@@ -359,7 +364,6 @@ coreMap.Map.Layer.NodeLayer.prototype.updateFeatures = function() {
         // If the line has substance, render it.
         if(weight > 0) {
             lines.push(me.createWeightedLine(pt1, pt2, weight));
-
             arrows.push(me.createWeightedArrow(pt1, pt2, weight));
         }
 
@@ -385,7 +389,7 @@ coreMap.Map.Layer.NodeLayer.DEFAULT_SOURCE = "from";
 coreMap.Map.Layer.NodeLayer.DEFAULT_TARGET = "to";
 
 coreMap.Map.Layer.NodeLayer.DEFAULT_ARROW_POINT_RADIUS = 5;
-coreMap.Map.Layer.NodeLayer.DEFAULT_OPACITY = 0.8;
+coreMap.Map.Layer.NodeLayer.DEFAULT_OPACITY = 1;
 coreMap.Map.Layer.NodeLayer.DEFAULT_STROKE_WIDTH = 1;
 coreMap.Map.Layer.NodeLayer.DEFAULT_COLOR = "#00ff00";
 coreMap.Map.Layer.NodeLayer.DEFAULT_LINE_COLOR = "#ffff00";
