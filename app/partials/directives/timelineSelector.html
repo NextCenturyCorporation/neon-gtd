@@ -74,14 +74,16 @@
 <div class="header-container filter-container">
     <div class="neon-datetimepicker dropdown pull-right">
 
-        <button class="btn btn-default" role="button" data-target="#" href="#">
-            <span class="glyphicon glyphicon-play-circle"></span> Play <span class="caret"></span>
+        <button class="btn btn-default" role="button" ng-click="(options.animatingTime) ? pauseTimeAnimation() : playTimeAnimation()">
+            <span class="glyphicon" 
+                ng-class="{true: 'glyphicon-pause', false: 'glyphicon-play-circle'}[options.animatingTime]"></span> 
+                <span ng-bind="(options.animatingTime) ? 'Pause' : 'Play'"></span> </span>
         </button>
-        <button class="btn btn-default" role="button" data-target="#" href="#">
-            <span class="glyphicon glyphicon-step-forwarr"></span> Step <span class="caret"></span>
+        <button class="btn btn-default" role="button" ng-click="stepTimeAnimation()">
+            <span class="glyphicon glyphicon-step-forward"></span> Step </span>
         </button>
-        <button class="btn btn-default" role="button" data-target="#" href="#">
-            <span class="glyphicon glyphicon-stop"></span> Stop <span class="caret"></span>
+        <button class="btn btn-default" role="button" ng-click="stopTimeAnimation()">
+            <span class="glyphicon glyphicon-stop"></span> Stop </span>
         </button>
 
         <button class="btn btn-default dropdown-toggle" role="button" data-toggle="dropdown" data-target="#" href="#">

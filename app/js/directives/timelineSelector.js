@@ -32,8 +32,8 @@
  * @constructor
  */
 angular.module('neonDemo.directives')
-.directive('timelineSelector', ['ConnectionService', 'DatasetService', 'ErrorNotificationService', 'FilterService', 'opencpu',
-function(connectionService, datasetService, errorNotificationService, filterService, opencpu) {
+.directive('timelineSelector', ['$interval', 'ConnectionService', 'DatasetService', 'ErrorNotificationService', 'FilterService', 'opencpu',
+function($interval, connectionService, datasetService, errorNotificationService, filterService, opencpu) {
     return {
         templateUrl: 'partials/directives/timelineSelector.html',
         restrict: 'EA',
@@ -51,6 +51,7 @@ function(connectionService, datasetService, errorNotificationService, filterServ
             var MONTH = "month";
             var HOUR = "hour";
             var DAY = "day";
+            var ANIMATION_DELAY = 1000;
 
             $element.addClass('timeline-selector');
 
@@ -91,11 +92,48 @@ function(connectionService, datasetService, errorNotificationService, filterServ
                 primarySeries: false,
                 collapsed: true,
                 granularity: DAY,
-                showFocus: "on_filter"
+                showFocus: "on_filter",
+                animatingTime: false
             };
 
             var datesEqual = function(a, b) {
                 return a.toUTCString() === b.toUTCString();
+            };
+
+            $scope.playTimeAnimation = function() {
+                console.log('play');
+
+                // TODO: Determine frame data and 
+                $scope.options.animatingTime = true;
+                $scope.options.animationTimeout = $interval($scope.doTimeAnimation, ANIMATION_DELAY);
+            };
+
+            $scope.pauseTimeAnimation = function() {
+                console.log('pause');
+                $interval.cancel($scope.options.animationTimeout);
+                $scope.options.animatingTime = false;
+            };
+
+            $scope.stopTimeAnimation = function() {
+                console.log('stop');
+                $interval.cancel($scope.options.animationTimeout);
+                $scope.options.animatingTime = false;
+
+                // TODO: Clear the current step data.
+            }
+
+            $scope.stepTimeAnimation = function() {
+                console.log('step');
+                if ($scope.options.animatingTime) {
+                    $scope.pauseTimeAnimation();
+                }
+                $scope.doTimeAnimation();
+            };
+
+            $scope.doTimeAnimation = function() {
+                console.log('animation action');
+                // TODO: Publish the current time range.
+                // TODO: Advance the animation step data.
             };
 
             $scope.handleDateTimePickChange = function() {
