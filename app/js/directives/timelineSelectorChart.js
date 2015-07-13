@@ -170,6 +170,7 @@ angular.module('neonDemo.directives')
 
             $scope.$watch("messenger", function() {
                 $scope.messenger.subscribe("date_selected", onDateSelected);
+                $scope.messenger.subscribe("animation_date_selected", onDateSelected);
                 $scope.chart.setHoverListener(onHover);
             });
         }

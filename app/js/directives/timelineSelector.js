@@ -51,7 +51,8 @@ function($interval, connectionService, datasetService, errorNotificationService,
             var MONTH = "month";
             var HOUR = "hour";
             var DAY = "day";
-            var ANIMATION_DELAY = 1000;
+            var ANIMATION_DELAY = 250;
+            var DATE_ANIMATION_CHANNEL = 'animation_date_selected';
 
             $element.addClass('timeline-selector');
 
@@ -93,7 +94,8 @@ function($interval, connectionService, datasetService, errorNotificationService,
                 collapsed: true,
                 granularity: DAY,
                 showFocus: "on_filter",
-                animatingTime: false
+                animatingTime: false,
+                animationFrame: 0
             };
 
             var datesEqual = function(a, b) {
@@ -104,6 +106,10 @@ function($interval, connectionService, datasetService, errorNotificationService,
                 console.log('play');
 
                 // TODO: Determine frame data and 
+                if (!$scope.options.animationStartDate) {
+                    $scope.options.animationFrame = 0;
+                }
+
                 $scope.options.animatingTime = true;
                 $scope.options.animationTimeout = $interval($scope.doTimeAnimation, ANIMATION_DELAY);
             };
@@ -120,6 +126,8 @@ function($interval, connectionService, datasetService, errorNotificationService,
                 $scope.options.animatingTime = false;
 
                 // TODO: Clear the current step data.
+                $scope.options.animationFrame = 0;
+                $scope.animationMessenger.publish(DATE_ANIMATION_CHANNEL, {});
             }
 
             $scope.stepTimeAnimation = function() {
@@ -132,8 +140,19 @@ function($interval, connectionService, datasetService, errorNotificationService,
 
             $scope.doTimeAnimation = function() {
                 console.log('animation action');
-                // TODO: Publish the current time range.
-                // TODO: Advance the animation step data.
+                // Get the time range for the current animation frame and publish it.
+                if ($scope.options.animationFrame >= $scope.bucketizer.getNumBuckets()) {
+                    $scope.options.animationFrame = 0;
+                }
+                var dateSelected = {
+                    start: $scope.bucketizer.getDateForBucket($scope.options.animationFrame),
+                    end: $scope.bucketizer.getDateForBucket($scope.options.animationFrame + 1)
+                };
+                console.log(dateSelected);
+                $scope.animationMessenger.publish(DATE_ANIMATION_CHANNEL, dateSelected);
+
+                // Advance the animation step data.
+                 $scope.options.animationFrame++;
             };
 
             $scope.handleDateTimePickChange = function() {
@@ -359,11 +378,13 @@ function($interval, connectionService, datasetService, errorNotificationService,
                 });
 
                 $scope.messenger = new neon.eventing.Messenger();
+                $scope.animationMessenger = new neon.eventing.Messenger();
 
                 $scope.messenger.events({
                     filtersChanged: onFiltersChanged
                 });
                 $scope.messenger.subscribe(datasetService.DATE_CHANGED, onDateChanged);
+                $scope.messenger.subscribe(DATE_ANIMATION_CHANNEL, onDateChanged);
 
                 $scope.$on('$destroy', function() {
                     XDATA.userALE.log({
