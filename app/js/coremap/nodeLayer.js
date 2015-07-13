@@ -311,6 +311,7 @@ coreMap.Map.Layer.NodeLayer.prototype.styleNode = function(element) {
 coreMap.Map.Layer.NodeLayer.prototype.setData = function(edges) {
     this.edges = edges;
     this.updateFeatures();
+    this.dateFilterStrategy.setFilter();
 };
 
 coreMap.Map.Layer.NodeLayer.prototype.setDateFilter = function(filterBounds) {
@@ -319,7 +320,6 @@ coreMap.Map.Layer.NodeLayer.prototype.setDateFilter = function(filterBounds) {
         this.dateFilter.lowerBoundary = filterBounds.start;
         this.dateFilter.upperBoundary = filterBounds.end;
         this.dateFilterStrategy.setFilter(this.dateFilter);
-        this.dateFilterStrategy.activate();
     }
     else {
         // Clear the filter

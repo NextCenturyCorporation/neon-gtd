@@ -150,7 +150,7 @@ angular.module('neonDemo.directives')
                     $scope.createPoint(msg);
                 });
 
-                $scope.messenger.subscribe('date_selected', onDateSelected);
+                //$scope.messenger.subscribe('date_selected', onDateSelected);
                 $scope.messenger.subscribe($scope.animationDateSelectedEvent, onDateSelected);
 
                 $scope.$on('$destroy', function() {
@@ -383,6 +383,7 @@ angular.module('neonDemo.directives')
              * @private
              */
             var onDateSelected = function(message) {
+                //console.log(message);
                 // Set a date range on any node layers to start.
                 for (var i = 0; i < $scope.options.layers.length; i++) {
                     if ($scope.options.layers[i].type === coreMap.Map.NODE_LAYER) {

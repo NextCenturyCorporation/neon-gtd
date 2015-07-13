@@ -138,10 +138,16 @@ function($interval, connectionService, datasetService, errorNotificationService,
                 if ($scope.options.animationFrame >= $scope.bucketizer.getNumBuckets()) {
                     $scope.options.animationFrame = 0;
                 }
+
                 var dateSelected = {
                     start: $scope.bucketizer.getDateForBucket($scope.options.animationFrame),
                     end: $scope.bucketizer.getDateForBucket($scope.options.animationFrame + 1)
                 };
+                // Cleanup the animation end time on the last frame.
+                if ($scope.options.animationFrame === ($scope.bucketizer.getNumBuckets() - 1)) {
+                    dateSelected.end = $scope.bucketizer.getEndDate();
+                }
+                //console.log(dateSelected);
                 $scope.animationMessenger.publish(DATE_ANIMATION_CHANNEL, dateSelected);
 
                 // Advance the animation step data.
