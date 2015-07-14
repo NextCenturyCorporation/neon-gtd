@@ -28,6 +28,7 @@ function($scope, $timeout, config, datasets) {
     $scope.seeData = false;
     $scope.createFilters = false;
     $scope.filterCount = 0;
+    $scope.element = $("body");
 
     if($scope.hideNavbarItems) {
         for(var i = 0; i < datasets.length; ++i) {

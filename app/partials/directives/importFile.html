@@ -1,0 +1,64 @@
+<ul class="nav navbar-nav">
+  <li>
+    <a data-toggle="modal" data-target="#importModal" class="navbar-nav collapsed dropdown-toggle primary navbar-list-bottom neon-popup-button" ng-show="canImport">
+      Import File
+    </a>
+    <a class="navbar-nav collapsed dropdown-toggle primary navbar-list-bottom unselectable" ng-hide="canImport">
+      Import unsupported for this browser
+    </a>
+  </li>
+</ul>
+<ul class="nav navbar-nav">
+  <li>
+    <a id="dataDropped" class="navbar-nav collapsed primary navbar-list-bottom neon-popup-button" ng-click="dropCurrentSet()" ng-show="canImport">
+      Drop Current Data
+    </a>
+  </li>
+</ul>
+
+<div class="modal fade" id="importModal" tabindex="-1" role="dialog" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+        <h4 class="modal-title" id="importModalLabel">Select a file to import</h4>
+      </div>
+        <div class="modal-body">
+          <div id="fileDragAndDrop" class="unselectable"><span id="selectedFileIndicator">Drop a file here</span></div>
+          <input type="file" id="fileSelect" value="">
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-default" data-dismiss="modal" ng-click="uploadFile()">Import</button>
+        </div>
+    </div>
+  </div>
+</div>
+
+<div class="modal fade" id="confirmChoicesModal" data-keyboard="false" data-backdrop="static" tabIndex="-1" role="dialog" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+        <h4 class="modal-title" id="importModalLabel">Confirm Data Type of Fields</h4>
+      </div>
+      <div class="modal-body centered"> <!-- centered class comes from countBy.less - is it still okay to use it here? -->
+        <p ng-show="hasFailed">One or more fields failed to convert. Please try again.</p>
+        <p ng-repeat="field in fieldTypePairs">
+          <span>{{field.name}}</span>
+          <select id="{{field.name}}-options">
+            <option value="Integer">Integer</option>
+            <option value="Long">Long</option>
+            <option value="Double">Double</option>
+            <option value="Float">Float</option>
+            <option value="Date">Date</option>
+            <option value="String">String</option>
+          </select>
+        </p>
+      </div>
+      <div class="modal-footer">
+        <input type="text" id="dateStringInput" class="confirmModalFooterField" value="" maxlength="50" size="30" placeholder="Date format sting here if not standard">
+        <button type="button" class="btn btn-default" ng-click="sendConfirmedChoices()">Confirm</button> <!-- data-dismiss="modal" -->
+      </div>
+    </div>
+  </div>
+</div>
