@@ -38,7 +38,7 @@
 </div>
 
 <div class="header-container filter-container">
-    <div class="filter-reset pull-right" ng-class="{true: '', false: 'hidden'}[showFilter]">
+    <div class="filter-reset pull-right" ng-class="{true: '', false: 'hidden'}[showFilter]" title="Latitude from {{extent.minimumLatitude}} to {{extent.maximumLatitude}}, Longitude from {{extent.minimumLongitude}} to {{extent.maximumLongitude}}">
         <span class="filter-label">Map Filter</span>
         <span class="glyphicon glyphicon-remove" ng-click="clearFilters(true)"></span>
     </div>
