@@ -32,8 +32,8 @@
  * @constructor
  */
 angular.module('neonDemo.directives')
-.directive('timelineSelector', ['ConnectionService', 'DatasetService', 'ErrorNotificationService', 'FilterService', 'opencpu',
-function(connectionService, datasetService, errorNotificationService, filterService, opencpu) {
+.directive('timelineSelector', ['ConnectionService', 'DatasetService', 'ErrorNotificationService', 'FilterService', 'opencpu', '$filter',
+function(connectionService, datasetService, errorNotificationService, filterService, opencpu, $filter) {
     return {
         templateUrl: 'partials/directives/timelineSelector.html',
         restrict: 'EA',
@@ -174,16 +174,32 @@ function(connectionService, datasetService, errorNotificationService, filterServ
                     displayStartDate.getUTCMonth(),
                     displayStartDate.getUTCDate(),
                     displayStartDate.getUTCHours());
+
                 $scope.endDateForDisplay = new Date(displayEndDate.getUTCFullYear(),
                     displayEndDate.getUTCMonth(),
                     displayEndDate.getUTCDate(),
                     displayEndDate.getUTCHours());
+
                 // Describing ranges is odd. If an event lasts 2 hours starting at 6am, then it
                 // lasts from 6am to 8am. But if an event starts on the 6th and lasts 2 days, then
                 // it lasts from the 6th to the 7th.
                 if($scope.options.granularity !== HOUR) {
                     $scope.endDateForDisplay = new Date($scope.endDateForDisplay.getTime() - 1);
                 }
+
+                var format = "MMMM d, yyyy HH:mm";
+                if($scope.options.granularity === DAY) {
+                    format = "MMMM d, yyyy";
+                }
+                if($scope.options.granularity === MONTH) {
+                    format = "MMMM yyyy";
+                }
+                if($scope.options.granularity === YEAR) {
+                    format = "yyyy";
+                }
+
+                $scope.startDateForDisplay = $filter("date")($scope.startDateForDisplay.toISOString(), format) + " (Z)";
+                $scope.endDateForDisplay = $filter("date")($scope.endDateForDisplay.toISOString(), format) + " (Z)";
             };
 
             /**
@@ -656,10 +672,8 @@ function(connectionService, datasetService, errorNotificationService, filterServ
                     }
                 }
 
-                var displayStartDate = new Date(extentStartDate);
-                var displayEndDate = new Date(extentEndDate);
                 neon.safeApply($scope, function() {
-                    $scope.setDisplayDates(displayStartDate, displayEndDate);
+                    $scope.setDisplayDates(extentStartDate, extentEndDate);
                 });
 
                 $scope.recordCount = total;
