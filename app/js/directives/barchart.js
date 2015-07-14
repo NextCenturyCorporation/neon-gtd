@@ -293,6 +293,9 @@ function(connectionService, datasetService, errorNotificationService, filterServ
                             source: "system",
                             tags: ["receive", "barchart"]
                         });
+                        $scope.results = {
+                            count: queryResults.data.length
+                        };
                         doDrawChart(queryResults, rebuildChart);
                         $scope.loadingData = false;
                         XDATA.userALE.log({
