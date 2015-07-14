@@ -178,7 +178,7 @@ angular.module("neonDemo.services")
                 }, errorCallback);
             };
 
-            addFilter(relations);
+            addFilter(angular.copy(relations));
         };
 
         /**
@@ -217,7 +217,7 @@ angular.module("neonDemo.services")
                 }, errorCallback);
             };
 
-            replaceFilter(relations);
+            replaceFilter(angular.copy(relations));
         };
 
         /**

@@ -213,23 +213,24 @@ function(connectionService, datasetService, errorNotificationService, filterServ
              * @private
              */
             var onFiltersChanged = function(message) {
-                XDATA.userALE.log({
-                    activity: "alter",
-                    action: "query",
-                    elementId: "linechart",
-                    elementType: "canvas",
-                    elementSub: "linechart",
-                    elementGroup: "chart_group",
-                    source: "system",
-                    tags: ["filter-change", "linechart"]
-                });
-
                 if(message.addedFilter && message.addedFilter.databaseName === $scope.options.database.name && message.addedFilter.tableName === $scope.options.table.name) {
                     // If the filter changed event was triggered by a change in the global date filter, ignore the filter changed event.
                     // We don't need to re-query and we'll update the brush extent extent in response to the date changed event.
                     if(isDateFiltersChangedMessage(message)) {
                         return;
                     }
+
+                    XDATA.userALE.log({
+                        activity: "alter",
+                        action: "query",
+                        elementId: "linechart",
+                        elementType: "canvas",
+                        elementSub: "linechart",
+                        elementGroup: "chart_group",
+                        source: "system",
+                        tags: ["filter-change", "linechart"]
+                    });
+
                     $scope.queryForData();
                     $scope.queryOnChangeBrush = $scope.queryOnChangeBrush || ($scope.brushExtent.length > 0);
                 }
@@ -752,8 +753,8 @@ function(connectionService, datasetService, errorNotificationService, filterServ
                     return 0;
                 }
 
-                var start = $scope.dateStringToDataIndex[$scope.brushExtent[0].toDateString()];
-                var end = $scope.dateStringToDataIndex[$scope.brushExtent[1].toDateString()];
+                var start = $scope.dateStringToDataIndex[$scope.brushExtent[0].toDateString()] || 0;
+                var end = $scope.dateStringToDataIndex[$scope.brushExtent[1].toDateString()] || data.length;
                 var value = 0;
                 for(var i = start; i < end; ++i) {
                     value = calculationFunction(data[i].value, value);
@@ -830,8 +831,10 @@ function(connectionService, datasetService, errorNotificationService, filterServ
                 }
 
                 var relations = datasetService.getRelations($scope.options.database.name, $scope.options.table.name, [$scope.options.attrX]);
-                datasetService.setDateBrushExtentForRelations(relations, $scope.brushExtent);
-                filterService.replaceFilters($scope.messenger, relations, $scope.filterKeys, createFilterClauseForDate, updateLineChartForBrushExtent);
+                filterService.replaceFilters($scope.messenger, relations, $scope.filterKeys, createFilterClauseForDate, function() {
+                    updateLineChartForBrushExtent();
+                    datasetService.setDateBrushExtentForRelations(relations, $scope.brushExtent);
+                });
             };
 
             /**
@@ -891,8 +894,10 @@ function(connectionService, datasetService, errorNotificationService, filterServ
 
                 renderBrushExtent([]);
                 var relations = datasetService.getRelations($scope.options.database.name, $scope.options.table.name, [$scope.options.attrX]);
-                datasetService.removeDateBrushExtentForRelations(relations);
-                filterService.removeFilters($scope.messenger, $scope.filterKeys, updateLineChartForBrushExtent);
+                filterService.removeFilters($scope.messenger, $scope.filterKeys, function() {
+                    updateLineChartForBrushExtent();
+                    datasetService.removeDateBrushExtentForRelations(relations);
+                });
             };
 
             /**

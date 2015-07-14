@@ -95,7 +95,7 @@ function(connectionService, datasetService, errorNotificationService, filterServ
             };
 
             var datesEqual = function(a, b) {
-                return a.toDateString() === b.toDateString();
+                return a.toUTCString() === b.toUTCString();
             };
 
             $scope.handleDateTimePickChange = function() {
@@ -359,8 +359,12 @@ function(connectionService, datasetService, errorNotificationService, filterServ
                 }
 
                 var relations = datasetService.getRelations($scope.options.database.name, $scope.options.table.name, [$scope.options.dateField]);
-                datasetService.setDateBrushExtentForRelations(relations, $scope.brush);
-                filterService.replaceFilters($scope.messenger, relations, $scope.filterKeys, $scope.createFilterClauseForDate, callback);
+                filterService.replaceFilters($scope.messenger, relations, $scope.filterKeys, $scope.createFilterClauseForDate, function() {
+                    if(callback) {
+                        callback();
+                    }
+                    datasetService.setDateBrushExtentForRelations(relations, $scope.brush);
+                });
             };
 
             /**
@@ -405,23 +409,24 @@ function(connectionService, datasetService, errorNotificationService, filterServ
              * @private
              */
             var onFiltersChanged = function(message) {
-                XDATA.userALE.log({
-                    activity: "alter",
-                    action: "query",
-                    elementId: "timeline",
-                    elementType: "canvas",
-                    elementSub: "timeline",
-                    elementGroup: "chart_group",
-                    source: "system",
-                    tags: ["filter-change", "timeline"]
-                });
-
                 if(message.addedFilter && message.addedFilter.databaseName === $scope.options.database.name && message.addedFilter.tableName === $scope.options.table.name) {
                     // If the filter changed event was triggered by a change in the global date filter, ignore the filter changed event.
                     // We don't need to re-query and we'll update the brush extent in response to the date changed event.
                     if(isDateFiltersChangedMessage(message)) {
                         return;
                     }
+
+                    XDATA.userALE.log({
+                        activity: "alter",
+                        action: "query",
+                        elementId: "timeline",
+                        elementType: "canvas",
+                        elementSub: "timeline",
+                        elementGroup: "chart_group",
+                        source: "system",
+                        tags: ["filter-change", "timeline"]
+                    });
+
                     $scope.queryForChartData();
                 }
             };
@@ -1110,8 +1115,9 @@ function(connectionService, datasetService, errorNotificationService, filterServ
                 $scope.filter.start = $scope.bucketizer.getStartDate();
                 $scope.filter.end = $scope.bucketizer.getEndDate();
                 var relations = datasetService.getRelations($scope.options.database.name, $scope.options.table.name, [$scope.options.dateField]);
-                datasetService.removeDateBrushExtentForRelations(relations);
-                filterService.removeFilters($scope.messenger, $scope.filterKeys);
+                filterService.removeFilters($scope.messenger, $scope.filterKeys, function() {
+                    datasetService.removeDateBrushExtentForRelations(relations);
+                });
             };
 
             /**
