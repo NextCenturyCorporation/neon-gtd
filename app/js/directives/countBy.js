@@ -623,7 +623,6 @@ function(external, popups, connectionService, datasetService, errorNotificationS
                     query.sortBy($scope.options.aggregationField, neon.query.DESCENDING);
                 }
 
-
                 query.limit($scope.options.limitCount);
 
                 return query;

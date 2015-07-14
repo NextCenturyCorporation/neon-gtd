@@ -40,7 +40,8 @@ function(connectionService, datasetService, errorNotificationService, filterServ
             bindTable: '=',
             bindDatabase: '=',
             hideHeader: '=?',
-            hideAdvancedOptions: '=?'
+            hideAdvancedOptions: '=?',
+            limitCount: '=?'
         },
         link: function($scope, $element) {
             $element.addClass('barchartDirective');
@@ -61,7 +62,8 @@ function(connectionService, datasetService, errorNotificationService, filterServ
                 table: {},
                 attrX: "",
                 attrY: "",
-                barType: "count"
+                barType: "count",
+                limitCount: $scope.limitCount || 150
             };
 
             var COUNT_FIELD_NAME = 'Count';
@@ -265,6 +267,8 @@ function(connectionService, datasetService, errorNotificationService, filterServ
                 } else {
                     query.aggregate(queryType, $scope.options.attrY, COUNT_FIELD_NAME);
                 }
+                query.sortBy(COUNT_FIELD_NAME, neon.query.DESCENDING);
+                query.limit($scope.options.limitCount);
 
                 XDATA.userALE.log({
                     activity: "alter",
