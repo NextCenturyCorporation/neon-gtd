@@ -84,7 +84,14 @@ coreMap.Map.Layer.NodeLayer.prototype.calculateNodeRadius = function(element) {
  * @method calculateLineWidth
  */
 coreMap.Map.Layer.NodeLayer.prototype.calculateLineWidth = function(weight) {
-    var percentOfDataRange = (weight - this.minLineWidth) / this.lineWidthDiff;
+    var percentOfDataRange = 0;
+
+    // If there was some variance in edge weights/widths, calculate the percentage of max difference for this weight.
+    // Otherwise, we'll default to the minimum line width.
+    if (this.lineWidthDiff) {
+        percentOfDataRange = (weight - this.minLineWidth) / this.lineWidthDiff;
+    }
+
     return coreMap.Map.Layer.NodeLayer.MIN_LINE_WIDTH + (percentOfDataRange * this.baseLineWidthDiff);
 };
 
@@ -316,9 +323,9 @@ coreMap.Map.Layer.NodeLayer.prototype.calculateSizes = function() {
     _.each(this.edges, function(element) {
         var src = me.getValueFromDataElement(me.sourceMapping || coreMap.Map.Layer.NodeLayer.DEFAULT_SOURCE, element);
         var tgt = me.getValueFromDataElement(me.targetMapping || coreMap.Map.Layer.NodeLayer.DEFAULT_TARGET, element);
-        var weight = me.getValueFromDataElement(me.weightMapping || coreMap.Map.Layer.NodeLayer.DEFAULT_WEIGHT_MAPPING, element);
-        var srcWeight = me.getValueFromDataElement(me.weightMapping || coreMap.Map.Layer.NodeLayer.DEFAULT_WEIGHT_MAPPING, src);
-        var tgtWeight = me.getValueFromDataElement(me.weightMapping || coreMap.Map.Layer.NodeLayer.DEFAULT_WEIGHT_MAPPING, tgt);
+        var weight = me.getValueFromDataElement(me.weightMapping || coreMap.Map.Layer.NodeLayer.DEFAULT_WEIGHT_MAPPING, element) || 1;
+        var srcWeight = me.getValueFromDataElement(me.weightMapping || coreMap.Map.Layer.NodeLayer.DEFAULT_WEIGHT_MAPPING, src) || 1;
+        var tgtWeight = me.getValueFromDataElement(me.weightMapping || coreMap.Map.Layer.NodeLayer.DEFAULT_WEIGHT_MAPPING, tgt) || 1;
 
         me.minNodeRadius = _.min([me.minNodeRadius, srcWeight, tgtWeight]);
         me.maxNodeRadius = _.max([me.maxNodeRadius, srcWeight, tgtWeight]);
