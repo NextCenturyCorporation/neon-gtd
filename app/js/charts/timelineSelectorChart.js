@@ -978,19 +978,20 @@ charts.TimelineSelectorChart = function(element, configuration) {
         // configurable parameter that is passed in with the series, like series.color.
         var anomalyColor = 'red';
 
+        focus.selectAll("rect.bar").remove();
+        focus.selectAll("path." + series.type).remove();
+
         // If type is bar AND the data isn't too long, render a bar plot
-        if(series.type === 'bar' && series.data.length < me.width) {
+        if(series.type === 'bar' && dataShown.length < me.width) {
             var barheight = 0;
 
-            if(series.data.length < 60) {
+            if(dataShown.length < 60) {
                 style = 'stroke:#f1f1f1;';
                 barheight++;
             }
 
             var anomalyStyle = style + 'fill: ' + anomalyColor + '; stroke: ' + anomalyColor + ';';
             style += 'fill:' + series.color + ';';
-
-            focus.selectAll("rect.bar").remove();
 
             focus.selectAll("rect.bar")
                 .data(dataShown)
@@ -1043,19 +1044,17 @@ charts.TimelineSelectorChart = function(element, configuration) {
                     });
             }
 
-            focus.selectAll("path." + series.type).remove();
-
             focus.append("path")
                 .datum(dataShown)
                 .attr("class", series.type)
                 .attr("d", chartType)
                 .attr("style", style);
 
-            if(series.data.length < 80) {
+            if(dataShown.length < 80) {
                 var func = function(d) {
                     return me.xFocus(d.date);
                 };
-                if(series.data.length === 1) {
+                if(dataShown.length === 1) {
                     func = width / 2;
                 }
 
