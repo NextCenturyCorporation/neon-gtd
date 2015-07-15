@@ -158,16 +158,19 @@ coreMap.Map.Layer.NodeLayer.prototype.createLineStyleObject = function(color, wi
  * @param {String} color The color of the arrow
  * @param {Number} width The width of the arrow lines
  * @param {Number} angle The angle of rotation to set the arrow in the right direction
+ * @param {Object} element An element of the data array.
  * @return {OpenLayers.Symbolizer.Point} The style object
  * @method createArrowStyleObject
  */
-coreMap.Map.Layer.NodeLayer.prototype.createArrowStyleObject = function(color, width, angle) {
-    var arrowWidth = width + 7;
-    if(width % 2 === 0) {
+coreMap.Map.Layer.NodeLayer.prototype.createArrowStyleObject = function(color, width, angle, element) {
+    var radius = Math.ceil(this.calculateNodeRadius(element) || coreMap.Map.Layer.NodeLayer.MIN_RADIUS);
+    
+    var arrowWidth = radius + 7;
+    if(radius % 2 === 0) {
         arrowWidth += 1;
     }
 
-    OpenLayers.Renderer.symbol.arrow = [0,0, 0,arrowWidth, (arrowWidth / 2),width, arrowWidth,arrowWidth, 0,arrowWidth];
+    OpenLayers.Renderer.symbol.arrow = [0,0, 0,arrowWidth, (arrowWidth / 2),(arrowWidth - 7), arrowWidth,arrowWidth, 0,arrowWidth];
 
     color = color || coreMap.Map.Layer.NodeLayer.DEFAULT_COLOR;
 
@@ -215,10 +218,11 @@ coreMap.Map.Layer.NodeLayer.prototype.createWeightedLine = function(pt1, pt2, we
  * @param {Array<Number>} pt2 The [latitude, longitude] pair of the target node
  * @param {Number} weight The weight of the arrow lines. This will be compared to other
  * datapoints to calculate an appropriate line width for rendering.
+ * @param {Object} element An element of the data array.
  * @return {OpenLayers.Feature.Vector} the arrow to be added.
  * @method createWeightedArrow
  */
-coreMap.Map.Layer.NodeLayer.prototype.createWeightedArrow = function(pt1, pt2, weight) {
+coreMap.Map.Layer.NodeLayer.prototype.createWeightedArrow = function(pt1, pt2, weight, element) {
     var wt = this.calculateLineWidth(weight);
 
     var angle = this.calculateAngle(pt1[0], pt1[1], pt2[0], pt2[1]);
@@ -228,7 +232,7 @@ coreMap.Map.Layer.NodeLayer.prototype.createWeightedArrow = function(pt1, pt2, w
         coreMap.Map.DESTINATION_PROJECTION);
 
     var featureArrow = new OpenLayers.Feature.Vector(point);
-    featureArrow.style = this.createArrowStyleObject(this.lineColor || coreMap.Map.Layer.NodeLayer.DEFAULT_LINE_COLOR, wt, angle);
+    featureArrow.style = this.createArrowStyleObject(this.lineColor || coreMap.Map.Layer.NodeLayer.DEFAULT_LINE_COLOR, wt, angle, element);
 
     return featureArrow;
 };
@@ -371,7 +375,7 @@ coreMap.Map.Layer.NodeLayer.prototype.updateFeatures = function() {
         // If the line has substance, render it.
         if(weight > 0) {
             lines.push(me.createWeightedLine(pt1, pt2, weight));
-            arrows.push(me.createWeightedArrow(pt1, pt2, weight));
+            arrows.push(me.createWeightedArrow(pt1, pt2, weight, tgt));
         }
 
         // Add the nodes to the node list if necesary.
