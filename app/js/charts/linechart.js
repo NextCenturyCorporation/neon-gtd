@@ -213,8 +213,9 @@ charts.LineChart.prototype.selectDate = function(startDate, endDate) {
         return;
     }
 
-    var startIndex = startDate < this.data[0].data[0].date ? 0 : -1;
-    var endIndex = endDate > this.data[0].data[this.data[0].data.length - 1].date ? this.data[0].data.length - 1 : -1;
+    var dataLength = this.data[0].data.length;
+    var startIndex = -1;
+    var endIndex = -1;
 
     var datesEqual = this.datesEqual;
     this.data[0].data.forEach(function(datum, index) {
@@ -226,7 +227,17 @@ charts.LineChart.prototype.selectDate = function(startDate, endDate) {
         }
     });
 
-    if(startIndex < 0 || endIndex < 0 || endDate < this.data[0].data[0].date || startDate > this.data[0].data[this.data[0].data.length - 1].date) {
+    var dataStartDate = this.data[0].data[0].date;
+    var dataEndDate = this.data[0].data[dataLength - 1].date;
+
+    // Add a day to the end day so it includes the whole end day and not just the first hour of the end day.
+    dataEndDate = new Date(dataEndDate.getFullYear(), dataEndDate.getMonth(), dataEndDate.getDate() + 1, dataEndDate.getHours());
+
+    // If the start or end date is outside the date range of the data, set it to the of the start (inclusive) or end (exclusive) index of the data.
+    startIndex = startDate < dataStartDate ? 0 : startIndex;
+    endIndex = endDate > dataEndDate ? dataLength : endIndex;
+
+    if(startIndex < 0 || endIndex < 0 || endDate < dataStartDate || startDate > dataEndDate) {
         this.deselectDate();
         return;
     }
@@ -237,7 +248,7 @@ charts.LineChart.prototype.selectDate = function(startDate, endDate) {
 };
 
 charts.LineChart.prototype.datesEqual = function(a, b) {
-    return a.toDateString() === b.toDateString();
+    return a.toUTCString() === b.toUTCString();
 };
 
 /**
@@ -550,8 +561,9 @@ charts.LineChart.prototype.drawLines = function(opts) {
             me.showTooltip(index, opts[0].data[index][me.xAttribute]);
 
             if(me.hoverListener) {
-                var start = opts[0].data[index][me.xAttribute];
-                var end = new Date(start.getFullYear(), start.getMonth(), start.getDate() + 1);
+                var date = opts[0].data[index][me.xAttribute];
+                var start = new Date(date.getFullYear(), date.getMonth(), date.getDate(), date.getHours());
+                var end = new Date(date.getFullYear(), date.getMonth(), date.getDate() + 1, date.getHours());
                 me.hoverListener(start, end);
             }
         }

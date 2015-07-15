@@ -291,8 +291,13 @@ charts.TimelineSelectorChart = function(element, configuration) {
      * @method selectDate
      */
     this.selectDate = function(startDate, endDate) {
-        var startIndex = startDate < this.data[0].data[0].date ? 0 : -1;
-        var endIndex = endDate > this.data[0].data[this.data[0].data.length - 1].date ? this.data[0].data.length - 1 : -1;
+        if(!this.data || !this.data.length || !this.data[0].data || !this.data[0].data.length) {
+            return;
+        }
+
+        var dataLength = this.data[0].data.length;
+        var startIndex = -1;
+        var endIndex = -1;
 
         var datesEqual = this.datesEqual;
         this.data[0].data.forEach(function(datum, index) {
@@ -304,7 +309,22 @@ charts.TimelineSelectorChart = function(element, configuration) {
             }
         });
 
-        if(startIndex < 0 || endIndex < 0) {
+        var dataStartDate = this.data[0].data[0].date;
+        var dataEndDate = this.data[0].data[dataLength - 1].date;
+
+        // Add a month/year to the end month/year for month/year granularity so it includes the whole end month/year and not just the first day of the end month/year.
+        if(this.granularity === "month") {
+            dataEndDate = new Date(dataEndDate.getFullYear(), dataEndDate.getMonth() + 1, dataEndDate.getDate(), dataEndDate.getHours());
+        }
+        if(this.granularity === "year") {
+            dataEndDate = new Date(dataEndDate.getFullYear() + 1, dataEndDate.getMonth(), dataEndDate.getDate(), dataEndDate.getHours());
+        }
+
+        // If the start or end date is outside the date range of the data, set it to the of the start (inclusive) or end (exclusive) index of the data.
+        startIndex = startDate < dataStartDate ? 0 : startIndex;
+        endIndex = endDate > dataEndDate ? dataLength : endIndex;
+
+        if(startIndex < 0 || endIndex < 0 || endDate < dataStartDate || startDate > dataEndDate) {
             this.deselectDate();
             return;
         }
@@ -404,20 +424,26 @@ charts.TimelineSelectorChart = function(element, configuration) {
         showTooltip(datum, d3.event);
 
         if(this.hoverListener) {
-            var start = datum.date;
-            var end = datum.date;
+            var date = datum.date;
+            var start = new Date(date.getFullYear(), date.getMonth(), date.getDate(), date.getHours());
+            var end = new Date(date.getFullYear(), date.getMonth(), date.getDate() + 1, date.getHours());
+
             if(this.granularity === "hour") {
-                end = new Date(start.getFullYear(), start.getMonth(), start.getDate(), start.getHours() + 1);
+                start = new Date(date.getFullYear(), date.getMonth(), date.getDate(), date.getHours());
+                end = new Date(date.getFullYear(), date.getMonth(), date.getDate(), date.getHours() + 1);
             }
-            if(this.granularity === "day") {
-                end = new Date(start.getFullYear(), start.getMonth(), start.getDate() + 1);
-            }
+            // The years/months/hours start at index 0 and days start at index 1 but due to the timezone we want the last day of the previous month which is index 0.
+            // Add an additional 1 to the dates for month/year granularity because they will start in the previous month/year due to the timezone.
+            // Include hours to ensure the new start/end dates are in the same timezone as the original date.
             if(this.granularity === "month") {
-                end = new Date(start.getFullYear(), start.getMonth() + 2, 0);
+                start = new Date(date.getFullYear(), date.getMonth() + 1, 0, date.getHours());
+                end = new Date(date.getFullYear(), date.getMonth() + 2, 0, date.getHours());
             }
             if(this.granularity === "year") {
-                end = new Date(start.getFullYear() + 2, 0, 0);
+                start = new Date(date.getFullYear() + 1, 0, 0, date.getHours());
+                end = new Date(date.getFullYear() + 2, 0, 0, date.getHours());
             }
+
             this.hoverListener(start, end);
         }
     };
