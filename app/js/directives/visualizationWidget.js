@@ -28,7 +28,6 @@
  * @constructor
  */
 angular.module('neonDemo.directives').directive('visualizationWidget', ["config", "$compile", function(config, $compile) {
-    
     return {
         restrict: 'A',
         scope: {
@@ -169,20 +168,19 @@ angular.module('neonDemo.directives').directive('visualizationWidget', ["config"
              */
             $scope.moveToBottom = function() {
                 XDATA.userALE.log({
-                        activity: "alter",
-                        action: "click",
-                        elementId: "workspace",
-                        elementType: "workspace",
-                        elementSub: "layout",
-                        elementGroup: "top",
-                        source: "user",
-                        tags: ["visualization", "move", "bottom"]
-                    });
-                var maxVis = _.max($scope.gridsterConfigs, function(vis){
+                    activity: "alter",
+                    action: "click",
+                    elementId: "workspace",
+                    elementType: "workspace",
+                    elementSub: "layout",
+                    elementGroup: "top",
+                    source: "user",
+                    tags: ["visualization", "move", "bottom"]
+                });
+                var maxVis = _.max($scope.gridsterConfigs, function(vis) {
                     return vis.row;
                 });
                 $scope.gridsterConfigs[$scope.gridsterConfigIndex].row = maxVis.row + maxVis.sizeY + 1;
-
             };
         }
     };

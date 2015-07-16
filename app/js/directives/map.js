@@ -388,8 +388,8 @@ angular.module('neonDemo.directives')
             var onDateSelected = function(message) {
                 //console.log(message);
                 // Set a date range on any node layers to start.
-                for (var i = 0; i < $scope.options.layers.length; i++) {
-                    if ($scope.options.layers[i].type === coreMap.Map.NODE_LAYER) {
+                for(var i = 0; i < $scope.options.layers.length; i++) {
+                    if($scope.options.layers[i].type === coreMap.Map.NODE_LAYER) {
                         $scope.options.layers[i].olLayer.setDateFilter(message);
                     }
                 }
@@ -1055,7 +1055,9 @@ angular.module('neonDemo.directives')
              * @method updateLayer
              */
             $scope.updateLayer = function(filterKeys) {
-                var i = _.findIndex($scope.options.layers, {filterKeys: filterKeys});
+                var i = _.findIndex($scope.options.layers, {
+                    filterKeys: filterKeys
+                });
                 var type = $scope.options.layers[i].type;
 
                 if($scope.options.layers[i].olLayer) {
@@ -1068,7 +1070,6 @@ angular.module('neonDemo.directives')
 
                 queryAllLayerTables();
             };
-            
 
             /**
              * Creates and adds a layer to the map

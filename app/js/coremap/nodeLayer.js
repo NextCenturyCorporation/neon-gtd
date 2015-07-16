@@ -100,7 +100,7 @@ coreMap.Map.Layer.NodeLayer.prototype.calculateLineWidth = function(weight) {
 
     // If there was some variance in edge weights/widths, calculate the percentage of max difference for this weight.
     // Otherwise, we'll default to the minimum line width.
-    if (this.lineWidthDiff) {
+    if(this.lineWidthDiff) {
         percentOfDataRange = (weight - this.minLineWidth) / this.lineWidthDiff;
     }
 
@@ -176,7 +176,7 @@ coreMap.Map.Layer.NodeLayer.prototype.createLineStyleObject = function(color, wi
  */
 coreMap.Map.Layer.NodeLayer.prototype.createArrowStyleObject = function(color, width, angle, element) {
     var radius = Math.ceil(this.calculateNodeRadius(element) || coreMap.Map.Layer.NodeLayer.MIN_RADIUS);
-    
+
     var arrowWidth = radius + 7;
     if(radius % 2 === 0) {
         arrowWidth += 1;
@@ -219,7 +219,7 @@ coreMap.Map.Layer.NodeLayer.prototype.createWeightedLine = function(pt1, pt2, we
 
     var featureLine = new OpenLayers.Feature.Vector(line);
     featureLine.style = this.createLineStyleObject(this.lineColor || coreMap.Map.Layer.NodeLayer.DEFAULT_LINE_COLOR, wt);
-    featureLine.attributes['Weight'] = weight;
+    featureLine.attributes.weight = weight;
 
     return featureLine;
 };
@@ -264,7 +264,7 @@ coreMap.Map.Layer.NodeLayer.prototype.calculateAngle = function(x1, y1, x2, y2) 
     var dy = y2 - y1;
 
     // Calculates the angle between vector and x axis
-    var angle = Math.atan(dy/dx) * 180 / Math.PI;
+    var angle = Math.atan(dy / dx) * 180 / Math.PI;
 
     var rotation = 0;
 
@@ -300,10 +300,8 @@ coreMap.Map.Layer.NodeLayer.prototype.getValueFromDataElement = function(mapping
  */
 coreMap.Map.Layer.NodeLayer.prototype.areValuesInDataElement = function(element) {
     if(element[this.sourceMapping] && element[this.targetMapping] && element[this.weightMapping]) {
-
         if(element[this.sourceMapping][this.latitudeMapping] && element[this.sourceMapping][this.longitudeMapping] &&
             element[this.targetMapping][this.latitudeMapping] && element[this.targetMapping][this.longitudeMapping]) {
-
             return true;
         }
     }
@@ -331,13 +329,12 @@ coreMap.Map.Layer.NodeLayer.prototype.setData = function(edges) {
 };
 
 coreMap.Map.Layer.NodeLayer.prototype.setDateFilter = function(filterBounds) {
-    if (filterBounds && filterBounds.start && filterBounds.end) {
+    if(filterBounds && filterBounds.start && filterBounds.end) {
         // Update the filter
         this.dateFilter.lowerBoundary = filterBounds.start;
         this.dateFilter.upperBoundary = filterBounds.end;
         this.dateFilterStrategy.setFilter(this.dateFilter);
-    }
-    else {
+    } else {
         // Clear the filter
         this.dateFilterStrategy.setFilter();
     }
@@ -391,13 +388,13 @@ coreMap.Map.Layer.NodeLayer.prototype.updateFeatures = function() {
         var date = 'none';
         var key = '';
 
-        if (element.date) {
+        if(element.date) {
             date = new Date(element[me.dateMapping]);
         }
 
         var pt1 = [
             me.getValueFromDataElement(me.longitudeMapping || coreMap.Map.Layer.NodeLayer.DEFAULT_LONGITUDE_MAPPING, src),
-            me.getValueFromDataElement(me.latitudeMapping || coreMap.Map.Layer.NodeLayer.DEFAULT_LATITUDE_MAPPING, src),
+            me.getValueFromDataElement(me.latitudeMapping || coreMap.Map.Layer.NodeLayer.DEFAULT_LATITUDE_MAPPING, src)
         ];
 
         var pt2 = [
@@ -426,10 +423,10 @@ coreMap.Map.Layer.NodeLayer.prototype.updateFeatures = function() {
         key = pt2 + date;
         if(!nodes[key]) {
             nodes[key] = me.createNode(tgt);
-            nodes[key].attributes[me.dateMapping] =date;
+            nodes[key].attributes[me.dateMapping] = date;
         }
     });
-    
+
     this.addFeatures(lines);
     this.addFeatures(arrows);
     this.addFeatures(_.values(nodes));

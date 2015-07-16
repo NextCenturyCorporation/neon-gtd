@@ -200,8 +200,7 @@ function(connectionService, datasetService, errorNotificationService, filterServ
                 var whereClauses = undefined;
                 if(message.addedFilter.whereClause) {
                     whereClauses = message.addedFilter.whereClause.whereClauses;
-                }
-                else if(message.removedFilter.whereClause) {
+                } else if(message.removedFilter.whereClause) {
                     whereClauses = message.removedFilter.whereClause.whereClauses;
                 }
                 if(whereClauses && whereClauses.length === 2 && whereClauses[0].lhs === $scope.options.attrX && whereClauses[1].lhs === $scope.options.attrX) {
@@ -830,7 +829,7 @@ function(connectionService, datasetService, errorNotificationService, filterServ
                 }
                 return "";
             };
-            
+
             /**
              * Updates the brush extent in this visualization's chart and the dataset service.
              * @param {Array} brushExtent

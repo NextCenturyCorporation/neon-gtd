@@ -104,7 +104,7 @@ function($interval, connectionService, datasetService, errorNotificationService,
 
             $scope.playTimeAnimation = function() {
                 // Set the frame and start the animation loop.
-                if (!$scope.options.animationStartDate) {
+                if(!$scope.options.animationStartDate) {
                     $scope.options.animationFrame = 0;
                 }
 
@@ -127,7 +127,7 @@ function($interval, connectionService, datasetService, errorNotificationService,
             }
 
             $scope.stepTimeAnimation = function() {
-                if ($scope.options.animatingTime) {
+                if($scope.options.animatingTime) {
                     $scope.pauseTimeAnimation();
                 }
                 $scope.doTimeAnimation();
@@ -135,7 +135,7 @@ function($interval, connectionService, datasetService, errorNotificationService,
 
             $scope.doTimeAnimation = function() {
                 // Get the time range for the current animation frame and publish it.
-                if ($scope.options.animationFrame >= $scope.bucketizer.getNumBuckets()) {
+                if($scope.options.animationFrame >= $scope.bucketizer.getNumBuckets()) {
                     $scope.options.animationFrame = 0;
                 }
 
@@ -143,15 +143,16 @@ function($interval, connectionService, datasetService, errorNotificationService,
                     start: $scope.bucketizer.getDateForBucket($scope.options.animationFrame),
                     end: $scope.bucketizer.getDateForBucket($scope.options.animationFrame + 1)
                 };
+
                 // Cleanup the animation end time on the last frame.
-                if ($scope.options.animationFrame === ($scope.bucketizer.getNumBuckets() - 1)) {
+                if($scope.options.animationFrame === ($scope.bucketizer.getNumBuckets() - 1)) {
                     dateSelected.end = $scope.bucketizer.getEndDate();
                 }
                 //console.log(dateSelected);
                 $scope.animationMessenger.publish(DATE_ANIMATION_CHANNEL, dateSelected);
 
                 // Advance the animation step data.
-                 $scope.options.animationFrame++;
+                $scope.options.animationFrame++;
             };
 
             $scope.handleDateTimePickChange = function() {
