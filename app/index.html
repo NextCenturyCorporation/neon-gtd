@@ -56,6 +56,14 @@
                         </span>
                     </div>
 
+                    <options-menu parent-element="element" class="navbar-text pull-right" ng-show="!(hideAdvancedOptions)">
+                        <!-- Buttons to select file format -->
+                        <label>Export Format</label>
+                        <div file-formats gridster-configs="visualizations" ng-hide="hideNavbarItems"></div>
+                        <!-- Export option -->
+                        <div export-widgets gridster-configs="visualizations" ng-hide="hideNavbarItems"></div>
+                    </options-menu>
+
                     <div powered-by-neon class="pull-right"></div>
 
                     <!-- Help Button -->
@@ -272,6 +280,7 @@
         <script src="js/datasetService.js"></script>
         <script src="js/errorNotificationService.js"></script>
         <script src="js/filterService.js"></script>
+        <script src="js/exportService.js"></script>
         <script src="js/neonDemoController.js"></script>
 
         <script src="js/charts/circularHeatChart.js"></script>
@@ -283,6 +292,8 @@
         <script src="js/directives/countBy.js"></script>
         <script src="js/directives/databaseConfig.js"></script>
         <script src="js/directives/directedGraph.js"></script>
+        <script src="js/directives/exportWidgets.js"></script>
+        <script src="js/directives/fileFormats.js"></script>
         <script src="js/directives/filterBuilder.js"></script>
         <script src="js/directives/filterState.js"></script>
         <script src="js/directives/linechart.js"></script>

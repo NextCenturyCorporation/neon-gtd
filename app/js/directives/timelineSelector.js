@@ -32,8 +32,8 @@
  * @constructor
  */
 angular.module('neonDemo.directives')
-.directive('timelineSelector', ['$interval', 'ConnectionService', 'DatasetService', 'ErrorNotificationService', 'FilterService', 'opencpu',
-function($interval, connectionService, datasetService, errorNotificationService, filterService, opencpu) {
+.directive('timelineSelector', ['$interval', 'ConnectionService', 'DatasetService', 'ErrorNotificationService', 'FilterService', 'ExportService', 'opencpu',
+function($interval, connectionService, datasetService, errorNotificationService, filterService, exportService, opencpu, $filter) {
     return {
         templateUrl: 'partials/directives/timelineSelector.html',
         restrict: 'EA',
@@ -230,16 +230,32 @@ function($interval, connectionService, datasetService, errorNotificationService,
                     displayStartDate.getUTCMonth(),
                     displayStartDate.getUTCDate(),
                     displayStartDate.getUTCHours());
+
                 $scope.endDateForDisplay = new Date(displayEndDate.getUTCFullYear(),
                     displayEndDate.getUTCMonth(),
                     displayEndDate.getUTCDate(),
                     displayEndDate.getUTCHours());
+
                 // Describing ranges is odd. If an event lasts 2 hours starting at 6am, then it
                 // lasts from 6am to 8am. But if an event starts on the 6th and lasts 2 days, then
                 // it lasts from the 6th to the 7th.
                 if($scope.options.granularity !== HOUR) {
                     $scope.endDateForDisplay = new Date($scope.endDateForDisplay.getTime() - 1);
                 }
+
+                var format = "MMMM d, yyyy HH:mm";
+                if($scope.options.granularity === DAY) {
+                    format = "MMMM d, yyyy";
+                }
+                if($scope.options.granularity === MONTH) {
+                    format = "MMMM yyyy";
+                }
+                if($scope.options.granularity === YEAR) {
+                    format = "yyyy";
+                }
+
+                $scope.startDateForDisplay = $filter("date")($scope.startDateForDisplay.toISOString(), format) + " (Z)";
+                $scope.endDateForDisplay = $filter("date")($scope.endDateForDisplay.toISOString(), format) + " (Z)";
             };
 
             /**
@@ -385,6 +401,8 @@ function($interval, connectionService, datasetService, errorNotificationService,
                 $scope.messenger.subscribe(datasetService.DATE_CHANGED, onDateChanged);
                 $scope.messenger.subscribe(DATE_ANIMATION_CHANNEL, onDateChanged);
 
+                $scope.exportID = exportService.register($scope.makeTimelineSelectorExportObject);
+
                 $scope.$on('$destroy', function() {
                     XDATA.userALE.log({
                         activity: "remove",
@@ -401,6 +419,7 @@ function($interval, connectionService, datasetService, errorNotificationService,
                     if($scope.brush.length) {
                         filterService.removeFilters($scope.messenger, $scope.filterKeys);
                     }
+                    exportService.unregister($scope.exportID);
                     $element.off("resize", resizeDateTimePickerDropdown);
                 });
             };
@@ -576,6 +595,26 @@ function($interval, connectionService, datasetService, errorNotificationService,
             };
 
             /**
+             * Helper method for queryForChartData() and requestExport(). Creates the Query object to be used by those moethods.
+             * @method createChartDataQuery
+             * @return {neon.query.Query} query The Query object to be used by queryForChartData() and requestExport()
+             */
+            $scope.createChartDataQuery = function() {
+                var query = new neon.query.Query()
+                    .selectFrom($scope.options.database.name, $scope.options.table.name)
+                    .where($scope.options.dateField, '!=', null);
+
+                $scope.addGroupByGranularityClause(query);
+
+                query.aggregate(neon.query.COUNT, '*', 'count');
+                // TODO: Does this need to be an aggregate on the date field? What is MIN doing or is this just an arbitrary function to include the date with the query?
+                query.aggregate(neon.query.MIN, $scope.options.dateField, 'date');
+                query.sortBy('date', neon.query.ASCENDING);
+                query.ignoreFilters([$scope.filterKeys[$scope.options.database.name][$scope.options.table.name]]);
+                return query;
+            };
+
+            /**
              * Triggers a Neon query that will aggregate the time data for the currently selected dataset.
              * @method queryForChartData
              */
@@ -595,17 +634,7 @@ function($interval, connectionService, datasetService, errorNotificationService,
                     return;
                 }
 
-                var query = new neon.query.Query()
-                    .selectFrom($scope.options.database.name, $scope.options.table.name)
-                    .where($scope.options.dateField, '!=', null);
-
-                $scope.addGroupByGranularityClause(query);
-
-                query.aggregate(neon.query.COUNT, '*', 'count');
-                // TODO: Does this need to be an aggregate on the date field? What is MIN doing or is this just an arbitrary function to include the date with the query?
-                query.aggregate(neon.query.MIN, $scope.options.dateField, 'date');
-                query.sortBy('date', neon.query.ASCENDING);
-                query.ignoreFilters([$scope.filterKeys[$scope.options.database.name][$scope.options.table.name]]);
+                var query = $scope.createChartDataQuery();
 
                 XDATA.userALE.log({
                     activity: "alter",
@@ -714,10 +743,8 @@ function($interval, connectionService, datasetService, errorNotificationService,
                     }
                 }
 
-                var displayStartDate = new Date(extentStartDate);
-                var displayEndDate = new Date(extentEndDate);
                 neon.safeApply($scope, function() {
-                    $scope.setDisplayDates(displayStartDate, displayEndDate);
+                    $scope.setDisplayDates(extentStartDate, extentEndDate);
                 });
 
                 $scope.recordCount = total;
@@ -1201,6 +1228,56 @@ function($interval, connectionService, datasetService, errorNotificationService,
                 if(!$scope.loadingData) {
                     $scope.resetAndQueryForChartData();
                 }
+            };
+
+            /**
+             * Creates and returns an object that contains information needed to export the data in this widget.
+             * @return {Object} An object containing all the information needed to export the data in this widget.
+             */
+            $scope.makeTimelineSelectorExportObject = function() {
+                XDATA.userALE.log({
+                    activity: "perform",
+                    action: "click",
+                    elementId: "timeline-export",
+                    elementType: "button",
+                    elementGroup: "chart_group",
+                    source: "user",
+                    tags: ["options", "timeline", "export"]
+                });
+                var query = $scope.createChartDataQuery();
+                query.limitClause = exportService.getLimitClause();
+                query.ignoreFilters_ = exportService.getIgnoreFilters();
+                query.ignoredFilterIds_ = exportService.getIgnoredFilterIds();
+                var finalObject = {
+                    name: "Timeline",
+                    data: [{
+                        query: query,
+                        name: "timelineSelector-" + $scope.exportID,
+                        fields: [],
+                        ignoreFilters: query.ignoreFilters_,
+                        selectionOnly: query.selectionOnly_,
+                        ignoredFilterIds: query.ignoredFilterIds_,
+                        type: "query"
+                    }]
+                };
+                // The timelineSelector always asks for count and date, so it's fine to hard-code these in.
+                // GroupBy clauses will always be added to the query in the same order, so this takes advantage
+                // of that to add the pretty names of the clauses in the same order for as many as were added.
+                var counter = 0;
+                var prettyNames = ["Year", "Month", "Day", "Hour"];
+                query.groupByClauses.forEach(function(field) {
+                        finalObject.data[0].fields.push({
+                            query: field.name,
+                            pretty: prettyNames[counter]
+                        });
+                        counter++;
+                    }
+                );
+                finalObject.data[0].fields.push({
+                    query: "count",
+                    pretty: "Count"
+                });
+                return finalObject;
             };
 
             // Wait for neon to be ready, the create our messenger and intialize the view and data.

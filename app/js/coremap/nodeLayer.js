@@ -96,7 +96,14 @@ coreMap.Map.Layer.NodeLayer.prototype.calculateNodeRadius = function(element) {
  * @method calculateLineWidth
  */
 coreMap.Map.Layer.NodeLayer.prototype.calculateLineWidth = function(weight) {
-    var percentOfDataRange = (weight - this.minLineWidth) / this.lineWidthDiff;
+    var percentOfDataRange = 0;
+
+    // If there was some variance in edge weights/widths, calculate the percentage of max difference for this weight.
+    // Otherwise, we'll default to the minimum line width.
+    if (this.lineWidthDiff) {
+        percentOfDataRange = (weight - this.minLineWidth) / this.lineWidthDiff;
+    }
+
     return coreMap.Map.Layer.NodeLayer.MIN_LINE_WIDTH + (percentOfDataRange * this.baseLineWidthDiff);
 };
 
@@ -154,7 +161,7 @@ coreMap.Map.Layer.NodeLayer.prototype.createLineStyleObject = function(color, wi
         strokeColor: color || coreMap.Map.Layer.NodeLayer.DEFAULT_STROKE_COLOR,
         strokeOpacity: coreMap.Map.Layer.NodeLayer.DEFAULT_OPACITY,
         strokeWidth: width || coreMap.Map.Layer.NodeLayer.DEFAULT_STROKE_WIDTH,
-        strokeLinecap: "round"
+        strokeLinecap: "butt"
     });
 };
 
@@ -163,18 +170,26 @@ coreMap.Map.Layer.NodeLayer.prototype.createLineStyleObject = function(color, wi
  * @param {String} color The color of the arrow
  * @param {Number} width The width of the arrow lines
  * @param {Number} angle The angle of rotation to set the arrow in the right direction
+ * @param {Object} element An element of the data array.
  * @return {OpenLayers.Symbolizer.Point} The style object
  * @method createArrowStyleObject
  */
-coreMap.Map.Layer.NodeLayer.prototype.createArrowStyleObject = function(color, width, angle) {
-    OpenLayers.Renderer.symbol.arrow = [0,6, 3,3, 6,6, 0,6];
+coreMap.Map.Layer.NodeLayer.prototype.createArrowStyleObject = function(color, width, angle, element) {
+    var radius = Math.ceil(this.calculateNodeRadius(element) || coreMap.Map.Layer.NodeLayer.MIN_RADIUS);
+    
+    var arrowWidth = radius + 7;
+    if(radius % 2 === 0) {
+        arrowWidth += 1;
+    }
+
+    OpenLayers.Renderer.symbol.arrow = [0,0, 0,arrowWidth, (arrowWidth / 2),(arrowWidth - 7), arrowWidth,arrowWidth, 0,arrowWidth];
 
     color = color || coreMap.Map.Layer.NodeLayer.DEFAULT_COLOR;
 
     return new OpenLayers.Symbolizer.Point({
         strokeColor: color || coreMap.Map.Layer.NodeLayer.DEFAULT_STROKE_COLOR,
         fillColor: color || coreMap.Map.Layer.NodeLayer.DEFAULT_STROKE_COLOR,
-        strokeOpacity: coreMap.Map.Layer.NodeLayer.DEFAULT_OPACITY,
+        strokeOpacity: 0,
         strokeWidth: 1,
         graphicName: "arrow",
         pointRadius: (width || coreMap.Map.Layer.NodeLayer.DEFAULT_STROKE_WIDTH) * 2,
@@ -216,10 +231,11 @@ coreMap.Map.Layer.NodeLayer.prototype.createWeightedLine = function(pt1, pt2, we
  * @param {Array<Number>} pt2 The [latitude, longitude] pair of the target node
  * @param {Number} weight The weight of the arrow lines. This will be compared to other
  * datapoints to calculate an appropriate line width for rendering.
+ * @param {Object} element An element of the data array.
  * @return {OpenLayers.Feature.Vector} the arrow to be added.
  * @method createWeightedArrow
  */
-coreMap.Map.Layer.NodeLayer.prototype.createWeightedArrow = function(pt1, pt2, weight) {
+coreMap.Map.Layer.NodeLayer.prototype.createWeightedArrow = function(pt1, pt2, weight, element) {
     var wt = this.calculateLineWidth(weight);
     wt = 6;
     var angle = this.calculateAngle(pt1[0], pt1[1], pt2[0], pt2[1]);
@@ -229,7 +245,7 @@ coreMap.Map.Layer.NodeLayer.prototype.createWeightedArrow = function(pt1, pt2, w
         coreMap.Map.DESTINATION_PROJECTION);
 
     var featureArrow = new OpenLayers.Feature.Vector(point);
-    featureArrow.style = this.createArrowStyleObject(this.lineColor || coreMap.Map.Layer.NodeLayer.DEFAULT_LINE_COLOR, wt, angle);
+    featureArrow.style = this.createArrowStyleObject(this.lineColor || coreMap.Map.Layer.NodeLayer.DEFAULT_LINE_COLOR, wt, angle, element);
 
     return featureArrow;
 };
@@ -338,9 +354,9 @@ coreMap.Map.Layer.NodeLayer.prototype.calculateSizes = function() {
     _.each(this.edges, function(element) {
         var src = me.getValueFromDataElement(me.sourceMapping || coreMap.Map.Layer.NodeLayer.DEFAULT_SOURCE, element);
         var tgt = me.getValueFromDataElement(me.targetMapping || coreMap.Map.Layer.NodeLayer.DEFAULT_TARGET, element);
-        var weight = me.getValueFromDataElement(me.weightMapping || coreMap.Map.Layer.NodeLayer.DEFAULT_WEIGHT_MAPPING, element);
-        var srcWeight = me.getValueFromDataElement(me.weightMapping || coreMap.Map.Layer.NodeLayer.DEFAULT_WEIGHT_MAPPING, src);
-        var tgtWeight = me.getValueFromDataElement(me.weightMapping || coreMap.Map.Layer.NodeLayer.DEFAULT_WEIGHT_MAPPING, tgt);
+        var weight = me.getValueFromDataElement(me.weightMapping || coreMap.Map.Layer.NodeLayer.DEFAULT_WEIGHT_MAPPING, element) || 1;
+        var srcWeight = me.getValueFromDataElement(me.weightMapping || coreMap.Map.Layer.NodeLayer.DEFAULT_WEIGHT_MAPPING, src) || 1;
+        var tgtWeight = me.getValueFromDataElement(me.weightMapping || coreMap.Map.Layer.NodeLayer.DEFAULT_WEIGHT_MAPPING, tgt) || 1;
 
         me.minNodeRadius = _.min([me.minNodeRadius, srcWeight, tgtWeight]);
         me.maxNodeRadius = _.max([me.maxNodeRadius, srcWeight, tgtWeight]);
@@ -395,7 +411,7 @@ coreMap.Map.Layer.NodeLayer.prototype.updateFeatures = function() {
             line.attributes[me.dateMapping] = date;
             lines.push(line);
 
-            var arrow = me.createWeightedArrow(pt1, pt2, weight);
+            var arrow = me.createWeightedArrow(pt1, pt2, weight, tgt);
             arrow.attributes[me.dateMapping] = date;
             arrows.push(arrow);
         }
@@ -426,7 +442,7 @@ coreMap.Map.Layer.NodeLayer.DEFAULT_SOURCE = "from";
 coreMap.Map.Layer.NodeLayer.DEFAULT_TARGET = "to";
 
 coreMap.Map.Layer.NodeLayer.DEFAULT_ARROW_POINT_RADIUS = 5;
-coreMap.Map.Layer.NodeLayer.DEFAULT_OPACITY = 0.8;
+coreMap.Map.Layer.NodeLayer.DEFAULT_OPACITY = 1;
 coreMap.Map.Layer.NodeLayer.DEFAULT_STROKE_WIDTH = 1;
 coreMap.Map.Layer.NodeLayer.DEFAULT_COLOR = "#00ff00";
 coreMap.Map.Layer.NodeLayer.DEFAULT_LINE_COLOR =  "#444444";   "#a6d96a";

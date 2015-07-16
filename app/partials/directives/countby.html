@@ -1,7 +1,7 @@
 <div class="header-container" ng-show="!(hideHeader)">
     <span class="header-text pull-left">{{options.table.prettyName}}</span>
 
-    <options-menu parent-element="element" ng-show="!(hideAdvancedOptions)">
+    <options-menu parent-element="element" export-function="makeCountByExportObject" ng-show="!(hideAdvancedOptions)">
         <div class="form-group" ng-show="(hideAdvancedOptions)">
             <label>No Options Available</label>
         </div>
@@ -43,7 +43,7 @@
     <h4 class="pull-left"><span class="count text-primary ng-binding" ng-bind="count"></span> values</h4>
 
     <div class="filter-reset pull-right" ng-class="{true: 'hidden', false: ''}[filterSet === undefined]" title="{{filterSet.key}}={{filterSet.value}}">
-        <span class="filter-label">{{filterSet.key}}={{filterSet.value}}</span>
+        <span class="filter-label">{{filterSet.value}}</span>
         <span class="glyphicon glyphicon-remove" ng-click="clearFilter()"></span>
     </div>
 </div>
