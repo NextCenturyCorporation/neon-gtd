@@ -479,7 +479,7 @@ function(connectionService, datasetService, errorNotificationService, filterServ
                 var query = $scope.buildQuery();
                 query.limitClause = exportService.getLimitClause();
                 query.ignoreFilters_ = exportService.getIgnoreFilters();
-                query.ignoredFilterIds_ = exportService.getignoredFilterIds();
+                query.ignoredFilterIds_ = exportService.getIgnoredFilterIds();
                 var finalObject = {
                     name: "Bar_Chart",
                     data: [{

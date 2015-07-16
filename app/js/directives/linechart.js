@@ -627,7 +627,7 @@ function(connectionService, datasetService, errorNotificationService, exportServ
                 var query = $scope.buildQuery();
                 query.limitClause = exportService.getLimitClause();
                 query.ignoreFilters_ = exportService.getIgnoreFilters();
-                query.ignoredFilterIds_ = exportService.getignoredFilterIds();
+                query.ignoredFilterIds_ = exportService.getIgnoredFilterIds();
                 var finalObject = {
                     name: "Line_Chart",
                     data: [{
@@ -652,53 +652,34 @@ function(connectionService, datasetService, errorNotificationService, exportServ
                     query: "day",
                     pretty: "Day"
                 });
-                var aggr;
-                if($scope.options.aggregation === "count") {
-                    aggr = query.groupByClauses[3].field;
+                var aggr = (query.groupByClauses[3]) ? query.groupByClauses[3].field : null;
+                if(aggr) {
                     finalObject.data[0].fields.push({
                         query: aggr,
                         pretty: capitalizeFirstLetter(aggr)
                     });
+                }
+                if($scope.options.aggregation === "count") {
                     finalObject.data[0].fields.push({
                         query: "value",
                         pretty: "Count"
                     });
                 } else if($scope.options.aggregation === "sum") {
-                    aggr = query.groupByClauses[3].field;
-                    finalObject.data[0].fields.push({
-                        query: aggr,
-                        pretty: capitalizeFirstLetter(aggr)
-                    });
                     finalObject.data[0].fields.push({
                         query: "value",
                         pretty: "Sum of " + query.aggregates[0].field
                     });
                 } else if($scope.options.aggregation === "average") {
-                    aggr = query.groupByClauses[3].field;
-                    finalObject.data[0].fields.push({
-                        query: aggr,
-                        pretty: capitalizeFirstLetter(aggr)
-                    });
                     finalObject.data[0].fields.push({
                         query: "value",
                         pretty: "Average of " + query.aggregates[0].field
                     });
                 } else if($scope.options.aggregation === "min") {
-                    aggr = query.groupByClauses[3].field;
-                    finalObject.data[0].fields.push({
-                        query: aggr,
-                        pretty: capitalizeFirstLetter(aggr)
-                    });
                     finalObject.data[0].fields.push({
                         query: "value",
                         pretty: "Min of " + query.aggregates[0].field
                     });
                 } else if($scope.options.aggregation === "max") {
-                    aggr = query.groupByClauses[3].field;
-                    finalObject.data[0].fields.push({
-                        query: aggr,
-                        pretty: capitalizeFirstLetter(aggr)
-                    });
                     finalObject.data[0].fields.push({
                         query: "value",
                         pretty: "Max of " + query.aggregates[0].field
