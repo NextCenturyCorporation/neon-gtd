@@ -113,32 +113,34 @@ coreMap.Map.prototype.resetSelectControl = function() {
  */
 coreMap.Map.prototype.addLayer = function(layer) {
     this.map.addLayer(layer);
-    if(layer.CLASS_NAME === "coreMap.Map.Layer.PointsLayer")  {
+    if(layer.CLASS_NAME === "coreMap.Map.Layer.PointsLayer" || layer.CLASS_NAME === "coreMap.Map.Layer.SelectedPointsLayer")  {
         this.selectableLayers[layer.id] = layer;
         this.resetSelectControl();
     }
 };
 
 /**
- * Returns a layer from the map with the given name.
- * @param {String} name The name of an OpenLayers layer.
+ * Returns layer from the map with the given property.
+ * @param {String} property The name of the property to get the layer by.
+ * @param {String | Object} value The value of the property for the OpenLayers layer object to search for.
  * @method getLayer
- * @return {Object} An OpenLayers layer object or variant or undefined if no layer with the given name exists.
+ * @return {Object} An OpenLayers layer object or variant or undefined if no layer with the given property value exists.
  */
-coreMap.Map.prototype.getLayer = function(name) {
-    var layers = this.map.getLayersByName(name);
+coreMap.Map.prototype.getLayerBy = function(property, value) {
+    var layers = this.map.getLayersBy(property, value);
     return layers.length ? layers[0] : undefined;
 };
 
 /**
  * Sets the visibility for a layer from the map with the given name.
- * @param {String} name The name of an OpenLayers layer.
+ * @param {String} id The id of an OpenLayers layer.
  * @param {String} visibility The new visibility setting for the OpenLayers layer.
  * @method setLayerVisibility
  * @return {Object} An OpenLayers layer object or variant.
  */
-coreMap.Map.prototype.setLayerVisibility = function(name, visibility) {
-    var layer = this.getLayer(name);
+coreMap.Map.prototype.setLayerVisibility = function(id, visibility) {
+    var layer = this.getLayerBy("id", id);
+
     if(layer) {
         layer.setVisibility(visibility);
     }
@@ -152,6 +154,13 @@ coreMap.Map.prototype.setLayerVisibility = function(name, visibility) {
  */
 coreMap.Map.prototype.removeLayer = function(layer) {
     this.map.removeLayer(layer);
+
+    // Remove events that aren't destroyed on Heatmap Layer
+    if(layer.CLASS_NAME === "coreMap.Map.Layer.HeatmapLayer") {
+        this.unregister("zoomend", layer);
+        this.unregister("moveend", layer);
+    }
+
     if(this.selectableLayers[layer.id]) {
         this.resetSelectControl();
     }
@@ -187,6 +196,23 @@ coreMap.Map.prototype.resetZoom = function() {
 
 coreMap.Map.prototype.register = function(type, obj, listener) {
     this.map.events.register(type, obj, listener);
+};
+
+/**
+ * Unregisters a listener for a particular map event.
+ * @param {String} type A map event type.
+ * @param {Object} obj An object that the listener should be registered on.
+ * @method unregister
+ */
+
+coreMap.Map.prototype.unregister = function(type, object) {
+    for(var i = 0; i < this.map.events.listeners[type].length; i++) {
+        var eventObj = this.map.events.listeners[type][i].obj;
+
+        if(eventObj.id === object.id) {
+            this.map.events.unregister(type, eventObj, this.map.events.listeners[type][i].func);
+        }
+    }
 };
 
 coreMap.Map.prototype.toggleCaching = function() {
@@ -536,4 +562,24 @@ coreMap.Map.prototype.resizeOnWindowResize = function() {
     $(window).resize(function() {
         setTimeout(me.resizeToElement(), 1000);
     });
+};
+
+/**
+ * Checks if all attributes in the given layer exist in the data
+ * @param {Array} data Array of objects containing the layer data
+ * @param {Object} layer OpenLayers layer for the data
+ * @return {Boolean} True if all attributes in layer exist in the data, false otherwise.
+ * @method doAttributesExist
+ */
+coreMap.Map.prototype.doAttributesExist = function(data, layer) {
+    var allExist = true;
+
+    _.forEach(data, function(el) {
+        // Check for undefined because a value could exist in the layer and just be false.
+        if(layer.areValuesInDataElement(el) === undefined) {
+            allExist = false;
+        }
+    });
+
+    return allExist;
 };

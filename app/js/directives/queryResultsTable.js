@@ -118,11 +118,11 @@ function(external, popups, connectionService, datasetService, errorNotificationS
                 $scope.$watch('options.sortByField', function(newVal) {
                     XDATA.userALE.log({
                         activity: "select",
-                        action: "click",
+                        action: ($scope.loadingData) ? "reset" : "click",
                         elementId: "datagrid-sort-by",
                         elementType: "combobox",
                         elementGroup: "table_group",
-                        source: "user",
+                        source: ($scope.loadingData) ? "system" : "user",
                         tags: ["options", "datagrid", "sort-by", newVal]
                     });
                 });
@@ -130,11 +130,11 @@ function(external, popups, connectionService, datasetService, errorNotificationS
                 $scope.$watch('options.sortDirection', function(newVal) {
                     XDATA.userALE.log({
                         activity: "select",
-                        action: "click",
+                        action: ($scope.loadingData) ? "reset" : "click",
                         elementId: "datagrid-sort-direction",
                         elementType: "radiobutton",
                         elementGroup: "table_group",
-                        source: "user",
+                        source: ($scope.loadingData) ? "system" : "user",
                         tags: ["options", "datagrid", "sort-direction", newVal]
                     });
                 });
@@ -142,11 +142,11 @@ function(external, popups, connectionService, datasetService, errorNotificationS
                 $scope.$watch('options.limit', function(newVal) {
                     XDATA.userALE.log({
                         activity: "alter",
-                        action: "keydown",
+                        action: ($scope.loadingData) ? "reset" : "keydown",
                         elementId: "datagrid-limit",
                         elementType: "textbox",
                         elementGroup: "table_group",
-                        source: "user",
+                        source: ($scope.loadingData) ? "system" : "user",
                         tags: ["options", "datagrid", "limit", newVal]
                     });
                 });
@@ -163,12 +163,12 @@ function(external, popups, connectionService, datasetService, errorNotificationS
                 $scope.$on('$destroy', function() {
                     XDATA.userALE.log({
                         activity: "remove",
-                        action: "click",
+                        action: "remove",
                         elementId: "datagrid",
                         elementType: "canvas",
                         elementSub: "datagrid",
                         elementGroup: "table_group",
-                        source: "user",
+                        source: "system",
                         tags: ["remove", "datagrid"]
                     });
                     popups.links.deleteData($scope.tableId);
@@ -236,17 +236,17 @@ function(external, popups, connectionService, datasetService, errorNotificationS
              * @private
              */
             var onFiltersChanged = function(message) {
-                XDATA.userALE.log({
-                    activity: "alter",
-                    action: "query",
-                    elementId: "datagrid",
-                    elementType: "datagrid",
-                    elementSub: "datagrid",
-                    elementGroup: "chart_group",
-                    source: "system",
-                    tags: ["filter-change", "datagrid"]
-                });
                 if(message.addedFilter && message.addedFilter.databaseName === $scope.options.database.name && message.addedFilter.tableName === $scope.options.table.name) {
+                    XDATA.userALE.log({
+                        activity: "alter",
+                        action: "query",
+                        elementId: "datagrid",
+                        elementType: "datagrid",
+                        elementSub: "datagrid",
+                        elementGroup: "chart_group",
+                        source: "system",
+                        tags: ["filter-change", "datagrid"]
+                    });
                     queryForData();
                 }
             };
@@ -524,7 +524,7 @@ function(external, popups, connectionService, datasetService, errorNotificationS
              * Adds a sort listener in order to clear any row selection on column reorders
              */
             $scope.addSortListener = function() {
-                $scope.table.registerSortListener(function(event, args) {
+                $scope.table.registerSortListener(function() {
                     XDATA.userALE.log({
                         activity: "deselect",
                         action: "click",
@@ -549,11 +549,6 @@ function(external, popups, connectionService, datasetService, errorNotificationS
                     $scope.table.deselect();
                 }, 100);
             };
-
-            /**
-             * Refresh query forces a fresh query for data given the current sorting and limiting selections.
-             * @method refreshQuery
-             */
 
             /**
              * Updates the data bound to the table managed by this directive.  This will trigger a change in

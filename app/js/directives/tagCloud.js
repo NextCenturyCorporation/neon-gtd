@@ -68,11 +68,12 @@ function(connectionService, datasetService, errorNotificationService, filterServ
                 $scope.$watch('options.andTags', function(newVal, oldVal) {
                     XDATA.userALE.log({
                         activity: "select",
-                        action: "click",
-                        elementId: (newVal) ? "all-filters-button" : "any-filters-button",
-                        elementType: "radiobutton",
+                        action: ($scope.loadingData) ? "reset" : "click",
+                        elementId: "tag-cloud-options",
+                        elementType: "button",
+                        elementSub: (newVal) ? "all-filters" : "any-filters",
                         elementGroup: "chart_group",
-                        source: "user",
+                        source: ($scope.loadingData) ? "system" : "user",
                         tags: ["options", "tag-cloud"]
                     });
                     if(newVal !== oldVal) {
@@ -92,12 +93,12 @@ function(connectionService, datasetService, errorNotificationService, filterServ
                 $scope.$on('$destroy', function() {
                     XDATA.userALE.log({
                         activity: "remove",
-                        action: "click",
+                        action: "remove",
                         elementId: "tag-cloud",
                         elementType: "canvas",
                         elementSub: "tag-cloud",
                         elementGroup: "chart_group",
-                        source: "user",
+                        source: "system",
                         tags: ["remove", "tag-cloud"]
                     });
                     $scope.messenger.removeEvents();
@@ -135,17 +136,17 @@ function(connectionService, datasetService, errorNotificationService, filterServ
              * @private
              */
             var onFiltersChanged = function(message) {
-                XDATA.userALE.log({
-                    activity: "alter",
-                    action: "query",
-                    elementId: "tag-cloud",
-                    elementType: "tag",
-                    elementSub: "tag-cloud",
-                    elementGroup: "chart_group",
-                    source: "system",
-                    tags: ["filter-change", "tag-cloud"]
-                });
                 if(message.addedFilter && message.addedFilter.databaseName === $scope.options.database.name && message.addedFilter.tableName === $scope.options.table.name) {
+                    XDATA.userALE.log({
+                        activity: "alter",
+                        action: "query",
+                        elementId: "tag-cloud",
+                        elementType: "tag",
+                        elementSub: "tag-cloud",
+                        elementGroup: "chart_group",
+                        source: "system",
+                        tags: ["filter-change", "tag-cloud"]
+                    });
                     $scope.queryForTags();
                 }
             };
@@ -334,13 +335,13 @@ function(connectionService, datasetService, errorNotificationService, filterServ
             };
 
             /**
-             * Creates and returns a filter on the given table and tag field using the tags set by this visualization.
-             * @param {String} The name of the table on which to filter
-             * @param {String} The name of the tag field on which to filter
+             * Creates and returns a filter on the given tag field using the tags set by this visualization.
+             * @param {Object} databaseAndTableName Contains the database and table name
+             * @param {String} tagFieldName The name of the tag field on which to filter
              * @method createFilterClauseForTags
-             * @returns {Object} A neon.query.Filter object
+             * @return {Object} A neon.query.Filter object
              */
-            $scope.createFilterClauseForTags = function(tableName, tagFieldName) {
+            $scope.createFilterClauseForTags = function(databaseAndTableName, tagFieldName) {
                 var filterClauses = $scope.filterTags.map(function(tagName) {
                     return neon.query.where(tagFieldName, "=", tagName);
                 });

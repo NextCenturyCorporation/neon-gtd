@@ -351,6 +351,7 @@ label{
 }
 
 .filter-reset {
+    font-size: 14px;
     font-weight: bold;
     color: @main-text-color;
     background-color: @button-color;
@@ -365,28 +366,35 @@ label{
     /* Add padding so the height of the filter label and glyphicon equals the height of the filter-container (30 px). */
     .filter-label {
         float: left;
-        font-size: 14px;
         padding: 4px 8px;
-        max-width: 80px;
+        max-width: 90px;
         overflow: hidden;
         text-overflow: ellipsis;
         white-space: nowrap;
     }
 
-    .glyphicon-remove {
+    .glyphicon {
         float: left;
-        font-size: 14px;
         padding: 7px 8px;
-        color: @error-color;
         cursor: pointer;
-        border-left: @border;
-        border-radius: 0 4px 4px 0;
         top: 0px;
 
-        &:hover {
-            background-color: @error-color;
-            border-color: @error-dark-color;
-            color: @light-text-color;
+        &.glyphicon-remove {
+            color: @error-color;
+
+            &:hover {
+                background-color: @error-color;
+                border-color: @error-dark-color;
+                color: @light-text-color;
+            }
+        }
+    }
+
+    span {
+        border-left: @border;
+
+        &:first-child {
+            border-left: none;
         }
     }
 }
@@ -420,6 +428,12 @@ label{
     }
 }
 
+.form-group {
+    .form-group {
+        margin-bottom: 0px;
+    }
+}
+
 .gridster {
     margin-top: 5px;
     margin-bottom: 5px;
@@ -427,6 +441,18 @@ label{
 
 .gridster-item-resizable-handler {
     z-index: 1060;
+
+    &.handle-e {
+        width: 5px;
+    }
+
+    &.handle-w {
+        width: 5px;
+    }
+
+    &.handle-s {
+        height: 5px;
+    }
 }
 
 .header-container {
@@ -731,7 +757,7 @@ label{
 
 .overlay-above{
     position: relative;
-    z-index: 1050;
+    z-index: 1049;
 }
 
 .overlay-container {
@@ -867,4 +893,78 @@ label{
     margin-top: 15px;
     margin-bottom: 15px;
     font-weight: bold;
+}
+
+.brush {
+    .extent {
+        fill-opacity: 0;
+        shape-rendering: crispEdges;
+    }
+
+    .mask{
+        fill: @main-background;
+        fill-opacity: 0.7;
+    }
+
+    .resize {
+        path {
+            fill: @light-chart-axis-color;
+            stroke: @chart-text-color;
+            stroke-opacity: 0.5;
+        }
+    }
+
+    .resize-divider{
+        fill: @chart-text-color;
+        fill-opacity: 0.3;
+    }
+}
+
+.neon-datetimepicker {
+    .btn-default {
+        font-size: 14px;
+        font-weight: bold;
+        color: @main-text-color;
+        background-color: @button-color;
+        border-style: solid;
+        border-width: 1px;
+        border-color: @button-border-color;
+        border-radius: 4px;
+        padding: 3px 6px;
+
+        &:hover {
+            color: @accent-bright;
+        }
+
+        .glyphicon {
+            margin-right: 2px;
+            top: 2px;
+        }
+
+        &.reset {
+            color: @error-color;
+
+            &:hover {
+                background-color: @error-color;
+                border-color: @error-dark-color;
+                color: @light-text-color;
+            }
+
+            &.disabled {
+                color: #ccc;
+                opacity: 0.5;
+            }
+        }
+    }
+
+    .dropdown-menu {
+        overflow-y: scroll;
+        padding: 10px;
+
+        .table-responsive {
+            display: inline-block;
+            /* Force the datetimepicker height because the year and month views are shorter by default and cause unwanted empty space. */
+            height: 300px;
+        }
+    }
 }

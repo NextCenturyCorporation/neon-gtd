@@ -15,9 +15,8 @@
 
 .collapsed {
     .timeline-selector-chart {
-        height: 132px !important;
-
-        [class*='series-'] {
+        
+        [class*='series-y'] {
             display: none;
         }
     }
@@ -26,7 +25,7 @@
 .timeline-selector-chart {
     margin: 0 -15px 0;
     display:block;
-    min-height: 40px;
+    min-height: 250px;
 
     h3 {
         margin-top: 0px;
@@ -64,31 +63,6 @@
       stroke-width: 1px;
     }
 
-    .brush {
-        .extent {
-            fill-opacity: 0;
-            shape-rendering: crispEdges;
-        }
-
-        .mask{
-            fill: @main-background;
-            fill-opacity: 0.7;
-        }
-
-        .resize {
-            path {
-                fill: @light-chart-axis-color;
-                stroke: @chart-text-color;
-                stroke-opacity: 0.5;
-            }
-        }
-
-        .resize-divider{
-            fill: @chart-text-color;
-            fill-opacity: 0.3;
-        }
-    }
-
     .mini-axis{
       fill: none;
       shape-rendering: crispEdges;
@@ -107,6 +81,7 @@
             0px 2px 0 @text-shadow-color,
             0px -2px 0 @text-shadow-color;
         font-weight: bold;
+        font-size: 13px;
     }
 
     .tick {

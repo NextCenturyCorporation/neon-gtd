@@ -37,7 +37,7 @@
 <div class="clearfix"></div>
 
 <div class="header-container filter-container" ng-show="(filterTags.length > 0)">
-    <div class="filter-reset pull-right" ng-repeat="tagName in filterTags" title="{{tagName}}">
+    <div class="filter-reset pull-right" ng-repeat="tagName in filterTags" title="{{options.tagField}}={{tagName}}">
         <span class="filter-label">{{tagName}}</span>
         <span class="glyphicon glyphicon-remove" ng-click="removeFilter(tagName)"></span>
     </div>

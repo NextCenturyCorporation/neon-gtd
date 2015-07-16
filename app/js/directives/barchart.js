@@ -89,12 +89,11 @@ function(connectionService, datasetService, errorNotificationService, filterServ
                 $scope.$on('$destroy', function() {
                     XDATA.userALE.log({
                         activity: "remove",
-                        action: "click",
+                        action: "remove",
                         elementId: "barchart",
-                        elementType: "button",
-                        elementSub: "barchart-bar",
+                        elementType: "canvas",
                         elementGroup: "chart_group",
-                        source: "user",
+                        source: "system",
                         tags: ["remove", "barchart"]
                     });
                     $element.off("resize", updateChartSize);
@@ -106,49 +105,22 @@ function(connectionService, datasetService, errorNotificationService, filterServ
                     exportService.unregister($scope.exportID);
                 });
 
-                $scope.$watch('options.attrX', function() {
-                    XDATA.userALE.log({
-                        activity: "select",
-                        action: "click",
-                        elementId: "barchart",
-                        elementType: "combobox",
-                        elementSub: "barchart-x-axis",
-                        elementGroup: "chart_group",
-                        source: "user",
-                        tags: ["options", "barchart"]
-                    });
+                $scope.$watch('options.attrX', function(newValue) {
+                    onFieldChange('attrX', newValue);
                     if(!$scope.loadingData && $scope.options.database.name && $scope.options.table.name) {
                         $scope.queryForData(true);
                     }
                 });
 
-                $scope.$watch('options.attrY', function() {
-                    XDATA.userALE.log({
-                        activity: "select",
-                        action: "click",
-                        elementId: "barchart",
-                        elementType: "combobox",
-                        elementSub: "barchart-y-axis",
-                        elementGroup: "chart_group",
-                        source: "user",
-                        tags: ["options", "barchart"]
-                    });
+                $scope.$watch('options.attrY', function(newValue) {
+                    onFieldChange('attrY', newValue);
                     if(!$scope.loadingData && $scope.options.database.name && $scope.options.table.name) {
                         $scope.queryForData(true);
                     }
                 });
 
-                $scope.$watch('options.barType', function() {
-                    XDATA.userALE.log({
-                        activity: "select",
-                        action: "click",
-                        elementId: "barchart",
-                        elementType: "combobox",
-                        elementSub: "barchart-aggregation",
-                        elementGroup: "chart_group",
-                        source: "user",
-                        tags: ["options", "barchart"]
-                    });
+                $scope.$watch('options.barType', function(newValue) {
+                    onFieldChange('aggregation', newValue);
                     if(!$scope.loadingData && $scope.options.database.name && $scope.options.table.name) {
                         $scope.queryForData(false);
                     }
@@ -159,6 +131,29 @@ function(connectionService, datasetService, errorNotificationService, filterServ
                 $element.resize(updateChartSize);
             };
 
+            var onFieldChange = function(field, newValue) {
+                var source = "user";
+                var action = "click";
+
+                // Override the default action if a field changes while loading data during
+                // intialization or a dataset change.
+                if($scope.loadingData) {
+                    source = "system";
+                    action = "reset";
+                }
+
+                XDATA.userALE.log({
+                    activity: "select",
+                    action: action,
+                    elementId: "barchart",
+                    elementType: "combobox",
+                    elementSub: "barchart-" + field,
+                    elementGroup: "chart_group",
+                    source: source,
+                    tags: ["options", "barchart", newValue]
+                });
+            };
+
             /**
              * Event handler for filter changed events issued over Neon's messaging channels.
              * @param {Object} message A Neon filter changed message.
@@ -166,18 +161,17 @@ function(connectionService, datasetService, errorNotificationService, filterServ
              * @private
              */
             var onFiltersChanged = function(message) {
-                XDATA.userALE.log({
-                    activity: "alter",
-                    action: "query",
-                    elementId: "barchart",
-                    elementType: "canvas",
-                    elementSub: "barchart",
-                    elementGroup: "chart_group",
-                    source: "system",
-                    tags: ["filter-change", "barchart"]
-                });
-
                 if(message.addedFilter && message.addedFilter.databaseName === $scope.options.database.name && message.addedFilter.tableName === $scope.options.table.name) {
+                    XDATA.userALE.log({
+                        activity: "alter",
+                        action: "query",
+                        elementId: "barchart",
+                        elementType: "canvas",
+                        elementSub: "barchart",
+                        elementGroup: "chart_group",
+                        source: "system",
+                        tags: ["filter-change", "barchart"]
+                    });
                     $scope.queryForData(false);
                 }
             };
@@ -384,13 +378,13 @@ function(connectionService, datasetService, errorNotificationService, filterServ
             };
 
             /**
-             * Creates and returns a filter using the given table and x-axis field using the value set by this visualization.
-             * @param {String} The name of the table on which to filter
-             * @param {String} The name of the x-axis field on which to filter
+             * Creates and returns a filter on the given x-axis field using the value set by this visualization.
+             * @param {Object} databaseAndTableName Contains the database and table name
+             * @param {String} xAxisFieldName The name of the x-axis field on which to filter
              * @method createFilterClauseForXAxis
              * @return {Object} A neon.query.Filter object
              */
-            $scope.createFilterClauseForXAxis = function(tableName, xAxisFieldName) {
+            $scope.createFilterClauseForXAxis = function(databaseAndTableName, xAxisFieldName) {
                 return neon.query.where(xAxisFieldName, '=', $scope.filterValue);
             };
 
@@ -479,7 +473,7 @@ function(connectionService, datasetService, errorNotificationService, filterServ
                 var query = $scope.buildQuery();
                 query.limitClause = exportService.getLimitClause();
                 query.ignoreFilters_ = exportService.getIgnoreFilters();
-                query.ignoredFilterIds_ = exportService.getignoredFilterIds();
+                query.ignoredFilterIds_ = exportService.getIgnoredFilterIds();
                 var finalObject = {
                     name: "Bar_Chart",
                     data: [{

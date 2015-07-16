@@ -36,12 +36,12 @@
 <div class="clearfix"></div>
 
 <div class="header-container filter-container">
-    <div class="filter-reset pull-right" ng-class="{true: 'hidden', false: ''}[filterSet === undefined]" title="{{filterSet.key}}={{filterSet.value}}">
-        <span class="filter-label">{{filterSet.key}}={{filterSet.value}}</span>
-        <span class="glyphicon glyphicon-remove" ng-click="clearFilterSet()"></span>
-    </div>
-
     <div class="legend">
+        <div class="filter-reset pull-right" ng-class="{true: 'hidden', false: ''}[filterSet === undefined]" title="{{filterSet.key}}={{filterSet.value}}">
+            <span class="filter-label">{{filterSet.value}}</span>
+            <span class="glyphicon glyphicon-remove" ng-click="clearFilterSet()"></span>
+        </div>
+
         <div class="legend-item" title="{{getLegendText()}}">
             <span class="legend-icon" style="background-color: #39b54a"></span>
             <span class="legend-text legend-text-large">{{getLegendText()}}</span>
