@@ -152,7 +152,7 @@ angular.module('neonDemo.directives')
                     $scope.createPoint(msg);
                 });
 
-                //$scope.messenger.subscribe('date_selected', onDateSelected);
+                $scope.messenger.subscribe('date_selected', onDateSelected);
                 $scope.messenger.subscribe($scope.animationDateSelectedEvent, onDateSelected);
 
                 $scope.$on('$destroy', function() {
