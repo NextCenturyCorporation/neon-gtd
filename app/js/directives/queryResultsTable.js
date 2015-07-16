@@ -199,6 +199,12 @@ function(external, popups, connectionService, datasetService, errorNotificationS
                     }
                 };
 
+                var linkyConfig = datasetService.getLinkyConfig();
+
+                if(linkyConfig.linkTo) {
+                    options.linkyConfig = linkyConfig;
+                }
+
                 if(has_id) {
                     options.id = _id;
                 }

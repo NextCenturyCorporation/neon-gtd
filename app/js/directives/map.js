@@ -152,6 +152,8 @@ angular.module('neonDemo.directives')
                     $scope.createPoint(msg);
                 });
 
+                $scope.linkyConfig = datasetService.getLinkyConfig();
+
                 $scope.messenger.subscribe('date_selected', onDateSelected);
                 $scope.messenger.subscribe($scope.animationDateSelectedEvent, onDateSelected);
 
@@ -1085,12 +1087,12 @@ angular.module('neonDemo.directives')
                         sizeMapping: layer.sizeBy,
                         categoryMapping: layer.colorBy,
                         defaultColor: layer.defaultColor,
-                        linkyConfig: (layer.linkyConfig ? layer.linkyConfig :
+                        linkyConfig: ($scope.linkyConfig.linkTo ? $scope.linkyConfig :
                             {
                                 mentions: false,
                                 hashtags: false,
-                                urls: false,
-                                linkTo: "twitter"
+                                urls: true,
+                                linkTo: ""
                             })
                     });
                     $scope.map.addLayer(layer.olLayer);
@@ -1102,12 +1104,12 @@ angular.module('neonDemo.directives')
                         categoryMapping: layer.colorBy,
                         defaultColor: layer.defaultColor,
                         cluster: true,
-                        linkyConfig: (layer.linkyConfig ? layer.linkyConfig :
+                        linkyConfig: ($scope.linkyConfig.linkTo ? $scope.linkyConfig :
                             {
                                 mentions: false,
                                 hashtags: false,
-                                urls: false,
-                                linkTo: "twitter"
+                                urls: true,
+                                linkTo: ""
                             })
                     });
                     $scope.map.addLayer(layer.olLayer);
