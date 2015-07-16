@@ -28,8 +28,8 @@
  * @constructor
  */
 angular.module('neonDemo.directives')
-.directive('queryResultsTable', ['external', 'popups', 'ConnectionService', 'DatasetService', 'ErrorNotificationService', '$compile', '$timeout',
-function(external, popups, connectionService, datasetService, errorNotificationService, $compile, $timeout) {
+.directive('queryResultsTable', ['external', 'popups', 'ConnectionService', 'DatasetService', 'ErrorNotificationService', 'ExportService', '$compile', '$timeout',
+function(external, popups, connectionService, datasetService, errorNotificationService, exportService, $compile, $timeout) {
     return {
         templateUrl: 'partials/directives/queryResultsTable.html',
         restrict: 'EA',
@@ -158,6 +158,8 @@ function(external, popups, connectionService, datasetService, errorNotificationS
                     filtersChanged: onFiltersChanged
                 });
 
+                $scope.exportID = exportService.register($scope.makeQueryResultsTableExportObject);
+
                 $scope.$on('$destroy', function() {
                     XDATA.userALE.log({
                         activity: "remove",
@@ -172,6 +174,7 @@ function(external, popups, connectionService, datasetService, errorNotificationS
                     popups.links.deleteData($scope.tableId);
                     $element.off("resize", updateSize);
                     $scope.messenger.removeEvents();
+                    exportService.unregister($scope.exportID);
                 });
             };
 
@@ -709,7 +712,6 @@ function(external, popups, connectionService, datasetService, errorNotificationS
                 if($scope.options.sortByField !== undefined && $scope.options.sortByField.length > 0) {
                     query.sortBy($scope.options.sortByField, $scope.options.sortDirection);
                 }
-
                 return query;
             };
 
@@ -723,6 +725,44 @@ function(external, popups, connectionService, datasetService, errorNotificationS
                 if($scope.options.sortDirection === $scope.DESCENDING) {
                     $scope.refreshData();
                 }
+            };
+
+            /**
+             * Creates and returns an object that contains information needed to export the data in this widget.
+             * @return {Object} An object containing all the information needed to export the data in this widget.
+             */
+            $scope.makeQueryResultsTableExportObject = function() {
+                XDATA.userALE.log({
+                    activity: "perform",
+                    action: "click",
+                    elementId: "datagrid-export",
+                    elementType: "button",
+                    elementGroup: "table_group",
+                    source: "user",
+                    tags: ["options", "datagrid", "export"]
+                });
+                var query = $scope.buildQuery();
+                query.limitClause = exportService.getLimitClause();
+                var finalObject = {
+                    name: "Query_Results_Table",
+                    data: [{
+                        query: query,
+                        name: "queryResultsTable-" + $scope.exportID,
+                        fields: [],
+                        ignoreFilters: query.ignoreFilters_,
+                        selectionOnly: query.selectionOnly_,
+                        ignoredFilterIds: query.ignoredFilterIds_,
+                        type: "query"
+                    }]
+                };
+                var addField = function(field) {
+                    finalObject.data[0].fields.push({
+                        query: field.columnName,
+                        pretty: field.prettyName || field.columnName
+                    });
+                };
+                datasetService.getFields($scope.options.database.name, $scope.options.table.name).forEach(addField);
+                return finalObject;
             };
 
             // Wait for neon to be ready, the create our messenger and intialize the view and data.
