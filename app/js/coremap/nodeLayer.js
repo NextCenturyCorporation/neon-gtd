@@ -236,6 +236,7 @@ coreMap.Map.Layer.NodeLayer.prototype.createWeightedLine = function(pt1, pt2, we
  * @method createWeightedArrow
  */
 coreMap.Map.Layer.NodeLayer.prototype.createWeightedArrow = function(pt1, pt2, weight, element) {
+
     var wt = this.calculateLineWidth(weight);
     wt = 6;
     var angle = this.calculateAngle(pt1[0], pt1[1], pt2[0], pt2[1]);
@@ -442,7 +443,7 @@ coreMap.Map.Layer.NodeLayer.DEFAULT_ARROW_POINT_RADIUS = 5;
 coreMap.Map.Layer.NodeLayer.DEFAULT_OPACITY = 1;
 coreMap.Map.Layer.NodeLayer.DEFAULT_STROKE_WIDTH = 1;
 coreMap.Map.Layer.NodeLayer.DEFAULT_COLOR = "#00ff00";
-coreMap.Map.Layer.NodeLayer.DEFAULT_LINE_COLOR =  "#444444";   "#a6d96a";
+coreMap.Map.Layer.NodeLayer.DEFAULT_LINE_COLOR =  "#888888"; //  "#a6d96a";
 coreMap.Map.Layer.NodeLayer.DEFAULT_STROKE_COLOR = "#777";
 coreMap.Map.Layer.NodeLayer.MIN_RADIUS = 5;
 coreMap.Map.Layer.NodeLayer.MAX_RADIUS = 13;
