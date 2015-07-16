@@ -151,6 +151,8 @@ angular.module('neonDemo.directives')
                     $scope.createPoint(msg);
                 });
 
+                $scope.linkyConfig = datasetService.getLinkyConfig();
+
                 $scope.$on('$destroy', function() {
                     XDATA.userALE.log({
                         activity: "remove",
@@ -1035,7 +1037,9 @@ angular.module('neonDemo.directives')
              * @method updateLayer
              */
             $scope.updateLayer = function(filterKeys) {
-                var i = _.findIndex($scope.options.layers, {filterKeys: filterKeys});
+                var i = _.findIndex($scope.options.layers, {
+                    filterKeys: filterKeys
+                });
                 var type = $scope.options.layers[i].type;
 
                 if($scope.options.layers[i].olLayer) {
@@ -1048,7 +1052,6 @@ angular.module('neonDemo.directives')
 
                 queryAllLayerTables();
             };
-            
 
             /**
              * Creates and adds a layer to the map
@@ -1064,12 +1067,12 @@ angular.module('neonDemo.directives')
                         sizeMapping: layer.sizeBy,
                         categoryMapping: layer.colorBy,
                         defaultColor: layer.defaultColor,
-                        linkyConfig: (layer.linkyConfig ? layer.linkyConfig :
+                        linkyConfig: ($scope.linkyConfig.linkTo ? $scope.linkyConfig :
                             {
                                 mentions: false,
                                 hashtags: false,
-                                urls: false,
-                                linkTo: "twitter"
+                                urls: true,
+                                linkTo: ""
                             })
                     });
                     $scope.map.addLayer(layer.olLayer);
@@ -1081,12 +1084,12 @@ angular.module('neonDemo.directives')
                         categoryMapping: layer.colorBy,
                         defaultColor: layer.defaultColor,
                         cluster: true,
-                        linkyConfig: (layer.linkyConfig ? layer.linkyConfig :
+                        linkyConfig: ($scope.linkyConfig.linkTo ? $scope.linkyConfig :
                             {
                                 mentions: false,
                                 hashtags: false,
-                                urls: false,
-                                linkTo: "twitter"
+                                urls: true,
+                                linkTo: ""
                             })
                     });
                     $scope.map.addLayer(layer.olLayer);

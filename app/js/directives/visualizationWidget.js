@@ -28,7 +28,6 @@
  * @constructor
  */
 angular.module('neonDemo.directives').directive('visualizationWidget', ["config", "$compile", function(config, $compile) {
-    
     return {
         restrict: 'A',
         scope: {
@@ -178,11 +177,10 @@ angular.module('neonDemo.directives').directive('visualizationWidget', ["config"
                         source: "user",
                         tags: ["visualization", "move", "bottom"]
                     });
-                var maxVis = _.max($scope.gridsterConfigs, function(vis){
+                var maxVis = _.max($scope.gridsterConfigs, function(vis) {
                     return vis.row;
                 });
                 $scope.gridsterConfigs[$scope.gridsterConfigIndex].row = maxVis.row + maxVis.sizeY + 1;
-
             };
         }
     };

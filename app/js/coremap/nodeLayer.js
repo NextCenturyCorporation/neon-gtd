@@ -88,7 +88,7 @@ coreMap.Map.Layer.NodeLayer.prototype.calculateLineWidth = function(weight) {
 
     // If there was some variance in edge weights/widths, calculate the percentage of max difference for this weight.
     // Otherwise, we'll default to the minimum line width.
-    if (this.lineWidthDiff) {
+    if(this.lineWidthDiff) {
         percentOfDataRange = (weight - this.minLineWidth) / this.lineWidthDiff;
     }
 
@@ -164,7 +164,7 @@ coreMap.Map.Layer.NodeLayer.prototype.createLineStyleObject = function(color, wi
  */
 coreMap.Map.Layer.NodeLayer.prototype.createArrowStyleObject = function(color, width, angle, element) {
     var radius = Math.ceil(this.calculateNodeRadius(element) || coreMap.Map.Layer.NodeLayer.MIN_RADIUS);
-    
+
     var arrowWidth = radius + 7;
     if(radius % 2 === 0) {
         arrowWidth += 1;
@@ -251,7 +251,7 @@ coreMap.Map.Layer.NodeLayer.prototype.calculateAngle = function(x1, y1, x2, y2) 
     var dy = y2 - y1;
 
     // Calculates the angle between vector and x axis
-    var angle = Math.atan(dy/dx) * 180 / Math.PI;
+    var angle = Math.atan(dy / dx) * 180 / Math.PI;
 
     var rotation = 0;
 
@@ -287,10 +287,8 @@ coreMap.Map.Layer.NodeLayer.prototype.getValueFromDataElement = function(mapping
  */
 coreMap.Map.Layer.NodeLayer.prototype.areValuesInDataElement = function(element) {
     if(element[this.sourceMapping] && element[this.targetMapping] && element[this.weightMapping]) {
-
         if(element[this.sourceMapping][this.latitudeMapping] && element[this.sourceMapping][this.longitudeMapping] &&
             element[this.targetMapping][this.latitudeMapping] && element[this.targetMapping][this.longitudeMapping]) {
-
             return true;
         }
     }
@@ -387,7 +385,7 @@ coreMap.Map.Layer.NodeLayer.prototype.updateFeatures = function() {
             nodes[pt2] = me.createNode(tgt);
         }
     });
-    
+
     this.addFeatures(lines);
     this.addFeatures(arrows);
     this.addFeatures(_.values(nodes));

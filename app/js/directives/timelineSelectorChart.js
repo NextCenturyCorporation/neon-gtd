@@ -85,13 +85,13 @@ angular.module('neonDemo.directives')
                 });
 
                 $element.height($(".timeline-selector").height() - headerHeight);
-                
+
                 if($scope.showFocus === "always" || ($scope.showFocus === "on_filter" && $scope.timelineBrush.length > 0)) {
                     $scope.chart.toggleFocus(true);
                 } else {
                     $scope.chart.toggleFocus(false);
                 }
-                
+
                 $scope.resizePromise = null;
             };
 
