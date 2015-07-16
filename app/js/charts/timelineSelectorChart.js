@@ -44,7 +44,6 @@ charts.TimelineSelectorChart = function(element, configuration) {
     // Cache our element.
     this.element = element;
     this.d3element = d3.select(element);
-    this.baseHeight = 250;
     this.brushHandler = undefined;
     this.hoverListener = undefined;
     this.data = DEFAULT_DATA;
@@ -73,6 +72,9 @@ charts.TimelineSelectorChart = function(element, configuration) {
     // The data index over which the user is currently hovering changed on mousemove and mouseout.
     this.hoverIndex = -1;
 
+    this.DEFAULT_HEIGHT = 250;
+    this.DEFAULT_WIDTH = 1000;
+
     var self = this; // for internal d3 functions
 
     /**
@@ -94,7 +96,7 @@ charts.TimelineSelectorChart = function(element, configuration) {
         this.config.marginFocus = this.config.marginFocus || {
             top: 0,
             right: 15,
-            bottom: this.baseHeight,
+            bottom: this.determineHeight(this.d3element),
             left: 15
         };
         this.config.marginContext = this.config.marginContext || {
@@ -115,7 +117,7 @@ charts.TimelineSelectorChart = function(element, configuration) {
         } else if($(element[0]).width() !== 0) {
             return ($(element[0]).width());
         }
-        return 1000;
+        return this.DEFAULT_WIDTH;
     };
 
     this.determineHeight = function(element) {
@@ -124,7 +126,7 @@ charts.TimelineSelectorChart = function(element, configuration) {
         } else if($(element[0]).height() !== 0) {
             return ($(element[0]).height());
         }
-        return 40;
+        return this.DEFAULT_HEIGHT;
     };
 
     /**
@@ -267,7 +269,7 @@ charts.TimelineSelectorChart = function(element, configuration) {
                     left: 15
                 },
                 marginContext: {
-                    top: 185,
+                    top: this.determineHeight(this.d3element) - 65,
                     right: 15,
                     bottom: 18,
                     left: 15
@@ -501,15 +503,16 @@ charts.TimelineSelectorChart = function(element, configuration) {
     this.render = function(values) {
         var me = this;
         var i = 0;
+
         this.width = this.determineWidth(this.d3element) - this.config.marginFocus.left - this.config.marginFocus.right;
         // Depending on the granularity, the bars are not all the same width (months are different
         // lengths). But this is accurate enough to place tick marks and make other calculations.
         this.approximateBarWidth = 0;
 
-        $(this.d3element[0]).css("height", (this.baseHeight * values.length));
-        this.heightFocus = (this.baseHeight - (this.config.marginFocus.top) - this.config.marginFocus.bottom);
-        var heightContext = (this.baseHeight - (this.config.marginContext.top) - this.config.marginContext.bottom);
+        $(this.d3element[0]).css("height", (this.determineHeight(this.d3element) * values.length));
         var svgHeight = this.determineHeight(this.d3element);
+        this.heightFocus = (svgHeight - (this.config.marginFocus.top) - this.config.marginFocus.bottom);
+        var heightContext = (svgHeight - (this.config.marginContext.top) - this.config.marginContext.bottom);
 
         var fullDataSet = [];
         if(values && values.length > 0) {
@@ -637,7 +640,7 @@ charts.TimelineSelectorChart = function(element, configuration) {
                 .attr("transform", "translate(" + me.config.marginFocus.left + "," + me.config.marginFocus.top + ")");
 
             // Prevents the x-axis from being shown
-            if(me.config.marginFocus.bottom === me.baseHeight) {
+            if(me.config.marginFocus.bottom === me.determineHeight(me.d3element)) {
                 focus.attr("display", "none");
             }
 
@@ -1209,3 +1212,5 @@ charts.TimelineSelectorChart = function(element, configuration) {
     // initialization
     return this.configure(configuration);
 };
+
+
