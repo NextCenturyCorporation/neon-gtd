@@ -98,10 +98,30 @@ function(connectionService, datasetService, errorNotificationService, filterServ
                 return a.toUTCString() === b.toUTCString();
             };
 
+            var getDateTimePickerStart = function() {
+                return new Date(Date.UTC($scope.filter.start.getFullYear(), $scope.filter.start.getMonth(), $scope.filter.start.getDate(), $scope.filter.start.getHours()));
+            };
+
+            var getDateTimePickerEnd = function() {
+                return new Date(Date.UTC($scope.filter.end.getFullYear(), $scope.filter.end.getMonth(), $scope.filter.end.getDate() + 1, $scope.filter.end.getHours()));
+            };
+
+            var setDateTimePickerStart = function(date) {
+                $scope.filter.start = new Date(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate(), date.getUTCHours());
+            };
+
+            var setDateTimePickerEnd = function(date) {
+                $scope.filter.end = new Date(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate() - 1, date.getUTCHours());
+            };
+
             $scope.handleDateTimePickChange = function() {
-                if($scope.brush.length && datesEqual($scope.filter.start, $scope.brush[0]) && datesEqual($scope.filter.end, $scope.brush[1])) {
+                // Convert the datetimepicker dates from UTC to local time to match the other dates used throughout the application.
+                var start = getDateTimePickerStart();
+                var end = getDateTimePickerEnd();
+
+                if($scope.brush.length && datesEqual(start, $scope.brush[0]) && datesEqual(end, $scope.brush[1])) {
                     $element.find(".save-button").addClass("disabled");
-                } else if(!$scope.brush.length && datesEqual($scope.filter.start, $scope.bucketizer.getStartDate()) && datesEqual($scope.filter.end, $scope.bucketizer.getEndDate())) {
+                } else if(!$scope.brush.length && datesEqual(start, $scope.bucketizer.getStartDate()) && datesEqual(end, $scope.bucketizer.getEndDate())) {
                     $element.find(".save-button").addClass("disabled");
                 } else {
                     $element.find(".save-button").removeClass("disabled");
@@ -109,28 +129,28 @@ function(connectionService, datasetService, errorNotificationService, filterServ
             };
 
             $scope.handleDateTimePickSave = function() {
-                $scope.filter.start = $scope.filter.start || $scope.bucketizer.getStartDate();
-                $scope.filter.end = $scope.filter.end || $scope.bucketizer.getEndDate();
+                // Convert the datetimepicker dates from UTC to local time to match the other dates used throughout the application.
+                var start = getDateTimePickerStart();
+                var end = getDateTimePickerEnd();
+
                 $element.find(".save-button").addClass("disabled");
                 $element.find(".neon-datetimepicker").removeClass("open");
 
-                if(datesEqual($scope.filter.start, $scope.bucketizer.getStartDate()) && datesEqual($scope.filter.end, $scope.bucketizer.getEndDate())) {
+                if(datesEqual(start, $scope.bucketizer.getStartDate()) && datesEqual(end, $scope.bucketizer.getEndDate())) {
                     if($scope.brush.length) {
                         $scope.clearBrush();
                     }
                     return;
                 }
 
-                // Convert the datetimepicker dates from local time to UTC to match the other dates used throughout the application.
-                var utcStart = new Date(Date.UTC($scope.filter.start.getFullYear(), $scope.filter.start.getMonth(), $scope.filter.start.getDate(), $scope.filter.start.getHours()));
-                var utcEnd = new Date(Date.UTC($scope.filter.end.getFullYear(), $scope.filter.end.getMonth(), $scope.filter.end.getDate() + 1, $scope.filter.end.getHours()));
-                $scope.brush = [utcStart, utcEnd];
+                $scope.brush = [start, end];
                 $scope.extentDirty = true;
             };
 
             $scope.handleDateTimePickCancel = function() {
-                $scope.filter.start = $scope.brush.length ? $scope.brush[0] : $scope.bucketizer.getStartDate();
-                $scope.filter.end = $scope.brush.length ? $scope.brush[1] : $scope.bucketizer.getEndDate();
+                setDateTimePickerStart($scope.brush.length ? $scope.brush[0] : $scope.bucketizer.getStartDate());
+                setDateTimePickerEnd($scope.brush.length ? $scope.brush[1] : $scope.bucketizer.getEndDate());
+
                 $element.find(".save-button").addClass("disabled");
                 $element.find(".neon-datetimepicker").removeClass("open");
             };
@@ -161,8 +181,8 @@ function(connectionService, datasetService, errorNotificationService, filterServ
                     var endDateBucket = $scope.bucketizer.getBucketIndex($scope.referenceEndDate);
                     var afterEndDate = $scope.bucketizer.getDateForBucket(endDateBucket + 1);
                     $scope.bucketizer.setEndDate(afterEndDate);
-                    $scope.filter.start = $scope.bucketizer.getStartDate();
-                    $scope.filter.end = $scope.bucketizer.getEndDate();
+                    setDateTimePickerStart($scope.bucketizer.getStartDate());
+                    setDateTimePickerEnd($scope.bucketizer.getEndDate());
                 }
             };
 
@@ -305,8 +325,8 @@ function(connectionService, datasetService, errorNotificationService, filterServ
                         // Needed to redraw the brush for the case in which the user clicks on a point inside an existing brush.
                         $scope.extentDirty = true;
 
-                        $scope.filter.start = $scope.brush.length ? $scope.brush[0] : $scope.bucketizer.getStartDate();
-                        $scope.filter.end = $scope.brush.length ? $scope.brush[1] : $scope.bucketizer.getEndDate();
+                        setDateTimePickerStart($scope.brush.length ? $scope.brush[0] : $scope.bucketizer.getStartDate());
+                        setDateTimePickerEnd($scope.brush.length ? $scope.brush[1] : $scope.bucketizer.getEndDate());
 
                         if($scope.loadingData) {
                             // If the brush changed because of a granularity change, then don't
@@ -1126,8 +1146,8 @@ function(connectionService, datasetService, errorNotificationService, filterServ
             var removeBrushFromTimelineAndDatasetService = function() {
                 $scope.brush = [];
                 $scope.extentDirty = true;
-                $scope.filter.start = $scope.bucketizer.getStartDate();
-                $scope.filter.end = $scope.bucketizer.getEndDate();
+                setDateTimePickerStart($scope.bucketizer.getStartDate());
+                setDateTimePickerEnd($scope.bucketizer.getEndDate());
                 var relations = datasetService.getRelations($scope.options.database.name, $scope.options.table.name, [$scope.options.dateField]);
                 filterService.removeFilters($scope.messenger, $scope.filterKeys, function() {
                     datasetService.removeDateBrushExtentForRelations(relations);
