@@ -677,7 +677,7 @@ charts.TimelineSelectorChart = function(element, configuration) {
             var yAxis = axis.yAxis;
             me.yContext = d3.scale.linear().range([heightContext, 0]);
             me.yContext.domain(y.domain());
-            
+
             var contextContainer;
 
             // Only had context timeline on first chart (for when there are multiple charts)
@@ -685,9 +685,10 @@ charts.TimelineSelectorChart = function(element, configuration) {
                 contextContainer = context.append("g")
                     .attr("class", series.name)
                     .attr("transform", "translate(" + xOffset + "," + ((heightContext + me.config.marginContext.top + me.config.marginContext.bottom) * seriesPos) + ")");
-            
+
                 var style = 'stroke:' + series.color + ';';
-                var chartTypeFocus = '', chartTypeContext = '';
+                var chartTypeFocus = '';
+                var chartTypeContext = '';
 
                 // For now, all anomalies are shown as red, but this could be changed to be a
                 // configurable parameter that is passed in with the series, like series.color.
@@ -701,7 +702,7 @@ charts.TimelineSelectorChart = function(element, configuration) {
                         style = 'stroke:#f1f1f1;';
                         barheight++;
                     }
-                    
+
                     var anomalyStyle = style + 'fill: ' + anomalyColor + '; stroke: ' + anomalyColor + ';';
                     style += 'fill:' + series.color + ';';
 
@@ -974,7 +975,7 @@ charts.TimelineSelectorChart = function(element, configuration) {
         var me = this;
 
         me.svg.select(".focus-" + series.name).select(".x.axis").call(me.xAxisFocus);
-        
+
         var focus = me.svg.select(".focus-" + series.name + " ." + series.name);
 
         me.yFocus = d3.scale.linear().range([me.heightFocus, 0]);
@@ -1002,7 +1003,7 @@ charts.TimelineSelectorChart = function(element, configuration) {
         focus.select(".y.axis.series-y").call(yAxis);
 
         var style = 'stroke:' + series.color + ';';
-        
+
         // For now, all anomalies are shown as red, but this could be changed to be a
         // configurable parameter that is passed in with the series, like series.color.
         var anomalyColor = 'red';
@@ -1139,7 +1140,10 @@ charts.TimelineSelectorChart = function(element, configuration) {
             me.focusHighlights.push(highlight);
         });
 
-        return {y: me.yFocus, yAxis: yAxis};
+        return {
+            y: me.yFocus,
+            yAxis: yAxis
+        };
     }
 
     /**
@@ -1212,5 +1216,3 @@ charts.TimelineSelectorChart = function(element, configuration) {
     // initialization
     return this.configure(configuration);
 };
-
-

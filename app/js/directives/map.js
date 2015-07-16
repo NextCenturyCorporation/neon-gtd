@@ -1037,7 +1037,9 @@ angular.module('neonDemo.directives')
              * @method updateLayer
              */
             $scope.updateLayer = function(filterKeys) {
-                var i = _.findIndex($scope.options.layers, {filterKeys: filterKeys});
+                var i = _.findIndex($scope.options.layers, {
+                    filterKeys: filterKeys
+                });
                 var type = $scope.options.layers[i].type;
 
                 if($scope.options.layers[i].olLayer) {
@@ -1050,7 +1052,6 @@ angular.module('neonDemo.directives')
 
                 queryAllLayerTables();
             };
-            
 
             /**
              * Creates and adds a layer to the map
