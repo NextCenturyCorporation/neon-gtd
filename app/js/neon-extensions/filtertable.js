@@ -370,4 +370,5 @@ neon.query.FilterRow = function(database, table, columnValue, operatorValue, val
     this.value = value;
     this.dirty = false;
     this.index = 0;
+    this.isDate = false;
 };

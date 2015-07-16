@@ -28,9 +28,7 @@
  * @constructor
  */
 angular.module('neonDemo.directives').directive('visualizationWidget', ["config", "$compile", function(config, $compile) {
-    var MAXIMIZED_COLUMN_SIZE = 6;
-    var MAXIMIZED_ROW_SIZE = 4;
-
+    
     return {
         restrict: 'A',
         scope: {
@@ -47,6 +45,9 @@ angular.module('neonDemo.directives').directive('visualizationWidget', ["config"
                 '</div></div>',
         // templateUrl: "partials/directives/visualizationWidget.html",
         link: function($scope, $element) {
+            var MAXIMIZED_COLUMN_SIZE = config.gridsterColumns || 6;
+            var MAXIMIZED_ROW_SIZE = MAXIMIZED_COLUMN_SIZE * (2 / 3);
+
             // Create our widget.  Here, we are assuming the visualization is
             // implementated as an attribute directive.
             var widgetElement = document.createElement("div");
@@ -125,6 +126,16 @@ angular.module('neonDemo.directives').directive('visualizationWidget', ["config"
              * @method remove
              */
             $scope.remove = function() {
+                XDATA.userALE.log({
+                        activity: "remove",
+                        action: "click",
+                        elementId: "workspace",
+                        elementType: "workspace",
+                        elementSub: $scope.gridsterConfigs[$scope.gridsterConfigIndex].type,
+                        elementGroup: "top",
+                        source: "user",
+                        tags: ["remove", $scope.gridsterConfigs[$scope.gridsterConfigIndex].type]
+                    });
                 $scope.gridsterConfigs.splice($scope.gridsterConfigIndex, 1);
             };
         }

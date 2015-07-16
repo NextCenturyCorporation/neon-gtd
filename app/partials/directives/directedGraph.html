@@ -51,7 +51,7 @@
 
 <div class="header-container filter-container" ng-show="(filteredNodes.length > 0)">
     <div class="filter-reset pull-right" ng-repeat="value in filteredNodes" title="{{options.selectedNodeField}}={{value}}">
-        <span class="filter-label">{{options.selectedNodeField}}={{value}}</span>
+        <span class="filter-label">{{value}}</span>
         <span class="glyphicon glyphicon-remove" ng-click="removeFilter(value)"></span>
     </div>
 </div>

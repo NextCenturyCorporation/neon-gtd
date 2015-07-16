@@ -82,12 +82,12 @@ function(connectionService, datasetService, errorNotificationService, exportServ
                 $scope.$on('$destroy', function() {
                     XDATA.userALE.log({
                         activity: "remove",
-                        action: "click",
+                        action: "remove",
                         elementId: "circularheatform",
                         elementType: "canvas",
                         elementSub: "circularheatform",
                         elementGroup: "chart_group",
-                        source: "user",
+                        source: "system",
                         tags: ["remove", "circularheatform"]
                     });
                     $scope.messenger.removeEvents();
@@ -146,17 +146,17 @@ function(connectionService, datasetService, errorNotificationService, exportServ
              * @private
              */
             var onFiltersChanged = function(message) {
-                XDATA.userALE.log({
-                    activity: "alter",
-                    action: "query",
-                    elementId: "circularheatform",
-                    elementType: "canvas",
-                    elementSub: "circularheatform",
-                    elementGroup: "chart_group",
-                    source: "system",
-                    tags: ["filter-change", "circularheatform"]
-                });
                 if(message.addedFilter && message.addedFilter.databaseName === $scope.options.database.name && message.addedFilter.tableName === $scope.options.table.name) {
+                    XDATA.userALE.log({
+                        activity: "alter",
+                        action: "query",
+                        elementId: "circularheatform",
+                        elementType: "canvas",
+                        elementSub: "circularheatform",
+                        elementGroup: "chart_group",
+                        source: "system",
+                        tags: ["filter-change", "circularheatform"]
+                    });
                     $scope.queryForChartData();
                 }
             };

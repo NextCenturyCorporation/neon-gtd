@@ -1,29 +1,45 @@
 <div class="header-container menu-container">
     <options-menu parent-element="element" export-function="makeMapExportObject" button-text="optionsMenuButtonText" show-button-text="showOptionsMenuButtonText">
-        <div class="form-group layer-options" ng-repeat="layer in options.layers">
+        <div class="form-group instructions-container">
+            <label><span class="glyphicon glyphicon-info-sign"></span> SHIFT + DRAG on Map to Filter</label>
+        </div>
+        <div class="form-group layer-options-container" ng-repeat="layer in options.layers">
             <label>{{layer.name}}</label>
-            <div class="btn-group">
-                <label class="btn btn-default" ng-class="{true: 'active', false: ''}[layer.visible === true]">
-                    <input type="checkbox" style="display:none" ng-model="layer.visible" ng-change="updateLayerVisibility(layer)">
-                    <span class="glyphicon glyphicon-eye-open"></span> Visible
-                </label>
-                <label class="btn btn-default" ng-class="{true: 'active', false: ''}[layer.active === true]">
-                    <input type="checkbox" style="display:none" ng-model="layer.active" ng-change="updateFilteringOnLayer(layer)">
-                    <span class="glyphicon glyphicon-filter"></span> Filter
-                </label>
+            <div class="form-group layer-options">
+                <div class="btn-group">
+                    <label class="btn btn-default" ng-class="{true: 'active', false: ''}[layer.visible === true]">
+                        <input type="checkbox" style="display:none" ng-model="layer.visible" ng-change="updateLayerVisibility(layer)">
+                        <span class="glyphicon glyphicon-eye-open"></span> Visible
+                    </label>
+                    <label class="btn btn-default" ng-class="{true: 'active', false: ''}[layer.active === true]">
+                        <input type="checkbox" style="display:none" ng-model="layer.active" ng-change="updateFilteringOnLayer(layer)">
+                        <span class="glyphicon glyphicon-filter"></span> Filter
+                    </label>
+                </div>
+                <div class="form-group">
+                    <label>Layer Type</label>
+                    <select class="form-control" ng-model="layer.type" ng-options="layer for layer in mapLayers"
+                        ng-required="true" ng-change="updateLayer(layer.filterKeys)">
+                    </select>
+                </div>
+                <div class="error">
+                    {{ layer.error }}
+                </div>
             </div>
             <div class="clearfix"></div>
         </div>
+        <div class="form-group reset-options">
+            <button type="button" class="btn btn-default" title="Reset Map View" ng-click="setDefaultView()">
+              Reset View
+            </button>
+        </div>
+
     </options-menu>
 </div>
 
 <div class="header-container filter-container">
-    <div class="filter-reset pull-right" ng-class="{true: '', false: 'hidden'}[showFilter]">
-        <span class="filter-label">Filter</span>
+    <div class="filter-reset pull-right" ng-class="{true: '', false: 'hidden'}[showFilter]" title="Latitude from {{extent.minimumLatitude}} to {{extent.maximumLatitude}}, Longitude from {{extent.minimumLongitude}} to {{extent.maximumLongitude}}">
+        <span class="filter-label">Map Filter</span>
         <span class="glyphicon glyphicon-remove" ng-click="clearFilters(true)"></span>
     </div>
-</div>
-
-<div class="footer-container">
-    <span class="footer-text">SHIFT + DRAG to filter</span>
 </div>

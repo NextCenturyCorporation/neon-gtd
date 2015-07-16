@@ -42,15 +42,6 @@
         padding: 3px;
     }
 
-    .chart-options {
-        .popover {
-            top: 30px;
-            right: -10px;
-            position: absolute;
-            width: 250px;
-        }
-    }
-
     .footer-container {
         position: absolute;
         bottom: 10px;
@@ -73,26 +64,81 @@
             top: 10px;
             z-index: 1010;
 
-            /* Give the menu container a background to make it more readable.  Make it the same height (30 px) and color of the filter reset notifications. */
-            div.chart-options a {
-                background-color: @button-color;
-                border-style: solid;
-                border-width: 1px;
-                border-color: @button-border-color;
-                border-radius: 4px;
-                padding: 5px 5px 2px;
-            }
+            .chart-options {
+                .popover {
+                    top: 30px;
+                    right: 30px;
+                    position: absolute;
 
-            .layer-options {
-                .btn {
-                    &.active {
-                        color: @accent-bright;
-                    }
-
-                    .glyphicon {
-                        margin-right: 5px;
+                    .popover-content {
+                        width: 300px;
                     }
                 }
+
+                .arrow {
+                    right: -15px;
+                }
+
+                /* Give the menu container a background to make it more readable.  Make it the same height (30 px) and color of the filter reset notifications. */
+                a {
+                    background-color: @button-color;
+                    border-style: solid;
+                    border-width: 1px;
+                    border-color: @button-border-color;
+                    border-radius: 4px;
+                    padding: 5px 5px 2px;
+                }
+            }
+
+            .instructions-container {
+                label {
+                    font-size: 14px;
+                }
+
+                .glyphicon {
+                    top: 2px;
+                    margin-right: 5px;
+                }
+            }
+
+            .layer-options-container {
+                > label {
+                    font-size: 14px;
+                }
+
+                .layer-options {
+                    background-color: @main-background;
+                    border-style: solid;
+                    border-width: 1px;
+                    border-color: @border-color;
+                    border-radius: 4px;
+                    padding: 10px;
+
+                    > .btn-group {
+                        margin-bottom: 50px;
+
+                        .btn {
+                            width: 50%;
+
+                            &.active {
+                                color: @accent-bright;
+                            }
+
+                            .glyphicon {
+                                margin-right: 5px;
+                            }
+                        }
+                    }
+
+                    > .error {
+                        color: @error-text-color;
+                        margin: 5px;
+                    }
+                }
+            }
+
+            .reset-options {
+                margin-top: 30px;
             }
         }
 

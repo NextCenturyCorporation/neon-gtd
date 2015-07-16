@@ -21,28 +21,33 @@ angular.module("neonDemo.services")
         var service = {};
 
         /**
-         * Creates and returns a mapping of names from the given table names to unique filter keys for each table.
-         * @param {String} The name of the visualization
-         * @param {Array} The array of table names
+         * Creates and returns a mapping of names from the given database and table names to unique filter keys for each database and table pair.
+         * Uses the mapping of global filter keys (if given) for all possible database and table pairs.
+         * @param {String} visualizationName The name of the visualization
+         * @param {Object} databaseNamesToTableNames A map of database names to table names
+         * @param {Object} globalFilterKeys (Optional) A map of database names to table names to filter keys
          * @method createFilterKeys
-         * @return {Object} The mapping of table names to filter keys
+         * @return {Object} The mapping of database names to table names to filter keys
          */
-        service.createFilterKeys = function(visualizationName, databaseNamesToTableNames) {
+        service.createFilterKeys = function(visualizationName, databaseNamesToTableNames, globalFilterKeys) {
             var filterKeys = {};
             var databaseNames = Object.keys(databaseNamesToTableNames);
-            for(var i = 0; i < databaseNames.length; ++i) {
-                filterKeys[databaseNames[i]] = {};
-                var tableNames = databaseNamesToTableNames[databaseNames[i]];
-                for(var j = 0; j < tableNames.length; ++j) {
-                    filterKeys[databaseNames[i]][tableNames[j]] = visualizationName + "-" + databaseNames[i] + "-" + tableNames[j] + "-" + uuid();
-                }
-            }
+            databaseNames.forEach(function(databaseName) {
+                filterKeys[databaseName] = {};
+                var tableNames = databaseNamesToTableNames[databaseName];
+                tableNames.forEach(function(tableName) {
+                    if(globalFilterKeys && globalFilterKeys[databaseName] && globalFilterKeys[databaseName][tableName]) {
+                        filterKeys[databaseName][tableName] = globalFilterKeys[databaseName][tableName];
+                    } else {
+                        filterKeys[databaseName][tableName] = visualizationName + "-" + databaseName + "-" + tableName + "-" + uuid();
+                    }
+                });
+            });
             return filterKeys;
         };
 
         /**
-         * Returns the list of field names or arrays based on the data contained within the map of fields in the given relation to be used by a filter clause
-         * creation function.
+         * Returns the list of field names or arrays based on the data contained within the array of fields in the given relation to be used by a filter clause creation function.
          * @param {Object} relation A relation object containing a map of field names to arrays of related field names
          * @method getArgumentFieldsList
          * @return {Array} A list of {String} related field names if the map of field names in the given relation object only contains one field name key;
@@ -50,19 +55,21 @@ angular.module("neonDemo.services")
          * elements of this list will be used to call the filter clause creation functions in filterService.createFilter() below.
          */
         service.getArgumentFieldsList = function(relation) {
-            // The relation will contain each field used by the filter clause creation function mapped to a list of the related fields for that field.
-            // Note:  Sort the keys so, if multiple fields exist, the filter clause creation function can expect them in alphabetical order.
-            var fieldNames = Object.keys(relation.fields).sort();
+            // The relation contains an object with the name of each initial field and the array of related fields for each initial field.
+            // Keep the same order of the fields array.  This order may be used in the filter clause creation function.
+            var fieldNames = relation.fields.map(function(field) {
+                return field.initial;
+            });
 
             // If only one field is used by the filter clause creation function, just return the list of related fields for that field.
             if(fieldNames.length === 1) {
-                return relation.fields[fieldNames[0]];
+                return relation.fields[0].related;
             }
 
             // Else we need to create a list of all combinations of the related fields.  First, create a list containing all the lists of related fields.
             var relationFieldsList = [];
             for(var i = 0; i < fieldNames.length; ++i) {
-                relationFieldsList.push(relation.fields[fieldNames[i]]);
+                relationFieldsList.push(relation.fields[i].related);
             }
 
             // Create a list of arguments representing the fields using all combinations of the related fields.
@@ -98,28 +105,41 @@ angular.module("neonDemo.services")
          * </ul>
          * @param {Function} createFilterClauseFunction The function used to create the filter clause for each field, with arguments:
          *  <ul>
-         *      <li> {String} The table name </li>
+         *      <li> {Object} An object containing {String} database (the database name) and {String} table (the table name) </li>
          *      <li> {String} or {Array} The field name(s) </li>
          *  </ul>
          * @method createFilter
-         * @return {Object} A neon.query.Filter object
+         * @return {Object} A neon.query.Filter object or undefined if no filter clause could be created
          */
         service.createFilter = function(relation, createFilterClauseFunction) {
             // Creates a list of arguments for the filter clause creation function.  Each element is either a {String} or an {Array} depending on the number
             // of field keys in relation.fields.
             var argumentFieldsList = service.getArgumentFieldsList(relation);
+            var relationDatabaseAndTableName = {
+                database: relation.database,
+                table: relation.table
+            };
 
             var filterClause;
             if(argumentFieldsList.length === 1) {
-                filterClause = createFilterClauseFunction(relation.table, argumentFieldsList[0]);
+                filterClause = createFilterClauseFunction(relationDatabaseAndTableName, argumentFieldsList[0]);
             } else {
                 var filterClauses = [];
                 for(var i = 0; i < argumentFieldsList.length; ++i) {
-                    filterClauses.push(createFilterClauseFunction(relation.table, argumentFieldsList[i]));
+                    var result = createFilterClauseFunction(relationDatabaseAndTableName, argumentFieldsList[i]);
+                    if(result) {
+                        filterClauses.push(result);
+                    }
                 }
-                filterClause = neon.query.or.apply(neon.query, filterClauses);
+                if(filterClauses.length) {
+                    filterClause = neon.query.or.apply(neon.query, filterClauses);
+                }
             }
-            return new neon.query.Filter().selectFrom(relation.database, relation.table).where(filterClause);
+
+            if(filterClause) {
+                return new neon.query.Filter().selectFrom(relation.database, relation.table).where(filterClause);
+            }
+            return undefined;
         };
 
         /**
@@ -129,7 +149,7 @@ angular.module("neonDemo.services")
          * @param {Object} filterKeys The map of database and table names to filter keys used by the messenger
          * @param {Function} createFilterClauseFunction The function used to create the filter clause for each field, with arguments:
          *  <ul>
-         *      <li> {String} The table name </li>
+         *      <li> {Object} An object containing {String} database (the database name) and {String} table (the table name) </li>
          *      <li> {String} or {Array} The field name(s) </li>
          *  </ul>
          * @param {Function} successCallback The function called once all the filters have been added (optional)
@@ -138,18 +158,27 @@ angular.module("neonDemo.services")
          */
         service.addFilters = function(messenger, relations, filterKeys, createFilterClauseFunction, successCallback, errorCallback) {
             var addFilter = function(relationsToAdd) {
-                var relation = relationsToAdd.shift();
-                var filter = service.createFilter(relation, createFilterClauseFunction);
-                messenger.addFilter(filterKeys[relation.database][relation.table], filter, function() {
+                var addNextFilter = function() {
                     if(relationsToAdd.length) {
                         addFilter(relationsToAdd);
                     } else if(successCallback) {
                         successCallback();
                     }
+                };
+
+                var relation = relationsToAdd.shift();
+                var filter = service.createFilter(relation, createFilterClauseFunction);
+                if(!filter) {
+                    addNextFilter();
+                    return;
+                }
+
+                messenger.addFilter(filterKeys[relation.database][relation.table], filter, function() {
+                    addNextFilter();
                 }, errorCallback);
             };
 
-            addFilter(relations);
+            addFilter(angular.copy(relations));
         };
 
         /**
@@ -159,7 +188,7 @@ angular.module("neonDemo.services")
          * @param {Object} filterKeys The map of database and table names to filter keys used by the messenger
          * @param {Function} createFilterClauseFunction The function used to create the filter clause for each field, with arguments:
          *  <ul>
-         *      <li> {String} The table name </li>
+         *      <li> {Object} An object containing {String} database (the database name) and {String} table (the table name) </li>
          *      <li> {String} or {Array} The field name(s) </li>
          *  </ul>
          * @param {Function} successFunction The function called once all the filters have been replaced (optional)
@@ -168,18 +197,27 @@ angular.module("neonDemo.services")
          */
         service.replaceFilters = function(messenger, relations, filterKeys, createFilterClauseFunction, successCallback, errorCallback) {
             var replaceFilter = function(relationsToReplace) {
-                var relation = relationsToReplace.shift();
-                var filter = service.createFilter(relation, createFilterClauseFunction);
-                messenger.replaceFilter(filterKeys[relation.database][relation.table], filter, function() {
+                var replaceNextFilter = function() {
                     if(relationsToReplace.length) {
                         replaceFilter(relationsToReplace);
                     } else if(successCallback) {
                         successCallback();
                     }
+                };
+
+                var relation = relationsToReplace.shift();
+                var filter = service.createFilter(relation, createFilterClauseFunction);
+                if(!filter) {
+                    replaceNextFilter();
+                    return;
+                }
+
+                messenger.replaceFilter(filterKeys[relation.database][relation.table], filter, function() {
+                    replaceNextFilter();
                 }, errorCallback);
             };
 
-            replaceFilter(relations);
+            replaceFilter(angular.copy(relations));
         };
 
         /**

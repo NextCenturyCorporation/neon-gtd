@@ -9,8 +9,8 @@
         <a href="#" ng-click="connectToPreset(server)" ng-bind="server.name"></a>
       </li>
 
-      <li class="divider"></li>
-      <li ng-class="{true: 'active', false: ''}[activeServer == 'Custom' || !(servers.length > 0)]">
+      <li class="divider" ng-hide="hideAdvancedOptions"></li>
+      <li ng-class="{true: 'active', false: ''}[activeServer == 'Custom' || !(servers.length > 0)]" ng-hide="hideAdvancedOptions">
         <a data-toggle="modal" href="#customConnectionModal" ng-click="openedCustom()">Custom...</a>
       </li>
 

@@ -24,6 +24,21 @@ charts.LineChart = function(rootElement, selector, opts) {
     this.yAttribute = opts.y;
     this.margin = $.extend({}, charts.LineChart.DEFAULT_MARGIN, opts.margin || {});
 
+    this.brush = undefined;
+    this.brushHandler = undefined;
+    this.highlight = undefined;
+
+    // The old extent of the brush saved on brushstart.
+    this.oldExtent = [];
+
+    this.hoverIndex = -1;
+    this.hoverCircles = {};
+    this.hoverListener = opts.hoverListener;
+
+    this.x = [];
+    this.y = [];
+    this.xDomain = [];
+
     this.hiddenSeries = [];
 
     this.colors = [];
@@ -56,6 +71,7 @@ charts.LineChart = function(rootElement, selector, opts) {
     if(opts.responsive) {
         this.redrawOnResize();
     }
+
     return this;
 };
 
@@ -68,6 +84,7 @@ charts.LineChart.DEFAULT_MARGIN = {
     right: 0
 };
 charts.LineChart.DEFAULT_STYLE = {};
+charts.LineChart.DEFAULT_HIGHLIGHT_WIDTH = 4;
 
 charts.LineChart.prototype.determineWidth = function(element) {
     if(this.userSetWidth) {
@@ -152,20 +169,21 @@ charts.LineChart.prototype.calculateColor = function(seriesObject) {
         }
     }
 
+    var colorObject = {
+        color: color,
+        series: seriesObject.series,
+        total: seriesObject.total,
+        min: seriesObject.min,
+        max: seriesObject.max,
+        data: seriesObject.data,
+        hidden: hidden
+    };
+
     // store the color in the registry so we know the color/series mappings
     if(index >= 0) {
-        this.colors[index].color = color;
-        this.colors[index].total = seriesObject.total;
-        this.colors[index].hidden = hidden;
+        this.colors[index] = colorObject;
     } else {
-        this.colors.push({
-            color: color,
-            series: seriesObject.series,
-            total: seriesObject.total,
-            min: seriesObject.min,
-            max: seriesObject.max,
-            hidden: hidden
-        });
+        this.colors.push(colorObject);
     }
 
     return color;
@@ -184,7 +202,142 @@ charts.LineChart.prototype.getColorMappings = function() {
     return me.colors;
 };
 
-charts.LineChart.prototype.drawLine = function(opts) {
+/**
+ * Selects the date range with the given start and end date by highlighting it in the chart.
+ * @param {Date} startDate
+ * @param {Date} endDate
+ * @method selectDate
+ */
+charts.LineChart.prototype.selectDate = function(startDate, endDate) {
+    if(!this.data || !this.data.length || !this.data[0].data || !this.data[0].data.length) {
+        return;
+    }
+
+    var dataLength = this.data[0].data.length;
+    var startIndex = -1;
+    var endIndex = -1;
+
+    var datesEqual = this.datesEqual;
+    this.data[0].data.forEach(function(datum, index) {
+        if(datum.date <= startDate || datesEqual(datum.date, startDate)) {
+            startIndex = index;
+        }
+        if(datum.date <= endDate || datesEqual(datum.date, endDate)) {
+            endIndex = index;
+        }
+    });
+
+    var dataStartDate = this.data[0].data[0].date;
+    var dataEndDate = this.data[0].data[dataLength - 1].date;
+
+    // Add a day to the end day so it includes the whole end day and not just the first hour of the end day.
+    dataEndDate = new Date(dataEndDate.getFullYear(), dataEndDate.getMonth(), dataEndDate.getDate() + 1, dataEndDate.getHours());
+
+    // If the start or end date is outside the date range of the data, set it to the of the start (inclusive) or end (exclusive) index of the data.
+    startIndex = startDate < dataStartDate ? 0 : startIndex;
+    endIndex = endDate > dataEndDate ? dataLength : endIndex;
+
+    if(startIndex < 0 || endIndex < 0 || endDate < dataStartDate || startDate > dataEndDate) {
+        this.deselectDate();
+        return;
+    }
+
+    // If the start and end dates are the same, add one to the end index because it is exclusive.
+    endIndex = startIndex === endIndex ? endIndex + 1 : endIndex;
+    this.selectIndexedDates(startIndex, endIndex);
+};
+
+charts.LineChart.prototype.datesEqual = function(a, b) {
+    return a.toUTCString() === b.toUTCString();
+};
+
+/**
+ * Selects the date range with the given start and end index in the data by highlighting it in the chart.
+ * @param {Number} startIndex
+ * @param {Number} endIndex
+ * @method selectIndexedDates
+ */
+charts.LineChart.prototype.selectIndexedDates = function(startIndex, endIndex) {
+    var me = this;
+    this.clearHoverCircles();
+    this.data.forEach(function(seriesObject) {
+        if(me.hiddenSeries.indexOf(seriesObject.series) >= 0) {
+            return;
+        }
+
+        for(var i = startIndex; i < endIndex; ++i) {
+            var date = me.data[0].data[i].date;
+            me.hoverCircles[seriesObject.series][i]
+                .attr("stroke-opacity", 1)
+                .attr("fill-opacity", 1)
+                .attr("cx", seriesObject.data.length > 1 ? me.x(date) : me.width / 2)
+                .attr("cy", me.y(seriesObject.data[i].value));
+        }
+    });
+
+    var startDate = me.data[0].data[startIndex].date;
+    var endDate = me.data[0].data[endIndex - 1].date;
+    var startDateX = this.data[0].data.length > 1 ? this.x(startDate) : this.width / 2;
+    var endDateX = this.data[0].data.length > 1 ? this.x(endDate) : this.width / 2;
+
+    // Use a single highlight rectangle for the whole selected date range.
+    var highlightX = Math.max(0, startDateX - (charts.LineChart.DEFAULT_HIGHLIGHT_WIDTH / 2));
+    var width = Math.min(this.width, (endDateX - startDateX) + charts.LineChart.DEFAULT_HIGHLIGHT_WIDTH);
+    this.highlight.attr("x", highlightX).attr("width", width).style("visibility", "visible");
+};
+
+/**
+ * Shows the tooltip for the given date with the given index in the data.
+ * @param {Number} index
+ * @param {Date} date
+ * @method showTooltip
+ */
+charts.LineChart.prototype.showTooltip = function(index, date) {
+    var format = d3.time.format.utc('%e %B %Y');
+    var numFormat = d3.format("0,000.00");
+    var html = '<span class="tooltip-date">' + format(date) + '</span>';
+
+    for(var i = 0; i < this.data.length; ++i) {
+        if(this.hiddenSeries.indexOf(this.data[i].series) >= 0) {
+            continue;
+        }
+
+        var color = this.calculateColor(this.data[i]);
+
+        html += ('<span style="color: ' + color + '">' + this.data[i].series + ": " +
+            numFormat(Math.round(this.data[i].data[index].value * 100) / 100) + '</span>');
+    }
+
+    $("#tooltip-container").html(html);
+    $("#tooltip-container").show();
+
+    d3.select("#tooltip-container")
+        .style("top", (d3.event.pageY - ($("#tooltip-container").outerHeight(true) / 2))  + "px")
+        .style("left", (d3.event.pageX + 10) + "px");
+};
+
+/**
+ * Deselects the date by removing the highlighting in the chart.
+ * @method deselectDate
+ */
+charts.LineChart.prototype.deselectDate = function() {
+    if(this.highlight) {
+        this.highlight.style("visibility", "hidden");
+    }
+    this.clearHoverCircles();
+};
+
+/**
+ * Removes the hover circles from the chart.
+ * @method clearHoverCircles
+ */
+charts.LineChart.prototype.clearHoverCircles = function() {
+    this.svg.selectAll("circle.dot-hover")
+        .attr("stroke-opacity", 0)
+        .attr("fill-opacity", 0);
+};
+
+charts.LineChart.prototype.drawLines = function(opts) {
     /* jshint loopfunc:true */
     var me = this;
     var i = 0;
@@ -207,14 +360,27 @@ charts.LineChart.prototype.drawLine = function(opts) {
     me.x = d3.time.scale.utc()
     .range([0, (me.width - (me.margin.left + me.margin.right))], 0.25);
 
-    me.x.domain(d3.extent(fullDataSet, function(d) {
+    me.xDomain = d3.extent(fullDataSet, function(d) {
         return d[me.xAttribute];
-    }));
+    });
+
+    // If no data exists then the min and max of the domain will be undefined.
+    if(me.xDomain[1]) {
+        // Add one day to the end of the x-axis so users can hover over and filter on the end date.
+        me.xDomain[1] = d3.time.day.utc.offset(me.xDomain[1], 1);
+    }
+    me.x.domain(me.xDomain);
 
     var xAxis = d3.svg.axis()
         .scale(me.x)
         .orient("bottom")
         .ticks(Math.round(me.width / 100));
+
+    me.highlight = me.svg.append("rect")
+        .attr("class", "highlight")
+        .attr("x", 0).attr("width", 0)
+        .attr("y", 0).attr("height", me.height)
+        .style("visibility", "hidden");
 
     me.svg.append("g")
         .attr("class", "x axis")
@@ -253,38 +419,15 @@ charts.LineChart.prototype.drawLine = function(opts) {
                 }
             });
 
-    // Hover line.
-    var hoverLineGroup = me.svg.append("g")
-        .attr("class", "hover-line");
-    var hoverLine = hoverLineGroup
-        .append("line")
-            .attr("x1", 10).attr("x2", 10)
-            .attr("y1", 0).attr("y2", me.height);
-    // Add a date to appear on hover.
-    hoverLineGroup.append('text')
-        .attr("class", "hover-text hover-date")
-        .attr('y', me.height + 20);
+    me.hoverCircles = {};
 
-    // Hide hover line by default.
-    hoverLineGroup.style("opacity", 1e-6);
-
-    var cls;
-    var data;
-    var line;
-    var hoverSeries = [];
-    var hoverCircles = {};
     for(i = (opts.length - 1); i > -1; i--) {
         if(this.hiddenSeries.indexOf(opts[i].series) >= 0) {
             continue;
         }
-        cls = (opts[i].series ? " " + opts[i].series : "");
-        data = opts[i].data;
 
-        hoverSeries.push(
-            hoverLineGroup.append('text')
-                .attr("class", "hover-text")
-                .attr('y', me.height + 20)
-        );
+        var cls = (opts[i].series ? " " + opts[i].series : "");
+        var data = opts[i].data;
 
         var color = this.calculateColor(opts[i]);
 
@@ -311,7 +454,7 @@ charts.LineChart.prototype.drawLine = function(opts) {
             }
         });
 
-        line = d3.svg.line()
+        var line = d3.svg.line()
         .x(function(d) {
             return me.x(d.date);
         })
@@ -356,8 +499,9 @@ charts.LineChart.prototype.drawLine = function(opts) {
                 });
         }
 
-        hoverCircles[opts[i].series] =
-            me.svg.append("circle")
+        me.hoverCircles[opts[i].series] = [];
+        data.forEach(function(datum) {
+            var hoverCircle = me.svg.append("circle")
                 .attr("class", "dot dot-hover")
                 .attr("stroke", color)
                 .attr("fill", color)
@@ -366,6 +510,8 @@ charts.LineChart.prototype.drawLine = function(opts) {
                 .attr("r", 4)
                 .attr("cx", 0)
                 .attr("cy", 0);
+            me.hoverCircles[opts[i].series].push(hoverCircle);
+        });
     }
 
     me.svg.append("g")
@@ -399,106 +545,259 @@ charts.LineChart.prototype.drawLine = function(opts) {
         if(opts && opts.length > 0) {
             var mouse_x = d3.mouse(this)[0];
             var graph_x = me.x.invert(mouse_x);
-            var format = d3.time.format.utc('%e %B %Y');
-            var numFormat = d3.format("0,000.00");
-            var html = '';
-            var bisect;
-            var dataIndex;
-            var dataIndexLeft;
-            var dataDate;
-            var dataDateLeft;
-            var closerIndex;
-            var closerDate;
+            var index = 0;
 
             if(opts[0].data.length > 1) {
-                bisect = d3.bisector(function(d) {
+                var bisect = d3.bisector(function(d) {
                     return d[me.xAttribute];
                 }).right;
-                dataIndex = bisect(opts[0].data, graph_x);
+                index = bisect(opts[0].data, graph_x);
                 // Adjust for out of range mouse events; Typical during a resize and some orientations.
-                dataIndex = (dataIndex < opts[0].data.length) ? dataIndex : (opts[0].data.length - 1);
-                dataDate = opts[0].data[dataIndex][me.xAttribute];
-                closerDate = dataDate;
-                closerIndex = dataIndex;
-
-                if(dataIndex > 0) {
-                    dataIndexLeft = (dataIndex - 1);
-                    dataDateLeft = opts[0].data[dataIndexLeft][me.xAttribute];
-                    var compare = ((me.x(dataDate) - me.x(dataDateLeft)) / 2) + me.x(dataDateLeft);
-                    if(mouse_x < compare) {
-                        closerDate = dataDateLeft;
-                        closerIndex = dataIndexLeft;
-                    }
-                }
-            } else {
-                closerIndex = 0;
-                closerDate = opts[0].data[closerIndex][me.xAttribute];
+                index = (index < opts[0].data.length) ? Math.max(0, index - 1) : (opts[0].data.length - 1);
             }
 
-            html = '<span class="tooltip-date">' + format(closerDate) + '</span>';
+            me.hoverIndex = index;
+            me.selectIndexedDates(index, index + 1);
+            me.showTooltip(index, opts[0].data[index][me.xAttribute]);
 
-            for(var i = 0; i < opts.length; i++) {
-                if(me.hiddenSeries.indexOf(opts[i].series) >= 0) {
-                    continue;
-                }
-                var color = me.calculateColor(opts[i]);
-                var xPos = me.x(closerDate);
-                if(opts[i].data.length === 1) {
-                    xPos = me.width / 2;
-                }
-
-                hoverCircles[opts[i].series]
-                    .attr("stroke-opacity", 1)
-                    .attr("fill-opacity", 1)
-                    .attr("cx", xPos)
-                    .attr("cy", me.y(opts[i].data[closerIndex].value));
-
-                html += ('<span style="color: ' + color + '">' + opts[i].series + ": " +
-                    numFormat(Math.round(opts[i].data[closerIndex].value * 100) / 100) + '</span>');
+            if(me.hoverListener) {
+                var date = opts[0].data[index][me.xAttribute];
+                var start = new Date(date.getFullYear(), date.getMonth(), date.getDate(), date.getHours());
+                var end = new Date(date.getFullYear(), date.getMonth(), date.getDate() + 1, date.getHours());
+                me.hoverListener(start, end);
             }
-
-            if(opts[0].data.length === 1) {
-                hoverLine.attr("x1", me.width / 2).attr("x2", me.width / 2);
-            } else {
-                hoverLine.attr("x1", me.x(closerDate)).attr("x2", me.x(closerDate));
-            }
-
-            hoverLineGroup.style("opacity", 1);
-
-            $("#tooltip-container").html(html);
-            $("#tooltip-container").show();
-
-            d3.select("#tooltip-container")
-                .style("top", (d3.event.pageY)  + "px")
-                .style("left", (d3.event.pageX + 15) + "px");
-            XDATA.userALE.log({
-                activity: "show",
-                action: "mousemove",
-                elementId: "linechart",
-                elementType: "tooltip",
-                elementSub: "linechart",
-                elementGroup: "chart_group",
-                source: "user",
-                tags: ["tooltip", "linechart"]
-            });
         }
-    }).on("mouseout", function() {
-        hoverLineGroup.style("opacity", 1e-6);
-        me.svg.selectAll("circle.dot-hover")
-            .attr("stroke-opacity", 0)
-            .attr("fill-opacity", 0);
-        $("#tooltip-container").hide();
+    }).on("mouseover", function() {
         XDATA.userALE.log({
-                activity: "hide",
-                action: "mouseout",
-                elementId: "linechart",
-                elementType: "tooltip",
-                elementSub: "linechart",
+            activity: "show",
+            action: "mouseover",
+            elementId: "linechart",
+            elementType: "tooltip",
+            elementSub: "linechart",
+            elementGroup: "chart_group",
+            source: "user",
+            tags: ["tooltip", "highlight", "linechart"]
+        });
+    }).on("mouseout", function() {
+        me.hoverIndex = -1;
+        me.deselectDate();
+        $("#tooltip-container").hide();
+
+        XDATA.userALE.log({
+            activity: "hide",
+            action: "mouseout",
+            elementId: "linechart",
+            elementType: "tooltip",
+            elementSub: "linechart",
+            elementGroup: "chart_group",
+            source: "user",
+            tags: ["tooltip", "highlight", "linechart"]
+        });
+
+        if(me.hoverListener) {
+            me.hoverListener();
+        }
+    });
+};
+
+/**
+ * Returns a function that runs the given brush handler using the extent from the D3 brush in the given linechart and logs the event.
+ * @param {Object} linechart
+ * @param {Function} brushHandler
+ * @method runBrushHandler
+ * @return {Function}
+ */
+charts.LineChart.prototype.runBrushHandler = function(linechart, brushHandler) {
+    return function() {
+        XDATA.userALE.log({
+            activity: "select",
+            action: "dragend",
+            elementId: "linechart-brush",
+            elementType: "canvas",
+            elementSub: "linechart-brush",
+            elementGroup: "chart_group",
+            source: "user",
+            tags: ["linechart", "brush"]
+        });
+
+        // If the user clicks on a date inside the brush without moving the brush, change the brush to contain only that date.
+        if(linechart.hoverIndex >= 0 && linechart.oldExtent[0]) {
+            var extent = linechart.brush.extent();
+            if(linechart.datesEqual(linechart.oldExtent[0], extent[0]) && linechart.datesEqual(linechart.oldExtent[1], extent[1])) {
+                var startDate = linechart.data[0].data[linechart.hoverIndex].date;
+                var endDate = linechart.data[0].data.length === linechart.hoverIndex + 1 ? linechart.xDomain[1] : linechart.data[0].data[linechart.hoverIndex + 1].date;
+                linechart.brush.extent([startDate, endDate]);
+            }
+        }
+
+        if(brushHandler) {
+            brushHandler(linechart.brush.extent());
+        }
+    };
+};
+
+/**
+ * Sets the brush handler function for this line chart to run the given function and log the event.
+ * @param {Function} brushHandler
+ * @method setBrushHandler
+ */
+charts.LineChart.prototype.setBrushHandler = function(brushHandler) {
+    this.brushHandler = brushHandler;
+    if(this.brush) {
+        this.brush.on("brushend", this.runBrushHandler(this, this.brushHandler));
+    }
+};
+
+/**
+ * Draws the brush:  the highlighted filtered area.  Used the corresponding function in the timeline chart for reference.
+ * @method drawBrush
+ */
+charts.LineChart.prototype.drawBrush = function() {
+    var me = this;
+
+    this.brush = d3.svg.brush().x(this.x).on("brush", function() {
+        me.drawBrushMasks(this, me.brush);
+    });
+
+    if(this.brushHandler) {
+        this.brush.on("brushstart", function() {
+            me.oldExtent = me.brush.extent();
+            XDATA.userALE.log({
+                activity: "select",
+                action: "dragstart",
+                elementId: "linechart-brush",
+                elementType: "canvas",
+                elementSub: "linechart-brush",
                 elementGroup: "chart_group",
                 source: "user",
-                tags: ["tooltip", "linechart"]
+                tags: ["linechart", "brush"]
             });
+        });
+        this.brush.on("brushend", this.runBrushHandler(this, this.brushHandler));
+    }
+
+    var d3Brush = this.svg.append("g").attr("class", "brush");
+
+    d3Brush.append("rect")
+        .attr("x", this.width + this.margin.right)
+        .attr("y", -6)
+        .attr("width", this.width)
+        .attr("height", this.height + 7)
+        .attr("class", "mask mask-east");
+
+    d3Brush.append("rect")
+        .attr("x", this.width + this.margin.left)
+        .attr("y", -6)
+        .attr("width", this.width)
+        .attr("height", this.height + 7)
+        .attr("class", "mask mask-west");
+
+    d3Brush.call(this.brush);
+
+    d3Brush.selectAll("rect").attr("y", -6).attr("height", this.height + 7);
+
+    d3Brush.selectAll(".e").append("rect")
+        .attr("y", -6)
+        .attr("width", 1)
+        .attr("height", this.height + 6)
+        .attr("class", "resize-divider");
+
+    d3Brush.selectAll(".w").append("rect")
+        .attr("x", -1)
+        .attr("y", -6)
+        .attr("width", 1)
+        .attr("height", this.height + 6)
+        .attr("class", "resize-divider");
+
+    var height = this.height;
+    d3Brush.selectAll(".resize").append("path").attr("d", function(d) {
+        var e = +(d === "e");
+        var x = e ? 1 : -1;
+        var y = height / 3;
+        return "M" + (0.5 * x) + "," + y +
+            "A6,6 0 0 " + e + " " + (6.5 * x) + "," + (y + 6) +
+            "V" + (2 * y - 6) +
+            "A6,6 0 0 " + e + " " + (0.5 * x) + "," + (2 * y) +
+            "Z" +
+            "M" + (2.5 * x) + "," + (y + 8) +
+            "V" + (2 * y - 8) +
+            "M" + (4.5 * x) + "," + (y + 8) +
+            "V" + (2 * y - 8);
     });
+};
+
+/**
+ * Draws the brush masks:  the grayed unfiltered areas outside the brush.  Used the corresponding function in the timeline chart for reference.
+ * @param {Object} element
+ * @param {Object} brush
+ * @method drawBrushMasks
+ */
+charts.LineChart.prototype.drawBrushMasks = function(element, brush) {
+    if(d3.event) {
+        var timeFunction = d3.time.day.utc;
+        var oldExtent = brush.extent();
+        var newExtent;
+
+        if(!oldExtent[0] || !oldExtent[1]) {
+            return;
+        }
+
+        if(d3.event.mode === "move") {
+            var startDay = timeFunction.round(oldExtent[0]);
+            var range = timeFunction.range(oldExtent[0], oldExtent[1]);
+            var endDay = timeFunction.offset(startDay, range.length);
+            newExtent = [startDay, endDay];
+        } else {
+            newExtent = oldExtent.map(timeFunction.round);
+
+            if(newExtent[0] >= newExtent[1]) {
+                newExtent[0] = timeFunction.floor(oldExtent[0]);
+                newExtent[1] = timeFunction.ceil(oldExtent[1]);
+            }
+        }
+
+        if(newExtent[0] < newExtent[1]) {
+            d3.select(element).call(brush.extent(newExtent));
+        }
+    }
+
+    var brushElement = $(element);
+    var extentX = brushElement.find(".extent").attr("x");
+    var extentWidth = brushElement.find(".extent").attr("width");
+    var width = parseInt(brushElement.find(".mask-west").attr("width").replace("px", ""), 10);
+
+    if(extentWidth === "0" || !extentWidth) {
+        brushElement.find(".mask-west").attr("x", (0 - (width + 50)));
+        brushElement.find(".mask-east").attr("x", (width + 50));
+    } else {
+        brushElement.find(".mask-west").attr("x", (parseFloat(extentX) - width));
+        brushElement.find(".mask-east").attr("x", (parseFloat(extentX) + parseFloat(extentWidth)));
+    }
+};
+
+/**
+ * Clears the D3 brush.
+ * @method clearBrush
+ */
+charts.LineChart.prototype.clearBrush = function() {
+    this.brush.clear();
+    d3.select(this.element).select(".brush").call(this.brush);
+};
+
+/**
+ * Renders the given brush extent.
+ * @param {Array} extent
+ * @method renderBrushExtent
+ */
+charts.LineChart.prototype.renderBrushExtent = function(extent) {
+    if(!extent) {
+        this.clearBrush();
+        return;
+    }
+
+    var brushElement = this.svg.select(".brush");
+    brushElement.call(this.brush.extent(extent));
+    this.drawBrushMasks(brushElement[0][0], this.brush);
 };
 
 charts.LineChart.prototype.toggleSeries = function(series) {
@@ -516,16 +815,28 @@ charts.LineChart.prototype.toggleSeries = function(series) {
         this.hiddenSeries.splice(0);
     }
 
-    this.redraw();
+    this.draw();
 
     return activity;
 };
 
-charts.LineChart.prototype.redraw = function() {
-    var me = this;
-    me.drawChart();
-    if(me.data) {
-        me.drawLine(me.data);
+/**
+ * Draws this line chart.  Sets its data to the new data if given.
+ * @param {Array} data (Optional)
+ * @method draw
+ */
+charts.LineChart.prototype.draw = function(data) {
+    var extent = this.brush ? this.brush.extent() : undefined;
+    this.drawChart();
+    if(data) {
+        this.data = data;
+    }
+    if(this.data && this.data.length && this.data[0].data && this.data[0].data.length) {
+        this.drawLines(this.data);
+        this.drawBrush();
+        if(extent) {
+            this.renderBrushExtent(extent);
+        }
     }
 };
 
@@ -533,7 +844,7 @@ charts.LineChart.prototype.redrawOnResize = function() {
     var me = this;
 
     function drawChart() {
-        me.redraw();
+        me.draw();
     }
 
     // Debounce is needed because browser resizes fire this resize even multiple times.

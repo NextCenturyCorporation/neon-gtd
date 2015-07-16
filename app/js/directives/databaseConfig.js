@@ -23,7 +23,8 @@ angular.module('neonDemo.directives')
         scope: {
             storeSelect: '=',
             hostName: '=',
-            gridsterConfigs: "="
+            gridsterConfigs: "=",
+            hideAdvancedOptions: "="
         },
         link: function($scope, el) {
             el.addClass('databaseConfig');

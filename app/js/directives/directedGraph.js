@@ -117,12 +117,12 @@ angular.module('neonDemo.directives')
                 $scope.$on('$destroy', function() {
                     XDATA.userALE.log({
                         activity: "remove",
-                        action: "click",
+                        action: "remove",
                         elementId: "directed-graph",
                         elementType: "canvas",
                         elementSub: "directed-graph",
                         elementGroup: "graph_group",
-                        source: "user",
+                        source: "system",
                         tags: ["remove", "directed-graph"]
                     });
                     $element.off("resize", updateSize);
@@ -192,34 +192,39 @@ angular.module('neonDemo.directives')
                 $scope.filterKeys = filterService.createFilterKeys("graph", datasetService.getDatabaseAndTableNames());
 
                 if(initializing) {
-                    $scope.updateTables(initializing);
+                    $scope.updateTables();
                 } else {
                     $scope.$apply(function() {
-                        $scope.updateTables(initializing);
+                        $scope.updateTables();
                     });
                 }
             };
 
-            $scope.updateTables = function(initializing) {
+            $scope.updateTables = function() {
                 $scope.tables = datasetService.getTables($scope.options.database.name);
                 $scope.options.table = datasetService.getFirstTableWithMappings($scope.options.database.name, ["graph_nodes"]) || $scope.tables[0];
-                $scope.updateFields(initializing);
+                $scope.updateFields();
             };
 
-            $scope.updateFields = function(initializing) {
+            $scope.updateFields = function() {
                 $scope.loadingData = true;
                 $scope.fields = datasetService.getDatabaseFields($scope.options.database.name, $scope.options.table.name);
                 $scope.fields.sort();
                 $scope.options.selectedNodeField = datasetService.getMapping($scope.options.database.name, $scope.options.table.name, "graph_nodes") || "";
                 $scope.options.selectedLinkField = datasetService.getMapping($scope.options.database.name, $scope.options.table.name, "graph_links") || "";
-                $scope.queryForData(initializing);
+                $scope.queryForData(true);
             };
 
             $scope.addFilter = function(value) {
                 $scope.options.selectedNode = "";
 
-                var index = $scope.filteredNodes.indexOf(value);
-                if(index >= 0) {
+                var nodesIndex = $scope.nodes.indexOf(value);
+                if(nodesIndex < 0) {
+                    return;
+                }
+
+                var filteredNodesIndex = $scope.filteredNodes.indexOf(value);
+                if(filteredNodesIndex >= 0) {
                     return;
                 }
 
@@ -236,13 +241,13 @@ angular.module('neonDemo.directives')
             };
 
             /**
-             * Creates and returns a filter using the given table and node field using the nodes set by this visualization.
-             * @param {String} The name of the table on which to filter
-             * @param {String} The name of the node field on which to filter
+             * Creates and returns a filter on the given node field using the nodes set by this visualization.
+             * @param {Object} databaseAndTableName Contains the database and table name
+             * @param {String} nodeFieldName The name of the node field on which to filter
              * @method createFilterClauseForNode
              * @return {Object} A neon.query.Filter object
              */
-            $scope.createFilterClauseForNode = function(tableName, nodeFieldName) {
+            $scope.createFilterClauseForNode = function(databaseAndTableName, nodeFieldName) {
                 var filterClause = neon.query.where(nodeFieldName, '=', $scope.filteredNodes[0]);
                 for(var i = 1; i < $scope.filteredNodes.length; ++i) {
                     filterClause = neon.query.or(filterClause, neon.query.where(nodeFieldName, '=', $scope.filteredNodes[i]));
@@ -271,11 +276,13 @@ angular.module('neonDemo.directives')
             $scope.clearFilters = function() {
                 $scope.filteredNodes = [];
                 if($scope.messenger) {
-                    filterService.removeFilters($scope.messenger, $scope.filterKeys, $scope.queryForData);
+                    filterService.removeFilters($scope.messenger, $scope.filterKeys, function() {
+                        $scope.queryForData(true);
+                    });
                 }
             };
 
-            $scope.queryForData = function(initializing) {
+            $scope.queryForData = function(shouldQueryForNodeList) {
                 if($scope.errorMessage) {
                     errorNotificationService.hideErrorMessage($scope.errorMessage);
                     $scope.errorMessage = undefined;
@@ -283,26 +290,19 @@ angular.module('neonDemo.directives')
 
                 var connection = connectionService.getActiveConnection();
 
-                if(!connection) {
+                if(!connection || !$scope.options.selectedNodeField || !$scope.filteredNodes.length) {
                     $scope.numberOfNodesInGraph = 0;
+                    // Don't call $scope.updateGraph() here.  It will cause an error because we're in a $scope.$apply.
                     $scope.graph.updateGraph({
                         nodes: [],
                         links: []
                     });
                     $scope.loadingData = false;
-                    return;
                 }
 
-                if($scope.options.selectedNodeField) {
-                    if($scope.filteredNodes.length) {
-                        queryForFilteredNodeNetwork(connection);
-                    } else if(!initializing) {
-                        // Don't call $scope.updateGraph() here.  It will cause an error because we're in a $scope.$apply.
-                        $scope.numberOfNodesInGraph = 0;
-                        $scope.graph.updateGraph({
-                            nodes: [],
-                            links: []
-                        });
+                if(connection && $scope.options.selectedNodeField) {
+                    queryForFilteredNodeNetwork(connection);
+                    if(shouldQueryForNodeList) {
                         queryForNodeList(connection);
                     }
                 }
@@ -341,9 +341,7 @@ angular.module('neonDemo.directives')
                         }
                         return 0;
                     });
-                    $scope.loadingData = false;
                 }, function(response) {
-                    $scope.loadingData = false;
                     if(response.responseJSON) {
                         $scope.errorMessage = errorNotificationService.showErrorMessage($element, response.responseJSON.error, response.responseJSON.stackTrace);
                     }
