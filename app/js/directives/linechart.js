@@ -297,23 +297,7 @@ function(connectionService, datasetService, errorNotificationService, filterServ
 
                 var query = $scope.buildQuery();
 
-                connection.executeQuery(query, callback, function(response) {
-                    XDATA.userALE.log({
-                        activity: "alter",
-                        action: "failed",
-                        elementId: "linechart",
-                        elementType: "canvas",
-                        elementSub: "linechart",
-                        elementGroup: "chart_group",
-                        source: "system",
-                        tags: ["failed", "linechart"]
-                    });
-                    drawChart();
-                    $scope.loadingData = false;
-                    if(response.responseJSON) {
-                        $scope.errorMessage = errorNotificationService.showErrorMessage($element, response.responseJSON.error, response.responseJSON.stackTrace);
-                    }
-                });
+                connection.executeQuery(query, handleQuerySuccess, handleQueryFailure);
             };
 
             /**
