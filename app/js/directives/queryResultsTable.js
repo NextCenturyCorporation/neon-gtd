@@ -221,7 +221,9 @@ function(external, popups, connectionService, datasetService, errorNotificationS
                     });
                 } else {
                     $scope.table.getColumns().forEach(function(field) {
-                        fieldNames.push(field.name);
+                        if(field.name) {
+                            fieldNames.push(field.name);
+                        }
                     });
                 }
 
