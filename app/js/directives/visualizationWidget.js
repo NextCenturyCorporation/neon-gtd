@@ -28,25 +28,31 @@
  * @constructor
  */
 angular.module('neonDemo.directives').directive('visualizationWidget', ["config", "$compile", function(config, $compile) {
-    var MAXIMIZED_COLUMN_SIZE = 6;
-    var MAXIMIZED_ROW_SIZE = 4;
-
     return {
         restrict: 'A',
         scope: {
             gridsterConfigs: "=",
             gridsterConfigIndex: "="
         },
-        template: '<div class="visualization-drag-handle"><div class="visualization-buttons">' +
-                '<a class="btn" ng-click="toggleSize()"" ng-mouseover="$event.stopPropagation()">' +
+        template: '<div class="visualization-drag-handle"><div class="visualization-buttons" ng-class="{small: hideCloseButton}">' +
+                '<a class="btn" ng-click="toggleSize()" ng-mouseover="$event.stopPropagation()">' +
                 '   <span  class="glyphicon" ng-class="(oldSize) ? \'glyphicon-resize-small\' : \'glyphicon-resize-full\'"></span>' +
                 '</a>' +
-                '<a class="btn" ng-click="remove()" ng-mouseover="$event.stopPropagation()">' +
+                '<a class="btn" ng-click="remove()" ng-hide="hideCloseButton" ng-mouseover="$event.stopPropagation()">' +
                 '   <span  class="glyphicon glyphicon-remove"></span>' +
+                '</a>' +
+                '<a class="btn move-to" ng-click="moveToTop()" ng-mouseover="$event.stopPropagation()">' +
+                '   <span  class="glyphicon glyphicon-chevron-up"></span><span  class="glyphicon glyphicon-chevron-up"></span>' +
+                '</a>' +
+                '<a class="btn move-to" ng-click="moveToBottom()" ng-mouseover="$event.stopPropagation()">' +
+                '   <span  class="glyphicon glyphicon-chevron-down"></span><span  class="glyphicon glyphicon-chevron-down"></span>' +
                 '</a>' +
                 '</div></div>',
         // templateUrl: "partials/directives/visualizationWidget.html",
         link: function($scope, $element) {
+            var MAXIMIZED_COLUMN_SIZE = config.gridsterColumns || 6;
+            var MAXIMIZED_ROW_SIZE = MAXIMIZED_COLUMN_SIZE * (2 / 3);
+
             // Create our widget.  Here, we are assuming the visualization is
             // implementated as an attribute directive.
             var widgetElement = document.createElement("div");
@@ -57,6 +63,9 @@ angular.module('neonDemo.directives').directive('visualizationWidget', ["config"
             }
             if(config.hideHeader) {
                 widgetElement.setAttribute("hide-header", true);
+            }
+            if(config.hideCloseButton) {
+                $scope.hideCloseButton = config.hideCloseButton;
             }
 
             // Pass along any bindings.
@@ -122,7 +131,56 @@ angular.module('neonDemo.directives').directive('visualizationWidget', ["config"
              * @method remove
              */
             $scope.remove = function() {
+                XDATA.userALE.log({
+                        activity: "remove",
+                        action: "click",
+                        elementId: "workspace",
+                        elementType: "workspace",
+                        elementSub: $scope.gridsterConfigs[$scope.gridsterConfigIndex].type,
+                        elementGroup: "top",
+                        source: "user",
+                        tags: ["remove", $scope.gridsterConfigs[$scope.gridsterConfigIndex].type]
+                    });
                 $scope.gridsterConfigs.splice($scope.gridsterConfigIndex, 1);
+            };
+
+            /**
+             * Moves the visualization to the top row, keeping column position the same
+             * @method moveToTop
+             */
+            $scope.moveToTop = function() {
+                XDATA.userALE.log({
+                        activity: "alter",
+                        action: "click",
+                        elementId: "workspace",
+                        elementType: "workspace",
+                        elementSub: "layout",
+                        elementGroup: "top",
+                        source: "user",
+                        tags: ["visualization", "move", "top"]
+                    });
+                $scope.gridsterConfigs[$scope.gridsterConfigIndex].row = 0;
+            };
+
+            /**
+             * Moves the visualization to the bottom row, keeping column position the same
+             * @method moveToBottom
+             */
+            $scope.moveToBottom = function() {
+                XDATA.userALE.log({
+                        activity: "alter",
+                        action: "click",
+                        elementId: "workspace",
+                        elementType: "workspace",
+                        elementSub: "layout",
+                        elementGroup: "top",
+                        source: "user",
+                        tags: ["visualization", "move", "bottom"]
+                    });
+                var maxVis = _.max($scope.gridsterConfigs, function(vis) {
+                    return vis.row;
+                });
+                $scope.gridsterConfigs[$scope.gridsterConfigIndex].row = maxVis.row + maxVis.sizeY + 1;
             };
         }
     };

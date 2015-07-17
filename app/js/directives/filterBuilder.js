@@ -45,6 +45,7 @@ angular.module('neonDemo.directives')
             $scope.selectedTable = {};
             $scope.fields = [];
             $scope.selectedField = "";
+            $scope.selectedFieldIsDate = false;
             $scope.andClauses = true;
 
             if(!($scope.navbarItem)) {
@@ -58,12 +59,21 @@ angular.module('neonDemo.directives')
                 return operators[0] || "=";
             };
 
+            var resizeDateTimePickerDropdowns = function() {
+                $element.find(".filter").each(function() {
+                    var height = $element.height() - $(this).position().top - $(this).height() - 5;
+                    $(this).find(".dropdown-menu").css("max-height", height + "px");
+                });
+            };
+
             /**
              * Initializes the name of the date field used to query the current dataset
              * and the Neon Messenger used to monitor data change events.
              * @method initialize
              */
             $scope.initialize = function() {
+                $element.resize(resizeDateTimePickerDropdowns);
+
                 $scope.messenger = new neon.eventing.Messenger();
                 $scope.filterTable = new neon.query.FilterTable();
                 $scope.selectedOperator = findDefaultOperator($scope.filterTable.operatorOptions);
@@ -75,17 +85,21 @@ angular.module('neonDemo.directives')
                 $scope.$on('$destroy', function() {
                     XDATA.userALE.log({
                         activity: "remove",
-                        action: "click",
+                        action: "remove",
                         elementId: "filter-builder",
                         elementType: "panel",
                         elementSub: "filter-builder",
                         elementGroup: "query_group",
-                        source: "user",
+                        source: "system",
                         tags: ["remove", "filter-builder"]
                     });
 
                     $scope.messenger.removeEvents();
-                    $scope.publishRemoveFilterEvents($scope.filterTable.getDatabaseAndTableNames());
+                    var databaseAndTableNames = $scope.filterTable.getDatabaseAndTableNames();
+                    if(databaseAndTableNames.length) {
+                        $scope.publishRemoveFilterEvents($scope.filterTable.getDatabaseAndTableNames());
+                    }
+                    $element.off("resize", resizeDateTimePickerDropdowns);
                 });
 
                 $scope.$watch('filterTable', function(newVal, oldVal) {
@@ -104,42 +118,6 @@ angular.module('neonDemo.directives')
                     }
                     $scope.filterCount = count;
                 }, true);
-
-                $scope.$watch('selectedField', function(newVal) {
-                    XDATA.userALE.log({
-                        activity: "select",
-                        action: "click",
-                        elementId: "filter-builder-selected-field",
-                        elementType: "combobox",
-                        elementGroup: "query_group",
-                        source: "user",
-                        tags: ["filter-builder", "field", newVal]
-                    });
-                });
-
-                $scope.$watch('selectedOperator', function(newVal) {
-                    XDATA.userALE.log({
-                        activity: "select",
-                        action: "click",
-                        elementId: "filter-builder-selectedOperator",
-                        elementType: "combobox",
-                        elementGroup: "query_group",
-                        source: "user",
-                        tags: ["filter-builder", "operator", newVal]
-                    });
-                });
-
-                $scope.$watch('selectedValue', function(newVal) {
-                    XDATA.userALE.log({
-                        activity: "enter",
-                        action: "keydown",
-                        elementId: "filter-builder-selectedValue",
-                        elementType: "textbox",
-                        elementGroup: "query_group",
-                        source: "user",
-                        tags: ["filter-builder", "value", newVal]
-                    });
-                });
             };
 
             /**
@@ -203,6 +181,44 @@ angular.module('neonDemo.directives')
                 $scope.selectedField = findDefaultField($scope.fields);
             };
 
+            $scope.onSelectedFieldChange = function() {
+                XDATA.userALE.log({
+                    activity: "select",
+                    action: "click",
+                    elementId: "filter-builder-selected-field",
+                    elementType: "combobox",
+                    elementGroup: "query_group",
+                    source: "user",
+                    tags: ["filter-builder", "field", $scope.selectedfield]
+                });
+
+                $scope.selectedFieldIsDate = datasetService.hasDataset() && $scope.selectedField === datasetService.getMapping($scope.selectedDatabase.name, $scope.selectedTable.name, "date");
+            };
+
+            $scope.onSelectedOperatorChange = function() {
+                XDATA.userALE.log({
+                    activity: "select",
+                    action: "click",
+                    elementId: "filter-builder-selectedOperator",
+                    elementType: "combobox",
+                    elementGroup: "query_group",
+                    source: "user",
+                    tags: ["filter-builder", "operator", $scope.selectedOperator]
+                });
+            };
+
+            $scope.onSelectedValueChange = function() {
+                XDATA.userALE.log({
+                    activity: "enter",
+                    action: "keydown",
+                    elementId: "filter-builder-selectedValue",
+                    elementType: "textbox",
+                    elementGroup: "query_group",
+                    source: "user",
+                    tags: ["filter-builder", "value", $scope.selectedValue]
+                });
+            };
+
             var findDefaultField = function(fields) {
                 if(fields.indexOf("text") >= 0) {
                     return "text";
@@ -220,23 +236,22 @@ angular.module('neonDemo.directives')
 
             var findRelationInfo = function(relation) {
                 var info = {
-                    database: {},
-                    table: {},
-                    tables: datasetService.getTables(relation.database),
-                    databaseFields: datasetService.getDatabaseFields(relation.database, relation.table),
-                    originalFields: Object.keys(relation.fields)
+                    databaseObject: {},
+                    tableObject: {},
+                    tableObjects: datasetService.getTables(relation.database),
+                    databaseFields: datasetService.getDatabaseFields(relation.database, relation.table)
                 };
 
                 for(var i = 0; i < $scope.databases.length; ++i) {
                     if($scope.databases[i].name === relation.database) {
-                        info.database = $scope.databases[i];
+                        info.databaseObject = $scope.databases[i];
                         break;
                     }
                 }
 
-                for(i = 0; i < info.tables.length; ++i) {
-                    if(info.tables[i].name === relation.table) {
-                        info.table = info.tables[i];
+                for(i = 0; i < info.tableObjects.length; ++i) {
+                    if(info.tableObjects[i].name === relation.table) {
+                        info.tableObject = info.tableObjects[i];
                         break;
                     }
                 }
@@ -257,6 +272,7 @@ angular.module('neonDemo.directives')
                 }
 
                 var filterRow = new neon.query.FilterRow(database, table, $scope.selectedField, $scope.selectedOperator, $scope.selectedValue, $scope.tables, $scope.fields);
+                filterRow.isDate = $scope.selectedFieldIsDate;
                 var rows = [{
                     database: database,
                     table: table,
@@ -268,13 +284,14 @@ angular.module('neonDemo.directives')
                     var relation = relations[i];
                     if(relation.database !== database.name || relation.table !== table.name) {
                         var relationInfo = findRelationInfo(relation);
-                        for(var j = 0; j < relationInfo.originalFields.length; ++j) {
-                            var relationFields = relation.fields[relationInfo.originalFields[j]];
+                        for(var j = 0; j < relation.fields.length; ++j) {
+                            var relationFields = relation.fields[j].related;
                             for(var k = 0; k < relationFields.length; ++k) {
-                                var relationFilterRow = new neon.query.FilterRow(relationInfo.database, relationInfo.table, relationFields[k], $scope.selectedOperator, $scope.selectedValue, relationInfo.tables, relationInfo.databaseFields);
+                                var relationFilterRow = new neon.query.FilterRow(relationInfo.databaseObject, relationInfo.tableObject, relationFields[k], $scope.selectedOperator, $scope.selectedValue, relationInfo.tableObjects, relationInfo.databaseFields);
+                                relationFilterRow.isDate = datasetService.hasDataset() && relationFields[k] === datasetService.getMapping(relation.database, relation.table, "date");
                                 rows.push({
-                                    database: relationInfo.database,
-                                    table: relationInfo.table,
+                                    database: relationInfo.databaseObject,
+                                    table: relationInfo.tableObject,
                                     row: relationFilterRow
                                 });
                             }
@@ -413,12 +430,15 @@ angular.module('neonDemo.directives')
                     tags: ["filter-builder", "filter", "clear"]
                 });
 
-                $scope.publishRemoveFilterEvents($scope.filterTable.getDatabaseAndTableNames(), function(successDatabase, successTable) {
-                    $scope.$apply(function() {
-                        // Remove the visible filter list.
-                        $scope.filterTable.clearFilterState(successDatabase, successTable);
+                var databaseAndTableNames = $scope.filterTable.getDatabaseAndTableNames();
+                if(databaseAndTableNames.length) {
+                    $scope.publishRemoveFilterEvents(databaseAndTableNames, function(successDatabase, successTable) {
+                        $scope.$apply(function() {
+                            // Remove the visible filter list.
+                            $scope.filterTable.clearFilterState(successDatabase, successTable);
+                        });
                     });
-                });
+                }
             };
 
             $scope.publishReplaceFilterEvents = function(filters, successCallback, errorCallback) {

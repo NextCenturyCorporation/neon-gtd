@@ -17,8 +17,8 @@
  */
 
 angular.module('neonDemo.directives')
-.directive('countBy', ['external', 'popups', 'ConnectionService', 'DatasetService', 'ErrorNotificationService', 'FilterService',
-function(external, popups, connectionService, datasetService, errorNotificationService, filterService) {
+.directive('countBy', ['external', 'popups', 'ConnectionService', 'DatasetService', 'ErrorNotificationService', 'FilterService', 'ExportService',
+function(external, popups, connectionService, datasetService, errorNotificationService, filterService, exportService) {
     return {
         templateUrl: 'partials/directives/countby.html',
         restrict: 'EA',
@@ -92,15 +92,17 @@ function(external, popups, connectionService, datasetService, errorNotificationS
                     filtersChanged: onFiltersChanged
                 });
 
+                $scope.exportID = exportService.register($scope.makeCountByExportObject);
+
                 $scope.$on('$destroy', function() {
                     XDATA.userALE.log({
                         activity: "remove",
-                        action: "click",
+                        action: "remove",
                         elementId: "count-by",
                         elementType: "datagrid",
                         elementSub: "count-by",
                         elementGroup: "table_group",
-                        source: "user",
+                        source: "system",
                         tags: ["remove", "count-by"]
                     });
                     popups.links.deleteData($scope.tableId);
@@ -109,6 +111,7 @@ function(external, popups, connectionService, datasetService, errorNotificationS
                     if($scope.filterSet) {
                         filterService.removeFilters($scope.messenger, $scope.filterKeys);
                     }
+                    exportService.unregister($scope.exportID);
                 });
 
                 $element.resize(updateSize);
@@ -238,17 +241,17 @@ function(external, popups, connectionService, datasetService, errorNotificationS
              * @private
              */
             var onFiltersChanged = function(message) {
-                XDATA.userALE.log({
-                    activity: "alter",
-                    action: "query",
-                    elementId: "count-by",
-                    elementType: "canvas",
-                    elementSub: "count-by",
-                    elementGroup: "table_group",
-                    source: "system",
-                    tags: ["filter-change", "count-by"]
-                });
                 if(message.addedFilter && message.addedFilter.databaseName === $scope.options.database.name && message.addedFilter.tableName === $scope.options.table.name) {
+                    XDATA.userALE.log({
+                        activity: "alter",
+                        action: "query",
+                        elementId: "count-by",
+                        elementType: "canvas",
+                        elementSub: "count-by",
+                        elementGroup: "table_group",
+                        source: "system",
+                        tags: ["filter-change", "count-by"]
+                    });
                     $scope.queryForData();
                 }
             };
@@ -512,13 +515,13 @@ function(external, popups, connectionService, datasetService, errorNotificationS
             };
 
             /**
-             * Creates and returns a filter using the given table and count field using the value set by this visualization.
-             * @param {String} The name of the table on which to filter
-             * @param {String} The name of the count field on which to filter
+             * Creates and returns a filter on the given field using the value set by this visualization.
+             * @param {Object} databaseAndTableName Contains the database and table name
+             * @param {String} fieldName The name of the field on which to filter
              * @method createFilterClauseForCount
              * @return {Object} A neon.query.Filter object
              */
-            $scope.createFilterClauseForCount = function(tableName, fieldName) {
+            $scope.createFilterClauseForCount = function(databaseAndTableName, fieldName) {
                 return neon.query.where(fieldName, '=', $scope.filterValue);
             };
 
@@ -641,6 +644,61 @@ function(external, popups, connectionService, datasetService, errorNotificationS
                         clearFilter();
                     });
                 }
+            };
+
+            /**
+             * Creates and returns an object that contains information needed to export the data in this widget.
+             * @return {Object} An object containing all the information needed to export the data in this widget.
+             */
+            $scope.makeCountByExportObject = function() {
+                XDATA.userALE.log({
+                    activity: "perform",
+                    action: "click",
+                    elementId: "count-by-export",
+                    elementType: "button",
+                    elementGroup: "table_group",
+                    source: "user",
+                    tags: ["options", "count-by", "export"]
+                });
+                var query = $scope.buildQuery();
+                query.limitClause = exportService.getLimitClause();
+                var finalObject = {
+                    name: "Count_By",
+                    data: [{
+                        query: query,
+                        name: "countBy-" + $scope.exportID,
+                        fields: [],
+                        ignoreFilters: query.ignoreFilters_,
+                        selectionOnly: query.selectionOnly_,
+                        ignoredFilterIds: query.ignoredFilterIds_,
+                        type: "query"
+                    }]
+                };
+                finalObject.data[0].fields.push({
+                    query: (query.groupByClauses[0]).field,
+                    pretty: capitalizeFirstLetter((query.groupByClauses[0]).field)
+                });
+                var op = '';
+                if($scope.options.aggregation === 'min') {
+                    op = 'Min of ';
+                } else if($scope.options.aggregation === 'max') {
+                    op = 'Max of ';
+                }
+                finalObject.data[0].fields.push({
+                    query: (query.aggregates[0]).name,
+                    pretty: op + capitalizeFirstLetter((query.aggregates[0]).name)
+                });
+                return finalObject;
+            };
+
+            /**
+             * Helper function for makeBarchartExportObject that capitalizes the first letter of a string.
+             * @param str {String} The string to capitalize the first letter of.
+             * @return {String} The string given, but with its first letter capitalized.
+             */
+            var capitalizeFirstLetter = function(str) {
+                var first = str[0].toUpperCase();
+                return first + str.slice(1);
             };
 
             neon.ready(function() {

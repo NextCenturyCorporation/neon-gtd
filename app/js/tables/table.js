@@ -55,6 +55,12 @@ tables.Table = function(tableSelector, opts) {
     this.tableSelector_ = tableSelector;
     this.idField_ = opts.id;
     this.options_ = opts.gridOptions || {};
+    this.linkyConfig_ = opts.linkyConfig || {
+        mentions: false,
+        hashtags: false,
+        urls: true,
+        linkTo: ""
+    };
 
     var data = opts.data;
     var columns = opts.columns ? opts.columns : tables.createColumns([], data);
@@ -107,13 +113,15 @@ tables.createColumns = function(knownColumnNames, data, ignoreColumnNames, heade
 
     data.forEach(function(row) {
         Object.keys(row).forEach(function(dataColumnName) {
-            if(columnNameToInfo[dataColumnName] && row[dataColumnName]) {
-                // This is not technically correct since we're using a variable-width font but it's faster than calculating the width of the text by inserting it into a DOM element using jQuery.
-                if(columnNameToInfo[dataColumnName].text.length < row[dataColumnName].length) {
-                    columnNameToInfo[dataColumnName].text = row[dataColumnName];
+            if(row[dataColumnName]) {
+                if(columnNameToInfo[dataColumnName]) {
+                    // This is not technically correct since we're using a variable-width font but it's faster than calculating the width of the text by inserting it into a DOM element using jQuery.
+                    if(columnNameToInfo[dataColumnName].text.length < row[dataColumnName].length) {
+                        columnNameToInfo[dataColumnName].text = row[dataColumnName];
+                    }
+                } else {
+                    addColumnName(dataColumnName);
                 }
-            } else {
-                addColumnName(dataColumnName);
             }
         });
     });
@@ -289,15 +297,7 @@ tables.Table.prototype.addLinks_ = function() {
 };
 
 tables.Table.prototype.runLinky_ = function(cellSelector) {
-    // TODO:  Make this configurable based on the dataset.
-    var linkyConfig = {
-        mentions: true,
-        hashtags: true,
-        urls: true,
-        linkTo: "twitter"
-    };
-
-    $(cellSelector).find(".slick-cell." + tables.LINKABLE).linky(linkyConfig);
+    $(cellSelector).find(".slick-cell." + tables.LINKABLE).linky(this.linkyConfig_);
     // Remove the linkable class to ensure linky isn't run on this cell again.
     $(cellSelector).find(".slick-cell." + tables.LINKABLE).removeClass(tables.LINKABLE);
 };
@@ -422,6 +422,16 @@ tables.Table.prototype.addSortSupport_ = function() {
     });
 };
 
+/**
+ * Adds an onSort listener to the SlickGrid table using the given callback
+ * @param {Function} The callback function
+ */
+tables.Table.prototype.registerSortListener = function(callback) {
+    this.table_.onSort.subscribe(function(event, args) {
+        callback(event, args);
+    });
+};
+
 tables.Table.prototype.sortColumnAndChangeGlyph = function(sortInfo) {
     // Sort the data in the column.
     this.sortColumn(sortInfo.name, sortInfo.field, sortInfo.sortAsc);
@@ -448,7 +458,9 @@ tables.Table.prototype.addOnClickListener = function(callback) {
  * @param {Function} callback
  */
 tables.Table.prototype.addOnColumnsReorderedListener = function(callback) {
-    this.table_.onColumnsReordered.subscribe(function() {
+    var me = this;
+    this.table_.onColumnsReordered.subscribe(function(event, args) {
+        me.columns_ = me.table_.getColumns();
         callback();
     });
 };
@@ -527,4 +539,12 @@ tables.Table.prototype.addColumn = function(name) {
     this.table_.setColumns(this.columns_);
     this.runLinky_();
     return true;
+};
+
+/**
+ * Retrieves the columns shown in the table in their current order
+ * @return {Array} All the columns shown in the table
+ */
+tables.Table.prototype.getColumns = function() {
+    return this.columns_;
 };

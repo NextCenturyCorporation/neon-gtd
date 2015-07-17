@@ -36,6 +36,22 @@
         .visualization-buttons {
             background-color: #dddddd;
 
+            .move-to {
+
+                .glyphicon {
+
+                    &:first-child {
+                        margin-top: -1px;
+                    }
+                }
+
+                .glyphicon {
+                    display: block;
+                    font-size: 14px;
+                    margin-top: -5px;
+                }
+            }
+
             .btn {
                 opacity: 1;
             }
@@ -49,7 +65,11 @@
         right: 0px;
         border-radius: 10px;
         /* Width = Resize Button + Remove Button + Margins */
-        width: 60px;
+        width: 110px;
+
+        &.small {
+            width: 85px;
+        }
 
         .btn {
             margin: 4px 0px 4px 8px;

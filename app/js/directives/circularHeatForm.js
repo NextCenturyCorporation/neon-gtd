@@ -31,8 +31,8 @@
  * @constructor
  */
 angular.module('neonDemo.directives')
-.directive('circularHeatForm', ['ConnectionService', 'DatasetService', 'ErrorNotificationService',
-function(connectionService, datasetService, errorNotificationService) {
+.directive('circularHeatForm', ['ConnectionService', 'DatasetService', 'ErrorNotificationService', 'ExportService',
+function(connectionService, datasetService, errorNotificationService, exportService) {
     return {
         templateUrl: 'partials/directives/circularHeatForm.html',
         restrict: 'EA',
@@ -77,18 +77,21 @@ function(connectionService, datasetService, errorNotificationService) {
                     filtersChanged: onFiltersChanged
                 });
 
+                $scope.exportID = exportService.register($scope.makeCircularHeatFormExportObject);
+
                 $scope.$on('$destroy', function() {
                     XDATA.userALE.log({
                         activity: "remove",
-                        action: "click",
+                        action: "remove",
                         elementId: "circularheatform",
                         elementType: "canvas",
                         elementSub: "circularheatform",
                         elementGroup: "chart_group",
-                        source: "user",
+                        source: "system",
                         tags: ["remove", "circularheatform"]
                     });
                     $scope.messenger.removeEvents();
+                    exportService.unregister($scope.exportID);
                 });
             };
 
@@ -143,17 +146,17 @@ function(connectionService, datasetService, errorNotificationService) {
              * @private
              */
             var onFiltersChanged = function(message) {
-                XDATA.userALE.log({
-                    activity: "alter",
-                    action: "query",
-                    elementId: "circularheatform",
-                    elementType: "canvas",
-                    elementSub: "circularheatform",
-                    elementGroup: "chart_group",
-                    source: "system",
-                    tags: ["filter-change", "circularheatform"]
-                });
                 if(message.addedFilter && message.addedFilter.databaseName === $scope.options.database.name && message.addedFilter.tableName === $scope.options.table.name) {
+                    XDATA.userALE.log({
+                        activity: "alter",
+                        action: "query",
+                        elementId: "circularheatform",
+                        elementType: "canvas",
+                        elementSub: "circularheatform",
+                        elementGroup: "chart_group",
+                        source: "system",
+                        tags: ["filter-change", "circularheatform"]
+                    });
                     $scope.queryForChartData();
                 }
             };
@@ -374,6 +377,55 @@ function(connectionService, datasetService, errorNotificationService) {
                 if(!$scope.loadingData) {
                     $scope.queryForChartData();
                 }
+            };
+
+            /**
+             * Creates and returns an object that contains information needed to export the data in this widget.
+             * @return {Object} An object containing all the information needed to export the data in this widget.
+             */
+            $scope.makeCircularHeatFormExportObject = function() {
+                XDATA.userALE.log({
+                    activity: "perform",
+                    action: "click",
+                    elementId: "circularheatform-export",
+                    elementType: "button",
+                    elementGroup: "chart_group",
+                    source: "user",
+                    tags: ["options", "circularheatform", "export"]
+                });
+                var groupByDayClause = new neon.query.GroupByFunctionClause('dayOfWeek', $scope.options.dateField, 'day');
+                var groupByHourClause = new neon.query.GroupByFunctionClause(neon.query.HOUR, $scope.options.dateField, 'hour');
+                var query = new neon.query.Query()
+                    .selectFrom($scope.options.database.name, $scope.options.table.name)
+                    .groupBy(groupByDayClause, groupByHourClause)
+                    .where($scope.options.dateField, '!=', null)
+                    .aggregate(neon.query.COUNT, '*', 'count');
+                query.limitClause = exportService.getLimitClause();
+                var finalObject = {
+                    name: 'Ops_Clock',
+                    data: [{
+                        query: query,
+                        name: "circularHeatForm-" + $scope.exportID,
+                        fields: [],
+                        ignoreFilters: query.ignoreFilters_,
+                        selectionOnly: query.selectionOnly_,
+                        ignoredFilterIds: query.ignoredFilterIds_,
+                        type: "query"
+                    }]
+                };
+                finalObject.data[0].fields.push({
+                    query: 'day',
+                    pretty: 'Day'
+                });
+                finalObject.data[0].fields.push({
+                    query: 'hour',
+                    pretty: 'Hour'
+                });
+                finalObject.data[0].fields.push({
+                    query: 'count',
+                    pretty: 'Count'
+                });
+                return finalObject;
             };
 
             // Wait for neon to be ready, the create our messenger and intialize the view and data.

@@ -19,8 +19,8 @@
  * This directive is for building a tag cloud
  */
 angular.module('neonDemo.directives')
-.directive('tagCloud', ['ConnectionService', 'DatasetService', 'ErrorNotificationService', 'FilterService', '$timeout',
-function(connectionService, datasetService, errorNotificationService, filterService, $timeout) {
+.directive('tagCloud', ['ConnectionService', 'DatasetService', 'ErrorNotificationService', 'FilterService', 'ExportService', '$timeout',
+function(connectionService, datasetService, errorNotificationService, filterService, exportService, $timeout) {
     return {
         templateUrl: 'partials/directives/tagCloud.html',
         restrict: 'EA',
@@ -54,7 +54,8 @@ function(connectionService, datasetService, errorNotificationService, filterServ
                 database: {},
                 table: {},
                 tagField: "",
-                andTags: true
+                andTags: true,
+                tagLimit: 40
             };
 
             /**
@@ -67,11 +68,12 @@ function(connectionService, datasetService, errorNotificationService, filterServ
                 $scope.$watch('options.andTags', function(newVal, oldVal) {
                     XDATA.userALE.log({
                         activity: "select",
-                        action: "click",
-                        elementId: (newVal) ? "all-filters-button" : "any-filters-button",
-                        elementType: "radiobutton",
+                        action: ($scope.loadingData) ? "reset" : "click",
+                        elementId: "tag-cloud-options",
+                        elementType: "button",
+                        elementSub: (newVal) ? "all-filters" : "any-filters",
                         elementGroup: "chart_group",
-                        source: "user",
+                        source: ($scope.loadingData) ? "system" : "user",
                         tags: ["options", "tag-cloud"]
                     });
                     if(newVal !== oldVal) {
@@ -86,15 +88,17 @@ function(connectionService, datasetService, errorNotificationService, filterServ
                     filtersChanged: onFiltersChanged
                 });
 
+                $scope.exportID = exportService.register($scope.makeTagCloudExportObject);
+
                 $scope.$on('$destroy', function() {
                     XDATA.userALE.log({
                         activity: "remove",
-                        action: "click",
+                        action: "remove",
                         elementId: "tag-cloud",
                         elementType: "canvas",
                         elementSub: "tag-cloud",
                         elementGroup: "chart_group",
-                        source: "user",
+                        source: "system",
                         tags: ["remove", "tag-cloud"]
                     });
                     $scope.messenger.removeEvents();
@@ -102,6 +106,7 @@ function(connectionService, datasetService, errorNotificationService, filterServ
                     if(0 < $scope.filterTags.length) {
                         filterService.removeFilters($scope.messenger, $scope.filterKeys);
                     }
+                    exportService.unregister($scope.exportID);
                 });
 
                 // setup tag cloud color/size changes
@@ -131,17 +136,17 @@ function(connectionService, datasetService, errorNotificationService, filterServ
              * @private
              */
             var onFiltersChanged = function(message) {
-                XDATA.userALE.log({
-                    activity: "alter",
-                    action: "query",
-                    elementId: "tag-cloud",
-                    elementType: "tag",
-                    elementSub: "tag-cloud",
-                    elementGroup: "chart_group",
-                    source: "system",
-                    tags: ["filter-change", "tag-cloud"]
-                });
                 if(message.addedFilter && message.addedFilter.databaseName === $scope.options.database.name && message.addedFilter.tableName === $scope.options.table.name) {
+                    XDATA.userALE.log({
+                        activity: "alter",
+                        action: "query",
+                        elementId: "tag-cloud",
+                        elementType: "tag",
+                        elementSub: "tag-cloud",
+                        elementGroup: "chart_group",
+                        source: "system",
+                        tags: ["filter-change", "tag-cloud"]
+                    });
                     $scope.queryForTags();
                 }
             };
@@ -232,7 +237,7 @@ function(connectionService, datasetService, errorNotificationService, filterServ
                     tags: ["query", "tag-cloud"]
                 });
 
-                connection.executeArrayCountQuery($scope.options.database.name, $scope.options.table.name, $scope.options.tagField, 40, function(tagCounts) {
+                connection.executeArrayCountQuery($scope.options.database.name, $scope.options.table.name, $scope.options.tagField, $scope.options.tagLimit, function(tagCounts) {
                     XDATA.userALE.log({
                         activity: "alter",
                         action: "query",
@@ -330,13 +335,13 @@ function(connectionService, datasetService, errorNotificationService, filterServ
             };
 
             /**
-             * Creates and returns a filter on the given table and tag field using the tags set by this visualization.
-             * @param {String} The name of the table on which to filter
-             * @param {String} The name of the tag field on which to filter
+             * Creates and returns a filter on the given tag field using the tags set by this visualization.
+             * @param {Object} databaseAndTableName Contains the database and table name
+             * @param {String} tagFieldName The name of the tag field on which to filter
              * @method createFilterClauseForTags
-             * @returns {Object} A neon.query.Filter object
+             * @return {Object} A neon.query.Filter object
              */
-            $scope.createFilterClauseForTags = function(tableName, tagFieldName) {
+            $scope.createFilterClauseForTags = function(databaseAndTableName, tagFieldName) {
                 var filterClauses = $scope.filterTags.map(function(tagName) {
                     return neon.query.where(tagFieldName, "=", tagName);
                 });
@@ -409,6 +414,43 @@ function(connectionService, datasetService, errorNotificationService, filterServ
                 if(!$scope.loadingData) {
                     $scope.queryForTags();
                 }
+            };
+
+            /**
+             * Creates and returns an object that contains information needed to export the data in this widget.
+             * @return {Object} An object containing all the information needed to export the data in this widget.
+             */
+            $scope.makeTagCloudExportObject = function() {
+                XDATA.userALE.log({
+                    activity: "perform",
+                    action: "click",
+                    elementId: "tag-cloud-export",
+                    elementType: "button",
+                    elementGroup: "chart_group",
+                    source: "user",
+                    tags: ["options", "tag-cloud", "export"]
+                });
+                var finalObject = {
+                    name: "Tag_Cloud",
+                    data: [{
+                        database: $scope.options.database.name,
+                        table: $scope.options.table.name,
+                        field: $scope.options.tagField,
+                        limit: $scope.options.tagLimit,
+                        name: "tagCloud-" + $scope.exportID,
+                        fields: [],
+                        type: "arraycount"
+                    }]
+                };
+                finalObject.data[0].fields.push({
+                    query: "key",
+                    pretty: "Key"
+                });
+                finalObject.data[0].fields.push({
+                    query: "count",
+                    pretty: "Count"
+                });
+                return finalObject;
             };
 
             // Wait for neon to be ready, the create our messenger and intialize the view and data.

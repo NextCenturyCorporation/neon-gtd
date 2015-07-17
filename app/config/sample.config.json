@@ -22,13 +22,23 @@
         "hideNavbarItems": false,
         "hideAdvancedOptions": false,
         "hideErrorNotifications": false,
-        "hideHeaders": false
+        "hideHeaders": false,
+        "hideCloseButton": false,
+        "showVideoOnLoad": false
+    },
+
+    "help": {
+        "guide": "",
+        "video": ""
     },
 
     "opencpu": {
         "enableOpenCpu": false,
         "enableLogging": false,
         "useAlerts": false,
+        "enableAnomalyDetection": true,
+        "enableStl2": false,
+        "enableMmpp": false,
         "url": "http://neon-opencpu/ocpu/library/NeonAngularDemo/R"
     },
 
@@ -217,7 +227,13 @@
             "limit": 5000,
             "colorBy": "magType",
             "sizeBy": "mag"
-        }]
+        }],
+        "linkyConfig": {
+          "mentions": false,
+          "hashtags": false,
+          "urls": true,
+          "linkTo": "twitter"
+        }
     }],
 
     "layouts": {
@@ -255,7 +271,9 @@
             "bindings": {
                 "bind-database": "'myDatabase'",
                 "bind-table": "'myTable'",
-                "bind-date-field": "'date'"
+                "bind-date-field": "'date'",
+                "override-start-date": "'1/1/2013'",
+                "override-end-date": "1388534399000"
             }
         }, {
             "sizeX": 4,

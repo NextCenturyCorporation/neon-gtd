@@ -37,7 +37,9 @@ angular.module('neonDemo.directives')
             extentDirty: '=',
             collapsed: '=',
             primarySeries: '=',
-            granularity: '='
+            granularity: '=',
+            showFocus: '=',
+            messenger: '='
         },
         link: function($scope, $element) {
             // Initialize the chart.
@@ -48,7 +50,22 @@ angular.module('neonDemo.directives')
                 // Wrap our data change in $apply since this is fired from a D3 event and outside of
                 // angular's digest cycle.
                 $scope.$apply(function() {
+                    XDATA.userALE.log({
+                        activity: "select",
+                        action: "click",
+                        elementId: "timeline-range",
+                        elementType: "canvas",
+                        elementSub: "date-range",
+                        elementGroup: "chart_group",
+                        source: "user",
+                        tags: ["timeline", "date-range", "filter"]
+                    });
+
                     $scope.timelineBrush = data;
+
+                    if($scope.showFocus === "on_filter") {
+                        $scope.chart.toggleFocus(true);
+                    }
                 });
             });
 
@@ -56,17 +73,35 @@ angular.module('neonDemo.directives')
             $scope.chart.render([]);
 
             var redrawOnResize = function() {
-                $scope.chart.redrawChart();
+                // Start at 30 to add extra padding to chart
+                var headerHeight = 25;
+
+                $(".timeline-selector").find(".header-container").each(function() {
+                    headerHeight += $(this).outerHeight(true);
+                });
+
+                $(".timeline-selector").find(".mmpp").each(function() {
+                    headerHeight += $(this).outerHeight(true);
+                });
+
+                $element.height($(".timeline-selector").height() - headerHeight);
+
+                if($scope.showFocus === "always" || ($scope.showFocus === "on_filter" && $scope.timelineBrush.length > 0)) {
+                    $scope.chart.toggleFocus(true);
+                } else {
+                    $scope.chart.toggleFocus(false);
+                }
+
                 $scope.resizePromise = null;
             };
 
             // Watch for changes in the element size and update us.
             $scope.$watch(
                 function() {
-                    return $element[0].clientWidth + "x" + $element[0].clientHeight;
+                    return $(".timeline-selector")[0].clientWidth + "x" + $(".timeline-selector")[0].clientHeight;
                 },
-                function(oldVal, newVal) {
-                    if((oldVal !== newVal) && $scope.chart && $scope.timelineData && $scope.timelineData.length > 0) {
+                function(newVal, oldVal) {
+                    if(newVal && $scope.chart) {
                         if($scope.resizePromise) {
                             $timeout.cancel($scope.resizePromise);
                         }
@@ -87,6 +122,14 @@ angular.module('neonDemo.directives')
             $scope.$watch('timelineBrush', function(newVal) {
                 if(newVal && newVal.length === 0) {
                     $scope.chart.clearBrush();
+
+                    if($scope.showFocus === "on_filter") {
+                        $scope.chart.toggleFocus(false);
+                    }
+                } else if(newVal) {
+                    if($scope.showFocus === "on_filter") {
+                        $scope.chart.toggleFocus(true);
+                    }
                 }
             });
 
@@ -110,6 +153,42 @@ angular.module('neonDemo.directives')
                     $scope.chart.render($scope.timelineData);
                     $scope.chart.renderExtent($scope.timelineBrush);
                 }
+            });
+
+            $scope.$watch('showFocus', function(newVal, oldVal) {
+                if(newVal === 'always') {
+                    $scope.chart.toggleFocus(true);
+                } else if(newVal === 'never') {
+                    $scope.chart.toggleFocus(false);
+                } else if(newVal === 'on_filter' && $scope.timelineBrush.length > 0) {
+                    $scope.chart.toggleFocus(true);
+                }
+            });
+
+            /**
+             * Event handler for date selected events issued over Neon's messaging channels.
+             * @param {Object} message A Neon date selected message.
+             * @method onDateSelected
+             * @private
+             */
+            var onDateSelected = function(message) {
+                if(message.start && message.end) {
+                    $scope.chart.selectDate(message.start, message.end);
+                } else {
+                    $scope.chart.deselectDate();
+                }
+            };
+
+            var onHover = function(startDate, endDate) {
+                $scope.messenger.publish('date_selected', {
+                    start: startDate,
+                    end: endDate
+                });
+            };
+
+            $scope.$watch("messenger", function() {
+                $scope.messenger.subscribe("date_selected", onDateSelected);
+                $scope.chart.setHoverListener(onHover);
             });
         }
     };

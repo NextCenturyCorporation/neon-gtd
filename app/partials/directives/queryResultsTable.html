@@ -1,7 +1,7 @@
 <div class="header-container" ng-show="!(navbarItem) && !(hideHeader)">
     <span class="header-text pull-left">{{options.table.prettyName}}</span>
 
-    <options-menu parent-element="element">
+    <options-menu parent-element="element" export-function="makeQueryResultsTableExportObject">
         <div class="form-group" ng-show="!(hideAdvancedOptions)">
             <label>Database</label>
             <select class="form-control" ng-model="options.database" ng-options="database.prettyName for database in databases" ng-required="true" ng-disabled="(databases.length < 2)" ng-change="updateTables()">
@@ -33,10 +33,10 @@
 
                 <div class="input-group-btn">
                     <label class="btn btn-default active" ng-class="{true: 'active', false: ''}[options.sortDirection === ASCENDING]">
-                        <input type="radio" ng-model="options.sortDirection" style="display:none" ng-value="ASCENDING" ng-click="handleAscButtonClick()"> ASC
+                        <input type="radio" ng-model="options.sortDirection" style="display:none" ng-value="ASCENDING" ng-change="handleAscButtonClick()"> ASC
                     </label>
                     <label class="btn btn-default" ng-class="{true: 'active', false: ''}[options.sortDirection === DESCENDING]">
-                        <input type="radio" ng-model="options.sortDirection" style="display:none" ng-value="DESCENDING" ng-click="handleDescButtonClick()"> DESC
+                        <input type="radio" ng-model="options.sortDirection" style="display:none" ng-value="DESCENDING" ng-change="handleDescButtonClick()"> DESC
                     </label>
                 </div>
             </div>
@@ -98,10 +98,10 @@
 
                     <div class="input-group-btn">
                         <label class="btn btn-default active" ng-class="{true: 'active', false: ''}[options.sortDirection === ASCENDING]">
-                            <input type="radio" ng-model="options.sortDirection" style="display:none" ng-value="ASCENDING" ng-click="handleAscButtonClick()"> ASC
+                            <input type="radio" ng-model="options.sortDirection" style="display:none" ng-value="ASCENDING" ng-change="handleAscButtonClick()"> ASC
                         </label>
                         <label class="btn btn-default" ng-class="{true: 'active', false: ''}[options.sortDirection === DESCENDING]">
-                            <input type="radio" ng-model="options.sortDirection" style="display:none" ng-value="DESCENDING" ng-click="handleDescButtonClick()"> DESC
+                            <input type="radio" ng-model="options.sortDirection" style="display:none" ng-value="DESCENDING" ng-change="handleDescButtonClick()"> DESC
                         </label>
                     </div>
                 </div>

@@ -94,11 +94,25 @@
     }
 
     .modal-dialog {
-        margin: 60px auto;
+        margin: 70px auto;
     }
 
     .modal-body {
         max-height: 410px;
         overflow-y: auto;
+    }
+}
+
+#videoModal {
+    .modal-dialog {
+        width: 90%;
+
+        .modal-body {
+            max-height: none;
+
+            video {
+                width: 100%;
+            }
+        }
     }
 }

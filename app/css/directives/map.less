@@ -42,15 +42,6 @@
         padding: 3px;
     }
 
-    .chart-options {
-        .popover {
-            top: 25px;
-            right: -10px;
-            position: absolute;
-            width: 250px;
-        }
-    }
-
     .footer-container {
         position: absolute;
         bottom: 10px;
@@ -72,6 +63,83 @@
             right: 10px;
             top: 10px;
             z-index: 1010;
+
+            .chart-options {
+                .popover {
+                    top: 30px;
+                    right: 30px;
+                    position: absolute;
+
+                    .popover-content {
+                        width: 300px;
+                    }
+                }
+
+                .arrow {
+                    right: -15px;
+                }
+
+                /* Give the menu container a background to make it more readable.  Make it the same height (30 px) and color of the filter reset notifications. */
+                a {
+                    background-color: @button-color;
+                    border-style: solid;
+                    border-width: 1px;
+                    border-color: @button-border-color;
+                    border-radius: 4px;
+                    padding: 5px 5px 2px;
+                }
+            }
+
+            .instructions-container {
+                label {
+                    font-size: 14px;
+                }
+
+                .glyphicon {
+                    top: 2px;
+                    margin-right: 5px;
+                }
+            }
+
+            .layer-options-container {
+                > label {
+                    font-size: 14px;
+                }
+
+                .layer-options {
+                    background-color: @main-background;
+                    border-style: solid;
+                    border-width: 1px;
+                    border-color: @border-color;
+                    border-radius: 4px;
+                    padding: 10px;
+
+                    > .btn-group {
+                        margin-bottom: 50px;
+
+                        .btn {
+                            width: 50%;
+
+                            &.active {
+                                color: @accent-bright;
+                            }
+
+                            .glyphicon {
+                                margin-right: 5px;
+                            }
+                        }
+                    }
+
+                    > .error {
+                        color: @error-text-color;
+                        margin: 5px;
+                    }
+                }
+            }
+
+            .reset-options {
+                margin-top: 30px;
+            }
         }
 
         &.legend-container {
@@ -129,67 +197,6 @@
                 background-color: @accent-bright;
                 opacity: 1;
             }
-        }
-    }
-
-    .olControlLayerSwitcher {
-        top: 90px;
-        left: 5px;
-        border: @border; 
-        color: black;
-        
-        .dataLbl {
-            font-size: 18px;
-        }
-
-        .baseLbl {
-            font-size: 18px;
-        }
-
-        .labelSpan {
-            font-size: 16px;
-            color: black;
-        }
-
-        .layersDiv {
-            padding-left: 30px;
-            background-color: rgba(225, 225, 225, 0.7);
-        }
-
-        .minimizeDiv {
-            left: 0px;
-            height: 40px;
-            width: 30px;
-            background-color: darkblue;
-            border-radius: 0px 15px 15px 0px;
-            border: @border; 
-        }
-
-        .maximizeDiv {
-            left: 0px;
-            height: 40px;
-            width: 30px;
-            background-color: darkblue;
-            border-radius: 0px 15px 15px 0px;
-            border: @border;
-        }
-
-        .olAlphaImg {
-            position: absolute !important;
-            left: 6px;
-            top: 10px;
-        }
-
-        input[type=radio] {
-            margin: 4px;
-        }
-
-        input[type=checkbox] {
-            margin: 4px;
-        }
-
-        label {
-            margin: 0px;
         }
     }
 }
