@@ -34,6 +34,8 @@ function($scope, $timeout, config, datasets) {
     $scope.element = $("body");
     $scope.help = config.help;
 
+    $scope.element = $(window);
+
     if($scope.hideNavbarItems) {
         for(var i = 0; i < datasets.length; ++i) {
             if(datasets[i].connectOnLoad) {

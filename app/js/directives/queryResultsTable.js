@@ -111,7 +111,7 @@ function(external, popups, connectionService, datasetService, errorNotificationS
                 // display proper scrolling and sizing behavior if it is rendered while not visible.
                 $scope.$watch('showData', function(newVal) {
                     if(newVal) {
-                        queryForData();
+                        queryForData(true);
                     }
                 });
 
@@ -178,7 +178,7 @@ function(external, popups, connectionService, datasetService, errorNotificationS
                 });
             };
 
-            $scope.createOptions = function(data) {
+            $scope.createOptions = function(data, refreshColumns) {
                 var _id = "_id";
                 var has_id = true;
 
@@ -190,7 +190,7 @@ function(external, popups, connectionService, datasetService, errorNotificationS
 
                 var options = {
                     data: data.data,
-                    columns: createColumns(data.data),
+                    columns: createColumns(data.data, refreshColumns),
                     gridOptions: {
                         enableTextSelectionOnCells: true,
                         forceFitColumns: false,
@@ -211,12 +211,19 @@ function(external, popups, connectionService, datasetService, errorNotificationS
                 return options;
             };
 
-            var createColumns = function(data) {
+            var createColumns = function(data, refreshColumns) {
                 var fieldNames = [];
-                // Add the fields in the order they are listed in the configuration file.
-                datasetService.getFields($scope.options.database.name, $scope.options.table.name).forEach(function(field) {
-                    fieldNames.push(field.columnName);
-                });
+
+                if(refreshColumns || !$scope.table) {
+                    // Add the fields in the order they are listed in the configuration file.
+                    datasetService.getFields($scope.options.database.name, $scope.options.table.name).forEach(function(field) {
+                        fieldNames.push(field.columnName);
+                    });
+                } else {
+                    $scope.table.getColumns().forEach(function(field) {
+                        fieldNames.push(field.name);
+                    });
+                }
 
                 var columns = tables.createColumns(fieldNames, data, $scope.tableNameToDeletedFieldsMap[$scope.options.table.name], [$scope.createDeleteColumnButton("")]);
                 columns = tables.addLinkabilityToColumns(columns);
@@ -253,7 +260,7 @@ function(external, popups, connectionService, datasetService, errorNotificationS
                         source: "system",
                         tags: ["filter-change", "datagrid"]
                     });
-                    queryForData();
+                    queryForData(false);
                 }
             };
 
@@ -321,7 +328,7 @@ function(external, popups, connectionService, datasetService, errorNotificationS
                     $scope.options.addField = $scope.tableNameToDeletedFieldsMap[$scope.options.table.name][0];
                 }
                 $scope.options.sortByField = datasetService.getMapping($scope.options.database.name, $scope.options.table.name, "sort_by") || $scope.fields[0];
-                queryForData();
+                queryForData(true);
             };
 
             /**
@@ -338,7 +345,7 @@ function(external, popups, connectionService, datasetService, errorNotificationS
                     source: "user",
                     tags: ["options", "datagrid", "refresh"]
                 });
-                queryForData();
+                queryForData(false);
             };
 
             /**
@@ -349,9 +356,11 @@ function(external, popups, connectionService, datasetService, errorNotificationS
              * no data table is generated.  queryForData will not issue a query until the directive thinks it needs to
              * poll for data and should show data.
              * Resets internal "need to query" state to false.
+             * @param {Boolean} refreshColumns Whether the columns should be refreshed and thus the
+             * column ordering reverted back to the original
              * @method queryForData
              */
-            var queryForData = function() {
+            var queryForData = function(refreshColumns) {
                 if($scope.errorMessage) {
                     errorNotificationService.hideErrorMessage($scope.errorMessage);
                     $scope.errorMessage = undefined;
@@ -362,7 +371,7 @@ function(external, popups, connectionService, datasetService, errorNotificationS
                 if(!connection || !$scope.showData) {
                     $scope.updateData({
                         data: []
-                    });
+                    }, refreshColumns);
                     $scope.totalRows = 0;
                     $scope.loadingData = false;
                     return;
@@ -393,7 +402,7 @@ function(external, popups, connectionService, datasetService, errorNotificationS
                         tags: ["receive", "datagrid"]
                     });
                     $scope.$apply(function() {
-                        $scope.updateData(queryResults);
+                        $scope.updateData(queryResults, refreshColumns);
                         queryForTotalRows(connection);
                         XDATA.userALE.log({
                             activity: "alter",
@@ -419,7 +428,7 @@ function(external, popups, connectionService, datasetService, errorNotificationS
                     });
                     $scope.updateData({
                         data: []
-                    });
+                    }, refreshColumns);
                     $scope.totalRows = 0;
                     $scope.loadingData = false;
                     if(response.responseJSON) {
@@ -561,14 +570,16 @@ function(external, popups, connectionService, datasetService, errorNotificationS
              * the chart's visualization.
              * @param {Object} queryResults Results returned from a Neon query.
              * @param {Array} queryResults.data The aggregate numbers for the heat chart cells.
+             * @param {Boolean} refreshColumns Whether the columns should be refreshed and thus the
+             * column ordering reverted back to the original
              * @method updateData
              */
-            $scope.updateData = function(queryResults) {
+            $scope.updateData = function(queryResults, refreshColumns) {
                 if(!($("#" + $scope.tableId).length)) {
                     return;
                 }
 
-                $scope.tableOptions = $scope.createOptions(queryResults);
+                $scope.tableOptions = $scope.createOptions(queryResults, refreshColumns);
 
                 if(external.anyEnabled) {
                     queryResults = $scope.addExternalAppUrlColumnData(queryResults);
