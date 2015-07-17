@@ -135,7 +135,7 @@ var readDatasetFiles = function($http, datasets, datasetFiles, callback) {
 
 angular.element(document).ready(function() {
     var $http = angular.injector(['ng']).get('$http');
-    $http.get('./config/twitter.config.json').success(function(config) {
+    $http.get('./config/config.json').success(function(config) {
         // Configure the user-ale logger.
         var aleConfig = (config.user_ale || {
             loggingUrl: "http://192.168.1.100",
