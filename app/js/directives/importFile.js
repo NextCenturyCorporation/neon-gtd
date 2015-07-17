@@ -38,8 +38,8 @@ angular.module('neonDemo.directives')
             var file;
 
             $scope.uploadFile = function() {
-                importService.setUserName(jQuery('#usernameInput')[0].value);
-                importService.setDatabaseName(jQuery('#databaseInput')[0].value);
+                importService.setUserName(jQuery('#importUsernameInput')[0].value);
+                importService.setDatabaseName(jQuery('#importDatabaseInput')[0].value);
                 var connection = connectionService.getActiveConnection();
                 if(!connection || !file || !importService.getDatabaseName()) {
                     return;
@@ -49,6 +49,7 @@ angular.module('neonDemo.directives')
                 formData.append('data', importService.getDatabaseName());
                 formData.append('file', file);
                 connection.executeUploadFile(formData, importSuccess, importFail);
+                jQuery('#importDatabaseInput')[0].value = '';
             };
 
             var importSuccess = function(response) {
@@ -85,7 +86,7 @@ angular.module('neonDemo.directives')
             }
 
             var confirmSuccess = function(response) {
-                jQuery('#confirmModal').modal('hide');
+                jQuery('#confirmChoicesModal').modal('hide');
             };
 
             var confirmFail = function(response) {
@@ -99,7 +100,7 @@ angular.module('neonDemo.directives')
                 jQuery('#dateStringInput')[0].value = importService.getDateString();
                 jQuery('#userNameCreatedText')[0].innerHTML = "Your username is " + importService.getUserName();
                 jQuery('#convertFailedText').hide()
-                jQuery('#confirmModal').modal('show');
+                jQuery('#confirmChoicesModal').modal('show');
                 setupDropdowns();
             };
 
@@ -126,6 +127,10 @@ angular.module('neonDemo.directives')
                 document.getElementById("selectedFileIndicator").innerHTML = (file === undefined) ? "No file selected" : 
                     (file.size > importService.getMaxSize(false)) ? "File too large - size limit is " + importService.getMaxSize(true) :
                         file.name + " - " + importService.sizeToReadable(file.size);
+                var databaseName = jQuery('#importDatabaseInput')[0].value;
+                if(!databaseName) {
+                    jQuery('#importDatabaseInput')[0].value = file.name.substring(0, file.name.lastIndexOf('.'));
+                }
             }
 
 // =====================================================================================================================
@@ -164,7 +169,7 @@ angular.module('neonDemo.directives')
             };
 
             var importModalOnShow = function(evnt) {
-                jQuery('#usernameInput')[0].value = importService.getUserName();
+                jQuery('#importUsernameInput')[0].value = importService.getUserName();
             }
 
             // Set behavior of drag and drop element within import file modal.

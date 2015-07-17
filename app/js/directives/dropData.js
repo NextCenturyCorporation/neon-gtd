@@ -23,8 +23,8 @@
  */
 
 angular.module('neonDemo.directives')
-.directive('dropData', ['ConnectionService', 'ErrorNotificationService',
-    function(connectionService, errorNotificationService) {
+.directive('dropData', ['ConnectionService', 'ErrorNotificationService', 'ImportService',
+    function(connectionService, errorNotificationService, importService) {
     return {
         templateUrl: 'partials/directives/dropData.html',
         restrict: 'EA',
@@ -45,7 +45,14 @@ angular.module('neonDemo.directives')
 
     		var dropFailure = function(response) {
     			window.alert("Sorry, there wasn't any database with that name created by this username.");
-    		}
+    		};
+
+            var dropModalOnShow = function() {
+                jQuery('#dropUsernameInput')[0].value = importService.getUserName();
+                jQuery('#dropDatabaseInput')[0].value = '';
+            };
+
+            jQuery('#dropModal').on('show.bs.modal', dropModalOnShow);
         }
     };
 }]);
