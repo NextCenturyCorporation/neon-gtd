@@ -107,6 +107,7 @@ function(connectionService, datasetService, errorNotificationService, filterServ
                 });
                 $scope.messenger.subscribe(datasetService.DATE_CHANGED, onDateChanged);
                 $scope.messenger.subscribe("date_selected", onDateSelected);
+                $scope.messenger.subscribe("animation_date_selected", onDateSelected);
 
                 $scope.exportID = exportService.register($scope.makeLinechartExportObject);
 

@@ -79,6 +79,7 @@ angular.module('neonDemo.directives')
             $scope.loadingData = false;
             $scope.selectedPointLayer = {};
             $scope.selectionEvent = "QUERY_RESULTS_SELECTION_EVENT";
+            $scope.animationDateSelectedEvent = "animation_date_selected";
 
             $scope.mapLayers = [coreMap.Map.POINTS_LAYER, coreMap.Map.CLUSTER_LAYER, coreMap.Map.HEATMAP_LAYER, coreMap.Map.NODE_LAYER];
 
@@ -152,6 +153,9 @@ angular.module('neonDemo.directives')
                 });
 
                 $scope.linkyConfig = datasetService.getLinkyConfig();
+
+                $scope.messenger.subscribe('date_selected', onDateSelected);
+                $scope.messenger.subscribe($scope.animationDateSelectedEvent, onDateSelected);
 
                 $scope.$on('$destroy', function() {
                     XDATA.userALE.log({
@@ -375,6 +379,22 @@ angular.module('neonDemo.directives')
                     source: "user",
                     tags: ["map", "viewport"]
                 });
+            };
+
+            /**
+             * Event handler for date selected events issued over Neon's messaging channels.
+             * @param {Object} message A Neon date selected message.
+             * @method onDateSelected
+             * @private
+             */
+            var onDateSelected = function(message) {
+                //console.log(message);
+                // Set a date range on any node layers to start.
+                for(var i = 0; i < $scope.options.layers.length; i++) {
+                    if($scope.options.layers[i].type === coreMap.Map.NODE_LAYER) {
+                        $scope.options.layers[i].olLayer.setDateFilter(message);
+                    }
+                }
             };
 
             /**

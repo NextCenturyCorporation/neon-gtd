@@ -32,8 +32,8 @@
  * @constructor
  */
 angular.module('neonDemo.directives')
-.directive('timelineSelector', ['ConnectionService', 'DatasetService', 'ErrorNotificationService', 'FilterService', 'ExportService', 'opencpu', '$filter',
-function(connectionService, datasetService, errorNotificationService, filterService, exportService, opencpu, $filter) {
+.directive('timelineSelector', ['$interval', '$filter', 'ConnectionService', 'DatasetService', 'ErrorNotificationService', 'FilterService', 'ExportService', 'opencpu',
+function($interval, $filter, connectionService, datasetService, errorNotificationService, filterService, exportService, opencpu) {
     return {
         templateUrl: 'partials/directives/timelineSelector.html',
         restrict: 'EA',
@@ -51,6 +51,7 @@ function(connectionService, datasetService, errorNotificationService, filterServ
             var MONTH = "month";
             var HOUR = "hour";
             var DAY = "day";
+            var DATE_ANIMATION_CHANNEL = 'animation_date_selected';
 
             $element.addClass('timeline-selector');
 
@@ -94,7 +95,10 @@ function(connectionService, datasetService, errorNotificationService, filterServ
                 primarySeries: false,
                 collapsed: true,
                 granularity: DAY,
-                showFocus: "on_filter"
+                showFocus: "on_filter",
+                animatingTime: false,
+                animationFrame: 0,
+                animationFrameDelay: 250
             };
 
             var datesEqual = function(a, b) {
@@ -115,6 +119,59 @@ function(connectionService, datasetService, errorNotificationService, filterServ
 
             var setDateTimePickerEnd = function(date) {
                 $scope.filter.end = new Date(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate() - 1, date.getUTCHours());
+            };
+
+            $scope.playTimeAnimation = function() {
+                // Set the frame and start the animation loop.
+                if(!$scope.options.animationStartDate) {
+                    $scope.options.animationFrame = 0;
+                }
+
+                $scope.options.animatingTime = true;
+                $scope.options.animationTimeout = $interval($scope.doTimeAnimation, $scope.options.animationFrameDelay);
+            };
+
+            $scope.pauseTimeAnimation = function() {
+                $interval.cancel($scope.options.animationTimeout);
+                $scope.options.animatingTime = false;
+            };
+
+            $scope.stopTimeAnimation = function() {
+                $interval.cancel($scope.options.animationTimeout);
+                $scope.options.animatingTime = false;
+
+                // Clear the current step data.
+                $scope.options.animationFrame = 0;
+                $scope.animationMessenger.publish(DATE_ANIMATION_CHANNEL, {});
+            }
+
+            $scope.stepTimeAnimation = function() {
+                if($scope.options.animatingTime) {
+                    $scope.pauseTimeAnimation();
+                }
+                $scope.doTimeAnimation();
+            };
+
+            $scope.doTimeAnimation = function() {
+                // Get the time range for the current animation frame and publish it.
+                if($scope.options.animationFrame >= $scope.bucketizer.getNumBuckets()) {
+                    $scope.options.animationFrame = 0;
+                }
+
+                var dateSelected = {
+                    start: $scope.bucketizer.getDateForBucket($scope.options.animationFrame),
+                    end: $scope.bucketizer.getDateForBucket($scope.options.animationFrame + 1)
+                };
+
+                // Cleanup the animation end time on the last frame.
+                if($scope.options.animationFrame === ($scope.bucketizer.getNumBuckets() - 1)) {
+                    dateSelected.end = $scope.bucketizer.getEndDate();
+                }
+                //console.log(dateSelected);
+                $scope.animationMessenger.publish(DATE_ANIMATION_CHANNEL, dateSelected);
+
+                // Advance the animation step data.
+                $scope.options.animationFrame++;
             };
 
             $scope.handleDateTimePickChange = function() {
@@ -360,11 +417,13 @@ function(connectionService, datasetService, errorNotificationService, filterServ
                 });
 
                 $scope.messenger = new neon.eventing.Messenger();
+                $scope.animationMessenger = new neon.eventing.Messenger();
 
                 $scope.messenger.events({
                     filtersChanged: onFiltersChanged
                 });
                 $scope.messenger.subscribe(datasetService.DATE_CHANGED, onDateChanged);
+                $scope.messenger.subscribe(DATE_ANIMATION_CHANNEL, onDateChanged);
 
                 $scope.exportID = exportService.register($scope.makeTimelineSelectorExportObject);
 

@@ -168,15 +168,15 @@ angular.module('neonDemo.directives').directive('visualizationWidget', ["config"
              */
             $scope.moveToBottom = function() {
                 XDATA.userALE.log({
-                        activity: "alter",
-                        action: "click",
-                        elementId: "workspace",
-                        elementType: "workspace",
-                        elementSub: "layout",
-                        elementGroup: "top",
-                        source: "user",
-                        tags: ["visualization", "move", "bottom"]
-                    });
+                    activity: "alter",
+                    action: "click",
+                    elementId: "workspace",
+                    elementType: "workspace",
+                    elementSub: "layout",
+                    elementGroup: "top",
+                    source: "user",
+                    tags: ["visualization", "move", "bottom"]
+                });
                 var maxVis = _.max($scope.gridsterConfigs, function(vis) {
                     return vis.row;
                 });
