@@ -8,13 +8,6 @@
     </a>
   </li>
 </ul>
-<ul class="nav navbar-nav">
-  <li>
-    <a id="dataDropped" class="navbar-nav collapsed primary navbar-list-bottom neon-popup-button" ng-click="dropCurrentSet()" ng-show="canImport">
-      Drop Current Data
-    </a>
-  </li>
-</ul>
 
 <div class="modal fade" id="importModal" tabindex="-1" role="dialog" aria-hidden="true">
   <div class="modal-dialog">
@@ -28,22 +21,25 @@
           <input type="file" id="fileSelect" value="">
         </div>
         <div class="modal-footer">
+        	<input type="text" id="usernameInput" class="modalFooterField" value="" maxLength="40" size="20" placeholder="Username">
+        	<input type="text" id="databaseInput" class="modalFooterField" value="" maxLength="100" size="30" placeholder="Name for database">
           <button type="button" class="btn btn-default" data-dismiss="modal" ng-click="uploadFile()">Import</button>
         </div>
     </div>
   </div>
 </div>
 
-<div class="modal fade" id="confirmChoicesModal" data-keyboard="false" data-backdrop="static" tabIndex="-1" role="dialog" aria-hidden="true">
+<div class="modal fade" id="confirmModal" data-keyboard="false" data-backdrop="static" tabIndex="-1" role="dialog" aria-hidden="true">
   <div class="modal-dialog">
     <div class="modal-content">
       <div class="modal-header">
-        <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
-        <h4 class="modal-title" id="importModalLabel">Confirm Data Type of Fields</h4>
+        <button type="button" class="close" data-dismiss="modal" aria-hidden="true" ng-click="sendConfirmedChoices('String')">&times;</button>
+        <h4 class="modal-title" id="confirmModalLabel">Select Field Types</h4>
       </div>
       <div class="modal-body centered"> <!-- centered class comes from countBy.less - is it still okay to use it here? -->
-        <p ng-show="hasFailed">One or more fields failed to convert. Please try again.</p>
-        <p ng-repeat="field in fieldTypePairs">
+      	<p id="userNameCreatedText"></p>
+        <p id="convertFailedText">One or more fields failed to convert. Please try again.</p>
+        <p ng-repeat="field in nameTypePairs">
           <span>{{field.name}}</span>
           <select id="{{field.name}}-options">
             <option value="Integer">Integer</option>
@@ -56,8 +52,8 @@
         </p>
       </div>
       <div class="modal-footer">
-        <input type="text" id="dateStringInput" class="modalFooterField" value="" maxlength="50" size="30" placeholder="Date format sting here if not standard">
-        <button type="button" class="btn btn-default" ng-click="sendConfirmedChoices()">Confirm</button> <!-- data-dismiss="modal" -->
+        <input type="text" id="dateStringInput" class="modalFooterField" value="" maxlength="50" size="30" placeholder="Date format here if not standard">
+        <button type="button" class="btn btn-default" ng-click="sendConfirmedChoices()">Confirm</button>
       </div>
     </div>
   </div>

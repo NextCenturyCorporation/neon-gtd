@@ -16,144 +16,122 @@
  */
 
 /**
- * This Angular JS directive adds a simple button to a page that allows the user to upload a file to the server.
+ * This Angular JS directive adds a button to a page that triggers a modal, which allows the user to upload a file to the server.
  *
  * @namespace neonDemo.directives
  * @constructor
  */
 
+/*
+Set username and database in uploadFile.
+*/
 angular.module('neonDemo.directives')
-.directive('importFile', ['ConnectionService', 'ErrorNotificationService',
-    function(connectionService, errorNotificationService) {
+.directive('importFile', ['ConnectionService', 'ErrorNotificationService', 'ImportService',
+    function(connectionService, errorNotificationService, importService) {
     return {
         templateUrl: 'partials/directives/importFile.html',
         restrict: 'EA',
         link: function($scope) {
-            // Check if the browser has the functionality needed to support this implementation of import. There shouldn't
-            // be any that don't, at this point, but it doesn't hurt to check anyway.
+
             $scope.canImport = (window.File && window.FileReader && window.FileList && window.Blob);
-            // List of field/type pairs for current data.
-            $scope.fieldTypePairs;
-            // Stores whether the confirm choices modal should display the failure information message.
-            $scope.hasFailed;
-            // Maximum size of file to accept, in bytes.
-            var MAX_SIZE = 30000000;
-            // File to upload.
-            var file = undefined;
-            // Unique identifier of current data set - used for dropping data.
-            var identifier;
+            $scope.nameTypePairs = undefined;
+            var file;
 
             $scope.uploadFile = function() {
+                importService.setUserName(jQuery('#usernameInput')[0].value);
+                importService.setDatabaseName(jQuery('#databaseInput')[0].value);
                 var connection = connectionService.getActiveConnection();
-                if(!connection || !file) {
+                if(!connection || !file || !importService.getDatabaseName()) {
                     return;
                 }
                 var formData = new FormData();
-                formData.append("file", file);
-                connection.executeUploadFile(formData, function(data) {
-                    var result = JSON.parse(data); // ExecuteUploadFile doesn't automatically parse it for us because it doesn't go through jQuery ajax.
-                    identifier = result.identifier;
-                    $scope.fieldTypePairs = result.types;
-                    $scope.hasFailed = false;
-                    jQuery("#confirmChoicesModal").modal("show");
-                    document.getElementById("dataDropped").innerHTML = "Drop Current Data";
-                    $scope.$apply();
-                    setupDropdowns();
-                }, function(response) {
-                    window.alert("Failed to upload.")
-                    /*if(response.responseJSON) {
-                        $scope.errorMessage = errorNotificationService.showErrorMessage($element, response.responseJSON.error, response.responseJSON.stackTrace);
-                    }*/
-                });
-            }
+                formData.append('user', importService.getUserName());
+                formData.append('data', importService.getDatabaseName());
+                formData.append('file', file);
+                connection.executeUploadFile(formData, importSuccess, importFail);
+            };
 
-            $scope.dropCurrentSet = function() {
+            var importSuccess = function(response) {
+                var result = JSON.parse(response); // We manually make XMLHttpRequest here, so get no auto-parsing.
+                if(result.user) {
+                    importService.setUserName(result.user);
+                }
+                $scope.nameTypePairs = result.types;
+                $scope.$apply();
+                showConfirmModal();
+            };
+
+            var importFail = function(response) {
+                window.alert('Failed to import data.'); // TODO eventually need better failure code than this.
+            };
+
+            $scope.sendConfirmedChoices = function(value) {
                 var connection = connectionService.getActiveConnection();
-                if(!connection || !identifier) {
+                if(!connection || !$scope.nameTypePairs) {
                     return;
                 }
-                connection.executeDropData(identifier, function(response) {
-                    document.getElementById("dataDropped").innerHTML = (response.success) ? "Data set dropped" : "Failed to drop data";
-                    identifier = undefined;
-                });
-            };
-
-            // For some reason or another, on small data sets the processing and return of fields is happening so quickly the modal can't actually finish closing before it reopens (if one or more fields failed).
-            // This results in multiple modal backdrops being opened - the old one from before closing, and the new one from reopening. Closing the modal again only gets rid of one of these.
-
-            $scope.sendConfirmedChoices = function() {
-                var connection = connectionService.getActiveConnection();
-                if(!connection || !identifier || !$scope.fieldTypePairs) {
-                    return
-                }
-                var fieldTypeArray = [];
-                $scope.fieldTypePairs.forEach(function(pair) {
-                    // We do this because the scope variable has some sort of extra hash field on it that we don't want to send.
-                    fieldTypeArray.push({
-                        name: pair.name,
-                        type: pair.type
+                window.alert(JSON.stringify($scope.nameTypePairs))
+                var ftPairs = importService.getFieldsAndTypes($scope.nameTypePairs);
+                if(value && value === 'String') {
+                    ftPairs.forEach(function(pair) {
+                        pair.type = 'String';
                     });
-                });
-                var datePattern = jQuery("#dateStringInput")[0].value
+                }
+                var datePattern = jQuery('#dateStringInput')[0].value;
                 var toSend = {
-                    format: (datePattern.length > 0) ? datePattern : undefined,
-                    fields: fieldTypeArray
+                    format: datePattern ? datePattern : undefined,
+                    fields: ftPairs
                 };
-                connection.executeConfirmTypeGuesses(toSend, identifier, function(response) { // With any luck, this will keep the odd double-backdrop bug from occurring.
-                    jQuery("#confirmChoicesModal").modal("hide");
-                }, function(response) {
-                    $scope.fieldTypePairs = response.responseJSON;
-                    $scope.hasFailed = true;
-                    $scope.$apply();
-                    setupDropdowns();
-                });
-            };
-
-            var displayFileInfo = function(file) {
-                document.getElementById("selectedFileIndicator").innerHTML = (file === undefined) ? "No file selected" : 
-                    (file.size > MAX_SIZE) ? "File too large - size limit is " + sizeToReadable(MAX_SIZE) : file.name + " - " + sizeToReadable(file.size);
+                connection.executeConfirmTypeGuesses(toSend, importService.getUserName(), importService.getDatabaseName(), confirmSuccess, confirmFail);
             }
 
-            /*
-             * Helper method that converts a number of bytes into a human-readable format.
-             * @param size {Number} The number to convert into a human-readable form.
-             * @return {String} A human-readable version of the given number, with byte units.
-             */
-            var sizeToReadable = function(size) {
-                var nameList = ["bytes", "kB", "mB", "gB", "tB", "pB"];
-                var name = 0;
-                while(size > 1000) {
-                    size /= 1000;
-                    name++;
-                }
-                return (Math.round(size * 10) / 10) + " " + nameList[name];
+            var confirmSuccess = function(response) {
+                jQuery('#confirmModal').modal('hide');
             };
 
-            // Defines an event handler for drop down menus in the field type confirmation modal.
+            var confirmFail = function(response) {
+                $scope.nameTypePairs = response.responseJSON;
+                $scope.$apply();
+                jQuery('#convertFailedText').show();
+                setupDropdowns();
+            };
+
+            var showConfirmModal = function() {
+                jQuery('#dateStringInput')[0].value = importService.getDateString();
+                jQuery('#userNameCreatedText')[0].innerHTML = "Your username is " + importService.getUserName();
+                jQuery('#convertFailedText').hide()
+                jQuery('#confirmModal').modal('show');
+                setupDropdowns();
+            };
+
             var confirmChoicesDropdownChange = function(evnt) {
                 evnt.stopPropagation();
                 var name = evnt.target.id.split("-")[0];
                 var value = evnt.target.value;
-                $scope.fieldTypePairs.forEach(function(pair) {
+                $scope.nameTypePairs.forEach(function(pair) {
                     if(pair.name === name) {
                         pair.type = value;
                     }
                 });
             };
 
-            /*
-             * Initializes the dropdown menus in the field type confirmation modal to be what the server guessed, as well as adding change handlers
-             * that keep the types in the scope up to date with the types in the menus.
-             */
             var setupDropdowns = function() {
-                $scope.fieldTypePairs.forEach(function(pair) {
+                $scope.nameTypePairs.forEach(function(pair) {
                     var dropdown = document.getElementById(pair.name+"-options");
                     dropdown.value = pair.type;
                     dropdown.addEventListener("change", confirmChoicesDropdownChange, false);
                 });
             };
 
-            // Define some event handlers and attach them to elements in the import file modal.
+            var displayFileInfo = function(file) {
+                document.getElementById("selectedFileIndicator").innerHTML = (file === undefined) ? "No file selected" : 
+                    (file.size > importService.getMaxSize(false)) ? "File too large - size limit is " + importService.getMaxSize(true) :
+                        file.name + " - " + importService.sizeToReadable(file.size);
+            }
+
+// =====================================================================================================================
+// Define some behaviors for objects in the import modal and the import modal itself.
+// =====================================================================================================================
 
             var importModalDragEnter = function(evnt) {
                 evnt.stopPropagation();
@@ -174,7 +152,7 @@ angular.module('neonDemo.directives')
                 displayFileInfo(file);
             };
 
-            var importModalOnFileSelectChange = function(evnt) {
+            var importModalFileSelectChange = function(evnt) {
                 evnt.stopPropagation();
                 evnt.preventDefault();
                 file = fileSelector.files[0];
@@ -186,6 +164,10 @@ angular.module('neonDemo.directives')
                 displayFileInfo(file);
             };
 
+            var importModalOnShow = function(evnt) {
+                jQuery('#usernameInput')[0].value = importService.getUserName();
+            }
+
             // Set behavior of drag and drop element within import file modal.
             var dragDrop = document.getElementById("fileDragAndDrop");
             dragDrop.addEventListener("dragenter", importModalDragEnter, false);
@@ -196,9 +178,9 @@ angular.module('neonDemo.directives')
             fileSelector.addEventListener("dragenter", importModalDragEnter, false);
             fileSelector.addEventListener("dragover", importModalDragOver, false);
             fileSelector.addEventListener("drop", importModalDrop, false);
-            fileSelector.addEventListener("change", importModalOnFileSelectChange, false);
-            // Clear selected file and reset text when import modal is hidden.
-            jQuery("#importModal").on("hidden.bs.modal", importModalOnHidden);
+            fileSelector.addEventListener("change", importModalFileSelectChange, false);
+            // Clear selected file and reset text when import modal is hidden, and set username to what it was last time when the modal appears.
+            jQuery("#importModal").on("hidden.bs.modal", importModalOnHidden).on("show.bs.modal", importModalOnShow);
             // Hide the text portion of the file selector element -  we have our own, and it doesn't update when the modal closes and reopens.
             jQuery("#fileSelect").css("color", "transparent");
         }

@@ -1,0 +1,27 @@
+<ul class="nav navbar-nav">
+  <li>
+    <a data-toggle="modal" data-target="#dropModal" class="navbar-nav collapsed dropdown-toggle primary navbar-list-bottom neon-popup-button" ng-show="canImport">
+      Drop Dataset
+    </a>
+  </li>
+</ul>
+
+<div class="modal fade" id="dropModal" tabIndex="-1" role="dialog" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+        <h4 class="modal-title" id="importModalLabel">Drop a dataset</h4>
+      </div>
+      <div class="modal-body centered">
+        <p>Username</p>
+        <div><input type="text" id="dropUsernameInput" value="" maxLength="40" size="20"></div>
+        <p>Dataset</p>
+        <div><input type="text" id="dropDatabaseInput" value="" maxLength="100" size="20"></div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-default" ng-click="dropDataset()">Drop</button>
+      </div>
+    </div>
+  </div>
+</div>
