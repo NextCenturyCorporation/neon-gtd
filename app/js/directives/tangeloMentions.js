@@ -19,7 +19,6 @@ angular.module('neonDemo.directives')
             chartOptions.toggleClass($scope.uniqueChartOptions);
 
             $scope.databaseName = "";
-            $scope.tables = [];
             $scope.filterItem = "";
             $scope.filterKeys = {};
 
@@ -89,10 +88,9 @@ angular.module('neonDemo.directives')
                     return;
                 }
 
-                $scope.databaseName = datasetService.getDatabase();
-                $scope.tables = datasetService.getTables();
+                $scope.databaseName = datasetService.getDatabases()[0].name;
                 $scope.filterItem = "";
-                $scope.filterKeys = filterService.createFilterKeys("tangelo-mentions", $scope.tables);
+                $scope.filterKeys = filterService.createFilterKeys("tangelo-mentions", datasetService.getDatabaseAndTableNames());
             };
 
             // this method is called when a user clicks on a node in the graph. There is a
