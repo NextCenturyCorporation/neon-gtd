@@ -19,12 +19,32 @@
 // Used by neon core server.  Don't delete this or you will probably break everything!
 neon.SERVER_URL = "/neon";
 
+/**
+ * Utility that calls the given function in an $apply if the given $scope is not in the apply/digest phase or just calls the given function normally otherwise.
+ * @param {Object} $scope The $scope of an angular directive.
+ * @param {Fucntion} func The function to call.
+ * @method safeApply
+ */
+neon.safeApply = function($scope, func) {
+    if(!$scope || !func || typeof func !== "function") {
+        return;
+    }
+
+    var phase = $scope.$root.$$phase;
+    if(phase === "$apply" || phase === "$digest") {
+        func();
+    } else {
+        $scope.$apply(func);
+    }
+};
+
 var neonDemo = angular.module('neonDemo', [
     'neonDemo.controllers',
     'neonDemo.services',
     'neonDemo.directives',
     'neonDemo.filters',
-    'gridster'
+    'gridster',
+    'ui.bootstrap.datetimepicker'
 ]);
 
 angular.module('neonDemo.directives', []);
@@ -71,7 +91,7 @@ var readLayoutFiles = function($http, layouts, layoutFiles, callback) {
                 layouts[layoutConfig.name] = layoutConfig.layout;
             }
             readLayoutFiles($http, layouts, layoutFiles, callback);
-        })
+        });
     } else {
         saveLayouts(layouts);
         if(callback) {
@@ -92,7 +112,7 @@ var readDatasetFiles = function($http, datasets, datasetFiles, callback) {
                 datasets.push(datasetConfig.dataset);
             }
             readDatasetFiles($http, datasets, datasetFiles, callback);
-        })
+        });
     } else {
         saveDatasets(datasets);
         if(callback) {
@@ -131,16 +151,24 @@ angular.element(document).ready(function() {
             ocpu.enableLogging = opencpuConfig.enableLogging;
             ocpu.useAlerts = opencpuConfig.useAlerts;
             ocpu.seturl(opencpuConfig.url);
+            ocpu.connected = true;
         }
+        neonDemo.constant('opencpu', opencpuConfig);
 
+        var helpConfig = (config.help || {
+            guide: undefined,
+            video: undefined
+        });
         var dashboardConfig = config.dashboard || {
             gridsterColumns: 6,
             gridsterMargins: 10,
             hideNavbarItems: false,
+            hideAddVisualizationsButton: false,
             hideAdvancedOptions: false,
             hideErrorNotifications: false,
             hideHeader: false
         };
+        dashboardConfig.help = helpConfig;
         neonDemo.constant('config', dashboardConfig);
 
         neonDemo.value('popups', {
@@ -176,7 +204,15 @@ angular.element(document).ready(function() {
 
         // Read each layout config file and set the layouts, then read each dataset config file and set the datasets, then start angular.
         readLayoutFiles($http, layouts, (files.layouts || []), function() {
-            readDatasetFiles($http, datasets, (files.datasets || []), startAngular)
+            readDatasetFiles($http, datasets, (files.datasets || []), startAngular);
         });
+
+        // Keep the autoplay video code here because when it was in the neonDemoController the dashboard would start playing the video whenever the dataset was changed.
+        if(dashboardConfig.showVideoOnLoad && dashboardConfig.help.video) {
+            neon.ready(function() {
+                $("#videoModal").modal("show");
+                $("#helpVideo").attr("autoplay", "");
+            });
+        }
     });
 });

@@ -22,13 +22,23 @@
         "hideNavbarItems": false,
         "hideAdvancedOptions": false,
         "hideErrorNotifications": false,
-        "hideHeaders": false
+        "hideHeaders": false,
+        "hideCloseButton": false,
+        "showVideoOnLoad": false
+    },
+
+    "help": {
+        "guide": "",
+        "video": ""
     },
 
     "opencpu": {
         "enableOpenCpu": false,
         "enableLogging": false,
         "useAlerts": false,
+        "enableAnomalyDetection": true,
+        "enableStl2": false,
+        "enableMmpp": false,
         "url": "http://neon-opencpu/ocpu/library/NeonAngularDemo/R"
     },
 
@@ -62,8 +72,14 @@
         "name": "Map",
         "sizeX": 4,
         "sizeY": 2,
-        "type": "heat-map",
+        "type": "map",
         "icon": "img/visualizations/Map64.png"
+    }, {
+        "name": "Ops Clock",
+        "sizeX": 2,
+        "sizeY": 2,
+        "type": "circular-heat-form",
+        "icon": "img/visualizations/OpsClock64.png"
     }, {
         "name": "Line Chart",
         "sizeX": 2,
@@ -77,11 +93,11 @@
         "type": "barchart",
         "icon": "img/visualizations/BarChart64.png"
     }, {
-        "name": "Ops Clock",
+        "name": "Sunburst Chart",
         "sizeX": 2,
         "sizeY": 2,
-        "type": "circular-heat-form",
-        "icon": "img/visualizations/OpsClock64.png"
+        "type": "sunburst",
+        "icon": "img/visualizations/Sunburst64.png"
     }, {
         "name": "Text Cloud",
         "sizeX": 2,
@@ -89,17 +105,11 @@
         "type": "tag-cloud",
         "icon": "img/visualizations/TagCloud64.png"
     }, {
-        "name": "Count Table",
+        "name": "Aggregation Table",
         "sizeX": 2,
         "sizeY": 2,
         "type": "count-by",
         "icon": "img/visualizations/Count64.png"
-    }, {
-        "name": "Sunburst Chart",
-        "sizeX": 2,
-        "sizeY": 2,
-        "type": "sunburst",
-        "icon": "img/visualizations/Sunburst64.png"
     }, {
         "name": "Graph",
         "sizeX": 4,
@@ -181,12 +191,21 @@
                 }
             }]
         }],
+        "mapConfig": {
+            "bounds" : {
+                "left": -180,
+                "bottom": -90,
+                "right": 180,
+                "top": 90
+            }
+        },
         "mapLayers": [{
             "database": "test",
             "table": "earthquakes",
             "type": "heatmap",
             "latitudeMapping": "latitude",
             "longitudeMapping": "longitude",
+            "limit": 5000,
             "sizeBy": "mag"
         }, {
             "database": "test",
@@ -195,6 +214,7 @@
             "type": "cluster",
             "latitudeMapping": "latitude",
             "longitudeMapping": "longitude",
+            "limit": 5000,
             "colorBy": "magType",
             "sizeBy": "mag"
         }, {
@@ -204,9 +224,16 @@
             "type": "points",
             "latitudeMapping": "latitude",
             "longitudeMapping": "longitude",
+            "limit": 5000,
             "colorBy": "magType",
             "sizeBy": "mag"
-        }]
+        }],
+        "linkyConfig": {
+          "mentions": false,
+          "hashtags": false,
+          "urls": true,
+          "linkTo": "twitter"
+        }
     }],
 
     "layouts": {
@@ -218,7 +245,7 @@
         }, {
             "sizeX": 4,
             "sizeY": 2,
-            "type": "heat-map"
+            "type": "map"
         }, {
             "sizeX": 2,
             "sizeY": 2,
@@ -244,12 +271,14 @@
             "bindings": {
                 "bind-database": "'myDatabase'",
                 "bind-table": "'myTable'",
-                "bind-date-field": "'date'"
+                "bind-date-field": "'date'",
+                "override-start-date": "'1/1/2013'",
+                "override-end-date": "1388534399000"
             }
         }, {
             "sizeX": 4,
             "sizeY": 2,
-            "type": "heat-map",
+            "type": "map",
             "bindings": {
                 "bind-database": "'myDatabase'",
                 "bind-table": "'myTable'",

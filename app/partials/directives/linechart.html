@@ -1,7 +1,7 @@
 <div class="header-container" ng-show="!(hideHeader)">
     <span class="header-text pull-left">{{options.table.prettyName}}</span>
 
-    <options-menu parent-element="element" button-text="optionsMenuButtonText" show-button-text="showOptionsMenuButtonText" ng-show="!(hideAdvancedOptions)">
+    <options-menu parent-element="element" export-function="makeLinechartExportObject" button-text="optionsMenuButtonText" show-button-text="showOptionsMenuButtonText" ng-show="!(hideAdvancedOptions)">
         <div class="form-group" ng-show="!(hideAdvancedOptions)">
             <label>Database</label>
             <select class="form-control" ng-model="options.database" ng-options="database.prettyName for database in databases" ng-required="true" ng-disabled="(databases.length < 2)" ng-change="updateTables()">
@@ -45,11 +45,18 @@
 
 <div class="header-container filter-container">
     <div class="legend">
+        <div class="filter-reset pull-right" ng-class="{true: '', false: 'hidden'}[brushExtent.length > 0]" title="Date from {{brushExtent[0].toUTCString()}} to {{brushExtent[1].toUTCString()}}">
+            <span class="filter-label">Date Filter</span>
+            <span class="glyphicon glyphicon-remove" ng-click="removeBrush()"></span>
+        </div>
+
         <div class="legend-item legend-item-clickable" title="{{colorMapping.series}} {{getLegendItemAggregationText(colorMapping)}}" ng-repeat="colorMapping in colorMappings" ng-click="toggleSeries(colorMapping.series)" ng-class="{true: 'legend-hidden', false: ''}[colorMapping.hidden]">
             <span class="legend-icon" style="background-color: {{colorMapping.color}}"></span>
             <span class="legend-text">{{colorMapping.series}}</span>
             <span class="legend-text legend-text-small">{{getLegendItemAggregationText(colorMapping)}}</span>
         </div>
+
+        <span class="no-data pull-left" ng-show="noData">No data for current filters.</span>
     </div>
 </div>
 

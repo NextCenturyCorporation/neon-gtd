@@ -28,6 +28,12 @@ angular.module("neonDemo.services")
             databases: []
         };
 
+        // Use the Dataset Service to save settings for specific databases/tables and publish messages to all visualizations if those settings change.
+        service.messenger = new neon.eventing.Messenger();
+
+        // The Dataset Service saves the brush extent used to filter the date for each database/table.
+        service.DATE_CHANGED = "date_changed";
+
         /**
          * Sets the active dataset to the given dataset.
          * @param {Object} The dataset containing {String} name, {String} layout, {String} datastore, {String} hostname,
@@ -46,32 +52,38 @@ angular.module("neonDemo.services")
             service.dataset.databases = dataset.databases || [];
 
             service.dataset.mapLayers = dataset.mapLayers || [];
+            service.dataset.mapConfig = dataset.mapConfig || {};
             service.dataset.relations = dataset.relations || [];
+            service.dataset.linkyConfig = dataset.linkyConfig || {};
 
             // Remove databases from the dataset that contain no tables.
             var databaseIndexToRemove = [];
-            for(var i = 0; i < service.dataset.databases.length; ++i) {
-                if(!service.dataset.databases[i].prettyName) {
-                    service.dataset.databases[i].prettyName = service.dataset.databases[i].name;
+            service.dataset.databases.forEach(function(database, index) {
+                if(!database.prettyName) {
+                    database.prettyName = database.name;
                 }
-                if(!(service.dataset.databases[i].tables || service.dataset.databases[i].tables.length)) {
-                    databaseIndexToRemove.push(i);
+                if(!(database.tables || database.tables.length)) {
+                    databaseIndexToRemove.push(index);
                 }
-            }
+            });
 
-            for(var i = databaseIndexToRemove.length; i > 0; --i) {
-                service.dataset.databases.splice(i, 1);
-            }
+            databaseIndexToRemove.forEach(function(index) {
+                service.dataset.databases.splice(index, 1);
+            });
 
-            for(var i = 0; i < service.dataset.databases.length; ++i) {
-                for(var j = 0; j < service.dataset.databases[i].tables.length; ++j) {
-                    if(!service.dataset.databases[i].tables[j].prettyName) {
-                        service.dataset.databases[i].tables[j].prettyName = service.dataset.databases[i].tables[j].name;
+            service.dataset.databases.forEach(function(database) {
+                database.tables.forEach(function(table) {
+                    if(!table.prettyName) {
+                        table.prettyName = table.name;
                     }
-                    service.dataset.databases[i].tables[j].fields = service.dataset.databases[i].tables[j].fields || [];
-                    service.dataset.databases[i].tables[j].mappings = service.dataset.databases[i].tables[j].mappings || {};
-                }
-            }
+                    table.fields = table.fields || [];
+                    table.mappings = table.mappings || {};
+                    // Create a filter key for each database/table pair with a date mapping.
+                    if(table.mappings.date) {
+                        table.dateFilterKey = "date-" + database.name + "-" + table.name + "-" + uuid();
+                    }
+                });
+            });
         };
 
         /**
@@ -261,6 +273,23 @@ angular.module("neonDemo.services")
         };
 
         /**
+         * Returns the field objects for the table with the given name.
+         * @param {String} The database name
+         * @param {String} The table name
+         * @method getFields
+         * @return {Array} The array of field objects if a match exists or an empty array otherwise.
+         */
+        service.getFields = function(databaseName, tableName) {
+            var table = service.getTableWithName(databaseName, tableName);
+
+            if(!table) {
+                return [];
+            }
+
+            return table.fields;
+        };
+
+        /**
          * Returns the pretty field name for the field with the given name in the table with the given name.
          * @param {String} The table name
          * @param {String} The field name
@@ -375,18 +404,18 @@ angular.module("neonDemo.services")
          * the relation object for the table and fields given in the arguments
          */
         service.getRelations = function(databaseName, tableName, fieldNames) {
-            var i, j, k, l;
+            var i;
+            var j;
+            var k;
+            var l;
             var relations = service.dataset.relations;
 
-            var initializeMap = function(map, key1, key2, key3) {
+            var initializeMapAsNeeded = function(map, key1, key2) {
                 if(!(map[key1])) {
                     map[key1] = {};
                 }
                 if(!(map[key1][key2])) {
-                    map[key1][key2] = {};
-                }
-                if(!(map[key1][key2][key3])) {
-                    map[key1][key2][key3] = [];
+                    map[key1][key2] = [];
                 }
                 return map;
             };
@@ -403,15 +432,28 @@ angular.module("neonDemo.services")
                     // If the current relation contains a match for the input database/table/field, iterate through the elements in the current relation.
                     if(relation[databaseName] && fieldName === relation[databaseName][tableName]) {
                         var databaseNames = Object.keys(relation);
+                        // Add each database/table/field in the current relation to the map.  Note that this will include the input database/table/field.
                         for(k = 0; k < databaseNames.length; ++k) {
                             var relationDatabaseName = databaseNames[k];
                             var tableNames = Object.keys(relation[relationDatabaseName]);
                             for(l = 0; l < tableNames.length; ++l) {
                                 var relationTableName = tableNames[l];
                                 var relationFieldName = relation[relationDatabaseName][relationTableName];
-                                relationToFields = initializeMap(relationToFields, relationDatabaseName, relationTableName, fieldName);
-                                // Add each database/table/field in the current relation to the map.  Note that this will include the input database/table/field.
-                                relationToFields[relationDatabaseName][relationTableName][fieldName].push(relationFieldName);
+                                relationToFields = initializeMapAsNeeded(relationToFields, relationDatabaseName, relationTableName);
+
+                                var existingIndex = relationToFields[relationDatabaseName][relationTableName].map(function(object) {
+                                    return object.initial;
+                                }).indexOf(fieldName);
+                                if(existingIndex >= 0) {
+                                    // If the database/table/field exists in the relation, add another related field.
+                                    relationToFields[relationDatabaseName][relationTableName][existingIndex].related.push(relationFieldName);
+                                } else {
+                                    // Else create a new object for the database/table/field in the relation and add its related field.
+                                    relationToFields[relationDatabaseName][relationTableName].push({
+                                        initial: fieldName,
+                                        related: [relationFieldName]
+                                    });
+                                }
                             }
                         }
                     }
@@ -439,14 +481,35 @@ angular.module("neonDemo.services")
             var result = {
                 database: databaseName,
                 table: tableName,
-                fields: {}
+                fields: []
             };
 
             for(i = 0; i < fieldNames.length; ++i) {
-                result.fields[fieldNames[i]] = [fieldNames[i]];
+                result.fields.push({
+                    initial: fieldNames[i],
+                    related: [fieldNames[i]]
+                });
             }
 
             return [result];
+        };
+
+        /**
+         * Returns the initial configuration parameters for any maps in this dataset.
+         * @method getMapConfig
+         * @return {String}
+         */
+        service.getMapConfig = function() {
+            return service.dataset.mapConfig;
+        };
+
+        /**
+         * Sets the map layer configuration for the active dataset.
+         * @param {object} config Initial configuration parameters for any maps in this dataset.
+         * @method setMapConfig
+         */
+        service.setMapConfig = function(config) {
+            service.dataset.mapConfig = config;
         };
 
         /**
@@ -459,12 +522,110 @@ angular.module("neonDemo.services")
         };
 
         /**
-         * Returns the map layer configuration for the active dataset.
+         * Sets the map layer configuration for the active dataset.
          * @param {object} config A set of layer configuration objects.
          * @method setMapLayers
          */
         service.setMapLayers = function(config) {
             service.dataset.mapLayers = config;
+        };
+
+        /**
+         * Returns the linky configuration for the active dataset.
+         * @method getLinkyConfig
+         * @return {Object}
+         */
+        service.getLinkyConfig = function() {
+            return service.dataset.linkyConfig;
+        };
+
+        /**
+         * Sets the linky configuration for the active dataset.
+         * @param {Object} config A linky configuration object
+         * @param {Boolean} config.mentions If mentions should be linked
+         * @param {Boolean} config.hashtags If hashtags should be linked
+         * @param {Boolean} config.urls If URLs should be linked
+         * @param {String} config.linkTo Location where mentions and hashtags
+         * should be linked to. Options: "twitter", "instagram", "github"
+         * @method setLinkyConfig
+         */
+        service.setLinkyConfig = function(config) {
+            service.dataset.linkyConfig = config;
+        };
+
+        /**
+         * Returns the map of date filter keys for this dataset.
+         * @method getDateFilterKeys
+         * @return {Object}
+         */
+        service.getDateFilterKeys = function() {
+            var dateFilterKeys = {};
+            service.dataset.databases.forEach(function(database) {
+                dateFilterKeys[database.name] = {};
+                database.tables.forEach(function(table) {
+                    dateFilterKeys[database.name][table.name] = table.dateFilterKey ? table.dateFilterKey : "";
+                });
+            });
+            return dateFilterKeys;
+        };
+
+        /**
+         * Publishes a date changed message with the given database name, table name, and brush extent.
+         * @param {String} databaseName
+         * @param {String} tableName
+         * @param {Array} brushExtent
+         * @method publishDateChanged
+         * @private
+         */
+        var publishDateChanged = function(databaseName, tableName, brushExtent) {
+            service.messenger.publish(service.DATE_CHANGED, {
+                databaseName: databaseName,
+                tableName: tableName,
+                brushExtent: brushExtent
+            });
+        };
+
+        /**
+         * Sets the date brush extent for the databases and tables in the given relations to the given brush extent and publishes a date changed message for each.
+         * @param {Array} relations
+         * @param {Array} brushExtent
+         * @method setDateBrushExtentForRelations
+         */
+        service.setDateBrushExtentForRelations = function(relations, brushExtent) {
+            relations.forEach(function(relation) {
+                var table = service.getTableWithName(relation.database, relation.table);
+                if(table) {
+                    table.dateBrushExtent = brushExtent;
+                    publishDateChanged(relation.database, relation.table, brushExtent);
+                }
+            });
+        };
+
+        /**
+         * Returns the date brush extent for the database and table with the given names or an empty array if no brush extent has been set.
+         * @param {String} databaseName
+         * @param {String} tableName
+         * @method getDateBrushExtent
+         * @return {Array}
+         */
+        service.getDateBrushExtent = function(databaseName, tableName) {
+            var table = service.getTableWithName(databaseName, tableName);
+            return (table && table.dateBrushExtent) ? table.dateBrushExtent : [];
+        };
+
+        /**
+         * Removes the date brush extent for the databases and tables in the given relations and publishes a date changed message for each.
+         * @param {Array} relations
+         * @method removeDateBrushExtentForRelations
+         */
+        service.removeDateBrushExtentForRelations = function(relations) {
+            relations.forEach(function(relation) {
+                var table = service.getTableWithName(relation.database, relation.table);
+                if(table) {
+                    table.dateBrushExtent = [];
+                    publishDateChanged(relation.database, relation.table, []);
+                }
+            });
         };
 
         return service;

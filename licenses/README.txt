@@ -42,6 +42,9 @@ MIT/X11 (mit.txt)
   -- angular.min.js v1.2.26
   -- angular-mocks.js v1.2.26
   -- angular-route.min.js v1.2.26
+- Angular-Bootstrap-Datetimepicker
+  -- angular-bootstrap-datetimepicker v0.3.8
+  -- moment.js v2.10.3
 - Angular-Gridster
  -- angular-gridster.min.js 0.10.7
 - Bootstrap

@@ -16,6 +16,14 @@
  */
 
 coreMap.Map.Layer = coreMap.Map.HeatmapLayer || {};
+/**
+ * This module extends an OpenLayers 2 heatmap based upon the Heatmapjs
+ * library (http://www.patrick-wied.at/static/heatmapjs/).
+ *
+ * @namespace coreMap.Map.Layer
+ * @class HeatmapLayer
+ * @constructor
+ */
 coreMap.Map.Layer.HeatmapLayer = OpenLayers.Class(OpenLayers.Layer.Heatmap, {
     CLASS_NAME: "coreMap.Map.Layer.HeatmapLayer",
     data: [],
@@ -28,38 +36,40 @@ coreMap.Map.Layer.HeatmapLayer = OpenLayers.Class(OpenLayers.Layer.Heatmap, {
      */
     initialize: function(name, map, baseLayer, options) {
         // Override the style for our specialization.
-        var me = this;
+        var blur = (options && options.blur) ? options.blur : coreMap.Map.Layer.HeatmapLayer.DEFAULT_BLUR;
+        var minOpacity = (options && options.minOpacity) ? options.minOpacity : coreMap.Map.Layer.HeatmapLayer.DEFAULT_MIN_OPACITY;
+        var maxOpacity = (options && options.maxOpacity) ? options.maxOpacity : coreMap.Map.Layer.HeatmapLayer.DEFAULT_MAX_OPACITY;
+        maxOpacity = Math.max(minOpacity, maxOpacity);
         var heatmapOptions = {
             visible: true,
-            radius: 10
+            radius: coreMap.Map.Layer.HeatmapLayer.DEFAULT_RADIUS,
+            minOpacity: minOpacity,
+            maxOpacity: maxOpacity,
+            blur: blur,
+            valueField: coreMap.Map.Layer.HeatmapLayer.DEFAULT_INTENSITY_MAPPING
         };
         var extendOptions = options || {};
         extendOptions.baseLayer = false;
-        extendOptions.projection = new OpenLayers.Projection("EPSG:4326");;
+        extendOptions.projection = new OpenLayers.Projection("EPSG:4326");
         extendOptions.opacity = 0.3;
 
         // Call the super constructor, you will have to define the variables geometry, attributes and style
         var args = [name, map, baseLayer, heatmapOptions, extendOptions];
         OpenLayers.Layer.Heatmap.prototype.initialize.apply(this, args);
 
-        this.alwaysInRange = true;  // Force the layer to always be in range.
+        // Let OpenLayers know the display of this layer is not scale-dependent by setting "always in range"
+        // to true.  We want the later to be active at any map scale.
+        this.alwaysInRange = true;
 
         // When we are added to a map, add a resize handler on the map so we know when to rerender
         // our canvas.
-        this.events.register('added', this, function(event) {
+        this.events.register('added', this, function() {
             var me = this;
 
             this.resizeHandler = function() {
-                me.heatmap.set("width", this.getSize().w);
-                me.heatmap.set("height", this.getSize().h);
-                me.heatmap.resize();
-
-                // If we have data, update the layer so it redraws.  updating an empty layer
-                // causes exceptions.
-                if(me.data.length > 0) {
-                    me.updateLayer();
-                }
-            }
+                me.heatmap._renderer.setDimensions(this.getSize().w, this.getSize().h);
+                me.updateLayer();
+            };
             this.map.events.register('updatesize', this.map, this.resizeHandler);
         });
 
@@ -88,6 +98,20 @@ coreMap.Map.Layer.HeatmapLayer.prototype.getValueFromDataElement = function(mapp
     return element[mapping];
 };
 
+/**
+ * Checks if the mappings exist in the data element
+ * @param {Object} element An element of the data array.
+ * @return {Boolean} True if element contains all the mappings, false otherwise
+ * @method areValuesInDataElement
+ */
+coreMap.Map.Layer.HeatmapLayer.prototype.areValuesInDataElement = function(element) {
+    if(element[this.latitudeMapping] && element[this.longitudeMapping]) {
+        return true;
+    }
+
+    return false;
+};
+
 coreMap.Map.Layer.HeatmapLayer.prototype.setData = function(data) {
     this.data = data;
     this.updateFeatures();
@@ -101,7 +125,6 @@ coreMap.Map.Layer.HeatmapLayer.prototype.setData = function(data) {
  * @return {Object} an object containing the location and count for the heatmap.
  * @method createHeatmapDataPoint
  */
-
 coreMap.Map.Layer.HeatmapLayer.prototype.createHeatmapDataPoint = function(element, longitude, latitude) {
     var count = this.getValueFromDataElement(this.sizeMapping, element);
     var point = new OpenLayers.LonLat(longitude, latitude);
@@ -129,9 +152,10 @@ coreMap.Map.Layer.HeatmapLayer.prototype.updateFeatures = function() {
     });
 };
 
+coreMap.Map.Layer.HeatmapLayer.DEFAULT_BLUR = 0.85;
 coreMap.Map.Layer.HeatmapLayer.DEFAULT_LATITUDE_MAPPING = "latitude";
 coreMap.Map.Layer.HeatmapLayer.DEFAULT_LONGITUDE_MAPPING = "longitude";
-coreMap.Map.Layer.HeatmapLayer.DEFAULT_SIZE_MAPPING = "count_";
-coreMap.Map.Layer.HeatmapLayer.DEFAULT_OPACITY = 0.8;
+coreMap.Map.Layer.HeatmapLayer.DEFAULT_MAX_OPACITY = 0.8;
+coreMap.Map.Layer.HeatmapLayer.DEFAULT_MIN_OPACITY = 0.3;
 coreMap.Map.Layer.HeatmapLayer.DEFAULT_RADIUS = 10;
-
+coreMap.Map.Layer.HeatmapLayer.DEFAULT_INTENSITY_MAPPING = "count";

@@ -11,8 +11,10 @@
         <link rel="stylesheet" type="text/css" href="lib/bootstrap/css/bootstrap.min.css">
         <link rel="stylesheet" type="text/css" href="lib/jquery-ui/themes/ui-lightness/jquery-ui.min.css">
         <link rel="stylesheet" type="text/css" href="lib/jquery-ui/themes/ui-lightness/jquery.ui.theme.css">
+        <link rel="stylesheet" type="text/css" href="lib/openlayers/theme/default/style.css">
         <link rel="stylesheet" type="text/css" href="js/vendor/slick-grid/css/slick.grid.css">
         <link rel="stylesheet" type="text/css" href="lib/angular-gridster/css/angular-gridster.min.css">
+        <link rel="stylesheet" type="text/css" href="lib/angular-bootstrap-datetimepicker/css/datetimepicker.css">
 
         <link rel="stylesheet" type="text/css" href="css/app.css">
 
@@ -28,21 +30,67 @@
     </head>
     <body class="ng-hide" ng-controller="neonDemoController" ng-show="displayDashboard">
 
+        <!-- Help Video Modal -->
+        <div class="modal fade neon-popup" id="videoModal" tabindex="-1" role="dialog" aria-hidden="true">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+                        <h4 class="modal-title">Neon Dashboard Demo Video</h4>
+                    </div>
+                    <div class="modal-body">
+                        <video id="helpVideo" ng-src="{{help.video}}" controls>
+                            Your browser does not support the video tag.
+                        </video>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <!-- Header -->
         <!-- This could be made into either a directive or a partial -->
         <nav role="navigation" class="navbar">
-            <div class="navbar-default navbar-static-top" data-spy="{true: '', false: 'affix'}[hideNavbarItems]">
+            <div class="navbar-default navbar-static-top" ng-class="{true: '', false: 'affix'}[hideNavbarItems == true]">
                 <div class="container">
 
+                    <div class="pull-left" ng-show="hideNavbarItems">
+                        <span class="navbar-text navbar-title-text">
+                            {{navbarTitle}}
+                        </span>
+                    </div>
+
+                    <options-menu parent-element="element" class="navbar-text pull-right" ng-show="!(hideAdvancedOptions)">
+                        <!-- Buttons to select file format -->
+                        <label>Export Format</label>
+                        <div file-formats gridster-configs="visualizations" ng-hide="hideNavbarItems"></div>
+                        <!-- Export option -->
+                        <div export-widgets gridster-configs="visualizations" ng-hide="hideNavbarItems"></div>
+                    </options-menu>
+
                     <div powered-by-neon class="pull-right"></div>
+
+                    <!-- Help Button -->
+                    <div class="dropdown pull-right" ng-show="(help.guide || help.video)">
+                        <a class="dropdown-toggle navbar-text" data-toggle="dropdown" href="#" role="button">
+                            <img class="brand-image" src="img/Help_34x34.png" style="margin-right: 5px;"></img>Help<span class="caret" style="margin-left: 5px;"></span>
+                        </a>
+                        <ul class="dropdown-menu">
+                            <li ng-show="(help.guide)"><a href="{{help.guide}}" target="guide">
+                                User Guide
+                            </a></li>
+                            <li ng-show="(help.video)"><a href="#" data-toggle="modal" data-target="#videoModal">
+                                Demo Video
+                            </a></li>
+                        </ul>
+                    </div>
 
                     <div class="clearfix visible-xs"></div>
 
                     <!-- Database Config -->
-                    <database-config gridster-configs="visualizations" ng-hide="hideNavbarItems"></database-config>
+                    <database-config gridster-configs="visualizations" hide-advanced-options="hideAdvancedOptions" ng-hide="hideNavbarItems"></database-config>
 
                     <!-- Add visualization control -->
-                    <div add-visualization gridster-configs="visualizations" ng-hide="hideNavbarItems"></div>
+                    <div add-visualization gridster-configs="visualizations" ng-hide="hideNavbarItems || hideAddVisualizationsButton"></div>
 
                     <!--
                     <ul class="nav navbar-nav" ng-hide="hideNavbarItems">
@@ -78,7 +126,9 @@
         </nav>
 
         <!-- Trays -->
+        <!--
         <div class="panel-group" id="trays" ng-hide="hideNavbarItems">
+        -->
 
             <!-- Filter Builder tray -->
             <!--
@@ -159,7 +209,9 @@
 
             </div> -->
 
+        <!--
         </div>
+        -->
 
         <!-- DASHBOARD CONTENT -->
         <div class="container">
@@ -206,8 +258,8 @@
         <script src="lib/d3/js/d3.min.js"></script>
 
         <script src="lib/openlayers/OpenLayers.js"></script>
-        <script src="lib/openlayers-heatmap/js/heatmap.js"></script>
-        <script src="lib/openlayers-heatmap/js/heatmap-openlayers.js"></script>
+        <script src="lib/heatmapjs/js/heatmap.min.js"></script>
+        <script src="js/vendor/openlayers-heatmapjs/heatmap-openlayers.js"></script>
         <script src="lib/jquery.tagcloud/js/jquery.tagcloud.js"></script>
         <script src="lib/threedubmedia.jquery.event/js/jquery.event.drag.js"></script>
         <script src="lib/threedubmedia.jquery.event/js/jquery.event.drop.js"></script>
@@ -222,6 +274,10 @@
         <script src="lib/mergesort/js/merge-sort.js"></script>
         <script src="lib/bootstrap/js/bootstrap.min.js"></script>
         <script src="lib/remarkable-bootstrap-notify/js/bootstrap-notify.min.js"></script>
+
+        <!-- Moment required for angular-bootstrap-datetimepicker -->
+        <script src="lib/moment/js/moment.min.js"></script>
+        <script src="lib/angular-bootstrap-datetimepicker/js/datetimepicker.js"></script>
 
         <!-- Include Tangelo Mentions files -->
         <script src="js/vendor/vega/vega-1.3.3.min.js"></script>
@@ -243,6 +299,8 @@
         <script src="js/coremap/coremap.js"></script>
         <script src="js/coremap/heatmapLayer.js"></script>
         <script src="js/coremap/pointsLayer.js"></script>
+        <script src="js/coremap/selectedPointsLayer.js"></script>
+        <script src="js/coremap/nodeLayer.js"></script>
         <script src="js/tables/table.js"></script>
         <script src="js/charts/sunburst.js"></script>
 
@@ -252,6 +310,7 @@
         <script src="js/datasetService.js"></script>
         <script src="js/errorNotificationService.js"></script>
         <script src="js/filterService.js"></script>
+        <script src="js/exportService.js"></script>
         <script src="js/neonDemoController.js"></script>
 
         <script src="js/charts/circularHeatChart.js"></script>
@@ -263,6 +322,8 @@
         <script src="js/directives/countBy.js"></script>
         <script src="js/directives/databaseConfig.js"></script>
         <script src="js/directives/directedGraph.js"></script>
+        <script src="js/directives/exportWidgets.js"></script>
+        <script src="js/directives/fileFormats.js"></script>
         <script src="js/directives/filterBuilder.js"></script>
         <script src="js/directives/filterState.js"></script>
         <script src="js/directives/linechart.js"></script>

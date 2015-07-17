@@ -11,8 +11,8 @@
         </label>
       </div>
 
-      <button type="button" class="btn btn-danger" title="Reset All Filters" ng-click="resetFilters()">
-          Reset
+      <button type="button" class="btn btn-danger" title="Reset Filter Builder" ng-disabled="filterTable.getFilterRows().length == 0" ng-click="resetFilters()">
+          Reset Filter Builder
       </button>
     </div>
 </div>
@@ -29,7 +29,7 @@
         </label>
       </div>
 
-      <button type="button" class="btn btn-danger" title="Reset All Filters" ng-click="resetFilters()">
+      <button type="button" class="btn btn-danger" title="Reset Filter Builder" ng-disabled="filterTable.getFilterRows().length == 0" ng-click="resetFilters()">
           Reset
       </button>
     </div>
@@ -61,19 +61,27 @@
         </select>
       </div>
       <div class="form-group">
-        <select class="form-control" ng-model="filterRow.table" ng-options="table.prettyName for table in tables" ng-disabled="(tables.length < 2) || !(navbarItem)" ng-change="updateFieldsForFilterRow(filterRow)">
+        <select class="form-control" ng-model="filterRow.table" ng-options="table.prettyName for table in filterRow.tableOptions" ng-disabled="(tables.length < 2) || !(navbarItem)" ng-change="updateFieldsForFilterRow(filterRow)">
         </select>
       </div>
       <div class="form-group">
-        <select class="form-control" ng-model="filterRow.columnValue" ng-disabled="(filterRow.columnOptions.length < 2)" ng-options="column for column in filterRow.columnOptions" ng-change="dirtyFilterRow(filterRow)">
+        <select class="form-control" ng-model="filterRow.columnValue" ng-options="column for column in filterRow.columnOptions" ng-disabled="(filterRow.columnOptions.length < 2) || !(navbarItem)" ng-change="dirtyFilterRow(filterRow)">
         </select>
       </div>
       <div class="form-group">
-        <select class="form-control"  ng-model="filterRow.operatorValue" ng-disabled="(filterTable.operatorOptions.length < 2)" ng-options="operator for operator in filterTable.operatorOptions" ng-change="dirtyFilterRow(filterRow)">
+        <select class="form-control"  ng-model="filterRow.operatorValue" ng-options="operator for operator in filterTable.operatorOptions" ng-disabled="(filterTable.operatorOptions.length < 2)" ng-change="dirtyFilterRow(filterRow)">
         </select>
       </div>
       <div class="form-group">
-        <input type="text" class="form-control" placeholder="Value" ng-model="filterRow.value" ng-change="dirtyFilterRow(filterRow)">
+        <input type="text" class="form-control" placeholder="Value" ng-keyup="$event.keyCode == 13 && updateFilterRow(filterRow.database.name, filterRow.table.name, filterRow.index)" ng-model="filterRow.value" ng-change="dirtyFilterRow(filterRow)" ng-show="!(filterRow.isDate)">
+        <div class="neon-datetimepicker dropdown" ng-show="(filterRow.isDate)">
+            <button class="btn btn-default dropdown-toggle" id="date-dropdown-{{$index}}" role="button" data-toggle="dropdown" data-target="#" href="#" title="{{filterRow.value ? filterRow.value.toUTCString() : 'Choose Date'}}">
+                <span class="glyphicon glyphicon-calendar"></span> {{filterRow.value ? filterRow.value.toUTCString() : 'Choose Date'}}
+            </button>
+            <ul class="dropdown-menu" role="menu">
+                <datetimepicker data-ng-model="filterRow.value" data-on-set-time="dirtyFilterRow(filterRow)" data-datetimepicker-config="{ dropdownSelector: '#date-dropdown-{{$index}}', startView: 'year', minView: 'hour' }"/>
+            </ul>
+        </div>
       </div>
       <div class="form-group" ng-show="(navbarItem)">
         <button type="button" class="btn btn-default refresh" title="Refresh" ng-disabled="!(filterRow.dirty)" ng-click="updateFilterRow(filterRow.database.name, filterRow.table.name, filterRow.index)">
@@ -108,15 +116,23 @@
         </select>
       </div>
       <div class="form-group">
-        <select id="filter-field-selection" class="form-control" ng-model="selectedField" ng-disabled="(fields.length == 0)" ng-options="field for field in fields">
+        <select id="filter-field-selection" class="form-control" ng-model="selectedField" ng-disabled="(fields.length == 0)" ng-options="field for field in fields" ng-change="onSelectedFieldChange()">
         </select>
       </div>
       <div class="form-group">
-        <select id="filter-operator-selection" class="form-control"  ng-model="selectedOperator" ng-disabled="(fields.length == 0)" ng-options="operator for operator in filterTable.operatorOptions">
+        <select id="filter-operator-selection" class="form-control"  ng-model="selectedOperator" ng-options="operator for operator in filterTable.operatorOptions" ng-disabled="(fields.length == 0)" ng-change="onSelectedOperatorChange()">
         </select>
       </div>
       <div class="form-group">
-        <input type="text" class="form-control" id="filter-value" size="42" placeholder="Value"  ng-model="selectedValue" ng-disabled="(fields.length == 0)" ng-required="true">
+        <input type="text" class="form-control" id="filter-value" size="42" placeholder="Value" ng-keyup="$event.keyCode == 13 && addFilterRow()" ng-model="selectedValue" ng-disabled="(fields.length == 0)" ng-required="true" ng-show="!(selectedFieldIsDate)" ng-change="onSelectedValueChange()">
+        <div class="neon-datetimepicker dropdown" ng-show="(selectedFieldIsDate)">
+            <button class="btn btn-default dropdown-toggle" id="date-dropdown" role="button" data-toggle="dropdown" data-target="#" href="#" title="{{selectedValue ? selectedValue.toUTCString() : 'Choose Date'}}">
+                <span class="glyphicon glyphicon-calendar"></span> {{selectedValue ? selectedValue.toUTCString() : 'Choose Date'}}
+            </button>
+            <ul class="dropdown-menu" role="menu">
+                <datetimepicker data-ng-model="selectedValue" data-on-set-time="onSelectedValueChange()" data-datetimepicker-config="{ dropdownSelector: '#date-dropdown', startView: 'year', minView: 'hour' }"/>
+            </ul>
+        </div>
       </div>
       <div class="form-group" ng-show="(navbarItem)">
         <button type="button" class="btn btn-primary" title="Add" ng-click="addFilterRow()">

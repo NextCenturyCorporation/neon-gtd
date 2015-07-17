@@ -16,6 +16,19 @@
  */
 
 coreMap.Map.Layer = coreMap.Map.Layer || {};
+/**
+ * This module extend an OpenLayers 2 Vector Layer to create a map layer of points.  Each point
+ * can is made from a data array that is passed in via setData() and can be colored by a
+ * category field in the data array or sized by a particular field in each point's data array
+ * By default, all points are displayed.  However, the layer can be configured to cluster points.
+ * Visually, this will collect points within a certain pixel range of one another and display
+ * a count bubble representing the number of points in a given area.  As a user zoom's in on a map,
+ * the bubbles may begin to separate.
+ *
+ * @namespace coreMap.Map.Layer
+ * @class PointsLayer
+ * @constructor
+ */
 coreMap.Map.Layer.PointsLayer = OpenLayers.Class(OpenLayers.Layer.Vector, {
     CLASS_NAME: "coreMap.Map.Layer.PointsLayer",
     colors: {},
@@ -23,9 +36,16 @@ coreMap.Map.Layer.PointsLayer = OpenLayers.Class(OpenLayers.Layer.Vector, {
     latitudeMapping: '',
     longitudeMapping: '',
     sizeMapping: '',
+    defaultColor: '',
     colorMapping: '',
     categoryMapping: '',
     cluster: false,
+    linkyConfig: {
+        mentions: false,
+        hashtags: false,
+        urls: false,
+        linkTo: "twitter"
+    },
 
     /**
      * Override the OpenLayers Contructor
@@ -50,7 +70,7 @@ coreMap.Map.Layer.PointsLayer = OpenLayers.Class(OpenLayers.Layer.Vector, {
             });
             extendOptions.strategies = [
                 new ClusterClass({
-                    distance: 40,
+                    distance: coreMap.Map.Layer.PointsLayer.DEFAULT_CLUSTER_DISTANCE,
                     attribute: this.categoryMapping
                 })
             ];
@@ -91,8 +111,8 @@ coreMap.Map.Layer.PointsLayer = OpenLayers.Class(OpenLayers.Layer.Vector, {
         var clusterPointStyle = new OpenLayers.Style({
             label: "${count}",
             fillColor: "${fillColor}",
-            fillOpacity: 0.8,
-            strokeOpacity: 0.8,
+            fillOpacity: coreMap.Map.Layer.PointsLayer.DEFAULT_OPACITY,
+            strokeOpacity: coreMap.Map.Layer.PointsLayer.DEFAULT_OPACITY,
             strokeWidth: "${strokeWidth}",
             pointRadius: "${radius}"
         }, {
@@ -104,12 +124,12 @@ coreMap.Map.Layer.PointsLayer = OpenLayers.Class(OpenLayers.Layer.Vector, {
                     return (layer.calculateColor(feature.cluster[0].attributes));
                 },
                 radius: function(feature) {
-                    var digits = 1;
+                    // Here, we are basing the size of the cluster on the number of
+                    // digits in the total feature count.
                     var count = feature.cluster.length;
-                    while((count = count / 10) >= 1) {
-                        digits++;
-                    }
-                    return 5 + (5 * digits);
+                    var digits = Math.log10(count);
+                    digits = (digits >= 1) ? digits : 1;
+                    return Math.floor(5 + (5 * digits));
                 },
                 count: function(feature) {
                     return feature.cluster.length;
@@ -123,11 +143,12 @@ coreMap.Map.Layer.PointsLayer = OpenLayers.Class(OpenLayers.Layer.Vector, {
 
     createPointsStyleMap: function() {
         return new OpenLayers.StyleMap(OpenLayers.Util.applyDefaults({
-                fillColor: "#00FF00",
-                fillOpacity: 0.8,
-                strokeOpacity: 0.8,
-                strokeWidth: 1,
-                pointRadius: 4
+                fillColor: coreMap.Map.Layer.PointsLayer.DEFAULT_COLOR,
+                fillOpacity: coreMap.Map.Layer.PointsLayer.DEFAULT_OPACITY,
+                strokeOpacity: coreMap.Map.Layer.PointsLayer.DEFAULT_OPACITY,
+                strokeWidth: coreMap.Map.Layer.PointsLayer.DEFAULT_STROKE_WIDTH,
+                stroke: coreMap.Map.Layer.PointsLayer.DEFAULT_STROKE_COLOR,
+                pointRadius: coreMap.Map.Layer.PointsLayer.MIN_RADIUS
             },
             OpenLayers.Feature.Vector.style["default"]
         ));
@@ -148,7 +169,7 @@ coreMap.Map.Layer.PointsLayer.prototype.calculateColor = function(element) {
         color = this.colorScale(category);
     } else {
         category = '(Uncategorized)';
-        color = coreMap.Map.Layer.PointsLayer.DEFAULT_COLOR;
+        color = this.defaultColor || coreMap.Map.Layer.PointsLayer.DEFAULT_COLOR;
     }
 
     // store the color in the registry so we know the color/category mappings
@@ -207,7 +228,7 @@ coreMap.Map.Layer.PointsLayer.prototype.calculateRadius = function(element) {
 coreMap.Map.Layer.PointsLayer.prototype.createPoint = function(element, longitude, latitude) {
     var point = new OpenLayers.Geometry.Point(longitude, latitude);
     point.data = element;
-    point.transform(coreMap.Map.Layer.PointsLayer.SOURCE_PROJECTION, coreMap.Map.Layer.PointsLayer.DESTINATION_PROJECTION);
+    point.transform(coreMap.Map.SOURCE_PROJECTION, coreMap.Map.DESTINATION_PROJECTION);
 
     var feature = new OpenLayers.Feature.Vector(point);
     feature.style = this.stylePoint(element);
@@ -223,16 +244,13 @@ coreMap.Map.Layer.PointsLayer.prototype.createPoint = function(element, longitud
  * @method createPointStyleObject
  */
 coreMap.Map.Layer.PointsLayer.prototype.createPointStyleObject = function(color, radius) {
-    color = color || coreMap.Map.Layer.PointsLayer.DEFAULT_COLOR;
-    radius = radius || coreMap.Map.Layer.PointsLayer.MIN_RADIUS;
-
     return new OpenLayers.Symbolizer.Point({
-        fillColor: color,
+        fillColor: (color || coreMap.Map.Layer.PointsLayer.DEFAULT_COLOR),
         fillOpacity: coreMap.Map.Layer.PointsLayer.DEFAULT_OPACITY,
         strokeOpacity: coreMap.Map.Layer.PointsLayer.DEFAULT_OPACITY,
         strokeWidth: coreMap.Map.Layer.PointsLayer.DEFAULT_STROKE_WIDTH,
         stroke: coreMap.Map.Layer.PointsLayer.DEFAULT_STROKE_COLOR,
-        pointRadius: radius
+        pointRadius: (radius || coreMap.Map.Layer.PointsLayer.MIN_RADIUS)
     });
 };
 
@@ -248,6 +266,20 @@ coreMap.Map.Layer.PointsLayer.prototype.getValueFromDataElement = function(mappi
         return mapping.call(this, element);
     }
     return element[mapping];
+};
+
+/**
+ * Checks if the mappings exist in the data element
+ * @param {Object} element An element of the data array.
+ * @return {Boolean} True if element contains all the mappings, false otherwise
+ * @method areValuesInDataElement
+ */
+coreMap.Map.Layer.PointsLayer.prototype.areValuesInDataElement = function(element) {
+    if(element[this.latitudeMapping] && element[this.longitudeMapping]) {
+        return true;
+    }
+
+    return false;
 };
 
 /**
@@ -280,7 +312,6 @@ coreMap.Map.Layer.PointsLayer.prototype.updateFeatures = function() {
             mapData.push(me.createPoint(element, longitude, latitude));
         }
     });
-    //this.removeAllFeatures();
     this.destroyFeatures();
     this.addFeatures(mapData);
 };
@@ -300,17 +331,14 @@ coreMap.Map.Layer.PointsLayer.prototype.updateRadii = function() {
     this._dataRadiusDiff = this.maxRadius - this.minRadius;
 };
 
+coreMap.Map.Layer.PointsLayer.DEFAULT_CLUSTER_DISTANCE = 40;
+coreMap.Map.Layer.PointsLayer.DEFAULT_COLOR = "#00ff00";
 coreMap.Map.Layer.PointsLayer.DEFAULT_LATITUDE_MAPPING = "latitude";
 coreMap.Map.Layer.PointsLayer.DEFAULT_LONGITUDE_MAPPING = "longitude";
-coreMap.Map.Layer.PointsLayer.DEFAULT_SIZE_MAPPING = "count_";
-
 coreMap.Map.Layer.PointsLayer.DEFAULT_OPACITY = 0.8;
+coreMap.Map.Layer.PointsLayer.DEFAULT_SIZE_MAPPING = "count_";
 coreMap.Map.Layer.PointsLayer.DEFAULT_STROKE_WIDTH = 1;
-coreMap.Map.Layer.PointsLayer.DEFAULT_COLOR = "#00ff00";
 coreMap.Map.Layer.PointsLayer.DEFAULT_STROKE_COLOR = "#ffffff";
-coreMap.Map.Layer.PointsLayer.MIN_RADIUS = 3;
-coreMap.Map.Layer.PointsLayer.MAX_RADIUS = 13;
+coreMap.Map.Layer.PointsLayer.MIN_RADIUS = 5;
+coreMap.Map.Layer.PointsLayer.MAX_RADIUS = 15;
 
-// TODO: Keep these here or move back into coreMap?
-coreMap.Map.Layer.PointsLayer.SOURCE_PROJECTION = new OpenLayers.Projection("EPSG:4326");
-coreMap.Map.Layer.PointsLayer.DESTINATION_PROJECTION = new OpenLayers.Projection("EPSG:900913");

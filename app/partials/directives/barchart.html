@@ -1,7 +1,7 @@
 <div class="header-container" ng-show="!(hideHeader)">
     <span class="header-text pull-left">{{options.table.prettyName}}</span>
 
-    <options-menu parent-element="element" ng-show="!(hideAdvancedOptions)">
+    <options-menu parent-element="element" export-function="makeBarchartExportObject" ng-show="!(hideAdvancedOptions)">
         <div class="form-group" ng-show="!(hideAdvancedOptions)">
             <label>Database</label>
             <select class="form-control" ng-model="options.database" ng-options="database.prettyName for database in databases" ng-required="true" ng-disabled="(databases.length < 2)" ng-change="updateTables()">
@@ -29,19 +29,19 @@
             <label>Value Field (Y Axis)</label>
             <select class="form-control" ng-model="options.attrY" ng-options="field for field in fields" ng-required="true" ng-disabled="!(fields.length > 0)">
             </select>
-        </div>
+        </div>        
     </options-menu>
 </div>
 
 <div class="clearfix"></div>
 
 <div class="header-container filter-container">
-    <div class="filter-reset pull-right" ng-class="{true: 'hidden', false: ''}[filterSet === undefined]" title="{{filterSet.key}}={{filterSet.value}}">
-        <span class="filter-label">{{filterSet.key}}={{filterSet.value}}</span>
-        <span class="glyphicon glyphicon-remove" ng-click="clearFilterSet()"></span>
-    </div>
-
     <div class="legend">
+        <div class="filter-reset pull-right" ng-class="{true: 'hidden', false: ''}[filterSet === undefined]" title="{{filterSet.key}}={{filterSet.value}}">
+            <span class="filter-label">{{filterSet.value}}</span>
+            <span class="glyphicon glyphicon-remove" ng-click="clearFilterSet()"></span>
+        </div>
+
         <div class="legend-item" title="{{getLegendText()}}">
             <span class="legend-icon" style="background-color: #39b54a"></span>
             <span class="legend-text legend-text-large">{{getLegendText()}}</span>
