@@ -70,7 +70,6 @@ angular.module('neonDemo.directives')
                 if(!connection || !$scope.nameTypePairs) {
                     return;
                 }
-                window.alert(JSON.stringify($scope.nameTypePairs))
                 var ftPairs = importService.getFieldsAndTypes($scope.nameTypePairs);
                 if(value && value === 'String') {
                     ftPairs.forEach(function(pair) {
