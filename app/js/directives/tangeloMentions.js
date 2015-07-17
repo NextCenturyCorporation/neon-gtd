@@ -103,7 +103,7 @@ angular.module('neonDemo.directives')
                     if(item) {
                         $scope.filterItem = item;
                         // TODO This won't work if the twitter mentions collection is in a different database than the rest of the dataset.
-                        var relations = datasetService.getRelations(twitterMentionsCollectionName, ["source"]);
+                        var relations = datasetService.getRelations($scope.databaseName, twitterMentionsCollectionName, ["source"]);
                         filterService.replaceFilters($scope.messenger, relations, $scope.filterKeys, createNeonFilterClause, function() {
                             if(callback) {
                                 callback();
@@ -121,10 +121,8 @@ angular.module('neonDemo.directives')
                 }
             };
 
-            var createNeonFilterClause = function(tableName, fieldNames) {
-                var fieldName = fieldNames[0];
-                var filterClause = neon.query.where(fieldName, '=', $scope.filterItem);
-                return new neon.query.Filter().selectFrom($scope.databaseName, tableName).where(filterClause);
+            var createNeonFilterClause = function(databaseAndTableName, fieldName) {
+                return neon.query.where(fieldName, '=', $scope.filterItem);
             };
 
             var clearNeonFilter = function() {
