@@ -45,8 +45,9 @@ angular.module('neonDemo.directives')
                     return;
                 }
                 var formData = new FormData();
-                formData.append('user', importService.getUserName());
-                formData.append('data', importService.getDatabaseName());
+                formData.append('user', importService.makeTextSafe(importService.getUserName()));
+                formData.append('data', importService.makeTextSafe(importService.getDatabaseName()));
+                formData.append('type', file.name.substring(file.name.lastIndexOf('.') + 1));
                 formData.append('file', file);
                 connection.executeUploadFile(formData, importSuccess, importFail);
                 jQuery('#importDatabaseInput')[0].value = '';
@@ -82,7 +83,8 @@ angular.module('neonDemo.directives')
                     format: datePattern ? datePattern : undefined,
                     fields: ftPairs
                 };
-                connection.executeConfirmTypeGuesses(toSend, importService.getUserName(), importService.getDatabaseName(), confirmSuccess, confirmFail);
+                connection.executeConfirmTypeGuesses(toSend, importService.makeTextSafe(importService.getUserName()),
+                    importService.makeTextSafe(importService.getDatabaseName()), confirmSuccess, confirmFail);
             }
 
             var confirmSuccess = function(response) {
@@ -124,9 +126,15 @@ angular.module('neonDemo.directives')
             };
 
             var displayFileInfo = function(file) {
-                document.getElementById("selectedFileIndicator").innerHTML = (file === undefined) ? "No file selected" : 
-                    (file.size > importService.getMaxSize(false)) ? "File too large - size limit is " + importService.getMaxSize(true) :
-                        file.name + " - " + importService.sizeToReadable(file.size);
+                var indicator = document.getElementById("selectedFileIndicator");
+                if(!file) {
+                    indicator.innerHTML = "No file selected";
+                    return;
+                } else if(file.size > importService.getMaxSize(false)) {
+                    indicator.innerHTML = "File too large - size limit is " + importService.getMaxSize(true);
+                } else {
+                    indicator.innerHTML = file.name + " - " + importService.sizeToReadable(file.size);
+                }
                 var databaseName = jQuery('#importDatabaseInput')[0].value;
                 if(!databaseName) {
                     jQuery('#importDatabaseInput')[0].value = file.name.substring(0, file.name.lastIndexOf('.'));

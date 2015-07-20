@@ -30,8 +30,8 @@ angular.module('neonDemo.directives')
         restrict: 'EA',
         link: function($scope) {
     		$scope.dropDataset = function() {
-    			var username = jQuery("#dropUsernameInput")[0].value;
-    			var database = jQuery("#dropDatabaseInput")[0].value;
+    			var username = importService.makeTextSafe(jQuery("#dropUsernameInput")[0].value);
+    			var database = importService.makeTextSafe(jQuery("#dropDatabaseInput")[0].value);
     			var connection = connectionService.getActiveConnection();
     			if(!connection || !username || !database) {
     				return;

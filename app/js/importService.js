@@ -79,5 +79,9 @@ angular.module('neonDemo.services')
 	    return (Math.round(size * 10) / 10) + " " + nameList[name];
 	};
 
+	service.makeTextSafe = function(text) {
+		return text.replace(/[ \t\n]/, "_");
+	}
+
 	return service;
 });
