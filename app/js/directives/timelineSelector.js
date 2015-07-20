@@ -124,7 +124,7 @@ function($interval, $filter, connectionService, datasetService, errorNotificatio
             $scope.playTimeAnimation = function() {
                 // Set the frame and start the animation loop.
                 if(!$scope.options.animationStartDate) {
-                    $scope.options.animationFrame = 0;
+                    $scope.options.animationStartDate = $scope.getAnimationStartFrame();
                 }
 
                 $scope.options.animatingTime = true;
@@ -143,7 +143,7 @@ function($interval, $filter, connectionService, datasetService, errorNotificatio
                 // Clear the current step data.
                 $scope.options.animationFrame = 0;
                 $scope.animationMessenger.publish(DATE_ANIMATION_CHANNEL, {});
-            }
+            };
 
             $scope.stepTimeAnimation = function() {
                 if($scope.options.animatingTime) {
@@ -152,12 +152,35 @@ function($interval, $filter, connectionService, datasetService, errorNotificatio
                 $scope.doTimeAnimation();
             };
 
+            /**
+             * Get the animation frame for the first bucket within our brushed time range, or simply
+             * the first time bucket if no brush exists.
+             */
+            $scope.getAnimationStartFrame = function() {
+                return ($scope.brush.length && $scope.brush[0]) ?
+                    $scope.bucketizer.getBucketIndex($scope.brush[0]) : 0;
+            };
+
+            /**
+             * Get the animation frame limit for the brushed time range, or simply
+             * the overall frame limit if no brush exists.
+             */
+            $scope.getAnimationFrameLimit = function() {
+                return ($scope.brush.length && $scope.brush[1]) ?
+                    $scope.bucketizer.getBucketIndex($scope.brush[1]) : $scope.bucketizer.getNumBuckets();
+            };
+
             $scope.doTimeAnimation = function() {
-                // Get the time range for the current animation frame and publish it.
-                if($scope.options.animationFrame >= $scope.bucketizer.getNumBuckets()) {
-                    $scope.options.animationFrame = 0;
+                // Get the frame limits to see if we need to reset our animation.
+                var frameStart = $scope.getAnimationStartFrame();
+                var frameLimit = $scope.getAnimationFrameLimit();
+                if($scope.options.animationFrame >= frameLimit) {
+                    $scope.options.animationFrame = frameStart;
+                } else if($scope.options.animationFrame < frameStart) {
+                    $scope.options.animationFrame = frameStart;
                 }
 
+                // Get the time range for the current animation frame and publish it.
                 var dateSelected = {
                     start: $scope.bucketizer.getDateForBucket($scope.options.animationFrame),
                     end: $scope.bucketizer.getDateForBucket($scope.options.animationFrame + 1)
