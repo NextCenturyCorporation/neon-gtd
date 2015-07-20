@@ -572,7 +572,7 @@ charts.TimelineSelectorChart = function(element, configuration) {
             return d3.time[me.granularity].utc.offset(d.date, 1);
         }));
 
-        this.xDomain = [xMin, xMax];
+        this.xDomain = [xMin || new Date(), xMax || new Date()];
         this.xFocus.domain(this.xDomain);
         this.xContext.domain(this.xDomain);
 
@@ -839,15 +839,16 @@ charts.TimelineSelectorChart = function(element, configuration) {
 
         var charts = [];
         // If set, render primary series first
-        if(this.primarySeries) {
+        if(this.primarySeries && this.primarySeries.data.length) {
             createSeries(this.primarySeries);
         }
         // Render all series
         for(i = 0; i < values.length; i++) {
             if(this.primarySeries && values[i].name === this.primarySeries.name) {
                 continue;
+            } else if(values[i].data.length) {
+                createSeries(values[i]);
             }
-            createSeries(values[i]);
         }
 
         var gBrush = context.append("g")
