@@ -921,8 +921,20 @@ label{
 
         .table-responsive {
             display: inline-block;
-            /* Force the datetimepicker height because the year and month views are shorter by default and cause unwanted empty space. */
-            height: 300px;
+            font-size: 12px;
+            padding: 4px 5px;
+            /* Reduce the datetimepicker width because of the reduced font size. */
+            width: 250px;
+            /* Set the datetimepicker height because the year and month views are shorter by default and cause unwanted empty space. */
+            height: 250px;
+
+            .table {
+                th, td {
+                    padding: 6px;
+                    width: 34px;
+                    height: 30px;
+                }
+            }
         }
     }
 }
