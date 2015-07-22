@@ -459,6 +459,23 @@ coreMap.Map.prototype.createSelectControl =  function(layer) {
 
 coreMap.Map.prototype.setupLayers = function() {
     var baseLayer = new OpenLayers.Layer.OSM("OSM", null, {
+        // Add map tile grayscale conversion.
+        // https://github.com/openlayers/openlayers/blob/master/examples/osm-grayscale.html
+        eventListeners: {
+            tileloaded: function(event) {
+                var context = event.tile.getCanvasContext();
+                if(context) {
+                    var image = context.getImageData(0, 0, event.tile.size.w, event.tile.size.h);
+                    var pixels = image.data;
+                    for(var i = 0; i < pixels.length; i += 4) {
+                        pixels[i] = pixels[i + 1] = pixels[i + 2] = 0.8 * ((pixels[i] + pixels[i + 1] + pixels[i + 2]) / 3);
+                    }
+                    context.putImageData(image, 0, 0);
+                    event.tile.imgDiv.removeAttribute("crossorigin");
+                    event.tile.imgDiv.src = context.canvas.toDataURL();
+                }
+            }
+        },
         wrapDateLine: false
     });
     this.map.addLayer(baseLayer);
