@@ -616,7 +616,7 @@ function(external, popups, connectionService, datasetService, errorNotificationS
                 }
                 if($scope.options.aggregation === "min") {
                     query.aggregate(neon.query.MIN, $scope.options.aggregationField, $scope.options.aggregationField);
-                    query.sortBy($scope.options.aggregationField, neon.query.DESCENDING);
+                    query.sortBy($scope.options.aggregationField, neon.query.ASCENDING);
                 }
                 if($scope.options.aggregation === "max") {
                     query.aggregate(neon.query.MAX, $scope.options.aggregationField, $scope.options.aggregationField);
