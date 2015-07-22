@@ -687,7 +687,6 @@ charts.TimelineSelectorChart = function(element, configuration) {
                     .attr("transform", "translate(" + xOffset + "," + ((heightContext + me.config.marginContext.top + me.config.marginContext.bottom) * seriesPos) + ")");
 
                 var style = 'stroke:' + series.color + ';';
-                var chartTypeFocus = '';
                 var chartTypeContext = '';
 
                 // For now, all anomalies are shown as red, but this could be changed to be a
@@ -1145,7 +1144,7 @@ charts.TimelineSelectorChart = function(element, configuration) {
             y: me.yFocus,
             yAxis: yAxis
         };
-    }
+    };
 
     /**
      * Updates the x axis as well as redraws the focus chart

@@ -681,7 +681,7 @@ function(connectionService, datasetService, errorNotificationService, filterServ
                     extentStartDate = $scope.bucketizer.getStartDate();
                     extentEndDate = $scope.bucketizer.getEndDate();
                 }
-                
+
                 var total = 0;
 
                 if(extentStartDate && extentEndDate) {

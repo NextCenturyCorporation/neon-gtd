@@ -1040,7 +1040,6 @@ angular.module('neonDemo.directives')
                 var i = _.findIndex($scope.options.layers, {
                     filterKeys: filterKeys
                 });
-                var type = $scope.options.layers[i].type;
 
                 if($scope.options.layers[i].olLayer) {
                     this.map.removeLayer($scope.options.layers[i].olLayer);
