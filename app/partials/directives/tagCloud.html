@@ -1,7 +1,7 @@
 <div class="header-container" ng-show="!(hideHeader)">
     <span class="header-text pull-left">{{options.table.prettyName}}</span>
 
-    <options-menu parent-element="element" button-text="'No tag data'" show-button-text="showOptionsMenuButtonText">
+    <options-menu parent-element="element" export-function="makeTagCloudExportObject"  button-text="'No tag data'" show-button-text="showOptionsMenuButtonText">
         <div class="form-group" ng-show="!(hideAdvancedOptions)">
             <label>Database</label>
             <select class="form-control" ng-model="options.database" ng-options="database.prettyName for database in databases" ng-required="true" ng-disabled="(databases.length < 2)" ng-change="updateTables()">

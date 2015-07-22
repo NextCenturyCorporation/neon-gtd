@@ -28,7 +28,8 @@
  * @constructor
  */
 angular.module('neonDemo.directives')
-.directive('map', ['ConnectionService', 'DatasetService', 'ErrorNotificationService', 'FilterService', '$timeout', function(connectionService, datasetService, errorNotificationService, filterService, $timeout) {
+.directive('map', ['ConnectionService', 'DatasetService', 'ErrorNotificationService', 'FilterService', 'ExportService', '$timeout',
+    function(connectionService, datasetService, errorNotificationService, filterService, exportService, $timeout) {
     return {
         templateUrl: 'partials/directives/map.html',
         restrict: 'EA',
@@ -145,9 +146,12 @@ angular.module('neonDemo.directives')
                     filtersChanged: onFiltersChanged
                 });
 
+                $scope.exportID = exportService.register($scope.makeMapExportObject);
                 $scope.messenger.subscribe($scope.selectionEvent, function(msg) {
                     $scope.createPoint(msg);
                 });
+
+                $scope.linkyConfig = datasetService.getLinkyConfig();
 
                 $scope.$on('$destroy', function() {
                     XDATA.userALE.log({
@@ -165,6 +169,7 @@ angular.module('neonDemo.directives')
                     if($scope.showFilter) {
                         $scope.clearFilters();
                     }
+                    exportService.unregister($scope.exportID);
                 });
 
                 // Enable the tooltips.
@@ -1032,8 +1037,9 @@ angular.module('neonDemo.directives')
              * @method updateLayer
              */
             $scope.updateLayer = function(filterKeys) {
-                var i = _.findIndex($scope.options.layers, {filterKeys: filterKeys});
-                var type = $scope.options.layers[i].type;
+                var i = _.findIndex($scope.options.layers, {
+                    filterKeys: filterKeys
+                });
 
                 if($scope.options.layers[i].olLayer) {
                     this.map.removeLayer($scope.options.layers[i].olLayer);
@@ -1045,7 +1051,6 @@ angular.module('neonDemo.directives')
 
                 queryAllLayerTables();
             };
-            
 
             /**
              * Creates and adds a layer to the map
@@ -1061,12 +1066,12 @@ angular.module('neonDemo.directives')
                         sizeMapping: layer.sizeBy,
                         categoryMapping: layer.colorBy,
                         defaultColor: layer.defaultColor,
-                        linkyConfig: (layer.linkyConfig ? layer.linkyConfig :
+                        linkyConfig: ($scope.linkyConfig.linkTo ? $scope.linkyConfig :
                             {
                                 mentions: false,
                                 hashtags: false,
-                                urls: false,
-                                linkTo: "twitter"
+                                urls: true,
+                                linkTo: ""
                             })
                     });
                     $scope.map.addLayer(layer.olLayer);
@@ -1078,12 +1083,12 @@ angular.module('neonDemo.directives')
                         categoryMapping: layer.colorBy,
                         defaultColor: layer.defaultColor,
                         cluster: true,
-                        linkyConfig: (layer.linkyConfig ? layer.linkyConfig :
+                        linkyConfig: ($scope.linkyConfig.linkTo ? $scope.linkyConfig :
                             {
                                 mentions: false,
                                 hashtags: false,
-                                urls: false,
-                                linkTo: "twitter"
+                                urls: true,
+                                linkTo: ""
                             })
                     });
                     $scope.map.addLayer(layer.olLayer);
@@ -1111,6 +1116,55 @@ angular.module('neonDemo.directives')
                 }
 
                 return layer.olLayer;
+            };
+
+            /**
+             * Creates and returns an object that contains information needed to export the data in this widget.
+             * @return {Object} An object containing all the information needed to export the data in this widget.
+             */
+            $scope.makeMapExportObject = function() {
+                XDATA.userALE.log({
+                    activity: "perform",
+                    action: "click",
+                    elementId: "map-export",
+                    elementType: "button",
+                    elementGroup: "map_group",
+                    source: "user",
+                    tags: ["options", "map", "export"]
+                });
+                var finalObject = {
+                    name: "Map",
+                    data: []
+                };
+                // This is very much like queryAllTableLayers(), except it stores the query built for each database/tablename pair
+                // instead of calling queryForMapData() on them.
+                var sets = getLayerDatabaseTableSets();
+                var keys = _.keys(sets);
+                var tables = [];
+                for(var i = 0; i < keys.length; i++) {
+                    tables = sets[keys[i]];
+                    for(var j = 0; j < tables.length; j++) {
+                        var query = $scope.buildPointQuery(keys[i], tables[j]);
+                        query.limitClause = exportService.getLimitClause();
+                        var tempObject = {
+                            query: query,
+                            name: "map_" + keys[i] + "_" + tables[j] + "-" + $scope.exportID,
+                            fields: [],
+                            ignoreFilters: query.ignoreFilters_,
+                            selectionOnly: query.selectionOnly_,
+                            ignoredFilterIds: query.ignoredFilterIds_,
+                            type: "query"
+                        };
+                        for(var count = 0, fields = datasetService.getFields(keys[i], tables[j]); count < fields.length; count++) {
+                            tempObject.fields.push({
+                                query: fields[count].columnName,
+                                pretty: fields[count].prettyName || fields[count].columnName
+                            });
+                        }
+                        finalObject.data.push(tempObject);
+                    }
+                }
+                return finalObject;
             };
 
             // Wait for neon to be ready, the create our messenger and intialize the view and data.

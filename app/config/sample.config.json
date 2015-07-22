@@ -216,13 +216,7 @@
             "longitudeMapping": "longitude",
             "limit": 5000,
             "colorBy": "magType",
-            "sizeBy": "mag",
-            "linkyConfig": {
-              "mentions": false,
-              "hashtags": false,
-              "urls": false,
-              "linkTo": "twitter"
-            }
+            "sizeBy": "mag"
         }, {
             "database": "test",
             "table": "earthquakes",
@@ -232,14 +226,14 @@
             "longitudeMapping": "longitude",
             "limit": 5000,
             "colorBy": "magType",
-            "sizeBy": "mag",
-            "linkyConfig": {
-              "mentions": false,
-              "hashtags": false,
-              "urls": false,
-              "linkTo": "twitter"
-            }
-        }]
+            "sizeBy": "mag"
+        }],
+        "linkyConfig": {
+          "mentions": false,
+          "hashtags": false,
+          "urls": true,
+          "linkTo": "twitter"
+        }
     }],
 
     "layouts": {

@@ -28,8 +28,8 @@
  * @constructor
  */
 angular.module('neonDemo.directives')
-.directive('linechart', ['ConnectionService', 'DatasetService', 'ErrorNotificationService', 'FilterService', '$timeout', '$filter',
-function(connectionService, datasetService, errorNotificationService, filterService, $timeout, $filter) {
+.directive('linechart', ['ConnectionService', 'DatasetService', 'ErrorNotificationService', 'FilterService','ExportService',  '$timeout', '$filter',
+function(connectionService, datasetService, errorNotificationService, filterService, exportService, $timeout, $filter) {
     var COUNT_FIELD_NAME = 'value';
 
     return {
@@ -108,6 +108,8 @@ function(connectionService, datasetService, errorNotificationService, filterServ
                 $scope.messenger.subscribe(datasetService.DATE_CHANGED, onDateChanged);
                 $scope.messenger.subscribe("date_selected", onDateSelected);
 
+                $scope.exportID = exportService.register($scope.makeLinechartExportObject);
+
                 $scope.$on('$destroy', function() {
                     XDATA.userALE.log({
                         activity: "remove",
@@ -121,6 +123,7 @@ function(connectionService, datasetService, errorNotificationService, filterServ
                     });
                     $element.off("resize", updateChartSize);
                     $scope.messenger.removeEvents();
+                    exportService.unregister($scope.exportID);
                     if($scope.brushExtent.length) {
                         filterService.removeFilters($scope.messenger, $scope.filterKeys);
                     }
@@ -196,15 +199,14 @@ function(connectionService, datasetService, errorNotificationService, filterServ
                 var whereClauses = undefined;
                 if(message.addedFilter.whereClause) {
                     whereClauses = message.addedFilter.whereClause.whereClauses;
-                }
-                else if(message.removedFilter.whereClause) {
+                } else if(message.removedFilter.whereClause) {
                     whereClauses = message.removedFilter.whereClause.whereClauses;
                 }
                 if(whereClauses && whereClauses.length === 2 && whereClauses[0].lhs === $scope.options.attrX && whereClauses[1].lhs === $scope.options.attrX) {
                     return true;
                 }
                 return false;
-            }
+            };
 
             /**
              * Event handler for filter changed events issued over Neon's messaging channels.
@@ -293,6 +295,17 @@ function(connectionService, datasetService, errorNotificationService, filterServ
                     return;
                 }
 
+                var query = $scope.buildQuery();
+
+                connection.executeQuery(query, handleQuerySuccess, handleQueryFailure);
+            };
+
+            /**
+             * Builds a query for the line chart and returns it.
+             * @method buildQuery
+             * @return A ready-to-be-sent query for the line chart.
+             */
+            $scope.buildQuery = function() {
                 var yearGroupClause = new neon.query.GroupByFunctionClause(neon.query.YEAR, $scope.options.attrX, 'year');
                 var monthGroupClause = new neon.query.GroupByFunctionClause(neon.query.MONTH, $scope.options.attrX, 'month');
                 var dayGroupClause = new neon.query.GroupByFunctionClause(neon.query.DAY, $scope.options.attrX, 'day');
@@ -327,7 +340,7 @@ function(connectionService, datasetService, errorNotificationService, filterServ
                 query.aggregate(neon.query.MIN, $scope.options.attrX, 'date')
                     .sortBy('date', neon.query.ASCENDING);
 
-                connection.executeQuery(query, handleQuerySuccess, handleQueryFailure);
+                return query;
             };
 
             /**
@@ -631,8 +644,8 @@ function(connectionService, datasetService, errorNotificationService, filterServ
                             series: series,
                             count: 0,
                             total: 0,
-                            min: -1,
-                            max: -1,
+                            min: undefined,
+                            max: undefined,
                             data: []
                         };
                     }
@@ -645,7 +658,7 @@ function(connectionService, datasetService, errorNotificationService, filterServ
                         if(Object.prototype.hasOwnProperty.call(resultData, series)) {
                             resultData[series].data.push({
                                 date: bucketGraphDate,
-                                value: 0
+                                value: undefined
                             });
                         }
                     }
@@ -660,13 +673,16 @@ function(connectionService, datasetService, errorNotificationService, filterServ
                         series = data[i][$scope.options.categoryField] !== '' ? data[i][$scope.options.categoryField] : 'Unknown';
                     }
 
-                    // Set undefined values in the data to 0.
-                    data[i].value = data[i].value ? data[i].value : 0;
+                    data[i].value = _.isNumber(data[i].value) ? data[i].value : undefined;
 
                     resultData[series].data[Math.floor(Math.abs(indexDate - start) / dayMillis)].value = data[i].value;
-                    resultData[series].total += data[i].value;
-                    resultData[series].min = resultData[series].min < 0 ? data[i].value : Math.min(resultData[series].min, data[i].value);
-                    resultData[series].max = resultData[series].max < 0 ? data[i].value : Math.max(resultData[series].max, data[i].value);
+
+                    // Only calculate total, min, and max if the value is defined
+                    if(!_.isUndefined(data[i].value)) {
+                        resultData[series].total += data[i].value;
+                        resultData[series].min = _.isUndefined(resultData[series].min) ? data[i].value : Math.min(resultData[series].min, data[i].value);
+                        resultData[series].max = _.isUndefined(resultData[series].max) ? data[i].value : Math.max(resultData[series].max, data[i].value);
+                    }
 
                     // Save the mapping from date string to data index so we can find the data index using the brush extent while calculating aggregations for brushed line charts.
                     $scope.dateStringToDataIndex[indexDate.toDateString()] = Math.floor(Math.abs(indexDate - start) / dayMillis);
@@ -915,6 +931,94 @@ function(connectionService, datasetService, errorNotificationService, filterServ
                 var startFilterClause = neon.query.where(dateFieldName, ">=", $scope.brushExtent[0]);
                 var endFilterClause = neon.query.where(dateFieldName, "<", $scope.brushExtent[1]);
                 return neon.query.and.apply(this, [startFilterClause, endFilterClause]);
+            };
+
+            /**
+             * Creates and returns an object that contains information needed to export the data in this widget.
+             * @return {Object} An object containing all the information needed to export the data in this widget.
+             */
+            $scope.makeLinechartExportObject = function() {
+                XDATA.userALE.log({
+                    activity: "perform",
+                    action: "click",
+                    elementId: "linechart-export",
+                    elementType: "button",
+                    elementGroup: "chart_group",
+                    source: "user",
+                    tags: ["options", "linechart", "export"]
+                });
+                var query = $scope.buildQuery();
+                query.limitClause = exportService.getLimitClause();
+                query.ignoreFilters_ = exportService.getIgnoreFilters();
+                query.ignoredFilterIds_ = exportService.getIgnoredFilterIds();
+                var finalObject = {
+                    name: "Line_Chart",
+                    data: [{
+                        query: query,
+                        name: "linechart-" + $scope.exportID,
+                        fields: [],
+                        ignoreFilters: query.ignoreFilters_,
+                        selectionOnly: query.selectionOnly_,
+                        ignoredFilterIds: query.ignoredFilterIds_,
+                        type: "query"
+                    }]
+                };
+                finalObject.data[0].fields.push({
+                    query: "year",
+                    pretty: "Year"
+                });
+                finalObject.data[0].fields.push({
+                    query: "month",
+                    pretty: "Month"
+                });
+                finalObject.data[0].fields.push({
+                    query: "day",
+                    pretty: "Day"
+                });
+                var aggr = (query.groupByClauses[3]) ? query.groupByClauses[3].field : null;
+                if(aggr) {
+                    finalObject.data[0].fields.push({
+                        query: aggr,
+                        pretty: capitalizeFirstLetter(aggr)
+                    });
+                }
+                if($scope.options.aggregation === "count") {
+                    finalObject.data[0].fields.push({
+                        query: "value",
+                        pretty: "Count"
+                    });
+                } else if($scope.options.aggregation === "sum") {
+                    finalObject.data[0].fields.push({
+                        query: "value",
+                        pretty: "Sum of " + query.aggregates[0].field
+                    });
+                } else if($scope.options.aggregation === "average") {
+                    finalObject.data[0].fields.push({
+                        query: "value",
+                        pretty: "Average of " + query.aggregates[0].field
+                    });
+                } else if($scope.options.aggregation === "min") {
+                    finalObject.data[0].fields.push({
+                        query: "value",
+                        pretty: "Min of " + query.aggregates[0].field
+                    });
+                } else if($scope.options.aggregation === "max") {
+                    finalObject.data[0].fields.push({
+                        query: "value",
+                        pretty: "Max of " + query.aggregates[0].field
+                    });
+                }
+                return finalObject;
+            };
+
+            /**
+             * Helper function for makeBarchartExportObject that capitalizes the first letter of a string.
+             * @param str {String} The string to capitalize the first letter of.
+             * @return {String} The string given, but with its first letter capitalized.
+             */
+            var capitalizeFirstLetter = function(str) {
+                var first = str[0].toUpperCase();
+                return first + str.slice(1);
             };
 
             neon.ready(function() {

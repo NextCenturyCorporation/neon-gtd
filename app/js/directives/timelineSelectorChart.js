@@ -73,17 +73,35 @@ angular.module('neonDemo.directives')
             $scope.chart.render([]);
 
             var redrawOnResize = function() {
-                $scope.chart.redrawChart();
+                // Start at 30 to add extra padding to chart
+                var headerHeight = 25;
+
+                $(".timeline-selector").find(".header-container").each(function() {
+                    headerHeight += $(this).outerHeight(true);
+                });
+
+                $(".timeline-selector").find(".mmpp").each(function() {
+                    headerHeight += $(this).outerHeight(true);
+                });
+
+                $element.height($(".timeline-selector").height() - headerHeight);
+
+                if($scope.showFocus === "always" || ($scope.showFocus === "on_filter" && $scope.timelineBrush.length > 0)) {
+                    $scope.chart.toggleFocus(true);
+                } else {
+                    $scope.chart.toggleFocus(false);
+                }
+
                 $scope.resizePromise = null;
             };
 
             // Watch for changes in the element size and update us.
             $scope.$watch(
                 function() {
-                    return $element[0].clientWidth + "x" + $element[0].clientHeight;
+                    return $(".timeline-selector")[0].clientWidth + "x" + $(".timeline-selector")[0].clientHeight;
                 },
-                function(oldVal, newVal) {
-                    if((oldVal !== newVal) && $scope.chart && $scope.timelineData && $scope.timelineData.length > 0) {
+                function(newVal) {
+                    if(newVal && $scope.chart) {
                         if($scope.resizePromise) {
                             $timeout.cancel($scope.resizePromise);
                         }
@@ -137,7 +155,7 @@ angular.module('neonDemo.directives')
                 }
             });
 
-            $scope.$watch('showFocus', function(newVal, oldVal) {
+            $scope.$watch('showFocus', function(newVal) {
                 if(newVal === 'always') {
                     $scope.chart.toggleFocus(true);
                 } else if(newVal === 'never') {
