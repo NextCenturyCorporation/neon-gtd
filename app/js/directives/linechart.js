@@ -206,7 +206,7 @@ function(connectionService, datasetService, errorNotificationService, filterServ
                     return true;
                 }
                 return false;
-            }
+            };
 
             /**
              * Event handler for filter changed events issued over Neon's messaging channels.
@@ -644,8 +644,8 @@ function(connectionService, datasetService, errorNotificationService, filterServ
                             series: series,
                             count: 0,
                             total: 0,
-                            min: -1,
-                            max: -1,
+                            min: undefined,
+                            max: undefined,
                             data: []
                         };
                     }
@@ -658,7 +658,7 @@ function(connectionService, datasetService, errorNotificationService, filterServ
                         if(Object.prototype.hasOwnProperty.call(resultData, series)) {
                             resultData[series].data.push({
                                 date: bucketGraphDate,
-                                value: 0
+                                value: undefined
                             });
                         }
                     }
@@ -673,13 +673,16 @@ function(connectionService, datasetService, errorNotificationService, filterServ
                         series = data[i][$scope.options.categoryField] !== '' ? data[i][$scope.options.categoryField] : 'Unknown';
                     }
 
-                    // Set undefined values in the data to 0.
-                    data[i].value = data[i].value ? data[i].value : 0;
+                    data[i].value = _.isNumber(data[i].value) ? data[i].value : undefined;
 
                     resultData[series].data[Math.floor(Math.abs(indexDate - start) / dayMillis)].value = data[i].value;
-                    resultData[series].total += data[i].value;
-                    resultData[series].min = resultData[series].min < 0 ? data[i].value : Math.min(resultData[series].min, data[i].value);
-                    resultData[series].max = resultData[series].max < 0 ? data[i].value : Math.max(resultData[series].max, data[i].value);
+
+                    // Only calculate total, min, and max if the value is defined
+                    if(!_.isUndefined(data[i].value)) {
+                        resultData[series].total += data[i].value;
+                        resultData[series].min = _.isUndefined(resultData[series].min) ? data[i].value : Math.min(resultData[series].min, data[i].value);
+                        resultData[series].max = _.isUndefined(resultData[series].max) ? data[i].value : Math.max(resultData[series].max, data[i].value);
+                    }
 
                     // Save the mapping from date string to data index so we can find the data index using the brush extent while calculating aggregations for brushed line charts.
                     $scope.dateStringToDataIndex[indexDate.toDateString()] = Math.floor(Math.abs(indexDate - start) / dayMillis);
