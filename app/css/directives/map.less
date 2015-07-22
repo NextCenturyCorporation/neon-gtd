@@ -100,19 +100,22 @@
             }
 
             .layer-options-container {
+                /* Make the width match the width of the layer-options element + the right padding. */
+                width: 875px;
+
                 > label {
                     font-size: 14px;
                 }
 
                 .layer-options {
-                    background-color: @main-background;
+                    background-color: @main-background-darken;
                     border-style: solid;
                     border-width: 1px;
                     border-color: @border-color;
                     border-radius: 4px;
-                    padding: 10px;
+                    padding: 9px;
                     /* Make the width match the width of five columns + the padding + the borders. */
-                    width: 862px;
+                    width: 860px;
 
                     &.new-layer {
                         background-color: @main-background-lighten;
@@ -140,10 +143,13 @@
                                 margin-top: 25px;
 
                                 .btn {
-                                    /* Make the combined width of the three layer options buttons match the width of the column. */
-                                    padding: 5px 18px;
+                                    /* Make the combined width of the two layer options buttons match the width of the column. */
+                                    padding: 5px 31px;
 
                                     &.btn-default {
+                                        /* Make the border color darker so it stands out against the background. */
+                                        border-color: @main-text-color;
+
                                         &.active, &.active&:hover, &.active&:focus {
                                             color: #FFFFFF;
                                             background-color: @accent-dark;
@@ -162,6 +168,11 @@
                                     font-size: 16px;
                                     top: 2px;
                                 }
+                            }
+
+                            .empty {
+                                height: 60px;
+                                width: 160px;
                             }
                         }
                     }
