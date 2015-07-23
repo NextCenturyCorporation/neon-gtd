@@ -147,9 +147,7 @@ angular.module('neonDemo.directives')
                 });
 
                 $scope.exportID = exportService.register($scope.makeMapExportObject);
-                $scope.messenger.subscribe($scope.selectionEvent, function(msg) {
-                    $scope.createPoint(msg);
-                });
+                $scope.messenger.subscribe($scope.selectionEvent, $scope.createPoint);
 
                 $scope.linkyConfig = datasetService.getLinkyConfig();
 
@@ -437,23 +435,6 @@ angular.module('neonDemo.directives')
                     configClone.push(_.clone(config[i]));
                 }
                 return configClone;
-            };
-
-            var createLayerName = function(layer) {
-                var type = "";
-                if(layer.type === coreMap.Map.POINTS_LAYER) {
-                    type = " Points";
-                }
-                if(layer.type === coreMap.Map.CLUSTER_LAYER) {
-                    type = " Clusters";
-                }
-                if(layer.type === coreMap.Map.HEATMAP_LAYER) {
-                    type = " Heatmap";
-                }
-                if(layer.type === coreMap.Map.NODE_LAYER) {
-                    type = " Nodes";
-                }
-                return (layer.name || layer.table + type).toUpperCase();
             };
 
             var createLayersByDatabaseAndTableMap = function(layers) {
@@ -980,8 +961,11 @@ angular.module('neonDemo.directives')
             };
 
             /**
-             * Creates a point on map layer "Selected Point" for the given data
+             * Creates or removes points on map layer (named "Selected Point") for the given data
              * @param {Object} msg
+             * @param {Object} msg.data
+             * @param {String} msg.database
+             * @param {String} msg.table
              * @method createPoint
              */
             $scope.createPoint = function(msg) {
@@ -991,25 +975,56 @@ angular.module('neonDemo.directives')
                         $scope.map.removeLayer($scope.selectedPointLayer);
                     }
 
+                    var mappings = datasetService.getMappings(msg.database, msg.table);
+
                     var latMapping = "latitude";
                     var lonMapping = "longitude";
-                    var pointsLayer = _.find(datasetService.getMapLayers(), {
-                        type: "points",
-                        database: msg.database,
-                        table: msg.table
-                    });
+                    var layer = new coreMap.Map.Layer.SelectedPointsLayer("Selected Points");
 
-                    if(pointsLayer) {
-                        latMapping = pointsLayer.latitudeMapping;
-                        lonMapping = pointsLayer.longitudeMapping;
+                    /*
+                     * Create points on the map using either:
+                     *      - lat/lon pairs specified in the allCoordinates mapping in the config
+                     *      - the lat/lon mapping specified in the points layer for the specified
+                     *        database and table
+                     */
+                    if(mappings.allCoordinates && mappings.allCoordinates.length) {
+                        var features = [];
+
+                        for(var i = 0; i < mappings.allCoordinates.length; i++) {
+                            latMapping = mappings.allCoordinates[i].latitude;
+                            lonMapping = mappings.allCoordinates[i].longitude;
+
+                            var point = new OpenLayers.Geometry.Point(msg.data[lonMapping], msg.data[latMapping]);
+                            point.transform(coreMap.Map.SOURCE_PROJECTION, coreMap.Map.DESTINATION_PROJECTION);
+
+                            var feature = new OpenLayers.Feature.Vector(point);
+                            feature.attributes = msg.data;
+
+                            features.push(feature);
+                        }
+
+                        layer.addFeatures(features);
+                    } else {
+                        var pointsLayer = _.find(datasetService.getMapLayers(), {
+                            type: "points",
+                            database: msg.database,
+                            table: msg.table
+                        });
+
+                        if(pointsLayer) {
+                            latMapping = pointsLayer.latitudeMapping;
+                            lonMapping = pointsLayer.longitudeMapping;
+                        }
+
+                        var point = new OpenLayers.Geometry.Point(msg.data[lonMapping], msg.data[latMapping]);
+                        point.transform(coreMap.Map.SOURCE_PROJECTION, coreMap.Map.DESTINATION_PROJECTION);
+
+                        var feature = new OpenLayers.Feature.Vector(point);
+                        feature.attributes = msg.data;
+
+                        layer.addFeatures(feature);
                     }
 
-                    var point = new OpenLayers.Geometry.Point(msg.data[lonMapping], msg.data[latMapping]);
-                    point.transform(coreMap.Map.SOURCE_PROJECTION, coreMap.Map.DESTINATION_PROJECTION);
-
-                    var feature = new OpenLayers.Feature.Vector(point);
-                    var layer = new coreMap.Map.Layer.SelectedPointsLayer("Selected Points");
-                    layer.addFeatures(feature);
                     $scope.map.addLayer(layer);
                     $scope.selectedPointLayer = layer;
                 } else if($scope.selectedPointLayer.name) {
@@ -1095,7 +1110,8 @@ angular.module('neonDemo.directives')
                                 hashtags: false,
                                 urls: true,
                                 linkTo: ""
-                            })
+                            }),
+                        clusterPopupFields: layer.popupFields
                     });
                     $scope.map.addLayer(layer.olLayer);
                 } else if(layer.type === coreMap.Map.HEATMAP_LAYER) {

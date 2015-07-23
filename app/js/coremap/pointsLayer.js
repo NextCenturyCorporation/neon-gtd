@@ -46,6 +46,7 @@ coreMap.Map.Layer.PointsLayer = OpenLayers.Class(OpenLayers.Layer.Vector, {
         urls: false,
         linkTo: "twitter"
     },
+    clusterPopupFields: [],
 
     /**
      * Override the OpenLayers Contructor

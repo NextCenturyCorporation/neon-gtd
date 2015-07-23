@@ -364,33 +364,27 @@ coreMap.Map.prototype.createSelectControl =  function(layer) {
         });
         var text;
 
-        /* If we're on a twitter cluster layer, show specific fields.
-         * Limitations:
-         *  - Assumes data has certain column name
-         */
-        if(feature.cluster && feature.cluster[0].attributes.hashtags) {
+        // If we're on a cluster layer, show specific fields, if defined
+        if(feature.cluster && feature.layer.clusterPopupFields.length) {
             text = '<div><table class="table table-striped table-condensed table-bordered">';
-            text += '<tr><th>screen_name</th><th>created_at</th><th>text</th></tr>';
+            text += '<tr>';
 
-            for(var i = 0; i < feature.cluster.length; i++) {
+            for(var i = 0; i < feature.layer.clusterPopupFields.length; i++) {
+                text += '<th>' + feature.layer.clusterPopupFields[i] + '</th>';
+            }
+
+            text += '</tr>';
+
+            for(i = 0; i < feature.cluster.length; i++) {
                 text += '<tr>';
 
-                if(Object.prototype.hasOwnProperty.call(feature.cluster[i].attributes, "screen_name")) {
-                    text += '<td>' + feature.cluster[i].attributes.screen_name + '</td>';
-                } else {
-                    text += '<td></td>';
-                }
-
-                if(Object.prototype.hasOwnProperty.call(feature.cluster[i].attributes, "created_at")) {
-                    text += '<td>' + feature.cluster[i].attributes.created_at + '</td>';
-                } else {
-                    text += '<td></td>';
-                }
-
-                if(Object.prototype.hasOwnProperty.call(feature.cluster[i].attributes, "text")) {
-                    text += '<td>' + feature.cluster[i].attributes.text + '</td>';
-                } else {
-                    text += '<td></td>';
+                for(var j = 0; j < feature.layer.clusterPopupFields.length; j++) {
+                    var field = feature.layer.clusterPopupFields[j];
+                    if(Object.prototype.hasOwnProperty.call(feature.cluster[i].attributes, field)) {
+                        text += '<td>' + feature.cluster[i].attributes[field] + '</td>';
+                    } else {
+                        text += '<td></td>';
+                    }
                 }
 
                 text += '</tr>';
