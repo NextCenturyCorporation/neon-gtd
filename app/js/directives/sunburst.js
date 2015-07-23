@@ -28,8 +28,8 @@
  * @constructor
  */
 angular.module('neonDemo.directives')
-.directive('sunburst', ['ConnectionService', 'DatasetService', 'ErrorNotificationService',
-function(connectionService, datasetService, errorNotificationService) {
+.directive('sunburst', ['ConnectionService', 'DatasetService', 'ErrorNotificationService', 'ExportService',
+function(connectionService, datasetService, errorNotificationService, exportService) {
     return {
         templateUrl: 'partials/directives/sunburst.html',
         restrict: 'EA',
@@ -73,6 +73,8 @@ function(connectionService, datasetService, errorNotificationService) {
                     filtersChanged: onFiltersChanged
                 });
 
+                $scope.exportID = exportService.register($scope.makeSunburstExportObject);
+
                 $scope.$on('$destroy', function() {
                     XDATA.userALE.log({
                         activity: "remove",
@@ -86,6 +88,7 @@ function(connectionService, datasetService, errorNotificationService) {
                     });
                     $element.off("resize", updateChartSize);
                     $scope.messenger.removeEvents();
+                    exportService.unregister($scope.exportID);
                 });
 
                 // This resizes the chart when the div changes.  This rely's on jquery's resize plugin to fire
@@ -112,17 +115,17 @@ function(connectionService, datasetService, errorNotificationService) {
              * @private
              */
             var onFiltersChanged = function(message) {
-                XDATA.userALE.log({
-                    activity: "alter",
-                    action: "query",
-                    elementId: "sunburst",
-                    elementType: "canvas",
-                    elementSub: "sunburst",
-                    elementGroup: "chart_group",
-                    source: "system",
-                    tags: ["filter-change", "sunburst"]
-                });
                 if(message.addedFilter && message.addedFilter.databaseName === $scope.options.database.name && message.addedFilter.tableName === $scope.options.table.name) {
+                    XDATA.userALE.log({
+                        activity: "alter",
+                        action: "query",
+                        elementId: "sunburst",
+                        elementType: "canvas",
+                        elementSub: "sunburst",
+                        elementGroup: "chart_group",
+                        source: "system",
+                        tags: ["filter-change", "sunburst"]
+                    });
                     $scope.queryForData();
                 }
             };
@@ -342,12 +345,6 @@ function(connectionService, datasetService, errorNotificationService) {
                 $scope.chart.drawData(data);
             };
 
-            neon.ready(function() {
-                $scope.messenger = new neon.eventing.Messenger();
-                initialize();
-                $scope.displayActiveDataset(true);
-            });
-
             $scope.addGroup = function() {
                 if($scope.groupFields.indexOf($scope.options.selectedItem) === -1 && $scope.options.selectedItem !== "") {
                     $scope.groupFields.push($scope.options.selectedItem);
@@ -363,6 +360,67 @@ function(connectionService, datasetService, errorNotificationService) {
                 }
                 $scope.queryForData();
             };
+
+            /**
+             * Creates and returns an object that contains information needed to export the data in this widget.
+             * @return {Object} An object containing all the information needed to export the data in this widget.
+             */
+            $scope.makeSunburstExportObject = function() {
+                XDATA.userALE.log({
+                    activity: "perform",
+                    action: "click",
+                    elementId: "sunburst-export",
+                    elementType: "button",
+                    elementGroup: "chart_group",
+                    source: "user",
+                    tags: ["options", "sunburst", "export"]
+                });
+                var query = $scope.buildQuery();
+                query.limitClause = exportService.getLimitClause();
+                // Sort results by each group field so the resulting file won't be ugly.
+                var sortByArgs = [];
+                $scope.groupFields.forEach(function(field) {
+                    sortByArgs.push(field);
+                    sortByArgs.push(neon.query.ASCENDING);
+                });
+                query.sortBy(sortByArgs);
+
+                var finalObject = {
+                    name: "Sunburst",
+                    data: [{
+                        query: query,
+                        name: "sunburst-" + $scope.exportID,
+                        fields: [],
+                        ignoreFilters: query.ignoreFilters_,
+                        selectionOnly: query.selectionOnly_,
+                        ignoredFilterIds: query.ignoredFilterIds_,
+                        type: "query"
+                    }]
+                };
+                $scope.groupFields.forEach(function(field) {
+                    finalObject.data[0].fields.push({
+                        query: field,
+                        pretty: capitalizeFirstLetter(field)
+                    });
+                });
+                return finalObject;
+            };
+
+            /**
+             * Helper function for makeBarchartExportObject that capitalizes the first letter of a string.
+             * @param str {String} The string to capitalize the first letter of.
+             * @return {String} The string given, but with its first letter capitalized.
+             */
+            var capitalizeFirstLetter = function(str) {
+                var first = str[0].toUpperCase();
+                return first + str.slice(1);
+            };
+
+            neon.ready(function() {
+                $scope.messenger = new neon.eventing.Messenger();
+                initialize();
+                $scope.displayActiveDataset(true);
+            });
         }
     };
 }]);

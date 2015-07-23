@@ -11,6 +11,7 @@
         <link rel="stylesheet" type="text/css" href="lib/bootstrap/css/bootstrap.min.css">
         <link rel="stylesheet" type="text/css" href="lib/jquery-ui/themes/ui-lightness/jquery-ui.min.css">
         <link rel="stylesheet" type="text/css" href="lib/jquery-ui/themes/ui-lightness/jquery.ui.theme.css">
+        <link rel="stylesheet" type="text/css" href="lib/openlayers/theme/default/style.css">
         <link rel="stylesheet" type="text/css" href="js/vendor/slick-grid/css/slick.grid.css">
         <link rel="stylesheet" type="text/css" href="lib/angular-gridster/css/angular-gridster.min.css">
         <link rel="stylesheet" type="text/css" href="lib/angular-bootstrap-datetimepicker/css/datetimepicker.css">
@@ -54,6 +55,14 @@
                         </span>
                     </div>
 
+                    <options-menu parent-element="element" class="navbar-text pull-right" ng-show="!(hideAdvancedOptions)">
+                        <!-- Buttons to select file format -->
+                        <label>Export Format</label>
+                        <div file-formats gridster-configs="visualizations" ng-hide="hideNavbarItems"></div>
+                        <!-- Export option -->
+                        <div export-widgets gridster-configs="visualizations" ng-hide="hideNavbarItems"></div>
+                    </options-menu>
+
                     <div powered-by-neon class="pull-right"></div>
 
                     <!-- Help Button -->
@@ -74,7 +83,7 @@
                     <div class="clearfix visible-xs"></div>
 
                     <!-- Database Config -->
-                    <database-config gridster-configs="visualizations" ng-hide="hideNavbarItems"></database-config>
+                    <database-config gridster-configs="visualizations" hide-advanced-options="hideAdvancedOptions" ng-hide="hideNavbarItems"></database-config>
 
                     <!-- Add visualization control -->
                     <div add-visualization gridster-configs="visualizations" ng-hide="hideNavbarItems || hideAddVisualizationsButton"></div>
@@ -176,6 +185,7 @@
         <script src="js/datasetService.js"></script>
         <script src="js/errorNotificationService.js"></script>
         <script src="js/filterService.js"></script>
+        <script src="js/exportService.js"></script>
         <script src="js/neonDemoController.js"></script>
 
         <script src="js/charts/circularHeatChart.js"></script>
@@ -187,6 +197,8 @@
         <script src="js/directives/countBy.js"></script>
         <script src="js/directives/databaseConfig.js"></script>
         <script src="js/directives/directedGraph.js"></script>
+        <script src="js/directives/exportWidgets.js"></script>
+        <script src="js/directives/fileFormats.js"></script>
         <script src="js/directives/filterBuilder.js"></script>
         <script src="js/directives/filterState.js"></script>
         <script src="js/directives/filterTray.js"></script>

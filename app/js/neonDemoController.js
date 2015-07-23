@@ -26,11 +26,16 @@ angular.module('neonDemo.controllers')
 function($scope, $timeout, config, datasets) {
     $scope.hideNavbarItems = config.hideNavbarItems;
     $scope.showFilterStatusTray = config.showFilterStatusTray;
+
     $scope.hideAddVisualizationsButton = config.hideAddVisualizationsButton;
+    $scope.hideAdvancedOptions = config.hideAdvancedOptions;
+
     $scope.seeData = false;
     $scope.createFilters = false;
     $scope.filterCount = 0;
     $scope.help = config.help;
+
+    $scope.element = $(window);
 
     if($scope.hideNavbarItems) {
         for(var i = 0; i < datasets.length; ++i) {
@@ -230,11 +235,4 @@ function($scope, $timeout, config, datasets) {
     $("#videoModal").on("hidden.bs.modal", function() {
         $("#helpVideo")[0].pause();
     });
-
-    if(config.showVideoOnLoad && config.help.video) {
-        neon.ready(function() {
-            $("#videoModal").modal("show");
-            $("#helpVideo").attr("autoplay", "");
-        });
-    }
 }]);

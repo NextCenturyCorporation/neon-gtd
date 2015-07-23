@@ -28,8 +28,8 @@
  * @constructor
  */
 angular.module('neonDemo.directives')
-.directive('barchart', ['ConnectionService', 'DatasetService', 'ErrorNotificationService', 'FilterService',
-function(connectionService, datasetService, errorNotificationService, filterService) {
+.directive('barchart', ['ConnectionService', 'DatasetService', 'ErrorNotificationService', 'FilterService', 'ExportService',
+function(connectionService, datasetService, errorNotificationService, filterService, exportService) {
     return {
         templateUrl: 'partials/directives/barchart.html',
         restrict: 'EA',
@@ -40,7 +40,8 @@ function(connectionService, datasetService, errorNotificationService, filterServ
             bindTable: '=',
             bindDatabase: '=',
             hideHeader: '=?',
-            hideAdvancedOptions: '=?'
+            hideAdvancedOptions: '=?',
+            limitCount: '=?'
         },
         link: function($scope, $element) {
             $element.addClass('barchartDirective');
@@ -61,7 +62,8 @@ function(connectionService, datasetService, errorNotificationService, filterServ
                 table: {},
                 attrX: "",
                 attrY: "",
-                barType: "count"
+                barType: "count",
+                limitCount: $scope.limitCount || 150
             };
 
             var COUNT_FIELD_NAME = 'Count';
@@ -84,6 +86,8 @@ function(connectionService, datasetService, errorNotificationService, filterServ
                     filtersChanged: onFiltersChanged
                 });
 
+                $scope.exportID = exportService.register($scope.makeBarchartExportObject);
+
                 $scope.$on('$destroy', function() {
                     XDATA.userALE.log({
                         activity: "remove",
@@ -100,6 +104,7 @@ function(connectionService, datasetService, errorNotificationService, filterServ
                     if($scope.filterSet) {
                         filterService.removeFilters($scope.messenger, $scope.filterKeys);
                     }
+                    exportService.unregister($scope.exportID);
                 });
 
                 $scope.$watch('options.attrX', function(newValue) {
@@ -158,18 +163,17 @@ function(connectionService, datasetService, errorNotificationService, filterServ
              * @private
              */
             var onFiltersChanged = function(message) {
-                XDATA.userALE.log({
-                    activity: "alter",
-                    action: "query",
-                    elementId: "barchart",
-                    elementType: "canvas",
-                    elementSub: "barchart",
-                    elementGroup: "chart_group",
-                    source: "system",
-                    tags: ["filter-change", "barchart"]
-                });
-
                 if(message.addedFilter && message.addedFilter.databaseName === $scope.options.database.name && message.addedFilter.tableName === $scope.options.table.name) {
+                    XDATA.userALE.log({
+                        activity: "alter",
+                        action: "query",
+                        elementId: "barchart",
+                        elementType: "canvas",
+                        elementSub: "barchart",
+                        elementGroup: "chart_group",
+                        source: "system",
+                        tags: ["filter-change", "barchart"]
+                    });
                     $scope.queryForData(false);
                 }
             };
@@ -231,20 +235,7 @@ function(connectionService, datasetService, errorNotificationService, filterServ
                 $scope.queryForData(true);
             };
 
-            $scope.queryForData = function(rebuildChart) {
-                if($scope.errorMessage) {
-                    errorNotificationService.hideErrorMessage($scope.errorMessage);
-                    $scope.errorMessage = undefined;
-                }
-
-                var connection = connectionService.getActiveConnection();
-
-                if(!connection || !$scope.options.attrX || (!$scope.options.attrY && $scope.options.barType !== "count")) {
-                    drawBlankChart();
-                    $scope.loadingData = false;
-                    return;
-                }
-
+            $scope.buildQuery = function() {
                 var query = new neon.query.Query()
                     .selectFrom($scope.options.database.name, $scope.options.table.name)
                     .where($scope.options.attrX, '!=', null)
@@ -266,6 +257,27 @@ function(connectionService, datasetService, errorNotificationService, filterServ
                 } else {
                     query.aggregate(queryType, $scope.options.attrY, COUNT_FIELD_NAME);
                 }
+
+                query.sortBy(COUNT_FIELD_NAME, neon.query.DESCENDING);
+                query.limit($scope.options.limitCount);
+                return query;
+            };
+
+            $scope.queryForData = function(rebuildChart) {
+                if($scope.errorMessage) {
+                    errorNotificationService.hideErrorMessage($scope.errorMessage);
+                    $scope.errorMessage = undefined;
+                }
+
+                var connection = connectionService.getActiveConnection();
+
+                if(!connection || !$scope.options.attrX || (!$scope.options.attrY && $scope.options.barType !== "count")) {
+                    drawBlankChart();
+                    $scope.loadingData = false;
+                    return;
+                }
+
+                var query = $scope.buildQuery();
 
                 XDATA.userALE.log({
                     activity: "alter",
@@ -290,6 +302,9 @@ function(connectionService, datasetService, errorNotificationService, filterServ
                             source: "system",
                             tags: ["receive", "barchart"]
                         });
+                        $scope.results = {
+                            count: queryResults.data.length
+                        };
                         doDrawChart(queryResults, rebuildChart);
                         $scope.loadingData = false;
                         XDATA.userALE.log({
@@ -451,6 +466,71 @@ function(connectionService, datasetService, errorNotificationService, filterServ
                     return "Count";
                 }
                 return "";
+            };
+
+            /**
+             * Creates and returns an object that contains information needed to export the data in this widget.
+             * @return {Object} An object containing all the information needed to export the data in this widget.
+             */
+            $scope.makeBarchartExportObject = function() {
+                XDATA.userALE.log({
+                    activity: "perform",
+                    action: "click",
+                    elementId: "barchart-export",
+                    elementType: "button",
+                    elementGroup: "chart_group",
+                    source: "user",
+                    tags: ["options", "barchart", "export"]
+                });
+                var query = $scope.buildQuery();
+                query.limitClause = exportService.getLimitClause();
+                query.ignoreFilters_ = exportService.getIgnoreFilters();
+                query.ignoredFilterIds_ = exportService.getIgnoredFilterIds();
+                var finalObject = {
+                    name: "Bar_Chart",
+                    data: [{
+                        query: query,
+                        name: "barchart-" + $scope.exportID,
+                        fields: [],
+                        ignoreFilters: query.ignoreFilters_,
+                        selectionOnly: query.selectionOnly_,
+                        ignoredFilterIds: query.ignoredFilterIds_,
+                        type: "query"
+                    }]
+                };
+                finalObject.data[0].fields.push({
+                    query: query.groupByClauses[0].field,
+                    pretty: capitalizeFirstLetter(query.groupByClauses[0].field)
+                });
+                if($scope.options.barType === "average") {
+                    finalObject.data[0].fields.push({
+                        query: COUNT_FIELD_NAME,
+                        pretty: "Average of " + query.aggregates[0].field
+                    });
+                }
+                if($scope.options.barType === "sum") {
+                    finalObject.data[0].fields.push({
+                        query: COUNT_FIELD_NAME,
+                        pretty: "Sum of " + query.aggregates[0].field
+                    });
+                }
+                if($scope.options.barType === "count") {
+                    finalObject.data[0].fields.push({
+                        query: COUNT_FIELD_NAME,
+                        pretty: "Count"
+                    });
+                }
+                return finalObject;
+            };
+
+            /**
+             * Helper function for makeBarchartExportObject that capitalizes the first letter of a string.
+             * @param str {String} The string to capitalize the first letter of.
+             * @return {String} The string given, but with its first letter capitalized.
+             */
+            var capitalizeFirstLetter = function(str) {
+                var first = str[0].toUpperCase();
+                return first + str.slice(1);
             };
 
             neon.ready(function() {

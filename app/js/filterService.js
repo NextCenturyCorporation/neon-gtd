@@ -46,8 +46,7 @@ angular.module("neonDemo.services")
     };
 
     /**
-     * Returns the list of field names or arrays based on the data contained within the map of fields in the given relation to be used by a filter clause
-     * creation function.
+     * Returns the list of field names or arrays based on the data contained within the array of fields in the given relation to be used by a filter clause creation function.
      * @param {Object} relation A relation object containing a map of field names to arrays of related field names
      * @method getArgumentFieldsList
      * @return {Array} A list of {String} related field names if the map of field names in the given relation object only contains one field name key;
@@ -55,19 +54,21 @@ angular.module("neonDemo.services")
      * elements of this list will be used to call the filter clause creation functions in filterService.createFilter() below.
      */
     service.getArgumentFieldsList = function(relation) {
-        // The relation will contain each field used by the filter clause creation function mapped to a list of the related fields for that field.
-        // Note:  Sort the keys so, if multiple fields exist, the filter clause creation function can expect them in alphabetical order.
-        var fieldNames = Object.keys(relation.fields).sort();
+        // The relation contains an object with the name of each initial field and the array of related fields for each initial field.
+        // Keep the same order of the fields array.  This order may be used in the filter clause creation function.
+        var fieldNames = relation.fields.map(function(field) {
+            return field.initial;
+        });
 
         // If only one field is used by the filter clause creation function, just return the list of related fields for that field.
         if(fieldNames.length === 1) {
-            return relation.fields[fieldNames[0]];
+            return relation.fields[0].related;
         }
 
         // Else we need to create a list of all combinations of the related fields.  First, create a list containing all the lists of related fields.
         var relationFieldsList = [];
         for(var i = 0; i < fieldNames.length; ++i) {
-            relationFieldsList.push(relation.fields[fieldNames[i]]);
+            relationFieldsList.push(relation.fields[i].related);
         }
 
         // Create a list of arguments representing the fields using all combinations of the related fields.
@@ -179,6 +180,8 @@ angular.module("neonDemo.services")
             messenger.addFilter(filterKeys[relation.database][relation.table], filter, function() {
                 addNextFilter();
             }, errorCallback);
+
+            addFilter(angular.copy(relations));
         };
 
         var filterNameString = getFilterNameString(filterName, relations);
@@ -219,6 +222,8 @@ angular.module("neonDemo.services")
             messenger.replaceFilter(filterKeys[relation.database][relation.table], filter, function() {
                 replaceNextFilter();
             }, errorCallback);
+
+            replaceFilter(angular.copy(relations));
         };
 
         var filterNameString = getFilterNameString(filterName, relations);

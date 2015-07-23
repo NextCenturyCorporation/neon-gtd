@@ -15,14 +15,16 @@
  *
  */
 angular.module('neonDemo.directives')
-.directive('databaseConfig', ['datasets', 'layouts', 'ConnectionService', 'DatasetService', function(datasets, layouts, connectionService, datasetService) {
+.directive('databaseConfig', ['datasets', 'layouts', 'ConnectionService', 'DatasetService',
+    function(datasets, layouts, connectionService, datasetService) {
     return {
         templateUrl: 'partials/directives/databaseConfig.html',
         restrict: 'E',
         scope: {
             storeSelect: '=',
             hostName: '=',
-            gridsterConfigs: "="
+            gridsterConfigs: "=",
+            hideAdvancedOptions: "="
         },
         link: function($scope, el) {
             el.addClass('databaseConfig');
@@ -141,18 +143,6 @@ angular.module('neonDemo.directives')
 
             var populateDatabaseDropdown = function(dbs) {
                 $scope.databases = dbs;
-            };
-
-            $scope.connectToDatabase = function(updateFieldsCallback) {
-                var connection = connectionService.getActiveConnection();
-                if(connection) {
-                    connection.getTableNames($scope.selectedDB, function(tableNames) {
-                        $scope.$apply(function() {
-                            populateTableDropdown(tableNames);
-                        });
-                    });
-                    $scope.updateFieldsForTables(updateFieldsCallback);
-                }
             };
 
             $scope.selectDatabase = function() {

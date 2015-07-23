@@ -32,8 +32,8 @@
  * @constructor
  */
 angular.module('neonDemo.directives')
-.directive('timelineSelector', ['ConnectionService', 'DatasetService', 'ErrorNotificationService', 'FilterService', 'opencpu',
-function(connectionService, datasetService, errorNotificationService, filterService, opencpu) {
+.directive('timelineSelector', ['ConnectionService', 'DatasetService', 'ErrorNotificationService', 'FilterService', 'ExportService', 'opencpu', '$filter',
+function(connectionService, datasetService, errorNotificationService, filterService, exportService, opencpu, $filter) {
     return {
         templateUrl: 'partials/directives/timelineSelector.html',
         restrict: 'EA',
@@ -42,7 +42,9 @@ function(connectionService, datasetService, errorNotificationService, filterServ
             bindTable: '=',
             bindDatabase: '=',
             hideHeader: '=?',
-            hideAdvancedOptions: '=?'
+            hideAdvancedOptions: '=?',
+            overrideStartDate: '=?',
+            overrideEndDate: '=?'
         },
         link: function($scope, $element) {
             var YEAR = "year";
@@ -72,6 +74,7 @@ function(connectionService, datasetService, errorNotificationService, filterServ
             $scope.eventProbabilitiesDisplayed = false;
             $scope.errorMessage = undefined;
             $scope.loadingData = false;
+            $scope.noData = true;
 
             $scope.databases = [];
             $scope.tables = [];
@@ -93,13 +96,33 @@ function(connectionService, datasetService, errorNotificationService, filterServ
             };
 
             var datesEqual = function(a, b) {
-                return a.toDateString() === b.toDateString();
+                return a.toUTCString() === b.toUTCString();
+            };
+
+            var getDateTimePickerStart = function() {
+                return new Date(Date.UTC($scope.filter.start.getFullYear(), $scope.filter.start.getMonth(), $scope.filter.start.getDate(), $scope.filter.start.getHours()));
+            };
+
+            var getDateTimePickerEnd = function() {
+                return new Date(Date.UTC($scope.filter.end.getFullYear(), $scope.filter.end.getMonth(), $scope.filter.end.getDate() + 1, $scope.filter.end.getHours()));
+            };
+
+            var setDateTimePickerStart = function(date) {
+                $scope.filter.start = new Date(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate(), date.getUTCHours());
+            };
+
+            var setDateTimePickerEnd = function(date) {
+                $scope.filter.end = new Date(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate() - 1, date.getUTCHours());
             };
 
             $scope.handleDateTimePickChange = function() {
-                if($scope.brush.length && datesEqual($scope.filter.start, $scope.brush[0]) && datesEqual($scope.filter.end, $scope.brush[1])) {
+                // Convert the datetimepicker dates from UTC to local time to match the other dates used throughout the application.
+                var start = getDateTimePickerStart();
+                var end = getDateTimePickerEnd();
+
+                if($scope.brush.length && datesEqual(start, $scope.brush[0]) && datesEqual(end, $scope.brush[1])) {
                     $element.find(".save-button").addClass("disabled");
-                } else if(!$scope.brush.length && datesEqual($scope.filter.start, $scope.bucketizer.getStartDate()) && datesEqual($scope.filter.end, $scope.bucketizer.getEndDate())) {
+                } else if(!$scope.brush.length && datesEqual(start, $scope.bucketizer.getStartDate()) && datesEqual(end, $scope.bucketizer.getEndDate())) {
                     $element.find(".save-button").addClass("disabled");
                 } else {
                     $element.find(".save-button").removeClass("disabled");
@@ -107,25 +130,33 @@ function(connectionService, datasetService, errorNotificationService, filterServ
             };
 
             $scope.handleDateTimePickSave = function() {
-                $scope.filter.start = $scope.filter.start || $scope.bucketizer.getStartDate();
-                $scope.filter.end = $scope.filter.end || $scope.bucketizer.getEndDate();
+                // Convert the datetimepicker dates from UTC to local time to match the other dates used throughout the application.
+                var start = getDateTimePickerStart();
+                var end = getDateTimePickerEnd();
+
                 $element.find(".save-button").addClass("disabled");
                 $element.find(".neon-datetimepicker").removeClass("open");
 
-                if(datesEqual($scope.filter.start, $scope.bucketizer.getStartDate()) && datesEqual($scope.filter.end, $scope.bucketizer.getEndDate())) {
+                if(datesEqual(start, $scope.bucketizer.getStartDate()) && datesEqual(end, $scope.bucketizer.getEndDate())) {
                     if($scope.brush.length) {
                         $scope.clearBrush();
                     }
                     return;
                 }
 
-                $scope.brush = [$scope.filter.start, $scope.filter.end];
+                $scope.brush = [start, end];
                 $scope.extentDirty = true;
             };
 
             $scope.handleDateTimePickCancel = function() {
-                $scope.filter.start = $scope.brush.length ? $scope.brush[0] : $scope.bucketizer.getStartDate();
-                $scope.filter.end = $scope.brush.length ? $scope.brush[1] : $scope.bucketizer.getEndDate();
+                if($scope.brush.length) {
+                    setDateTimePickerStart($scope.brush[0]);
+                    setDateTimePickerEnd($scope.brush[1]);
+                } else if($scope.bucketizer.getStartDate() && $scope.bucketizer.getEndDate()) {
+                    setDateTimePickerStart($scope.bucketizer.getStartDate());
+                    setDateTimePickerEnd($scope.bucketizer.getEndDate());
+                }
+
                 $element.find(".save-button").addClass("disabled");
                 $element.find(".neon-datetimepicker").removeClass("open");
             };
@@ -156,8 +187,8 @@ function(connectionService, datasetService, errorNotificationService, filterServ
                     var endDateBucket = $scope.bucketizer.getBucketIndex($scope.referenceEndDate);
                     var afterEndDate = $scope.bucketizer.getDateForBucket(endDateBucket + 1);
                     $scope.bucketizer.setEndDate(afterEndDate);
-                    $scope.filter.start = $scope.bucketizer.getStartDate();
-                    $scope.filter.end = $scope.bucketizer.getEndDate();
+                    setDateTimePickerStart($scope.bucketizer.getStartDate());
+                    setDateTimePickerEnd($scope.bucketizer.getEndDate());
                 }
             };
 
@@ -169,16 +200,32 @@ function(connectionService, datasetService, errorNotificationService, filterServ
                     displayStartDate.getUTCMonth(),
                     displayStartDate.getUTCDate(),
                     displayStartDate.getUTCHours());
+
                 $scope.endDateForDisplay = new Date(displayEndDate.getUTCFullYear(),
                     displayEndDate.getUTCMonth(),
                     displayEndDate.getUTCDate(),
                     displayEndDate.getUTCHours());
+
                 // Describing ranges is odd. If an event lasts 2 hours starting at 6am, then it
                 // lasts from 6am to 8am. But if an event starts on the 6th and lasts 2 days, then
                 // it lasts from the 6th to the 7th.
                 if($scope.options.granularity !== HOUR) {
                     $scope.endDateForDisplay = new Date($scope.endDateForDisplay.getTime() - 1);
                 }
+
+                var format = "MMMM d, yyyy HH:mm";
+                if($scope.options.granularity === DAY) {
+                    format = "MMMM d, yyyy";
+                }
+                if($scope.options.granularity === MONTH) {
+                    format = "MMMM yyyy";
+                }
+                if($scope.options.granularity === YEAR) {
+                    format = "yyyy";
+                }
+
+                $scope.startDateForDisplay = $filter("date")($scope.startDateForDisplay.toISOString(), format) + " (Z)";
+                $scope.endDateForDisplay = $filter("date")($scope.endDateForDisplay.toISOString(), format) + " (Z)";
             };
 
             /**
@@ -261,17 +308,6 @@ function(connectionService, datasetService, errorNotificationService, filterServ
                 // Watch for brush changes and set the appropriate neon filter.
                 $scope.$watch('brush', function(newVal) {
                     if(newVal.length && $scope.messenger && connectionService.getActiveConnection()) {
-                        XDATA.userALE.log({
-                            activity: "select",
-                            action: ($scope.loadingData) ? "reset" : "click",
-                            elementId: "timeline-range",
-                            elementType: "canvas",
-                            elementSub: "date-range",
-                            elementGroup: "chart_group",
-                            source: ($scope.loadingData) ? "system" : "user",
-                            tags: ["timeline", "date-range", "filter"]
-                        });
-
                         if(2 > newVal.length || newVal[0].getTime() === newVal[1].getTime()) {
                             // may be undefined when a new dataset is being loaded
                             if($scope.bucketizer.getStartDate() !== undefined && $scope.bucketizer.getEndDate() !== undefined && $scope.brush.length) {
@@ -295,8 +331,8 @@ function(connectionService, datasetService, errorNotificationService, filterServ
                         // Needed to redraw the brush for the case in which the user clicks on a point inside an existing brush.
                         $scope.extentDirty = true;
 
-                        $scope.filter.start = $scope.brush.length ? $scope.brush[0] : $scope.bucketizer.getStartDate();
-                        $scope.filter.end = $scope.brush.length ? $scope.brush[1] : $scope.bucketizer.getEndDate();
+                        setDateTimePickerStart($scope.brush.length ? $scope.brush[0] : $scope.bucketizer.getStartDate());
+                        setDateTimePickerEnd($scope.brush.length ? $scope.brush[1] : $scope.bucketizer.getEndDate());
 
                         if($scope.loadingData) {
                             // If the brush changed because of a granularity change, then don't
@@ -310,7 +346,7 @@ function(connectionService, datasetService, errorNotificationService, filterServ
                         }
                     }
                 }, true);
-                
+
                 $scope.$watch('options.showFocus', function(newVal, oldVal) {
                     if(!$scope.loadingData && newVal && newVal !== oldVal) {
                         XDATA.userALE.log({
@@ -333,6 +369,8 @@ function(connectionService, datasetService, errorNotificationService, filterServ
                 });
                 $scope.messenger.subscribe(datasetService.DATE_CHANGED, onDateChanged);
 
+                $scope.exportID = exportService.register($scope.makeTimelineSelectorExportObject);
+
                 $scope.$on('$destroy', function() {
                     XDATA.userALE.log({
                         activity: "remove",
@@ -349,6 +387,7 @@ function(connectionService, datasetService, errorNotificationService, filterServ
                     if($scope.brush.length) {
                         filterService.removeFilters($scope.messenger, $scope.filterKeys);
                     }
+                    exportService.unregister($scope.exportID);
                     $element.off("resize", resizeDateTimePickerDropdown);
                 });
             };
@@ -365,7 +404,6 @@ function(connectionService, datasetService, errorNotificationService, filterServ
                 }
 
                 var relations = datasetService.getRelations($scope.options.database.name, $scope.options.table.name, [$scope.options.dateField]);
-                datasetService.setDateBrushExtentForRelations(relations, $scope.brush);
 
                 var nameIncludeTime = $scope.options.granularity === HOUR;
                 var filterNameObj = {
@@ -373,7 +411,12 @@ function(connectionService, datasetService, errorNotificationService, filterServ
                     text: getDateString($scope.startDateForDisplay, nameIncludeTime) + " to " + getDateString($scope.endDateForDisplay, nameIncludeTime)
                 };
 
-                filterService.replaceFilters($scope.messenger, relations, $scope.filterKeys, $scope.createFilterClauseForDate, filterNameObj, callback);
+                filterService.replaceFilters($scope.messenger, relations, $scope.filterKeys, $scope.createFilterClauseForDate, filterNameObj, function() {
+                    if(callback) {
+                        callback();
+                    }
+                    datasetService.setDateBrushExtentForRelations(relations, $scope.brush);
+                });
             };
 
             var getDateString = function(date, includeTime) {
@@ -407,18 +450,17 @@ function(connectionService, datasetService, errorNotificationService, filterServ
              * @return {Boolean}
              */
             var isDateFiltersChangedMessage = function(message) {
-                var whereClauses = undefined;
+                var whereClauses;
                 if(message.addedFilter.whereClause) {
                     whereClauses = message.addedFilter.whereClause.whereClauses;
-                }
-                else if(message.removedFilter.whereClause) {
+                } else if(message.removedFilter.whereClause) {
                     whereClauses = message.removedFilter.whereClause.whereClauses;
                 }
                 if(whereClauses && whereClauses.length === 2 && whereClauses[0].lhs === $scope.options.dateField && whereClauses[1].lhs === $scope.options.dateField) {
                     return true;
                 }
                 return false;
-            }
+            };
 
             /**
              * Event handler for filter changed events issued over Neon's messaging channels.
@@ -427,23 +469,24 @@ function(connectionService, datasetService, errorNotificationService, filterServ
              * @private
              */
             var onFiltersChanged = function(message) {
-                XDATA.userALE.log({
-                    activity: "alter",
-                    action: "query",
-                    elementId: "timeline",
-                    elementType: "canvas",
-                    elementSub: "timeline",
-                    elementGroup: "chart_group",
-                    source: "system",
-                    tags: ["filter-change", "timeline"]
-                });
-
                 if(message.addedFilter && message.addedFilter.databaseName === $scope.options.database.name && message.addedFilter.tableName === $scope.options.table.name) {
                     // If the filter changed event was triggered by a change in the global date filter, ignore the filter changed event.
                     // We don't need to re-query and we'll update the brush extent in response to the date changed event.
                     if(isDateFiltersChangedMessage(message)) {
                         return;
                     }
+
+                    XDATA.userALE.log({
+                        activity: "alter",
+                        action: "query",
+                        elementId: "timeline",
+                        elementType: "canvas",
+                        elementSub: "timeline",
+                        elementGroup: "chart_group",
+                        source: "system",
+                        tags: ["filter-change", "timeline"]
+                    });
+
                     $scope.queryForChartData();
                 }
             };
@@ -455,17 +498,6 @@ function(connectionService, datasetService, errorNotificationService, filterServ
              * @private
              */
             var onDateChanged = function(message) {
-                XDATA.userALE.log({
-                    activity: "alter",
-                    action: "receive",
-                    elementId: "timeline-range",
-                    elementType: "canvas",
-                    elementSub: "date-range",
-                    elementGroup: "chart_group",
-                    source: "system",
-                    tags: ["timeline", "date-range", "filter-change"]
-                });
-
                 if($scope.options.database.name === message.databaseName && $scope.options.table.name === message.tableName && $scope.brush !== message.brushExtent) {
                     $scope.brush = message.brushExtent;
                     $scope.extentDirty = true;
@@ -533,16 +565,35 @@ function(connectionService, datasetService, errorNotificationService, filterServ
                 $scope.referenceStartDate = undefined;
                 $scope.referenceEndDate = undefined;
                 $scope.data = [];
+                $scope.noData = true;
 
                 var globalBrushExtent = datasetService.getDateBrushExtent($scope.options.database.name, $scope.options.table.name);
                 if($scope.brush !== globalBrushExtent) {
                     $scope.brush = globalBrushExtent;
                     $scope.extentDirty = true;
-                } else if($scope.brush.length) {
-                    $scope.clearBrush();
                 }
 
                 $scope.queryForChartData();
+            };
+
+            /**
+             * Helper method for queryForChartData() and requestExport(). Creates the Query object to be used by those moethods.
+             * @method createChartDataQuery
+             * @return {neon.query.Query} query The Query object to be used by queryForChartData() and requestExport()
+             */
+            $scope.createChartDataQuery = function() {
+                var query = new neon.query.Query()
+                    .selectFrom($scope.options.database.name, $scope.options.table.name)
+                    .where($scope.options.dateField, '!=', null);
+
+                $scope.addGroupByGranularityClause(query);
+
+                query.aggregate(neon.query.COUNT, '*', 'count');
+                // TODO: Does this need to be an aggregate on the date field? What is MIN doing or is this just an arbitrary function to include the date with the query?
+                query.aggregate(neon.query.MIN, $scope.options.dateField, 'date');
+                query.sortBy('date', neon.query.ASCENDING);
+                query.ignoreFilters([$scope.filterKeys[$scope.options.database.name][$scope.options.table.name]]);
+                return query;
             };
 
             /**
@@ -565,17 +616,7 @@ function(connectionService, datasetService, errorNotificationService, filterServ
                     return;
                 }
 
-                var query = new neon.query.Query()
-                    .selectFrom($scope.options.database.name, $scope.options.table.name)
-                    .where($scope.options.dateField, '!=', null);
-
-                $scope.addGroupByGranularityClause(query);
-
-                query.aggregate(neon.query.COUNT, '*', 'count');
-                // TODO: Does this need to be an aggregate on the date field? What is MIN doing or is this just an arbitrary function to include the date with the query?
-                query.aggregate(neon.query.MIN, $scope.options.dateField, 'date');
-                query.sortBy('date', neon.query.ASCENDING);
-                query.ignoreFilters([$scope.filterKeys[$scope.options.database.name][$scope.options.table.name]]);
+                var query = $scope.createChartDataQuery();
 
                 XDATA.userALE.log({
                     activity: "alter",
@@ -656,39 +697,46 @@ function(connectionService, datasetService, errorNotificationService, filterServ
                     extentEndDate = $scope.bucketizer.getEndDate();
                 }
 
-                // can happen when switching between granularities on edge cases
-                if(extentStartDate < $scope.bucketizer.getStartDate()) {
-                    extentStartDate = $scope.bucketizer.getStartDate();
-                }
-
-                if(extentEndDate > $scope.bucketizer.getEndDate()) {
-                    extentEndDate = $scope.bucketizer.getEndDate();
-                }
-
-                extentStartDate = $scope.bucketizer.zeroOutDate(extentStartDate);
-                extentEndDate = $scope.bucketizer.roundUpBucket(extentEndDate);
-
-                var startIdx = $scope.bucketizer.getBucketIndex(extentStartDate);
-                var endIdx = $scope.bucketizer.getBucketIndex(extentEndDate);
-
-                // Update the start/end times and totals used for the Neon selection and their
-                // display versions.  Since Angular formats dates as local values, we create new display values
-                // for the appropriate date we want to appear in this directive's associated partial.
-                // This essentially shifts the display times from local to the value we want to appear in UTC time.
                 var total = 0;
-                // endIdx points to the start of the day/hour just after the buckets we want to count, so do not
-                // include the bucket at endIdx.
-                for(i = startIdx; i < endIdx; i++) {
-                    if($scope.options.primarySeries.data[i]) {
-                        total += $scope.options.primarySeries.data[i].value;
+
+                if(extentStartDate && extentEndDate) {
+                    // can happen when switching between granularities on edge cases
+                    if(extentStartDate < $scope.bucketizer.getStartDate()) {
+                        extentStartDate = $scope.bucketizer.getStartDate();
+                    }
+
+                    if(extentEndDate > $scope.bucketizer.getEndDate()) {
+                        extentEndDate = $scope.bucketizer.getEndDate();
+                    }
+
+                    extentStartDate = $scope.bucketizer.zeroOutDate(extentStartDate);
+                    extentEndDate = $scope.bucketizer.roundUpBucket(extentEndDate);
+
+                    var startIdx = $scope.bucketizer.getBucketIndex(extentStartDate);
+                    var endIdx = $scope.bucketizer.getBucketIndex(extentEndDate);
+
+                    // Update the start/end times and totals used for the Neon selection and their
+                    // display versions.  Since Angular formats dates as local values, we create new display values
+                    // for the appropriate date we want to appear in this directive's associated partial.
+                    // This essentially shifts the display times from local to the value we want to appear in UTC time.
+
+                    // endIdx points to the start of the day/hour just after the buckets we want to count, so do not
+                    // include the bucket at endIdx.
+                    for(i = startIdx; i < endIdx; i++) {
+                        if($scope.options.primarySeries.data[i]) {
+                            total += $scope.options.primarySeries.data[i].value;
+                        }
                     }
                 }
 
-                var displayStartDate = new Date(extentStartDate);
-                var displayEndDate = new Date(extentEndDate);
-                neon.safeApply($scope, function() {
-                    $scope.setDisplayDates(displayStartDate, displayEndDate);
-                });
+                if(isNaN(extentStartDate) || isNaN(extentEndDate)) {
+                    $scope.startDateForDisplay = undefined;
+                    $scope.endDateForDisplay = undefined;
+                } else {
+                    neon.safeApply($scope, function() {
+                        $scope.setDisplayDates(extentStartDate, extentEndDate);
+                    });
+                }
 
                 $scope.recordCount = total;
             };
@@ -711,6 +759,7 @@ function(connectionService, datasetService, errorNotificationService, filterServ
                         }
                         var data = $scope.createTimelineData(queryResults);
                         $scope.data = data;
+                        $scope.noData = !$scope.data || !$scope.data.length || !$scope.data[0].data || !$scope.data[0].data.length;
                         $scope.updateChartTimesAndTotal();
                         $scope.addTimeSeriesAnalysis(data[0].data, data);
                     };
@@ -733,6 +782,7 @@ function(connectionService, datasetService, errorNotificationService, filterServ
                         tags: ["timeline", "clear"]
                     });
                     $scope.data = $scope.createTimelineData(queryResults);
+                    $scope.noData = !$scope.data || !$scope.data.length || !$scope.data[0].data || !$scope.data[0].data.length;
                     $scope.updateChartTimesAndTotal();
                 }
             };
@@ -743,26 +793,46 @@ function(connectionService, datasetService, errorNotificationService, filterServ
                     $scope.errorMessage = undefined;
                 }
 
-                // TODO: neon doesn't yet support a more efficient way to just get the min/max fields without aggregating
-                // TODO: This could be done better with a promise framework - just did this in a pinch for a demo
-                var minDateQuery = new neon.query.Query()
-                    .selectFrom($scope.options.database.name, $scope.options.table.name).ignoreFilters()
-                    .where($scope.options.dateField, '!=', null).sortBy($scope.options.dateField, neon.query.ASCENDING).limit(1);
-
-                XDATA.userALE.log({
-                    activity: "alter",
-                    action: "query",
-                    elementId: "timeline",
-                    elementType: "canvas",
-                    elementSub: "timeline",
-                    elementGroup: "chart_group",
-                    source: "system",
-                    tags: ["query", "timeline", "min-date"]
-                });
                 var connection = connectionService.getActiveConnection();
-                if(connection) {
-                    connection.executeQuery(minDateQuery, function(queryResults) {
-                        if(queryResults.data.length > 0) {
+
+                if($scope.overrideStartDate) {
+                    $scope.referenceStartDate = new Date($scope.overrideStartDate);
+                } else {
+                    // TODO: neon doesn't yet support a more efficient way to just get the min/max fields without aggregating
+                    // TODO: This could be done better with a promise framework - just did this in a pinch for a demo
+                    var minDateQuery = new neon.query.Query()
+                        .selectFrom($scope.options.database.name, $scope.options.table.name).ignoreFilters()
+                        .where($scope.options.dateField, '!=', null).sortBy($scope.options.dateField, neon.query.ASCENDING).limit(1);
+
+                    XDATA.userALE.log({
+                        activity: "alter",
+                        action: "query",
+                        elementId: "timeline",
+                        elementType: "canvas",
+                        elementSub: "timeline",
+                        elementGroup: "chart_group",
+                        source: "system",
+                        tags: ["query", "timeline", "min-date"]
+                    });
+                    if(connection) {
+                        connection.executeQuery(minDateQuery, function(queryResults) {
+                            if(queryResults.data.length > 0) {
+                                XDATA.userALE.log({
+                                    activity: "alter",
+                                    action: "query",
+                                    elementId: "timeline",
+                                    elementType: "canvas",
+                                    elementSub: "timeline",
+                                    elementGroup: "chart_group",
+                                    source: "system",
+                                    tags: ["receive", "timeline", "min-date"]
+                                });
+                                $scope.referenceStartDate = new Date(queryResults.data[0][$scope.options.dateField]);
+                                if($scope.referenceEndDate !== undefined) {
+                                    $scope.$apply(success);
+                                }
+                            }
+                        }, function(response) {
                             XDATA.userALE.log({
                                 activity: "alter",
                                 action: "query",
@@ -771,51 +841,60 @@ function(connectionService, datasetService, errorNotificationService, filterServ
                                 elementSub: "timeline",
                                 elementGroup: "chart_group",
                                 source: "system",
-                                tags: ["receive", "timeline", "min-date"]
+                                tags: ["failed", "timeline", "min-date"]
                             });
-                            $scope.referenceStartDate = new Date(queryResults.data[0][$scope.options.dateField]);
-                            if($scope.referenceEndDate !== undefined) {
-                                $scope.$apply(success);
+                            $scope.referenceStartDate = undefined;
+                            $scope.updateChartData({
+                                data: []
+                            });
+                            if(response.responseJSON) {
+                                $scope.errorMessage = errorNotificationService.showErrorMessage($element, response.responseJSON.error, response.responseJSON.stackTrace);
                             }
-                        }
-                    }, function(response) {
-                        XDATA.userALE.log({
-                            activity: "alter",
-                            action: "query",
-                            elementId: "timeline",
-                            elementType: "canvas",
-                            elementSub: "timeline",
-                            elementGroup: "chart_group",
-                            source: "system",
-                            tags: ["failed", "timeline", "min-date"]
                         });
-                        $scope.referenceStartDate = undefined;
-                        $scope.updateChartData({
-                            data: []
-                        });
-                        if(response.responseJSON) {
-                            $scope.errorMessage = errorNotificationService.showErrorMessage($element, response.responseJSON.error, response.responseJSON.stackTrace);
-                        }
-                    });
+                    }
                 }
 
-                var maxDateQuery = new neon.query.Query()
-                    .selectFrom($scope.options.database.name, $scope.options.table.name).ignoreFilters()
-                    .where($scope.options.dateField, '!=', null).sortBy($scope.options.dateField, neon.query.DESCENDING).limit(1);
+                if($scope.overrideEndDate) {
+                    $scope.referenceEndDate = new Date($scope.overrideEndDate);
 
-                XDATA.userALE.log({
-                    activity: "alter",
-                    action: "query",
-                    elementId: "timeline",
-                    elementType: "canvas",
-                    elementSub: "timeline",
-                    elementGroup: "chart_group",
-                    source: "system",
-                    tags: ["query", "timeline", "max-date"]
-                });
-                if(connection) {
-                    connection.executeQuery(maxDateQuery, function(queryResults) {
-                        if(queryResults.data.length > 0) {
+                    if($scope.referenceStartDate !== undefined) {
+                        success();
+                    }
+                } else {
+                    var maxDateQuery = new neon.query.Query()
+                        .selectFrom($scope.options.database.name, $scope.options.table.name).ignoreFilters()
+                        .where($scope.options.dateField, '!=', null).sortBy($scope.options.dateField, neon.query.DESCENDING).limit(1);
+
+                    XDATA.userALE.log({
+                        activity: "alter",
+                        action: "query",
+                        elementId: "timeline",
+                        elementType: "canvas",
+                        elementSub: "timeline",
+                        elementGroup: "chart_group",
+                        source: "system",
+                        tags: ["query", "timeline", "max-date"]
+                    });
+
+                    if(connection) {
+                        connection.executeQuery(maxDateQuery, function(queryResults) {
+                            if(queryResults.data.length > 0) {
+                                XDATA.userALE.log({
+                                    activity: "alter",
+                                    action: "query",
+                                    elementId: "timeline",
+                                    elementType: "canvas",
+                                    elementSub: "timeline",
+                                    elementGroup: "chart_group",
+                                    source: "system",
+                                    tags: ["received", "timeline", "max-date"]
+                                });
+                                $scope.referenceEndDate = new Date(queryResults.data[0][$scope.options.dateField]);
+                                if($scope.referenceStartDate !== undefined) {
+                                    $scope.$apply(success);
+                                }
+                            }
+                        }, function(response) {
                             XDATA.userALE.log({
                                 activity: "alter",
                                 action: "query",
@@ -824,32 +903,17 @@ function(connectionService, datasetService, errorNotificationService, filterServ
                                 elementSub: "timeline",
                                 elementGroup: "chart_group",
                                 source: "system",
-                                tags: ["received", "timeline", "max-date"]
+                                tags: ["failed", "timeline", "max-date"]
                             });
-                            $scope.referenceEndDate = new Date(queryResults.data[0][$scope.options.dateField]);
-                            if($scope.referenceStartDate !== undefined) {
-                                $scope.$apply(success);
+                            $scope.referenceEndDate = undefined;
+                            $scope.updateChartData({
+                                data: []
+                            });
+                            if(response.responseJSON) {
+                                $scope.errorMessage = errorNotificationService.showErrorMessage($element, response.responseJSON.error, response.responseJSON.stackTrace);
                             }
-                        }
-                    }, function(response) {
-                        XDATA.userALE.log({
-                            activity: "alter",
-                            action: "query",
-                            elementId: "timeline",
-                            elementType: "canvas",
-                            elementSub: "timeline",
-                            elementGroup: "chart_group",
-                            source: "system",
-                            tags: ["failed", "timeline", "max-date"]
                         });
-                        $scope.referenceEndDate = undefined;
-                        $scope.updateChartData({
-                            data: []
-                        });
-                        if(response.responseJSON) {
-                            $scope.errorMessage = errorNotificationService.showErrorMessage($element, response.responseJSON.error, response.responseJSON.stackTrace);
-                        }
-                    });
+                    }
                 }
             };
 
@@ -867,32 +931,25 @@ function(connectionService, datasetService, errorNotificationService, filterServ
                 var i = 0;
                 var rawLength = rawData.length;
 
-                // If we have no values, use our dates if they existed or now.
-                if(rawData.length === 0) {
-                    rawData[0] = {
-                        date: $scope.bucketizer.getStartDate() || new Date(),
-                        count: 0
-                    };
-                    rawLength = 1;
-                }
+                if(rawLength > 0) {
+                    var numBuckets = $scope.bucketizer.getNumBuckets();
 
-                var numBuckets = $scope.bucketizer.getNumBuckets();
+                    // Initialize our time buckets.
+                    for(i = 0; i < numBuckets; i++) {
+                        var bucketGraphDate = $scope.bucketizer.getDateForBucket(i);
+                        queryData[i] = {
+                            date: bucketGraphDate,
+                            value: 0
+                        };
+                    }
 
-                // Initialize our time buckets.
-                for(i = 0; i < numBuckets; i++) {
-                    var bucketGraphDate = $scope.bucketizer.getDateForBucket(i);
-                    queryData[i] = {
-                        date: bucketGraphDate,
-                        value: 0
-                    };
-                }
-
-                // Fill our rawData into the appropriate interval buckets.
-                var resultDate;
-                for(i = 0; i < rawLength; i++) {
-                    resultDate = new Date(rawData[i].date);
-                    var bucketIndex = $scope.bucketizer.getBucketIndex(resultDate);
-                    queryData[bucketIndex].value = rawData[i].count;
+                    // Fill our rawData into the appropriate interval buckets.
+                    var resultDate;
+                    for(i = 0; i < rawLength; i++) {
+                        resultDate = new Date(rawData[i].date);
+                        var bucketIndex = $scope.bucketizer.getBucketIndex(resultDate);
+                        queryData[bucketIndex].value = rawData[i].count;
+                    }
                 }
 
                 data.push({
@@ -1126,11 +1183,14 @@ function(connectionService, datasetService, errorNotificationService, filterServ
             var removeBrushFromTimelineAndDatasetService = function() {
                 $scope.brush = [];
                 $scope.extentDirty = true;
-                $scope.filter.start = $scope.bucketizer.getStartDate();
-                $scope.filter.end = $scope.bucketizer.getEndDate();
+                if($scope.bucketizer.getStartDate() && $scope.bucketizer.getEndDate()) {
+                    setDateTimePickerStart($scope.bucketizer.getStartDate());
+                    setDateTimePickerEnd($scope.bucketizer.getEndDate());
+                }
                 var relations = datasetService.getRelations($scope.options.database.name, $scope.options.table.name, [$scope.options.dateField]);
-                datasetService.removeDateBrushExtentForRelations(relations);
-                filterService.removeFilters($scope.messenger, $scope.filterKeys);
+                filterService.removeFilters($scope.messenger, $scope.filterKeys, function() {
+                    datasetService.removeDateBrushExtentForRelations(relations);
+                });
             };
 
             /**
@@ -1156,6 +1216,56 @@ function(connectionService, datasetService, errorNotificationService, filterServ
                 if(!$scope.loadingData) {
                     $scope.resetAndQueryForChartData();
                 }
+            };
+
+            /**
+             * Creates and returns an object that contains information needed to export the data in this widget.
+             * @return {Object} An object containing all the information needed to export the data in this widget.
+             */
+            $scope.makeTimelineSelectorExportObject = function() {
+                XDATA.userALE.log({
+                    activity: "perform",
+                    action: "click",
+                    elementId: "timeline-export",
+                    elementType: "button",
+                    elementGroup: "chart_group",
+                    source: "user",
+                    tags: ["options", "timeline", "export"]
+                });
+                var query = $scope.createChartDataQuery();
+                query.limitClause = exportService.getLimitClause();
+                query.ignoreFilters_ = exportService.getIgnoreFilters();
+                query.ignoredFilterIds_ = exportService.getIgnoredFilterIds();
+                var finalObject = {
+                    name: "Timeline",
+                    data: [{
+                        query: query,
+                        name: "timelineSelector-" + $scope.exportID,
+                        fields: [],
+                        ignoreFilters: query.ignoreFilters_,
+                        selectionOnly: query.selectionOnly_,
+                        ignoredFilterIds: query.ignoredFilterIds_,
+                        type: "query"
+                    }]
+                };
+                // The timelineSelector always asks for count and date, so it's fine to hard-code these in.
+                // GroupBy clauses will always be added to the query in the same order, so this takes advantage
+                // of that to add the pretty names of the clauses in the same order for as many as were added.
+                var counter = 0;
+                var prettyNames = ["Year", "Month", "Day", "Hour"];
+                query.groupByClauses.forEach(function(field) {
+                        finalObject.data[0].fields.push({
+                            query: field.name,
+                            pretty: prettyNames[counter]
+                        });
+                        counter++;
+                    }
+                );
+                finalObject.data[0].fields.push({
+                    query: "count",
+                    pretty: "Count"
+                });
+                return finalObject;
             };
 
             // Wait for neon to be ready, the create our messenger and intialize the view and data.

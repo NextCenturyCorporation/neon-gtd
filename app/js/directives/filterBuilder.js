@@ -236,23 +236,22 @@ angular.module('neonDemo.directives')
 
             var findRelationInfo = function(relation) {
                 var info = {
-                    database: {},
-                    table: {},
-                    tables: datasetService.getTables(relation.database),
-                    databaseFields: datasetService.getDatabaseFields(relation.database, relation.table),
-                    originalFields: Object.keys(relation.fields)
+                    databaseObject: {},
+                    tableObject: {},
+                    tableObjects: datasetService.getTables(relation.database),
+                    databaseFields: datasetService.getDatabaseFields(relation.database, relation.table)
                 };
 
                 for(var i = 0; i < $scope.databases.length; ++i) {
                     if($scope.databases[i].name === relation.database) {
-                        info.database = $scope.databases[i];
+                        info.databaseObject = $scope.databases[i];
                         break;
                     }
                 }
 
-                for(i = 0; i < info.tables.length; ++i) {
-                    if(info.tables[i].name === relation.table) {
-                        info.table = info.tables[i];
+                for(i = 0; i < info.tableObjects.length; ++i) {
+                    if(info.tableObjects[i].name === relation.table) {
+                        info.tableObject = info.tableObjects[i];
                         break;
                     }
                 }
@@ -285,14 +284,14 @@ angular.module('neonDemo.directives')
                     var relation = relations[i];
                     if(relation.database !== database.name || relation.table !== table.name) {
                         var relationInfo = findRelationInfo(relation);
-                        for(var j = 0; j < relationInfo.originalFields.length; ++j) {
-                            var relationFields = relation.fields[relationInfo.originalFields[j]];
+                        for(var j = 0; j < relation.fields.length; ++j) {
+                            var relationFields = relation.fields[j].related;
                             for(var k = 0; k < relationFields.length; ++k) {
-                                var relationFilterRow = new neon.query.FilterRow(relationInfo.database, relationInfo.table, relationFields[k], $scope.selectedOperator, $scope.selectedValue, relationInfo.tables, relationInfo.databaseFields);
-                                relationFilterRow.isDate = datasetService.hasDataset() && relationFields[k] === datasetService.getMapping(relationInfo.database, relationInfo.table, "date");
+                                var relationFilterRow = new neon.query.FilterRow(relationInfo.databaseObject, relationInfo.tableObject, relationFields[k], $scope.selectedOperator, $scope.selectedValue, relationInfo.tableObjects, relationInfo.databaseFields);
+                                relationFilterRow.isDate = datasetService.hasDataset() && relationFields[k] === datasetService.getMapping(relation.database, relation.table, "date");
                                 rows.push({
-                                    database: relationInfo.database,
-                                    table: relationInfo.table,
+                                    database: relationInfo.databaseObject,
+                                    table: relationInfo.tableObject,
                                     row: relationFilterRow
                                 });
                             }

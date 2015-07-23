@@ -216,13 +216,7 @@
             "longitudeMapping": "longitude",
             "limit": 5000,
             "colorBy": "magType",
-            "sizeBy": "mag",
-            "linkyConfig": {
-              "mentions": false,
-              "hashtags": false,
-              "urls": false,
-              "linkTo": "twitter"
-            }
+            "sizeBy": "mag"
         }, {
             "database": "test",
             "table": "earthquakes",
@@ -232,14 +226,14 @@
             "longitudeMapping": "longitude",
             "limit": 5000,
             "colorBy": "magType",
-            "sizeBy": "mag",
-            "linkyConfig": {
-              "mentions": false,
-              "hashtags": false,
-              "urls": false,
-              "linkTo": "twitter"
-            }
-        }]
+            "sizeBy": "mag"
+        }],
+        "linkyConfig": {
+          "mentions": false,
+          "hashtags": false,
+          "urls": true,
+          "linkTo": "twitter"
+        }
     }],
 
     "layouts": {
@@ -277,7 +271,9 @@
             "bindings": {
                 "bind-database": "'myDatabase'",
                 "bind-table": "'myTable'",
-                "bind-date-field": "'date'"
+                "bind-date-field": "'date'",
+                "override-start-date": "'1/1/2013'",
+                "override-end-date": "1388534399000"
             }
         }, {
             "sizeX": 4,

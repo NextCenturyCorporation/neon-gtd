@@ -84,7 +84,7 @@ charts.LineChart.DEFAULT_MARGIN = {
     right: 0
 };
 charts.LineChart.DEFAULT_STYLE = {};
-charts.LineChart.DEFAULT_HIGHLIGHT_WIDTH = 20;
+charts.LineChart.DEFAULT_HIGHLIGHT_WIDTH = 4;
 
 charts.LineChart.prototype.determineWidth = function(element) {
     if(this.userSetWidth) {
@@ -209,12 +209,13 @@ charts.LineChart.prototype.getColorMappings = function() {
  * @method selectDate
  */
 charts.LineChart.prototype.selectDate = function(startDate, endDate) {
-    if(!this.data || !this.data.length) {
+    if(!this.data || !this.data.length || !this.data[0].data || !this.data[0].data.length) {
         return;
     }
 
-    var startIndex = startDate < this.data[0].data[0].date ? 0 : -1;
-    var endIndex = endDate > this.data[0].data[this.data[0].data.length - 1].date ? this.data[0].data.length - 1 : -1;
+    var dataLength = this.data[0].data.length;
+    var startIndex = -1;
+    var endIndex = -1;
 
     var datesEqual = this.datesEqual;
     this.data[0].data.forEach(function(datum, index) {
@@ -226,7 +227,17 @@ charts.LineChart.prototype.selectDate = function(startDate, endDate) {
         }
     });
 
-    if(startIndex < 0 || endIndex < 0 || endDate < this.data[0].data[0].date || startDate > this.data[0].data[this.data[0].data.length - 1].date) {
+    var dataStartDate = this.data[0].data[0].date;
+    var dataEndDate = this.data[0].data[dataLength - 1].date;
+
+    // Add a day to the end day so it includes the whole end day and not just the first hour of the end day.
+    dataEndDate = new Date(dataEndDate.getFullYear(), dataEndDate.getMonth(), dataEndDate.getDate() + 1, dataEndDate.getHours());
+
+    // If the start or end date is outside the date range of the data, set it to the of the start (inclusive) or end (exclusive) index of the data.
+    startIndex = startDate < dataStartDate ? 0 : startIndex;
+    endIndex = endDate > dataEndDate ? dataLength : endIndex;
+
+    if(startIndex < 0 || endIndex < 0 || endDate < dataStartDate || startDate > dataEndDate) {
         this.deselectDate();
         return;
     }
@@ -237,42 +248,59 @@ charts.LineChart.prototype.selectDate = function(startDate, endDate) {
 };
 
 charts.LineChart.prototype.datesEqual = function(a, b) {
-    return a.toDateString() === b.toDateString();
+    return a.toUTCString() === b.toUTCString();
 };
 
 /**
- * Selects the date range with the given start and end index in the data by highlighting it in the chart.
+ * Selects the date range, if any values exist, with the given start and end index in the data by highlighting it in the chart.
  * @param {Number} startIndex
  * @param {Number} endIndex
  * @method selectIndexedDates
+ * @return {Boolean} Return true if the date range was selected
  */
 charts.LineChart.prototype.selectIndexedDates = function(startIndex, endIndex) {
     var me = this;
-    this.clearHoverCircles();
+    var allUndefined = true;
+
     this.data.forEach(function(seriesObject) {
         if(me.hiddenSeries.indexOf(seriesObject.series) >= 0) {
             return;
         }
 
         for(var i = startIndex; i < endIndex; ++i) {
-            var date = me.data[0].data[i].date;
-            me.hoverCircles[seriesObject.series][i]
-                .attr("stroke-opacity", 1)
-                .attr("fill-opacity", 1)
-                .attr("cx", seriesObject.data.length > 1 ? me.x(date) : me.width / 2)
-                .attr("cy", me.y(seriesObject.data[i].value));
+            if(!_.isUndefined(seriesObject.data[i].value)) {
+                // Clear circles if haven't already
+                if(allUndefined) {
+                    me.clearHoverCircles();
+                }
+
+                allUndefined = false;
+
+                var date = me.data[0].data[i].date;
+                me.hoverCircles[seriesObject.series][i]
+                    .attr("stroke-opacity", 1)
+                    .attr("fill-opacity", 1)
+                    .attr("cx", seriesObject.data.length > 1 ? me.x(date) : me.width / 2)
+                    .attr("cy", me.y(seriesObject.data[i].value));
+            }
         }
     });
 
-    var startDate = me.data[0].data[startIndex].date;
-    var endDate = me.data[0].data[endIndex - 1].date;
-    var startDateX = this.data[0].data.length > 1 ? this.x(startDate) : this.width / 2;
-    var endDateX = this.data[0].data.length > 1 ? this.x(endDate) : this.width / 2;
+    if(!allUndefined) {
+        var startDate = me.data[0].data[startIndex].date;
+        var endDate = me.data[0].data[endIndex - 1].date;
+        var startDateX = this.data[0].data.length > 1 ? this.x(startDate) : this.width / 2;
+        var endDateX = this.data[0].data.length > 1 ? this.x(endDate) : this.width / 2;
 
-    // Use a single highlight rectangle for the whole selected date range.
-    var highlightX = Math.max(0, startDateX - (charts.LineChart.DEFAULT_HIGHLIGHT_WIDTH / 2));
-    var width = Math.min(this.width, (endDateX - startDateX) + charts.LineChart.DEFAULT_HIGHLIGHT_WIDTH);
-    this.highlight.attr("x", highlightX).attr("width", width).style("visibility", "visible");
+        // Use a single highlight rectangle for the whole selected date range.
+        var highlightX = Math.max(0, startDateX - (charts.LineChart.DEFAULT_HIGHLIGHT_WIDTH / 2));
+        var width = Math.min(this.width, (endDateX - startDateX) + charts.LineChart.DEFAULT_HIGHLIGHT_WIDTH);
+        this.highlight.attr("x", highlightX).attr("width", width).style("visibility", "visible");
+
+        return true;
+    }
+
+    return false;
 };
 
 /**
@@ -291,10 +319,12 @@ charts.LineChart.prototype.showTooltip = function(index, date) {
             continue;
         }
 
-        var color = this.calculateColor(this.data[i]);
+        if(!_.isUndefined(this.data[i].data[index].value)) {
+            var color = this.calculateColor(this.data[i]);
 
-        html += ('<span style="color: ' + color + '">' + this.data[i].series + ": " +
-            numFormat(Math.round(this.data[i].data[index].value * 100) / 100) + '</span>');
+            html += ('<span style="color: ' + color + '">' + this.data[i].series + ": " +
+                numFormat(Math.round(this.data[i].data[index].value * 100) / 100) + '</span>');
+        }
     }
 
     $("#tooltip-container").html(html);
@@ -310,7 +340,9 @@ charts.LineChart.prototype.showTooltip = function(index, date) {
  * @method deselectDate
  */
 charts.LineChart.prototype.deselectDate = function() {
-    this.highlight.style("visibility", "hidden");
+    if(this.highlight) {
+        this.highlight.style("visibility", "hidden");
+    }
     this.clearHoverCircles();
 };
 
@@ -447,6 +479,9 @@ charts.LineChart.prototype.drawLines = function(opts) {
         })
         .y(function(d) {
             return me.y(d[me.yAttribute]);
+        })
+        .defined(function(d) {
+            return !_.isUndefined(d[me.yAttribute]);
         });
 
         me.svg.append("path")
@@ -463,21 +498,18 @@ charts.LineChart.prototype.drawLines = function(opts) {
                 func = me.width / 2;
             }
 
-            // Hide circle if point is a 0
-            var isZero = function(d) {
-                if(d[me.yAttribute] === 0) {
-                    return 0;
-                } else {
-                    return 1;
-                }
-            };
+            // Filter out data with undefined values so we don't draw
+            // circles for them
+            var filteredData = _.filter(data, function(d) {
+                return !_.isUndefined(d.value);
+            });
 
             me.svg.selectAll("dot")
-                .data(data)
+                .data(filteredData)
             .enter().append("circle")
                 .attr("class", "dot dot-empty")
-                .attr("fill-opacity", isZero)
-                .attr("stroke-opacity", isZero)
+                .attr("fill-opacity", 1)
+                .attr("stroke-opacity", 1)
                 .attr("stroke", color)
                 .attr("r", 4)
                 .attr("cx", func)
@@ -544,26 +576,31 @@ charts.LineChart.prototype.drawLines = function(opts) {
             }
 
             me.hoverIndex = index;
-            me.selectIndexedDates(index, index + 1);
-            me.showTooltip(index, opts[0].data[index][me.xAttribute]);
 
-            XDATA.userALE.log({
-                activity: "show",
-                action: "mousemove",
-                elementId: "linechart",
-                elementType: "tooltip",
-                elementSub: "linechart",
-                elementGroup: "chart_group",
-                source: "user",
-                tags: ["tooltip", "linechart"]
-            });
+            var didSelect = me.selectIndexedDates(index, index + 1);
 
-            if(me.hoverListener) {
-                var start = opts[0].data[index][me.xAttribute];
-                var end = new Date(start.getFullYear(), start.getMonth(), start.getDate() + 1);
-                me.hoverListener(start, end);
+            if(didSelect) {
+                me.showTooltip(index, opts[0].data[index][me.xAttribute]);
+
+                if(me.hoverListener) {
+                    var date = opts[0].data[index][me.xAttribute];
+                    var start = new Date(date.getFullYear(), date.getMonth(), date.getDate(), date.getHours());
+                    var end = new Date(date.getFullYear(), date.getMonth(), date.getDate() + 1, date.getHours());
+                    me.hoverListener(start, end);
+                }
             }
         }
+    }).on("mouseover", function() {
+        XDATA.userALE.log({
+            activity: "show",
+            action: "mouseover",
+            elementId: "linechart",
+            elementType: "tooltip",
+            elementSub: "linechart",
+            elementGroup: "chart_group",
+            source: "user",
+            tags: ["tooltip", "highlight", "linechart"]
+        });
     }).on("mouseout", function() {
         me.hoverIndex = -1;
         me.deselectDate();
@@ -577,7 +614,7 @@ charts.LineChart.prototype.drawLines = function(opts) {
             elementSub: "linechart",
             elementGroup: "chart_group",
             source: "user",
-            tags: ["tooltip", "linechart"]
+            tags: ["tooltip", "highlight", "linechart"]
         });
 
         if(me.hoverListener) {
@@ -817,12 +854,12 @@ charts.LineChart.prototype.draw = function(data) {
     if(data) {
         this.data = data;
     }
-    if(this.data) {
+    if(this.data && this.data.length && this.data[0].data && this.data[0].data.length) {
         this.drawLines(this.data);
-    }
-    this.drawBrush();
-    if(extent) {
-        this.renderBrushExtent(extent);
+        this.drawBrush();
+        if(extent) {
+            this.renderBrushExtent(extent);
+        }
     }
 };
 
