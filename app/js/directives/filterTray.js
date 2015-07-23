@@ -107,6 +107,11 @@ angular.module('neonDemo.directives')
                     var resultList = _.map(uniqueNameList, function(uniqueName) {
                         return uniqueName.filterName;
                     });
+
+                    resultList = _.filter(resultList, function(name) {
+                        return (name && name !== '');
+                    });
+
                     return resultList;
                 }
                 return [];

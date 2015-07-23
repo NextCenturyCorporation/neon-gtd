@@ -445,9 +445,9 @@ angular.module('neonDemo.directives')
                 var filterObject = filters.shift();
                 var filter = filterObject.filter;
 
-                if(filter.whereClause.lhs) {
+                if(filter.whereClause && filter.whereClause.lhs) {
                     filter.name("Filter Builder: " + filter.whereClause.lhs + " " + filter.whereClause.operator + " " + filter.whereClause.rhs);
-                } else if(filter.whereClause.whereClauses) {
+                } else if(filter.whereClause && filter.whereClause.whereClauses) {
                     filter.name("Filter Builder: " + filter.whereClause.whereClauses.length + " filters");
                 }
 
