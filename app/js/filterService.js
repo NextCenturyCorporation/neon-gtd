@@ -180,12 +180,10 @@ angular.module("neonDemo.services")
             messenger.addFilter(filterKeys[relation.database][relation.table], filter, function() {
                 addNextFilter();
             }, errorCallback);
-
-            addFilter(angular.copy(relations));
         };
 
         var filterNameString = getFilterNameString(filterName, relations);
-        addFilter(relations);
+        addFilter(angular.copy(relations));
     };
 
     /**
@@ -222,12 +220,10 @@ angular.module("neonDemo.services")
             messenger.replaceFilter(filterKeys[relation.database][relation.table], filter, function() {
                 replaceNextFilter();
             }, errorCallback);
-
-            replaceFilter(angular.copy(relations));
         };
 
         var filterNameString = getFilterNameString(filterName, relations);
-        replaceFilter(relations);
+        replaceFilter(angular.copy(relations));
     };
 
     /**
