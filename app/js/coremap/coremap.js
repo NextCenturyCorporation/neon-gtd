@@ -565,6 +565,26 @@ coreMap.Map.prototype.resizeOnWindowResize = function() {
 };
 
 /**
+ * Reorders the given OpenLayers layers starting at the index of the first of the given layers.
+ * @param {Array} layers
+ * @method reorderLayers
+ */
+coreMap.Map.prototype.reorderLayers = function(layers) {
+    if(!layers.length) {
+        return;
+    }
+
+    var map = this.map;
+    var startIndex = map.getLayerIndex(layers[0]);
+    layers.forEach(function(layer) {
+        startIndex = Math.min(startIndex, map.getLayerIndex(layer));
+    });
+    layers.forEach(function(layer) {
+        map.setLayerIndex(layer, startIndex++);
+    });
+};
+
+/**
  * Checks if all attributes in the given layer exist in the data
  * @param {Array} data Array of objects containing the layer data
  * @param {Object} layer OpenLayers layer for the data
