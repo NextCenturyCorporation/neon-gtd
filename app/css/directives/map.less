@@ -99,87 +99,111 @@
                 }
             }
 
-            .layer-options-container {
-                /* Make the width match the width of the layer-options element + the right padding. */
-                width: 875px;
+            .all-layer-options {
+                /* Make the width match the width of the layer-options element + border + right padding. */
+                width: 885px;
 
-                > label {
-                    font-size: 14px;
-                }
+                .layer-options-container {
+                    /* Make the width match the width of the layer-options element + border. */
+                    width: 870px;
+                    /* Create a hidden (white) border so that the div doesn't move when it has the drag-enter class and shows a colored border (see below). */
+                    border-color: #ffffff;
+                    border-style: dotted;
+                    border-width: 5px;
 
-                .layer-options {
-                    background-color: @main-background-darken;
-                    border-style: solid;
-                    border-width: 1px;
-                    border-color: @border-color;
-                    border-radius: 4px;
-                    padding: 9px;
-                    /* Make the width match the width of five columns + the padding + the borders. */
-                    width: 860px;
-
-                    &.new-layer {
-                        background-color: @main-background-lighten;
+                    &.drag-enter {
+                        border-color: @accent-dark;
                     }
 
-                    .layer-options-row {
-                        height: 60px;
-                        margin-top: 10px;
+                    .dragging {
+                        /* Display the dragged element above the other elements in its list, even if the other elements are defined after the dragged element in the DOM. */
+                        position: relative;
+                    }
 
-                        &:first-child {
-                            margin-top: 0px;
+                    > label {
+                        font-size: 14px;
+                    }
+
+                    .layer-options {
+                        background-color: @main-background-darken;
+                        border-color: @border-color;
+                        border-radius: 4px;
+                        border-style: solid;
+                        border-width: 1px;
+                        cursor: move;
+                        padding: 9px;
+                        /* Make the width match the width of five columns + the padding + the borders. */
+                        width: 860px;
+
+                        &.new-layer {
+                            background-color: @main-background-lighten;
+                            cursor: inherit;
                         }
 
-                        .layer-options-col {
-                            float: left;
-                            width: 160px;
-                            margin-left: 10px;
+                        .layer-options-row {
+                            height: 60px;
+                            margin-top: 10px;
 
                             &:first-child {
-                                margin-left: 0px;
+                                margin-top: 0px;
                             }
 
-                            &.btn-group {
-                                /* Make the layer options buttons vertically align with the dropdowns. */
-                                margin-top: 25px;
+                            .layer-options-col {
+                                float: left;
+                                width: 160px;
+                                margin-left: 10px;
 
-                                .btn {
-                                    /* Make the combined width of the two layer options buttons match the width of the column. */
-                                    padding: 5px 31px;
+                                &:first-child {
+                                    margin-left: 0px;
+                                }
 
-                                    &.btn-default {
-                                        /* Make the border color darker so it stands out against the background. */
-                                        border-color: @main-text-color;
+                                &.btn-group {
+                                    /* Make the layer options buttons vertically align with the dropdowns. */
+                                    margin-top: 25px;
 
-                                        &.active, &.active&:hover, &.active&:focus {
-                                            color: #FFFFFF;
-                                            background-color: @accent-dark;
-                                            border-color: @accent-dark;
+                                    .btn {
+                                        /* Make the combined width of the two layer options buttons match the width of the column. */
+                                        padding: 5px 31px;
+
+                                        &.btn-default {
+                                            /* Make the border color darker so it stands out against the background. */
+                                            border-color: @main-text-color;
+
+                                            &.active, &.active&:hover, &.active&:focus {
+                                                color: #FFFFFF;
+                                                background-color: @accent-dark;
+                                                border-color: @accent-dark;
+                                            }
+                                        }
+
+                                        &.one-btn {
+                                            font-size: 14px;
+                                            padding: 5px;
+                                            width: 100%;
+                                        }
+
+                                        &.active {
+                                            z-index: auto;
                                         }
                                     }
 
-                                    &.one-btn {
-                                        font-size: 14px;
-                                        padding: 5px;
-                                        width: 100%;
+                                    .glyphicon {
+                                        font-size: 16px;
+                                        top: 2px;
                                     }
                                 }
 
-                                .glyphicon {
-                                    font-size: 16px;
-                                    top: 2px;
+                                .empty {
+                                    height: 60px;
+                                    width: 160px;
                                 }
                             }
-
-                            .empty {
-                                height: 60px;
-                                width: 160px;
-                            }
                         }
-                    }
 
-                    > .error {
-                        color: @error-text-color;
-                        margin: 5px;
+                        > .error {
+                            color: @error-text-color;
+                            margin: 5px;
+                        }
                     }
                 }
             }

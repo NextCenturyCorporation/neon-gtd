@@ -1352,6 +1352,22 @@ angular.module('neonDemo.directives')
                 resetNewLayer();
             };
 
+            /**
+             * Moves the given layer to the given new index and reorders the other layers as needed.
+             * @param {Number} newIndexReversed
+             * @param {Object} layer
+             * @method reorderLayer
+             */
+            $scope.reorderLayer = function(newIndexReversed, layer) {
+                var newIndex = $scope.options.layers.length - 1 - newIndexReversed;
+                var oldIndex = $scope.options.layers.indexOf(layer);
+                $scope.options.layers.splice(oldIndex, 1);
+                $scope.options.layers.splice(newIndex, 0, layer);
+                $scope.map.reorderLayers($scope.options.layers.map(function(element) {
+                    return element.olLayer;
+                }));
+            };
+
             var getPrettyNameForDatabase = function(databaseName) {
                 var name = databaseName;
                 $scope.databases.forEach(function(database) {
