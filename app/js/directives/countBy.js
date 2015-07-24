@@ -30,7 +30,8 @@ function(external, popups, connectionService, datasetService, errorNotificationS
             bindDatabase: '=',
             usePrettyNames: '=?',
             hideHeader: '=?',
-            hideAdvancedOptions: '=?'
+            hideAdvancedOptions: '=?',
+            limitCount: '=?'
         },
         link: function($scope, $element) {
             $element.addClass('countByDirective');
@@ -56,7 +57,8 @@ function(external, popups, connectionService, datasetService, errorNotificationS
                 table: {},
                 field: "",
                 aggregation: "",
-                aggregationField: ""
+                aggregationField: "",
+                limitCount: $scope.limitCount || 16000
             };
 
             var $tableDiv = $element.find('.count-by-grid');
@@ -501,7 +503,10 @@ function(external, popups, connectionService, datasetService, errorNotificationS
                             source: "user",
                             tags: ["filter", "count-by"]
                         });
-                        filterService.replaceFilters($scope.messenger, relations, $scope.filterKeys, $scope.createFilterClauseForCount);
+                        filterService.replaceFilters($scope.messenger, relations, $scope.filterKeys, $scope.createFilterClauseForCount, {
+                            visName: "Count By",
+                            text: $scope.options.field + " = " + $scope.filterSet.value
+                        });
                     } else {
                         XDATA.userALE.log({
                             activity: "select",
@@ -513,7 +518,10 @@ function(external, popups, connectionService, datasetService, errorNotificationS
                             source: "user",
                             tags: ["filter", "count-by"]
                         });
-                        filterService.addFilters($scope.messenger, relations, $scope.filterKeys, $scope.createFilterClauseForCount);
+                        filterService.addFilters($scope.messenger, relations, $scope.filterKeys, $scope.createFilterClauseForCount, {
+                            visName: "Count By",
+                            text: $scope.options.field + " = " + $scope.filterSet.value
+                        });
                     }
                 }
             };
@@ -617,13 +625,18 @@ function(external, popups, connectionService, datasetService, errorNotificationS
 
                 if($scope.options.aggregation === "count") {
                     query.aggregate(neon.query.COUNT, '*', 'count');
+                    query.sortBy('count', neon.query.DESCENDING);
                 }
                 if($scope.options.aggregation === "min") {
                     query.aggregate(neon.query.MIN, $scope.options.aggregationField, $scope.options.aggregationField);
+                    query.sortBy($scope.options.aggregationField, neon.query.ASCENDING);
                 }
                 if($scope.options.aggregation === "max") {
                     query.aggregate(neon.query.MAX, $scope.options.aggregationField, $scope.options.aggregationField);
+                    query.sortBy($scope.options.aggregationField, neon.query.DESCENDING);
                 }
+
+                query.limit($scope.options.limitCount);
 
                 return query;
             };

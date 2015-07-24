@@ -114,7 +114,7 @@ angular.module('neonDemo.services')
      */
     service.getIgnoreFilters = function() {
         return ignoreFilters_;
-    }
+    };
 
     /**
      * Returns the list of ignored filter ids that should be given to queries going to export.
@@ -123,7 +123,7 @@ angular.module('neonDemo.services')
      */
     service.getIgnoredFilterIds = function() {
         return ignoredFilterIds_;
-    }
+    };
 
     return service;
 });

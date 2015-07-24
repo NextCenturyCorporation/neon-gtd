@@ -360,7 +360,10 @@ function(connectionService, datasetService, errorNotificationService, filterServ
              */
             $scope.applyFilter = function() {
                 var relations = datasetService.getRelations($scope.options.database.name, $scope.options.table.name, [$scope.options.tagField]);
-                filterService.replaceFilters($scope.messenger, relations, $scope.filterKeys, $scope.createFilterClauseForTags, function() {
+                filterService.replaceFilters($scope.messenger, relations, $scope.filterKeys, $scope.createFilterClauseForTags, {
+                    visName: "Tag Cloud",
+                    text: $scope.filterTags.join(', ')
+                },function() {
                     $scope.$apply(function() {
                         $scope.queryForTags();
                         // Show the Clear Filter button.
