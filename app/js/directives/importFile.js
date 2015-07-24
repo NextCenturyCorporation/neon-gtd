@@ -35,6 +35,7 @@ angular.module('neonDemo.directives')
 
             $scope.canImport = (window.File && window.FileReader && window.FileList && window.Blob);
             $scope.nameTypePairs = undefined;
+            $scope.jobID = undefined;
             var file;
 
             $scope.uploadFile = function() {
@@ -49,22 +50,40 @@ angular.module('neonDemo.directives')
                 formData.append('data', importService.makeTextSafe(importService.getDatabaseName()));
                 formData.append('type', file.name.substring(file.name.lastIndexOf('.') + 1));
                 formData.append('file', file);
-                connection.executeUploadFile(formData, importSuccess, importFail);
+                connection.executeUploadFile(formData, uploadSuccess, uploadFail);
                 jQuery('#importDatabaseInput')[0].value = '';
             };
 
-            var importSuccess = function(response) {
-                var result = JSON.parse(response); // We manually make XMLHttpRequest here, so get no auto-parsing.
-                if(result.user) {
-                    importService.setUserName(result.user);
-                }
-                $scope.nameTypePairs = result.types;
-                $scope.$apply();
-                showConfirmModal();
+            var uploadFail = function(response) {
+                window.alert(response.response[0]); // TODO eventually need better failure code than this.
             };
 
-            var importFail = function(response) {
-                window.alert('Failed to import data.'); // TODO eventually need better failure code than this.
+            var uploadSuccess = function(response) {
+                var result = JSON.parse(response); // We manually make XMLHttpRequest here, so get no auto-parsing.
+                var jobID = result.jobID;
+                $scope.nameTypePairs = result.types;
+                $scope.$apply();
+                waitForGuesses(jobID);
+            };
+
+            var waitForGuesses = function(jobID) {
+                var connection = connectionService.getActiveConnection();
+                if(!connection || !jobID) {
+                    return;
+                }
+                connection.executeCheckTypeGuesses(jobID, waitForGuessesCallback);
+            }
+
+            var waitForGuessesCallback = function(response) {
+                if(response.complete) {
+                    $scope.nameTypePairs = response.guesses;
+                    $scope.jobID = response.jobID;
+                    $scope.$apply();
+                    showConfirmGuessesModal();
+                }
+                else {
+                    setTimeout(waitForGuesses(response.jobID), 2000);
+                }
             };
 
             $scope.sendConfirmedChoices = function(value) {
@@ -83,12 +102,15 @@ angular.module('neonDemo.directives')
                     format: datePattern ? datePattern : undefined,
                     fields: ftPairs
                 };
-                connection.executeConfirmTypeGuesses(toSend, importService.makeTextSafe(importService.getUserName()),
-                    importService.makeTextSafe(importService.getDatabaseName()), confirmSuccess, confirmFail);
+                connection.executeLoadFileIntoDB(toSend, $scope.jobID, confirmSuccess, confirmFail); // I need to actually get jobID in here somehow. Preferably,
+                                                                                              // this would be passed directly from the last time the guesses
+                                                                                              //callback fired, but for now I'll just store it as a variable.
+                                                                                              // (Getting it straight from the last method to use it would be
+                                                                                              // preferable just to continue everything in a nice chain.)
             }
 
             var confirmSuccess = function(response) {
-                jQuery('#confirmChoicesModal').modal('hide');
+                waitForUploadComplete(response.jobID);
             };
 
             var confirmFail = function(response) {
@@ -98,7 +120,36 @@ angular.module('neonDemo.directives')
                 setupDropdowns();
             };
 
-            var showConfirmModal = function() {
+            var waitForUploadComplete = function(jobID) {
+                var connection = connectionService.getActiveConnection();
+                if(!connection || !jobID) {
+                    return;
+                }
+                connection.executeCheckImportProgress(jobID, waitForUploadCompleteCallback);
+            }
+
+            var waitForUploadCompleteCallback = function(response) {
+                if(response.complete) {
+                    if(response.failed) {
+                        $scope.nameTypePairs = response.responseJSON;
+                        $scope.$apply();
+                        jQuery('#convertFailedText').show();
+                        setupDropdowns();
+                    }
+                    else {
+                        jQuery("#confirmChoicesModal").modal('hide');
+                    }
+                }
+                else {
+                    if(numFinished < 0) {
+                        return;
+                    }
+                    window.alert(response.numComplete);
+                    setTimeout(waitForUploadComplete(reponse.jobID), 2000);
+                }
+            }
+
+            var showConfirmGuessesModal = function() {
                 jQuery('#dateStringInput')[0].value = importService.getDateString();
                 jQuery('#userNameCreatedText')[0].innerHTML = "Your username is " + importService.getUserName();
                 jQuery('#convertFailedText').hide()

@@ -40,8 +40,9 @@
       	<p id="userNameCreatedText"></p>
         <p id="convertFailedText">One or more fields failed to convert. Please try again.</p>
         <p ng-repeat="field in nameTypePairs">
-          <span>{{field.name}}</span>
-          <select id="{{field.name}}-options">
+          <br>
+          <span class="floatLeft">{{field.name}}</span>
+          <select class="floatRight" id="{{field.name}}-options">
             <option value="Integer">Integer</option>
             <option value="Long">Long</option>
             <option value="Double">Double</option>
@@ -50,6 +51,7 @@
             <option value="String">String</option>
           </select>
         </p>
+        <br>
       </div>
       <div class="modal-footer">
         <input type="text" id="dateStringInput" class="modalFooterField" value="" maxlength="50" size="30" placeholder="Date format here if not standard">
