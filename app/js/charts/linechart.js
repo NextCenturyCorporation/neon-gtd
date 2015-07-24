@@ -28,6 +28,12 @@ charts.LineChart = function(rootElement, selector, opts) {
     this.brushHandler = undefined;
     this.highlight = undefined;
 
+    this.granularity = opts.granularity;
+    this.dateFormats = {
+        day: '%e %B %Y',
+        hour: '%e %B %Y %H:%M'
+    };
+
     // The old extent of the brush saved on brushstart.
     this.oldExtent = [];
 
@@ -102,6 +108,10 @@ charts.LineChart.prototype.determineHeight = function(element) {
         return $(element[0]).height();
     }
     return charts.LineChart.DEFAULT_HEIGHT;
+};
+
+charts.LineChart.prototype.setGranularity = function(granularity) {
+    this.granularity = granularity;
 };
 
 charts.LineChart.prototype.categoryForItem = function(item) {
@@ -230,8 +240,13 @@ charts.LineChart.prototype.selectDate = function(startDate, endDate) {
     var dataStartDate = this.data[0].data[0].date;
     var dataEndDate = this.data[0].data[dataLength - 1].date;
 
-    // Add a day to the end day so it includes the whole end day and not just the first hour of the end day.
-    dataEndDate = new Date(dataEndDate.getFullYear(), dataEndDate.getMonth(), dataEndDate.getDate() + 1, dataEndDate.getHours());
+    if(this.granularity === 'day') {
+        // Add a day to the end day so it includes the whole end day and not just the first hour of the end day.
+        dataEndDate = new Date(dataEndDate.getFullYear(), dataEndDate.getMonth(), dataEndDate.getDate() + 1, dataEndDate.getHours());
+    } else {
+        // Add an hour to the end day so it includes the whole time
+        dataEndDate = new Date(dataEndDate.getFullYear(), dataEndDate.getMonth(), dataEndDate.getDate(), dataEndDate.getHours() + 1);
+    }
 
     // If the start or end date is outside the date range of the data, set it to the of the start (inclusive) or end (exclusive) index of the data.
     startIndex = startDate < dataStartDate ? 0 : startIndex;
@@ -310,7 +325,7 @@ charts.LineChart.prototype.selectIndexedDates = function(startIndex, endIndex) {
  * @method showTooltip
  */
 charts.LineChart.prototype.showTooltip = function(index, date) {
-    var format = d3.time.format.utc('%e %B %Y');
+    var format = d3.time.format.utc(this.dateFormats[this.granularity]);
     var numFormat = d3.format("0,000.00");
     var html = '<span class="tooltip-date">' + format(date) + '</span>';
 
@@ -384,9 +399,12 @@ charts.LineChart.prototype.drawLines = function(opts) {
     });
 
     // If no data exists then the min and max of the domain will be undefined.
-    if(me.xDomain[1]) {
+    if(me.xDomain[1] && me.granularity === 'day') {
         // Add one day to the end of the x-axis so users can hover over and filter on the end date.
         me.xDomain[1] = d3.time.day.utc.offset(me.xDomain[1], 1);
+    } else if(me.xDomain[1] && me.granularity === 'hour') {
+        // Add one hour to the end of the x-axis so users can hover over and filter on the end date.
+        me.xDomain[1] = d3.time.hour.utc.offset(me.xDomain[1], 1);
     }
     me.x.domain(me.xDomain);
 
@@ -585,7 +603,12 @@ charts.LineChart.prototype.drawLines = function(opts) {
                 if(me.hoverListener) {
                     var date = opts[0].data[index][me.xAttribute];
                     var start = new Date(date.getFullYear(), date.getMonth(), date.getDate(), date.getHours());
-                    var end = new Date(date.getFullYear(), date.getMonth(), date.getDate() + 1, date.getHours());
+                    var end;
+                    if(me.granularity === 'day') {
+                        end = new Date(date.getFullYear(), date.getMonth(), date.getDate() + 1, date.getHours());
+                    } else {
+                        end = new Date(date.getFullYear(), date.getMonth(), date.getDate(), date.getHours() + 1);
+                    }
                     me.hoverListener(start, end);
                 }
             }
