@@ -928,7 +928,7 @@ function(connectionService, datasetService, errorNotificationService, filterServ
                     var dayMillis = (1000 * 60 * 60 * 24);
                     var diff = $scope.brushExtent[1] - $scope.brushExtent[0];
 
-                    if(diff / dayMillis === 1) {
+                    if(diff / dayMillis <= 1) {
                         $scope.automaticHourSet = true;
                         $scope.options.granularity = HOUR;
                         return;
