@@ -40,7 +40,8 @@ function(connectionService, datasetService, errorNotificationService, filterServ
             bindTable: '=',
             bindDatabase: '=',
             hideHeader: '=?',
-            hideAdvancedOptions: '=?'
+            hideAdvancedOptions: '=?',
+            limitCount: '=?'
         },
         link: function($scope, $element) {
             $element.addClass('barchartDirective');
@@ -61,7 +62,8 @@ function(connectionService, datasetService, errorNotificationService, filterServ
                 table: {},
                 attrX: "",
                 attrY: "",
-                barType: "count"
+                barType: "count",
+                limitCount: $scope.limitCount || 150
             };
 
             var COUNT_FIELD_NAME = 'Count';
@@ -255,6 +257,9 @@ function(connectionService, datasetService, errorNotificationService, filterServ
                 } else {
                     query.aggregate(queryType, $scope.options.attrY, COUNT_FIELD_NAME);
                 }
+
+                query.sortBy(COUNT_FIELD_NAME, neon.query.DESCENDING);
+                query.limit($scope.options.limitCount);
                 return query;
             };
 
@@ -297,6 +302,9 @@ function(connectionService, datasetService, errorNotificationService, filterServ
                             source: "system",
                             tags: ["receive", "barchart"]
                         });
+                        $scope.results = {
+                            count: queryResults.data.length
+                        };
                         doDrawChart(queryResults, rebuildChart);
                         $scope.loadingData = false;
                         XDATA.userALE.log({
@@ -349,6 +357,10 @@ function(connectionService, datasetService, errorNotificationService, filterServ
                 var connection = connectionService.getActiveConnection();
                 if($scope.messenger && connection) {
                     var relations = datasetService.getRelations($scope.options.database.name, $scope.options.table.name, [$scope.options.attrX]);
+                    var filterNameObj = {
+                        visName: "BarChart",
+                        text: $scope.filterSet.key + " = " + $scope.filterSet.value
+                    };
                     if(filterExists) {
                         XDATA.userALE.log({
                             activity: "select",
@@ -360,7 +372,7 @@ function(connectionService, datasetService, errorNotificationService, filterServ
                             source: "user",
                             tags: ["filter", "barchart"]
                         });
-                        filterService.replaceFilters($scope.messenger, relations, $scope.filterKeys, $scope.createFilterClauseForXAxis);
+                        filterService.replaceFilters($scope.messenger, relations, $scope.filterKeys, $scope.createFilterClauseForXAxis, filterNameObj);
                     } else {
                         XDATA.userALE.log({
                             activity: "select",
@@ -372,7 +384,7 @@ function(connectionService, datasetService, errorNotificationService, filterServ
                             source: "user",
                             tags: ["filter", "barchart"]
                         });
-                        filterService.addFilters($scope.messenger, relations, $scope.filterKeys, $scope.createFilterClauseForXAxis);
+                        filterService.addFilters($scope.messenger, relations, $scope.filterKeys, $scope.createFilterClauseForXAxis, filterNameObj);
                     }
                 }
             };

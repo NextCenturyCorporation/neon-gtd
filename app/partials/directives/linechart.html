@@ -38,6 +38,18 @@
                 <option value="">None</option>
             </select>
         </div>
+        <div class="form-group">
+            <label>Date Granularity</label>
+            <div class="btn-group">
+              <label class="btn btn-default active" ng-class="{true: 'active', false: ''}[options.granularity === 'day']">
+                <input type="radio" style="display:none" ng-model="options.granularity" value="day"> Day
+              </label>
+              <label class="btn btn-default" ng-class="{true: 'active', false: ''}[options.granularity === 'hour']">
+                <input type="radio" style="display:none" ng-model="options.granularity" value="hour"> Hour
+              </label>
+            </div>
+            <div class="clearfix"></div>
+        </div>
     </options-menu>
 </div>
 

@@ -21,6 +21,7 @@
         "gridsterMargins": 10,
         "hideNavbarItems": false,
         "hideAdvancedOptions": false,
+        "showFilterStatusTray": false,
         "hideErrorNotifications": false,
         "hideHeaders": false,
         "hideCloseButton": false,

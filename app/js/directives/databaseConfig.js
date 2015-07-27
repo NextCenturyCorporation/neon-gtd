@@ -145,18 +145,6 @@ angular.module('neonDemo.directives')
                 $scope.databases = dbs;
             };
 
-            $scope.connectToDatabase = function(updateFieldsCallback) {
-                var connection = connectionService.getActiveConnection();
-                if(connection) {
-                    connection.getTableNames($scope.selectedDB, function(tableNames) {
-                        $scope.$apply(function() {
-                            populateTableDropdown(tableNames);
-                        });
-                    });
-                    $scope.updateFieldsForTables(updateFieldsCallback);
-                }
-            };
-
             $scope.selectDatabase = function() {
                 XDATA.userALE.log({
                     activity: "select",

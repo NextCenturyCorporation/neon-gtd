@@ -47,7 +47,9 @@ var neonDemo = angular.module('neonDemo', [
     'ui.bootstrap.datetimepicker'
 ]);
 
-angular.module('neonDemo.directives', []);
+angular.module('neonDemo.directives', [
+
+]);
 angular.module('neonDemo.controllers', []);
 angular.module('neonDemo.services', []);
 
@@ -163,6 +165,7 @@ angular.element(document).ready(function() {
             gridsterColumns: 6,
             gridsterMargins: 10,
             hideNavbarItems: false,
+            showFilterStatusTray: false,
             hideAddVisualizationsButton: false,
             hideAdvancedOptions: false,
             hideErrorNotifications: false,

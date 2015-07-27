@@ -458,7 +458,9 @@ tables.Table.prototype.addOnClickListener = function(callback) {
  * @param {Function} callback
  */
 tables.Table.prototype.addOnColumnsReorderedListener = function(callback) {
+    var me = this;
     this.table_.onColumnsReordered.subscribe(function() {
+        me.columns_ = me.table_.getColumns();
         callback();
     });
 };
@@ -537,4 +539,12 @@ tables.Table.prototype.addColumn = function(name) {
     this.table_.setColumns(this.columns_);
     this.runLinky_();
     return true;
+};
+
+/**
+ * Retrieves the columns shown in the table in their current order
+ * @return {Array} All the columns shown in the table
+ */
+tables.Table.prototype.getColumns = function() {
+    return this.columns_;
 };
