@@ -39,12 +39,9 @@ function neonQuery(start_time, end_time, current_talkers) {
 
     return new neon.query.Query()
         .selectFrom(twitter.mentionsDatabase, twitter.mentionsCollection)
-        .where(and(where("date", ">=", start_time),
-                         where("date", "<", end_time),
-                         where("source", "!=", ""),
-                         where("target", "!=", ""),
-                         or(where("source", "in", current_talkers),
-                            where("target", "in", current_talkers))));
+        .where(and(//where("date", ">=", start_time), where("date", "<", end_time),
+                    where("source", "!=", ""), where("target", "!=", ""),
+                    or(where("source", "in", current_talkers), where("target", "in", current_talkers))));
 }
 
 function tweetersNeon(host, database, collection, params, callback) {
