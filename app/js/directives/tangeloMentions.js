@@ -103,8 +103,11 @@ angular.module('neonDemo.directives')
                     if(item) {
                         $scope.filterItem = item;
                         // TODO This won't work if the twitter mentions collection is in a different database than the rest of the dataset.
-                        var relations = datasetService.getRelations(twitterMentionsCollectionName, ["source"]);
-                        filterService.replaceFilters($scope.messenger, relations, $scope.filterKeys, createNeonFilterClause, function() {
+                        var relations = datasetService.getRelations($scope.databaseName, twitterMentionsCollectionName, ["source"]);
+                        filterService.replaceFilters($scope.messenger, relations, $scope.filterKeys, createNeonFilterClause, {
+                            visName: "Mentions",
+                            text: $scope.filterItem
+                        }, function() {
                             if(callback) {
                                 callback();
                             }
@@ -112,7 +115,6 @@ angular.module('neonDemo.directives')
                     } else {
                         $scope.filterItem = "";
                         filterService.removeFilters($scope.messenger, $scope.filterKeys, function() {
-                            console.log("Mentions: neon filter removed");
                             if(callback) {
                                 callback();
                             }
@@ -121,18 +123,14 @@ angular.module('neonDemo.directives')
                 }
             };
 
-            var createNeonFilterClause = function(tableName, fieldNames) {
-                var fieldName = fieldNames[0];
-                var filterClause = neon.query.where(fieldName, '=', $scope.filterItem);
-                return new neon.query.Filter().selectFrom($scope.databaseName, tableName).where(filterClause);
+            var createNeonFilterClause = function(databaseAndTableName, fieldName) {
+                return neon.query.where(fieldName, '=', $scope.filterItem);
             };
 
             var clearNeonFilter = function() {
                 if($scope.messenger) {
                     $scope.filterItem = "";
-                    filterService.removeFilters($scope.messenger, $scope.filterKeys, function() {
-                        console.log("Mentions: neon filter cleared");
-                    })
+                    filterService.removeFilters($scope.messenger, $scope.filterKeys);
                 }
             };
 
