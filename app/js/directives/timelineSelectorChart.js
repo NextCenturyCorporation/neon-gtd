@@ -100,7 +100,7 @@ angular.module('neonDemo.directives')
                 function() {
                     return $(".timeline-selector")[0].clientWidth + "x" + $(".timeline-selector")[0].clientHeight;
                 },
-                function(newVal, oldVal) {
+                function(newVal) {
                     if(newVal && $scope.chart) {
                         if($scope.resizePromise) {
                             $timeout.cancel($scope.resizePromise);
@@ -155,7 +155,7 @@ angular.module('neonDemo.directives')
                 }
             });
 
-            $scope.$watch('showFocus', function(newVal, oldVal) {
+            $scope.$watch('showFocus', function(newVal) {
                 if(newVal === 'always') {
                     $scope.chart.toggleFocus(true);
                 } else if(newVal === 'never') {
