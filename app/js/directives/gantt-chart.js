@@ -66,7 +66,7 @@ function(connectionService, datasetService, errorNotificationService, filterServ
                     var relations = datasetService.getRelations($scope.options.database.name, $scope.options.table.name, ['_id']);
                     filterService.addFilters($scope.messenger, relations, $scope.filterKeys, function() {
                         return neon.query.where('_id', '=', id);
-                    }, function() {
+                    }, "Gantt Chart", function() {
                         $scope.filterSet.key = "_id";
                         $scope.filterSet.value = id;
                         $scope.queryForData();
