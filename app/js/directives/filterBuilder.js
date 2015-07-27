@@ -444,6 +444,13 @@ angular.module('neonDemo.directives')
             $scope.publishReplaceFilterEvents = function(filters, successCallback, errorCallback) {
                 var filterObject = filters.shift();
                 var filter = filterObject.filter;
+
+                if(filter.whereClause && filter.whereClause.lhs) {
+                    filter.name("Filter Builder: " + filter.whereClause.lhs + " " + filter.whereClause.operator + " " + filter.whereClause.rhs);
+                } else if(filter.whereClause && filter.whereClause.whereClauses) {
+                    filter.name("Filter Builder: " + filter.whereClause.whereClauses.length + " filters");
+                }
+
                 var databaseName = filterObject.databaseName;
                 var tableName = filterObject.tableName;
                 var filterKey = $scope.filterTable.getFilterKey(databaseName, tableName);

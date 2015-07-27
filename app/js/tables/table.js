@@ -459,7 +459,7 @@ tables.Table.prototype.addOnClickListener = function(callback) {
  */
 tables.Table.prototype.addOnColumnsReorderedListener = function(callback) {
     var me = this;
-    this.table_.onColumnsReordered.subscribe(function(event, args) {
+    this.table_.onColumnsReordered.subscribe(function() {
         me.columns_ = me.table_.getColumns();
         callback();
     });

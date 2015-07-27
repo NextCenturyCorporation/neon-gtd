@@ -77,17 +77,16 @@
             line-height: 0px;
             z-index: 1065;
             opacity: 0;
+            /* Force the width of the buttons to avoid odd behavior. */
+            width: 18px;
 
             .glyphicon {
+                color: @accent-bright;
                 font-size: 16px;
             }
 
             .glyphicon-remove {
-                color: #f00;
-            }
-
-            .glyphicon-resize-full, .glyphicon-resize-small {
-                color: @accent-bright;
+                color: @error-text-color;
             }
         }
     }

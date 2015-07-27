@@ -221,7 +221,9 @@ function(external, popups, connectionService, datasetService, errorNotificationS
                     });
                 } else {
                     $scope.table.getColumns().forEach(function(field) {
-                        fieldNames.push(field.name);
+                        if(field.name) {
+                            fieldNames.push(field.name);
+                        }
                     });
                 }
 
@@ -587,12 +589,11 @@ function(external, popups, connectionService, datasetService, errorNotificationS
 
                 $scope.table = new tables.Table("#" + $scope.tableId, $scope.tableOptions).draw();
 
-                /* Enable row selection for Twitter data.
+                /* Enable row selection
                  * Limitations:
-                 *  - Assumes data has certain column name
                  *  - It is only guaranteed to work correctly if there is only one data table showing this collection
                  */
-                if(queryResults.data.length && queryResults.data[0].hashtags) {
+                if($scope.options.table.enableRowSelection) {
                     $scope.addOnClickListener();
                     $scope.clearSelection();
                     $scope.addSortListener();

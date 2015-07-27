@@ -37,6 +37,14 @@ coreMap.Map.Layer.SelectedPointsLayer = OpenLayers.Class(OpenLayers.Layer.Vector
                 fillColor: coreMap.Map.Layer.SelectedPointsLayer.DEFAULT_FILL_COLOR,
                 fillOpacity: coreMap.Map.Layer.SelectedPointsLayer.DEFAULT_FILL_OPACITY,
                 pointRadius: coreMap.Map.Layer.SelectedPointsLayer.DEFAULT_POINT_RADIUS
+            },
+            select: {
+                graphicName: coreMap.Map.Layer.SelectedPointsLayer.DEFAULT_GRAPHIC,
+                strokeOpacity: coreMap.Map.Layer.SelectedPointsLayer.DEFAULT_STROKE_OPACITY,
+                strokeWidth: coreMap.Map.Layer.SelectedPointsLayer.DEFAULT_STROKE_WIDTH,
+                fillColor: coreMap.Map.Layer.SelectedPointsLayer.DEFAULT_FILL_COLOR,
+                fillOpacity: coreMap.Map.Layer.SelectedPointsLayer.DEFAULT_FILL_OPACITY,
+                pointRadius: coreMap.Map.Layer.SelectedPointsLayer.DEFAULT_POINT_RADIUS
             }
         });
         OpenLayers.Layer.Vector.prototype.initialize.apply(this, [name, extendOptions]);
@@ -44,7 +52,7 @@ coreMap.Map.Layer.SelectedPointsLayer = OpenLayers.Class(OpenLayers.Layer.Vector
     }
 });
 
-coreMap.Map.Layer.SelectedPointsLayer.DEFAULT_GRAPH = "star";
+coreMap.Map.Layer.SelectedPointsLayer.DEFAULT_GRAPHIC = "star";
 coreMap.Map.Layer.SelectedPointsLayer.DEFAULT_STROKE_OPACITY = 0.8;
 coreMap.Map.Layer.SelectedPointsLayer.DEFAULT_STROKE_WIDTH = 1;
 coreMap.Map.Layer.SelectedPointsLayer.DEFAULT_FILL_COLOR = "#FFA500";
