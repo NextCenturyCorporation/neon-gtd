@@ -534,6 +534,27 @@ charts.LineChart.prototype.drawLines = function(opts) {
                 .attr("cy", function(d) {
                     return me.y(d[me.yAttribute]);
                 });
+        } else {
+            var func = function(d) {
+                return me.x(d.date);
+            };
+
+            var singlePoints = me.filterOutSinglePoints(data);
+
+            // Place dots on points that aren't connected to a line segment
+            me.svg.selectAll("dot")
+                .data(singlePoints)
+            .enter().append("circle")
+                .attr("class", "dot")
+                .attr("fill-opacity", 1)
+                .attr("stroke-opacity", 1)
+                .attr("stroke", color)
+                .attr("fill", color)
+                .attr("r", 2)
+                .attr("cx", func)
+                .attr("cy", function(d) {
+                    return me.y(d[me.yAttribute]);
+                });
         }
 
         me.hoverCircles[opts[i].series] = [];
@@ -644,6 +665,35 @@ charts.LineChart.prototype.drawLines = function(opts) {
             me.hoverListener();
         }
     });
+};
+
+/**
+ * Return items in data whose neighboring items have an undefined value
+ * @param {Array} data
+ * @method filterOutSinglePoints
+ * @return {Array}
+ */
+charts.LineChart.prototype.filterOutSinglePoints = function(data) {
+    var singlePointsData = [];
+
+    // Check the first data element
+    if(!_.isUndefined(data[0].value) && _.isUndefined(data[1].value)) {
+        singlePointsData.push(data[0]);
+    }
+
+    for(var i = 1; i < data.length - 1; i++) {
+        if(_.isUndefined(data[i - 1].value) && !_.isUndefined(data[i].value) && _.isUndefined(data[i + 1].value)) {
+            singlePointsData.push(data[i]);
+            i += 1;
+        }
+    }
+
+    // Check the last data element
+    if(_.isUndefined(data[data.length - 2].value) && !_.isUndefined(data[data.length - 1].value)) {
+        singlePointsData.push(data[data.length - 1]);
+    }
+
+    return singlePointsData;
 };
 
 /**
