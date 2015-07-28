@@ -234,10 +234,10 @@ function(connectionService, datasetService, errorNotificationService, filterServ
              * @param {Object} query the query to add the group by clause to
              */
             $scope.addGroupByGranularityClause = function(query) {
-                var yearGroupClause = new neon.query.GroupByFunctionClause(neon.query.YEAR, $scope.options.dateField, 'year');
-                var monthGroupClause = new neon.query.GroupByFunctionClause(neon.query.MONTH, $scope.options.dateField, 'month');
-                var dayGroupClause = new neon.query.GroupByFunctionClause(neon.query.DAY, $scope.options.dateField, 'day');
-                var hourGroupClause = new neon.query.GroupByFunctionClause(neon.query.HOUR, $scope.options.dateField, 'hour');
+                var yearGroupClause = new neon.query.GroupByFunctionClause(neon.query.YEAR, $scope.options.dateField.columnName, 'year');
+                var monthGroupClause = new neon.query.GroupByFunctionClause(neon.query.MONTH, $scope.options.dateField.columnName, 'month');
+                var dayGroupClause = new neon.query.GroupByFunctionClause(neon.query.DAY, $scope.options.dateField.columnName, 'day');
+                var hourGroupClause = new neon.query.GroupByFunctionClause(neon.query.HOUR, $scope.options.dateField.columnName, 'hour');
 
                 // Group by the appropriate granularity.
                 if($scope.options.granularity === YEAR) {
@@ -403,7 +403,7 @@ function(connectionService, datasetService, errorNotificationService, filterServ
                     return;
                 }
 
-                var relations = datasetService.getRelations($scope.options.database.name, $scope.options.table.name, [$scope.options.dateField]);
+                var relations = datasetService.getRelations($scope.options.database.name, $scope.options.table.name, [$scope.options.dateField.columnName]);
                 filterService.replaceFilters($scope.messenger, relations, $scope.filterKeys, $scope.createFilterClauseForDate, function() {
                     if(callback) {
                         callback();
@@ -441,7 +441,7 @@ function(connectionService, datasetService, errorNotificationService, filterServ
                 } else if(message.removedFilter.whereClause) {
                     whereClauses = message.removedFilter.whereClause.whereClauses;
                 }
-                if(whereClauses && whereClauses.length === 2 && whereClauses[0].lhs === $scope.options.dateField && whereClauses[1].lhs === $scope.options.dateField) {
+                if(whereClauses && whereClauses.length === 2 && whereClauses[0].lhs === $scope.options.dateField.columnName && whereClauses[1].lhs === $scope.options.dateField.columnName) {
                     return true;
                 }
                 return false;
@@ -537,9 +537,16 @@ function(connectionService, datasetService, errorNotificationService, filterServ
 
             $scope.updateFields = function() {
                 $scope.loadingData = true;
-                $scope.fields = datasetService.getDatabaseFields($scope.options.database.name, $scope.options.table.name);
-                $scope.fields.sort();
-                $scope.options.dateField = $scope.bindDateField || datasetService.getMapping($scope.options.database.name, $scope.options.table.name, "date") || "date";
+                $scope.fields = datasetService.getSortedFields($scope.options.database.name, $scope.options.table.name);
+
+                var dateField = $scope.bindDateField || datasetService.getMapping($scope.options.database.name, $scope.options.table.name, "date") || "date";
+                $scope.options.dateField = _.find($scope.fields, function(field) {
+                    return field.columnName === dateField;
+                }) || {
+                    columnName: "",
+                    prettyName: ""
+                };
+
                 $scope.resetAndQueryForChartData();
             };
 
@@ -569,13 +576,13 @@ function(connectionService, datasetService, errorNotificationService, filterServ
             $scope.createChartDataQuery = function() {
                 var query = new neon.query.Query()
                     .selectFrom($scope.options.database.name, $scope.options.table.name)
-                    .where($scope.options.dateField, '!=', null);
+                    .where($scope.options.dateField.columnName, '!=', null);
 
                 $scope.addGroupByGranularityClause(query);
 
                 query.aggregate(neon.query.COUNT, '*', 'count');
                 // TODO: Does this need to be an aggregate on the date field? What is MIN doing or is this just an arbitrary function to include the date with the query?
-                query.aggregate(neon.query.MIN, $scope.options.dateField, 'date');
+                query.aggregate(neon.query.MIN, $scope.options.dateField.columnName, 'date');
                 query.sortBy('date', neon.query.ASCENDING);
                 query.ignoreFilters([$scope.filterKeys[$scope.options.database.name][$scope.options.table.name]]);
                 return query;
@@ -787,7 +794,7 @@ function(connectionService, datasetService, errorNotificationService, filterServ
                     // TODO: This could be done better with a promise framework - just did this in a pinch for a demo
                     var minDateQuery = new neon.query.Query()
                         .selectFrom($scope.options.database.name, $scope.options.table.name).ignoreFilters()
-                        .where($scope.options.dateField, '!=', null).sortBy($scope.options.dateField, neon.query.ASCENDING).limit(1);
+                        .where($scope.options.dateField.columnName, '!=', null).sortBy($scope.options.dateField.columnName, neon.query.ASCENDING).limit(1);
 
                     XDATA.userALE.log({
                         activity: "alter",
@@ -812,7 +819,7 @@ function(connectionService, datasetService, errorNotificationService, filterServ
                                     source: "system",
                                     tags: ["receive", "timeline", "min-date"]
                                 });
-                                $scope.referenceStartDate = new Date(queryResults.data[0][$scope.options.dateField]);
+                                $scope.referenceStartDate = new Date(queryResults.data[0][$scope.options.dateField.columnName]);
                                 if($scope.referenceEndDate !== undefined) {
                                     $scope.$apply(success);
                                 }
@@ -848,7 +855,7 @@ function(connectionService, datasetService, errorNotificationService, filterServ
                 } else {
                     var maxDateQuery = new neon.query.Query()
                         .selectFrom($scope.options.database.name, $scope.options.table.name).ignoreFilters()
-                        .where($scope.options.dateField, '!=', null).sortBy($scope.options.dateField, neon.query.DESCENDING).limit(1);
+                        .where($scope.options.dateField.columnName, '!=', null).sortBy($scope.options.dateField.columnName, neon.query.DESCENDING).limit(1);
 
                     XDATA.userALE.log({
                         activity: "alter",
@@ -874,7 +881,7 @@ function(connectionService, datasetService, errorNotificationService, filterServ
                                     source: "system",
                                     tags: ["received", "timeline", "max-date"]
                                 });
-                                $scope.referenceEndDate = new Date(queryResults.data[0][$scope.options.dateField]);
+                                $scope.referenceEndDate = new Date(queryResults.data[0][$scope.options.dateField.columnName]);
                                 if($scope.referenceStartDate !== undefined) {
                                     $scope.$apply(success);
                                 }
@@ -1172,7 +1179,7 @@ function(connectionService, datasetService, errorNotificationService, filterServ
                     setDateTimePickerStart($scope.bucketizer.getStartDate());
                     setDateTimePickerEnd($scope.bucketizer.getEndDate());
                 }
-                var relations = datasetService.getRelations($scope.options.database.name, $scope.options.table.name, [$scope.options.dateField]);
+                var relations = datasetService.getRelations($scope.options.database.name, $scope.options.table.name, [$scope.options.dateField.columnName]);
                 filterService.removeFilters($scope.messenger, $scope.filterKeys, function() {
                     datasetService.removeDateBrushExtentForRelations(relations);
                 });

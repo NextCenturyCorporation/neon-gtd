@@ -129,7 +129,9 @@ angular.module('neonDemo.directives')
 
                 $scope.selectedDB = server.databases[0].name;
                 $scope.selectedTable = server.databases[0].tables[0].name;
-                $scope.tableFields = server.databases[0].tables[0].fields;
+                $scope.tableFields = server.databases[0].tables[0].fields.map(function(field) {
+                    return field.columnName;
+                });
                 $scope.tableFieldMappings = server.databases[0].tables[0].mappings;
 
                 var databaseNames = [];
@@ -194,7 +196,9 @@ angular.module('neonDemo.directives')
                                 $scope.tableNameToFieldNames[tableName] = tableNamesAndFieldNames[tableName];
 
                                 if(databaseName === $scope.selectedDB && tableName === $scope.selectedTable) {
-                                    $scope.tableFields = datasetService.getDatabaseFields(databaseName, tableName);
+                                    $scope.tableFields = datasetService.getFields(databaseName, tableName).map(function(field) {
+                                        return field.columnName;
+                                    });
                                 }
                             }
 
@@ -219,7 +223,9 @@ angular.module('neonDemo.directives')
                     tags: ["dataset", $scope.selectedTable, "table"]
                 });
 
-                $scope.tableFields = datasetService.getDatabaseFields($scope.selectedDB, $scope.selectedTable);
+                $scope.tableFields = datasetService.getFields($scope.selectedDB, $scope.selectedTable).map(function(field) {
+                    return field.columnName;
+                });
                 // If the table does not exist in the dataset configuration, use the locally stored field names for the table.
                 if(!($scope.tableFields.length)) {
                     $scope.tableFields = $scope.tableNameToFieldNames[$scope.selectedTable];

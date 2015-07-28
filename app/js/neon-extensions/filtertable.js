@@ -289,7 +289,7 @@ neon.query.FilterTable.buildFilterFromData = function(databaseName, tableName, d
     }
     if(1 === data.length) {
         var filterData = data[0];
-        whereClause = neon.query.where(filterData.columnValue, filterData.operatorValue, neon.query.FilterTable.parseValue(filterData.value));
+        whereClause = neon.query.where(filterData.columnValue.columnName, filterData.operatorValue, neon.query.FilterTable.parseValue(filterData.value));
     } else {
         whereClause = neon.query.FilterTable.buildCompoundWhereClause(data, andClauses);
     }
@@ -311,7 +311,7 @@ neon.query.FilterTable.buildCompoundWhereClause = function(data, andClauses) {
     var clauses = [];
 
     $.each(data, function(index, filterData) {
-        var clause = neon.query.where(filterData.columnValue, filterData.operatorValue, neon.query.FilterTable.parseValue(filterData.value));
+        var clause = neon.query.where(filterData.columnValue.columnName, filterData.operatorValue, neon.query.FilterTable.parseValue(filterData.value));
         clauses.push(clause);
     });
 
@@ -354,7 +354,7 @@ neon.query.FilterTable.parseValue = function(value) {
  * an operator, and a value.
  *
  * @example
- *    var filterRow = new FilterRow({name: "myDatabase", prettyName: "My Database"}, {name: "myTable", prettyName: "My Table"}, "total", "<", 10);
+ *    var filterRow = new FilterRow({name: "myDatabase", prettyName: "My Database"}, {name: "myTable", prettyName: "My Table"}, {columnName: "total", prettyName: "Total"}, "<", 10);
  *
  * @class neon.query.FilterRow
  * @constructor

@@ -14,7 +14,7 @@
         </div>
         <div class="form-group" ng-show="!(hideAdvancedOptions)">
             <label>Group Field (X Axis)</label>
-            <select class="form-control" ng-model="options.attrX" ng-options="field for field in fields" ng-required="true" ng-disabled="!(fields.length > 0)">
+            <select class="form-control" ng-model="options.attrX" ng-options="field.prettyName for field in fields" ng-required="true" ng-disabled="!(fields.length > 0)">
             </select>
         </div>
         <div class="form-group" ng-show="!(hideAdvancedOptions)">
@@ -27,7 +27,7 @@
         </div>
         <div class="form-group" ng-show="!(hideAdvancedOptions) && (options.barType !== 'count')">
             <label>Value Field (Y Axis)</label>
-            <select class="form-control" ng-model="options.attrY" ng-options="field for field in fields" ng-required="true" ng-disabled="!(fields.length > 0)">
+            <select class="form-control" ng-model="options.attrY" ng-options="field.prettyName for field in fields" ng-required="true" ng-disabled="!(fields.length > 0)">
             </select>
         </div>        
     </options-menu>

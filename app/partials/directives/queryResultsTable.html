@@ -16,11 +16,11 @@
         <div class="form-group">
             <label>Add Column</label>
             <div class="input-group">
-                <select class="form-control" ng-model="options.addField" ng-disabled="!(tableNameToDeletedFieldsMap[options.table.name].length > 0)" ng-options="field for field in tableNameToDeletedFieldsMap[options.table.name]">
+                <select class="form-control" ng-model="options.addField" ng-disabled="!(deletedFieldsMap[options.database.name][options.table.name].length > 0)" ng-options="field.prettyName for field in deletedFieldsMap[options.database.name][options.table.name]">
                 </select>
 
                 <div class="input-group-btn">
-                    <button class="btn btn-default" ng-click="addColumn()" ng-disabled="!(tableNameToDeletedFieldsMap[options.table.name].length > 0)">&plus;</button>
+                    <button class="btn btn-default" ng-click="addColumn()" ng-disabled="!(deletedFieldsMap[options.database.name][options.table.name].length > 0)">&plus;</button>
                 </div>
             </div>
         </div>    
@@ -28,7 +28,7 @@
         <div class="form-group">
             <label>Sort By</label>
             <div class="input-group">
-                <select class="form-control" ng-model="options.sortByField" ng-disabled="!(fields.length > 0)" ng-options="field for field in fields" ng-change="refreshData()">
+                <select class="form-control" ng-model="options.sortByField" ng-disabled="!(fields.length > 0)" ng-options="field.prettyName for field in fields" ng-change="refreshData()">
                 </select>
 
                 <div class="input-group-btn">
@@ -80,11 +80,11 @@
             <div ng-hide="!(navbarItem)" class="form-input-group">
                 <label>Add Column</label>
                 <div class="input-group">
-                    <select class="form-control" ng-model="options.addField" ng-disabled="!(tableNameToDeletedFieldsMap[options.table.name].length > 0)" ng-options="field for field in tableNameToDeletedFieldsMap[options.table.name]">
+                    <select class="form-control" ng-model="options.addField" ng-disabled="!(deletedFieldsMap[options.database.name][options.table.name].length > 0)" ng-options="field.prettyName for field in deletedFieldsMap[options.database.name][options.table.name]">
                     </select>
 
                     <div class="input-group-btn">
-                        <button class="btn btn-default" ng-click="addColumn()" ng-disabled="!(tableNameToDeletedFieldsMap[options.table.name].length > 0)">&plus;</button>
+                        <button class="btn btn-default" ng-click="addColumn()" ng-disabled="!(deletedFieldsMap[options.database.name][options.table.name].length > 0)">&plus;</button>
                     </div>
                 </div>
             </div>    
@@ -93,7 +93,7 @@
                 <label>Sort By</label>
 
                 <div class="input-group">
-                    <select class="form-control" ng-model="options.sortByField" ng-disabled="!(fields.length > 0)" ng-options="field for field in fields" ng-change="refreshData()">
+                    <select class="form-control" ng-model="options.sortByField" ng-disabled="!(fields.length > 0)" ng-options="field.prettyName for field in fields" ng-change="refreshData()">
                     </select>
 
                     <div class="input-group-btn">

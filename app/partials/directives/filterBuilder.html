@@ -65,7 +65,7 @@
         </select>
       </div>
       <div class="form-group">
-        <select class="form-control" ng-model="filterRow.columnValue" ng-options="column for column in filterRow.columnOptions" ng-disabled="(filterRow.columnOptions.length < 2) || !(navbarItem)" ng-change="dirtyFilterRow(filterRow)">
+        <select class="form-control" ng-model="filterRow.columnValue" ng-options="column.prettyName for column in filterRow.columnOptions" ng-disabled="(filterRow.columnOptions.length < 2) || !(navbarItem)" ng-change="dirtyFilterRow(filterRow)">
         </select>
       </div>
       <div class="form-group">
@@ -116,7 +116,7 @@
         </select>
       </div>
       <div class="form-group">
-        <select id="filter-field-selection" class="form-control" ng-model="selectedField" ng-disabled="(fields.length == 0)" ng-options="field for field in fields" ng-change="onSelectedFieldChange()">
+        <select id="filter-field-selection" class="form-control" ng-model="selectedField" ng-disabled="(fields.length == 0)" ng-options="field.prettyName for field in fields" ng-change="onSelectedFieldChange()">
         </select>
       </div>
       <div class="form-group">

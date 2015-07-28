@@ -223,10 +223,23 @@ function(connectionService, datasetService, errorNotificationService, filterServ
 
             $scope.updateFields = function() {
                 $scope.loadingData = true;
-                $scope.options.attrX = $scope.bindXAxisField || datasetService.getMapping($scope.options.database.name, $scope.options.table.name, "bar_x_axis") || "";
-                $scope.options.attrY = $scope.bindYAxisField || datasetService.getMapping($scope.options.database.name, $scope.options.table.name, "y_axis") || "";
-                $scope.fields = datasetService.getDatabaseFields($scope.options.database.name, $scope.options.table.name);
-                $scope.fields.sort();
+                $scope.fields = datasetService.getSortedFields($scope.options.database.name, $scope.options.table.name);
+
+                var attrX = $scope.bindXAxisField || datasetService.getMapping($scope.options.database.name, $scope.options.table.name, "bar_x_axis") || "";
+                $scope.options.attrX = _.find($scope.fields, function(field) {
+                    return field.columnName === attrX;
+                }) || {
+                    columnName: "",
+                    prettyName: ""
+                };
+                var attrY = $scope.bindYAxisField || datasetService.getMapping($scope.options.database.name, $scope.options.table.name, "y_axis") || "";
+                $scope.options.attrY = _.find($scope.fields, function(field) {
+                    return field.columnName === attrY;
+                }) || {
+                    columnName: "",
+                    prettyName: ""
+                };
+
                 if($scope.filterSet) {
                     $scope.clearFilterSet();
                 }
@@ -236,8 +249,8 @@ function(connectionService, datasetService, errorNotificationService, filterServ
             $scope.buildQuery = function() {
                 var query = new neon.query.Query()
                     .selectFrom($scope.options.database.name, $scope.options.table.name)
-                    .where($scope.options.attrX, '!=', null)
-                    .groupBy($scope.options.attrX);
+                    .where($scope.options.attrX.columnName, '!=', null)
+                    .groupBy($scope.options.attrX.columnName);
 
                 query.ignoreFilters([$scope.filterKeys[$scope.options.database.name][$scope.options.table.name]]);
 
@@ -253,7 +266,7 @@ function(connectionService, datasetService, errorNotificationService, filterServ
                 if($scope.options.barType === "count") {
                     query.aggregate(queryType, '*', COUNT_FIELD_NAME);
                 } else {
-                    query.aggregate(queryType, $scope.options.attrY, COUNT_FIELD_NAME);
+                    query.aggregate(queryType, $scope.options.attrY.columnName, COUNT_FIELD_NAME);
                 }
                 return query;
             };
@@ -341,14 +354,14 @@ function(connectionService, datasetService, errorNotificationService, filterServ
                 }
 
                 var filterExists = $scope.filterSet ? true : false;
-                handleFilterSet($scope.options.attrX, value);
+                handleFilterSet($scope.options.attrX.prettyName, value);
 
                 // Store the value for the filter to use during filter creation.
                 $scope.filterValue = value;
 
                 var connection = connectionService.getActiveConnection();
                 if($scope.messenger && connection) {
-                    var relations = datasetService.getRelations($scope.options.database.name, $scope.options.table.name, [$scope.options.attrX]);
+                    var relations = datasetService.getRelations($scope.options.database.name, $scope.options.table.name, [$scope.options.attrX.columnName]);
                     if(filterExists) {
                         XDATA.userALE.log({
                             activity: "select",
@@ -421,7 +434,7 @@ function(connectionService, datasetService, errorNotificationService, filterServ
             var doDrawChart = function(data, destroy) {
                 var opts = {
                     data: data.data,
-                    x: $scope.options.attrX,
+                    x: $scope.options.attrX.columnName,
                     y: COUNT_FIELD_NAME,
                     responsive: false,
                     clickHandler: clickFilterHandler
@@ -445,10 +458,10 @@ function(connectionService, datasetService, errorNotificationService, filterServ
 
             $scope.getLegendText = function() {
                 if($scope.options.barType === "average") {
-                    return "Average " + $scope.options.attrY + " vs. " + $scope.options.attrX;
+                    return "Average " + $scope.options.attrY.prettyName + " vs. " + $scope.options.attrX.prettyName;
                 }
                 if($scope.options.barType === "sum") {
-                    return "Sum " + $scope.options.attrY + " vs. " + $scope.options.attrX;
+                    return "Sum " + $scope.options.attrY.prettyName + " vs. " + $scope.options.attrX.prettyName;
                 }
                 if($scope.options.barType === "count") {
                     return "Count";

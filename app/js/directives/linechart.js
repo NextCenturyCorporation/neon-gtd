@@ -202,7 +202,7 @@ function(connectionService, datasetService, errorNotificationService, filterServ
                 } else if(message.removedFilter.whereClause) {
                     whereClauses = message.removedFilter.whereClause.whereClauses;
                 }
-                if(whereClauses && whereClauses.length === 2 && whereClauses[0].lhs === $scope.options.attrX && whereClauses[1].lhs === $scope.options.attrX) {
+                if(whereClauses && whereClauses.length === 2 && whereClauses[0].lhs === $scope.options.attrX.columnName && whereClauses[1].lhs === $scope.options.attrX.columnName) {
                     return true;
                 }
                 return false;
@@ -306,18 +306,18 @@ function(connectionService, datasetService, errorNotificationService, filterServ
              * @return A ready-to-be-sent query for the line chart.
              */
             $scope.buildQuery = function() {
-                var yearGroupClause = new neon.query.GroupByFunctionClause(neon.query.YEAR, $scope.options.attrX, 'year');
-                var monthGroupClause = new neon.query.GroupByFunctionClause(neon.query.MONTH, $scope.options.attrX, 'month');
-                var dayGroupClause = new neon.query.GroupByFunctionClause(neon.query.DAY, $scope.options.attrX, 'day');
+                var yearGroupClause = new neon.query.GroupByFunctionClause(neon.query.YEAR, $scope.options.attrX.columnName, 'year');
+                var monthGroupClause = new neon.query.GroupByFunctionClause(neon.query.MONTH, $scope.options.attrX.columnName, 'month');
+                var dayGroupClause = new neon.query.GroupByFunctionClause(neon.query.DAY, $scope.options.attrX.columnName, 'day');
 
                 var groupByClause = [yearGroupClause, monthGroupClause, dayGroupClause];
                 if($scope.options.categoryField) {
-                    groupByClause.push($scope.options.categoryField);
+                    groupByClause.push($scope.options.categoryField.columnName);
                 }
 
                 var query = new neon.query.Query()
                     .selectFrom($scope.options.database.name, $scope.options.table.name)
-                    .where($scope.options.attrX, '!=', null);
+                    .where($scope.options.attrX.columnName, '!=', null);
 
                 query.groupBy.apply(query, groupByClause);
 
@@ -325,19 +325,19 @@ function(connectionService, datasetService, errorNotificationService, filterServ
                     query.aggregate(neon.query.COUNT, '*', COUNT_FIELD_NAME);
                 }
                 if($scope.options.aggregation === "sum") {
-                    query.aggregate(neon.query.SUM, $scope.options.attrY, COUNT_FIELD_NAME);
+                    query.aggregate(neon.query.SUM, $scope.options.attrY.columnName, COUNT_FIELD_NAME);
                 }
                 if($scope.options.aggregation === "average") {
-                    query.aggregate(neon.query.AVG, $scope.options.attrY, COUNT_FIELD_NAME);
+                    query.aggregate(neon.query.AVG, $scope.options.attrY.columnName, COUNT_FIELD_NAME);
                 }
                 if($scope.options.aggregation === "min") {
-                    query.aggregate(neon.query.MIN, $scope.options.attrY, COUNT_FIELD_NAME);
+                    query.aggregate(neon.query.MIN, $scope.options.attrY.columnName, COUNT_FIELD_NAME);
                 }
                 if($scope.options.aggregation === "max") {
-                    query.aggregate(neon.query.MAX, $scope.options.attrY, COUNT_FIELD_NAME);
+                    query.aggregate(neon.query.MAX, $scope.options.attrY.columnName, COUNT_FIELD_NAME);
                 }
 
-                query.aggregate(neon.query.MIN, $scope.options.attrX, 'date')
+                query.aggregate(neon.query.MIN, $scope.options.attrX.columnName, 'date')
                     .sortBy('date', neon.query.ASCENDING);
 
                 return query;
@@ -389,12 +389,30 @@ function(connectionService, datasetService, errorNotificationService, filterServ
 
             $scope.updateFields = function() {
                 $scope.loadingData = true;
-                $scope.options.attrX = $scope.bindDateField || datasetService.getMapping($scope.options.database.name, $scope.options.table.name, "date") || "";
-                $scope.options.attrY = $scope.bindYAxisField || datasetService.getMapping($scope.options.database.name, $scope.options.table.name, "y_axis") || "";
-                $scope.options.categoryField = $scope.bindCategoryField || datasetService.getMapping($scope.options.database.name, $scope.options.table.name, "line_category") || "";
+                $scope.fields = datasetService.getSortedFields($scope.options.database.name, $scope.options.table.name);
                 $scope.options.aggregation = $scope.bindAggregationField || "count";
-                $scope.fields = datasetService.getDatabaseFields($scope.options.database.name, $scope.options.table.name);
-                $scope.fields.sort();
+
+                var attrX = $scope.bindDateField || datasetService.getMapping($scope.options.database.name, $scope.options.table.name, "date") || "";
+                $scope.options.attrX = _.find($scope.fields, function(field) {
+                    return field.columnName === attrX;
+                }) || {
+                    columnName: "",
+                    prettyName: ""
+                };
+                var attrY = $scope.bindYAxisField || datasetService.getMapping($scope.options.database.name, $scope.options.table.name, "y_axis") || "";
+                $scope.options.attrY = _.find($scope.fields, function(field) {
+                    return field.columnName === attrY;
+                }) || {
+                    columnName: "",
+                    prettyName: ""
+                };
+                var categoryField = $scope.bindCategoryField || datasetService.getMapping($scope.options.database.name, $scope.options.table.name, "line_category") || "";
+                $scope.options.categoryField = _.find($scope.fields, function(field) {
+                    return field.columnName === categoryField;
+                }) || {
+                    columnName: "",
+                    prettyName: ""
+                };
 
                 var globalBrushExtent = datasetService.getDateBrushExtent($scope.options.database.name, $scope.options.table.name);
                 if($scope.brushExtent !== globalBrushExtent) {
@@ -514,8 +532,8 @@ function(connectionService, datasetService, errorNotificationService, filterServ
                 //this prevents an error in older mongo caused when the xAxis value is invalid as it is not
                 //included as a key in the response
                 for(var i = 0; i < data.length; i++) {
-                    if(typeof(data[i][$scope.options.attrX]) === 'undefined') {
-                        data[i][$scope.options.attrX] = null;
+                    if(typeof(data[i][$scope.options.attrX.columnName]) === 'undefined') {
+                        data[i][$scope.options.attrX.columnName] = null;
                     }
                 }
 
@@ -616,27 +634,27 @@ function(connectionService, datasetService, errorNotificationService, filterServ
 
                 var resultData = {};
 
-                var series = $scope.options.attrY;
+                var series = $scope.options.attrY.prettyName;
                 if($scope.options.aggregation === 'count') {
-                    series = 'Count ' + $scope.options.attrY;
+                    series = 'Count ' + $scope.options.attrY.prettyName;
                 }
                 if($scope.options.aggregation === 'average') {
-                    series = 'Average ' + $scope.options.attrY;
+                    series = 'Average ' + $scope.options.attrY.prettyName;
                 }
                 if($scope.options.aggregation === 'sum') {
-                    series = 'Sum ' + $scope.options.attrY;
+                    series = 'Sum ' + $scope.options.attrY.prettyName;
                 }
                 if($scope.options.aggregation === 'min') {
-                    series = 'Minimum ' + $scope.options.attrY;
+                    series = 'Minimum ' + $scope.options.attrY.prettyName;
                 }
                 if($scope.options.aggregation === 'max') {
-                    series = 'Maximum ' + $scope.options.attrY;
+                    series = 'Maximum ' + $scope.options.attrY.prettyName;
                 }
 
                 // Scrape data for unique series
                 for(i = 0; i < data.length; i++) {
                     if($scope.options.categoryField) {
-                        series = data[i][$scope.options.categoryField] !== '' ? data[i][$scope.options.categoryField] : 'Unknown';
+                        series = data[i][$scope.options.categoryField.columnName] !== '' ? data[i][$scope.options.categoryField.columnName] : 'Unknown';
                     }
 
                     if(!resultData[series]) {
@@ -670,7 +688,7 @@ function(connectionService, datasetService, errorNotificationService, filterServ
                     indexDate = new Date(data[i].date);
 
                     if($scope.options.categoryField) {
-                        series = data[i][$scope.options.categoryField] !== '' ? data[i][$scope.options.categoryField] : 'Unknown';
+                        series = data[i][$scope.options.categoryField.columnName] !== '' ? data[i][$scope.options.categoryField.columnName] : 'Unknown';
                     }
 
                     data[i].value = _.isNumber(data[i].value) ? data[i].value : undefined;
@@ -846,7 +864,7 @@ function(connectionService, datasetService, errorNotificationService, filterServ
                     return;
                 }
 
-                var relations = datasetService.getRelations($scope.options.database.name, $scope.options.table.name, [$scope.options.attrX]);
+                var relations = datasetService.getRelations($scope.options.database.name, $scope.options.table.name, [$scope.options.attrX.columnName]);
                 filterService.replaceFilters($scope.messenger, relations, $scope.filterKeys, createFilterClauseForDate, function() {
                     updateLineChartForBrushExtent();
                     datasetService.setDateBrushExtentForRelations(relations, $scope.brushExtent);
@@ -909,7 +927,7 @@ function(connectionService, datasetService, errorNotificationService, filterServ
                 });
 
                 renderBrushExtent([]);
-                var relations = datasetService.getRelations($scope.options.database.name, $scope.options.table.name, [$scope.options.attrX]);
+                var relations = datasetService.getRelations($scope.options.database.name, $scope.options.table.name, [$scope.options.attrX.columnName]);
                 filterService.removeFilters($scope.messenger, $scope.filterKeys, function() {
                     updateLineChartForBrushExtent();
                     datasetService.removeDateBrushExtentForRelations(relations);

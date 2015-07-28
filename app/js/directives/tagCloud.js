@@ -198,9 +198,16 @@ function(connectionService, datasetService, errorNotificationService, filterServ
 
             $scope.updateFields = function() {
                 $scope.loadingData = true;
-                $scope.fields = datasetService.getDatabaseFields($scope.options.database.name, $scope.options.table.name);
-                $scope.fields.sort();
-                $scope.options.tagField = $scope.bindTagField || datasetService.getMapping($scope.options.database.name, $scope.options.table.name, "tags") || $scope.fields[0] || "";
+                $scope.fields = datasetService.getSortedFields($scope.options.database.name, $scope.options.table.name);
+
+                var tagField = $scope.bindTagField || datasetService.getMapping($scope.options.database.name, $scope.options.table.name, "tags") || "";
+                $scope.options.tagField = _.find($scope.fields, function(field) {
+                    return field.columnName === tagField;
+                }) || {
+                    columnName: "",
+                    prettyName: ""
+                };
+
                 if($scope.showFilter) {
                     $scope.clearTagFilters();
                 } else {

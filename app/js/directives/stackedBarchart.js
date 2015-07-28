@@ -141,10 +141,23 @@ function(connectionService, datasetService, errorNotificationService) {
             };
 
             $scope.updateFields = function() {
-                $scope.options.attrX = datasetService.getMapping($scope.options.database.name, $scope.options.table.name, "x_axis") || "";
-                $scope.options.attrY = datasetService.getMapping($scope.options.database.name, $scope.options.table.name, "y_axis") || "";
-                $scope.fields = datasetService.getDatabaseFields($scope.options.database.name, $scope.options.table.name);
-                $scope.fields.sort();
+                $scope.fields = datasetService.getSortedFields($scope.options.database.name, $scope.options.table.name);
+
+                var attrX = datasetService.getMapping($scope.options.database.name, $scope.options.table.name, "x_axis") || "";
+                $scope.options.attrX = _.find($scope.fields, function(field) {
+                    return field.columnName === attrX;
+                }) || {
+                    columnName: "",
+                    prettyName: ""
+                };
+                var attrY = datasetService.getMapping($scope.options.database.name, $scope.options.table.name, "y_axis") || "";
+                $scope.options.attrY = _.find($scope.fields, function(field) {
+                    return field.columnName === attrY;
+                }) || {
+                    columnName: "",
+                    prettyName: ""
+                };
+
                 $scope.queryForData(true);
             };
 
@@ -154,8 +167,8 @@ function(connectionService, datasetService, errorNotificationService) {
                     $scope.errorMessage = undefined;
                 }
 
-                var xAxis = $scope.options.attrX || datasetService.getMapping($scope.options.database.name, $scope.options.table.name, "x_axis");
-                var yAxis = $scope.options.attrY || datasetService.getMapping($scope.options.database.name, $scope.options.table.name, "y_axis");
+                var xAxis = $scope.options.attrX.name || datasetService.getMapping($scope.options.database.name, $scope.options.table.name, "x_axis");
+                var yAxis = $scope.options.attrY.name || datasetService.getMapping($scope.options.database.name, $scope.options.table.name, "y_axis");
                 if(!yAxis) {
                     yAxis = COUNT_FIELD_NAME;
                 }
@@ -196,8 +209,8 @@ function(connectionService, datasetService, errorNotificationService) {
             };
 
             $scope.queryForData = function() {
-                var xAxis = $scope.options.attrX || datasetService.getMapping($scope.options.database.name, $scope.options.table.name, "x_axis");
-                var yAxis = $scope.options.attrY || datasetService.getMapping($scope.options.database.name, $scope.options.table.name, "y_axis");
+                var xAxis = $scope.options.attrX.name || datasetService.getMapping($scope.options.database.name, $scope.options.table.name, "x_axis");
+                var yAxis = $scope.options.attrY.name || datasetService.getMapping($scope.options.database.name, $scope.options.table.name, "y_axis");
                 if(!yAxis) {
                     yAxis = COUNT_FIELD_NAME;
                 }
@@ -287,8 +300,8 @@ function(connectionService, datasetService, errorNotificationService) {
             var doDrawChart = function(data) {
                 charts.BarChart.destroy($element[0], '.barchart');
 
-                var xAxis = datasetService.getMapping($scope.options.database.name, $scope.options.table.name, "x_axis") || $scope.options.attrX;
-                var yAxis = datasetService.getMapping($scope.options.database.name, $scope.options.table.name, "y_axis") || $scope.options.attrY;
+                var xAxis = datasetService.getMapping($scope.options.database.name, $scope.options.table.name, "x_axis") || $scope.options.attrX.name;
+                var yAxis = datasetService.getMapping($scope.options.database.name, $scope.options.table.name, "y_axis") || $scope.options.attrY.name;
                 if(!yAxis) {
                     yAxis = COUNT_FIELD_NAME;
                 }

@@ -34,6 +34,56 @@ angular.module("neonDemo.services")
         // The Dataset Service saves the brush extent used to filter the date for each database/table.
         service.DATE_CHANGED = "date_changed";
 
+        var removeFromArray = function(array, indexList) {
+            indexList.forEach(function(index) {
+                array.splice(index, 1);
+            });
+        };
+
+        var validateFields = function(table) {
+            var indexListToRemove = [];
+            table.fields.forEach(function(field, index) {
+                if(!field.columnName) {
+                    indexListToRemove.push(index);
+                } else {
+                    field.prettyName = field.prettyName || field.columnName;
+                }
+            });
+            removeFromArray(table.fields, indexListToRemove);
+        };
+
+        var validateTables = function(database) {
+            var indexListToRemove = [];
+            database.tables.forEach(function(table, index) {
+                if(!table.name) {
+                    indexListToRemove.push(index);
+                } else {
+                    table.prettyName = table.prettyName || table.name;
+                    table.fields = table.fields || [];
+                    table.mappings = table.mappings || {};
+                    // Create a filter key for each database/table pair with a date mapping.
+                    if(table.mappings.date) {
+                        table.dateFilterKey = "date-" + database.name + "-" + table.name + "-" + uuid();
+                    }
+                    validateFields(table);
+                }
+            });
+            removeFromArray(database.tables, indexListToRemove);
+        };
+
+        var validateDatabases = function(dataset) {
+            var indexListToRemove = [];
+            dataset.databases.forEach(function(database, index) {
+                if(!(database.name || database.tables || database.tables.length)) {
+                    indexListToRemove.push(index);
+                } else {
+                    database.prettyName = database.prettyName || database.name;
+                    validateTables(database);
+                }
+            });
+            removeFromArray(dataset.databases, indexListToRemove);
+        };
+
         /**
          * Sets the active dataset to the given dataset.
          * @param {Object} The dataset containing {String} name, {String} layout, {String} datastore, {String} hostname,
@@ -56,34 +106,7 @@ angular.module("neonDemo.services")
             service.dataset.relations = dataset.relations || [];
             service.dataset.linkyConfig = dataset.linkyConfig || {};
 
-            // Remove databases from the dataset that contain no tables.
-            var databaseIndexToRemove = [];
-            service.dataset.databases.forEach(function(database, index) {
-                if(!database.prettyName) {
-                    database.prettyName = database.name;
-                }
-                if(!(database.tables || database.tables.length)) {
-                    databaseIndexToRemove.push(index);
-                }
-            });
-
-            databaseIndexToRemove.forEach(function(index) {
-                service.dataset.databases.splice(index, 1);
-            });
-
-            service.dataset.databases.forEach(function(database) {
-                database.tables.forEach(function(table) {
-                    if(!table.prettyName) {
-                        table.prettyName = table.name;
-                    }
-                    table.fields = table.fields || [];
-                    table.mappings = table.mappings || {};
-                    // Create a filter key for each database/table pair with a date mapping.
-                    if(table.mappings.date) {
-                        table.dateFilterKey = "date-" + database.name + "-" + table.name + "-" + uuid();
-                    }
-                });
-            });
+            validateDatabases(service.dataset);
         };
 
         /**
@@ -231,49 +254,7 @@ angular.module("neonDemo.services")
         };
 
         /**
-         * Returns the database field names for the table with the given name.
-         * @param {String} The database name
-         * @param {String} The table name
-         * @method getDatabaseFields
-         * @return {Array} The array of database field names if a match exists or an empty array otherwise.
-         */
-        service.getDatabaseFields = function(databaseName, tableName) {
-            var table = service.getTableWithName(databaseName, tableName);
-
-            if(!table) {
-                return [];
-            }
-
-            var databaseFields = [];
-            for(var i = 0; i < table.fields.length; ++i) {
-                databaseFields.push(table.fields[i].columnName);
-            }
-            return databaseFields;
-        };
-
-        /**
-         * Returns the pretty field names for the table with the given name.
-         * @param {String} The database name
-         * @param {String} The table name
-         * @method getPrettyFields
-         * @return {Array} The array of pretty field names if a match exists or an empty array otherwise.
-         */
-        service.getPrettyFields = function(databaseName, tableName) {
-            var table = service.getTableWithName(databaseName, tableName);
-
-            if(!table) {
-                return [];
-            }
-
-            var prettyFields = [];
-            for(var i = 0; i < table.fields.length; ++i) {
-                prettyFields.push(table.fields[i].prettyName || table.fields[i].columnName);
-            }
-            return prettyFields;
-        };
-
-        /**
-         * Returns the field objects for the table with the given name.
+         * Returns the field objects for the database and table with the given names.
          * @param {String} The database name
          * @param {String} The table name
          * @method getFields
@@ -290,23 +271,30 @@ angular.module("neonDemo.services")
         };
 
         /**
-         * Returns the pretty field name for the field with the given name in the table with the given name.
+         * Returns a sorted copy of the array of field objects for the database and table with the given names, ignoring hidden fields if specified.
+         * @param {String} The database name
          * @param {String} The table name
-         * @param {String} The field name
-         * @method getPrettyFields
-         * @return {String} The pretty field name if a match exists or undefined otherwise.
+         * @param {Boolean} Whether to ignore fields in the table marked as hidden (optional)
+         * @method getSortedFields
+         * @return {Array} The sorted copy of the array of field objects if a match exists or an empty array otherwise.
          */
-        service.getPrettyField = function(tableName, fieldName) {
-            var table = service.getTableWithName(tableName);
+        service.getSortedFields = function(databaseName, tableName, ignoreHiddenFields) {
+            var table = service.getTableWithName(databaseName, tableName);
 
-            for(var i = 0; i < table.fields.length; ++i) {
-                var field = table.fields[i];
-                if(field.columnName === fieldName) {
-                    return field.prettyName || field.columnName;
-                }
+            if(!table) {
+                return [];
             }
 
-            return undefined;
+            var fields = angular.copy(table.fields).filter(function(field) {
+                return ignoreHiddenFields ? !field.hide : true;
+            });
+
+            fields.sort(function(x, y) {
+                // Compare field pretty names and ignore case.
+                return (x.prettyName.toUpperCase() < y.prettyName.toUpperCase()) ? -1 : ((x.prettyName.toUpperCase() > y.prettyName.toUpperCase()) ? 1 : 0);
+            });
+
+            return fields;
         };
 
         /**
@@ -332,7 +320,8 @@ angular.module("neonDemo.services")
             for(var j = 0; j < fieldNames.length; ++j) {
                 if(!fieldExists[fieldNames[j]]) {
                     table.fields.push({
-                        columnName: fieldNames[j]
+                        columnName: fieldNames[j],
+                        prettyName: fieldNames[j]
                     });
                 }
             }

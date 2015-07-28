@@ -28,7 +28,6 @@ function(external, popups, connectionService, datasetService, errorNotificationS
             bindAggregationField: '=',
             bindTable: '=',
             bindDatabase: '=',
-            usePrettyNames: '=?',
             hideHeader: '=?',
             hideAdvancedOptions: '=?'
         },
@@ -168,36 +167,32 @@ function(external, popups, connectionService, datasetService, errorNotificationS
 
             var createAggregationColumnName = function() {
                 if($scope.options.aggregation === "count") {
-                    return $scope.usePrettyNames ? "Count" : "count";
+                    return "Count";
                 }
 
-                var aggregationFieldName = $scope.usePrettyNames ? datasetService.getPrettyField($scope.options.table.name, $scope.options.aggregationField) : $scope.options.aggregationField;
-
                 if($scope.options.aggregation === "min") {
-                    return ($scope.usePrettyNames ? "Min " : "min ") + aggregationFieldName;
+                    return "Min " + $scope.options.aggregationField.prettyName;
                 }
 
                 if($scope.options.aggregation === "max") {
-                    return ($scope.usePrettyNames ? "Max " : "max ") + aggregationFieldName;
+                    return "Max " + $scope.options.aggregationField.prettyName;
                 }
 
                 return "";
             };
 
             var createColumns = function(data) {
-                var fieldName = $scope.usePrettyNames ? datasetService.getPrettyField($scope.options.table.name, $scope.options.field) : $scope.options.field;
-
                 // Since forceFitColumns is enabled, setting this width will force the columns to use as much
                 // space as possible, which is necessary to keep the first column as small as possible.
                 var tableWidth = $tableDiv.outerWidth();
 
                 var columns = [{
-                    name: fieldName,
-                    field: $scope.options.field,
+                    name: $scope.options.field.prettyName,
+                    field: $scope.options.field.columnName,
                     width: tableWidth
                 }, {
                     name: createAggregationColumnName(),
-                    field: $scope.options.aggregation === "count" ? "count" : $scope.options.aggregationField,
+                    field: $scope.options.aggregation === "count" ? "count" : $scope.options.aggregationField.columnName,
                     width: tableWidth
                 }];
 
@@ -303,11 +298,24 @@ function(external, popups, connectionService, datasetService, errorNotificationS
 
             $scope.updateFields = function() {
                 $scope.loadingData = true;
-                $scope.fields = datasetService.getDatabaseFields($scope.options.database.name, $scope.options.table.name);
-                $scope.fields.sort();
-                $scope.options.field = $scope.bindCountField || datasetService.getMapping($scope.options.database.name, $scope.options.table.name, "count_by") || "";
+                $scope.fields = datasetService.getSortedFields($scope.options.database.name, $scope.options.table.name);
                 $scope.options.aggregation = $scope.bindAggregation || "count";
-                $scope.options.aggregationField = $scope.bindAggregationField || "";
+
+                var fieldName = $scope.bindCountField || datasetService.getMapping($scope.options.database.name, $scope.options.table.name, "count_by") || "";
+                $scope.options.field = _.find($scope.fields, function(field) {
+                    return field.columnName === fieldName;
+                }) || {
+                    columnName: "",
+                    prettyName: ""
+                };
+                var aggregationFieldName = $scope.bindAggregationField || "";
+                $scope.options.aggregationField = _.find($scope.fields, function(field) {
+                    return field.columnName === aggregationFieldName;
+                }) || {
+                    columnName: "",
+                    prettyName: ""
+                };
+
                 if($scope.filterSet) {
                     $scope.clearFilter();
                 }
@@ -405,11 +413,11 @@ function(external, popups, connectionService, datasetService, errorNotificationS
                 var cleanData = [];
                 for(var i = 0; i < data.length; i++) {
                     var row = {};
-                    row[$scope.options.field] = data[i][$scope.options.field];
+                    row[$scope.options.field.columnName] = data[i][$scope.options.field.columnName];
                     if($scope.options.aggregation === "count") {
                         row.count = data[i].count;
                     } else {
-                        row[$scope.options.aggregationField] = data[i][$scope.options.aggregationField];
+                        row[$scope.options.aggregationField.columnName] = data[i][$scope.options.aggregationField.columnName];
                     }
                     cleanData.push(row);
                 }
@@ -421,8 +429,8 @@ function(external, popups, connectionService, datasetService, errorNotificationS
                 var tableLinks = [];
 
                 data.data.forEach(function(row) {
-                    var field = $scope.options.field;
-                    var value = row[$scope.options.field];
+                    var field = $scope.options.field.columnName;
+                    var value = row[$scope.options.field.columnName];
                     var query = field + "=" + value;
 
                     var links = [];
@@ -566,7 +574,7 @@ function(external, popups, connectionService, datasetService, errorNotificationS
                 // If the table is recreated while sorting is set, we must redo the sorting on the new table; else, sort the table by the aggregation field.
                 var sortInfo = $scope.table ? $scope.table.sortInfo_ : {
                     name: createAggregationColumnName(),
-                    field: $scope.options.aggregation === "count" ? "count" : $scope.options.aggregationField,
+                    field: $scope.options.aggregation === "count" ? "count" : $scope.options.aggregationField.columnName,
                     sortAsc: false
                 };
 
@@ -606,7 +614,7 @@ function(external, popups, connectionService, datasetService, errorNotificationS
              * @method buildQuery
              */
             $scope.buildQuery = function() {
-                var query = new neon.query.Query().selectFrom($scope.options.database.name, $scope.options.table.name).groupBy($scope.options.field);
+                var query = new neon.query.Query().selectFrom($scope.options.database.name, $scope.options.table.name).groupBy($scope.options.field.columnName);
 
                 // The widget displays its own ignored rows with 0.5 opacity.
                 query.ignoreFilters([$scope.filterKeys[$scope.options.database.name][$scope.options.table.name]]);
@@ -615,10 +623,10 @@ function(external, popups, connectionService, datasetService, errorNotificationS
                     query.aggregate(neon.query.COUNT, '*', 'count');
                 }
                 if($scope.options.aggregation === "min") {
-                    query.aggregate(neon.query.MIN, $scope.options.aggregationField, $scope.options.aggregationField);
+                    query.aggregate(neon.query.MIN, $scope.options.aggregationField.columnName, $scope.options.aggregationField.columnName);
                 }
                 if($scope.options.aggregation === "max") {
-                    query.aggregate(neon.query.MAX, $scope.options.aggregationField, $scope.options.aggregationField);
+                    query.aggregate(neon.query.MAX, $scope.options.aggregationField.columnName, $scope.options.aggregationField.columnName);
                 }
 
                 return query;

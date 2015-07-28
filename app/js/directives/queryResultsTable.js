@@ -77,7 +77,7 @@ function(external, popups, connectionService, datasetService, errorNotificationS
             $scope.databases = [];
             $scope.tables = [];
             $scope.fields = [];
-            $scope.tableNameToDeletedFieldsMap = {};
+            $scope.deletedFieldsMap = {};
             $scope.totalRows = 0;
             $scope.errorMessage = undefined;
             $scope.loadingData = false;
@@ -85,8 +85,8 @@ function(external, popups, connectionService, datasetService, errorNotificationS
             $scope.options = {
                 database: {},
                 table: {},
-                addField: "",
-                sortByField: "",
+                addField: {},
+                sortByField: {},
                 sortDirection: neon.query.ASCENDING,
                 limit: 500
             };
@@ -212,22 +212,32 @@ function(external, popups, connectionService, datasetService, errorNotificationS
             };
 
             var createColumns = function(data, refreshColumns) {
-                var fieldNames = [];
+                var knownColumns = [];
 
                 if(refreshColumns || !$scope.table) {
                     // Add the fields in the order they are listed in the configuration file.
                     datasetService.getFields($scope.options.database.name, $scope.options.table.name).forEach(function(field) {
-                        fieldNames.push(field.columnName);
+                        knownColumns.push({
+                            columnName: field.columnName,
+                            prettyName: field.prettyName
+                        });
                     });
                 } else {
-                    $scope.table.getColumns().forEach(function(field) {
-                        if(field.name) {
-                            fieldNames.push(field.name);
+                    // Add the fields in the order they are set in the existing data table.
+                    $scope.table.getColumns().forEach(function(column) {
+                        if(column.name) {
+                            knownColumns.push({
+                                columnName: column.field,
+                                prettyName: column.name
+                            });
                         }
                     });
                 }
 
-                var columns = tables.createColumns(fieldNames, data, $scope.tableNameToDeletedFieldsMap[$scope.options.table.name], [$scope.createDeleteColumnButton("")]);
+                var hiddenColumnNames = $scope.deletedFieldsMap[$scope.options.database.name][$scope.options.table.name].map(function(deletedField) {
+                    return deletedField.columnName;
+                });
+                var columns = tables.createColumns(knownColumns, data, hiddenColumnNames, [$scope.createDeleteColumnButton("")]);
                 columns = tables.addLinkabilityToColumns(columns);
 
                 if(external.anyEnabled) {
@@ -286,6 +296,10 @@ function(external, popups, connectionService, datasetService, errorNotificationS
                     }
                 }
 
+                if(!($scope.deletedFieldsMap[$scope.options.database.name])) {
+                    $scope.deletedFieldsMap[$scope.options.database.name] = {};
+                }
+
                 if(initializing) {
                     $scope.updateTables();
                 } else {
@@ -305,31 +319,49 @@ function(external, popups, connectionService, datasetService, errorNotificationS
                         }
                     }
                 }
+
+                if(!($scope.deletedFieldsMap[$scope.options.database.name][$scope.options.table.name])) {
+                    $scope.deletedFieldsMap[$scope.options.database.name][$scope.options.table.name] = [];
+                    // The first time the data for a table is displayed, add the fields hidden in the configuration to the list of deleted fields for the table.
+                    datasetService.getFields($scope.options.database.name, $scope.options.table.name).forEach(function(field) {
+                        if(field.hide) {
+                            $scope.deletedFieldsMap[$scope.options.database.name][$scope.options.table.name].push({
+                                columnName: field.columnName,
+                                prettyName: field.prettyName
+                            });
+                        }
+                    });
+                }
+
                 $scope.updateFields();
             };
 
             $scope.updateFields = function() {
                 $scope.loadingData = true;
-                $scope.fields = datasetService.getDatabaseFields($scope.options.database.name, $scope.options.table.name);
-                $scope.fields.sort();
-                $scope.options.addField = "";
-                if(!($scope.tableNameToDeletedFieldsMap[$scope.options.table.name])) {
-                    $scope.tableNameToDeletedFieldsMap[$scope.options.table.name] = [];
-                    // The first time the data for a table is displayed, add the fields hidden in the configuration to the list of deleted fields for the table.
-                    datasetService.getFields($scope.options.database.name, $scope.options.table.name).forEach(function(field) {
-                        if(field.hide) {
-                            $scope.tableNameToDeletedFieldsMap[$scope.options.table.name].push(field.columnName);
-                        }
-                    });
-                }
-                if($scope.tableNameToDeletedFieldsMap[$scope.options.table.name].length) {
+                $scope.fields = datasetService.getSortedFields($scope.options.database.name, $scope.options.table.name);
+                $scope.options.addField = {
+                    columnName: "",
+                    prettyName: ""
+                };
+
+                if($scope.deletedFieldsMap[$scope.options.database.name][$scope.options.table.name].length) {
                     // Remove previously deleted fields from the list of fields.
                     $scope.fields = $scope.fields.filter(function(field) {
-                        return $scope.tableNameToDeletedFieldsMap[$scope.options.table.name].indexOf(field) === -1;
+                        return -1 === _.findIndex($scope.deletedFieldsMap[$scope.options.database.name][$scope.options.table.name], function(deletedField) {
+                            return deletedField.columnName === field.columnName;
+                        });
                     });
-                    $scope.options.addField = $scope.tableNameToDeletedFieldsMap[$scope.options.table.name][0];
+                    $scope.options.addField = $scope.deletedFieldsMap[$scope.options.database.name][$scope.options.table.name][0];
                 }
-                $scope.options.sortByField = datasetService.getMapping($scope.options.database.name, $scope.options.table.name, "sort_by") || $scope.fields[0];
+
+                var sortByField = datasetService.getMapping($scope.options.database.name, $scope.options.table.name, "sort_by") || "";
+                $scope.options.sortByField = _.find($scope.fields, function(field) {
+                    return field.columnName === sortByField;
+                }) || {
+                    columnName: "",
+                    prettyName: ""
+                };
+
                 queryForData(true);
             };
 
@@ -681,11 +713,13 @@ function(external, popups, connectionService, datasetService, errorNotificationS
 
             $scope.deleteColumn = function(name) {
                 if($scope.table.deleteColumn(name)) {
-                    var indexToSplice = $scope.fields.indexOf(name);
-                    $scope.fields.splice(indexToSplice, 1);
+                    var indexToSplice = _.findIndex($scope.fields, function(field) {
+                        return name === field.prettyName;
+                    });
+                    var deletedField = $scope.fields.splice(indexToSplice, 1)[0];
                     $scope.options.sortByField = $scope.options.sortByField === name ? $scope.fields[0] : $scope.options.sortByField;
-                    $scope.tableNameToDeletedFieldsMap[$scope.options.table.name].push(name);
-                    $scope.options.addField = name;
+                    $scope.deletedFieldsMap[$scope.options.database.name][$scope.options.table.name].push(deletedField);
+                    $scope.options.addField = deletedField;
                     $scope.createDeleteColumnButtons();
 
                     XDATA.userALE.log({
@@ -701,22 +735,27 @@ function(external, popups, connectionService, datasetService, errorNotificationS
             };
 
             $scope.addColumn = function() {
-                if($scope.table.addColumn($scope.options.addField)) {
-                    var indexToSplice = $scope.tableNameToDeletedFieldsMap[$scope.options.table.name].indexOf($scope.options.addField);
+                if($scope.table.addColumn($scope.options.addField.prettyName)) {
+                    var indexToSplice = _.findIndex($scope.deletedFieldsMap[$scope.options.database.name][$scope.options.table.name], function(deletedField) {
+                        return deletedField.columnName === $scope.options.addField.columnName;
+                    });
+                    $scope.deletedFieldsMap[$scope.options.database.name][$scope.options.table.name].splice(indexToSplice, 1);
+                    $scope.fields.push($scope.options.addField);
+                    $scope.options.addField = $scope.deletedFieldsMap[$scope.options.database.name][$scope.options.table.name].length > 0 ? $scope.deletedFieldsMap[$scope.options.database.name][$scope.options.table.name][0] : {
+                        columnName: "",
+                        prettyName: ""
+                    };
+                    $scope.createDeleteColumnButtons();
 
                     XDATA.userALE.log({
                         activity: "add",
                         action: "click",
-                        elementId: "column-" + $scope.options.addField,
+                        elementId: "column-" + $scope.options.addField.prettyName,
                         elementType: "datagrid",
                         elementGroup: "table_group",
                         source: "user",
-                        tags: ["options", "datagrid", "column", $scope.options.addField]
+                        tags: ["options", "datagrid", "column", $scope.options.addField.prettyName]
                     });
-                    $scope.tableNameToDeletedFieldsMap[$scope.options.table.name].splice(indexToSplice, 1);
-                    $scope.fields.push($scope.options.addField);
-                    $scope.options.addField = $scope.tableNameToDeletedFieldsMap[$scope.options.table.name].length > 0 ? $scope.tableNameToDeletedFieldsMap[$scope.options.table.name][0] : "";
-                    $scope.createDeleteColumnButtons();
                 }
             };
 
@@ -727,8 +766,8 @@ function(external, popups, connectionService, datasetService, errorNotificationS
              */
             $scope.buildQuery = function() {
                 var query = new neon.query.Query().selectFrom($scope.options.database.name, $scope.options.table.name).limit($scope.options.limit);
-                if($scope.options.sortByField !== undefined && $scope.options.sortByField.length > 0) {
-                    query.sortBy($scope.options.sortByField, $scope.options.sortDirection);
+                if($scope.options.sortByField) {
+                    query.sortBy($scope.options.sortByField.columnName, $scope.options.sortDirection);
                 }
                 return query;
             };
