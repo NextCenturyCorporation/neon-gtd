@@ -114,6 +114,14 @@ charts.LineChart.prototype.setGranularity = function(granularity) {
     this.granularity = granularity;
 };
 
+charts.LineChart.prototype.showTrendlines = function(display) {
+    if(display) {
+        $(".trendline*").show();
+    } else {
+        $(".trendline*").hide();
+    }
+};
+
 charts.LineChart.prototype.categoryForItem = function(item) {
     if(typeof this.xAttribute === 'function') {
         return this.xAttribute.call(this, item);
@@ -508,6 +516,11 @@ charts.LineChart.prototype.drawLines = function(opts) {
             .attr("d", line)
             .attr("stroke", color);
 
+        // Filter out data with undefined values
+        var filteredData = _.filter(data, function(d) {
+            return !_.isUndefined(d.value);
+        });
+
         if(data.length < 40) {
             var func = function(d) {
                 return me.x(d.date);
@@ -516,12 +529,7 @@ charts.LineChart.prototype.drawLines = function(opts) {
                 func = me.width / 2;
             }
 
-            // Filter out data with undefined values so we don't draw
-            // circles for them
-            var filteredData = _.filter(data, function(d) {
-                return !_.isUndefined(d.value);
-            });
-
+            // Draw circles for all data containing a defined value
             me.svg.selectAll("dot")
                 .data(filteredData)
             .enter().append("circle")
@@ -570,6 +578,48 @@ charts.LineChart.prototype.drawLines = function(opts) {
                 .attr("cy", 0);
             me.hoverCircles[opts[i].series].push(hoverCircle);
         });
+
+        // Calculate and create trendlines
+
+        var xSeries = filteredData.map(function(datum) {
+            return me.x(datum.date);
+        });
+        var ySeries = filteredData.map(function(datum) {
+            return me.y(datum[me.yAttribute]);
+        });
+
+        if(xSeries.length && ySeries.length && xSeries.length === ySeries.length) {
+            var trendLine = me.leastSquares(xSeries, ySeries);
+
+            var x1 = 0;
+            var y1 = trendLine[1];
+            var x2 = me.x(me.xDomain[1]);
+            var y2 = (trendLine[0] * x2) + trendLine[1];
+            var trendData = [[x1, y1, x2, y2]];
+
+            // Remove any invalid characters from class name because
+            // svg's selectAll only allows certain characters
+            var cleanedCls = cls.replace(/[^a-zA-Z ]+/g, '');
+
+            me.svg.selectAll(".trendline" + cleanedCls)
+                .data(trendData)
+            .enter().append("line")
+                .attr("class", "trendline" + cleanedCls)
+                .attr("x1", function(d) {
+                    return d[0];
+                })
+                .attr("y1", function(d) {
+                    return d[1];
+                })
+                .attr("x2", function(d) {
+                    return d[2];
+                })
+                .attr("y2", function(d) {
+                    return d[3];
+                })
+                .attr("stroke", color)
+                .attr("stroke-width", 4);
+        }
     }
 
     me.svg.append("g")
@@ -694,6 +744,37 @@ charts.LineChart.prototype.filterOutSinglePoints = function(data) {
     }
 
     return singlePointsData;
+};
+
+/**
+ * Calculates the slope and intercept of the least squares line.
+ * @param {Array} xSeries All the x values of the data-points trying to find the least squares value of
+ * @param {Array} ySeries All the y values of the data-points trying to find the least squares value of
+ * @method leastSquares
+ * @return {Array} Contains the slope and intercept, respectively
+ */
+charts.LineChart.prototype.leastSquares = function(xSeries, ySeries) {
+    var sumXSquared = _.reduce(xSeries.map(function(d) {
+        return d * d;
+    }), function(total, curr) {
+        return total + curr;
+    });
+    var sumX = _.reduce(xSeries, function(total, curr) {
+        return total + curr;
+    });
+    var sumXTimesY = _.reduce(xSeries.map(function(d, i) {
+        return d * (ySeries[i]);
+    }), function(total, curr) {
+        return total + curr;
+    });
+    var sumY = _.reduce(ySeries, function(total, curr) {
+        return total + curr;
+    });
+
+    var slope = ((sumXTimesY * xSeries.length) - (sumY * sumX)) / ((xSeries.length * sumXSquared) - (2 * sumX));
+    var intercept = (sumXTimesY - (sumXSquared * slope)) / sumX;
+
+    return [slope, intercept];
 };
 
 /**

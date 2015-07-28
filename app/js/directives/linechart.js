@@ -91,7 +91,8 @@ function(connectionService, datasetService, errorNotificationService, filterServ
                 attrY: "",
                 categoryField: "",
                 aggregation: "count",
-                granularity: DAY
+                granularity: DAY,
+                trendlines: 'hide'
             };
 
             var updateChartSize = function() {
@@ -103,6 +104,7 @@ function(connectionService, datasetService, errorNotificationService, filterServ
                     $element.find('.linechart').height($element.height() - headerHeight);
                     // Redraw the line chart.
                     $scope.chart.draw();
+                    $scope.chart.showTrendlines(($scope.options.trendlines === 'show') ? true : false);
                 }
             };
 
@@ -185,6 +187,25 @@ function(connectionService, datasetService, errorNotificationService, filterServ
                         $scope.chart.setGranularity(newVal);
                         $scope.queryForData();
                         $scope.queryOnChangeBrush = $scope.queryOnChangeBrush || ($scope.brushExtent.length > 0);
+                    }
+                });
+                $scope.$watch('options.trendlines', function(newVal, oldVal) {
+                    if(!$scope.loadingData && newVal && newVal !== oldVal) {
+                        XDATA.userALE.log({
+                            activity: "alter",
+                            action: ($scope.loadingData) ? "reset" : "click",
+                            elementId: "linechart",
+                            elementType: "button",
+                            elementSub: "linechart-trendline-" + newVal,
+                            elementGroup: "chart_group",
+                            source: ($scope.loadingData) ? "system" : "user",
+                            tags: ["linechart", "trendline", newVal]
+                        });
+                        if(newVal === 'show') {
+                            $scope.chart.showTrendlines(true);
+                        } else {
+                            $scope.chart.showTrendlines(false);
+                        }
                     }
                 });
             };
@@ -630,6 +651,7 @@ function(connectionService, datasetService, errorNotificationService, filterServ
 
             $scope.toggleSeries = function(series) {
                 var activity = $scope.chart.toggleSeries(series);
+                $scope.chart.showTrendlines(($scope.options.trendlines === 'show') ? true : false);
                 XDATA.userALE.log({
                     activity: activity,
                     action: "click",
@@ -771,6 +793,7 @@ function(connectionService, datasetService, errorNotificationService, filterServ
                     });
                 });
                 $scope.chart.draw(data);
+                $scope.chart.showTrendlines(($scope.options.trendlines === 'show') ? true : false);
                 $scope.colorMappings = $scope.chart.getColorMappings();
                 $scope.noData = !data || !data.length || !data[0].data || !data[0].data.length;
                 $scope.loadingData = false;
