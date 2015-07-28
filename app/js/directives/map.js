@@ -88,6 +88,7 @@ angular.module('neonDemo.directives')
                 layers: [],
                 newLayer: {
                     editing: false,
+                    valid: false,
                     active: true,
                     visible: true,
                     database: {},
@@ -416,11 +417,13 @@ angular.module('neonDemo.directives')
 
             var setDefaultLayerProperties = function(layer) {
                 layer.name = (layer.name || layer.table).toUpperCase();
+                layer.previousName = layer.name;
                 layer.databasePrettyName = getPrettyNameForDatabase(layer.database);
                 layer.tablePrettyName = getPrettyNameForTable(layer.table);
                 layer.limit = layer.limit || $scope.DEFAULT_LIMIT;
-                layer.visible = true;
                 layer.editing = false;
+                layer.valid = true;
+                layer.visible = true;
                 return layer;
             };
 
@@ -503,6 +506,7 @@ angular.module('neonDemo.directives')
             $scope.updateTables = function() {
                 $scope.tables = datasetService.getTables($scope.options.newLayer.database.name);
                 $scope.options.newLayer.table = datasetService.getFirstTableWithMappings($scope.options.newLayer.database.name, ["latitude", "longitude"]) || $scope.tables[0];
+                $scope.validateLayerName($scope.options.newLayer, -1);
                 $scope.updateFields();
             };
 
@@ -1023,16 +1027,27 @@ angular.module('neonDemo.directives')
              * @method updateLayer
              */
             $scope.updateLayer = function(layer) {
+                layer.name = (layer.name || layer.table).toUpperCase();
+
+                if(layer.previousName !== layer.name) {
+                    var limits = Object.keys($scope.limitedLayers);
+                    limits.forEach(function(limit) {
+                        var index = $scope.limitedLayers[limit].indexOf(layer.previousName);
+                        if(index >= 0) {
+                            $scope.limitedLayers[limit].splice(index, 1, layer.name);
+                        }
+                    });
+                }
+
                 if(layer.olLayer) {
                     this.map.removeLayer(layer.olLayer);
                     layer.olLayer = undefined;
                 }
 
+                layer.editing = false;
                 layer.olLayer = addLayer(layer);
                 $scope.map.setLayerVisibility(layer.olLayer.id, layer.visible);
-                layer.editing = false;
-
-                queryAllLayerTables();
+                $scope.queryForMapData(layer.database, layer.table);
             };
 
             /**
@@ -1111,15 +1126,17 @@ angular.module('neonDemo.directives')
             };
 
             /**
-             * Deletes the given layer at the given index from this map.
+             * Deletes the given layer from this map.
              * @param {Object} layer
-             * @param {Number} layerIndex
              * @method deleteLayer
              */
-            $scope.deleteLayer = function(layer, layerIndex) {
+            $scope.deleteLayer = function(layer) {
                 $scope.map.removeLayer(layer.olLayer);
                 layer.olLayer = undefined;
-                $scope.options.layers.splice(layerIndex, 1);
+                var index = _.findIndex($scope.options.layers, function(element) {
+                    return element.name === layer.name;
+                });
+                $scope.options.layers.splice(index, 1);
             };
 
             /**
@@ -1150,6 +1167,7 @@ angular.module('neonDemo.directives')
                     editing: false
                 };
 
+                layer.previousName = layer.name;
                 layer.olLayer = addLayer(layer);
                 layer.filterKeys = filterService.createFilterKeys("map", datasetService.getDatabaseAndTableNames());
                 $scope.options.layers.push(layer);
@@ -1171,6 +1189,38 @@ angular.module('neonDemo.directives')
                 $scope.map.reorderLayers($scope.options.layers.map(function(element) {
                     return element.olLayer;
                 }));
+            };
+
+            /**
+             * Sets the {Boolean} valid property of the given layer object at the given index based on whether its name matches the name of any other existing layers.
+             * @param {Object} layer
+             * @param {Number} layerIndexReversed
+             * @method validateLayerName
+             */
+            $scope.validateLayerName = function(layer, layerIndexReversed) {
+                var layerIndex = $scope.options.layers.length - 1 - layerIndexReversed;
+                layer.valid = !($scope.options.layers.some(function(element, elementIndex) {
+                    return element.name === (layer.name || layer.table).toUpperCase() && elementIndex !== layerIndex;
+                }));
+            };
+
+            /**
+             * Sets the {Boolean} valid property of the global new layer object based on whether its name matches the name of any other existing layers.
+             * @method validateNewLayerName
+             */
+            $scope.validateNewLayerName = function() {
+                $scope.options.newLayer.valid = !($scope.options.layers.some(function(element) {
+                    return element.name === ($scope.options.newLayer.name || $scope.options.newLayer.table.name).toUpperCase();
+                }));
+            };
+
+            /**
+             * Toggles the editing status of the new layer object and validates its name.
+             * @method clickAddNewLayerButton
+             */
+            $scope.clickAddNewLayerButton = function() {
+                $scope.toggleEditing($scope.options.newLayer);
+                $scope.validateNewLayerName();
             };
 
             var getPrettyNameForDatabase = function(databaseName) {
