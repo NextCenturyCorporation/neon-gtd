@@ -220,7 +220,7 @@ angular.module('neonDemo.directives')
             var findDefaultField = function(fields) {
                 return _.find(fields, function(field) {
                     return field.columnName === "text";
-                }) || fields[0] || "";
+                }) || fields[0];
             };
 
             $scope.updateFieldsForFilterRow = function(filterRow) {
