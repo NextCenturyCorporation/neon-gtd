@@ -38,6 +38,16 @@ function(external, popups, connectionService, datasetService, errorNotificationS
 
             $scope.element = $element;
 
+            $scope.optionsMenuButtonText = function() {
+                if($scope.count >= $scope.options.limitCount) {
+                    return $scope.options.limitCount + " value limit";
+                }
+                return "";
+            };
+            $scope.showOptionsMenuButtonText = function() {
+                return $scope.count >= $scope.options.limitCount;
+            };
+
             // Unique field name used for the SlickGrid column containing the URLs for the external apps.
             // This name should be one that is highly unlikely to be a column name in a real database.
             $scope.EXTERNAL_APP_FIELD_NAME = "neonExternalApps";
@@ -148,6 +158,13 @@ function(external, popups, connectionService, datasetService, errorNotificationS
 
             $scope.handleChangeAggregationField = function() {
                 logOptionsMenuDropdownChange("aggregation-field", $scope.options.aggregationField);
+                if(!$scope.loadingData) {
+                    $scope.queryForData();
+                }
+            };
+
+            $scope.handleChangeLimit = function() {
+                logOptionsMenuDropdownChange("limit", $scope.options.limitCount);
                 if(!$scope.loadingData) {
                     $scope.queryForData();
                 }
