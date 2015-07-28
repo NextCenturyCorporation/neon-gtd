@@ -257,8 +257,8 @@ charts.LineChart.prototype.selectDate = function(startDate, endDate) {
     }
 
     // If the start or end date is outside the date range of the data, set it to the of the start (inclusive) or end (exclusive) index of the data.
-    startIndex = startDate < dataStartDate ? 0 : startIndex;
-    endIndex = endDate > dataEndDate ? dataLength : endIndex;
+    startIndex = startDate <= dataStartDate ? 0 : startIndex;
+    endIndex = endDate >= dataEndDate ? dataLength : endIndex;
 
     if(startIndex < 0 || endIndex < 0 || endDate < dataStartDate || startDate > dataEndDate) {
         this.deselectDate();
