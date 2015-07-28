@@ -88,7 +88,9 @@
                 }
             }
 
-            .instructions-container {
+            .info-container {
+                margin-left: 5px;
+
                 label {
                     font-size: 14px;
                     margin-bottom: 0px;
@@ -99,12 +101,16 @@
                 }
             }
 
+            .button-container {
+                margin-left: 5px;
+            }
+
             .all-layer-options {
-                /* Make the width match the width of the layer-options element + border + right padding. */
+                /* Make the width match the width of the layer-options-well element + border + right padding. */
                 width: 885px;
 
                 .layer-options-container {
-                    /* Make the width match the width of the layer-options element + border. */
+                    /* Make the width match the width of the layer-options-well element + border. */
                     width: 870px;
                     /* Create a hidden (white) border so that the div doesn't move when it has the drag-enter class and shows a colored border (see below). */
                     border-color: #ffffff;
@@ -124,7 +130,7 @@
                         font-size: 14px;
                     }
 
-                    .layer-options {
+                    .layer-options-well {
                         background-color: @main-background-darken;
                         border-color: @border-color;
                         border-radius: 4px;
@@ -163,7 +169,7 @@
 
                                     .btn {
                                         /* Make the combined width of the two layer options buttons match the width of the column. */
-                                        padding: 5px 31px;
+                                        padding: 3px 30px;
 
                                         &.btn-default {
                                             /* Make the border color darker so it stands out against the background. */
@@ -176,26 +182,15 @@
                                             }
                                         }
 
-                                        &.one-btn {
-                                            font-size: 14px;
-                                            padding: 5px;
-                                            width: 100%;
-                                        }
-
                                         &.active {
                                             z-index: auto;
                                         }
                                     }
 
                                     .glyphicon {
-                                        font-size: 16px;
-                                        top: 2px;
+                                        font-size: 18px;
+                                        top: 3px;
                                     }
-                                }
-
-                                .empty {
-                                    height: 60px;
-                                    width: 160px;
                                 }
                             }
                         }
@@ -203,6 +198,10 @@
                         > .error {
                             color: @error-text-color;
                             margin: 5px;
+                        }
+
+                        .layer-options-editing {
+                            margin-top: 10px;
                         }
                     }
                 }
