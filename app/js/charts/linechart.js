@@ -774,6 +774,9 @@ charts.LineChart.prototype.leastSquares = function(xSeries, ySeries) {
     var slope = ((sumXTimesY * xSeries.length) - (sumY * sumX)) / ((xSeries.length * sumXSquared) - (2 * sumX));
     var intercept = (sumXTimesY - (sumXSquared * slope)) / sumX;
 
+    slope = isNaN(slope) ? 0 : slope;
+    intercept = isNaN(intercept) ? 0 : intercept;
+
     return [slope, intercept];
 };
 
@@ -911,7 +914,7 @@ charts.LineChart.prototype.drawBrush = function() {
  */
 charts.LineChart.prototype.drawBrushMasks = function(element, brush) {
     if(d3.event) {
-        var timeFunction = d3.time.day.utc;
+        var timeFunction = d3.time[this.granularity].utc;
         var oldExtent = brush.extent();
         var newExtent;
 
