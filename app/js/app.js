@@ -44,7 +44,12 @@ var neonDemo = angular.module('neonDemo', [
     'neonDemo.directives',
     'neonDemo.filters',
     'gridster',
-    'ui.bootstrap.datetimepicker'
+    'ui.bootstrap.datetimepicker',
+
+    'gantt',
+    'gantt.tooltips',
+    'gantt.tree',
+    'gantt.groups'
 ]);
 
 angular.module('neonDemo.directives', [
