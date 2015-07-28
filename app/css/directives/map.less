@@ -107,11 +107,11 @@
 
             .all-layer-options {
                 /* Make the width match the width of the layer-options-well element + border + right padding. */
-                width: 885px;
+                width: 555px;
 
                 .layer-options-container {
                     /* Make the width match the width of the layer-options-well element + border. */
-                    width: 870px;
+                    width: 540px;
                     /* Create a hidden (white) border so that the div doesn't move when it has the drag-enter class and shows a colored border (see below). */
                     border-color: #ffffff;
                     border-style: dotted;
@@ -138,8 +138,8 @@
                         border-width: 1px;
                         cursor: move;
                         padding: 9px;
-                        /* Make the width match the width of five columns + the padding + the borders. */
-                        width: 860px;
+                        /* Make the width match the width of four columns + the columns' margins + this element's padding + this element's borders. */
+                        width: 530px;
 
                         &.new-layer {
                             background-color: @main-background-lighten;
@@ -156,11 +156,15 @@
 
                             .layer-options-col {
                                 float: left;
-                                width: 160px;
+                                width: 120px;
                                 margin-left: 10px;
 
                                 &:first-child {
                                     margin-left: 0px;
+                                }
+
+                                &.layer-options-col-wide {
+                                    width: 250px;
                                 }
 
                                 &.btn-group {
@@ -168,8 +172,8 @@
                                     margin-top: 25px;
 
                                     .btn {
-                                        /* Make the combined width of the two layer options buttons match the width of the column. */
-                                        padding: 3px 30px;
+                                        /* Make the combined width of the four layer options buttons match the width of the column. */
+                                        padding: 3px 22px 3px 21px;
 
                                         &.btn-default {
                                             /* Make the border color darker so it stands out against the background. */
@@ -195,9 +199,9 @@
                             }
                         }
 
-                        > .error {
+                        .layer-options-error {
                             color: @error-text-color;
-                            margin: 5px;
+                            margin: 10px 0px 0px;
                         }
 
                         .layer-options-editing {
