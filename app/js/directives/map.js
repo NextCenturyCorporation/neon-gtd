@@ -88,6 +88,9 @@ angular.module('neonDemo.directives')
             $scope.options = {
                 layers: [],
                 newLayer: {
+                    editing: false,
+                    active: true,
+                    visible: true,
                     database: {},
                     table: {},
                     name: "",
@@ -493,6 +496,7 @@ angular.module('neonDemo.directives')
                 layer.tablePrettyName = getPrettyNameForTable(layer.table);
                 layer.limit = layer.limit || $scope.DEFAULT_LIMIT;
                 layer.visible = true;
+                layer.editing = false;
                 return layer;
             };
 
@@ -608,8 +612,13 @@ angular.module('neonDemo.directives')
                 $scope.updateFields();
             };
 
-            var resetNewLayer = function() {
+            /**
+             * Resets the new map layer properties.
+             * @method resetNewLayer
+             */
+            $scope.resetNewLayer = function() {
                 $scope.databases = datasetService.getDatabases();
+                $scope.options.newLayer.editing = false;
                 $scope.options.newLayer.database = $scope.databases[0];
                 $scope.options.newLayer.name = "";
                 $scope.options.newLayer.type = $scope.DEFAULT_NEW_LAYER_TYPE;
@@ -649,7 +658,7 @@ angular.module('neonDemo.directives')
                 // $scope.loadingData = true;
 
                 $timeout(function() {
-                    resetNewLayer();
+                    $scope.resetNewLayer();
                     $scope.updateLayersAndQueries();
                 });
             };
@@ -1149,18 +1158,19 @@ angular.module('neonDemo.directives')
             };
 
             /**
-             * Recreates a layer
-             * @param {Number} layerIndex
+             * Updates the given layer by recreating it in the map.
+             * @param {Object} layer
              * @method updateLayer
              */
-            $scope.updateLayer = function(layerIndex) {
-                if($scope.options.layers[layerIndex].olLayer) {
-                    this.map.removeLayer($scope.options.layers[layerIndex].olLayer);
-                    $scope.options.layers[layerIndex].olLayer = undefined;
+            $scope.updateLayer = function(layer) {
+                if(layer.olLayer) {
+                    this.map.removeLayer(layer.olLayer);
+                    layer.olLayer = undefined;
                 }
 
-                $scope.options.layers[layerIndex].olLayer = addLayer($scope.options.layers[layerIndex]);
-                $scope.map.setLayerVisibility($scope.options.layers[layerIndex].olLayer.id, $scope.options.layers[layerIndex].visible);
+                layer.olLayer = addLayer(layer);
+                $scope.map.setLayerVisibility(layer.olLayer.id, layer.visible);
+                layer.editing = false;
 
                 queryAllLayerTables();
             };
@@ -1233,7 +1243,6 @@ angular.module('neonDemo.directives')
             };
 
             /**
-<<<<<<< HEAD
              * Creates and returns an object that contains information needed to export the data in this widget.
              * @return {Object} An object containing all the information needed to export the data in this widget.
              */
@@ -1298,28 +1307,28 @@ angular.module('neonDemo.directives')
             };
 
             /**
-             * Updates the map layer with the given index and disableds its refresh button in the options menu.
-             * @param {Number} layerIndex
-             * @method refreshLayer
-             */
-            $scope.refreshLayer = function(layerIndex) {
-                $scope.updateLayer(layerIndex);
-                $("#refresh-" + layerIndex).addClass("disabled");
+             * Toggles editing on the given layer.
+             * @param {Object} layer
+             * @method toggleEditing
+            */
+            $scope.toggleEditing = function(layer) {
+                layer.editing = !layer.editing;
             };
 
             /**
-             * Deletes the map layer with the given index.
+             * Deletes the given layer at the given index from this map.
+             * @param {Object} layer
              * @param {Number} layerIndex
              * @method deleteLayer
              */
-            $scope.deleteLayer = function(layerIndex) {
-                $scope.map.removeLayer($scope.options.layers[layerIndex].olLayer);
-                $scope.options.layers[layerIndex].olLayer = undefined;
-                $scope.options.layers.splice(index, 1);
+            $scope.deleteLayer = function(layer, layerIndex) {
+                $scope.map.removeLayer(layer.olLayer);
+                layer.olLayer = undefined;
+                $scope.options.layers.splice(layerIndex, 1);
             };
 
             /**
-             * Adds a new map layer using the properties set in the options menu, queries for new map data, draws the new layer, and resets the new layer properties for reuse.
+             * Adds a new map layer using the properties set in the options menu, queries for new map data, draws the new map layer, and resets the new map layer properties for reuse.
              * @method addNewLayer
              */
             $scope.addNewLayer = function() {
@@ -1341,15 +1350,16 @@ angular.module('neonDemo.directives')
                     targetMapping: $scope.options.newLayer.target,
                     nodeColor: $scope.options.newLayer.pointColor,
                     lineColor: $scope.options.newLayer.lineColor,
-                    active: true,
-                    visible: true
+                    active: $scope.options.newLayer.active,
+                    visible: $scope.options.newLayer.visible,
+                    editing: false
                 };
 
                 layer.olLayer = addLayer(layer);
                 layer.filterKeys = filterService.createFilterKeys("map", datasetService.getDatabaseAndTableNames());
                 $scope.options.layers.push(layer);
                 $scope.queryForMapData(layer.database, layer.table);
-                resetNewLayer();
+                $scope.resetNewLayer();
             };
 
             /**
