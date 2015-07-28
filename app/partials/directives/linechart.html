@@ -50,6 +50,18 @@
             </div>
             <div class="clearfix"></div>
         </div>
+        <div class="form-group">
+            <label>Trendlines</label>
+            <div class="btn-group">
+              <label class="btn btn-default" ng-class="{true: 'active', false: ''}[options.trendlines === 'show']">
+                <input type="radio" style="display:none" ng-model="options.trendlines" value="show"> ON
+              </label>
+              <label class="btn btn-default" ng-class="{true: 'active', false: ''}[options.trendlines === 'hide']">
+                <input type="radio" style="display:none" ng-model="options.trendlines" value="hide"> OFF
+              </label>
+            </div>
+            <div class="clearfix"></div>
+        </div>
     </options-menu>
 </div>
 
