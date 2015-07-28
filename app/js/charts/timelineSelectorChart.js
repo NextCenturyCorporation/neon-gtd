@@ -241,8 +241,13 @@ charts.TimelineSelectorChart = function(element, configuration) {
         var extentWidth = brushElement.find('.extent').attr('width');
         var width = parseInt(brushElement.find('.mask-west').attr('width').replace('px', ''), 10);
 
-        // If brush extent has been cleared, reset mask positions
-        if(extentWidth === "0" || extentWidth === 0 || extentWidth === undefined) {
+        if((extentWidth === "0" || extentWidth === 0) &&
+            (brush.extent() && brush.extent().length >= 2 && (brush.extent()[1] - brush.extent()[0]) > 0)) {
+            // If brush extent exists, but the width is too small, draw masks with a bigger width
+            brushElement.find('.mask-west').attr('x', parseFloat(xPos) - width);
+            brushElement.find('.mask-east').attr('x', parseFloat(xPos) + 1);
+        } else if(extentWidth === "0" || extentWidth === 0 || extentWidth === undefined) {
+            // If brush extent has been cleared, reset mask positions
             brushElement.find('.mask-west').attr('x', (0 - (width + 50)));
             brushElement.find('.mask-east').attr('x', width + 50);
         } else {
@@ -994,9 +999,13 @@ charts.TimelineSelectorChart = function(element, configuration) {
         }));
         minY = minY < 0 ? minY : 0;
 
-        me.yFocus.domain([minY, d3.max(dataShown.map(function(d) {
+        // Use highest value for Y-axis domain, or 0 if there is no data
+        var maxY = d3.max(dataShown.map(function(d) {
             return d.value;
-        }))]);
+        }));
+        maxY = maxY ? maxY : 0;
+
+        me.yFocus.domain([minY, maxY]);
 
         var yAxis = d3.svg.axis().scale(me.yFocus).orient("right").ticks(2);
 
@@ -1158,7 +1167,12 @@ charts.TimelineSelectorChart = function(element, configuration) {
             return;
         }
 
-        me.xFocus.domain(me.brush.empty() ? me.xContext.domain() : me.brush.extent());
+        if(me.brush.extent() && me.brush.extent().length >= 2 && !_.isUndefined(me.brush.extent()[0]) && !_.isUndefined(me.brush.extent()[1])) {
+            me.xFocus.domain(me.brush.extent());
+        } else {
+            me.xFocus.domain(me.xContext.domain());
+        }
+
         me.xDomain = [me.xFocus.domain()[0], me.xFocus.domain()[1]];
 
         for(var i = 0; i < me.data.length; i++) {

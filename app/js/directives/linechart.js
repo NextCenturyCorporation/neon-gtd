@@ -947,13 +947,17 @@ function(connectionService, datasetService, errorNotificationService, filterServ
              * @method updateLineChartForBrushExtent
              */
             var updateLineChartForBrushExtent = function() {
-                if($scope.brushExtent.length >= 2 && $scope.options.granularity === DAY) {
+                if($scope.brushExtent.length >= 2) {
                     var dayMillis = (1000 * 60 * 60 * 24);
                     var diff = $scope.brushExtent[1] - $scope.brushExtent[0];
 
-                    if(diff / dayMillis <= 1) {
+                    if($scope.options.granularity === DAY && (diff / dayMillis) <= 1) {
                         $scope.automaticHourSet = true;
                         $scope.options.granularity = HOUR;
+                        return;
+                    } else if($scope.options.granularity === HOUR && (diff / dayMillis) > 1 && $scope.automaticHourSet) {
+                        $scope.automaticHourSet = false;
+                        $scope.options.granularity = DAY;
                         return;
                     }
                 } else if($scope.automaticHourSet) {
