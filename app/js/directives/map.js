@@ -1369,6 +1369,7 @@ angular.module('neonDemo.directives')
                     lineColor: $scope.options.newLayer.lineColor,
                     active: $scope.options.newLayer.active,
                     visible: $scope.options.newLayer.visible,
+                    valid: true,
                     editing: false
                 };
 
