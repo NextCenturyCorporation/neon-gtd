@@ -65,44 +65,49 @@ angular.module('neonDemo.directives')
 
             $scope.initialize = function() {
                 $scope.messenger = new neon.eventing.Messenger();
+
+                for(var i = 0; i < $scope.servers.length; ++i) {
+                    if($scope.servers[i].connectOnLoad) {
+                        $scope.connectToPreset($scope.servers[i]);
+                        $scope.clearPopover = 'sr-only';
+                        break;
+                    }
+                }
             };
 
-            $scope.connectToDataServer = function() {
+            var updateLayout = function() {
+                var layoutName = datasetService.getLayout();
+
+                // Log the layout/dataset change.
                 XDATA.userALE.log({
                     activity: "select",
-                    action: "click",
+                    action: "show",
                     elementId: "dataset-selector",
-                    elementType: "button",
+                    elementType: "workspace",
                     elementGroup: "top",
-                    source: "user",
-                    tags: ["dataset", $scope.datastoreSelect]
+                    source: "system",
+                    tags: ["connect", "dataset"]
                 });
 
-                $scope.showDbTable = true;
+                // Clear any old filters prior to loading the new layout and dataset.
+                $scope.messenger.clearFiltersSilently();
 
-                // Clear the active dataset while creating a custom connection so the visualizations cannot query.
-                datasetService.setActiveDataset({});
+                // Use the default layout (if it exists) for custom datasets or datasets without a layout.
+                if(!layoutName || !layouts[layoutName]) {
+                    layoutName = "default";
+                }
 
-                // Connect to the datastore.
-                connectionService.createActiveConnection($scope.datastoreSelect, $scope.hostnameInput);
+                // Recreate the layout each time to ensure all visualizations are using the new dataset.
+                $scope.gridsterConfigs = layouts[layoutName] ? angular.copy(layouts[layoutName]) : [];
 
-                // Clear the table names to force re-selection by the user.
-                $scope.databases = [];
-                $scope.dbTables = [];
-                $scope.selectedDB = null;
-                $scope.selectedTable = null;
-
-                // Flag that we're connected for the front-end controls enable/disable code.
-                $scope.isConnected = true;
-
-                // Pull in the databse names.
-                var connection = connectionService.getActiveConnection();
-                if(connection) {
-                    connection.getDatabaseNames(function(results) {
-                        $scope.$apply(function() {
-                            populateDatabaseDropdown(results);
-                        });
-                    });
+                for(var i = 0; i < $scope.gridsterConfigs.length; ++i) {
+                    $scope.gridsterConfigs[i].id = uuid();
+                    if(!($scope.gridsterConfigs[i].minSizeX)) {
+                        $scope.gridsterConfigs[i].minSizeX = 2;
+                    }
+                    if(!($scope.gridsterConfigs[i].minSizeY)) {
+                        $scope.gridsterConfigs[i].minSizeY = 2;
+                    }
                 }
             };
 
@@ -138,32 +143,49 @@ angular.module('neonDemo.directives')
                 }
 
                 // Update the layout (and create new visualizations) after the table/field names are added to the DatasetService so they are available to the new visualizations.
-                $scope.updateDatabases(databaseNames, $scope.updateLayout);
+                updateDatabases(databaseNames, updateLayout);
             };
 
-            var populateDatabaseDropdown = function(dbs) {
-                $scope.databases = dbs;
-            };
-
-            $scope.selectDatabase = function() {
+            $scope.connectToDataServer = function() {
                 XDATA.userALE.log({
                     activity: "select",
                     action: "click",
-                    elementId: "database-selector",
-                    elementType: "combobox",
+                    elementId: "dataset-selector",
+                    elementType: "button",
                     elementGroup: "top",
                     source: "user",
-                    tags: ["dataset", $scope.selectedDB, "database"]
+                    tags: ["dataset", $scope.datastoreSelect]
                 });
 
-                if($scope.selectedDB) {
-                    $scope.updateDatabases([$scope.selectedDB]);
-                } else {
-                    $scope.dbTables = [];
+                $scope.showDbTable = true;
+
+                // Clear the active dataset while creating a custom connection so the visualizations cannot query.
+                datasetService.setActiveDataset({});
+
+                // Connect to the datastore.
+                connectionService.createActiveConnection($scope.datastoreSelect, $scope.hostnameInput);
+
+                // Clear the table names to force re-selection by the user.
+                $scope.databases = [];
+                $scope.dbTables = [];
+                $scope.selectedDB = null;
+                $scope.selectedTable = null;
+
+                // Flag that we're connected for the front-end controls enable/disable code.
+                $scope.isConnected = true;
+
+                // Pull in the databse names.
+                var connection = connectionService.getActiveConnection();
+                if(connection) {
+                    connection.getDatabaseNames(function(databaseNames) {
+                        $scope.$apply(function() {
+                            $scope.databases = databaseNames;
+                        });
+                    });
                 }
             };
 
-            $scope.updateDatabases = function(databaseNames, updateCallback) {
+            var updateDatabases = function(databaseNames, updateCallback) {
                 var databaseName = databaseNames.shift();
 
                 var connection = connectionService.getActiveConnection();
@@ -180,7 +202,7 @@ angular.module('neonDemo.directives')
                     connection.getTableNamesAndFieldNames(databaseName, function(tableNamesAndFieldNames) {
                         $scope.$apply(function() {
                             var tableNames = Object.keys(tableNamesAndFieldNames);
-                            populateTableDropdown(tableNames);
+                            $scope.dbTables = tableNames;
 
                             for(var i = 0; i < tableNames.length; ++i) {
                                 var tableName = tableNames[i];
@@ -199,12 +221,30 @@ angular.module('neonDemo.directives')
                             }
 
                             if(databaseNames.length) {
-                                $scope.updateDatabases(databaseNames, updateCallback);
+                                updateDatabases(databaseNames, updateCallback);
                             } else if(updateCallback) {
                                 updateCallback();
                             }
                         });
                     });
+                }
+            };
+
+            $scope.selectDatabase = function() {
+                XDATA.userALE.log({
+                    activity: "select",
+                    action: "click",
+                    elementId: "database-selector",
+                    elementType: "combobox",
+                    elementGroup: "top",
+                    source: "user",
+                    tags: ["dataset", $scope.selectedDB, "database"]
+                });
+
+                if($scope.selectedDB) {
+                    updateDatabases([$scope.selectedDB]);
+                } else {
+                    $scope.dbTables = [];
                 }
             };
 
@@ -265,46 +305,6 @@ angular.module('neonDemo.directives')
                 });
             };
 
-            var populateTableDropdown = function(tables) {
-                $scope.dbTables = tables;
-            };
-
-            $scope.updateLayout = function() {
-                var layoutName = datasetService.getLayout();
-
-                // Log the layout/dataset change.
-                XDATA.userALE.log({
-                    activity: "select",
-                    action: "show",
-                    elementId: "dataset-selector",
-                    elementType: "workspace",
-                    elementGroup: "top",
-                    source: "system",
-                    tags: ["connect", "dataset"]
-                });
-
-                // Clear any old filters prior to loading the new layout and dataset.
-                $scope.messenger.clearFiltersSilently();
-
-                // Use the default layout (if it exists) for custom datasets or datasets without a layout.
-                if(!layoutName || !layouts[layoutName]) {
-                    layoutName = "default";
-                }
-
-                // Recreate the layout each time to ensure all visualizations are using the new dataset.
-                $scope.gridsterConfigs = layouts[layoutName] ? angular.copy(layouts[layoutName]) : [];
-
-                for(var i = 0; i < $scope.gridsterConfigs.length; ++i) {
-                    $scope.gridsterConfigs[i].id = uuid();
-                    if(!($scope.gridsterConfigs[i].minSizeX)) {
-                        $scope.gridsterConfigs[i].minSizeX = 2;
-                    }
-                    if(!($scope.gridsterConfigs[i].minSizeY)) {
-                        $scope.gridsterConfigs[i].minSizeY = 2;
-                    }
-                }
-            };
-
             $scope.connectClick = function() {
                 $scope.activeServer = "Custom";
 
@@ -323,7 +323,7 @@ angular.module('neonDemo.directives')
                 // Update the fields for this table in the new custom dataset.
                 datasetService.updateFields($scope.selectedDB, $scope.selectedTable, $scope.tableFields);
 
-                $scope.updateLayout();
+                updateLayout();
 
                 for(var key in $scope.fields) {
                     if(Object.prototype.hasOwnProperty.call($scope.fields, key)) {
@@ -348,14 +348,6 @@ angular.module('neonDemo.directives')
             // Wait for neon to be ready, the create our messenger and intialize the view and data.
             neon.ready(function() {
                 $scope.initialize();
-
-                for(var i = 0; i < $scope.servers.length; ++i) {
-                    if($scope.servers[i].connectOnLoad) {
-                        $scope.connectToPreset($scope.servers[i]);
-                        $scope.clearPopover = 'sr-only';
-                        break;
-                    }
-                }
             });
         }
     };
