@@ -657,6 +657,14 @@ angular.module('neonDemo.directives')
              */
             $scope.updateMapData = function(database, table, queryResults) {
                 var data = queryResults.data;
+                var initializing = false;
+
+                // Set data bounds on load
+                if(!$scope.dataBounds) {
+                    initializing = true;
+                    $scope.dataBounds = $scope.computeDataBounds(data);
+                }
+
                 $scope.dataLength = data.length;
                 for(var i = 0; i < $scope.options.layers.length; i++) {
                     if($scope.options.layers[i].database === database && $scope.options.layers[i].table === table && $scope.options.layers[i].olLayer) {
@@ -693,6 +701,10 @@ angular.module('neonDemo.directives')
                 }
 
                 $scope.draw();
+
+                if(initializing) {
+                    $scope.setDefaultView();
+                }
             };
 
             /**
@@ -719,29 +731,78 @@ angular.module('neonDemo.directives')
                     var minLat = 90;
                     var maxLon = -180;
                     var maxLat = -90;
-                    data.forEach(function(d) {
-                        var lat = d[$scope.options.latitudeField];
-                        var lon = d[$scope.options.longitudeField];
-                        if($.isNumeric(lat) && $.isNumeric(lon)) {
-                            if(lon < minLon) {
-                                minLon = lon;
+                    var latMapping = "latitude";
+                    var lonMapping = "longitude";
+
+                    if($scope.options.layers.length && $scope.options.layers[0].type === "node") {
+                        var targetMapping = $scope.options.layers[0].targetMapping ? $scope.options.layers[0].targetMapping : "to";
+                        var sourceMapping = $scope.options.layers[0].sourceMapping ? $scope.options.layers[0].sourceMapping : "from";
+                        latMapping = $scope.options.layers[0].latitudeMapping ? $scope.options.layers[0].latitudeMapping : latMapping;
+                        lonMapping = $scope.options.layers[0].longitudeMapping ? $scope.options.layers[0].longitudeMapping : lonMapping;
+
+                        data.forEach(function(d) {
+                            var lat = d[targetMapping][latMapping];
+                            var lon = d[targetMapping][lonMapping];
+                            if($.isNumeric(lat) && $.isNumeric(lon)) {
+                                if(lon < minLon) {
+                                    minLon = lon;
+                                }
+                                if(lon > maxLon) {
+                                    maxLon = lon;
+                                }
+                                if(lat < minLat) {
+                                    minLat = lat;
+                                }
+                                if(lat > maxLat) {
+                                    maxLat = lat;
+                                }
                             }
-                            if(lon > maxLon) {
-                                maxLon = lon;
+                            lat = d[sourceMapping][latMapping];
+                            lon = d[sourceMapping][lonMapping];
+                            if($.isNumeric(lat) && $.isNumeric(lon)) {
+                                if(lon < minLon) {
+                                    minLon = lon;
+                                }
+                                if(lon > maxLon) {
+                                    maxLon = lon;
+                                }
+                                if(lat < minLat) {
+                                    minLat = lat;
+                                }
+                                if(lat > maxLat) {
+                                    maxLat = lat;
+                                }
                             }
-                            if(lat < minLat) {
-                                minLat = lat;
+                        });
+                    } else {
+                        latMapping = $scope.options.layers[0].latitudeMapping ? $scope.options.layers[0].latitudeMapping : latMapping;
+                        lonMapping = $scope.options.layers[0].longitudeMapping ? $scope.options.layers[0].longitudeMapping : lonMapping;
+
+                        data.forEach(function(d) {
+                            var lat = d[latMapping];
+                            var lon = d[lonMapping];
+                            if($.isNumeric(lat) && $.isNumeric(lon)) {
+                                if(lon < minLon) {
+                                    minLon = lon;
+                                }
+                                if(lon > maxLon) {
+                                    maxLon = lon;
+                                }
+                                if(lat < minLat) {
+                                    minLat = lat;
+                                }
+                                if(lat > maxLat) {
+                                    maxLat = lat;
+                                }
                             }
-                            if(lat > maxLat) {
-                                maxLat = lat;
-                            }
-                        }
-                    });
+                        });
+                    }
+
                     return {
-                        left: minLon,
-                        bottom: minLat,
-                        right: maxLon,
-                        top: maxLat
+                        left: minLon === 180 ? -180 : minLon,
+                        bottom: minLat === 90 ? -90 : minLat,
+                        right: maxLon === -180 ? 180 : maxLon,
+                        top: maxLat === -90 ? 90 : maxLat
                     };
                 }
             };
@@ -1034,7 +1095,7 @@ angular.module('neonDemo.directives')
             };
 
             /**
-             * Sets the maps viewing bounds to either those defined in the configuration file or
+             * Sets the maps viewing bounds to either those defined in the configuration file, the data bounds, or
              * all the way zoomed out
              * @method setDefaultView
              */
@@ -1042,6 +1103,8 @@ angular.module('neonDemo.directives')
                 var mapConfig = datasetService.getMapConfig();
                 if(mapConfig && mapConfig.bounds) {
                     $scope.map.zoomToBounds(mapConfig.bounds);
+                } else if($scope.dataBounds) {
+                    $scope.zoomToDataBounds();
                 } else {
                     $scope.map.zoomToBounds({
                         left: -180,
