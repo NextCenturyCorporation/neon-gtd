@@ -1149,6 +1149,7 @@ angular.module('neonDemo.directives')
                         longitudeMapping: layer.longitudeMapping,
                         sizeMapping: layer.sizeBy,
                         categoryMapping: layer.colorBy,
+                        gradient: layer.gradient,
                         defaultColor: layer.defaultColor,
                         linkyConfig: ($scope.linkyConfig.linkTo ? $scope.linkyConfig :
                             {

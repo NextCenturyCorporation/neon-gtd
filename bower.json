@@ -30,7 +30,8 @@
         "remarkable-bootstrap-notify": "3.0.0",
         "respond": "1.4.2",
         "slickgrid": "2.1.0",
-        "user-ale": "draperlaboratory/user-ale#67954dc8bcb02c657306ea89193b25e4831bf59e"
+        "user-ale": "draperlaboratory/user-ale#67954dc8bcb02c657306ea89193b25e4831bf59e",
+        "rainbowvis.js": "https://github.com/anomal/RainbowVis-JS.git"
     },
     "resolutions": {
         "jquery": "1.11.x"
@@ -104,6 +105,10 @@
 
         "respond": {
             "js": "dest/*min.js"
+        },
+
+        "rainbowvis.js": {
+            "js": "*.js"
         },
 
         "slickgrid": {
