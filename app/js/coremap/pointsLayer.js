@@ -38,6 +38,7 @@ coreMap.Map.Layer.PointsLayer = OpenLayers.Class(OpenLayers.Layer.Vector, {
     sizeMapping: '',
     defaultColor: '',
     categoryMapping: '',
+    gradient: false,
     cluster: false,
     linkyConfig: {
         mentions: false,
@@ -163,9 +164,12 @@ coreMap.Map.Layer.PointsLayer = OpenLayers.Class(OpenLayers.Layer.Vector, {
  */
 coreMap.Map.Layer.PointsLayer.prototype.calculateColor = function(element) {
     var category = this.getValueFromDataElement(this.categoryMapping, element);
+    var date = new Date(category);
     var color;
 
-    if(category) {
+    if(category && this.gradient && _.isString(category) && !isNaN(date)) {
+        color = "#" + this.rainbow.colourAt(date.getTime());
+    } else if(category && !this.gradient) {
         color = this.colorScale(category);
     } else {
         category = '(Uncategorized)';
@@ -297,8 +301,49 @@ coreMap.Map.Layer.PointsLayer.prototype.stylePoint = function(element) {
 
 coreMap.Map.Layer.PointsLayer.prototype.setData = function(data) {
     this.data = data;
+    if(this.gradient) {
+        this.updateGradient();
+    }
     this.updateRadii();
     this.updateFeatures();
+};
+
+/**
+ * Creates a date gradient mapping to use for coloring the points
+ * @method updateGradient
+ */
+coreMap.Map.Layer.PointsLayer.prototype.updateGradient = function() {
+    var me = this;
+
+    this.rainbow = new Rainbow();
+
+    // Check if category mapping is valid date before creating gradient
+
+    if(_.isString(me.categoryMapping) && this.data.length) {
+        var value = this.getValueFromDataElement(this.categoryMapping, this.data[0]);
+
+        if(value && !isNaN(new Date(value))) {
+            var minData = _.min(this.data, function(datum) {
+                var date = new Date(me.getValueFromDataElement(me.categoryMapping, datum));
+                return date.getTime();
+            });
+            var maxData = _.max(this.data, function(datum) {
+                var date = new Date(me.getValueFromDataElement(me.categoryMapping, datum));
+                return date.getTime();
+            });
+
+            var startDate = new Date(this.getValueFromDataElement(this.categoryMapping, minData));
+            var endDate = new Date(this.getValueFromDataElement(this.categoryMapping, maxData));
+            startDate = startDate.getTime();
+            endDate = endDate.getTime();
+
+            if(startDate === endDate) {
+                endDate += 1;
+            }
+
+            this.rainbow.setNumberRange(startDate, endDate);
+        }
+    }
 };
 
 coreMap.Map.Layer.PointsLayer.prototype.updateFeatures = function() {
