@@ -1,118 +1,180 @@
-<div class="overlay database-overlay" ng-class="{true: 'sr-only', false: ''}[activeServer != 'Choose dataset']"></div>
+<div class="overlay database-overlay" ng-class="{true: 'sr-only', false: ''}[activeDataset.data]"></div>
 
 <ul class="nav navbar-nav overlay-above">
   <li class="dropdown">
-    <a data-toggle="dropdown" ng-bind="activeServer" class="dropdown-toggle primary" href="#" ng-click="clearPopover = 'sr-only'"><b class="caret"></b></a>
+    <a data-toggle="dropdown" ng-bind="activeDataset.name" class="dropdown-toggle primary" href="#" ng-click="activeDataset.info = 'sr-only'"><b class="caret"></b></a>
     <ul class="dropdown-menu">
-
-      <li ng-repeat="server in servers" ng-class="{true: 'active', false: ''}[server.name == activeServer]">
-        <a href="#" ng-click="connectToPreset(server)" ng-bind="server.name"></a>
+      <li ng-repeat="dataset in datasets" ng-class="{true: 'active', false: ''}[dataset.name == activeDataset.name]">
+        <a href="#" ng-click="connectToPreset($index)" ng-bind="dataset.name"></a>
       </li>
 
       <li class="divider" ng-hide="hideAdvancedOptions"></li>
-      <li ng-class="{true: 'active', false: ''}[activeServer == 'Custom' || !(servers.length > 0)]" ng-hide="hideAdvancedOptions">
+
+      <li ng-class="{true: 'active', false: ''}[activeDataset.custom || !(datasets.length > 0)]" ng-hide="hideAdvancedOptions">
         <a data-toggle="modal" href="#customConnectionModal" ng-click="openedCustom()">Custom...</a>
       </li>
-
     </ul>
   </li>
 
-  <div class="popover fade bottom in {{clearPopover}}" style="display: block; top: 51px;">
+  <div class="popover fade bottom in {{activeDataset.info}}" style="display: block; top: 51px;">
     <div class="arrow"></div>
     <h3 class="popover-title">Start here!</h3>
     <div class="popover-content">
-      <p>First you must select a dataset from the dropdown menu. You can use a preset dataset or click Custom to configure your own.</p>
+      <p>Please select a dataset from the menu or create your own custom dataset.</p>
     </div>
   </div>
-
 </ul>
 
-<div class="modal fade" id="customConnectionModal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
+<div class="modal fade neon-popup" id="customConnectionModal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
   <div class="modal-dialog">
     <div class="modal-content">
       <div class="modal-header">
         <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
-        <h4 class="modal-title" id="customConnectionModalLabel">Custom Connection</h4>
+        <h4 class="modal-title" id="customConnectionModalLabel">Custom Dataset</h4>
       </div>
+
       <div class="modal-body">
+          <div class="well">
+            <div class="row">
+              <div class="col-md-6">
+                <div class="form-group">
+                  <label>Dataset Name</label>
+                  <input type="text" class="form-control" ng-class="{true: '', false: 'ng-invalid'}[datasetNameIsValid]" ng-model="datasetName" ng-change="validateDatasetName()">
+                </div>
+              </div>
 
-        <div class="row">
-
-          <div class="col-md-6">
-
-            <div class="form-group">
-              <label for="datastore-select">Datastore Type</label>
-              <select id="datastore-select" class="form-control" ng-model="datastoreSelect">
-                <option value="mongo">Mongo</option>
-                <option value="sparksql">Spark SQL</option>
-              </select>
-            </div>
-
-          </div>
-
-          <div class="col-md-6">
-
-            <div class="form-group">
-              <label for="hostname-input">Datastore Host Name</label>
-              <div class="input-group">
-                <input class="form-control" type="text" id="hostname-input" ng-model="hostnameInput" />
-                <span class="input-group-btn">
-                  <button class="btn btn-default" id="datastore-button" ng-click="connectToDataServer()">Continue</button>
-                </span>
+              <div class="col-md-6">
+                <div class="form-group">
+                  <label ng-bind="datasetNameIsValid ? '' : 'Please enter a unique name.'"></label>
+                </div>
               </div>
             </div>
 
-          </div>
+            <div class="row">
+              <div class="col-md-6">
+                <div class="form-group">
+                  <label>Datastore Type</label>
+                  <select class="form-control" ng-model="datastoreType">
+                    <option value="mongo">Mongo</option>
+                    <option value="sparksql">Spark SQL</option>
+                  </select>
+                </div>
+              </div>
 
-        </div>
-
-        <div class="row">
-
-          <div class="col-md-6">
-
-            <div class="form-group">
-              <label for="database-select">Database Name</label>
-              <select id="database-select" class="form-control" ng-change="selectDatabase()" ng-model="selectedDB" ng-options="db for db in databases" ng-disabled="!(isConnected)">
-                <option value="">Select Database</option>
-              </select>
-            </div>
-
-          </div>
-
-          <div class="col-md-6">
-
-            <div class="form-group">
-              <label for="table-select">Table Name</label>
-              <select id="table-select" class="form-control" ng-change="selectTable()" ng-model="selectedTable" ng-disabled="!(dbTables.length > 0)" ng-options="table for table in dbTables">
-                <option value="">Select Table</option>
-              </select>
-            </div>
-
-          </div>
-
-        </div>
-
-        <h4>Choose field mappings</h4>
-
-        <div class="row">
-
-          <div class="col-md-6" ng-repeat="field in fields">
-            <div class="form-group">
-              <label for="{{field.name}}-mapping" ng-bind="field.label"></label>
-                <select id="{{field.name}}-mapping" class="form-control" ng-change="selectField()" ng-model="field.selected" ng-disabled="!(tableFields.length > 0)" ng-options="field for field in tableFields">
-                  <option value="">Select Field</option>
-                </select>
+              <div class="col-md-6">
+                <div class="form-group">
+                  <label>Datastore Host Name</label>
+                  <div class="input-group">
+                    <input class="form-control" type="text" ng-model="datastoreHost" ng-change="changeHost()"/>
+                    <span class="input-group-btn">
+                      <button class="btn btn-default" ng-click="connectToServer()" ng-bind="isConnected ? 'Connected' : 'Connect'" ng-disabled="(isConnected)"></button>
+                    </span>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
 
-        </div>
+          <div class="well" ng-repeat="customDatabase in customDatabases">
+            <div class="row">
+              <div class="col-md-6">
+                <div class="form-group">
+                  <label>Database Name</label>
+                  <select class="form-control" ng-change="selectDatabase(customDatabase)" ng-model="customDatabase.database" ng-disabled="(databases.length == 0)" ng-options="database.name for database in databases">
+                    <option value="">Select Database</option>
+                  </select>
+                </div>
+              </div>
 
+              <div class="col-md-6">
+                  <div class="form-group">
+                      <button class="btn btn-default" ng-click="removeCustomDatabase($index)" ng-hide="($index == 0)">Remove Database</button>
+                  </div>
+              </div>
+            </div>
+
+            <div class="well" ng-repeat="customTable in customDatabase.customTables">
+              <div class="row">
+                <div class="col-md-6">
+                  <div class="form-group">
+                    <label>Table Name</label>
+                    <select class="form-control" ng-change="selectTable(customTable)" ng-model="customTable.table" ng-disabled="(!customDatabase.database.name || customDatabase.tables.length == 0)" ng-options="table.name for table in customDatabase.database.tables">
+                      <option value="">Select Table</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div class="col-md-6">
+                    <div class="form-group">
+                        <button class="btn btn-default" ng-click="removeCustomTable(customDatabase, $index)" ng-hide="($index == 0)">Remove Table</button>
+                    </div>
+                </div>
+              </div>
+
+              <div class="row">
+                <div class="col-md-6">
+                  <div class="form-group">
+                    <label>Latitude Field</label>
+                    <select class="form-control" ng-change="selectMapping('latitude', customTable.latitude)" ng-model="customTable.latitude" ng-disabled="(!customDatabase.database.name || !customTable.table.name || customTable.table.fields.length == 0)" ng-options="field.prettyName for field in customTable.table.fields">
+                      <option value="">None</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div class="col-md-6">
+                  <div class="form-group">
+                    <label>Longitude Field</label>
+                    <select class="form-control" ng-change="selectMapping('longitude', customTable.longitude)" ng-model="customTable.longitude" ng-disabled="(!customDatabase.database.name || !customTable.table.name || customTable.table.fields.length == 0)" ng-options="field.prettyName for field in customTable.table.fields">
+                      <option value="">None</option>
+                    </select>
+                  </div>
+                </div>
+              </div>
+
+              <div class="row">
+                <div class="col-md-6">
+                  <div class="form-group">
+                    <label>Date Field</label>
+                    <select class="form-control" ng-change="selectMapping('date', customTable.date)" ng-model="customTable.date" ng-disabled="(!customDatabase.database.name || !customTable.table.name || customTable.table.fields.length == 0)" ng-options="field.prettyName for field in customTable.table.fields">
+                      <option value="">None</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div class="col-md-6">
+                  <div class="form-group">
+                    <label>Hashtag Field</label>
+                    <select class="form-control" ng-change="selectMapping('hashtag', customTable.date)" ng-model="customTable.tags" ng-disabled="(!customDatabase.database.name || !customTable.table.name || customTable.table.fields.length == 0)" ng-options="field.prettyName for field in customTable.table.fields">
+                      <option value="">None</option>
+                    </select>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="row">
+                <div class="col-md-12">
+                    <div class="form-group">
+                        <button class="btn btn-default" ng-click="addNewCustomTable(customDatabase)" ng-disabled="(customDatabase.database.tables.length == 0)">Add Table</button>
+                    </div>
+                </div>
+            </div>
+          </div>
+
+          <div>
+              <div class="row">
+                  <div class="col-md-12">
+                      <div class="form-group">
+                          <button class="btn btn-default" ng-click="addNewCustomDatabase()" ng-disabled="(databases.length == 0)">Add Database</button>
+                      </div>
+                  </div>
+              </div>
+          </div>
       </div>
+
       <div class="modal-footer">
-        <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
-        <button type="button" class="btn btn-primary" data-dismiss="modal" id="database-table-button"
-            ng-disabled="selectedTable === null || selectedDB === null" 
-            ng-click="connectClick()">Connect</button>
+        <button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
+        <button type="button" class="btn btn-primary" data-dismiss="modal" ng-disabled="(customDatabases.length == 0 || !datasetNameIsValid)" ng-click="setDataset()">Done</button>
       </div>
     </div>
   </div>
