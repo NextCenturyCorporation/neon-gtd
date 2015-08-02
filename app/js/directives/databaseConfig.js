@@ -15,8 +15,8 @@
  *
  */
 angular.module('neonDemo.directives')
-.directive('databaseConfig', ['datasets', 'layouts', 'ConnectionService', 'DatasetService',
-    function(datasets, layouts, connectionService, datasetService) {
+.directive('databaseConfig', ['layouts', 'ConnectionService', 'DatasetService',
+    function(layouts, connectionService, datasetService) {
     return {
         templateUrl: 'partials/directives/databaseConfig.html',
         restrict: 'E',
@@ -26,59 +26,100 @@ angular.module('neonDemo.directives')
             gridsterConfigs: "=",
             hideAdvancedOptions: "="
         },
-        link: function($scope, el) {
-            el.addClass('databaseConfig');
+        link: function($scope, $element) {
+            $element.addClass('databaseConfig');
 
-            $scope.showDbTable = false;
-            $scope.selectedDB = null;
-            $scope.selectedTable = null;
+            $scope.HIDE_INFO_POPOVER = "sr-only";
+
+            $scope.datasets = datasetService.getDatasets();
+            $scope.activeDataset = {
+                name: "Choose Dataset",
+                info: "",
+                data: false
+            };
+
+            $scope.datasetName = "";
+            $scope.datasetNameIsValid = false;
+            $scope.datastoreType = $scope.storeSelect || 'mongo';
+            $scope.datastoreHost = $scope.hostName || 'localhost';
             $scope.databases = [];
-            $scope.dbTables = [];
-            $scope.tableFields = [];
-            $scope.tableFieldMappings = {};
             $scope.isConnected = false;
-            $scope.clearPopover = '';
-            $scope.activeServer = "Choose dataset";
-            $scope.servers = datasets;
 
-            $scope.fields = [
-                {
-                    label: "Latitude",
-                    name: "latitude",
-                    selected: ""
-                },
-                {
-                    label: "Longitude",
-                    name: "longitude",
-                    selected: ""
-                },
-                {
-                    label: "Date (and Time)",
-                    name: "date",
-                    selected: ""
-                }
-            ];
-
-            $scope.datastoreSelect = $scope.storeSelect || 'mongo';
-            $scope.hostnameInput = $scope.hostName || 'localhost';
-            $scope.tableNameToFieldNames = {};
+            /**
+             * This is the array of custom database objects configured by the user through the popup.  Each custom database contains:
+             *     {Object} database The database object
+             *     {Array} customTables The array of custom table objects configured by the user through the popup.  Each custom table contains:
+             *         {Object} table The table object
+             *         {Object} latitude The field object for the latitude
+             *         {Object} longitude The field object for the longitude
+             *         {Object} date The field object for the date
+             *         {Object} tags The field object for the hashtags
+             */
+            $scope.customDatabases = [];
 
             $scope.initialize = function() {
                 $scope.messenger = new neon.eventing.Messenger();
 
-                for(var i = 0; i < $scope.servers.length; ++i) {
-                    if($scope.servers[i].connectOnLoad) {
-                        $scope.connectToPreset($scope.servers[i]);
-                        $scope.clearPopover = 'sr-only';
-                        break;
+                $scope.datasets.forEach(function(dataset, index) {
+                    if(dataset.connectOnLoad) {
+                        $scope.connectToPreset(index);
+                        return;
                     }
-                }
+                });
             };
 
+            /**
+             * Connects to the preset dataset at the given index.
+             * @param {Number} index
+             * @method connectToPreset
+             */
+            $scope.connectToPreset = function(index) {
+                XDATA.userALE.log({
+                    activity: "select",
+                    action: "click",
+                    elementId: "dataset-menu",
+                    elementType: "button",
+                    elementGroup: "top",
+                    source: "user",
+                    tags: ["dataset", $scope.datasets[index].name, "connect"]
+                });
+
+                $scope.activeDataset = {
+                    name: $scope.datasets[index].name,
+                    info: $scope.HIDE_INFO_POPOVER,
+                    data: true
+                };
+
+                $scope.datastoreType = $scope.datasets[index].datastore;
+                $scope.datastoreHost = $scope.datasets[index].hostname;
+                $scope.databases = [];
+                $scope.customDatabases = [];
+                $scope.addNewCustomDatabase();
+
+                var connection = connectionService.createActiveConnection($scope.datastoreType, $scope.datastoreHost);
+                if(!connection) {
+                    return;
+                }
+
+                // Update the fields within each database and table within the selected dataset to include fields that weren't listed in the configuration file.
+                datasetService.updateDatabases($scope.datasets[index], connection, function(dataset) {
+                    $scope.datasets[index] = dataset;
+                    datasetService.setActiveDataset(dataset);
+                    $scope.$apply(function() {
+                        // Wait to update the layout until after the update is finished.
+                        updateLayout();
+                    });
+                });
+            };
+
+            /**
+             * Updates the layout of visualizations in the dashboard for the active dataset.
+             * @method updateLayout
+             * @private
+             */
             var updateLayout = function() {
                 var layoutName = datasetService.getLayout();
 
-                // Log the layout/dataset change.
                 XDATA.userALE.log({
                     activity: "select",
                     action: "show",
@@ -100,6 +141,7 @@ angular.module('neonDemo.directives')
                 // Recreate the layout each time to ensure all visualizations are using the new dataset.
                 $scope.gridsterConfigs = layouts[layoutName] ? angular.copy(layouts[layoutName]) : [];
 
+                // TODO Set default minimum size in config.json
                 for(var i = 0; i < $scope.gridsterConfigs.length; ++i) {
                     $scope.gridsterConfigs[i].id = uuid();
                     if(!($scope.gridsterConfigs[i].minSizeX)) {
@@ -111,42 +153,11 @@ angular.module('neonDemo.directives')
                 }
             };
 
-            $scope.connectToPreset = function(server) {
-                XDATA.userALE.log({
-                    activity: "select",
-                    action: "click",
-                    elementId: "dataset-menu",
-                    elementType: "button",
-                    elementGroup: "top",
-                    source: "user",
-                    tags: ["dataset", server.name, "connect"]
-                });
-
-                // Change name of active connection.
-                $scope.activeServer = server.name;
-
-                // Set datastore connection details and connect to the datastore.
-                $scope.datastoreSelect = server.datastore;
-                $scope.hostnameInput = server.hostname;
-                $scope.connectToDataServer();
-
-                datasetService.setActiveDataset(server);
-
-                $scope.selectedDB = server.databases[0].name;
-                $scope.selectedTable = server.databases[0].tables[0].name;
-                $scope.tableFields = server.databases[0].tables[0].fields;
-                $scope.tableFieldMappings = server.databases[0].tables[0].mappings;
-
-                var databaseNames = [];
-                for(var i = 0; i < server.databases.length; ++i) {
-                    databaseNames.push(server.databases[i].name);
-                }
-
-                // Update the layout (and create new visualizations) after the table/field names are added to the DatasetService so they are available to the new visualizations.
-                updateDatabases(databaseNames, updateLayout);
-            };
-
-            $scope.connectToDataServer = function() {
+            /**
+             * Connects to the data server with the global datastore type and host.
+             * @method connectToServer
+             */
+            $scope.connectToServer = function() {
                 XDATA.userALE.log({
                     activity: "select",
                     action: "click",
@@ -154,83 +165,118 @@ angular.module('neonDemo.directives')
                     elementType: "button",
                     elementGroup: "top",
                     source: "user",
-                    tags: ["dataset", $scope.datastoreSelect]
+                    tags: ["dataset", $scope.datastoreType]
                 });
-
-                $scope.showDbTable = true;
 
                 // Clear the active dataset while creating a custom connection so the visualizations cannot query.
                 datasetService.setActiveDataset({});
 
-                // Connect to the datastore.
-                connectionService.createActiveConnection($scope.datastoreSelect, $scope.hostnameInput);
-
-                // Clear the table names to force re-selection by the user.
                 $scope.databases = [];
-                $scope.dbTables = [];
-                $scope.selectedDB = null;
-                $scope.selectedTable = null;
+                $scope.customDatabases = [];
+                $scope.addNewCustomDatabase();
 
-                // Flag that we're connected for the front-end controls enable/disable code.
+                var connection = connectionService.createActiveConnection($scope.datastoreType, $scope.datastoreHost);
+                if(!connection) {
+                    return;
+                }
+
                 $scope.isConnected = true;
 
-                // Pull in the databse names.
-                var connection = connectionService.getActiveConnection();
-                if(connection) {
-                    connection.getDatabaseNames(function(databaseNames) {
-                        $scope.$apply(function() {
-                            $scope.databases = databaseNames;
+                connection.getDatabaseNames(function(databaseNames) {
+                    $scope.$apply(function() {
+                        databaseNames.forEach(function(databaseName) {
+                            $scope.databases.push({
+                                name: databaseName,
+                                tables: []
+                            });
                         });
+                        updateDatabases(connection);
                     });
-                }
+                });
             };
 
-            var updateDatabases = function(databaseNames, updateCallback) {
-                var databaseName = databaseNames.shift();
+            /**
+             * Updates the fields in the tables in the global databases starting at the given index (default 0) by querying using the given connection.
+             * @param {Object} connection
+             * @param {Number} index (optional)
+             * @method updateDatabases
+             * @private
+             */
+            var updateDatabases = function(connection, index) {
+                var databaseIndex = index ? index : 0;
+                var database = $scope.databases[databaseIndex];
+                connection.getTableNamesAndFieldNames(database.name, function(tableNamesAndFieldNames) {
+                    $scope.$apply(function() {
+                        Object.keys(tableNamesAndFieldNames).forEach(function(tableName) {
+                            var table = {
+                                name: tableName,
+                                fields: [],
+                                mappings: {}
+                            };
 
-                var connection = connectionService.getActiveConnection();
-                if(connection) {
-                    // This is a temporary solution.
-                    // FIXME
-                    if(!datasetService.getDatabaseWithName(databaseName)) {
-                        datasetService.dataset.databases.push({
-                            name: databaseName,
-                            tables: []
+                            tableNamesAndFieldNames[tableName].forEach(function(fieldName) {
+                                table.fields.push({
+                                    columnName: fieldName,
+                                    prettyName: fieldName
+                                });
+                            });
+
+                            database.tables.push(table);
                         });
+
+                        if(++databaseIndex < $scope.databases.length) {
+                            updateDatabases(connection, databaseIndex);
+                        }
+                    });
+                });
+            };
+
+            /**
+             * Resets the latitude, longitude, date and hashtag field mappings in the given custom table object and returns the object.
+             * @param {Object} customTable
+             * @method resetFieldMappings
+             * @private
+             */
+            var resetFieldMappings = function(customTable) {
+                customTable.date = {
+                    columnName: "",
+                    prettyName: ""
+                };
+                customTable.latitude = {
+                    columnName: "",
+                    prettyName: ""
+                };
+                customTable.longitude = {
+                    columnName: "",
+                    prettyName: ""
+                };
+                customTable.tags = {
+                    columnName: "",
+                    prettyName: ""
+                };
+                return customTable;
+            };
+
+            /**
+             * Creates and returns a new custom table object.
+             * @method createCustomTable
+             * @private
+             */
+            var createCustomTable = function() {
+                var customTable = {
+                    table: {
+                        name: ""
                     }
-
-                    connection.getTableNamesAndFieldNames(databaseName, function(tableNamesAndFieldNames) {
-                        $scope.$apply(function() {
-                            var tableNames = Object.keys(tableNamesAndFieldNames);
-                            $scope.dbTables = tableNames;
-
-                            for(var i = 0; i < tableNames.length; ++i) {
-                                var tableName = tableNames[i];
-
-                                // Update the fields for this table if it exists in the active dataset.
-                                datasetService.updateFields(databaseName, tableName, tableNamesAndFieldNames[tableName]);
-
-                                // Store fields for each table locally because the dataset service ignores tables not included in the dataset.
-                                // TODO Determine how to handle fields from tables in the database that are not included in the dataset.  This may
-                                //      be solved once we update the custom connection interface to support multi-table datasets and field mappings.
-                                $scope.tableNameToFieldNames[tableName] = tableNamesAndFieldNames[tableName];
-
-                                if(databaseName === $scope.selectedDB && tableName === $scope.selectedTable) {
-                                    $scope.tableFields = datasetService.getDatabaseFields(databaseName, tableName);
-                                }
-                            }
-
-                            if(databaseNames.length) {
-                                updateDatabases(databaseNames, updateCallback);
-                            } else if(updateCallback) {
-                                updateCallback();
-                            }
-                        });
-                    });
-                }
+                };
+                return resetFieldMappings(customTable);
             };
 
-            $scope.selectDatabase = function() {
+            /**
+             * Selection event for the given custom database object.
+             * @param {Object} customDatabase
+             * @method selectDatabase
+             */
+            $scope.selectDatabase = function(customDatabase) {
                 XDATA.userALE.log({
                     activity: "select",
                     action: "click",
@@ -238,17 +284,18 @@ angular.module('neonDemo.directives')
                     elementType: "combobox",
                     elementGroup: "top",
                     source: "user",
-                    tags: ["dataset", $scope.selectedDB, "database"]
+                    tags: ["dataset", customDatabase.database.name, "database"]
                 });
 
-                if($scope.selectedDB) {
-                    updateDatabases([$scope.selectedDB]);
-                } else {
-                    $scope.dbTables = [];
-                }
+                customDatabase.customTables = [createCustomTable()];
             };
 
-            $scope.selectTable = function() {
+            /**
+             * Selection event for the given custom table object.
+             * @param {Object} customTable
+             * @method selectTable
+             */
+            $scope.selectTable = function(customTable) {
                 XDATA.userALE.log({
                     activity: "select",
                     action: "click",
@@ -256,32 +303,44 @@ angular.module('neonDemo.directives')
                     elementType: "combobox",
                     elementGroup: "top",
                     source: "user",
-                    tags: ["dataset", $scope.selectedTable, "table"]
+                    tags: ["dataset", customTable.table.name, "table"]
                 });
 
-                $scope.tableFields = datasetService.getDatabaseFields($scope.selectedDB, $scope.selectedTable);
-                // If the table does not exist in the dataset configuration, use the locally stored field names for the table.
-                if(!($scope.tableFields.length)) {
-                    $scope.tableFields = $scope.tableNameToFieldNames[$scope.selectedTable];
-                }
+                guessDefaultFieldMappings(customTable);
+            };
+
+            /**
+             * Sets the default latitude, longitude, date, and hashtag field mappings for the given custom table object if possible by guessing.
+             * @param {Object} customTable
+             * @method guessDefaultFieldMappings
+             * @private
+             */
+            var guessDefaultFieldMappings = function(customTable) {
+                customTable = resetFieldMappings(customTable);
 
                 // Iterates through the list of fields and looks for ones that match latitude, longitude, and time.
                 // Backwards instead of forwards because it allows use of one fewer variables and because the final value
                 // winds up with the first match in the list rather than the last.
-                var counter = $scope.tableFields.length - 1;
-                for(; counter >= 0; counter--) {
-                    if($scope.tableFields[counter].search(/latitude|\blat\b/i) !== -1) {
-                        $scope.fields[0].selected = $scope.tableFields[counter];
-                    } else if($scope.tableFields[counter].search(/longitude|\blong\b|\blon\b/i) !== -1) {
-                        $scope.fields[1].selected = $scope.tableFields[counter];
-                    } else if($scope.tableFields[counter].search(/\bdate\b|time|created|\byyyy|yyyy\b|update/i) !== -1) {
-                        $scope.fields[2].selected = $scope.tableFields[counter];
+                for(var counter = customTable.table.fields.length - 1; counter >= 0; counter--) {
+                    if(customTable.table.fields[counter].columnName.search(/\bdate\b|time|created|\byyyy|yyyy\b|update/i) !== -1) {
+                        customTable.date = customTable.table.fields[counter];
+                    } else if(customTable.table.fields[counter].columnName.search(/latitude|\blat\b/i) !== -1) {
+                        customTable.latitude = customTable.table.fields[counter];
+                    } else if(customTable.table.fields[counter].columnName.search(/longitude|\blong\b|\blon\b/i) !== -1) {
+                        customTable.longitude = customTable.table.fields[counter];
+                    } else if(customTable.table.fields[counter].columnName.search(/hash|tag/i) !== -1) {
+                        customTable.tags = customTable.table.fields[counter];
                     }
                 }
-                $scope.tableFieldMappings = datasetService.getMappings($scope.selectedDB, $scope.selectedTable);
             };
 
-            $scope.selectField = function() {
+            /**
+             * Selection event for the given mapping set to the given field.
+             * @param {String} mapping
+             * @param {Object} field
+             * @method selectMapping
+             */
+            $scope.selectMapping = function(mapping, field) {
                 XDATA.userALE.log({
                     activity: "select",
                     action: "click",
@@ -289,15 +348,19 @@ angular.module('neonDemo.directives')
                     elementType: "combobox",
                     elementGroup: "top",
                     source: "user",
-                    tags: ["dataset", "field", "mapping"]
+                    tags: ["dataset", mapping, "mapping", field.columnName, "field"]
                 });
             };
 
-            $scope.openedCustom = function() {
+            /**
+             * Selection event for the custom dataset popup.
+             * @method selectCustom
+             */
+            $scope.selectCustom = function() {
                 XDATA.userALE.log({
                     activity: "open",
                     action: "click",
-                    elementId: "custom-connection",
+                    elementId: "custom-dataset",
                     elementType: "button",
                     elementGroup: "top",
                     source: "user",
@@ -305,44 +368,131 @@ angular.module('neonDemo.directives')
                 });
             };
 
-            $scope.connectClick = function() {
-                $scope.activeServer = "Custom";
-
-                datasetService.setActiveDataset({
-                    datastore: $scope.datastoreSelect,
-                    hostname: $scope.hostnameInput,
-                    databases: [{
-                        name: $scope.selectedDB,
-                        tables: [{
-                            name: $scope.selectedTable
-                        }],
-                        relations: []
-                    }]
-                });
-
-                // Update the fields for this table in the new custom dataset.
-                datasetService.updateFields($scope.selectedDB, $scope.selectedTable, $scope.tableFields);
-
-                updateLayout();
-
-                for(var key in $scope.fields) {
-                    if(Object.prototype.hasOwnProperty.call($scope.fields, key)) {
-                        var field = $scope.fields[key];
-                        if(field.selected) {
-                            datasetService.setMapping($scope.selectedDB, $scope.selectedTable, field.name, field.selected);
-                        }
-                    }
-                }
-
+            /**
+             * Sets the active dataset to the databases and tables in the list of custom databases and saves it in the Dataset Service.
+             * @method setDataset
+             */
+            $scope.setDataset = function() {
                 XDATA.userALE.log({
                     activity: "close",
                     action: "click",
-                    elementId: "custom-connect-button",
+                    elementId: "custom-dataset-done",
                     elementType: "button",
                     elementGroup: "top",
                     source: "user",
                     tags: ["custom", "dataset", "connect"]
                 });
+
+                $scope.activeDataset = {
+                    name: $scope.datasetName,
+                    info: $scope.HIDE_INFO_POPOVER,
+                    data: true
+                };
+
+                var dataset = {
+                    name: $scope.datasetName,
+                    datastore: $scope.datastoreType,
+                    hostname: $scope.datastoreHost,
+                    databases: []
+                };
+
+                $scope.customDatabases.forEach(function(customDatabase) {
+                    var database = {
+                        name: customDatabase.database.name,
+                        tables: [],
+                        relations: []
+                    };
+
+                    customDatabase.customTables.forEach(function(customTable) {
+                        var tableObject = {
+                            name: customTable.table.name,
+                            fields: customTable.table.fields,
+                            mappings: {
+                                latitude: customTable.latitude.columnName,
+                                longitude: customTable.longitude.columnName,
+                                date: customTable.date.columnName,
+                                tags: customTable.tags.columnName
+                            }
+                        };
+
+                        database.tables.push(tableObject);
+                    });
+
+                    dataset.databases.push(database);
+                });
+
+                $scope.datasets = datasetService.addDataset(dataset);
+                datasetService.setActiveDataset(dataset);
+                updateLayout();
+
+                $scope.datasetName = "";
+                $scope.datasetNameIsValid = false;
+
+                $element.find(".modal").modal("hide");
+            };
+
+            /**
+             * Adds a new custom table element to the list of custom tables for the given database.
+             * @param {Object} customDatabase
+             * @method addNewCustomTable
+             */
+            $scope.addNewCustomTable = function(customDatabase) {
+                customDatabase.customTables.push(createCustomTable());
+            };
+
+            /**
+             * Adds a new custom database element to the global list of custom databases.
+             * @method addNewCustomDatabase
+             */
+            $scope.addNewCustomDatabase = function() {
+                var customDatabase = {
+                    customTables: [],
+                    database: {
+                        name: ""
+                    }
+                };
+                $scope.addNewCustomTable(customDatabase);
+                $scope.customDatabases.push(customDatabase);
+            };
+
+            /**
+             * Removes the custom table element at the given index from the list of custom tables for the given custom database element.
+             * @param {Object} customDatabase
+             * @param {Number} index
+             * @method removeCustomTable
+             */
+            $scope.removeCustomTable = function(customDatabase, index) {
+                customDatabase.customTables.splice(index, 1);
+            };
+
+            /**
+             * Removes the custom database element at the given index from the global list of custom databases.
+             * @param {Number} index
+             * @method removeCustomDatabase
+             */
+            $scope.removeCustomDatabase = function(index) {
+                $scope.customDatabases.splice(index, 1);
+            };
+
+            /**
+             * Validates the global dataset name by checking if its already in use by another dataset.
+             * @method validateDatasetName
+             */
+            $scope.validateDatasetName = function() {
+                $scope.datasetNameIsValid = ($scope.datasetName !== "");
+                $scope.datasets.forEach(function(dataset) {
+                    if(dataset.name === $scope.datasetName) {
+                        $scope.datasetNameIsValid = false;
+                    }
+                });
+            };
+
+            /**
+             * Triggered by connecting to a datastore.
+             * @method changeHost
+             */
+            $scope.changeHost = function() {
+                $scope.isConnected = false;
             };
 
             // Wait for neon to be ready, the create our messenger and intialize the view and data.
