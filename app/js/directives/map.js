@@ -638,12 +638,13 @@ angular.module('neonDemo.directives')
             };
 
             $scope.updateAndQueryForMapData = function() {
-                // TODO:  Determine how to guarantee that loadingData is set to false once queries on all layers are finished.
-                // $scope.loadingData = true;
+                // TODO Add logging for clicks and changes in the options menu while loadingData is false.
+                $scope.loadingData = true;
 
                 $timeout(function() {
                     $scope.resetNewLayer();
                     $scope.updateLayersAndQueries();
+                    $scope.loadingData = false;
                 });
             };
 
@@ -809,14 +810,14 @@ angular.module('neonDemo.directives')
              * @param data
              */
             $scope.computeDataBounds = function(data) {
-                if(data.length === 0) {
+                if(data && data.length === 0) {
                     return {
                         left: -180,
                         bottom: -90,
                         right: 180,
                         top: 90
                     };
-                } else {
+                } else if(data) {
                     var minLon = 180;
                     var minLat = 90;
                     var maxLon = -180;
@@ -1316,9 +1317,18 @@ angular.module('neonDemo.directives')
              * @method deleteLayer
              */
             $scope.deleteLayer = function(layer) {
+                // Remove layer from the limit text.
+                var index = $scope.limitedLayers[layer.limit] ? $scope.limitedLayers[layer.limit].indexOf(layer.name) : -1;
+                if(index >= 0) {
+                    $scope.limitedLayers[layer.limit].splice(index, 1);
+                }
+
+                // Remove layer from the map.
                 $scope.map.removeLayer(layer.olLayer);
                 layer.olLayer = undefined;
-                var index = _.findIndex($scope.options.layers, function(element) {
+
+                // Remove layer from the global list of layers.
+                index = _.findIndex($scope.options.layers, function(element) {
                     return element.name === layer.name;
                 });
                 $scope.options.layers.splice(index, 1);
@@ -1386,7 +1396,7 @@ angular.module('neonDemo.directives')
             $scope.validateLayerName = function(layer, layerIndexReversed) {
                 var layerIndex = $scope.options.layers.length - 1 - layerIndexReversed;
                 layer.valid = !($scope.options.layers.some(function(element, elementIndex) {
-                    return element.name === (layer.name || layer.table).toUpperCase() && elementIndex !== layerIndex;
+                    return element.name === (layer.name || layer.table.name).toUpperCase() && elementIndex !== layerIndex;
                 }));
             };
 
