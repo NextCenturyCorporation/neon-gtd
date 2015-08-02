@@ -116,9 +116,9 @@ charts.LineChart.prototype.setGranularity = function(granularity) {
 
 charts.LineChart.prototype.showTrendlines = function(display) {
     if(display) {
-        $(".trendline*").show();
+        $("[class*='trendline']").show();
     } else {
-        $(".trendline*").hide();
+        $("[class*='trendline']").hide();
     }
 };
 
@@ -597,14 +597,10 @@ charts.LineChart.prototype.drawLines = function(opts) {
             var y2 = (trendLine[0] * x2) + trendLine[1];
             var trendData = [[x1, y1, x2, y2]];
 
-            // Remove any invalid characters from class name because
-            // svg's selectAll only allows certain characters
-            var cleanedCls = cls.replace(/[^a-zA-Z ]+/g, '');
-
-            me.svg.selectAll(".trendline" + cleanedCls)
+            me.svg.selectAll(".trendline")
                 .data(trendData)
             .enter().append("line")
-                .attr("class", "trendline" + cleanedCls)
+                .attr("class", "trendline-" + opts[i].series)
                 .attr("x1", function(d) {
                     return d[0];
                 })
