@@ -19,3 +19,10 @@ To install this on an OpenCPU server, copy the resulting tar.gz file to that ser
     > install.packages('NeonAngularDemo_x.y.tar.gz', repos=NULL)
 
 where *x.y* is replaced with the version of the package.
+
+Note: To get the prerequisites, you will need to run
+
+    sudo R
+    > install.packages("devtools")
+    > devtools::install_github("twitter/AnomalyDetection")
+    > devtools::install_github("giantoak/mmppr")

@@ -28,7 +28,8 @@
  * @constructor
  */
 angular.module('neonDemo.directives')
-.directive('map', ['ConnectionService', 'DatasetService', 'ErrorNotificationService', 'FilterService', '$timeout', function(connectionService, datasetService, errorNotificationService, filterService, $timeout) {
+.directive('map', ['ConnectionService', 'DatasetService', 'ErrorNotificationService', 'FilterService', 'ExportService', '$timeout',
+    function(connectionService, datasetService, errorNotificationService, filterService, exportService, $timeout) {
     return {
         templateUrl: 'partials/directives/map.html',
         restrict: 'EA',
@@ -167,9 +168,10 @@ angular.module('neonDemo.directives')
                     filtersChanged: onFiltersChanged
                 });
 
-                $scope.messenger.subscribe($scope.SELECTION_EVENT_CHANNEL, function(msg) {
-                    $scope.createPoint(msg);
-                });
+                $scope.exportID = exportService.register($scope.makeMapExportObject);
+                $scope.messenger.subscribe($scope.SELECTION_EVENT_CHANNEL, $scope.createPoint);
+
+                $scope.linkyConfig = datasetService.getLinkyConfig();
 
                 $scope.$on('$destroy', function() {
                     XDATA.userALE.log({
@@ -187,6 +189,7 @@ angular.module('neonDemo.directives')
                     if($scope.showFilter) {
                         $scope.clearFilters();
                     }
+                    exportService.unregister($scope.exportID);
                 });
 
                 // Enable the tooltips.
@@ -314,12 +317,67 @@ angular.module('neonDemo.directives')
             var filterActiveLayersRecursively = function(activeLayers, callback) {
                 var layer = activeLayers.shift();
                 var relations = datasetService.getRelations(layer.database, layer.table, [layer.latitudeMapping, layer.longitudeMapping]);
-                filterService.replaceFilters($scope.messenger, relations, layer.filterKeys, $scope.createFilterClauseForExtent, function() {
+                filterService.replaceFilters($scope.messenger, relations, layer.filterKeys, $scope.createFilterClauseForExtent, {
+                    visName: "Map"
+                }, function() {
                     if(activeLayers.length) {
                         filterActiveLayersRecursively(activeLayers, callback);
-                    } else if(callback) {
-                        callback();
+                    } else {
+                        if(callback) {
+                            callback();
+                        }
                     }
+                }, function() {
+                    XDATA.userALE.log({
+                        activity: "alter",
+                        action: "failed",
+                        elementId: "map",
+                        elementType: "canvas",
+                        elementSub: "map",
+                        elementGroup: "map_group",
+                        source: "system",
+                        tags: ["failed", "map", "filter"]
+                    });
+                    // Notify the user of the error.
+                    $scope.error = "Error: Failed to create filter.";
+                });
+            };
+
+            /**
+             * This method will apply filters to a particular layer.
+             * @method addFiltersForLayer
+             * @private
+             */
+            var addFiltersForLayer = function(layer) {
+                var relations = datasetService.getRelations(layer.database, layer.table, [layer.latitudeMapping, layer.longitudeMapping]);
+                filterService.replaceFilters($scope.messenger, relations, layer.filterKeys, $scope.createFilterClauseForExtent, {
+                    visName: "Map"
+                }, function() {
+                    $scope.$apply(function() {
+                        // TODO: Need a way to defer this so we don't reload everything
+                        // for every filtering layer and related filter.
+                        queryAllLayerTables();
+                        drawZoomRect({
+                            left: $scope.extent.minimumLongitude,
+                            bottom: $scope.extent.minimumLatitude,
+                            right: $scope.extent.maximumLongitude,
+                            top: $scope.extent.maximumLatitude
+                        });
+
+                        // Show the Clear Filter button.
+                        $scope.showFilter = true;
+                        $scope.error = "";
+                        XDATA.userALE.log({
+                            activity: "alter",
+                            action: "filter",
+                            elementId: "map",
+                            elementType: "canvas",
+                            elementSub: "map-filter-box",
+                            elementGroup: "map_group",
+                            source: "system",
+                            tags: ["render", "map"]
+                        });
+                    });
                 }, function() {
                     XDATA.userALE.log({
                         activity: "alter",
@@ -434,6 +492,34 @@ angular.module('neonDemo.directives')
                     configClone.push(setDefaultLayerProperties(_.clone(config[i])));
                 }
                 return configClone;
+            };
+
+            var createLayersByDatabaseAndTableMap = function(layers) {
+                var map = {};
+                for(var i = 0; i < layers.length; ++i) {
+                    var database = layers[i].database;
+                    var table = layers[i].table;
+                    if(!map[database]) {
+                        map[database] = {};
+                    }
+                    // TODO:  We currently use the limit of the first layer for each database/table pair.  We need to determine a better way of structuring the configuration.
+                    if(!map[database][table]) {
+                        map[database][table] = {
+                            names: [],
+                            limit: layers[i].limit
+                        };
+                    }
+
+                    if(!(map[database][table].limit)) {
+                        map[database][table].limit = layers[i].limit;
+                    }
+
+                    layers[i].name = (layers[i].name || layers[i].table).toUpperCase();
+                    map[database][table].names.push(layers[i].name);
+
+                    layers[i].visible = true;
+                }
+                return map;
             };
 
             var drawZoomRect = function(rect) {
@@ -662,6 +748,14 @@ angular.module('neonDemo.directives')
              * @method updateMapData
              */
             $scope.updateMapData = function(database, table, queryResults) {
+                var initializing = false;
+
+                // Set data bounds on load
+                if(!$scope.dataBounds) {
+                    initializing = true;
+                    $scope.dataBounds = $scope.computeDataBounds(data);
+                }
+
                 for(var i = 0; i < $scope.options.layers.length; i++) {
                     if($scope.options.layers[i].database === database && $scope.options.layers[i].table === table && $scope.options.layers[i].olLayer) {
                         // Only use elements up to the limit of this layer; other layers for this database/table may have a higher limit.
@@ -697,6 +791,10 @@ angular.module('neonDemo.directives')
                 }
 
                 $scope.draw();
+
+                if(initializing) {
+                    $scope.setDefaultView();
+                }
             };
 
             /**
@@ -723,29 +821,78 @@ angular.module('neonDemo.directives')
                     var minLat = 90;
                     var maxLon = -180;
                     var maxLat = -90;
-                    data.forEach(function(d) {
-                        var lat = d[$scope.options.latitudeField];
-                        var lon = d[$scope.options.longitudeField];
-                        if($.isNumeric(lat) && $.isNumeric(lon)) {
-                            if(lon < minLon) {
-                                minLon = lon;
+                    var latMapping = "latitude";
+                    var lonMapping = "longitude";
+
+                    if($scope.options.layers.length && $scope.options.layers[0].type === "node") {
+                        var targetMapping = $scope.options.layers[0].targetMapping ? $scope.options.layers[0].targetMapping : "to";
+                        var sourceMapping = $scope.options.layers[0].sourceMapping ? $scope.options.layers[0].sourceMapping : "from";
+                        latMapping = $scope.options.layers[0].latitudeMapping ? $scope.options.layers[0].latitudeMapping : latMapping;
+                        lonMapping = $scope.options.layers[0].longitudeMapping ? $scope.options.layers[0].longitudeMapping : lonMapping;
+
+                        data.forEach(function(d) {
+                            var lat = d[targetMapping][latMapping];
+                            var lon = d[targetMapping][lonMapping];
+                            if($.isNumeric(lat) && $.isNumeric(lon)) {
+                                if(lon < minLon) {
+                                    minLon = lon;
+                                }
+                                if(lon > maxLon) {
+                                    maxLon = lon;
+                                }
+                                if(lat < minLat) {
+                                    minLat = lat;
+                                }
+                                if(lat > maxLat) {
+                                    maxLat = lat;
+                                }
                             }
-                            if(lon > maxLon) {
-                                maxLon = lon;
+                            lat = d[sourceMapping][latMapping];
+                            lon = d[sourceMapping][lonMapping];
+                            if($.isNumeric(lat) && $.isNumeric(lon)) {
+                                if(lon < minLon) {
+                                    minLon = lon;
+                                }
+                                if(lon > maxLon) {
+                                    maxLon = lon;
+                                }
+                                if(lat < minLat) {
+                                    minLat = lat;
+                                }
+                                if(lat > maxLat) {
+                                    maxLat = lat;
+                                }
                             }
-                            if(lat < minLat) {
-                                minLat = lat;
+                        });
+                    } else {
+                        latMapping = $scope.options.layers[0].latitudeMapping ? $scope.options.layers[0].latitudeMapping : latMapping;
+                        lonMapping = $scope.options.layers[0].longitudeMapping ? $scope.options.layers[0].longitudeMapping : lonMapping;
+
+                        data.forEach(function(d) {
+                            var lat = d[latMapping];
+                            var lon = d[lonMapping];
+                            if($.isNumeric(lat) && $.isNumeric(lon)) {
+                                if(lon < minLon) {
+                                    minLon = lon;
+                                }
+                                if(lon > maxLon) {
+                                    maxLon = lon;
+                                }
+                                if(lat < minLat) {
+                                    minLat = lat;
+                                }
+                                if(lat > maxLat) {
+                                    maxLat = lat;
+                                }
                             }
-                            if(lat > maxLat) {
-                                maxLat = lat;
-                            }
-                        }
-                    });
+                        });
+                    }
+
                     return {
-                        left: minLon,
-                        bottom: minLat,
-                        right: maxLon,
-                        top: maxLat
+                        left: minLon === 180 ? -180 : minLon,
+                        bottom: minLat === 90 ? -90 : minLat,
+                        right: maxLon === -180 ? 180 : maxLon,
+                        top: maxLat === -90 ? 90 : maxLat
                     };
                 }
             };
@@ -964,8 +1111,11 @@ angular.module('neonDemo.directives')
             };
 
             /**
-             * Creates a point on map layer "Selected Point" for the given data
+             * Creates or removes points on map layer (named "Selected Point") for the given data
              * @param {Object} msg
+             * @param {Object} msg.data
+             * @param {String} msg.database
+             * @param {String} msg.table
              * @method createPoint
              */
             $scope.createPoint = function(msg) {
@@ -975,25 +1125,56 @@ angular.module('neonDemo.directives')
                         $scope.map.removeLayer($scope.selectedPointLayer);
                     }
 
+                    var mappings = datasetService.getMappings(msg.database, msg.table);
+
                     var latMapping = "latitude";
                     var lonMapping = "longitude";
-                    var pointsLayer = _.find(datasetService.getMapLayers(), {
-                        type: "points",
-                        database: msg.database,
-                        table: msg.table
-                    });
+                    var layer = new coreMap.Map.Layer.SelectedPointsLayer("Selected Points");
 
-                    if(pointsLayer) {
-                        latMapping = pointsLayer.latitudeMapping;
-                        lonMapping = pointsLayer.longitudeMapping;
+                    /*
+                     * Create points on the map using either:
+                     *      - lat/lon pairs specified in the allCoordinates mapping in the config
+                     *      - the lat/lon mapping specified in the points layer for the specified
+                     *        database and table
+                     */
+                    if(mappings.allCoordinates && mappings.allCoordinates.length) {
+                        var features = [];
+
+                        for(var i = 0; i < mappings.allCoordinates.length; i++) {
+                            latMapping = mappings.allCoordinates[i].latitude;
+                            lonMapping = mappings.allCoordinates[i].longitude;
+
+                            var point = new OpenLayers.Geometry.Point(msg.data[lonMapping], msg.data[latMapping]);
+                            point.transform(coreMap.Map.SOURCE_PROJECTION, coreMap.Map.DESTINATION_PROJECTION);
+
+                            var feature = new OpenLayers.Feature.Vector(point);
+                            feature.attributes = msg.data;
+
+                            features.push(feature);
+                        }
+
+                        layer.addFeatures(features);
+                    } else {
+                        var pointsLayer = _.find(datasetService.getMapLayers(), {
+                            type: "points",
+                            database: msg.database,
+                            table: msg.table
+                        });
+
+                        if(pointsLayer) {
+                            latMapping = pointsLayer.latitudeMapping;
+                            lonMapping = pointsLayer.longitudeMapping;
+                        }
+
+                        var point = new OpenLayers.Geometry.Point(msg.data[lonMapping], msg.data[latMapping]);
+                        point.transform(coreMap.Map.SOURCE_PROJECTION, coreMap.Map.DESTINATION_PROJECTION);
+
+                        var feature = new OpenLayers.Feature.Vector(point);
+                        feature.attributes = msg.data;
+
+                        layer.addFeatures(feature);
                     }
 
-                    var point = new OpenLayers.Geometry.Point(msg.data[lonMapping], msg.data[latMapping]);
-                    point.transform(coreMap.Map.SOURCE_PROJECTION, coreMap.Map.DESTINATION_PROJECTION);
-
-                    var feature = new OpenLayers.Feature.Vector(point);
-                    var layer = new coreMap.Map.Layer.SelectedPointsLayer("Selected Points");
-                    layer.addFeatures(feature);
                     $scope.map.addLayer(layer);
                     $scope.selectedPointLayer = layer;
                 } else if($scope.selectedPointLayer.name) {
@@ -1003,7 +1184,7 @@ angular.module('neonDemo.directives')
             };
 
             /**
-             * Sets the maps viewing bounds to either those defined in the configuration file or
+             * Sets the maps viewing bounds to either those defined in the configuration file, the data bounds, or
              * all the way zoomed out
              * @method setDefaultView
              */
@@ -1011,6 +1192,8 @@ angular.module('neonDemo.directives')
                 var mapConfig = datasetService.getMapConfig();
                 if(mapConfig && mapConfig.bounds) {
                     $scope.map.zoomToBounds(mapConfig.bounds);
+                } else if($scope.dataBounds) {
+                    $scope.zoomToDataBounds();
                 } else {
                     $scope.map.zoomToBounds({
                         left: -180,
@@ -1063,13 +1246,14 @@ angular.module('neonDemo.directives')
                         longitudeMapping: layer.longitudeMapping,
                         sizeMapping: layer.sizeBy,
                         categoryMapping: layer.colorBy,
+                        gradient: layer.gradient,
                         defaultColor: layer.defaultColor,
-                        linkyConfig: (layer.linkyConfig ? layer.linkyConfig :
+                        linkyConfig: ($scope.linkyConfig.linkTo ? $scope.linkyConfig :
                             {
                                 mentions: false,
                                 hashtags: false,
-                                urls: false,
-                                linkTo: "twitter"
+                                urls: true,
+                                linkTo: ""
                             })
                     });
                     $scope.map.addLayer(layer.olLayer);
@@ -1081,13 +1265,14 @@ angular.module('neonDemo.directives')
                         categoryMapping: layer.colorBy,
                         defaultColor: layer.defaultColor,
                         cluster: true,
-                        linkyConfig: (layer.linkyConfig ? layer.linkyConfig :
+                        linkyConfig: ($scope.linkyConfig.linkTo ? $scope.linkyConfig :
                             {
                                 mentions: false,
                                 hashtags: false,
-                                urls: false,
-                                linkTo: "twitter"
-                            })
+                                urls: true,
+                                linkTo: ""
+                            }),
+                        clusterPopupFields: layer.popupFields
                     });
                     $scope.map.addLayer(layer.olLayer);
                 } else if(layer.type === coreMap.Map.HEATMAP_LAYER) {
@@ -1242,6 +1427,55 @@ angular.module('neonDemo.directives')
                     }
                 });
                 return name;
+            };
+
+            /**
+             * Creates and returns an object that contains information needed to export the data in this widget.
+             * @return {Object} An object containing all the information needed to export the data in this widget.
+             */
+            $scope.makeMapExportObject = function() {
+                XDATA.userALE.log({
+                    activity: "perform",
+                    action: "click",
+                    elementId: "map-export",
+                    elementType: "button",
+                    elementGroup: "map_group",
+                    source: "user",
+                    tags: ["options", "map", "export"]
+                });
+                var finalObject = {
+                    name: "Map",
+                    data: []
+                };
+                // This is very much like queryAllTableLayers(), except it stores the query built for each database/tablename pair
+                // instead of calling queryForMapData() on them.
+                var sets = getLayerDatabaseTableSets();
+                var keys = _.keys(sets);
+                var tables = [];
+                for(var i = 0; i < keys.length; i++) {
+                    tables = sets[keys[i]];
+                    for(var j = 0; j < tables.length; j++) {
+                        var query = $scope.buildPointQuery(keys[i], tables[j]);
+                        query.limitClause = exportService.getLimitClause();
+                        var tempObject = {
+                            query: query,
+                            name: "map_" + keys[i] + "_" + tables[j] + "-" + $scope.exportID,
+                            fields: [],
+                            ignoreFilters: query.ignoreFilters_,
+                            selectionOnly: query.selectionOnly_,
+                            ignoredFilterIds: query.ignoredFilterIds_,
+                            type: "query"
+                        };
+                        for(var count = 0, fields = datasetService.getFields(keys[i], tables[j]); count < fields.length; count++) {
+                            tempObject.fields.push({
+                                query: fields[count].columnName,
+                                pretty: fields[count].prettyName || fields[count].columnName
+                            });
+                        }
+                        finalObject.data.push(tempObject);
+                    }
+                }
+                return finalObject;
             };
 
             // Wait for neon to be ready, the create our messenger and intialize the view and data.

@@ -55,6 +55,12 @@ tables.Table = function(tableSelector, opts) {
     this.tableSelector_ = tableSelector;
     this.idField_ = opts.id;
     this.options_ = opts.gridOptions || {};
+    this.linkyConfig_ = opts.linkyConfig || {
+        mentions: false,
+        hashtags: false,
+        urls: true,
+        linkTo: ""
+    };
 
     var data = opts.data;
     var columns = opts.columns ? opts.columns : tables.createColumns([], data);
@@ -291,15 +297,7 @@ tables.Table.prototype.addLinks_ = function() {
 };
 
 tables.Table.prototype.runLinky_ = function(cellSelector) {
-    // TODO:  Make this configurable based on the dataset.
-    var linkyConfig = {
-        mentions: true,
-        hashtags: true,
-        urls: true,
-        linkTo: "twitter"
-    };
-
-    $(cellSelector).find(".slick-cell." + tables.LINKABLE).linky(linkyConfig);
+    $(cellSelector).find(".slick-cell." + tables.LINKABLE).linky(this.linkyConfig_);
     // Remove the linkable class to ensure linky isn't run on this cell again.
     $(cellSelector).find(".slick-cell." + tables.LINKABLE).removeClass(tables.LINKABLE);
 };
@@ -460,7 +458,9 @@ tables.Table.prototype.addOnClickListener = function(callback) {
  * @param {Function} callback
  */
 tables.Table.prototype.addOnColumnsReorderedListener = function(callback) {
+    var me = this;
     this.table_.onColumnsReordered.subscribe(function() {
+        me.columns_ = me.table_.getColumns();
         callback();
     });
 };
@@ -539,4 +539,12 @@ tables.Table.prototype.addColumn = function(name) {
     this.table_.setColumns(this.columns_);
     this.runLinky_();
     return true;
+};
+
+/**
+ * Retrieves the columns shown in the table in their current order
+ * @return {Array} All the columns shown in the table
+ */
+tables.Table.prototype.getColumns = function() {
+    return this.columns_;
 };

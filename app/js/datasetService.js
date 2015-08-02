@@ -54,6 +54,7 @@ angular.module("neonDemo.services")
             service.dataset.mapLayers = dataset.mapLayers || [];
             service.dataset.mapConfig = dataset.mapConfig || {};
             service.dataset.relations = dataset.relations || [];
+            service.dataset.linkyConfig = dataset.linkyConfig || {};
 
             // Remove databases from the dataset that contain no tables.
             var databaseIndexToRemove = [];
@@ -527,6 +528,29 @@ angular.module("neonDemo.services")
          */
         service.setMapLayers = function(config) {
             service.dataset.mapLayers = config;
+        };
+
+        /**
+         * Returns the linky configuration for the active dataset.
+         * @method getLinkyConfig
+         * @return {Object}
+         */
+        service.getLinkyConfig = function() {
+            return service.dataset.linkyConfig;
+        };
+
+        /**
+         * Sets the linky configuration for the active dataset.
+         * @param {Object} config A linky configuration object
+         * @param {Boolean} config.mentions If mentions should be linked
+         * @param {Boolean} config.hashtags If hashtags should be linked
+         * @param {Boolean} config.urls If URLs should be linked
+         * @param {String} config.linkTo Location where mentions and hashtags
+         * should be linked to. Options: "twitter", "instagram", "github"
+         * @method setLinkyConfig
+         */
+        service.setLinkyConfig = function(config) {
+            service.dataset.linkyConfig = config;
         };
 
         /**

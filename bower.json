@@ -7,11 +7,12 @@
     "private": true,
     "dependencies": {
         "angular": "1.2.26",
-        "angular-bootstrap-datetimepicker": "0.3.8",
-        "angular-gridster": "0.11.0",
+        "angular-gridster": "0.13.4",
         "angular-loader": "1.2.26",
         "angular-mocks": "1.2.26",
         "angular-route": "1.2.26",
+        "angular-ui-tree": "2.5.0",
+        "angular-bootstrap-datetimepicker": "0.3.8",
         "bootstrap": "3.2.0",
         "d3": "3.0.8",
         "html5shiv": "3.7.2",
@@ -30,7 +31,8 @@
         "remarkable-bootstrap-notify": "3.0.0",
         "respond": "1.4.2",
         "slickgrid": "2.1.0",
-        "user-ale": "draperlaboratory/user-ale#67954dc8bcb02c657306ea89193b25e4831bf59e"
+        "user-ale": "draperlaboratory/user-ale#67954dc8bcb02c657306ea89193b25e4831bf59e",
+        "rainbowvis.js": "https://github.com/anomal/RainbowVis-JS.git"
     },
     "resolutions": {
         "jquery": "1.11.x"
@@ -108,6 +110,10 @@
 
         "respond": {
             "js": "dest/*min.js"
+        },
+
+        "rainbowvis.js": {
+            "js": "*.js"
         },
 
         "slickgrid": {

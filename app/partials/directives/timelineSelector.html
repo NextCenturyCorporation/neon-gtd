@@ -1,7 +1,7 @@
 <div class="header-container" ng-show="!(hideHeader)">
     <span class="header-text pull-left">{{options.table.prettyName}}</span>
 
-    <options-menu parent-element="element">
+    <options-menu parent-element="element" export-function="makeTimelineSelectorExportObject">
         <div class="form-group" ng-show="!(hideAdvancedOptions)">
             <label>Database</label>
             <select class="form-control" ng-model="options.database" ng-options="database.prettyName for database in databases" ng-required="true" ng-disabled="(databases.length < 2)" ng-change="updateTables()">
@@ -72,12 +72,20 @@
 <div class="clearfix"></div>
 
 <div class="header-container filter-container">
-    <div class="neon-datetimepicker dropdown pull-right">
+    <div class="filter-reset pull-right" ng-class="{true: '', false: 'hidden'}[brush.length > 0]" title="Date from {{startDateForDisplay}} to {{endDateForDisplay}}">
+        <span class="filter-label">Date Filter</span>
+        <span class="glyphicon glyphicon-remove" ng-click="clearBrush()"></span>
+    </div>
+
+    <h4 class="pull-left">
+        <span class="count text-primary">{{recordCount}}</span> records
+    </h4>
+
+    <div class="neon-datetimepicker dropdown pull-left">
         <button class="btn btn-default dropdown-toggle" role="button" data-toggle="dropdown" data-target="#" href="#">
-            <span class="glyphicon glyphicon-calendar"></span> Date Filter <span class="caret"></span>
-        </button>
-        <button class="btn btn-default reset" ng-class="{true: '', false: 'disabled'}[brush.length > 0]" ng-click="clearBrush()">
-            <span class="glyphicon glyphicon-remove"></span> Reset Date
+            <span class="glyphicon glyphicon-calendar"></span>
+            From {{startDateForDisplay || '?'}} to {{endDateForDisplay || '?'}}
+            <span class="caret"></span>
         </button>
         <ul class="dropdown-menu" role="menu">
             <div>
@@ -97,28 +105,18 @@
             <datetimepicker ng-show="(options.granularity === 'year')" data-ng-model="filter.end" data-datetimepicker-config="{ startView: 'year', minView: 'year' }" ng-change="handleDateTimePickChange()"/>
         </ul>
     </div>
-
-  <h4 class="pull-left"><span class="count text-primary" ng-bind="recordCount | number"></span> records 
-  <span ng-bind="(startDateForDisplay) ? ' from ' : ''"></span>
-  <span ng-bind="(startDateForDisplay && options.granularity === 'hour') ? (startDateForDisplay.toISOString() | date: 'MMM d, yyyy HH:mm') : ''"></span>
-  <span ng-bind="(startDateForDisplay && options.granularity === 'day') ? (startDateForDisplay.toISOString() | date: 'MMMM d, yyyy') : ''"></span>
-  <span ng-bind="(startDateForDisplay && options.granularity === 'month') ? (startDateForDisplay.toISOString() | date: 'MMMM yyyy') : ''"></span>
-  <span ng-bind="(startDateForDisplay && options.granularity === 'year') ? (startDateForDisplay.toISOString() | date: 'yyyy') : ''"></span>
-  <span ng-bind="(endDateForDisplay) ? ' to ' : ''"></span>
-  <span ng-bind="(endDateForDisplay && options.granularity === 'hour') ? (endDateForDisplay.toISOString() | date:'MMM d, yyyy HH:mm') : ''"></span>
-  <span ng-bind="(endDateForDisplay && options.granularity === 'day') ? (endDateForDisplay.toISOString() | date:'MMMM d, yyyy') : ''"></span>
-  <span ng-bind="(endDateForDisplay && options.granularity === 'month') ? (endDateForDisplay.toISOString() | date: 'MMMM yyyy') : ''"></span>
-  <span ng-bind="(endDateForDisplay && options.granularity === 'year') ? (endDateForDisplay.toISOString() | date: 'yyyy') : ''"></span>
-  <span ng-bind="(startDateForDisplay) ? '(Z)' : ''"></span></h4>
 </div>
 
-  <div class="collapsed" ng-class="{true: 'collapsed', false: ''}[options.collapsed]">
-    <div timeline-selector-chart timeline-data='data' timeline-brush='brush' collapsed='options.collapsed' extent-dirty='extentDirty' primary-series='options.primarySeries' granularity='options.granularity' show-focus='options.showFocus' messenger='messenger'></div>
-  </div>
+<div class="collapsed" ng-class="{true: 'collapsed', false: ''}[options.collapsed]" ng-hide="noData">
+    <div timeline-selector-chart timeline-data='data' timeline-brush='brush' collapsed='options.collapsed' extent-dirty='extentDirty'
+        primary-series='options.primarySeries' granularity='options.granularity' show-focus='options.showFocus' messenger='messenger'></div>
+</div>
 
-  <div class="text-center" ng-class="{true: '', false: 'hidden'}[opencpu.enableMmpp === true && options.granularity === 'hour' && !eventProbabilitiesDisplayed && !options.collapsed]">
+<span class="no-data pull-left" ng-show="noData">No data for current filters.</span>
+
+<div class="text-center mmpp" ng-class="{true: '', false: 'hidden'}[opencpu.enableMmpp === true && options.granularity === 'hour' && !eventProbabilitiesDisplayed && !options.collapsed]" ng-hide="noData">
     <a class="btn" ng-click="runMMPP()">
-      Click to run event probability analysis (this may take a few minutes) <span class="glyphicon glyphicon-transfer"></span>
+        Click to run event probability analysis (this may take a few minutes) <span class="glyphicon glyphicon-transfer"></span>
     </a>
-  </div>
+</div>
 

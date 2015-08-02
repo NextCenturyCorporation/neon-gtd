@@ -24,14 +24,18 @@
 angular.module('neonDemo.controllers')
 .controller('neonDemoController', ['$scope', '$timeout', 'config', 'datasets',
 function($scope, $timeout, config, datasets) {
+    $scope.hideNavbarItems = config.hideNavbarItems;
+    $scope.showFilterStatusTray = config.showFilterStatusTray;
+
     $scope.hideAddVisualizationsButton = config.hideAddVisualizationsButton;
     $scope.hideAdvancedOptions = config.hideAdvancedOptions;
-    $scope.hideNavbarItems = config.hideNavbarItems;
 
     $scope.seeData = false;
     $scope.createFilters = false;
     $scope.filterCount = 0;
     $scope.help = config.help;
+
+    $scope.element = $(window);
 
     if($scope.hideNavbarItems) {
         for(var i = 0; i < datasets.length; ++i) {

@@ -1,7 +1,7 @@
 <div class="header-container" ng-show="!(hideHeader)">
     <span class="header-text pull-left">{{options.table.prettyName}}</span>
 
-    <options-menu parent-element="element" button-text="optionsMenuButtonText" show-button-text="showOptionsMenuButtonText" ng-show="!(hideAdvancedOptions)">
+    <options-menu parent-element="element" export-function="makeLinechartExportObject" button-text="optionsMenuButtonText" show-button-text="showOptionsMenuButtonText" ng-show="!(hideAdvancedOptions)">
         <div class="form-group" ng-show="!(hideAdvancedOptions)">
             <label>Database</label>
             <select class="form-control" ng-model="options.database" ng-options="database.prettyName for database in databases" ng-required="true" ng-disabled="(databases.length < 2)" ng-change="updateTables()">
@@ -38,6 +38,30 @@
                 <option value="">None</option>
             </select>
         </div>
+        <div class="form-group">
+            <label>Date Granularity</label>
+            <div class="btn-group">
+              <label class="btn btn-default active" ng-class="{true: 'active', false: ''}[options.granularity === 'day']">
+                <input type="radio" style="display:none" ng-model="options.granularity" value="day"> Day
+              </label>
+              <label class="btn btn-default" ng-class="{true: 'active', false: ''}[options.granularity === 'hour']">
+                <input type="radio" style="display:none" ng-model="options.granularity" value="hour"> Hour
+              </label>
+            </div>
+            <div class="clearfix"></div>
+        </div>
+        <div class="form-group">
+            <label>Trendlines</label>
+            <div class="btn-group">
+              <label class="btn btn-default" ng-class="{true: 'active', false: ''}[options.trendlines === 'show']">
+                <input type="radio" style="display:none" ng-model="options.trendlines" value="show"> ON
+              </label>
+              <label class="btn btn-default" ng-class="{true: 'active', false: ''}[options.trendlines === 'hide']">
+                <input type="radio" style="display:none" ng-model="options.trendlines" value="hide"> OFF
+              </label>
+            </div>
+            <div class="clearfix"></div>
+        </div>
     </options-menu>
 </div>
 
@@ -45,7 +69,7 @@
 
 <div class="header-container filter-container">
     <div class="legend">
-        <div class="filter-reset pull-right" ng-class="{true: '', false: 'hidden'}[brushExtent.length > 0]">
+        <div class="filter-reset pull-right" ng-class="{true: '', false: 'hidden'}[brushExtent.length > 0]" title="Date from {{brushExtent[0].toUTCString()}} to {{brushExtent[1].toUTCString()}}">
             <span class="filter-label">Date Filter</span>
             <span class="glyphicon glyphicon-remove" ng-click="removeBrush()"></span>
         </div>
