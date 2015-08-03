@@ -525,7 +525,7 @@ function(external, popups, connectionService, datasetService, errorNotificationS
                             tags: ["filter", "count-by"]
                         });
                         filterService.replaceFilters($scope.messenger, relations, $scope.filterKeys, $scope.createFilterClauseForCount, {
-                            visName: "Count By",
+                            visName: "Aggregation Table",
                             text: $scope.options.field.columnName + " = " + $scope.filterSet.value
                         });
                     } else {
@@ -540,7 +540,7 @@ function(external, popups, connectionService, datasetService, errorNotificationS
                             tags: ["filter", "count-by"]
                         });
                         filterService.addFilters($scope.messenger, relations, $scope.filterKeys, $scope.createFilterClauseForCount, {
-                            visName: "Count By",
+                            visName: "Aggregation Table",
                             text: $scope.options.field.columnName + " = " + $scope.filterSet.value
                         });
                     }
