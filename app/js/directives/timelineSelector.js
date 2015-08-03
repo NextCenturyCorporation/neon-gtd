@@ -600,7 +600,7 @@ function(connectionService, datasetService, errorNotificationService, filterServ
 
                 var connection = connectionService.getActiveConnection();
 
-                if(!connection) {
+                if(!connection || !$scope.options.dateField.columnName) {
                     $scope.updateChartData({
                         data: []
                     });
