@@ -473,6 +473,15 @@ angular.module('neonDemo.directives')
                 }
             };
 
+            var findField = function(fields, fieldName) {
+                return _.find(fields, function(field) {
+                    return field.columnName === fieldName;
+                }) || {
+                    columnName: "",
+                    prettyName: ""
+                };
+            };
+
             var setDefaultLayerProperties = function(layer) {
                 layer.name = (layer.name || layer.table).toUpperCase();
                 layer.previousName = layer.name;
@@ -482,6 +491,15 @@ angular.module('neonDemo.directives')
                 layer.editing = false;
                 layer.valid = true;
                 layer.visible = true;
+
+                layer.fields = datasetService.getSortedFields(layer.database, layer.table);
+                layer.latitudeField = findField(layer.fields, layer.latitudeMapping);
+                layer.longitudeField = findField(layer.fields, layer.longitudeMapping);
+                layer.sizeField = layer.weightMapping ? findField(layer.fields, layer.weightMapping) : findField(layer.fields, layer.sizeBy);
+                layer.colorField = findField(layer.fields, layer.colorBy);
+                layer.sourceField = findField(layer.fields, layer.sourceMapping);
+                layer.targetField = findField(layer.fields, layer.targetMapping);
+
                 return layer;
             };
 
@@ -576,17 +594,41 @@ angular.module('neonDemo.directives')
             };
 
             $scope.updateFields = function() {
-                $scope.fields = datasetService.getDatabaseFields($scope.options.newLayer.database.name, $scope.options.newLayer.table.name);
-                $scope.fields.sort();
-                $scope.options.newLayer.latitude = datasetService.getMapping($scope.options.newLayer.database.name, $scope.options.newLayer.table.name, "latitude") || "";
-                $scope.options.newLayer.longitude = datasetService.getMapping($scope.options.newLayer.database.name, $scope.options.newLayer.table.name, "longitude") || "";
-                $scope.options.newLayer.color = datasetService.getMapping($scope.options.newLayer.database.name, $scope.options.newLayer.table.name, "colorBy") || "";
-                $scope.options.newLayer.size = datasetService.getMapping($scope.options.newLayer.database.name, $scope.options.newLayer.table.name, "sizeBy") || "";
+                $scope.fields = datasetService.getSortedFields($scope.options.newLayer.database.name, $scope.options.newLayer.table.name);
                 $scope.options.newLayer.source = $scope.fields[0];
                 $scope.options.newLayer.target = $scope.fields[0];
                 $scope.options.newLayer.pointColor = "";
                 $scope.options.newLayer.lineColor = "";
                 $scope.options.newLayer.colorCode = "";
+
+                var latitude = datasetService.getMapping($scope.options.newLayer.database.name, $scope.options.newLayer.table.name, "latitude") || "";
+                $scope.options.newLayer.latitude = _.find($scope.fields, function(field) {
+                    return field.columnName === latitude;
+                }) || {
+                    columnName: "",
+                    prettyName: ""
+                };
+                var longitude = datasetService.getMapping($scope.options.newLayer.database.name, $scope.options.newLayer.table.name, "longitude") || "";
+                $scope.options.newLayer.longitude = _.find($scope.fields, function(field) {
+                    return field.columnName === longitude;
+                }) || {
+                    columnName: "",
+                    prettyName: ""
+                };
+                var color = datasetService.getMapping($scope.options.newLayer.database.name, $scope.options.newLayer.table.name, "colorBy") || "";
+                $scope.options.newLayer.color = _.find($scope.fields, function(field) {
+                    return field.columnName === color;
+                }) || {
+                    columnName: "",
+                    prettyName: ""
+                };
+                var size = datasetService.getMapping($scope.options.newLayer.database.name, $scope.options.newLayer.table.name, "sizeBy") || "";
+                $scope.options.newLayer.size = _.find($scope.fields, function(field) {
+                    return field.columnName === size;
+                }) || {
+                    columnName: "",
+                    prettyName: ""
+                };
             };
 
             $scope.updateTables = function() {
@@ -1206,12 +1248,31 @@ angular.module('neonDemo.directives')
             };
 
             /**
+             * Updates the field mappings in the given layer and returns the layer.
+             * @param {Object} layer
+             * @method updateLayerFieldMappings
+             * @return {Object}
+             * @private
+             */
+            var updateLayerFieldMappings = function(layer) {
+                layer.latitudeMapping = layer.latitudeField.columnName;
+                layer.longitudeMapping = layer.longitudeField.columnName;
+                layer.sizeBy = layer.sizeField ? layer.sizeField.columnName : "";
+                layer.colorBy = layer.colorField ? layer.colorField.columnName : "";
+                layer.weightMapping = layer.sizeField ? layer.sizeField.columnName : "";
+                layer.sourceMapping = layer.sourceField.columnName;
+                layer.targetMapping = layer.targetField.columnName;
+                return layer;
+            };
+
+            /**
              * Updates the given layer by recreating it in the map.
              * @param {Object} layer
              * @method updateLayer
              */
             $scope.updateLayer = function(layer) {
                 layer.name = (layer.name || layer.table).toUpperCase();
+                layer = updateLayerFieldMappings(layer);
 
                 if(layer.previousName !== layer.name) {
                     var limits = Object.keys($scope.limitedLayers);
@@ -1346,15 +1407,22 @@ angular.module('neonDemo.directives')
                     databasePrettyName: getPrettyNameForDatabase($scope.options.newLayer.database.name),
                     table: $scope.options.newLayer.table.name,
                     tablePrettyName: getPrettyNameForTable($scope.options.newLayer.table.name),
+                    fields: $scope.fields,
                     limit: $scope.options.newLayer.limit,
-                    latitudeMapping: $scope.options.newLayer.latitude,
-                    longitudeMapping: $scope.options.newLayer.longitude,
-                    sizeBy: $scope.options.newLayer.size,
-                    colorBy: $scope.options.newLayer.color,
+                    latitudeField: $scope.options.newLayer.latitude,
+                    latitudeMapping: $scope.options.newLayer.latitude.columnName,
+                    longitudeField: $scope.options.newLayer.longitude,
+                    longitudeMapping: $scope.options.newLayer.longitude.columnName,
+                    sizeField: $scope.options.newLayer.size,
+                    sizeBy: $scope.options.newLayer.sizeField ? $scope.options.newLayer.size.columnName : "",
+                    colorField: $scope.options.newLayer.color,
+                    colorBy: $scope.options.newLayer.color ? $scope.options.newLayer.color.columnName : "",
                     defaultColor: $scope.options.newLayer.colorCode,
-                    weightMapping: $scope.options.newLayer.size,
-                    sourceMapping: $scope.options.newLayer.source,
-                    targetMapping: $scope.options.newLayer.target,
+                    weightMapping: $scope.options.newLayer.sizeField ? $scope.options.newLayer.size.columnName : "",
+                    sourceField: $scope.options.newLayer.source,
+                    sourceMapping: $scope.options.newLayer.source.columnName,
+                    targetField: $scope.options.newLayer.target,
+                    targetMapping: $scope.options.newLayer.target.columnName,
                     nodeColor: $scope.options.newLayer.pointColor,
                     lineColor: $scope.options.newLayer.lineColor,
                     active: $scope.options.newLayer.active,
