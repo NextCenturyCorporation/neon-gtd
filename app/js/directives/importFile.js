@@ -82,7 +82,7 @@ angular.module('neonDemo.directives')
                     showConfirmGuessesModal();
                 }
                 else {
-                    setTimeout(waitForGuesses(response.jobID), 2000);
+                    window.setTimeout(function() { waitForGuesses(response.jobID); }, 2000);
                 }
             };
 
@@ -102,11 +102,11 @@ angular.module('neonDemo.directives')
                     format: datePattern ? datePattern : undefined,
                     fields: ftPairs
                 };
-                connection.executeLoadFileIntoDB(toSend, $scope.jobID, confirmSuccess, confirmFail); // I need to actually get jobID in here somehow. Preferably,
-                                                                                              // this would be passed directly from the last time the guesses
-                                                                                              //callback fired, but for now I'll just store it as a variable.
-                                                                                              // (Getting it straight from the last method to use it would be
-                                                                                              // preferable just to continue everything in a nice chain.)
+                connection.executeLoadFileIntoDB(toSend, $scope.jobID, confirmSuccess, confirmFail);// I need to actually get jobID in here somehow. Preferably,
+                                                                                                    // this would be passed directly from the last time the guesses
+                                                                                                    // callback fired, but for now I'll just store it as a variable.
+                                                                                                    // (Getting it straight from the last method to use it would be
+                                                                                                    // preferable just to continue everything in a nice chain.)
             }
 
             var confirmSuccess = function(response) {
@@ -141,11 +141,11 @@ angular.module('neonDemo.directives')
                     }
                 }
                 else {
-                    if(numFinished < 0) {
+                    if(response.numFinished < 0) {
                         return;
                     }
-                    window.alert(response.numComplete);
-                    setTimeout(waitForUploadComplete(reponse.jobID), 2000);
+                    //window.alert(response.numFinished);
+                    window.setTimeout(function() { waitForUploadComplete(response.jobID); }, 2000);
                 }
             }
 
