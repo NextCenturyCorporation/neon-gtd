@@ -57,6 +57,16 @@ angular.module('neonDemo.directives')
              */
             $scope.customDatabases = [];
 
+            /**
+             * This is the array of custom relation objects configured by the user through the popup.  Each custom relation contains:
+             *     {Array} customRelationDatabases The array of custom relation database objects configured by the user through the popup.  Each custom relation database contains:
+             *         {Object} database The database object
+             *         {Array} customRelationTables The array of custom relation table objects configured by the user through the popup.  Each custom relation table contains:
+             *             {Object} table The table object
+             *             {Object} field The field object
+             */
+            $scope.customRelations = [];
+
             $scope.initialize = function() {
                 $scope.messenger = new neon.eventing.Messenger();
 
@@ -66,6 +76,18 @@ angular.module('neonDemo.directives')
                         return;
                     }
                 });
+            };
+
+            /**
+             * Resets the global lists containing the user configuration for the custom dataset.
+             * @method resetCustomDataset
+             */
+            $scope.resetCustomDataset = function() {
+                $scope.isConnected = false;
+                $scope.databases = [];
+                $scope.customDatabases = [];
+                $scope.customRelations = [];
+                $scope.addNewCustomDatabase();
             };
 
             /**
@@ -92,9 +114,7 @@ angular.module('neonDemo.directives')
 
                 $scope.datastoreType = $scope.datasets[index].datastore;
                 $scope.datastoreHost = $scope.datasets[index].hostname;
-                $scope.databases = [];
-                $scope.customDatabases = [];
-                $scope.addNewCustomDatabase();
+                $scope.resetCustomDataset();
 
                 var connection = connectionService.createActiveConnection($scope.datastoreType, $scope.datastoreHost);
                 if(!connection) {
@@ -171,9 +191,7 @@ angular.module('neonDemo.directives')
                 // Clear the active dataset while creating a custom connection so the visualizations cannot query.
                 datasetService.setActiveDataset({});
 
-                $scope.databases = [];
-                $scope.customDatabases = [];
-                $scope.addNewCustomDatabase();
+                $scope.resetCustomDataset();
 
                 var connection = connectionService.createActiveConnection($scope.datastoreType, $scope.datastoreHost);
                 if(!connection) {
@@ -187,6 +205,7 @@ angular.module('neonDemo.directives')
                         databaseNames.forEach(function(databaseName) {
                             $scope.databases.push({
                                 name: databaseName,
+                                prettyName: databaseName,
                                 tables: []
                             });
                         });
@@ -210,6 +229,7 @@ angular.module('neonDemo.directives')
                         Object.keys(tableNamesAndFieldNames).forEach(function(tableName) {
                             var table = {
                                 name: tableName,
+                                prettyName: tableName,
                                 fields: [],
                                 mappings: {}
                             };
@@ -265,7 +285,8 @@ angular.module('neonDemo.directives')
             var createCustomTable = function() {
                 var customTable = {
                     table: {
-                        name: ""
+                        name: "",
+                        prettyName: ""
                     }
                 };
                 return resetFieldMappings(customTable);
@@ -369,43 +390,31 @@ angular.module('neonDemo.directives')
             };
 
             /**
-             * Sets the active dataset to the databases and tables in the list of custom databases and saves it in the Dataset Service.
-             * @method setDataset
+             * Creates and returns a new custom dataset object using the user configuration saved in the global variables.
+             * @method createCustomDataset
+             * @return {Object}
              */
-            $scope.setDataset = function() {
-                XDATA.userALE.log({
-                    activity: "close",
-                    action: "click",
-                    elementId: "custom-dataset-done",
-                    elementType: "button",
-                    elementGroup: "top",
-                    source: "user",
-                    tags: ["custom", "dataset", "connect"]
-                });
-
-                $scope.activeDataset = {
-                    name: $scope.datasetName,
-                    info: $scope.HIDE_INFO_POPOVER,
-                    data: true
-                };
-
+            var createCustomDataset = function() {
                 var dataset = {
                     name: $scope.datasetName,
                     datastore: $scope.datastoreType,
                     hostname: $scope.datastoreHost,
-                    databases: []
+                    databases: [],
+                    relations: [],
+                    layout: "default"
                 };
 
                 $scope.customDatabases.forEach(function(customDatabase) {
                     var database = {
                         name: customDatabase.database.name,
-                        tables: [],
-                        relations: []
+                        prettyName: customDatabase.database.prettyName,
+                        tables: []
                     };
 
                     customDatabase.customTables.forEach(function(customTable) {
                         var tableObject = {
                             name: customTable.table.name,
+                            prettyName: customTable.table.prettyName,
                             fields: customTable.table.fields,
                             mappings: {
                                 latitude: customTable.latitude.columnName,
@@ -421,6 +430,48 @@ angular.module('neonDemo.directives')
                     dataset.databases.push(database);
                 });
 
+                $scope.customRelations.forEach(function(customRelation) {
+                    var relation = {};
+
+                    customRelation.customRelationDatabases.forEach(function(customRelationDatabase) {
+                        if(!relation[customRelationDatabase.database.name]) {
+                            relation[customRelationDatabase.database.name] = {};
+                        }
+
+                        customRelationDatabase.customRelationTables.forEach(function(customRelationTable) {
+                            relation[customRelationDatabase.database.name][customRelationTable.table.name] = customRelationTable.field.columnName;
+                        });
+                    });
+
+                    dataset.relations.push(relation);
+                });
+
+                return dataset;
+            };
+
+            /**
+             * Sets the active dataset to the databases and tables in the list of custom databases and saves it in the Dataset Service.
+             * @method setDataset
+             */
+            $scope.setDataset = function() {
+                XDATA.userALE.log({
+                    activity: "close",
+                    action: "click",
+                    elementId: "custom-dataset-done",
+                    elementType: "button",
+                    elementGroup: "top",
+                    source: "user",
+                    tags: ["custom", "dataset", "connect"]
+                });
+
+                var dataset = createCustomDataset();
+
+                $scope.activeDataset = {
+                    name: dataset.name,
+                    info: $scope.HIDE_INFO_POPOVER,
+                    data: true
+                };
+
                 $scope.datasets = datasetService.addDataset(dataset);
                 datasetService.setActiveDataset(dataset);
                 updateLayout();
@@ -432,12 +483,14 @@ angular.module('neonDemo.directives')
             };
 
             /**
-             * Adds a new custom table element to the list of custom tables for the given database.
+             * Adds a new custom table element to the list of custom tables for the given custom database and returns the custom database.
              * @param {Object} customDatabase
              * @method addNewCustomTable
+             * @return {Object}
              */
             $scope.addNewCustomTable = function(customDatabase) {
                 customDatabase.customTables.push(createCustomTable());
+                return customDatabase;
             };
 
             /**
@@ -446,13 +499,13 @@ angular.module('neonDemo.directives')
              */
             $scope.addNewCustomDatabase = function() {
                 var customDatabase = {
-                    customTables: [],
                     database: {
-                        name: ""
-                    }
+                        name: "",
+                        prettyName: ""
+                    },
+                    customTables: []
                 };
-                $scope.addNewCustomTable(customDatabase);
-                $scope.customDatabases.push(customDatabase);
+                $scope.customDatabases.push($scope.addNewCustomTable(customDatabase));
             };
 
             /**
@@ -485,6 +538,146 @@ angular.module('neonDemo.directives')
                         $scope.datasetNameIsValid = false;
                     }
                 });
+            };
+
+            /**
+             * Selection event for the given custom relation database object.
+             * @param {Object} customRelationDatabase
+             * @method selectRelationDatabase
+             */
+            $scope.selectRelationDatabase = function(customRelationDatabase) {
+                XDATA.userALE.log({
+                    activity: "select",
+                    action: "click",
+                    elementId: "relation-database-selector",
+                    elementType: "combobox",
+                    elementGroup: "top",
+                    source: "user",
+                    tags: ["dataset", "relation", customRelationDatabase.database.name, "database"]
+                });
+
+                customRelationDatabase.customRelationTables = [createCustomRelationTable()];
+            };
+
+            /**
+             * Selection event for the given custom relation table object.
+             * @param {Object} customRelationTable
+             * @method selectRelationTable
+             */
+            $scope.selectRelationTable = function(customRelationTable) {
+                XDATA.userALE.log({
+                    activity: "select",
+                    action: "click",
+                    elementId: "relation-table-selector",
+                    elementType: "combobox",
+                    elementGroup: "top",
+                    source: "user",
+                    tags: ["dataset", "relation", customRelationTable.table.name, "table"]
+                });
+            };
+
+            /**
+             * Selection event for the given custom relation field object.
+             * @param {Object} customRelationField
+             * @method selectRelationField
+             */
+            $scope.selectRelationField = function(customRelationField) {
+                XDATA.userALE.log({
+                    activity: "select",
+                    action: "click",
+                    elementId: "relation-field-selector",
+                    elementType: "combobox",
+                    elementGroup: "top",
+                    source: "user",
+                    tags: ["dataset", "relation", customRelationField.columnName, "field"]
+                });
+            };
+
+            /**
+             * Creates and returns a new custom relation table object.
+             * @method createCustomRelationTable
+             * @private
+             */
+            var createCustomRelationTable = function() {
+                return {
+                    table: {
+                        name: "",
+                        prettyName: ""
+                    },
+                    field: {
+                        columnName: "",
+                        prettyName: ""
+                    }
+                };
+            };
+
+            /**
+             * Adds a new custom relation table element to the list of custom relation tables for the given custom relation database and returns the custom relation database.
+             * @param {Object} customRelationDatabase
+             * @method addNewCustomRelationTable
+             * @return {Object}
+             */
+            $scope.addNewCustomRelationTable = function(customRelationDatabase) {
+                customRelationDatabase.customRelationTables.push(createCustomRelationTable());
+                return customRelationDatabase;
+            };
+
+            /**
+             * Adds a new custom relation database element to the list of custom relation databases for the given custom relation and returns the custom relation.
+             * @param {Object} customRelation
+             * @method addNewCustomRelationDatabase
+             * @return {Object}
+             */
+            $scope.addNewCustomRelationDatabase = function(customRelation) {
+                var customRelationDatabase = {
+                    database: {
+                        name: "",
+                        prettyName: ""
+                    },
+                    customRelationTables: []
+                };
+                customRelation.customRelationDatabases.push($scope.addNewCustomRelationTable(customRelationDatabase));
+                return customRelation;
+            };
+
+            /**
+             * Adds a new custom relation element to the global list of custom relations.
+             * @method addNewCustomRelation
+             */
+            $scope.addNewCustomRelation = function() {
+                var customRelation = {
+                    customRelationDatabases: []
+                };
+                $scope.customRelations.push($scope.addNewCustomRelationDatabase(customRelation));
+            };
+
+            /**
+             * Removes the custom relation table element at the given index from the list of custom relation tables for the given custom relation database element.
+             * @param {Object} customRelationDatabase
+             * @param {Number} index
+             * @method removeCustomRelationTable
+             */
+            $scope.removeCustomRelationTable = function(customRelationDatabase, index) {
+                customRelationDatabase.customRelationTables.splice(index, 1);
+            };
+
+            /**
+             * Removes the custom relation database element at the given index from the list of custom relation databases for the given custom relation element.
+             * @param {Object} customRelation
+             * @param {Number} index
+             * @method removeCustomRelationDatabase
+             */
+            $scope.removeCustomRelationDatabase = function(customRelation, index) {
+                customRelation.customRelationDatabases.splice(index, 1);
+            };
+
+            /**
+             * Removes the custom relation element at the given index from the global list of custom relations.
+             * @param {Number} index
+             * @method removeCustomRelation
+             */
+            $scope.removeCustomRelation = function(index) {
+                $scope.customRelations.splice(index, 1);
             };
 
             /**
