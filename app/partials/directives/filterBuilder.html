@@ -1,4 +1,4 @@
-<div class="header-container header-container-large" ng-show="!(navbarItem)">
+<div class="header-container header-container-large">
     <span class="count text-primary pull-left">Filter Builder</span>
 
     <div class="pull-right">
@@ -17,55 +17,36 @@
     </div>
 </div>
 
-    <h4 class="pull-left" ng-show="(navbarItem)">Create Filters</h4>
-
-    <div class="pull-right" ng-show="(navbarItem)">
-      <div class="btn-group" >
-        <label class="btn btn-default" ng-class="{true: 'active', false: ''}[andClauses]">
-          <input type="radio" ng-model="andClauses" style="display:none" ng-value="true" ng-change="updateAndClauses()">AND
-        </label>
-        <label class="btn btn-default" ng-class="{true: '', false: 'active'}[andClauses]">
-          <input type="radio" ng-model="andClauses" style="display:none" ng-value="false" ng-change="updateAndClauses()">OR
-        </label>
-      </div>
-
-      <button type="button" class="btn btn-danger" title="Reset Filter Builder" ng-disabled="filterTable.getFilterRows().length == 0" ng-click="resetFilters()">
-          Reset
-      </button>
-    </div>
-
-    <div class="clearfix"></div>
-
-    <div class="labels form-inline" ng-show="!(navbarItem)">
+    <div class="labels form-inline">
       <div class="form-group">
-        <label ng-show="!(navbarItem)">Database</label>
+        <label>Database</label>
       </div>
       <div class="form-group">
-        <label ng-show="!(navbarItem)">Table</label>
+        <label>Table</label>
       </div>
       <div class="form-group">
-        <label ng-show="!(navbarItem)">Field</label>
+        <label>Field</label>
       </div>
       <div class="form-group">
-        <label ng-show="!(navbarItem)">Operator</label>
+        <label>Operator</label>
       </div>
       <div class="form-group">
-        <label ng-show="!(navbarItem)">Value</label>
+        <label>Value</label>
       </div>
       <div class="clearfix"></div>
     </div>
 
     <div class="filter neon-well neon-well-dark neon-well-thin form-inline" ng-repeat="filterRow in filterTable.getFilterRows()">
       <div class="form-group">
-        <select class="form-control" ng-model="filterRow.database" ng-options="database.prettyName for database in databases" ng-disabled="(databases.length < 2) || !(navbarItem)" ng-change="updateTablesForFilterRow(filterRow)">
+        <select class="form-control" ng-model="filterRow.database" ng-options="database.prettyName for database in databases" ng-disabled="(databases.length < 2)" ng-change="updateTablesForFilterRow(filterRow)">
         </select>
       </div>
       <div class="form-group">
-        <select class="form-control" ng-model="filterRow.table" ng-options="table.prettyName for table in filterRow.tableOptions" ng-disabled="(tables.length < 2) || !(navbarItem)" ng-change="updateFieldsForFilterRow(filterRow)">
+        <select class="form-control" ng-model="filterRow.table" ng-options="table.prettyName for table in filterRow.tableOptions" ng-disabled="(tables.length < 2)" ng-change="updateFieldsForFilterRow(filterRow)">
         </select>
       </div>
       <div class="form-group">
-        <select class="form-control" ng-model="filterRow.columnValue" ng-options="column.prettyName for column in filterRow.columnOptions" ng-disabled="(filterRow.columnOptions.length < 2) || !(navbarItem)" ng-change="dirtyFilterRow(filterRow)">
+        <select class="form-control" ng-model="filterRow.columnValue" ng-options="column.prettyName for column in filterRow.columnOptions" ng-disabled="(filterRow.columnOptions.length < 2)" ng-change="dirtyFilterRow(filterRow)">
         </select>
       </div>
       <div class="form-group">
@@ -84,17 +65,7 @@
             </ul>
         </div>
       </div>
-      <div class="form-group" ng-show="(navbarItem)">
-        <button type="button" class="btn btn-default refresh" title="Refresh" ng-disabled="!(filterRow.dirty)" ng-click="updateFilterRow(filterRow.database.name, filterRow.table.name, filterRow.index)">
-          <span class="glyphicon glyphicon-refresh"></span>
-        </button>
-      </div>
-      <div class="form-group pull-right" ng-show="(navbarItem)">
-        <button type="button" class="btn delete" title="Remove" ng-click="removeFilterRow(filterRow.database.name, filterRow.table.name, filterRow.index)">
-          <span class="glyphicon glyphicon-remove"></span>
-        </button>
-      </div>
-      <div class="form-group form-group-button" ng-show="!(navbarItem)">
+      <div class="form-group form-group-button">
           <div class="btn-group">
               <button type="button" class="btn btn-default refresh" title="Refresh" ng-disabled="!(filterRow.dirty)" ng-click="updateFilterRow(filterRow.database.name, filterRow.table.name, filterRow.index)">
                   <span class="glyphicon glyphicon-refresh"></span>
@@ -136,12 +107,7 @@
             </ul>
         </div>
       </div>
-      <div class="form-group" ng-show="(navbarItem)">
-        <button type="button" class="btn btn-primary" title="Add" ng-click="addFilterRow()">
-          Add Filter
-        </button>
-      </div>
-      <div class="form-group form-group-button" ng-show="!(navbarItem)">
+      <div class="form-group form-group-button">
         <button type="button" class="btn btn-primary" title="Add" ng-click="addFilterRow()">
           <span class="glyphicon glyphicon-plus"></span>
         </button>

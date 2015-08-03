@@ -34,7 +34,6 @@ angular.module('neonDemo.directives')
         templateUrl: 'partials/directives/filterBuilder.html',
         restrict: 'EA',
         scope: {
-            navbarItem: '=?',
             filterCount: '=?'
         },
         controller: 'neonDemoController',
@@ -48,9 +47,7 @@ angular.module('neonDemo.directives')
             $scope.selectedFieldIsDate = false;
             $scope.andClauses = true;
 
-            if(!($scope.navbarItem)) {
-                $element.addClass("filter-directive");
-            }
+            $element.addClass("filter-directive");
 
             var findDefaultOperator = function(operators) {
                 if(operators.indexOf("contains") >= 0) {
@@ -554,11 +551,7 @@ angular.module('neonDemo.directives')
                     tags: ["filter-builder", "filter", "update"]
                 });
 
-                // For the Filter Builder visualization, automatically update all the filters.
-                if(!$scope.navbarItem) {
-                    $scope.updateFilters();
-                    return;
-                }
+                $scope.updateFilters();
 
                 var databaseAndTableNames = $scope.filterTable.getDatabaseAndTableNames();
                 for(var i = 0; i < databaseAndTableNames.length; ++i) {

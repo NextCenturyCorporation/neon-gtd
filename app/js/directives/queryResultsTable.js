@@ -36,7 +36,6 @@ function(external, popups, connectionService, datasetService, errorNotificationS
         scope: {
             bindTable: '=',
             bindDatabase: '=',
-            navbarItem: '=?',
             showData: '=?',
             hideHeader: '=?',
             hideAdvancedOptions: '=?'
