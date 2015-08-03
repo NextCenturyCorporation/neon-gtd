@@ -231,7 +231,7 @@ function(connectionService, datasetService, errorNotificationService, exportServ
 
                 var connection = connectionService.getActiveConnection();
 
-                if(!connection || !$scope.options.dateField) {
+                if(!connection || !$scope.options.dateField.columnName) {
                     $scope.updateChartData({
                         data: []
                     });

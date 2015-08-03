@@ -279,7 +279,7 @@ function(connectionService, datasetService, errorNotificationService, filterServ
 
                 var connection = connectionService.getActiveConnection();
 
-                if(!connection || !$scope.options.attrX || (!$scope.options.attrY && $scope.options.barType !== "count")) {
+                if(!connection || !$scope.options.attrX.columnName || (!$scope.options.attrY.columnName && $scope.options.barType !== "count")) {
                     drawBlankChart();
                     $scope.loadingData = false;
                     return;
@@ -349,7 +349,7 @@ function(connectionService, datasetService, errorNotificationService, filterServ
             };
 
             var clickFilterHandler = function(value) {
-                if(!$scope.options.attrX) {
+                if(!$scope.options.attrX.columnName) {
                     return;
                 }
 

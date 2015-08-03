@@ -50,7 +50,7 @@
 <div class="clearfix"></div>
 
 <div class="header-container filter-container" ng-show="(filteredNodes.length > 0)">
-    <div class="filter-reset pull-right" ng-repeat="value in filteredNodes" title="{{options.selectedNodeField.prettyField}}={{value}}">
+    <div class="filter-reset pull-right" ng-repeat="value in filteredNodes" title="{{options.selectedNodeField.prettyName}}={{value}}">
         <span class="filter-label">{{value}}</span>
         <span class="glyphicon glyphicon-remove" ng-click="removeFilter(value)"></span>
     </div>

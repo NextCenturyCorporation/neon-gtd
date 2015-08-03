@@ -290,7 +290,7 @@ function(connectionService, datasetService, errorNotificationService, filterServ
 
                 var connection = connectionService.getActiveConnection();
 
-                if(!connection || !$scope.options.attrX || (!$scope.options.attrY && $scope.options.aggregation !== "count")) {
+                if(!connection || !$scope.options.attrX.columnName || (!$scope.options.attrY.columnName && $scope.options.aggregation !== "count")) {
                     drawLineChart();
                     return;
                 }
@@ -311,7 +311,7 @@ function(connectionService, datasetService, errorNotificationService, filterServ
                 var dayGroupClause = new neon.query.GroupByFunctionClause(neon.query.DAY, $scope.options.attrX.columnName, 'day');
 
                 var groupByClause = [yearGroupClause, monthGroupClause, dayGroupClause];
-                if($scope.options.categoryField) {
+                if($scope.options.categoryField.columnName) {
                     groupByClause.push($scope.options.categoryField.columnName);
                 }
 
@@ -653,7 +653,7 @@ function(connectionService, datasetService, errorNotificationService, filterServ
 
                 // Scrape data for unique series
                 for(i = 0; i < data.length; i++) {
-                    if($scope.options.categoryField) {
+                    if($scope.options.categoryField.columnName) {
                         series = data[i][$scope.options.categoryField.columnName] !== '' ? data[i][$scope.options.categoryField.columnName] : 'Unknown';
                     }
 
@@ -687,7 +687,7 @@ function(connectionService, datasetService, errorNotificationService, filterServ
                 for(i = 0; i < data.length; i++) {
                     indexDate = new Date(data[i].date);
 
-                    if($scope.options.categoryField) {
+                    if($scope.options.categoryField.columnName) {
                         series = data[i][$scope.options.categoryField.columnName] !== '' ? data[i][$scope.options.categoryField.columnName] : 'Unknown';
                     }
 

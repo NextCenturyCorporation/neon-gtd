@@ -303,7 +303,7 @@ angular.module('neonDemo.directives')
 
                 var connection = connectionService.getActiveConnection();
 
-                if(!connection || !$scope.options.selectedNodeField || !$scope.filteredNodes.length) {
+                if(!connection || !$scope.options.selectedNodeField.columnName || !$scope.filteredNodes.length) {
                     $scope.numberOfNodesInGraph = 0;
                     // Don't call $scope.updateGraph() here.  It will cause an error because we're in a $scope.$apply.
                     $scope.graph.updateGraph({
@@ -313,7 +313,7 @@ angular.module('neonDemo.directives')
                     $scope.loadingData = false;
                 }
 
-                if(connection && $scope.options.selectedNodeField) {
+                if(connection && $scope.options.selectedNodeField.columnName) {
                     queryForFilteredNodeNetwork(connection);
                     if(shouldQueryForNodeList) {
                         queryForNodeList(connection);
@@ -451,7 +451,7 @@ angular.module('neonDemo.directives')
                     if(value) {
                         addNodeIfUnique(value);
 
-                        if($scope.options.selectedLinkField) {
+                        if($scope.options.selectedLinkField.columnName) {
                             var linkedNodes = (data[i][$scope.options.selectedLinkField.columnName] ? data[i][$scope.options.selectedLinkField.columnName] : []);
                             if(linkedNodes.constructor !== Array) {
                                 linkedNodes = [linkedNodes];

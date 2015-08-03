@@ -227,7 +227,7 @@ function(connectionService, datasetService, errorNotificationService, filterServ
 
                 var connection = connectionService.getActiveConnection();
 
-                if(!connection || !$scope.options.tagField) {
+                if(!connection || !$scope.options.tagField.columnName) {
                     $scope.updateTagData([]);
                     $scope.loadingData = false;
                     return;
@@ -244,7 +244,7 @@ function(connectionService, datasetService, errorNotificationService, filterServ
                     tags: ["query", "tag-cloud"]
                 });
 
-                connection.executeArrayCountQuery($scope.options.database.name, $scope.options.table.name, $scope.options.tagField, $scope.options.tagLimit, function(tagCounts) {
+                connection.executeArrayCountQuery($scope.options.database.name, $scope.options.table.name, $scope.options.tagField.columnName, $scope.options.tagLimit, function(tagCounts) {
                     XDATA.userALE.log({
                         activity: "alter",
                         action: "query",
@@ -366,7 +366,7 @@ function(connectionService, datasetService, errorNotificationService, filterServ
              * @method applyFilter
              */
             $scope.applyFilter = function() {
-                var relations = datasetService.getRelations($scope.options.database.name, $scope.options.table.name, [$scope.options.tagField]);
+                var relations = datasetService.getRelations($scope.options.database.name, $scope.options.table.name, [$scope.options.tagField.columnName]);
                 filterService.replaceFilters($scope.messenger, relations, $scope.filterKeys, $scope.createFilterClauseForTags, function() {
                     $scope.$apply(function() {
                         $scope.queryForTags();
@@ -442,7 +442,7 @@ function(connectionService, datasetService, errorNotificationService, filterServ
                     data: [{
                         database: $scope.options.database.name,
                         table: $scope.options.table.name,
-                        field: $scope.options.tagField,
+                        field: $scope.options.tagField.columnName,
                         limit: $scope.options.tagLimit,
                         name: "tagCloud-" + $scope.exportID,
                         fields: [],
