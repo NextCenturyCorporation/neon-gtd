@@ -47,6 +47,9 @@ function(connectionService, datasetService, errorNotificationService, filterServ
             hideAdvancedOptions: '=?'
         },
         link: function($scope, $element) {
+            var HOUR = "hour";
+            var DAY = "day";
+
             $element.addClass('linechartDirective');
 
             $scope.element = $element;
@@ -79,6 +82,7 @@ function(connectionService, datasetService, errorNotificationService, filterServ
             $scope.noData = true;
             $scope.data = [];
             $scope.queryOnChangeBrush = false;
+            $scope.automaticHourSet = false;
 
             $scope.options = {
                 database: {},
@@ -86,7 +90,9 @@ function(connectionService, datasetService, errorNotificationService, filterServ
                 attrX: "",
                 attrY: "",
                 categoryField: "",
-                aggregation: "count"
+                aggregation: "count",
+                granularity: DAY,
+                trendlines: 'hide'
             };
 
             var updateChartSize = function() {
@@ -98,6 +104,7 @@ function(connectionService, datasetService, errorNotificationService, filterServ
                     $element.find('.linechart').height($element.height() - headerHeight);
                     // Redraw the line chart.
                     $scope.chart.draw();
+                    $scope.chart.showTrendlines(($scope.options.trendlines === 'show') ? true : false);
                 }
             };
 
@@ -164,6 +171,42 @@ function(connectionService, datasetService, errorNotificationService, filterServ
                         $scope.queryOnChangeBrush = $scope.queryOnChangeBrush || ($scope.brushExtent.length > 0);
                     }
                 });
+                $scope.$watch('options.granularity', function(newVal, oldVal) {
+                    if(!$scope.loadingData && newVal && newVal !== oldVal) {
+                        XDATA.userALE.log({
+                            activity: "alter",
+                            action: ($scope.loadingData) ? "reset" : "click",
+                            elementId: "linechart-" + newVal,
+                            elementType: "button",
+                            elementSub: "linechart-" + newVal,
+                            elementGroup: "chart_group",
+                            source: ($scope.loadingData) ? "system" : "user",
+                            tags: ["linechart", "granularity", newVal]
+                        });
+                        $scope.chart.setGranularity(newVal);
+                        $scope.queryForData();
+                        $scope.queryOnChangeBrush = $scope.queryOnChangeBrush || ($scope.brushExtent.length > 0);
+                    }
+                });
+                $scope.$watch('options.trendlines', function(newVal, oldVal) {
+                    if(!$scope.loadingData && newVal && newVal !== oldVal) {
+                        XDATA.userALE.log({
+                            activity: "alter",
+                            action: ($scope.loadingData) ? "reset" : "click",
+                            elementId: "linechart",
+                            elementType: "button",
+                            elementSub: "linechart-trendline-" + newVal,
+                            elementGroup: "chart_group",
+                            source: ($scope.loadingData) ? "system" : "user",
+                            tags: ["linechart", "trendline", newVal]
+                        });
+                        if(newVal === 'show') {
+                            $scope.chart.showTrendlines(true);
+                        } else {
+                            $scope.chart.showTrendlines(false);
+                        }
+                    }
+                });
             };
 
             var onFieldChange = function(field, newValue) {
@@ -196,7 +239,7 @@ function(connectionService, datasetService, errorNotificationService, filterServ
              * @return {Boolean}
              */
             var isDateFiltersChangedMessage = function(message) {
-                var whereClauses = undefined;
+                var whereClauses;
                 if(message.addedFilter.whereClause) {
                     whereClauses = message.addedFilter.whereClause.whereClauses;
                 } else if(message.removedFilter.whereClause) {
@@ -311,6 +354,11 @@ function(connectionService, datasetService, errorNotificationService, filterServ
                 var dayGroupClause = new neon.query.GroupByFunctionClause(neon.query.DAY, $scope.options.attrX.columnName, 'day');
 
                 var groupByClause = [yearGroupClause, monthGroupClause, dayGroupClause];
+
+                if($scope.options.granularity === HOUR) {
+                    var hourGroupClause = new neon.query.GroupByFunctionClause(neon.query.HOUR, $scope.options.attrX.columnName, 'hour');
+                    groupByClause.push(hourGroupClause);
+                }
                 if($scope.options.categoryField.columnName) {
                     groupByClause.push($scope.options.categoryField.columnName);
                 }
@@ -470,8 +518,8 @@ function(connectionService, datasetService, errorNotificationService, filterServ
                 var otherSeriesData = {
                     series: count + " Others",
                     total: 0,
-                    min: -1,
-                    max: -1,
+                    min: undefined,
+                    max: undefined,
                     data: []
                 };
 
@@ -479,18 +527,30 @@ function(connectionService, datasetService, errorNotificationService, filterServ
                 if($scope.options.aggregation !== 'average') {
                     for(var i = $scope.seriesLimit; i < data.length; i++) {
                         otherSeriesData.total += data[i].total;
-                        otherSeriesData.min = otherSeriesData.min < 0 ? data[i].min : Math.min(otherSeriesData.min, data[i].min);
-                        otherSeriesData.max = otherSeriesData.max < 0 ? data[i].max : Math.max(otherSeriesData.max, data[i].max);
+                        otherSeriesData.min = _.isUndefined(otherSeriesData.min) ? data[i].min : Math.min(otherSeriesData.min, data[i].min);
+                        otherSeriesData.max = _.isUndefined(otherSeriesData.max) ? data[i].max : Math.max(otherSeriesData.max, data[i].max);
                         for(var d = 0; d < data[i].data.length; d++) {
                             if(otherSeriesData.data[d]) {
-                                if($scope.options.aggregation === "count" || $scope.options.aggregation === "sum") {
-                                    otherSeriesData.data[d].value += data[i].data[d].value;
+                                if(($scope.options.aggregation === "count" || $scope.options.aggregation === "sum") && !_.isUndefined(data[i].data[d].value)) {
+                                    if(_.isUndefined(otherSeriesData.data[d].value)) {
+                                        otherSeriesData.data[d].value = data[i].data[d].value;
+                                    } else {
+                                        otherSeriesData.data[d].value += data[i].data[d].value;
+                                    }
                                 }
-                                if($scope.options.aggregation === "min") {
-                                    otherSeriesData.data[d].value = Math.min(otherSeriesData.data[d].value, data[i].data[d].value);
+                                if($scope.options.aggregation === "min" && !_.isUndefined(data[i].data[d].value)) {
+                                    if(_.isUndefined(otherSeriesData.data[d].value)) {
+                                        otherSeriesData.data[d].value = data[i].data[d].value;
+                                    } else {
+                                        otherSeriesData.data[d].value = Math.min(otherSeriesData.data[d].value, data[i].data[d].value);
+                                    }
                                 }
-                                if($scope.options.aggregation === "max") {
-                                    otherSeriesData.data[d].value = Math.max(otherSeriesData.data[d].value, data[i].data[d].value);
+                                if($scope.options.aggregation === "max" && !_.isUndefined(data[i].data[d].value)) {
+                                    if(_.isUndefined(otherSeriesData.data[d].value)) {
+                                        otherSeriesData.data[d].value = data[i].data[d].value;
+                                    } else {
+                                        otherSeriesData.data[d].value = Math.max(otherSeriesData.data[d].value, data[i].data[d].value);
+                                    }
                                 }
                             } else {
                                 otherSeriesData.data[d] = {
@@ -608,6 +668,7 @@ function(connectionService, datasetService, errorNotificationService, filterServ
 
             $scope.toggleSeries = function(series) {
                 var activity = $scope.chart.toggleSeries(series);
+                $scope.chart.showTrendlines(($scope.options.trendlines === 'show') ? true : false);
                 XDATA.userALE.log({
                     activity: activity,
                     action: "click",
@@ -627,8 +688,16 @@ function(connectionService, datasetService, errorNotificationService, filterServ
                 var start = zeroOutDate(minDate);
                 var end = zeroOutDate(maxDate);
 
-                var dayMillis = (1000 * 60 * 60 * 24);
-                var numBuckets = Math.ceil(Math.abs(end - start) / dayMillis) + 1;
+                var numBuckets;
+                var millis;
+
+                if($scope.options.granularity === DAY) {
+                    millis = (1000 * 60 * 60 * 24);
+                    numBuckets = Math.ceil(Math.abs(end - start) / millis) + 1;
+                } else {
+                    millis = (1000 * 60 * 60);
+                    numBuckets = Math.ceil(Math.abs(end - start) / millis) + 1;
+                }
 
                 var startTime = start.getTime();
 
@@ -671,7 +740,7 @@ function(connectionService, datasetService, errorNotificationService, filterServ
 
                 // Initialize our data buckets.
                 for(i = 0; i < numBuckets; i++) {
-                    var bucketGraphDate = new Date(startTime + (dayMillis * i));
+                    var bucketGraphDate = new Date(startTime + (millis * i));
                     for(series in resultData) {
                         if(Object.prototype.hasOwnProperty.call(resultData, series)) {
                             resultData[series].data.push({
@@ -693,7 +762,7 @@ function(connectionService, datasetService, errorNotificationService, filterServ
 
                     data[i].value = _.isNumber(data[i].value) ? data[i].value : undefined;
 
-                    resultData[series].data[Math.floor(Math.abs(indexDate - start) / dayMillis)].value = data[i].value;
+                    resultData[series].data[Math.floor(Math.abs(indexDate - start) / millis)].value = data[i].value;
 
                     // Only calculate total, min, and max if the value is defined
                     if(!_.isUndefined(data[i].value)) {
@@ -703,7 +772,7 @@ function(connectionService, datasetService, errorNotificationService, filterServ
                     }
 
                     // Save the mapping from date string to data index so we can find the data index using the brush extent while calculating aggregations for brushed line charts.
-                    $scope.dateStringToDataIndex[indexDate.toDateString()] = Math.floor(Math.abs(indexDate - start) / dayMillis);
+                    $scope.dateStringToDataIndex[indexDate.toDateString()] = Math.floor(Math.abs(indexDate - start) / millis);
                 }
 
                 return resultData;
@@ -726,7 +795,8 @@ function(connectionService, datasetService, errorNotificationService, filterServ
                     x: "date",
                     y: "value",
                     hoverListener: onHover,
-                    responsive: true
+                    responsive: true,
+                    granularity: $scope.options.granularity
                 };
 
                 // Destroy the old chart and rebuild it.
@@ -740,6 +810,7 @@ function(connectionService, datasetService, errorNotificationService, filterServ
                     });
                 });
                 $scope.chart.draw(data);
+                $scope.chart.showTrendlines(($scope.options.trendlines === 'show') ? true : false);
                 $scope.colorMappings = $scope.chart.getColorMappings();
                 $scope.noData = !data || !data.length || !data[0].data || !data[0].data.length;
                 $scope.loadingData = false;
@@ -771,7 +842,9 @@ function(connectionService, datasetService, errorNotificationService, filterServ
                 zeroed.setUTCMinutes(0);
                 zeroed.setUTCSeconds(0);
                 zeroed.setUTCMilliseconds(0);
-                zeroed.setUTCHours(0);
+                if($scope.options.granularity === DAY) {
+                    zeroed.setUTCHours(0);
+                }
                 return zeroed;
             };
 
@@ -791,7 +864,9 @@ function(connectionService, datasetService, errorNotificationService, filterServ
                 var end = $scope.dateStringToDataIndex[$scope.brushExtent[1].toDateString()] || data.length;
                 var value = 0;
                 for(var i = start; i < end; ++i) {
-                    value = calculationFunction(data[i].value, value);
+                    if(!_.isUndefined(data[i].value)) {
+                        value = calculationFunction(data[i].value, value);
+                    }
                 }
                 return value;
             };
@@ -804,7 +879,7 @@ function(connectionService, datasetService, errorNotificationService, filterServ
              */
             $scope.getLegendItemAggregationText = function(colorMappingObject) {
                 var total = 0;
-                if($scope.options.aggregation === "count" || $scope.options.aggregation === "sum") {
+                if(($scope.options.aggregation === "count" || $scope.options.aggregation === "sum") && !_.isUndefined(colorMappingObject.total)) {
                     total = colorMappingObject.total;
                     if($scope.brushExtent.length >= 2) {
                         total = calculateBrushedAggregationValue(colorMappingObject.data, function(indexValue, aggregationValue) {
@@ -813,7 +888,7 @@ function(connectionService, datasetService, errorNotificationService, filterServ
                     }
                     return "(" + $filter('number')(total) + ")";
                 }
-                if($scope.options.aggregation === "min") {
+                if($scope.options.aggregation === "min" && !_.isUndefined(colorMappingObject.min)) {
                     var min = colorMappingObject.min;
                     if($scope.brushExtent.length >= 2) {
                         total = calculateBrushedAggregationValue(colorMappingObject.data, function(indexValue, aggregationValue) {
@@ -822,7 +897,7 @@ function(connectionService, datasetService, errorNotificationService, filterServ
                     }
                     return "(" + min + ")";
                 }
-                if($scope.options.aggregation === "max") {
+                if($scope.options.aggregation === "max" && !_.isUndefined(colorMappingObject.max)) {
                     var max = colorMappingObject.max;
                     if($scope.brushExtent.length >= 2) {
                         total = calculateBrushedAggregationValue(colorMappingObject.data, function(indexValue, aggregationValue) {
@@ -865,10 +940,24 @@ function(connectionService, datasetService, errorNotificationService, filterServ
                 }
 
                 var relations = datasetService.getRelations($scope.options.database.name, $scope.options.table.name, [$scope.options.attrX.columnName]);
-                filterService.replaceFilters($scope.messenger, relations, $scope.filterKeys, createFilterClauseForDate, function() {
+
+                var filterNameObj = {
+                    visName: "LineChart",
+                    text: getDateString($scope.brushExtent[0], false) + " to " + getDateString($scope.brushExtent[1], false)
+                };
+
+                filterService.replaceFilters($scope.messenger, relations, $scope.filterKeys, createFilterClauseForDate, filterNameObj, function() {
                     updateLineChartForBrushExtent();
                     datasetService.setDateBrushExtentForRelations(relations, $scope.brushExtent);
                 });
+            };
+
+            var getDateString = function(date, includeTime) {
+                var dateString = (date.getMonth() + 1) + "/" + date.getDate() + "/" + date.getFullYear();
+                if(includeTime) {
+                    dateString = dateString + " " + date.getHours() + ":" + (date.getMinutes() < 10 ? "0" : "") + date.getMinutes();
+                }
+                return dateString;
             };
 
             /**
@@ -876,6 +965,25 @@ function(connectionService, datasetService, errorNotificationService, filterServ
              * @method updateLineChartForBrushExtent
              */
             var updateLineChartForBrushExtent = function() {
+                if($scope.brushExtent.length >= 2) {
+                    var dayMillis = (1000 * 60 * 60 * 24);
+                    var diff = $scope.brushExtent[1] - $scope.brushExtent[0];
+
+                    if($scope.options.granularity === DAY && (diff / dayMillis) <= 1) {
+                        $scope.automaticHourSet = true;
+                        $scope.options.granularity = HOUR;
+                        return;
+                    } else if($scope.options.granularity === HOUR && (diff / dayMillis) > 1 && $scope.automaticHourSet) {
+                        $scope.automaticHourSet = false;
+                        $scope.options.granularity = DAY;
+                        return;
+                    }
+                } else if($scope.automaticHourSet) {
+                    $scope.automaticHourSet = false;
+                    $scope.options.granularity = DAY;
+                    return;
+                }
+
                 // If the user changed a field or filter while the chart contained data filtered by date then the chart will need to query for new data since the saved data from
                 // the previous query will be stale.  Otherwise use the data from the previous query and the current brush extent to redraw the chart.
                 if($scope.queryOnChangeBrush) {

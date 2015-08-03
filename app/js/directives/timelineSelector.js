@@ -404,12 +404,30 @@ function(connectionService, datasetService, errorNotificationService, filterServ
                 }
 
                 var relations = datasetService.getRelations($scope.options.database.name, $scope.options.table.name, [$scope.options.dateField.columnName]);
-                filterService.replaceFilters($scope.messenger, relations, $scope.filterKeys, $scope.createFilterClauseForDate, function() {
+
+                var nameIncludeTime = $scope.options.granularity === HOUR;
+                var startDate = getFilterStartDate();
+                //If day, display a day shorter to make sense, otherwise display the proper date-time.
+                var endDate = ($scope.options.granularity === HOUR ? getFilterEndDate() : new Date(getFilterEndDate().getTime() - 1));
+                var filterNameObj = {
+                    visName: "Timeline",
+                    text: getDateString(startDate, nameIncludeTime) + " to " + getDateString(endDate, nameIncludeTime)
+                };
+
+                filterService.replaceFilters($scope.messenger, relations, $scope.filterKeys, $scope.createFilterClauseForDate, filterNameObj, function() {
                     if(callback) {
                         callback();
                     }
                     datasetService.setDateBrushExtentForRelations(relations, $scope.brush);
                 });
+            };
+
+            var getDateString = function(date, includeTime) {
+                var dateString = (date.getUTCMonth() + 1) + '/' + date.getUTCDate() + '/' + date.getUTCFullYear();
+                if(includeTime) {
+                    dateString = dateString + (' ' + date.getUTCHours() + ':' + (date.getUTCMinutes() > 9 ? date.getUTCMinutes() : '0' + date.getUTCMinutes()));
+                }
+                return dateString;
             };
 
             /**
@@ -420,12 +438,22 @@ function(connectionService, datasetService, errorNotificationService, filterServ
              * @return {Object} A neon.query.Filter object
              */
             $scope.createFilterClauseForDate = function(databaseAndTableName, dateFieldName) {
-                var startDate = $scope.brush.length < 2 ? $scope.bucketizer.getStartDate() : $scope.brush[0];
-                var endDate = $scope.brush.length < 2 ? $scope.bucketizer.getEndDate() : $scope.brush[1];
-                var startFilterClause = neon.query.where(dateFieldName, '>=', $scope.bucketizer.zeroOutDate(startDate));
-                var endFilterClause = neon.query.where(dateFieldName, '<', $scope.bucketizer.roundUpBucket(endDate));
+                var startDate = getFilterStartDate();
+                var endDate = getFilterEndDate();
+                var startFilterClause = neon.query.where(dateFieldName, '>=', startDate);
+                var endFilterClause = neon.query.where(dateFieldName, '<', endDate);
                 var clauses = [startFilterClause, endFilterClause];
                 return neon.query.and.apply(this, clauses);
+            };
+
+            var getFilterStartDate = function() {
+                var startDate = $scope.brush.length < 2 ? $scope.bucketizer.getStartDate() : $scope.brush[0];
+                return $scope.bucketizer.zeroOutDate(startDate);
+            };
+
+            var getFilterEndDate = function() {
+                var endDate = $scope.brush.length < 2 ? $scope.bucketizer.getEndDate() : $scope.brush[1];
+                return $scope.bucketizer.roundUpBucket(endDate);
             };
 
             /**

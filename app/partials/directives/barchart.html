@@ -37,15 +37,19 @@
 
 <div class="header-container filter-container">
     <div class="legend">
+
         <div class="filter-reset pull-right" ng-class="{true: 'hidden', false: ''}[filterSet === undefined]" title="{{filterSet.key}}={{filterSet.value}}">
             <span class="filter-label" ng-bind="filterSet.value"></span>
             <span class="glyphicon glyphicon-remove" ng-click="clearFilterSet()"></span>
         </div>
+        <h4 class="pull-right limit-message" ng-show="results.count >= options.limitCount">Limited to {{options.limitCount}} bars</h4>
+
 
         <div class="legend-item" title="{{getLegendText()}}">
             <span class="legend-icon" style="background-color: #39b54a"></span>
             <span class="legend-text legend-text-large" ng-bind="getLegendText()"></span>
         </div>
+
     </div>
 </div>
 

@@ -47,9 +47,8 @@
         <!-- Header -->
         <!-- This could be made into either a directive or a partial -->
         <nav role="navigation" class="navbar">
-            <div class="navbar-default navbar-static-top" ng-class="{true: '', false: 'affix'}[hideNavbarItems == true]">
-                <div class="container">
-
+            <div class="navbar-default navbar-fixed-top" ng-class="{true: '', false: 'affix'}[hideNavbarItems == true]">
+                <div class="container" ng-hide="hideNavbarItems">
                     <div class="pull-left" ng-show="hideNavbarItems">
                         <span class="navbar-text navbar-title-text">
                             {{navbarTitle}}
@@ -88,110 +87,14 @@
 
                     <!-- Add visualization control -->
                     <div add-visualization gridster-configs="visualizations" ng-hide="hideNavbarItems || hideAddVisualizationsButton"></div>
+                </div>
 
-                    <!--
-                    <ul class="nav navbar-nav" ng-hide="hideNavbarItems">
-                        <li>
-                            <a data-toggle="collapse" data-parent="#trays" href=".filter-tray" class="collapsed"
-                                ng-click="toggleCreateFilters()">
-                                <span class="glyphicon glyphicon-filter"></span>
-                                Create Filters
-                                <span class="label label-primary" ng-bind="filterCount" ng-class="{true: '', false: 'hidden'}[filterCount > 0]"></span>
-                            </a>
-                        </li>
-                        <li>
-                            <a data-toggle="collapse" data-parent="#trays" href=".data-tray" class="collapsed"
-                               ng-click="toggleSeeData()">
-                                <span class="glyphicon glyphicon-list"></span> View Data
-                            </a>
-                        </li>
-                        -->
-                        <!-- <li>
-                            <a data-toggle="collapse" data-parent="#trays" href=".query-tray" class="collapsed">
-                                <span class="glyphicon glyphicon-pencil"></span> Write Query
-                            </a>
-                        </li> -->
-                    </ul>
+                <!-- FILTER STATUS TRAY -->
+                <div class="container" ng-show="showFilterStatusTray">
+                    <filter-tray bound-parent="'nav.navbar'" include-parent-height="!hideNavbarItems"></filter-tray>
                 </div>
             </div>
         </nav>
-
-        <!-- Trays -->
-        <!--
-        <div class="panel-group" id="trays" ng-hide="hideNavbarItems">
-        -->
-
-            <!-- Filter Builder tray -->
-            <!--
-            <div class="tray-mirror filter-tray collapse">
-                <div class="inner" style="height: 134px"></div>
-            </div>
-
-            <div id="filter-tray" class="tray filter-tray panel panel-default collapse">
-                <div class="container panel-body">
-                    <div filter-builder navbar-item="(true)" filter-count="filterCount"></div>
-                </div>
-            </div>
-            -->
-
-            <!-- See Data tray -->
-            <!--
-            <div class="tray-mirror data-tray collapse">
-                <div class="inner" style="height: 394px"></div>
-            </div>
-
-            <div id="data-tray" class="tray data-tray panel panel-default collapse">
-                <div class="container panel-body">
-                    <div query-results-table show-data="seeData" navbar-item="(true)"></div>
-                </div>
-            </div>
-            -->
-
-            <!-- Query Builder tray -->
-            <!-- <div>
-
-                <div class="tray-mirror query-tray collapse">
-                  <div class="inner" style="height: 223px"></div>
-                </div>
-                <div id="query-tray" class="tray query-tray panel panel-default collapse">
-
-                  <div class="container panel-body">
-
-                    <a class="pull-right" data-toggle="modal" href="#queryHelpModal">Help <span class="glyphicon glyphicon-question-sign"></span></a>
-
-                    <h4>Write your own query</h4>
-
-                    <textarea class="form-control" rows="5"></textarea>
-
-                    <button type="button" class="btn btn-primary pull-right">
-                      Run Query
-                    </button>
-
-                  </div>
-                </div>
-
-                <div class="modal fade" id="queryHelpModal" tabindex="-1" role="dialog" aria-labelledby="queryHelpModalLabel" aria-hidden="true">
-                    <div class="modal-dialog">
-                        <div class="modal-content">
-                            <div class="modal-header">
-                                <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
-                                <h4 class="modal-title" id="queryHelpModalLabel">Custom Query Instructions</h4>
-                            </div>
-                            <div class="modal-body">
-                                Helpful info here.
-                            </div>
-                            <div class="modal-footer">
-                                <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-            </div> -->
-
-        <!--
-        </div>
-        -->
 
         <!-- DASHBOARD CONTENT -->
         <div class="container">
@@ -232,6 +135,8 @@
         -->
         <script src="lib/angular/js/angular.min.js"></script>
         <script src="lib/angular-gridster/js/angular-gridster.min.js"></script>
+        <script src="lib/moment/js/moment.min.js"></script>
+        <script src="lib/angular-ui-tree/js/angular-ui-tree.min.js"></script>
         <script src="lib/javascript-detect-element-resize/js/jquery.resize.js"></script>
 
         <!-- Include third party libs -->
@@ -253,7 +158,9 @@
         <script src="js/vendor/slick-grid/js/slick.rowselectionmodel.js"></script>
         <script src="lib/mergesort/js/merge-sort.js"></script>
         <script src="lib/bootstrap/js/bootstrap.min.js"></script>
+        <script src="lib/ngDraggable/js/ngDraggable.js"></script>
         <script src="lib/remarkable-bootstrap-notify/js/bootstrap-notify.min.js"></script>
+        <script src="lib/rainbowvis.js/js/rainbowvis.js"></script>
 
         <!-- Moment required for angular-bootstrap-datetimepicker -->
         <script src="lib/moment/js/moment.min.js"></script>
@@ -296,6 +203,7 @@
         <script src="js/directives/fileFormats.js"></script>
         <script src="js/directives/filterBuilder.js"></script>
         <script src="js/directives/filterState.js"></script>
+        <script src="js/directives/filterTray.js"></script>
         <script src="js/directives/linechart.js"></script>
         <script src="js/directives/linksPopup.js"></script>
         <script src="js/directives/map.js"></script>

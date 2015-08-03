@@ -16,9 +16,12 @@
  */
 
 angular.module("neonDemo.services")
-.factory("DatasetService", function() {
+.factory("DatasetService", function(datasets) {
     var service = {};
 
+    service.datasets = datasets;
+
+    // The active dataset.
     service.dataset = {
         name: "",
         layout: "",
@@ -32,6 +35,26 @@ angular.module("neonDemo.services")
 
     // The Dataset Service saves the brush extent used to filter the date for each database/table.
     service.DATE_CHANGED = "date_changed";
+
+    /**
+     * Returns the list of datasets maintained by this service.
+     * @method getDatasets
+     * @return {Array}
+     */
+    service.getDatasets = function() {
+        return service.datasets;
+    };
+
+    /**
+     * Adds the given dataset to the list of datasets maintained by this service and returns the new list.
+     * @method addDataset
+     * @return {Array}
+     */
+    service.addDataset = function(dataset) {
+        // TODO Validate
+        service.datasets.push(dataset);
+        return service.datasets;
+    };
 
     /**
      * Sets the active dataset to the given dataset.
@@ -244,36 +267,6 @@ angular.module("neonDemo.services")
         });
 
         return fields;
-    };
-
-    /**
-     * Updates the fields for the table with the given name to include all of the given fields it does not already
-     * contain.
-     * @param {String} The database name
-     * @param {String} The table name
-     * @param {Array} The array of database field names to add
-     * @method updateFields
-     */
-    service.updateFields = function(databaseName, tableName, fieldNames) {
-        var table = service.getTableWithName(databaseName, tableName);
-
-        if(!table) {
-            return;
-        }
-
-        var fieldExists = {};
-        for(var i = 0; i < table.fields.length; ++i) {
-            fieldExists[table.fields[i].columnName] = true;
-        }
-
-        for(var j = 0; j < fieldNames.length; ++j) {
-            if(!fieldExists[fieldNames[j]]) {
-                table.fields.push({
-                    columnName: fieldNames[j],
-                    prettyName: fieldNames[j]
-                });
-            }
-        }
     };
 
     /**
@@ -562,6 +555,57 @@ angular.module("neonDemo.services")
             if(table) {
                 table.dateBrushExtent = [];
                 publishDateChanged(relation.database, relation.table, []);
+            }
+        });
+    };
+
+    /**
+     * Updates the database at the given index (default 0) from the given dataset by adding undefined fields for each table.
+     * @param {Object} dataset
+     * @param {Object} connection
+     * @param {Function} callback (optional)
+     * @param {Number} index (optional)
+     * @method updateDatabases
+     * @private
+     */
+    service.updateDatabases = function(dataset, connection, callback, index) {
+        if(dataset.updatedFields) {
+            if(callback) {
+                callback(dataset);
+            }
+            return;
+        }
+
+        var databaseIndex = index ? index : 0;
+        var database = dataset.databases[databaseIndex];
+        connection.getTableNamesAndFieldNames(database.name, function(tableNamesAndFieldNames) {
+            Object.keys(tableNamesAndFieldNames).forEach(function(tableName) {
+                var table = _.find(database.tables, function(table) {
+                    return table.name === tableName;
+                });
+
+                if(table) {
+                    var hasField = {};
+                    table.fields.forEach(function(field) {
+                        hasField[field.columnName] = true;
+                    });
+
+                    tableNamesAndFieldNames[tableName].forEach(function(fieldName) {
+                        if(!hasField[fieldName]) {
+                            table.fields.push({
+                                columnName: fieldName,
+                                prettyName: fieldName
+                            });
+                        }
+                    });
+                }
+            });
+
+            if(++databaseIndex < dataset.databases.length) {
+                service.updateDatabases(dataset, connection, callback, databaseIndex);
+            } else if(callback) {
+                dataset.updatedFields = true;
+                callback(dataset);
             }
         });
     };

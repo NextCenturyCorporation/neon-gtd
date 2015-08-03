@@ -29,12 +29,23 @@ function(external, popups, connectionService, datasetService, errorNotificationS
             bindTable: '=',
             bindDatabase: '=',
             hideHeader: '=?',
-            hideAdvancedOptions: '=?'
+            hideAdvancedOptions: '=?',
+            limitCount: '=?'
         },
         link: function($scope, $element) {
             $element.addClass('countByDirective');
 
             $scope.element = $element;
+
+            $scope.optionsMenuButtonText = function() {
+                if($scope.count >= $scope.options.limitCount) {
+                    return $scope.options.limitCount + " value limit";
+                }
+                return "";
+            };
+            $scope.showOptionsMenuButtonText = function() {
+                return $scope.count >= $scope.options.limitCount;
+            };
 
             // Unique field name used for the SlickGrid column containing the URLs for the external apps.
             // This name should be one that is highly unlikely to be a column name in a real database.
@@ -55,7 +66,8 @@ function(external, popups, connectionService, datasetService, errorNotificationS
                 table: {},
                 field: "",
                 aggregation: "",
-                aggregationField: ""
+                aggregationField: "",
+                limitCount: $scope.limitCount || 16000
             };
 
             var $tableDiv = $element.find('.count-by-grid');
@@ -145,6 +157,13 @@ function(external, popups, connectionService, datasetService, errorNotificationS
 
             $scope.handleChangeAggregationField = function() {
                 logOptionsMenuDropdownChange("aggregation-field", $scope.options.aggregationField);
+                if(!$scope.loadingData) {
+                    $scope.queryForData();
+                }
+            };
+
+            $scope.handleChangeLimit = function() {
+                logOptionsMenuDropdownChange("limit", $scope.options.limitCount);
                 if(!$scope.loadingData) {
                     $scope.queryForData();
                 }
@@ -505,7 +524,10 @@ function(external, popups, connectionService, datasetService, errorNotificationS
                             source: "user",
                             tags: ["filter", "count-by"]
                         });
-                        filterService.replaceFilters($scope.messenger, relations, $scope.filterKeys, $scope.createFilterClauseForCount);
+                        filterService.replaceFilters($scope.messenger, relations, $scope.filterKeys, $scope.createFilterClauseForCount, {
+                            visName: "Count By",
+                            text: $scope.options.field.columnName + " = " + $scope.filterSet.value
+                        });
                     } else {
                         XDATA.userALE.log({
                             activity: "select",
@@ -517,7 +539,10 @@ function(external, popups, connectionService, datasetService, errorNotificationS
                             source: "user",
                             tags: ["filter", "count-by"]
                         });
-                        filterService.addFilters($scope.messenger, relations, $scope.filterKeys, $scope.createFilterClauseForCount);
+                        filterService.addFilters($scope.messenger, relations, $scope.filterKeys, $scope.createFilterClauseForCount, {
+                            visName: "Count By",
+                            text: $scope.options.field.columnName + " = " + $scope.filterSet.value
+                        });
                     }
                 }
             };
@@ -621,13 +646,18 @@ function(external, popups, connectionService, datasetService, errorNotificationS
 
                 if($scope.options.aggregation === "count") {
                     query.aggregate(neon.query.COUNT, '*', 'count');
+                    query.sortBy('count', neon.query.DESCENDING);
                 }
                 if($scope.options.aggregation === "min") {
                     query.aggregate(neon.query.MIN, $scope.options.aggregationField.columnName, $scope.options.aggregationField.columnName);
+                    query.sortBy($scope.options.aggregationField, neon.query.ASCENDING);
                 }
                 if($scope.options.aggregation === "max") {
                     query.aggregate(neon.query.MAX, $scope.options.aggregationField.columnName, $scope.options.aggregationField.columnName);
+                    query.sortBy($scope.options.aggregationField, neon.query.DESCENDING);
                 }
+
+                query.limit($scope.options.limitCount);
 
                 return query;
             };
