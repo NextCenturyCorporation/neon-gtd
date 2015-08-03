@@ -55,7 +55,7 @@
       <div class="clearfix"></div>
     </div>
 
-    <div class="filter form-inline" ng-repeat="filterRow in filterTable.getFilterRows()">
+    <div class="filter neon-well neon-well-dark neon-well-thin form-inline" ng-repeat="filterRow in filterTable.getFilterRows()">
       <div class="form-group">
         <select class="form-control" ng-model="filterRow.database" ng-options="database.prettyName for database in databases" ng-disabled="(databases.length < 2) || !(navbarItem)" ng-change="updateTablesForFilterRow(filterRow)">
         </select>
@@ -106,7 +106,7 @@
       <div class="clearfix"></div>
     </div>
 
-    <div class="filter filter-new form-inline">
+    <div class="filter neon-well neon-well-thin form-inline">
       <div class="form-group">
         <select id="filter-table-selection" class="form-control" ng-model="selectedDatabase" ng-options="database.prettyName for database in databases" ng-disabled="(databases.length < 2)" ng-change="updateTables()">
         </select>

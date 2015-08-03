@@ -34,7 +34,7 @@
       </div>
 
       <div class="modal-body">
-          <div class="well">
+          <div class="neon-well neon-well-dark">
             <div class="row">
               <div class="col-md-6">
                 <div class="form-group">
@@ -44,8 +44,8 @@
               </div>
 
               <div class="col-md-6">
-                <div class="form-group">
-                  <label ng-bind="datasetNameIsValid ? '' : 'Please enter a unique name.'"></label>
+                <div class="form-group no-margin">
+                  <label class="bottom text-danger" ng-bind="datasetNameIsValid ? '' : 'Please enter a unique name.'"></label>
                 </div>
               </div>
             </div>
@@ -75,7 +75,7 @@
             </div>
           </div>
 
-          <div class="well" ng-repeat="customDatabase in customDatabases">
+          <div class="neon-well neon-well-dark" ng-repeat="customDatabase in customDatabases">
             <div class="row">
               <div class="col-md-6">
                 <div class="form-group">
@@ -86,14 +86,15 @@
                 </div>
               </div>
 
-              <div class="col-md-6">
-                  <div class="form-group">
-                      <button class="btn btn-default" ng-click="removeCustomDatabase($index)" ng-hide="($index == 0)">Remove Database</button>
+              <div class="col-md-4">
+                  <div class="form-group no-margin">
+                      <label>&nbsp;</label>
+                      <button class="btn btn-default form-control" ng-click="removeCustomDatabase($index)" ng-hide="($index == 0)">Remove Database</button>
                   </div>
               </div>
             </div>
 
-            <div class="well" ng-repeat="customTable in customDatabase.customTables">
+            <div class="neon-well" ng-repeat="customTable in customDatabase.customTables">
               <div class="row">
                 <div class="col-md-6">
                   <div class="form-group">
@@ -104,9 +105,10 @@
                   </div>
                 </div>
 
-                <div class="col-md-6">
-                    <div class="form-group">
-                        <button class="btn btn-default" ng-click="removeCustomTable(customDatabase, $index)" ng-hide="($index == 0)">Remove Table</button>
+                <div class="col-md-4">
+                    <div class="form-group no-margin">
+                        <label>&nbsp;</label>
+                        <button class="btn btn-default form-control" ng-click="removeCustomTable(customDatabase, $index)" ng-hide="($index == 0)">Remove Table</button>
                     </div>
                 </div>
               </div>
@@ -154,7 +156,7 @@
 
             <div class="row">
                 <div class="col-md-12">
-                    <div class="form-group">
+                    <div class="form-group no-margin">
                         <button class="btn btn-default" ng-click="addNewCustomTable(customDatabase)" ng-disabled="(customDatabase.database.tables.length == 0)">Add Table</button>
                     </div>
                 </div>
@@ -164,7 +166,7 @@
           <div>
               <div class="row">
                   <div class="col-md-12">
-                      <div class="form-group">
+                      <div class="form-group no-margin">
                           <button class="btn btn-default" ng-click="addNewCustomDatabase()" ng-disabled="(databases.length == 0)">Add Database</button>
                       </div>
                   </div>
