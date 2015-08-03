@@ -33,56 +33,6 @@ angular.module("neonDemo.services")
     // The Dataset Service saves the brush extent used to filter the date for each database/table.
     service.DATE_CHANGED = "date_changed";
 
-    var removeFromArray = function(array, indexList) {
-        indexList.forEach(function(index) {
-            array.splice(index, 1);
-        });
-    };
-
-    var validateFields = function(table) {
-        var indexListToRemove = [];
-        table.fields.forEach(function(field, index) {
-            if(!field.columnName) {
-                indexListToRemove.push(index);
-            } else {
-                field.prettyName = field.prettyName || field.columnName;
-            }
-        });
-        removeFromArray(table.fields, indexListToRemove);
-    };
-
-    var validateTables = function(database) {
-        var indexListToRemove = [];
-        database.tables.forEach(function(table, index) {
-            if(!table.name) {
-                indexListToRemove.push(index);
-            } else {
-                table.prettyName = table.prettyName || table.name;
-                table.fields = table.fields || [];
-                table.mappings = table.mappings || {};
-                // Create a filter key for each database/table pair with a date mapping.
-                if(table.mappings.date) {
-                    table.dateFilterKey = "date-" + database.name + "-" + table.name + "-" + uuid();
-                }
-                validateFields(table);
-            }
-        });
-        removeFromArray(database.tables, indexListToRemove);
-    };
-
-    var validateDatabases = function(dataset) {
-        var indexListToRemove = [];
-        dataset.databases.forEach(function(database, index) {
-            if(!(database.name || database.tables || database.tables.length)) {
-                indexListToRemove.push(index);
-            } else {
-                database.prettyName = database.prettyName || database.name;
-                validateTables(database);
-            }
-        });
-        removeFromArray(dataset.databases, indexListToRemove);
-    };
-
     /**
      * Sets the active dataset to the given dataset.
      * @param {Object} The dataset containing {String} name, {String} layout, {String} datastore, {String} hostname,
@@ -614,6 +564,56 @@ angular.module("neonDemo.services")
                 publishDateChanged(relation.database, relation.table, []);
             }
         });
+    };
+
+    var removeFromArray = function(array, indexList) {
+        indexList.forEach(function(index) {
+            array.splice(index, 1);
+        });
+    };
+
+    var validateFields = function(table) {
+        var indexListToRemove = [];
+        table.fields.forEach(function(field, index) {
+            if(!field.columnName) {
+                indexListToRemove.push(index);
+            } else {
+                field.prettyName = field.prettyName || field.columnName;
+            }
+        });
+        removeFromArray(table.fields, indexListToRemove);
+    };
+
+    var validateTables = function(database) {
+        var indexListToRemove = [];
+        database.tables.forEach(function(table, index) {
+            if(!table.name) {
+                indexListToRemove.push(index);
+            } else {
+                table.prettyName = table.prettyName || table.name;
+                table.fields = table.fields || [];
+                table.mappings = table.mappings || {};
+                // Create a filter key for each database/table pair with a date mapping.
+                if(table.mappings.date) {
+                    table.dateFilterKey = "date-" + database.name + "-" + table.name + "-" + uuid();
+                }
+                validateFields(table);
+            }
+        });
+        removeFromArray(database.tables, indexListToRemove);
+    };
+
+    var validateDatabases = function(dataset) {
+        var indexListToRemove = [];
+        dataset.databases.forEach(function(database, index) {
+            if(!(database.name || database.tables || database.tables.length)) {
+                indexListToRemove.push(index);
+            } else {
+                database.prettyName = database.prettyName || database.name;
+                validateTables(database);
+            }
+        });
+        removeFromArray(dataset.databases, indexListToRemove);
     };
 
     return service;
