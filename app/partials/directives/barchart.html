@@ -1,5 +1,5 @@
 <div class="header-container" ng-show="!(hideHeader)">
-    <span class="header-text pull-left">{{options.table.prettyName}}</span>
+    <span class="header-text pull-left" ng-bind="options.table.prettyName"></span>
 
     <options-menu parent-element="element" export-function="makeBarchartExportObject" ng-show="!(hideAdvancedOptions)">
         <div class="form-group" ng-show="!(hideAdvancedOptions)">
@@ -38,13 +38,13 @@
 <div class="header-container filter-container">
     <div class="legend">
         <div class="filter-reset pull-right" ng-class="{true: 'hidden', false: ''}[filterSet === undefined]" title="{{filterSet.key}}={{filterSet.value}}">
-            <span class="filter-label">{{filterSet.value}}</span>
+            <span class="filter-label" ng-bind="filterSet.value"></span>
             <span class="glyphicon glyphicon-remove" ng-click="clearFilterSet()"></span>
         </div>
 
         <div class="legend-item" title="{{getLegendText()}}">
             <span class="legend-icon" style="background-color: #39b54a"></span>
-            <span class="legend-text legend-text-large">{{getLegendText()}}</span>
+            <span class="legend-text legend-text-large" ng-bind="getLegendText()"></span>
         </div>
     </div>
 </div>

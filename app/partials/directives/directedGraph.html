@@ -1,5 +1,5 @@
 <div class="header-container" ng-show="!(hideHeader)">
-    <span class="header-text pull-left">{{options.table.prettyName}}</span>
+    <span class="header-text pull-left" ng-bind="options.table.prettyName"></span>
 
     <options-menu parent-element="element" button-text="optionsMenuButtonText" show-button-text="showOptionsMenuButtonText">
         <div class="form-group" ng-show="!(hideAdvancedOptions)">
@@ -27,7 +27,7 @@
             </select>
         </div>
         <div class="form-group">
-            <label>Filter on {{options.selectedNodeField.prettyName}}</label>
+            <label ng-bind="'Filter on ' + options.selectedNodeField.prettyName"></label>
             <select class="form-control" ng-model="options.selectedNode" ng-options="node for node in nodes track by node" ng-required="false" ng-disabled="(nodes.length == 0) || !(options.selectedNodeField)" ng-change="selectNode()">
                 <option value=""></option>
             </select>
@@ -51,7 +51,7 @@
 
 <div class="header-container filter-container" ng-show="(filteredNodes.length > 0)">
     <div class="filter-reset pull-right" ng-repeat="value in filteredNodes" title="{{options.selectedNodeField.prettyName}}={{value}}">
-        <span class="filter-label">{{value}}</span>
+        <span class="filter-label" ng-bind="value"></span>
         <span class="glyphicon glyphicon-remove" ng-click="removeFilter(value)"></span>
     </div>
 </div>

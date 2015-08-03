@@ -1,5 +1,5 @@
 <div class="header-container" ng-show="!(hideHeader)">
-    <span class="header-text pull-left">{{options.table.prettyName}}</span>
+    <span class="header-text pull-left" ng-bind="options.table.prettyName"></span>
 
     <options-menu parent-element="element" export-function="makeSunburstExportObject">
         <div class="form-group" ng-show="!(hideAdvancedOptions)">
@@ -42,7 +42,7 @@
             <span class="glyphicon glyphicon-chevron-right"></span>
         </div>
         <div class="sunburst-breadcrumb">
-            <span>{{(arcValue === 'count') ? arcValue : 'TOTAL (' + options.valueField.prettyName + ')'}}</span>
+            <span ng-bind="(arcValue === 'count') ? arcValue : 'TOTAL (' + options.valueField.prettyName + ')'"></span>
         </div>
     </div>
 
@@ -53,7 +53,7 @@
             </label>
             <label><input type="radio" ng-model="arcValue" value="total" class="sunburst-chart-selector"
                 ng-disabled="!(options.valueField.columnName && options.valueField.prettyName)"> 
-                <span>{{'TOTAL (' + options.valueField.prettyName + ')'}}</span>
+                <span ng-bind="'TOTAL (' + options.valueField.prettyName + ')'"></span>
             </label>
         </form>
     </div>

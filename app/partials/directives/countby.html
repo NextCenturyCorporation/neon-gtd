@@ -1,5 +1,5 @@
 <div class="header-container" ng-show="!(hideHeader)">
-    <span class="header-text pull-left">{{options.table.prettyName}}</span>
+    <span class="header-text pull-left" ng-bind="options.table.prettyName"></span>
 
     <options-menu parent-element="element" export-function="makeCountByExportObject" ng-show="!(hideAdvancedOptions)">
         <div class="form-group" ng-show="(hideAdvancedOptions)">
@@ -43,7 +43,7 @@
     <h4 class="pull-left"><span class="count text-primary ng-binding" ng-bind="count"></span> values</h4>
 
     <div class="filter-reset pull-right" ng-class="{true: 'hidden', false: ''}[filterSet === undefined]" title="{{filterSet.key}}={{filterSet.value}}">
-        <span class="filter-label">{{filterSet.value}}</span>
+        <span class="filter-label" ng-bind="filterSet.value"></span>
         <span class="glyphicon glyphicon-remove" ng-click="clearFilter()"></span>
     </div>
 </div>
