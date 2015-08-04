@@ -89,6 +89,11 @@ coreMap.Map.HEATMAP_LAYER = 'heatmap';
 coreMap.Map.CLUSTER_LAYER = 'cluster';
 coreMap.Map.NODE_LAYER = 'node';
 
+// Dark Background Color = #242426
+coreMap.Map.DARK_MAP_TILES = "http://a.basemaps.cartocdn.com/dark_all/${z}/${x}/${y}.png";
+// Light Background Color = #CDD2D4
+coreMap.Map.LIGHT_MAP_TILES = "http://a.basemaps.cartocdn.com/light_all/${z}/${x}/${y}.png";
+
 /**
  * Resets the select control by temporarily removing it from the map
  * before syncing to the current list of selectable layers.
@@ -452,7 +457,8 @@ coreMap.Map.prototype.createSelectControl =  function(layer) {
  */
 
 coreMap.Map.prototype.setupLayers = function() {
-    var baseLayer = new OpenLayers.Layer.OSM("OSM", null, {
+    var baseLayer = new OpenLayers.Layer.OSM("OSM", coreMap.Map.LIGHT_MAP_TILES, {
+        attribution:  "Map tiles by CartoDB, under CC BY 3.0. Data by OpenStreetMap, under ODbL.",
         wrapDateLine: false
     });
     this.map.addLayer(baseLayer);
