@@ -89,6 +89,11 @@ coreMap.Map.HEATMAP_LAYER = 'heatmap';
 coreMap.Map.CLUSTER_LAYER = 'cluster';
 coreMap.Map.NODE_LAYER = 'node';
 
+// Dark Background Color = #242426
+coreMap.Map.DARK_MAP_TILES = "http://a.basemaps.cartocdn.com/dark_all/${z}/${x}/${y}.png";
+// Light Background Color = #CDD2D4
+coreMap.Map.LIGHT_MAP_TILES = "http://a.basemaps.cartocdn.com/light_all/${z}/${x}/${y}.png";
+
 /**
  * Resets the select control by temporarily removing it from the map
  * before syncing to the current list of selectable layers.
@@ -458,24 +463,8 @@ coreMap.Map.prototype.createSelectControl =  function(layer) {
  */
 
 coreMap.Map.prototype.setupLayers = function() {
-    var baseLayer = new OpenLayers.Layer.OSM("OSM", null, {
-        // Add map tile grayscale conversion.
-        // https://github.com/openlayers/openlayers/blob/master/examples/osm-grayscale.html
-        eventListeners: {
-            tileloaded: function(event) {
-                var context = event.tile.getCanvasContext();
-                if(context) {
-                    var image = context.getImageData(0, 0, event.tile.size.w, event.tile.size.h);
-                    var pixels = image.data;
-                    for(var i = 0; i < pixels.length; i += 4) {
-                        pixels[i] = pixels[i + 1] = pixels[i + 2] = 0.8 * ((pixels[i] + pixels[i + 1] + pixels[i + 2]) / 3);
-                    }
-                    context.putImageData(image, 0, 0);
-                    event.tile.imgDiv.removeAttribute("crossorigin");
-                    event.tile.imgDiv.src = context.canvas.toDataURL();
-                }
-            }
-        },
+    var baseLayer = new OpenLayers.Layer.OSM("OSM", coreMap.Map.LIGHT_MAP_TILES, {
+        attribution:  "Map tiles by CartoDB, under CC BY 3.0. Data by OpenStreetMap, under ODbL.",
         wrapDateLine: false
     });
     this.map.addLayer(baseLayer);
