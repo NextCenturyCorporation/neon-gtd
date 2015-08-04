@@ -26,21 +26,23 @@
 Set username and database in uploadFile.
 */
 angular.module('neonDemo.directives')
-.directive('importFile', ['ConnectionService', 'ErrorNotificationService', 'ImportService',
-    function(connectionService, errorNotificationService, importService) {
+.directive('importFile', ['ConnectionService', 'ImportService',
+    function(connectionService, importService) {
     return {
         templateUrl: 'partials/directives/importFile.html',
         restrict: 'EA',
         link: function($scope) {
-
             $scope.canImport = (window.File && window.FileReader && window.FileList && window.Blob);
             $scope.nameTypePairs = undefined;
-            $scope.jobID = undefined;
+            $scope.currentJobID = undefined;
+
+            $scope.isConverting = false;
+            $scope.convertingMessage = "";
             var file;
 
             $scope.uploadFile = function() {
-                importService.setUserName(jQuery('#importUsernameInput')[0].value);
-                importService.setDatabaseName(jQuery('#importDatabaseInput')[0].value);
+                importService.setUserName($('#importUsernameInput')[0].value);
+                importService.setDatabaseName($('#importDatabaseInput')[0].value);
                 var connection = connectionService.getActiveConnection();
                 if(!connection || !file || !importService.getDatabaseName()) {
                     return;
@@ -51,7 +53,7 @@ angular.module('neonDemo.directives')
                 formData.append('type', file.name.substring(file.name.lastIndexOf('.') + 1));
                 formData.append('file', file);
                 connection.executeUploadFile(formData, uploadSuccess, uploadFail);
-                jQuery('#importDatabaseInput')[0].value = '';
+                $('#importDatabaseInput')[0].value = '';
             };
 
             var uploadFail = function(response) {
@@ -59,7 +61,7 @@ angular.module('neonDemo.directives')
             };
 
             var uploadSuccess = function(response) {
-                var result = JSON.parse(response); // We manually make XMLHttpRequest here, so get no auto-parsing.
+                var result = JSON.parse(response); // We manually make XMLHttpRequest when uploading binary data, so get no auto-parsing.
                 var jobID = result.jobID;
                 $scope.nameTypePairs = result.types;
                 $scope.$apply();
@@ -72,17 +74,18 @@ angular.module('neonDemo.directives')
                     return;
                 }
                 connection.executeCheckTypeGuesses(jobID, waitForGuessesCallback);
-            }
+            };
 
             var waitForGuessesCallback = function(response) {
                 if(response.complete) {
                     $scope.nameTypePairs = response.guesses;
-                    $scope.jobID = response.jobID;
+                    $scope.currentJobID = response.jobID;
                     $scope.$apply();
                     showConfirmGuessesModal();
-                }
-                else {
-                    window.setTimeout(function() { waitForGuesses(response.jobID); }, 2000);
+                } else {
+                    window.setTimeout(function() {
+                        waitForGuesses(response.jobID);
+                    }, 2000);
                 }
             };
 
@@ -97,27 +100,24 @@ angular.module('neonDemo.directives')
                         pair.type = 'String';
                     });
                 }
-                var datePattern = jQuery('#dateStringInput')[0].value;
+                var datePattern = $('#dateStringInput')[0].value;
                 var toSend = {
                     format: datePattern ? datePattern : undefined,
                     fields: ftPairs
                 };
-                connection.executeLoadFileIntoDB(toSend, $scope.jobID, confirmSuccess, confirmFail);// I need to actually get jobID in here somehow. Preferably,
-                                                                                                    // this would be passed directly from the last time the guesses
-                                                                                                    // callback fired, but for now I'll just store it as a variable.
-                                                                                                    // (Getting it straight from the last method to use it would be
-                                                                                                    // preferable just to continue everything in a nice chain.)
-            }
+                connection.executeLoadFileIntoDB(toSend, $scope.currentJobID, confirmChoicesSuccess, confirmChoicesFail);
+                // Preferably, job ID here would be passed directly from the last time the guesses callback fired, but for now I'll just store it as a variable.
+                // (Getting it straight from the last method to use it would be preferable just to continue everything in a nice chain.)
+                $scope.isConverting = true;
+                $scope.convertingMessage = "Records converted: 0";
+            };
 
-            var confirmSuccess = function(response) {
+            var confirmChoicesSuccess = function(response) {
                 waitForUploadComplete(response.jobID);
             };
 
-            var confirmFail = function(response) {
-                $scope.nameTypePairs = response.responseJSON;
-                $scope.$apply();
-                jQuery('#convertFailedText').show();
-                setupDropdowns();
+            var confirmChoicesFail = function() {
+                window.alert("Something went wrong when trying to find your file's records to convert and load them.");
             };
 
             var waitForUploadComplete = function(jobID) {
@@ -126,35 +126,38 @@ angular.module('neonDemo.directives')
                     return;
                 }
                 connection.executeCheckImportProgress(jobID, waitForUploadCompleteCallback);
-            }
+            };
 
             var waitForUploadCompleteCallback = function(response) {
                 if(response.complete) {
-                    if(response.failed) {
-                        $scope.nameTypePairs = response.responseJSON;
+                    $scope.isConverting = false;
+                    $scope.$apply();
+                    if(response.failedFields.length > 0) {
+                        $scope.nameTypePairs = response.failedFields;
                         $scope.$apply();
-                        jQuery('#convertFailedText').show();
-                        setupDropdowns();
+                        $('#convertFailedText').show();
+                        setupConfirmGuessesModalInfo();
+                    } else {
+                        $("#confirmChoicesModal").modal('hide');
                     }
-                    else {
-                        jQuery("#confirmChoicesModal").modal('hide');
-                    }
-                }
-                else {
+                } else {
                     if(response.numFinished < 0) {
-                        return;
+                        return; // numFinished only returns as <0 if the data that the user is trying to convert doesn't exist anymore.
                     }
-                    //window.alert(response.numFinished);
-                    window.setTimeout(function() { waitForUploadComplete(response.jobID); }, 2000);
+                    $scope.convertingMessage = "Records converted: " + response.numFinished;
+                    $scope.$apply();
+                    window.setTimeout(function() {
+                        waitForUploadComplete(response.jobID);
+                    }, 2000);
                 }
-            }
+            };
 
             var showConfirmGuessesModal = function() {
-                jQuery('#dateStringInput')[0].value = importService.getDateString();
-                jQuery('#userNameCreatedText')[0].innerHTML = "Your username is " + importService.getUserName();
-                jQuery('#convertFailedText').hide()
-                jQuery('#confirmChoicesModal').modal('show');
-                setupDropdowns();
+                $('#dateStringInput')[0].value = importService.getDateString();
+                $('#userNameCreatedText')[0].innerHTML = "Your username is " + importService.getUserName();
+                $('#convertFailedText').hide();
+                $('#confirmChoicesModal').modal('show');
+                setupConfirmGuessesModalInfo();
             };
 
             var confirmChoicesDropdownChange = function(evnt) {
@@ -166,13 +169,17 @@ angular.module('neonDemo.directives')
                         pair.type = value;
                     }
                 });
+                var example = document.getElementById(name + "-example");
+                example.innerHTML = getExampleFromTypeName(value);
             };
 
-            var setupDropdowns = function() {
+            var setupConfirmGuessesModalInfo = function() {
                 $scope.nameTypePairs.forEach(function(pair) {
-                    var dropdown = document.getElementById(pair.name+"-options");
+                    var dropdown = document.getElementById(pair.name + "-options");
                     dropdown.value = pair.type;
                     dropdown.addEventListener("change", confirmChoicesDropdownChange, false);
+                    var example = document.getElementById(pair.name + "-example");
+                    example.innerHTML = getExampleFromTypeName(pair.type);
                 });
             };
 
@@ -186,15 +193,43 @@ angular.module('neonDemo.directives')
                 } else {
                     indicator.innerHTML = file.name + " - " + importService.sizeToReadable(file.size);
                 }
-                var databaseName = jQuery('#importDatabaseInput')[0].value;
+                var databaseName = $('#importDatabaseInput')[0].value;
                 if(!databaseName) {
-                    jQuery('#importDatabaseInput')[0].value = file.name.substring(0, file.name.lastIndexOf('.'));
+                    $('#importDatabaseInput')[0].value = file.name.substring(0, file.name.lastIndexOf('.'));
                 }
-            }
+            };
 
-// =====================================================================================================================
-// Define some behaviors for objects in the import modal and the import modal itself.
-// =====================================================================================================================
+            var getExampleFromTypeName = function(name) {
+                switch(name) {
+                    case "Integer": {
+                        return "1125";
+                    }
+                    case "Long": {
+                        return "1234567890987654321";
+                    }
+                    case "Double": {
+                        return "1.125";
+                    }
+                    case "Float": {
+                        return "1.234567890987654321";
+                    }
+                    case "Date": {
+                        return "2012-12-21T07:08:09.123Z";
+                    }
+                    case "String": {
+                        return "\"The quick brown fox.\"";
+                    }
+                    default: {
+                        return "No example available; invalid type.";
+                    }
+                }
+            };
+
+            /**
+             * =====================================================================================================================
+             * Define some behaviors for objects in the import modal and the import modal itself.
+             * =====================================================================================================================
+             */
 
             var importModalDragEnter = function(evnt) {
                 evnt.stopPropagation();
@@ -222,14 +257,14 @@ angular.module('neonDemo.directives')
                 displayFileInfo(file);
             };
 
-            var importModalOnHidden = function(evnt) {
+            var importModalOnHidden = function() {
                 file = undefined;
                 displayFileInfo(file);
             };
 
-            var importModalOnShow = function(evnt) {
-                jQuery('#importUsernameInput')[0].value = importService.getUserName();
-            }
+            var importModalOnShow = function() {
+                $('#importUsernameInput')[0].value = importService.getUserName();
+            };
 
             // Set behavior of drag and drop element within import file modal.
             var dragDrop = document.getElementById("fileDragAndDrop");
@@ -243,9 +278,9 @@ angular.module('neonDemo.directives')
             fileSelector.addEventListener("drop", importModalDrop, false);
             fileSelector.addEventListener("change", importModalFileSelectChange, false);
             // Clear selected file and reset text when import modal is hidden, and set username to what it was last time when the modal appears.
-            jQuery("#importModal").on("hidden.bs.modal", importModalOnHidden).on("show.bs.modal", importModalOnShow);
+            $("#importModal").on("hidden.bs.modal", importModalOnHidden).on("show.bs.modal", importModalOnShow);
             // Hide the text portion of the file selector element -  we have our own, and it doesn't update when the modal closes and reopens.
-            jQuery("#fileSelect").css("color", "transparent");
+            $("#fileSelect").css("color", "transparent");
         }
     };
 }]);

@@ -1144,7 +1144,7 @@ charts.TimelineSelectorChart = function(element, configuration) {
             y: me.yFocus,
             yAxis: yAxis
         };
-    }
+    };
 
     /**
      * Updates the x axis as well as redraws the focus chart

@@ -23,65 +23,65 @@
  */
 angular.module('neonDemo.services')
 .factory('ImportService', function() {
-	var userName = '';
-	var databaseName = '';
-	var dateString = '';
-	var MAX_SIZE = 30000000;
+    var userName = '';
+    var databaseName = '';
+    var dateString = '';
+    var MAX_SIZE = 30000000;
 
-	var service = {};
+    var service = {};
 
-	service.getUserName = function() {
-		return userName;
-	};
+    service.getUserName = function() {
+        return userName;
+    };
 
-	service.setUserName = function(newName) {
-		userName = newName;
-	};
-	
-	service.getDatabaseName = function() {
-		return databaseName;
-	};
+    service.setUserName = function(newName) {
+        userName = newName;
+    };
 
-	service.setDatabaseName = function(newName) {
-		databaseName = newName;
-	};
-	
-	service.getDateString = function() {
-		return dateString;
-	};
+    service.getDatabaseName = function() {
+        return databaseName;
+    };
 
-	service.setDateString = function(newString) {
-		dateString = newString;
-	};
+    service.setDatabaseName = function(newName) {
+        databaseName = newName;
+    };
 
-	service.getFieldsAndTypes = function(fieldTypePairs) { // Assumes it's given an array of objects with name and type fields, among others.
-		var toReturn = [];
-		fieldTypePairs.forEach(function(pair) {
-			toReturn.push({
-				name: pair.name,
-				type: pair.type
-			});
-		});
-		return toReturn;
-	};
+    service.getDateString = function() {
+        return dateString;
+    };
 
-	service.getMaxSize = function(readable) {
-		return readable ? service.sizeToReadable(MAX_SIZE) : MAX_SIZE;
-	};
+    service.setDateString = function(newString) {
+        dateString = newString;
+    };
 
-	service.sizeToReadable = function(size) {
-	    var nameList = ["bytes", "kB", "mB", "gB", "tB", "pB"];
-	    var name = 0;
-	    while(size > 1000) {
-	        size /= 1000;
-	        name++;
-	    }
-	    return (Math.round(size * 10) / 10) + " " + nameList[name];
-	};
+    service.getFieldsAndTypes = function(fieldTypePairs) { // Assumes it's given an array of objects with name and type fields, among others.
+        var toReturn = [];
+        fieldTypePairs.forEach(function(pair) {
+            toReturn.push({
+                name: pair.name,
+                type: pair.type
+            });
+        });
+        return toReturn;
+    };
 
-	service.makeTextSafe = function(text) {
-		return text.replace(/[ \t\n]/, "_");
-	}
+    service.getMaxSize = function(readable) {
+        return readable ? service.sizeToReadable(MAX_SIZE) : MAX_SIZE;
+    };
 
-	return service;
+    service.sizeToReadable = function(size) {
+        var nameList = ["bytes", "kB", "mB", "gB", "tB", "pB"];
+        var name = 0;
+        while(size > 1000) {
+            size /= 1000;
+            name++;
+        }
+        return (Math.round(size * 10) / 10) + " " + nameList[name];
+    };
+
+    service.makeTextSafe = function(text) {
+        return text.replace(/[ \t\n]/, "_");
+    };
+
+    return service;
 });

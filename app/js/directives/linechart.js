@@ -196,7 +196,7 @@ function(connectionService, datasetService, errorNotificationService, filterServ
              * @return {Boolean}
              */
             var isDateFiltersChangedMessage = function(message) {
-                var whereClauses = undefined;
+                var whereClauses;
                 if(message.addedFilter.whereClause) {
                     whereClauses = message.addedFilter.whereClause.whereClauses;
                 } else if(message.removedFilter.whereClause) {
@@ -206,7 +206,7 @@ function(connectionService, datasetService, errorNotificationService, filterServ
                     return true;
                 }
                 return false;
-            }
+            };
 
             /**
              * Event handler for filter changed events issued over Neon's messaging channels.

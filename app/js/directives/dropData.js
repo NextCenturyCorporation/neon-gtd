@@ -29,31 +29,31 @@ angular.module('neonDemo.directives')
         templateUrl: 'partials/directives/dropData.html',
         restrict: 'EA',
         link: function($scope) {
-    		$scope.dropDataset = function() {
-                importService.setUserName(jQuery("#dropUsernameInput")[0].value);
-    			var username = importService.makeTextSafe(jQuery("#dropUsernameInput")[0].value);
-    			var database = importService.makeTextSafe(jQuery("#dropDatabaseInput")[0].value);
-    			var connection = connectionService.getActiveConnection();
-    			if(!connection || !username || !database) {
-    				return;
-    			}
-    			connection.executeDropData(username, database, dropSuccess, dropFailure);
-    		};
-
-    		var dropSuccess = function(response) {
-    			jQuery('#dropModal').modal('hide');
-    		};
-
-    		var dropFailure = function(response) {
-    			window.alert("Sorry, there wasn't any database with that name created by this username.");
-    		};
-
-            var dropModalOnShow = function() {
-                jQuery('#dropUsernameInput')[0].value = importService.getUserName();
-                jQuery('#dropDatabaseInput')[0].value = '';
+            $scope.dropDataset = function() {
+                importService.setUserName($("#dropUsernameInput")[0].value);
+                var username = importService.makeTextSafe($("#dropUsernameInput")[0].value);
+                var database = importService.makeTextSafe($("#dropDatabaseInput")[0].value);
+                var connection = connectionService.getActiveConnection();
+                if(!connection || !username || !database) {
+                    return;
+                }
+                connection.executeDropData(username, database, dropSuccess, dropFailure);
             };
 
-            jQuery('#dropModal').on('show.bs.modal', dropModalOnShow);
+            var dropSuccess = function() {
+                $('#dropModal').modal('hide');
+            };
+
+            var dropFailure = function() {
+                window.alert("Sorry, there wasn't any database with that name created by this username.");
+            };
+
+            var dropModalOnShow = function() {
+                $('#dropUsernameInput')[0].value = importService.getUserName();
+                $('#dropDatabaseInput')[0].value = '';
+            };
+
+            $('#dropModal').on('show.bs.modal', dropModalOnShow);
         }
     };
 }]);

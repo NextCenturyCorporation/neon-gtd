@@ -39,22 +39,31 @@
       <div class="modal-body centered"> <!-- centered class comes from countBy.less - is it still okay to use it here? -->
       	<p id="userNameCreatedText"></p>
         <p id="convertFailedText">One or more fields failed to convert. Please try again.</p>
-        <p ng-repeat="field in nameTypePairs">
-          <br>
-          <span class="floatLeft">{{field.name}}</span>
-          <select class="floatRight" id="{{field.name}}-options">
-            <option value="Integer">Integer</option>
-            <option value="Long">Long</option>
-            <option value="Double">Double</option>
-            <option value="Float">Float</option>
-            <option value="Date">Date</option>
-            <option value="String">String</option>
-          </select>
-        </p>
-        <br>
+        <table class="importGuessesTable">
+          <tr>
+            <th class="alignLeft">Field name</th>
+            <th class="centered">Example of type</th>
+            <th class="alignRight">Guessed type</th>
+          </tr>
+          <tr class="borderedRow" ng-repeat="field in nameTypePairs">
+            <td class="alignLeft">{{field.name}}</td>
+            <td class="alignLeft" id="{{field.name}}-example"></td>
+            <td class="alignRight">
+              <select class="floatRight" id="{{field.name}}-options">
+                <option value="Integer">Integer</option>
+                <option value="Long">Long</option>
+                <option value="Double">Double</option>
+                <option value="Float">Float</option>
+                <option value="Date">Date</option>
+                <option value="String">String</option>
+              </select>
+            </td>
+          </tr>
+        </table>
       </div>
       <div class="modal-footer">
-        <input type="text" id="dateStringInput" class="modalFooterField" value="" maxlength="50" size="30" placeholder="Date format here if not standard">
+        <div class="alert alert-success pull-left text-left" role="alert" ng-bind="convertingMessage" ng-show="isConverting"></div>
+        <input type="text" id="dateStringInput" class="modalFooterField" value="" maxlength="50" size="30" placeholder="Date format here if not standard" ng-hide="isConverting">
         <button type="button" class="btn btn-default" ng-click="sendConfirmedChoices()">Confirm</button>
       </div>
     </div>
