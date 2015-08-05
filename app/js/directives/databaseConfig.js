@@ -15,8 +15,8 @@
  *
  */
 angular.module('neonDemo.directives')
-.directive('databaseConfig', ['layouts', 'ConnectionService', 'DatasetService',
-    function(layouts, connectionService, datasetService) {
+.directive('databaseConfig', ['layouts', 'ConnectionService', 'DatasetService', 'ParameterService',
+    function(layouts, connectionService, datasetService, parameterService) {
     return {
         templateUrl: 'partials/directives/databaseConfig.html',
         restrict: 'E',
@@ -171,6 +171,8 @@ angular.module('neonDemo.directives')
                         $scope.gridsterConfigs[i].minSizeY = 2;
                     }
                 }
+
+                parameterService.addFiltersFromUrl();
             };
 
             /**

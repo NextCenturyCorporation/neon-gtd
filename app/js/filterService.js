@@ -260,22 +260,22 @@ angular.module("neonDemo.services")
 
     var getFilterNameString = function(name, relations) {
         if(typeof name === 'object') {
+            var string = "";
             if(name.visName) {
-                var tableString;
-                var table;
-                if(relations.length > 0) {
-                    table = DatasetService.getTableWithName(relations[0].database, relations[0].table);
-                    tableString = table.prettyName;
-                }
-                for(var i = 1; i < relations.length; i++) {
-                    table = DatasetService.getTableWithName(relations[i].database, relations[i].table);
-                    tableString += ("/" + table.prettyName);
-                }
-
-                return name.visName + " - " + tableString + (name.text ? ": " + name.text : "");
-            } else {
-                return null;
+                string += name.visName + " - ";
             }
+            var tableString;
+            var table;
+            if(relations.length > 0) {
+                table = DatasetService.getTableWithName(relations[0].database, relations[0].table);
+                tableString = table.prettyName;
+            }
+            for(var i = 1; i < relations.length; i++) {
+                table = DatasetService.getTableWithName(relations[i].database, relations[i].table);
+                tableString += ("/" + table.prettyName);
+            }
+
+            return string + tableString + (name.text ? ": " + name.text : "");
         } else {
             return name;
         }
