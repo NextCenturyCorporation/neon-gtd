@@ -1,5 +1,6 @@
-<div class="filter-tray-filters" ng-show="filters.formatted.length > 0">
+<div class="filter-tray-filters" ng-show="filters.formatted.length > -100">
     <div ng-repeat="filter in filters.formatted" class="filter-tray-filter">
-        {{filter}}
+        <span class="filter-label">{{filter.name}}</span>
+        <span class="glyphicon glyphicon-remove" ng-click="handleFilterRemove(filter.ids)"></span>
     </div>
 </div>

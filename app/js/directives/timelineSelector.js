@@ -369,6 +369,12 @@ function(connectionService, datasetService, errorNotificationService, filterServ
                 });
                 $scope.messenger.subscribe(datasetService.DATE_CHANGED, onDateChanged);
 
+                $scope.messenger.subscribe(filterService.REQUEST_REMOVE_FILTER, function(ids) {
+                    if(filterService.containsKey($scope.filterKeys, ids)) {
+                        removeBrushFromTimelineAndDatasetService();
+                    }
+                });
+
                 $scope.exportID = exportService.register($scope.makeTimelineSelectorExportObject);
 
                 $scope.$on('$destroy', function() {

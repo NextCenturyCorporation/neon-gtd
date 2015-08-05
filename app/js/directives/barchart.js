@@ -86,6 +86,12 @@ function(connectionService, datasetService, errorNotificationService, filterServ
                     filtersChanged: onFiltersChanged
                 });
 
+                $scope.messenger.subscribe(filterService.REQUEST_REMOVE_FILTER, function(ids) {
+                    if(filterService.containsKey($scope.filterKeys, ids)) {
+                        $scope.clearFilterSet();
+                    }
+                });
+
                 $scope.exportID = exportService.register($scope.makeBarchartExportObject);
 
                 $scope.$on('$destroy', function() {

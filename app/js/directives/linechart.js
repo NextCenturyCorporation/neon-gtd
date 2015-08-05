@@ -115,6 +115,12 @@ function(connectionService, datasetService, errorNotificationService, filterServ
                 $scope.messenger.subscribe(datasetService.DATE_CHANGED, onDateChanged);
                 $scope.messenger.subscribe("date_selected", onDateSelected);
 
+                $scope.messenger.subscribe(filterService.REQUEST_REMOVE_FILTER, function(ids) {
+                    if(filterService.containsKey($scope.filterKeys, ids)) {
+                        $scope.removeBrush();
+                    }
+                });
+
                 $scope.exportID = exportService.register($scope.makeLinechartExportObject);
 
                 $scope.$on('$destroy', function() {

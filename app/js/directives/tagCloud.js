@@ -88,6 +88,12 @@ function(connectionService, datasetService, errorNotificationService, filterServ
                     filtersChanged: onFiltersChanged
                 });
 
+                $scope.messenger.subscribe(filterService.REQUEST_REMOVE_FILTER, function(ids) {
+                    if(filterService.containsKey($scope.filterKeys, ids)) {
+                        $scope.clearTagFilters();
+                    }
+                });
+
                 $scope.exportID = exportService.register($scope.makeTagCloudExportObject);
 
                 $scope.$on('$destroy', function() {

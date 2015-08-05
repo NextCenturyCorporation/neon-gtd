@@ -114,6 +114,12 @@ angular.module('neonDemo.directives')
                     filtersChanged: onFiltersChanged
                 });
 
+                $scope.messenger.subscribe(filterService.REQUEST_REMOVE_FILTER, function(ids) {
+                    if(filterService.containsKey($scope.filterKeys, ids)) {
+                        $scope.clearFilters();
+                    }
+                });
+
                 $scope.$on('$destroy', function() {
                     XDATA.userALE.log({
                         activity: "remove",
