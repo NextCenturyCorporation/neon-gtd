@@ -96,7 +96,8 @@ function($interval, $filter, connectionService, datasetService, errorNotificatio
                 showFocus: "on_filter",
                 animatingTime: false,
                 animationFrame: 0,
-                animationFrameDelay: 250
+                animationFrameDelay: 250,
+                showAnimationControls: true
             };
 
             var datesEqual = function(a, b) {
@@ -119,21 +120,32 @@ function($interval, $filter, connectionService, datasetService, errorNotificatio
                 $scope.filter.end = new Date(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate() - 1, date.getUTCHours());
             };
 
+            /** 
+             * Begins an animation loop by calling doTimeAnimation() at regular intervals.  An animation 
+             * consists of separate events for each bucket of time data at the timeline selector's current
+             * time resolution.  On each animation tick, a date-selected event will be emitted to allow
+             * other visualization to respond to the animation loop with their own customized graphics or filtered data.
+             * @method playTimeAnimation
+             */
             $scope.playTimeAnimation = function() {
-                // Set the frame and start the animation loop.
-                if(!$scope.options.animationStartDate) {
-                    $scope.options.animationStartDate = $scope.getAnimationStartFrame();
-                }
-
                 $scope.options.animatingTime = true;
                 $scope.options.animationTimeout = $interval($scope.doTimeAnimation, $scope.options.animationFrameDelay);
             };
 
+            /**
+             * Pauses an animation loop by cancelling the automatic doTimeAnimation interval.
+             * @method pauseTimeAnimation
+             */
             $scope.pauseTimeAnimation = function() {
                 $interval.cancel($scope.options.animationTimeout);
                 $scope.options.animatingTime = false;
             };
 
+            /**
+             * Stops an animation loop by cancelling the automatic doTimeAnimation interval and resetting the
+             * animation frame.
+             * @method stopTimeAnimation
+             */
             $scope.stopTimeAnimation = function() {
                 $interval.cancel($scope.options.animationTimeout);
                 $scope.options.animatingTime = false;
@@ -143,6 +155,10 @@ function($interval, $filter, connectionService, datasetService, errorNotificatio
                 $scope.animationMessenger.publish(DATE_ANIMATION_CHANNEL, {});
             };
 
+            /**
+             * Step ahead one frame of animation.  This emits a selection of the next bucket of temporal data.
+             * @method stepTimeAnimation
+             */
             $scope.stepTimeAnimation = function() {
                 if($scope.options.animatingTime) {
                     $scope.pauseTimeAnimation();
@@ -153,6 +169,7 @@ function($interval, $filter, connectionService, datasetService, errorNotificatio
             /**
              * Get the animation frame for the first bucket within our brushed time range, or simply
              * the first time bucket if no brush exists.
+             * @method getAnimationStartFrame
              */
             $scope.getAnimationStartFrame = function() {
                 return ($scope.brush.length && $scope.brush[0]) ?
@@ -162,19 +179,25 @@ function($interval, $filter, connectionService, datasetService, errorNotificatio
             /**
              * Get the animation frame limit for the brushed time range, or simply
              * the overall frame limit if no brush exists.
+             * @method getAnimationFrameLimit
              */
             $scope.getAnimationFrameLimit = function() {
                 return ($scope.brush.length && $scope.brush[1]) ?
                     $scope.bucketizer.getBucketIndex($scope.brush[1]) : $scope.bucketizer.getNumBuckets();
             };
 
+            /**
+             * Perform a single frame an time animation.  For this directive, the time bucket corresponding
+             * to the current animation frame will be highlighted.  Additionally, a date selection message will
+             * be published for the bucket's date range.  This will allow other visualizations to sync up their 
+             * display and match animation frames.
+             * @method doTimeAnimation
+             */
             $scope.doTimeAnimation = function() {
                 // Get the frame limits to see if we need to reset our animation.
                 var frameStart = $scope.getAnimationStartFrame();
                 var frameLimit = $scope.getAnimationFrameLimit();
-                if($scope.options.animationFrame >= frameLimit) {
-                    $scope.options.animationFrame = frameStart;
-                } else if($scope.options.animationFrame < frameStart) {
+                if(($scope.options.animationFrame >= frameLimit) || ($scope.options.animationFrame < frameStart)){
                     $scope.options.animationFrame = frameStart;
                 }
 
