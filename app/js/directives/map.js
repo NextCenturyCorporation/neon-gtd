@@ -79,7 +79,6 @@ angular.module('neonDemo.directives')
             $scope.loadingData = false;
             $scope.selectedPointLayer = {};
             $scope.selectionEvent = "QUERY_RESULTS_SELECTION_EVENT";
-            $scope.animationDateSelectedEvent = "animation_date_selected";
 
             $scope.mapLayers = [coreMap.Map.POINTS_LAYER, coreMap.Map.CLUSTER_LAYER, coreMap.Map.HEATMAP_LAYER, coreMap.Map.NODE_LAYER];
 
@@ -153,7 +152,6 @@ angular.module('neonDemo.directives')
                 $scope.linkyConfig = datasetService.getLinkyConfig();
 
                 $scope.messenger.subscribe('date_selected', onDateSelected);
-                $scope.messenger.subscribe($scope.animationDateSelectedEvent, onDateSelected);
 
                 $scope.$on('$destroy', function() {
                     XDATA.userALE.log({
