@@ -235,7 +235,6 @@ coreMap.Map.Layer.NodeLayer.prototype.createWeightedLine = function(pt1, pt2, we
  * @method createWeightedArrow
  */
 coreMap.Map.Layer.NodeLayer.prototype.createWeightedArrow = function(pt1, pt2, weight, element) {
-
     var lineWidth = this.calculateLineWidth(weight);
     lineWidth = (lineWidth < coreMap.Map.Layer.NodeLayer.MIN_ARROW_POINT_RADIUS) ?
         coreMap.Map.Layer.NodeLayer.MIN_ARROW_POINT_RADIUS : lineWidth;

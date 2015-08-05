@@ -119,8 +119,8 @@ function($interval, $filter, connectionService, datasetService, errorNotificatio
                 $scope.filter.end = new Date(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate() - 1, date.getUTCHours());
             };
 
-            /** 
-             * Begins an animation loop by calling doTimeAnimation() at regular intervals.  An animation 
+            /**
+             * Begins an animation loop by calling doTimeAnimation() at regular intervals.  An animation
              * consists of separate events for each bucket of time data at the timeline selector's current
              * time resolution.  On each animation tick, a date-selected event will be emitted to allow
              * other visualization to respond to the animation loop with their own customized graphics or filtered data.
@@ -188,7 +188,7 @@ function($interval, $filter, connectionService, datasetService, errorNotificatio
             /**
              * Perform a single frame an time animation.  For this directive, the time bucket corresponding
              * to the current animation frame will be highlighted.  Additionally, a date selection message will
-             * be published for the bucket's date range.  This will allow other visualizations to sync up their 
+             * be published for the bucket's date range.  This will allow other visualizations to sync up their
              * display and match animation frames.
              * @method doTimeAnimation
              */
@@ -196,7 +196,7 @@ function($interval, $filter, connectionService, datasetService, errorNotificatio
                 // Get the frame limits to see if we need to reset our animation.
                 var frameStart = $scope.getAnimationStartFrame();
                 var frameLimit = $scope.getAnimationFrameLimit();
-                if(($scope.options.animationFrame >= frameLimit) || ($scope.options.animationFrame < frameStart)){
+                if(($scope.options.animationFrame >= frameLimit) || ($scope.options.animationFrame < frameStart)) {
                     $scope.options.animationFrame = frameStart;
                 }
 
