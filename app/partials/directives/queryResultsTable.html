@@ -1,5 +1,5 @@
-<div class="header-container" ng-show="!(navbarItem) && !(hideHeader)">
-    <span class="header-text pull-left">{{options.table.prettyName}}</span>
+<div class="header-container" ng-show="!(hideHeader)">
+    <span class="header-text pull-left" ng-bind="options.table.prettyName"></span>
 
     <options-menu parent-element="element" export-function="makeQueryResultsTableExportObject">
         <div class="form-group" ng-show="!(hideAdvancedOptions)">
@@ -16,11 +16,11 @@
         <div class="form-group">
             <label>Add Column</label>
             <div class="input-group">
-                <select class="form-control" ng-model="options.addField" ng-disabled="!(tableNameToDeletedFieldsMap[options.table.name].length > 0)" ng-options="field for field in tableNameToDeletedFieldsMap[options.table.name]">
+                <select class="form-control" ng-model="options.addField" ng-disabled="!(deletedFieldsMap[options.database.name][options.table.name].length > 0)" ng-options="field.prettyName for field in deletedFieldsMap[options.database.name][options.table.name]">
                 </select>
 
                 <div class="input-group-btn">
-                    <button class="btn btn-default" ng-click="addColumn()" ng-disabled="!(tableNameToDeletedFieldsMap[options.table.name].length > 0)">&plus;</button>
+                    <button class="btn btn-default" ng-click="addColumn()" ng-disabled="!(deletedFieldsMap[options.database.name][options.table.name].length > 0)">&plus;</button>
                 </div>
             </div>
         </div>    
@@ -28,15 +28,15 @@
         <div class="form-group">
             <label>Sort By</label>
             <div class="input-group">
-                <select class="form-control" ng-model="options.sortByField" ng-disabled="!(fields.length > 0)" ng-options="field for field in fields" ng-change="refreshData()">
+                <select class="form-control" ng-model="options.sortByField" ng-disabled="!(fields.length > 0)" ng-options="field.prettyName for field in fields" ng-change="refreshData()">
                 </select>
 
                 <div class="input-group-btn">
                     <label class="btn btn-default active" ng-class="{true: 'active', false: ''}[options.sortDirection === ASCENDING]">
-                        <input type="radio" ng-model="options.sortDirection" style="display:none" ng-value="ASCENDING" ng-change="handleAscButtonClick()"> ASC
+                        <input type="radio" ng-model="options.sortDirection" style="display:none" ng-value="ASCENDING" ng-change="handleAscButtonClick()">ASC
                     </label>
                     <label class="btn btn-default" ng-class="{true: 'active', false: ''}[options.sortDirection === DESCENDING]">
-                        <input type="radio" ng-model="options.sortDirection" style="display:none" ng-value="DESCENDING" ng-change="handleDescButtonClick()"> DESC
+                        <input type="radio" ng-model="options.sortDirection" style="display:none" ng-value="DESCENDING" ng-change="handleDescButtonClick()">DESC
                     </label>
                 </div>
             </div>
@@ -63,61 +63,6 @@
         <span class="count text-primary" ng-bind="tableOptions.data.length"></span> of 
         <span ng-bind="totalRows"></span>
     </h4>
-
-    <div class="form-inline navbar-item-forms pull-right">
-        <form name="dataTableForm">
-            <div ng-hide="!(navbarItem)" class="form-group">
-                <label>Database</label>
-                <select class="form-control" ng-model="options.database" ng-options="database.prettyName for database in databases" ng-required="true" ng-disabled="(databases.length < 2)" ng-change="updateTables()">
-                </select>
-            </div>
-            <div ng-hide="!(navbarItem)" class="form-group">
-                <label>Table</label>
-                <select class="form-control" ng-model="options.table" ng-options="table.prettyName for table in tables" ng-required="true" ng-disabled="(tables.length < 2)" ng-change="updateFields()">
-                </select>
-            </div>
-
-            <div ng-hide="!(navbarItem)" class="form-input-group">
-                <label>Add Column</label>
-                <div class="input-group">
-                    <select class="form-control" ng-model="options.addField" ng-disabled="!(tableNameToDeletedFieldsMap[options.table.name].length > 0)" ng-options="field for field in tableNameToDeletedFieldsMap[options.table.name]">
-                    </select>
-
-                    <div class="input-group-btn">
-                        <button class="btn btn-default" ng-click="addColumn()" ng-disabled="!(tableNameToDeletedFieldsMap[options.table.name].length > 0)">&plus;</button>
-                    </div>
-                </div>
-            </div>    
-
-            <div ng-hide="!(navbarItem)" class="form-input-group">
-                <label>Sort By</label>
-
-                <div class="input-group">
-                    <select class="form-control" ng-model="options.sortByField" ng-disabled="!(fields.length > 0)" ng-options="field for field in fields" ng-change="refreshData()">
-                    </select>
-
-                    <div class="input-group-btn">
-                        <label class="btn btn-default active" ng-class="{true: 'active', false: ''}[options.sortDirection === ASCENDING]">
-                            <input type="radio" ng-model="options.sortDirection" style="display:none" ng-value="ASCENDING" ng-change="handleAscButtonClick()"> ASC
-                        </label>
-                        <label class="btn btn-default" ng-class="{true: 'active', false: ''}[options.sortDirection === DESCENDING]">
-                            <input type="radio" ng-model="options.sortDirection" style="display:none" ng-value="DESCENDING" ng-change="handleDescButtonClick()"> DESC
-                        </label>
-                    </div>
-                </div>
-            </div>    
-
-            <div ng-hide="!(navbarItem)" class="form-group">
-                <label>Limit</label>
-                <input type="number" min="1" name="limitInput" class="form-control" ng-model="options.limit"
-                ng-class="{true: '', false: 'has-error'}[dataTableForm.limitInput.$error.number]">
-            </div>
-
-            <button type="button" class="btn btn-default refresh" title="Refresh" ng-click="refreshData()" ng-hide="!(navbarItem)">
-                <span class="glyphicon glyphicon-refresh"></span>
-            </button>
-        </form>
-    </div>
 </div>
 
 <div class="clearfix"></div>

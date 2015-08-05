@@ -37,7 +37,6 @@ coreMap.Map.Layer.PointsLayer = OpenLayers.Class(OpenLayers.Layer.Vector, {
     longitudeMapping: '',
     sizeMapping: '',
     defaultColor: '',
-    colorMapping: '',
     categoryMapping: '',
     gradient: false,
     cluster: false,
@@ -383,8 +382,8 @@ coreMap.Map.Layer.PointsLayer.DEFAULT_LATITUDE_MAPPING = "latitude";
 coreMap.Map.Layer.PointsLayer.DEFAULT_LONGITUDE_MAPPING = "longitude";
 coreMap.Map.Layer.PointsLayer.DEFAULT_OPACITY = 0.8;
 coreMap.Map.Layer.PointsLayer.DEFAULT_SIZE_MAPPING = "count_";
-coreMap.Map.Layer.PointsLayer.DEFAULT_STROKE_WIDTH = 1;
+coreMap.Map.Layer.PointsLayer.DEFAULT_STROKE_WIDTH = 0;
 coreMap.Map.Layer.PointsLayer.DEFAULT_STROKE_COLOR = "#ffffff";
-coreMap.Map.Layer.PointsLayer.MIN_RADIUS = 5;
-coreMap.Map.Layer.PointsLayer.MAX_RADIUS = 15;
+coreMap.Map.Layer.PointsLayer.MIN_RADIUS = 4;
+coreMap.Map.Layer.PointsLayer.MAX_RADIUS = 8;
 

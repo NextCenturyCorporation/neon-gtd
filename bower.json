@@ -24,6 +24,7 @@
         "jquery.linky": "0.1.8",
         "mergesort": "https://github.com/justinforce/merge-sort/archive/1.0.zip",
         "moment": "2.10.3",
+        "ngDraggable": "0.1.8",
         "opencpu": "https://github.com/NextCenturyCorporation/opencpu.js.git",
         "openlayers": "https://github.com/openlayers/openlayers/releases/download/release-2.13.1/OpenLayers-2.13.1.zip",
         "heatmapjs": "https://github.com/pa7/heatmap.js.git#v2.0",
@@ -86,6 +87,10 @@
 
         "mergesort": {
             "js": "**/merge*.js"
+        },
+
+        "ngDraggable": {
+            "js": "**/ngDraggable.js"
         },
 
         "opencpu": {
