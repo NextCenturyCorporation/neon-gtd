@@ -16,7 +16,7 @@
  */
 
 angular.module("neonDemo.services")
-.factory("DatasetService", function(datasets) {
+.factory("DatasetService", ["datasets", "$interval", function(datasets, $interval) {
     var service = {};
 
     service.datasets = datasets;
@@ -34,7 +34,10 @@ angular.module("neonDemo.services")
     service.messenger = new neon.eventing.Messenger();
 
     // The Dataset Service saves the brush extent used to filter the date for each database/table.
-    service.DATE_CHANGED = "date_changed";
+    service.DATE_CHANGED_CHANNEL = "date_changed";
+
+    // The Dataset Service may ask the visualizations to update their data.
+    service.UPDATE_DATA_CHANNEL = "update_data";
 
     /**
      * Returns the list of datasets maintained by this service.
@@ -72,13 +75,18 @@ angular.module("neonDemo.services")
         service.dataset.datastore = dataset.datastore || "";
         service.dataset.hostname = dataset.hostname || "";
         service.dataset.databases = dataset.databases || [];
-
+        service.dataset.options = dataset.options || {};
         service.dataset.mapLayers = dataset.mapLayers || [];
         service.dataset.mapConfig = dataset.mapConfig || {};
         service.dataset.relations = dataset.relations || [];
         service.dataset.linkyConfig = dataset.linkyConfig || {};
 
         validateDatabases(service.dataset);
+
+        if(service.dataset.options.requeryInterval) {
+            var delay = Math.max(0.5, service.dataset.options.requeryInterval) * 60000;
+            $interval(publishUpdateData, delay);
+        }
     };
 
     /**
@@ -509,7 +517,7 @@ angular.module("neonDemo.services")
      * @private
      */
     var publishDateChanged = function(databaseName, tableName, brushExtent) {
-        service.messenger.publish(service.DATE_CHANGED, {
+        service.messenger.publish(service.DATE_CHANGED_CHANNEL, {
             databaseName: databaseName,
             tableName: tableName,
             brushExtent: brushExtent
@@ -660,5 +668,14 @@ angular.module("neonDemo.services")
         removeFromArray(dataset.databases, indexListToRemove);
     };
 
+    /**
+     * Publishes an update data message.
+     * @method publishUpdateData
+     * @private
+     */
+    var publishUpdateData = function() {
+        service.messenger.publish(service.UPDATE_DATA_CHANNEL, {});
+    };
+
     return service;
-});
+}]);

@@ -85,6 +85,9 @@ function(connectionService, datasetService, errorNotificationService, filterServ
                 $scope.messenger.events({
                     filtersChanged: onFiltersChanged
                 });
+                $scope.messenger.subscribe(datasetService.UPDATE_DATA_CHANNEL, function() {
+                    $scope.queryForData(false);
+                });
 
                 $scope.exportID = exportService.register($scope.makeBarchartExportObject);
 

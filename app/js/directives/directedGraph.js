@@ -113,6 +113,9 @@ angular.module('neonDemo.directives')
                 $scope.messenger.events({
                     filtersChanged: onFiltersChanged
                 });
+                $scope.messenger.subscribe(datasetService.UPDATE_DATA_CHANNEL, function() {
+                    $scope.queryForData();
+                });
 
                 $scope.$on('$destroy', function() {
                     XDATA.userALE.log({

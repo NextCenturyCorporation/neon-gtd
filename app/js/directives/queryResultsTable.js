@@ -28,8 +28,8 @@
  * @constructor
  */
 angular.module('neonDemo.directives')
-.directive('queryResultsTable', ['external', 'popups', 'ConnectionService', 'DatasetService', 'ErrorNotificationService', 'ExportService', '$compile', '$timeout',
-function(external, popups, connectionService, datasetService, errorNotificationService, exportService, $compile, $timeout) {
+.directive('queryResultsTable', ['external', 'popups', 'ConnectionService', 'DatasetService', 'ErrorNotificationService', 'ExportService', '$compile', '$interval', '$timeout',
+function(external, popups, connectionService, datasetService, errorNotificationService, exportService, $compile, $interval, $timeout) {
     return {
         templateUrl: 'partials/directives/queryResultsTable.html',
         restrict: 'EA',
@@ -155,6 +155,9 @@ function(external, popups, connectionService, datasetService, errorNotificationS
 
                 $scope.messenger.events({
                     filtersChanged: onFiltersChanged
+                });
+                $scope.messenger.subscribe(datasetService.UPDATE_DATA_CHANNEL, function() {
+                    queryForData(false);
                 });
 
                 $scope.exportID = exportService.register($scope.makeQueryResultsTableExportObject);

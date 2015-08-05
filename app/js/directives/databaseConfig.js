@@ -401,7 +401,9 @@ angular.module('neonDemo.directives')
                     hostname: $scope.datastoreHost,
                     databases: [],
                     relations: [],
-                    layout: "default"
+                    options: {
+                        requery: 0
+                    }
                 };
 
                 $scope.customDatabases.forEach(function(customDatabase) {
