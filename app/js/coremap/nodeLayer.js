@@ -23,7 +23,7 @@ coreMap.Map.Layer.NodeLayer = OpenLayers.Class(OpenLayers.Layer.Vector, {
     edges: [],
     edgeWeightMapping: '',
     categoryMapping: '',
-    dateMapping: 'date',
+    dateMapping: '',
     latitudeMapping: '',
     lineColor: '',
     lineWidthDiff: 0,
@@ -47,7 +47,7 @@ coreMap.Map.Layer.NodeLayer = OpenLayers.Class(OpenLayers.Layer.Vector, {
         // Set a default date filter strategy.
         this.dateFilter = new OpenLayers.Filter.Comparison({
             type: OpenLayers.Filter.Comparison.BETWEEN,
-            property: this.dateMapping,
+            property: options.dateMapping || coreMap.Map.Layer.NodeLayer.DEFAULT_DATE_MAPPING,
             lowerBoundary: new Date("2015-05-10 00:00:00.000Z"),
             upperBoundary: new Date("2015-05-16 00:00:00.000Z")
         });
@@ -387,10 +387,11 @@ coreMap.Map.Layer.NodeLayer.prototype.updateFeatures = function() {
         var tgt = me.getValueFromDataElement(me.targetMapping || coreMap.Map.Layer.NodeLayer.DEFAULT_TARGET, element);
         var weight = me.getValueFromDataElement(me.weightMapping || coreMap.Map.Layer.NodeLayer.DEFAULT_WEIGHT_MAPPING, element);
         var date = 'none';
+        var dateMapping = me.dateMapping || coreMap.Map.Layer.PointsLayer.DEFAULT_DATE_MAPPING;
         var key = '';
 
-        if(element.date) {
-            date = new Date(element[me.dateMapping]);
+        if(element[dateMapping]) {
+            date = new Date(element[dateMapping]);
         }
 
         var pt1 = [
@@ -406,11 +407,11 @@ coreMap.Map.Layer.NodeLayer.prototype.updateFeatures = function() {
         // If the line has substance, render it.
         if(weight > 0) {
             var line = me.createWeightedLine(pt1, pt2, weight);
-            line.attributes[me.dateMapping] = date;
+            line.attributes[dateMapping] = date;
             lines.push(line);
 
             var arrow = me.createWeightedArrow(pt1, pt2, weight, tgt);
-            arrow.attributes[me.dateMapping] = date;
+            arrow.attributes[dateMapping] = date;
             arrows.push(arrow);
         }
 
@@ -418,13 +419,13 @@ coreMap.Map.Layer.NodeLayer.prototype.updateFeatures = function() {
         key = pt1 + date;
         if(!nodes[key]) {
             nodes[key] = me.createNode(src);
-            nodes[key].attributes[me.dateMapping] = date;
+            nodes[key].attributes[dateMapping] = date;
         }
 
         key = pt2 + date;
         if(!nodes[key]) {
             nodes[key] = me.createNode(tgt);
-            nodes[key].attributes[me.dateMapping] = date;
+            nodes[key].attributes[dateMapping] = date;
         }
     });
 
@@ -438,6 +439,7 @@ coreMap.Map.Layer.NodeLayer.DEFAULT_LONGITUDE_MAPPING = "longitude";
 coreMap.Map.Layer.NodeLayer.DEFAULT_WEIGHT_MAPPING = "wgt";
 coreMap.Map.Layer.NodeLayer.DEFAULT_SOURCE = "from";
 coreMap.Map.Layer.NodeLayer.DEFAULT_TARGET = "to";
+coreMap.Map.Layer.NodeLayer.DEFAULT_DATE_MAPPING = "date";
 
 coreMap.Map.Layer.NodeLayer.DEFAULT_ARROW_POINT_RADIUS = 5;
 coreMap.Map.Layer.NodeLayer.DEFAULT_OPACITY = 1;

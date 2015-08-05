@@ -646,7 +646,7 @@ angular.module("neonDemo.services")
                     return table.name === tableName;
                 });
 
-                if(table) {
+                if(table && table.fields) {
                     var hasField = {};
                     table.fields.forEach(function(field) {
                         hasField[field.columnName] = true;

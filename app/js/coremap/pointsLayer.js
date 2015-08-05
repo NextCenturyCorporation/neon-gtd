@@ -38,6 +38,7 @@ coreMap.Map.Layer.PointsLayer = OpenLayers.Class(OpenLayers.Layer.Vector, {
     sizeMapping: '',
     defaultColor: '',
     categoryMapping: '',
+    dateMapping: '',
     gradient: false,
     cluster: false,
     linkyConfig: {
@@ -59,7 +60,7 @@ coreMap.Map.Layer.PointsLayer = OpenLayers.Class(OpenLayers.Layer.Vector, {
 
         // Set the clustering strategy if necessary.
         if(options.cluster) {
-            var ClusterClass = new OpenLayers.Class(OpenLayers.Strategy.Cluster, {
+            this.ClusterClass = new OpenLayers.Class(OpenLayers.Strategy.Cluster, {
                 attribute: null,
                 shouldCluster: function(cluster, feature) {
                     var clusterVal = cluster.cluster[0].attributes[me.categoryMapping];
@@ -69,12 +70,22 @@ coreMap.Map.Layer.PointsLayer = OpenLayers.Class(OpenLayers.Layer.Vector, {
                 },
                 CLASS_NAME: "OpenLayers.Strategy.AttributeCluster"
             });
-            extendOptions.strategies = [
-                new ClusterClass({
-                    distance: coreMap.Map.Layer.PointsLayer.DEFAULT_CLUSTER_DISTANCE,
-                    attribute: this.categoryMapping
-                })
-            ];
+            this.clusterStrategy = new this.ClusterClass({
+                distance: coreMap.Map.Layer.PointsLayer.DEFAULT_CLUSTER_DISTANCE,
+                attribute: this.categoryMapping
+            });
+            extendOptions.strategies = [this.clusterStrategy];
+        } else {
+            // Set a default date filter strategy.
+            this.dateFilter = new OpenLayers.Filter.Comparison({
+                type: OpenLayers.Filter.Comparison.BETWEEN,
+                property: options.dateMapping || coreMap.Map.Layer.PointsLayer.DEFAULT_DATE_MAPPING,
+                lowerBoundary: new Date("2015-05-10 00:00:00.000Z"),
+                upperBoundary: new Date("2015-05-16 00:00:00.000Z")
+            });
+            this.dateFilterStrategy = new OpenLayers.Strategy.Filter({});
+            extendOptions.strategies = [this.dateFilterStrategy];
+            this.dateFilterStrategy.deactivate();
         }
 
         // Call the super constructor, you will have to define the variables geometry, attributes and style
@@ -164,11 +175,10 @@ coreMap.Map.Layer.PointsLayer = OpenLayers.Class(OpenLayers.Layer.Vector, {
  */
 coreMap.Map.Layer.PointsLayer.prototype.calculateColor = function(element) {
     var category = this.getValueFromDataElement(this.categoryMapping, element);
-    var date = new Date(category);
     var color;
 
-    if(category && this.gradient && _.isString(category) && !isNaN(date)) {
-        color = "#" + this.rainbow.colourAt(date.getTime());
+    if(category && this.gradient && _.isDate(category)) {
+        color = "#" + this.rainbow.colourAt(category.getTime());
     } else if(category && !this.gradient) {
         color = this.colorScale(category);
     } else {
@@ -237,6 +247,11 @@ coreMap.Map.Layer.PointsLayer.prototype.createPoint = function(element, longitud
     var feature = new OpenLayers.Feature.Vector(point);
     feature.style = this.stylePoint(element);
     feature.attributes = element;
+
+    if(this.cluster) {
+        feature.dataElements = element;
+    }
+
     return feature;
 };
 
@@ -306,6 +321,21 @@ coreMap.Map.Layer.PointsLayer.prototype.setData = function(data) {
     }
     this.updateRadii();
     this.updateFeatures();
+    if(this.dateFilterStrategy) {
+        this.dateFilterStrategy.setFilter();
+    }
+};
+
+coreMap.Map.Layer.PointsLayer.prototype.setDateFilter = function(filterBounds) {
+    if(filterBounds && filterBounds.start && filterBounds.end) {
+        // Update the filter
+        this.dateFilter.lowerBoundary = filterBounds.start;
+        this.dateFilter.upperBoundary = filterBounds.end;
+        this.dateFilterStrategy.setFilter(this.dateFilter);
+    } else {
+        // Clear the filter
+        this.dateFilterStrategy.setFilter();
+    }
 };
 
 /**
@@ -354,7 +384,16 @@ coreMap.Map.Layer.PointsLayer.prototype.updateFeatures = function() {
         var latitude = me.getValueFromDataElement(me.latitudeMapping, element);
 
         if($.isNumeric(latitude) && $.isNumeric(longitude)) {
-            mapData.push(me.createPoint(element, longitude, latitude));
+            var pointFeature = me.createPoint(element, longitude, latitude);
+
+            var date = 'none';
+            var dateMapping = me.dateMapping || coreMap.Map.Layer.PointsLayer.DEFAULT_DATE_MAPPING;
+            if(element[dateMapping]) {
+                date = new Date(element[dateMapping]);
+            }
+            pointFeature.attributes[dateMapping] = date;
+
+            mapData.push(pointFeature);
         }
     });
     this.destroyFeatures();
@@ -380,6 +419,7 @@ coreMap.Map.Layer.PointsLayer.DEFAULT_CLUSTER_DISTANCE = 40;
 coreMap.Map.Layer.PointsLayer.DEFAULT_COLOR = "#00ff00";
 coreMap.Map.Layer.PointsLayer.DEFAULT_LATITUDE_MAPPING = "latitude";
 coreMap.Map.Layer.PointsLayer.DEFAULT_LONGITUDE_MAPPING = "longitude";
+coreMap.Map.Layer.PointsLayer.DEFAULT_DATE_MAPPING = "date";
 coreMap.Map.Layer.PointsLayer.DEFAULT_OPACITY = 0.8;
 coreMap.Map.Layer.PointsLayer.DEFAULT_SIZE_MAPPING = "count_";
 coreMap.Map.Layer.PointsLayer.DEFAULT_STROKE_WIDTH = 1;
