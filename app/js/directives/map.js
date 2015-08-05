@@ -81,7 +81,7 @@ angular.module('neonDemo.directives')
             $scope.selectedPointLayer = {};
             $scope.selectionEvent = "QUERY_RESULTS_SELECTION_EVENT";
             $scope.animationDateSelectedEvent = "animation_date_selected";
-            
+
             $scope.MAP_LAYER_TYPES = [coreMap.Map.POINTS_LAYER, coreMap.Map.CLUSTER_LAYER, coreMap.Map.HEATMAP_LAYER, coreMap.Map.NODE_LAYER];
             $scope.DEFAULT_LIMIT = 1000;
             $scope.DEFAULT_NEW_LAYER_TYPE = $scope.MAP_LAYER_TYPES[0];
@@ -512,36 +512,6 @@ angular.module('neonDemo.directives')
                     configClone.push(setDefaultLayerProperties(_.clone(config[i])));
                 }
                 return configClone;
-            };
-
-            var createLayersByDatabaseAndTableMap = function(layers) {
-                var map = {};
-                for(var i = 0; i < layers.length; ++i) {
-                    var database = layers[i].database;
-                    var table = layers[i].table;
-                    if(!map[database]) {
-                        map[database] = {};
-                    }
-                    // TODO:  We currently use the limit of the first layer for each database/table pair.  We need to determine a better way of structuring the configuration.
-                    if(!map[database][table]) {
-                        map[database][table] = {
-                            names: [],
-                            limit: layers[i].limit
-                        };
-                    }
-
-                    if(!(map[database][table].limit)) {
-                        map[database][table].limit = layers[i].limit;
-                    }
-
-                    // Set other properties for the layer.
-                    layers[i].name = (layers[i].name || layers[i].table).toUpperCase();
-                    map[database][table].names.push(layers[i].name);
-                    layers[i].databasePrettyName = getPrettyNameForDatabase(database);
-                    layers[i].tablePrettyName = getPrettyNameForTable(table);
-                    layers[i].visible = true;
-                }
-                return map;
             };
 
             var drawZoomRect = function(rect) {
@@ -1378,12 +1348,6 @@ angular.module('neonDemo.directives')
                     }
                 }
                 return finalObject;
-            };
-
-            $scope.resetNewLayer = function() {
-                $scope.options.newLayer.database = $scope.databases[0];
-                $scope.options.newLayer.limit = $scope.DEFAULT_LIMIT;
-                $scope.updateTables();
             };
 
             /*

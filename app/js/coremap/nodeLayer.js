@@ -236,7 +236,6 @@ coreMap.Map.Layer.NodeLayer.prototype.createWeightedLine = function(pt1, pt2, we
  * @method createWeightedArrow
  */
 coreMap.Map.Layer.NodeLayer.prototype.createWeightedArrow = function(pt1, pt2, weight, element) {
-
     var wt = this.calculateLineWidth(weight);
     wt = 6;
     var angle = this.calculateAngle(pt1[0], pt1[1], pt2[0], pt2[1]);
