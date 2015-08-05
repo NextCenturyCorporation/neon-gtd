@@ -51,7 +51,6 @@ function($interval, $filter, connectionService, datasetService, errorNotificatio
             var MONTH = "month";
             var HOUR = "hour";
             var DAY = "day";
-            var DATE_ANIMATION_CHANNEL = 'animation_date_selected';
 
             $element.addClass('timeline-selector');
 
@@ -152,7 +151,7 @@ function($interval, $filter, connectionService, datasetService, errorNotificatio
 
                 // Clear the current step data.
                 $scope.options.animationFrame = 0;
-                $scope.animationMessenger.publish(DATE_ANIMATION_CHANNEL, {});
+                $scope.messenger.publish('date_selected', {});
             };
 
             /**
@@ -211,8 +210,8 @@ function($interval, $filter, connectionService, datasetService, errorNotificatio
                 if($scope.options.animationFrame === ($scope.bucketizer.getNumBuckets() - 1)) {
                     dateSelected.end = $scope.bucketizer.getEndDate();
                 }
-                //console.log(dateSelected);
-                $scope.animationMessenger.publish(DATE_ANIMATION_CHANNEL, dateSelected);
+
+                $scope.messenger.publish('date_selected', dateSelected);
 
                 // Advance the animation step data.
                 $scope.options.animationFrame++;
@@ -466,13 +465,11 @@ function($interval, $filter, connectionService, datasetService, errorNotificatio
                 });
 
                 $scope.messenger = new neon.eventing.Messenger();
-                $scope.animationMessenger = new neon.eventing.Messenger();
 
                 $scope.messenger.events({
                     filtersChanged: onFiltersChanged
                 });
                 $scope.messenger.subscribe(datasetService.DATE_CHANGED, onDateChanged);
-                $scope.messenger.subscribe(DATE_ANIMATION_CHANNEL, onDateChanged);
 
                 $scope.exportID = exportService.register($scope.makeTimelineSelectorExportObject);
 
