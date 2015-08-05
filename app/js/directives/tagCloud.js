@@ -198,9 +198,16 @@ function(connectionService, datasetService, errorNotificationService, filterServ
 
             $scope.updateFields = function() {
                 $scope.loadingData = true;
-                $scope.fields = datasetService.getDatabaseFields($scope.options.database.name, $scope.options.table.name);
-                $scope.fields.sort();
-                $scope.options.tagField = $scope.bindTagField || datasetService.getMapping($scope.options.database.name, $scope.options.table.name, "tags") || $scope.fields[0] || "";
+                $scope.fields = datasetService.getSortedFields($scope.options.database.name, $scope.options.table.name);
+
+                var tagField = $scope.bindTagField || datasetService.getMapping($scope.options.database.name, $scope.options.table.name, "tags") || "";
+                $scope.options.tagField = _.find($scope.fields, function(field) {
+                    return field.columnName === tagField;
+                }) || {
+                    columnName: "",
+                    prettyName: ""
+                };
+
                 if($scope.showFilter) {
                     $scope.clearTagFilters();
                 } else {
@@ -220,7 +227,7 @@ function(connectionService, datasetService, errorNotificationService, filterServ
 
                 var connection = connectionService.getActiveConnection();
 
-                if(!connection || !$scope.options.tagField) {
+                if(!connection || !$scope.options.tagField.columnName) {
                     $scope.updateTagData([]);
                     $scope.loadingData = false;
                     return;
@@ -237,7 +244,7 @@ function(connectionService, datasetService, errorNotificationService, filterServ
                     tags: ["query", "tag-cloud"]
                 });
 
-                connection.executeArrayCountQuery($scope.options.database.name, $scope.options.table.name, $scope.options.tagField, $scope.options.tagLimit, function(tagCounts) {
+                connection.executeArrayCountQuery($scope.options.database.name, $scope.options.table.name, $scope.options.tagField.columnName, $scope.options.tagLimit, function(tagCounts) {
                     XDATA.userALE.log({
                         activity: "alter",
                         action: "query",
@@ -359,7 +366,7 @@ function(connectionService, datasetService, errorNotificationService, filterServ
              * @method applyFilter
              */
             $scope.applyFilter = function() {
-                var relations = datasetService.getRelations($scope.options.database.name, $scope.options.table.name, [$scope.options.tagField]);
+                var relations = datasetService.getRelations($scope.options.database.name, $scope.options.table.name, [$scope.options.tagField.columnName]);
                 filterService.replaceFilters($scope.messenger, relations, $scope.filterKeys, $scope.createFilterClauseForTags, {
                     visName: "Tag Cloud",
                     text: $scope.filterTags.join(', ')
@@ -438,7 +445,7 @@ function(connectionService, datasetService, errorNotificationService, filterServ
                     data: [{
                         database: $scope.options.database.name,
                         table: $scope.options.table.name,
-                        field: $scope.options.tagField,
+                        field: $scope.options.tagField.columnName,
                         limit: $scope.options.tagLimit,
                         name: "tagCloud-" + $scope.exportID,
                         fields: [],

@@ -1,5 +1,5 @@
 <div class="header-container" ng-show="!(hideHeader)">
-    <span class="header-text pull-left">{{options.table.prettyName}}</span>
+    <span class="header-text pull-left" ng-bind="options.table.prettyName"></span>
 
     <options-menu parent-element="element" export-function="makeTimelineSelectorExportObject">
         <div class="form-group" ng-show="!(hideAdvancedOptions)">
@@ -16,7 +16,7 @@
 
         <div class="form-group" ng-show="!(hideAdvancedOptions)">
             <label>Date Field</label>
-            <select class="form-control" ng-model="options.dateField" ng-options="field for field in fields" ng-required="true" ng-disabled="(fields.length == 0)" ng-change="updateDateField()">
+            <select class="form-control" ng-model="options.dateField" ng-options="field.prettyName for field in fields" ng-required="true" ng-disabled="(fields.length == 0)" ng-change="updateDateField()">
             </select>
         </div>
 
@@ -90,13 +90,13 @@
     </div>
 
     <h4 class="pull-left">
-        <span class="count text-primary">{{recordCount}}</span> records
+        <span class="count text-primary" ng-bind="recordCount"></span> records
     </h4>
 
     <div class="neon-datetimepicker dropdown pull-left">
         <button class="btn btn-default dropdown-toggle" role="button" data-toggle="dropdown" data-target="#" href="#">
             <span class="glyphicon glyphicon-calendar"></span>
-            From {{startDateForDisplay || '?'}} to {{endDateForDisplay || '?'}}
+            <span ng-bind="'From ' + (startDateForDisplay || '?') + ' to ' + (endDateForDisplay || '?')"></span>
             <span class="caret"></span>
         </button>
         <ul class="dropdown-menu" role="menu">

@@ -21,8 +21,6 @@ coreMap.Map.Layer.NodeLayer = OpenLayers.Class(OpenLayers.Layer.Vector, {
     baseLineWidthDiff: 0,
     baseRadiusDiff: 0,
     edges: [],
-    edgeWeightMapping: '',
-    categoryMapping: '',
     dateMapping: 'date',
     latitudeMapping: '',
     lineColor: '',
@@ -34,7 +32,7 @@ coreMap.Map.Layer.NodeLayer = OpenLayers.Class(OpenLayers.Layer.Vector, {
     minLineWidth: 0,
     nodeColor: '',
     nodeRadiusDiff: 0,
-    nodeWeightMapping: '',
+    weightMapping: '',
 
     /**
      * Override the OpenLayers Contructor

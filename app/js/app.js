@@ -44,12 +44,19 @@ var neonDemo = angular.module('neonDemo', [
     'neonDemo.directives',
     'neonDemo.filters',
     'gridster',
+    'ngDraggable',
     'ui.bootstrap.datetimepicker'
 ]);
 
-angular.module('neonDemo.directives', [
+// AngularJS filter for reversing the order of an array.
+// http://stackoverflow.com/questions/15266671/angular-ng-repeat-in-reverse
+neonDemo.filter("reverse", function() {
+    return function(items) {
+        return items.slice().reverse();
+    };
+});
 
-]);
+angular.module('neonDemo.directives', []);
 angular.module('neonDemo.controllers', []);
 angular.module('neonDemo.services', []);
 
@@ -165,7 +172,6 @@ angular.element(document).ready(function() {
             gridsterColumns: 6,
             gridsterMargins: 10,
             hideNavbarItems: false,
-            showFilterStatusTray: false,
             hideAddVisualizationsButton: false,
             hideAdvancedOptions: false,
             hideErrorNotifications: false,
