@@ -80,7 +80,6 @@ angular.module('neonDemo.directives')
                 });
 
                 $scope.messenger.subscribe(FilterService.REQUEST_REMOVE_FILTER, function(ids) {
-                    console.log("filter builder");
                     if(FilterService.containsKey($scope.filterKeys, ids)) {
                         $scope.resetFilters();
                     }
@@ -179,7 +178,7 @@ angular.module('neonDemo.directives')
             };
 
             $scope.updateFields = function() {
-                $scope.fields = datasetService.getSortedFields($scope.selectedDatabase.name, $scope.selectedTable.name, true);
+                $scope.fields = DatasetService.getSortedFields($scope.selectedDatabase.name, $scope.selectedTable.name, true);
                 $scope.selectedField = findDefaultField($scope.fields);
             };
 
@@ -194,7 +193,7 @@ angular.module('neonDemo.directives')
                     tags: ["filter-builder", "field", $scope.selectedfield]
                 });
 
-                $scope.selectedFieldIsDate = datasetService.hasDataset() && $scope.selectedField.columnName === datasetService.getMapping($scope.selectedDatabase.name, $scope.selectedTable.name, "date");
+                $scope.selectedFieldIsDate = DatasetService.hasDataset() && $scope.selectedField.columnName === DatasetService.getMapping($scope.selectedDatabase.name, $scope.selectedTable.name, "date");
             };
 
             $scope.onSelectedOperatorChange = function() {
@@ -228,7 +227,7 @@ angular.module('neonDemo.directives')
             };
 
             $scope.updateFieldsForFilterRow = function(filterRow) {
-                filterRow.columnOptions = datasetService.getSortedFields(filterRow.database.name, filterRow.tableName, true);
+                filterRow.columnOptions = DatasetService.getSortedFields(filterRow.database.name, filterRow.tableName, true);
                 filterRow.columnValue = findDefaultField(filterRow.columnOptions);
                 $scope.dirtyFilterRow(filterRow);
             };
@@ -237,8 +236,8 @@ angular.module('neonDemo.directives')
                 var info = {
                     databaseObject: {},
                     tableObject: {},
-                    tableObjects: datasetService.getTables(relation.database),
-                    databaseFields: datasetService.getSortedFields(relation.database, relation.table, true)
+                    tableObjects: DatasetService.getTables(relation.database),
+                    databaseFields: DatasetService.getSortedFields(relation.database, relation.table, true)
                 };
 
                 for(var i = 0; i < $scope.databases.length; ++i) {
@@ -278,7 +277,7 @@ angular.module('neonDemo.directives')
                     row: filterRow
                 }];
 
-                var relations = datasetService.getRelations(database.name, table.name, [$scope.selectedField.columnName]);
+                var relations = DatasetService.getRelations(database.name, table.name, [$scope.selectedField.columnName]);
                 for(var i = 0; i < relations.length; ++i) {
                     var relation = relations[i];
                     if(relation.database !== database.name || relation.table !== table.name) {
