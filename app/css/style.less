@@ -70,6 +70,11 @@ h6, .h6 {
 
 }
 
+html {
+    width:100vw;
+    overflow-x:hidden;
+}
+
 label{
     font-size: 12px;
     color: @main-text-color;
@@ -429,8 +434,22 @@ label{
 }
 
 .form-group {
+    &.no-margin {
+        margin-bottom: 0px;
+    }
+
     .form-group {
         margin-bottom: 0px;
+    }
+
+    label {
+        &.top {
+            margin-top: 10px;
+        }
+
+        &.bottom {
+            margin-top: 30px;
+        }
     }
 }
 
@@ -580,6 +599,10 @@ label{
         width: 10em;
         height: 10em;
     }
+}
+
+.margin-right {
+    margin-right: 5px;
 }
 
 .modal-backdrop{
@@ -925,4 +948,22 @@ label{
             height: 300px;
         }
     }
+}
+
+.neon-well {
+    background-color: @main-background-lighten;
+    border-color: @border-color;
+    border-radius: 4px;
+    border-style: solid;
+    border-width: 1px;
+    margin: 0px 0px 15px;
+    padding: 9px;
+}
+
+.neon-well-dark {
+    background-color: @main-background-darken;
+}
+
+.neon-well-thin {
+    padding: 4px;
 }

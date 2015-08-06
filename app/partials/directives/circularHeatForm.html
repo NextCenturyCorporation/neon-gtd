@@ -1,5 +1,5 @@
 <div class="header-container" ng-show="!(hideHeader)">
-    <span class="header-text pull-left">{{options.table.prettyName}}</span>
+    <span class="header-text pull-left" ng-bind="options.table.prettyName"></span>
 
     <options-menu parent-element="element" export-function="makeCircularHeatFormExportObject" ng-show="!(hideAdvancedOptions)">
         <div class="form-group" ng-show="!(hideAdvancedOptions)">
@@ -14,7 +14,7 @@
         </div>
         <div class="form-group" ng-show="!(hideAdvancedOptions)">
             <label>Date Field</label>
-            <select class="form-control" ng-model="options.dateField" ng-options="field for field in fields" ng-required="true" ng-disabled="(fields.length == 0)" ng-change="updateDateField()">
+            <select class="form-control" ng-model="options.dateField" ng-options="field.prettyName for field in fields" ng-required="true" ng-disabled="(fields.length == 0)" ng-change="updateDateField()">
             </select>
         </div>
     </options-menu>

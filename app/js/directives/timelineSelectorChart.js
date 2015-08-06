@@ -142,8 +142,7 @@ angular.module('neonDemo.directives')
 
             $scope.$watch('collapsed', function(newVal) {
                 if(newVal !== undefined) {
-                    $scope.chart.render($scope.timelineData);
-                    $scope.chart.renderExtent($scope.timelineBrush);
+                    $scope.chart.collapse(newVal);
                 }
             });
 

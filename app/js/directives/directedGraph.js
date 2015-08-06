@@ -113,6 +113,9 @@ angular.module('neonDemo.directives')
                 $scope.messenger.events({
                     filtersChanged: onFiltersChanged
                 });
+                $scope.messenger.subscribe(datasetService.UPDATE_DATA_CHANNEL, function() {
+                    $scope.queryForData();
+                });
 
                 $scope.$on('$destroy', function() {
                     XDATA.userALE.log({
@@ -162,7 +165,7 @@ angular.module('neonDemo.directives')
                     for(var i = 0; i < whereClause.whereClauses.length; ++i) {
                         $scope.addFilterWhereClauseToFilterList(whereClause.whereClauses[i]);
                     }
-                } else if(whereClause.lhs === $scope.options.selectedNodeField && whereClause.lhs && whereClause.rhs) {
+                } else if(whereClause.lhs === $scope.options.selectedNodeField.columnName && whereClause.lhs && whereClause.rhs) {
                     $scope.addFilter(whereClause.rhs);
                 }
             };
@@ -208,10 +211,23 @@ angular.module('neonDemo.directives')
 
             $scope.updateFields = function() {
                 $scope.loadingData = true;
-                $scope.fields = datasetService.getDatabaseFields($scope.options.database.name, $scope.options.table.name);
-                $scope.fields.sort();
-                $scope.options.selectedNodeField = datasetService.getMapping($scope.options.database.name, $scope.options.table.name, "graph_nodes") || "";
-                $scope.options.selectedLinkField = datasetService.getMapping($scope.options.database.name, $scope.options.table.name, "graph_links") || "";
+                $scope.fields = datasetService.getSortedFields($scope.options.database.name, $scope.options.table.name);
+
+                var selectedNodeField = datasetService.getMapping($scope.options.database.name, $scope.options.table.name, "graph_nodes") || "";
+                $scope.options.selectedNodeField = _.find($scope.fields, function(field) {
+                    return field.columnName === selectedNodeField;
+                }) || {
+                    columnName: "",
+                    prettyName: ""
+                };
+                var selectedLinkField = datasetService.getMapping($scope.options.database.name, $scope.options.table.name, "graph_links") || "";
+                $scope.options.selectedLinkField = _.find($scope.fields, function(field) {
+                    return field.columnName === selectedLinkField;
+                }) || {
+                    columnName: "",
+                    prettyName: ""
+                };
+
                 $scope.queryForData(true);
             };
 
@@ -231,7 +247,7 @@ angular.module('neonDemo.directives')
                 $scope.filteredNodes.push(value);
 
                 if($scope.messenger) {
-                    var relations = datasetService.getRelations($scope.options.database.name, $scope.options.table.name, [$scope.options.selectedNodeField]);
+                    var relations = datasetService.getRelations($scope.options.database.name, $scope.options.table.name, [$scope.options.selectedNodeField.columnName]);
                     if($scope.filteredNodes.length === 1) {
                         filterService.addFilters($scope.messenger, relations, $scope.filterKeys, $scope.createFilterClauseForNode, $scope.queryForData);
                     } else if($scope.filteredNodes.length > 1) {
@@ -267,7 +283,7 @@ angular.module('neonDemo.directives')
                     if($scope.filteredNodes.length === 0) {
                         filterService.removeFilters($scope.messenger, $scope.filterKeys, $scope.queryForData);
                     } else {
-                        var relations = datasetService.getRelations($scope.options.database.name, $scope.options.table.name, [$scope.options.selectedNodeField]);
+                        var relations = datasetService.getRelations($scope.options.database.name, $scope.options.table.name, [$scope.options.selectedNodeField.columnName]);
                         filterService.replaceFilters($scope.messenger, relations, $scope.filterKeys, $scope.createFilterClauseForNode, $scope.queryForData);
                     }
                 }
@@ -290,7 +306,7 @@ angular.module('neonDemo.directives')
 
                 var connection = connectionService.getActiveConnection();
 
-                if(!connection || !$scope.options.selectedNodeField || !$scope.filteredNodes.length) {
+                if(!connection || !$scope.options.selectedNodeField.columnName || !$scope.filteredNodes.length) {
                     $scope.numberOfNodesInGraph = 0;
                     // Don't call $scope.updateGraph() here.  It will cause an error because we're in a $scope.$apply.
                     $scope.graph.updateGraph({
@@ -300,7 +316,7 @@ angular.module('neonDemo.directives')
                     $scope.loadingData = false;
                 }
 
-                if(connection && $scope.options.selectedNodeField) {
+                if(connection && $scope.options.selectedNodeField.columnName) {
                     queryForFilteredNodeNetwork(connection);
                     if(shouldQueryForNodeList) {
                         queryForNodeList(connection);
@@ -314,15 +330,15 @@ angular.module('neonDemo.directives')
             var queryForNodeList = function(connection) {
                 var query = new neon.query.Query()
                     .selectFrom($scope.options.database.name, $scope.options.table.name)
-                    .withFields([$scope.options.selectedNodeField])
-                    .groupBy($scope.options.selectedNodeField)
+                    .withFields([$scope.options.selectedNodeField.columnName])
+                    .groupBy($scope.options.selectedNodeField.columnName)
                     .aggregate(neon.query.COUNT, '*', 'count')
                     .ignoreFilters([$scope.filterKeys[$scope.options.database.name][$scope.options.table.name]]);
 
                 connection.executeQuery(query, function(data) {
                     $scope.nodes = [];
                     for(var i = 0; i < data.data.length; i++) {
-                        var node = data.data[i][$scope.options.selectedNodeField];
+                        var node = data.data[i][$scope.options.selectedNodeField.columnName];
                         if($scope.nodes.indexOf(node) < 0) {
                             $scope.nodes.push(node);
                         }
@@ -355,10 +371,10 @@ angular.module('neonDemo.directives')
                 var query = new neon.query.Query()
                     .selectFrom($scope.options.database.name, $scope.options.table.name);
 
-                var where = neon.query.where($scope.options.selectedNodeField, '=', $scope.filteredNodes[0]);
+                var where = neon.query.where($scope.options.selectedNodeField.columnName, '=', $scope.filteredNodes[0]);
                 var orWhere;
                 for(var i = 1; i < $scope.filteredNodes.length; i++) {
-                    orWhere = neon.query.where($scope.options.selectedNodeField, '=', $scope.filteredNodes[i]);
+                    orWhere = neon.query.where($scope.options.selectedNodeField.columnName, '=', $scope.filteredNodes[i]);
                     where = neon.query.or(where, orWhere);
                 }
                 query = query.where(where);
@@ -434,12 +450,12 @@ angular.module('neonDemo.directives')
 
                 // Add each unique value from the data to the graph as a node.
                 for(var i = 0; i < data.length; i++) {
-                    var value = data[i][$scope.options.selectedNodeField];
+                    var value = data[i][$scope.options.selectedNodeField.columnName];
                     if(value) {
                         addNodeIfUnique(value);
 
-                        if($scope.options.selectedLinkField) {
-                            var linkedNodes = (data[i][$scope.options.selectedLinkField] ? data[i][$scope.options.selectedLinkField] : []);
+                        if($scope.options.selectedLinkField.columnName) {
+                            var linkedNodes = (data[i][$scope.options.selectedLinkField.columnName] ? data[i][$scope.options.selectedLinkField.columnName] : []);
                             if(linkedNodes.constructor !== Array) {
                                 linkedNodes = [linkedNodes];
                             }

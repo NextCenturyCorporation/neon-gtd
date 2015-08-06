@@ -1,5 +1,5 @@
 <div class="header-container" ng-show="!(hideHeader)">
-    <span class="header-text pull-left">{{options.table.prettyName}}</span>
+    <span class="header-text pull-left" ng-bind="options.table.prettyName"></span>
 
     <options-menu parent-element="element" export-function="makeSunburstExportObject">
         <div class="form-group" ng-show="!(hideAdvancedOptions)">
@@ -15,14 +15,13 @@
         <div class="form-group">
             <label>Add a Ring</label>
             <select class="form-control" ng-model="options.selectedItem" ng-disabled="!(fields.length > 0)" 
-                ng-options="field for field in fields" ng-change="addGroup()">
+                ng-options="field.prettyName for field in fields" ng-change="addGroup()">
             <option value="">Add a Ring</option>
         </select>
         </div>
         <div class="form-group"  ng-hide="arcValue === 'Record Count'">
             <label>Value Field</label>
-            <select class="form-control" ng-model="options.valueField"
-                ng-options="field for field in fields">
+            <select class="form-control" ng-model="options.valueField" ng-options="field.prettyName for field in fields">
                 <option value="">Select a Field</option>
             </select>
         </div>
@@ -43,18 +42,18 @@
             <span class="glyphicon glyphicon-chevron-right"></span>
         </div>
         <div class="sunburst-breadcrumb">
-            <span ng-bind="(arcValue === 'count') ? arcValue : 'TOTAL (' + options.valueField + ')'"></span>
+            <span ng-bind="(arcValue === 'count') ? arcValue : 'TOTAL (' + options.valueField.prettyName + ')'"></span>
         </div>
     </div>
 
-    <div class="sunburst-controls" ng-show = "options.valueField">
+    <div class="sunburst-controls" ng-show="options.valueField && options.valueField.columnName">
         <form>
             <label><input type="radio" ng-model="arcValue" value="count" class="sunburst-chart-selector"> 
                 Count
             </label>
             <label><input type="radio" ng-model="arcValue" value="total" class="sunburst-chart-selector"
-                ng-disabled="!(options.valueField)"> 
-                <span ng-bind="(options.valueField) ? 'TOTAL (' + options.valueField + ')' : 'TOTAL ()'"></span>
+                ng-disabled="!(options.valueField.columnName && options.valueField.prettyName)"> 
+                <span ng-bind="'TOTAL (' + options.valueField.prettyName + ')'"></span>
             </label>
         </form>
     </div>

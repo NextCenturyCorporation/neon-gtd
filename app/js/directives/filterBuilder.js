@@ -34,7 +34,6 @@ angular.module('neonDemo.directives')
         templateUrl: 'partials/directives/filterBuilder.html',
         restrict: 'EA',
         scope: {
-            navbarItem: '=?',
             filterCount: '=?'
         },
         controller: 'neonDemoController',
@@ -48,9 +47,7 @@ angular.module('neonDemo.directives')
             $scope.selectedFieldIsDate = false;
             $scope.andClauses = true;
 
-            if(!($scope.navbarItem)) {
-                $element.addClass("filter-directive");
-            }
+            $element.addClass("filter-directive");
 
             var findDefaultOperator = function(operators) {
                 if(operators.indexOf("contains") >= 0) {
@@ -175,9 +172,7 @@ angular.module('neonDemo.directives')
             };
 
             $scope.updateFields = function() {
-                var fields = datasetService.getDatabaseFields($scope.selectedDatabase.name, $scope.selectedTable.name);
-                $scope.fields = _.without(fields, "_id");
-                $scope.fields.sort();
+                $scope.fields = datasetService.getSortedFields($scope.selectedDatabase.name, $scope.selectedTable.name, true);
                 $scope.selectedField = findDefaultField($scope.fields);
             };
 
@@ -192,7 +187,7 @@ angular.module('neonDemo.directives')
                     tags: ["filter-builder", "field", $scope.selectedfield]
                 });
 
-                $scope.selectedFieldIsDate = datasetService.hasDataset() && $scope.selectedField === datasetService.getMapping($scope.selectedDatabase.name, $scope.selectedTable.name, "date");
+                $scope.selectedFieldIsDate = datasetService.hasDataset() && $scope.selectedField.columnName === datasetService.getMapping($scope.selectedDatabase.name, $scope.selectedTable.name, "date");
             };
 
             $scope.onSelectedOperatorChange = function() {
@@ -220,16 +215,13 @@ angular.module('neonDemo.directives')
             };
 
             var findDefaultField = function(fields) {
-                if(fields.indexOf("text") >= 0) {
-                    return "text";
-                }
-                return fields[0] || "";
+                return _.find(fields, function(field) {
+                    return field.columnName === "text";
+                }) || fields[0];
             };
 
             $scope.updateFieldsForFilterRow = function(filterRow) {
-                var fields = datasetService.getDatabaseFields(filterRow.database.name, filterRow.tableName);
-                filterRow.columnOptions = _.without(fields, "_id");
-                filterRow.columnOptions.sort();
+                filterRow.columnOptions = datasetService.getSortedFields(filterRow.database.name, filterRow.tableName, true);
                 filterRow.columnValue = findDefaultField(filterRow.columnOptions);
                 $scope.dirtyFilterRow(filterRow);
             };
@@ -239,7 +231,7 @@ angular.module('neonDemo.directives')
                     databaseObject: {},
                     tableObject: {},
                     tableObjects: datasetService.getTables(relation.database),
-                    databaseFields: datasetService.getDatabaseFields(relation.database, relation.table)
+                    databaseFields: datasetService.getSortedFields(relation.database, relation.table, true)
                 };
 
                 for(var i = 0; i < $scope.databases.length; ++i) {
@@ -279,7 +271,7 @@ angular.module('neonDemo.directives')
                     row: filterRow
                 }];
 
-                var relations = datasetService.getRelations(database.name, table.name, [$scope.selectedField]);
+                var relations = datasetService.getRelations(database.name, table.name, [$scope.selectedField.columnName]);
                 for(var i = 0; i < relations.length; ++i) {
                     var relation = relations[i];
                     if(relation.database !== database.name || relation.table !== table.name) {
@@ -559,11 +551,7 @@ angular.module('neonDemo.directives')
                     tags: ["filter-builder", "filter", "update"]
                 });
 
-                // For the Filter Builder visualization, automatically update all the filters.
-                if(!$scope.navbarItem) {
-                    $scope.updateFilters();
-                    return;
-                }
+                $scope.updateFilters();
 
                 var databaseAndTableNames = $scope.filterTable.getDatabaseAndTableNames();
                 for(var i = 0; i < databaseAndTableNames.length; ++i) {
