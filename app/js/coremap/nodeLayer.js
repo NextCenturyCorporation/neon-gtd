@@ -23,13 +23,17 @@ coreMap.Map.Layer.NodeLayer = OpenLayers.Class(OpenLayers.Layer.Vector, {
     edges: [],
     latitudeMapping: '',
     lineColor: '',
+    lineColors: {},
     lineWidthDiff: 0,
     longitudeMapping: '',
+    nodeMapping: '',
+    lineMapping: '',
     maxNodeRadius: 0,
     minNodeRadius: 0,
     maxLineWidth: 0,
     minLineWidth: 0,
     nodeColor: '',
+    nodeColors: {},
     nodeRadiusDiff: 0,
     weightMapping: '',
 
@@ -45,7 +49,30 @@ coreMap.Map.Layer.NodeLayer = OpenLayers.Class(OpenLayers.Layer.Vector, {
         var args = [name, extendOptions];
         OpenLayers.Layer.Vector.prototype.initialize.apply(this, args);
 
+        this.colorRange = [
+            '#39b54a',
+            '#C23333',
+            '#3662CC',
+            "#ff7f0e",
+            "#9467bd",
+            "#8c564b",
+            "#e377c2",
+            "#7f7f7f",
+            "#bcbd22",
+            "#17becf",
+            "#98df8a",
+            "#ff9896",
+            "#aec7e8",
+            "#ffbb78",
+            "#c5b0d5",
+            "#c49c94",
+            "#f7b6d2",
+            "#c7c7c7",
+            "#dbdb8d",
+            "#9edae5"
+        ];
         this.visibility = true;
+        this.colorScale = d3.scale.ordinal().range(this.colorRange);
     },
 
     createNodeStyleMap: function() {
@@ -99,7 +126,7 @@ coreMap.Map.Layer.NodeLayer.prototype.calculateLineWidth = function(weight) {
  * @return {OpenLayers.Feature.Vector} the point to be added.
  * @method createNode
  */
-coreMap.Map.Layer.NodeLayer.prototype.createNode = function(element) {
+coreMap.Map.Layer.NodeLayer.prototype.createNode = function(element, nodeMappingElement) {
     var point = new OpenLayers.Geometry.Point(
         this.getValueFromDataElement(this.longitudeMapping, element),
         this.getValueFromDataElement(this.latitudeMapping, element)
@@ -107,7 +134,7 @@ coreMap.Map.Layer.NodeLayer.prototype.createNode = function(element) {
     point.transform(coreMap.Map.SOURCE_PROJECTION, coreMap.Map.DESTINATION_PROJECTION);
 
     var feature = new OpenLayers.Feature.Vector(point);
-    feature.style = this.styleNode(element);
+    feature.style = this.styleNode(element, nodeMappingElement);
     feature.attributes = element;
     return feature;
 };
@@ -119,9 +146,22 @@ coreMap.Map.Layer.NodeLayer.prototype.createNode = function(element) {
  * @return {OpenLayers.Symbolizer.Point} The style object
  * @method createNodeStyleObject
  */
-coreMap.Map.Layer.NodeLayer.prototype.createNodeStyleObject = function(color, radius) {
-    color = color || coreMap.Map.Layer.NodeLayer.DEFAULT_COLOR;
+coreMap.Map.Layer.NodeLayer.prototype.createNodeStyleObject = function(nodeMappingElement, radius) {
     radius = radius || coreMap.Map.Layer.NodeLayer.MIN_RADIUS;
+
+    var color;
+
+    if(nodeMappingElement) {
+        color = this.colorScale(nodeMappingElement);
+    } else {
+        nodeMappingElement = '(Uncategorized)';
+        color = this.nodeColor || coreMap.Map.Layer.NodeLayer.DEFAULT_COLOR;
+    }
+
+    // store the color in the registry so we know the color/category mappings
+    if(!(this.nodeColors.hasOwnProperty(nodeMappingElement))) {
+        this.nodeColors[nodeMappingElement] = color;
+    }
 
     return new OpenLayers.Symbolizer.Point({
         fillColor: color,
@@ -140,11 +180,24 @@ coreMap.Map.Layer.NodeLayer.prototype.createNodeStyleObject = function(color, ra
  * @return {OpenLayers.Symbolizer.Line} The style object
  * @method createLineStyleObject
  */
-coreMap.Map.Layer.NodeLayer.prototype.createLineStyleObject = function(color, width) {
-    color = color || coreMap.Map.Layer.NodeLayer.DEFAULT_COLOR;
+coreMap.Map.Layer.NodeLayer.prototype.createLineStyleObject = function(lineMappingElement, width) {
+    //color = color || coreMap.Map.Layer.NodeLayer.DEFAULT_COLOR;
+    var color;
+
+    if(lineMappingElement) {
+        color = this.colorScale(lineMappingElement);
+    } else {
+        lineMappingElement = '(Uncategorized)';
+        color = this.lineColor || coreMap.Map.Layer.NodeLayer.DEFAULT_LINE_COLOR;
+    }
+
+    // store the color in the registry so we know the color/category mappings
+    if(!(this.lineColors.hasOwnProperty(lineMappingElement))) {
+        this.lineColors[lineMappingElement] = color;
+    }
 
     return new OpenLayers.Symbolizer.Line({
-        strokeColor: color || coreMap.Map.Layer.NodeLayer.DEFAULT_STROKE_COLOR,
+        strokeColor: color,
         strokeOpacity: coreMap.Map.Layer.NodeLayer.DEFAULT_OPACITY,
         strokeWidth: width || coreMap.Map.Layer.NodeLayer.DEFAULT_STROKE_WIDTH,
         strokeLinecap: "butt"
@@ -160,7 +213,7 @@ coreMap.Map.Layer.NodeLayer.prototype.createLineStyleObject = function(color, wi
  * @return {OpenLayers.Symbolizer.Point} The style object
  * @method createArrowStyleObject
  */
-coreMap.Map.Layer.NodeLayer.prototype.createArrowStyleObject = function(color, width, angle, element) {
+coreMap.Map.Layer.NodeLayer.prototype.createArrowStyleObject = function(lineMappingElement, width, angle, element) {
     var radius = Math.ceil(this.calculateNodeRadius(element) || coreMap.Map.Layer.NodeLayer.MIN_RADIUS);
 
     var arrowWidth = radius + 7;
@@ -170,11 +223,23 @@ coreMap.Map.Layer.NodeLayer.prototype.createArrowStyleObject = function(color, w
 
     OpenLayers.Renderer.symbol.arrow = [0,0, 0,arrowWidth, (arrowWidth / 2),(arrowWidth - 7), arrowWidth,arrowWidth, 0,arrowWidth];
 
-    color = color || coreMap.Map.Layer.NodeLayer.DEFAULT_COLOR;
+    var color;
+
+    if(lineMappingElement) {
+        color = this.colorScale(lineMappingElement);
+    } else {
+        lineMappingElement = '(Uncategorized)';
+        color = this.lineColor || coreMap.Map.Layer.NodeLayer.DEFAULT_LINE_COLOR;
+    }
+
+    // store the color in the registry so we know the color/category mappings
+    if(!(this.lineColors.hasOwnProperty(lineMappingElement))) {
+        this.lineColors[lineMappingElement] = color;
+    }
 
     return new OpenLayers.Symbolizer.Point({
-        strokeColor: color || coreMap.Map.Layer.NodeLayer.DEFAULT_STROKE_COLOR,
-        fillColor: color || coreMap.Map.Layer.NodeLayer.DEFAULT_STROKE_COLOR,
+        strokeColor: color,
+        fillColor: color,
         strokeOpacity: 0,
         strokeWidth: 1,
         graphicName: "arrow",
@@ -194,7 +259,7 @@ coreMap.Map.Layer.NodeLayer.prototype.createArrowStyleObject = function(color, w
  * @return {OpenLayers.Feature.Vector} the line to be added.
  * @method createWeightedLine
  */
-coreMap.Map.Layer.NodeLayer.prototype.createWeightedLine = function(pt1, pt2, weight) {
+coreMap.Map.Layer.NodeLayer.prototype.createWeightedLine = function(pt1, pt2, weight, lineMappingElement) {
     var wt = this.calculateLineWidth(weight);
     var point1 = new OpenLayers.Geometry.Point(pt1[0], pt1[1]);
     var point2 = new OpenLayers.Geometry.Point(pt2[0], pt2[1]);
@@ -204,7 +269,8 @@ coreMap.Map.Layer.NodeLayer.prototype.createWeightedLine = function(pt1, pt2, we
         coreMap.Map.DESTINATION_PROJECTION);
 
     var featureLine = new OpenLayers.Feature.Vector(line);
-    featureLine.style = this.createLineStyleObject(this.lineColor || coreMap.Map.Layer.NodeLayer.DEFAULT_LINE_COLOR, wt);
+
+    featureLine.style = this.createLineStyleObject(lineMappingElement, wt);
 
     return featureLine;
 };
@@ -220,7 +286,7 @@ coreMap.Map.Layer.NodeLayer.prototype.createWeightedLine = function(pt1, pt2, we
  * @return {OpenLayers.Feature.Vector} the arrow to be added.
  * @method createWeightedArrow
  */
-coreMap.Map.Layer.NodeLayer.prototype.createWeightedArrow = function(pt1, pt2, weight, element) {
+coreMap.Map.Layer.NodeLayer.prototype.createWeightedArrow = function(pt1, pt2, weight, element, lineMappingElement) {
     var wt = this.calculateLineWidth(weight);
 
     var angle = this.calculateAngle(pt1[0], pt1[1], pt2[0], pt2[1]);
@@ -230,7 +296,7 @@ coreMap.Map.Layer.NodeLayer.prototype.createWeightedArrow = function(pt1, pt2, w
         coreMap.Map.DESTINATION_PROJECTION);
 
     var featureArrow = new OpenLayers.Feature.Vector(point);
-    featureArrow.style = this.createArrowStyleObject(this.lineColor || coreMap.Map.Layer.NodeLayer.DEFAULT_LINE_COLOR, wt, angle, element);
+    featureArrow.style = this.createArrowStyleObject(lineMappingElement, wt, angle, element);
 
     return featureArrow;
 };
@@ -300,11 +366,10 @@ coreMap.Map.Layer.NodeLayer.prototype.areValuesInDataElement = function(element)
  * @return {OpenLayers.Symbolizer.Point} The style object
  * @method styleNode
  */
-coreMap.Map.Layer.NodeLayer.prototype.styleNode = function(element) {
+coreMap.Map.Layer.NodeLayer.prototype.styleNode = function(element, nodeMappingElement) {
     var radius = this.calculateNodeRadius(element) || coreMap.Map.Layer.NodeLayer.MIN_RADIUS;
-    var color = this.nodeColor || coreMap.Map.Layer.NodeLayer.DEFAULT_COLOR;
 
-    return this.createNodeStyleObject(color, radius);
+    return this.createNodeStyleObject(nodeMappingElement, radius);
 };
 
 coreMap.Map.Layer.NodeLayer.prototype.setData = function(edges) {
@@ -370,17 +435,21 @@ coreMap.Map.Layer.NodeLayer.prototype.updateFeatures = function() {
 
         // If the line has substance, render it.
         if(weight > 0) {
-            lines.push(me.createWeightedLine(pt1, pt2, weight));
-            arrows.push(me.createWeightedArrow(pt1, pt2, weight, tgt));
+            var lineMappingElement = me.getValueFromDataElement(me.lineMapping, element);
+
+            lines.push(me.createWeightedLine(pt1, pt2, weight, lineMappingElement));
+            arrows.push(me.createWeightedArrow(pt1, pt2, weight, tgt, lineMappingElement));
         }
+        
+        var nodeMappingElement = me.getValueFromDataElement(me.nodeMapping, element);
 
         // Add the nodes to the node list if necesary.
         if(!nodes[pt1]) {
-            nodes[pt1] = me.createNode(src);
+            nodes[pt1] = me.createNode(src, nodeMappingElement);
         }
 
         if(!nodes[pt2]) {
-            nodes[pt2] = me.createNode(tgt);
+            nodes[pt2] = me.createNode(tgt, nodeMappingElement);
         }
     });
 

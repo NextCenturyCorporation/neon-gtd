@@ -103,6 +103,8 @@ angular.module('neonDemo.directives')
                     target: "",
                     pointColor: "",
                     lineColor: "",
+                    pointColorCode: "",
+                    lineColorCode: "",
                     limit: $scope.DEFAULT_LIMIT,
                     type: $scope.DEFAULT_NEW_LAYER_TYPE
                 }
@@ -600,8 +602,8 @@ angular.module('neonDemo.directives')
                 $scope.fields = datasetService.getSortedFields($scope.options.newLayer.database.name, $scope.options.newLayer.table.name);
                 $scope.options.newLayer.source = $scope.fields[0];
                 $scope.options.newLayer.target = $scope.fields[0];
-                $scope.options.newLayer.pointColor = "";
-                $scope.options.newLayer.lineColor = "";
+                $scope.options.newLayer.pointColorCode = "";
+                $scope.options.newLayer.lineColorCode = "";
                 $scope.options.newLayer.colorCode = "";
 
                 var latitude = datasetService.getMapping($scope.options.newLayer.database.name, $scope.options.newLayer.table.name, "latitude") || "";
@@ -628,6 +630,20 @@ angular.module('neonDemo.directives')
                 var size = datasetService.getMapping($scope.options.newLayer.database.name, $scope.options.newLayer.table.name, "sizeBy") || "";
                 $scope.options.newLayer.size = _.find($scope.fields, function(field) {
                     return field.columnName === size;
+                }) || {
+                    columnName: "",
+                    prettyName: ""
+                };
+                var pointColor = datasetService.getMapping($scope.options.newLayer.database.name, $scope.options.newLayer.table.name, "pointColorBy") || "";
+                $scope.options.newLayer.pointColor = _.find($scope.fields, function(field) {
+                    return field.columnName === pointColor;
+                }) || {
+                    columnName: "",
+                    prettyName: ""
+                };
+                var lineColor = datasetService.getMapping($scope.options.newLayer.database.name, $scope.options.newLayer.table.name, "lineColorBy") || "";
+                $scope.options.newLayer.lineColor = _.find($scope.fields, function(field) {
+                    return field.columnName === lineColor;
                 }) || {
                     columnName: "",
                     prettyName: ""
@@ -799,7 +815,7 @@ angular.module('neonDemo.directives')
                 // Set data bounds on load
                 if(!$scope.dataBounds) {
                     initializing = true;
-                    $scope.dataBounds = $scope.computeDataBounds(data);
+                    $scope.dataBounds = $scope.computeDataBounds(queryResults.data);
                 }
 
                 for(var i = 0; i < $scope.options.layers.length; i++) {
@@ -1357,8 +1373,10 @@ angular.module('neonDemo.directives')
                         latitudeMapping: layer.latitudeMapping,
                         longitudeMapping: layer.longitudeMapping,
                         idMapping: layer.nodeIdMapping,
+                        nodeMapping: layer.nodeColorBy,
+                        lineMapping: layer.lineColorBy,
                         nodeColor: layer.nodeColor,
-                        lineColor: layer.edgeColor
+                        lineColor: layer.lineColor
                     });
                     $scope.map.addLayer(layer.olLayer);
                 }
@@ -1426,8 +1444,10 @@ angular.module('neonDemo.directives')
                     sourceMapping: $scope.options.newLayer.source.columnName,
                     targetField: $scope.options.newLayer.target,
                     targetMapping: $scope.options.newLayer.target.columnName,
-                    nodeColor: $scope.options.newLayer.pointColor,
+                    nodeColor: $scope.options.newLayer.nodeColor,
                     lineColor: $scope.options.newLayer.lineColor,
+                    nodeColorCode: $scope.options.newLayer.pointColorCode,
+                    lineColorCode: $scope.options.newLayer.lineColorCode,
                     active: $scope.options.newLayer.active,
                     visible: $scope.options.newLayer.visible,
                     valid: true,
