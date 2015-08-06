@@ -21,10 +21,6 @@
  * @namespace neonDemo.directives
  * @constructor
  */
-
-/*
-Set username and database in uploadFile.
-*/
 angular.module('neonDemo.directives')
 .directive('importFile', ['ConnectionService', 'ImportService',
     function(connectionService, importService) {
@@ -35,10 +31,10 @@ angular.module('neonDemo.directives')
             $scope.canImport = (window.File && window.FileReader && window.FileList && window.Blob);
             $scope.nameTypePairs = undefined;
             $scope.currentJobID = undefined;
-
             $scope.isConverting = false;
             $scope.convertingMessage = "";
             var file;
+            var pollDelay = 1500; 
 
             $scope.uploadFile = function() {
                 importService.setUserName($('#importUsernameInput')[0].value);
@@ -85,7 +81,7 @@ angular.module('neonDemo.directives')
                 } else {
                     window.setTimeout(function() {
                         waitForGuesses(response.jobID);
-                    }, 2000);
+                    }, pollDelay);
                 }
             };
 
@@ -141,14 +137,14 @@ angular.module('neonDemo.directives')
                         $("#confirmChoicesModal").modal('hide');
                     }
                 } else {
-                    if(response.numFinished < 0) {
-                        return; // numFinished only returns as <0 if the data that the user is trying to convert doesn't exist anymore.
+                    if(response.numCompleted < 0) {
+                        return; // numCompleted only returns as <0 if the data that the user is trying to convert doesn't exist anymore.
                     }
-                    $scope.convertingMessage = "Records converted: " + response.numFinished;
+                    $scope.convertingMessage = "Records converted: " + response.numCompleted;
                     $scope.$apply();
                     window.setTimeout(function() {
                         waitForUploadComplete(response.jobID);
-                    }, 2000);
+                    }, pollDelay);
                 }
             };
 
