@@ -68,6 +68,9 @@ function(connectionService, datasetService, errorNotificationService) {
                 $scope.messenger.events({
                     filtersChanged: onFiltersChanged
                 });
+                $scope.messenger.subscribe(datasetService.UPDATE_DATA_CHANNEL, function() {
+                    $scope.queryForData();
+                });
 
                 $scope.$on('$destroy', function() {
                     XDATA.userALE.log({

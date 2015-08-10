@@ -28,15 +28,14 @@
  * @constructor
  */
 angular.module('neonDemo.directives')
-.directive('queryResultsTable', ['external', 'popups', 'ConnectionService', 'DatasetService', 'ErrorNotificationService', 'ExportService', '$compile', '$timeout',
-function(external, popups, connectionService, datasetService, errorNotificationService, exportService, $compile, $timeout) {
+.directive('queryResultsTable', ['external', 'popups', 'ConnectionService', 'DatasetService', 'ErrorNotificationService', 'ExportService', '$compile', '$interval', '$timeout',
+function(external, popups, connectionService, datasetService, errorNotificationService, exportService, $compile, $interval, $timeout) {
     return {
         templateUrl: 'partials/directives/queryResultsTable.html',
         restrict: 'EA',
         scope: {
             bindTable: '=',
             bindDatabase: '=',
-            showData: '=?',
             hideHeader: '=?',
             hideAdvancedOptions: '=?'
         },
@@ -60,13 +59,6 @@ function(external, popups, connectionService, datasetService, errorNotificationS
                     $scope.table.refreshLayout();
                 }
             };
-
-            // If this widget was launched as a navbar collapsable then showData will be bound to the collapse toggle.
-            // Otherwise show the data automatically on launching the widget.
-            if($scope.showData === undefined) {
-                $scope.showData = true;
-                $element.resize(updateSize);
-            }
 
             $scope.ASCENDING = neon.query.ASCENDING;
             $scope.DESCENDING = neon.query.DESCENDING;
@@ -103,17 +95,6 @@ function(external, popups, connectionService, datasetService, errorNotificationS
              * @method initialize
              */
             $scope.initialize = function() {
-                // KLUDGE: Watch for changes to showData if it goes from false to true, we want to requery for data to
-                // trigger the data table to be recreated.  While deferring data queries to when the user want to display them
-                // is benefitial for initial application load, it can interfere with animations tied to whether or not this is
-                // displayed.  The other reason to query for data on show is because of issues with SlickGrid.  It does not
-                // display proper scrolling and sizing behavior if it is rendered while not visible.
-                $scope.$watch('showData', function(newVal) {
-                    if(newVal) {
-                        queryForData(true);
-                    }
-                });
-
                 $scope.$watch('options.sortByField', function(newVal) {
                     XDATA.userALE.log({
                         activity: "select",
@@ -150,11 +131,16 @@ function(external, popups, connectionService, datasetService, errorNotificationS
                     });
                 });
 
+                $element.resize(updateSize);
+
                 // Setup our messenger.
                 $scope.messenger = new neon.eventing.Messenger();
 
                 $scope.messenger.events({
                     filtersChanged: onFiltersChanged
+                });
+                $scope.messenger.subscribe(datasetService.UPDATE_DATA_CHANNEL, function() {
+                    queryForData(false);
                 });
 
                 $scope.exportID = exportService.register($scope.makeQueryResultsTableExportObject);
@@ -401,7 +387,7 @@ function(external, popups, connectionService, datasetService, errorNotificationS
 
                 var connection = connectionService.getActiveConnection();
 
-                if(!connection || !$scope.showData) {
+                if(!connection) {
                     $scope.updateData({
                         data: []
                     }, refreshColumns);

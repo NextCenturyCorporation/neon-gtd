@@ -469,7 +469,10 @@ function($interval, $filter, connectionService, datasetService, errorNotificatio
                 $scope.messenger.events({
                     filtersChanged: onFiltersChanged
                 });
-                $scope.messenger.subscribe(datasetService.DATE_CHANGED, onDateChanged);
+                $scope.messenger.subscribe(datasetService.UPDATE_DATA_CHANNEL, function() {
+                    $scope.queryForChartData();
+                });
+                $scope.messenger.subscribe(datasetService.DATE_CHANGED_CHANNEL, onDateChanged);
 
                 $scope.exportID = exportService.register($scope.makeTimelineSelectorExportObject);
 

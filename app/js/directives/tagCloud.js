@@ -87,6 +87,9 @@ function(connectionService, datasetService, errorNotificationService, filterServ
                 $scope.messenger.events({
                     filtersChanged: onFiltersChanged
                 });
+                $scope.messenger.subscribe(datasetService.UPDATE_DATA_CHANNEL, function() {
+                    $scope.queryForTags();
+                });
 
                 $scope.exportID = exportService.register($scope.makeTagCloudExportObject);
 

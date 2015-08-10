@@ -102,6 +102,9 @@ function(external, popups, connectionService, datasetService, errorNotificationS
                 $scope.messenger.events({
                     filtersChanged: onFiltersChanged
                 });
+                $scope.messenger.subscribe(datasetService.UPDATE_DATA_CHANNEL, function() {
+                    $scope.queryForData();
+                });
 
                 $scope.exportID = exportService.register($scope.makeCountByExportObject);
 

@@ -167,9 +167,12 @@ angular.module('neonDemo.directives')
                 $scope.messenger.events({
                     filtersChanged: onFiltersChanged
                 });
+                $scope.messenger.subscribe(datasetService.UPDATE_DATA_CHANNEL, function() {
+                    queryAllLayerTables();
+                });
+                $scope.messenger.subscribe($scope.SELECTION_EVENT_CHANNEL, $scope.createPoint);
 
                 $scope.exportID = exportService.register($scope.makeMapExportObject);
-                $scope.messenger.subscribe($scope.SELECTION_EVENT_CHANNEL, $scope.createPoint);
 
                 $scope.linkyConfig = datasetService.getLinkyConfig();
 
