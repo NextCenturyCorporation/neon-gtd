@@ -119,7 +119,7 @@ coreMap.Map.Layer.PointsLayer = OpenLayers.Class(OpenLayers.Layer.Vector, {
         }, {
             context: {
                 strokeWidth: function(feature) {
-                    return (feature.cluster.length > 1) ? 2 : 1;
+                    return coreMap.Map.Layer.PointsLayer.DEFAULT_STROKE_WIDTH ? ((feature.cluster.length > 1) ? 2 : 1) : 0;
                 },
                 fillColor: function(feature) {
                     return (layer.calculateColor(feature.cluster[0].attributes));
