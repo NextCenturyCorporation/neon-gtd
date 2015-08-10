@@ -177,7 +177,7 @@ angular.module('neonDemo.directives')
                 $scope.linkyConfig = datasetService.getLinkyConfig();
 
                 $scope.messenger.subscribe('date_selected', onDateSelected);
-                $scope.messenger.subscribe($scope.selectionEvent, $scope.createPoint);
+
                 $scope.$on('$destroy', function() {
                     XDATA.userALE.log({
                         activity: "remove",
