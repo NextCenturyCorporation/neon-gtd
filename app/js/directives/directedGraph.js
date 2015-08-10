@@ -151,7 +151,7 @@ angular.module('neonDemo.directives')
                             $scope.addFilterWhereClauseToFilterList(message.addedFilter.whereClause);
                         }
                     }
-                    $scope.queryForData();
+                    $scope.queryForData(true);
                 }
             };
 
@@ -249,9 +249,9 @@ angular.module('neonDemo.directives')
                 if($scope.messenger) {
                     var relations = datasetService.getRelations($scope.options.database.name, $scope.options.table.name, [$scope.options.selectedNodeField.columnName]);
                     if($scope.filteredNodes.length === 1) {
-                        filterService.addFilters($scope.messenger, relations, $scope.filterKeys, $scope.createFilterClauseForNode, $scope.queryForData);
+                        filterService.addFilters($scope.messenger, relations, $scope.filterKeys, $scope.createFilterClauseForNode, "Graph", $scope.queryForData);
                     } else if($scope.filteredNodes.length > 1) {
-                        filterService.replaceFilters($scope.messenger, relations, $scope.filterKeys, $scope.createFilterClauseForNode, $scope.queryForData);
+                        filterService.replaceFilters($scope.messenger, relations, $scope.filterKeys, $scope.createFilterClauseForNode, "Graph", $scope.queryForData);
                     }
                 }
             };
@@ -284,7 +284,7 @@ angular.module('neonDemo.directives')
                         filterService.removeFilters($scope.messenger, $scope.filterKeys, $scope.queryForData);
                     } else {
                         var relations = datasetService.getRelations($scope.options.database.name, $scope.options.table.name, [$scope.options.selectedNodeField.columnName]);
-                        filterService.replaceFilters($scope.messenger, relations, $scope.filterKeys, $scope.createFilterClauseForNode, $scope.queryForData);
+                        filterService.replaceFilters($scope.messenger, relations, $scope.filterKeys, $scope.createFilterClauseForNode, "Graph", $scope.queryForData);
                     }
                 }
             };
