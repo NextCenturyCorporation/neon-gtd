@@ -751,7 +751,7 @@ function(external, popups, connectionService, datasetService, errorNotificationS
              */
             $scope.buildQuery = function() {
                 var query = new neon.query.Query().selectFrom($scope.options.database.name, $scope.options.table.name).limit($scope.options.limit);
-                if($scope.options.sortByField) {
+                if($scope.options.sortByField && $scope.options.sortByField.columnName) {
                     query.sortBy($scope.options.sortByField.columnName, $scope.options.sortDirection);
                 }
                 return query;
