@@ -96,7 +96,7 @@ function($interval, $filter, connectionService, datasetService, errorNotificatio
                 animatingTime: false,
                 animationFrame: 0,
                 animationFrameDelay: 250,
-                showAnimationControls: true
+                showAnimationControls: false
             };
 
             var datesEqual = function(a, b) {
