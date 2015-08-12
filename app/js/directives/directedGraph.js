@@ -32,13 +32,14 @@ angular.module('neonDemo.directives')
             $scope.optionsMenuButtonText = function() {
                 if($scope.numberOfNodesInGraph === 0) {
                     return "No graph data available";
-                } else if($scope.numberOfNodesInGraph >= $scope.options.nodeLimit) {
-                    return $scope.options.nodeLimit + " node limit";
                 }
-                return "";
+                if($scope.numberOfNodesInGraph >= $scope.options.nodeLimit) {
+                    return $scope.options.nodeLimit + " nodes (data limit)";
+                }
+                return $scope.numberOfNodesInGraph + " nodes";
             };
             $scope.showOptionsMenuButtonText = function() {
-                return $scope.numberOfNodesInGraph === 0 ||$scope.numberOfNodesInGraph >= $scope.options.nodeLimit;
+                return true;
             };
 
             $scope.TIMEOUT_MS = 250;
@@ -369,7 +370,8 @@ angular.module('neonDemo.directives')
              */
             var queryForFilteredNodeNetwork = function(connection) {
                 var query = new neon.query.Query()
-                    .selectFrom($scope.options.database.name, $scope.options.table.name);
+                    .selectFrom($scope.options.database.name, $scope.options.table.name)
+                    .withFields([$scope.options.selectedNodeField.columnName, $scope.options.selectedLinkField.columnName]);
 
                 var where = neon.query.where($scope.options.selectedNodeField.columnName, '=', $scope.filteredNodes[0]);
                 var orWhere;
