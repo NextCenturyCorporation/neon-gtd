@@ -122,8 +122,8 @@ function($scope, $timeout, config, datasets) {
         });
     };
 
-    var gridsterColumns = config.gridsterColumns || 6;
-    var gridsterMargins = config.gridsterMargins || 10;
+    var gridsterColumns = config.gridsterColumns;
+    var gridsterMargins = config.gridsterMargins;
 
     $scope.gridsterOpts = {
         columns: gridsterColumns, // the width of the grid, in columns

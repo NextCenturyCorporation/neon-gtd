@@ -169,14 +169,16 @@ angular.element(document).ready(function() {
             video: undefined
         });
         var dashboardConfig = config.dashboard || {
-            gridsterColumns: 6,
-            gridsterMargins: 10,
             hideNavbarItems: false,
             hideAddVisualizationsButton: false,
             hideAdvancedOptions: false,
             hideErrorNotifications: false,
             hideHeader: false
         };
+        dashboardConfig.gridsterColumns = dashboardConfig.gridsterColumns || 6;
+        dashboardConfig.gridsterMargins = dashboardConfig.gridsterMargins || 10;
+        dashboardConfig.gridsterDefaultMinSizeX = Math.round(dashboardConfig.gridsterColumns / 3);
+        dashboardConfig.gridsterDefaultMinSizeY = Math.round(dashboardConfig.gridsterColumns / 6);
         dashboardConfig.help = helpConfig;
         neonDemo.constant('config', dashboardConfig);
 

@@ -15,8 +15,8 @@
  *
  */
 angular.module('neonDemo.directives')
-.directive('databaseConfig', ['layouts', 'ConnectionService', 'DatasetService',
-    function(layouts, connectionService, datasetService) {
+.directive('databaseConfig', ['config', 'layouts', 'ConnectionService', 'DatasetService',
+    function(config, layouts, connectionService, datasetService) {
     return {
         templateUrl: 'partials/directives/databaseConfig.html',
         restrict: 'E',
@@ -162,14 +162,19 @@ angular.module('neonDemo.directives')
                 // Recreate the layout each time to ensure all visualizations are using the new dataset.
                 $scope.gridsterConfigs = layouts[layoutName] ? angular.copy(layouts[layoutName]) : [];
 
-                // TODO Set default minimum size in config.json
                 for(var i = 0; i < $scope.gridsterConfigs.length; ++i) {
                     $scope.gridsterConfigs[i].id = uuid();
                     if(!($scope.gridsterConfigs[i].minSizeX)) {
-                        $scope.gridsterConfigs[i].minSizeX = 2;
+                        $scope.gridsterConfigs[i].minSizeX = config.gridsterDefaultMinSizeX;
                     }
                     if(!($scope.gridsterConfigs[i].minSizeY)) {
-                        $scope.gridsterConfigs[i].minSizeY = 2;
+                        $scope.gridsterConfigs[i].minSizeY = config.gridsterDefaultMinSizeY;
+                    }
+                    if($scope.gridsterConfigs[i].sizeX < config.gridsterDefaultMinSizeX) {
+                        $scope.gridsterConfigs[i].sizeX = config.gridsterDefaultMinSizeX;
+                    }
+                    if($scope.gridsterConfigs[i].sizeY < config.gridsterDefaultMinSizeY) {
+                        $scope.gridsterConfigs[i].sizeY = config.gridsterDefaultMinSizeY;
                     }
                 }
             };
