@@ -73,7 +73,8 @@ charts.TimelineSelectorChart = function(element, configuration) {
     // The data index over which the user is currently hovering changed on mousemove and mouseout.
     this.hoverIndex = -1;
 
-    this.DEFAULT_HEIGHT = 250;
+    this.DEFAULT_MARGIN = 15;
+    this.DEFAULT_HEIGHT = 150;
     this.DEFAULT_WIDTH = 1000;
 
     var self = this; // for internal d3 functions
@@ -96,15 +97,15 @@ charts.TimelineSelectorChart = function(element, configuration) {
         this.config = configuration || {};
         this.config.marginFocus = this.config.marginFocus || {
             top: 0,
-            right: 15,
+            right: this.DEFAULT_MARGIN,
             bottom: (this.collapsed ? this.determineHeight(this.d3element) : this.DEFAULT_HEIGHT),
-            left: 15
+            left: this.DEFAULT_MARGIN
         };
         this.config.marginContext = this.config.marginContext || {
-            top: 22,
-            right: 15,
-            bottom: 18,
-            left: 15
+            top: this.DEFAULT_MARGIN,
+            right: this.DEFAULT_MARGIN,
+            bottom: 0,
+            left: this.DEFAULT_MARGIN
         };
         this.granularity = this.config.granularity || this.granularity;
         this.redrawOnResize();
@@ -269,16 +270,16 @@ charts.TimelineSelectorChart = function(element, configuration) {
         if(showFocus) {
             this.configure({
                 marginFocus: {
-                    top: 22,
-                    right: 15,
+                    top: this.DEFAULT_MARGIN,
+                    right: this.DEFAULT_MARGIN,
                     bottom: 99,
-                    left: 15
+                    left: this.DEFAULT_MARGIN
                 },
                 marginContext: {
                     top: (this.collapsed ? this.determineHeight(this.d3element) : this.DEFAULT_HEIGHT) - 65,
-                    right: 15,
-                    bottom: 18,
-                    left: 15
+                    right: this.DEFAULT_MARGIN,
+                    bottom: 0,
+                    left: this.DEFAULT_MARGIN
                 }
             });
         } else {
