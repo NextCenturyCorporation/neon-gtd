@@ -510,6 +510,7 @@ angular.module('neonDemo.directives')
                 layer.databasePrettyName = getPrettyNameForDatabase(layer.database);
                 layer.tablePrettyName = getPrettyNameForTable(layer.table);
                 layer.limit = layer.limit || $scope.DEFAULT_LIMIT;
+                layer.previousLimit = layer.limit;
                 layer.editing = false;
                 layer.valid = true;
                 layer.visible = true;
@@ -1270,14 +1271,23 @@ angular.module('neonDemo.directives')
                 layer.name = (layer.name || layer.table).toUpperCase();
                 layer = updateLayerFieldMappings(layer);
 
-                if(layer.previousName !== layer.name) {
-                    var limits = Object.keys($scope.limitedLayers);
-                    limits.forEach(function(limit) {
-                        var index = $scope.limitedLayers[limit].indexOf(layer.previousName);
-                        if(index >= 0) {
-                            $scope.limitedLayers[limit].splice(index, 1, layer.name);
-                        }
-                    });
+                if(layer.previousLimit !== layer.limit) {
+                    // Remove the old limit/name.
+                    var index = $scope.limitedLayers[layer.previousLimit].indexOf(layer.previousName);
+                    if(index >= 0) {
+                        $scope.limitedLayers[layer.previousLimit].splice(index, 1);
+                    }
+                    // Add the new limit/name.
+                    if(!$scope.limitedLayers[layer.limit]) {
+                        $scope.limitedLayers[layer.limit] = [];
+                    }
+                    $scope.limitedLayers[layer.limit].push(layer.name);
+                } else if(layer.previousName !== layer.name) {
+                    // Replace the old name with the new name.
+                    var index = $scope.limitedLayers[layer.limit].indexOf(layer.previousName);
+                    if(index >= 0) {
+                        $scope.limitedLayers[layer.limit].splice(index, 1, layer.name);
+                    }
                 }
 
                 if(layer.olLayer) {
@@ -1285,6 +1295,8 @@ angular.module('neonDemo.directives')
                     layer.olLayer = undefined;
                 }
 
+                layer.previousName = layer.name;
+                layer.previousLimit = layer.limit;
                 layer.editing = false;
                 layer.olLayer = addLayer(layer);
                 $scope.map.setLayerVisibility(layer.olLayer.id, layer.visible);
@@ -1433,6 +1445,7 @@ angular.module('neonDemo.directives')
                 };
 
                 layer.previousName = layer.name;
+                layer.previousLimit = layer.limit;
                 layer.olLayer = addLayer(layer);
                 layer.filterKeys = filterService.createFilterKeys("map", datasetService.getDatabaseAndTableNames());
                 $scope.options.layers.push(layer);
