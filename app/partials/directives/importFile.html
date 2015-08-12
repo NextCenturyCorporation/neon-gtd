@@ -17,13 +17,13 @@
         <h4 class="modal-title" id="importModalLabel">Select a file to import</h4>
       </div>
         <div class="modal-body">
-          <div id="fileDragAndDrop" class="unselectable"><span id="selectedFileIndicator">Drop a file here</span></div>
+          <div id="fileDragAndDrop" class="unselectable"><span id="selectedFileIndicator" ng-bind="indicatorText"></span></div>
           <input type="file" id="fileSelect" value="">
         </div>
         <div class="modal-footer">
-        	<input type="text" id="importUsernameInput" class="modalFooterField" value="" maxLength="40" size="20" placeholder="Username">
-        	<input type="text" id="importDatabaseInput" class="modalFooterField" value="" maxLength="100" size="30" placeholder="Name for database">
-          <button type="button" class="btn btn-default" data-dismiss="modal" ng-click="uploadFile()">Import</button>
+        	<input type="text" id="importUsernameInput" class="modalFooterField" value="" maxLength="40" size="20" placeholder="Username" ng-model="importUserName">
+        	<input type="text" id="importDatabaseInput" class="modalFooterField" value="" maxLength="100" size="30" placeholder="Name for database" ng-model="importDatabaseName">
+          <button type="button" class="btn btn-default" data-dismiss="modal" ng-class="{true: 'disabled', false: ''}[importUserName == '' || importDatabaseName == '']" ng-click="uploadFile()">Import</button>
         </div>
     </div>
   </div>
@@ -33,11 +33,11 @@
   <div class="modal-dialog">
     <div class="modal-content">
       <div class="modal-header">
-        <button type="button" class="close" data-dismiss="modal" aria-hidden="true" ng-click="sendConfirmedChoices('String')">&times;</button>
+        <button type="button" class="close" data-dismiss="modal" aria-hidden="true" ng-click="sendConfirmedChoices('STRING')">&times;</button>
         <h4 class="modal-title" id="confirmModalLabel">Select Field Types</h4>
       </div>
-      <div class="modal-body centered"> <!-- centered class comes from countBy.less - is it still okay to use it here? -->
-      	<p id="userNameCreatedText"></p>
+      <div class="modal-body centered">
+      	<p id="userNameCreatedText">Your username is {{importUserName}}</p>
         <p id="convertFailedText">One or more fields failed to convert. Please try again.</p>
         <table class="importGuessesTable">
           <tr>
@@ -50,12 +50,12 @@
             <td class="alignLeft" id="{{field.name}}-example"></td>
             <td class="alignRight">
               <select class="floatRight" id="{{field.name}}-options">
-                <option value="Integer">Integer</option>
-                <option value="Long">Long</option>
-                <option value="Double">Double</option>
-                <option value="Float">Float</option>
-                <option value="Date">Date</option>
-                <option value="String">String</option>
+                <option value="INTEGER" label="Integer">Integer</option>
+                <option value="LONG" label="Long">Long</option>
+                <option value="DOUBLE" label="Double">Double</option>
+                <option value="FLOAT" label="Float">Float</option>
+                <option value="DATE" label="Date">Date</option>
+                <option value="STRING" label="String">String</option>
               </select>
             </td>
           </tr>
@@ -63,8 +63,8 @@
       </div>
       <div class="modal-footer">
         <div class="alert alert-success pull-left text-left" role="alert" ng-bind="convertingMessage" ng-show="isConverting"></div>
-        <input type="text" id="dateStringInput" class="modalFooterField" value="" maxlength="50" size="30" placeholder="Date format here if not standard" ng-hide="isConverting">
-        <button type="button" class="btn btn-default" ng-click="sendConfirmedChoices()">Confirm</button>
+        <input type="text" id="dateStringInput" class="modalFooterField" value="" maxlength="50" size="30" placeholder="Date format here if not standard" ng-hide="isConverting" ng-model="dateFormatString">
+        <button type="button" id="confirmChoicesButton" class="btn btn-default" ng-click="sendConfirmedChoices()">Confirm</button>
       </div>
     </div>
   </div>
