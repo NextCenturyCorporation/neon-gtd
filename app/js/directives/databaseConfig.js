@@ -70,11 +70,12 @@ angular.module('neonDemo.directives')
             $scope.initialize = function() {
                 $scope.messenger = new neon.eventing.Messenger();
 
-                $scope.datasets.forEach(function(dataset, index) {
+                $scope.datasets.some(function(dataset, index) {
                     if(dataset.connectOnLoad) {
                         $scope.connectToPreset(index);
-                        return;
+                        return true;
                     }
+                    return false;
                 });
             };
 
