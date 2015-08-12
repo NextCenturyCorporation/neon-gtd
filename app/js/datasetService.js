@@ -54,7 +54,7 @@ angular.module("neonDemo.services")
      * @return {Array}
      */
     service.addDataset = function(dataset) {
-        // TODO Validate
+        validateDatabases(dataset);
         service.datasets.push(dataset);
         return service.datasets;
     };
@@ -80,8 +80,6 @@ angular.module("neonDemo.services")
         service.dataset.mapConfig = dataset.mapConfig || {};
         service.dataset.relations = dataset.relations || [];
         service.dataset.linkyConfig = dataset.linkyConfig || {};
-
-        validateDatabases(service.dataset);
 
         if(service.dataset.options.requeryInterval) {
             var delay = Math.max(0.5, service.dataset.options.requeryInterval) * 60000;
@@ -676,6 +674,11 @@ angular.module("neonDemo.services")
     var publishUpdateData = function() {
         service.messenger.publish(service.UPDATE_DATA_CHANNEL, {});
     };
+
+    // Validate the datasets from the configuration file on initialization.
+    service.datasets.forEach(function(dataset) {
+        validateDatabases(dataset);
+    });
 
     return service;
 }]);
