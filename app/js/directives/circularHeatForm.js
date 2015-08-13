@@ -76,6 +76,9 @@ function(connectionService, datasetService, errorNotificationService, exportServ
                 $scope.messenger.events({
                     filtersChanged: onFiltersChanged
                 });
+                $scope.messenger.subscribe(datasetService.UPDATE_DATA_CHANNEL, function() {
+                    $scope.queryForChartData();
+                });
 
                 $scope.exportID = exportService.register($scope.makeCircularHeatFormExportObject);
 
@@ -206,9 +209,16 @@ function(connectionService, datasetService, errorNotificationService, exportServ
 
             $scope.updateFields = function() {
                 $scope.loadingData = true;
-                $scope.fields = datasetService.getDatabaseFields($scope.options.database.name, $scope.options.table.name);
-                $scope.fields.sort();
-                $scope.options.dateField = $scope.bindDateField || datasetService.getMapping($scope.options.database.name, $scope.options.table.name, "date") || "";
+                $scope.fields = datasetService.getSortedFields($scope.options.database.name, $scope.options.table.name);
+
+                var dateField = $scope.bindDateField || datasetService.getMapping($scope.options.database.name, $scope.options.table.name, "date") || "";
+                $scope.options.dateField = _.find($scope.fields, function(field) {
+                    return field.columnName === dateField;
+                }) || {
+                    columnName: "",
+                    prettyName: ""
+                };
+
                 $scope.queryForChartData();
             };
 
@@ -224,7 +234,7 @@ function(connectionService, datasetService, errorNotificationService, exportServ
 
                 var connection = connectionService.getActiveConnection();
 
-                if(!connection || !$scope.options.dateField) {
+                if(!connection || !$scope.options.dateField.columnName) {
                     $scope.updateChartData({
                         data: []
                     });
@@ -233,13 +243,13 @@ function(connectionService, datasetService, errorNotificationService, exportServ
                 }
 
                 //TODO: NEON-603 Add support for dayOfWeek to query API
-                var groupByDayClause = new neon.query.GroupByFunctionClause('dayOfWeek', $scope.options.dateField, 'day');
-                var groupByHourClause = new neon.query.GroupByFunctionClause(neon.query.HOUR, $scope.options.dateField, 'hour');
+                var groupByDayClause = new neon.query.GroupByFunctionClause('dayOfWeek', $scope.options.dateField.columnName, 'day');
+                var groupByHourClause = new neon.query.GroupByFunctionClause(neon.query.HOUR, $scope.options.dateField.columnName, 'hour');
 
                 var query = new neon.query.Query()
                     .selectFrom($scope.options.database.name, $scope.options.table.name)
                     .groupBy(groupByDayClause, groupByHourClause)
-                    .where($scope.options.dateField, '!=', null)
+                    .where($scope.options.dateField.columnName, '!=', null)
                     .aggregate(neon.query.COUNT, '*', 'count');
 
                 // Issue the query and provide a success handler that will forcefully apply an update to the chart.
@@ -393,12 +403,12 @@ function(connectionService, datasetService, errorNotificationService, exportServ
                     source: "user",
                     tags: ["options", "circularheatform", "export"]
                 });
-                var groupByDayClause = new neon.query.GroupByFunctionClause('dayOfWeek', $scope.options.dateField, 'day');
-                var groupByHourClause = new neon.query.GroupByFunctionClause(neon.query.HOUR, $scope.options.dateField, 'hour');
+                var groupByDayClause = new neon.query.GroupByFunctionClause('dayOfWeek', $scope.options.dateField.columnName, 'day');
+                var groupByHourClause = new neon.query.GroupByFunctionClause(neon.query.HOUR, $scope.options.dateField.columnName, 'hour');
                 var query = new neon.query.Query()
                     .selectFrom($scope.options.database.name, $scope.options.table.name)
                     .groupBy(groupByDayClause, groupByHourClause)
-                    .where($scope.options.dateField, '!=', null)
+                    .where($scope.options.dateField.columnName, '!=', null)
                     .aggregate(neon.query.COUNT, '*', 'count');
                 query.limitClause = exportService.getLimitClause();
                 var finalObject = {

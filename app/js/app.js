@@ -44,8 +44,17 @@ var neonDemo = angular.module('neonDemo', [
     'neonDemo.directives',
     'neonDemo.filters',
     'gridster',
+    'ngDraggable',
     'ui.bootstrap.datetimepicker'
 ]);
+
+// AngularJS filter for reversing the order of an array.
+// http://stackoverflow.com/questions/15266671/angular-ng-repeat-in-reverse
+neonDemo.filter("reverse", function() {
+    return function(items) {
+        return items.slice().reverse();
+    };
+});
 
 angular.module('neonDemo.directives', []);
 angular.module('neonDemo.controllers', []);
@@ -160,14 +169,16 @@ angular.element(document).ready(function() {
             video: undefined
         });
         var dashboardConfig = config.dashboard || {
-            gridsterColumns: 6,
-            gridsterMargins: 10,
             hideNavbarItems: false,
             hideAddVisualizationsButton: false,
             hideAdvancedOptions: false,
             hideErrorNotifications: false,
             hideHeader: false
         };
+        dashboardConfig.gridsterColumns = dashboardConfig.gridsterColumns || 6;
+        dashboardConfig.gridsterMargins = dashboardConfig.gridsterMargins || 10;
+        dashboardConfig.gridsterDefaultMinSizeX = Math.round(dashboardConfig.gridsterColumns / 3);
+        dashboardConfig.gridsterDefaultMinSizeY = Math.round(dashboardConfig.gridsterColumns / 6);
         dashboardConfig.help = helpConfig;
         neonDemo.constant('config', dashboardConfig);
 

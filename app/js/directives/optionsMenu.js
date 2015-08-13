@@ -7,6 +7,7 @@ angular.module('neonDemo.directives')
         transclude: true,
         scope: {
             parentElement: '=',
+            resize: '=?',
             buttonText: '=?',
             showButtonText: '=?',
             exportFunction: '=?'
@@ -40,7 +41,7 @@ angular.module('neonDemo.directives')
                 return $scope.buttonText;
             };
 
-            var resizeMenu = function() {
+            var resizeMenu = $scope.resize || function() {
                 var chartOptions = $element.find(".chart-options");
                 var height = $scope.parentElement.innerHeight() - (chartOptions.outerHeight(true) - chartOptions.height() + $scope.CHART_OPTIONS_BUFFER_Y);
                 chartOptions.find(".popover-content").css("max-height", height + "px");

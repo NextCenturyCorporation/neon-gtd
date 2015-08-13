@@ -38,8 +38,7 @@ angular.module('neonDemo.directives')
             collapsed: '=',
             primarySeries: '=',
             granularity: '=',
-            showFocus: '=',
-            messenger: '='
+            showFocus: '='
         },
         link: function($scope, $element) {
             // Initialize the chart.
@@ -100,7 +99,7 @@ angular.module('neonDemo.directives')
                 function() {
                     return $(".timeline-selector")[0].clientWidth + "x" + $(".timeline-selector")[0].clientHeight;
                 },
-                function(newVal, oldVal) {
+                function(newVal) {
                     if(newVal && $scope.chart) {
                         if($scope.resizePromise) {
                             $timeout.cancel($scope.resizePromise);
@@ -142,8 +141,7 @@ angular.module('neonDemo.directives')
 
             $scope.$watch('collapsed', function(newVal) {
                 if(newVal !== undefined) {
-                    $scope.chart.render($scope.timelineData);
-                    $scope.chart.renderExtent($scope.timelineBrush);
+                    $scope.chart.collapse(newVal);
                 }
             });
 
@@ -155,7 +153,7 @@ angular.module('neonDemo.directives')
                 }
             });
 
-            $scope.$watch('showFocus', function(newVal, oldVal) {
+            $scope.$watch('showFocus', function(newVal) {
                 if(newVal === 'always') {
                     $scope.chart.toggleFocus(true);
                 } else if(newVal === 'never') {
@@ -186,9 +184,15 @@ angular.module('neonDemo.directives')
                 });
             };
 
-            $scope.$watch("messenger", function() {
+            $scope.initialize = function() {
+                $scope.messenger = new neon.eventing.Messenger();
                 $scope.messenger.subscribe("date_selected", onDateSelected);
                 $scope.chart.setHoverListener(onHover);
+            };
+
+            // Wait for neon to be ready, the create our messenger and intialize the view and data.
+            neon.ready(function() {
+                $scope.initialize();
             });
         }
     };

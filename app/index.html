@@ -47,9 +47,8 @@
         <!-- Header -->
         <!-- This could be made into either a directive or a partial -->
         <nav role="navigation" class="navbar">
-            <div class="navbar-default navbar-static-top" ng-class="{true: '', false: 'affix'}[hideNavbarItems == true]">
-                <div class="container">
-
+            <div class="navbar-default navbar-fixed-top" ng-class="{true: '', false: 'affix'}[hideNavbarItems == true]">
+                <div class="container" ng-hide="hideNavbarItems">
                     <div class="pull-left" ng-show="hideNavbarItems">
                         <span class="navbar-text navbar-title-text">
                             {{navbarTitle}}
@@ -91,30 +90,11 @@
 
                     <!-- Add visualization control -->
                     <div add-visualization gridster-configs="visualizations" ng-hide="hideNavbarItems || hideAddVisualizationsButton"></div>
+                </div>
 
-                    <!--
-                    <ul class="nav navbar-nav" ng-hide="hideNavbarItems">
-                        <li>
-                            <a data-toggle="collapse" data-parent="#trays" href=".filter-tray" class="collapsed"
-                                ng-click="toggleCreateFilters()">
-                                <span class="glyphicon glyphicon-filter"></span>
-                                Create Filters
-                                <span class="label label-primary" ng-bind="filterCount" ng-class="{true: '', false: 'hidden'}[filterCount > 0]"></span>
-                            </a>
-                        </li>
-                        <li>
-                            <a data-toggle="collapse" data-parent="#trays" href=".data-tray" class="collapsed"
-                               ng-click="toggleSeeData()">
-                                <span class="glyphicon glyphicon-list"></span> View Data
-                            </a>
-                        </li>
-                        -->
-                        <!-- <li>
-                            <a data-toggle="collapse" data-parent="#trays" href=".query-tray" class="collapsed">
-                                <span class="glyphicon glyphicon-pencil"></span> Write Query
-                            </a>
-                        </li> -->
-                    </ul>
+                <!-- FILTER STATUS TRAY -->
+                <div class="container" ng-show="showFilterStatusTray">
+                    <filter-tray bound-parent="'nav.navbar'" include-parent-height="!hideNavbarItems"></filter-tray>
                 </div>
             </div>
         </nav>
@@ -158,6 +138,8 @@
         -->
         <script src="lib/angular/js/angular.min.js"></script>
         <script src="lib/angular-gridster/js/angular-gridster.min.js"></script>
+        <script src="lib/moment/js/moment.min.js"></script>
+        <script src="lib/angular-ui-tree/js/angular-ui-tree.min.js"></script>
         <script src="lib/javascript-detect-element-resize/js/jquery.resize.js"></script>
 
         <!-- Include third party libs -->
@@ -179,7 +161,9 @@
         <script src="js/vendor/slick-grid/js/slick.rowselectionmodel.js"></script>
         <script src="lib/mergesort/js/merge-sort.js"></script>
         <script src="lib/bootstrap/js/bootstrap.min.js"></script>
+        <script src="lib/ngDraggable/js/ngDraggable.js"></script>
         <script src="lib/remarkable-bootstrap-notify/js/bootstrap-notify.min.js"></script>
+        <script src="lib/rainbowvis.js/js/rainbowvis.js"></script>
 
         <!-- Moment required for angular-bootstrap-datetimepicker -->
         <script src="lib/moment/js/moment.min.js"></script>
@@ -223,6 +207,7 @@
         <script src="js/directives/fileFormats.js"></script>
         <script src="js/directives/filterBuilder.js"></script>
         <script src="js/directives/filterState.js"></script>
+        <script src="js/directives/filterTray.js"></script>
         <script src="js/directives/importFile.js"></script>
         <script src="js/directives/linechart.js"></script>
         <script src="js/directives/linksPopup.js"></script>

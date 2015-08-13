@@ -1,39 +1,270 @@
 <div class="header-container menu-container">
-    <options-menu parent-element="element" export-function="makeMapExportObject" button-text="optionsMenuButtonText" show-button-text="showOptionsMenuButtonText">
-        <div class="form-group instructions-container">
-            <label><span class="glyphicon glyphicon-info-sign"></span> SHIFT + DRAG on Map to Filter</label>
+    <options-menu parent-element="element" export-function="makeMapExportObject" resize="resizeOptionsMenu" button-text="optionsMenuButtonText" show-button-text="showOptionsMenuButtonText">
+        <div class="form-group info-container">
+            <label><span class="glyphicon glyphicon-info-sign margin-right"></span>SHIFT + DRAG on Map to Filter</label>
         </div>
-        <div class="form-group layer-options-container" ng-repeat="layer in options.layers">
-            <label>{{layer.name}}</label>
-            <div class="form-group layer-options">
-                <div class="btn-group">
-                    <label class="btn btn-default" ng-class="{true: 'active', false: ''}[layer.visible === true]">
-                        <input type="checkbox" style="display:none" ng-model="layer.visible" ng-change="updateLayerVisibility(layer)">
-                        <span class="glyphicon glyphicon-eye-open"></span> Visible
-                    </label>
-                    <label class="btn btn-default" ng-class="{true: 'active', false: ''}[layer.active === true]">
-                        <input type="checkbox" style="display:none" ng-model="layer.active" ng-change="updateFilteringOnLayer(layer)">
-                        <span class="glyphicon glyphicon-filter"></span> Filter
-                    </label>
-                </div>
-                <div class="form-group">
-                    <label>Layer Type</label>
-                    <select class="form-control" ng-model="layer.type" ng-options="layer for layer in mapLayers"
-                        ng-required="true" ng-change="updateLayer(layer.filterKeys)">
-                    </select>
-                </div>
-                <div class="error">
-                    {{ layer.error }}
-                </div>
-            </div>
-            <div class="clearfix"></div>
-        </div>
-        <div class="form-group reset-options">
+
+        <div class="form-group button-container">
             <button type="button" class="btn btn-default" title="Reset Map View" ng-click="setDefaultView()">
-              Reset View
+                Reset Map View
+            </button>
+            <button type="button" class="btn btn-primary" title="Add New Layer" ng-click="clickAddNewLayerButton()" ng-show="!(options.newLayer.editing)">
+                Add New Layer
             </button>
         </div>
 
+        <div class="all-layer-options">
+            <!-- Container for a new map layer. -->
+            <div class="form-group layer-options-container" ng-show="(options.newLayer.editing)">
+                <div class="form-group layer-options-well neon-well new-layer">
+                    <div class="layer-options-row">
+                        <div class="btn-group layer-options-col layer-options-col-wide">
+                            <label class="btn btn-default" ng-cancel-drag ng-class="{true: 'active', false: ''}[options.newLayer.visible === true]" title="Toggle Layer Visibility" ng-show="(options.newLayer.editing)">
+                                <input type="checkbox" style="display:none" ng-model="options.newLayer.visible">
+                                <span class="glyphicon glyphicon-eye-open"></span>
+                            </label>
+                            <label class="btn btn-default" ng-cancel-drag ng-class="{true: 'active', false: ''}[options.newLayer.active === true]" title="Toggle Map Filtering on Layer" ng-show="(options.newLayer.editing)">
+                                <input type="checkbox" style="display:none" ng-model="options.newLayer.active">
+                                <span class="glyphicon glyphicon-filter"></span>
+                            </label>
+                            <label class="btn btn-default" ng-cancel-drag ng-class="{true: '', false: 'disabled'}[options.newLayer.valid]" title="Save New Layer">
+                                <input type="button" style="display:none" ng-click="addNewLayer()">
+                                <span class="glyphicon glyphicon-ok"></span>
+                            </label>
+                            <label class="btn btn-danger" ng-cancel-drag title="Cancel">
+                                <input type="button" style="display:none" ng-click="resetNewLayer()">
+                                <span class="glyphicon glyphicon-trash"></span>
+                            </label>
+                        </div>
+
+                        <div class="form-group layer-options-col layer-options-col-wide">
+                            <label>Layer Name</label>
+                            <input type="text" class="form-control" placeholder="{{options.newLayer.table.prettyName.toUpperCase()}}" style="text-transform: uppercase;" ng-model="options.newLayer.name" ng-required="false" ng-class="{true: '', false: 'ng-invalid'}[options.newLayer.valid]" ng-change="validateNewLayerName()"/>
+                        </div>
+                    </div>
+
+                    <div class="layer-options-row">
+                        <div class="form-group layer-options-col">
+                            <label>Database</label>
+                            <select class="form-control" ng-model="options.newLayer.database" ng-options="database.prettyName for database in databases" ng-required="true" ng-disabled="(databases.length < 2)" ng-change="updateTables()"></select>
+                        </div>
+
+                        <div class="form-group layer-options-col">
+                            <label>Table</label>
+                            <select class="form-control" ng-model="options.newLayer.table" ng-options="table.prettyName for table in tables" ng-required="true" ng-disabled="(tables.length < 2)" ng-change="updateFields()"></select>
+                        </div>
+
+                        <div class="form-group layer-options-col">
+                            <label>Layer Type</label>
+                            <select class="form-control" ng-model="options.newLayer.type" ng-options="type for type in MAP_LAYER_TYPES" ng-required="true">
+                            </select>
+                        </div>
+
+                        <div class="form-group layer-options-col">
+                            <label>Data Limit</label>
+                            <input type="number" min="1" class="form-control" ng-model="options.newLayer.limit" ng-model="options.newLayer.limit" ng-required="true"/>
+                        </div>
+                    </div>
+
+                    <div class="layer-options-row">
+                        <div class="form-group layer-options-col">
+                            <label>Longitude Field</label>
+                            <select class="form-control" ng-model="options.newLayer.longitude" ng-options="field for field in fields" ng-required="true" ng-disabled="!(fields.length > 0)"></select>
+                        </div>
+
+                        <div class="form-group layer-options-col">
+                            <label>Latitude Field</label>
+                            <select class="form-control" ng-model="options.newLayer.latitude" ng-options="field for field in fields" ng-required="true" ng-disabled="!(fields.length > 0)"></select>
+                        </div>
+
+                        <div class="form-group layer-options-col" ng-show="(options.newLayer.type == 'points' || options.newLayer.type == 'cluster' || options.newLayer.type == 'heatmap')">
+                            <label>Size Field</label>
+                            <select class="form-control" ng-model="options.newLayer.size" ng-options="field for field in fields" ng-disabled="!(fields.length > 0)">
+                                <option value="">None</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group layer-options-col" ng-show="(options.newLayer.type == 'points' || options.newLayer.type == 'cluster')">
+                            <label>Color Field</label>
+                            <select class="form-control" ng-model="options.newLayer.color" ng-options="field for field in fields" ng-disabled="!(fields.length > 0)">
+                                <option value="">None</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group layer-options-col" ng-show="(options.newLayer.type == 'node')">
+                            <label>Source Field</label>
+                            <select class="form-control" ng-model="options.newLayer.source" ng-options="field for field in fields" ng-disabled="!(fields.length > 0)"></select>
+                        </div>
+
+                        <div class="form-group layer-options-col" ng-show="(options.newLayer.type == 'node')">
+                            <label>Target Field</label>
+                            <select class="form-control" ng-model="options.newLayer.target" ng-options="field for field in fields" ng-disabled="!(fields.length > 0)"></select>
+                        </div>
+                    </div>
+
+                    <div class="layer-options-row" ng-show="(options.newLayer.type == 'points' || options.newLayer.type == 'cluster')">
+                        <div class="form-group layer-options-col">
+                            <label>Color Code</label>
+                            <input type="text" class="form-control" placeholder="None" ng-model="options.newLayer.colorCode" ng-required="false"/>
+                        </div>
+                    </div>
+
+                    <div class="layer-options-row" ng-show="(options.newLayer.type == 'node')">
+                        <div class="form-group layer-options-col">
+                            <label>Point Color Code</label>
+                            <input type="text" class="form-control" placeholder="None" ng-model="options.newLayer.pointColor" ng-required="false"/>
+                        </div>
+
+                        <div class="form-group layer-options-col">
+                            <label>Line Color Code</label>
+                            <input type="text" class="form-control" placeholder="None" ng-model="options.newLayer.lineColor" ng-required="false"/>
+                        </div>
+
+                        <div class="form-group layer-options-col">
+                            <label>Size Field</label>
+                            <select class="form-control" ng-model="options.newLayer.size" ng-options="field for field in fields" ng-disabled="!(fields.length > 0)">
+                                <option value="">None</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <label class="layer-options-error" ng-show="!(options.newLayer.valid)">Please choose a unique layer name.</label>
+                </div>
+            </div>
+
+            <!-- Containers for the existing map layers. -->
+            <!-- The ng-drag and ng-drop directives are from the ngDraggable library. -->
+            <div class="form-group layer-options-container" ng-drop="true" ng-drop-success="reorderLayer($index, $data)" ng-repeat="layer in options.layers | reverse">
+                <div ng-drag="true" ng-drag-data="layer">
+                    <div class="form-group layer-options-well neon-well neon-well-dark">
+                        <div class="layer-options-row">
+                            <div class="btn-group layer-options-col layer-options-col-wide">
+                                <label class="btn btn-default" ng-cancel-drag ng-class="{true: 'active', false: ''}[layer.visible === true]" title="Toggle Layer Visibility">
+                                    <input type="checkbox" style="display:none" ng-model="layer.visible" ng-change="updateLayerVisibility(layer)">
+                                    <span class="glyphicon glyphicon-eye-open"></span>
+                                </label>
+                                <label class="btn btn-default" ng-cancel-drag ng-class="{true: 'active', false: ''}[layer.active === true]" title="Toggle Map Filtering on Layer">
+                                    <input type="checkbox" style="display:none" ng-model="layer.active" ng-change="updateFilteringOnLayer(layer)">
+                                    <span class="glyphicon glyphicon-filter"></span>
+                                </label>
+                                <label class="btn btn-default" ng-cancel-drag title="Edit Layer" ng-show="!(layer.editing)">
+                                    <input type="button" style="display:none" ng-click="toggleEditing(layer)">
+                                    <span class="glyphicon glyphicon-edit"></span>
+                                </label>
+                                <label class="btn btn-default" ng-cancel-drag ng-class="{true: '', false: 'disabled'}[layer.valid]" title="Save Layer" ng-show="(layer.editing)">
+                                    <input type="button" style="display:none" ng-click="updateLayer(layer)">
+                                    <span class="glyphicon glyphicon-ok"></span>
+                                </label>
+                                <label class="btn btn-danger" ng-cancel-drag title="Delete Layer">
+                                    <input type="button" style="display:none" ng-click="deleteLayer(layer)">
+                                    <span class="glyphicon glyphicon-trash"></span>
+                                </label>
+                            </div>
+
+                            <div class="form-group layer-options-col layer-options-col-wide">
+                                <label>Layer Name</label>
+                                <input type="text" class="form-control" placeholder="{{layer.table.toUpperCase()}}" style="text-transform: uppercase;" ng-cancel-drag ng-model="layer.name" ng-required="false" ng-disabled="(!layer.editing)" ng-class="{true: '', false: 'ng-invalid'}[layer.valid]" ng-change="validateLayerName(layer, $index)"/>
+                            </div>
+                        </div>
+
+                        <div class="layer-options-editing" ng-show="(layer.editing)">
+                            <div class="layer-options-row">
+                                <div class="form-group layer-options-col">
+                                    <label>Database</label>
+                                    <input type="text" class="form-control" ng-cancel-drag ng-model="layer.databasePrettyName" ng-disabled="true"/>
+                                </div>
+
+                                <div class="form-group layer-options-col">
+                                    <label>Table</label>
+                                    <input type="text" class="form-control" ng-cancel-drag ng-model="layer.tablePrettyName" ng-disabled="true"/>
+                                </div>
+
+                                <div class="form-group layer-options-col">
+                                    <label>Layer Type</label>
+                                    <select class="form-control" ng-cancel-drag ng-model="layer.type" ng-options="type for type in MAP_LAYER_TYPES" ng-required="true">
+                                    </select>
+                                </div>
+
+                                <div class="form-group layer-options-col">
+                                    <label>Data Limit</label>
+                                    <input type="number" min="1" class="form-control" ng-cancel-drag ng-model="layer.limit" ng-required="true">
+                                </div>
+                            </div>
+
+                            <div class="layer-options-row">
+                                <div class="form-group layer-options-col">
+                                    <label>Longitude Field</label>
+                                    <select class="form-control" ng-cancel-drag ng-model="layer.longitudeMapping" ng-options="field for field in fields" ng-required="true" ng-disabled="!(fields.length > 0)">
+                                    </select>
+                                </div>
+
+                                <div class="form-group layer-options-col">
+                                    <label>Latitude Field</label>
+                                    <select class="form-control" ng-cancel-drag ng-model="layer.latitudeMapping" ng-options="field for field in fields" ng-required="true" ng-disabled="!(fields.length > 0)">
+                                    </select>
+                                </div>
+
+                                <div class="form-group layer-options-col" ng-show="layer.type == 'points' || layer.type == 'cluster' || layer.type == 'heatmap'">
+                                    <label>Size Field</label>
+                                    <select class="form-control" ng-cancel-drag ng-model="layer.sizeBy" ng-options="field for field in fields" ng-required="false" ng-disabled="!(fields.length > 0)">
+                                        <option value="">None</option>
+                                    </select>
+                                </div>
+
+                                <div class="form-group layer-options-col" ng-show="layer.type == 'points' || layer.type == 'cluster'">
+                                    <label>Color Field</label>
+                                    <select class="form-control" ng-cancel-drag ng-model="layer.colorBy" ng-options="field for field in fields" ng-required="false" ng-disabled="!(fields.length > 0)">
+                                        <option value="">None</option>
+                                    </select>
+                                </div>
+
+                                <div class="form-group layer-options-col" ng-show="layer.type == 'node'">
+                                    <label>Source Field</label>
+                                    <select class="form-control" ng-cancel-drag ng-model="layer.sourceMapping" ng-options="field for field in fields" ng-required="layer.type == 'node'" ng-disabled="!(fields.length > 0)">
+                                    </select>
+                                </div>
+
+                                <div class="form-group layer-options-col" ng-show="layer.type == 'node'">
+                                    <label>Target Field</label>
+                                    <select class="form-control" ng-cancel-drag ng-model="layer.targetMapping" ng-options="field for field in fields" ng-required="layer.type == 'node'" ng-disabled="!(fields.length > 0)">
+                                    </select>
+                                </div>
+                            </div>
+
+                            <div class="layer-options-row" ng-show="layer.type == 'points' || layer.type == 'cluster'">
+                                <div class="form-group layer-options-col">
+                                    <label>Color Code</label>
+                                    <input type="text" class="form-control" placeholder="{{layer.defaultColor || 'None'}}" ng-cancel-drag ng-model="layer.defaultColor" ng-required="false">
+                                </div>
+                            </div>
+
+                            <div class="layer-options-row" ng-show="layer.type == 'node'">
+                                <div class="form-group layer-options-col">
+                                    <label>Point Color Code</label>
+                                    <input type="text" class="form-control" placeholder="{{layer.nodeColor || 'None'}}" ng-cancel-drag ng-model="layer.nodeColor" ng-required="false"/>
+                                </div>
+
+                                <div class="form-group layer-options-col">
+                                    <label>Line Color Code</label>
+                                    <input type="text" class="form-control" placeholder="{{layer.edgeColor || 'None'}}" ng-cancel-drag ng-model="layer.edgeColor" ng-required="false"/>
+                                </div>
+
+                                <div class="form-group layer-options-col">
+                                    <label>Size Field</label>
+                                    <select class="form-control" ng-cancel-drag ng-model="layer.weightMapping" ng-options="field for field in fields" ng-required="false" ng-disabled="!(fields.length > 0)">
+                                        <option value="">None</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <label class="layer-options-error" ng-show="!(layer.valid)">Please choose a unique layer name.</label>
+
+                            <label class="layer-options-error" ng-show="layer.error != undefined">{{layer.error}}</label>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
     </options-menu>
 </div>
 

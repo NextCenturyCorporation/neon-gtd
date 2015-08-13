@@ -72,6 +72,9 @@ function(connectionService, datasetService, errorNotificationService, exportServ
                 $scope.messenger.events({
                     filtersChanged: onFiltersChanged
                 });
+                $scope.messenger.subscribe(datasetService.UPDATE_DATA_CHANNEL, function() {
+                    $scope.queryForData();
+                });
 
                 $scope.exportID = exportService.register($scope.makeSunburstExportObject);
 
@@ -153,8 +156,8 @@ function(connectionService, datasetService, errorNotificationService, exportServ
 
                 //take based on selected count or total
                 query.aggregate(neon.query.COUNT, '*', 'count');
-                if($scope.options.valueField) {
-                    query.aggregate(neon.query.SUM, $scope.options.valueField, $scope.options.valueField);
+                if($scope.options.valueField.columnName) {
+                    query.aggregate(neon.query.SUM, $scope.options.valueField.columnName, $scope.options.valueField.columnName);
                 }
 
                 return query;
@@ -171,7 +174,6 @@ function(connectionService, datasetService, errorNotificationService, exportServ
                 }
 
                 $scope.groupFields = [];
-                $scope.options.valueField = "";
                 $scope.arcValue = charts.SunburstChart.COUNT_PARTITION;
 
                 $scope.databases = datasetService.getDatabases();
@@ -210,8 +212,11 @@ function(connectionService, datasetService, errorNotificationService, exportServ
 
             $scope.updateFields = function() {
                 $scope.loadingData = true;
-                $scope.fields = datasetService.getDatabaseFields($scope.options.database.name, $scope.options.table.name);
-                $scope.fields.sort();
+                $scope.fields = datasetService.getSortedFields($scope.options.database.name, $scope.options.table.name);
+                $scope.options.valueField = {
+                    columnName: "",
+                    prettyName: ""
+                };
                 $scope.queryForData();
             };
 
@@ -328,7 +333,7 @@ function(connectionService, datasetService, errorNotificationService, exportServ
                             } else {
                                 leafObject.name = field + ": " + doc[field];
                                 leafObject.count = doc.count;
-                                leafObject.total = doc[$scope.options.valueField];
+                                leafObject.total = doc[$scope.options.valueField.columnName];
                                 parent.children.push(leafObject);
                             }
                         } else {
@@ -346,10 +351,10 @@ function(connectionService, datasetService, errorNotificationService, exportServ
             };
 
             $scope.addGroup = function() {
-                if($scope.groupFields.indexOf($scope.options.selectedItem) === -1 && $scope.options.selectedItem !== "") {
-                    $scope.groupFields.push($scope.options.selectedItem);
+                if($scope.groupFields.indexOf($scope.options.selectedItem.columnName) === -1 && $scope.options.selectedItem.columnName !== "") {
+                    $scope.groupFields.push($scope.options.selectedItem.columnName);
                 }
-                $scope.options.selectedItem = "";
+                $scope.options.selectedItem = {};
                 $scope.queryForData();
             };
 

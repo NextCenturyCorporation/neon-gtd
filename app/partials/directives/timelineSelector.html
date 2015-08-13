@@ -1,5 +1,5 @@
 <div class="header-container" ng-show="!(hideHeader)">
-    <span class="header-text pull-left">{{options.table.prettyName}}</span>
+    <span class="header-text pull-left" ng-bind="options.table.prettyName"></span>
 
     <options-menu parent-element="element" export-function="makeTimelineSelectorExportObject">
         <div class="form-group" ng-show="!(hideAdvancedOptions)">
@@ -16,7 +16,7 @@
 
         <div class="form-group" ng-show="!(hideAdvancedOptions)">
             <label>Date Field</label>
-            <select class="form-control" ng-model="options.dateField" ng-options="field for field in fields" ng-required="true" ng-disabled="(fields.length == 0)" ng-change="updateDateField()">
+            <select class="form-control" ng-model="options.dateField" ng-options="field.prettyName for field in fields" ng-required="true" ng-disabled="(fields.length == 0)" ng-change="updateDateField()">
             </select>
         </div>
 
@@ -66,6 +66,18 @@
             </div>
             <div class="clearfix"></div>
         </div>
+        <div class="form-group">
+            <label>Animation Controls</label>
+            <div class="btn-group">
+                <label class="btn btn-default" ng-class="{true: 'active', false: ''}[options.showAnimationControls]">
+                    <input type="radio" style="display:none" ng-model="options.showAnimationControls" value="true"> Show 
+                </label>
+                <label class="btn btn-default" ng-class="{true: '', false: 'active'}[options.showAnimationControls]">
+                    <input type="radio" style="display:none" ng-model="options.showAnimationControls" value="false"> Hide
+                </label>
+            </div>
+            <div class="clearfix"></div>
+        </div>
     </options-menu>
 </div>
 
@@ -78,13 +90,13 @@
     </div>
 
     <h4 class="pull-left">
-        <span class="count text-primary">{{recordCount}}</span> records
+        <span class="count text-primary" ng-bind="recordCount"></span> records
     </h4>
 
     <div class="neon-datetimepicker dropdown pull-left">
         <button class="btn btn-default dropdown-toggle" role="button" data-toggle="dropdown" data-target="#" href="#">
             <span class="glyphicon glyphicon-calendar"></span>
-            From {{startDateForDisplay || '?'}} to {{endDateForDisplay || '?'}}
+            <span ng-bind="'From ' + (startDateForDisplay || '?') + ' to ' + (endDateForDisplay || '?')"></span>
             <span class="caret"></span>
         </button>
         <ul class="dropdown-menu" role="menu">
@@ -104,16 +116,33 @@
             <datetimepicker ng-show="(options.granularity === 'month')" data-ng-model="filter.end" data-datetimepicker-config="{ startView: 'month', minView: 'month' }" ng-change="handleDateTimePickChange()"/>
             <datetimepicker ng-show="(options.granularity === 'year')" data-ng-model="filter.end" data-datetimepicker-config="{ startView: 'year', minView: 'year' }" ng-change="handleDateTimePickChange()"/>
         </ul>
+        <span ng-if="options.showAnimationControls">
+            <button class="btn btn-default" role="button" 
+                ng-click="(options.animatingTime) ? pauseTimeAnimation() : playTimeAnimation()">
+                <span class="glyphicon" 
+                    ng-class="{true: 'glyphicon-pause', false: 'glyphicon-play-circle'}[options.animatingTime]"></span> 
+                <span ng-bind="(options.animatingTime) ? 'Pause' : 'Play'"></span>
+            </button>
+            <button class="btn btn-default" role="button" ng-click="stepTimeAnimation()">
+                <span class="glyphicon glyphicon-step-forward"></span> Step
+            </button>
+            <button class="btn btn-default" role="button" ng-click="stopTimeAnimation()">
+                <span class="glyphicon glyphicon-stop"></span> Stop
+            </button>
+        </span>
     </div>
 </div>
 
-  <div class="collapsed" ng-class="{true: 'collapsed', false: ''}[options.collapsed]">
-    <div timeline-selector-chart timeline-data='data' timeline-brush='brush' collapsed='options.collapsed' extent-dirty='extentDirty' primary-series='options.primarySeries' granularity='options.granularity' show-focus='options.showFocus' messenger='messenger'></div>
-  </div>
+<div class="collapsed" ng-class="{true: 'collapsed', false: ''}[options.collapsed]" ng-hide="noData">
+    <div timeline-selector-chart timeline-data='data' timeline-brush='brush' collapsed='options.collapsed' extent-dirty='extentDirty'
+        primary-series='options.primarySeries' granularity='options.granularity' show-focus='options.showFocus'></div>
+</div>
 
-  <div class="text-center mmpp" ng-class="{true: '', false: 'hidden'}[opencpu.enableMmpp === true && options.granularity === 'hour' && !eventProbabilitiesDisplayed && !options.collapsed]">
+<span class="no-data pull-left" ng-show="noData">No data for current filters.</span>
+
+<div class="text-center mmpp" ng-class="{true: '', false: 'hidden'}[opencpu.enableMmpp === true && options.granularity === 'hour' && !eventProbabilitiesDisplayed && !options.collapsed]" ng-hide="noData">
     <a class="btn" ng-click="runMMPP()">
-      Click to run event probability analysis (this may take a few minutes) <span class="glyphicon glyphicon-transfer"></span>
+        Click to run event probability analysis (this may take a few minutes) <span class="glyphicon glyphicon-transfer"></span>
     </a>
-  </div>
+</div>
 

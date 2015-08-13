@@ -32,8 +32,8 @@
  * @constructor
  */
 angular.module('neonDemo.directives')
-.directive('timelineSelector', ['ConnectionService', 'DatasetService', 'ErrorNotificationService', 'FilterService', 'ExportService', 'opencpu', '$filter',
-function(connectionService, datasetService, errorNotificationService, filterService, exportService, opencpu, $filter) {
+.directive('timelineSelector', ['$interval', '$filter', 'ConnectionService', 'DatasetService', 'ErrorNotificationService', 'FilterService', 'ExportService', 'opencpu',
+function($interval, $filter, connectionService, datasetService, errorNotificationService, filterService, exportService, opencpu) {
     return {
         templateUrl: 'partials/directives/timelineSelector.html',
         restrict: 'EA',
@@ -74,6 +74,7 @@ function(connectionService, datasetService, errorNotificationService, filterServ
             $scope.eventProbabilitiesDisplayed = false;
             $scope.errorMessage = undefined;
             $scope.loadingData = false;
+            $scope.noData = true;
 
             $scope.databases = [];
             $scope.tables = [];
@@ -91,7 +92,11 @@ function(connectionService, datasetService, errorNotificationService, filterServ
                 primarySeries: false,
                 collapsed: true,
                 granularity: DAY,
-                showFocus: "on_filter"
+                showFocus: "on_filter",
+                animatingTime: false,
+                animationFrame: 0,
+                animationFrameDelay: 250,
+                showAnimationControls: false
             };
 
             var datesEqual = function(a, b) {
@@ -112,6 +117,104 @@ function(connectionService, datasetService, errorNotificationService, filterServ
 
             var setDateTimePickerEnd = function(date) {
                 $scope.filter.end = new Date(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate() - 1, date.getUTCHours());
+            };
+
+            /**
+             * Begins an animation loop by calling doTimeAnimation() at regular intervals.  An animation
+             * consists of separate events for each bucket of time data at the timeline selector's current
+             * time resolution.  On each animation tick, a date-selected event will be emitted to allow
+             * other visualization to respond to the animation loop with their own customized graphics or filtered data.
+             * @method playTimeAnimation
+             */
+            $scope.playTimeAnimation = function() {
+                $scope.options.animatingTime = true;
+                $scope.options.animationTimeout = $interval($scope.doTimeAnimation, $scope.options.animationFrameDelay);
+            };
+
+            /**
+             * Pauses an animation loop by cancelling the automatic doTimeAnimation interval.
+             * @method pauseTimeAnimation
+             */
+            $scope.pauseTimeAnimation = function() {
+                $interval.cancel($scope.options.animationTimeout);
+                $scope.options.animatingTime = false;
+            };
+
+            /**
+             * Stops an animation loop by cancelling the automatic doTimeAnimation interval and resetting the
+             * animation frame.
+             * @method stopTimeAnimation
+             */
+            $scope.stopTimeAnimation = function() {
+                $interval.cancel($scope.options.animationTimeout);
+                $scope.options.animatingTime = false;
+
+                // Clear the current step data.
+                $scope.options.animationFrame = 0;
+                $scope.messenger.publish('date_selected', {});
+            };
+
+            /**
+             * Step ahead one frame of animation.  This emits a selection of the next bucket of temporal data.
+             * @method stepTimeAnimation
+             */
+            $scope.stepTimeAnimation = function() {
+                if($scope.options.animatingTime) {
+                    $scope.pauseTimeAnimation();
+                }
+                $scope.doTimeAnimation();
+            };
+
+            /**
+             * Get the animation frame for the first bucket within our brushed time range, or simply
+             * the first time bucket if no brush exists.
+             * @method getAnimationStartFrame
+             */
+            $scope.getAnimationStartFrame = function() {
+                return ($scope.brush.length && $scope.brush[0]) ?
+                    $scope.bucketizer.getBucketIndex($scope.brush[0]) : 0;
+            };
+
+            /**
+             * Get the animation frame limit for the brushed time range, or simply
+             * the overall frame limit if no brush exists.
+             * @method getAnimationFrameLimit
+             */
+            $scope.getAnimationFrameLimit = function() {
+                return ($scope.brush.length && $scope.brush[1]) ?
+                    $scope.bucketizer.getBucketIndex($scope.brush[1]) : $scope.bucketizer.getNumBuckets();
+            };
+
+            /**
+             * Perform a single frame an time animation.  For this directive, the time bucket corresponding
+             * to the current animation frame will be highlighted.  Additionally, a date selection message will
+             * be published for the bucket's date range.  This will allow other visualizations to sync up their
+             * display and match animation frames.
+             * @method doTimeAnimation
+             */
+            $scope.doTimeAnimation = function() {
+                // Get the frame limits to see if we need to reset our animation.
+                var frameStart = $scope.getAnimationStartFrame();
+                var frameLimit = $scope.getAnimationFrameLimit();
+                if(($scope.options.animationFrame >= frameLimit) || ($scope.options.animationFrame < frameStart)) {
+                    $scope.options.animationFrame = frameStart;
+                }
+
+                // Get the time range for the current animation frame and publish it.
+                var dateSelected = {
+                    start: $scope.bucketizer.getDateForBucket($scope.options.animationFrame),
+                    end: $scope.bucketizer.getDateForBucket($scope.options.animationFrame + 1)
+                };
+
+                // Cleanup the animation end time on the last frame.
+                if($scope.options.animationFrame === ($scope.bucketizer.getNumBuckets() - 1)) {
+                    dateSelected.end = $scope.bucketizer.getEndDate();
+                }
+
+                $scope.messenger.publish('date_selected', dateSelected);
+
+                // Advance the animation step data.
+                $scope.options.animationFrame++;
             };
 
             $scope.handleDateTimePickChange = function() {
@@ -148,8 +251,13 @@ function(connectionService, datasetService, errorNotificationService, filterServ
             };
 
             $scope.handleDateTimePickCancel = function() {
-                setDateTimePickerStart($scope.brush.length ? $scope.brush[0] : $scope.bucketizer.getStartDate());
-                setDateTimePickerEnd($scope.brush.length ? $scope.brush[1] : $scope.bucketizer.getEndDate());
+                if($scope.brush.length) {
+                    setDateTimePickerStart($scope.brush[0]);
+                    setDateTimePickerEnd($scope.brush[1]);
+                } else if($scope.bucketizer.getStartDate() && $scope.bucketizer.getEndDate()) {
+                    setDateTimePickerStart($scope.bucketizer.getStartDate());
+                    setDateTimePickerEnd($scope.bucketizer.getEndDate());
+                }
 
                 $element.find(".save-button").addClass("disabled");
                 $element.find(".neon-datetimepicker").removeClass("open");
@@ -228,10 +336,10 @@ function(connectionService, datasetService, errorNotificationService, filterServ
              * @param {Object} query the query to add the group by clause to
              */
             $scope.addGroupByGranularityClause = function(query) {
-                var yearGroupClause = new neon.query.GroupByFunctionClause(neon.query.YEAR, $scope.options.dateField, 'year');
-                var monthGroupClause = new neon.query.GroupByFunctionClause(neon.query.MONTH, $scope.options.dateField, 'month');
-                var dayGroupClause = new neon.query.GroupByFunctionClause(neon.query.DAY, $scope.options.dateField, 'day');
-                var hourGroupClause = new neon.query.GroupByFunctionClause(neon.query.HOUR, $scope.options.dateField, 'hour');
+                var yearGroupClause = new neon.query.GroupByFunctionClause(neon.query.YEAR, $scope.options.dateField.columnName, 'year');
+                var monthGroupClause = new neon.query.GroupByFunctionClause(neon.query.MONTH, $scope.options.dateField.columnName, 'month');
+                var dayGroupClause = new neon.query.GroupByFunctionClause(neon.query.DAY, $scope.options.dateField.columnName, 'day');
+                var hourGroupClause = new neon.query.GroupByFunctionClause(neon.query.HOUR, $scope.options.dateField.columnName, 'hour');
 
                 // Group by the appropriate granularity.
                 if($scope.options.granularity === YEAR) {
@@ -361,7 +469,10 @@ function(connectionService, datasetService, errorNotificationService, filterServ
                 $scope.messenger.events({
                     filtersChanged: onFiltersChanged
                 });
-                $scope.messenger.subscribe(datasetService.DATE_CHANGED, onDateChanged);
+                $scope.messenger.subscribe(datasetService.UPDATE_DATA_CHANNEL, function() {
+                    $scope.queryForChartData();
+                });
+                $scope.messenger.subscribe(datasetService.DATE_CHANGED_CHANNEL, onDateChanged);
 
                 $scope.exportID = exportService.register($scope.makeTimelineSelectorExportObject);
 
@@ -397,13 +508,31 @@ function(connectionService, datasetService, errorNotificationService, filterServ
                     return;
                 }
 
-                var relations = datasetService.getRelations($scope.options.database.name, $scope.options.table.name, [$scope.options.dateField]);
-                filterService.replaceFilters($scope.messenger, relations, $scope.filterKeys, $scope.createFilterClauseForDate, function() {
+                var relations = datasetService.getRelations($scope.options.database.name, $scope.options.table.name, [$scope.options.dateField.columnName]);
+
+                var nameIncludeTime = $scope.options.granularity === HOUR;
+                var startDate = getFilterStartDate();
+                //If day, display a day shorter to make sense, otherwise display the proper date-time.
+                var endDate = ($scope.options.granularity === HOUR ? getFilterEndDate() : new Date(getFilterEndDate().getTime() - 1));
+                var filterNameObj = {
+                    visName: "Timeline",
+                    text: getDateString(startDate, nameIncludeTime) + " to " + getDateString(endDate, nameIncludeTime)
+                };
+
+                filterService.replaceFilters($scope.messenger, relations, $scope.filterKeys, $scope.createFilterClauseForDate, filterNameObj, function() {
                     if(callback) {
                         callback();
                     }
                     datasetService.setDateBrushExtentForRelations(relations, $scope.brush);
                 });
+            };
+
+            var getDateString = function(date, includeTime) {
+                var dateString = (date.getUTCMonth() + 1) + '/' + date.getUTCDate() + '/' + date.getUTCFullYear();
+                if(includeTime) {
+                    dateString = dateString + (' ' + date.getUTCHours() + ':' + (date.getUTCMinutes() > 9 ? date.getUTCMinutes() : '0' + date.getUTCMinutes()));
+                }
+                return dateString;
             };
 
             /**
@@ -414,12 +543,22 @@ function(connectionService, datasetService, errorNotificationService, filterServ
              * @return {Object} A neon.query.Filter object
              */
             $scope.createFilterClauseForDate = function(databaseAndTableName, dateFieldName) {
-                var startDate = $scope.brush.length < 2 ? $scope.bucketizer.getStartDate() : $scope.brush[0];
-                var endDate = $scope.brush.length < 2 ? $scope.bucketizer.getEndDate() : $scope.brush[1];
-                var startFilterClause = neon.query.where(dateFieldName, '>=', $scope.bucketizer.zeroOutDate(startDate));
-                var endFilterClause = neon.query.where(dateFieldName, '<', $scope.bucketizer.roundUpBucket(endDate));
+                var startDate = getFilterStartDate();
+                var endDate = getFilterEndDate();
+                var startFilterClause = neon.query.where(dateFieldName, '>=', startDate);
+                var endFilterClause = neon.query.where(dateFieldName, '<', endDate);
                 var clauses = [startFilterClause, endFilterClause];
                 return neon.query.and.apply(this, clauses);
+            };
+
+            var getFilterStartDate = function() {
+                var startDate = $scope.brush.length < 2 ? $scope.bucketizer.getStartDate() : $scope.brush[0];
+                return $scope.bucketizer.zeroOutDate(startDate);
+            };
+
+            var getFilterEndDate = function() {
+                var endDate = $scope.brush.length < 2 ? $scope.bucketizer.getEndDate() : $scope.brush[1];
+                return $scope.bucketizer.roundUpBucket(endDate);
             };
 
             /**
@@ -435,7 +574,7 @@ function(connectionService, datasetService, errorNotificationService, filterServ
                 } else if(message.removedFilter.whereClause) {
                     whereClauses = message.removedFilter.whereClause.whereClauses;
                 }
-                if(whereClauses && whereClauses.length === 2 && whereClauses[0].lhs === $scope.options.dateField && whereClauses[1].lhs === $scope.options.dateField) {
+                if(whereClauses && whereClauses.length === 2 && whereClauses[0].lhs === $scope.options.dateField.columnName && whereClauses[1].lhs === $scope.options.dateField.columnName) {
                     return true;
                 }
                 return false;
@@ -531,9 +670,16 @@ function(connectionService, datasetService, errorNotificationService, filterServ
 
             $scope.updateFields = function() {
                 $scope.loadingData = true;
-                $scope.fields = datasetService.getDatabaseFields($scope.options.database.name, $scope.options.table.name);
-                $scope.fields.sort();
-                $scope.options.dateField = $scope.bindDateField || datasetService.getMapping($scope.options.database.name, $scope.options.table.name, "date") || "date";
+                $scope.fields = datasetService.getSortedFields($scope.options.database.name, $scope.options.table.name);
+
+                var dateField = $scope.bindDateField || datasetService.getMapping($scope.options.database.name, $scope.options.table.name, "date") || "date";
+                $scope.options.dateField = _.find($scope.fields, function(field) {
+                    return field.columnName === dateField;
+                }) || {
+                    columnName: "",
+                    prettyName: ""
+                };
+
                 $scope.resetAndQueryForChartData();
             };
 
@@ -544,13 +690,12 @@ function(connectionService, datasetService, errorNotificationService, filterServ
                 $scope.referenceStartDate = undefined;
                 $scope.referenceEndDate = undefined;
                 $scope.data = [];
+                $scope.noData = true;
 
                 var globalBrushExtent = datasetService.getDateBrushExtent($scope.options.database.name, $scope.options.table.name);
                 if($scope.brush !== globalBrushExtent) {
                     $scope.brush = globalBrushExtent;
                     $scope.extentDirty = true;
-                } else if($scope.brush.length) {
-                    $scope.clearBrush();
                 }
 
                 $scope.queryForChartData();
@@ -564,13 +709,13 @@ function(connectionService, datasetService, errorNotificationService, filterServ
             $scope.createChartDataQuery = function() {
                 var query = new neon.query.Query()
                     .selectFrom($scope.options.database.name, $scope.options.table.name)
-                    .where($scope.options.dateField, '!=', null);
+                    .where($scope.options.dateField.columnName, '!=', null);
 
                 $scope.addGroupByGranularityClause(query);
 
                 query.aggregate(neon.query.COUNT, '*', 'count');
                 // TODO: Does this need to be an aggregate on the date field? What is MIN doing or is this just an arbitrary function to include the date with the query?
-                query.aggregate(neon.query.MIN, $scope.options.dateField, 'date');
+                query.aggregate(neon.query.MIN, $scope.options.dateField.columnName, 'date');
                 query.sortBy('date', neon.query.ASCENDING);
                 query.ignoreFilters([$scope.filterKeys[$scope.options.database.name][$scope.options.table.name]]);
                 return query;
@@ -588,7 +733,7 @@ function(connectionService, datasetService, errorNotificationService, filterServ
 
                 var connection = connectionService.getActiveConnection();
 
-                if(!connection) {
+                if(!connection || !$scope.options.dateField.columnName) {
                     $scope.updateChartData({
                         data: []
                     });
@@ -677,37 +822,46 @@ function(connectionService, datasetService, errorNotificationService, filterServ
                     extentEndDate = $scope.bucketizer.getEndDate();
                 }
 
-                // can happen when switching between granularities on edge cases
-                if(extentStartDate < $scope.bucketizer.getStartDate()) {
-                    extentStartDate = $scope.bucketizer.getStartDate();
-                }
-
-                if(extentEndDate > $scope.bucketizer.getEndDate()) {
-                    extentEndDate = $scope.bucketizer.getEndDate();
-                }
-
-                extentStartDate = $scope.bucketizer.zeroOutDate(extentStartDate);
-                extentEndDate = $scope.bucketizer.roundUpBucket(extentEndDate);
-
-                var startIdx = $scope.bucketizer.getBucketIndex(extentStartDate);
-                var endIdx = $scope.bucketizer.getBucketIndex(extentEndDate);
-
-                // Update the start/end times and totals used for the Neon selection and their
-                // display versions.  Since Angular formats dates as local values, we create new display values
-                // for the appropriate date we want to appear in this directive's associated partial.
-                // This essentially shifts the display times from local to the value we want to appear in UTC time.
                 var total = 0;
-                // endIdx points to the start of the day/hour just after the buckets we want to count, so do not
-                // include the bucket at endIdx.
-                for(i = startIdx; i < endIdx; i++) {
-                    if($scope.options.primarySeries.data[i]) {
-                        total += $scope.options.primarySeries.data[i].value;
+
+                if(extentStartDate && extentEndDate) {
+                    // can happen when switching between granularities on edge cases
+                    if(extentStartDate < $scope.bucketizer.getStartDate()) {
+                        extentStartDate = $scope.bucketizer.getStartDate();
+                    }
+
+                    if(extentEndDate > $scope.bucketizer.getEndDate()) {
+                        extentEndDate = $scope.bucketizer.getEndDate();
+                    }
+
+                    extentStartDate = $scope.bucketizer.zeroOutDate(extentStartDate);
+                    extentEndDate = $scope.bucketizer.roundUpBucket(extentEndDate);
+
+                    var startIdx = $scope.bucketizer.getBucketIndex(extentStartDate);
+                    var endIdx = $scope.bucketizer.getBucketIndex(extentEndDate);
+
+                    // Update the start/end times and totals used for the Neon selection and their
+                    // display versions.  Since Angular formats dates as local values, we create new display values
+                    // for the appropriate date we want to appear in this directive's associated partial.
+                    // This essentially shifts the display times from local to the value we want to appear in UTC time.
+
+                    // endIdx points to the start of the day/hour just after the buckets we want to count, so do not
+                    // include the bucket at endIdx.
+                    for(i = startIdx; i < endIdx; i++) {
+                        if($scope.options.primarySeries.data[i]) {
+                            total += $scope.options.primarySeries.data[i].value;
+                        }
                     }
                 }
 
-                neon.safeApply($scope, function() {
-                    $scope.setDisplayDates(extentStartDate, extentEndDate);
-                });
+                if(isNaN(extentStartDate) || isNaN(extentEndDate)) {
+                    $scope.startDateForDisplay = undefined;
+                    $scope.endDateForDisplay = undefined;
+                } else {
+                    neon.safeApply($scope, function() {
+                        $scope.setDisplayDates(extentStartDate, extentEndDate);
+                    });
+                }
 
                 $scope.recordCount = total;
             };
@@ -730,6 +884,7 @@ function(connectionService, datasetService, errorNotificationService, filterServ
                         }
                         var data = $scope.createTimelineData(queryResults);
                         $scope.data = data;
+                        $scope.noData = !$scope.data || !$scope.data.length || !$scope.data[0].data || !$scope.data[0].data.length;
                         $scope.updateChartTimesAndTotal();
                         $scope.addTimeSeriesAnalysis(data[0].data, data);
                     };
@@ -752,6 +907,7 @@ function(connectionService, datasetService, errorNotificationService, filterServ
                         tags: ["timeline", "clear"]
                     });
                     $scope.data = $scope.createTimelineData(queryResults);
+                    $scope.noData = !$scope.data || !$scope.data.length || !$scope.data[0].data || !$scope.data[0].data.length;
                     $scope.updateChartTimesAndTotal();
                 }
             };
@@ -771,7 +927,7 @@ function(connectionService, datasetService, errorNotificationService, filterServ
                     // TODO: This could be done better with a promise framework - just did this in a pinch for a demo
                     var minDateQuery = new neon.query.Query()
                         .selectFrom($scope.options.database.name, $scope.options.table.name).ignoreFilters()
-                        .where($scope.options.dateField, '!=', null).sortBy($scope.options.dateField, neon.query.ASCENDING).limit(1);
+                        .where($scope.options.dateField.columnName, '!=', null).sortBy($scope.options.dateField.columnName, neon.query.ASCENDING).limit(1);
 
                     XDATA.userALE.log({
                         activity: "alter",
@@ -796,7 +952,7 @@ function(connectionService, datasetService, errorNotificationService, filterServ
                                     source: "system",
                                     tags: ["receive", "timeline", "min-date"]
                                 });
-                                $scope.referenceStartDate = new Date(queryResults.data[0][$scope.options.dateField]);
+                                $scope.referenceStartDate = new Date(queryResults.data[0][$scope.options.dateField.columnName]);
                                 if($scope.referenceEndDate !== undefined) {
                                     $scope.$apply(success);
                                 }
@@ -832,7 +988,7 @@ function(connectionService, datasetService, errorNotificationService, filterServ
                 } else {
                     var maxDateQuery = new neon.query.Query()
                         .selectFrom($scope.options.database.name, $scope.options.table.name).ignoreFilters()
-                        .where($scope.options.dateField, '!=', null).sortBy($scope.options.dateField, neon.query.DESCENDING).limit(1);
+                        .where($scope.options.dateField.columnName, '!=', null).sortBy($scope.options.dateField.columnName, neon.query.DESCENDING).limit(1);
 
                     XDATA.userALE.log({
                         activity: "alter",
@@ -858,7 +1014,7 @@ function(connectionService, datasetService, errorNotificationService, filterServ
                                     source: "system",
                                     tags: ["received", "timeline", "max-date"]
                                 });
-                                $scope.referenceEndDate = new Date(queryResults.data[0][$scope.options.dateField]);
+                                $scope.referenceEndDate = new Date(queryResults.data[0][$scope.options.dateField.columnName]);
                                 if($scope.referenceStartDate !== undefined) {
                                     $scope.$apply(success);
                                 }
@@ -900,32 +1056,25 @@ function(connectionService, datasetService, errorNotificationService, filterServ
                 var i = 0;
                 var rawLength = rawData.length;
 
-                // If we have no values, use our dates if they existed or now.
-                if(rawData.length === 0) {
-                    rawData[0] = {
-                        date: $scope.bucketizer.getStartDate() || new Date(),
-                        count: 0
-                    };
-                    rawLength = 1;
-                }
+                if(rawLength > 0) {
+                    var numBuckets = $scope.bucketizer.getNumBuckets();
 
-                var numBuckets = $scope.bucketizer.getNumBuckets();
+                    // Initialize our time buckets.
+                    for(i = 0; i < numBuckets; i++) {
+                        var bucketGraphDate = $scope.bucketizer.getDateForBucket(i);
+                        queryData[i] = {
+                            date: bucketGraphDate,
+                            value: 0
+                        };
+                    }
 
-                // Initialize our time buckets.
-                for(i = 0; i < numBuckets; i++) {
-                    var bucketGraphDate = $scope.bucketizer.getDateForBucket(i);
-                    queryData[i] = {
-                        date: bucketGraphDate,
-                        value: 0
-                    };
-                }
-
-                // Fill our rawData into the appropriate interval buckets.
-                var resultDate;
-                for(i = 0; i < rawLength; i++) {
-                    resultDate = new Date(rawData[i].date);
-                    var bucketIndex = $scope.bucketizer.getBucketIndex(resultDate);
-                    queryData[bucketIndex].value = rawData[i].count;
+                    // Fill our rawData into the appropriate interval buckets.
+                    var resultDate;
+                    for(i = 0; i < rawLength; i++) {
+                        resultDate = new Date(rawData[i].date);
+                        var bucketIndex = $scope.bucketizer.getBucketIndex(resultDate);
+                        queryData[bucketIndex].value = rawData[i].count;
+                    }
                 }
 
                 data.push({
@@ -1159,9 +1308,11 @@ function(connectionService, datasetService, errorNotificationService, filterServ
             var removeBrushFromTimelineAndDatasetService = function() {
                 $scope.brush = [];
                 $scope.extentDirty = true;
-                setDateTimePickerStart($scope.bucketizer.getStartDate());
-                setDateTimePickerEnd($scope.bucketizer.getEndDate());
-                var relations = datasetService.getRelations($scope.options.database.name, $scope.options.table.name, [$scope.options.dateField]);
+                if($scope.bucketizer.getStartDate() && $scope.bucketizer.getEndDate()) {
+                    setDateTimePickerStart($scope.bucketizer.getStartDate());
+                    setDateTimePickerEnd($scope.bucketizer.getEndDate());
+                }
+                var relations = datasetService.getRelations($scope.options.database.name, $scope.options.table.name, [$scope.options.dateField.columnName]);
                 filterService.removeFilters($scope.messenger, $scope.filterKeys, function() {
                     datasetService.removeDateBrushExtentForRelations(relations);
                 });

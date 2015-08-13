@@ -26,7 +26,7 @@
  * @constructor
  */
 angular.module('neonDemo.directives')
-.directive('addVisualization', ['$timeout', 'visualizations', function($timeout, visualizations) {
+.directive('addVisualization', ['$timeout', 'config', 'visualizations', function($timeout, config, visualizations) {
     return {
         templateUrl: 'partials/directives/addVisualization.html',
         restrict: 'EA',
@@ -40,10 +40,16 @@ angular.module('neonDemo.directives')
             $scope.visualizations = visualizations;
             for(var i = 0; i < $scope.visualizations.length; ++i) {
                 if(!($scope.visualizations[i].minSizeX)) {
-                    $scope.visualizations[i].minSizeX = 2;
+                    $scope.visualizations[i].minSizeX = config.gridsterDefaultMinSizeX;
                 }
                 if(!($scope.visualizations[i].minSizeY)) {
-                    $scope.visualizations[i].minSizeY = 2;
+                    $scope.visualizations[i].minSizeY = config.gridsterDefaultMinSizeY;
+                }
+                if($scope.visualizations[i].sizeX < config.gridsterDefaultMinSizeX) {
+                    $scope.visualizations[i].sizeX = config.gridsterDefaultMinSizeX;
+                }
+                if($scope.visualizations[i].sizeY < config.gridsterDefaultMinSizeY) {
+                    $scope.visualizations[i].sizeY = config.gridsterDefaultMinSizeY;
                 }
             }
 

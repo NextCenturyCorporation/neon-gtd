@@ -74,6 +74,11 @@ h6, .h6 {
 
 }
 
+html {
+    width:100vw;
+    overflow-x:hidden;
+}
+
 label{
     font-size: 12px;
     color: @main-text-color;
@@ -433,8 +438,22 @@ label{
 }
 
 .form-group {
+    &.no-margin {
+        margin-bottom: 0px;
+    }
+
     .form-group {
         margin-bottom: 0px;
+    }
+
+    label {
+        &.top {
+            margin-top: 10px;
+        }
+
+        &.bottom {
+            margin-top: 30px;
+        }
     }
 }
 
@@ -584,6 +603,10 @@ label{
         width: 10em;
         height: 10em;
     }
+}
+
+.margin-right {
+    margin-right: 5px;
 }
 
 .modal-backdrop{
@@ -985,8 +1008,38 @@ tr.borderedRow {
 
         .table-responsive {
             display: inline-block;
-            /* Force the datetimepicker height because the year and month views are shorter by default and cause unwanted empty space. */
-            height: 300px;
+            font-size: 12px;
+            padding: 4px 5px;
+            /* Reduce the datetimepicker width because of the reduced font size. */
+            width: 250px;
+            /* Set the datetimepicker height because the year and month views are shorter by default and cause unwanted empty space. */
+            height: 250px;
+
+            .table {
+                th, td {
+                    padding: 6px;
+                    width: 34px;
+                    height: 30px;
+                }
+            }
         }
     }
+}
+
+.neon-well {
+    background-color: @main-background-lighten;
+    border-color: @border-color;
+    border-radius: 4px;
+    border-style: solid;
+    border-width: 1px;
+    margin: 0px 0px 15px;
+    padding: 9px;
+}
+
+.neon-well-dark {
+    background-color: @main-background-darken;
+}
+
+.neon-well-thin {
+    padding: 4px;
 }

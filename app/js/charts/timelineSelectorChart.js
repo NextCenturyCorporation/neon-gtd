@@ -57,6 +57,7 @@ charts.TimelineSelectorChart = function(element, configuration) {
     };
     this.TOOLTIP_ID = 'tooltip';
     this.xDomain = [];
+    this.collapsed = true;
 
     // The highlight bars for each date for both the context and focus timelines.
     this.focusHighlights = [];
@@ -72,7 +73,8 @@ charts.TimelineSelectorChart = function(element, configuration) {
     // The data index over which the user is currently hovering changed on mousemove and mouseout.
     this.hoverIndex = -1;
 
-    this.DEFAULT_HEIGHT = 250;
+    this.DEFAULT_MARGIN = 15;
+    this.DEFAULT_HEIGHT = 150;
     this.DEFAULT_WIDTH = 1000;
 
     var self = this; // for internal d3 functions
@@ -95,15 +97,15 @@ charts.TimelineSelectorChart = function(element, configuration) {
         this.config = configuration || {};
         this.config.marginFocus = this.config.marginFocus || {
             top: 0,
-            right: 15,
-            bottom: this.determineHeight(this.d3element),
-            left: 15
+            right: this.DEFAULT_MARGIN,
+            bottom: (this.collapsed ? this.determineHeight(this.d3element) : this.DEFAULT_HEIGHT),
+            left: this.DEFAULT_MARGIN
         };
         this.config.marginContext = this.config.marginContext || {
-            top: 22,
-            right: 15,
-            bottom: 18,
-            left: 15
+            top: this.DEFAULT_MARGIN,
+            right: this.DEFAULT_MARGIN,
+            bottom: 0,
+            left: this.DEFAULT_MARGIN
         };
         this.granularity = this.config.granularity || this.granularity;
         this.redrawOnResize();
@@ -241,8 +243,13 @@ charts.TimelineSelectorChart = function(element, configuration) {
         var extentWidth = brushElement.find('.extent').attr('width');
         var width = parseInt(brushElement.find('.mask-west').attr('width').replace('px', ''), 10);
 
-        // If brush extent has been cleared, reset mask positions
-        if(extentWidth === "0" || extentWidth === 0 || extentWidth === undefined) {
+        if((extentWidth === "0" || extentWidth === 0) &&
+            (brush.extent() && brush.extent().length >= 2 && (brush.extent()[1] - brush.extent()[0]) > 0)) {
+            // If brush extent exists, but the width is too small, draw masks with a bigger width
+            brushElement.find('.mask-west').attr('x', parseFloat(xPos) - width);
+            brushElement.find('.mask-east').attr('x', parseFloat(xPos) + 1);
+        } else if(extentWidth === "0" || extentWidth === 0 || extentWidth === undefined) {
+            // If brush extent has been cleared, reset mask positions
             brushElement.find('.mask-west').attr('x', (0 - (width + 50)));
             brushElement.find('.mask-east').attr('x', width + 50);
         } else {
@@ -263,16 +270,16 @@ charts.TimelineSelectorChart = function(element, configuration) {
         if(showFocus) {
             this.configure({
                 marginFocus: {
-                    top: 22,
-                    right: 15,
+                    top: this.DEFAULT_MARGIN,
+                    right: this.DEFAULT_MARGIN,
                     bottom: 99,
-                    left: 15
+                    left: this.DEFAULT_MARGIN
                 },
                 marginContext: {
-                    top: this.determineHeight(this.d3element) - 65,
-                    right: 15,
-                    bottom: 18,
-                    left: 15
+                    top: (this.collapsed ? this.determineHeight(this.d3element) : this.DEFAULT_HEIGHT) - 65,
+                    right: this.DEFAULT_MARGIN,
+                    bottom: 0,
+                    left: this.DEFAULT_MARGIN
                 }
             });
         } else {
@@ -281,6 +288,26 @@ charts.TimelineSelectorChart = function(element, configuration) {
 
         if(this.data.length && this.data[0].data) {
             this.redrawChart();
+        }
+    };
+
+    /**
+     * Show/hide all the charts if the focus is shown
+     * @param {boolean} collapse Set to true to collapse all graphs. False otherwise.
+     * @method collapse
+     */
+    this.collapse = function(collapse) {
+        this.collapsed = collapse;
+
+        // Set height to default when collapsed so height doesn't
+        // stay at the uncollapsed height
+        if(collapse) {
+            $(this.d3element[0]).css("height", this.DEFAULT_HEIGHT);
+        }
+
+        // Resets configs and draws charts if focus shown
+        if(this.config.marginFocus.top !== 0) {
+            this.toggleFocus(true);
         }
     };
 
@@ -321,7 +348,7 @@ charts.TimelineSelectorChart = function(element, configuration) {
         }
 
         // If the start or end date is outside the date range of the data, set it to the of the start (inclusive) or end (exclusive) index of the data.
-        startIndex = startDate < dataStartDate ? 0 : startIndex;
+        startIndex = startDate <= dataStartDate ? 0 : startIndex;
         endIndex = endDate > dataEndDate ? dataLength : endIndex;
 
         if(startIndex < 0 || endIndex < 0 || endDate < dataStartDate || startDate > dataEndDate) {
@@ -363,13 +390,16 @@ charts.TimelineSelectorChart = function(element, configuration) {
      */
     this.selectIndexedDates = function(startIndex, endIndex) {
         this.clearHighlights();
+        var primaryData = _.find(this.data, {
+            name: this.primarySeries.name
+        });
 
         for(var i = startIndex; i < endIndex; ++i) {
-            this.showHighlight(this.data[0].data[i].date, this.data[0].data[i].value, this.contextHighlights[i], this.xContext, this.yContext);
+            this.showHighlight(primaryData.data[i].date, primaryData.data[i].value, this.contextHighlights[i], this.xContext, this.yContext);
 
-            var focusIndex = this.focusDateToIndex[this.data[0].data[i].date.toUTCString()];
+            var focusIndex = this.focusDateToIndex[primaryData.data[i].date.toUTCString()];
             if(focusIndex >= 0) {
-                this.showHighlight(this.data[0].data[i].date, this.data[0].data[i].value, this.focusHighlights[focusIndex], this.xFocus, this.yFocus);
+                this.showHighlight(primaryData.data[i].date, primaryData.data[i].value, this.focusHighlights[focusIndex], this.xFocus, this.yFocus);
             }
         }
     };
@@ -398,18 +428,18 @@ charts.TimelineSelectorChart = function(element, configuration) {
     /**
      * Returns the hover index in the given data using the given mouse event and xRange function (xContext or xFocus).
      * @param {Object} mouseEvent
-     * @param {Array} values
+     * @param {Object} value
      * @param {Function} xRange
      * @method findHoverIndexInData
      * @return {Number}
      */
-    this.findHoverIndexInData = function(mouseEvent, values, xRange) {
+    this.findHoverIndexInData = function(mouseEvent, value, xRange) {
         var mouseLocation = d3.mouse(mouseEvent);
         var graph_x = xRange.invert(mouseLocation[0]);
         var bisect = d3.bisector(function(d) {
             return d.date;
         }).right;
-        return values[0] ? bisect(values[0].data, graph_x) - 1 : -1;
+        return value ? bisect(value.data, graph_x) - 1 : -1;
     };
 
     /**
@@ -509,10 +539,20 @@ charts.TimelineSelectorChart = function(element, configuration) {
         // lengths). But this is accurate enough to place tick marks and make other calculations.
         this.approximateBarWidth = 0;
 
-        $(this.d3element[0]).css("height", (this.determineHeight(this.d3element) * values.length));
-        var svgHeight = this.determineHeight(this.d3element);
-        this.heightFocus = (svgHeight - (this.config.marginFocus.top) - this.config.marginFocus.bottom);
-        var heightContext = (svgHeight - (this.config.marginContext.top) - this.config.marginContext.bottom);
+        var svgHeight;
+        var heightContext;
+
+        if(this.collapsed) {
+            svgHeight = this.determineHeight(this.d3element);
+            $(this.d3element[0]).css("height", svgHeight);
+            this.heightFocus = (svgHeight - (this.config.marginFocus.top) - this.config.marginFocus.bottom);
+            heightContext = (svgHeight - (this.config.marginContext.top) - this.config.marginContext.bottom);
+        } else {
+            svgHeight = this.DEFAULT_HEIGHT * values.length;
+            $(this.d3element[0]).css("height", svgHeight);
+            this.heightFocus = (this.DEFAULT_HEIGHT - (this.config.marginFocus.top) - this.config.marginFocus.bottom);
+            heightContext = (this.DEFAULT_HEIGHT - (this.config.marginContext.top) - this.config.marginContext.bottom);
+        }
 
         var fullDataSet = [];
         if(values && values.length > 0) {
@@ -572,7 +612,7 @@ charts.TimelineSelectorChart = function(element, configuration) {
             return d3.time[me.granularity].utc.offset(d.date, 1);
         }));
 
-        this.xDomain = [xMin, xMax];
+        this.xDomain = [xMin || new Date(), xMax || new Date()];
         this.xFocus.domain(this.xDomain);
         this.xContext.domain(this.xDomain);
 
@@ -640,7 +680,7 @@ charts.TimelineSelectorChart = function(element, configuration) {
                 .attr("transform", "translate(" + me.config.marginFocus.left + "," + me.config.marginFocus.top + ")");
 
             // Prevents the x-axis from being shown
-            if(me.config.marginFocus.bottom === me.determineHeight(me.d3element)) {
+            if(me.config.marginFocus.top === 0) {
                 focus.attr("display", "none");
             }
 
@@ -659,10 +699,10 @@ charts.TimelineSelectorChart = function(element, configuration) {
                 .attr("class", series.name)
                 .attr("transform", "translate(" + xOffset + "," + ((me.heightFocus + (me.config.marginFocus.top * 2) + me.config.marginFocus.bottom) * seriesPos) + ")")
                 .on('mousemove', function() {
-                    var index = me.findHoverIndexInData(this, values, me.xFocus);
-                    if(index >= 0 && index < values[0].data.length) {
-                        var contextIndex = me.contextDateToIndex[values[0].data[index].date.toUTCString()];
-                        me.onHover(values[0].data[index], contextIndex);
+                    var index = me.findHoverIndexInData(this, series, me.xFocus);
+                    if(index >= 0 && index < series.data.length) {
+                        var contextIndex = me.contextDateToIndex[series.data[index].date.toUTCString()];
+                        me.onHover(series.data[index], contextIndex);
                     }
                 })
                 .on('mouseover', function() {
@@ -675,8 +715,12 @@ charts.TimelineSelectorChart = function(element, configuration) {
             var axis = me.drawFocusChart(series);
             var y = axis.y;
             var yAxis = axis.yAxis;
-            me.yContext = d3.scale.linear().range([heightContext, 0]);
-            me.yContext.domain(y.domain());
+            var yContext = d3.scale.linear().range([heightContext, 0]);
+            yContext.domain(y.domain());
+
+            if(me.primarySeries.name === series.name) {
+                me.yContext = yContext;
+            }
 
             var contextContainer;
 
@@ -687,7 +731,6 @@ charts.TimelineSelectorChart = function(element, configuration) {
                     .attr("transform", "translate(" + xOffset + "," + ((heightContext + me.config.marginContext.top + me.config.marginContext.bottom) * seriesPos) + ")");
 
                 var style = 'stroke:' + series.color + ';';
-                var chartTypeFocus = '';
                 var chartTypeContext = '';
 
                 // For now, all anomalies are shown as red, but this could be changed to be a
@@ -722,10 +765,10 @@ charts.TimelineSelectorChart = function(element, configuration) {
                             return me.xContext(d3.time[me.granularity].utc.offset(d.date, 1)) - me.xContext(d.date);
                         })
                         .attr("y", function(d) {
-                            return me.yContext(Math.max(0, d.value));
+                            return yContext(Math.max(0, d.value));
                         })
                         .attr("height", function(d) {
-                            var height = me.yContext(d.value) - me.yContext(0);
+                            var height = yContext(d.value) - yContext(0);
                             var offset = height / height || 0;
                             var calculatedHeight = Math.abs(height) + (offset * barheight);
                             return calculatedHeight;
@@ -738,7 +781,7 @@ charts.TimelineSelectorChart = function(element, configuration) {
                                 return me.xContext(d.date);
                             })
                             .y(function(d) {
-                                return me.yContext(d.value);
+                                return yContext(d.value);
                             });
                     } else {
                         // Otherwise, default to area, e.g. for bars whose data is too long
@@ -748,10 +791,10 @@ charts.TimelineSelectorChart = function(element, configuration) {
                                 return me.xContext(d.date);
                             })
                             .y0(function(d) {
-                                return me.yContext(Math.min(0, d.value));
+                                return yContext(Math.min(0, d.value));
                             })
                             .y1(function(d) {
-                                return me.yContext(Math.max(0, d.value));
+                                return yContext(Math.max(0, d.value));
                             });
                     }
 
@@ -766,7 +809,7 @@ charts.TimelineSelectorChart = function(element, configuration) {
                             return me.xContext(d.date);
                         };
                         if(series.data.length === 1) {
-                            func = width / 2;
+                            func = me.width / 2;
                         }
 
                         contextContainer.selectAll("dot")
@@ -777,7 +820,7 @@ charts.TimelineSelectorChart = function(element, configuration) {
                             .attr("r", 3)
                             .attr("cx", func)
                             .attr("cy", function(d) {
-                                return me.yContext(d.value);
+                                return yContext(d.value);
                             });
                     } else {
                         // If a line graph was used and there are anomalies, put a circle on the
@@ -796,7 +839,7 @@ charts.TimelineSelectorChart = function(element, configuration) {
                                 return me.xContext(d.date);
                             })
                             .attr("cy", function(d) {
-                                return me.yContext(d.value);
+                                return yContext(d.value);
                             });
                     }
                 }
@@ -839,23 +882,27 @@ charts.TimelineSelectorChart = function(element, configuration) {
 
         var charts = [];
         // If set, render primary series first
-        if(this.primarySeries) {
+        if(this.primarySeries && this.primarySeries.data.length) {
             createSeries(this.primarySeries);
         }
         // Render all series
         for(i = 0; i < values.length; i++) {
             if(this.primarySeries && values[i].name === this.primarySeries.name) {
                 continue;
+            } else if(values[i].data.length) {
+                createSeries(values[i]);
             }
-            createSeries(values[i]);
         }
 
         var gBrush = context.append("g")
             .attr("class", "brush")
             .on('mousemove', function() {
-                var index = me.findHoverIndexInData(this, values, me.xContext);
-                if(index >= 0 && index < values[0].data.length) {
-                    me.onHover(values[0].data[index], index);
+                var series = _.find(values, {
+                    name: me.primarySeries.name
+                });
+                var index = me.findHoverIndexInData(this, series, me.xContext);
+                if(index >= 0 && index < series.data.length) {
+                    me.onHover(series.data[index], index);
                 }
             })
             .on('mouseover', function() {
@@ -978,7 +1025,11 @@ charts.TimelineSelectorChart = function(element, configuration) {
 
         var focus = me.svg.select(".focus-" + series.name + " ." + series.name);
 
-        me.yFocus = d3.scale.linear().range([me.heightFocus, 0]);
+        var yFocus = d3.scale.linear().range([me.heightFocus, 0]);
+
+        if(me.primarySeries.name === series.name) {
+            me.yFocus = yFocus;
+        }
 
         // Get only the data in the brushed area
         var dataShown = _.filter(series.data, function(obj) {
@@ -994,11 +1045,15 @@ charts.TimelineSelectorChart = function(element, configuration) {
         }));
         minY = minY < 0 ? minY : 0;
 
-        me.yFocus.domain([minY, d3.max(dataShown.map(function(d) {
+        // Use highest value for Y-axis domain, or 0 if there is no data
+        var maxY = d3.max(dataShown.map(function(d) {
             return d.value;
-        }))]);
+        }));
+        maxY = maxY ? maxY : 0;
 
-        var yAxis = d3.svg.axis().scale(me.yFocus).orient("right").ticks(2);
+        yFocus.domain([minY, maxY]);
+
+        var yAxis = d3.svg.axis().scale(yFocus).orient("right").ticks(2);
 
         focus.select(".y.axis.series-y").call(yAxis);
 
@@ -1039,10 +1094,10 @@ charts.TimelineSelectorChart = function(element, configuration) {
                     return me.xFocus(d3.time[me.granularity].utc.offset(d.date, 1)) - me.xFocus(d.date);
                 })
                 .attr("y", function(d) {
-                    return me.yFocus(Math.max(0, d.value));
+                    return yFocus(Math.max(0, d.value));
                 })
                 .attr("height", function(d) {
-                    var height = me.yFocus(d.value) - me.yFocus(0);
+                    var height = yFocus(d.value) - yFocus(0);
                     var offset = height / height || 0;
                     var calculatedHeight = Math.abs(height) + (offset * barheight);
                     return calculatedHeight;
@@ -1057,7 +1112,7 @@ charts.TimelineSelectorChart = function(element, configuration) {
                         return me.xFocus(d.date);
                     })
                     .y(function(d) {
-                        return me.yFocus(d.value);
+                        return yFocus(d.value);
                     });
             } else {
                 // Otherwise, default to area, e.g. for bars whose data is too long
@@ -1067,10 +1122,10 @@ charts.TimelineSelectorChart = function(element, configuration) {
                         return me.xFocus(d.date);
                     })
                     .y0(function(d) {
-                        return me.yFocus(Math.min(0, d.value));
+                        return yFocus(Math.min(0, d.value));
                     })
                     .y1(function(d) {
-                        return me.yFocus(Math.max(0, d.value));
+                        return yFocus(Math.max(0, d.value));
                     });
             }
 
@@ -1085,7 +1140,7 @@ charts.TimelineSelectorChart = function(element, configuration) {
                     return me.xFocus(d.date);
                 };
                 if(dataShown.length === 1) {
-                    func = width / 2;
+                    func = me.width / 2;
                 }
 
                 focus.selectAll("circle.dot").remove();
@@ -1098,7 +1153,7 @@ charts.TimelineSelectorChart = function(element, configuration) {
                     .attr("r", 3)
                     .attr("cx", func)
                     .attr("cy", function(d) {
-                        return me.yFocus(d.value);
+                        return yFocus(d.value);
                     });
             } else {
                 // If a line graph was used and there are anomalies, put a circle on the
@@ -1119,7 +1174,7 @@ charts.TimelineSelectorChart = function(element, configuration) {
                         return me.xFocus(d.date);
                     })
                     .attr("cy", function(d) {
-                        return me.yFocus(d.value);
+                        return yFocus(d.value);
                     });
             }
         }
@@ -1129,19 +1184,21 @@ charts.TimelineSelectorChart = function(element, configuration) {
             me.focusDateToIndex[datum.date.toUTCString()] = index;
         });
 
-        // Append the highlight bars after the other bars so it is drawn on top.
-        me.focusHighlights = [];
-        dataShown.forEach(function(datum) {
-            var highlight = focus.append("rect")
-                .attr("class", "highlight")
-                .attr("x", 0).attr("width", 0)
-                .attr("y", -1).attr("height", me.heightFocus + 2)
-                .style("visibility", "hidden");
-            me.focusHighlights.push(highlight);
-        });
+        if(me.primarySeries.name === series.name) {
+            // Append the highlight bars after the other bars so it is drawn on top.
+            me.focusHighlights = [];
+            dataShown.forEach(function(datum) {
+                var highlight = focus.append("rect")
+                    .attr("class", "highlight")
+                    .attr("x", 0).attr("width", 0)
+                    .attr("y", -1).attr("height", me.heightFocus + 2)
+                    .style("visibility", "hidden");
+                me.focusHighlights.push(highlight);
+            });
+        }
 
         return {
-            y: me.yFocus,
+            y: yFocus,
             yAxis: yAxis
         };
     };
@@ -1158,7 +1215,12 @@ charts.TimelineSelectorChart = function(element, configuration) {
             return;
         }
 
-        me.xFocus.domain(me.brush.empty() ? me.xContext.domain() : me.brush.extent());
+        if(me.brush.extent() && me.brush.extent().length >= 2 && !_.isUndefined(me.brush.extent()[0]) && !_.isUndefined(me.brush.extent()[1])) {
+            me.xFocus.domain(me.brush.extent());
+        } else {
+            me.xFocus.domain(me.xContext.domain());
+        }
+
         me.xDomain = [me.xFocus.domain()[0], me.xFocus.domain()[1]];
 
         for(var i = 0; i < me.data.length; i++) {
@@ -1179,6 +1241,9 @@ charts.TimelineSelectorChart = function(element, configuration) {
                     y1: y(0),
                     y2: y(0)
                 });
+
+            me.svg.selectAll(".focus-" + series.name + " g.y.axis.series-y")
+                .call(axis.yAxis);
         }
     };
 
