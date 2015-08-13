@@ -938,14 +938,27 @@ angular.module('neonDemo.directives')
             };
 
             $scope.buildPointQuery = function(database, table) {
+                var latitudesAndLongitudes = [];
                 var limit = undefined;
                 $scope.options.layers.forEach(function(layer) {
                     if(layer.database === database && layer.table === table) {
+                        latitudesAndLongitudes.push({
+                            latitude: layer.latitudeMapping,
+                            longitude: layer.longitudeMapping
+                        });
                         // Use the highest limit for the query from all layers for the given database/table; only the first X elements will be used for each layer based on the limit of the layer.
                         limit = limit ? Math.max(limit, layer.limit) : layer.limit;
                     }
                 });
-                return new neon.query.Query().selectFrom(database, table).limit(limit || $scope.DEFAULT_LIMIT);
+
+                var query = new neon.query.Query().selectFrom(database, table).limit(limit || $scope.DEFAULT_LIMIT);
+                if(datasetService.getActiveDatasetOptions().checkForNullCoordinates) {
+                    var filterClauses = latitudesAndLongitudes.map(function(element) {
+                        return neon.query.and(neon.query.where(element.latitude, "!=", null), neon.query.where(element.longitude, "!=", null));
+                    });
+                    return query.where(neon.query.or.apply(neon.query, filterClauses));
+                }
+                return query;
             };
 
             $scope.hideClearFilterButton = function() {

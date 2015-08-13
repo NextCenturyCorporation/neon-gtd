@@ -668,6 +668,15 @@ angular.module("neonDemo.services")
         service.messenger.publish(service.UPDATE_DATA_CHANNEL, {});
     };
 
+    /**
+     * Returns the options for the active dataset.
+     * @method getActiveDatasetOptions
+     * @return {Object}
+     */
+    service.getActiveDatasetOptions = function() {
+        return service.dataset.options;
+    };
+
     // Validate the datasets from the configuration file on initialization.
     service.datasets.forEach(function(dataset) {
         validateDatabases(dataset);
