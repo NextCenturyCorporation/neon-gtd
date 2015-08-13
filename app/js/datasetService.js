@@ -575,13 +575,6 @@ angular.module("neonDemo.services")
      * @private
      */
     service.updateDatabases = function(dataset, connection, callback, index) {
-        if(dataset.updatedFields) {
-            if(callback) {
-                callback(dataset);
-            }
-            return;
-        }
-
         var databaseIndex = index ? index : 0;
         var database = dataset.databases[databaseIndex];
         connection.getTableNamesAndFieldNames(database.name, function(tableNamesAndFieldNames) {
@@ -610,7 +603,7 @@ angular.module("neonDemo.services")
             if(++databaseIndex < dataset.databases.length) {
                 service.updateDatabases(dataset, connection, callback, databaseIndex);
             } else if(callback) {
-                dataset.updatedFields = true;
+                dataset.hasUpdatedFields = true;
                 callback(dataset);
             }
         });

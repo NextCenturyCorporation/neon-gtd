@@ -122,13 +122,24 @@ angular.module('neonDemo.directives')
                     return;
                 }
 
+                var finishConnectToPreset = function(dataset) {
+                    datasetService.setActiveDataset(dataset);
+                    updateLayout();
+                };
+
+                // Don't update the dataset if its fields are already updated.
+                if($scope.datasets[index].hasUpdatedFields) {
+                    finishConnectToPreset($scope.datasets[index]);
+                    return;
+                }
+
                 // Update the fields within each database and table within the selected dataset to include fields that weren't listed in the configuration file.
                 datasetService.updateDatabases($scope.datasets[index], connection, function(dataset) {
                     $scope.datasets[index] = dataset;
-                    datasetService.setActiveDataset(dataset);
+                    // Update the layout inside a $scope.$apply because we're inside a jQuery ajax callback thread.
                     $scope.$apply(function() {
-                        // Wait to update the layout until after the update is finished.
-                        updateLayout();
+                        // Wait to update the layout until after we finish the dataset updates.
+                        finishConnectToPreset(dataset);
                     });
                 });
             };
