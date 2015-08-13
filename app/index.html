@@ -62,8 +62,8 @@
                         <!-- Export option -->
                         <div export-widgets gridster-configs="visualizations" ng-hide="hideNavbarItems"></div>
                         <!-- Import option -->
-                        <div import-file gridster-configs="visualizations" ng-hide="hideNavbarItems"></div>
-                        <div remove-dataset gridster-configs="visualizations" ng-hide="hideNavbarItems"></div>
+                        <div import-file gridster-configs="visualizations" ng-show="showImport"></div>
+                        <div remove-dataset gridster-configs="visualizations" ng-show="showImport"></div>
                     </options-menu>
 
                     <div powered-by-neon class="pull-right"></div>

@@ -44,7 +44,6 @@ angular.module('neonDemo.directives')
                     return;
                 }
                 connection.executeRemoveDataset($scope.removeDatasetUserName, $scope.removeDatasetDatabaseName, removeSuccess, removeFailure);
-                $scope.removeDatasetDatabaseName = '';
             };
 
             /**
@@ -73,6 +72,7 @@ angular.module('neonDemo.directives')
              * @method removeDatasetModalOnShow
              */
             var removeDatasetModalOnShow = function() {
+                $scope.removeDatasetDatabaseName = '';
                 $scope.removeDatasetUserName = importService.getUserName();
                 // Angular doesn't automatically recognize when this changes, so we force it to manually.
                 $scope.$apply();
