@@ -341,10 +341,6 @@ angular.module("neonDemo.services")
      * the relation object for the table and fields given in the arguments
      */
     service.getRelations = function(databaseName, tableName, fieldNames) {
-        var i;
-        var j;
-        var k;
-        var l;
         var relations = service.dataset.relations;
 
         var initializeMapAsNeeded = function(map, key1, key2) {
@@ -361,27 +357,24 @@ angular.module("neonDemo.services")
         var relationToFields = {};
 
         // Iterate through each field to find its relations.
-        for(i = 0; i < fieldNames.length; ++i) {
-            var fieldName = fieldNames[i];
+        fieldNames.forEach(function(fieldName) {
             // Iterate through each relation to compare with the current field.
-            for(j = 0; j < relations.length; ++j) {
-                var relation = relations[j];
+            relations.forEach(function(relation) {
                 // If the current relation contains a match for the input database/table/field, iterate through the elements in the current relation.
                 if(relation[databaseName] && fieldName === relation[databaseName][tableName]) {
                     var databaseNames = Object.keys(relation);
                     // Add each database/table/field in the current relation to the map.  Note that this will include the input database/table/field.
-                    for(k = 0; k < databaseNames.length; ++k) {
-                        var relationDatabaseName = databaseNames[k];
+                    databaseNames.forEach(function(relationDatabaseName) {
                         var tableNames = Object.keys(relation[relationDatabaseName]);
-                        for(l = 0; l < tableNames.length; ++l) {
-                            var relationTableName = tableNames[l];
+                        tableNames.forEach(function(relationTableName) {
                             var relationFieldName = relation[relationDatabaseName][relationTableName];
                             relationToFields = initializeMapAsNeeded(relationToFields, relationDatabaseName, relationTableName);
 
                             var existingIndex = relationToFields[relationDatabaseName][relationTableName].map(function(object) {
                                 return object.initial;
                             }).indexOf(fieldName);
-                            if(existingIndex >= 0) {
+
+                            if(existingIndex >= 0 && relationToFields[relationDatabaseName][relationTableName][existingIndex].related.indexOf(relationFieldName) < 0) {
                                 // If the database/table/field exists in the relation, add another related field.
                                 relationToFields[relationDatabaseName][relationTableName][existingIndex].related.push(relationFieldName);
                             } else {
@@ -391,26 +384,26 @@ angular.module("neonDemo.services")
                                     related: [relationFieldName]
                                 });
                             }
-                        }
-                    }
+                        });
+                    });
                 }
-            }
-        }
+            });
+        });
 
         var resultDatabaseNames = Object.keys(relationToFields);
         if(resultDatabaseNames.length) {
             var results = [];
             // Iterate through the relations for each relation's database/table/field and add a relation object for each database/table pair to the final list of results.
-            for(i = 0; i < resultDatabaseNames.length; ++i) {
-                var resultTableNames = Object.keys(relationToFields[resultDatabaseNames[i]]);
-                for(j = 0; j < resultTableNames.length; ++j) {
+            resultDatabaseNames.forEach(function(resultDatabaseName) {
+                var resultTableNames = Object.keys(relationToFields[resultDatabaseName]);
+                resultTableNames.forEach(function(resultTableName) {
                     results.push({
-                        database: resultDatabaseNames[i],
-                        table: resultTableNames[j],
-                        fields: relationToFields[resultDatabaseNames[i]][resultTableNames[j]]
+                        database: resultDatabaseName,
+                        table: resultTableName,
+                        fields: relationToFields[resultDatabaseName][resultTableName]
                     });
-                }
-            }
+                });
+            });
             return results;
         }
 
@@ -421,12 +414,12 @@ angular.module("neonDemo.services")
             fields: []
         };
 
-        for(i = 0; i < fieldNames.length; ++i) {
+        fieldNames.forEach(function(fieldName) {
             result.fields.push({
-                initial: fieldNames[i],
-                related: [fieldNames[i]]
+                initial: fieldName,
+                related: [fieldName]
             });
-        }
+        });
 
         return [result];
     };
