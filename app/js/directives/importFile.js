@@ -144,7 +144,7 @@ angular.module('neonDemo.directives')
                     });
                 }
                 var toSend = {
-                    format: $scope.dateFormatString ? $scope.dateFormatString : undefined,
+                    dateFormat: $scope.dateFormatString ? $scope.dateFormatString : undefined,
                     fields: ftPairs
                 };
                 connection.executeLoadFileIntoDB(toSend, $scope.currentJobID, confirmChoicesSuccess, confirmChoicesFailure);
