@@ -176,10 +176,12 @@ angular.element(document).ready(function() {
             hideHeader: false,
             showImport: false
         };
-        dashboardConfig.gridsterColumns = dashboardConfig.gridsterColumns || 6;
+        dashboardConfig.gridsterColumns = dashboardConfig.gridsterColumns || 8;
         dashboardConfig.gridsterMargins = dashboardConfig.gridsterMargins || 10;
-        dashboardConfig.gridsterDefaultMinSizeX = Math.round(dashboardConfig.gridsterColumns / 3);
-        dashboardConfig.gridsterDefaultMinSizeY = Math.round(dashboardConfig.gridsterColumns / 6);
+        // Most visualizations should have a minimum size of about 300px square to have space for their UI elements.
+        // TODO Use the browser width to determine the minimum size for visualizations and update it on browser resize.
+        dashboardConfig.gridsterDefaultMinSizeX = Math.floor(dashboardConfig.gridsterColumns / 4);
+        dashboardConfig.gridsterDefaultMinSizeY = Math.floor(dashboardConfig.gridsterColumns / 6);
         dashboardConfig.help = helpConfig;
         neonDemo.constant('config', dashboardConfig);
 
