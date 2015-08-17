@@ -14,6 +14,7 @@
  * limitations under the License.
  *
  */
+
 /**
  * This provides an Angular service for keeping track of various pieces of information relevant to importing custom data,
  * to easily pass them from place to place.
@@ -73,7 +74,7 @@ angular.module('neonDemo.services')
      * @param fieldtypePairs {Array} The array of objects, each with at least a name and a type field.
      * @return {Array} An array identical to the input array, but with all fields except for name and
      * type removed.
-     */ 
+     */
     service.getFieldsAndTypes = function(fieldTypePairs) {
         var toReturn = [];
         fieldTypePairs.forEach(function(pair) {

@@ -112,7 +112,7 @@ angular.module('neonDemo.directives')
                 if(response.complete) {
                     $scope.nameTypePairs = response.guesses;
                     $scope.currentJobID = response.jobID;
-                     // Angular doesn't automatically recognize when this changes, so we force it to manually.
+                    // Angular doesn't automatically recognize when this changes, so we force it to manually.
 
                     $scope.$apply();
                     showConfirmGuessesModal();
@@ -202,12 +202,12 @@ angular.module('neonDemo.directives')
                 if(response.complete) {
                     $element.find("#confirmChoicesButton").removeClass("disabled");
                     $scope.isConverting = false;
-                     // Angular doesn't automatically recognize when this changes, so we force it to manually.
+                    // Angular doesn't automatically recognize when this changes, so we force it to manually.
 
                     $scope.$apply();
                     if(response.failedFields.length > 0) {
                         $scope.nameTypePairs = response.failedFields;
-                         // Angular doesn't automatically recognize when this changes, so we force it to manually.
+                        // Angular doesn't automatically recognize when this changes, so we force it to manually.
 
                         $scope.$apply();
                         $element.find('#convertFailedText').show();
@@ -294,11 +294,11 @@ angular.module('neonDemo.directives')
                 } else {
                     $scope.indicatorText = file.name + " - " + importService.sizeToReadable(file.size);
                 }
-                if($scope.importDatabaseName == '' && file) {
+                if($scope.importDatabaseName === '' && file) {
                     $scope.importDatabaseName = file.name.substring(0, file.name.lastIndexOf('.'));
                 }
-                 // Angular doesn't automatically recognize when this changes, so we force it to manually.
- 
+                // Angular doesn't automatically recognize when this changes, so we force it to manually.
+
                 $scope.$apply();
             };
 
