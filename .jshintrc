@@ -107,6 +107,7 @@
         "OpenLayers": true,
         "OWF": true,
         "require": true,
+        "Rainbow": true,
         "Slick": true,
         "tables": true,
         "userale": true,
