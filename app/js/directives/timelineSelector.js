@@ -1073,7 +1073,9 @@ function($interval, $filter, connectionService, datasetService, errorNotificatio
                     for(i = 0; i < rawLength; i++) {
                         resultDate = new Date(rawData[i].date);
                         var bucketIndex = $scope.bucketizer.getBucketIndex(resultDate);
-                        queryData[bucketIndex].value = rawData[i].count;
+                        if(queryData[bucketIndex]) {
+                            queryData[bucketIndex].value = rawData[i].count;
+                        }
                     }
                 }
 

@@ -85,9 +85,8 @@ var dateBucketizer = dateBucketizer || function() {
      */
     var getBucketIndex = function(date) {
         var effectiveStartDate = zeroOutDate(getStartDate());
-        // TODO - The absolute value doesn't make sense here; we just don't want negative
-        // values
-        var difference = Math.abs(date - effectiveStartDate);
+        var difference = date - effectiveStartDate;
+        difference = (difference < 0) ? 0 : difference;
         return Math.floor(difference / millisMultiplier);
     };
 
