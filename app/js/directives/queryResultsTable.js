@@ -281,10 +281,6 @@ function(external, popups, connectionService, datasetService, errorNotificationS
                     }
                 }
 
-                if(!($scope.deletedFieldsMap[$scope.options.database.name])) {
-                    $scope.deletedFieldsMap[$scope.options.database.name] = {};
-                }
-
                 if(initializing) {
                     $scope.updateTables();
                 } else {
@@ -305,17 +301,8 @@ function(external, popups, connectionService, datasetService, errorNotificationS
                     }
                 }
 
-                if(!($scope.deletedFieldsMap[$scope.options.database.name][$scope.options.table.name])) {
-                    $scope.deletedFieldsMap[$scope.options.database.name][$scope.options.table.name] = [];
-                    // The first time the data for a table is displayed, add the fields hidden in the configuration to the list of deleted fields for the table.
-                    datasetService.getFields($scope.options.database.name, $scope.options.table.name).forEach(function(field) {
-                        if(field.hide) {
-                            $scope.deletedFieldsMap[$scope.options.database.name][$scope.options.table.name].push({
-                                columnName: field.columnName,
-                                prettyName: field.prettyName
-                            });
-                        }
-                    });
+                if(!($scope.deletedFieldsMap[$scope.options.database.name])) {
+                    $scope.deletedFieldsMap[$scope.options.database.name] = {};
                 }
 
                 $scope.updateFields();
@@ -328,6 +315,19 @@ function(external, popups, connectionService, datasetService, errorNotificationS
                     columnName: "",
                     prettyName: ""
                 };
+
+                if(!($scope.deletedFieldsMap[$scope.options.database.name][$scope.options.table.name])) {
+                    $scope.deletedFieldsMap[$scope.options.database.name][$scope.options.table.name] = [];
+                    // The first time the data for a table is displayed, add the fields hidden in the configuration to the list of deleted fields for the table.
+                    datasetService.getFields($scope.options.database.name, $scope.options.table.name).forEach(function(field) {
+                        if(field.hide) {
+                            $scope.deletedFieldsMap[$scope.options.database.name][$scope.options.table.name].push({
+                                columnName: field.columnName,
+                                prettyName: field.prettyName
+                            });
+                        }
+                    });
+                }
 
                 if($scope.deletedFieldsMap[$scope.options.database.name][$scope.options.table.name].length) {
                     // Remove previously deleted fields from the list of fields.
