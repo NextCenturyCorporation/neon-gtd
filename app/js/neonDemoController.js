@@ -29,10 +29,12 @@ function($scope, $timeout, config, datasets) {
 
     $scope.hideAddVisualizationsButton = config.hideAddVisualizationsButton;
     $scope.hideAdvancedOptions = config.hideAdvancedOptions;
+    $scope.showImport = config.showImport;
 
     $scope.seeData = false;
     $scope.createFilters = false;
     $scope.filterCount = 0;
+    $scope.element = $("body");
     $scope.help = config.help;
 
     $scope.element = $(window);

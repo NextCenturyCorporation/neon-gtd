@@ -521,8 +521,9 @@ charts.LineChart.prototype.drawLines = function(opts) {
             return !_.isUndefined(d.value);
         });
 
+        var func;
         if(data.length < 40) {
-            var func = function(d) {
+            func = function(d) {
                 return me.x(d.date);
             };
             if(data.length === 1) {
@@ -543,7 +544,7 @@ charts.LineChart.prototype.drawLines = function(opts) {
                     return me.y(d[me.yAttribute]);
                 });
         } else {
-            var func = function(d) {
+            func = function(d) {
                 return me.x(d.date);
             };
 
@@ -566,7 +567,7 @@ charts.LineChart.prototype.drawLines = function(opts) {
         }
 
         me.hoverCircles[opts[i].series] = [];
-        data.forEach(function(datum) {
+        data.forEach(function() {
             var hoverCircle = me.svg.append("circle")
                 .attr("class", "dot dot-hover")
                 .attr("stroke", color)

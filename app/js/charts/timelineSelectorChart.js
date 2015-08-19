@@ -851,7 +851,7 @@ charts.TimelineSelectorChart = function(element, configuration) {
 
                 // Append the highlight bars after the other bars so it is drawn on top.
                 me.contextHighlights = [];
-                series.data.forEach(function(datum) {
+                series.data.forEach(function() {
                     var highlight = contextContainer.append("rect")
                         .attr("class", "highlight")
                         .attr("x", 0).attr("width", 0)
@@ -1187,7 +1187,7 @@ charts.TimelineSelectorChart = function(element, configuration) {
         if(me.primarySeries.name === series.name) {
             // Append the highlight bars after the other bars so it is drawn on top.
             me.focusHighlights = [];
-            dataShown.forEach(function(datum) {
+            dataShown.forEach(function() {
                 var highlight = focus.append("rect")
                     .attr("class", "highlight")
                     .attr("x", 0).attr("width", 0)

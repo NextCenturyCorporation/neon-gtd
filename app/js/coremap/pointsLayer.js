@@ -175,7 +175,6 @@ coreMap.Map.Layer.PointsLayer = OpenLayers.Class(OpenLayers.Layer.Vector, {
  */
 coreMap.Map.Layer.PointsLayer.prototype.calculateColor = function(element) {
     var category = this.getValueFromDataElement(this.categoryMapping, element);
-    var date = new Date(category);
     var color;
 
     if(category && this.gradient && _.isDate(category)) {
@@ -427,4 +426,3 @@ coreMap.Map.Layer.PointsLayer.DEFAULT_STROKE_WIDTH = 0;
 coreMap.Map.Layer.PointsLayer.DEFAULT_STROKE_COLOR = "#ffffff";
 coreMap.Map.Layer.PointsLayer.MIN_RADIUS = 4;
 coreMap.Map.Layer.PointsLayer.MAX_RADIUS = 8;
-

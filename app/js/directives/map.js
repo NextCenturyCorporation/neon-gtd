@@ -353,7 +353,9 @@ angular.module('neonDemo.directives')
              * @method addFiltersForLayer
              * @private
              */
+            //jshint unused:false
             var addFiltersForLayer = function(layer) {
+                //jshint unused:true
                 var relations = datasetService.getRelations(layer.database, layer.table, [layer.latitudeMapping, layer.longitudeMapping]);
                 filterService.replaceFilters($scope.messenger, relations, layer.filterKeys, $scope.createFilterClauseForExtent, {
                     visName: "Map"
@@ -800,7 +802,7 @@ angular.module('neonDemo.directives')
                     if($scope.options.layers[i].database === database && $scope.options.layers[i].table === table && $scope.options.layers[i].olLayer) {
                         // Only use elements up to the limit of this layer; other layers for this database/table may have a higher limit.
                         var limit = $scope.options.layers[i].limit;
-                        var data = queryResults.data.slice(0, limit);
+                        data = queryResults.data.slice(0, limit);
 
                         // Only set data and update features if all attributes exist in data
                         if($scope.map.doAttributesExist(data, $scope.options.layers[i].olLayer)) {
@@ -939,7 +941,7 @@ angular.module('neonDemo.directives')
 
             $scope.buildPointQuery = function(database, table) {
                 var latitudesAndLongitudes = [];
-                var limit = undefined;
+                var limit;
                 $scope.options.layers.forEach(function(layer) {
                     if(layer.database === database && layer.table === table) {
                         latitudesAndLongitudes.push({
@@ -1190,6 +1192,8 @@ angular.module('neonDemo.directives')
                      *      - the lat/lon mapping specified in the points layer for the specified
                      *        database and table
                      */
+                    var point;
+                    var feature;
                     if(mappings.allCoordinates && mappings.allCoordinates.length) {
                         var features = [];
 
@@ -1197,10 +1201,10 @@ angular.module('neonDemo.directives')
                             latMapping = mappings.allCoordinates[i].latitude;
                             lonMapping = mappings.allCoordinates[i].longitude;
 
-                            var point = new OpenLayers.Geometry.Point(msg.data[lonMapping], msg.data[latMapping]);
+                            point = new OpenLayers.Geometry.Point(msg.data[lonMapping], msg.data[latMapping]);
                             point.transform(coreMap.Map.SOURCE_PROJECTION, coreMap.Map.DESTINATION_PROJECTION);
 
-                            var feature = new OpenLayers.Feature.Vector(point);
+                            feature = new OpenLayers.Feature.Vector(point);
                             feature.attributes = msg.data;
 
                             features.push(feature);
@@ -1219,10 +1223,10 @@ angular.module('neonDemo.directives')
                             lonMapping = pointsLayer.longitudeMapping;
                         }
 
-                        var point = new OpenLayers.Geometry.Point(msg.data[lonMapping], msg.data[latMapping]);
+                        point = new OpenLayers.Geometry.Point(msg.data[lonMapping], msg.data[latMapping]);
                         point.transform(coreMap.Map.SOURCE_PROJECTION, coreMap.Map.DESTINATION_PROJECTION);
 
-                        var feature = new OpenLayers.Feature.Vector(point);
+                        feature = new OpenLayers.Feature.Vector(point);
                         feature.attributes = msg.data;
 
                         layer.addFeatures(feature);
@@ -1284,9 +1288,10 @@ angular.module('neonDemo.directives')
                 layer.name = (layer.name || layer.table).toUpperCase();
                 layer = updateLayerFieldMappings(layer);
 
+                var index;
                 if(layer.previousLimit !== layer.limit) {
                     // Remove the old limit/name.
-                    var index = $scope.limitedLayers[layer.previousLimit].indexOf(layer.previousName);
+                    index = $scope.limitedLayers[layer.previousLimit].indexOf(layer.previousName);
                     if(index >= 0) {
                         $scope.limitedLayers[layer.previousLimit].splice(index, 1);
                     }
@@ -1297,7 +1302,7 @@ angular.module('neonDemo.directives')
                     $scope.limitedLayers[layer.limit].push(layer.name);
                 } else if(layer.previousName !== layer.name) {
                     // Replace the old name with the new name.
-                    var index = $scope.limitedLayers[layer.limit].indexOf(layer.previousName);
+                    index = $scope.limitedLayers[layer.limit].indexOf(layer.previousName);
                     if(index >= 0) {
                         $scope.limitedLayers[layer.limit].splice(index, 1, layer.name);
                     }

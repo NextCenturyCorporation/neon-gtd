@@ -16,7 +16,8 @@
  */
 
 angular.module('neonDemo.directives')
-.directive('directedGraph',['ConnectionService', 'DatasetService', 'ErrorNotificationService', 'FilterService', '$timeout', function(connectionService, datasetService, errorNotificationService, filterService, $timeout) {
+.directive('directedGraph', ['$timeout', 'ConnectionService', 'DatasetService', 'ErrorNotificationService', 'FilterService', 'ExportService',
+function($timeout, connectionService, datasetService, errorNotificationService, filterService, exportService) {
     return {
         templateUrl: 'partials/directives/directedGraph.html',
         restrict: 'EA',
@@ -119,6 +120,8 @@ angular.module('neonDemo.directives')
                     $scope.queryForData();
                 });
 
+                $scope.exportID = exportService.register($scope.makeDirectedGraphExportObject);
+
                 $scope.$on('$destroy', function() {
                     XDATA.userALE.log({
                         activity: "remove",
@@ -132,6 +135,7 @@ angular.module('neonDemo.directives')
                     });
                     $element.off("resize", updateSize);
                     $scope.messenger.removeEvents();
+                    exportService.unregister($scope.exportID);
                     if($scope.filteredNodes.length) {
                         filterService.removeFilters($scope.messenger, $scope.filterKeys);
                     }
@@ -319,7 +323,7 @@ angular.module('neonDemo.directives')
                             $scope.queryForData();
                         });
                     }
-                };
+                }
             };
 
             $scope.queryForData = function(reloadNetworkGraph, reloadNodeList) {
@@ -354,12 +358,7 @@ angular.module('neonDemo.directives')
              * Query for the list of nodes using the selected field but do not draw a graph.
              */
             var queryForNodeList = function(connection) {
-                var query = new neon.query.Query()
-                    .selectFrom($scope.options.database.name, $scope.options.table.name)
-                    .withFields([$scope.options.selectedNodeField.columnName])
-                    .groupBy($scope.options.selectedNodeField.columnName)
-                    .aggregate(neon.query.COUNT, '*', 'count')
-                    .ignoreFilters([$scope.filterKeys[$scope.options.database.name][$scope.options.table.name]]);
+                var query = createNodeListQuery();
 
                 connection.executeQuery(query, function(data) {
                     $scope.nodes = [];
@@ -385,23 +384,27 @@ angular.module('neonDemo.directives')
                     });
                 }, function(response) {
                     if(response.responseJSON) {
-                        //$scope.errorMessage = errorNotificationService.showErrorMessage($element, response.responseJSON.error, response.responseJSON.stackTrace);
+                        $scope.errorMessage = errorNotificationService.showErrorMessage($element, response.responseJSON.error, response.responseJSON.stackTrace);
                     }
                 });
+            };
+
+            var createNodeListQuery = function() {
+                var query = new neon.query.Query()
+                    .selectFrom($scope.options.database.name, $scope.options.table.name)
+                    .withFields([$scope.options.selectedNodeField.columnName])
+                    .groupBy($scope.options.selectedNodeField.columnName)
+                    .aggregate(neon.query.COUNT, '*', 'count')
+                    .ignoreFilters([$scope.filterKeys[$scope.options.database.name][$scope.options.table.name]]);
+
+                return query;
             };
 
             /**
              * Query for the list of nodes that link to the filtered nodes and draw the graph containing the network.
              */
             var queryForNetworkGraph = function(connection) {
-                var fields = [$scope.options.selectedNodeField.columnName];
-                if($scope.options.selectedLinkField && $scope.options.selectedLinkField.columnName) {
-                    fields.push($scope.options.selectedLinkField.columnName);
-                }
-
-                var query = new neon.query.Query()
-                    .selectFrom($scope.options.database.name, $scope.options.table.name)
-                    .withFields(fields);
+                var query = createQueryForNetworkGraphQuery();
 
                 connection.executeQuery(query, function(response) {
                     if(response.data.length) {
@@ -419,6 +422,19 @@ angular.module('neonDemo.directives')
                         $scope.errorMessage = errorNotificationService.showErrorMessage($element, response.responseJSON.error, response.responseJSON.stackTrace);
                     }
                 });
+            };
+
+            var createQueryForNetworkGraphQuery = function() {
+                var fields = [$scope.options.selectedNodeField.columnName];
+                if($scope.options.selectedLinkField && $scope.options.selectedLinkField.columnName) {
+                    fields.push($scope.options.selectedLinkField.columnName);
+                }
+
+                var query = new neon.query.Query()
+                    .selectFrom($scope.options.database.name, $scope.options.table.name)
+                    .withFields(fields);
+
+                return query;
             };
 
             $scope.createAndShowGraph = function(response) {
@@ -517,6 +533,63 @@ angular.module('neonDemo.directives')
                         $scope.addFilter(item.name);
                     });
                 }
+            };
+
+            /**
+             * Creates and returns an object that contains information needed to export the data in this widget.
+             * @return {Object} An object containing all the information needed to export the data in this widget.
+             */
+            $scope.makeDirectedGraphExportObject = function() {
+                XDATA.userALE.log({
+                    activity: "perform",
+                    action: "click",
+                    elementId: "directed-graph-export",
+                    elementType: "button",
+                    elementGroup: "graph_group",
+                    source: "user",
+                    tags: ["options", "directed-graph", "export"]
+                });
+                var query = createQueryForNetworkGraphQuery();
+                query.limitClause = exportService.getLimitClause();
+                query.ignoreFilters_ = exportService.getIgnoreFilters();
+                query.ignoredFilterIds_ = exportService.getIgnoredFilterIds();
+                var fields = [];
+                if($scope.options.selectedNodeField.columnName && $scope.options.selectedLinkField.columnName) {
+                    fields = [{
+                        query: $scope.options.selectedNodeField.columnName,
+                        pretty: $scope.options.selectedNodeField.prettyName
+                    },{
+                        query: $scope.options.selectedLinkField.columnName,
+                        pretty: $scope.options.selectedLinkField.prettyName
+                    }];
+                    query.groupBy($scope.options.selectedNodeField.columnName, $scope.options.selectedLinkField.columnName);
+                } else if($scope.options.selectedNodeField.columnName) {
+                    fields = [{
+                        query: $scope.options.selectedNodeField.columnName,
+                        pretty: $scope.options.selectedNodeField.prettyName
+                    }];
+                    query.groupBy($scope.options.selectedNodeField.columnName);
+                } else if($scope.options.selectedLinkField.columnName) {
+                    fields = [{
+                        query: $scope.options.selectedLinkField.columnName,
+                        pretty: $scope.options.selectedLinkField.prettyName
+                    }];
+                    query.groupBy($scope.options.selectedLinkField.columnName);
+                }
+
+                var finalObject = {
+                    name: "Directed Graph",
+                    data: [{
+                        query: query,
+                        name: "directedGraph-" + $scope.exportID,
+                        fields: fields,
+                        ignoreFilters: query.ignoreFilters_,
+                        selectionOnly: query.selectionOnly_,
+                        ignoredFilterIds: query.ignoredFilterIds_,
+                        type: "query"
+                    }]
+                };
+                return finalObject;
             };
 
             // Wait for neon to be ready, the create our messenger and intialize the view and data.

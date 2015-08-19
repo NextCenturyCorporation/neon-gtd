@@ -50,7 +50,7 @@ coreMap.Map.Layer.NodeLayer = OpenLayers.Class(OpenLayers.Layer.Vector, {
             lowerBoundary: Date.now(),
             upperBoundary: Date.now()
         });
-        this.dateFilterStrategy = new OpenLayers.Strategy.Filter({})
+        this.dateFilterStrategy = new OpenLayers.Strategy.Filter({});
         extendOptions.strategies = [this.dateFilterStrategy];
 
         // Call the super constructor, you will have to define the variables geometry, attributes and style
@@ -112,7 +112,7 @@ coreMap.Map.Layer.NodeLayer.prototype.calculateLineWidth = function(weight) {
  * @return {OpenLayers.Feature.Vector} the point to be added.
  * @method createNode
  */
-coreMap.Map.Layer.NodeLayer.prototype.createNode = function(element, date) {
+coreMap.Map.Layer.NodeLayer.prototype.createNode = function(element) {
     var point = new OpenLayers.Geometry.Point(
         this.getValueFromDataElement(this.longitudeMapping, element),
         this.getValueFromDataElement(this.latitudeMapping, element)
@@ -450,4 +450,3 @@ coreMap.Map.Layer.NodeLayer.MAX_RADIUS = 13;
 coreMap.Map.Layer.NodeLayer.MIN_ARROW_POINT_RADIUS = 5;
 coreMap.Map.Layer.NodeLayer.MIN_LINE_WIDTH = 1;
 coreMap.Map.Layer.NodeLayer.MAX_LINE_WIDTH = 13;
-

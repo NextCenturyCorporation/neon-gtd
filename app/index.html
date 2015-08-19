@@ -55,12 +55,15 @@
                         </span>
                     </div>
 
-                    <options-menu parent-element="element" class="navbar-text pull-right" ng-show="!(hideAdvancedOptions)">
+                    <options-menu parent-element="element" id= "navbar-option-menu" class="navbar-text pull-right navbar-option-menu" ng-show="!(hideAdvancedOptions)">
                         <!-- Buttons to select file format -->
                         <label>Export Format</label>
                         <div file-formats gridster-configs="visualizations" ng-hide="hideNavbarItems"></div>
                         <!-- Export option -->
                         <div export-widgets gridster-configs="visualizations" ng-hide="hideNavbarItems"></div>
+                        <!-- Import option -->
+                        <div import-file gridster-configs="visualizations" ng-show="showImport"></div>
+                        <div remove-dataset gridster-configs="visualizations" ng-show="showImport"></div>
                     </options-menu>
 
                     <div powered-by-neon class="pull-right"></div>
@@ -188,6 +191,7 @@
         <script src="js/errorNotificationService.js"></script>
         <script src="js/filterService.js"></script>
         <script src="js/exportService.js"></script>
+        <script src="js/importService.js"></script>
         <script src="js/neonDemoController.js"></script>
 
         <script src="js/charts/circularHeatChart.js"></script>
@@ -204,12 +208,14 @@
         <script src="js/directives/filterBuilder.js"></script>
         <script src="js/directives/filterState.js"></script>
         <script src="js/directives/filterTray.js"></script>
+        <script src="js/directives/importFile.js"></script>
         <script src="js/directives/linechart.js"></script>
         <script src="js/directives/linksPopup.js"></script>
         <script src="js/directives/map.js"></script>
         <script src="js/directives/optionsMenu.js"></script>
         <script src="js/directives/poweredByNeon.js"></script>
         <script src="js/directives/queryResultsTable.js"></script>
+        <script src="js/directives/removeDataset.js"></script>
         <script src="js/directives/stackedBarchart.js"></script>
         <script src="js/directives/tagCloud.js"></script>
         <script src="js/time/dateBucketizer.js"></script>
