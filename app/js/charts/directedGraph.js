@@ -72,6 +72,20 @@ charts.DirectedGraph.prototype.updateGraph = function(data) {
     .attr("pointer-events", "all")
     .call(d3.behavior.zoom().on("zoom", me.handleZoom));
 
+    me.svg.append("svg:defs").selectAll("marker")
+        .data(["end"])      // Different link/path types can be defined here
+        .enter().append("svg:marker")    // This section adds in the arrows
+        .attr("id", String)
+        .attr("viewBox", "0 -5 10 10")
+        .attr("refX", 15)
+        .attr("refY", 0)
+        .attr("markerWidth", 10)
+        .attr("markerHeight", 10)
+        .attr("orient", "auto")
+        .attr("class", "arrowhead")
+        .append("svg:path")
+        .attr("d", "M0,-5L10,0L0,5");
+
     me.vis = me.svg
     .append('svg:g');
 
@@ -90,8 +104,9 @@ charts.DirectedGraph.prototype.updateGraph = function(data) {
 
         link = me.vis.selectAll(".link")
             .data(data.links)
-        .enter().append("line")
+            .enter().append("line")
             .attr("class", "link")
+            .attr("marker-end", "url(#end)")
             .style("stroke-width", function(d) {
                 return Math.sqrt(d.value);
             });
@@ -99,91 +114,71 @@ charts.DirectedGraph.prototype.updateGraph = function(data) {
 
     var node = me.vis.selectAll(".node")
         .data(nodes)
-    .enter().append("g")
+        .enter().append("g")
         .attr("class", "node")
-    .append("circle")
+        .append("circle")
         .attr("r", 5)
         .style("fill", function(d) {
             return color(d.group);
         })
         .call(force.drag);
 
-    me.vis.selectAll("g.node").selectAll("circle");
+    // The index of the force layout tick.
+    var index = 1;
+    // Whether the node data has been fixed (doesn't move unless dragged by the user).
+    var fixed = false;
 
-    var setupForceLayoutTick = function() {
-        force.on("tick", function() {
-            me.svg.selectAll("line").attr("x1", function(d) {
-                return d.source.x;
-            })
-            .attr("y1", function(d) {
-                return d.source.y;
-            })
-            .attr("x2", function(d) {
-                return d.target.x;
-            })
-            .attr("y2", function(d) {
-                return d.target.y;
-            });
+    var fixNodeData = function() {
+        if(fixed) {
+            return;
+        }
+        fixed = true;
+        node.each(function(data) {
+            data.fixed = true;
+        });
+    };
 
-            me.svg.selectAll("g.node")
-            .attr("cx", function(d) {
-                return d.x;
+    force.on("tick", function(event) {
+        index = (event.alpha === 0.099 ? 1 : ++index);
+
+        if(link) {
+            link.attr("x1", function(d) {
+                    return d.source.x;
+                })
+                .attr("y1", function(d) {
+                    return d.source.y;
+                })
+                .attr("x2", function(d) {
+                    return d.target.x;
+                })
+                .attr("y2", function(d) {
+                    return d.target.y;
+                });
+        }
+
+        node.attr("cx", function(d) {
+                return d.x ? d.x : 0;
             })
             .attr("cy", function(d) {
-                return d.y;
+                return d.y ? d.y : 0;
             });
 
-            if(nodes.length) {
-                nodes[0].x = width / 2;
-                nodes[0].y = height / 2;
-            }
-        });
-    };
+        if(event.alpha < 0.025 || index > 250) {
+            fixNodeData();
+        }
+    });
 
-    var bounds = {
-        minX: 0,
-        maxX: 0,
-        minY: 0,
-        maxY: 0
-    };
-    var runForceLayoutSimulation = function() {
+    if(nodes.length) {
         force.start();
-        var i = 0;
-        while(force.alpha() > 0.01 && i++ < 1000) {
-            force.tick();
-        }
-        force.stop();
-
-        me.svg.selectAll(".node").each(function(nodeData) {
-            checkBounds(nodeData.x, nodeData.y);
-            nodeData.fixed = true;
-        });
-    };
-
-    var checkBounds = function(x, y) {
-        if(x < bounds.minX) {
-            bounds.minX = x;
-        }
-        if(x > bounds.maxX) {
-            bounds.maxX = x;
-        }
-        if(y < bounds.minY) {
-            bounds.minY = y;
-        }
-        if(y > bounds.maxY) {
-            bounds.maxY = y;
-        }
-    };
-
-    setupForceLayoutTick();
-    runForceLayoutSimulation();
-    force.start();
+    }
 
     node.on('dblclick', function(d) {
+        fixNodeData();
         if(me.doubleClickHandler) {
             me.doubleClickHandler(d);
         }
     }).on("click", function(d) {
+        fixNodeData();
         if(d3.event.shiftKey && me.shiftClickHandler) {
             me.shiftClickHandler(d);
         } else if(me.clickHandler) {
@@ -203,28 +198,6 @@ charts.DirectedGraph.prototype.updateGraph = function(data) {
         me.tooltip.transition()
         .duration(500)
         .style("opacity", 0);
-    });
-
-    force.on("tick", function() {
-        link.attr("x1", function(d) {
-                return d.source.x;
-            })
-            .attr("y1", function(d) {
-                return d.source.y;
-            })
-            .attr("x2", function(d) {
-                return d.target.x;
-            })
-            .attr("y2", function(d) {
-                return d.target.y;
-            });
-
-        node.attr("cx", function(d) {
-                return d.x ? d.x : 0;
-            })
-            .attr("cy", function(d) {
-                return d.y ? d.y : 0;
-            });
     });
 };
 

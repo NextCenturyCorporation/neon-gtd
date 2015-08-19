@@ -61,7 +61,8 @@ angular.module('neonDemo.directives')
                 selectedNodeField: "",
                 selectedLinkField: "",
                 selectedNode: "",
-                nodeLimit: 500
+                nodeLimit: 5000,
+                reloadOnFilter: false
             };
 
             $scope.calculateGraphHeight = function() {
@@ -100,11 +101,11 @@ angular.module('neonDemo.directives')
 
             $scope.selectNode = function() {
                 if($scope.options.selectedNode !== "") {
-                    if($scope.messenger && $scope.filteredNodes.length) {
-                        filterService.removeFilters($scope.messenger, $scope.filterKeys);
+                    var value = Number($scope.options.selectedNode) ? Number($scope.options.selectedNode) : $scope.options.selectedNode;
+
+                    if($scope.filteredNodes.indexOf(value) < 0) {
+                        $scope.addFilter(value);
                     }
-                    $scope.filteredNodes = [];
-                    $scope.addFilter($scope.options.selectedNode);
                 }
             };
 
@@ -147,12 +148,14 @@ angular.module('neonDemo.directives')
              */
             var onFiltersChanged = function(message) {
                 if(message.addedFilter && message.addedFilter.databaseName === $scope.options.database.name && message.addedFilter.tableName === $scope.options.table.name) {
+                    var reloadNetworkGraph = false;
                     if(message.type.toUpperCase() === "ADD" || message.type.toUpperCase() === "REPLACE") {
                         if(message.addedFilter.whereClause) {
                             $scope.addFilterWhereClauseToFilterList(message.addedFilter.whereClause);
                         }
+                        reloadNetworkGraph = $scope.options.reloadOnFilter;
                     }
-                    $scope.queryForData(true);
+                    $scope.queryForData(reloadNetworkGraph);
                 }
             };
 
@@ -167,6 +170,8 @@ angular.module('neonDemo.directives')
                         $scope.addFilterWhereClauseToFilterList(whereClause.whereClauses[i]);
                     }
                 } else if(whereClause.lhs === $scope.options.selectedNodeField.columnName && whereClause.lhs && whereClause.rhs) {
+                    $scope.addFilter(whereClause.rhs);
+                } else if($scope.options.selectedLinkField && whereClause.lhs === $scope.options.selectedLinkField.columnName && whereClause.lhs && whereClause.rhs) {
                     $scope.addFilter(whereClause.rhs);
                 }
             };
@@ -229,26 +234,24 @@ angular.module('neonDemo.directives')
                     prettyName: ""
                 };
 
-                $scope.queryForData(true);
+                $scope.queryForData();
             };
 
             $scope.addFilter = function(value) {
                 $scope.options.selectedNode = "";
 
-                var nodesIndex = $scope.nodes.indexOf(value);
-                if(nodesIndex < 0) {
-                    return;
-                }
-
-                var filteredNodesIndex = $scope.filteredNodes.indexOf(value);
-                if(filteredNodesIndex >= 0) {
+                if($scope.filteredNodes.indexOf(value) >= 0) {
                     return;
                 }
 
                 $scope.filteredNodes.push(value);
 
                 if($scope.messenger) {
-                    var relations = datasetService.getRelations($scope.options.database.name, $scope.options.table.name, [$scope.options.selectedNodeField.columnName]);
+                    var fields = [$scope.options.selectedNodeField.columnName];
+                    if($scope.options.selectedLinkField && $scope.options.selectedLinkField.columnName) {
+                        fields.push($scope.options.selectedLinkField.columnName);
+                    }
+                    var relations = datasetService.getRelations($scope.options.database.name, $scope.options.table.name, fields);
                     if($scope.filteredNodes.length === 1) {
                         filterService.addFilters($scope.messenger, relations, $scope.filterKeys, $scope.createFilterClauseForNode, "Graph", $scope.queryForData);
                     } else if($scope.filteredNodes.length > 1) {
@@ -264,12 +267,26 @@ angular.module('neonDemo.directives')
              * @method createFilterClauseForNode
              * @return {Object} A neon.query.Filter object
              */
-            $scope.createFilterClauseForNode = function(databaseAndTableName, nodeFieldName) {
-                var filterClause = neon.query.where(nodeFieldName, '=', $scope.filteredNodes[0]);
-                for(var i = 1; i < $scope.filteredNodes.length; ++i) {
-                    filterClause = neon.query.or(filterClause, neon.query.where(nodeFieldName, '=', $scope.filteredNodes[i]));
+            $scope.createFilterClauseForNode = function(databaseAndTableName, fieldNames) {
+                var nodeFieldName = fieldNames[0];
+                var linkFieldName = fieldNames.length > 1 ? fieldNames[1] : "";
+
+                var nodeClauses = [];
+                var linkClauses = [];
+                $scope.filteredNodes.forEach(function(filteredNode) {
+                    nodeClauses.push(neon.query.where(nodeFieldName, '=', filteredNode));
+                    if(linkFieldName) {
+                        linkClauses.push(neon.query.where(linkFieldName, '=', filteredNode));
+                    }
+                });
+
+                var whereClause = nodeClauses.length > 1 ? neon.query.or.apply(neon.query, nodeClauses) : nodeClauses[0];
+                if(linkClauses.length) {
+                    var otherClause = linkClauses.length > 1 ? neon.query.or.apply(neon.query, linkClauses) : linkClauses[0];
+                    whereClause = neon.query.or.apply(neon.query, [whereClause, otherClause]);
                 }
-                return filterClause;
+
+                return whereClause;
             };
 
             $scope.removeFilter = function(value) {
@@ -284,22 +301,28 @@ angular.module('neonDemo.directives')
                     if($scope.filteredNodes.length === 0) {
                         filterService.removeFilters($scope.messenger, $scope.filterKeys, $scope.queryForData);
                     } else {
-                        var relations = datasetService.getRelations($scope.options.database.name, $scope.options.table.name, [$scope.options.selectedNodeField.columnName]);
+                        var fields = [$scope.options.selectedNodeField.columnName];
+                        if($scope.options.selectedLinkField && $scope.options.selectedLinkField.columnName) {
+                            fields.push($scope.options.selectedLinkField.columnName);
+                        }
+                        var relations = datasetService.getRelations($scope.options.database.name, $scope.options.table.name, fields);
                         filterService.replaceFilters($scope.messenger, relations, $scope.filterKeys, $scope.createFilterClauseForNode, "Graph", $scope.queryForData);
                     }
                 }
             };
 
             $scope.clearFilters = function() {
-                $scope.filteredNodes = [];
-                if($scope.messenger) {
-                    filterService.removeFilters($scope.messenger, $scope.filterKeys, function() {
-                        $scope.queryForData(true);
-                    });
-                }
+                if($scope.filteredNodes.length) {
+                    $scope.filteredNodes = [];
+                    if($scope.messenger) {
+                        filterService.removeFilters($scope.messenger, $scope.filterKeys, function() {
+                            $scope.queryForData();
+                        });
+                    }
+                };
             };
 
-            $scope.queryForData = function(shouldQueryForNodeList) {
+            $scope.queryForData = function(reloadNetworkGraph, reloadNodeList) {
                 if($scope.errorMessage) {
                     errorNotificationService.hideErrorMessage($scope.errorMessage);
                     $scope.errorMessage = undefined;
@@ -318,8 +341,10 @@ angular.module('neonDemo.directives')
                 }
 
                 if(connection && $scope.options.selectedNodeField.columnName) {
-                    queryForFilteredNodeNetwork(connection);
-                    if(shouldQueryForNodeList) {
+                    if($scope.filteredNodes.length || reloadNetworkGraph) {
+                        queryForNetworkGraph(connection);
+                        queryForNodeList(connection);
+                    } else if(reloadNodeList) {
                         queryForNodeList(connection);
                     }
                 }
@@ -360,7 +385,7 @@ angular.module('neonDemo.directives')
                     });
                 }, function(response) {
                     if(response.responseJSON) {
-                        $scope.errorMessage = errorNotificationService.showErrorMessage($element, response.responseJSON.error, response.responseJSON.stackTrace);
+                        //$scope.errorMessage = errorNotificationService.showErrorMessage($element, response.responseJSON.error, response.responseJSON.stackTrace);
                     }
                 });
             };
@@ -368,19 +393,15 @@ angular.module('neonDemo.directives')
             /**
              * Query for the list of nodes that link to the filtered nodes and draw the graph containing the network.
              */
-            var queryForFilteredNodeNetwork = function(connection) {
+            var queryForNetworkGraph = function(connection) {
+                var fields = [$scope.options.selectedNodeField.columnName];
+                if($scope.options.selectedLinkField && $scope.options.selectedLinkField.columnName) {
+                    fields.push($scope.options.selectedLinkField.columnName);
+                }
+
                 var query = new neon.query.Query()
                     .selectFrom($scope.options.database.name, $scope.options.table.name)
-                    .withFields([$scope.options.selectedNodeField.columnName, $scope.options.selectedLinkField.columnName]);
-
-                var where = neon.query.where($scope.options.selectedNodeField.columnName, '=', $scope.filteredNodes[0]);
-                var orWhere;
-                for(var i = 1; i < $scope.filteredNodes.length; i++) {
-                    orWhere = neon.query.where($scope.options.selectedNodeField.columnName, '=', $scope.filteredNodes[i]);
-                    where = neon.query.or(where, orWhere);
-                }
-                query = query.where(where);
-                query.ignoreFilters([$scope.filterKeys[$scope.options.database.name][$scope.options.table.name]]);
+                    .withFields(fields);
 
                 connection.executeQuery(query, function(response) {
                     if(response.data.length) {
@@ -418,16 +439,9 @@ angular.module('neonDemo.directives')
                 var addNodeIfUnique = function(value) {
                     if(nodesIndexes[value] === undefined) {
                         nodesIndexes[value] = nodes.length;
-                        var colorGroup = 2;
-                        if($scope.filteredNodes.indexOf(value) >= 0) {
-                            colorGroup = 1;
-                        } else if($scope.nodes.indexOf(value) >= 0) {
-                            colorGroup = 3;
-                        }
-
                         nodes.push({
                             name: value,
-                            group: colorGroup
+                            group: $scope.filteredNodes.indexOf(value) < 0 ? 2 : 1
                         });
                     }
                 };
@@ -435,6 +449,10 @@ angular.module('neonDemo.directives')
                 var addLinkIfUnique = function(value1, value2) {
                     var node1 = nodesIndexes[value1];
                     var node2 = nodesIndexes[value2];
+
+                    if(node1 === node2) {
+                        return;
+                    }
 
                     if(!linksIndexes[node1]) {
                         linksIndexes[node1] = {};
@@ -451,32 +469,29 @@ angular.module('neonDemo.directives')
                 };
 
                 // Add each unique value from the data to the graph as a node.
-                for(var i = 0; i < data.length; i++) {
-                    var value = data[i][$scope.options.selectedNodeField.columnName];
+                data.forEach(function(datum) {
+                    var value = datum[$scope.options.selectedNodeField.columnName];
                     if(value) {
                         addNodeIfUnique(value);
 
-                        if($scope.options.selectedLinkField.columnName) {
-                            var linkedNodes = (data[i][$scope.options.selectedLinkField.columnName] ? data[i][$scope.options.selectedLinkField.columnName] : []);
-                            if(linkedNodes.constructor !== Array) {
-                                linkedNodes = [linkedNodes];
-                            }
+                        if($scope.options.selectedLinkField && $scope.options.selectedLinkField.columnName && datum[$scope.options.selectedLinkField.columnName]) {
+                            var linkedNodes = datum[$scope.options.selectedLinkField.columnName] || [];
+                            linkedNodes = (linkedNodes.constructor === Array) ? linkedNodes : [linkedNodes];
 
                             if(linkedNodes.length >= $scope.options.nodeLimit) {
                                 linkedNodes = linkedNodes.slice(0, $scope.options.nodeLimit);
                             }
 
                             // Add each related node to the graph as a node with a link to the original node.
-                            for(var j = 0; j < linkedNodes.length; j++) {
-                                var linkedNode = linkedNodes[j];
+                            linkedNodes.forEach(function(linkedNode) {
                                 if(linkedNode) {
-                                    addNodeIfUnique(linkedNodes[j]);
-                                    addLinkIfUnique(value, linkedNodes[j]);
+                                    addNodeIfUnique(linkedNode);
+                                    addLinkIfUnique(linkedNode, value);
                                 }
-                            }
+                            });
                         }
                     }
-                }
+                });
 
                 $scope.updateGraph(nodes, links);
             };
@@ -493,16 +508,14 @@ angular.module('neonDemo.directives')
             };
 
             $scope.createClickHandler = function(item) {
-                if($scope.nodes.indexOf(item.name) >= 0) {
-                    if($scope.filteredNodes.indexOf(item.name) >= 0) {
-                        $scope.$apply(function() {
-                            $scope.removeFilter(item.name);
-                        });
-                    } else {
-                        $scope.$apply(function() {
-                            $scope.addFilter(item.name);
-                        });
-                    }
+                if($scope.filteredNodes.indexOf(item.name) >= 0) {
+                    $scope.$apply(function() {
+                        $scope.removeFilter(item.name);
+                    });
+                } else {
+                    $scope.$apply(function() {
+                        $scope.addFilter(item.name);
+                    });
                 }
             };
 

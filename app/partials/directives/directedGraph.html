@@ -15,22 +15,39 @@
         </div>
 
         <div class="form-group" ng-show="!(hideAdvancedOptions)">
-            <label>Source Node Field</label>
+            <label>Node Field</label>
             <select class="form-control" ng-model="options.selectedNodeField" ng-options="field.prettyName for field in fields" ng-required="true" ng-disabled="(fields.length == 0)" ng-change="clearFilters()">
             </select>
         </div>
 
         <div class="form-group" ng-show="!(hideAdvancedOptions)">
-            <label>Target Node(s) Field</label>
+            <label>Linked Node(s) Field</label>
             <select class="form-control" ng-model="options.selectedLinkField" ng-options="field.prettyName for field in fields" ng-required="false" ng-disabled="(fields.length == 0)" ng-change="clearFilters()">
-                <option value=""></option>
+                <option value="">None</option>
             </select>
         </div>
-        <div class="form-group">
-            <label ng-bind="'Filter on ' + options.selectedNodeField.prettyName"></label>
-            <select class="form-control" ng-model="options.selectedNode" ng-options="node for node in nodes track by node" ng-required="false" ng-disabled="(nodes.length == 0) || !(options.selectedNodeField)" ng-change="selectNode()">
-                <option value=""></option>
-            </select>
+
+        <div class="form-group" ng-hide="!(options.selectedNodeField && options.selectedNodeField.columnName)">
+            <label ng-bind="'Set Filter on ' + options.selectedNodeField.prettyName"></label>
+            <div class="input-group">
+                <input type="text" class="form-control" placeholder="{{'Enter ' + options.selectedNodeField.prettyName + ' to Filter'}}" ng-model="options.selectedNode" ng-disabled="!(options.selectedNodeField)">
+                <div class="input-group-btn">
+                    <button type="button" class="btn btn-default refresh" title="Add Node Filter" ng-click="selectNode()">
+                        <span class="glyphicon glyphicon-plus"></span>
+                    </button>
+                </div>
+            </div>
+
+            <div class="input-group">
+                <select class="form-control" ng-model="options.selectedNode" ng-options="node for node in nodes track by node" ng-required="false" ng-disabled="(nodes.length == 0) || !(options.selectedNodeField)" ng-change="selectNode()">
+                    <option value="" ng-bind="'Select ' + options.selectedNodeField.prettyName + ' to Filter...'"></option>
+                </select>
+                <div class="input-group-btn">
+                    <button type="button" class="btn btn-default refresh" title="Refresh Node List" ng-click="queryForData(false, true)">
+                        <span class="glyphicon glyphicon-refresh"></span>
+                    </button>
+                </div>
+            </div>
         </div>
 
         <div class="form-group">
@@ -44,13 +61,24 @@
                 </div>
             </div>
         </div>
+
+        <div class="form-group">
+            <label class="btn btn-default" ng-class="{true: 'active', false: ''}[options.reloadOnFilter]" title="Reload Graph on Filter">
+                <input type="checkbox" ng-model="options.reloadOnFilter" style="display:none" ng-value="false"/>
+                Reload Graph on Filter
+            </label>
+        </div>
     </options-menu>
 </div>
 
 <div class="clearfix"></div>
 
-<div class="header-container filter-container" ng-show="(filteredNodes.length > 0)">
-    <div class="filter-reset pull-right" ng-repeat="value in filteredNodes" title="{{options.selectedNodeField.prettyName}}={{value}}">
+<div class="header-container filter-container">
+    <button type="button" class="btn btn-default header-item" title="Load Graph" ng-click="queryForData(true)">
+        Load Graph
+    </button>
+
+    <div class="header-item filter-reset pull-right" ng-repeat="value in filteredNodes" title="{{options.selectedNodeField.prettyName}}={{value}}">
         <span class="filter-label" ng-bind="value"></span>
         <span class="glyphicon glyphicon-remove" ng-click="removeFilter(value)"></span>
     </div>

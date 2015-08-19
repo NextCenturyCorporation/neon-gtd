@@ -356,7 +356,7 @@ label{
     }
 }
 
-.filter-reset {
+.header-item {
     font-size: 14px;
     font-weight: bold;
     color: @main-text-color;
@@ -365,9 +365,24 @@ label{
     border-width: 1px;
     border-color: @button-border-color;
     border-radius: 4px;
-    margin-left: 5px;
+    padding: 4px 8px;
+    margin-right: 5px;
     margin-top: 5px;
     margin-bottom: 5px;
+
+    &:hover {
+        color: @accent-bright;
+    }
+}
+
+.filter-reset {
+    margin-right: 0px;
+    margin-left: 5px;
+    padding: 0px;
+
+    &:hover {
+        color: @main-text-color;
+    }
 
     /* Add padding so the height of the filter label and glyphicon equals the height of the filter-container (30 px). */
     .filter-label {
@@ -405,21 +420,6 @@ label{
     }
 }
 
-.footer-container {
-    min-height: 20px;
-    margin-top: 5px;
-
-    span {
-        &.footer-text {
-            color: @main-text-color;
-            font-size: 16px;
-            font-weight: bold;
-            line-height: 1.33;
-            text-transform: uppercase;
-        }
-    }
-}
-
 .form-control {
     &:focus {
         border-color: @accent-bright;
@@ -441,6 +441,12 @@ label{
 
     .form-group {
         margin-bottom: 0px;
+    }
+
+    .input-group {
+        +.input-group {
+            margin-top: 5px;
+        }
     }
 
     label {
@@ -903,40 +909,9 @@ label{
 }
 
 .neon-datetimepicker {
-    .btn-default {
-        font-size: 14px;
-        font-weight: bold;
-        color: @main-text-color;
-        background-color: @button-color;
-        border-style: solid;
-        border-width: 1px;
-        border-color: @button-border-color;
-        border-radius: 4px;
-        padding: 3px 6px;
-
-        &:hover {
-            color: @accent-bright;
-        }
-
-        .glyphicon {
-            margin-right: 2px;
-            top: 2px;
-        }
-
-        &.reset {
-            color: @error-color;
-
-            &:hover {
-                background-color: @error-color;
-                border-color: @error-dark-color;
-                color: @light-text-color;
-            }
-
-            &.disabled {
-                color: #ccc;
-                opacity: 0.5;
-            }
-        }
+    .glyphicon {
+        margin-right: 2px;
+        top: 2px;
     }
 
     .dropdown-menu {
