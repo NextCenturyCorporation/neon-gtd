@@ -84,7 +84,7 @@
 <div class="clearfix"></div>
 
 <div class="header-container filter-container">
-    <div class="filter-reset pull-right" ng-class="{true: '', false: 'hidden'}[brush.length > 0]" title="Date from {{startDateForDisplay}} to {{endDateForDisplay}}">
+    <div class="header-item filter-reset pull-right" ng-class="{true: '', false: 'hidden'}[brush.length > 0]" title="Date from {{startDateForDisplay}} to {{endDateForDisplay}}">
         <span class="filter-label">Date Filter</span>
         <span class="glyphicon glyphicon-remove" ng-click="clearBrush()"></span>
     </div>
@@ -94,7 +94,7 @@
     </h4>
 
     <div class="neon-datetimepicker dropdown pull-left">
-        <button class="btn btn-default dropdown-toggle" role="button" data-toggle="dropdown" data-target="#" href="#">
+        <button class="btn btn-default header-item dropdown-toggle" role="button" data-toggle="dropdown" data-target="#" href="#">
             <span class="glyphicon glyphicon-calendar"></span>
             <span ng-bind="'From ' + (startDateForDisplay || '?') + ' to ' + (endDateForDisplay || '?')"></span>
             <span class="caret"></span>
