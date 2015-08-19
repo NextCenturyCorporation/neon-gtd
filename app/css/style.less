@@ -13,6 +13,10 @@
 // limitations under the License.
 //
 
+.bold {
+    font-weight: bold;
+}
+
 .centered {
     text-align: center;
 }
@@ -48,6 +52,7 @@ a {
 
     &:hover, &:focus {
         color: @accent-dark;
+        cursor: pointer;
     }
 
     .navbar-text {
@@ -373,9 +378,13 @@ label{
     margin-right: 5px;
     margin-top: 5px;
     margin-bottom: 5px;
+}
 
-    &:hover {
-        color: @accent-bright;
+button {
+    &.header-item {
+        &:hover {
+            color: @accent-bright;
+        }
     }
 }
 
