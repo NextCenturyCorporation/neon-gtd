@@ -45,7 +45,7 @@
             <th class="centered">Example of type</th>
             <th class="alignRight">Guessed type</th>
           </tr>
-          <tr class="borderedRow" ng-repeat="field in nameTypePairs">
+          <tr class="borderedRow" id="{{field.name}}-row" ng-repeat="field in nameTypePairs">
             <td class="alignLeft">{{field.name}}</td>
             <td class="alignLeft" id="{{field.name}}-example"></td>
             <td class="alignRight">
@@ -55,6 +55,7 @@
                 <option value="DOUBLE" label="Double">Double</option>
                 <option value="FLOAT" label="Float">Float</option>
                 <option value="DATE" label="Date">Date</option>
+                <option value="OBJECT" label="Object">Object</option>
                 <option value="STRING" label="String">String</option>
               </select>
             </td>

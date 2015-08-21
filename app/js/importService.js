@@ -68,22 +68,69 @@ angular.module('neonDemo.services')
     };
 
     /**
-     * Given an array of objects, assumed to each have a name field and a date field at the very least,
+     * Given an array of objects, assumed to each have a name field and a type field at the very least,
      * returns a new array of objects identical to the input array but with all fields except for name
-     * and date removed.
+     * and type removed. It also puts any values of pairs of type OBJECT into objectFTPairs of the
+     * associated pair.
      * @param fieldtypePairs {Array} The array of objects, each with at least a name and a type field.
-     * @return {Array} An array identical to the input array, but with all fields except for name and
-     * type removed.
+     * @return {Array} An array identical to the input array, but with all fields except for name, type,
+     * and objectFTPairs removed.
      */
     service.getFieldsAndTypes = function(fieldTypePairs) {
-        var toReturn = [];
-        fieldTypePairs.forEach(function(pair) {
-            toReturn.push({
-                name: pair.name,
-                type: pair.type
-            });
+        var toReturn = angular.copy(fieldTypePairs);
+        var toRemoveIndices = [];
+
+        fieldTypePairs.forEach(function(pair, index) {
+            if(pair.keys && pair.keys.length && pair.type === "OBJECT") {
+                var objectFTPairs = [];
+
+                // Find and save in pair all objectFTPairs that are associated with pair and save the index to remove later
+                pair.keys.forEach(function(key) {
+                    var index = _.findIndex(toReturn, {
+                        name: pair.name + "__" + key
+                    });
+                    objectFTPairs.push({
+                        name: key,
+                        type: toReturn[index].type
+                    });
+                    toRemoveIndices.push(index);
+                });
+
+                toReturn[index] = {
+                    name: pair.name,
+                    type: pair.type,
+                    objectFTPairs: objectFTPairs
+                };
+            } else if(pair.keys && pair.keys.length && pair.type !== "OBJECT") {
+                // Find all objectFTPairs that are associated with pair and save the index to remove later
+                pair.keys.forEach(function(key) {
+                    var index = _.findIndex(toReturn, {
+                        name: pair.name + "__" + key
+                    });
+                    toRemoveIndices.push(index);
+                });
+
+                toReturn[index] = {
+                    name: pair.name,
+                    type: pair.type
+                };
+            }
         });
-        return toReturn;
+
+        // Removes any extra fields not needed
+        toReturn = _.map(toReturn, function(pair, index) {
+            if(toRemoveIndices.indexOf(index) < 0) {
+                return {
+                    name: pair.name,
+                    type: pair.type,
+                    objectFTPairs: pair.objectFTPairs
+                };
+            }
+        });
+
+        return _.filter(toReturn, function(pair) {
+            return pair;
+        });
     };
 
     /**
