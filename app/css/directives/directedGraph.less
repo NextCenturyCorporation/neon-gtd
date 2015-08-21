@@ -36,13 +36,10 @@ div {
 
     .graph-tooltip {
         position: absolute;
-        text-align: center;
-        height: 20px;
         padding: 5px;
         font: 12px sans-serif;
         background: @tooltip-background;
-        border: 0px;
-        border-radius: 8px;
+        border-radius: 4px;
         pointer-events: none;
     }
 }
@@ -51,19 +48,10 @@ div {
     padding: 10px;
     height: 100%;
     width: 100%;
+    /* Hide the area of the tooltip that overflows the visualization. */
+    overflow: hidden;
 }
 
 .node {
-  stroke: @chart-empty-dot-color;
-  stroke-width: 1.5px;
   cursor: pointer;
-}
-
-.link {
-  stroke: @chart-line-color;
-  stroke-opacity: .6;
-}
-
-.arrowhead {
-  fill: @chart-line-color;
 }

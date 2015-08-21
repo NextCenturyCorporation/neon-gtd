@@ -43,6 +43,20 @@ function($timeout, connectionService, datasetService, errorNotificationService, 
                 return true;
             };
 
+            var NODE_TYPE = "node";
+            var CLUSTER_TYPE = "cluster";
+
+            var DEFAULT_NODE_GROUP = "default";
+            var QUERIED_NODE_GROUP = "queried";
+            var CLUSTER_NODE_GROUP = "cluster";
+            var UNKNOWN_NODE_GROUP = "unknown";
+
+            // Colors copied from d3.scale.category10().
+            var DEFAULT_NODE_COLOR = "#1f77b4";
+            var QUERIED_NODE_COLOR = "#2ca02c";
+            var UNKNOWN_NODE_COLOR = "#d62728";
+            var CLUSTER_NODE_COLOR = "#9467bd";
+
             $scope.TIMEOUT_MS = 250;
             $scope.uniqueId = uuid();
 
@@ -66,7 +80,7 @@ function($timeout, connectionService, datasetService, errorNotificationService, 
                 reloadOnFilter: false
             };
 
-            $scope.calculateGraphHeight = function() {
+            var calculateGraphHeight = function() {
                 var headerHeight = 0;
                 $element.find(".header-container").each(function() {
                     headerHeight += $(this).outerHeight(true);
@@ -74,15 +88,15 @@ function($timeout, connectionService, datasetService, errorNotificationService, 
                 return $element.height() - headerHeight;
             };
 
-            $scope.calculateGraphWidth = function() {
+            var calculateGraphWidth = function() {
                 return $element.width();
             };
 
             var updateGraphSize = function() {
                 // The D3 graph will resize itself but we need to trigger that resize event by changing the height and widget of the SVG.
                 // Setting the dimensions on the SVG performs better than just setting the dimensions on the directed-graph-container.
-                $element.find(".directed-graph .directed-graph-container svg").attr("height", $scope.calculateGraphHeight());
-                $element.find(".directed-graph .directed-graph-container svg").attr("width", $scope.calculateGraphWidth());
+                $element.find(".directed-graph .directed-graph-container svg").attr("height", calculateGraphHeight());
+                $element.find(".directed-graph .directed-graph-container svg").attr("width", calculateGraphWidth());
                 return $timeout($scope.redraw, $scope.TIMEOUT_MS);
             };
 
@@ -192,14 +206,17 @@ function($timeout, connectionService, datasetService, errorNotificationService, 
 
                 if(!$scope.graph) {
                     $scope.graph = new charts.DirectedGraph($element[0], (".directed-graph-container-" + $scope.uniqueId), {
-                        calculateHeight: $scope.calculateGraphHeight,
-                        calculateWidth: $scope.calculateGraphWidth,
-                        clickHandler: $scope.createClickHandler
+                        calculateHeight: calculateGraphHeight,
+                        calculateWidth: calculateGraphWidth,
+                        getNodeSize: calculateNodeSize,
+                        getNodeColor: calculateNodeColor,
+                        getNodeText: createNodeText,
+                        getNodeTooltip: createNodeTooltip,
+                        getLinkSize: calculateLinkSize,
+                        nodeClickHandler: onNodeClicked
                     });
                 }
 
-                $scope.nodes = [];
-                $scope.data = [];
                 $scope.databases = datasetService.getDatabases();
                 $scope.options.database = $scope.databases[0];
                 $scope.filterKeys = filterService.createFilterKeys("graph", datasetService.getDatabaseAndTableNames());
@@ -332,11 +349,13 @@ function($timeout, connectionService, datasetService, errorNotificationService, 
                     $scope.errorMessage = undefined;
                 }
 
+                $scope.nodes = [];
+
                 var connection = connectionService.getActiveConnection();
 
                 if(!connection || !$scope.options.selectedNodeField.columnName || !$scope.filteredNodes.length) {
                     $scope.numberOfNodesInGraph = 0;
-                    // Don't call $scope.updateGraph() here.  It will cause an error because we're in a $scope.$apply.
+                    // Don't call updateGraph() here.  It will cause an error because we're in a $scope.$apply.
                     $scope.graph.updateGraph({
                         nodes: [],
                         links: []
@@ -347,8 +366,9 @@ function($timeout, connectionService, datasetService, errorNotificationService, 
                 if(connection && $scope.options.selectedNodeField.columnName) {
                     if($scope.filteredNodes.length || reloadNetworkGraph) {
                         queryForNetworkGraph(connection);
-                        queryForNodeList(connection);
-                    } else if(reloadNodeList) {
+                    }
+
+                    if(reloadNodeList) {
                         queryForNodeList(connection);
                     }
                 }
@@ -361,7 +381,6 @@ function($timeout, connectionService, datasetService, errorNotificationService, 
                 var query = createNodeListQuery();
 
                 connection.executeQuery(query, function(data) {
-                    $scope.nodes = [];
                     for(var i = 0; i < data.data.length; i++) {
                         var node = data.data[i][$scope.options.selectedNodeField.columnName];
                         if($scope.nodes.indexOf(node) < 0) {
@@ -404,11 +423,11 @@ function($timeout, connectionService, datasetService, errorNotificationService, 
              * Query for the list of nodes that link to the filtered nodes and draw the graph containing the network.
              */
             var queryForNetworkGraph = function(connection) {
-                var query = createQueryForNetworkGraphQuery();
+                var query = createNetworkGraphQuery();
 
                 connection.executeQuery(query, function(response) {
                     if(response.data.length) {
-                        $scope.createAndShowGraph(response);
+                        createAndShowGraph(response.data);
                     } else if($scope.filteredNodes.length) {
                         // If the filters cause the query to return no data, remove the most recent filter and query again.  This can happen if the user
                         // creates a filter in the Filter Builder (which the graph automatically adds as a filter) on a node that doesn't exist.
@@ -416,7 +435,7 @@ function($timeout, connectionService, datasetService, errorNotificationService, 
                     }
                     $scope.loadingData = false;
                 }, function(response) {
-                    $scope.updateGraph([], []);
+                    updateGraph([], []);
                     $scope.loadingData = false;
                     if(response.responseJSON) {
                         $scope.errorMessage = errorNotificationService.showErrorMessage($element, response.responseJSON.error, response.responseJSON.stackTrace);
@@ -424,7 +443,7 @@ function($timeout, connectionService, datasetService, errorNotificationService, 
                 });
             };
 
-            var createQueryForNetworkGraphQuery = function() {
+            var createNetworkGraphQuery = function() {
                 var fields = [$scope.options.selectedNodeField.columnName];
                 if($scope.options.selectedLinkField && $scope.options.selectedLinkField.columnName) {
                     fields.push($scope.options.selectedLinkField.columnName);
@@ -437,82 +456,247 @@ function($timeout, connectionService, datasetService, errorNotificationService, 
                 return query;
             };
 
-            $scope.createAndShowGraph = function(response) {
-                var data = response.data;
+            /**
+             * Creates and shows this visualization's graph using the given data from a query.
+             * @param {Array} data
+             * @method createAndShowGraph
+             * @private
+             */
+            var createAndShowGraph = function(data) {
                 if(data.length >= $scope.options.nodeLimit) {
                     data = data.slice(0, $scope.options.nodeLimit);
                 }
 
-                // Maps a node value to a unique node ID to ensure each node we add to the graph is unique.
-                var nodesIndexes = {};
-                // Maps two node IDs to a unique link ID to ensure each link we add to the graph is unique.
-                var linksIndexes = {};
+                // Maps source node IDs to an array of target node IDs to ensure each link we add to the graph is unique and help with clustering.
+                var sourcesToTargets = {};
+                // Maps target node IDs to an array of source node IDs to ensure each link we add to the graph is unique and help with clustering.
+                var targetsToSources = {};
                 // The nodes to be added to the graph.
                 var nodes = [];
                 // The links to be added to the graph.
                 var links = [];
 
                 var addNodeIfUnique = function(value) {
-                    if(nodesIndexes[value] === undefined) {
-                        nodesIndexes[value] = nodes.length;
-                        nodes.push({
+                    var node = _.find(nodes, function(node) {
+                        return node.id === value;
+                    });
+
+                    if(!node) {
+                        node = {
+                            id: value,
                             name: value,
-                            group: $scope.filteredNodes.indexOf(value) < 0 ? 2 : 1
-                        });
+                            size: 0,
+                            type: NODE_TYPE,
+                            group: $scope.filteredNodes.indexOf(value) >= 0 ? QUERIED_NODE_GROUP : UNKNOWN_NODE_GROUP
+                        };
+                        nodes.push(node);
                     }
+
+                    return node;
                 };
 
-                var addLinkIfUnique = function(value1, value2) {
-                    var node1 = nodesIndexes[value1];
-                    var node2 = nodesIndexes[value2];
-
-                    if(node1 === node2) {
-                        return;
+                var addLinkIfUnique = function(sourceValue, targetValue) {
+                    if(!targetsToSources[targetValue]) {
+                        targetsToSources[targetValue] = [];
                     }
 
-                    if(!linksIndexes[node1]) {
-                        linksIndexes[node1] = {};
+                    if(targetsToSources[targetValue].indexOf(sourceValue) < 0) {
+                        targetsToSources[targetValue].push(sourceValue);
                     }
 
-                    if(!linksIndexes[node1][node2]) {
-                        linksIndexes[node1][node2] = links.length;
+                    if(!sourcesToTargets[sourceValue]) {
+                        sourcesToTargets[sourceValue] = [];
+                    }
+
+                    if(sourcesToTargets[sourceValue].indexOf(targetValue) < 0) {
+                        sourcesToTargets[sourceValue].push(targetValue);
                         links.push({
-                            source: node1,
-                            target: node2,
-                            value: 1
+                            sourceId: sourceValue,
+                            targetId: targetValue,
+                            sourceType: NODE_TYPE,
+                            targetType: NODE_TYPE
                         });
                     }
                 };
 
                 // Add each unique value from the data to the graph as a node.
                 data.forEach(function(datum) {
-                    var value = datum[$scope.options.selectedNodeField.columnName];
-                    if(value) {
-                        addNodeIfUnique(value);
+                    var nodeValue = datum[$scope.options.selectedNodeField.columnName];
+                    if(nodeValue) {
+                        var node = addNodeIfUnique(nodeValue);
+                        // Add to size for each instance of the node in the data.
+                        node.size++;
+                        // Nodes that exist in the data are put in the default group.  Nodes that exist only as linked nodes are put in the unknown group.
+                        node.group = (node.group === UNKNOWN_NODE_GROUP ? DEFAULT_NODE_GROUP : node.group);
 
                         if($scope.options.selectedLinkField && $scope.options.selectedLinkField.columnName && datum[$scope.options.selectedLinkField.columnName]) {
-                            var linkedNodes = datum[$scope.options.selectedLinkField.columnName] || [];
-                            linkedNodes = (linkedNodes.constructor === Array) ? linkedNodes : [linkedNodes];
-
-                            if(linkedNodes.length >= $scope.options.nodeLimit) {
-                                linkedNodes = linkedNodes.slice(0, $scope.options.nodeLimit);
-                            }
+                            var linkedNodeValues = datum[$scope.options.selectedLinkField.columnName] || [];
+                            linkedNodeValues = (linkedNodeValues.constructor === Array) ? linkedNodeValues : [linkedNodeValues];
 
                             // Add each related node to the graph as a node with a link to the original node.
-                            linkedNodes.forEach(function(linkedNode) {
-                                if(linkedNode) {
-                                    addNodeIfUnique(linkedNode);
-                                    addLinkIfUnique(linkedNode, value);
+                            linkedNodeValues.forEach(function(linkedNodeValue) {
+                                if(linkedNodeValue && linkedNodeValue !== nodeValue) {
+                                    // Nodes for linked nodes start at size 0.  Any instance of the linked node in the data will add to its size.
+                                    // If the linked node is not in the data, the size will be an indicator to the user.
+                                    addNodeIfUnique(linkedNodeValue);
+                                    addLinkIfUnique(linkedNodeValue, nodeValue);
                                 }
                             });
                         }
                     }
                 });
 
-                $scope.updateGraph(nodes, links);
+                if(!$scope.filteredNodes.length) {
+                    var result = clusterNodes(nodes, links, sourcesToTargets, targetsToSources);
+                    nodes = result.nodes;
+                    links = result.links;
+                }
+
+                var indexLinks = createIndexLinks(nodes, links);
+
+                updateGraph(nodes, indexLinks);
             };
 
-            $scope.updateGraph = function(nodes, links) {
+            /**
+             * Creates clusters for nodes in the given array as appropriate and returns an object containing the new arrays of nodes and links.
+             * @param {Array} nodes
+             * @param {Array} links
+             * @param {Object} sourcesToTargets
+             * @param {Object} targetsToSources
+             * @method clusterNodes
+             * @private
+             * @return {Object}
+             */
+            var clusterNodes = function(nodes, links, sourcesToTargets, targetsToSources) {
+                var nodesWithClusters = [];
+                var linksWithClusters = links;
+
+                var nextFreeClusterId = 1;
+                var sourcesToClusterTargets = {};
+                var targetsToClusterSources = {};
+
+                // The cluster for all nodes that are not linked to any other nodes.
+                var unlinkedCluster = {
+                    type: CLUSTER_TYPE,
+                    group: CLUSTER_NODE_GROUP,
+                    nodes: []
+                };
+
+                var shouldCluster = function(id, map, reverseMap) {
+                    if(map[id] && map[id].length > 1) {
+                        // Ensure the cluster would contain more than one node.
+                        return map[id].filter(function(otherId) {
+                            return reverseMap[otherId].length === 1;
+                        }).length > 1;
+                    }
+                    return false;
+                };
+
+                var addCluster = function(clusterId, sourceId, targetId, nodeToCluster) {
+                    if(!clusterId) {
+                        clusterId = nextFreeClusterId++;
+                        linksWithClusters.push({
+                            sourceId: sourceId || clusterId,
+                            targetId: targetId || clusterId,
+                            sourceType: sourceId ? NODE_TYPE : CLUSTER_TYPE,
+                            targetType: targetId ? NODE_TYPE : CLUSTER_TYPE
+                        });
+                        nodesWithClusters.push({
+                            id: clusterId,
+                            type: CLUSTER_TYPE,
+                            group: CLUSTER_NODE_GROUP,
+                            nodes: [nodeToCluster]
+                        });
+                    } else {
+                        linksWithClusters.push({
+                            sourceId: sourceId || clusterId,
+                            targetId: targetId || clusterId,
+                            sourceType: sourceId ? NODE_TYPE : CLUSTER_TYPE,
+                            targetType: targetId ? NODE_TYPE : CLUSTER_TYPE
+                        });
+                        var cluster = _.find(nodesWithClusters, function(node) {
+                            return node.type === CLUSTER_TYPE && node.id === clusterId;
+                        });
+                        cluster.nodes.push(nodeToCluster);
+                    }
+                    return clusterId;
+                };
+
+                nodes.forEach(function(node, index) {
+                    var numberOfTargets = sourcesToTargets[node.id] ? sourcesToTargets[node.id].length : 0;
+                    var numberOfSources = targetsToSources[node.id] ? targetsToSources[node.id].length : 0;
+
+                    // If the node has more than one link, keep it; otherwise, add it to a cluster.
+                    if($scope.filteredNodes.indexOf(node.id) >= 0 || numberOfTargets > 1 || numberOfSources > 1 || (numberOfTargets === 1 && numberOfSources === 1)) {
+                        nodesWithClusters.push(node);
+                    } else if(numberOfTargets === 1) {
+                        var targetId = sourcesToTargets[node.id][0];
+                        if(shouldCluster(targetId, targetsToSources, sourcesToTargets)) {
+                            targetsToClusterSources[targetId] = addCluster(targetsToClusterSources[targetId], null, targetId, node);
+                        } else {
+                            nodesWithClusters.push(node);
+                        }
+                    } else if(numberOfSources === 1) {
+                        var sourceId = targetsToSources[node.id][0];
+                        if(shouldCluster(sourceId, sourcesToTargets, targetsToSources)) {
+                            sourcesToClusterTargets[sourceId] = addCluster(sourcesToClusterTargets[sourceId], sourceId, null, node);
+                        } else {
+                            nodesWithClusters.push(node);
+                        }
+                    } else {
+                        unlinkedCluster.nodes.push(node);
+                    }
+                });
+
+                if(unlinkedCluster.nodes.length) {
+                    nodesWithClusters.push(unlinkedCluster);
+                }
+
+                return {
+                    nodes: nodesWithClusters,
+                    links: linksWithClusters
+                };
+            };
+
+            /**
+             * Returns the array of links containing indices for the source and target nodes using the given list of nodes and links containing source and target node IDs.
+             * @param {Array} nodes
+             * @param {Array} links
+             * @method createIndexLinks
+             * @private
+             * @return {Array}
+             */
+            var createIndexLinks = function(nodes, links) {
+                var indexLinks = [];
+
+                links.forEach(function(link) {
+                    var sourceIndex = _.findIndex(nodes, function(node) {
+                        return node.id === link.sourceId && node.type === link.sourceType;
+                    });
+                    var targetIndex = _.findIndex(nodes, function(node) {
+                        return node.id === link.targetId && node.type === link.targetType;
+                    });
+
+                    if(sourceIndex >= 0 && targetIndex >= 0) {
+                        indexLinks.push({
+                            source: sourceIndex,
+                            target: targetIndex,
+                            size: 2
+                        });
+                    }
+                });
+
+                return indexLinks;
+            };
+
+            /**
+             * Updates this visualization's graph with the given nodes and links.
+             * @param {Array} nodes
+             * @param {Array} links
+             * @method updateGraph
+             * @private
+             */
+            var updateGraph = function(nodes, links) {
                 $scope.$apply(function() {
                     $scope.numberOfNodesInGraph = nodes.length;
                 });
@@ -523,14 +707,101 @@ function($timeout, connectionService, datasetService, errorNotificationService, 
                 });
             };
 
-            $scope.createClickHandler = function(item) {
-                if($scope.filteredNodes.indexOf(item.name) >= 0) {
+            /**
+             * Returns the size for the given node.
+             * @param {Object} node
+             * @method calculateNodeSize
+             * @private
+             */
+            var calculateNodeSize = function(node) {
+                if(node.type === CLUSTER_TYPE) {
+                    var size = 0;
+                    node.nodes.forEach(function(nodeInCluster) {
+                        size += nodeInCluster.size;
+                    });
+                    return 10 + Math.min(20, Math.floor(size / 5));
+                }
+
+                return 10 + Math.min(20, Math.floor(node.size / 5));
+            };
+
+            /**
+             * Returns the color for the given node.
+             * @param {Object} node
+             * @method calculateNodeColor
+             * @private
+             */
+            var calculateNodeColor = function(node) {
+                if(node.group === QUERIED_NODE_GROUP) {
+                    return QUERIED_NODE_COLOR;
+                }
+                if(node.group === CLUSTER_NODE_GROUP) {
+                    return CLUSTER_NODE_COLOR;
+                }
+                if(node.group === UNKNOWN_NODE_GROUP) {
+                    return UNKNOWN_NODE_COLOR;
+                }
+                return DEFAULT_NODE_COLOR;
+            };
+
+            /**
+             * Returns the text for the given node.
+             * @param {Object} node
+             * @method createNodeText
+             * @private
+             */
+            var createNodeText = function(node) {
+                if(node.type === CLUSTER_TYPE) {
+                    return node.nodes.length;
+                }
+                return "";
+            };
+
+            /**
+             * Returns the tooltip for the given node.
+             * @param {Object} node
+             * @method createNodeTooltip
+             * @private
+             */
+            var createNodeTooltip = function(node) {
+                if(node.type === CLUSTER_TYPE) {
+                    var text = "<div>Cluster of " + node.nodes.length + ":</div><ul>";
+                    node.nodes.forEach(function(nodeInCluster) {
+                        text += "<li>" + createNodeTooltip(nodeInCluster) + "</li>";
+                    });
+                    return text;
+                }
+                return "<div>" + node.name + "</div><div>Count:  " + node.size + "</div>";
+            };
+
+            /**
+             * Returns the size for the given link.
+             * @param {Object} link
+             * @method calculateLinkSize
+             * @private
+             */
+            var calculateLinkSize = function(link) {
+                return link.size;
+            };
+
+            /**
+             * Adds or removes a filter on the given node.
+             * @param {Object} node
+             * @method onNodeClicked
+             * @private
+             */
+            var onNodeClicked = function(node) {
+                if(node.type === CLUSTER_TYPE) {
+                    return;
+                }
+
+                if($scope.filteredNodes.indexOf(node.name) >= 0) {
                     $scope.$apply(function() {
-                        $scope.removeFilter(item.name);
+                        $scope.removeFilter(node.name);
                     });
                 } else {
                     $scope.$apply(function() {
-                        $scope.addFilter(item.name);
+                        $scope.addFilter(node.name);
                     });
                 }
             };
@@ -549,7 +820,7 @@ function($timeout, connectionService, datasetService, errorNotificationService, 
                     source: "user",
                     tags: ["options", "directed-graph", "export"]
                 });
-                var query = createQueryForNetworkGraphQuery();
+                var query = createNetworkGraphQuery();
                 query.limitClause = exportService.getLimitClause();
                 query.ignoreFilters_ = exportService.getIgnoreFilters();
                 query.ignoredFilterIds_ = exportService.getIgnoredFilterIds();
