@@ -110,7 +110,7 @@ angular.module('neonDemo.directives')
              */
             var waitForGuessesCallback = function(response) {
                 if(response.complete) {
-                    $scope.nameTypePairs = response.guesses;
+                    $scope.nameTypePairs = getNameTypePairs(response.guesses);
                     $scope.currentJobID = response.jobID;
                     // Angular doesn't automatically recognize when this changes, so we force it to manually.
 
@@ -121,6 +121,45 @@ angular.module('neonDemo.directives')
                         waitForGuesses(response.jobID);
                     }, pollDelay);
                 }
+            };
+
+            /**
+             * Flattens the given list so all values in a pair of type OBJECT are in the root (with given name of, for example,
+             * pairName__subPairName) and all pairs of type OBJECT have their values field names stored in a maps of key 'keys'.
+             * @method getNameTypePairs
+             * @param {Array} pairs An array of objects with, at very least, keys of name and type
+             * @return An array of objects with all sub-objects in the root
+             */
+            var getNameTypePairs = function(pairs) {
+                var updatedPairs = [];
+
+                pairs.forEach(function(pair) {
+                    // If the pair is of type 'OBJECT', store each of its values field names in a
+                    // 'key' mapping on the pair, and put each value in the root object as pairName__subPairName
+                    if(pair.type === "OBJECT") {
+                        updatedPairs.push({
+                            name: pair.name,
+                            type: pair.type,
+                            keys: _.map(pair.objectFTPairs, function(it) {
+                                return it.name;
+                            })
+                        });
+
+                        pair.objectFTPairs.forEach(function(objPair) {
+                            updatedPairs.push({
+                                name: pair.name + "__" + objPair.name,
+                                type: objPair.type
+                            });
+                        });
+                    } else {
+                        updatedPairs.push({
+                            name: pair.name,
+                            type: pair.type
+                        });
+                    }
+                });
+
+                return updatedPairs;
             };
 
             /**
@@ -206,7 +245,7 @@ angular.module('neonDemo.directives')
 
                     $scope.$apply();
                     if(response.failedFields.length > 0) {
-                        $scope.nameTypePairs = response.failedFields;
+                        $scope.nameTypePairs = getNameTypePairs(response.failedFields);
                         // Angular doesn't automatically recognize when this changes, so we force it to manually.
 
                         $scope.$apply();
@@ -254,6 +293,16 @@ angular.module('neonDemo.directives')
                 var value = evnt.target.value;
                 $scope.nameTypePairs.forEach(function(pair) {
                     if(pair.name === name) {
+                        // Show/Hide all fields in object pair
+                        if(pair.keys && value !== "OBJECT") {
+                            pair.keys.forEach(function(val) {
+                                $("#" + pair.name + "__" + val + "-row").hide();
+                            });
+                        } else if(pair.keys) {
+                            pair.keys.forEach(function(val) {
+                                $("#" + pair.name + "__" + val + "-row").show();
+                            });
+                        }
                         pair.type = value;
                     }
                 });
@@ -323,6 +372,9 @@ angular.module('neonDemo.directives')
                     }
                     case "DATE": {
                         return "2012-12-21T07:08:09.123Z";
+                    }
+                    case "OBJECT": {
+                        return "{id: 1, name: 'Jon'}";
                     }
                     case "STRING": {
                         return "\"The quick brown fox.\"";
