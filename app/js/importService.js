@@ -117,7 +117,7 @@ angular.module('neonDemo.services')
             }
         });
 
-        // Removes any extra fields not needed
+        // Removes any pairs that are in any objectFTPairs
         toReturn = _.map(toReturn, function(pair, index) {
             if(toRemoveIndices.indexOf(index) < 0) {
                 return {

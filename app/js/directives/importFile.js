@@ -124,8 +124,8 @@ angular.module('neonDemo.directives')
             };
 
             /**
-             * Flattens the list so all values in a pair of type OBJECT are in the root (with name of, for example,
-             * pairName__subPairName) and all pairs of type OBJECT have their values names stored in a maps of key 'keys'.
+             * Flattens the given list so all values in a pair of type OBJECT are in the root (with given name of, for example,
+             * pairName__subPairName) and all pairs of type OBJECT have their values field names stored in a maps of key 'keys'.
              * @method getNameTypePairs
              * @param {Array} pairs An array of objects with, at very least, keys of name and type
              * @return An array of objects with all sub-objects in the root
@@ -134,6 +134,8 @@ angular.module('neonDemo.directives')
                 var updatedPairs = [];
 
                 pairs.forEach(function(pair) {
+                    // If the pair is of type 'OBJECT', store each of its values field names in a
+                    // 'key' mapping on the pair, and put each value in the root object as pairName__subPairName
                     if(pair.type === "OBJECT") {
                         updatedPairs.push({
                             name: pair.name,
@@ -291,6 +293,7 @@ angular.module('neonDemo.directives')
                 var value = evnt.target.value;
                 $scope.nameTypePairs.forEach(function(pair) {
                     if(pair.name === name) {
+                        // Show/Hide all fields in object pair
                         if(pair.keys && value !== "OBJECT") {
                             pair.keys.forEach(function(val) {
                                 $("#" + pair.name + "__" + val + "-row").hide();
