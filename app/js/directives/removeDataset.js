@@ -63,7 +63,8 @@ angular.module('neonDemo.directives')
              * @param {Object} response The response from the server.
              */
             var removeFailure = function(response) {
-                window.alert(JSON.stringify(response.responseJSON));
+                var result = JSON.parse(response);
+                window.alert(result.message);
             };
 
             /**

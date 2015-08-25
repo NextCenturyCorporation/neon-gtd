@@ -59,9 +59,6 @@ angular.module('neonDemo.directives')
                 formData.append('type', file.name.substring(file.name.lastIndexOf('.') + 1));
                 formData.append('file', file);
                 connection.executeUploadFile(formData, uploadSuccess, uploadFailure);
-                $scope.importDatabaseName = '';
-                file = undefined;
-                displayFileInfo();
             };
 
             // TODO - window.alert technically works here, but isn't necessarily the prettiest solution.
@@ -73,7 +70,12 @@ angular.module('neonDemo.directives')
              * @param {Object} response The server's response.
              */
             var uploadFailure = function(response) {
-                window.alert(JSON.stringify(response));
+                var result = JSON.parse(response);
+                if(result.status === 406) {
+                    $('#overwriteModal').modal('show');
+                } else {
+                    window.alert(result.message);
+                }
             };
 
             /**
@@ -85,6 +87,10 @@ angular.module('neonDemo.directives')
             var uploadSuccess = function(response) {
                 var result = JSON.parse(response);
                 var jobID = result.jobID;
+                $scope.importDatabaseName = '';
+                file = undefined;
+                displayFileInfo();
+                $('#importModal').modal('hide');
                 waitForGuesses(jobID);
             };
 
@@ -163,6 +169,34 @@ angular.module('neonDemo.directives')
             };
 
             /**
+             * Sends a request to remove the dataset associated with the username and database name currently entered and
+             * recreates the dataset with a new file if the dataset is succesfully removed.
+             * @method $scope.overwriteDatabase
+             */
+            $scope.overwriteDatabase = function() {
+                importService.setUserName($scope.importUserName);
+                var connection = connectionService.getActiveConnection();
+                if(!connection || !$scope.importUserName || !$scope.importDatabaseName) {
+                    return;
+                }
+                connection.executeRemoveDataset($scope.importUserName, $scope.importDatabaseName, $scope.uploadFile, removeFailure);
+            };
+
+            // TODO - window.alert technically works here, but isn't necessarily the prettiest solution.
+            // Should change this to use the errorNotificationService at some point - it's only not doing
+            // that now because the error shows up in the options menu rather than the modal for some reason.
+            /**
+             * Failure callback for $scope.overwriteDatabase, in case it fails for some reason. Displays an error
+             * message saying what went wrong.
+             * @method removeFailure
+             * @param {Object} response The server's response.
+             */
+            var removeFailure = function(response) {
+                var result = JSON.parse(response);
+                window.alert(result.message);
+            };
+
+            /**
              * Sends the user-decided list of fields and their types to the server, once the user has selected them, as well
              * as a user-defined date formatting string if one was entered. then begins to display progress of importing and
              * converting records. Triggers either a success callback or an error callback.
@@ -213,7 +247,8 @@ angular.module('neonDemo.directives')
              */
             var confirmChoicesFailure = function(response) {
                 $element.find("#confirmChoicesButton").removeClass("disabled");
-                window.alert(JSON.stringify(response.responseJSON));
+                var result = JSON.parse(response);
+                window.alert(result.message);
             };
 
             /**

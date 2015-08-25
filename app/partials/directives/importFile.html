@@ -23,7 +23,28 @@
         <div class="modal-footer">
         	<input type="text" id="importUsernameInput" class="modalFooterField" value="" maxLength="40" size="20" placeholder="Username" ng-model="importUserName">
         	<input type="text" id="importDatabaseInput" class="modalFooterField" value="" maxLength="100" size="30" placeholder="Name for database" ng-model="importDatabaseName">
-          <button type="button" class="btn btn-default" data-dismiss="modal" ng-class="{true: 'disabled', false: ''}[importUserName == '' || importDatabaseName == '']" ng-click="uploadFile()">Import</button>
+          <button type="button" class="btn btn-default" ng-class="{true: 'disabled', false: ''}[importUserName == '' || importDatabaseName == '']" ng-click="uploadFile()">Import</button>
+        </div>
+    </div>
+  </div>
+</div>
+
+<div class="modal fade" id="overwriteModal" tabindex="-1" role="dialog" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+        <h4 class="modal-title" id="overwriteModalLabel">Overwrite?</h4>
+      </div>
+        <div class="modal-body">
+            <span class="modal-body-text">
+                Database with username <b>{{importUserName}}</b> and database name <b>{{importDatabaseName}}</b> already exist. Would
+                you like to overwrite it?
+            </span>
+        </div>
+        <div class="modal-footer">
+            <button type="button" class="btn btn-success" data-dismiss="modal" ng-click="overwriteDatabase()">Overwrite</button>
+            <button type="button" class="btn btn-alert" data-dismiss="modal">Cancel</button>
         </div>
     </div>
   </div>
