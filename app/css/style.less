@@ -636,28 +636,6 @@ button {
     margin-right: 0px;
 }
 
-#fileDragAndDrop {
-    border: 2px dashed @main-text-color;
-    border-radius: 5px;
-    min-width: 450px;
-    min-height: 200px;
-    text-align: center;
-    margin-bottom: 8px;
-    font-color: @main-text-color;
-    font-size: 200%;
-
-    > span {
-        display: inline-block;
-        padding-top: 80px;
-    }
-}
-/* Applied to the elements that display inputs for import database and table names, to position them properly in the footer of a modal. */
-.modalFooterField {
-    float: left;
-    margin-top: 5px;
-    font-color: @main-text-color;
-}
-
 /* Makes items unselectable and forces the cursor to remain default. */
 .unselectable {
     -webkit-user-select: none;
@@ -665,18 +643,6 @@ button {
     -ms-user-select: none;
     user-select: none;
     cursor: default;
-}
-
-.alignLeft {
-    text-align: left;
-}
-
-.alignRight {
-    text-align: right;
-}
-
-.importGuessesTable {
-    width: 100%;
 }
 
 tr.borderedRow {
@@ -780,6 +746,14 @@ tr.borderedRow {
         img{
             margin-left: 5px;
             margin-right: 5px;
+        }
+    }
+
+    .navbar-option-menu {
+        .chart-options {
+            .popover {
+                min-width: 200px;
+            }
         }
     }
 }
@@ -1027,4 +1001,8 @@ tr.borderedRow {
 
 .neon-well-thin {
     padding: 4px;
+}
+
+#removeDatasetModal {
+    font-weight: normal;
 }

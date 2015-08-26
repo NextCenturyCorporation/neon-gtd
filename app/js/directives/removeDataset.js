@@ -24,14 +24,16 @@
  */
 
 angular.module('neonDemo.directives')
-.directive('removeDataset', ['ConnectionService', 'ErrorNotificationService', 'ImportService',
-    function(connectionService, errorNotificationService, importService) {
+.directive('removeDataset', ['ConnectionService', 'ErrorNotificationService', 'ImportService', 'DatasetService',
+    function(connectionService, errorNotificationService, importService, datasetService) {
     return {
         templateUrl: 'partials/directives/removeDataset.html',
         restrict: 'EA',
         link: function($scope, $element) {
             $scope.removeDatasetUserName = '';
             $scope.removeDatasetDatabaseName = '';
+            $scope.datastoreType = datasetService.getDatastore() || 'mongo';
+            $scope.datastoreHost = datasetService.getHostname() || 'localhost';
 
             /**
              * Sends a request to remove a dataset associated with the username and database name currently entered in the text fields.
@@ -43,7 +45,8 @@ angular.module('neonDemo.directives')
                 if(!connection || !$scope.removeDatasetUserName || !$scope.removeDatasetDatabaseName) {
                     return;
                 }
-                connection.executeRemoveDataset($scope.removeDatasetUserName, $scope.removeDatasetDatabaseName, removeSuccess, removeFailure);
+                connection.executeRemoveDataset($scope.removeDatasetUserName, $scope.removeDatasetDatabaseName,
+                    removeSuccess, removeFailure, $scope.datastoreHost, $scope.datastoreType);
             };
 
             /**
@@ -63,18 +66,25 @@ angular.module('neonDemo.directives')
              * @param {Object} response The response from the server.
              */
             var removeFailure = function(response) {
-                var result = JSON.parse(response);
-                window.alert(result.message);
+                if(response.responseJSON && response.responseJSON.message) {
+                    window.alert(response.responseJSON.message);
+                } else {
+                    window.alert(response);
+                }
             };
 
             /**
              * Defines on-show behavior of the remove modal. Autofills the username input
-             * to be equal to the username stored in the importService.
+             * to be equal to the username stored in the importService and the datastore type and host
+             * to be equal to that of the dataset selected on the dashboard (or 'mongo' and 'localhost',
+             * respectively, if no dataset selected).
              * @method removeDatasetModalOnShow
              */
             var removeDatasetModalOnShow = function() {
                 $scope.removeDatasetDatabaseName = '';
                 $scope.removeDatasetUserName = importService.getUserName();
+                $scope.datastoreType = datasetService.getDatastore() || 'mongo';
+                $scope.datastoreHost = datasetService.getHostname() || 'localhost';
                 // Angular doesn't automatically recognize when this changes, so we force it to manually.
                 $scope.$apply();
             };

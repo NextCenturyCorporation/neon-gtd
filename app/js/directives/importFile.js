@@ -22,8 +22,8 @@
  * @constructor
  */
 angular.module('neonDemo.directives')
-.directive('importFile', ['ConnectionService', 'ErrorNotificationService', 'ImportService',
-    function(connectionService, errorNotificationService, importService) {
+.directive('importFile', ['ConnectionService', 'ErrorNotificationService', 'ImportService', 'DatasetService',
+    function(connectionService, errorNotificationService, importService, datasetService) {
     return {
         templateUrl: 'partials/directives/importFile.html',
         restrict: 'EA',
@@ -37,6 +37,8 @@ angular.module('neonDemo.directives')
             $scope.indicatorText = "No file selected";
             $scope.isConverting = false;
             $scope.convertingMessage = "";
+            $scope.datastoreType = datasetService.getDatastore() || 'mongo';
+            $scope.datastoreHost = datasetService.getHostname() || 'localhost';
             var file;
             var pollDelay = 1500;
 
@@ -56,9 +58,9 @@ angular.module('neonDemo.directives')
                 var formData = new FormData();
                 formData.append('user', $scope.importUserName);
                 formData.append('data', $scope.importDatabaseName);
-                formData.append('type', file.name.substring(file.name.lastIndexOf('.') + 1));
+                formData.append('fileType', file.name.substring(file.name.lastIndexOf('.') + 1));
                 formData.append('file', file);
-                connection.executeUploadFile(formData, uploadSuccess, uploadFailure);
+                connection.executeUploadFile(formData, uploadSuccess, uploadFailure, $scope.datastoreHost, $scope.datastoreType);
             };
 
             // TODO - window.alert technically works here, but isn't necessarily the prettiest solution.
@@ -104,7 +106,7 @@ angular.module('neonDemo.directives')
                 if(!connection || !jobID) {
                     return;
                 }
-                connection.executeCheckTypeGuesses(jobID, waitForGuessesCallback);
+                connection.executeCheckTypeGuesses(jobID, waitForGuessesCallback, $scope.datastoreHost, $scope.datastoreType);
             };
 
             /**
@@ -179,7 +181,7 @@ angular.module('neonDemo.directives')
                 if(!connection || !$scope.importUserName || !$scope.importDatabaseName) {
                     return;
                 }
-                connection.executeRemoveDataset($scope.importUserName, $scope.importDatabaseName, $scope.uploadFile, removeFailure);
+                connection.executeRemoveDataset($scope.importUserName, $scope.importDatabaseName, $scope.uploadFile, removeFailure, $scope.datastoreHost, $scope.datastoreType);
             };
 
             // TODO - window.alert technically works here, but isn't necessarily the prettiest solution.
@@ -220,7 +222,7 @@ angular.module('neonDemo.directives')
                     dateFormat: $scope.dateFormatString ? $scope.dateFormatString : undefined,
                     fields: ftPairs
                 };
-                connection.executeLoadFileIntoDB(toSend, $scope.currentJobID, confirmChoicesSuccess, confirmChoicesFailure);
+                connection.executeLoadFileIntoDB(toSend, $scope.currentJobID, confirmChoicesSuccess, confirmChoicesFailure, $scope.datastoreHost, $scope.datastoreType);
                 $element.find("#confirmChoicesButton").addClass("disabled");
                 // Preferably, job ID here would be passed directly from the last time the guesses callback fired, but for now I'll just store it as a variable.
                 // (Getting it straight from the last method to use it would be preferable just to continue everything in a nice chain.)
@@ -262,7 +264,7 @@ angular.module('neonDemo.directives')
                 if(!connection || !jobID) {
                     return;
                 }
-                connection.executeCheckImportProgress(jobID, waitForImportCompleteCallback);
+                connection.executeCheckImportProgress(jobID, waitForImportCompleteCallback, $scope.datastoreHost, $scope.datastoreType);
             };
 
             /**
@@ -487,6 +489,19 @@ angular.module('neonDemo.directives')
             fileSelector.addEventListener("change", importModalFileSelectChange, false);
             // Hide the text portion of the file selector element -  we have our own, and it doesn't update when the modal closes and reopens.
             $element.find("#fileSelect").css("color", "transparent");
+
+            /**
+             * Defines on-show behavior of the import modal. Autofills the datastore type and host
+             * to be equal to that of the dataset selected on the dashboard (or 'mongo' and 'localhost',
+             * respectively, if no dataset selected).
+             * @method importModalOnShow
+             */
+            var importModalOnShow = function() {
+                $scope.datastoreType = datasetService.getDatastore() || 'mongo';
+                $scope.datastoreHost = datasetService.getHostname() || 'localhost';
+            };
+
+            $('#importModal').on('shown.bs.modal', importModalOnShow);
         }
     };
 }]);
