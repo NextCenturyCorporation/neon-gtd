@@ -89,7 +89,6 @@ angular.module('neonDemo.directives')
             var uploadSuccess = function(response) {
                 var result = JSON.parse(response);
                 var jobID = result.jobID;
-                $scope.importDatabaseName = '';
                 file = undefined;
                 displayFileInfo();
                 $('#importModal').modal('hide');
@@ -275,12 +274,14 @@ angular.module('neonDemo.directives')
              * @param {Object} response The server's response.
              */
             var waitForImportCompleteCallback = function(response) {
+                $scope.convertingMessage = "Records converted: ";
                 if(response.complete) {
+                    $scope.convertingMessage += response.numCompleted;
                     $element.find("#confirmChoicesButton").removeClass("disabled");
-                    $scope.isConverting = false;
                     // Angular doesn't automatically recognize when this changes, so we force it to manually.
 
                     $scope.$apply();
+                    $scope.isConverting = false;
                     if(response.failedFields.length > 0) {
                         $scope.nameTypePairs = getNameTypePairs(response.failedFields);
                         // Angular doesn't automatically recognize when this changes, so we force it to manually.
@@ -290,12 +291,13 @@ angular.module('neonDemo.directives')
                         setupConfirmGuessesModalInfo();
                     } else {
                         $element.find("#confirmChoicesModal").modal('hide');
+                        $scope.importDatabaseName = '';
                     }
                 } else {
                     if(response.numCompleted < 0) {
                         return; // numCompleted only returns as <0 if the data that the user is trying to convert doesn't exist anymore.
                     }
-                    $scope.convertingMessage = "Records converted: " + response.numCompleted;
+                    $scope.convertingMessage += response.numCompleted;
                     // Angular doesn't automatically recognize when this changes, so we force it to manually.
 
                     $scope.$apply();
@@ -491,17 +493,22 @@ angular.module('neonDemo.directives')
             $element.find("#fileSelect").css("color", "transparent");
 
             /**
-             * Defines on-show behavior of the import modal. Autofills the datastore type and host
+             * Defines on-show behavior of the import modal. Resets all the fields and autofills the datastore type and host
              * to be equal to that of the dataset selected on the dashboard (or 'mongo' and 'localhost',
              * respectively, if no dataset selected).
              * @method importModalOnShow
              */
             var importModalOnShow = function() {
+                $(".upload-file")[0].reset();
+                file = undefined;
+                $scope.importDatabaseName = '';
                 $scope.datastoreType = datasetService.getDatastore() || 'mongo';
                 $scope.datastoreHost = datasetService.getHostname() || 'localhost';
+                displayFileInfo();
+                $scope.$apply();
             };
 
-            $('#importModal').on('shown.bs.modal', importModalOnShow);
+            $('#importModal').on('show.bs.modal', importModalOnShow);
         }
     };
 }]);

@@ -69,7 +69,8 @@ angular.module('neonDemo.directives')
                 if(response.responseJSON && response.responseJSON.message) {
                     window.alert(response.responseJSON.message);
                 } else {
-                    window.alert(response);
+                    var result = JSON.parse(response);
+                    window.alert(result.message);
                 }
             };
 
