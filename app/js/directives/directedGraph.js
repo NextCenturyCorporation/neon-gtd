@@ -70,6 +70,8 @@ function($timeout, connectionService, datasetService, errorNotificationService, 
             $scope.filteredNodes = [];
             $scope.errorMessage = undefined;
             $scope.loadingData = false;
+            $scope.outstandingNodeQuery = undefined;
+            $scope.outstandingGraphQuery = undefined;
 
             $scope.options = {
                 database: {},
@@ -416,7 +418,12 @@ function($timeout, connectionService, datasetService, errorNotificationService, 
             var queryForNodeList = function(connection) {
                 var query = createNodeListQuery();
 
-                connection.executeQuery(query, function(data) {
+                if($scope.outstandingNodeQuery) {
+                    $scope.outstandingNodeQuery.abort();
+                }
+
+                $scope.outstandingNodeQuery = connection.executeQuery(query).xhr.done(function(data) {
+                    $scope.outstandingNodeQuery = undefined;
                     for(var i = 0; i < data.data.length; i++) {
                         var node = data.data[i][$scope.options.selectedNodeField.columnName];
                         if($scope.nodes.indexOf(node) < 0) {
@@ -437,7 +444,8 @@ function($timeout, connectionService, datasetService, errorNotificationService, 
                         }
                         return 0;
                     });
-                }, function(response) {
+                }).fail(function(response) {
+                    $scope.outstandingNodeQuery = undefined;
                     if(response.responseJSON) {
                         $scope.errorMessage = errorNotificationService.showErrorMessage($element, response.responseJSON.error, response.responseJSON.stackTrace);
                     }
@@ -461,7 +469,12 @@ function($timeout, connectionService, datasetService, errorNotificationService, 
             var queryForNetworkGraph = function(connection) {
                 var query = createNetworkGraphQuery();
 
-                connection.executeQuery(query, function(response) {
+                if($scope.outstandingGraphQuery) {
+                    $scope.outstandingGraphQuery.abort();
+                }
+
+                $scope.outstandingGraphQuery = connection.executeQuery(query).xhr.done(function(response) {
+                    $scope.outstandingGraphQuery = undefined;
                     if(response.data.length) {
                         createAndShowGraph(response.data);
                     } else if($scope.filteredNodes.length) {
@@ -470,11 +483,14 @@ function($timeout, connectionService, datasetService, errorNotificationService, 
                         $scope.removeFilter($scope.filteredNodes[$scope.filteredNodes.length - 1]);
                     }
                     $scope.loadingData = false;
-                }, function(response) {
-                    updateGraph([], []);
-                    $scope.loadingData = false;
-                    if(response.responseJSON) {
-                        $scope.errorMessage = errorNotificationService.showErrorMessage($element, response.responseJSON.error, response.responseJSON.stackTrace);
+                }).fail(function(response) {
+                    $scope.outstandingGraphQuery = undefined;
+                    if (response.status !== 0) {
+                        updateGraph([], []);
+                        $scope.loadingData = false;
+                        if(response.responseJSON) {
+                            $scope.errorMessage = errorNotificationService.showErrorMessage($element, response.responseJSON.error, response.responseJSON.stackTrace);
+                        }
                     }
                 });
             };

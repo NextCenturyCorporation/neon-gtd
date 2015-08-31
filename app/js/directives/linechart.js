@@ -83,6 +83,7 @@ function(connectionService, datasetService, errorNotificationService, filterServ
             $scope.data = [];
             $scope.queryOnChangeBrush = false;
             $scope.automaticHourSet = false;
+            $scope.outstandingQuery = undefined;
 
             $scope.options = {
                 database: {},
@@ -343,7 +344,11 @@ function(connectionService, datasetService, errorNotificationService, filterServ
 
                 var query = $scope.buildQuery();
 
-                connection.executeQuery(query, handleQuerySuccess, handleQueryFailure);
+                if($scope.outstandingQuery) {
+                    $scope.outstandingQuery.abort();
+                }
+
+                $scope.outstandingQuery = connection.executeQuery(query).xhr.done(handleQuerySuccess).fail(handleQueryFailure);
             };
 
             /**
@@ -574,6 +579,7 @@ function(connectionService, datasetService, errorNotificationService, filterServ
              * @method handleQuerySuccess
              */
             var handleQuerySuccess = function(results) {
+                $scope.outstandingQuery = undefined;
                 $scope.data = results.data;
 
                 var seriesData = createLineSeriesData(results.data);
@@ -651,21 +657,35 @@ function(connectionService, datasetService, errorNotificationService, filterServ
              * @method handleQueryFailure
              */
             var handleQueryFailure = function(response) {
-                XDATA.userALE.log({
-                    activity: "alter",
-                    action: "failed",
-                    elementId: "linechart",
-                    elementType: "canvas",
-                    elementSub: "linechart",
-                    elementGroup: "chart_group",
-                    source: "system",
-                    tags: ["failed", "linechart"]
-                });
+                $scope.outstandingQuery = undefined;
+                if(response.status === 0) {
+                    XDATA.userALE.log({
+                        activity: "alter",
+                        action: "canceled",
+                        elementId: "linechart",
+                        elementType: "canvas",
+                        elementSub: "linechart",
+                        elementGroup: "chart_group",
+                        source: "system",
+                        tags: ["canceled", "linechart"]
+                    });
+                } else {
+                    XDATA.userALE.log({
+                        activity: "alter",
+                        action: "failed",
+                        elementId: "linechart",
+                        elementType: "canvas",
+                        elementSub: "linechart",
+                        elementGroup: "chart_group",
+                        source: "system",
+                        tags: ["failed", "linechart"]
+                    });
 
-                drawLineChart();
+                    drawLineChart();
 
-                if(response.responseJSON) {
-                    $scope.errorMessage = errorNotificationService.showErrorMessage($element, response.responseJSON.error, response.responseJSON.stackTrace);
+                    if(response.responseJSON) {
+                        $scope.errorMessage = errorNotificationService.showErrorMessage($element, response.responseJSON.error, response.responseJSON.stackTrace);
+                    }
                 }
             };
 

@@ -60,6 +60,7 @@ function(external, popups, connectionService, datasetService, errorNotificationS
             $scope.filterSet = undefined;
             $scope.errorMessage = undefined;
             $scope.loadingData = false;
+            $scope.outstandingQuery = undefined;
 
             $scope.options = {
                 database: {},
@@ -383,7 +384,11 @@ function(external, popups, connectionService, datasetService, errorNotificationS
                     tags: ["query", "count-by"]
                 });
 
-                connection.executeQuery(query, function(queryResults) {
+                if($scope.outstandingQuery) {
+                    $scope.outstandingQuery.abort();
+                }
+
+                $scope.outstandingQuery = connection.executeQuery(query).xhr.done(function(queryResults) {
                     $scope.$apply(function() {
                         XDATA.userALE.log({
                             activity: "alter",
@@ -395,6 +400,7 @@ function(external, popups, connectionService, datasetService, errorNotificationS
                             source: "system",
                             tags: ["receive", "count-by"]
                         });
+                        $scope.outstandingQuery = undefined;
                         $scope.updateData(queryResults);
                         $scope.loadingData = false;
                         XDATA.userALE.log({
@@ -408,23 +414,37 @@ function(external, popups, connectionService, datasetService, errorNotificationS
                             tags: ["render", "count-by"]
                         });
                     });
-                }, function(response) {
-                    XDATA.userALE.log({
-                        activity: "alter",
-                        action: "failed",
-                        elementId: "count-by",
-                        elementType: "canvas",
-                        elementSub: "count-by",
-                        elementGroup: "table_group",
-                        source: "system",
-                        tags: ["failed", "count-by"]
-                    });
-                    $scope.updateData({
-                        data: []
-                    });
-                    $scope.loadingData = false;
-                    if(response.responseJSON) {
-                        $scope.errorMessage = errorNotificationService.showErrorMessage($element, response.responseJSON.error, response.responseJSON.stackTrace);
+                }).fail(function(response) {
+                    $scope.outstandingQuery = undefined;
+                    if(response.status === 0) {
+                        XDATA.userALE.log({
+                            activity: "alter",
+                            action: "canceled",
+                            elementId: "count-by",
+                            elementType: "canvas",
+                            elementSub: "count-by",
+                            elementGroup: "table_group",
+                            source: "system",
+                            tags: ["canceled", "count-by"]
+                        });
+                    } else {
+                        XDATA.userALE.log({
+                            activity: "alter",
+                            action: "failed",
+                            elementId: "count-by",
+                            elementType: "canvas",
+                            elementSub: "count-by",
+                            elementGroup: "table_group",
+                            source: "system",
+                            tags: ["failed", "count-by"]
+                        });
+                        $scope.updateData({
+                            data: []
+                        });
+                        $scope.loadingData = false;
+                        if(response.responseJSON) {
+                            $scope.errorMessage = errorNotificationService.showErrorMessage($element, response.responseJSON.error, response.responseJSON.stackTrace);
+                        }
                     }
                 });
             };

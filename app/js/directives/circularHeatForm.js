@@ -57,6 +57,7 @@ function(connectionService, datasetService, errorNotificationService, exportServ
             $scope.maxTime = "";
             $scope.errorMessage = undefined;
             $scope.loadingData = false;
+            $scope.outstandingQuery = undefined;
 
             $scope.options = {
                 database: {},
@@ -268,7 +269,11 @@ function(connectionService, datasetService, errorNotificationService, exportServ
                     tags: ["circularheatform"]
                 });
 
-                connection.executeQuery(query, function(queryResults) {
+                if($scope.outstandingQuery) {
+                    $scope.outstandingQuery.abort();
+                }
+
+                $scope.outstandingQuery = connection.executeQuery(query).xhr.done(function(queryResults) {
                     XDATA.userALE.log({
                         activity: "alter",
                         action: "receive",
@@ -280,6 +285,7 @@ function(connectionService, datasetService, errorNotificationService, exportServ
                         tags: ["circularheatform"]
                     });
                     $scope.$apply(function() {
+                        $scope.outstandingQuery = undefined;
                         $scope.updateChartData(queryResults);
                         $scope.loadingData = false;
                         XDATA.userALE.log({
@@ -293,23 +299,37 @@ function(connectionService, datasetService, errorNotificationService, exportServ
                             tags: ["circularheatform"]
                         });
                     });
-                }, function(response) {
-                    XDATA.userALE.log({
-                        activity: "alter",
-                        action: "failed",
-                        elementId: "circularheatform",
-                        elementType: "canvas",
-                        elementSub: "circularheatform",
-                        elementGroup: "chart_group",
-                        source: "system",
-                        tags: ["circularheatform"]
-                    });
-                    $scope.updateChartData({
-                        data: []
-                    });
-                    $scope.loadingData = false;
-                    if(response.responseJSON) {
-                        $scope.errorMessage = errorNotificationService.showErrorMessage($element, response.responseJSON.error, response.responseJSON.stackTrace);
+                }).fail(function(response) {
+                    $scope.outstandingQuery = undefined;
+                    if(response.status === 0) {
+                        XDATA.userALE.log({
+                            activity: "alter",
+                            action: "canceled",
+                            elementId: "circularheatform",
+                            elementType: "canvas",
+                            elementSub: "circularheatform",
+                            elementGroup: "chart_group",
+                            source: "system",
+                            tags: ["circularheatform"]
+                        });
+                    } else {
+                        XDATA.userALE.log({
+                            activity: "alter",
+                            action: "failed",
+                            elementId: "circularheatform",
+                            elementType: "canvas",
+                            elementSub: "circularheatform",
+                            elementGroup: "chart_group",
+                            source: "system",
+                            tags: ["circularheatform"]
+                        });
+                        $scope.updateChartData({
+                            data: []
+                        });
+                        $scope.loadingData = false;
+                        if(response.responseJSON) {
+                            $scope.errorMessage = errorNotificationService.showErrorMessage($element, response.responseJSON.error, response.responseJSON.stackTrace);
+                        }
                     }
                 });
             };

@@ -79,6 +79,7 @@ angular.module('neonDemo.directives')
             $scope.errorMessage = undefined;
             $scope.loadingData = false;
             $scope.selectedPointLayer = {};
+            $scope.outstandingQuery = undefined;
 
             $scope.MAP_LAYER_TYPES = [coreMap.Map.POINTS_LAYER, coreMap.Map.CLUSTER_LAYER, coreMap.Map.HEATMAP_LAYER, coreMap.Map.NODE_LAYER];
             $scope.DEFAULT_LIMIT = 1000;
@@ -727,7 +728,11 @@ angular.module('neonDemo.directives')
                     tags: ["query", "map"]
                 });
 
-                connection.executeQuery(query, function(queryResults) {
+                if($scope.outstandingQuery) {
+                    $scope.outstandingQuery.abort();
+                }
+
+                $scope.outstandingQuery = connection.executeQuery(query).xhr.done(function(queryResults) {
                     $scope.$apply(function() {
                         XDATA.userALE.log({
                             activity: "alter",
@@ -739,6 +744,7 @@ angular.module('neonDemo.directives')
                             source: "system",
                             tags: ["receive", "map"]
                         });
+                        $scope.outstandingQuery = undefined;
                         $scope.updateMapData(database, table, queryResults);
 
                         XDATA.userALE.log({
@@ -752,22 +758,36 @@ angular.module('neonDemo.directives')
                             tags: ["render", "map"]
                         });
                     });
-                }, function(response) {
-                    XDATA.userALE.log({
-                        activity: "alter",
-                        action: "failed",
-                        elementId: "map",
-                        elementType: "canvas",
-                        elementSub: "map",
-                        elementGroup: "map_group",
-                        source: "system",
-                        tags: ["failed", "map"]
-                    });
-                    $scope.updateMapData(database, table, {
-                        data: []
-                    });
-                    if(response.responseJSON) {
-                        $scope.errorMessage = errorNotificationService.showErrorMessage($element, response.responseJSON.error, response.responseJSON.stackTrace);
+                }).fail(function(response) {
+                    $scope.outstandingQuery = undefined;
+                    if(response.status === 0) {
+                        XDATA.userALE.log({
+                            activity: "alter",
+                            action: "canceled",
+                            elementId: "map",
+                            elementType: "canvas",
+                            elementSub: "map",
+                            elementGroup: "map_group",
+                            source: "system",
+                            tags: ["canceled", "map"]
+                        });
+                    } else {
+                        XDATA.userALE.log({
+                            activity: "alter",
+                            action: "failed",
+                            elementId: "map",
+                            elementType: "canvas",
+                            elementSub: "map",
+                            elementGroup: "map_group",
+                            source: "system",
+                            tags: ["failed", "map"]
+                        });
+                        $scope.updateMapData(database, table, {
+                            data: []
+                        });
+                        if(response.responseJSON) {
+                            $scope.errorMessage = errorNotificationService.showErrorMessage($element, response.responseJSON.error, response.responseJSON.stackTrace);
+                        }
                     }
                 });
             };

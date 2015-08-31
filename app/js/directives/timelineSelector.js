@@ -85,6 +85,8 @@ function($interval, $filter, connectionService, datasetService, errorNotificatio
                 end: undefined
             };
 
+            $scope.outstandingQuery = undefined;
+
             $scope.options = {
                 database: {},
                 table: {},
@@ -754,8 +756,13 @@ function($interval, $filter, connectionService, datasetService, errorNotificatio
                     tags: ["query", "timeline", "data"]
                 });
 
-                connection.executeQuery(query, function(queryResults) {
+                if($scope.outstandingQuery) {
+                    $scope.outstandingQuery.abort();
+                }
+
+                $scope.outstandingQuery = connection.executeQuery(query).xhr.done(function(queryResults) {
                     $scope.$apply(function() {
+                        $scope.outstandingQuery = undefined;
                         $scope.updateChartData(queryResults);
                         $scope.loadingData = false;
                         XDATA.userALE.log({
@@ -769,23 +776,37 @@ function($interval, $filter, connectionService, datasetService, errorNotificatio
                             tags: ["receive", "timeline", "data"]
                         });
                     });
-                }, function(response) {
-                    XDATA.userALE.log({
-                        activity: "alter",
-                        action: "failed",
-                        elementId: "timeline",
-                        elementType: "canvas",
-                        elementSub: "timeline",
-                        elementGroup: "chart_group",
-                        source: "system",
-                        tags: ["failed", "timeline", "data"]
-                    });
-                    $scope.updateChartData({
-                        data: []
-                    });
-                    $scope.loadingData = false;
-                    if(response.responseJSON) {
-                        $scope.errorMessage = errorNotificationService.showErrorMessage($element, response.responseJSON.error, response.responseJSON.stackTrace);
+                }).fail(function(response) {
+                    $scope.outstandingQuery = undefined;
+                    if(response.status === 0) {
+                        XDATA.userALE.log({
+                            activity: "alter",
+                            action: "canceled",
+                            elementId: "timeline",
+                            elementType: "canvas",
+                            elementSub: "timeline",
+                            elementGroup: "chart_group",
+                            source: "system",
+                            tags: ["canceled", "timeline", "data"]
+                        });
+                    } else {
+                        XDATA.userALE.log({
+                            activity: "alter",
+                            action: "failed",
+                            elementId: "timeline",
+                            elementType: "canvas",
+                            elementSub: "timeline",
+                            elementGroup: "chart_group",
+                            source: "system",
+                            tags: ["failed", "timeline", "data"]
+                        });
+                        $scope.updateChartData({
+                            data: []
+                        });
+                        $scope.loadingData = false;
+                        if(response.responseJSON) {
+                            $scope.errorMessage = errorNotificationService.showErrorMessage($element, response.responseJSON.error, response.responseJSON.stackTrace);
+                        }
                     }
                 });
             };
