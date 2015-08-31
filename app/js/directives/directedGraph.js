@@ -97,7 +97,7 @@ function($timeout, connectionService, datasetService, errorNotificationService, 
                 // Setting the dimensions on the SVG performs better than just setting the dimensions on the directed-graph-container.
                 $element.find(".directed-graph .directed-graph-container svg").attr("height", calculateGraphHeight());
                 $element.find(".directed-graph .directed-graph-container svg").attr("width", calculateGraphWidth());
-                return $timeout($scope.redraw, $scope.TIMEOUT_MS);
+                return $timeout(redraw, $scope.TIMEOUT_MS);
             };
 
             var updateSize = function() {
@@ -107,13 +107,17 @@ function($timeout, connectionService, datasetService, errorNotificationService, 
                 $scope.resizePromise = updateGraphSize();
             };
 
-            $scope.redraw = function() {
+            var redraw = function() {
                 if($scope.graph) {
                     $scope.graph.redraw();
                 }
                 $scope.resizePromise = null;
             };
 
+            /**
+             * Adds a node filter for the value of the global selected node variable.
+             * @method selectNode
+             */
             $scope.selectNode = function() {
                 if($scope.options.selectedNode !== "") {
                     var value = Number($scope.options.selectedNode) ? Number($scope.options.selectedNode) : $scope.options.selectedNode;
@@ -124,7 +128,7 @@ function($timeout, connectionService, datasetService, errorNotificationService, 
                 }
             };
 
-            $scope.initialize = function() {
+            var initialize = function() {
                 $scope.messenger = new neon.eventing.Messenger();
 
                 $scope.messenger.events({
@@ -169,7 +173,7 @@ function($timeout, connectionService, datasetService, errorNotificationService, 
                     var reloadNetworkGraph = false;
                     if(message.type.toUpperCase() === "ADD" || message.type.toUpperCase() === "REPLACE") {
                         if(message.addedFilter.whereClause) {
-                            $scope.addFilterWhereClauseToFilterList(message.addedFilter.whereClause);
+                            addFilterWhereClauseToFilterList(message.addedFilter.whereClause);
                         }
                         reloadNetworkGraph = $scope.options.reloadOnFilter;
                     }
@@ -181,11 +185,12 @@ function($timeout, connectionService, datasetService, errorNotificationService, 
              * Adds the filter with the given where clause (or its children) to the list of graph filters if the filter's field matches the selected node field.
              * @param {Object} A where clause containing either {String} lhs and {String} rhs or {Array} whereClauses containing other where clause Objects.
              * @method addFilterWhereClauseToFilterList
+             * @private
              */
-            $scope.addFilterWhereClauseToFilterList = function(whereClause) {
+            var addFilterWhereClauseToFilterList = function(whereClause) {
                 if(whereClause.whereClauses) {
                     for(var i = 0; i < whereClause.whereClauses.length; ++i) {
-                        $scope.addFilterWhereClauseToFilterList(whereClause.whereClauses[i]);
+                        addFilterWhereClauseToFilterList(whereClause.whereClauses[i]);
                     }
                 } else if(whereClause.lhs === $scope.options.selectedNodeField.columnName && whereClause.lhs && whereClause.rhs) {
                     $scope.addFilter(whereClause.rhs);
@@ -198,8 +203,9 @@ function($timeout, connectionService, datasetService, errorNotificationService, 
              * Displays data for any currently active datasets.
              * @param {Boolean} Whether this function was called during visualization initialization.
              * @method displayActiveDataset
+             * @private
              */
-            $scope.displayActiveDataset = function(initializing) {
+            var displayActiveDataset = function(initializing) {
                 if(!datasetService.hasDataset() || $scope.loadingData) {
                     return;
                 }
@@ -230,12 +236,20 @@ function($timeout, connectionService, datasetService, errorNotificationService, 
                 }
             };
 
+            /**
+             * Updates the tables available in this visualization using the selected database and the active dataset.
+             * @method updateTables
+             */
             $scope.updateTables = function() {
                 $scope.tables = datasetService.getTables($scope.options.database.name);
                 $scope.options.table = datasetService.getFirstTableWithMappings($scope.options.database.name, ["graph_nodes"]) || $scope.tables[0];
                 $scope.updateFields();
             };
 
+            /**
+             * Updates the fields available in this visualization using the selected database/table and the active dataset.
+             * @method updateFields
+             */
             $scope.updateFields = function() {
                 $scope.loadingData = true;
                 $scope.fields = datasetService.getSortedFields($scope.options.database.name, $scope.options.table.name);
@@ -258,6 +272,11 @@ function($timeout, connectionService, datasetService, errorNotificationService, 
                 $scope.queryForData();
             };
 
+            /**
+             * Adds the node filter with the given value and publishes an add or replace filters event.
+             * @param {Object} value
+             * @method addFilter
+             */
             $scope.addFilter = function(value) {
                 $scope.options.selectedNode = "";
 
@@ -274,9 +293,9 @@ function($timeout, connectionService, datasetService, errorNotificationService, 
                     }
                     var relations = datasetService.getRelations($scope.options.database.name, $scope.options.table.name, fields);
                     if($scope.filteredNodes.length === 1) {
-                        filterService.addFilters($scope.messenger, relations, $scope.filterKeys, $scope.createFilterClauseForNode, "Graph", $scope.queryForData);
+                        filterService.addFilters($scope.messenger, relations, $scope.filterKeys, createFilterClauseForNode, "Graph", $scope.queryForData);
                     } else if($scope.filteredNodes.length > 1) {
-                        filterService.replaceFilters($scope.messenger, relations, $scope.filterKeys, $scope.createFilterClauseForNode, "Graph", $scope.queryForData);
+                        filterService.replaceFilters($scope.messenger, relations, $scope.filterKeys, createFilterClauseForNode, "Graph", $scope.queryForData);
                     }
                 }
             };
@@ -286,9 +305,10 @@ function($timeout, connectionService, datasetService, errorNotificationService, 
              * @param {Object} databaseAndTableName Contains the database and table name
              * @param {String} nodeFieldName The name of the node field on which to filter
              * @method createFilterClauseForNode
+             * @private
              * @return {Object} A neon.query.Filter object
              */
-            $scope.createFilterClauseForNode = function(databaseAndTableName, fieldNames) {
+            var createFilterClauseForNode = function(databaseAndTableName, fieldNames) {
                 var nodeFieldName = fieldNames[0];
                 var linkFieldName = fieldNames.length > 1 ? fieldNames[1] : "";
 
@@ -310,6 +330,11 @@ function($timeout, connectionService, datasetService, errorNotificationService, 
                 return whereClause;
             };
 
+            /**
+             * Removes the node filter with the given value and publishes a remove or replace filters event.
+             * @param {Object} value
+             * @method removeFilter
+             */
             $scope.removeFilter = function(value) {
                 var index = $scope.filteredNodes.indexOf(value);
                 if(index < 0) {
@@ -327,11 +352,15 @@ function($timeout, connectionService, datasetService, errorNotificationService, 
                             fields.push($scope.options.selectedLinkField.columnName);
                         }
                         var relations = datasetService.getRelations($scope.options.database.name, $scope.options.table.name, fields);
-                        filterService.replaceFilters($scope.messenger, relations, $scope.filterKeys, $scope.createFilterClauseForNode, "Graph", $scope.queryForData);
+                        filterService.replaceFilters($scope.messenger, relations, $scope.filterKeys, createFilterClauseForNode, "Graph", $scope.queryForData);
                     }
                 }
             };
 
+            /**
+             * Removes all of the node filters and publishes a remove filters event.
+             * @method clearFilters
+             */
             $scope.clearFilters = function() {
                 if($scope.filteredNodes.length) {
                     $scope.filteredNodes = [];
@@ -343,6 +372,12 @@ function($timeout, connectionService, datasetService, errorNotificationService, 
                 }
             };
 
+            /**
+             * Queries for new node list and network graph data as requested.
+             * @param {Boolean} reloadNetworkGraph Whether to query for the network graph data.  Happens automatically if any node filter(s) are set.
+             * @param {Boolean} reloadNodeList Whether to query for the node list data.
+             * @method queryForData
+             */
             $scope.queryForData = function(reloadNetworkGraph, reloadNodeList) {
                 if($scope.errorMessage) {
                     errorNotificationService.hideErrorMessage($scope.errorMessage);
@@ -476,6 +511,13 @@ function($timeout, connectionService, datasetService, errorNotificationService, 
                 // The links to be added to the graph.
                 var links = [];
 
+                /**
+                 * Adds a node for the given value to the list of nodes if it does not already exist and returns the node.
+                 * @param {Object} value
+                 * @method addNodeIfUnique
+                 * @private
+                 * @return {Object}
+                 */
                 var addNodeIfUnique = function(value) {
                     var node = _.find(nodes, function(node) {
                         return node.id === value;
@@ -495,6 +537,13 @@ function($timeout, connectionService, datasetService, errorNotificationService, 
                     return node;
                 };
 
+                /**
+                 * Adds a link for the given source and target to the list of links if it does not already exist.
+                 * @param {Object} sourceValue
+                 * @param {Object} targetValue
+                 * @method addLinkIfUnique
+                 * @private
+                 */
                 var addLinkIfUnique = function(sourceValue, targetValue) {
                     if(!targetsToSources[targetValue]) {
                         targetsToSources[targetValue] = [];
@@ -537,7 +586,7 @@ function($timeout, connectionService, datasetService, errorNotificationService, 
                             linkedNodeValues.forEach(function(linkedNodeValue) {
                                 if(linkedNodeValue && linkedNodeValue !== nodeValue) {
                                     // Nodes for linked nodes start at size 0.  Any instance of the linked node in the data will add to its size.
-                                    // If the linked node is not in the data, the size will be an indicator to the user.
+                                    // If the linked node is not in the data, the size and type will be indicators to the user.
                                     addNodeIfUnique(linkedNodeValue);
                                     addLinkIfUnique(linkedNodeValue, nodeValue);
                                 }
@@ -552,6 +601,7 @@ function($timeout, connectionService, datasetService, errorNotificationService, 
                     links = result.links;
                 }
 
+                // Convert links connecting node values to links connecting node indices.
                 var indexLinks = createIndexLinks(nodes, links);
 
                 updateGraph(nodes, indexLinks);
@@ -568,6 +618,7 @@ function($timeout, connectionService, datasetService, errorNotificationService, 
              * @return {Object}
              */
             var clusterNodes = function(nodes, links, sourcesToTargets, targetsToSources) {
+                // The node and link lists that will be returned.
                 var nodesWithClusters = [];
                 var linksWithClusters = links;
 
@@ -582,9 +633,19 @@ function($timeout, connectionService, datasetService, errorNotificationService, 
                     nodes: []
                 };
 
+                /**
+                 * Returns whether to cluster the node linked to the node with the given ID based on whether the cluster to be created would contain more than one node.
+                 * @param {Number} id The ID of the node linked to the node in question.
+                 * @param {Object} map The mapping from the given ID to the node in question.
+                 * @param {Object} reverseMap The reverse mapping.
+                 * @method shouldCluster
+                 * @private
+                 * @return {Boolean}
+                 */
                 var shouldCluster = function(id, map, reverseMap) {
+                    // Check if the linked node itself has other linked nodes.  If not, the node in question should not be clustered.
                     if(map[id] && map[id].length > 1) {
-                        // Ensure the cluster would contain more than one node.
+                        // Check if the cluster would contain more than one node.  If not, the node in question should not be clustered.
                         return map[id].filter(function(otherId) {
                             return reverseMap[otherId].length === 1;
                         }).length > 1;
@@ -592,15 +653,28 @@ function($timeout, connectionService, datasetService, errorNotificationService, 
                     return false;
                 };
 
+                /**
+                 * Adds a new cluster node to the list of nodes using the given node IDs or adds a node to an existing cluster node.  Returns the ID of the cluster node.
+                 * Either sourceId or targetId should be undefined (but not both).
+                 * @param {Number} clusterId The ID of the cluster node, or undefined if a new cluster node should be created.
+                 * @param {Number} sourceId The ID of the source node linked to the cluster node, or undefined if the cluster node is the source.
+                 * @param {Number} targetId the ID of the target node linked to the cluster node, or undefined if the cluster node is the target.
+                 * @param {Object} nodeToCluster The node to add to the cluster.
+                 * @method addCluster
+                 * @private
+                 * @return {Number}
+                 */
                 var addCluster = function(clusterId, sourceId, targetId, nodeToCluster) {
                     if(!clusterId) {
                         clusterId = nextFreeClusterId++;
+                        // Create a new link between the cluster node and the other node.  Use the cluster node ID as the source/target ID for the link.
                         linksWithClusters.push({
                             sourceId: sourceId || clusterId,
                             targetId: targetId || clusterId,
                             sourceType: sourceId ? NODE_TYPE : CLUSTER_TYPE,
                             targetType: targetId ? NODE_TYPE : CLUSTER_TYPE
                         });
+                        // Create a new cluster node and add it to the list of nodes.
                         nodesWithClusters.push({
                             id: clusterId,
                             type: CLUSTER_TYPE,
@@ -614,6 +688,7 @@ function($timeout, connectionService, datasetService, errorNotificationService, 
                             sourceType: sourceId ? NODE_TYPE : CLUSTER_TYPE,
                             targetType: targetId ? NODE_TYPE : CLUSTER_TYPE
                         });
+                        // Add the node to the existing cluster.
                         var cluster = _.find(nodesWithClusters, function(node) {
                             return node.type === CLUSTER_TYPE && node.id === clusterId;
                         });
@@ -644,6 +719,7 @@ function($timeout, connectionService, datasetService, errorNotificationService, 
                             nodesWithClusters.push(node);
                         }
                     } else {
+                        // If the node has no links, add it to the cluster node for unlinked nodes.
                         unlinkedCluster.nodes.push(node);
                     }
                 });
@@ -865,8 +941,8 @@ function($timeout, connectionService, datasetService, errorNotificationService, 
 
             // Wait for neon to be ready, the create our messenger and intialize the view and data.
             neon.ready(function() {
-                $scope.initialize();
-                $scope.displayActiveDataset(true);
+                initialize();
+                displayActiveDataset(true);
             });
         }
     };
