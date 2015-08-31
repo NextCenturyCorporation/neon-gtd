@@ -34,8 +34,8 @@ function($timeout, connectionService, datasetService, errorNotificationService, 
                 if($scope.numberOfNodesInGraph === 0) {
                     return "No graph data available";
                 }
-                if($scope.numberOfNodesInGraph >= $scope.options.nodeLimit) {
-                    return $scope.options.nodeLimit + " nodes (data limit)";
+                if($scope.dataLimited) {
+                    return $scope.numberOfNodesInGraph + " nodes (data limited)";
                 }
                 return $scope.numberOfNodesInGraph + " nodes";
             };
@@ -65,6 +65,7 @@ function($timeout, connectionService, datasetService, errorNotificationService, 
             $scope.fields = [];
             $scope.nodes = [];
             $scope.numberOfNodesInGraph = 0;
+            $scope.dataLimited = false;
             $scope.filterKeys = {};
             $scope.filteredNodes = [];
             $scope.errorMessage = undefined;
@@ -76,7 +77,7 @@ function($timeout, connectionService, datasetService, errorNotificationService, 
                 selectedNodeField: "",
                 selectedLinkField: "",
                 selectedNode: "",
-                nodeLimit: 5000,
+                dataLimit: 500000,
                 reloadOnFilter: false
             };
 
@@ -484,9 +485,7 @@ function($timeout, connectionService, datasetService, errorNotificationService, 
                     fields.push($scope.options.selectedLinkField.columnName);
                 }
 
-                var query = new neon.query.Query()
-                    .selectFrom($scope.options.database.name, $scope.options.table.name)
-                    .withFields(fields);
+                var query = new neon.query.Query().selectFrom($scope.options.database.name, $scope.options.table.name).withFields(fields).limit($scope.options.dataLimit);
 
                 return query;
             };
@@ -498,8 +497,10 @@ function($timeout, connectionService, datasetService, errorNotificationService, 
              * @private
              */
             var createAndShowGraph = function(data) {
-                if(data.length >= $scope.options.nodeLimit) {
-                    data = data.slice(0, $scope.options.nodeLimit);
+                if(data.length >= $scope.options.dataLimit) {
+                    $scope.dataLimited = true;
+                } else {
+                    $scope.dataLimited = false;
                 }
 
                 // Maps source node IDs to an array of target node IDs to ensure each link we add to the graph is unique and help with clustering.
