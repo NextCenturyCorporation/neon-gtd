@@ -782,9 +782,11 @@ function(connectionService, datasetService, errorNotificationService, filterServ
             };
 
             var onHover = function(startDate, endDate) {
-                $scope.messenger.publish("date_selected", {
-                    start: startDate,
-                    end: endDate
+                $scope.$apply(function() {
+                    $scope.messenger.publish("date_selected", {
+                        start: startDate,
+                        end: endDate
+                    });
                 });
             };
 

@@ -31,13 +31,17 @@ function($timeout, connectionService, datasetService, errorNotificationService, 
             $scope.element = $element;
 
             $scope.optionsMenuButtonText = function() {
-                if($scope.numberOfNodesInGraph === 0) {
+                if($scope.graphNodes.length === 0) {
                     return "No graph data available";
                 }
-                if($scope.dataLimited) {
-                    return $scope.numberOfNodesInGraph + " nodes (data limited)";
+                var text = $scope.numberOfVisibleNodes + " nodes";
+                if($scope.bucketizer && $scope.selectedDateBucket) {
+                    text += " (" + $scope.bucketizer.getDateForBucket($scope.selectedDateBucket).toUTCString() + ")";
                 }
-                return $scope.numberOfNodesInGraph + " nodes";
+                if($scope.dataLimited) {
+                    text += " [data limited]";
+                }
+                return text;
             };
             $scope.showOptionsMenuButtonText = function() {
                 return true;
@@ -63,23 +67,32 @@ function($timeout, connectionService, datasetService, errorNotificationService, 
             $scope.databases = [];
             $scope.tables = [];
             $scope.fields = [];
-            $scope.nodes = [];
-            $scope.numberOfNodesInGraph = 0;
+            $scope.numberOfVisibleNodes = 0;
             $scope.dataLimited = false;
             $scope.filterKeys = {};
             $scope.filteredNodes = [];
+            $scope.filterableNodes = [];
             $scope.errorMessage = undefined;
             $scope.loadingData = false;
+            $scope.bucketizer = dateBucketizer();
 
             $scope.options = {
                 database: {},
                 table: {},
-                selectedNodeField: "",
-                selectedLinkField: "",
+                selectedNodeField: {},
+                selectedLinkField: {},
+                selectedDateField: {},
                 selectedNode: "",
                 dataLimit: 500000,
                 reloadOnFilter: false
             };
+
+            // Save the data from the last network graph query to animate it on "date selected" events.
+            $scope.graphNodes = [];
+            $scope.graphLinks = [];
+            $scope.dateBucketToNodeIndex = {};
+            $scope.dateBucketToLinkIndex = {};
+            $scope.selectedDateBucket = undefined;
 
             var calculateGraphHeight = function() {
                 var headerHeight = 0;
@@ -138,6 +151,11 @@ function($timeout, connectionService, datasetService, errorNotificationService, 
                 $scope.messenger.subscribe(datasetService.UPDATE_DATA_CHANNEL, function() {
                     $scope.queryForData();
                 });
+                $scope.messenger.subscribe("date_bucketizer", function(message) {
+                    $scope.bucketizer = message.bucketizer;
+                    initializeDateBuckets();
+                });
+                $scope.messenger.subscribe("date_selected", onDateSelected);
 
                 $scope.exportID = exportService.register($scope.makeDirectedGraphExportObject);
 
@@ -197,6 +215,39 @@ function($timeout, connectionService, datasetService, errorNotificationService, 
                     $scope.addFilter(whereClause.rhs);
                 } else if($scope.options.selectedLinkField && whereClause.lhs === $scope.options.selectedLinkField.columnName && whereClause.lhs && whereClause.rhs) {
                     $scope.addFilter(whereClause.rhs);
+                }
+            };
+
+            /**
+             * Event handler for date selected events issued over Neon's messaging channels.
+             * @param {Object} message A Neon date selected message.
+             * @method onDateSelected
+             * @private
+             */
+            var onDateSelected = function(message) {
+                if($scope.bucketizer.getStartDate() && $scope.bucketizer.getEndDate() && message.start) {
+                    var bucket = $scope.bucketizer.getBucketIndex(message.start);
+                    if(bucket === $scope.selectedDateBucket) {
+                        return;
+                    }
+
+                    $scope.selectedDateBucket = bucket;
+
+                    var nodes = $scope.graphNodes.slice(0, $scope.dateBucketToNodeIndex[bucket]);
+                    nodes.forEach(function(node) {
+                        if(node.dateBucketToNodeIndex && node.nodes) {
+                            node.nodesForSelectedDateBucket = node.nodes.slice(0, node.dateBucketToNodeIndex[bucket]);
+                        }
+                    });
+
+                    var links = $scope.graphLinks.slice(0, $scope.dateBucketToLinkIndex[bucket]);
+
+                    $scope.numberOfVisibleNodes = nodes.length;
+
+                    $scope.graph.updateGraph({
+                        nodes: nodes,
+                        links: links
+                    });
                 }
             };
 
@@ -265,6 +316,13 @@ function($timeout, connectionService, datasetService, errorNotificationService, 
                 var selectedLinkField = datasetService.getMapping($scope.options.database.name, $scope.options.table.name, "graph_links") || "";
                 $scope.options.selectedLinkField = _.find($scope.fields, function(field) {
                     return field.columnName === selectedLinkField;
+                }) || {
+                    columnName: "",
+                    prettyName: ""
+                };
+                var selectedDateField = datasetService.getMapping($scope.options.database.name, $scope.options.table.name, "date") || "";
+                $scope.options.selectedDateField = _.find($scope.fields, function(field) {
+                    return field.columnName === selectedDateField;
                 }) || {
                     columnName: "",
                     prettyName: ""
@@ -385,17 +443,12 @@ function($timeout, connectionService, datasetService, errorNotificationService, 
                     $scope.errorMessage = undefined;
                 }
 
-                $scope.nodes = [];
+                $scope.filterableNodes = [];
 
                 var connection = connectionService.getActiveConnection();
 
                 if(!connection || !$scope.options.selectedNodeField.columnName || !$scope.filteredNodes.length) {
-                    $scope.numberOfNodesInGraph = 0;
-                    // Don't call updateGraph() here.  It will cause an error because we're in a $scope.$apply.
-                    $scope.graph.updateGraph({
-                        nodes: [],
-                        links: []
-                    });
+                    saveDataAndUpdateGraph([], []);
                     $scope.loadingData = false;
                 }
 
@@ -419,13 +472,13 @@ function($timeout, connectionService, datasetService, errorNotificationService, 
                 connection.executeQuery(query, function(data) {
                     for(var i = 0; i < data.data.length; i++) {
                         var node = data.data[i][$scope.options.selectedNodeField.columnName];
-                        if($scope.nodes.indexOf(node) < 0) {
-                            $scope.nodes.push(node);
+                        if($scope.filterableNodes.indexOf(node) < 0) {
+                            $scope.filterableNodes.push(node);
                         }
                     }
 
                     // Sort the nodes so they are displayed in alphabetical order in the options dropdown.
-                    $scope.nodes.sort(function(a, b) {
+                    $scope.filterableNodes.sort(function(a, b) {
                         if(typeof a === "string" && typeof b === "string") {
                             return a.toLowerCase().localeCompare(b.toLowerCase());
                         }
@@ -471,7 +524,9 @@ function($timeout, connectionService, datasetService, errorNotificationService, 
                     }
                     $scope.loadingData = false;
                 }, function(response) {
-                    updateGraph([], []);
+                    $scope.$apply(function() {
+                        saveDataAndUpdateGraph([], []);
+                    });
                     $scope.loadingData = false;
                     if(response.responseJSON) {
                         $scope.errorMessage = errorNotificationService.showErrorMessage($element, response.responseJSON.error, response.responseJSON.stackTrace);
@@ -487,7 +542,18 @@ function($timeout, connectionService, datasetService, errorNotificationService, 
 
                 var query = new neon.query.Query().selectFrom($scope.options.database.name, $scope.options.table.name).withFields(fields).limit($scope.options.dataLimit);
 
+                if($scope.options.selectedDateField && $scope.options.selectedDateField.columnName) {
+                    query.sortBy($scope.options.selectedDateField.columnName, neon.query.ASCENDING);
+                }
+
                 return query;
+            };
+
+            var chooseEarliestDate = function(a, b) {
+                if(a && b) {
+                    return (a.getTime() <= b.getTime()) ? a : b;
+                }
+                return a || b;
             };
 
             /**
@@ -497,11 +563,7 @@ function($timeout, connectionService, datasetService, errorNotificationService, 
              * @private
              */
             var createAndShowGraph = function(data) {
-                if(data.length >= $scope.options.dataLimit) {
-                    $scope.dataLimited = true;
-                } else {
-                    $scope.dataLimited = false;
-                }
+                $scope.dataLimited = (data.length >= $scope.options.dataLimit);
 
                 // Maps source node IDs to an array of target node IDs to ensure each link we add to the graph is unique and help with clustering.
                 var sourcesToTargets = {};
@@ -515,11 +577,12 @@ function($timeout, connectionService, datasetService, errorNotificationService, 
                 /**
                  * Adds a node for the given value to the list of nodes if it does not already exist and returns the node.
                  * @param {Object} value
+                 * @param {Date} date
                  * @method addNodeIfUnique
                  * @private
                  * @return {Object}
                  */
-                var addNodeIfUnique = function(value) {
+                var addNodeIfUnique = function(value, date) {
                     var node = _.find(nodes, function(node) {
                         return node.id === value;
                     });
@@ -529,10 +592,13 @@ function($timeout, connectionService, datasetService, errorNotificationService, 
                             id: value,
                             name: value,
                             size: 0,
+                            date: date,
                             type: NODE_TYPE,
                             group: $scope.filteredNodes.indexOf(value) >= 0 ? QUERIED_NODE_GROUP : UNKNOWN_NODE_GROUP
                         };
                         nodes.push(node);
+                    } else {
+                        node.date = chooseEarliestDate(node.date, date);
                     }
 
                     return node;
@@ -542,10 +608,11 @@ function($timeout, connectionService, datasetService, errorNotificationService, 
                  * Adds a link for the given source and target to the list of links if it does not already exist.
                  * @param {Object} sourceValue
                  * @param {Object} targetValue
+                 * @param {Date} date
                  * @method addLinkIfUnique
                  * @private
                  */
-                var addLinkIfUnique = function(sourceValue, targetValue) {
+                var addLinkIfUnique = function(sourceValue, targetValue, date) {
                     if(!targetsToSources[targetValue]) {
                         targetsToSources[targetValue] = [];
                     }
@@ -564,23 +631,26 @@ function($timeout, connectionService, datasetService, errorNotificationService, 
                             sourceId: sourceValue,
                             targetId: targetValue,
                             sourceType: NODE_TYPE,
-                            targetType: NODE_TYPE
+                            targetType: NODE_TYPE,
+                            date: date
                         });
                     }
                 };
 
                 // Add each unique value from the data to the graph as a node.
-                data.forEach(function(datum) {
-                    var nodeValue = datum[$scope.options.selectedNodeField.columnName];
+                data.forEach(function(row) {
+                    var nodeValue = row[$scope.options.selectedNodeField.columnName];
+                    var rowDate = ($scope.options.selectedDateField && $scope.options.selectedDateField.columnName) ? new Date(row[$scope.options.selectedDateField.columnName]) : undefined;
+
                     if(nodeValue) {
-                        var node = addNodeIfUnique(nodeValue);
+                        var node = addNodeIfUnique(nodeValue, rowDate);
                         // Add to size for each instance of the node in the data.
                         node.size++;
                         // Nodes that exist in the data are put in the default group.  Nodes that exist only as linked nodes are put in the unknown group.
                         node.group = (node.group === UNKNOWN_NODE_GROUP ? DEFAULT_NODE_GROUP : node.group);
 
-                        if($scope.options.selectedLinkField && $scope.options.selectedLinkField.columnName && datum[$scope.options.selectedLinkField.columnName]) {
-                            var linkedNodeValues = datum[$scope.options.selectedLinkField.columnName] || [];
+                        if($scope.options.selectedLinkField && $scope.options.selectedLinkField.columnName && row[$scope.options.selectedLinkField.columnName]) {
+                            var linkedNodeValues = row[$scope.options.selectedLinkField.columnName] || [];
                             linkedNodeValues = (linkedNodeValues.constructor === Array) ? linkedNodeValues : [linkedNodeValues];
 
                             // Add each related node to the graph as a node with a link to the original node.
@@ -588,8 +658,8 @@ function($timeout, connectionService, datasetService, errorNotificationService, 
                                 if(linkedNodeValue && linkedNodeValue !== nodeValue) {
                                     // Nodes for linked nodes start at size 0.  Any instance of the linked node in the data will add to its size.
                                     // If the linked node is not in the data, the size and type will be indicators to the user.
-                                    addNodeIfUnique(linkedNodeValue);
-                                    addLinkIfUnique(linkedNodeValue, nodeValue);
+                                    addNodeIfUnique(linkedNodeValue, rowDate);
+                                    addLinkIfUnique(linkedNodeValue, nodeValue, rowDate);
                                 }
                             });
                         }
@@ -602,10 +672,11 @@ function($timeout, connectionService, datasetService, errorNotificationService, 
                     links = result.links;
                 }
 
-                // Convert links connecting node values to links connecting node indices.
-                var indexLinks = createIndexLinks(nodes, links);
+                sortNodesAndLinks(nodes, links);
 
-                updateGraph(nodes, indexLinks);
+                $scope.$apply(function() {
+                    saveDataAndUpdateGraph(nodes, links);
+                });
             };
 
             /**
@@ -620,8 +691,8 @@ function($timeout, connectionService, datasetService, errorNotificationService, 
              */
             var clusterNodes = function(nodes, links, sourcesToTargets, targetsToSources) {
                 // The node and link lists that will be returned.
-                var nodesWithClusters = [];
-                var linksWithClusters = links;
+                var resultNodes = [];
+                var resultLinks = links;
 
                 var nextFreeClusterId = 1;
                 var sourcesToClusterTargets = {};
@@ -669,31 +740,37 @@ function($timeout, connectionService, datasetService, errorNotificationService, 
                     if(!clusterId) {
                         clusterId = nextFreeClusterId++;
                         // Create a new link between the cluster node and the other node.  Use the cluster node ID as the source/target ID for the link.
-                        linksWithClusters.push({
+                        resultLinks.push({
                             sourceId: sourceId || clusterId,
                             targetId: targetId || clusterId,
                             sourceType: sourceId ? NODE_TYPE : CLUSTER_TYPE,
-                            targetType: targetId ? NODE_TYPE : CLUSTER_TYPE
+                            targetType: targetId ? NODE_TYPE : CLUSTER_TYPE,
+                            date: nodeToCluster.date
                         });
+
                         // Create a new cluster node and add it to the list of nodes.
-                        nodesWithClusters.push({
+                        resultNodes.push({
                             id: clusterId,
                             type: CLUSTER_TYPE,
+                            date: nodeToCluster.date,
                             group: CLUSTER_NODE_GROUP,
                             nodes: [nodeToCluster]
                         });
                     } else {
-                        linksWithClusters.push({
+                        resultLinks.push({
                             sourceId: sourceId || clusterId,
                             targetId: targetId || clusterId,
                             sourceType: sourceId ? NODE_TYPE : CLUSTER_TYPE,
-                            targetType: targetId ? NODE_TYPE : CLUSTER_TYPE
+                            targetType: targetId ? NODE_TYPE : CLUSTER_TYPE,
+                            date: nodeToCluster.date
                         });
+
                         // Add the node to the existing cluster.
-                        var cluster = _.find(nodesWithClusters, function(node) {
+                        var cluster = _.find(resultNodes, function(node) {
                             return node.type === CLUSTER_TYPE && node.id === clusterId;
                         });
                         cluster.nodes.push(nodeToCluster);
+                        cluster.date = chooseEarliestDate(cluster.date, nodeToCluster.date);
                     }
                     return clusterId;
                 };
@@ -702,37 +779,60 @@ function($timeout, connectionService, datasetService, errorNotificationService, 
                     var numberOfTargets = sourcesToTargets[node.id] ? sourcesToTargets[node.id].length : 0;
                     var numberOfSources = targetsToSources[node.id] ? targetsToSources[node.id].length : 0;
 
-                    // If the node has more than one link, keep it; otherwise, add it to a cluster.
-                    if($scope.filteredNodes.indexOf(node.id) >= 0 || numberOfTargets > 1 || numberOfSources > 1 || (numberOfTargets === 1 && numberOfSources === 1)) {
-                        nodesWithClusters.push(node);
+                    // If the node is an unknown type or has more than one link, keep it; otherwise, add it to a cluster.
+                    if($scope.filteredNodes.indexOf(node.id) >= 0 || node.type === UNKNOWN_NODE_GROUP || numberOfTargets > 1 || numberOfSources > 1 || (numberOfTargets === 1 && numberOfSources === 1)) {
+                        resultNodes.push(node);
                     } else if(numberOfTargets === 1) {
                         var targetId = sourcesToTargets[node.id][0];
                         if(shouldCluster(targetId, targetsToSources, sourcesToTargets)) {
                             targetsToClusterSources[targetId] = addCluster(targetsToClusterSources[targetId], null, targetId, node);
                         } else {
-                            nodesWithClusters.push(node);
+                            resultNodes.push(node);
                         }
                     } else if(numberOfSources === 1) {
                         var sourceId = targetsToSources[node.id][0];
                         if(shouldCluster(sourceId, sourcesToTargets, targetsToSources)) {
                             sourcesToClusterTargets[sourceId] = addCluster(sourcesToClusterTargets[sourceId], sourceId, null, node);
                         } else {
-                            nodesWithClusters.push(node);
+                            resultNodes.push(node);
                         }
                     } else {
                         // If the node has no links, add it to the cluster node for unlinked nodes.
                         unlinkedCluster.nodes.push(node);
+                        unlinkedCluster.date = chooseEarliestDate(unlinkedCluster.date, node.date);
                     }
                 });
 
                 if(unlinkedCluster.nodes.length) {
-                    nodesWithClusters.push(unlinkedCluster);
+                    resultNodes.push(unlinkedCluster);
                 }
 
                 return {
-                    nodes: nodesWithClusters,
-                    links: linksWithClusters
+                    nodes: resultNodes,
+                    links: resultLinks
                 };
+            };
+
+            /**
+             * Sorts the given lists of nodes and links by date.  Nodes and links with undefined dates will be in front.
+             * @param nodes
+             * @param links
+             * @method sortNodesAndLinks
+             * @private
+             */
+            var sortNodesAndLinks = function(nodes, links) {
+                var compareNodesOrLinksByDate = function(a, b) {
+                    if(!a.date) {
+                        return -1;
+                    }
+                    if(!b.date) {
+                        return 1;
+                    }
+                    return (a.date.getTime() <= b.date.getTime()) ? -1 : 1;
+                };
+
+                nodes.sort(compareNodesOrLinksByDate);
+                links.sort(compareNodesOrLinksByDate);
             };
 
             /**
@@ -758,6 +858,7 @@ function($timeout, connectionService, datasetService, errorNotificationService, 
                         indexLinks.push({
                             source: sourceIndex,
                             target: targetIndex,
+                            date: link.date,
                             size: 2
                         });
                     }
@@ -767,21 +868,75 @@ function($timeout, connectionService, datasetService, errorNotificationService, 
             };
 
             /**
-             * Updates this visualization's graph with the given nodes and links.
+             * Saves the given nodes and links and updates this visualization's network graph using the data.
              * @param {Array} nodes
              * @param {Array} links
-             * @method updateGraph
+             * @method saveDataAndUpdateGraph
              * @private
              */
-            var updateGraph = function(nodes, links) {
-                $scope.$apply(function() {
-                    $scope.numberOfNodesInGraph = nodes.length;
-                });
+            var saveDataAndUpdateGraph = function(nodes, links) {
+                $scope.numberOfVisibleNodes = nodes.length;
+                $scope.graphNodes = nodes;
+                // Convert links connecting node values to links connecting node indices.
+                $scope.graphLinks = createIndexLinks(nodes, links);
+                initializeDateBuckets();
 
                 $scope.graph.updateGraph({
-                    nodes: nodes,
-                    links: links
+                    nodes: $scope.graphNodes,
+                    links: $scope.graphLinks
                 });
+            };
+
+            /**
+             * Initializes the global date bucket maps for the global node and link data using the global bucketizer.
+             * @method initializeDateBuckets
+             * @private
+             */
+            var initializeDateBuckets = function() {
+                $scope.dateBucketToNodeIndex = createDateBucketMap($scope.graphNodes.length);
+                $scope.dateBucketToLinkIndex = createDateBucketMap($scope.graphLinks.length);
+
+                if($scope.bucketizer && $scope.bucketizer.getStartDate() && $scope.bucketizer.getEndDate()) {
+                    $scope.graphNodes.forEach(function(node, index) {
+                        var bucket = node.date ? $scope.bucketizer.getBucketIndex(node.date) : 0;
+                        $scope.dateBucketToNodeIndex[bucket] = index + 1;
+
+                        // If the node is a cluster containing its own nodes, create a date bucket map for the cluster.
+                        if(node.nodes) {
+                            node.dateBucketToNodeIndex = createDateBucketMap(node.nodes.length);
+                            node.nodes.forEach(function(clusteredNode, clusteredIndex) {
+                                var bucket = clusteredNode.date ? $scope.bucketizer.getBucketIndex(clusteredNode.date) : 0;
+                                node.dateBucketToNodeIndex[bucket] = clusteredIndex + 1;
+                            });
+                            node.nodesForSelectedDateBucket = node.nodes;
+                        }
+                    });
+
+                    $scope.graphLinks.forEach(function(link, index) {
+                        var bucket = link.date ? $scope.bucketizer.getBucketIndex(link.date) : 0;
+                        $scope.dateBucketToLinkIndex[bucket] = index + 1;
+                    });
+                }
+            };
+
+            /**
+             * Creates and returns a map containing keys for each date bucket in the global bucketizer.
+             * @param {Number} length The length of the list used with the date bucket map to be created.
+             * @method createDateBucketMap
+             * @private
+             * @return {Object}
+             */
+            var createDateBucketMap = function(length) {
+                var dateBucketMap = {};
+
+                if($scope.bucketizer && $scope.bucketizer.getStartDate() && $scope.bucketizer.getEndDate()) {
+                    var numberOfBuckets = $scope.bucketizer.getNumBuckets();
+                    for(var i = 0; i < numberOfBuckets; ++i) {
+                        dateBucketMap[i] = length;
+                    }
+                }
+
+                return dateBucketMap;
             };
 
             /**
@@ -792,8 +947,9 @@ function($timeout, connectionService, datasetService, errorNotificationService, 
              */
             var calculateNodeSize = function(node) {
                 if(node.type === CLUSTER_TYPE) {
+                    var nodesInCluster = $scope.selectedDateBucket ? node.nodesForSelectedDateBucket : node.nodes;
                     var size = 0;
-                    node.nodes.forEach(function(nodeInCluster) {
+                    nodesInCluster.forEach(function(nodeInCluster) {
                         size += nodeInCluster.size;
                     });
                     return 10 + Math.min(20, Math.floor(size / 5));
@@ -829,7 +985,8 @@ function($timeout, connectionService, datasetService, errorNotificationService, 
              */
             var createNodeText = function(node) {
                 if(node.type === CLUSTER_TYPE) {
-                    return node.nodes.length;
+                    var nodesInCluster = $scope.selectedDateBucket ? node.nodesForSelectedDateBucket : node.nodes;
+                    return nodesInCluster.length;
                 }
                 return "";
             };
@@ -842,8 +999,9 @@ function($timeout, connectionService, datasetService, errorNotificationService, 
              */
             var createNodeTooltip = function(node) {
                 if(node.type === CLUSTER_TYPE) {
-                    var text = "<div>Cluster of " + node.nodes.length + ":</div><ul>";
-                    node.nodes.forEach(function(nodeInCluster) {
+                    var nodesInCluster = $scope.selectedDateBucket ? node.nodesForSelectedDateBucket : node.nodes;
+                    var text = "<div>Cluster of " + nodesInCluster.length + ":</div><ul>";
+                    nodesInCluster.forEach(function(nodeInCluster) {
                         text += "<li>" + createNodeTooltip(nodeInCluster) + "</li>";
                     });
                     return text;

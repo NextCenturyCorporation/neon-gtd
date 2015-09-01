@@ -291,6 +291,9 @@ function($interval, $filter, connectionService, datasetService, errorNotificatio
                     $scope.bucketizer.setEndDate(afterEndDate);
                     setDateTimePickerStart($scope.bucketizer.getStartDate());
                     setDateTimePickerEnd($scope.bucketizer.getEndDate());
+                    $scope.messenger.publish('date_bucketizer', {
+                        bucketizer: $scope.bucketizer
+                    });
                 }
             };
 

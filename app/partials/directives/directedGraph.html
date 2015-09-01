@@ -27,6 +27,12 @@
             </select>
         </div>
 
+        <div class="form-group" ng-show="!(hideAdvancedOptions)">
+            <label>Date Field</label>
+            <select class="form-control" ng-model="options.selectedDateField" ng-options="field.prettyName for field in fields" ng-required="true" ng-disabled="(fields.length == 0)" ng-change="queryForData()">
+            </select>
+        </div>
+
         <div class="form-group" ng-hide="!(options.selectedNodeField && options.selectedNodeField.columnName)">
             <label ng-bind="'Set Filter on ' + options.selectedNodeField.prettyName"></label>
             <div class="input-group">
