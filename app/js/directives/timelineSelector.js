@@ -318,19 +318,9 @@ function($interval, $filter, connectionService, datasetService, errorNotificatio
                     $scope.endDateForDisplay = new Date($scope.endDateForDisplay.getTime() - 1);
                 }
 
-                var format = "MMMM d, yyyy HH:mm";
-                if($scope.options.granularity === DAY) {
-                    format = "MMMM d, yyyy";
-                }
-                if($scope.options.granularity === MONTH) {
-                    format = "MMMM yyyy";
-                }
-                if($scope.options.granularity === YEAR) {
-                    format = "yyyy";
-                }
-
-                $scope.startDateForDisplay = $filter("date")($scope.startDateForDisplay.toISOString(), format) + " (Z)";
-                $scope.endDateForDisplay = $filter("date")($scope.endDateForDisplay.toISOString(), format) + " (Z)";
+                var format = $scope.bucketizer.getDateFormat();
+                $scope.startDateForDisplay = $filter("date")($scope.startDateForDisplay.toISOString(), format);
+                $scope.endDateForDisplay = $filter("date")($scope.endDateForDisplay.toISOString(), format);
             };
 
             /**

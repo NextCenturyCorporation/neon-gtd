@@ -16,8 +16,8 @@
  */
 
 angular.module('neonDemo.directives')
-.directive('directedGraph', ['$timeout', 'ConnectionService', 'DatasetService', 'ErrorNotificationService', 'FilterService', 'ExportService',
-function($timeout, connectionService, datasetService, errorNotificationService, filterService, exportService) {
+.directive('directedGraph', ['$filter', '$timeout', 'ConnectionService', 'DatasetService', 'ErrorNotificationService', 'FilterService', 'ExportService',
+function($filter, $timeout, connectionService, datasetService, errorNotificationService, filterService, exportService) {
     return {
         templateUrl: 'partials/directives/directedGraph.html',
         restrict: 'EA',
@@ -36,7 +36,8 @@ function($timeout, connectionService, datasetService, errorNotificationService, 
                 }
                 var text = $scope.numberOfVisibleNodes + " nodes";
                 if($scope.bucketizer && $scope.selectedDateBucket) {
-                    text += " (" + $scope.bucketizer.getDateForBucket($scope.selectedDateBucket).toUTCString() + ")";
+                    var date = $filter("date")($scope.bucketizer.getDateForBucket($scope.selectedDateBucket).toISOString(), $scope.bucketizer.getDateFormat());
+                    text += " (" + date + ")";
                 }
                 if($scope.dataLimited) {
                     text += " [data limited]";
