@@ -14,106 +14,141 @@
  * limitations under the License.
  *
  */
-charts.DirectedGraph = function(rootElement, selector, opts) {
-    opts = opts || {};
+charts.DirectedGraph = function(rootElement, selector, options) {
     this.rootElement = rootElement;
     this.chartSelector = selector;
-    this.element = d3.select(rootElement).select(selector);
+    this.oldData = {
+        nodes: [],
+        links: []
+    };
 
     this.tooltip = d3.select(rootElement)
         .append("div")
         .attr("class", "graph-tooltip")
         .style("opacity", 0);
-    this.svgId = "directed-svg-" + (opts.uniqueId ? opts.uniqueId : uuid());
 
-    this.calculateHeight = opts.calculateHeight;
-    this.calculateWidth = opts.calculateWidth;
-    this.getNodeSize = function(nodeData) {
-        if(opts.getNodeSize) {
-            if(_.isFunction(opts.getNodeSize)) {
-                return opts.getNodeSize(nodeData);
+    this.initializeGraphOptions(options || {});
+    this.initializeGraphElement();
+};
+
+charts.DirectedGraph.prototype.initializeGraphOptions = function(options) {
+    this.getRenderWidth = function() {
+        if(options.getWidth) {
+            if(_.isFunction(options.getWidth)) {
+                return options.getWidth();
             }
-            return opts.getNodeSize;
+            return options.getWidth;
+        }
+        if($(this.element[0]).width() !== 0) {
+            return $(this.element[0]).width();
+        }
+        return this.DEFAULT_WIDTH;
+    };
+
+    this.getRenderHeight = function() {
+        if(options.getHeight) {
+            if(_.isFunction(options.getHeight)) {
+                return options.getHeight();
+            }
+            return options.getHeight;
+        }
+        if($(this.element[0]).height() !== 0) {
+            return $(this.element[0]).height();
+        }
+        return this.DEFAULT_HEIGHT;
+    };
+
+    this.getNodeSize = function(nodeData) {
+        if(options.getNodeSize) {
+            if(_.isFunction(options.getNodeSize)) {
+                return options.getNodeSize(nodeData);
+            }
+            return options.getNodeSize;
         }
         return this.DEFAULT_NODE_SIZE;
     };
+
     this.getNodeColor = function(nodeData) {
-        if(opts.getNodeColor) {
-            if(_.isFunction(opts.getNodeColor)) {
-                return opts.getNodeColor(nodeData);
+        if(options.getNodeColor) {
+            if(_.isFunction(options.getNodeColor)) {
+                return options.getNodeColor(nodeData);
             }
-            return opts.getNodeColor;
+            return options.getNodeColor;
         }
         return this.DEFAULT_NODE_COLOR;
     };
+
     this.getNodeText = function(nodeData) {
-        if(opts.getNodeText) {
-            if(_.isFunction(opts.getNodeText)) {
-                return opts.getNodeText(nodeData);
+        if(options.getNodeText) {
+            if(_.isFunction(options.getNodeText)) {
+                return options.getNodeText(nodeData);
             }
-            return opts.getNodeText;
+            return options.getNodeText;
         }
         return "";
     };
+
     this.getNodeTooltip = function(nodeData) {
-        if(opts.getNodeTooltip) {
-            if(_.isFunction(opts.getNodeTooltip)) {
-                return opts.getNodeTooltip(nodeData);
+        if(options.getNodeTooltip) {
+            if(_.isFunction(options.getNodeTooltip)) {
+                return options.getNodeTooltip(nodeData);
             }
-            return opts.getNodeTooltip;
+            return options.getNodeTooltip;
         }
         return nodeData.name || nodeData.id || "";
     };
+
     this.getLinkSize = function(linkData) {
-        if(opts.getLinkSize) {
-            if(_.isFunction(opts.getLinkSize)) {
-                return opts.getLinkSize(linkData);
+        if(options.getLinkSize) {
+            if(_.isFunction(options.getLinkSize)) {
+                return options.getLinkSize(linkData);
             }
-            return opts.getLinkSize;
+            return options.getLinkSize;
         }
         return this.DEFAULT_LINK_SIZE;
     };
-    this.nodeClickHandler = opts.nodeClickHandler;
-    this.nodeShiftClickHandler = opts.nodeShiftClickHandler;
-    this.nodeDoubleClickHandler = opts.nodeDoubleClickHandler;
+
+    this.getNodeKeyFunction = options.getNodeKey;
+    this.getLinkKeyFunction = options.getLinkKey;
+
+    this.nodeClickHandler = function(nodeData) {
+        if(d3.event.shiftKey && options.nodeShiftClickHandler) {
+            options.nodeShiftClickHandler(nodeData);
+        } else if(options.nodeClickHandler) {
+            options.nodeClickHandler(nodeData);
+        }
+    };
+
+    this.nodeDoubleClickHandler = function(nodeData) {
+        if(options.nodeDoubleClickHandler) {
+            options.nodeDoubleClickHandler(nodeData);
+        }
+    };
 };
 
-charts.DirectedGraph.prototype.DEFAULT_WIDTH = 600;
-charts.DirectedGraph.prototype.DEFAULT_HEIGHT = 350;
-
-charts.DirectedGraph.prototype.DEFAULT_NODE_COLOR = "black";
-charts.DirectedGraph.prototype.DEFAULT_NODE_SIZE = 10;
-charts.DirectedGraph.prototype.DEFAULT_NODE_STROKE_COLOR = "black";
-charts.DirectedGraph.prototype.DEFAULT_NODE_STROKE_SIZE = 0;
-charts.DirectedGraph.prototype.DEFAULT_NODE_TEXT_COLOR = "black";
-charts.DirectedGraph.prototype.DEFAULT_LINK_SIZE = 2;
-charts.DirectedGraph.prototype.DEFAULT_LINK_STROKE_COLOR = "#999999";
-charts.DirectedGraph.prototype.DEFAULT_LINK_STROKE_OPACITY = 0.5;
-
-charts.DirectedGraph.prototype.updateGraph = function(data) {
+charts.DirectedGraph.prototype.initializeGraphElement = function() {
     var me = this;
-    me.data = data;
 
     // Reset element here because it may not get set correctly in the constructor due to an odd race
     // condition issue with angularjs setting the graph's id using $scope.uniqueId.
     me.element = d3.select(me.rootElement).select(me.chartSelector);
 
-    var nodes = data.nodes;
-
     var height = me.getRenderHeight();
     var width = me.getRenderWidth();
 
-    me.clearSVG();
+    var svg = me.element.select(".directed-graph-svg");
+    if(svg) {
+        svg.remove();
+    }
 
-    me.svg = me.element
-    .append("svg")
-        .attr("id", me.svgId)
-    .attr("width", width)
-    .attr("height", height)
-    .style("fill", "none")
-    .attr("preserveAspectRatio", "xMidYMid meet")
-    .attr("pointer-events", "all")
-    .call(d3.behavior.zoom().on("zoom", me.handleZoom));
+    me.svg = me.element.append("svg")
+        .attr("class", "directed-graph-svg")
+        .attr("width", width)
+        .attr("height", height)
+        .style("fill", "none")
+        .attr("preserveAspectRatio", "xMidYMid meet")
+        .attr("pointer-events", "all")
+        .call(d3.behavior.zoom().on("zoom", me.handleZoom));
 
     // Create the definition for the arrowhead markers to be added to the end of each link.
     me.svg.append("svg:defs").selectAll("marker")
@@ -132,42 +167,108 @@ charts.DirectedGraph.prototype.updateGraph = function(data) {
 
     me.vis = me.svg.append('svg:g');
 
-    var force = d3.layout.force()
+    me.forceLayout = d3.layout.force()
         .charge(-300)
         .linkDistance(100)
         .size([width, height])
         .gravity(0.05);
 
-    force.nodes(data.nodes);
+    me.forceLayoutNodes = me.forceLayout.nodes();
+    me.forceLayoutLinks = me.forceLayout.links();
+};
 
-    var link;
-    if(data.links) {
-        force.links(data.links);
+charts.DirectedGraph.prototype.updateGraphData = function(newData) {
+    var i;
 
-        link = me.vis.selectAll(".link")
-            .data(data.links)
-            .enter().append("line")
-            .attr("class", "link")
-            .attr("marker-end", "url(#end)")
+    newData.nodes = newData.nodes || [];
+    newData.links = newData.links || [];
+
+    // Update the data saved in the D3 force layout nodes.
+    for(i = 0; i < Math.min(this.oldData.nodes.length, newData.nodes.length); ++i) {
+        this.forceLayoutNodes[i] = newData.nodes[i];
+    }
+
+    // Add or remove D3 force layout nodes as necessary.
+    if(this.oldData.nodes.length < newData.nodes.length) {
+        for(i = this.oldData.nodes.length; i < newData.nodes.length; ++i) {
+            this.forceLayoutNodes.push(newData.nodes[i]);
+        }
+    } else if(this.oldData.nodes.length > newData.nodes.length) {
+        this.forceLayoutNodes.splice(newData.nodes.length, this.oldData.nodes.length);
+    }
+
+    // Update the data saved in the D3 force layout links.
+    for(i = 0; i < Math.min(this.oldData.nodes.length, newData.links.length); ++i) {
+        this.forceLayoutLinks[i] = newData.links[i];
+    }
+
+    // Add or remove D3 force layout links as necessary.
+    if(this.oldData.links.length < newData.links.length) {
+        for(i = this.oldData.links.length; i < newData.links.length; ++i) {
+            this.forceLayoutLinks.push(newData.links[i]);
+        }
+    } else if(this.oldData.links.length > newData.links.length) {
+        this.forceLayoutLinks.splice(newData.links.length, this.oldData.links.length);
+    }
+};
+
+charts.DirectedGraph.prototype.updateGraph = function(newData) {
+    var me = this;
+    me.tooltip.style("opacity", 0);
+    me.updateGraphData(newData);
+
+    var lineElements;
+    if(newData.links) {
+        // Update the data saved in the D3 line elements.
+        lineElements = me.vis.selectAll(".link").data(newData.links, me.getLinkKeyFunction);
+
+        // Add new D3 line elements for new data as necessary.
+        lineElements.enter().append("line").attr("class", "link");
+
+        // Remove old data saved in the D3 line elements.
+        lineElements.exit().remove();
+
+        // Update the styling for all D3 line elements.
+        lineElements.attr("marker-end", "url(#end)")
             .style("stroke", me.DEFAULT_LINK_STROKE_COLOR)
             .style("stroke-opacity", me.DEFAULT_LINK_STROKE_OPACITY)
             .style("stroke-width", me.getLinkSize);
     }
 
-    var node = me.vis.selectAll(".node")
-        .data(nodes)
-        .enter().append("g")
-        .attr("class", "node")
-        .call(force.drag);
+    // Update the data saved in the D3 circle elements.
+    var circleElements = me.vis.selectAll(".node").data(newData.nodes, me.getNodeKeyFunction);
 
-    node.append("circle")
-        .attr("r", me.getNodeSize)
+    // Add new D3 circle elements for new data as necessary.
+    circleElements.enter().append("circle").attr("class", "node").call(me.forceLayout.drag)
+        .on("click", me.nodeClickHandler)
+        .on('dblclick', me.nodeDoubleClickHandler)
+        .on("mouseover", me.createMouseoverHandler(me))
+        .on("mouseout", me.createMouseoutHandler(me));
+
+    // Remove old data saved in the D3 circle elements.
+    circleElements.exit().remove();
+
+    // Update the styling for all D3 circle elements.
+    circleElements.attr("r", me.getNodeSize)
         .style("fill", me.getNodeColor)
         .style("stroke", me.DEFAULT_NODE_STROKE_COLOR)
         .style("stroke-width", me.DEFAULT_NODE_STROKE_SIZE);
 
-    node.append("text")
-        .attr("dy", "5px")
+    // Update the data saved in the D3 text elements.
+    var textElements = me.vis.selectAll(".node-text").data(newData.nodes, me.getNodeKeyFunction);
+
+    // Add new D3 text elements for new data as necessary.
+    textElements.enter().append("text").attr("class", "node-text").call(me.forceLayout.drag)
+        .on("click", me.nodeClickHandler)
+        .on('dblclick', me.nodeDoubleClickHandler)
+        .on("mouseover", me.createMouseoverHandler(me))
+        .on("mouseout", me.createMouseoutHandler(me));
+
+    // Remove old data saved in the D3 text elements.
+    textElements.exit().remove();
+
+    // Update the styling for all D3 text elements.
+    textElements.attr("dy", "5px")
         .style("fill", me.DEFAULT_NODE_TEXT_COLOR)
         .style("text-anchor", "middle")
         .text(me.getNodeText);
@@ -177,37 +278,21 @@ charts.DirectedGraph.prototype.updateGraph = function(data) {
     // Whether the node data has been fixed.
     var fixed = false;
 
-    force.on("tick", function(event) {
+    me.forceLayout.on("tick", function(event) {
         index = (event.alpha === 0.099 ? 1 : ++index);
 
-        if(link) {
-            link.attr("x1", function(linkData) {
-                    return linkData.source.x;
-                })
-                .attr("y1", function(linkData) {
-                    return linkData.source.y;
-                })
-                .attr("x2", function(linkData) {
-                    // Ensure the line ends at the radius of the target node so the arrowhead is not drawn under the node.
-                    var targetSize = me.getNodeSize(linkData.target);
-                    var length = Math.sqrt(Math.pow(linkData.target.y - linkData.source.y, 2) + Math.pow(linkData.target.x - linkData.source.x, 2));
-                    var scale = (length - targetSize) / length;
-                    var offset = (linkData.target.x - linkData.source.x) - (linkData.target.x - linkData.source.x) * scale;
-                    return linkData.target.x - offset;
-                    return linkData.target.x;
-                })
-                .attr("y2", function(linkData) {
-                    // Ensure the line ends at the radius of the target node so the arrowhead is not drawn under the node.
-                    var targetSize = me.getNodeSize(linkData.target);
-                    var length = Math.sqrt(Math.pow(linkData.target.y - linkData.source.y, 2) + Math.pow(linkData.target.x - linkData.source.x, 2));
-                    var scale = (length - targetSize) / length;
-                    var offset = (linkData.target.y - linkData.source.y) - (linkData.target.y - linkData.source.y) * scale;
-                    return linkData.target.y - offset;
-                    return linkData.target.y;
-                });
+        if(lineElements) {
+            lineElements.attr("x1", me.getLinkStartXFunction(me))
+                .attr("y1", me.getLinkStartYFunction(me))
+                .attr("x2", me.getLinkEndXFunction(me))
+                .attr("y2", me.getLinkEndYFunction(me));
         }
 
-        node.attr("transform", function(nodeData) {
+        circleElements.attr("transform", function(nodeData) {
+            return "translate(" + (nodeData.x) + "," + (nodeData.y) + ")";
+        });
+
+        textElements.attr("transform", function(nodeData) {
             return "translate(" + (nodeData.x) + "," + (nodeData.y) + ")";
         });
 
@@ -215,42 +300,26 @@ charts.DirectedGraph.prototype.updateGraph = function(data) {
         if(!fixed && (event.alpha < 0.025 || index > 250)) {
             fixed = true;
             // Set the fixed property to true to stop the force layout from moving nodes automatically.  They will only be movable through user dragging.
-            node.each(function(nodeData) {
+            circleElements.each(function(nodeData) {
                 nodeData.fixed = true;
             });
         }
     });
 
-    if(nodes.length) {
-        force.start();
+    if(newData.nodes.length) {
+        me.forceLayout.start();
     }
 
-    node.on('dblclick', function(nodeData) {
-        if(me.nodeDoubleClickHandler) {
-            me.nodeDoubleClickHandler(nodeData);
-        }
-    }).on("click", function(nodeData) {
-        if(d3.event.shiftKey && me.nodeShiftClickHandler) {
-            me.nodeShiftClickHandler(nodeData);
-        } else if(me.nodeClickHandler) {
-            me.nodeClickHandler(nodeData);
-        }
-    }).on("mouseover", function(nodeData) {
-        var parentOffset = $(me.rootElement).offset();
-
-        me.tooltip.transition().duration(200).style("opacity", 0.9)
-            .style("left", (d3.event.pageX - parentOffset.left + 10) + "px")
-            .style("top", (d3.event.pageY - parentOffset.top - 20) + "px");
-
-        me.tooltip.html(me.getNodeTooltip(nodeData));
-    }).on("mouseout", function() {
-        me.tooltip.transition().duration(500).style("opacity", 0);
-    });
+    // Save the data for future redraws.
+    me.oldData = {
+        nodes: newData.nodes,
+        links: newData.links
+    };
 };
 
 charts.DirectedGraph.prototype.redraw = function() {
-    if(this.data) {
-        this.updateGraph(this.data);
+    if(this.oldData) {
+        this.updateGraph(this.oldData);
     }
 };
 
@@ -258,29 +327,74 @@ charts.DirectedGraph.prototype.handleZoom = function() {
     $(this).children("g").attr("transform", "translate(" + d3.event.translate + ")" + " scale(" + d3.event.scale + ")");
 };
 
-charts.DirectedGraph.prototype.clearSVG = function() {
-    var svg = d3.select("#" + this.svgId);
-    if(svg) {
-        svg.remove();
-    }
+charts.DirectedGraph.prototype.createMouseoverHandler = function(me) {
+    return function(nodeData) {
+        var parentOffset = $(me.rootElement).offset();
+        me.tooltip.transition().duration(200).style("opacity", 0.9)
+            .style("left", (d3.event.pageX - parentOffset.left + 10) + "px")
+            .style("top", (d3.event.pageY - parentOffset.top - 20) + "px");
+        me.tooltip.html(me.getNodeTooltip(nodeData));
+    };
 };
 
-charts.DirectedGraph.prototype.getRenderWidth = function() {
-    if(this.calculateWidth) {
-        return this.calculateWidth();
-    }
-    if($(this.element[0]).width() !== 0) {
-        return $(this.element[0]).width();
-    }
-    return charts.BarChart.DEFAULT_WIDTH;
+charts.DirectedGraph.prototype.createMouseoutHandler = function(me) {
+    return function() {
+        me.tooltip.transition().duration(500).style("opacity", 0);
+    };
 };
 
-charts.DirectedGraph.prototype.getRenderHeight = function() {
-    if(this.calculateHeight) {
-        return this.calculateHeight();
-    }
-    if($(this.element[0]).height() !== 0) {
-        return $(this.element[0]).height();
-    }
-    return charts.BarChart.DEFAULT_HEIGHT;
+charts.DirectedGraph.prototype.getLinkStartXFunction = function(me) {
+    return function(linkData) {
+        // Ensure the line starts at the radius of the source node so the line does not overlap the node.
+        var sourceSize = me.getNodeSize(linkData.source);
+        var length = Math.sqrt(Math.pow(linkData.source.y - linkData.target.y, 2) + Math.pow(linkData.source.x - linkData.target.x, 2));
+        var scale = (length - sourceSize) / length;
+        var offset = (linkData.source.x - linkData.target.x) - (linkData.source.x - linkData.target.x) * scale;
+        return linkData.source.x - offset;
+    };
 };
+
+charts.DirectedGraph.prototype.getLinkEndXFunction = function(me) {
+    return function(linkData) {
+        // Ensure the line ends at the radius of the target node so the arrowhead does not overlap the node.
+        var targetSize = me.getNodeSize(linkData.target);
+        var length = Math.sqrt(Math.pow(linkData.target.y - linkData.source.y, 2) + Math.pow(linkData.target.x - linkData.source.x, 2));
+        var scale = (length - targetSize) / length;
+        var offset = (linkData.target.x - linkData.source.x) - (linkData.target.x - linkData.source.x) * scale;
+        return linkData.target.x - offset;
+    };
+};
+
+charts.DirectedGraph.prototype.getLinkStartYFunction = function(me) {
+    return function(linkData) {
+        // Ensure the line starts at the radius of the source node so the line does not overlap the node.
+        var sourceSize = me.getNodeSize(linkData.source);
+        var length = Math.sqrt(Math.pow(linkData.source.y - linkData.target.y, 2) + Math.pow(linkData.source.x - linkData.target.x, 2));
+        var scale = (length - sourceSize) / length;
+        var offset = (linkData.source.y - linkData.target.y) - (linkData.source.y - linkData.target.y) * scale;
+        return linkData.source.y - offset;
+    };
+};
+
+charts.DirectedGraph.prototype.getLinkEndYFunction = function(me) {
+    return function(linkData) {
+        // Ensure the line ends at the radius of the target node so the arrowhead does not overlap the node.
+        var targetSize = me.getNodeSize(linkData.target);
+        var length = Math.sqrt(Math.pow(linkData.target.y - linkData.source.y, 2) + Math.pow(linkData.target.x - linkData.source.x, 2));
+        var scale = (length - targetSize) / length;
+        var offset = (linkData.target.y - linkData.source.y) - (linkData.target.y - linkData.source.y) * scale;
+        return linkData.target.y - offset;
+    };
+};
+
+charts.DirectedGraph.prototype.DEFAULT_WIDTH = 600;
+charts.DirectedGraph.prototype.DEFAULT_HEIGHT = 350;
+
+charts.DirectedGraph.prototype.DEFAULT_NODE_COLOR = "black";
+charts.DirectedGraph.prototype.DEFAULT_NODE_SIZE = 10;
+charts.DirectedGraph.prototype.DEFAULT_NODE_STROKE_COLOR = "black";
+charts.DirectedGraph.prototype.DEFAULT_NODE_STROKE_SIZE = 0;
+charts.DirectedGraph.prototype.DEFAULT_NODE_TEXT_COLOR = "black";
+charts.DirectedGraph.prototype.DEFAULT_LINK_SIZE = 2;
+charts.DirectedGraph.prototype.DEFAULT_LINK_STROKE_COLOR = "#999999";
+charts.DirectedGraph.prototype.DEFAULT_LINK_STROKE_OPACITY = 0.5;

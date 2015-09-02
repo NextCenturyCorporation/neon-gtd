@@ -63,7 +63,6 @@ function($filter, $timeout, connectionService, datasetService, errorNotification
             var CLUSTER_NODE_COLOR = "#9467bd";
 
             $scope.TIMEOUT_MS = 250;
-            $scope.uniqueId = uuid();
 
             $scope.databases = [];
             $scope.tables = [];
@@ -264,14 +263,16 @@ function($filter, $timeout, connectionService, datasetService, errorNotification
                 }
 
                 if(!$scope.graph) {
-                    $scope.graph = new charts.DirectedGraph($element[0], (".directed-graph-container-" + $scope.uniqueId), {
-                        calculateHeight: calculateGraphHeight,
-                        calculateWidth: calculateGraphWidth,
+                    $scope.graph = new charts.DirectedGraph($element[0], ".directed-graph-container", {
+                        getHeight: calculateGraphHeight,
+                        getWidth: calculateGraphWidth,
                         getNodeSize: calculateNodeSize,
                         getNodeColor: calculateNodeColor,
                         getNodeText: createNodeText,
                         getNodeTooltip: createNodeTooltip,
                         getLinkSize: calculateLinkSize,
+                        getNodeKey: getNodeKey,
+                        getLinkKey: getLinkKey,
                         nodeClickHandler: onNodeClicked
                     });
                 }
@@ -592,9 +593,10 @@ function($filter, $timeout, connectionService, datasetService, errorNotification
                         node = {
                             id: value,
                             name: value,
-                            size: 0,
                             date: date,
+                            size: 0,
                             type: NODE_TYPE,
+                            key: createNodeKey(value, NODE_TYPE),
                             group: $scope.filteredNodes.indexOf(value) >= 0 ? QUERIED_NODE_GROUP : UNKNOWN_NODE_GROUP
                         };
                         nodes.push(node);
@@ -680,6 +682,14 @@ function($filter, $timeout, connectionService, datasetService, errorNotification
                 });
             };
 
+            var createNodeKey = function(id, type) {
+                return type + "." + id;
+            };
+
+            var createLinkKey = function(sourceId, sourceType, targetId, targetType) {
+                return createNodeKey(sourceId, sourceType) + "-" + createNodeKey(targetId, targetType);
+            };
+
             /**
              * Creates clusters for nodes in the given array as appropriate and returns an object containing the new arrays of nodes and links.
              * @param {Array} nodes
@@ -701,7 +711,9 @@ function($filter, $timeout, connectionService, datasetService, errorNotification
 
                 // The cluster for all nodes that are not linked to any other nodes.
                 var unlinkedCluster = {
+                    id: 0,
                     type: CLUSTER_TYPE,
+                    key: createNodeKey(0, CLUSTER_TYPE),
                     group: CLUSTER_NODE_GROUP,
                     nodes: []
                 };
@@ -752,8 +764,9 @@ function($filter, $timeout, connectionService, datasetService, errorNotification
                         // Create a new cluster node and add it to the list of nodes.
                         resultNodes.push({
                             id: clusterId,
-                            type: CLUSTER_TYPE,
                             date: nodeToCluster.date,
+                            type: CLUSTER_TYPE,
+                            key: createNodeKey(clusterId, CLUSTER_TYPE),
                             group: CLUSTER_NODE_GROUP,
                             nodes: [nodeToCluster]
                         });
@@ -776,7 +789,7 @@ function($filter, $timeout, connectionService, datasetService, errorNotification
                     return clusterId;
                 };
 
-                nodes.forEach(function(node, index) {
+                nodes.forEach(function(node) {
                     var numberOfTargets = sourcesToTargets[node.id] ? sourcesToTargets[node.id].length : 0;
                     var numberOfSources = targetsToSources[node.id] ? targetsToSources[node.id].length : 0;
 
@@ -860,7 +873,8 @@ function($filter, $timeout, connectionService, datasetService, errorNotification
                             source: sourceIndex,
                             target: targetIndex,
                             date: link.date,
-                            size: 2
+                            size: 2,
+                            key: createLinkKey(link.sourceId, link.sourceType, link.targetId, link.targetType)
                         });
                     }
                 });
@@ -1018,6 +1032,26 @@ function($filter, $timeout, connectionService, datasetService, errorNotification
              */
             var calculateLinkSize = function(link) {
                 return link.size;
+            };
+
+            /**
+             * Returns the key for the given node.
+             * @param {Object} node
+             * @method getNodeKey
+             * @private
+             */
+            var getNodeKey = function(node) {
+                return node.key;
+            };
+
+            /**
+             * Returns the key for the given link.
+             * @param {Object} link
+             * @method getLinkKey
+             * @private
+             */
+            var getLinkKey = function(link) {
+                return link.key;
             };
 
             /**
