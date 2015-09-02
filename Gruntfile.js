@@ -2,6 +2,7 @@
 
 module.exports = function(grunt) {
     var packageJSON = require('./package.json');
+    var versionJSONFile = 'app/config/version.json';
 
     grunt.initConfig({
         bower: {
@@ -33,6 +34,17 @@ module.exports = function(grunt) {
             war: ["target"],
             tests: ["reports"],
             less: ["app/css/app.css"]
+        },
+
+        "git-describe": {
+            options: {
+                failOnError: false
+            },
+            neonGTDVersion: {
+                tags: true,
+                all: true,
+                template: '{%=tag%}-{%=since%}-{%=object%}'
+            }
         },
 
         jshint: {
@@ -161,11 +173,25 @@ module.exports = function(grunt) {
     grunt.loadNpmTasks('grunt-contrib-jshint');
     grunt.loadNpmTasks('grunt-contrib-less');
     grunt.loadNpmTasks('grunt-contrib-yuidoc');
+    grunt.loadNpmTasks('grunt-git-describe');
     grunt.loadNpmTasks('grunt-jscs');
     grunt.loadNpmTasks('grunt-karma');
     grunt.loadNpmTasks('grunt-war');
 
     grunt.registerTask('compile-less', ['clean:less', 'less']);
+    grunt.registerTask('saveRevision', function() {
+        grunt.event.once('git-describe', function(rev) {
+            var date = new Date(Date.now()).toISOString();
+            date = date.replace(/-/g, '.').replace(/T.*/, '');
+
+            var versionObj = {
+                name: packageJSON.name,
+                version: packageJSON.version + '-' + rev[2] + '-g' + rev[3] + '-' + date
+            };
+            grunt.file.write(versionJSONFile, JSON.stringify(versionObj));
+        });
+        grunt.task.run('git-describe');
+    });
     grunt.registerTask('test', ['jshint:console', 'jscs:console', 'karma']);
-    grunt.registerTask('default', ['clean', 'bower:install', 'jshint:xml', 'jscs:xml', 'yuidoc', 'compile-less', 'war']);
+    grunt.registerTask('default', ['clean', 'bower:install', 'saveRevision', 'jshint:xml', 'jscs:xml', 'yuidoc', 'compile-less', 'war']);
 };
