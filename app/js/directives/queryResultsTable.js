@@ -72,6 +72,8 @@ function(external, popups, connectionService, datasetService, errorNotificationS
             $scope.totalRows = 0;
             $scope.errorMessage = undefined;
             $scope.loadingData = false;
+            $scope.outstandingDataQuery = undefined;
+            $scope.outstandingTotalRowsQuery = undefined;
 
             $scope.options = {
                 database: {},
@@ -409,7 +411,11 @@ function(external, popups, connectionService, datasetService, errorNotificationS
                     tags: ["query", "datagrid"]
                 });
 
-                connection.executeQuery(query, function(queryResults) {
+                if($scope.outstandingDataQuery) {
+                    $scope.outstandingDataQuery.abort();
+                }
+
+                $scope.outstandingDataQuery = connection.executeQuery(query).xhr.done(function(queryResults) {
                     XDATA.userALE.log({
                         activity: "alter",
                         action: "receive",
@@ -421,6 +427,7 @@ function(external, popups, connectionService, datasetService, errorNotificationS
                         tags: ["receive", "datagrid"]
                     });
                     $scope.$apply(function() {
+                        $scope.outstandingDataQuery = undefined;
                         $scope.updateData(queryResults, refreshColumns);
                         queryForTotalRows(connection);
                         XDATA.userALE.log({
@@ -434,24 +441,38 @@ function(external, popups, connectionService, datasetService, errorNotificationS
                             tags: ["render", "datagrid"]
                         });
                     });
-                }, function(response) {
-                    XDATA.userALE.log({
-                        activity: "alter",
-                        action: "failed",
-                        elementId: "datagrid",
-                        elementType: "datagrid",
-                        elementSub: "data",
-                        elementGroup: "chart_group",
-                        source: "system",
-                        tags: ["failed", "datagrid"]
-                    });
-                    $scope.updateData({
-                        data: []
-                    }, refreshColumns);
-                    $scope.totalRows = 0;
-                    $scope.loadingData = false;
-                    if(response.responseJSON) {
-                        $scope.errorMessage = errorNotificationService.showErrorMessage($element, response.responseJSON.error, response.responseJSON.stackTrace);
+                }).fail(function(response) {
+                    $scope.outstandingDataQuery = undefined;
+                    if(response.status === 0) {
+                        XDATA.userALE.log({
+                            activity: "alter",
+                            action: "canceled",
+                            elementId: "datagrid",
+                            elementType: "datagrid",
+                            elementSub: "data",
+                            elementGroup: "chart_group",
+                            source: "system",
+                            tags: ["canceled", "datagrid"]
+                        });
+                    } else {
+                        XDATA.userALE.log({
+                            activity: "alter",
+                            action: "failed",
+                            elementId: "datagrid",
+                            elementType: "datagrid",
+                            elementSub: "data",
+                            elementGroup: "chart_group",
+                            source: "system",
+                            tags: ["failed", "datagrid"]
+                        });
+                        $scope.updateData({
+                            data: []
+                        }, refreshColumns);
+                        $scope.totalRows = 0;
+                        $scope.loadingData = false;
+                        if(response.responseJSON) {
+                            $scope.errorMessage = errorNotificationService.showErrorMessage($element, response.responseJSON.error, response.responseJSON.stackTrace);
+                        }
                     }
                 });
             };
@@ -475,8 +496,13 @@ function(external, popups, connectionService, datasetService, errorNotificationS
                     tags: ["query", "datagrid"]
                 });
 
-                connection.executeQuery(query, function(queryResults) {
+                if($scope.outstandingTotalRowsQuery) {
+                    $scope.outstandingTotalRowsQuery.abort();
+                }
+
+                $scope.outstandingTotalRowsQuery = connection.executeQuery(query).xhr.done(function(queryResults) {
                     $scope.$apply(function() {
+                        $scope.outstandingTotalRowsQuery = undefined;
                         if(queryResults.data.length > 0) {
                             $scope.totalRows = queryResults.data[0].count;
                         } else {
@@ -494,19 +520,33 @@ function(external, popups, connectionService, datasetService, errorNotificationS
                             tags: ["receive", "datagrid"]
                         });
                     });
-                }, function() {
-                    XDATA.userALE.log({
-                        activity: "alter",
-                        action: "failed",
-                        elementId: "datagrid",
-                        elementType: "datagrid",
-                        elementSub: "totals",
-                        elementGroup: "chart_group",
-                        source: "system",
-                        tags: ["failed", "datagrid"]
-                    });
-                    $scope.totalRows = 0;
-                    $scope.loadingData = false;
+                }).fail(function(response) {
+                    $scope.outstandingTotalRowsQuery = undefined;
+                    if(response.status === 0) {
+                        XDATA.userALE.log({
+                            activity: "alter",
+                            action: "canceled",
+                            elementId: "datagrid",
+                            elementType: "datagrid",
+                            elementSub: "totals",
+                            elementGroup: "chart_group",
+                            source: "system",
+                            tags: ["canceled", "datagrid"]
+                        });
+                    } else {
+                        XDATA.userALE.log({
+                            activity: "alter",
+                            action: "failed",
+                            elementId: "datagrid",
+                            elementType: "datagrid",
+                            elementSub: "totals",
+                            elementGroup: "chart_group",
+                            source: "system",
+                            tags: ["failed", "datagrid"]
+                        });
+                        $scope.totalRows = 0;
+                        $scope.loadingData = false;
+                    }
                 });
             };
 
