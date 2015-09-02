@@ -278,6 +278,10 @@ charts.DirectedGraph.prototype.updateGraph = function(newData) {
     // Whether the node data has been fixed.
     var fixed = false;
 
+    circleElements.each(function(nodeData) {
+        nodeData.fixed = false;
+    });
+
     me.forceLayout.on("tick", function(event) {
         index = (event.alpha === 0.099 ? 1 : ++index);
 
