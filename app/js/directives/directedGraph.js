@@ -225,23 +225,32 @@ function($filter, $timeout, connectionService, datasetService, errorNotification
              * @private
              */
             var onDateSelected = function(message) {
-                if($scope.bucketizer.getStartDate() && $scope.bucketizer.getEndDate() && message.start) {
-                    var bucket = $scope.bucketizer.getBucketIndex(message.start);
-                    if(bucket === $scope.selectedDateBucket) {
-                        return;
+                if(!message.start && !$scope.selectedDateBucket) {
+                    return;
+                }
+
+                if($scope.bucketizer.getStartDate() && $scope.bucketizer.getEndDate()) {
+                    var bucket = undefined;
+                    var nodes = $scope.graphNodes;
+                    var links = $scope.graphLinks;
+
+                    if(message.start) {
+                        bucket = $scope.bucketizer.getBucketIndex(message.start);
+                        if(bucket === $scope.selectedDateBucket) {
+                            return;
+                        }
+
+                        nodes = $scope.graphNodes.slice(0, $scope.dateBucketToNodeIndex[bucket]);
+                        nodes.forEach(function(node) {
+                            if(node.dateBucketToNodeIndex && node.nodes) {
+                                node.nodesForSelectedDateBucket = node.nodes.slice(0, node.dateBucketToNodeIndex[bucket]);
+                            }
+                        });
+
+                        links = $scope.graphLinks.slice(0, $scope.dateBucketToLinkIndex[bucket]);
                     }
 
                     $scope.selectedDateBucket = bucket;
-
-                    var nodes = $scope.graphNodes.slice(0, $scope.dateBucketToNodeIndex[bucket]);
-                    nodes.forEach(function(node) {
-                        if(node.dateBucketToNodeIndex && node.nodes) {
-                            node.nodesForSelectedDateBucket = node.nodes.slice(0, node.dateBucketToNodeIndex[bucket]);
-                        }
-                    });
-
-                    var links = $scope.graphLinks.slice(0, $scope.dateBucketToLinkIndex[bucket]);
-
                     $scope.numberOfVisibleNodes = nodes.length;
 
                     $scope.graph.updateGraph({
