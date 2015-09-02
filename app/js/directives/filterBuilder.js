@@ -46,6 +46,7 @@ angular.module('neonDemo.directives')
             $scope.selectedField = "";
             $scope.selectedFieldIsDate = false;
             $scope.andClauses = true;
+            $scope.instanceId = undefined;
 
             $element.addClass("filter-directive");
 
@@ -69,6 +70,8 @@ angular.module('neonDemo.directives')
              * @method initialize
              */
             $scope.initialize = function() {
+                $scope.instanceId = neon.widget.getInstanceId("filterBuilder");
+
                 $element.resize(resizeDateTimePickerDropdowns);
 
                 $scope.messenger = new neon.eventing.Messenger();
@@ -158,7 +161,7 @@ angular.module('neonDemo.directives')
 
                 for(var i = 0; i < $scope.databases.length; ++i) {
                     for(var j = 0; j < $scope.tables.length; ++j) {
-                        $scope.filterTable.setFilterKey($scope.databases[i].name, $scope.tables[j].name, neon.widget.getInstanceId("filterBuilder") + "-" + $scope.databases[i].name + "-" + $scope.tables[j].name);
+                        $scope.filterTable.setFilterKey($scope.databases[i].name, $scope.tables[j].name, $scope.instanceId + "-" + $scope.databases[i].name + "-" + $scope.tables[j].name);
                     }
                 }
 
