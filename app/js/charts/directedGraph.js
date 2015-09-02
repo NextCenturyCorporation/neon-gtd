@@ -288,6 +288,8 @@ charts.DirectedGraph.prototype.updateGraph = function(newData) {
                 .attr("y2", me.getLinkEndYFunction(me));
         }
 
+        //circleElements.each(me.getCollisionFunction());
+
         circleElements.attr("transform", function(nodeData) {
             return "translate(" + (nodeData.x) + "," + (nodeData.y) + ")";
         });
@@ -384,6 +386,33 @@ charts.DirectedGraph.prototype.getLinkEndYFunction = function(me) {
         var scale = (length - targetSize) / length;
         var offset = (linkData.target.y - linkData.source.y) - (linkData.target.y - linkData.source.y) * scale;
         return linkData.target.y - offset;
+    };
+};
+
+charts.DirectedGraph.prototype.getCollisionFunction = function() {
+    var me = this;
+    var quadtree = d3.geom.quadtree(this.forceLayoutNodes);
+    return function(d) {
+        var r = 2 * me.getNodeSize(d) + 1;
+        var nx1 = d.x - r;
+        var nx2 = d.x + r;
+        var ny1 = d.y - r;
+        var ny2 = d.y + r;
+        quadtree.visit(function(quad, x1, y1, x2, y2) {
+            if(quad.point && (quad.point !== d)) {
+                var x = d.x - quad.point.x;
+                var y = d.y - quad.point.y;
+                var l = Math.sqrt(x * x + y * y);
+                if(l < r) {
+                    l = (l - r) / l * 0.5;
+                    d.x -= x *= l;
+                    d.y -= y *= l;
+                    quad.point.x += x;
+                    quad.point.y += y;
+                }
+            }
+            return x1 > nx2 || x2 < nx1 || y1 > ny2 || y2 < ny1;
+        });
     };
 };
 
