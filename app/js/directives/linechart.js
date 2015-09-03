@@ -348,7 +348,12 @@ function(connectionService, datasetService, errorNotificationService, filterServ
                     $scope.outstandingQuery.abort();
                 }
 
-                $scope.outstandingQuery = connection.executeQuery(query).xhr.done(handleQuerySuccess).fail(handleQueryFailure);
+                $scope.outstandingQuery = connection.executeQuery(query);
+                $scope.outstandingQuery.always(function() {
+                    $scope.outstandingQuery = undefined;
+                });
+                $scope.outstandingQuery.done(handleQuerySuccess);
+                $scope.outstandingQuery.fail(handleQueryFailure);
             };
 
             /**
@@ -579,7 +584,6 @@ function(connectionService, datasetService, errorNotificationService, filterServ
              * @method handleQuerySuccess
              */
             var handleQuerySuccess = function(results) {
-                $scope.outstandingQuery = undefined;
                 $scope.data = results.data;
 
                 var seriesData = createLineSeriesData(results.data);
@@ -657,7 +661,6 @@ function(connectionService, datasetService, errorNotificationService, filterServ
              * @method handleQueryFailure
              */
             var handleQueryFailure = function(response) {
-                $scope.outstandingQuery = undefined;
                 if(response.status === 0) {
                     XDATA.userALE.log({
                         activity: "alter",

@@ -311,7 +311,11 @@ function(connectionService, datasetService, errorNotificationService, filterServ
                     $scope.outstandingQuery.abort();
                 }
 
-                $scope.outstandingQuery = connection.executeQuery(query).xhr.done(function(queryResults) {
+                $scope.outstandingQuery = connection.executeQuery(query);
+                $scope.outstandingQuery.always(function() {
+                    $scope.outstandingQuery = undefined;
+                });
+                $scope.outstandingQuery.done(function(queryResults) {
                     $scope.$apply(function() {
                         XDATA.userALE.log({
                             activity: "alter",
@@ -323,7 +327,6 @@ function(connectionService, datasetService, errorNotificationService, filterServ
                             source: "system",
                             tags: ["receive", "barchart"]
                         });
-                        $scope.outstandingQuery = undefined;
                         $scope.results = {
                             count: queryResults.data.length
                         };
@@ -340,7 +343,8 @@ function(connectionService, datasetService, errorNotificationService, filterServ
                             tags: ["render", "barchart"]
                         });
                     });
-                }).fail(function(response) {
+                });
+                $scope.outstandingQuery.fail(function(response) {
                     $scope.outstandingQuery = undefined;
                     if(response.status === 0) {
                         XDATA.userALE.log({
