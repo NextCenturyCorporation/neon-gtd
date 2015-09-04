@@ -13,26 +13,12 @@
 // limitations under the License.
 //
 
-div {
-    .config-row-div {
-        padding-bottom: 5px;
-    }
-
-    .directed-graph {
-        height: @widget-height;
-        width: @widget-width;
-
-        div {
-            .directed-graph-container {
-                height: @widget-height;
-                width: @widget-width;
-            }
-        }
-    }
-
-    .draw-button-div {
-        padding-left: 0px;
-    }
+.directedGraphDirective {
+    padding: 10px;
+    height: 100%;
+    width: 100%;
+    /* Hide the area of the tooltip that overflows the visualization. */
+    overflow: hidden;
 
     .graph-tooltip {
         position: absolute;
@@ -42,16 +28,16 @@ div {
         border-radius: 4px;
         pointer-events: none;
     }
-}
 
-.directedGraphDirective {
-    padding: 10px;
-    height: 100%;
-    width: 100%;
-    /* Hide the area of the tooltip that overflows the visualization. */
-    overflow: hidden;
-}
+    .link {
+      cursor: pointer;
+    }
 
-.node {
-  cursor: pointer;
+    .node {
+      cursor: pointer;
+    }
+
+    .node-text {
+      cursor: pointer;
+    }
 }

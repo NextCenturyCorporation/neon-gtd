@@ -78,6 +78,16 @@ charts.DirectedGraph.prototype.initializeGraphOptions = function(options) {
         return this.DEFAULT_NODE_COLOR;
     };
 
+    this.getNodeOpacity = function(nodeData) {
+        if(options.getNodeOpacity) {
+            if(_.isFunction(options.getNodeOpacity)) {
+                return options.getNodeOpacity(nodeData);
+            }
+            return options.getNodeOpacity;
+        }
+        return this.DEFAULT_NODE_OPACITY;
+    };
+
     this.getNodeText = function(nodeData) {
         if(options.getNodeText) {
             if(_.isFunction(options.getNodeText)) {
@@ -108,8 +118,62 @@ charts.DirectedGraph.prototype.initializeGraphOptions = function(options) {
         return this.DEFAULT_LINK_SIZE;
     };
 
+    this.getLinkColor = function(linkData) {
+        if(options.getLinkColor) {
+            if(_.isFunction(options.getLinkColor)) {
+                return options.getLinkColor(linkData);
+            }
+            return options.getLinkColor;
+        }
+        return this.DEFAULT_LINK_STROKE_COLOR;
+    };
+
+    this.getLinkOpacity = function(linkData) {
+        if(options.getLinkOpacity) {
+            if(_.isFunction(options.getLinkOpacity)) {
+                return options.getLinkOpacity(linkData);
+            }
+            return options.getLinkOpacity;
+        }
+        return this.DEFAULT_LINK_STROKE_OPACITY;
+    };
+
+    this.getLinkArrowhead = function(linkData) {
+        var name = this.DEFAULT_LINK_ARROWHEAD;
+        if(options.getLinkArrowhead) {
+            if(_.isFunction(options.getLinkArrowhead)) {
+                name = options.getLinkArrowhead(linkData);
+            } else {
+                name = options.getLinkArrowhead;
+            }
+        }
+        return "url(#" + name + ")";
+    }
+
+    this.getLinkTooltip = function(linkData) {
+        if(options.getLinkTooltip) {
+            if(_.isFunction(options.getLinkTooltip)) {
+                return options.getLinkTooltip(linkData);
+            }
+            return options.getLinkTooltip;
+        }
+        return linkData.name || linkData.id || "";
+    };
+
     this.getNodeKeyFunction = options.getNodeKey;
     this.getLinkKeyFunction = options.getLinkKey;
+
+    this.nodeMouseoverHandler = function(nodeData) {
+        if(options.nodeMouseoverHandler) {
+            options.nodeMouseoverHandler(nodeData);
+        }
+    };
+
+    this.nodeMouseoutHandler = function(nodeData) {
+        if(options.nodeMouseoutHandler) {
+            options.nodeMouseoutHandler(nodeData);
+        }
+    };
 
     this.nodeClickHandler = function(nodeData) {
         if(d3.event.shiftKey && options.nodeShiftClickHandler) {
@@ -124,6 +188,44 @@ charts.DirectedGraph.prototype.initializeGraphOptions = function(options) {
             options.nodeDoubleClickHandler(nodeData);
         }
     };
+
+    this.linkMouseoverHandler = function(linkData) {
+        if(options.linkMouseoverHandler) {
+            options.linkMouseoverHandler(linkData);
+        }
+    };
+
+    this.linkMouseoutHandler = function(linkData) {
+        if(options.linkMouseoutHandler) {
+            options.linkMouseoutHandler(linkData);
+        }
+    };
+
+    this.linkClickHandler = function(linkData) {
+        if(d3.event.shiftKey && options.linkShiftClickHandler) {
+            options.linkShiftClickHandler(linkData);
+        } else if(options.linkClickHandler) {
+            options.linkClickHandler(linkData);
+        }
+    };
+};
+
+charts.DirectedGraph.prototype.createArrowhead = function(name, color, opacity) {
+    // Create the definition for the arrowhead markers to be added to the end of each link.
+    // Please note that markerUnits=userSpaceOnUse stops the marker from using the stroke width of its line.
+    this.svg.select("defs").append("svg:marker")
+        .attr("id", name)
+        .attr("viewBox", "0 -5 10 10")
+        .attr("refX", 0)
+        .attr("refY", 0)
+        .attr("markerWidth", this.DEFAULT_LINK_ARROWHEAD_SIZE)
+        .attr("markerHeight", this.DEFAULT_LINK_ARROWHEAD_SIZE)
+        .attr("markerUnits", "userSpaceOnUse")
+        .attr("orient", "auto")
+        .style("fill", color)
+        .style("opacity", opacity)
+        .append("svg:path")
+        .attr("d", "M0,-5L10,0L0,5");
 };
 
 charts.DirectedGraph.prototype.initializeGraphElement = function() {
@@ -150,20 +252,9 @@ charts.DirectedGraph.prototype.initializeGraphElement = function() {
         .attr("pointer-events", "all")
         .call(d3.behavior.zoom().on("zoom", me.handleZoom));
 
-    // Create the definition for the arrowhead markers to be added to the end of each link.
-    me.svg.append("svg:defs").selectAll("marker")
-        .data(["end"])
-        .enter().append("svg:marker")
-        .attr("id", String)
-        .attr("viewBox", "0 -5 10 10")
-        .attr("refX", 10)
-        .attr("refY", 0)
-        .attr("markerWidth", 10)
-        .attr("markerHeight", 10)
-        .attr("orient", "auto")
-        .style("fill", me.DEFAULT_LINK_STROKE_COLOR)
-        .append("svg:path")
-        .attr("d", "M0,-5L10,0L0,5");
+    me.svg.append("svg:defs");
+
+    me.createArrowhead(me.DEFAULT_LINK_ARROWHEAD, me.DEFAULT_LINK_STROKE_COLOR, me.DEFAULT_LINK_STROKE_OPACITY);
 
     me.vis = me.svg.append('svg:g');
 
@@ -212,6 +303,29 @@ charts.DirectedGraph.prototype.updateGraphData = function(newData) {
     }
 };
 
+charts.DirectedGraph.prototype.redrawNodesAndLinks = function() {
+    var me = this;
+
+    me.vis.selectAll(".link")
+        .attr("marker-end", me.getLinkArrowhead)
+        .style("stroke", me.getLinkColor)
+        .style("stroke-opacity", me.getLinkOpacity)
+        .style("stroke-width", me.getLinkSize);
+
+    me.vis.selectAll(".node")
+        .attr("r", me.getNodeSize)
+        .style("fill", me.getNodeColor)
+        .style("opacity", me.getNodeOpacity)
+        .style("stroke", me.DEFAULT_NODE_STROKE_COLOR)
+        .style("stroke-width", me.DEFAULT_NODE_STROKE_SIZE);
+
+    me.vis.selectAll(".node-text")
+        .attr("dy", "5px")
+        .style("fill", me.DEFAULT_NODE_TEXT_COLOR)
+        .style("text-anchor", "middle")
+        .text(me.getNodeText);
+};
+
 charts.DirectedGraph.prototype.updateGraph = function(newData) {
     var me = this;
     me.tooltip.style("opacity", 0);
@@ -223,16 +337,13 @@ charts.DirectedGraph.prototype.updateGraph = function(newData) {
         lineElements = me.vis.selectAll(".link").data(newData.links, me.getLinkKeyFunction);
 
         // Add new D3 line elements for new data as necessary.
-        lineElements.enter().append("line").attr("class", "link");
+        lineElements.enter().append("line").attr("class", "link")
+            .on("click", me.linkClickHandler)
+            .on("mouseover", me.createLinkMouseoverHandler(me))
+            .on("mouseout", me.createLinkMouseoutHandler(me));
 
         // Remove old data saved in the D3 line elements.
         lineElements.exit().remove();
-
-        // Update the styling for all D3 line elements.
-        lineElements.attr("marker-end", "url(#end)")
-            .style("stroke", me.DEFAULT_LINK_STROKE_COLOR)
-            .style("stroke-opacity", me.DEFAULT_LINK_STROKE_OPACITY)
-            .style("stroke-width", me.getLinkSize);
     }
 
     // Update the data saved in the D3 circle elements.
@@ -242,17 +353,11 @@ charts.DirectedGraph.prototype.updateGraph = function(newData) {
     circleElements.enter().append("circle").attr("class", "node").call(me.forceLayout.drag)
         .on("click", me.nodeClickHandler)
         .on('dblclick', me.nodeDoubleClickHandler)
-        .on("mouseover", me.createMouseoverHandler(me))
-        .on("mouseout", me.createMouseoutHandler(me));
+        .on("mouseover", me.createNodeMouseoverHandler(me))
+        .on("mouseout", me.createNodeMouseoutHandler(me));
 
     // Remove old data saved in the D3 circle elements.
     circleElements.exit().remove();
-
-    // Update the styling for all D3 circle elements.
-    circleElements.attr("r", me.getNodeSize)
-        .style("fill", me.getNodeColor)
-        .style("stroke", me.DEFAULT_NODE_STROKE_COLOR)
-        .style("stroke-width", me.DEFAULT_NODE_STROKE_SIZE);
 
     // Update the data saved in the D3 text elements.
     var textElements = me.vis.selectAll(".node-text").data(newData.nodes, me.getNodeKeyFunction);
@@ -261,26 +366,18 @@ charts.DirectedGraph.prototype.updateGraph = function(newData) {
     textElements.enter().append("text").attr("class", "node-text").call(me.forceLayout.drag)
         .on("click", me.nodeClickHandler)
         .on('dblclick', me.nodeDoubleClickHandler)
-        .on("mouseover", me.createMouseoverHandler(me))
-        .on("mouseout", me.createMouseoutHandler(me));
+        .on("mouseover", me.createNodeMouseoverHandler(me))
+        .on("mouseout", me.createNodeMouseoutHandler(me));
 
     // Remove old data saved in the D3 text elements.
     textElements.exit().remove();
 
-    // Update the styling for all D3 text elements.
-    textElements.attr("dy", "5px")
-        .style("fill", me.DEFAULT_NODE_TEXT_COLOR)
-        .style("text-anchor", "middle")
-        .text(me.getNodeText);
+    me.redrawNodesAndLinks();
 
     // The index of the force layout tick.
     var index = 1;
     // Whether the node data has been fixed.
     var fixed = false;
-
-    circleElements.each(function(nodeData) {
-        nodeData.fixed = false;
-    });
 
     me.forceLayout.on("tick", function(event) {
         index = (event.alpha === 0.099 ? 1 : ++index);
@@ -333,19 +430,43 @@ charts.DirectedGraph.prototype.handleZoom = function() {
     $(this).children("g").attr("transform", "translate(" + d3.event.translate + ")" + " scale(" + d3.event.scale + ")");
 };
 
-charts.DirectedGraph.prototype.createMouseoverHandler = function(me) {
-    return function(nodeData) {
-        var parentOffset = $(me.rootElement).offset();
-        me.tooltip.transition().duration(200).style("opacity", 0.9)
-            .style("left", (d3.event.pageX - parentOffset.left + 10) + "px")
-            .style("top", (d3.event.pageY - parentOffset.top - 20) + "px");
-        me.tooltip.html(me.getNodeTooltip(nodeData));
+charts.DirectedGraph.prototype.showTooltip = function(text) {
+    var parentOffset = $(this.rootElement).offset();
+    this.tooltip.transition().duration(200).style("opacity", 0.9)
+        .style("left", (d3.event.pageX - parentOffset.left + 10) + "px")
+        .style("top", (d3.event.pageY - parentOffset.top - 20) + "px");
+    this.tooltip.html(text);
+};
+
+charts.DirectedGraph.prototype.hideTooltip = function() {
+    this.tooltip.transition().duration(500).style("opacity", 0);
+};
+
+charts.DirectedGraph.prototype.createLinkMouseoverHandler = function(me) {
+    return function(linkData) {
+        me.showTooltip(me.getLinkTooltip(linkData));
+        me.linkMouseoverHandler(linkData);
     };
 };
 
-charts.DirectedGraph.prototype.createMouseoutHandler = function(me) {
-    return function() {
-        me.tooltip.transition().duration(500).style("opacity", 0);
+charts.DirectedGraph.prototype.createLinkMouseoutHandler = function(me) {
+    return function(linkData) {
+        me.hideTooltip();
+        me.linkMouseoutHandler(linkData);
+    };
+};
+
+charts.DirectedGraph.prototype.createNodeMouseoverHandler = function(me) {
+    return function(nodeData) {
+        me.showTooltip(me.getNodeTooltip(nodeData));
+        me.nodeMouseoverHandler(nodeData);
+    };
+};
+
+charts.DirectedGraph.prototype.createNodeMouseoutHandler = function(me) {
+    return function(nodeData) {
+        me.hideTooltip();
+        me.nodeMouseoutHandler(nodeData);
     };
 };
 
@@ -362,8 +483,8 @@ charts.DirectedGraph.prototype.getLinkStartXFunction = function(me) {
 
 charts.DirectedGraph.prototype.getLinkEndXFunction = function(me) {
     return function(linkData) {
-        // Ensure the line ends at the radius of the target node so the arrowhead does not overlap the node.
-        var targetSize = me.getNodeSize(linkData.target);
+        // Ensure the line ends at the arrowhead which ends at the radius of the target node so the line does not overlap the node.
+        var targetSize = me.getNodeSize(linkData.target) + me.DEFAULT_LINK_ARROWHEAD_SIZE;
         var length = Math.sqrt(Math.pow(linkData.target.y - linkData.source.y, 2) + Math.pow(linkData.target.x - linkData.source.x, 2));
         var scale = (length - targetSize) / length;
         var offset = (linkData.target.x - linkData.source.x) - (linkData.target.x - linkData.source.x) * scale;
@@ -384,8 +505,8 @@ charts.DirectedGraph.prototype.getLinkStartYFunction = function(me) {
 
 charts.DirectedGraph.prototype.getLinkEndYFunction = function(me) {
     return function(linkData) {
-        // Ensure the line ends at the radius of the target node so the arrowhead does not overlap the node.
-        var targetSize = me.getNodeSize(linkData.target);
+        // Ensure the line ends at the arrowhead which ends at the radius of the target node so the line does not overlap the node.
+        var targetSize = me.getNodeSize(linkData.target) + me.DEFAULT_LINK_ARROWHEAD_SIZE;
         var length = Math.sqrt(Math.pow(linkData.target.y - linkData.source.y, 2) + Math.pow(linkData.target.x - linkData.source.x, 2));
         var scale = (length - targetSize) / length;
         var offset = (linkData.target.y - linkData.source.y) - (linkData.target.y - linkData.source.y) * scale;
@@ -424,10 +545,13 @@ charts.DirectedGraph.prototype.DEFAULT_WIDTH = 600;
 charts.DirectedGraph.prototype.DEFAULT_HEIGHT = 350;
 
 charts.DirectedGraph.prototype.DEFAULT_NODE_COLOR = "black";
+charts.DirectedGraph.prototype.DEFAULT_NODE_OPACITY = 1;
 charts.DirectedGraph.prototype.DEFAULT_NODE_SIZE = 10;
 charts.DirectedGraph.prototype.DEFAULT_NODE_STROKE_COLOR = "black";
 charts.DirectedGraph.prototype.DEFAULT_NODE_STROKE_SIZE = 0;
 charts.DirectedGraph.prototype.DEFAULT_NODE_TEXT_COLOR = "black";
+charts.DirectedGraph.prototype.DEFAULT_LINK_ARROWHEAD = "default";
+charts.DirectedGraph.prototype.DEFAULT_LINK_ARROWHEAD_SIZE = 20;
 charts.DirectedGraph.prototype.DEFAULT_LINK_SIZE = 2;
 charts.DirectedGraph.prototype.DEFAULT_LINK_STROKE_COLOR = "#999999";
 charts.DirectedGraph.prototype.DEFAULT_LINK_STROKE_OPACITY = 0.5;
