@@ -1,0 +1,15 @@
+<div>
+	<div class="item" ng-class="getNewsItemStyleClass(item)" ng-repeat='item in data.news | orderBy: "date" | reverse'>
+        <div>
+            <img class="image" src="img/Twitter.png" ng-show="data.type == 'TWITTER'">
+            <span class="head" ng-bind="item.head"></span>
+            <span class="name" ng-bind="item.name"></span>
+        </div>
+        <div>
+            <span class="date" ng-bind="item.date.toUTCString()"></span>
+        </div>
+        <div>
+            <span class="text" ng-bind="item.text"></span>
+        </div>
+	</div>
+</div>

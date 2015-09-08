@@ -84,6 +84,8 @@ function($filter, $timeout, connectionService, datasetService, errorNotification
                 selectedNodeField: {},
                 selectedLinkField: {},
                 selectedDateField: {},
+                selectedNameField: {},
+                selectedTextField: {},
                 selectedNode: "",
                 dataLimit: 500000,
                 useNodeClusters: true,
@@ -359,6 +361,20 @@ function($filter, $timeout, connectionService, datasetService, errorNotification
                     columnName: "",
                     prettyName: ""
                 };
+                var selectedNameField = datasetService.getMapping($scope.options.database.name, $scope.options.table.name, "newsfeed_name") || "";
+                $scope.options.selectedNameField = _.find($scope.fields, function(field) {
+                    return field.columnName === selectedNameField;
+                }) || {
+                    columnName: "",
+                    prettyName: ""
+                };
+                var selectedTextField = datasetService.getMapping($scope.options.database.name, $scope.options.table.name, "newsfeed_text") || "";
+                $scope.options.selectedTextField = _.find($scope.fields, function(field) {
+                    return field.columnName === selectedTextField;
+                }) || {
+                    columnName: "",
+                    prettyName: ""
+                };
 
                 $scope.queryForData();
             };
@@ -378,6 +394,7 @@ function($filter, $timeout, connectionService, datasetService, errorNotification
                 $scope.mouseoverNetworkId = undefined;
                 $scope.selectedNetworkIds = [];
                 $scope.databaseNodeValues = [];
+                publishNews([]);
 
                 if($scope.graphNodes.length) {
                     saveDataAndUpdateGraph([], []);
@@ -397,6 +414,66 @@ function($filter, $timeout, connectionService, datasetService, errorNotification
                 if(reloadNodeList) {
                     queryForNodeList(connection);
                 }
+            };
+
+            /**
+             * Publishes a news event using the given graph data.
+             * @param {Array} data
+             * @method publishNews
+             * @private
+             */
+            var publishNews = function(data) {
+                var news = [];
+                data.forEach(function(item) {
+                    var newsItem = {
+                        head: item[$scope.options.selectedNodeField.columnName]
+                    };
+                    if($scope.options.selectedNameField && $scope.options.selectedNameField.columnName) {
+                        newsItem.name = item[$scope.options.selectedNameField.columnName];
+                        delete item[$scope.options.selectedNameField.columnName];
+                    }
+                    if($scope.options.selectedTextField && $scope.options.selectedTextField.columnName) {
+                        newsItem.text = item[$scope.options.selectedTextField.columnName];
+                        delete item[$scope.options.selectedTextField.columnName];
+                    }
+                    if($scope.options.selectedDateField && $scope.options.selectedDateField.columnName) {
+                        newsItem.date = new Date(item[$scope.options.selectedDateField.columnName]);
+                    }
+                    news.push(newsItem);
+                });
+
+                $scope.messenger.publish("news", {
+                    date: $scope.bucketizer ? $scope.bucketizer.getEndDate() : undefined,
+                    news: news,
+                    type: datasetService.getMapping($scope.options.database.name, $scope.options.table.name, "stream_type") || ""
+                });
+            };
+
+            /**
+             * Publishes a news highlights event using the global selected network IDs.
+             * @method publishNewsHighlights
+             * @private
+             */
+            var publishNewsHighlights = function() {
+                var ids = [];
+
+                var findNodeIdsInNetwork = function(nodes) {
+                    nodes.forEach(function(node) {
+                        if(node.type === CLUSTER_TYPE) {
+                            findNodeIdsInNetwork(node.nodes);
+                        } else if($scope.selectedNetworkIds.indexOf(node.network) >= 0) {
+                            ids.push(node.id);
+                        }
+                    });
+                };
+
+                findNodeIdsInNetwork($scope.graphNodes);
+
+                $scope.messenger.publish("news_highlights", {
+                    highlights: {
+                        heads: ids
+                    }
+                });
             };
 
             /**
@@ -484,6 +561,12 @@ function($filter, $timeout, connectionService, datasetService, errorNotification
                 if($scope.options.selectedLinkField && $scope.options.selectedLinkField.columnName) {
                     fields.push($scope.options.selectedLinkField.columnName);
                 }
+                if($scope.options.selectedNameField && $scope.options.selectedNameField.columnName) {
+                    fields.push($scope.options.selectedNameField.columnName);
+                }
+                if($scope.options.selectedTextField && $scope.options.selectedTextField.columnName) {
+                    fields.push($scope.options.selectedTextField.columnName);
+                }
 
                 var query = new neon.query.Query().selectFrom($scope.options.database.name, $scope.options.table.name).withFields(fields).limit($scope.options.dataLimit);
 
@@ -508,6 +591,8 @@ function($filter, $timeout, connectionService, datasetService, errorNotification
              * @private
              */
             var createAndShowGraph = function(data) {
+                publishNews(data);
+
                 $scope.dataLimited = (data.length >= $scope.options.dataLimit);
 
                 // Maps source node IDs to an array of target node IDs to ensure each link we add to the graph is unique and help with clustering.
@@ -639,8 +724,6 @@ function($filter, $timeout, connectionService, datasetService, errorNotification
                     network: 0,
                     size: 0,
                     type: type,
-                    //x: 0,
-                    //y: 0,
                     key: createNodeKey(value, type)
                 };
             };
@@ -1210,6 +1293,7 @@ function($filter, $timeout, connectionService, datasetService, errorNotification
                     $scope.selectedNetworkIds.push(node.network);
                 }
                 $scope.graph.redrawNodesAndLinks();
+                publishNewsHighlights();
             };
 
             /**
@@ -1248,6 +1332,7 @@ function($filter, $timeout, connectionService, datasetService, errorNotification
                     $scope.selectedNetworkIds.push(link.network);
                 }
                 $scope.graph.redrawNodesAndLinks();
+                publishNewsHighlights();
             };
 
             /**
