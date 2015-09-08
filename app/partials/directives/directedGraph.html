@@ -69,6 +69,20 @@
         </div>
 
         <div class="form-group">
+            <label class="btn btn-default" ng-class="{true: 'active', false: ''}[options.useNodeClusters]" title="Cluster Known Leaf Nodes and Unlinked Nodes">
+                <input type="checkbox" ng-model="options.useNodeClusters" style="display:none" ng-value="false" ng-change="queryForData(true)"/>
+                Cluster Nodes
+            </label>
+        </div>
+
+        <div class="form-group">
+            <label class="btn btn-default" ng-class="{true: 'active', false: ''}[options.hideNodesWithZeroOrOneLink]" title="Hide Known Single Link Networks and Unlinked Nodes">
+                <input type="checkbox" ng-model="options.hideNodesWithZeroOrOneLink" style="display:none" ng-value="false" ng-change="queryForData(true)"/>
+                Hide Small Known Networks
+            </label>
+        </div>
+
+        <div class="form-group">
             <label class="btn btn-default" ng-class="{true: 'active', false: ''}[options.reloadOnFilter]" title="Reload Graph on Filter">
                 <input type="checkbox" ng-model="options.reloadOnFilter" style="display:none" ng-value="false"/>
                 Reload Graph on Filter

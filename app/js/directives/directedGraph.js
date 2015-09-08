@@ -86,6 +86,8 @@ function($filter, $timeout, connectionService, datasetService, errorNotification
                 selectedDateField: {},
                 selectedNode: "",
                 dataLimit: 500000,
+                useNodeClusters: true,
+                hideNodesWithZeroOrOneLink: false,
                 reloadOnFilter: false
             };
 
@@ -377,10 +379,13 @@ function($filter, $timeout, connectionService, datasetService, errorNotification
                 $scope.selectedNetworkIds = [];
                 $scope.databaseNodeValues = [];
 
+                if($scope.graphNodes.length) {
+                    saveDataAndUpdateGraph([], []);
+                }
+
                 var connection = connectionService.getActiveConnection();
 
-                if(!connection || !$scope.options.selectedNodeField.columnName || (!reloadNetworkGraph && !reloadNodeList)) {
-                    saveDataAndUpdateGraph([], []);
+                if(!connection || !$scope.options.selectedNodeField.columnName) {
                     $scope.loadingData = false;
                     return;
                 }
@@ -399,7 +404,6 @@ function($filter, $timeout, connectionService, datasetService, errorNotification
              */
             var queryForNodeList = function(connection) {
                 var query = createNodeListQuery();
-                console.log("query for node list");
 
                 if($scope.outstandingNodeQuery) {
                     $scope.outstandingNodeQuery.abort();
@@ -514,6 +518,8 @@ function($filter, $timeout, connectionService, datasetService, errorNotification
                 var nodes = [];
                 // The links to be added to the graph.
                 var links = [];
+                // The IDs of the nodes that exist in the node field of the data.
+                var nodeIds = {};
 
                 /**
                  * Adds a node for the given value to the list of nodes if it does not already exist and returns the node.
@@ -582,6 +588,7 @@ function($filter, $timeout, connectionService, datasetService, errorNotification
                         node.size++;
                         // Nodes that exist in the data are put in the default group.  Nodes that exist only as linked nodes are put in the missing group.
                         node.group = (node.group === MISSING_NODE_GROUP ? DEFAULT_NODE_GROUP : node.group);
+                        nodeIds[node.id] = true;
 
                         if($scope.options.selectedLinkField && $scope.options.selectedLinkField.columnName && row[$scope.options.selectedLinkField.columnName]) {
                             var linkedNodeValues = row[$scope.options.selectedLinkField.columnName] || [];
@@ -602,8 +609,7 @@ function($filter, $timeout, connectionService, datasetService, errorNotification
 
                 $scope.nodeValuesToNetworkIds = {};
 
-                // TODO Add an option to avoid clustering the nodes.
-                var result = clusterNodes(nodes, links, sourcesToTargets, targetsToSources);
+                var result = clusterAndHideNodes(nodes, links, sourcesToTargets, targetsToSources, nodeIds);
                 nodes = result.nodes;
                 links = result.links;
 
@@ -692,11 +698,12 @@ function($filter, $timeout, connectionService, datasetService, errorNotification
              * @param {Array} links
              * @param {Object} sourcesToTargets
              * @param {Object} targetsToSources
-             * @method clusterNodes
+             * @param {Object} nodeIds
+             * @method clusterAndHideNodes
              * @private
              * @return {Object}
              */
-            var clusterNodes = function(nodes, links, sourcesToTargets, targetsToSources) {
+            var clusterAndHideNodes = function(nodes, links, sourcesToTargets, targetsToSources, nodeIds) {
                 // The node and link lists that will be returned.
                 var resultNodes = [];
                 var resultLinks = links;
@@ -746,26 +753,30 @@ function($filter, $timeout, connectionService, datasetService, errorNotification
                     var numberOfSources = targetsToSources[node.id] ? targetsToSources[node.id].length : 0;
 
                     // If the node is a missing type or has more than one link, keep it; otherwise, add it to a cluster.
-                    if(node.type === MISSING_NODE_GROUP || numberOfTargets > 1 || numberOfSources > 1 || (numberOfTargets === 1 && numberOfSources === 1)) {
+                    if(node.group === MISSING_NODE_GROUP || numberOfTargets > 1 || numberOfSources > 1 || (numberOfTargets === 1 && numberOfSources === 1)) {
                         resultNodes.push(node);
                     } else if(numberOfTargets === 1) {
                         var targetId = sourcesToTargets[node.id][0];
                         if(shouldCluster(targetId, targetsToSources, sourcesToTargets)) {
                             targetsToClusterSources[targetId] = addCluster(targetsToClusterSources[targetId], null, targetId, node);
-                        } else {
+                        } else if(!($scope.options.hideNodesWithZeroOrOneLink && targetsToSources[targetId].length === 1 && nodeIds[targetId])) {
                             resultNodes.push(node);
                         }
                     } else if(numberOfSources === 1) {
                         var sourceId = targetsToSources[node.id][0];
                         if(shouldCluster(sourceId, sourcesToTargets, targetsToSources)) {
                             sourcesToClusterTargets[sourceId] = addCluster(sourcesToClusterTargets[sourceId], sourceId, null, node);
+                        } else if(!($scope.options.hideNodesWithZeroOrOneLink && sourcesToTargets[sourceId].length === 1 && nodeIds[sourceId])) {
+                            resultNodes.push(node);
+                        }
+                    } else if(!$scope.options.hideNodesWithZeroOrOneLink) {
+                        if($scope.options.useNodeClusters) {
+                            // If the node has no links, add it to the cluster node for unlinked nodes.
+                            unlinkedCluster.nodes.push(node);
+                            unlinkedCluster.date = chooseEarliestDate(unlinkedCluster.date, node.date);
                         } else {
                             resultNodes.push(node);
                         }
-                    } else {
-                        // If the node has no links, add it to the cluster node for unlinked nodes.
-                        unlinkedCluster.nodes.push(node);
-                        unlinkedCluster.date = chooseEarliestDate(unlinkedCluster.date, node.date);
                         $scope.nodeValuesToNetworkIds[node.id] = 0;
                     }
                 });
@@ -791,7 +802,7 @@ function($filter, $timeout, connectionService, datasetService, errorNotification
              */
             var shouldCluster = function(id, map, reverseMap) {
                 // Check if the linked node itself has other linked nodes.  If not, the node in question should not be clustered.
-                if(map[id] && map[id].length > 1) {
+                if($scope.options.useNodeClusters && map[id] && map[id].length > 1) {
                     // Check if the cluster would contain more than one node.  If not, the node in question should not be clustered.
                     return map[id].filter(function(otherId) {
                         return reverseMap[otherId].length === 1;
@@ -872,10 +883,6 @@ function($filter, $timeout, connectionService, datasetService, errorNotification
 
                         saveValueToNetworkIdMapping(sourceNode);
                         saveValueToNetworkIdMapping(targetNode);
-
-                        if(link.size > 1) {
-                            console.log(link.size + " for " + link.sourceId + " -> " + link.targetId);
-                        }
 
                         indexLinks.push({
                             source: sourceIndex,
