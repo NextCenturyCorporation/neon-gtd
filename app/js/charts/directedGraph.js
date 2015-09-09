@@ -88,6 +88,26 @@ charts.DirectedGraph.prototype.initializeGraphOptions = function(options) {
         return this.DEFAULT_NODE_OPACITY;
     };
 
+    this.getNodeStrokeColor = function(nodeData) {
+        if(options.getNodeStrokeColor) {
+            if(_.isFunction(options.getNodeStrokeColor)) {
+                return options.getNodeStrokeColor(nodeData);
+            }
+            return options.getNodeStrokeColor;
+        }
+        return this.DEFAULT_NODE_STROKE_COLOR;
+    };
+
+    this.getNodeStrokeSize = function(nodeData) {
+        if(options.getNodeStrokeSize) {
+            if(_.isFunction(options.getNodeStrokeSize)) {
+                return options.getNodeStrokeSize(nodeData);
+            }
+            return options.getNodeStrokeSize;
+        }
+        return this.DEFAULT_NODE_STROKE_SIZE;
+    };
+
     this.getNodeText = function(nodeData) {
         if(options.getNodeText) {
             if(_.isFunction(options.getNodeText)) {
@@ -259,7 +279,7 @@ charts.DirectedGraph.prototype.initializeGraphElement = function() {
     me.vis = me.svg.append('svg:g');
 
     me.forceLayout = d3.layout.force()
-        .charge(-300)
+        .charge(-500)
         .linkDistance(100)
         .size([width, height])
         .gravity(0.05);
@@ -316,8 +336,8 @@ charts.DirectedGraph.prototype.redrawNodesAndLinks = function() {
         .attr("r", me.getNodeSize)
         .style("fill", me.getNodeColor)
         .style("opacity", me.getNodeOpacity)
-        .style("stroke", me.DEFAULT_NODE_STROKE_COLOR)
-        .style("stroke-width", me.DEFAULT_NODE_STROKE_SIZE);
+        .style("stroke", me.getNodeStrokeColor)
+        .style("stroke-width", me.getNodeStrokeSize);
 
     me.vis.selectAll(".node-text")
         .attr("dy", "5px")

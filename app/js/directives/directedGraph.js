@@ -1112,14 +1112,14 @@ function($filter, $timeout, connectionService, datasetService, errorNotification
              * @return {String}
              */
             var calculateNodeColor = function(node) {
-                if($scope.mouseoverNetworkId === node.network || $scope.selectedNetworkIds.indexOf(node.network) >= 0) {
-                    return FOCUSED_COLOR;
-                }
                 if(node.group === CLUSTER_NODE_GROUP) {
                     return CLUSTER_COLOR;
                 }
                 if(node.group === MISSING_NODE_GROUP) {
                     return MISSING_COLOR;
+                }
+                if($scope.mouseoverNetworkId === node.network || $scope.selectedNetworkIds.indexOf(node.network) >= 0) {
+                    return FOCUSED_COLOR;
                 }
                 return DEFAULT_COLOR;
             };
