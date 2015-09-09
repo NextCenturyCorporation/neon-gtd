@@ -230,6 +230,13 @@ charts.DirectedGraph.prototype.initializeGraphOptions = function(options) {
     };
 };
 
+/**
+ * Creates an SVG marker definition in the graph for a link arrowhead with the given name, color, and opacity.
+ * @param {String} name
+ * @param {String} color
+ * @param {Number} opacity
+ * @method createArrowhead
+ */
 charts.DirectedGraph.prototype.createArrowhead = function(name, color, opacity) {
     // Create the definition for the arrowhead markers to be added to the end of each link.
     // Please note that markerUnits=userSpaceOnUse stops the marker from using the stroke width of its line.
@@ -323,6 +330,10 @@ charts.DirectedGraph.prototype.updateGraphData = function(newData) {
     }
 };
 
+/**
+ * Redraws the nodes and links in the graph.
+ * @method redrawNodesAndLinks
+ */
 charts.DirectedGraph.prototype.redrawNodesAndLinks = function() {
     var me = this;
 
@@ -346,6 +357,11 @@ charts.DirectedGraph.prototype.redrawNodesAndLinks = function() {
         .text(me.getNodeText);
 };
 
+/**
+ * Updates the graph using the given data.
+ * @param {Array} newData
+ * @method updateGraph
+ */
 charts.DirectedGraph.prototype.updateGraph = function(newData) {
     var me = this;
     me.tooltip.style("opacity", 0);
@@ -440,6 +456,10 @@ charts.DirectedGraph.prototype.updateGraph = function(newData) {
     };
 };
 
+/**
+ * Redraws the graph using its current data.
+ * @method redraw
+ */
 charts.DirectedGraph.prototype.redraw = function() {
     if(this.oldData) {
         this.updateGraph(this.oldData);
@@ -561,12 +581,15 @@ charts.DirectedGraph.prototype.getCollisionFunction = function() {
     };
 };
 
-charts.DirectedGraph.prototype.pulseNodes = function(nodeIds) {
+/**
+ * Pulses the nodes (circle elements) in the graph which pass the given filter function.
+ * @param {Function} filterFunction
+ * @method pulseNodes
+ */
+charts.DirectedGraph.prototype.pulseNodes = function(filterFunction) {
     var me = this;
 
-    me.vis.selectAll(".node").filter(function(nodeData) {
-        return nodeIds.indexOf(nodeData.id) >= 0;
-    }).call(function(nodeData) {
+    me.vis.selectAll(".node").filter(filterFunction).call(function(nodeData) {
         nodeData.transition().duration(500).attr("r", function(nodeData) {
             return me.getNodeSize(nodeData) * 5;
         }).transition().duration(500).attr("r", me.getNodeSize).ease("sine");
