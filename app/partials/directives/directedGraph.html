@@ -21,6 +21,12 @@
         </div>
 
         <div class="form-group" ng-show="!(hideAdvancedOptions)">
+            <label>Name Field</label>
+            <select class="form-control" ng-model="options.selectedNameField" ng-options="field.prettyName for field in fields" ng-required="false" ng-disabled="(fields.length == 0)" ng-change="queryForData()">
+            </select>
+        </div>
+
+        <div class="form-group" ng-show="!(hideAdvancedOptions)">
             <label>Linked Node(s) Field</label>
             <select class="form-control" ng-model="options.selectedLinkField" ng-options="field.prettyName for field in fields" ng-required="false" ng-disabled="(fields.length == 0)" ng-change="queryForData()">
                 <option value="">None</option>
@@ -28,36 +34,36 @@
         </div>
 
         <div class="form-group" ng-show="!(hideAdvancedOptions)">
-            <label>Date Field</label>
-            <select class="form-control" ng-model="options.selectedDateField" ng-options="field.prettyName for field in fields" ng-required="true" ng-disabled="(fields.length == 0)" ng-change="queryForData()">
+            <label>Linked Node(s) Name Field</label>
+            <select class="form-control" ng-model="options.selectedLinkNameField" ng-options="field.prettyName for field in fields" ng-required="false" ng-disabled="(fields.length == 0)" ng-change="queryForData()">
             </select>
         </div>
 
         <div class="form-group" ng-show="!(hideAdvancedOptions)">
-            <label>Name Field</label>
-            <select class="form-control" ng-model="options.selectedNameField" ng-options="field.prettyName for field in fields" ng-required="true" ng-disabled="(fields.length == 0)" ng-change="queryForData()">
+            <label>Date Field</label>
+            <select class="form-control" ng-model="options.selectedDateField" ng-options="field.prettyName for field in fields" ng-required="false" ng-disabled="(fields.length == 0)" ng-change="queryForData()">
             </select>
         </div>
 
         <div class="form-group" ng-show="!(hideAdvancedOptions)">
             <label>Text Field</label>
-            <select class="form-control" ng-model="options.selectedTextField" ng-options="field.prettyName for field in fields" ng-required="true" ng-disabled="(fields.length == 0)" ng-change="queryForData()">
+            <select class="form-control" ng-model="options.selectedTextField" ng-options="field.prettyName for field in fields" ng-required="false" ng-disabled="(fields.length == 0)" ng-change="queryForData()">
             </select>
         </div>
 
         <div class="form-group" ng-hide="!(options.selectedNodeField && options.selectedNodeField.columnName)">
             <label ng-bind="'Select ' + options.selectedNodeField.prettyName"></label>
             <div class="input-group">
-                <input type="text" class="form-control" placeholder="{{'Enter ' + options.selectedNodeField.prettyName + '...'}}" ng-model="options.selectedNode" ng-disabled="!(options.selectedNodeField)">
+                <input type="text" class="form-control" placeholder="{{'Enter ' + options.selectedNodeField.prettyName + '...'}}" ng-model="options.selectedNodeId" ng-disabled="!(options.selectedNodeField)">
                 <div class="input-group-btn">
-                    <button type="button" class="btn btn-default refresh" title="Select Node" ng-click="selectNodeNetworkFromValue(options.selectedNode)">
+                    <button type="button" class="btn btn-default refresh" title="Select Node" ng-click="selectNodeNetworkFromNodeId(options.selectedNodeId)">
                         <span class="glyphicon glyphicon-plus"></span>
                     </button>
                 </div>
             </div>
 
             <div class="input-group">
-                <select class="form-control" ng-model="options.selectedNode" ng-options="node for node in databaseNodeValues track by node" ng-required="false" ng-disabled="(databaseNodeValues.length == 0) || !(options.selectedNodeField)" ng-change="selectNodeNetworkFromValue(options.selectedNode)">
+                <select class="form-control" ng-model="options.selectedNodeId" ng-options="nodeId for nodeId in nodeIds track by nodeId" ng-required="false" ng-disabled="(nodeIds.length == 0) || !(options.selectedNodeField)" ng-change="selectNodeNetworkFromNodeId(options.selectedNodeId)">
                     <option value="" ng-bind="'Select ' + options.selectedNodeField.prettyName + '...'"></option>
                 </select>
                 <div class="input-group-btn">

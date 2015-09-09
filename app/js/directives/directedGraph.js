@@ -64,14 +64,16 @@ function($filter, $timeout, connectionService, datasetService, errorNotification
             // Name for the arrowhead marker with the focused color.
             var FOCUSED_COLOR_ARROWHEAD = "focused";
 
-            var DEFAULT_TOOLTIP_LABEL = "";
-            var DEFAULT_TOOLTIP_COUNT = "Count";
+            var DEFAULT_TOOLTIP_ID_LABEL = "";
+            var DEFAULT_TOOLTIP_NAME_LABEL = "Name";
+            var DEFAULT_TOOLTIP_SIZE_LABEL = "Size";
             var DEFAULT_TOOLTIP_SOURCE_LABEL = "From";
             var DEFAULT_TOOLTIP_TARGET_LABEL = "To";
 
             $scope.tooltip = {
-                label: DEFAULT_TOOLTIP_LABEL,
-                count: DEFAULT_TOOLTIP_COUNT,
+                idLabel: DEFAULT_TOOLTIP_ID_LABEL,
+                nameLabel: DEFAULT_TOOLTIP_NAME_LABEL,
+                sizeLabel: DEFAULT_TOOLTIP_SIZE_LABEL,
                 sourceLabel: DEFAULT_TOOLTIP_SOURCE_LABEL,
                 targetLabel: DEFAULT_TOOLTIP_TARGET_LABEL
             };
@@ -83,7 +85,7 @@ function($filter, $timeout, connectionService, datasetService, errorNotification
             $scope.fields = [];
             $scope.numberOfVisibleNodes = 0;
             $scope.dataLimited = false;
-            $scope.databaseNodeValues = [];
+            $scope.nodeIds = [];
             $scope.errorMessage = undefined;
             $scope.loadingData = false;
             $scope.bucketizer = dateBucketizer();
@@ -94,11 +96,12 @@ function($filter, $timeout, connectionService, datasetService, errorNotification
                 database: {},
                 table: {},
                 selectedNodeField: {},
-                selectedLinkField: {},
-                selectedDateField: {},
                 selectedNameField: {},
+                selectedLinkField: {},
+                selectedLinkNameField: {},
+                selectedDateField: {},
                 selectedTextField: {},
-                selectedNode: "",
+                selectedNodeId: "",
                 dataLimit: 500000,
                 useNodeClusters: true,
                 hideNodesWithZeroOrOneLink: false,
@@ -113,7 +116,7 @@ function($filter, $timeout, connectionService, datasetService, errorNotification
             $scope.selectedDateBucket = undefined;
             $scope.mouseoverNetworkId = undefined;
             $scope.selectedNetworkIds = [];
-            $scope.nodeValuesToNetworkIds = {};
+            $scope.nodeIdsToNetworkIds = {};
 
             var calculateGraphHeight = function() {
                 var headerHeight = 0;
@@ -150,20 +153,20 @@ function($filter, $timeout, connectionService, datasetService, errorNotification
             };
 
             /**
-             * Selects the network of the node in the graph with the given value.
-             * @param {Object} selectedValue
-             * @method selectNodeNetworkFromValue
+             * Selects the network of the node in the graph with the given ID.
+             * @param {Object} selectedNodeId
+             * @method selectNodeNetworkFromNodeId
              */
-            $scope.selectNodeNetworkFromValue = function(selectedValue) {
-                if(selectedValue !== "" && $scope.graph) {
-                    var value = Number(selectedValue) ? Number(selectedValue) : selectedValue;
+            $scope.selectNodeNetworkFromNodeId = function(selectedNodeId) {
+                if(selectedNodeId !== "" && $scope.graph) {
+                    var nodeId = Number(selectedNodeId) ? Number(selectedNodeId) : selectedNodeId;
 
-                    if($scope.nodeValuesToNetworkIds[value] !== undefined) {
-                        var index = $scope.selectedNetworkIds.indexOf($scope.nodeValuesToNetworkIds[value]);
+                    if($scope.nodeIdsToNetworkIds[nodeId] !== undefined) {
+                        var index = $scope.selectedNetworkIds.indexOf($scope.nodeIdsToNetworkIds[nodeId]);
                         if(index >= 0) {
                             $scope.selectedNetworkIds.splice(index, 1);
                         } else {
-                            $scope.selectedNetworkIds.push($scope.nodeValuesToNetworkIds[value]);
+                            $scope.selectedNetworkIds.push($scope.nodeIdsToNetworkIds[nodeId]);
                         }
                         $scope.graph.redrawNodesAndLinks();
                     }
@@ -226,7 +229,7 @@ function($filter, $timeout, connectionService, datasetService, errorNotification
             };
 
             /**
-             * Selects the networks for the nodes with values in the given where clause (and its children) if their fields match the selected node or link fields.
+             * Selects the networks for the nodes with IDs in the given where clause (and its children) if their fields match the selected node or link fields.
              * @param {Object} A where clause containing either {String} lhs and {String} rhs or {Array} whereClauses containing other where clause Objects.
              * @method selectNodeNetworkFromWhereClause
              * @private
@@ -237,9 +240,9 @@ function($filter, $timeout, connectionService, datasetService, errorNotification
                         selectNodeNetworkFromWhereClause(whereClause.whereClauses[i]);
                     }
                 } else if(whereClause.lhs === $scope.options.selectedNodeField.columnName && whereClause.lhs && whereClause.rhs) {
-                    $scope.selectNodeNetworkFromValue(whereClause.rhs);
+                    $scope.selectNodeNetworkFromNodeId(whereClause.rhs);
                 } else if($scope.options.selectedLinkField && whereClause.lhs === $scope.options.selectedLinkField.columnName && whereClause.lhs && whereClause.rhs) {
-                    $scope.selectNodeNetworkFromValue(whereClause.rhs);
+                    $scope.selectNodeNetworkFromNodeId(whereClause.rhs);
                 }
             };
 
@@ -359,6 +362,14 @@ function($filter, $timeout, connectionService, datasetService, errorNotification
                     columnName: "",
                     prettyName: ""
                 };
+                var selectedNameField = datasetService.getMapping($scope.options.database.name, $scope.options.table.name, "graph_nodes_names") ||
+                    datasetService.getMapping($scope.options.database.name, $scope.options.table.name, "newsfeed_name") || "";
+                $scope.options.selectedNameField = _.find($scope.fields, function(field) {
+                    return field.columnName === selectedNameField;
+                }) || {
+                    columnName: "",
+                    prettyName: ""
+                };
                 var selectedLinkField = datasetService.getMapping($scope.options.database.name, $scope.options.table.name, "graph_links") || "";
                 $scope.options.selectedLinkField = _.find($scope.fields, function(field) {
                     return field.columnName === selectedLinkField;
@@ -366,16 +377,16 @@ function($filter, $timeout, connectionService, datasetService, errorNotification
                     columnName: "",
                     prettyName: ""
                 };
-                var selectedDateField = datasetService.getMapping($scope.options.database.name, $scope.options.table.name, "date") || "";
-                $scope.options.selectedDateField = _.find($scope.fields, function(field) {
-                    return field.columnName === selectedDateField;
+                var selectedLinkNameField = datasetService.getMapping($scope.options.database.name, $scope.options.table.name, "graph_links_names") || "";
+                $scope.options.selectedLinkNameField = _.find($scope.fields, function(field) {
+                    return field.columnName === selectedLinkNameField;
                 }) || {
                     columnName: "",
                     prettyName: ""
                 };
-                var selectedNameField = datasetService.getMapping($scope.options.database.name, $scope.options.table.name, "newsfeed_name") || "";
-                $scope.options.selectedNameField = _.find($scope.fields, function(field) {
-                    return field.columnName === selectedNameField;
+                var selectedDateField = datasetService.getMapping($scope.options.database.name, $scope.options.table.name, "date") || "";
+                $scope.options.selectedDateField = _.find($scope.fields, function(field) {
+                    return field.columnName === selectedDateField;
                 }) || {
                     columnName: "",
                     prettyName: ""
@@ -389,8 +400,9 @@ function($filter, $timeout, connectionService, datasetService, errorNotification
                 };
 
                 $scope.tooltip = {
-                    label: datasetService.getMapping($scope.options.database.name, $scope.options.table.name, "graph_tooltip_label") || DEFAULT_TOOLTIP_LABEL,
-                    count: datasetService.getMapping($scope.options.database.name, $scope.options.table.name, "graph_tooltip_count") || DEFAULT_TOOLTIP_COUNT,
+                    idLabel: datasetService.getMapping($scope.options.database.name, $scope.options.table.name, "graph_tooltip_id_label") || DEFAULT_TOOLTIP_ID_LABEL,
+                    nameLabel: datasetService.getMapping($scope.options.database.name, $scope.options.table.name, "graph_tooltip_name_label") || DEFAULT_TOOLTIP_NAME_LABEL,
+                    sizeLabel: datasetService.getMapping($scope.options.database.name, $scope.options.table.name, "graph_tooltip_size_label") || DEFAULT_TOOLTIP_SIZE_LABEL,
                     sourceLabel: datasetService.getMapping($scope.options.database.name, $scope.options.table.name, "graph_tooltip_source_label") || DEFAULT_TOOLTIP_SOURCE_LABEL,
                     targetLabel: datasetService.getMapping($scope.options.database.name, $scope.options.table.name, "graph_tooltip_target_label") || DEFAULT_TOOLTIP_TARGET_LABEL
                 };
@@ -412,7 +424,7 @@ function($filter, $timeout, connectionService, datasetService, errorNotification
 
                 $scope.mouseoverNetworkId = undefined;
                 $scope.selectedNetworkIds = [];
-                $scope.databaseNodeValues = [];
+                $scope.nodeIds = [];
                 publishNews([]);
 
                 if($scope.graphNodes.length) {
@@ -447,16 +459,16 @@ function($filter, $timeout, connectionService, datasetService, errorNotification
                     var newsItem = {
                         head: item[$scope.options.selectedNodeField.columnName]
                     };
+                    if($scope.options.selectedDateField && $scope.options.selectedDateField.columnName) {
+                        newsItem.date = new Date(item[$scope.options.selectedDateField.columnName]);
+                    }
                     if($scope.options.selectedNameField && $scope.options.selectedNameField.columnName) {
                         newsItem.name = item[$scope.options.selectedNameField.columnName];
-                        delete item[$scope.options.selectedNameField.columnName];
                     }
                     if($scope.options.selectedTextField && $scope.options.selectedTextField.columnName) {
                         newsItem.text = item[$scope.options.selectedTextField.columnName];
+                        // Delete the text from the data to improve our memory preformance because we don't need it any longer.
                         delete item[$scope.options.selectedTextField.columnName];
-                    }
-                    if($scope.options.selectedDateField && $scope.options.selectedDateField.columnName) {
-                        newsItem.date = new Date(item[$scope.options.selectedDateField.columnName]);
                     }
                     news.push(newsItem);
                 });
@@ -508,14 +520,14 @@ function($filter, $timeout, connectionService, datasetService, errorNotification
                 $scope.outstandingNodeQuery = connection.executeQuery(query).xhr.done(function(data) {
                     $scope.outstandingNodeQuery = undefined;
                     for(var i = 0; i < data.data.length; i++) {
-                        var node = data.data[i][$scope.options.selectedNodeField.columnName];
-                        if($scope.databaseNodeValues.indexOf(node) < 0) {
-                            $scope.databaseNodeValues.push(node);
+                        var nodeId = data.data[i][$scope.options.selectedNodeField.columnName];
+                        if($scope.nodeIds.indexOf(nodeId) < 0) {
+                            $scope.nodeIds.push(nodeId);
                         }
                     }
 
                     // Sort the nodes so they are displayed in alphabetical order in the options dropdown.
-                    $scope.databaseNodeValues.sort(function(a, b) {
+                    $scope.nodeIds.sort(function(a, b) {
                         if(typeof a === "string" && typeof b === "string") {
                             return a.toLowerCase().localeCompare(b.toLowerCase());
                         }
@@ -583,6 +595,9 @@ function($filter, $timeout, connectionService, datasetService, errorNotification
                 if($scope.options.selectedNameField && $scope.options.selectedNameField.columnName) {
                     fields.push($scope.options.selectedNameField.columnName);
                 }
+                if($scope.options.selectedLinkNameField && $scope.options.selectedLinkNameField.columnName) {
+                    fields.push($scope.options.selectedLinkNameField.columnName);
+                }
                 if($scope.options.selectedTextField && $scope.options.selectedTextField.columnName) {
                     fields.push($scope.options.selectedTextField.columnName);
                 }
@@ -628,23 +643,25 @@ function($filter, $timeout, connectionService, datasetService, errorNotification
                 var sourcesToTargetsToLinkSize = {};
 
                 /**
-                 * Adds a node for the given value to the list of nodes if it does not already exist and returns the node.
-                 * @param {Number} or {String} value
+                 * Adds a node for the given ID, name, and date to the list of nodes if it does not already exist and returns the node.
+                 * @param {Number} or {String} id
                  * @param {Date} date
+                 * @param {Number} or {String} name
                  * @method addNodeIfUnique
                  * @private
                  * @return {Object}
                  */
-                var addNodeIfUnique = function(value, date) {
+                var addNodeIfUnique = function(id, date, name) {
                     var node = _.find(nodes, function(node) {
-                        return node.id === value;
+                        return node.id === id;
                     });
 
                     if(!node) {
-                        node = createNode(value, NODE_TYPE, MISSING_NODE_GROUP, date);
+                        node = createNode(id, NODE_TYPE, MISSING_NODE_GROUP, date, name);
                         nodes.push(node);
                     } else {
                         node.date = chooseEarliestDate(node.date, date);
+                        node.name = name || node.name;
                     }
 
                     return node;
@@ -652,73 +669,80 @@ function($filter, $timeout, connectionService, datasetService, errorNotification
 
                 /**
                  * Adds a link for the given source and target to the list of links if it does not already exist.
-                 * @param {Number} or {String} sourceValue
-                 * @param {Number} or {String} targetValue
+                 * @param {Number} or {String} sourceId
+                 * @param {Number} or {String} targetId
                  * @param {Date} date
                  * @method addLinkIfUnique
                  * @private
                  */
-                var addLinkIfUnique = function(sourceValue, targetValue, date) {
-                    if(!targetsToSources[targetValue]) {
-                        targetsToSources[targetValue] = [];
+                var addLinkIfUnique = function(sourceId, targetId, date) {
+                    if(!targetsToSources[targetId]) {
+                        targetsToSources[targetId] = [];
                     }
 
-                    if(targetsToSources[targetValue].indexOf(sourceValue) < 0) {
-                        targetsToSources[targetValue].push(sourceValue);
+                    if(targetsToSources[targetId].indexOf(sourceId) < 0) {
+                        targetsToSources[targetId].push(sourceId);
                     }
 
-                    if(!sourcesToTargets[sourceValue]) {
-                        sourcesToTargets[sourceValue] = [];
+                    if(!sourcesToTargets[sourceId]) {
+                        sourcesToTargets[sourceId] = [];
                     }
 
-                    if(sourcesToTargets[sourceValue].indexOf(targetValue) < 0) {
-                        sourcesToTargets[sourceValue].push(targetValue);
-                        var link = createLink(sourceValue, NODE_TYPE, targetValue, NODE_TYPE, date);
+                    if(sourcesToTargets[sourceId].indexOf(targetId) < 0) {
+                        sourcesToTargets[sourceId].push(targetId);
+                        var link = createLink(sourceId, NODE_TYPE, targetId, NODE_TYPE, date);
                         links.push(link);
-                        if(!sourcesToTargetsToLinkSize[sourceValue]) {
-                            sourcesToTargetsToLinkSize[sourceValue] = {};
+                        if(!sourcesToTargetsToLinkSize[sourceId]) {
+                            sourcesToTargetsToLinkSize[sourceId] = {};
                         }
-                        sourcesToTargetsToLinkSize[sourceValue][targetValue] = 1;
+                        sourcesToTargetsToLinkSize[sourceId][targetId] = 1;
                     } else {
                         var link = _.find(links, function(link) {
-                            return link.sourceId === sourceValue && link.targetId === targetValue;
+                            return link.sourceId === sourceId && link.targetId === targetId;
                         });
                         link.date = chooseEarliestDate(link.date, date);
-                        sourcesToTargetsToLinkSize[sourceValue][targetValue]++;
+                        sourcesToTargetsToLinkSize[sourceId][targetId]++;
                     }
                 };
 
-                // Add each unique value from the data to the graph as a node.
-                data.forEach(function(row) {
-                    var nodeValue = row[$scope.options.selectedNodeField.columnName];
-                    var rowDate = ($scope.options.selectedDateField && $scope.options.selectedDateField.columnName) ? new Date(row[$scope.options.selectedDateField.columnName]) : undefined;
+                // Add each unique node from the data to the graph as a node.
+                data.forEach(function(item) {
+                    var nodeId = item[$scope.options.selectedNodeField.columnName];
+                    var nodeName = ($scope.options.selectedNameField && $scope.options.selectedNameField.columnName) ? item[$scope.options.selectedNameField.columnName] : nodeId;
+                    var itemDate = ($scope.options.selectedDateField && $scope.options.selectedDateField.columnName) ? new Date(item[$scope.options.selectedDateField.columnName]) : undefined;
 
-                    if(nodeValue) {
-                        var node = addNodeIfUnique(nodeValue, rowDate);
+                    if(nodeId) {
+                        var node = addNodeIfUnique(nodeId, itemDate, nodeName);
                         // Add to size for each instance of the node in the data.
                         node.size++;
                         // Nodes that exist in the data are put in the default group.  Nodes that exist only as linked nodes are put in the missing group.
                         node.group = (node.group === MISSING_NODE_GROUP ? DEFAULT_NODE_GROUP : node.group);
                         nodeIds[node.id] = true;
 
-                        if($scope.options.selectedLinkField && $scope.options.selectedLinkField.columnName && row[$scope.options.selectedLinkField.columnName]) {
-                            var linkedNodeValues = row[$scope.options.selectedLinkField.columnName] || [];
-                            linkedNodeValues = (linkedNodeValues.constructor === Array) ? linkedNodeValues : [linkedNodeValues];
+                        if($scope.options.selectedLinkField && $scope.options.selectedLinkField.columnName) {
+                            var linkedNodeIds = item[$scope.options.selectedLinkField.columnName] || [];
+                            linkedNodeIds = (linkedNodeIds.constructor === Array) ? linkedNodeIds : [linkedNodeIds];
+
+                            var linkedNodeNames = [];
+                            if($scope.options.selectedLinkNameField && $scope.options.selectedLinkNameField.columnName) {
+                                linkedNodeNames = item[$scope.options.selectedLinkNameField.columnName] || [];
+                                linkedNodeNames = (linkedNodeNames.constructor === Array) ? linkedNodeNames : [linkedNodeNames];
+                            }
 
                             // Add each related node to the graph as a node with a link to the original node.
-                            linkedNodeValues.forEach(function(linkedNodeValue) {
-                                if(linkedNodeValue && linkedNodeValue !== nodeValue) {
+                            linkedNodeIds.forEach(function(linkedNodeId, index) {
+                                if(linkedNodeId && linkedNodeId !== nodeId) {
                                     // Nodes for linked nodes start at size 0.  Any instance of the linked node in the data will add to its size.
                                     // If the linked node is not in the data, the size and type will be indicators to the user.
-                                    addNodeIfUnique(linkedNodeValue, rowDate);
-                                    addLinkIfUnique(linkedNodeValue, nodeValue, rowDate);
+                                    addNodeIfUnique(linkedNodeId, itemDate, linkedNodeNames[index]);
+                                    addLinkIfUnique(linkedNodeId, nodeId, itemDate);
                                 }
                             });
                         }
                     }
                 });
 
-                $scope.nodeValuesToNetworkIds = {};
+                $scope.nodeIdsToNetworkIds = {};
 
                 var result = clusterAndHideNodes(nodes, links, sourcesToTargets, targetsToSources, nodeIds);
                 nodes = result.nodes;
@@ -733,24 +757,25 @@ function($filter, $timeout, connectionService, datasetService, errorNotification
 
             /**
              * Creates and returns a new node for the graph.
-             * @param {Number} or {String} value
+             * @param {Number} or {String} id
              * @param {Number} or {String} type
              * @param {Number} or {String} group
-             * @param {Date} date
+             * @param {Date} date (optional)
+             * @param {Number} or {String} name (optional)
              * @method createNode
              * @private
              * @return {Object}
              */
-            var createNode = function(value, type, group, date) {
+            var createNode = function(id, type, group, date, name) {
                 return {
-                    id: value,
+                    id: id,
                     date: date,
                     group: group,
-                    name: value,
+                    name: name || "",
                     network: 0,
                     size: 0,
                     type: type,
-                    key: createNodeKey(value, type)
+                    key: createNodeKey(id, type)
                 };
             };
 
@@ -767,19 +792,19 @@ function($filter, $timeout, connectionService, datasetService, errorNotification
             };
 
             /**
-             * Creates and returns a new link connecting two nodes with the given values.
-             * @param {Number} or {String} sourceValue
+             * Creates and returns a new link connecting two nodes with the given IDs.
+             * @param {Number} or {String} sourceId
              * @param {Number} or {String} sourceType
-             * @param {Number} or {String} targetValue
+             * @param {Number} or {String} targetId
              * @param {Number} or {String} targetType
              * @method createLink
              * @private
              * @return {Object}
              */
-            var createLink = function(sourceValue, sourceType, targetValue, targetType, date) {
+            var createLink = function(sourceId, sourceType, targetId, targetType, date) {
                 return {
-                    sourceId: sourceValue,
-                    targetId: targetValue,
+                    sourceId: sourceId,
+                    targetId: targetId,
                     sourceType: sourceType,
                     targetType: targetType,
                     date: date
@@ -890,7 +915,7 @@ function($filter, $timeout, connectionService, datasetService, errorNotification
                         } else {
                             resultNodes.push(node);
                         }
-                        $scope.nodeValuesToNetworkIds[node.id] = 0;
+                        $scope.nodeIdsToNetworkIds[node.id] = 0;
                     }
                 });
 
@@ -957,7 +982,7 @@ function($filter, $timeout, connectionService, datasetService, errorNotification
              * @return {Array}
              */
             var finalizeNetworksAndCreateLinks = function(nodes, links, sourcesToTargetsToLinkSize) {
-                // While the input links connect source node value to target node value, D3 links must connect source node index to target node index.
+                // While the input links connect source node IDs to target node IDs, D3 links must connect source node index to target node index.
                 var indexLinks = [];
 
                 var nextFreeNetworkId = 1;
@@ -995,8 +1020,8 @@ function($filter, $timeout, connectionService, datasetService, errorNotification
                             });
                         }
 
-                        saveValueToNetworkIdMapping(sourceNode);
-                        saveValueToNetworkIdMapping(targetNode);
+                        saveNodeIdToNetworkIdMapping(sourceNode);
+                        saveNodeIdToNetworkIdMapping(targetNode);
 
                         var size = sourcesToTargetsToLinkSize[sourceNode.id] ? sourcesToTargetsToLinkSize[sourceNode.id][targetNode.id] || 0 : 0;
                         if(sourceNode.type === CLUSTER_TYPE) {
@@ -1041,18 +1066,18 @@ function($filter, $timeout, connectionService, datasetService, errorNotification
             };
 
             /**
-             * Saves the value to network ID mapping of the given node in the global map.  If the node is a cluster, also saves the mappings for all nodes in the cluster.
+             * Saves the node ID to network ID mapping of the given node in the global map.  If the node is a cluster, also saves the mappings for all nodes in the cluster.
              * @param {Object} node
-             * @method saveValueToNetworkIdMapping
+             * @method saveNodeIdToNetworkIdMapping
              * @private
              */
-            var saveValueToNetworkIdMapping = function(node) {
+            var saveNodeIdToNetworkIdMapping = function(node) {
                 if(node.type === CLUSTER_TYPE) {
                     node.nodes.forEach(function(nodeInCluster) {
-                        saveValueToNetworkIdMapping(nodeInCluster);
+                        saveNodeIdToNetworkIdMapping(nodeInCluster);
                     });
                 } else {
-                    $scope.nodeValuesToNetworkIds[node.id] = node.network;
+                    $scope.nodeIdsToNetworkIds[node.id] = node.network;
                 }
             };
 
@@ -1067,7 +1092,7 @@ function($filter, $timeout, connectionService, datasetService, errorNotification
             var saveDataAndUpdateGraph = function(nodes, links, sourcesToTargetsToLinkSize) {
                 $scope.numberOfVisibleNodes = nodes.length;
                 $scope.graphNodes = nodes;
-                // Sets the node/link network IDs and transforms links connecting node values to links connecting node indices.
+                // Sets the node/link network IDs and transforms links connecting node IDs to links connecting node indices.
                 $scope.graphLinks = finalizeNetworksAndCreateLinks(nodes, links, sourcesToTargetsToLinkSize);
                 initializeDateBuckets();
 
@@ -1217,17 +1242,21 @@ function($filter, $timeout, connectionService, datasetService, errorNotification
                         '<span class="graph-tooltip-value">Cluster of ' + nodesInCluster.length + '</span>' +
                         '</div>' +
                         '<div class="graph-tooltip-block">' +
-                        '<span class="graph-tooltip-label">Total ' + $scope.tooltip.count + '</span>' +
+                        '<span class="graph-tooltip-label">Total ' + $scope.tooltip.sizeLabel + '</span>' +
                         '<span class="graph-tooltip-value">' + size + '</span>' +
                         '</div>';
                 }
 
                 return '<div class="graph-tooltip-block">' +
-                    '<span class="graph-tooltip-label">' + $scope.tooltip.label + '</span>' +
+                    '<span class="graph-tooltip-label">' + $scope.tooltip.nameLabel + '</span>' +
                     '<span class="graph-tooltip-value">' + node.name + '</span>' +
                     '</div>' +
                     '<div class="graph-tooltip-block">' +
-                    '<span class="graph-tooltip-label">' + $scope.tooltip.count + '</span>' +
+                    '<span class="graph-tooltip-label">' + $scope.tooltip.idLabel + '</span>' +
+                    '<span class="graph-tooltip-value">' + node.id + '</span>' +
+                    '</div>' +
+                    '<div class="graph-tooltip-block">' +
+                    '<span class="graph-tooltip-label">' + $scope.tooltip.sizeLabel + '</span>' +
                     '<span class="graph-tooltip-value">' + node.size + '</span>' +
                     '</div>' +
                     '<div class="graph-tooltip-block">' +
@@ -1318,7 +1347,7 @@ function($filter, $timeout, connectionService, datasetService, errorNotification
                     '<span class="graph-tooltip-value">' + targetName + '</span>' +
                     '</div>' +
                     '<div class="graph-tooltip-block">' +
-                    '<span class="graph-tooltip-label">' + $scope.tooltip.count + '</span>' +
+                    '<span class="graph-tooltip-label">' + $scope.tooltip.sizeLabel + '</span>' +
                     // TODO Correctly calculate link size for clusters with a selected date bucket.
                     '<span class="graph-tooltip-value">' + link.size + '</span>' +
                     '</div>';
@@ -1443,6 +1472,7 @@ function($filter, $timeout, connectionService, datasetService, errorNotification
                 query.limitClause = exportService.getLimitClause();
                 query.ignoreFilters_ = exportService.getIgnoreFilters();
                 query.ignoredFilterIds_ = exportService.getIgnoredFilterIds();
+                // TODO Update due to recent graph changes.
                 var fields = [];
                 if($scope.options.selectedNodeField.columnName && $scope.options.selectedLinkField.columnName) {
                     fields = [{
