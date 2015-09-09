@@ -60,8 +60,8 @@
 
 <div class="header-container filter-container">
     <h4 class="pull-left">Showing 
-        <span class="count text-primary" ng-bind="tableOptions.data.length"></span> of 
-        <span ng-bind="totalRows"></span>
+        <span class="count text-primary" ng-bind="tableOptions.data.length | number"></span> of 
+        <span ng-bind="totalRows | number"></span>
     </h4>
 </div>
 

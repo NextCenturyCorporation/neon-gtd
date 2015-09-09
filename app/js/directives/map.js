@@ -28,8 +28,8 @@
  * @constructor
  */
 angular.module('neonDemo.directives')
-.directive('map', ['ConnectionService', 'DatasetService', 'ErrorNotificationService', 'FilterService', 'ExportService', '$timeout',
-    function(connectionService, datasetService, errorNotificationService, filterService, exportService, $timeout) {
+.directive('map', ['ConnectionService', 'DatasetService', 'ErrorNotificationService', 'FilterService', 'ExportService', '$timeout', '$filter',
+    function(connectionService, datasetService, errorNotificationService, filterService, exportService, $timeout, $filter) {
     return {
         templateUrl: 'partials/directives/map.html',
         restrict: 'EA',
@@ -55,7 +55,7 @@ angular.module('neonDemo.directives')
                             for(var j = 0; j < limitedLayers.length; ++j) {
                                 text += (j ? ", " + limitedLayers[j] : limitedLayers[j]);
                             }
-                            text += " limit " + limits[i];
+                            text += " limit " + $filter('number')(limits[i]);
                         }
                     }
                 }

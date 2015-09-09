@@ -17,8 +17,8 @@
  */
 
 angular.module('neonDemo.directives')
-.directive('countBy', ['external', 'popups', 'ConnectionService', 'DatasetService', 'ErrorNotificationService', 'FilterService', 'ExportService',
-function(external, popups, connectionService, datasetService, errorNotificationService, filterService, exportService) {
+.directive('countBy', ['external', 'popups', 'ConnectionService', 'DatasetService', 'ErrorNotificationService', 'FilterService', 'ExportService', '$filter',
+function(external, popups, connectionService, datasetService, errorNotificationService, filterService, exportService, $filter) {
     return {
         templateUrl: 'partials/directives/countby.html',
         restrict: 'EA',
@@ -216,6 +216,9 @@ function(external, popups, connectionService, datasetService, errorNotificationS
                 }, {
                     name: createAggregationColumnName(),
                     field: $scope.options.aggregation === "count" ? "count" : $scope.options.aggregationField.columnName,
+                    formatter: function(row, cell, value) {
+                        return $filter('number')(value);
+                    },
                     width: tableWidth
                 }];
 
