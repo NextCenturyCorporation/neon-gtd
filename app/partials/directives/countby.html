@@ -53,7 +53,7 @@
 <div class="clearfix"></div>
 
 <div class="header-container filter-container">
-    <h4 class="pull-left"><span class="count text-primary ng-binding" ng-bind="count"></span> values</h4>
+    <h4 class="pull-left"><span class="count text-primary ng-binding" ng-bind="count | number"></span> values</h4>
 
     <div class="header-item filter-reset pull-right" ng-class="{true: 'hidden', false: ''}[filterSet === undefined]" title="{{filterSet.key}}={{filterSet.value}}">
         <span class="filter-label" ng-bind="filterSet.value"></span>

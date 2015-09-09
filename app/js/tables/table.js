@@ -246,7 +246,7 @@ tables.Table.createSlickgridColumn_ = function(column) {
     slickgridColumn.field = column.field ? column.field : column.name;
     slickgridColumn.focusable = true;
     slickgridColumn.sortable = true;
-    slickgridColumn.formatter = tables.Table.defaultCellFormatter_;
+    slickgridColumn.formatter = column.formatter;
     if(column.width) {
         slickgridColumn.width = column.width;
     }

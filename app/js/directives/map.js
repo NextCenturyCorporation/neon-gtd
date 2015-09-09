@@ -28,8 +28,8 @@
  * @constructor
  */
 angular.module('neonDemo.directives')
-.directive('map', ['ConnectionService', 'DatasetService', 'ErrorNotificationService', 'FilterService', 'ExportService', '$timeout',
-    function(connectionService, datasetService, errorNotificationService, filterService, exportService, $timeout) {
+.directive('map', ['ConnectionService', 'DatasetService', 'ErrorNotificationService', 'FilterService', 'ExportService', '$timeout', '$filter',
+    function(connectionService, datasetService, errorNotificationService, filterService, exportService, $timeout, $filter) {
     return {
         templateUrl: 'partials/directives/map.html',
         restrict: 'EA',
@@ -55,7 +55,7 @@ angular.module('neonDemo.directives')
                             for(var j = 0; j < limitedLayers.length; ++j) {
                                 text += (j ? ", " + limitedLayers[j] : limitedLayers[j]);
                             }
-                            text += " limit " + limits[i];
+                            text += " limit " + $filter('number')(limits[i]);
                         }
                     }
                 }
@@ -732,7 +732,11 @@ angular.module('neonDemo.directives')
                     $scope.outstandingQuery.abort();
                 }
 
-                $scope.outstandingQuery = connection.executeQuery(query).xhr.done(function(queryResults) {
+                $scope.outstandingQuery = connection.executeQuery(query);
+                $scope.outstandingQuery.always(function() {
+                    $scope.outstandingQuery = undefined;
+                });
+                $scope.outstandingQuery.done(function(queryResults) {
                     $scope.$apply(function() {
                         XDATA.userALE.log({
                             activity: "alter",
@@ -744,7 +748,6 @@ angular.module('neonDemo.directives')
                             source: "system",
                             tags: ["receive", "map"]
                         });
-                        $scope.outstandingQuery = undefined;
                         $scope.updateMapData(database, table, queryResults);
 
                         XDATA.userALE.log({
@@ -758,8 +761,8 @@ angular.module('neonDemo.directives')
                             tags: ["render", "map"]
                         });
                     });
-                }).fail(function(response) {
-                    $scope.outstandingQuery = undefined;
+                });
+                $scope.outstandingQuery.fail(function(response) {
                     if(response.status === 0) {
                         XDATA.userALE.log({
                             activity: "alter",

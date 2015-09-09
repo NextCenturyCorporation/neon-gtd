@@ -530,8 +530,11 @@ function($filter, $timeout, connectionService, datasetService, errorNotification
                     $scope.outstandingNodeQuery.abort();
                 }
 
-                $scope.outstandingNodeQuery = connection.executeQuery(query).xhr.done(function(data) {
+                $scope.outstandingNodeQuery = connection.executeQuery(query);
+                $scope.outstandingNodeQuery.always(function() {
                     $scope.outstandingNodeQuery = undefined;
+                });
+                $scope.outstandingNodeQuery.done(function(data) {
                     for(var i = 0; i < data.data.length; i++) {
                         var nodeId = data.data[i][$scope.options.selectedNodeField.columnName];
                         if($scope.nodeIds.indexOf(nodeId) < 0) {
@@ -552,8 +555,8 @@ function($filter, $timeout, connectionService, datasetService, errorNotification
                         }
                         return 0;
                     });
-                }).fail(function(response) {
-                    $scope.outstandingNodeQuery = undefined;
+                });
+                $scope.outstandingNodeQuery.fail(function(response) {
                     if(response.responseJSON) {
                         $scope.errorMessage = errorNotificationService.showErrorMessage($element, response.responseJSON.error, response.responseJSON.stackTrace);
                     }
@@ -580,14 +583,17 @@ function($filter, $timeout, connectionService, datasetService, errorNotification
                     $scope.outstandingGraphQuery.abort();
                 }
 
-                $scope.outstandingGraphQuery = connection.executeQuery(query).xhr.done(function(response) {
+                $scope.outstandingGraphQuery = connection.executeQuery(query);
+                $scope.outstandingGraphQuery.always(function() {
                     $scope.outstandingGraphQuery = undefined;
+                });
+                $scope.outstandingGraphQuery.done(function(response) {
                     if(response.data.length) {
                         createAndShowGraph(response.data);
                     }
                     $scope.loadingData = false;
-                }).fail(function(response) {
-                    $scope.outstandingGraphQuery = undefined;
+                });
+                $scope.outstandingGraphQuery.fail(function(response) {
                     if(response.status !== 0) {
                         $scope.$apply(function() {
                             saveDataAndUpdateGraph([], []);

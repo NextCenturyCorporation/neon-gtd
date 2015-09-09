@@ -273,7 +273,11 @@ function(connectionService, datasetService, errorNotificationService, exportServ
                     $scope.outstandingQuery.abort();
                 }
 
-                $scope.outstandingQuery = connection.executeQuery(query).xhr.done(function(queryResults) {
+                $scope.outstandingQuery = connection.executeQuery(query);
+                $scope.outstandingQuery.always(function() {
+                    $scope.outstandingQuery = undefined;
+                });
+                $scope.outstandingQuery.done(function(queryResults) {
                     XDATA.userALE.log({
                         activity: "alter",
                         action: "receive",
@@ -285,7 +289,6 @@ function(connectionService, datasetService, errorNotificationService, exportServ
                         tags: ["circularheatform"]
                     });
                     $scope.$apply(function() {
-                        $scope.outstandingQuery = undefined;
                         $scope.updateChartData(queryResults);
                         $scope.loadingData = false;
                         XDATA.userALE.log({
@@ -299,8 +302,8 @@ function(connectionService, datasetService, errorNotificationService, exportServ
                             tags: ["circularheatform"]
                         });
                     });
-                }).fail(function(response) {
-                    $scope.outstandingQuery = undefined;
+                });
+                $scope.outstandingQuery.fail(function(response) {
                     if(response.status === 0) {
                         XDATA.userALE.log({
                             activity: "alter",
