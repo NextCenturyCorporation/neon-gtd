@@ -561,6 +561,18 @@ charts.DirectedGraph.prototype.getCollisionFunction = function() {
     };
 };
 
+charts.DirectedGraph.prototype.pulseNodes = function(nodeIds) {
+    var me = this;
+
+    me.vis.selectAll(".node").filter(function(nodeData) {
+        return nodeIds.indexOf(nodeData.id) >= 0;
+    }).call(function(nodeData) {
+        nodeData.transition().duration(500).attr("r", function(nodeData) {
+            return me.getNodeSize(nodeData) * 5;
+        }).transition().duration(500).attr("r", me.getNodeSize).ease("sine");
+    });
+};
+
 charts.DirectedGraph.prototype.DEFAULT_WIDTH = 600;
 charts.DirectedGraph.prototype.DEFAULT_HEIGHT = 350;
 

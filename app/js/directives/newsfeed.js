@@ -76,10 +76,8 @@ angular.module('neonDemo.directives')
              */
             var onNewsHighlights = function(message) {
                 if(message.highlights) {
-                    $scope.$apply(function() {
-                        $scope.data.highlights.heads = message.highlights.heads || [];
-                        $scope.data.highlights.names = message.highlights.names || [];
-                    });
+                    $scope.data.highlights.heads = message.highlights.heads || [];
+                    $scope.data.highlights.names = message.highlights.names || [];
                 }
             };
 
