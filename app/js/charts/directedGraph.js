@@ -452,9 +452,9 @@ charts.DirectedGraph.prototype.handleZoom = function() {
 
 charts.DirectedGraph.prototype.showTooltip = function(text) {
     var parentOffset = $(this.rootElement).offset();
-    this.tooltip.transition().duration(200).style("opacity", 0.9)
+    this.tooltip.transition().duration(200).style("opacity", 1)
         .style("left", (d3.event.pageX - parentOffset.left + 10) + "px")
-        .style("top", (d3.event.pageY - parentOffset.top - 20) + "px");
+        .style("top", (d3.event.pageY - parentOffset.top + 10) + "px");
     this.tooltip.html(text);
 };
 

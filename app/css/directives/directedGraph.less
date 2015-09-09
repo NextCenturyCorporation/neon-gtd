@@ -21,12 +21,33 @@
     overflow: hidden;
 
     .graph-tooltip {
-        position: absolute;
-        padding: 5px;
-        font: 12px sans-serif;
-        background: @tooltip-background;
+        background: @dark-tooltip-background;
         border-radius: 4px;
+        color: @light-text-color;
+        font-size: 15px;
+        font-weight: bold;
+        padding: 5px;
+        position: absolute;
         pointer-events: none;
+        white-space: nowrap;
+
+        .graph-tooltip-block {
+            text-align: center;
+
+            .graph-tooltip-label {
+                color: #ddd;
+            }
+
+            .graph-tooltip-value {
+                font-size: 22px;
+                position: relative;
+                top: 2px;
+            }
+
+            .graph-tooltip-label+.graph-tooltip-value {
+                margin-left: 5px;
+            }
+        }
     }
 
     .link {

@@ -64,6 +64,18 @@ function($filter, $timeout, connectionService, datasetService, errorNotification
             // Name for the arrowhead marker with the focused color.
             var FOCUSED_COLOR_ARROWHEAD = "focused";
 
+            var DEFAULT_TOOLTIP_LABEL = "";
+            var DEFAULT_TOOLTIP_COUNT = "Count";
+            var DEFAULT_TOOLTIP_SOURCE_LABEL = "From";
+            var DEFAULT_TOOLTIP_TARGET_LABEL = "To";
+
+            $scope.tooltip = {
+                label: DEFAULT_TOOLTIP_LABEL,
+                count: DEFAULT_TOOLTIP_COUNT,
+                sourceLabel: DEFAULT_TOOLTIP_SOURCE_LABEL,
+                targetLabel: DEFAULT_TOOLTIP_TARGET_LABEL
+            };
+
             $scope.TIMEOUT_MS = 250;
 
             $scope.databases = [];
@@ -376,6 +388,13 @@ function($filter, $timeout, connectionService, datasetService, errorNotification
                     prettyName: ""
                 };
 
+                $scope.tooltip = {
+                    label: datasetService.getMapping($scope.options.database.name, $scope.options.table.name, "graph_tooltip_label") || DEFAULT_TOOLTIP_LABEL,
+                    count: datasetService.getMapping($scope.options.database.name, $scope.options.table.name, "graph_tooltip_count") || DEFAULT_TOOLTIP_COUNT,
+                    sourceLabel: datasetService.getMapping($scope.options.database.name, $scope.options.table.name, "graph_tooltip_source_label") || DEFAULT_TOOLTIP_SOURCE_LABEL,
+                    targetLabel: datasetService.getMapping($scope.options.database.name, $scope.options.table.name, "graph_tooltip_target_label") || DEFAULT_TOOLTIP_TARGET_LABEL
+                };
+
                 $scope.queryForData();
             };
 
@@ -605,6 +624,8 @@ function($filter, $timeout, connectionService, datasetService, errorNotification
                 var links = [];
                 // The IDs of the nodes that exist in the node field of the data.
                 var nodeIds = {};
+                // Maps source node IDs to target node IDS to their link size.
+                var sourcesToTargetsToLinkSize = {};
 
                 /**
                  * Adds a node for the given value to the list of nodes if it does not already exist and returns the node.
@@ -652,13 +673,18 @@ function($filter, $timeout, connectionService, datasetService, errorNotification
 
                     if(sourcesToTargets[sourceValue].indexOf(targetValue) < 0) {
                         sourcesToTargets[sourceValue].push(targetValue);
-                        links.push(createLink(sourceValue, NODE_TYPE, targetValue, NODE_TYPE, date));
+                        var link = createLink(sourceValue, NODE_TYPE, targetValue, NODE_TYPE, date);
+                        links.push(link);
+                        if(!sourcesToTargetsToLinkSize[sourceValue]) {
+                            sourcesToTargetsToLinkSize[sourceValue] = {};
+                        }
+                        sourcesToTargetsToLinkSize[sourceValue][targetValue] = 1;
                     } else {
                         var link = _.find(links, function(link) {
                             return link.sourceId === sourceValue && link.targetId === targetValue;
                         });
                         link.date = chooseEarliestDate(link.date, date);
-                        link.size++;
+                        sourcesToTargetsToLinkSize[sourceValue][targetValue]++;
                     }
                 };
 
@@ -701,7 +727,7 @@ function($filter, $timeout, connectionService, datasetService, errorNotification
                 sortNodesAndLinks(nodes, links);
 
                 $scope.$apply(function() {
-                    saveDataAndUpdateGraph(nodes, links);
+                    saveDataAndUpdateGraph(nodes, links, sourcesToTargetsToLinkSize);
                 });
             };
 
@@ -756,8 +782,7 @@ function($filter, $timeout, connectionService, datasetService, errorNotification
                     targetId: targetValue,
                     sourceType: sourceType,
                     targetType: targetType,
-                    date: date,
-                    size: 1
+                    date: date
                 };
             };
 
@@ -823,29 +848,33 @@ function($filter, $timeout, connectionService, datasetService, errorNotification
                             return node.type === CLUSTER_TYPE && node.id === clusterId;
                         });
                         cluster.nodes.push(nodeToCluster);
+                        cluster.size += nodeToCluster.size;
                         cluster.date = chooseEarliestDate(cluster.date, nodeToCluster.date);
                     }
 
-                    // Create a new link between the cluster node and the other node.  Use the cluster node ID as the source/target ID for the link.
-                    resultLinks.push(createLink((sourceId || clusterId), (sourceId ? NODE_TYPE : CLUSTER_TYPE), (targetId || clusterId), (targetId ? NODE_TYPE : CLUSTER_TYPE), nodeToCluster.date));
+                    // If one doesn't exist, create a new link between the cluster node and the other node.  Use the cluster node ID as the source/target ID for the link.
+                    if(!((sourceId && sourcesToClusterTargets[sourceId]) || (targetId && targetsToClusterSources[targetId]))) {
+                        var link = createLink((sourceId || clusterId), (sourceId ? NODE_TYPE : CLUSTER_TYPE), (targetId || clusterId), (targetId ? NODE_TYPE : CLUSTER_TYPE), nodeToCluster.date);
+                        resultLinks.push(link);
+                    }
                     return clusterId;
                 };
 
                 nodes.forEach(function(node) {
-                    var numberOfTargets = sourcesToTargets[node.id] ? sourcesToTargets[node.id].length : 0;
-                    var numberOfSources = targetsToSources[node.id] ? targetsToSources[node.id].length : 0;
+                    node.numberOfTargets = sourcesToTargets[node.id] ? sourcesToTargets[node.id].length : 0;
+                    node.numberOfSources = targetsToSources[node.id] ? targetsToSources[node.id].length : 0;
 
                     // If the node is a missing type or has more than one link, keep it; otherwise, add it to a cluster.
-                    if(node.group === MISSING_NODE_GROUP || numberOfTargets > 1 || numberOfSources > 1 || (numberOfTargets === 1 && numberOfSources === 1)) {
+                    if(node.group === MISSING_NODE_GROUP || node.numberOfTargets > 1 || node.numberOfSources > 1 || (node.numberOfTargets === 1 && node.numberOfSources === 1)) {
                         resultNodes.push(node);
-                    } else if(numberOfTargets === 1) {
+                    } else if(node.numberOfTargets === 1) {
                         var targetId = sourcesToTargets[node.id][0];
                         if(shouldCluster(targetId, targetsToSources, sourcesToTargets)) {
                             targetsToClusterSources[targetId] = addCluster(targetsToClusterSources[targetId], null, targetId, node);
                         } else if(!($scope.options.hideNodesWithZeroOrOneLink && targetsToSources[targetId].length === 1 && nodeIds[targetId])) {
                             resultNodes.push(node);
                         }
-                    } else if(numberOfSources === 1) {
+                    } else if(node.numberOfSources === 1) {
                         var sourceId = targetsToSources[node.id][0];
                         if(shouldCluster(sourceId, sourcesToTargets, targetsToSources)) {
                             sourcesToClusterTargets[sourceId] = addCluster(sourcesToClusterTargets[sourceId], sourceId, null, node);
@@ -856,6 +885,7 @@ function($filter, $timeout, connectionService, datasetService, errorNotification
                         if($scope.options.useNodeClusters) {
                             // If the node has no links, add it to the cluster node for unlinked nodes.
                             unlinkedCluster.nodes.push(node);
+                            unlinkedCluster.size += node.size;
                             unlinkedCluster.date = chooseEarliestDate(unlinkedCluster.date, node.date);
                         } else {
                             resultNodes.push(node);
@@ -921,11 +951,12 @@ function($filter, $timeout, connectionService, datasetService, errorNotification
              * given list of nodes and links containing source and target node IDs.
              * @param {Array} nodes
              * @param {Array} links
+             * @param {Object} sourcesToTargetsToLinkSize
              * @method finalizeNetworksAndCreateLinks
              * @private
              * @return {Array}
              */
-            var finalizeNetworksAndCreateLinks = function(nodes, links) {
+            var finalizeNetworksAndCreateLinks = function(nodes, links, sourcesToTargetsToLinkSize) {
                 // While the input links connect source node value to target node value, D3 links must connect source node index to target node index.
                 var indexLinks = [];
 
@@ -967,11 +998,23 @@ function($filter, $timeout, connectionService, datasetService, errorNotification
                         saveValueToNetworkIdMapping(sourceNode);
                         saveValueToNetworkIdMapping(targetNode);
 
+                        var size = sourcesToTargetsToLinkSize[sourceNode.id] ? sourcesToTargetsToLinkSize[sourceNode.id][targetNode.id] || 0 : 0;
+                        if(sourceNode.type === CLUSTER_TYPE) {
+                            sourceNode.nodes.forEach(function(nodeInCluster) {
+                                size += sourcesToTargetsToLinkSize[nodeInCluster.id][targetNode.id];
+                            });
+                        }
+                        if(targetNode.type === CLUSTER_TYPE) {
+                            targetNode.nodes.forEach(function(nodeInCluster) {
+                                size += sourcesToTargetsToLinkSize[sourceNode.id][nodeInCluster.id];
+                            });
+                        }
+
                         indexLinks.push({
                             source: sourceIndex,
                             target: targetIndex,
                             date: link.date,
-                            size: link.size,
+                            size: size,
                             network: sourceNode.network,
                             key: createLinkKey(link.sourceId, link.sourceType, link.targetId, link.targetType)
                         });
@@ -1017,14 +1060,15 @@ function($filter, $timeout, connectionService, datasetService, errorNotification
              * Saves the given nodes and links and updates this visualization's network graph using the data.
              * @param {Array} nodes
              * @param {Array} links
+             * @param {Object} sourcesToTargetsToLinkSize
              * @method saveDataAndUpdateGraph
              * @private
              */
-            var saveDataAndUpdateGraph = function(nodes, links) {
+            var saveDataAndUpdateGraph = function(nodes, links, sourcesToTargetsToLinkSize) {
                 $scope.numberOfVisibleNodes = nodes.length;
                 $scope.graphNodes = nodes;
                 // Sets the node/link network IDs and transforms links connecting node values to links connecting node indices.
-                $scope.graphLinks = finalizeNetworksAndCreateLinks(nodes, links);
+                $scope.graphLinks = finalizeNetworksAndCreateLinks(nodes, links, sourcesToTargetsToLinkSize);
                 initializeDateBuckets();
 
                 $scope.graph.updateGraph({
@@ -1165,13 +1209,35 @@ function($filter, $timeout, connectionService, datasetService, errorNotification
             var createNodeTooltip = function(node) {
                 if(node.type === CLUSTER_TYPE) {
                     var nodesInCluster = $scope.selectedDateBucket ? node.nodesForSelectedDateBucket : node.nodes;
-                    var text = "<div>Cluster of " + nodesInCluster.length + ":</div><ul>";
+                    var size = 0;
                     nodesInCluster.forEach(function(nodeInCluster) {
-                        text += "<li>" + createNodeTooltip(nodeInCluster) + "</li>";
+                        size += nodeInCluster.size;
                     });
-                    return text;
+                    return '<div class="graph-tooltip-block">' +
+                        '<span class="graph-tooltip-value">Cluster of ' + nodesInCluster.length + '</span>' +
+                        '</div>' +
+                        '<div class="graph-tooltip-block">' +
+                        '<span class="graph-tooltip-label">Total ' + $scope.tooltip.count + '</span>' +
+                        '<span class="graph-tooltip-value">' + size + '</span>' +
+                        '</div>';
                 }
-                return "<div>" + node.name + "</div><div>Count:  " + node.size + "</div>";
+
+                return '<div class="graph-tooltip-block">' +
+                    '<span class="graph-tooltip-label">' + $scope.tooltip.label + '</span>' +
+                    '<span class="graph-tooltip-value">' + node.name + '</span>' +
+                    '</div>' +
+                    '<div class="graph-tooltip-block">' +
+                    '<span class="graph-tooltip-label">' + $scope.tooltip.count + '</span>' +
+                    '<span class="graph-tooltip-value">' + node.size + '</span>' +
+                    '</div>' +
+                    '<div class="graph-tooltip-block">' +
+                    '<span class="graph-tooltip-label">' + $scope.tooltip.sourceLabel + '</span>' +
+                    '<span class="graph-tooltip-value">' + node.numberOfSources + '</span>' +
+                    '</div>' +
+                    '<div class="graph-tooltip-block">' +
+                    '<span class="graph-tooltip-label">' + $scope.tooltip.targetLabel + '</span>' +
+                    '<span class="graph-tooltip-value">' + node.numberOfTargets + '</span>' +
+                    '</div>';
             };
 
             /**
@@ -1232,7 +1298,31 @@ function($filter, $timeout, connectionService, datasetService, errorNotification
              * @return {String}
              */
             var createLinkTooltip = function(link) {
-                return "<div>Count:  " + link.size + "</div>";
+                var sourceName = link.source.name;
+                if(link.source.type === CLUSTER_TYPE) {
+                    var nodesInCluster = $scope.selectedDateBucket ? link.source.nodesForSelectedDateBucket : link.source.nodes;
+                    sourceName = "Cluster of " + nodesInCluster.length;
+                }
+                var targetName = link.target.name;
+                if(link.target.type === CLUSTER_TYPE) {
+                    var nodesInCluster = $scope.selectedDateBucket ? link.target.nodesForSelectedDateBucket : link.target.nodes;
+                    targetName = "Cluster of " + nodesInCluster.length;
+                }
+
+                return '<div class="graph-tooltip-block">' +
+                    '<span class="graph-tooltip-label">' + $scope.tooltip.sourceLabel + '</span>' +
+                    '<span class="graph-tooltip-value">' + sourceName + '</span>' +
+                    '</div>' +
+                    '<div class="graph-tooltip-block">' +
+                    '<span class="graph-tooltip-label">' + $scope.tooltip.targetLabel + '</span>' +
+                    '<span class="graph-tooltip-value">' + targetName + '</span>' +
+                    '</div>' +
+                    '<div class="graph-tooltip-block">' +
+                    '<span class="graph-tooltip-label">' + $scope.tooltip.count + '</span>' +
+                    // TODO Correctly calculate link size for clusters with a selected date bucket.
+                    '<span class="graph-tooltip-value">' + link.size + '</span>' +
+                    '</div>';
+
             };
 
             /**
