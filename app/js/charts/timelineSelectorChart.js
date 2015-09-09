@@ -52,8 +52,8 @@ charts.TimelineSelectorChart = function(element, configuration) {
     this.dateFormats = {
         year: '%Y',
         month: '%b %Y',
-        day: '%d-%b-%Y',
-        hour: '%d-%b-%Y %H:%M'
+        day: '%d %b %Y',
+        hour: '%d %b %Y %H:%M'
     };
     this.TOOLTIP_ID = 'tooltip';
     this.xDomain = [];

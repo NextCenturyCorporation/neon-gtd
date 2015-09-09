@@ -147,9 +147,9 @@ var dateBucketizer = dateBucketizer || function() {
 
     var getDateFormat = function() {
         if(getGranularity() === DAY) {
-            return "MMM d, yyyy";
+            return "d MMM yyyy";
         }
-        return "MMM d, yyyy HH:mm";
+        return "d MMM yyyy HH:mm";
     };
 
     setGranularity(DAY);
