@@ -17,8 +17,8 @@
  */
 
 angular.module('neonDemo.directives')
-.directive('countBy', ['external', 'popups', 'ConnectionService', 'DatasetService', 'ErrorNotificationService', 'FilterService', 'ExportService',
-function(external, popups, connectionService, datasetService, errorNotificationService, filterService, exportService) {
+.directive('countBy', ['external', 'popups', 'ConnectionService', 'DatasetService', 'ErrorNotificationService', 'FilterService', 'ExportService', '$filter',
+function(external, popups, connectionService, datasetService, errorNotificationService, filterService, exportService, $filter) {
     return {
         templateUrl: 'partials/directives/countby.html',
         restrict: 'EA',
@@ -216,6 +216,9 @@ function(external, popups, connectionService, datasetService, errorNotificationS
                 }, {
                     name: createAggregationColumnName(),
                     field: $scope.options.aggregation === "count" ? "count" : $scope.options.aggregationField.columnName,
+                    formatter: function(row, cell, value) {
+                        return $filter('number')(value);
+                    },
                     width: tableWidth
                 }];
 
@@ -388,7 +391,11 @@ function(external, popups, connectionService, datasetService, errorNotificationS
                     $scope.outstandingQuery.abort();
                 }
 
-                $scope.outstandingQuery = connection.executeQuery(query).xhr.done(function(queryResults) {
+                $scope.outstandingQuery = connection.executeQuery(query);
+                $scope.outstandingQuery.always(function() {
+                    $scope.outstandingQuery = undefined;
+                });
+                $scope.outstandingQuery.done(function(queryResults) {
                     $scope.$apply(function() {
                         XDATA.userALE.log({
                             activity: "alter",
@@ -400,7 +407,6 @@ function(external, popups, connectionService, datasetService, errorNotificationS
                             source: "system",
                             tags: ["receive", "count-by"]
                         });
-                        $scope.outstandingQuery = undefined;
                         $scope.updateData(queryResults);
                         $scope.loadingData = false;
                         XDATA.userALE.log({
@@ -414,8 +420,8 @@ function(external, popups, connectionService, datasetService, errorNotificationS
                             tags: ["render", "count-by"]
                         });
                     });
-                }).fail(function(response) {
-                    $scope.outstandingQuery = undefined;
+                });
+                $scope.outstandingQuery.fail(function(response) {
                     if(response.status === 0) {
                         XDATA.userALE.log({
                             activity: "alter",

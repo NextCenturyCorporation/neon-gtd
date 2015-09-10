@@ -145,6 +145,13 @@ var dateBucketizer = dateBucketizer || function() {
         }
     };
 
+    var getDateFormat = function() {
+        if(getGranularity() === DAY) {
+            return "d MMM yyyy";
+        }
+        return "d MMM yyyy HH:mm";
+    };
+
     setGranularity(DAY);
     return {
         DAY: DAY,
@@ -161,6 +168,7 @@ var dateBucketizer = dateBucketizer || function() {
         getDateForBucket: getDateForBucket,
         getNumBuckets: getNumBuckets,
         roundUpBucket: roundUpBucket,
-        roundDownBucket: roundDownBucket
+        roundDownBucket: roundDownBucket,
+        getDateFormat: getDateFormat
     };
 };

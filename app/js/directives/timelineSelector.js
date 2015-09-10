@@ -293,6 +293,9 @@ function($interval, $filter, connectionService, datasetService, errorNotificatio
                     $scope.bucketizer.setEndDate(afterEndDate);
                     setDateTimePickerStart($scope.bucketizer.getStartDate());
                     setDateTimePickerEnd($scope.bucketizer.getEndDate());
+                    $scope.messenger.publish('date_bucketizer', {
+                        bucketizer: $scope.bucketizer
+                    });
                 }
             };
 
@@ -300,36 +303,35 @@ function($interval, $filter, connectionService, datasetService, errorNotificatio
              * Sets the display dates, that are used by the template, to the provided values.
              */
             $scope.setDisplayDates = function(displayStartDate, displayEndDate) {
-                $scope.startDateForDisplay = new Date(displayStartDate.getUTCFullYear(),
-                    displayStartDate.getUTCMonth(),
-                    displayStartDate.getUTCDate(),
-                    displayStartDate.getUTCHours());
+                $scope.startDateForDisplay = $scope.formatStartDate(displayStartDate);
+                $scope.endDateForDisplay = $scope.formatEndDate(displayEndDate);
+            };
 
-                $scope.endDateForDisplay = new Date(displayEndDate.getUTCFullYear(),
-                    displayEndDate.getUTCMonth(),
-                    displayEndDate.getUTCDate(),
-                    displayEndDate.getUTCHours());
+            $scope.formatStartDate = function(startDate) {
+                var formattedStartDate = new Date(startDate.getUTCFullYear(),
+                    startDate.getUTCMonth(),
+                    startDate.getUTCDate(),
+                    startDate.getUTCHours());
+                var format = $scope.bucketizer.getDateFormat();
+                formattedStartDate = $filter("date")(formattedStartDate.toISOString(), format);
+                return formattedStartDate;
+            };
+
+            $scope.formatEndDate = function(endDate) {
+                var formattedEndDate = new Date(endDate.getUTCFullYear(),
+                    endDate.getUTCMonth(),
+                    endDate.getUTCDate(),
+                    endDate.getUTCHours());
 
                 // Describing ranges is odd. If an event lasts 2 hours starting at 6am, then it
                 // lasts from 6am to 8am. But if an event starts on the 6th and lasts 2 days, then
                 // it lasts from the 6th to the 7th.
                 if($scope.options.granularity !== HOUR) {
-                    $scope.endDateForDisplay = new Date($scope.endDateForDisplay.getTime() - 1);
+                    formattedEndDate = new Date(formattedEndDate.getTime() - 1);
                 }
-
-                var format = "MMMM d, yyyy HH:mm";
-                if($scope.options.granularity === DAY) {
-                    format = "MMMM d, yyyy";
-                }
-                if($scope.options.granularity === MONTH) {
-                    format = "MMMM yyyy";
-                }
-                if($scope.options.granularity === YEAR) {
-                    format = "yyyy";
-                }
-
-                $scope.startDateForDisplay = $filter("date")($scope.startDateForDisplay.toISOString(), format) + " (Z)";
-                $scope.endDateForDisplay = $filter("date")($scope.endDateForDisplay.toISOString(), format) + " (Z)";
+                var format = $scope.bucketizer.getDateFormat();
+                formattedEndDate = $filter("date")(formattedEndDate.toISOString(), format);
+                return formattedEndDate;
             };
 
             /**
@@ -512,13 +514,9 @@ function($interval, $filter, connectionService, datasetService, errorNotificatio
 
                 var relations = datasetService.getRelations($scope.options.database.name, $scope.options.table.name, [$scope.options.dateField.columnName]);
 
-                var nameIncludeTime = $scope.options.granularity === HOUR;
-                var startDate = getFilterStartDate();
-                //If day, display a day shorter to make sense, otherwise display the proper date-time.
-                var endDate = ($scope.options.granularity === HOUR ? getFilterEndDate() : new Date(getFilterEndDate().getTime() - 1));
                 var filterNameObj = {
                     visName: "Timeline",
-                    text: getDateString(startDate, nameIncludeTime) + " to " + getDateString(endDate, nameIncludeTime)
+                    text: $scope.formatStartDate(getFilterStartDate()) + " to " + $scope.formatEndDate(getFilterEndDate())
                 };
 
                 filterService.replaceFilters($scope.messenger, relations, $scope.filterKeys, $scope.createFilterClauseForDate, filterNameObj, function() {
@@ -527,14 +525,6 @@ function($interval, $filter, connectionService, datasetService, errorNotificatio
                     }
                     datasetService.setDateBrushExtentForRelations(relations, $scope.brush);
                 });
-            };
-
-            var getDateString = function(date, includeTime) {
-                var dateString = (date.getUTCMonth() + 1) + '/' + date.getUTCDate() + '/' + date.getUTCFullYear();
-                if(includeTime) {
-                    dateString = dateString + (' ' + date.getUTCHours() + ':' + (date.getUTCMinutes() > 9 ? date.getUTCMinutes() : '0' + date.getUTCMinutes()));
-                }
-                return dateString;
             };
 
             /**
@@ -760,9 +750,12 @@ function($interval, $filter, connectionService, datasetService, errorNotificatio
                     $scope.outstandingQuery.abort();
                 }
 
-                $scope.outstandingQuery = connection.executeQuery(query).xhr.done(function(queryResults) {
+                $scope.outstandingQuery = connection.executeQuery(query);
+                $scope.outstandingQuery.done(function() {
+                    $scope.outstandingQuery = undefined;
+                });
+                $scope.outstandingQuery.done(function(queryResults) {
                     $scope.$apply(function() {
-                        $scope.outstandingQuery = undefined;
                         $scope.updateChartData(queryResults);
                         $scope.loadingData = false;
                         XDATA.userALE.log({
@@ -776,8 +769,8 @@ function($interval, $filter, connectionService, datasetService, errorNotificatio
                             tags: ["receive", "timeline", "data"]
                         });
                     });
-                }).fail(function(response) {
-                    $scope.outstandingQuery = undefined;
+                });
+                $scope.outstandingQuery.fail(function(response) {
                     if(response.status === 0) {
                         XDATA.userALE.log({
                             activity: "alter",

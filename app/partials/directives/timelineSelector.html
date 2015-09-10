@@ -90,15 +90,16 @@
     </div>
 
     <h4 class="pull-left">
-        <span class="count text-primary" ng-bind="recordCount"></span> records
+        <span class="count text-primary" ng-bind="recordCount | number"></span> records
     </h4>
 
     <div class="neon-datetimepicker dropdown pull-left">
         <button class="btn btn-default header-item dropdown-toggle" role="button" data-toggle="dropdown" data-target="#" href="#">
             <span class="glyphicon glyphicon-calendar"></span>
-            <span ng-bind="'From ' + (startDateForDisplay || '?') + ' to ' + (endDateForDisplay || '?')"></span>
+            <span ng-bind="(startDateForDisplay || '?') + ' to ' + (endDateForDisplay || '?')"></span>
             <span class="caret"></span>
         </button>
+
         <ul class="dropdown-menu" role="menu">
             <div>
                 <label class="start-date">Start Date</label>
@@ -116,19 +117,22 @@
             <datetimepicker ng-show="(options.granularity === 'month')" data-ng-model="filter.end" data-datetimepicker-config="{ startView: 'month', minView: 'month' }" ng-change="handleDateTimePickChange()"/>
             <datetimepicker ng-show="(options.granularity === 'year')" data-ng-model="filter.end" data-datetimepicker-config="{ startView: 'year', minView: 'year' }" ng-change="handleDateTimePickChange()"/>
         </ul>
-        <span ng-if="options.showAnimationControls">
-            <button class="btn btn-default" role="button" 
-                ng-click="(options.animatingTime) ? pauseTimeAnimation() : playTimeAnimation()">
-                <span class="glyphicon" 
-                    ng-class="{true: 'glyphicon-pause', false: 'glyphicon-play-circle'}[options.animatingTime]"></span> 
-                <span ng-bind="(options.animatingTime) ? 'Pause' : 'Play'"></span>
-            </button>
-            <button class="btn btn-default" role="button" ng-click="stepTimeAnimation()">
-                <span class="glyphicon glyphicon-step-forward"></span> Step
-            </button>
-            <button class="btn btn-default" role="button" ng-click="stopTimeAnimation()">
-                <span class="glyphicon glyphicon-stop"></span> Stop
-            </button>
+
+        <span class="form-group" ng-if="options.showAnimationControls">
+            <span class="btn-group">
+                <button class="btn btn-default header-item" role="button" title="{{(options.animatingTime) ? 'Pause' : 'Play'}}"
+                    ng-click="(options.animatingTime) ? pauseTimeAnimation() : playTimeAnimation()">
+                    <span class="glyphicon" 
+                        ng-class="{true: 'glyphicon-pause', false: 'glyphicon-play-circle'}[options.animatingTime]"></span> 
+                    <span ng-bind="(options.animatingTime) ? 'Pause' : 'Play'"></span>
+                </button>
+                <button class="btn btn-default header-item" role="button" title="Step" ng-click="stepTimeAnimation()">
+                    <span class="glyphicon glyphicon-step-forward"></span> Step
+                </button>
+                <button class="btn btn-default header-item" role="button" title="Stop" ng-click="stopTimeAnimation()">
+                    <span class="glyphicon glyphicon-stop"></span> Stop
+                </button>
+            </span>
         </span>
     </div>
 </div>
