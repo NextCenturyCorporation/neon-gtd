@@ -485,9 +485,8 @@ function($filter, $timeout, connectionService, datasetService, errorNotification
                 });
 
                 $scope.messenger.publish("news", {
-                    date: $scope.bucketizer ? $scope.bucketizer.getEndDate() : undefined,
                     news: news,
-                    type: datasetService.getMapping($scope.options.database.name, $scope.options.table.name, "stream_type") || ""
+                    type: datasetService.getMapping($scope.options.database.name, $scope.options.table.name, "newsfeed_type") || ""
                 });
             };
 

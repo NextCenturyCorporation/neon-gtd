@@ -27,10 +27,11 @@ angular.module('neonDemo.directives')
 
             $scope.element = $element;
 
+            $scope.selectedDate = undefined;
+
             $scope.data = {
-                date: undefined,
-                type: undefined,
                 news: [],
+                type: undefined,
                 highlights: {
                     heads: [],
                     names: []
@@ -48,6 +49,7 @@ angular.module('neonDemo.directives')
                 $scope.messenger = new neon.eventing.Messenger();
                 $scope.messenger.subscribe("news", onNews);
                 $scope.messenger.subscribe("news_highlights", onNewsHighlights);
+                $scope.messenger.subscribe("date_selected", onDateSelected);
 
                 $scope.$on('$destroy', function() {
                     $scope.messenger.removeEvents();
@@ -63,7 +65,6 @@ angular.module('neonDemo.directives')
             var onNews = function(message) {
                 if(message.news) {
                     $scope.data.news = message.news;
-                    $scope.data.date = message.date;
                     $scope.data.type = (message.type || DEFAULT_TYPE).toUpperCase();
                 }
             };
@@ -82,6 +83,16 @@ angular.module('neonDemo.directives')
             };
 
             /**
+             * Event handler for date selected events issued over Neon's messaging channels.
+             * @param {Object} message A Neon date selected message.
+             * @method onDateSelected
+             * @private
+             */
+            var onDateSelected = function(message) {
+                $scope.selectedDate = message.end;
+            };
+
+            /**
              * Returns the style class for the given news item.
              * @param {Object} item
              * @method getNewsItemStyleClass
@@ -89,7 +100,7 @@ angular.module('neonDemo.directives')
              */
             $scope.getNewsItemStyleClass = function(item) {
                 var style = [];
-                if(item.date > $scope.data.date) {
+                if($scope.selectedDate && item.date.getTime() > $scope.selectedDate.getTime()) {
                     style.push("future");
                 }
                 if($scope.data.highlights.heads.length || $scope.data.highlights.names.length) {
