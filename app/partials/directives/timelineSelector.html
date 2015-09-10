@@ -90,13 +90,14 @@
     </div>
 
     <h4 class="pull-left">
-        <span class="count text-primary" ng-bind="recordCount | number"></span> records
+        <span class="count text-primary" ng-bind="recordCount | number"></span>
+        <span ng-hide="(brush.length > 0 && width < 500) || (width < 400)">records</span>
     </h4>
 
     <div class="neon-datetimepicker dropdown pull-left">
-        <button class="btn btn-default header-item dropdown-toggle" role="button" data-toggle="dropdown" data-target="#" href="#">
+        <button class="btn btn-default header-item dropdown-toggle" role="button" data-toggle="dropdown" data-target="#" href="#" title="{{'From ' + (startDateForDisplay || '?') + ' to ' + (endDateForDisplay || '?')}}">
             <span class="glyphicon glyphicon-calendar"></span>
-            <span ng-bind="(startDateForDisplay || '?') + ' to ' + (endDateForDisplay || '?')"></span>
+            <span ng-hide="(brush.length > 0 && width < 700) || (width < 600)" ng-bind="(startDateForDisplay || '?') + ' to ' + (endDateForDisplay || '?')"></span>
             <span class="caret"></span>
         </button>
 
@@ -122,15 +123,16 @@
             <span class="btn-group">
                 <button class="btn btn-default header-item" role="button" title="{{(options.animatingTime) ? 'Pause' : 'Play'}}"
                     ng-click="(options.animatingTime) ? pauseTimeAnimation() : playTimeAnimation()">
-                    <span class="glyphicon" 
-                        ng-class="{true: 'glyphicon-pause', false: 'glyphicon-play-circle'}[options.animatingTime]"></span> 
-                    <span ng-bind="(options.animatingTime) ? 'Pause' : 'Play'"></span>
+                    <span class="glyphicon" ng-class="{true: 'glyphicon-pause', false: 'glyphicon-play-circle'}[options.animatingTime]"></span> 
+                    <span ng-hide="(brush.length > 0 && width < 800) || (width < 700)" ng-bind="(options.animatingTime) ? 'Pause' : 'Play'"></span>
                 </button>
                 <button class="btn btn-default header-item" role="button" title="Step" ng-click="stepTimeAnimation()">
-                    <span class="glyphicon glyphicon-step-forward"></span> Step
+                    <span class="glyphicon glyphicon-step-forward"></span>
+                    <span ng-hide="(brush.length > 0 && width < 800) || (width < 700)">Step</span>
                 </button>
                 <button class="btn btn-default header-item" role="button" title="Stop" ng-click="stopTimeAnimation()">
-                    <span class="glyphicon glyphicon-stop"></span> Stop
+                    <span class="glyphicon glyphicon-stop"></span>
+                    <span ng-hide="(brush.length > 0 && width < 800) || (width < 700)">Stop</span>
                 </button>
             </span>
         </span>
