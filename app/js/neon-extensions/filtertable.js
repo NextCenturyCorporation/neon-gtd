@@ -344,7 +344,7 @@ neon.query.FilterTable.parseValue = function(value) {
         retVal = false;
     } else if('true' === retVal) {
         retVal = true;
-    } else if((retVal.charAt(0) === '"' && retVal.charAt(retVal.length - 1) === '"') || (retVal.charAt(0) === "'" && retVal.charAt(retVal.length - 1) === "'")) {
+    } else if(retVal.charAt && ((retVal.charAt(0) === '"' && retVal.charAt(retVal.length - 1) === '"') || (retVal.charAt(0) === "'" && retVal.charAt(retVal.length - 1) === "'"))) {
         retVal = retVal.substring(1, retVal.length - 1);
     }
 
