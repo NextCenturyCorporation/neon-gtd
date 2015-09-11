@@ -56,14 +56,14 @@
             <div class="input-group">
                 <input type="text" class="form-control" placeholder="{{'Enter ' + options.selectedNodeField.prettyName + '...'}}" ng-model="options.selectedNodeId" ng-disabled="!(options.selectedNodeField)">
                 <div class="input-group-btn">
-                    <button type="button" class="btn btn-default refresh" title="Select Node" ng-click="selectNodeNetworkFromNodeId(options.selectedNodeId)">
+                    <button type="button" class="btn btn-default refresh" title="Select Node" ng-click="selectNodeAndNetworkFromNodeId(options.selectedNodeId)">
                         <span class="glyphicon glyphicon-plus"></span>
                     </button>
                 </div>
             </div>
 
             <div class="input-group">
-                <select class="form-control" ng-model="options.selectedNodeId" ng-options="nodeId for nodeId in nodeIds track by nodeId" ng-required="false" ng-disabled="(nodeIds.length == 0) || !(options.selectedNodeField)" ng-change="selectNodeNetworkFromNodeId(options.selectedNodeId)">
+                <select class="form-control" ng-model="options.selectedNodeId" ng-options="nodeId for nodeId in data.availableNodeIds track by nodeId" ng-required="false" ng-disabled="(data.availableNodeIds.length == 0) || !(options.selectedNodeField)" ng-change="selectNodeAndNetworkFromNodeId(options.selectedNodeId)">
                     <option value="" ng-bind="'Select ' + options.selectedNodeField.prettyName + '...'"></option>
                 </select>
                 <div class="input-group-btn">
@@ -112,9 +112,12 @@
 <div class="clearfix"></div>
 
 <div class="header-container filter-container">
-    <button type="button" class="btn btn-default header-item" title="Load Graph" ng-click="queryForData(true)">
-        Load Graph
-    </button>
+    <div class="header-item filter-reset pull-right" ng-class="{hidden: (selected.graphNodeIds.length == 0)}" title="{{'Selected ' + selected.graphNodeIds.length + ((selected.graphNodeIds.length == 1) ? ' Node' : ' Nodes')}}">
+        <span class="filter-label" ng-bind="selected.graphNodeIds.length + ((selected.graphNodeIds.length == 1) ? ' Node' : ' Nodes')"></span>
+        <span class="glyphicon glyphicon-remove" ng-click="deselectAllNodesAndNetwork()"></span>
+    </div>
+
+    <label type="button" class="btn btn-default header-item" title="Load Graph" ng-bind="'Load ' + (selected.graphNodeIds.length ? 'Selected ' : '') + 'Network'" ng-click="queryForData(true)"/>
 </div>
 
 <div class="clearfix"></div>
