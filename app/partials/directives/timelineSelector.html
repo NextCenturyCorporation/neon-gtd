@@ -103,10 +103,10 @@
 
         <ul class="dropdown-menu" role="menu">
             <div>
-                <label class="start-date">Start Date</label>
-                <label class="end-date">End Date</label>
-                <button class="btn btn-default save-button disabled" ng-click="handleDateTimePickSave()">Save</button>
-                <button class="btn btn-default" ng-click="handleDateTimePickCancel()">Cancel</button>
+                <label class="start-date pull-left">Start Date</label>
+                <label class="end-date pull-left">End Date</label>
+                <button class="btn btn-default header-item pull-left save-button disabled" ng-click="handleDateTimePickSave()">Save</button>
+                <button class="btn btn-default header-item pull-left" ng-click="handleDateTimePickCancel()">Cancel</button>
             </div>
             <!-- Create a datetimepicker for each granularity because you can't change the configuration dynamically. -->
             <datetimepicker ng-show="(options.granularity === 'hour')" data-ng-model="filter.start" data-datetimepicker-config="{ startView: 'hour', minView: 'hour' }" ng-change="handleDateTimePickChange()"/>
@@ -121,19 +121,19 @@
 
         <span class="form-group" ng-if="options.showAnimationControls">
             <span class="btn-group">
-                <button class="btn btn-default header-item" role="button" title="{{(options.animatingTime) ? 'Pause' : 'Play'}}"
+                <label class="btn btn-default header-item" role="button" title="{{(options.animatingTime) ? 'Pause' : ((options.animationFrame > getAnimationStartFrame()) ? 'Resume' : 'Play')}}"
                     ng-click="(options.animatingTime) ? pauseTimeAnimation() : playTimeAnimation()">
                     <span class="glyphicon" ng-class="{true: 'glyphicon-pause', false: 'glyphicon-play-circle'}[options.animatingTime]"></span> 
-                    <span ng-hide="(brush.length > 0 && width < 800) || (width < 700)" ng-bind="(options.animatingTime) ? 'Pause' : 'Play'"></span>
-                </button>
-                <button class="btn btn-default header-item" role="button" title="Step" ng-click="stepTimeAnimation()">
+                    <span ng-hide="(brush.length > 0 && width < 800) || (width < 700)" ng-bind="(options.animatingTime) ? 'Pause' : ((options.animationFrame > getAnimationStartFrame()) ? 'Resume' : 'Play')"></span>
+                </label>
+                <label class="btn btn-default header-item" role="button" title="Step" ng-click="stepTimeAnimation()">
                     <span class="glyphicon glyphicon-step-forward"></span>
                     <span ng-hide="(brush.length > 0 && width < 800) || (width < 700)">Step</span>
-                </button>
-                <button class="btn btn-default header-item" role="button" title="Stop" ng-click="stopTimeAnimation()">
+                </label>
+                <label class="btn btn-default header-item" role="button" title="Stop" ng-click="stopTimeAnimation()">
                     <span class="glyphicon glyphicon-stop"></span>
                     <span ng-hide="(brush.length > 0 && width < 800) || (width < 700)">Stop</span>
-                </button>
+                </label>
             </span>
         </span>
     </div>
