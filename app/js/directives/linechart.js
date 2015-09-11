@@ -378,7 +378,10 @@ function(connectionService, datasetService, errorNotificationService, filterServ
 
                 var query = new neon.query.Query()
                     .selectFrom($scope.options.database.name, $scope.options.table.name)
-                    .where($scope.options.attrX.columnName, '!=', null);
+                    .where(neon.query.and(
+                        neon.query.where($scope.options.attrX.columnName, '>=', new Date("1970-01-01T00:00:00.000Z")),
+                        neon.query.where($scope.options.attrX.columnName, '<=', new Date("2025-01-01T00:00:00.000Z"))
+                    ));
 
                 query.groupBy.apply(query, groupByClause);
 

@@ -168,7 +168,7 @@ charts.DirectedGraph.prototype.initializeGraphOptions = function(options) {
             }
         }
         return "url(#" + name + ")";
-    }
+    };
 
     this.getLinkTooltip = function(linkData) {
         if(options.getLinkTooltip) {

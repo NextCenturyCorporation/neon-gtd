@@ -1393,7 +1393,6 @@ function($filter, $timeout, connectionService, datasetService, errorNotification
                     // TODO Correctly calculate link size for clusters with a selected date bucket.
                     '<span class="graph-tooltip-value">' + getDatesInNodeOrLink(link).length + '</span>' +
                     '</div>';
-
             };
 
             /**
