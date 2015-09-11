@@ -32,6 +32,10 @@ angular.module('neonDemo.directives')
             $scope.data = {
                 news: [],
                 type: undefined,
+                show: {
+                    heads: [],
+                    names: []
+                },
                 highlights: {
                     heads: [],
                     names: []
@@ -76,6 +80,10 @@ angular.module('neonDemo.directives')
              * @private
              */
             var onNewsHighlights = function(message) {
+                if(message.show) {
+                    $scope.data.show.heads = message.show.heads || [];
+                    $scope.data.show.names = message.show.names || [];
+                }
                 if(message.highlights) {
                     $scope.data.highlights.heads = message.highlights.heads || [];
                     $scope.data.highlights.names = message.highlights.names || [];
@@ -104,10 +112,13 @@ angular.module('neonDemo.directives')
                     style.push("future");
                 }
                 if($scope.data.highlights.heads.length || $scope.data.highlights.names.length) {
-                    if($scope.data.highlights.heads.indexOf(item.head) < 0 && $scope.data.highlights.names.indexOf(item.name) < 0) {
-                        style.push("hidden");
-                    } else {
+                    if($scope.data.highlights.heads.indexOf(item.head) >= 0 || $scope.data.highlights.names.indexOf(item.name) >= 0) {
                         style.push("highlight");
+                    }
+                }
+                if($scope.data.show.heads.length || $scope.data.show.names.length) {
+                    if($scope.data.show.heads.indexOf(item.head) < 0 && $scope.data.show.names.indexOf(item.name) < 0) {
+                        style.push("hidden");
                     }
                 }
                 return style.join(" ");

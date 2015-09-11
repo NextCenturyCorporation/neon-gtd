@@ -171,7 +171,7 @@ function($filter, $timeout, connectionService, datasetService, errorNotification
 
                     if(networkId !== undefined && $scope.selected.graphNodeIds.indexOf(nodeId) < 0) {
                         addSelectedNodeAndNetwork(nodeId, networkId);
-                        $scope.graph.redrawNodesAndLinks();
+                        redrawGraphAndShowSelectedNews();
                     }
                 }
             };
@@ -201,6 +201,16 @@ function($filter, $timeout, connectionService, datasetService, errorNotification
                 if(index < 0) {
                     $scope.selected.graphNodeIds.push(nodeId);
                 }
+            };
+
+            /**
+             * Redraws the nodes and links in the graph to update the styling and publishes a news highlights event using the global selected nodes and network.
+             * @method redrawGraphAndShowSelectedNews
+             * @private
+             */
+            var redrawGraphAndShowSelectedNews = function() {
+                $scope.graph.redrawNodesAndLinks();
+                publishNewsHighlights();
             };
 
             var initialize = function() {
@@ -523,30 +533,17 @@ function($filter, $timeout, connectionService, datasetService, errorNotification
             };
 
             /**
-             * Publishes a news highlights event using the global selected network IDs.
+             * Publishes a news highlights event using the global selected nodes and network.
              * @method publishNewsHighlights
              * @private
              */
             var publishNewsHighlights = function() {
-                var ids = [];
-
-                var findNodeIdsInNetwork = function(nodes) {
-                    nodes.forEach(function(node) {
-                        if(node.type === CLUSTER_TYPE) {
-                            findNodeIdsInNetwork(node.nodes);
-                        } else if($scope.selected.graphNetworkId === node.network) {
-                            ids.push(node.id);
-                        }
-                    });
-                };
-
-                if($scope.selected.graphNetworkId) {
-                    findNodeIdsInNetwork($scope.data.graphNodes);
-                }
-
                 $scope.messenger.publish("news_highlights", {
+                    show: {
+                        heads: $scope.data.networkIdsToNodeIds[$scope.selected.graphNetworkId]
+                    },
                     highlights: {
-                        heads: ids
+                        heads: $scope.selected.graphNodeIds
                     }
                 });
             };
@@ -1537,9 +1534,8 @@ function($filter, $timeout, connectionService, datasetService, errorNotification
              */
             var onNodeClick = function(node) {
                 addSelectedNode(node, true);
-                $scope.graph.redrawNodesAndLinks();
                 $scope.$apply(function() {
-                    publishNewsHighlights();
+                    redrawGraphAndShowSelectedNews();
                 });
             };
 
@@ -1594,9 +1590,8 @@ function($filter, $timeout, connectionService, datasetService, errorNotification
             var onLinkClick = function(link) {
                 addSelectedNode(link.source);
                 addSelectedNode(link.target);
-                $scope.graph.redrawNodesAndLinks();
                 $scope.$apply(function() {
-                    publishNewsHighlights();
+                    redrawGraphAndShowSelectedNews();
                 });
             };
 
@@ -1607,7 +1602,7 @@ function($filter, $timeout, connectionService, datasetService, errorNotification
             $scope.deselectAllNodesAndNetwork = function() {
                 $scope.selected.graphNetworkId = undefined;
                 $scope.selected.graphNodeIds = [];
-                $scope.graph.redrawNodesAndLinks();
+                redrawGraphAndShowSelectedNews();
             };
 
             /**
