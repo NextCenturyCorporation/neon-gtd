@@ -74,8 +74,10 @@ function($filter, $timeout, connectionService, datasetService, errorNotification
                 idLabel: DEFAULT_TOOLTIP_ID_LABEL,
                 nameLabel: DEFAULT_TOOLTIP_NAME_LABEL,
                 sizeLabel: DEFAULT_TOOLTIP_SIZE_LABEL,
-                sourceLabel: DEFAULT_TOOLTIP_SOURCE_LABEL,
-                targetLabel: DEFAULT_TOOLTIP_TARGET_LABEL
+                sourceNameLabel: DEFAULT_TOOLTIP_SOURCE_LABEL,
+                targetNameLabel: DEFAULT_TOOLTIP_TARGET_LABEL,
+                sourceSizeLabel: DEFAULT_TOOLTIP_SOURCE_LABEL,
+                targetSizeLabel: DEFAULT_TOOLTIP_TARGET_LABEL
             };
 
             $scope.TIMEOUT_MS = 250;
@@ -452,8 +454,10 @@ function($filter, $timeout, connectionService, datasetService, errorNotification
                     idLabel: datasetService.getMapping($scope.options.database.name, $scope.options.table.name, "graph_tooltip_id_label") || DEFAULT_TOOLTIP_ID_LABEL,
                     nameLabel: datasetService.getMapping($scope.options.database.name, $scope.options.table.name, "graph_tooltip_name_label") || DEFAULT_TOOLTIP_NAME_LABEL,
                     sizeLabel: datasetService.getMapping($scope.options.database.name, $scope.options.table.name, "graph_tooltip_size_label") || DEFAULT_TOOLTIP_SIZE_LABEL,
-                    sourceLabel: datasetService.getMapping($scope.options.database.name, $scope.options.table.name, "graph_tooltip_source_label") || DEFAULT_TOOLTIP_SOURCE_LABEL,
-                    targetLabel: datasetService.getMapping($scope.options.database.name, $scope.options.table.name, "graph_tooltip_target_label") || DEFAULT_TOOLTIP_TARGET_LABEL
+                    sourceNameLabel: datasetService.getMapping($scope.options.database.name, $scope.options.table.name, "graph_tooltip_source_name_label") || DEFAULT_TOOLTIP_SOURCE_LABEL,
+                    targetNameLabel: datasetService.getMapping($scope.options.database.name, $scope.options.table.name, "graph_tooltip_target_name_label") || DEFAULT_TOOLTIP_TARGET_LABEL,
+                    sourceSizeLabel: datasetService.getMapping($scope.options.database.name, $scope.options.table.name, "graph_tooltip_source_size_label") || DEFAULT_TOOLTIP_SOURCE_LABEL,
+                    targetSizeLabel: datasetService.getMapping($scope.options.database.name, $scope.options.table.name, "graph_tooltip_target_size_label") || DEFAULT_TOOLTIP_TARGET_LABEL
                 };
 
                 $scope.selected.graphNodeIds = [];
@@ -1369,11 +1373,11 @@ function($filter, $timeout, connectionService, datasetService, errorNotification
                     '<span class="graph-tooltip-value">' + getDatesInNodeOrLink(node).length + '</span>' +
                     '</div>' +
                     '<div class="graph-tooltip-block">' +
-                    '<span class="graph-tooltip-label">' + $scope.tooltip.sourceLabel + '</span>' +
+                    '<span class="graph-tooltip-label">' + $scope.tooltip.sourceSizeLabel + '</span>' +
                     '<span class="graph-tooltip-value">' + node.numberOfSources + '</span>' +
                     '</div>' +
                     '<div class="graph-tooltip-block">' +
-                    '<span class="graph-tooltip-label">' + $scope.tooltip.targetLabel + '</span>' +
+                    '<span class="graph-tooltip-label">' + $scope.tooltip.targetSizeLabel + '</span>' +
                     '<span class="graph-tooltip-value">' + node.numberOfTargets + '</span>' +
                     '</div>';
             };
@@ -1448,16 +1452,15 @@ function($filter, $timeout, connectionService, datasetService, errorNotification
                 }
 
                 return '<div class="graph-tooltip-block">' +
-                    '<span class="graph-tooltip-label">' + $scope.tooltip.sourceLabel + '</span>' +
+                    '<span class="graph-tooltip-label">' + $scope.tooltip.sourceNameLabel + '</span>' +
                     '<span class="graph-tooltip-value">' + sourceName + '</span>' +
                     '</div>' +
                     '<div class="graph-tooltip-block">' +
-                    '<span class="graph-tooltip-label">' + $scope.tooltip.targetLabel + '</span>' +
+                    '<span class="graph-tooltip-label">' + $scope.tooltip.targetNameLabel + '</span>' +
                     '<span class="graph-tooltip-value">' + targetName + '</span>' +
                     '</div>' +
                     '<div class="graph-tooltip-block">' +
                     '<span class="graph-tooltip-label">' + $scope.tooltip.sizeLabel + '</span>' +
-                    // TODO Correctly calculate link size for clusters with a selected date bucket.
                     '<span class="graph-tooltip-value">' + getDatesInNodeOrLink(link).length + '</span>' +
                     '</div>';
 
