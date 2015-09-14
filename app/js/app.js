@@ -44,12 +44,19 @@ var neonDemo = angular.module('neonDemo', [
     'neonDemo.directives',
     'neonDemo.filters',
     'gridster',
+    'ngDraggable',
     'ui.bootstrap.datetimepicker'
 ]);
 
-angular.module('neonDemo.directives', [
+// AngularJS filter for reversing the order of an array.
+// http://stackoverflow.com/questions/15266671/angular-ng-repeat-in-reverse
+neonDemo.filter("reverse", function() {
+    return function(items) {
+        return items.slice().reverse();
+    };
+});
 
-]);
+angular.module('neonDemo.directives', []);
 angular.module('neonDemo.controllers', []);
 angular.module('neonDemo.services', []);
 
@@ -162,15 +169,19 @@ angular.element(document).ready(function() {
             video: undefined
         });
         var dashboardConfig = config.dashboard || {
-            gridsterColumns: 6,
-            gridsterMargins: 10,
             hideNavbarItems: false,
-            showFilterStatusTray: false,
             hideAddVisualizationsButton: false,
             hideAdvancedOptions: false,
             hideErrorNotifications: false,
-            hideHeader: false
+            hideHeader: false,
+            showImport: false
         };
+        dashboardConfig.gridsterColumns = dashboardConfig.gridsterColumns || 8;
+        dashboardConfig.gridsterMargins = dashboardConfig.gridsterMargins || 10;
+        // Most visualizations should have a minimum size of about 300px square to have space for their UI elements.
+        // TODO Use the browser width to determine the minimum size for visualizations and update it on browser resize.
+        dashboardConfig.gridsterDefaultMinSizeX = Math.floor(dashboardConfig.gridsterColumns / 4);
+        dashboardConfig.gridsterDefaultMinSizeY = Math.floor(dashboardConfig.gridsterColumns / 6);
         dashboardConfig.help = helpConfig;
         neonDemo.constant('config', dashboardConfig);
 

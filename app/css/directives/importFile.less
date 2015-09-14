@@ -1,0 +1,44 @@
+.import.modal {
+    text-align: left;
+    font-weight: normal;
+
+    .upload-file {
+        margin-bottom: 20px;
+
+        #fileDragAndDrop {
+            border: 2px dashed @main-text-color;
+            border-radius: 5px;
+            min-width: 450px;
+            min-height: 100px;
+            text-align: center;
+            margin-bottom: 8px;
+            color: @main-text-color;
+            font-size: 200%;
+
+            > span {
+                display: inline-block;
+                padding-top: 30px;
+            }
+        }
+    }
+
+    .importGuessesTable {
+        width: 100%;
+        margin-top: 20px;
+
+        td {
+            select {
+                width: auto;
+                float: right;
+            }
+        }
+    }
+
+    /* Applied to the elements that display inputs for import database and table names, to position them properly in the footer of a modal. */
+    .modalFooterField {
+        float: left;
+        margin-top: 5px;
+        color: @main-text-color;
+        width: auto;
+    }
+}

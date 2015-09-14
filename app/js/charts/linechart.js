@@ -28,6 +28,12 @@ charts.LineChart = function(rootElement, selector, opts) {
     this.brushHandler = undefined;
     this.highlight = undefined;
 
+    this.granularity = opts.granularity;
+    this.dateFormats = {
+        day: '%e %B %Y',
+        hour: '%e %B %Y %H:%M'
+    };
+
     // The old extent of the brush saved on brushstart.
     this.oldExtent = [];
 
@@ -102,6 +108,18 @@ charts.LineChart.prototype.determineHeight = function(element) {
         return $(element[0]).height();
     }
     return charts.LineChart.DEFAULT_HEIGHT;
+};
+
+charts.LineChart.prototype.setGranularity = function(granularity) {
+    this.granularity = granularity;
+};
+
+charts.LineChart.prototype.showTrendlines = function(display) {
+    if(display) {
+        $("[class*='trendline']").show();
+    } else {
+        $("[class*='trendline']").hide();
+    }
 };
 
 charts.LineChart.prototype.categoryForItem = function(item) {
@@ -230,12 +248,17 @@ charts.LineChart.prototype.selectDate = function(startDate, endDate) {
     var dataStartDate = this.data[0].data[0].date;
     var dataEndDate = this.data[0].data[dataLength - 1].date;
 
-    // Add a day to the end day so it includes the whole end day and not just the first hour of the end day.
-    dataEndDate = new Date(dataEndDate.getFullYear(), dataEndDate.getMonth(), dataEndDate.getDate() + 1, dataEndDate.getHours());
+    if(this.granularity === 'day') {
+        // Add a day to the end day so it includes the whole end day and not just the first hour of the end day.
+        dataEndDate = new Date(dataEndDate.getFullYear(), dataEndDate.getMonth(), dataEndDate.getDate() + 1, dataEndDate.getHours());
+    } else {
+        // Add an hour to the end day so it includes the whole time
+        dataEndDate = new Date(dataEndDate.getFullYear(), dataEndDate.getMonth(), dataEndDate.getDate(), dataEndDate.getHours() + 1);
+    }
 
     // If the start or end date is outside the date range of the data, set it to the of the start (inclusive) or end (exclusive) index of the data.
-    startIndex = startDate < dataStartDate ? 0 : startIndex;
-    endIndex = endDate > dataEndDate ? dataLength : endIndex;
+    startIndex = startDate <= dataStartDate ? 0 : startIndex;
+    endIndex = endDate >= dataEndDate ? dataLength : endIndex;
 
     if(startIndex < 0 || endIndex < 0 || endDate < dataStartDate || startDate > dataEndDate) {
         this.deselectDate();
@@ -310,7 +333,7 @@ charts.LineChart.prototype.selectIndexedDates = function(startIndex, endIndex) {
  * @method showTooltip
  */
 charts.LineChart.prototype.showTooltip = function(index, date) {
-    var format = d3.time.format.utc('%e %B %Y');
+    var format = d3.time.format.utc(this.dateFormats[this.granularity]);
     var numFormat = d3.format("0,000.00");
     var html = '<span class="tooltip-date">' + format(date) + '</span>';
 
@@ -384,9 +407,12 @@ charts.LineChart.prototype.drawLines = function(opts) {
     });
 
     // If no data exists then the min and max of the domain will be undefined.
-    if(me.xDomain[1]) {
+    if(me.xDomain[1] && me.granularity === 'day') {
         // Add one day to the end of the x-axis so users can hover over and filter on the end date.
         me.xDomain[1] = d3.time.day.utc.offset(me.xDomain[1], 1);
+    } else if(me.xDomain[1] && me.granularity === 'hour') {
+        // Add one hour to the end of the x-axis so users can hover over and filter on the end date.
+        me.xDomain[1] = d3.time.hour.utc.offset(me.xDomain[1], 1);
     }
     me.x.domain(me.xDomain);
 
@@ -490,20 +516,21 @@ charts.LineChart.prototype.drawLines = function(opts) {
             .attr("d", line)
             .attr("stroke", color);
 
+        // Filter out data with undefined values
+        var filteredData = _.filter(data, function(d) {
+            return !_.isUndefined(d.value);
+        });
+
+        var func;
         if(data.length < 40) {
-            var func = function(d) {
+            func = function(d) {
                 return me.x(d.date);
             };
             if(data.length === 1) {
                 func = me.width / 2;
             }
 
-            // Filter out data with undefined values so we don't draw
-            // circles for them
-            var filteredData = _.filter(data, function(d) {
-                return !_.isUndefined(d.value);
-            });
-
+            // Draw circles for all data containing a defined value
             me.svg.selectAll("dot")
                 .data(filteredData)
             .enter().append("circle")
@@ -516,10 +543,31 @@ charts.LineChart.prototype.drawLines = function(opts) {
                 .attr("cy", function(d) {
                     return me.y(d[me.yAttribute]);
                 });
+        } else {
+            func = function(d) {
+                return me.x(d.date);
+            };
+
+            var singlePoints = me.filterOutSinglePoints(data);
+
+            // Place dots on points that aren't connected to a line segment
+            me.svg.selectAll("dot")
+                .data(singlePoints)
+            .enter().append("circle")
+                .attr("class", "dot")
+                .attr("fill-opacity", 1)
+                .attr("stroke-opacity", 1)
+                .attr("stroke", color)
+                .attr("fill", color)
+                .attr("r", 2)
+                .attr("cx", func)
+                .attr("cy", function(d) {
+                    return me.y(d[me.yAttribute]);
+                });
         }
 
         me.hoverCircles[opts[i].series] = [];
-        data.forEach(function(datum) {
+        data.forEach(function() {
             var hoverCircle = me.svg.append("circle")
                 .attr("class", "dot dot-hover")
                 .attr("stroke", color)
@@ -531,6 +579,44 @@ charts.LineChart.prototype.drawLines = function(opts) {
                 .attr("cy", 0);
             me.hoverCircles[opts[i].series].push(hoverCircle);
         });
+
+        // Calculate and create trendlines
+
+        var xSeries = filteredData.map(function(datum) {
+            return me.x(datum.date);
+        });
+        var ySeries = filteredData.map(function(datum) {
+            return me.y(datum[me.yAttribute]);
+        });
+
+        if(xSeries.length && ySeries.length && xSeries.length === ySeries.length) {
+            var trendLine = me.leastSquares(xSeries, ySeries);
+
+            var x1 = 0;
+            var y1 = trendLine[1];
+            var x2 = me.x(me.xDomain[1]);
+            var y2 = (trendLine[0] * x2) + trendLine[1];
+            var trendData = [[x1, y1, x2, y2]];
+
+            me.svg.selectAll(".trendline")
+                .data(trendData)
+            .enter().append("line")
+                .attr("class", "trendline-" + opts[i].series)
+                .attr("x1", function(d) {
+                    return d[0];
+                })
+                .attr("y1", function(d) {
+                    return d[1];
+                })
+                .attr("x2", function(d) {
+                    return d[2];
+                })
+                .attr("y2", function(d) {
+                    return d[3];
+                })
+                .attr("stroke", color)
+                .attr("stroke-width", 4);
+        }
     }
 
     me.svg.append("g")
@@ -585,7 +671,12 @@ charts.LineChart.prototype.drawLines = function(opts) {
                 if(me.hoverListener) {
                     var date = opts[0].data[index][me.xAttribute];
                     var start = new Date(date.getFullYear(), date.getMonth(), date.getDate(), date.getHours());
-                    var end = new Date(date.getFullYear(), date.getMonth(), date.getDate() + 1, date.getHours());
+                    var end;
+                    if(me.granularity === 'day') {
+                        end = new Date(date.getFullYear(), date.getMonth(), date.getDate() + 1, date.getHours());
+                    } else {
+                        end = new Date(date.getFullYear(), date.getMonth(), date.getDate(), date.getHours() + 1);
+                    }
                     me.hoverListener(start, end);
                 }
             }
@@ -621,6 +712,69 @@ charts.LineChart.prototype.drawLines = function(opts) {
             me.hoverListener();
         }
     });
+};
+
+/**
+ * Return items in data whose neighboring items have an undefined value
+ * @param {Array} data
+ * @method filterOutSinglePoints
+ * @return {Array}
+ */
+charts.LineChart.prototype.filterOutSinglePoints = function(data) {
+    var singlePointsData = [];
+
+    // Check the first data element
+    if(!_.isUndefined(data[0].value) && _.isUndefined(data[1].value)) {
+        singlePointsData.push(data[0]);
+    }
+
+    for(var i = 1; i < data.length - 1; i++) {
+        if(_.isUndefined(data[i - 1].value) && !_.isUndefined(data[i].value) && _.isUndefined(data[i + 1].value)) {
+            singlePointsData.push(data[i]);
+            i += 1;
+        }
+    }
+
+    // Check the last data element
+    if(_.isUndefined(data[data.length - 2].value) && !_.isUndefined(data[data.length - 1].value)) {
+        singlePointsData.push(data[data.length - 1]);
+    }
+
+    return singlePointsData;
+};
+
+/**
+ * Calculates the slope and intercept of the least squares line.
+ * @param {Array} xSeries All the x values of the data-points trying to find the least squares value of
+ * @param {Array} ySeries All the y values of the data-points trying to find the least squares value of
+ * @method leastSquares
+ * @return {Array} Contains the slope and intercept, respectively
+ */
+charts.LineChart.prototype.leastSquares = function(xSeries, ySeries) {
+    var sumXSquared = _.reduce(xSeries.map(function(d) {
+        return d * d;
+    }), function(total, curr) {
+        return total + curr;
+    });
+    var sumX = _.reduce(xSeries, function(total, curr) {
+        return total + curr;
+    });
+    var sumXTimesY = _.reduce(xSeries.map(function(d, i) {
+        return d * (ySeries[i]);
+    }), function(total, curr) {
+        return total + curr;
+    });
+    var sumY = _.reduce(ySeries, function(total, curr) {
+        return total + curr;
+    });
+
+    var slope = ((sumXTimesY * xSeries.length) - (sumY * sumX)) / ((xSeries.length * sumXSquared) - (2 * sumX));
+    var intercept = (sumXTimesY - (sumXSquared * slope)) / sumX;
+
+    slope = isNaN(slope) ? 0 : slope;
+    intercept = isNaN(intercept) ? 0 : intercept;
+
+    return [slope, intercept];
 };
 
 /**
@@ -757,7 +911,7 @@ charts.LineChart.prototype.drawBrush = function() {
  */
 charts.LineChart.prototype.drawBrushMasks = function(element, brush) {
     if(d3.event) {
-        var timeFunction = d3.time.day.utc;
+        var timeFunction = d3.time[this.granularity].utc;
         var oldExtent = brush.extent();
         var newExtent;
 

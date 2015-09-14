@@ -85,9 +85,8 @@ var dateBucketizer = dateBucketizer || function() {
      */
     var getBucketIndex = function(date) {
         var effectiveStartDate = zeroOutDate(getStartDate());
-        // TODO - The absolute value doesn't make sense here; we just don't want negative
-        // values
-        var difference = Math.abs(date - effectiveStartDate);
+        var difference = date - effectiveStartDate;
+        difference = (difference < 0) ? 0 : difference;
         return Math.floor(difference / millisMultiplier);
     };
 
@@ -146,6 +145,13 @@ var dateBucketizer = dateBucketizer || function() {
         }
     };
 
+    var getDateFormat = function() {
+        if(getGranularity() === DAY) {
+            return "d MMM yyyy";
+        }
+        return "d MMM yyyy HH:mm";
+    };
+
     setGranularity(DAY);
     return {
         DAY: DAY,
@@ -162,6 +168,7 @@ var dateBucketizer = dateBucketizer || function() {
         getDateForBucket: getDateForBucket,
         getNumBuckets: getNumBuckets,
         roundUpBucket: roundUpBucket,
-        roundDownBucket: roundDownBucket
+        roundDownBucket: roundDownBucket,
+        getDateFormat: getDateFormat
     };
 };

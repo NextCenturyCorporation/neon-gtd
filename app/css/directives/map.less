@@ -66,17 +66,15 @@
 
             .chart-options {
                 .popover {
-                    top: 30px;
-                    right: 30px;
+                    max-width: none;
+                    padding: 10px 0px 0px;
                     position: absolute;
-
-                    .popover-content {
-                        width: 300px;
-                    }
+                    top: 30px;
+                    right: -10px;
                 }
 
                 .arrow {
-                    right: -15px;
+                    right: 25px;
                 }
 
                 /* Give the menu container a background to make it more readable.  Make it the same height (30 px) and color of the filter reset notifications. */
@@ -90,71 +88,136 @@
                 }
             }
 
-            .instructions-container {
+            .info-container {
+                margin-left: 5px;
+
                 label {
                     font-size: 14px;
+                    margin-bottom: 0px;
                 }
 
                 .glyphicon {
                     top: 2px;
-                    margin-right: 5px;
                 }
             }
 
-            .layer-options-container {
-                > label {
-                    font-size: 14px;
-                }
+            .button-container {
+                margin-left: 5px;
+            }
 
-                .layer-options {
-                    background-color: @main-background;
-                    border-style: solid;
-                    border-width: 1px;
-                    border-color: @border-color;
-                    border-radius: 4px;
-                    padding: 10px;
+            .all-layer-options {
+                /* Make the width match the width of the layer-options-well element + border + right padding. */
+                width: 555px;
 
-                    > .btn-group {
-                        margin-bottom: 50px;
+                .layer-options-container {
+                    /* Make the width match the width of the layer-options-well element + border. */
+                    width: 540px;
+                    /* Create a hidden (white) border so that the div doesn't move when it has the drag-enter class and shows a colored border (see below). */
+                    border-color: #ffffff;
+                    border-style: dotted;
+                    border-width: 5px;
 
-                        .btn {
-                            width: 50%;
+                    &.drag-enter {
+                        border-color: @accent-dark;
+                    }
 
-                            &.active {
-                                color: @accent-bright;
+                    .dragging {
+                        /* Display the dragged element above the other elements in its list, even if the other elements are defined after the dragged element in the DOM. */
+                        position: relative;
+                    }
+
+                    > label {
+                        font-size: 14px;
+                    }
+
+                    .layer-options-well {
+                        cursor: move;
+                        /* Make the width match the width of four columns + the columns' margins + this element's padding + this element's borders. */
+                        width: 530px;
+
+                        &.new-layer {
+                            cursor: inherit;
+                        }
+
+                        .layer-options-row {
+                            height: 60px;
+                            margin-top: 10px;
+
+                            &:first-child {
+                                margin-top: 0px;
                             }
 
-                            .glyphicon {
-                                margin-right: 5px;
+                            .layer-options-col {
+                                float: left;
+                                width: 120px;
+                                margin-left: 10px;
+
+                                &:first-child {
+                                    margin-left: 0px;
+                                }
+
+                                &.layer-options-col-wide {
+                                    width: 250px;
+                                }
+
+                                &.btn-group {
+                                    /* Make the layer options buttons vertically align with the dropdowns. */
+                                    margin-top: 25px;
+
+                                    .btn {
+                                        /* Make the combined width of the four layer options buttons match the width of the column. */
+                                        padding: 3px 22px 3px 21px;
+
+                                        &.btn-default {
+                                            /* Make the border color darker so it stands out against the background. */
+                                            border-color: @main-text-color;
+
+                                            &.active, &.active&:hover, &.active&:focus {
+                                                color: #FFFFFF;
+                                                background-color: @accent-dark;
+                                                border-color: @accent-dark;
+                                            }
+                                        }
+
+                                        &.active {
+                                            z-index: auto;
+                                        }
+                                    }
+
+                                    .glyphicon {
+                                        font-size: 18px;
+                                        top: 3px;
+                                    }
+                                }
                             }
                         }
-                    }
 
-                    > .error {
-                        color: @error-text-color;
-                        margin: 5px;
+                        .layer-options-error {
+                            color: @error-text-color;
+                            margin: 10px 0px 0px;
+                        }
+
+                        .layer-options-editing {
+                            margin-top: 10px;
+                        }
                     }
                 }
-            }
-
-            .reset-options {
-                margin-top: 30px;
             }
         }
 
         &.legend-container {
-            top: 40px;
+            top: 50px;
             left: 10px;
         }
 
         &.filter-container {
-            top: 40px;
+            top: 50px;
             right: 10px;
         }
     }
 
     .olMap {
-        background-color: #b5d0d0;
+        background-color: #CDD2D4;
         border: @border;
         border-radius: 0 0 4px 4px;
         width: auto !important;
@@ -165,7 +228,7 @@
 
     .olPopup {
         font-size: 12px;
-        z-index: 1060;
+        z-index: 1060 !important;
 
         table {
             margin: 2px;
@@ -178,12 +241,12 @@
 
     .olControlAttribution {
         bottom: 0;
+        right: 5px;
         color: @main-text-color;
-        text-shadow: 0 1px 0 @text-shadow-color;
     }
 
     .olControlZoom {
-        top: 40px;
+        top: 50px;
         left: 10px;
 
         a {

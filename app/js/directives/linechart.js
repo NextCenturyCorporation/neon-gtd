@@ -47,6 +47,9 @@ function(connectionService, datasetService, errorNotificationService, filterServ
             hideAdvancedOptions: '=?'
         },
         link: function($scope, $element) {
+            var HOUR = "hour";
+            var DAY = "day";
+
             $element.addClass('linechartDirective');
 
             $scope.element = $element;
@@ -79,6 +82,8 @@ function(connectionService, datasetService, errorNotificationService, filterServ
             $scope.noData = true;
             $scope.data = [];
             $scope.queryOnChangeBrush = false;
+            $scope.automaticHourSet = false;
+            $scope.outstandingQuery = undefined;
 
             $scope.options = {
                 database: {},
@@ -86,7 +91,9 @@ function(connectionService, datasetService, errorNotificationService, filterServ
                 attrX: "",
                 attrY: "",
                 categoryField: "",
-                aggregation: "count"
+                aggregation: "count",
+                granularity: DAY,
+                trendlines: 'hide'
             };
 
             var updateChartSize = function() {
@@ -98,6 +105,7 @@ function(connectionService, datasetService, errorNotificationService, filterServ
                     $element.find('.linechart').height($element.height() - headerHeight);
                     // Redraw the line chart.
                     $scope.chart.draw();
+                    $scope.chart.showTrendlines(($scope.options.trendlines === 'show') ? true : false);
                 }
             };
 
@@ -105,9 +113,11 @@ function(connectionService, datasetService, errorNotificationService, filterServ
                 $scope.messenger.events({
                     filtersChanged: onFiltersChanged
                 });
-                $scope.messenger.subscribe(datasetService.DATE_CHANGED, onDateChanged);
+                $scope.messenger.subscribe(datasetService.UPDATE_DATA_CHANNEL, function() {
+                    $scope.queryForData();
+                });
+                $scope.messenger.subscribe(datasetService.DATE_CHANGED_CHANNEL, onDateChanged);
                 $scope.messenger.subscribe("date_selected", onDateSelected);
-                $scope.messenger.subscribe("animation_date_selected", onDateSelected);
 
                 $scope.exportID = exportService.register($scope.makeLinechartExportObject);
 
@@ -165,6 +175,42 @@ function(connectionService, datasetService, errorNotificationService, filterServ
                         $scope.queryOnChangeBrush = $scope.queryOnChangeBrush || ($scope.brushExtent.length > 0);
                     }
                 });
+                $scope.$watch('options.granularity', function(newVal, oldVal) {
+                    if(!$scope.loadingData && newVal && newVal !== oldVal) {
+                        XDATA.userALE.log({
+                            activity: "alter",
+                            action: ($scope.loadingData) ? "reset" : "click",
+                            elementId: "linechart-" + newVal,
+                            elementType: "button",
+                            elementSub: "linechart-" + newVal,
+                            elementGroup: "chart_group",
+                            source: ($scope.loadingData) ? "system" : "user",
+                            tags: ["linechart", "granularity", newVal]
+                        });
+                        $scope.chart.setGranularity(newVal);
+                        $scope.queryForData();
+                        $scope.queryOnChangeBrush = $scope.queryOnChangeBrush || ($scope.brushExtent.length > 0);
+                    }
+                });
+                $scope.$watch('options.trendlines', function(newVal, oldVal) {
+                    if(!$scope.loadingData && newVal && newVal !== oldVal) {
+                        XDATA.userALE.log({
+                            activity: "alter",
+                            action: ($scope.loadingData) ? "reset" : "click",
+                            elementId: "linechart",
+                            elementType: "button",
+                            elementSub: "linechart-trendline-" + newVal,
+                            elementGroup: "chart_group",
+                            source: ($scope.loadingData) ? "system" : "user",
+                            tags: ["linechart", "trendline", newVal]
+                        });
+                        if(newVal === 'show') {
+                            $scope.chart.showTrendlines(true);
+                        } else {
+                            $scope.chart.showTrendlines(false);
+                        }
+                    }
+                });
             };
 
             var onFieldChange = function(field, newValue) {
@@ -203,7 +249,7 @@ function(connectionService, datasetService, errorNotificationService, filterServ
                 } else if(message.removedFilter.whereClause) {
                     whereClauses = message.removedFilter.whereClause.whereClauses;
                 }
-                if(whereClauses && whereClauses.length === 2 && whereClauses[0].lhs === $scope.options.attrX && whereClauses[1].lhs === $scope.options.attrX) {
+                if(whereClauses && whereClauses.length === 2 && whereClauses[0].lhs === $scope.options.attrX.columnName && whereClauses[1].lhs === $scope.options.attrX.columnName) {
                     return true;
                 }
                 return false;
@@ -291,14 +337,23 @@ function(connectionService, datasetService, errorNotificationService, filterServ
 
                 var connection = connectionService.getActiveConnection();
 
-                if(!connection || !$scope.options.attrX || (!$scope.options.attrY && $scope.options.aggregation !== "count")) {
+                if(!connection || !$scope.options.attrX.columnName || (!$scope.options.attrY.columnName && $scope.options.aggregation !== "count")) {
                     drawLineChart();
                     return;
                 }
 
                 var query = $scope.buildQuery();
 
-                connection.executeQuery(query, handleQuerySuccess, handleQueryFailure);
+                if($scope.outstandingQuery) {
+                    $scope.outstandingQuery.abort();
+                }
+
+                $scope.outstandingQuery = connection.executeQuery(query);
+                $scope.outstandingQuery.always(function() {
+                    $scope.outstandingQuery = undefined;
+                });
+                $scope.outstandingQuery.done(handleQuerySuccess);
+                $scope.outstandingQuery.fail(handleQueryFailure);
             };
 
             /**
@@ -307,18 +362,26 @@ function(connectionService, datasetService, errorNotificationService, filterServ
              * @return A ready-to-be-sent query for the line chart.
              */
             $scope.buildQuery = function() {
-                var yearGroupClause = new neon.query.GroupByFunctionClause(neon.query.YEAR, $scope.options.attrX, 'year');
-                var monthGroupClause = new neon.query.GroupByFunctionClause(neon.query.MONTH, $scope.options.attrX, 'month');
-                var dayGroupClause = new neon.query.GroupByFunctionClause(neon.query.DAY, $scope.options.attrX, 'day');
+                var yearGroupClause = new neon.query.GroupByFunctionClause(neon.query.YEAR, $scope.options.attrX.columnName, 'year');
+                var monthGroupClause = new neon.query.GroupByFunctionClause(neon.query.MONTH, $scope.options.attrX.columnName, 'month');
+                var dayGroupClause = new neon.query.GroupByFunctionClause(neon.query.DAY, $scope.options.attrX.columnName, 'day');
 
                 var groupByClause = [yearGroupClause, monthGroupClause, dayGroupClause];
-                if($scope.options.categoryField) {
-                    groupByClause.push($scope.options.categoryField);
+
+                if($scope.options.granularity === HOUR) {
+                    var hourGroupClause = new neon.query.GroupByFunctionClause(neon.query.HOUR, $scope.options.attrX.columnName, 'hour');
+                    groupByClause.push(hourGroupClause);
+                }
+                if($scope.options.categoryField.columnName) {
+                    groupByClause.push($scope.options.categoryField.columnName);
                 }
 
                 var query = new neon.query.Query()
                     .selectFrom($scope.options.database.name, $scope.options.table.name)
-                    .where($scope.options.attrX, '!=', null);
+                    .where(neon.query.and(
+                        neon.query.where($scope.options.attrX.columnName, '>=', new Date("1970-01-01T00:00:00.000Z")),
+                        neon.query.where($scope.options.attrX.columnName, '<=', new Date("2025-01-01T00:00:00.000Z"))
+                    ));
 
                 query.groupBy.apply(query, groupByClause);
 
@@ -326,19 +389,19 @@ function(connectionService, datasetService, errorNotificationService, filterServ
                     query.aggregate(neon.query.COUNT, '*', COUNT_FIELD_NAME);
                 }
                 if($scope.options.aggregation === "sum") {
-                    query.aggregate(neon.query.SUM, $scope.options.attrY, COUNT_FIELD_NAME);
+                    query.aggregate(neon.query.SUM, $scope.options.attrY.columnName, COUNT_FIELD_NAME);
                 }
                 if($scope.options.aggregation === "average") {
-                    query.aggregate(neon.query.AVG, $scope.options.attrY, COUNT_FIELD_NAME);
+                    query.aggregate(neon.query.AVG, $scope.options.attrY.columnName, COUNT_FIELD_NAME);
                 }
                 if($scope.options.aggregation === "min") {
-                    query.aggregate(neon.query.MIN, $scope.options.attrY, COUNT_FIELD_NAME);
+                    query.aggregate(neon.query.MIN, $scope.options.attrY.columnName, COUNT_FIELD_NAME);
                 }
                 if($scope.options.aggregation === "max") {
-                    query.aggregate(neon.query.MAX, $scope.options.attrY, COUNT_FIELD_NAME);
+                    query.aggregate(neon.query.MAX, $scope.options.attrY.columnName, COUNT_FIELD_NAME);
                 }
 
-                query.aggregate(neon.query.MIN, $scope.options.attrX, 'date')
+                query.aggregate(neon.query.MIN, $scope.options.attrX.columnName, 'date')
                     .sortBy('date', neon.query.ASCENDING);
 
                 return query;
@@ -390,12 +453,30 @@ function(connectionService, datasetService, errorNotificationService, filterServ
 
             $scope.updateFields = function() {
                 $scope.loadingData = true;
-                $scope.options.attrX = $scope.bindDateField || datasetService.getMapping($scope.options.database.name, $scope.options.table.name, "date") || "";
-                $scope.options.attrY = $scope.bindYAxisField || datasetService.getMapping($scope.options.database.name, $scope.options.table.name, "y_axis") || "";
-                $scope.options.categoryField = $scope.bindCategoryField || datasetService.getMapping($scope.options.database.name, $scope.options.table.name, "line_category") || "";
+                $scope.fields = datasetService.getSortedFields($scope.options.database.name, $scope.options.table.name);
                 $scope.options.aggregation = $scope.bindAggregationField || "count";
-                $scope.fields = datasetService.getDatabaseFields($scope.options.database.name, $scope.options.table.name);
-                $scope.fields.sort();
+
+                var attrX = $scope.bindDateField || datasetService.getMapping($scope.options.database.name, $scope.options.table.name, "date") || "";
+                $scope.options.attrX = _.find($scope.fields, function(field) {
+                    return field.columnName === attrX;
+                }) || {
+                    columnName: "",
+                    prettyName: ""
+                };
+                var attrY = $scope.bindYAxisField || datasetService.getMapping($scope.options.database.name, $scope.options.table.name, "y_axis") || "";
+                $scope.options.attrY = _.find($scope.fields, function(field) {
+                    return field.columnName === attrY;
+                }) || {
+                    columnName: "",
+                    prettyName: ""
+                };
+                var categoryField = $scope.bindCategoryField || datasetService.getMapping($scope.options.database.name, $scope.options.table.name, "line_category") || "";
+                $scope.options.categoryField = _.find($scope.fields, function(field) {
+                    return field.columnName === categoryField;
+                }) || {
+                    columnName: "",
+                    prettyName: ""
+                };
 
                 var globalBrushExtent = datasetService.getDateBrushExtent($scope.options.database.name, $scope.options.table.name);
                 if($scope.brushExtent !== globalBrushExtent) {
@@ -453,8 +534,8 @@ function(connectionService, datasetService, errorNotificationService, filterServ
                 var otherSeriesData = {
                     series: count + " Others",
                     total: 0,
-                    min: -1,
-                    max: -1,
+                    min: undefined,
+                    max: undefined,
                     data: []
                 };
 
@@ -462,18 +543,30 @@ function(connectionService, datasetService, errorNotificationService, filterServ
                 if($scope.options.aggregation !== 'average') {
                     for(var i = $scope.seriesLimit; i < data.length; i++) {
                         otherSeriesData.total += data[i].total;
-                        otherSeriesData.min = otherSeriesData.min < 0 ? data[i].min : Math.min(otherSeriesData.min, data[i].min);
-                        otherSeriesData.max = otherSeriesData.max < 0 ? data[i].max : Math.max(otherSeriesData.max, data[i].max);
+                        otherSeriesData.min = _.isUndefined(otherSeriesData.min) ? data[i].min : Math.min(otherSeriesData.min, data[i].min);
+                        otherSeriesData.max = _.isUndefined(otherSeriesData.max) ? data[i].max : Math.max(otherSeriesData.max, data[i].max);
                         for(var d = 0; d < data[i].data.length; d++) {
                             if(otherSeriesData.data[d]) {
-                                if($scope.options.aggregation === "count" || $scope.options.aggregation === "sum") {
-                                    otherSeriesData.data[d].value += data[i].data[d].value;
+                                if(($scope.options.aggregation === "count" || $scope.options.aggregation === "sum") && !_.isUndefined(data[i].data[d].value)) {
+                                    if(_.isUndefined(otherSeriesData.data[d].value)) {
+                                        otherSeriesData.data[d].value = data[i].data[d].value;
+                                    } else {
+                                        otherSeriesData.data[d].value += data[i].data[d].value;
+                                    }
                                 }
-                                if($scope.options.aggregation === "min") {
-                                    otherSeriesData.data[d].value = Math.min(otherSeriesData.data[d].value, data[i].data[d].value);
+                                if($scope.options.aggregation === "min" && !_.isUndefined(data[i].data[d].value)) {
+                                    if(_.isUndefined(otherSeriesData.data[d].value)) {
+                                        otherSeriesData.data[d].value = data[i].data[d].value;
+                                    } else {
+                                        otherSeriesData.data[d].value = Math.min(otherSeriesData.data[d].value, data[i].data[d].value);
+                                    }
                                 }
-                                if($scope.options.aggregation === "max") {
-                                    otherSeriesData.data[d].value = Math.max(otherSeriesData.data[d].value, data[i].data[d].value);
+                                if($scope.options.aggregation === "max" && !_.isUndefined(data[i].data[d].value)) {
+                                    if(_.isUndefined(otherSeriesData.data[d].value)) {
+                                        otherSeriesData.data[d].value = data[i].data[d].value;
+                                    } else {
+                                        otherSeriesData.data[d].value = Math.max(otherSeriesData.data[d].value, data[i].data[d].value);
+                                    }
                                 }
                             } else {
                                 otherSeriesData.data[d] = {
@@ -515,8 +608,8 @@ function(connectionService, datasetService, errorNotificationService, filterServ
                 //this prevents an error in older mongo caused when the xAxis value is invalid as it is not
                 //included as a key in the response
                 for(var i = 0; i < data.length; i++) {
-                    if(typeof(data[i][$scope.options.attrX]) === 'undefined') {
-                        data[i][$scope.options.attrX] = null;
+                    if(typeof(data[i][$scope.options.attrX.columnName]) === 'undefined') {
+                        data[i][$scope.options.attrX.columnName] = null;
                     }
                 }
 
@@ -571,26 +664,40 @@ function(connectionService, datasetService, errorNotificationService, filterServ
              * @method handleQueryFailure
              */
             var handleQueryFailure = function(response) {
-                XDATA.userALE.log({
-                    activity: "alter",
-                    action: "failed",
-                    elementId: "linechart",
-                    elementType: "canvas",
-                    elementSub: "linechart",
-                    elementGroup: "chart_group",
-                    source: "system",
-                    tags: ["failed", "linechart"]
-                });
+                if(response.status === 0) {
+                    XDATA.userALE.log({
+                        activity: "alter",
+                        action: "canceled",
+                        elementId: "linechart",
+                        elementType: "canvas",
+                        elementSub: "linechart",
+                        elementGroup: "chart_group",
+                        source: "system",
+                        tags: ["canceled", "linechart"]
+                    });
+                } else {
+                    XDATA.userALE.log({
+                        activity: "alter",
+                        action: "failed",
+                        elementId: "linechart",
+                        elementType: "canvas",
+                        elementSub: "linechart",
+                        elementGroup: "chart_group",
+                        source: "system",
+                        tags: ["failed", "linechart"]
+                    });
 
-                drawLineChart();
+                    drawLineChart();
 
-                if(response.responseJSON) {
-                    $scope.errorMessage = errorNotificationService.showErrorMessage($element, response.responseJSON.error, response.responseJSON.stackTrace);
+                    if(response.responseJSON) {
+                        $scope.errorMessage = errorNotificationService.showErrorMessage($element, response.responseJSON.error, response.responseJSON.stackTrace);
+                    }
                 }
             };
 
             $scope.toggleSeries = function(series) {
                 var activity = $scope.chart.toggleSeries(series);
+                $scope.chart.showTrendlines(($scope.options.trendlines === 'show') ? true : false);
                 XDATA.userALE.log({
                     activity: activity,
                     action: "click",
@@ -610,34 +717,42 @@ function(connectionService, datasetService, errorNotificationService, filterServ
                 var start = zeroOutDate(minDate);
                 var end = zeroOutDate(maxDate);
 
-                var dayMillis = (1000 * 60 * 60 * 24);
-                var numBuckets = Math.ceil(Math.abs(end - start) / dayMillis) + 1;
+                var numBuckets;
+                var millis;
+
+                if($scope.options.granularity === DAY) {
+                    millis = (1000 * 60 * 60 * 24);
+                    numBuckets = Math.ceil(Math.abs(end - start) / millis) + 1;
+                } else {
+                    millis = (1000 * 60 * 60);
+                    numBuckets = Math.ceil(Math.abs(end - start) / millis) + 1;
+                }
 
                 var startTime = start.getTime();
 
                 var resultData = {};
 
-                var series = $scope.options.attrY;
+                var series = $scope.options.attrY.prettyName;
                 if($scope.options.aggregation === 'count') {
-                    series = 'Count ' + $scope.options.attrY;
+                    series = 'Count ' + $scope.options.attrY.prettyName;
                 }
                 if($scope.options.aggregation === 'average') {
-                    series = 'Average ' + $scope.options.attrY;
+                    series = 'Average ' + $scope.options.attrY.prettyName;
                 }
                 if($scope.options.aggregation === 'sum') {
-                    series = 'Sum ' + $scope.options.attrY;
+                    series = 'Sum ' + $scope.options.attrY.prettyName;
                 }
                 if($scope.options.aggregation === 'min') {
-                    series = 'Minimum ' + $scope.options.attrY;
+                    series = 'Minimum ' + $scope.options.attrY.prettyName;
                 }
                 if($scope.options.aggregation === 'max') {
-                    series = 'Maximum ' + $scope.options.attrY;
+                    series = 'Maximum ' + $scope.options.attrY.prettyName;
                 }
 
                 // Scrape data for unique series
                 for(i = 0; i < data.length; i++) {
-                    if($scope.options.categoryField) {
-                        series = data[i][$scope.options.categoryField] !== '' ? data[i][$scope.options.categoryField] : 'Unknown';
+                    if($scope.options.categoryField.columnName) {
+                        series = data[i][$scope.options.categoryField.columnName] !== '' ? data[i][$scope.options.categoryField.columnName] : 'Unknown';
                     }
 
                     if(!resultData[series]) {
@@ -654,7 +769,7 @@ function(connectionService, datasetService, errorNotificationService, filterServ
 
                 // Initialize our data buckets.
                 for(i = 0; i < numBuckets; i++) {
-                    var bucketGraphDate = new Date(startTime + (dayMillis * i));
+                    var bucketGraphDate = new Date(startTime + (millis * i));
                     for(series in resultData) {
                         if(Object.prototype.hasOwnProperty.call(resultData, series)) {
                             resultData[series].data.push({
@@ -670,13 +785,13 @@ function(connectionService, datasetService, errorNotificationService, filterServ
                 for(i = 0; i < data.length; i++) {
                     indexDate = new Date(data[i].date);
 
-                    if($scope.options.categoryField) {
-                        series = data[i][$scope.options.categoryField] !== '' ? data[i][$scope.options.categoryField] : 'Unknown';
+                    if($scope.options.categoryField.columnName) {
+                        series = data[i][$scope.options.categoryField.columnName] !== '' ? data[i][$scope.options.categoryField.columnName] : 'Unknown';
                     }
 
                     data[i].value = _.isNumber(data[i].value) ? data[i].value : undefined;
 
-                    resultData[series].data[Math.floor(Math.abs(indexDate - start) / dayMillis)].value = data[i].value;
+                    resultData[series].data[Math.floor(Math.abs(indexDate - start) / millis)].value = data[i].value;
 
                     // Only calculate total, min, and max if the value is defined
                     if(!_.isUndefined(data[i].value)) {
@@ -686,16 +801,18 @@ function(connectionService, datasetService, errorNotificationService, filterServ
                     }
 
                     // Save the mapping from date string to data index so we can find the data index using the brush extent while calculating aggregations for brushed line charts.
-                    $scope.dateStringToDataIndex[indexDate.toDateString()] = Math.floor(Math.abs(indexDate - start) / dayMillis);
+                    $scope.dateStringToDataIndex[indexDate.toDateString()] = Math.floor(Math.abs(indexDate - start) / millis);
                 }
 
                 return resultData;
             };
 
             var onHover = function(startDate, endDate) {
-                $scope.messenger.publish("date_selected", {
-                    start: startDate,
-                    end: endDate
+                $scope.$apply(function() {
+                    $scope.messenger.publish("date_selected", {
+                        start: startDate,
+                        end: endDate
+                    });
                 });
             };
 
@@ -709,7 +826,8 @@ function(connectionService, datasetService, errorNotificationService, filterServ
                     x: "date",
                     y: "value",
                     hoverListener: onHover,
-                    responsive: true
+                    responsive: true,
+                    granularity: $scope.options.granularity
                 };
 
                 // Destroy the old chart and rebuild it.
@@ -723,6 +841,7 @@ function(connectionService, datasetService, errorNotificationService, filterServ
                     });
                 });
                 $scope.chart.draw(data);
+                $scope.chart.showTrendlines(($scope.options.trendlines === 'show') ? true : false);
                 $scope.colorMappings = $scope.chart.getColorMappings();
                 $scope.noData = !data || !data.length || !data[0].data || !data[0].data.length;
                 $scope.loadingData = false;
@@ -754,7 +873,9 @@ function(connectionService, datasetService, errorNotificationService, filterServ
                 zeroed.setUTCMinutes(0);
                 zeroed.setUTCSeconds(0);
                 zeroed.setUTCMilliseconds(0);
-                zeroed.setUTCHours(0);
+                if($scope.options.granularity === DAY) {
+                    zeroed.setUTCHours(0);
+                }
                 return zeroed;
             };
 
@@ -774,7 +895,9 @@ function(connectionService, datasetService, errorNotificationService, filterServ
                 var end = $scope.dateStringToDataIndex[$scope.brushExtent[1].toDateString()] || data.length;
                 var value = 0;
                 for(var i = start; i < end; ++i) {
-                    value = calculationFunction(data[i].value, value);
+                    if(!_.isUndefined(data[i].value)) {
+                        value = calculationFunction(data[i].value, value);
+                    }
                 }
                 return value;
             };
@@ -787,7 +910,7 @@ function(connectionService, datasetService, errorNotificationService, filterServ
              */
             $scope.getLegendItemAggregationText = function(colorMappingObject) {
                 var total = 0;
-                if($scope.options.aggregation === "count" || $scope.options.aggregation === "sum") {
+                if(($scope.options.aggregation === "count" || $scope.options.aggregation === "sum") && !_.isUndefined(colorMappingObject.total)) {
                     total = colorMappingObject.total;
                     if($scope.brushExtent.length >= 2) {
                         total = calculateBrushedAggregationValue(colorMappingObject.data, function(indexValue, aggregationValue) {
@@ -796,7 +919,7 @@ function(connectionService, datasetService, errorNotificationService, filterServ
                     }
                     return "(" + $filter('number')(total) + ")";
                 }
-                if($scope.options.aggregation === "min") {
+                if($scope.options.aggregation === "min" && !_.isUndefined(colorMappingObject.min)) {
                     var min = colorMappingObject.min;
                     if($scope.brushExtent.length >= 2) {
                         total = calculateBrushedAggregationValue(colorMappingObject.data, function(indexValue, aggregationValue) {
@@ -805,7 +928,7 @@ function(connectionService, datasetService, errorNotificationService, filterServ
                     }
                     return "(" + min + ")";
                 }
-                if($scope.options.aggregation === "max") {
+                if($scope.options.aggregation === "max" && !_.isUndefined(colorMappingObject.max)) {
                     var max = colorMappingObject.max;
                     if($scope.brushExtent.length >= 2) {
                         total = calculateBrushedAggregationValue(colorMappingObject.data, function(indexValue, aggregationValue) {
@@ -847,7 +970,7 @@ function(connectionService, datasetService, errorNotificationService, filterServ
                     return;
                 }
 
-                var relations = datasetService.getRelations($scope.options.database.name, $scope.options.table.name, [$scope.options.attrX]);
+                var relations = datasetService.getRelations($scope.options.database.name, $scope.options.table.name, [$scope.options.attrX.columnName]);
 
                 var filterNameObj = {
                     visName: "LineChart",
@@ -873,6 +996,25 @@ function(connectionService, datasetService, errorNotificationService, filterServ
              * @method updateLineChartForBrushExtent
              */
             var updateLineChartForBrushExtent = function() {
+                if($scope.brushExtent.length >= 2) {
+                    var dayMillis = (1000 * 60 * 60 * 24);
+                    var diff = $scope.brushExtent[1] - $scope.brushExtent[0];
+
+                    if($scope.options.granularity === DAY && (diff / dayMillis) <= 1) {
+                        $scope.automaticHourSet = true;
+                        $scope.options.granularity = HOUR;
+                        return;
+                    } else if($scope.options.granularity === HOUR && (diff / dayMillis) > 1 && $scope.automaticHourSet) {
+                        $scope.automaticHourSet = false;
+                        $scope.options.granularity = DAY;
+                        return;
+                    }
+                } else if($scope.automaticHourSet) {
+                    $scope.automaticHourSet = false;
+                    $scope.options.granularity = DAY;
+                    return;
+                }
+
                 // If the user changed a field or filter while the chart contained data filtered by date then the chart will need to query for new data since the saved data from
                 // the previous query will be stale.  Otherwise use the data from the previous query and the current brush extent to redraw the chart.
                 if($scope.queryOnChangeBrush) {
@@ -924,7 +1066,7 @@ function(connectionService, datasetService, errorNotificationService, filterServ
                 });
 
                 renderBrushExtent([]);
-                var relations = datasetService.getRelations($scope.options.database.name, $scope.options.table.name, [$scope.options.attrX]);
+                var relations = datasetService.getRelations($scope.options.database.name, $scope.options.table.name, [$scope.options.attrX.columnName]);
                 filterService.removeFilters($scope.messenger, $scope.filterKeys, function() {
                     updateLineChartForBrushExtent();
                     datasetService.removeDateBrushExtentForRelations(relations);

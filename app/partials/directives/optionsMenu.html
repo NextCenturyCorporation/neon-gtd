@@ -1,6 +1,6 @@
 <div class="chart-options pull-right">
     <a class="btn collapsed" data-toggle="collapse" data-target=".{{uniqueVisualizationOptions}} .popover" data-animation=false ng-click="toggleOptionsDisplay()">
-        <span class="header-text" ng-show="showButtonText()">{{getButtonText()}}</span>
+        <span class="header-text" ng-show="showButtonText()" ng-bind="getButtonText()"></span>
         <span class="glyphicon glyphicon-cog"></span>
         <span class="caret"></span>
     </a>

@@ -1,5 +1,17 @@
 <div class="header-container" ng-show="!(hideHeader)">
-    <span class="header-text pull-left">{{options.table.prettyName}}</span>
+    <span class="header-text pull-left" ng-bind="options.table.prettyName"></span>
+
+    <h4 class="pull-left">
+        <span class="count text-primary" ng-bind="recordCount | number"></span>
+        <span>valid</span>
+        <span ng-hide="(width < 600)">records</span>
+    </h4>
+
+    <h4 class="invalid-record-count pull-left" ng-click="sendInvalidDates()">
+        <span class="count text-primary" ng-bind="invalidRecordCount | number"></span>
+        <span>invalid</span>
+        <span ng-hide="(width < 600)">records</span>
+    </h4>
 
     <options-menu parent-element="element" export-function="makeTimelineSelectorExportObject">
         <div class="form-group" ng-show="!(hideAdvancedOptions)">
@@ -16,7 +28,7 @@
 
         <div class="form-group" ng-show="!(hideAdvancedOptions)">
             <label>Date Field</label>
-            <select class="form-control" ng-model="options.dateField" ng-options="field for field in fields" ng-required="true" ng-disabled="(fields.length == 0)" ng-change="updateDateField()">
+            <select class="form-control" ng-model="options.dateField" ng-options="field.prettyName for field in fields" ng-required="true" ng-disabled="(fields.length == 0)" ng-change="updateDateField()">
             </select>
         </div>
 
@@ -66,33 +78,47 @@
             </div>
             <div class="clearfix"></div>
         </div>
+        <div class="form-group">
+            <label>Animation Controls</label>
+            <div class="btn-group">
+                <label class="btn btn-default" ng-class="{true: 'active', false: ''}[options.showAnimationControls]">
+                    <input type="radio" style="display:none" ng-model="options.showAnimationControls" value="true"> Show 
+                </label>
+                <label class="btn btn-default" ng-class="{true: '', false: 'active'}[options.showAnimationControls]">
+                    <input type="radio" style="display:none" ng-model="options.showAnimationControls" value="false"> Hide
+                </label>
+            </div>
+            <div class="clearfix"></div>
+        </div>
     </options-menu>
 </div>
 
 <div class="clearfix"></div>
 
 <div class="header-container filter-container">
-    <div class="filter-reset pull-right" ng-class="{true: '', false: 'hidden'}[brush.length > 0]" title="Date from {{startDateForDisplay}} to {{endDateForDisplay}}">
+    <div class="header-item filter-reset pull-right" ng-class="{true: '', false: 'hidden'}[brush.length > 0]" title="Date from {{startDateForDisplay}} to {{endDateForDisplay}}">
         <span class="filter-label">Date Filter</span>
         <span class="glyphicon glyphicon-remove" ng-click="clearBrush()"></span>
     </div>
 
-    <h4 class="pull-left">
-        <span class="count text-primary">{{recordCount}}</span> records
-    </h4>
+    <div class="header-item filter-reset pull-right" ng-class="{true: '', false: 'hidden'}[invalidDatesFilter]" title="Invalid Date">
+        <span class="filter-lg-label">Invalid Date Filter</span>
+        <span class="glyphicon glyphicon-remove" ng-click="clearInvalidDatesFilter()"></span>
+    </div>
 
     <div class="neon-datetimepicker dropdown pull-left">
-        <button class="btn btn-default dropdown-toggle" role="button" data-toggle="dropdown" data-target="#" href="#">
+        <button class="btn btn-default header-item dropdown-toggle" role="button" data-toggle="dropdown" data-target="#" href="#" title="{{'From ' + (startDateForDisplay || '?') + ' to ' + (endDateForDisplay || '?')}}">
             <span class="glyphicon glyphicon-calendar"></span>
-            From {{startDateForDisplay || '?'}} to {{endDateForDisplay || '?'}}
+            <span ng-hide="(brush.length > 0 && width < 525) || (width < 400)" ng-bind="(startDateForDisplay || '?') + ' to ' + (endDateForDisplay || '?')"></span>
             <span class="caret"></span>
         </button>
+
         <ul class="dropdown-menu" role="menu">
             <div>
-                <label class="start-date">Start Date</label>
-                <label class="end-date">End Date</label>
-                <button class="btn btn-default save-button disabled" ng-click="handleDateTimePickSave()">Save</button>
-                <button class="btn btn-default" ng-click="handleDateTimePickCancel()">Cancel</button>
+                <label class="start-date pull-left">Start Date</label>
+                <label class="end-date pull-left">End Date</label>
+                <button class="btn btn-default header-item pull-left save-button disabled" ng-click="handleDateTimePickSave()">Save</button>
+                <button class="btn btn-default header-item pull-left" ng-click="handleDateTimePickCancel()">Cancel</button>
             </div>
             <!-- Create a datetimepicker for each granularity because you can't change the configuration dynamically. -->
             <datetimepicker ng-show="(options.granularity === 'hour')" data-ng-model="filter.start" data-datetimepicker-config="{ startView: 'hour', minView: 'hour' }" ng-change="handleDateTimePickChange()"/>
@@ -104,24 +130,30 @@
             <datetimepicker ng-show="(options.granularity === 'month')" data-ng-model="filter.end" data-datetimepicker-config="{ startView: 'month', minView: 'month' }" ng-change="handleDateTimePickChange()"/>
             <datetimepicker ng-show="(options.granularity === 'year')" data-ng-model="filter.end" data-datetimepicker-config="{ startView: 'year', minView: 'year' }" ng-change="handleDateTimePickChange()"/>
         </ul>
-        <button class="btn btn-default" role="button" 
-            ng-click="(options.animatingTime) ? pauseTimeAnimation() : playTimeAnimation()">
-            <span class="glyphicon" 
-                ng-class="{true: 'glyphicon-pause', false: 'glyphicon-play-circle'}[options.animatingTime]"></span> 
-            <span ng-bind="(options.animatingTime) ? 'Pause' : 'Play'"></span>
-        </button>
-        <button class="btn btn-default" role="button" ng-click="stepTimeAnimation()">
-            <span class="glyphicon glyphicon-step-forward"></span> Step
-        </button>
-        <button class="btn btn-default" role="button" ng-click="stopTimeAnimation()">
-            <span class="glyphicon glyphicon-stop"></span> Stop
-        </button>
+
+        <span class="form-group" ng-if="options.showAnimationControls">
+            <span class="btn-group">
+                <label class="btn btn-default header-item" role="button" title="{{(options.animatingTime) ? 'Pause' : ((options.animationFrame > getAnimationStartFrame()) ? 'Resume' : 'Play')}}"
+                    ng-click="(options.animatingTime) ? pauseTimeAnimation() : playTimeAnimation()">
+                    <span class="glyphicon" ng-class="{true: 'glyphicon-pause', false: 'glyphicon-play-circle'}[options.animatingTime]"></span> 
+                    <span ng-hide="(brush.length > 0 && width < 625) || (width < 500)" ng-bind="(options.animatingTime) ? 'Pause' : ((options.animationFrame > getAnimationStartFrame()) ? 'Resume' : 'Play')"></span>
+                </label>
+                <label class="btn btn-default header-item" role="button" title="Step" ng-click="stepTimeAnimation()">
+                    <span class="glyphicon glyphicon-step-forward"></span>
+                    <span ng-hide="(brush.length > 0 && width < 625) || (width < 500)">Step</span>
+                </label>
+                <label class="btn btn-default header-item" role="button" title="Stop" ng-click="stopTimeAnimation()">
+                    <span class="glyphicon glyphicon-stop"></span>
+                    <span ng-hide="(brush.length > 0 && width < 625) || (width < 500)">Stop</span>
+                </label>
+            </span>
+        </span>
     </div>
 </div>
 
 <div class="collapsed" ng-class="{true: 'collapsed', false: ''}[options.collapsed]" ng-hide="noData">
     <div timeline-selector-chart timeline-data='data' timeline-brush='brush' collapsed='options.collapsed' extent-dirty='extentDirty'
-        primary-series='options.primarySeries' granularity='options.granularity' show-focus='options.showFocus' messenger='messenger'></div>
+        primary-series='options.primarySeries' granularity='options.granularity' show-focus='options.showFocus'></div>
 </div>
 
 <span class="no-data pull-left" ng-show="noData">No data for current filters.</span>

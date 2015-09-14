@@ -24,13 +24,15 @@
         "jquery.tagcloud": "https://github.com/addywaddy/jquery.tagcloud.js.git",
         "jquery.linky": "0.1.8",
         "mergesort": "https://github.com/justinforce/merge-sort/archive/1.0.zip",
+        "ngDraggable": "0.1.8",
         "opencpu": "https://github.com/NextCenturyCorporation/opencpu.js.git",
         "openlayers": "https://github.com/openlayers/openlayers/releases/download/release-2.13.1/OpenLayers-2.13.1.zip",
         "heatmapjs": "https://github.com/pa7/heatmap.js.git#v2.0",
         "remarkable-bootstrap-notify": "3.0.0",
         "respond": "1.4.2",
         "slickgrid": "2.1.0",
-        "user-ale": "draperlaboratory/user-ale#67954dc8bcb02c657306ea89193b25e4831bf59e"
+        "user-ale": "draperlaboratory/user-ale#67954dc8bcb02c657306ea89193b25e4831bf59e",
+        "rainbowvis.js": "https://github.com/anomal/RainbowVis-JS.git"
     },
     "resolutions": {
         "jquery": "1.11.x"
@@ -87,6 +89,10 @@
             "js": "**/merge*.js"
         },
 
+        "ngDraggable": {
+            "js": "**/ngDraggable.js"
+        },
+
         "opencpu": {
             "js": "**/opencpu-*.*.js"
         },
@@ -104,6 +110,10 @@
 
         "respond": {
             "js": "dest/*min.js"
+        },
+
+        "rainbowvis.js": {
+            "js": "*.js"
         },
 
         "slickgrid": {

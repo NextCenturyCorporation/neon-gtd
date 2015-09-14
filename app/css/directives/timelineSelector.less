@@ -84,8 +84,6 @@
     }
 
     .neon-datetimepicker {
-        margin-top: 5px;
-        margin-left: 10px;
 
         .dropdown-menu {
             /* Match the width of two datetimepickers plus margin/padding/scrollbar. */
@@ -93,17 +91,19 @@
 
             label {
                 &.start-date {
+                    margin-top: 15px;
                     width: 250px;
                 }
 
                 &.end-date {
-                    width: 115px;
+                    margin-top: 15px;
+                    width: 125px;
                 }
             }
 
-            button {
-                margin-left: 5px;
-                margin-bottom: 5px;
+            .datetimepicker {
+                float: left;
+                margin-right: 5px;
             }
         }
     }
@@ -112,6 +112,27 @@
         color: @main-text-color;
         font-weight: bold;
         margin-top: 10px;
+    }
+
+    .invalid-record-count:hover {
+        color: goldenrod;
+        cursor: pointer;
+
+        .count {
+            color: goldenrod;
+            cursor: pointer;
+        }
+    }
+
+    .header-container {
+        h4 {
+            margin-left: 15px;
+            margin-top: 0px;
+
+            .count {
+                font-size: 20px;
+            }
+        }
     }
 }
 

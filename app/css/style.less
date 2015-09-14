@@ -13,6 +13,14 @@
 // limitations under the License.
 //
 
+.bold {
+    font-weight: bold;
+}
+
+.centered {
+    text-align: center;
+}
+
 @-webkit-keyframes load8 {
     0% {
         -webkit-transform: rotate(0deg);
@@ -44,6 +52,7 @@ a {
 
     &:hover, &:focus {
         color: @accent-dark;
+        cursor: pointer;
     }
 
     .navbar-text {
@@ -68,6 +77,11 @@ h6, .h6 {
     font-family: "Open Sans", Helvetica, arial, sans-serif;
     color: @main-text-color;
 
+}
+
+html {
+    width:100vw;
+    overflow-x:hidden;
 }
 
 label{
@@ -202,6 +216,7 @@ label{
         right: 0px;
         top: 35px;
         margin-top: 0;
+        min-width: 320px;
 
         background: none;
         padding: 10px;
@@ -350,7 +365,7 @@ label{
     }
 }
 
-.filter-reset {
+.header-item {
     font-size: 14px;
     font-weight: bold;
     color: @main-text-color;
@@ -359,15 +374,52 @@ label{
     border-width: 1px;
     border-color: @button-border-color;
     border-radius: 4px;
-    margin-left: 5px;
+    padding: 4px 8px;
+    margin-right: 5px;
     margin-top: 5px;
     margin-bottom: 5px;
+}
+
+button {
+    &.header-item {
+        &:hover {
+            color: @accent-bright;
+        }
+    }
+}
+
+.btn-group {
+    .header-item {
+        /* Remove the right margin set in header-item. */
+        margin-right: 0px;
+        /* Use the header-item padding instead of the btn-group>btn padding. */
+        padding: 4px 8px;
+    }
+}
+
+.filter-reset {
+    margin-right: 0px;
+    margin-left: 5px;
+    padding: 0px;
+
+    &:hover {
+        color: @main-text-color;
+    }
 
     /* Add padding so the height of the filter label and glyphicon equals the height of the filter-container (30 px). */
     .filter-label {
         float: left;
         padding: 4px 8px;
         max-width: 90px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
+    .filter-lg-label {
+        float: left;
+        padding: 4px 8px;
+        max-width: 200px;
         overflow: hidden;
         text-overflow: ellipsis;
         white-space: nowrap;
@@ -399,21 +451,6 @@ label{
     }
 }
 
-.footer-container {
-    min-height: 20px;
-    margin-top: 5px;
-
-    span {
-        &.footer-text {
-            color: @main-text-color;
-            font-size: 16px;
-            font-weight: bold;
-            line-height: 1.33;
-            text-transform: uppercase;
-        }
-    }
-}
-
 .form-control {
     &:focus {
         border-color: @accent-bright;
@@ -429,8 +466,28 @@ label{
 }
 
 .form-group {
+    &.no-margin {
+        margin-bottom: 0px;
+    }
+
     .form-group {
         margin-bottom: 0px;
+    }
+
+    .input-group {
+        +.input-group {
+            margin-top: 5px;
+        }
+    }
+
+    label {
+        &.top {
+            margin-top: 10px;
+        }
+
+        &.bottom {
+            margin-top: 30px;
+        }
     }
 }
 
@@ -582,9 +639,34 @@ label{
     }
 }
 
+.margin-right {
+    margin-right: 5px;
+}
+
 .modal-backdrop{
     background: none;
     z-index: auto;
+}
+
+/* Applied to the main options menu to position it properly at the right side of the navbar. */
+#navbar-option-menu {
+    margin-top: 13px;
+    margin-right: 0px;
+}
+
+/* Makes items unselectable and forces the cursor to remain default. */
+.unselectable {
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
+    cursor: default;
+}
+
+tr.borderedRow {
+    border-top: 1px solid #666;
+    border-bottom: 1px solid #666;
+    border-collapse: collapse;
 }
 
 .navbar{
@@ -629,6 +711,11 @@ label{
 
                     &:focus, &:hover, &.collapsed:hover{
                         color: @accent-bright;
+                    }
+
+                    /* Can be applied to elements after the first in a list to prevent them from being spaced way too far apart. */
+                    &.navbar-list-bottom {
+                        padding-top: 0px;
                     }
                 }
             }
@@ -677,6 +764,14 @@ label{
         img{
             margin-left: 5px;
             margin-right: 5px;
+        }
+    }
+
+    .navbar-option-menu {
+        .chart-options {
+            .popover {
+                min-width: 200px;
+            }
         }
     }
 }
@@ -876,43 +971,16 @@ label{
         fill: @chart-text-color;
         fill-opacity: 0.3;
     }
+
+    rect.background {
+        cursor: pointer !important;
+    }
 }
 
 .neon-datetimepicker {
-    .btn-default {
-        font-size: 14px;
-        font-weight: bold;
-        color: @main-text-color;
-        background-color: @button-color;
-        border-style: solid;
-        border-width: 1px;
-        border-color: @button-border-color;
-        border-radius: 4px;
-        padding: 3px 6px;
-
-        &:hover {
-            color: @accent-bright;
-        }
-
-        .glyphicon {
-            margin-right: 2px;
-            top: 2px;
-        }
-
-        &.reset {
-            color: @error-color;
-
-            &:hover {
-                background-color: @error-color;
-                border-color: @error-dark-color;
-                color: @light-text-color;
-            }
-
-            &.disabled {
-                color: #ccc;
-                opacity: 0.5;
-            }
-        }
+    .glyphicon {
+        margin-right: 2px;
+        top: 2px;
     }
 
     .dropdown-menu {
@@ -937,4 +1005,26 @@ label{
             }
         }
     }
+}
+
+.neon-well {
+    background-color: @main-background-lighten;
+    border-color: @border-color;
+    border-radius: 4px;
+    border-style: solid;
+    border-width: 1px;
+    margin: 0px 0px 15px;
+    padding: 9px;
+}
+
+.neon-well-dark {
+    background-color: @main-background-darken;
+}
+
+.neon-well-thin {
+    padding: 4px;
+}
+
+#removeDatasetModal {
+    font-weight: normal;
 }

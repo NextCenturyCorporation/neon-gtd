@@ -65,6 +65,8 @@ MIT/X11 (mit.txt)
   -- jquery.event.drop.js
 - jQuery Linky
   -- jquery.linky.min.js
+- ngDraggable
+  -- ngDraggable.js
 - Openlayers Heatmap
   -- heatmap.js  1.0
   -- heatmap-openlayers.js
