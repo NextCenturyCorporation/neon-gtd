@@ -289,7 +289,7 @@ neon.query.FilterTable.buildFilterFromData = function(databaseName, tableName, d
     }
     if(1 === data.length) {
         var filterData = data[0];
-        whereClause = neon.query.where(filterData.columnValue.columnName, filterData.operatorValue, neon.query.FilterTable.parseValue(filterData.value));
+        whereClause = neon.query.where(filterData.columnValue.columnName, filterData.operatorValue, neon.query.FilterTable.parseValue(filterData.value, filterData.operatorValue));
     } else {
         whereClause = neon.query.FilterTable.buildCompoundWhereClause(data, andClauses);
     }
@@ -311,7 +311,7 @@ neon.query.FilterTable.buildCompoundWhereClause = function(data, andClauses) {
     var clauses = [];
 
     $.each(data, function(index, filterData) {
-        var clause = neon.query.where(filterData.columnValue.columnName, filterData.operatorValue, neon.query.FilterTable.parseValue(filterData.value));
+        var clause = neon.query.where(filterData.columnValue.columnName, filterData.operatorValue, neon.query.FilterTable.parseValue(filterData.value, filterData.operatorValue));
         clauses.push(clause);
     });
 
@@ -327,14 +327,15 @@ neon.query.FilterTable.buildCompoundWhereClause = function(data, andClauses) {
  * Takes a string value (e.g., input field value) and parses it to a float, null, or boolean, or string as
  * appropriate to work with the Neon Query API.
  * @param {String} value The value to parse
+ * @param {String} operator
  * @return {String|Number|Boolean|null}
  * @method parseValue
  * @static
  */
-neon.query.FilterTable.parseValue = function(value) {
+neon.query.FilterTable.parseValue = function(value, operator) {
     var retVal = value;
 
-    if($.isNumeric(retVal)) {
+    if($.isNumeric(retVal) && operator !== "contains" && operator !== "not contains") {
         retVal = parseFloat(retVal);
     } else if('null' === retVal || "" === retVal) {
         retVal = null;
