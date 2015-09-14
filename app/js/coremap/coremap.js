@@ -250,6 +250,7 @@ coreMap.Map.prototype.initializeMap = function() {
         height: this.height
     });
     this.map = new OpenLayers.Map(this.elementId);
+    this.map.layerContainerDiv.style.removeProperty("z-index");
     this.configureFilterOnZoomRectangle();
 };
 
