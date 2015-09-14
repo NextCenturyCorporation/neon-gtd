@@ -27,10 +27,15 @@ angular.module('neonDemo.directives')
 
             $scope.element = $element;
 
+            $scope.selectedDate = undefined;
+
             $scope.data = {
-                date: undefined,
-                type: undefined,
                 news: [],
+                type: undefined,
+                show: {
+                    heads: [],
+                    names: []
+                },
                 highlights: {
                     heads: [],
                     names: []
@@ -48,6 +53,7 @@ angular.module('neonDemo.directives')
                 $scope.messenger = new neon.eventing.Messenger();
                 $scope.messenger.subscribe("news", onNews);
                 $scope.messenger.subscribe("news_highlights", onNewsHighlights);
+                $scope.messenger.subscribe("date_selected", onDateSelected);
 
                 $scope.$on('$destroy', function() {
                     $scope.messenger.removeEvents();
@@ -63,7 +69,6 @@ angular.module('neonDemo.directives')
             var onNews = function(message) {
                 if(message.news) {
                     $scope.data.news = message.news;
-                    $scope.data.date = message.date;
                     $scope.data.type = (message.type || DEFAULT_TYPE).toUpperCase();
                 }
             };
@@ -75,10 +80,24 @@ angular.module('neonDemo.directives')
              * @private
              */
             var onNewsHighlights = function(message) {
+                if(message.show) {
+                    $scope.data.show.heads = message.show.heads || [];
+                    $scope.data.show.names = message.show.names || [];
+                }
                 if(message.highlights) {
                     $scope.data.highlights.heads = message.highlights.heads || [];
                     $scope.data.highlights.names = message.highlights.names || [];
                 }
+            };
+
+            /**
+             * Event handler for date selected events issued over Neon's messaging channels.
+             * @param {Object} message A Neon date selected message.
+             * @method onDateSelected
+             * @private
+             */
+            var onDateSelected = function(message) {
+                $scope.selectedDate = message.end;
             };
 
             /**
@@ -89,14 +108,17 @@ angular.module('neonDemo.directives')
              */
             $scope.getNewsItemStyleClass = function(item) {
                 var style = [];
-                if(item.date > $scope.data.date) {
+                if($scope.selectedDate && item.date.getTime() > $scope.selectedDate.getTime()) {
                     style.push("future");
                 }
                 if($scope.data.highlights.heads.length || $scope.data.highlights.names.length) {
-                    if($scope.data.highlights.heads.indexOf(item.head) < 0 && $scope.data.highlights.names.indexOf(item.name) < 0) {
-                        style.push("hidden");
-                    } else {
+                    if($scope.data.highlights.heads.indexOf(item.head) >= 0 || $scope.data.highlights.names.indexOf(item.name) >= 0) {
                         style.push("highlight");
+                    }
+                }
+                if($scope.data.show.heads.length || $scope.data.show.names.length) {
+                    if($scope.data.show.heads.indexOf(item.head) < 0 && $scope.data.show.names.indexOf(item.name) < 0) {
+                        style.push("hidden");
                     }
                 }
                 return style.join(" ");

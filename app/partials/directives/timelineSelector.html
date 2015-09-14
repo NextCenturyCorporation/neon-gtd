@@ -2,11 +2,15 @@
     <span class="header-text pull-left" ng-bind="options.table.prettyName"></span>
 
     <h4 class="pull-left">
-        <span class="count text-primary" ng-bind="recordCount | number"></span> valid records
+        <span class="count text-primary" ng-bind="recordCount | number"></span>
+        <span>valid</span>
+        <span ng-hide="(width < 600)">records</span>
     </h4>
 
     <h4 class="invalid-record-count pull-left" ng-click="sendInvalidDates()">
-        <span class="count text-primary" ng-bind="invalidRecordCount | number"></span> invalid records
+        <span class="count text-primary" ng-bind="invalidRecordCount | number"></span>
+        <span>invalid</span>
+        <span ng-hide="(width < 600)">records</span>
     </h4>
 
     <options-menu parent-element="element" export-function="makeTimelineSelectorExportObject">
@@ -97,24 +101,24 @@
         <span class="glyphicon glyphicon-remove" ng-click="clearBrush()"></span>
     </div>
 
-    <div class="header-item filter-reset pull-right" ng-class="{true: '', false: 'hidden'}[invalidDatesFilter]">
+    <div class="header-item filter-reset pull-right" ng-class="{true: '', false: 'hidden'}[invalidDatesFilter]" title="Invalid Date">
         <span class="filter-lg-label">Invalid Date Filter</span>
         <span class="glyphicon glyphicon-remove" ng-click="clearInvalidDatesFilter()"></span>
     </div>
 
     <div class="neon-datetimepicker dropdown pull-left">
-        <button class="btn btn-default header-item dropdown-toggle" role="button" data-toggle="dropdown" data-target="#" href="#">
+        <button class="btn btn-default header-item dropdown-toggle" role="button" data-toggle="dropdown" data-target="#" href="#" title="{{'From ' + (startDateForDisplay || '?') + ' to ' + (endDateForDisplay || '?')}}">
             <span class="glyphicon glyphicon-calendar"></span>
-            <span ng-bind="(startDateForDisplay || '?') + ' to ' + (endDateForDisplay || '?')"></span>
+            <span ng-hide="(brush.length > 0 && width < 525) || (width < 400)" ng-bind="(startDateForDisplay || '?') + ' to ' + (endDateForDisplay || '?')"></span>
             <span class="caret"></span>
         </button>
 
         <ul class="dropdown-menu" role="menu">
             <div>
-                <label class="start-date">Start Date</label>
-                <label class="end-date">End Date</label>
-                <button class="btn btn-default save-button disabled" ng-click="handleDateTimePickSave()">Save</button>
-                <button class="btn btn-default" ng-click="handleDateTimePickCancel()">Cancel</button>
+                <label class="start-date pull-left">Start Date</label>
+                <label class="end-date pull-left">End Date</label>
+                <button class="btn btn-default header-item pull-left save-button disabled" ng-click="handleDateTimePickSave()">Save</button>
+                <button class="btn btn-default header-item pull-left" ng-click="handleDateTimePickCancel()">Cancel</button>
             </div>
             <!-- Create a datetimepicker for each granularity because you can't change the configuration dynamically. -->
             <datetimepicker ng-show="(options.granularity === 'hour')" data-ng-model="filter.start" data-datetimepicker-config="{ startView: 'hour', minView: 'hour' }" ng-change="handleDateTimePickChange()"/>
@@ -129,18 +133,19 @@
 
         <span class="form-group" ng-if="options.showAnimationControls">
             <span class="btn-group">
-                <button class="btn btn-default header-item" role="button" title="{{(options.animatingTime) ? 'Pause' : 'Play'}}"
+                <label class="btn btn-default header-item" role="button" title="{{(options.animatingTime) ? 'Pause' : ((options.animationFrame > getAnimationStartFrame()) ? 'Resume' : 'Play')}}"
                     ng-click="(options.animatingTime) ? pauseTimeAnimation() : playTimeAnimation()">
-                    <span class="glyphicon" 
-                        ng-class="{true: 'glyphicon-pause', false: 'glyphicon-play-circle'}[options.animatingTime]"></span> 
-                    <span ng-bind="(options.animatingTime) ? 'Pause' : 'Play'"></span>
-                </button>
-                <button class="btn btn-default header-item" role="button" title="Step" ng-click="stepTimeAnimation()">
-                    <span class="glyphicon glyphicon-step-forward"></span> Step
-                </button>
-                <button class="btn btn-default header-item" role="button" title="Stop" ng-click="stopTimeAnimation()">
-                    <span class="glyphicon glyphicon-stop"></span> Stop
-                </button>
+                    <span class="glyphicon" ng-class="{true: 'glyphicon-pause', false: 'glyphicon-play-circle'}[options.animatingTime]"></span> 
+                    <span ng-hide="(brush.length > 0 && width < 625) || (width < 500)" ng-bind="(options.animatingTime) ? 'Pause' : ((options.animationFrame > getAnimationStartFrame()) ? 'Resume' : 'Play')"></span>
+                </label>
+                <label class="btn btn-default header-item" role="button" title="Step" ng-click="stepTimeAnimation()">
+                    <span class="glyphicon glyphicon-step-forward"></span>
+                    <span ng-hide="(brush.length > 0 && width < 625) || (width < 500)">Step</span>
+                </label>
+                <label class="btn btn-default header-item" role="button" title="Stop" ng-click="stopTimeAnimation()">
+                    <span class="glyphicon glyphicon-stop"></span>
+                    <span ng-hide="(brush.length > 0 && width < 625) || (width < 500)">Stop</span>
+                </label>
             </span>
         </span>
     </div>

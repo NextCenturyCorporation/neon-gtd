@@ -77,6 +77,7 @@ function($interval, $filter, connectionService, datasetService, errorNotificatio
             $scope.loadingData = false;
             $scope.noData = true;
             $scope.invalidDatesFilter = false;
+            $scope.width = 0;
 
             $scope.databases = [];
             $scope.tables = [];
@@ -359,6 +360,11 @@ function($interval, $filter, connectionService, datasetService, errorNotificatio
                 }
             };
 
+            var onResize = function() {
+                resizeDateTimePickerDropdown();
+                $scope.width = $element.outerWidth(true);
+            };
+
             var resizeDateTimePickerDropdown = function() {
                 var headerHeight = 0;
                 $element.find(".header-container").each(function() {
@@ -378,7 +384,8 @@ function($interval, $filter, connectionService, datasetService, errorNotificatio
                     return false;
                 });
 
-                $element.resize(resizeDateTimePickerDropdown);
+                $element.resize(onResize);
+                onResize();
 
                 // Switch bucketizers when the granularity is changed.
                 $scope.$watch('options.granularity', function(newVal, oldVal) {
@@ -499,7 +506,7 @@ function($interval, $filter, connectionService, datasetService, errorNotificatio
                         filterService.removeFilters($scope.messenger, $scope.filterKeys);
                     }
                     exportService.unregister($scope.exportID);
-                    $element.off("resize", resizeDateTimePickerDropdown);
+                    $element.off("resize", onResize);
                 });
             };
 
