@@ -657,6 +657,7 @@ function(external, popups, connectionService, datasetService, errorNotificationS
                  *  - It is only guaranteed to work correctly if there is only one data table showing this collection
                  */
                 if($scope.options.table.enableRowSelection) {
+                    $(".query-results-grid .slick-row").addClass("selectable");
                     $scope.addOnClickListener();
                     $scope.clearSelection();
                     $scope.addSortListener();
