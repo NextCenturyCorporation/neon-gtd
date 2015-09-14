@@ -1463,7 +1463,6 @@ function($filter, $timeout, connectionService, datasetService, errorNotification
                     '<span class="graph-tooltip-label">' + $scope.tooltip.sizeLabel + '</span>' +
                     '<span class="graph-tooltip-value">' + getDatesInNodeOrLink(link).length + '</span>' +
                     '</div>';
-
             };
 
             /**

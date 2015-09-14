@@ -1,6 +1,14 @@
 <div class="header-container" ng-show="!(hideHeader)">
     <span class="header-text pull-left" ng-bind="options.table.prettyName"></span>
 
+    <h4 class="pull-left">
+        <span class="count text-primary" ng-bind="recordCount | number"></span> valid records
+    </h4>
+
+    <h4 class="invalid-record-count pull-left" ng-click="sendInvalidDates()">
+        <span class="count text-primary" ng-bind="invalidRecordCount | number"></span> invalid records
+    </h4>
+
     <options-menu parent-element="element" export-function="makeTimelineSelectorExportObject">
         <div class="form-group" ng-show="!(hideAdvancedOptions)">
             <label>Database</label>
@@ -87,6 +95,11 @@
     <div class="header-item filter-reset pull-right" ng-class="{true: '', false: 'hidden'}[brush.length > 0]" title="Date from {{startDateForDisplay}} to {{endDateForDisplay}}">
         <span class="filter-label">Date Filter</span>
         <span class="glyphicon glyphicon-remove" ng-click="clearBrush()"></span>
+    </div>
+
+    <div class="header-item filter-reset pull-right" ng-class="{true: '', false: 'hidden'}[invalidDatesFilter]">
+        <span class="filter-lg-label">Invalid Date Filter</span>
+        <span class="glyphicon glyphicon-remove" ng-click="clearInvalidDatesFilter()"></span>
     </div>
 
     <h4 class="pull-left">

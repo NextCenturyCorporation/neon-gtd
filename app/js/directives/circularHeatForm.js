@@ -250,7 +250,10 @@ function(connectionService, datasetService, errorNotificationService, exportServ
                 var query = new neon.query.Query()
                     .selectFrom($scope.options.database.name, $scope.options.table.name)
                     .groupBy(groupByDayClause, groupByHourClause)
-                    .where($scope.options.dateField.columnName, '!=', null)
+                    .where(neon.query.and(
+                        neon.query.where($scope.options.dateField.columnName, '>=', new Date("1970-01-01T00:00:00.000Z")),
+                        neon.query.where($scope.options.dateField.columnName, '<=', new Date("2025-01-01T00:00:00.000Z"))
+                    ))
                     .aggregate(neon.query.COUNT, '*', 'count');
 
                 // Issue the query and provide a success handler that will forcefully apply an update to the chart.
@@ -431,7 +434,10 @@ function(connectionService, datasetService, errorNotificationService, exportServ
                 var query = new neon.query.Query()
                     .selectFrom($scope.options.database.name, $scope.options.table.name)
                     .groupBy(groupByDayClause, groupByHourClause)
-                    .where($scope.options.dateField.columnName, '!=', null)
+                    .where(neon.query.and(
+                        neon.query.where($scope.options.dateField.columnName, '>=', new Date("1970-01-01T00:00:00.000Z")),
+                        neon.query.where($scope.options.dateField.columnName, '<=', new Date("2025-01-01T00:00:00.000Z"))
+                    ))
                     .aggregate(neon.query.COUNT, '*', 'count');
                 query.limitClause = exportService.getLimitClause();
                 var finalObject = {

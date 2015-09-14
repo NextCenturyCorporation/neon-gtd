@@ -60,6 +60,8 @@ function(external, popups, connectionService, datasetService, errorNotificationS
                 }
             };
 
+            $element.resize(updateSize);
+
             $scope.ASCENDING = neon.query.ASCENDING;
             $scope.DESCENDING = neon.query.DESCENDING;
 
@@ -132,8 +134,6 @@ function(external, popups, connectionService, datasetService, errorNotificationS
                         tags: ["options", "datagrid", "limit", newVal]
                     });
                 });
-
-                $element.resize(updateSize);
 
                 // Setup our messenger.
                 $scope.messenger = new neon.eventing.Messenger();
@@ -657,6 +657,7 @@ function(external, popups, connectionService, datasetService, errorNotificationS
                  *  - It is only guaranteed to work correctly if there is only one data table showing this collection
                  */
                 if($scope.options.table.enableRowSelection) {
+                    $(".query-results-grid .slick-row").addClass("selectable");
                     $scope.addOnClickListener();
                     $scope.clearSelection();
                     $scope.addSortListener();

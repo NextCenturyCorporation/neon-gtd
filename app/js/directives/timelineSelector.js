@@ -71,10 +71,12 @@ function($interval, $filter, connectionService, datasetService, errorNotificatio
             $scope.referenceEndDate = undefined;
 
             $scope.recordCount = 0;
+            $scope.invalidRecordCount = 0;
             $scope.eventProbabilitiesDisplayed = false;
             $scope.errorMessage = undefined;
             $scope.loadingData = false;
             $scope.noData = true;
+            $scope.invalidDatesFilter = false;
             $scope.width = 0;
 
             $scope.databases = [];
@@ -451,11 +453,11 @@ function($interval, $filter, connectionService, datasetService, errorNotificatio
                             // If the brush changed because of a granularity change, then don't
                             // update the chart. The granularity change will cause the data to be
                             // updated
-                            replaceDateFilters();
+                            replaceDateFilters(false);
                         } else {
                             // Because the timeline ignores its own filter, we just need to update the
                             // chart times and total when this filter is applied
-                            replaceDateFilters($scope.updateChartTimesAndTotal);
+                            replaceDateFilters(false, $scope.updateChartTimesAndTotal);
                         }
                     }
                 }, true);
@@ -511,27 +513,70 @@ function($interval, $filter, connectionService, datasetService, errorNotificatio
             /**
              * If this timeline's brush extent does not match the brush extent saved in the Dataset Service, replace the date filters on this timeline's date
              * field and all related fields and save the brush extent in the Dataset Service for each field.
+             * @param {boolean} showInvalidDates If set to true, filters on invalid dates instead of the brush extent.
              * @param {Function} callback A function to be called after date filters are replaced.  Ignored if the date filters do not need to be updated.
              * @methd replaceDateFilters
              */
-            var replaceDateFilters = function(callback) {
-                if($scope.brush === datasetService.getDateBrushExtent($scope.options.database.name, $scope.options.table.name)) {
+            var replaceDateFilters = function(showInvalidDates, callback) {
+                if(($scope.brush === datasetService.getDateBrushExtent($scope.options.database.name, $scope.options.table.name)) &&
+                    !showInvalidDates) {
                     return;
                 }
 
                 var relations = datasetService.getRelations($scope.options.database.name, $scope.options.table.name, [$scope.options.dateField.columnName]);
 
+                var filterText = $scope.formatStartDate(getFilterStartDate()) + " to " + $scope.formatEndDate(getFilterEndDate());
+
+                if(showInvalidDates) {
+                    filterText = "Invalid Dates";
+                }
+
                 var filterNameObj = {
                     visName: "Timeline",
-                    text: $scope.formatStartDate(getFilterStartDate()) + " to " + $scope.formatEndDate(getFilterEndDate())
+                    text: filterText
                 };
 
-                filterService.replaceFilters($scope.messenger, relations, $scope.filterKeys, $scope.createFilterClauseForDate, filterNameObj, function() {
+                filterService.replaceFilters($scope.messenger, relations, $scope.filterKeys, (showInvalidDates ? $scope.createFilterClauseForInvalidDates : $scope.createFilterClauseForDate), filterNameObj, function() {
                     if(callback) {
                         callback();
                     }
                     datasetService.setDateBrushExtentForRelations(relations, $scope.brush);
                 });
+            };
+
+            /**
+             * Replaces all filters with a new one for invalid dates. This results in no data being shown on the timeline.
+             * @method sendInvalidDates
+             */
+            $scope.sendInvalidDates = function() {
+                $scope.clearBrush();
+                $scope.invalidDatesFilter = true;
+                replaceDateFilters(true, $scope.queryForChartData);
+            };
+
+            /**
+             * Clears the invalid dates filter and re-queries.
+             * @method clearInvalidDatesFilter
+             */
+            $scope.clearInvalidDatesFilter = function() {
+                $scope.invalidDatesFilter = false;
+                filterService.removeFilters($scope.messenger, $scope.filterKeys, $scope.queryForChartData);
+            };
+
+            /**
+             * Creates and returns a filter on the given date field using values greater than Jan. 1, 2025, less than
+             * Jan. 1, 1970, or null.
+             * @param {Object} databaseAndTableName Contains the database and table name
+             * @param {String} dateFieldName The name of the date field on which to filter
+             * @method createFilterClauseForInvalidDates
+             * @return {Object} A neon.query.Filter object
+             */
+            $scope.createFilterClauseForInvalidDates = function(databaseAndTableName, dateFieldName) {
+                var lowerBoundFilterClause = neon.query.where(dateFieldName, '<', new Date("1970-01-01T00:00:00.000Z"));
+                var upperBoundFilterClause = neon.query.where(dateFieldName, '>', new Date("2025-01-01T00:00:00.000Z"));
+                var nullFilterClause = neon.query.where(dateFieldName, '=', null);
+                var clauses = [lowerBoundFilterClause, upperBoundFilterClause, nullFilterClause];
+                return neon.query.or.apply(this, clauses);
             };
 
             /**
@@ -708,7 +753,10 @@ function($interval, $filter, connectionService, datasetService, errorNotificatio
             $scope.createChartDataQuery = function() {
                 var query = new neon.query.Query()
                     .selectFrom($scope.options.database.name, $scope.options.table.name)
-                    .where($scope.options.dateField.columnName, '!=', null);
+                    .where(neon.query.and(
+                        neon.query.where($scope.options.dateField.columnName, '>=', new Date("1970-01-01T00:00:00.000Z")),
+                        neon.query.where($scope.options.dateField.columnName, '<=', new Date("2025-01-01T00:00:00.000Z"))
+                    ));
 
                 $scope.addGroupByGranularityClause(query);
 
@@ -717,6 +765,27 @@ function($interval, $filter, connectionService, datasetService, errorNotificatio
                 query.aggregate(neon.query.MIN, $scope.options.dateField.columnName, 'date');
                 query.sortBy('date', neon.query.ASCENDING);
                 query.ignoreFilters([$scope.filterKeys[$scope.options.database.name][$scope.options.table.name]]);
+
+                return query;
+            };
+
+            /**
+             * Helper method for queryForChartData(). Creates the Query object for invalid dates to be used by this moethod.
+             * @method createInvalidDatesQuery
+             * @return {neon.query.Query} query The Query object to be used by queryForChartData()
+             */
+            $scope.createInvalidDatesQuery = function() {
+                var query = new neon.query.Query()
+                    .selectFrom($scope.options.database.name, $scope.options.table.name)
+                    .where(neon.query.or(
+                        neon.query.where($scope.options.dateField.columnName, '<', new Date("1970-01-01T00:00:00.000Z")),
+                        neon.query.where($scope.options.dateField.columnName, '>', new Date("2025-01-01T00:00:00.000Z")),
+                        neon.query.where($scope.options.dateField.columnName, '=', null)
+                    ));
+
+                query.aggregate(neon.query.COUNT, '*', 'count');
+                query.ignoreFilters([$scope.filterKeys[$scope.options.database.name][$scope.options.table.name]]);
+
                 return query;
             };
 
@@ -740,7 +809,11 @@ function($interval, $filter, connectionService, datasetService, errorNotificatio
                     return;
                 }
 
-                var query = $scope.createChartDataQuery();
+                var queryDates = $scope.createChartDataQuery();
+                var queryUnknownDates = $scope.createInvalidDatesQuery();
+                var queryGroup = new neon.query.QueryGroup();
+                queryGroup.addQuery(queryDates);
+                queryGroup.addQuery(queryUnknownDates);
 
                 XDATA.userALE.log({
                     activity: "alter",
@@ -757,13 +830,25 @@ function($interval, $filter, connectionService, datasetService, errorNotificatio
                     $scope.outstandingQuery.abort();
                 }
 
-                $scope.outstandingQuery = connection.executeQuery(query);
+                $scope.outstandingQuery = connection.executeQueryGroup(queryGroup);
                 $scope.outstandingQuery.done(function() {
                     $scope.outstandingQuery = undefined;
                 });
                 $scope.outstandingQuery.done(function(queryResults) {
                     $scope.$apply(function() {
-                        $scope.updateChartData(queryResults);
+                        var dateQueryResults = {
+                            data: _.filter(queryResults.data, function(datum) {
+                                return _.keys(datum).length > 2;
+                            })
+                        };
+                        if($scope.invalidDatesFilter) {
+                            dateQueryResults.data = [];
+                        }
+                        var invalidDates = _.filter(queryResults.data, function(datum) {
+                            return _.keys(datum).length === 2 && datum._id && datum.count;
+                        });
+                        $scope.invalidRecordCount = (invalidDates.length ? invalidDates[0].count : 0);
+                        $scope.updateChartData(dateQueryResults);
                         $scope.loadingData = false;
                         XDATA.userALE.log({
                             activity: "alter",
@@ -948,7 +1033,11 @@ function($interval, $filter, connectionService, datasetService, errorNotificatio
                     // TODO: This could be done better with a promise framework - just did this in a pinch for a demo
                     var minDateQuery = new neon.query.Query()
                         .selectFrom($scope.options.database.name, $scope.options.table.name).ignoreFilters()
-                        .where($scope.options.dateField.columnName, '!=', null).sortBy($scope.options.dateField.columnName, neon.query.ASCENDING).limit(1);
+                        .where(neon.query.and(
+                            neon.query.where($scope.options.dateField.columnName, '>=', new Date("1970-01-01T00:00:00.000Z")),
+                            neon.query.where($scope.options.dateField.columnName, '<=', new Date("2025-01-01T00:00:00.000Z"))
+                        ))
+                        .sortBy($scope.options.dateField.columnName, neon.query.ASCENDING).limit(1);
 
                     XDATA.userALE.log({
                         activity: "alter",
@@ -1009,7 +1098,11 @@ function($interval, $filter, connectionService, datasetService, errorNotificatio
                 } else {
                     var maxDateQuery = new neon.query.Query()
                         .selectFrom($scope.options.database.name, $scope.options.table.name).ignoreFilters()
-                        .where($scope.options.dateField.columnName, '!=', null).sortBy($scope.options.dateField.columnName, neon.query.DESCENDING).limit(1);
+                        .where(neon.query.and(
+                            neon.query.where($scope.options.dateField.columnName, '>=', new Date("1970-01-01T00:00:00.000Z")),
+                            neon.query.where($scope.options.dateField.columnName, '<=', new Date("2025-01-01T00:00:00.000Z"))
+                        ))
+                        .sortBy($scope.options.dateField.columnName, neon.query.DESCENDING).limit(1);
 
                     XDATA.userALE.log({
                         activity: "alter",

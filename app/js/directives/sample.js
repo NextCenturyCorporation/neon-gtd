@@ -382,7 +382,7 @@ function(connectionService, datasetService, errorNotificationService, filterServ
                     query: $scope.options.field.columnName,
                     // The name to display in the dashboard.
                     pretty: $scope.options.field.prettyName
-                }]
+                }];
 
                 var finalObject = {
                     name: "Sample",
