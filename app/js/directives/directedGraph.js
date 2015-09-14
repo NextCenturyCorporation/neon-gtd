@@ -110,8 +110,8 @@ function($filter, $timeout, connectionService, datasetService, errorNotification
                 selectedNodeId: "",
                 dataLimit: 500000,
                 useNodeClusters: true,
-                hideNodesWithZeroOrOneLink: false,
-                reloadOnFilter: false
+                hideNodesWithZeroOrOneLink: true,
+                reloadOnFilter: true
             };
 
             $scope.data = {
@@ -128,7 +128,7 @@ function($filter, $timeout, connectionService, datasetService, errorNotification
                 dateBucket: undefined,
                 graphNodeIds: [],
                 graphNetworkId: undefined,
-                mouseoverNodeIds: undefined,
+                mouseoverNodeIds: [],
                 mouseoverNetworkId: undefined
             };
 
@@ -300,47 +300,45 @@ function($filter, $timeout, connectionService, datasetService, errorNotification
              * @private
              */
             var onDateSelected = function(message) {
-                if(!message.start && !$scope.selected.dateBucket) {
+                if(!message.start && !$scope.selected.dateBucket || !$scope.bucketizer || !$scope.bucketizer.getStartDate() || !$scope.bucketizer.getEndDate() || !$scope.data.graphNodes) {
                     return;
                 }
 
-                if($scope.bucketizer.getStartDate() && $scope.bucketizer.getEndDate()) {
-                    var bucket = undefined;
-                    var nodes = $scope.data.graphNodes;
-                    var links = $scope.data.graphLinks;
+                var bucket = undefined;
+                var nodes = $scope.data.graphNodes;
+                var links = $scope.data.graphLinks;
 
-                    if(message.start) {
-                        bucket = $scope.bucketizer.getBucketIndex(message.start);
-                        if(bucket === $scope.selected.dateBucket) {
-                            return;
-                        }
-
-                        nodes = $scope.data.graphNodes.slice(0, $scope.data.dateBucketsToNodeIndices[bucket]);
-                        nodes.forEach(function(node) {
-                            if(node.dateBucketsToNodeIndices && node.nodes) {
-                                node.nodesForSelectedDateBucket = node.nodes.slice(0, node.dateBucketsToNodeIndices[bucket]);
-                            }
-                        });
-
-                        links = $scope.data.graphLinks.slice(0, $scope.data.dateBucketsToLinkIndices[bucket]);
+                if(message.start) {
+                    bucket = $scope.bucketizer.getBucketIndex(message.start);
+                    if(bucket === $scope.selected.dateBucket) {
+                        return;
                     }
 
-                    $scope.selected.dateBucket = bucket;
-                    $scope.numberOfVisibleNodes = nodes.length;
-
-                    $scope.graph.updateGraph({
-                        nodes: nodes,
-                        links: links
+                    nodes = $scope.data.graphNodes.slice(0, $scope.data.dateBucketsToNodeIndices[bucket]);
+                    nodes.forEach(function(node) {
+                        if(node.dateBucketsToNodeIndices && node.nodes) {
+                            node.nodesForSelectedDateBucket = node.nodes.slice(0, node.dateBucketsToNodeIndices[bucket]);
+                        }
                     });
 
-                    if($scope.selected.dateBucket) {
-                        // Pulse all nodes that occur (contain a date) in the selected date bucket.
-                        $scope.graph.pulseNodes(function(node) {
-                            return _.find(node.dates, function(date) {
-                                return $scope.bucketizer.getBucketIndex(date) === $scope.selected.dateBucket;
-                            });
+                    links = $scope.data.graphLinks.slice(0, $scope.data.dateBucketsToLinkIndices[bucket]);
+                }
+
+                $scope.selected.dateBucket = bucket;
+                $scope.numberOfVisibleNodes = nodes.length;
+
+                $scope.graph.updateGraph({
+                    nodes: nodes,
+                    links: links
+                });
+
+                if($scope.selected.dateBucket) {
+                    // Pulse all nodes that occur (contain a date) in the selected date bucket.
+                    $scope.graph.pulseNodes(function(node) {
+                        return _.find(node.dates, function(date) {
+                            return $scope.bucketizer.getBucketIndex(date) === $scope.selected.dateBucket;
                         });
-                    }
+                    });
                 }
             };
 
@@ -353,32 +351,6 @@ function($filter, $timeout, connectionService, datasetService, errorNotification
             var displayActiveDataset = function(initializing) {
                 if(!datasetService.hasDataset() || $scope.loadingData) {
                     return;
-                }
-
-                if(!$scope.graph) {
-                    $scope.graph = new charts.DirectedGraph($element[0], ".directed-graph-container", {
-                        getHeight: calculateGraphHeight,
-                        getWidth: calculateGraphWidth,
-                        getNodeSize: calculateNodeSize,
-                        getNodeColor: calculateNodeColor,
-                        getNodeOpacity: calculateNodeOpacity,
-                        getNodeText: createNodeText,
-                        getNodeTooltip: createNodeTooltip,
-                        getLinkSize: calculateLinkSize,
-                        getLinkColor: calculateLinkColor,
-                        getLinkOpacity: calculateLinkOpacity,
-                        getLinkArrowhead: getLinkArrowhead,
-                        getLinkTooltip: createLinkTooltip,
-                        getNodeKey: getNodeKey,
-                        getLinkKey: getLinkKey,
-                        nodeMouseoverHandler: onNodeSelect,
-                        nodeMouseoutHandler: onNodeDeselect,
-                        nodeClickHandler: onNodeClick,
-                        linkMouseoverHandler: onLinkSelect,
-                        linkMouseoutHandler: onLinkDeselect,
-                        linkClickHandler: onLinkClick
-                    });
-                    $scope.graph.createArrowhead(FOCUSED_COLOR_ARROWHEAD, FOCUSED_COLOR, $scope.graph.DEFAULT_LINK_STROKE_OPACITY);
                 }
 
                 $scope.databases = datasetService.getDatabases();
@@ -496,17 +468,9 @@ function($filter, $timeout, connectionService, datasetService, errorNotification
                     $scope.errorMessage = undefined;
                 }
 
-                $scope.selected.mouseoverNodeIds = [];
-                $scope.selected.mouseoverNetworkId = undefined;
-                $scope.selected.graphNetworkId = undefined
-                $scope.data.availableNodeIds = [];
-
+                clearGraph();
                 publishNews([]);
                 publishNewsHighlights([]);
-
-                if($scope.data.graphNodes.length) {
-                    saveDataAndUpdateGraph([], []);
-                }
 
                 var connection = connectionService.getActiveConnection();
 
@@ -522,6 +486,57 @@ function($filter, $timeout, connectionService, datasetService, errorNotification
                 if(reloadNodeList) {
                     queryForNodeList(connection);
                 }
+            };
+
+            /**
+             * Clears the graph and all graph data.
+             * @method clearGraph
+             * @private
+             */
+            var clearGraph = function() {
+                $scope.selected = {
+                    dateBucket: undefined,
+                    // Keep the selected node IDs.
+                    graphNodeIds: $scope.selected.graphNodeIds,
+                    graphNetworkId: undefined,
+                    mouseoverNodeIds: [],
+                    mouseoverNetworkId: undefined
+                };
+
+                $scope.data = {
+                    availableNodeIds: [],
+                    graphNodes: [],
+                    graphLinks: [],
+                    nodeIdsToNetworkIds: {},
+                    networkIdsToNodeIds: {},
+                    dateBucketsToNodeIndices: {},
+                    dateBucketsToLinkIndices: {}
+                };
+
+                $scope.graph = new charts.DirectedGraph($element[0], ".directed-graph-container", {
+                    getHeight: calculateGraphHeight,
+                    getWidth: calculateGraphWidth,
+                    getNodeSize: calculateNodeSize,
+                    getNodeColor: calculateNodeColor,
+                    getNodeOpacity: calculateNodeOpacity,
+                    getNodeText: createNodeText,
+                    getNodeTooltip: createNodeTooltip,
+                    getLinkSize: calculateLinkSize,
+                    getLinkColor: calculateLinkColor,
+                    getLinkOpacity: calculateLinkOpacity,
+                    getLinkArrowhead: getLinkArrowhead,
+                    getLinkTooltip: createLinkTooltip,
+                    getNodeKey: getNodeKey,
+                    getLinkKey: getLinkKey,
+                    nodeMouseoverHandler: onNodeSelect,
+                    nodeMouseoutHandler: onNodeDeselect,
+                    nodeClickHandler: onNodeClick,
+                    linkMouseoverHandler: onLinkSelect,
+                    linkMouseoutHandler: onLinkDeselect,
+                    linkClickHandler: onLinkClick
+                });
+
+                $scope.graph.createArrowhead(FOCUSED_COLOR_ARROWHEAD, FOCUSED_COLOR, $scope.graph.DEFAULT_LINK_STROKE_OPACITY);
             };
 
             /**
@@ -1326,7 +1341,7 @@ function($filter, $timeout, connectionService, datasetService, errorNotification
              * @return {Number}
              */
             var calculateSizeLogValue = function(size, multiplier) {
-                var log10 = Math.log10(size);
+                var log10 = size ? Math.log10(size) : 0;
                 var floor = Math.floor(log10);
                 var round = Math.round(log10);
                 return floor === round ? multiplier * floor : multiplier * floor + Math.floor(multiplier / 2.0);
