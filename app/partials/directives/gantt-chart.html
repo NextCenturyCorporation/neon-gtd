@@ -12,46 +12,50 @@
         </div>
         <div class="form-group" ng-show="!(hideAdvancedOptions)">
             <label>First grouping</label>
-            <select class="form-control" ng-model="options.groupField[0]" ng-options="field for field in fields" ng-disabled="!(fields.length > 0)">
+            <select class="form-control" ng-model="options.firstGroupField" ng-options="field.prettyName for field in fields" ng-disabled="!(fields.length > 0)" ng-change="queryForData()">
+                <option value="">None</option>
             </select>
         </div>
-        <div class="form-group" ng-show="!(hideAdvancedOptions) && options.groupField[0]">
+        <div class="form-group" ng-show="!(hideAdvancedOptions) && options.firstGroupField">
             <label>Second grouping</label>
-            <select class="form-control" ng-model="options.groupField[1]" ng-options="field for field in fields">
+            <select class="form-control" ng-model="options.secondGroupField" ng-options="field.prettyName for field in fields" ng-change="queryForData()">
+                <option value="">None</option>
             </select>
         </div>
-        <div class="form-group" ng-show="!(hideAdvancedOptions) && options.groupField[1]">
+        <div class="form-group" ng-show="!(hideAdvancedOptions) && options.secondGroupField">
             <label>Third grouping</label>
-            <select class="form-control" ng-model="options.groupField[2]" ng-options="field for field in fields">
+            <select class="form-control" ng-model="options.thirdGroupField" ng-options="field.prettyName for field in fields" ng-change="queryForData()">
+                <option value="">None</option>
             </select>
         </div>
-        <div class="form-group" ng-show="!(hideAdvancedOptions) && options.groupField[2]">
+        <div class="form-group" ng-show="!(hideAdvancedOptions) && options.thirdGroupField">
             <label>Fourth grouping</label>
-            <select class="form-control" ng-model="options.groupField[3]" ng-options="field for field in fields">
+            <select class="form-control" ng-model="options.fourthGroupField" ng-options="field.prettyName for field in fields" ng-change="queryForData()">
+                <option value="">None</option>
             </select>
         </div>
 
         <div class="form-group" ng-show="!(hideAdvancedOptions)">
             <label>Color by</label>
-            <select class="form-control" ng-model="options.colorField" ng-options="field for field in fields" ng-disabled="!(fields.length > 0)">
+            <select class="form-control" ng-model="options.colorField" ng-options="field.prettyName for field in fields" ng-disabled="!(fields.length > 0)" ng-change="formatData(queryData)">
             </select>
         </div>
 
         <div class="form-group" ng-show="!(hideAdvancedOptions)">
             <label>Title Field</label>
-            <select class="form-control" ng-model="bindings.rowTitleField" ng-options="field for field in fields" ng-disabled="!(fields.length > 0)">
+            <select class="form-control" ng-model="bindings.rowTitleField" ng-options="field.prettyName for field in fields" ng-disabled="!(fields.length > 0)" ng-change="queryForData()">
             </select>
         </div>
 
         <div class="form-group" ng-show="!(hideAdvancedOptions)">
             <label>Start Field</label>
-            <select class="form-control" ng-model="bindings.startField" ng-options="field for field in fields" ng-disabled="!(fields.length > 0)">
+            <select class="form-control" ng-model="bindings.startField" ng-options="field.prettyName for field in fields" ng-disabled="!(fields.length > 0)" ng-change="queryForData()">
             </select>
         </div>
 
         <div class="form-group" ng-show="!(hideAdvancedOptions)">
             <label>End Field</label>
-            <select class="form-control" ng-model="bindings.endField" ng-options="field for field in fields" ng-disabled="!(fields.length > 0)">
+            <select class="form-control" ng-model="bindings.endField" ng-options="field.prettyName for field in fields" ng-disabled="!(fields.length > 0)" ng-change="queryForData()">
             </select>
         </div>
     </options-menu>
@@ -74,6 +78,6 @@
 
 <div class="gantt-chart" gantt data="data" api="registerHooks">
     <gantt-tooltips></gantt-tooltips>
-    <gantt-tree enabled="options.groupField.length > 0"></gantt-tree>
+    <gantt-tree enabled="(options.firstGroupField != undefined)"></gantt-tree>
     <gantt-groups></gantt-groups>
 </div>
