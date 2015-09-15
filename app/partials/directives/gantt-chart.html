@@ -16,19 +16,19 @@
                 <option value="">None</option>
             </select>
         </div>
-        <div class="form-group" ng-show="!(hideAdvancedOptions) && options.firstGroupField">
+        <div class="form-group" ng-show="!(hideAdvancedOptions) && options.firstGroupField && options.firstGroupField.columnName">
             <label>Second grouping</label>
             <select class="form-control" ng-model="options.secondGroupField" ng-options="field.prettyName for field in fields" ng-change="queryForData()">
                 <option value="">None</option>
             </select>
         </div>
-        <div class="form-group" ng-show="!(hideAdvancedOptions) && options.secondGroupField">
+        <div class="form-group" ng-show="!(hideAdvancedOptions) && options.secondGroupField && options.secondGroupField.columnName">
             <label>Third grouping</label>
             <select class="form-control" ng-model="options.thirdGroupField" ng-options="field.prettyName for field in fields" ng-change="queryForData()">
                 <option value="">None</option>
             </select>
         </div>
-        <div class="form-group" ng-show="!(hideAdvancedOptions) && options.thirdGroupField">
+        <div class="form-group" ng-show="!(hideAdvancedOptions) && options.thirdGroupField && options.thirdGroupField.columnName">
             <label>Fourth grouping</label>
             <select class="form-control" ng-model="options.fourthGroupField" ng-options="field.prettyName for field in fields" ng-change="queryForData()">
                 <option value="">None</option>
@@ -38,6 +38,7 @@
         <div class="form-group" ng-show="!(hideAdvancedOptions)">
             <label>Color by</label>
             <select class="form-control" ng-model="options.colorField" ng-options="field.prettyName for field in fields" ng-disabled="!(fields.length > 0)" ng-change="formatData(queryData)">
+                <option value="">None</option>
             </select>
         </div>
 
@@ -62,7 +63,7 @@
 </div>
 
 <div class="header-container filter-container" ng-show="(filterSet.key && filterSet.value) || legent.colors">
-    <div class="filter-reset pull-right" ng-show="filterSet.key && filterSet.value" title="{{filterSet.key}}={{filterSet.value}}">
+    <div class="header-item filter-reset pull-right" ng-show="filterSet.key && filterSet.value" title="{{filterSet.key}}={{filterSet.value}}">
         <span class="filter-label">{{filterSet.key}}={{filterSet.value}}</span>
         <span class="glyphicon glyphicon-remove" ng-click="removeFilter()"></span>
     </div>
@@ -78,6 +79,6 @@
 
 <div class="gantt-chart" gantt data="data" api="registerHooks">
     <gantt-tooltips></gantt-tooltips>
-    <gantt-tree enabled="(options.firstGroupField != undefined)"></gantt-tree>
+    <gantt-tree enabled="(options.firstGroupField != undefined && options.firstGroupField.columnName != '')"></gantt-tree>
     <gantt-groups></gantt-groups>
 </div>

@@ -23,7 +23,9 @@ function(connectionService, datasetService, errorNotificationService, filterServ
         templateUrl: 'partials/directives/gantt-chart.html',
         restrict: 'EA',
         scope: {
-            bindRowTitleField: "="
+            bindRowTitleField: "=",
+            bindStartField: "=",
+            bindEndField: "="
         },
         link: function($scope, $element) {
             $element.addClass('gantt-chart-directive');
@@ -33,14 +35,15 @@ function(connectionService, datasetService, errorNotificationService, filterServ
             $scope.filterSet = {};
 
             $scope.bindings = {
-                rowTitleField: ($scope.bindRowTitleField || "_id"),
-                startField: ($scope.BindStartField || "Start"),
-                endField: ($scope.BindEndField || "End")
+                rowTitleField: {},
+                startField: {},
+                endField: {}
             };
 
             $scope.options = {
                 database: {},
                 table: {},
+                colorField: {},
                 firstGroupField: {},
                 secondGroupField: {},
                 thirdGroupField: {},
@@ -145,8 +148,8 @@ function(connectionService, datasetService, errorNotificationService, filterServ
                 var i;
                 var color = d3.scale.category20();
                 var colorList;
-                if($scope.options.colorField) {
-                    colorList = createFieldList($scope.options.colorField, data);
+                if($scope.options.colorField && $scope.options.colorField.columnName) {
+                    colorList = createFieldList($scope.options.colorField.columnName, data);
                     $scope.legend.colors = [];
                     for(i = 0; i < colorList.length; i++) {
                         $scope.legend.colors.push({
@@ -182,8 +185,8 @@ function(connectionService, datasetService, errorNotificationService, filterServ
                     }
 
                     var colorVal;
-                    if($scope.options.colorField) {
-                        colorVal = color(colorList.indexOf(data[i][$scope.options.colorField]));
+                    if($scope.options.colorField && $scope.options.colorField.columnName) {
+                        colorVal = color(colorList.indexOf(data[i][$scope.options.colorField.columnName]));
                     } else {
                         colorVal = color(i);
                     }
@@ -338,6 +341,27 @@ function(connectionService, datasetService, errorNotificationService, filterServ
                 $scope.loadingData = true;
                 $scope.fields = datasetService.getSortedFields($scope.options.database.name, $scope.options.table.name);
 
+                $scope.options.colorField = {
+                    columnName: "",
+                    prettyName: ""
+                };
+                $scope.options.firstGroupField = {
+                    columnName: "",
+                    prettyName: ""
+                };
+                $scope.options.secondGroupField = {
+                    columnName: "",
+                    prettyName: ""
+                };
+                $scope.options.thirdGroupField = {
+                    columnName: "",
+                    prettyName: ""
+                };
+                $scope.options.fourthGroupField = {
+                    columnName: "",
+                    prettyName: ""
+                };
+
                 var rowTitleField = $scope.bindRowTitleField || "_id";
                 $scope.bindings.rowTitleField = _.find($scope.fields, function(field) {
                     return field.columnName === rowTitleField;
@@ -345,14 +369,14 @@ function(connectionService, datasetService, errorNotificationService, filterServ
                     columnName: "",
                     prettyName: ""
                 };
-                var startField = $scope.bindRowTitleField || "Start";
+                var startField = $scope.bindStartField || "Start";
                 $scope.bindings.startField = _.find($scope.fields, function(field) {
                     return field.columnName === startField;
                 }) || {
                     columnName: "",
                     prettyName: ""
                 };
-                var endField = $scope.bindRowTitleField || "End";
+                var endField = $scope.bindEndField || "End";
                 $scope.bindings.endField = _.find($scope.fields, function(field) {
                     return field.columnName === endField;
                 }) || {
