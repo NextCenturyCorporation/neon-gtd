@@ -1,0 +1,131 @@
+<ul class="nav navbar-nav">
+  <li>
+    <a data-toggle="modal" data-target="#importModal" class="navbar-nav collapsed dropdown-toggle primary navbar-list-bottom neon-popup-button" ng-show="canImport">
+      Import File
+    </a>
+    <a class="navbar-nav collapsed dropdown-toggle primary navbar-list-bottom unselectable" ng-hide="canImport">
+      Import unsupported for this browser
+    </a>
+  </li>
+</ul>
+
+<div class="import modal fade" id="importModal" tabindex="-1" role="dialog" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+        <h4 class="modal-title" id="importModalLabel">Select a file to import</h4>
+      </div>
+        <div class="modal-body">
+            <form class="upload-file">
+                <div id="fileDragAndDrop" class="unselectable"><span id="selectedFileIndicator" ng-bind="indicatorText"></span></div>
+                <input type="file" id="fileSelect">
+            </form>
+            <div class="file-info">
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label>Datastore Type</label>
+                            <select class="form-control" ng-model="datastoreType">
+                                <option value="mongo">Mongo</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label>Datastore Host Name</label>
+                            <input type="text" class="form-control" ng-model="datastoreHost">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label>Username</label>
+                            <input type="text" id="importUsernameInput" class="form-control"
+                                maxLength="40" ng-model="importUserName">
+                        </div>
+                    </div>
+
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label>Database Name</label>
+                            <input type="text" id="importDatabaseInput" class="form-control"
+                                maxLength="100" ng-model="importDatabaseName">
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button type="button" class="btn btn-default" ng-class="{true: 'disabled', false: ''}[importUserName == '' || importDatabaseName == '']" ng-click="uploadFile()">Import</button>
+        </div>
+    </div>
+  </div>
+</div>
+
+<div class="import modal fade" id="overwriteModal" tabindex="-1" role="dialog" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+        <h4 class="modal-title" id="overwriteModalLabel">Overwrite?</h4>
+      </div>
+        <div class="modal-body">
+            <span class="modal-body-text">
+                Database with username <b>{{importUserName}}</b> and database name <b>{{importDatabaseName}}</b> already exist. Would
+                you like to overwrite it?
+            </span>
+        </div>
+        <div class="modal-footer">
+            <button type="button" class="btn btn-success" data-dismiss="modal" ng-click="overwriteDatabase()">Overwrite</button>
+            <button type="button" class="btn btn-alert" data-dismiss="modal">Cancel</button>
+        </div>
+    </div>
+  </div>
+</div>
+
+<div class="import modal fade" id="confirmChoicesModal" data-keyboard="false" data-backdrop="static" tabIndex="-1" role="dialog" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal" aria-hidden="true" ng-click="sendConfirmedChoices('STRING')">&times;</button>
+        <h4 class="modal-title" id="confirmModalLabel">Select Field Types</h4>
+      </div>
+      <div class="modal-body centered">
+      	<p id="userNameCreatedText"><b>Username:</b> {{importUserName}}</p>
+        <p id="userNameCreatedText"><b>Database Name:</b> {{importDatabaseName}}</p>
+        <p id="convertFailedText">One or more fields failed to convert. Please try again.</p>
+        <table class="importGuessesTable">
+          <tr>
+            <th class="text-left">Field name</th>
+            <th class="text-center">Example of type</th>
+            <th class="text-right">Guessed type</th>
+          </tr>
+          <tr class="borderedRow" id="{{field.name}}-row" ng-repeat="field in nameTypePairs">
+            <td class="text-left">{{field.name}}</td>
+            <td class="text-center" id="{{field.name}}-example"></td>
+            <td class="text-right">
+              <select class="form-control" id="{{field.name}}-options">
+                <option value="INTEGER" label="Integer">Integer</option>
+                <option value="LONG" label="Long">Long</option>
+                <option value="DOUBLE" label="Double">Double</option>
+                <option value="FLOAT" label="Float">Float</option>
+                <option value="DATE" label="Date">Date</option>
+                <option value="OBJECT" label="Object">Object</option>
+                <option value="STRING" label="String">String</option>
+              </select>
+            </td>
+          </tr>
+        </table>
+      </div>
+      <div class="modal-footer">
+        <div class="alert alert-success pull-left text-left" role="alert" ng-bind="convertingMessage" ng-show="isConverting"></div>
+        <input type="text" id="dateStringInput" class="modalFooterField form-control" value="" maxlength="50" size="30" placeholder="Date format here if not standard" ng-hide="isConverting" ng-model="dateFormatString">
+        <button type="button" id="confirmChoicesButton" class="btn btn-default" ng-click="sendConfirmedChoices()">Confirm</button>
+      </div>
+    </div>
+  </div>
+</div>

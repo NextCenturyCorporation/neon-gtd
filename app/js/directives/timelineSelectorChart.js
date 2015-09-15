@@ -38,8 +38,7 @@ angular.module('neonDemo.directives')
             collapsed: '=',
             primarySeries: '=',
             granularity: '=',
-            showFocus: '=',
-            messenger: '='
+            showFocus: '='
         },
         link: function($scope, $element) {
             // Initialize the chart.
@@ -142,8 +141,7 @@ angular.module('neonDemo.directives')
 
             $scope.$watch('collapsed', function(newVal) {
                 if(newVal !== undefined) {
-                    $scope.chart.render($scope.timelineData);
-                    $scope.chart.renderExtent($scope.timelineBrush);
+                    $scope.chart.collapse(newVal);
                 }
             });
 
@@ -180,15 +178,23 @@ angular.module('neonDemo.directives')
             };
 
             var onHover = function(startDate, endDate) {
-                $scope.messenger.publish('date_selected', {
-                    start: startDate,
-                    end: endDate
+                $scope.$apply(function() {
+                    $scope.messenger.publish('date_selected', {
+                        start: startDate,
+                        end: endDate
+                    });
                 });
             };
 
-            $scope.$watch("messenger", function() {
+            $scope.initialize = function() {
+                $scope.messenger = new neon.eventing.Messenger();
                 $scope.messenger.subscribe("date_selected", onDateSelected);
                 $scope.chart.setHoverListener(onHover);
+            };
+
+            // Wait for neon to be ready, the create our messenger and intialize the view and data.
+            neon.ready(function() {
+                $scope.initialize();
             });
         }
     };

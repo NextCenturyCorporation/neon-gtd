@@ -30,6 +30,8 @@ angular.module('neonDemo.services')
      * Creates a Neon connection to the given host with the given database type.
      * @param {String} databaseType
      * @param {String} host
+     * @method createActiveConnection
+     * @return {neon.query.Connection}
      */
     service.createActiveConnection = function(databaseType, host) {
         if(!activeConnection || activeConnection.databaseType_ !== databaseType || activeConnection.host_ !== host) {
@@ -39,12 +41,14 @@ angular.module('neonDemo.services')
         if(databaseType && host) {
             activeConnection.connect(databaseType, host);
         }
+
+        return activeConnection;
     };
 
     /**
      * Returns the active connection.
-     * @return {neon.query.Connection}
      * @method getActiveConnection
+     * @return {neon.query.Connection}
      */
     service.getActiveConnection = function() {
         return activeConnection;

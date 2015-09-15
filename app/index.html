@@ -58,12 +58,15 @@
                         </span>
                     </div>
 
-                    <options-menu parent-element="element" class="navbar-text pull-right" ng-show="!(hideAdvancedOptions)">
+                    <options-menu parent-element="element" id= "navbar-option-menu" class="navbar-text pull-right navbar-option-menu" ng-show="!(hideAdvancedOptions)">
                         <!-- Buttons to select file format -->
                         <label>Export Format</label>
                         <div file-formats gridster-configs="visualizations" ng-hide="hideNavbarItems"></div>
                         <!-- Export option -->
                         <div export-widgets gridster-configs="visualizations" ng-hide="hideNavbarItems"></div>
+                        <!-- Import option -->
+                        <div import-file gridster-configs="visualizations" ng-show="showImport"></div>
+                        <div remove-dataset gridster-configs="visualizations" ng-show="showImport"></div>
                     </options-menu>
 
                     <div powered-by-neon class="pull-right"></div>
@@ -165,7 +168,9 @@
         <script src="js/vendor/slick-grid/js/slick.rowselectionmodel.js"></script>
         <script src="lib/mergesort/js/merge-sort.js"></script>
         <script src="lib/bootstrap/js/bootstrap.min.js"></script>
+        <script src="lib/ngDraggable/js/ngDraggable.js"></script>
         <script src="lib/remarkable-bootstrap-notify/js/bootstrap-notify.min.js"></script>
+        <script src="lib/rainbowvis.js/js/rainbowvis.js"></script>
 
         <!-- Include required non-angular support modules -->
         <script src="js/neon-extensions/filtertable.js"></script>
@@ -189,6 +194,7 @@
         <script src="js/errorNotificationService.js"></script>
         <script src="js/filterService.js"></script>
         <script src="js/exportService.js"></script>
+        <script src="js/importService.js"></script>
         <script src="js/neonDemoController.js"></script>
 
         <script src="js/charts/circularHeatChart.js"></script>
@@ -206,12 +212,16 @@
         <script src="js/directives/filterState.js"></script>
         <script src="js/directives/filterTray.js"></script>
         <script src="js/directives/gantt-chart.js"></script>
+        <script src="js/directives/importFile.js"></script>
         <script src="js/directives/linechart.js"></script>
         <script src="js/directives/linksPopup.js"></script>
         <script src="js/directives/map.js"></script>
+        <script src="js/directives/newsfeed.js"></script>
         <script src="js/directives/optionsMenu.js"></script>
         <script src="js/directives/poweredByNeon.js"></script>
         <script src="js/directives/queryResultsTable.js"></script>
+        <script src="js/directives/removeDataset.js"></script>
+        <script src="js/directives/sample.js"></script>
         <script src="js/directives/stackedBarchart.js"></script>
         <script src="js/directives/tagCloud.js"></script>
         <script src="js/time/dateBucketizer.js"></script>

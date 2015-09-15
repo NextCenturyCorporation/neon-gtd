@@ -36,15 +36,17 @@ coreMap.Map.Layer.SelectedPointsLayer = OpenLayers.Class(OpenLayers.Layer.Vector
                 strokeWidth: coreMap.Map.Layer.SelectedPointsLayer.DEFAULT_STROKE_WIDTH,
                 fillColor: coreMap.Map.Layer.SelectedPointsLayer.DEFAULT_FILL_COLOR,
                 fillOpacity: coreMap.Map.Layer.SelectedPointsLayer.DEFAULT_FILL_OPACITY,
-                pointRadius: coreMap.Map.Layer.SelectedPointsLayer.DEFAULT_POINT_RADIUS
+                pointRadius: coreMap.Map.Layer.SelectedPointsLayer.DEFAULT_POINT_RADIUS,
+                cursor: coreMap.Map.Layer.SelectedPointsLayer.DEFAULT_CURSOR
             },
             select: {
                 graphicName: coreMap.Map.Layer.SelectedPointsLayer.DEFAULT_GRAPHIC,
                 strokeOpacity: coreMap.Map.Layer.SelectedPointsLayer.DEFAULT_STROKE_OPACITY,
                 strokeWidth: coreMap.Map.Layer.SelectedPointsLayer.DEFAULT_STROKE_WIDTH,
-                fillColor: coreMap.Map.Layer.SelectedPointsLayer.DEFAULT_FILL_COLOR,
-                fillOpacity: coreMap.Map.Layer.SelectedPointsLayer.DEFAULT_FILL_OPACITY,
-                pointRadius: coreMap.Map.Layer.SelectedPointsLayer.DEFAULT_POINT_RADIUS
+                fillColor: coreMap.Map.Layer.SelectedPointsLayer.DEFAULT_SELECT_FILL_COLOR,
+                fillOpacity: coreMap.Map.Layer.SelectedPointsLayer.DEFAULT_SELECT_FILL_OPACITY,
+                pointRadius: coreMap.Map.Layer.SelectedPointsLayer.DEFAULT_POINT_RADIUS * 1.5,
+                cursor: coreMap.Map.Layer.SelectedPointsLayer.DEFAULT_CURSOR
             }
         });
         OpenLayers.Layer.Vector.prototype.initialize.apply(this, [name, extendOptions]);
@@ -56,5 +58,8 @@ coreMap.Map.Layer.SelectedPointsLayer.DEFAULT_GRAPHIC = "star";
 coreMap.Map.Layer.SelectedPointsLayer.DEFAULT_STROKE_OPACITY = 0.8;
 coreMap.Map.Layer.SelectedPointsLayer.DEFAULT_STROKE_WIDTH = 1;
 coreMap.Map.Layer.SelectedPointsLayer.DEFAULT_FILL_COLOR = "#FFA500";
+coreMap.Map.Layer.SelectedPointsLayer.DEFAULT_SELECT_FILL_COLOR = "#88d292";
 coreMap.Map.Layer.SelectedPointsLayer.DEFAULT_FILL_OPACITY = 0.8;
+coreMap.Map.Layer.SelectedPointsLayer.DEFAULT_SELECT_FILL_OPACITY = 1;
 coreMap.Map.Layer.SelectedPointsLayer.DEFAULT_POINT_RADIUS = 10;
+coreMap.Map.Layer.SelectedPointsLayer.DEFAULT_CURSOR = "pointer";

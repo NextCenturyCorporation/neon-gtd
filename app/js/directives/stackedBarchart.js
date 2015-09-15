@@ -51,6 +51,7 @@ function(connectionService, datasetService, errorNotificationService) {
             $scope.tables = [];
             $scope.fields = [];
             $scope.errorMessage = undefined;
+            $scope.outstandingQuery = undefined;
 
             $scope.options = {
                 database: {},
@@ -67,6 +68,9 @@ function(connectionService, datasetService, errorNotificationService) {
 
                 $scope.messenger.events({
                     filtersChanged: onFiltersChanged
+                });
+                $scope.messenger.subscribe(datasetService.UPDATE_DATA_CHANNEL, function() {
+                    $scope.queryForData();
                 });
 
                 $scope.$on('$destroy', function() {
@@ -141,10 +145,23 @@ function(connectionService, datasetService, errorNotificationService) {
             };
 
             $scope.updateFields = function() {
-                $scope.options.attrX = datasetService.getMapping($scope.options.database.name, $scope.options.table.name, "x_axis") || "";
-                $scope.options.attrY = datasetService.getMapping($scope.options.database.name, $scope.options.table.name, "y_axis") || "";
-                $scope.fields = datasetService.getDatabaseFields($scope.options.database.name, $scope.options.table.name);
-                $scope.fields.sort();
+                $scope.fields = datasetService.getSortedFields($scope.options.database.name, $scope.options.table.name);
+
+                var attrX = datasetService.getMapping($scope.options.database.name, $scope.options.table.name, "x_axis") || "";
+                $scope.options.attrX = _.find($scope.fields, function(field) {
+                    return field.columnName === attrX;
+                }) || {
+                    columnName: "",
+                    prettyName: ""
+                };
+                var attrY = datasetService.getMapping($scope.options.database.name, $scope.options.table.name, "y_axis") || "";
+                $scope.options.attrY = _.find($scope.fields, function(field) {
+                    return field.columnName === attrY;
+                }) || {
+                    columnName: "",
+                    prettyName: ""
+                };
+
                 $scope.queryForData(true);
             };
 
@@ -154,8 +171,8 @@ function(connectionService, datasetService, errorNotificationService) {
                     $scope.errorMessage = undefined;
                 }
 
-                var xAxis = $scope.options.attrX || datasetService.getMapping($scope.options.database.name, $scope.options.table.name, "x_axis");
-                var yAxis = $scope.options.attrY || datasetService.getMapping($scope.options.database.name, $scope.options.table.name, "y_axis");
+                var xAxis = $scope.options.attrX.columnName || datasetService.getMapping($scope.options.database.name, $scope.options.table.name, "x_axis");
+                var yAxis = $scope.options.attrY.columnName || datasetService.getMapping($scope.options.database.name, $scope.options.table.name, "y_axis");
                 if(!yAxis) {
                     yAxis = COUNT_FIELD_NAME;
                 }
@@ -184,20 +201,31 @@ function(connectionService, datasetService, errorNotificationService) {
 
                 var connection = connectionService.getActiveConnection();
                 if(connection) {
-                    connection.executeQuery(query, function(queryResults) {
+                    if($scope.outstandingQuery) {
+                        $scope.outstandingQuery.abort();
+                    }
+
+                    $scope.outstandingQuery = connection.executeQuery(query);
+                    $scope.outstandingQuery.done(function() {
+                        $scope.outstandingQuery = undefined;
+                    });
+                    $scope.outstandingQuery.done(function(queryResults) {
                         next(queryResults);
-                    }, function(response) {
-                        $scope.drawBlankChart();
-                        if(response.responseJSON) {
-                            $scope.errorMessage = errorNotificationService.showErrorMessage($element, response.responseJSON.error, response.responseJSON.stackTrace);
+                    });
+                    $scope.outstandingQuery.fail(function(response) {
+                        if(response.status !== 0) {
+                            $scope.drawBlankChart();
+                            if(response.responseJSON) {
+                                $scope.errorMessage = errorNotificationService.showErrorMessage($element, response.responseJSON.error, response.responseJSON.stackTrace);
+                            }
                         }
                     });
                 }
             };
 
             $scope.queryForData = function() {
-                var xAxis = $scope.options.attrX || datasetService.getMapping($scope.options.database.name, $scope.options.table.name, "x_axis");
-                var yAxis = $scope.options.attrY || datasetService.getMapping($scope.options.database.name, $scope.options.table.name, "y_axis");
+                var xAxis = $scope.options.attrX.columnName || datasetService.getMapping($scope.options.database.name, $scope.options.table.name, "x_axis");
+                var yAxis = $scope.options.attrY.columnName || datasetService.getMapping($scope.options.database.name, $scope.options.table.name, "y_axis");
                 if(!yAxis) {
                     yAxis = COUNT_FIELD_NAME;
                 }
@@ -287,8 +315,8 @@ function(connectionService, datasetService, errorNotificationService) {
             var doDrawChart = function(data) {
                 charts.BarChart.destroy($element[0], '.barchart');
 
-                var xAxis = datasetService.getMapping($scope.options.database.name, $scope.options.table.name, "x_axis") || $scope.options.attrX;
-                var yAxis = datasetService.getMapping($scope.options.database.name, $scope.options.table.name, "y_axis") || $scope.options.attrY;
+                var xAxis = datasetService.getMapping($scope.options.database.name, $scope.options.table.name, "x_axis") || $scope.options.attrX.columnName;
+                var yAxis = datasetService.getMapping($scope.options.database.name, $scope.options.table.name, "y_axis") || $scope.options.attrY.columnName;
                 if(!yAxis) {
                     yAxis = COUNT_FIELD_NAME;
                 }

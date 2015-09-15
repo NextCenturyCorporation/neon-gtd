@@ -1,5 +1,5 @@
 //
-// Copyright 2014 Next Century Corporation
+// Copyright 2015 Next Century Corporation
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
 // You may obtain a copy of the License at
@@ -13,18 +13,11 @@
 // limitations under the License.
 //
 
-.circularheatchart {
-    margin: auto;
-    display: block;
+.sampleDirective {
+    height: @widget-height;
+    width: @widget-width;
+    overflow: auto;
+    padding: 10px;
 
-    svg {
-        width: 100%;
-        height: 100%;
-        margin: auto;
-
-        .segment, .radial {
-            fill: @main-text-color;
-            font-weight: bold;
-        }
-    }
+    /* TODO */
 }

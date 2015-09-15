@@ -1,5 +1,5 @@
 <div class="header-container" ng-show="!(hideHeader)">
-    <span class="header-text pull-left">{{options.table.prettyName}}</span>
+    <span class="header-text pull-left" ng-bind="options.table.prettyName"></span>
 
     <options-menu parent-element="element" export-function="makeTagCloudExportObject"  button-text="'No tag data'" show-button-text="showOptionsMenuButtonText">
         <div class="form-group" ng-show="!(hideAdvancedOptions)">
@@ -14,7 +14,7 @@
         </div>
         <div class="form-group" ng-show="!(hideAdvancedOptions)">
             <label>Data Field</label>
-            <select class="form-control" ng-model="options.tagField" ng-options="field for field in fields" ng-required="true" ng-disabled="(fields.length == 0)" ng-change="updateTagField()">
+            <select class="form-control" ng-model="options.tagField" ng-options="field.prettyName for field in fields" ng-required="true" ng-disabled="(fields.length == 0)" ng-change="updateTagField()">
             </select>
         </div>
         <div class="form-group">
@@ -37,8 +37,8 @@
 <div class="clearfix"></div>
 
 <div class="header-container filter-container" ng-show="(filterTags.length > 0)">
-    <div class="filter-reset pull-right" ng-repeat="tagName in filterTags" title="{{options.tagField}}={{tagName}}">
-        <span class="filter-label">{{tagName}}</span>
+    <div class="header-item filter-reset pull-right" ng-repeat="tagName in filterTags" title="{{options.tagField.prettyName}}={{tagName}}">
+        <span class="filter-label" ng-bind="tagName"></span>
         <span class="glyphicon glyphicon-remove" ng-click="removeFilter(tagName)"></span>
     </div>
 </div>

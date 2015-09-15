@@ -13,91 +13,6 @@
 // limitations under the License.
 //
 
-.data-tray {
-    h4 {
-        &.pull-left {
-            @media (max-width: 767px) {
-                float: none !important;
-            }
-
-            @media (min-width: 768px) and (max-width: 991px) {
-                float: none !important;
-            }
-        }
-    }
-
-    .form-inline {
-        @media (max-width: 767px) {
-            float: none !important;
-            margin-top: 15px !important;
-            margin-bottom: 10px;
-        }
-
-        @media (min-width: 768px) and (max-width: 991px) {
-            float: none !important;
-            margin-bottom: 5px;
-        }
-
-        .form-control {
-            @media (max-width: 767px) {
-                display: inline-block;
-                width: 100%;
-                vertical-align: middle;
-            }
-        }
-
-        .form-group {
-            @media (max-width: 767px) {
-                display: inline-block;
-                margin-bottom: 0;
-                vertical-align: middle;
-                width: 20%;
-            }
-
-            > label {
-                @media (max-width: 767px) {
-                    display: block;
-                    margin-top: 0;
-                    margin-left: 0;
-                }
-            }
-        }
-
-        .form-input-group {
-            @media (max-width: 767px) {
-                width: 55%;
-                padding-right: 10px;
-            }
-
-            > label{
-                @media (max-width: 767px) {
-                    float: none !important;
-                }
-            }
-        }
-    }
-
-    .input-group {
-        .form-control {
-            @media (max-width: 767px) {
-                width: 100%;
-            }
-        }
-    }
-
-    .refresh {
-        margin-left: 10px;
-
-        @media (max-width: 767px) {
-            margin-top: 21px;
-        }
-    }
-}
-
-.navbar-item-forms {
-    margin-top: 5px;
-}
-
 .query-results-directive {
     margin: 0px;
     height: 100%;
@@ -178,6 +93,12 @@
         &.odd {
             background: @main-background;
         }
+
+        &.selectable {
+            .slick-cell {
+                cursor: pointer;
+            }
+        }
     }
 
     .slick-header{
@@ -231,15 +152,6 @@
 
 .slick-sort-indicator {
     float: none;
-}
-
-.tray {
-    .container {
-        .query-results-grid {
-            min-height: 200px;
-            height: 300px;
-        }
-    }
 }
 
 .visualization-widget {
