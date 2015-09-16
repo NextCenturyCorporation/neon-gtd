@@ -675,6 +675,28 @@ angular.module("neonDemo.services")
         return service.dataset.options;
     };
 
+    /**
+     * Creates and returns a new blank field object.
+     * @method createBlankField
+     * @return {Object}
+     */
+    service.createBlankField = function() {
+        return {
+            columnName: "",
+            prettyName: ""
+        };
+    };
+
+    /**
+     * Returns whether the given field object is valid.
+     * @param {Object} fieldObject
+     * @method isFieldValid
+     * @return {Boolean}
+     */
+    service.isFieldValid = function(fieldObject) {
+        return fieldObject && fieldObject.columnName;
+    };
+
     // Validate the datasets from the configuration file on initialization.
     service.datasets.forEach(function(dataset) {
         validateDatabases(dataset);

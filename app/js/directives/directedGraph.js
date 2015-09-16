@@ -291,7 +291,7 @@ function($filter, $timeout, connectionService, datasetService, errorNotification
                     }
                 } else if(whereClause.lhs === $scope.options.selectedNodeField.columnName && whereClause.lhs && whereClause.rhs) {
                     $scope.selectNodeAndNetworkFromNodeId(whereClause.rhs);
-                } else if($scope.options.selectedLinkField && whereClause.lhs === $scope.options.selectedLinkField.columnName && whereClause.lhs && whereClause.rhs) {
+                } else if(datasetService.isFieldValid($scope.options.selectedLinkField) && whereClause.lhs === $scope.options.selectedLinkField.columnName && whereClause.lhs && whereClause.rhs) {
                     $scope.selectNodeAndNetworkFromNodeId(whereClause.rhs);
                 }
             };
@@ -389,67 +389,40 @@ function($filter, $timeout, connectionService, datasetService, errorNotification
                 var selectedNodeField = datasetService.getMapping($scope.options.database.name, $scope.options.table.name, "graph_nodes") || "";
                 $scope.options.selectedNodeField = _.find($scope.fields, function(field) {
                     return field.columnName === selectedNodeField;
-                }) || {
-                    columnName: "",
-                    prettyName: ""
-                };
+                }) || datasetService.createBlankField();
                 var selectedNameField = datasetService.getMapping($scope.options.database.name, $scope.options.table.name, "graph_nodes_names") ||
                     datasetService.getMapping($scope.options.database.name, $scope.options.table.name, "newsfeed_name") || "";
                 $scope.options.selectedNameField = _.find($scope.fields, function(field) {
                     return field.columnName === selectedNameField;
-                }) || {
-                    columnName: "",
-                    prettyName: ""
-                };
+                }) || datasetService.createBlankField();
                 var selectedSizeField = datasetService.getMapping($scope.options.database.name, $scope.options.table.name, "graph_nodes_sizes");
                 $scope.options.selectedSizeField = _.find($scope.fields, function(field) {
                     return field.columnName === selectedSizeField;
-                }) || {
-                    columnName: "",
-                    prettyName: ""
-                };
+                }) || datasetService.createBlankField();
                 var selectedLinkField = datasetService.getMapping($scope.options.database.name, $scope.options.table.name, "graph_links") || "";
                 $scope.options.selectedLinkField = _.find($scope.fields, function(field) {
                     return field.columnName === selectedLinkField;
-                }) || {
-                    columnName: "",
-                    prettyName: ""
-                };
+                }) || datasetService.createBlankField();
                 var selectedLinkNameField = datasetService.getMapping($scope.options.database.name, $scope.options.table.name, "graph_links_names") || "";
                 $scope.options.selectedLinkNameField = _.find($scope.fields, function(field) {
                     return field.columnName === selectedLinkNameField;
-                }) || {
-                    columnName: "",
-                    prettyName: ""
-                };
+                }) || datasetService.createBlankField();
                 var selectedLinkSizeField = datasetService.getMapping($scope.options.database.name, $scope.options.table.name, "graph_links_sizes");
                 $scope.options.selectedLinkSizeField = _.find($scope.fields, function(field) {
                     return field.columnName === selectedLinkSizeField;
-                }) || {
-                    columnName: "",
-                    prettyName: ""
-                };
+                }) || datasetService.createBlankField();
                 var selectedFlagField = datasetService.getMapping($scope.options.database.name, $scope.options.table.name, "graph_flags");
                 $scope.options.selectedFlagField = _.find($scope.fields, function(field) {
                     return field.columnName === selectedFlagField;
-                }) || {
-                    columnName: "",
-                    prettyName: ""
-                };
+                }) || datasetService.createBlankField();
                 var selectedDateField = datasetService.getMapping($scope.options.database.name, $scope.options.table.name, "date") || "";
                 $scope.options.selectedDateField = _.find($scope.fields, function(field) {
                     return field.columnName === selectedDateField;
-                }) || {
-                    columnName: "",
-                    prettyName: ""
-                };
+                }) || datasetService.createBlankField();
                 var selectedTextField = datasetService.getMapping($scope.options.database.name, $scope.options.table.name, "newsfeed_text") || "";
                 $scope.options.selectedTextField = _.find($scope.fields, function(field) {
                     return field.columnName === selectedTextField;
-                }) || {
-                    columnName: "",
-                    prettyName: ""
-                };
+                }) || datasetService.createBlankField();
 
                 $scope.options.flagMode = datasetService.getMapping($scope.options.database.name, $scope.options.table.name, "graph_flag_mode") || FLAG_LINKED_NODES;
 
@@ -487,7 +460,7 @@ function($filter, $timeout, connectionService, datasetService, errorNotification
 
                 var connection = connectionService.getActiveConnection();
 
-                if(!connection || !$scope.options.selectedNodeField.columnName) {
+                if(!connection || !datasetService.isFieldValid($scope.options.selectedNodeField)) {
                     $scope.loadingData = false;
                     return;
                 }
@@ -564,13 +537,13 @@ function($filter, $timeout, connectionService, datasetService, errorNotification
                     var newsItem = {
                         head: item[$scope.options.selectedNodeField.columnName]
                     };
-                    if($scope.options.selectedDateField && $scope.options.selectedDateField.columnName) {
+                    if(datasetService.isFieldValid($scope.options.selectedDateField)) {
                         newsItem.date = new Date(item[$scope.options.selectedDateField.columnName]);
                     }
-                    if($scope.options.selectedNameField && $scope.options.selectedNameField.columnName) {
+                    if(datasetService.isFieldValid($scope.options.selectedNameField)) {
                         newsItem.name = item[$scope.options.selectedNameField.columnName];
                     }
-                    if($scope.options.selectedTextField && $scope.options.selectedTextField.columnName) {
+                    if(datasetService.isFieldValid($scope.options.selectedTextField)) {
                         newsItem.text = item[$scope.options.selectedTextField.columnName];
                         // Delete the text from the data to improve our memory preformance because we don't need it any longer.
                         delete item[$scope.options.selectedTextField.columnName];
@@ -690,38 +663,38 @@ function($filter, $timeout, connectionService, datasetService, errorNotification
 
             var createNetworkGraphQuery = function() {
                 var fields = [$scope.options.selectedNodeField.columnName];
-                if($scope.options.selectedNameField && $scope.options.selectedNameField.columnName) {
+                if(datasetService.isFieldValid($scope.options.selectedNameField)) {
                     fields.push($scope.options.selectedNameField.columnName);
                 }
-                if($scope.options.selectedSizeField && $scope.options.selectedSizeField.columnName) {
+                if(datasetService.isFieldValid($scope.options.selectedSizeField)) {
                     fields.push($scope.options.selectedSizeField.columnName);
                 }
-                if($scope.options.selectedLinkField && $scope.options.selectedLinkField.columnName) {
+                if(datasetService.isFieldValid($scope.options.selectedLinkField)) {
                     fields.push($scope.options.selectedLinkField.columnName);
                 }
-                if($scope.options.selectedLinkNameField && $scope.options.selectedLinkNameField.columnName) {
+                if(datasetService.isFieldValid($scope.options.selectedLinkNameField)) {
                     fields.push($scope.options.selectedLinkNameField.columnName);
                 }
-                if($scope.options.selectedLinkSizeField && $scope.options.selectedLinkSizeField.columnName) {
+                if(datasetService.isFieldValid($scope.options.selectedLinkSizeField)) {
                     fields.push($scope.options.selectedLinkSizeField.columnName);
                 }
-                if($scope.options.selectedFlagField && $scope.options.selectedFlagField.columnName) {
+                if(datasetService.isFieldValid($scope.options.selectedFlagField)) {
                     fields.push($scope.options.selectedFlagField.columnName);
                 }
-                if($scope.options.selectedTextField && $scope.options.selectedTextField.columnName) {
+                if(datasetService.isFieldValid($scope.options.selectedTextField)) {
                     fields.push($scope.options.selectedTextField.columnName);
                 }
 
                 var query = new neon.query.Query().selectFrom($scope.options.database.name, $scope.options.table.name).withFields(fields).limit($scope.options.dataLimit);
 
-                if($scope.options.selectedDateField && $scope.options.selectedDateField.columnName) {
+                if(datasetService.isFieldValid($scope.options.selectedDateField)) {
                     query.sortBy($scope.options.selectedDateField.columnName, neon.query.ASCENDING);
                 }
 
                 if($scope.selected.graphNodeIds.length) {
                     var whereClauses = $scope.selected.graphNodeIds.map(function(nodeId) {
                         var whereClause = neon.query.where($scope.options.selectedNodeField.columnName, "=", nodeId);
-                        if($scope.options.selectedLinkField && $scope.options.selectedLinkField.columnName) {
+                        if(datasetService.isFieldValid($scope.options.selectedLinkField)) {
                             return neon.query.or(whereClause, neon.query.where($scope.options.selectedLinkField.columnName, "=", nodeId));
                         }
                         return whereClause;
@@ -827,10 +800,10 @@ function($filter, $timeout, connectionService, datasetService, errorNotification
                 // Add each unique node from the data to the graph as a node.
                 data.forEach(function(item) {
                     var nodeId = item[$scope.options.selectedNodeField.columnName];
-                    var nodeName = ($scope.options.selectedNameField && $scope.options.selectedNameField.columnName) ? item[$scope.options.selectedNameField.columnName] : nodeId;
-                    var nodeSize = ($scope.options.selectedSizeField && $scope.options.selectedSizeField.columnName) ? item[$scope.options.selectedSizeField.columnName] : 1;
-                    var nodeFlag = ($scope.options.selectedFlagField && $scope.options.selectedFlagField.columnName) ? item[$scope.options.selectedFlagField.columnName] : true;
-                    var itemDate = ($scope.options.selectedDateField && $scope.options.selectedDateField.columnName) ? new Date(item[$scope.options.selectedDateField.columnName]) : undefined;
+                    var nodeName = datasetService.isFieldValid($scope.options.selectedNameField) ? item[$scope.options.selectedNameField.columnName] : nodeId;
+                    var nodeSize = datasetService.isFieldValid($scope.options.selectedSizeField) ? item[$scope.options.selectedSizeField.columnName] : 1;
+                    var nodeFlag = datasetService.isFieldValid($scope.options.selectedFlagField) ? item[$scope.options.selectedFlagField.columnName] : true;
+                    var itemDate = datasetService.isFieldValid($scope.options.selectedDateField) ? new Date(item[$scope.options.selectedDateField.columnName]) : undefined;
 
                     if(nodeId) {
                         var node = addNodeIfUnique(nodeId, nodeName, nodeSize);
@@ -841,18 +814,18 @@ function($filter, $timeout, connectionService, datasetService, errorNotification
                         // Mark this node as a node created from the result data.
                         node.inData = true;
 
-                        if($scope.options.selectedLinkField && $scope.options.selectedLinkField.columnName) {
+                        if(datasetService.isFieldValid($scope.options.selectedLinkField)) {
                             var linkedNodeIds = item[$scope.options.selectedLinkField.columnName] || [];
                             linkedNodeIds = (linkedNodeIds.constructor === Array) ? linkedNodeIds : [linkedNodeIds];
 
                             var linkedNodeNames = [];
-                            if($scope.options.selectedLinkNameField && $scope.options.selectedLinkNameField.columnName) {
+                            if(datasetService.isFieldValid($scope.options.selectedLinkNameField)) {
                                 linkedNodeNames = item[$scope.options.selectedLinkNameField.columnName] || [];
                                 linkedNodeNames = (linkedNodeNames.constructor === Array) ? linkedNodeNames : [linkedNodeNames];
                             }
 
                             var linkedNodeSizes = [];
-                            if($scope.options.selectedLinkSizeField && $scope.options.selectedLinkSizeField.columnName) {
+                            if(datasetService.isFieldValid($scope.options.selectedLinkSizeField)) {
                                 linkedNodeSizes = item[$scope.options.selectedLinkSizeField.columnName] || [];
                                 linkedNodeSizes = (linkedNodeSizes.constructor === Array) ? linkedNodeSizes : [linkedNodeSizes];
                             }
@@ -1436,7 +1409,7 @@ function($filter, $timeout, connectionService, datasetService, errorNotification
                         '<span class="graph-tooltip-value">' + sizeFromCount + '</span>' +
                         '</div>';
 
-                    if($scope.options.selectedSizeField && $scope.options.selectedSizeField.columnName && $scope.tooltip.sizeFieldLabel) {
+                    if(datasetService.isFieldValid($scope.options.selectedSizeField) && $scope.tooltip.sizeFieldLabel) {
                         text += '<div class="graph-tooltip-block">' +
                             '<span class="graph-tooltip-label">' + prefix + $scope.tooltip.sizeFieldLabel + '</span>' +
                             '<span class="graph-tooltip-value">' + sizeFromField + '</span>' +
@@ -1733,7 +1706,7 @@ function($filter, $timeout, connectionService, datasetService, errorNotification
                 query.ignoredFilterIds_ = exportService.getIgnoredFilterIds();
                 // TODO Update due to recent graph changes.
                 var fields = [];
-                if($scope.options.selectedNodeField.columnName && $scope.options.selectedLinkField.columnName) {
+                if(datasetService.isFieldValid($scope.options.selectedNodeField) && datasetService.isFieldValid($scope.options.selectedLinkField)) {
                     fields = [{
                         query: $scope.options.selectedNodeField.columnName,
                         pretty: $scope.options.selectedNodeField.prettyName
@@ -1742,13 +1715,13 @@ function($filter, $timeout, connectionService, datasetService, errorNotification
                         pretty: $scope.options.selectedLinkField.prettyName
                     }];
                     query.groupBy($scope.options.selectedNodeField.columnName, $scope.options.selectedLinkField.columnName);
-                } else if($scope.options.selectedNodeField.columnName) {
+                } else if(datasetService.isFieldValid($scope.options.selectedNodeField)) {
                     fields = [{
                         query: $scope.options.selectedNodeField.columnName,
                         pretty: $scope.options.selectedNodeField.prettyName
                     }];
                     query.groupBy($scope.options.selectedNodeField.columnName);
-                } else if($scope.options.selectedLinkField.columnName) {
+                } else if(datasetService.isFieldValid($scope.options.selectedLinkField)) {
                     fields = [{
                         query: $scope.options.selectedLinkField.columnName,
                         pretty: $scope.options.selectedLinkField.prettyName
