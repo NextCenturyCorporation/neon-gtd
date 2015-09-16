@@ -63,6 +63,13 @@
         </div>
 
         <div class="form-group" ng-show="!(hideAdvancedOptions)">
+            <label>Flag Field</label>
+            <select class="form-control" ng-model="options.selectedFlagField" ng-options="field.prettyName for field in fields" ng-required="false" ng-disabled="(fields.length == 0)" ng-change="queryForData()">
+                <option value="">None</option>
+            </select>
+        </div>
+
+        <div class="form-group" ng-show="!(hideAdvancedOptions)">
             <label>Text Field</label>
             <select class="form-control" ng-model="options.selectedTextField" ng-options="field.prettyName for field in fields" ng-required="false" ng-disabled="(fields.length == 0)" ng-change="queryForData()">
                 <option value="">None</option>
