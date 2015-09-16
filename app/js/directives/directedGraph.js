@@ -92,6 +92,7 @@ function($filter, $timeout, connectionService, datasetService, errorNotification
             $scope.bucketizer = dateBucketizer();
             $scope.outstandingNodeQuery = undefined;
             $scope.outstandingGraphQuery = undefined;
+            $scope.width = $element.outerWidth(true);
 
             var FLAG_RESULT_NODES = "result";
             var FLAG_LINKED_NODES = "linked";
@@ -156,6 +157,7 @@ function($filter, $timeout, connectionService, datasetService, errorNotification
             };
 
             var updateSize = function() {
+                $scope.width = $element.outerWidth(true);
                 if($scope.resizePromise) {
                     $timeout.cancel($scope.resizePromise);
                 }
