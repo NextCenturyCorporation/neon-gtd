@@ -121,26 +121,35 @@
         <span class="glyphicon glyphicon-remove" ng-click="deselectAllNodesAndNetwork()"></span>
     </div>
 
-    <label type="button" class="btn btn-default header-item" title="{{'Load ' + (selected.graphNodeIds.length ? 'Selected ' : '') + 'Network'}}"
-        ng-bind="'Load ' + (selected.graphNodeIds.length ? 'Selected ' : '') + 'Network'" ng-click="queryForData(true)"/>
+    <div class="pull-left">
+        <label type="button" class="btn btn-default header-item" title="{{'Load ' + (selected.graphNodeIds.length ? 'Selected ' : '') + 'Network Graph'}}"
+            ng-bind="'Load ' + (selected.graphNodeIds.length ? 'Selected ' : '') + 'Network'" ng-click="queryForData(true)"/>
+    </div>
 
-    <label class="btn btn-default header-item" ng-class="{true: 'active', false: ''}[options.useNodeClusters]" title="Cluster Leaf Nodes and Unlinked Nodes">
-        <input type="checkbox" ng-model="options.useNodeClusters" style="display:none" ng-value="false" ng-change="queryForData(true)"/>
-        <span class="glyphicon glyphicon-cloud"></span>
-        <span ng-hide="(width < 525)">Cluster Nodes</span>
-    </label>
+    <div class="pull-left">
+        <span class="form-group">
+            <span class="btn-group">
+                <label class="btn btn-default header-item" ng-class="{true: 'active', false: ''}[options.hideNodesWithZeroOrOneLink]" title="Hide Single-Link Networks and Unlinked Nodes">
+                    <input type="checkbox" ng-model="options.hideNodesWithZeroOrOneLink" style="display:none" ng-value="false" ng-change="queryForData(numberOfVisibleNodes > 0)"/>
+                    <span class="glyphicon glyphicon-eye-open" ng-show="!(options.hideNodesWithZeroOrOneLink)"></span>
+                    <span class="glyphicon glyphicon-eye-close" ng-show="(options.hideNodesWithZeroOrOneLink)"></span>
+                    <span ng-hide="(width < 725) || (selected.graphNodeIds.length > 0 && width < 925)" ng-bind="(options.hideNodesWithZeroOrOneLink ? 'Hide' : 'Show') + ' Simple Networks'"</span>
+                </label>
 
-    <label class="btn btn-default header-item" ng-class="{true: 'active', false: ''}[options.hideNodesWithZeroOrOneLink]" title="Hide Single Link Networks and Unlinked Nodes">
-        <input type="checkbox" ng-model="options.hideNodesWithZeroOrOneLink" style="display:none" ng-value="false" ng-change="queryForData(true)"/>
-        <span class="glyphicon glyphicon-eye-close"></span>
-        <span ng-hide="(width < 675)">Hide Simple Networks</span>
-    </label>
+                <label class="btn btn-default header-item" ng-class="{true: 'active', false: ''}[options.useNodeClusters]" title="Cluster Leaf Nodes and Unlinked Nodes">
+                    <input type="checkbox" ng-model="options.useNodeClusters" style="display:none" ng-value="false" ng-change="queryForData(numberOfVisibleNodes > 0)"/>
+                    <span class="glyphicon glyphicon-cloud"></span>
+                    <span ng-hide="(width < 725) || (selected.graphNodeIds.length > 0 && width < 925)" ng-bind="'Clustering ' + (options.useNodeClusters ? 'On' : 'Off')"</span>
+                </label>
 
-    <label class="btn btn-default header-item" ng-class="{true: 'active', false: ''}[options.reloadOnFilter]" title="Reload Network Graph on Filter">
-        <input type="checkbox" ng-model="options.reloadOnFilter" style="display:none" ng-value="false"/>
-        <span class="glyphicon glyphicon-refresh"></span>
-        <span ng-hide="(width < 800)">Reload on Filter</span>
-    </label>
+                <label class="btn btn-default header-item" ng-class="{true: 'active', false: ''}[options.reloadOnFilter]" title="Auto-Reload Network Graph on Adding Filters">
+                    <input type="checkbox" ng-model="options.reloadOnFilter" style="display:none" ng-value="false"/>
+                    <span class="glyphicon glyphicon-refresh"></span>
+                    <span ng-hide="(width < 725) || (selected.graphNodeIds.length > 0 && width < 925)" ng-bind="'Auto-Reload ' + (options.reloadOnFilter ? 'On' : 'Off')"</span>
+                </label>
+            </span>
+        </span>
+    </div>
 </div>
 
 <div class="clearfix"></div>

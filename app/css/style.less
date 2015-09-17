@@ -431,10 +431,12 @@ button {
     }
 
     .glyphicon {
+        cursor: pointer;
         float: left;
         padding: 7px 8px;
-        cursor: pointer;
         top: 0px;
+        /* Remove the margin set by .header-item .glyphicon (above).*/
+        margin: 0px;
 
         &.glyphicon-remove {
             color: @error-color;
