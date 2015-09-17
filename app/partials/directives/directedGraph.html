@@ -23,6 +23,14 @@
         <div class="form-group" ng-show="!(hideAdvancedOptions)">
             <label>Name Field</label>
             <select class="form-control" ng-model="options.selectedNameField" ng-options="field.prettyName for field in fields" ng-required="false" ng-disabled="(fields.length == 0)" ng-change="queryForData()">
+                <option value="">None</option>
+            </select>
+        </div>
+
+        <div class="form-group" ng-show="!(hideAdvancedOptions)">
+            <label>Size Field</label>
+            <select class="form-control" ng-model="options.selectedSizeField" ng-options="field.prettyName for field in fields" ng-required="false" ng-disabled="(fields.length == 0)" ng-change="queryForData()">
+                <option value="">None</option>
             </select>
         </div>
 
@@ -36,18 +44,35 @@
         <div class="form-group" ng-show="!(hideAdvancedOptions)">
             <label>Linked Node(s) Name Field</label>
             <select class="form-control" ng-model="options.selectedLinkNameField" ng-options="field.prettyName for field in fields" ng-required="false" ng-disabled="(fields.length == 0)" ng-change="queryForData()">
+                <option value="">None</option>
+            </select>
+        </div>
+
+        <div class="form-group" ng-show="!(hideAdvancedOptions)">
+            <label>Link Size Field</label>
+            <select class="form-control" ng-model="options.selectedLinkSizeField" ng-options="field.prettyName for field in fields" ng-required="false" ng-disabled="(fields.length == 0)" ng-change="queryForData()">
+                <option value="">None</option>
             </select>
         </div>
 
         <div class="form-group" ng-show="!(hideAdvancedOptions)">
             <label>Date Field</label>
             <select class="form-control" ng-model="options.selectedDateField" ng-options="field.prettyName for field in fields" ng-required="false" ng-disabled="(fields.length == 0)" ng-change="queryForData()">
+                <option value="">None</option>
+            </select>
+        </div>
+
+        <div class="form-group" ng-show="!(hideAdvancedOptions)">
+            <label>Flag Field</label>
+            <select class="form-control" ng-model="options.selectedFlagField" ng-options="field.prettyName for field in fields" ng-required="false" ng-disabled="(fields.length == 0)" ng-change="queryForData()">
+                <option value="">None</option>
             </select>
         </div>
 
         <div class="form-group" ng-show="!(hideAdvancedOptions)">
             <label>Text Field</label>
             <select class="form-control" ng-model="options.selectedTextField" ng-options="field.prettyName for field in fields" ng-required="false" ng-disabled="(fields.length == 0)" ng-change="queryForData()">
+                <option value="">None</option>
             </select>
         </div>
 
@@ -85,27 +110,6 @@
                 </div>
             </div>
         </div>
-
-        <div class="form-group">
-            <label class="btn btn-default" ng-class="{true: 'active', false: ''}[options.useNodeClusters]" title="Cluster Known Leaf Nodes and Unlinked Nodes">
-                <input type="checkbox" ng-model="options.useNodeClusters" style="display:none" ng-value="false" ng-change="queryForData(true)"/>
-                Cluster Nodes
-            </label>
-        </div>
-
-        <div class="form-group">
-            <label class="btn btn-default" ng-class="{true: 'active', false: ''}[options.hideNodesWithZeroOrOneLink]" title="Hide Known Single Link Networks and Unlinked Nodes">
-                <input type="checkbox" ng-model="options.hideNodesWithZeroOrOneLink" style="display:none" ng-value="false" ng-change="queryForData(true)"/>
-                Hide Small Known Networks
-            </label>
-        </div>
-
-        <div class="form-group">
-            <label class="btn btn-default" ng-class="{true: 'active', false: ''}[options.reloadOnFilter]" title="Reload Graph on Filter">
-                <input type="checkbox" ng-model="options.reloadOnFilter" style="display:none" ng-value="false"/>
-                Reload Graph on Filter
-            </label>
-        </div>
     </options-menu>
 </div>
 
@@ -117,7 +121,26 @@
         <span class="glyphicon glyphicon-remove" ng-click="deselectAllNodesAndNetwork()"></span>
     </div>
 
-    <label type="button" class="btn btn-default header-item" title="Load Graph" ng-bind="'Load ' + (selected.graphNodeIds.length ? 'Selected ' : '') + 'Network'" ng-click="queryForData(true)"/>
+    <label type="button" class="btn btn-default header-item" title="{{'Load ' + (selected.graphNodeIds.length ? 'Selected ' : '') + 'Network'}}"
+        ng-bind="'Load ' + (selected.graphNodeIds.length ? 'Selected ' : '') + 'Network'" ng-click="queryForData(true)"/>
+
+    <label class="btn btn-default header-item" ng-class="{true: 'active', false: ''}[options.useNodeClusters]" title="Cluster Leaf Nodes and Unlinked Nodes">
+        <input type="checkbox" ng-model="options.useNodeClusters" style="display:none" ng-value="false" ng-change="queryForData(true)"/>
+        <span class="glyphicon glyphicon-cloud"></span>
+        <span ng-hide="(width < 525)">Cluster Nodes</span>
+    </label>
+
+    <label class="btn btn-default header-item" ng-class="{true: 'active', false: ''}[options.hideNodesWithZeroOrOneLink]" title="Hide Single Link Networks and Unlinked Nodes">
+        <input type="checkbox" ng-model="options.hideNodesWithZeroOrOneLink" style="display:none" ng-value="false" ng-change="queryForData(true)"/>
+        <span class="glyphicon glyphicon-eye-close"></span>
+        <span ng-hide="(width < 675)">Hide Simple Networks</span>
+    </label>
+
+    <label class="btn btn-default header-item" ng-class="{true: 'active', false: ''}[options.reloadOnFilter]" title="Reload Network Graph on Filter">
+        <input type="checkbox" ng-model="options.reloadOnFilter" style="display:none" ng-value="false"/>
+        <span class="glyphicon glyphicon-refresh"></span>
+        <span ng-hide="(width < 800)">Reload on Filter</span>
+    </label>
 </div>
 
 <div class="clearfix"></div>

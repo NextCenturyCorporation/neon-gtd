@@ -130,7 +130,9 @@
             <datetimepicker ng-show="(options.granularity === 'month')" data-ng-model="filter.end" data-datetimepicker-config="{ startView: 'month', minView: 'month' }" ng-change="handleDateTimePickChange()"/>
             <datetimepicker ng-show="(options.granularity === 'year')" data-ng-model="filter.end" data-datetimepicker-config="{ startView: 'year', minView: 'year' }" ng-change="handleDateTimePickChange()"/>
         </ul>
+    </div>
 
+    <div class="pull-left">
         <span class="form-group" ng-if="options.showAnimationControls">
             <span class="btn-group">
                 <label class="btn btn-default header-item" role="button" title="{{(options.animatingTime) ? 'Pause' : ((options.animationFrame > getAnimationStartFrame()) ? 'Resume' : 'Play')}}"
