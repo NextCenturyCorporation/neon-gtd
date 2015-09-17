@@ -460,7 +460,7 @@ function($filter, $timeout, connectionService, datasetService, errorNotification
 
                 clearGraph();
                 publishNews([]);
-                publishNewsHighlights([]);
+                publishNewsHighlights();
 
                 var connection = connectionService.getActiveConnection();
 
@@ -497,6 +497,7 @@ function($filter, $timeout, connectionService, datasetService, errorNotification
                     availableNodeIds: [],
                     graphNodes: [],
                     graphLinks: [],
+                    nodeIdsToClusterIds: {},
                     nodeIdsToNetworkIds: {},
                     networkIdsToNodeIds: {},
                     dateBucketsToNodeIndices: {},
@@ -783,7 +784,7 @@ function($filter, $timeout, connectionService, datasetService, errorNotification
 
                     if(sourcesToTargets[sourceId].indexOf(targetId) < 0) {
                         sourcesToTargets[sourceId].push(targetId);
-                        var link = createLink(sourceId, NODE_TYPE, targetId, NODE_TYPE);
+                        var link = createLink(sourceId, targetId);
                         links.push(link);
                         if(!sourcesToTargetsToLinkDates[sourceId]) {
                             sourcesToTargetsToLinkDates[sourceId] = {};
@@ -836,6 +837,7 @@ function($filter, $timeout, connectionService, datasetService, errorNotification
                     }
                 });
 
+                $scope.data.nodeIdsToClusterIds = {};
                 $scope.data.nodeIdsToNetworkIds = {};
                 $scope.data.networkIdsToNodeIds = {};
 
@@ -886,19 +888,15 @@ function($filter, $timeout, connectionService, datasetService, errorNotification
             /**
              * Creates and returns a new link connecting two nodes with the given IDs.
              * @param {Number} or {String} sourceId
-             * @param {Number} or {String} sourceType
              * @param {Number} or {String} targetId
-             * @param {Number} or {String} targetType
              * @method createLink
              * @private
              * @return {Object}
              */
-            var createLink = function(sourceId, sourceType, targetId, targetType) {
+            var createLink = function(sourceId, targetId) {
                 return {
                     sourceId: sourceId,
-                    targetId: targetId,
-                    sourceType: sourceType,
-                    targetType: targetType
+                    targetId: targetId
                 };
             };
 
@@ -965,24 +963,19 @@ function($filter, $timeout, connectionService, datasetService, errorNotification
 
                 /**
                  * Adds a new cluster node to the list of nodes using the given node IDs or adds a node to an existing cluster node.  Returns the ID of the cluster node.
-                 * Either sourceId or targetId should be undefined (but not both).
                  * @param {Number} clusterId The ID of the cluster node, or undefined if a new cluster node should be created.
-                 * @param {Number} or {String} sourceId The ID of the source node linked to the cluster node, or undefined if the cluster node is the source.
-                 * @param {Number} or {String} targetId the ID of the target node linked to the cluster node, or undefined if the cluster node is the target.
                  * @param {Object} nodeToCluster The node to add to the cluster.
                  * @method addCluster
                  * @private
                  * @return {Number}
                  */
-                var addCluster = function(clusterId, sourceId, targetId, nodeToCluster) {
+                var addCluster = function(clusterId, nodeToCluster) {
                     if(!clusterId) {
                         clusterId = nextFreeClusterId++;
-                        // Create a new cluster node and add it to the list of nodes.
                         var cluster = createNode(clusterId, null, CLUSTER_TYPE, nodeToCluster.size, nodeToCluster.dates);
                         cluster.nodes = [nodeToCluster];
                         resultNodes.push(cluster);
                     } else {
-                        // Add the node to the existing cluster.
                         var cluster = _.find(resultNodes, function(node) {
                             return node.type === CLUSTER_TYPE && node.id === clusterId;
                         });
@@ -991,12 +984,7 @@ function($filter, $timeout, connectionService, datasetService, errorNotification
                         cluster.dates = cluster.dates.concat(nodeToCluster.dates);
                         sortDates(cluster);
                     }
-
-                    // If one doesn't exist, create a new link between the cluster node and the other node.  Use the cluster node ID as the source/target ID for the link.
-                    if(!((sourceId && sourcesToClusterTargets[sourceId]) || (targetId && targetsToClusterSources[targetId]))) {
-                        var link = createLink((sourceId || clusterId), (sourceId ? NODE_TYPE : CLUSTER_TYPE), (targetId || clusterId), (targetId ? NODE_TYPE : CLUSTER_TYPE));
-                        resultLinks.push(link);
-                    }
+                    $scope.data.nodeIdsToClusterIds[nodeToCluster.id] = clusterId;
                     return clusterId;
                 };
 
@@ -1005,15 +993,20 @@ function($filter, $timeout, connectionService, datasetService, errorNotification
                     node.numberOfTargets = sourcesToTargets[node.id] ? sourcesToTargets[node.id].length : 0;
                     node.numberOfSources = targetsToSources[node.id] ? targetsToSources[node.id].length : 0;
 
-                    // If the node is a missing type or has more than one link, keep it; otherwise, add it to a cluster.
-                    if(!$scope.data.nodeIdsToFlags[node.id] || (node.numberOfTargets >= 1 && node.numberOfSources >= 1)) {
+                    if(!$scope.data.nodeIdsToFlags[node.id]) {
                         resultNodes.push(node);
-                    } else if(node.numberOfTargets > 1) {
-                        if(shouldAddMultipleLinkNode(node.id, sourcesToTargets, targetsToSources)) {
+                    } else if(node.numberOfTargets > 1 || node.numberOfSources > 1 || (node.numberOfTargets === 1 && node.numberOfSources === 1)) {
+                        var nodeIdsForCluster = $scope.options.useNodeClusters ? findNodeIdsForMultipleLinkCluster(node, sourcesToTargets, targetsToSources) : [];
+                        if(nodeIdsForCluster.length > 1) {
+                            var clusterId = addCluster($scope.data.nodeIdsToClusterIds[node.id], node);
+                            nodeIdsForCluster.forEach(function(nodeId) {
+                                $scope.data.nodeIdsToClusterIds[nodeId] = clusterId;
+                            });
+                        } else if(node.numberOfTargets >= 1 && node.numberOfSources >= 1) {
                             resultNodes.push(node);
-                        }
-                    } else if(node.numberOfSources > 1) {
-                        if(shouldAddMultipleLinkNode(node.id, targetsToSources, sourcesToTargets)) {
+                        } else if(node.numberOfTargets > 1 && shouldAddMultipleLinkNode(node.id, sourcesToTargets, targetsToSources)) {
+                            resultNodes.push(node);
+                        } else if(node.numberOfSources > 1 && shouldAddMultipleLinkNode(node.id, targetsToSources, sourcesToTargets)) {
                             resultNodes.push(node);
                         }
                     } else if(node.numberOfTargets === 1) {
@@ -1021,7 +1014,7 @@ function($filter, $timeout, connectionService, datasetService, errorNotification
                         var numberOfNodesToCluster = findNumberOfNodesToCluster(targetId, targetsToSources, sourcesToTargets);
                         if($scope.options.useNodeClusters && numberOfNodesToCluster > 1) {
                             if(shouldAddClusterNode(targetId, targetsToSources, sourcesToTargets, numberOfNodesToCluster)) {
-                                targetsToClusterSources[targetId] = addCluster(targetsToClusterSources[targetId], null, targetId, node);
+                                targetsToClusterSources[targetId] = addCluster(targetsToClusterSources[targetId], node);
                             }
                         } else if(shouldAddSingleLinkNode(targetId, targetsToSources)) {
                             resultNodes.push(node);
@@ -1031,14 +1024,13 @@ function($filter, $timeout, connectionService, datasetService, errorNotification
                         var numberOfNodesToCluster = findNumberOfNodesToCluster(sourceId, sourcesToTargets, targetsToSources);
                         if($scope.options.useNodeClusters && numberOfNodesToCluster > 1) {
                             if(shouldAddClusterNode(sourceId, sourcesToTargets, targetsToSources, numberOfNodesToCluster)) {
-                                sourcesToClusterTargets[sourceId] = addCluster(sourcesToClusterTargets[sourceId], sourceId, null, node);
+                                sourcesToClusterTargets[sourceId] = addCluster(sourcesToClusterTargets[sourceId], node);
                             }
                         } else if(shouldAddSingleLinkNode(sourceId, sourcesToTargets)) {
                             resultNodes.push(node);
                         }
                     } else if(!$scope.options.hideNodesWithZeroOrOneLink || $scope.selected.graphNodeIds.length) {
                         if($scope.options.useNodeClusters) {
-                            // If the node has no links, add it to the cluster node for unlinked nodes.
                             unlinkedCluster.nodes.push(node);
                             unlinkedCluster.dates = unlinkedCluster.dates.concat(node.dates);
                         } else {
@@ -1073,6 +1065,58 @@ function($filter, $timeout, connectionService, datasetService, errorNotification
             };
 
             /**
+             * Returns the list of node IDs (including the ID of the given node) that should be contained within a multiple-link cluster,
+             * or an empty list if no such cluster should be created.
+             * @param {Object} node
+             * @param {Object} sourcesToTargets
+             * @param {Object} targetsToSources
+             * @method findNodeIdsForMultipleLinkCluster
+             * @private
+             * @return {Array}
+             */
+            var findNodeIdsForMultipleLinkCluster = function(node, sourcesToTargets, targetsToSources) {
+                var nodeLists = [];
+                if(node.numberOfTargets >= 1) {
+                    nodeLists = nodeLists.concat(sourcesToTargets[node.id].map(function(targetId) {
+                        return targetsToSources[targetId];
+                    }));
+                }
+                if(node.numberOfSources >= 1) {
+                    nodeLists = nodeLists.concat(targetsToSources[node.id].map(function(sourceId) {
+                        return sourcesToTargets[sourceId];
+                    }));
+                }
+
+                var nodeIdsToCounts = {};
+                nodeLists.forEach(function(nodeList) {
+                    nodeList.forEach(function(nodeId) {
+                        if(!nodeIdsToCounts[nodeId]) {
+                            // Save the ID in the object because the ID key will be converted to a String which will cause an issue if the node ID is a Number.
+                            nodeIdsToCounts[nodeId] = {
+                                id: nodeId,
+                                count: 0
+                            };
+                        }
+                        nodeIdsToCounts[nodeId].count++;
+                    });
+                });
+
+                var nodeIdsForCluster = [];
+                Object.keys(nodeIdsToCounts).forEach(function(nodeIdKey) {
+                    var nodeId = nodeIdsToCounts[nodeIdKey].id;
+                    if(nodeIdsToCounts[nodeIdKey].count === nodeLists.length) {
+                        if(!sourcesToTargets[nodeId] || node.numberOfTargets === sourcesToTargets[nodeId].length) {
+                            if(!targetsToSources[nodeId] || node.numberOfSources === targetsToSources[nodeId].length) {
+                                nodeIdsForCluster.push(nodeId);
+                            }
+                        }
+                    }
+                });
+
+                return nodeIdsForCluster.indexOf(node.id) >= 0 ? nodeIdsForCluster : [];
+            };
+
+            /**
              * Returns whether to add the node with the given ID and multiple links to other nodes to the graph.
              * @param {Number} or {String} id The ID of the node in question.
              * @param {Object} map The mapping from the node in question to two or more other nodes.
@@ -1103,7 +1147,7 @@ function($filter, $timeout, connectionService, datasetService, errorNotification
              */
             var findNumberOfNodesToCluster = function(id, map, reverseMap) {
                 return map[id].filter(function(otherId) {
-                    return reverseMap[otherId].length === 1;
+                    return !map[otherId] && reverseMap[otherId].length === 1;
                 }).length;
             };
 
@@ -1147,14 +1191,21 @@ function($filter, $timeout, connectionService, datasetService, errorNotification
                 // While the input links connect source node IDs to target node IDs, D3 links must connect source node index to target node index.
                 var indexLinks = [];
 
+                // Maps link source indices to link target indices to true to ensure we don't create duplicate links.
+                var linksCreated = {};
+
                 var nextFreeNetworkId = 1;
 
                 links.forEach(function(link) {
+                    var sourceId = $scope.data.nodeIdsToClusterIds[link.sourceId] || link.sourceId;
+                    var sourceType = $scope.data.nodeIdsToClusterIds[link.sourceId] ? CLUSTER_TYPE : NODE_TYPE;
                     var sourceIndex = _.findIndex(nodes, function(node) {
-                        return node.id === link.sourceId && node.type === link.sourceType;
+                        return node.id === sourceId && node.type === sourceType;
                     });
+                    var targetId = $scope.data.nodeIdsToClusterIds[link.targetId] || link.targetId;
+                    var targetType = $scope.data.nodeIdsToClusterIds[link.targetId] ? CLUSTER_TYPE : NODE_TYPE;
                     var targetIndex = _.findIndex(nodes, function(node) {
-                        return node.id === link.targetId && node.type === link.targetType;
+                        return node.id === targetId && node.type === targetType;
                     });
 
                     if(sourceIndex >= 0 && targetIndex >= 0) {
@@ -1193,25 +1244,35 @@ function($filter, $timeout, connectionService, datasetService, errorNotification
                         var dates = [];
                         if(sourceNode.type !== CLUSTER_TYPE && targetNode.type !== CLUSTER_TYPE) {
                             dates = sourcesToTargetsToLinkDates[sourceNode.id][targetNode.id];
-                        }
-                        if(sourceNode.type === CLUSTER_TYPE) {
+                        } else if(sourceNode.type === CLUSTER_TYPE && targetNode.type === CLUSTER_TYPE) {
+                            sourceNode.nodes.forEach(function(sourceNodeInCluster) {
+                                targetNode.nodes.forEach(function(targetNodeInCluster) {
+                                    dates = dates.concat(sourcesToTargetsToLinkDates[sourceNodeInCluster.id][targetNodeInCluster.id]);
+                                });
+                            });
+                        } else if(sourceNode.type === CLUSTER_TYPE) {
                             sourceNode.nodes.forEach(function(nodeInCluster) {
                                 dates = dates.concat(sourcesToTargetsToLinkDates[nodeInCluster.id][targetNode.id]);
                             });
-                        }
-                        if(targetNode.type === CLUSTER_TYPE) {
+                        } else if(targetNode.type === CLUSTER_TYPE) {
                             targetNode.nodes.forEach(function(nodeInCluster) {
                                 dates = dates.concat(sourcesToTargetsToLinkDates[sourceNode.id][nodeInCluster.id]);
                             });
                         }
 
-                        indexLinks.push({
-                            source: sourceIndex,
-                            target: targetIndex,
-                            dates: dates,
-                            network: sourceNode.network,
-                            key: createLinkKey(link.sourceId, link.sourceType, link.targetId, link.targetType)
-                        });
+                        if(!linksCreated[sourceIndex] || !linksCreated[sourceIndex][targetIndex]) {
+                            indexLinks.push({
+                                source: sourceIndex,
+                                target: targetIndex,
+                                dates: dates,
+                                network: sourceNode.network,
+                                key: createLinkKey(sourceId, sourceType, targetId, targetType)
+                            });
+                            if(!linksCreated[sourceIndex]) {
+                                linksCreated[sourceIndex] = {};
+                            }
+                            linksCreated[sourceIndex][targetIndex] = true;
+                        }
                     }
                 });
 
