@@ -703,9 +703,7 @@ function($filter, $timeout, connectionService, datasetService, errorNotification
                         }
                         return whereClause;
                     });
-                    if(whereClauses.length > 1) {
-                        whereClauses = neon.query.or.apply(neon.query, whereClauses);
-                    }
+                    whereClauses = whereClauses.length > 1 ? neon.query.or.apply(neon.query, whereClauses) : whereClauses[0];
                     query.where(whereClauses);
                     $scope.queryForSelectedNetworkGraph = true;
                 }
@@ -1008,23 +1006,37 @@ function($filter, $timeout, connectionService, datasetService, errorNotification
                     node.numberOfSources = targetsToSources[node.id] ? targetsToSources[node.id].length : 0;
 
                     // If the node is a missing type or has more than one link, keep it; otherwise, add it to a cluster.
-                    if(!$scope.data.nodeIdsToFlags[node.id] || node.numberOfTargets > 1 || node.numberOfSources > 1 || (node.numberOfTargets === 1 && node.numberOfSources === 1)) {
+                    if(!$scope.data.nodeIdsToFlags[node.id] || (node.numberOfTargets >= 1 && node.numberOfSources >= 1)) {
                         resultNodes.push(node);
+                    } else if(node.numberOfTargets > 1) {
+                        if(shouldAddMultipleLinkNode(node.id, sourcesToTargets, targetsToSources)) {
+                            resultNodes.push(node);
+                        }
+                    } else if(node.numberOfSources > 1) {
+                        if(shouldAddMultipleLinkNode(node.id, targetsToSources, sourcesToTargets)) {
+                            resultNodes.push(node);
+                        }
                     } else if(node.numberOfTargets === 1) {
                         var targetId = sourcesToTargets[node.id][0];
-                        if(shouldCluster(targetId, targetsToSources, sourcesToTargets)) {
-                            targetsToClusterSources[targetId] = addCluster(targetsToClusterSources[targetId], null, targetId, node);
-                        } else if(!$scope.options.hideNodesWithZeroOrOneLink || !$scope.data.nodeIdsToFlags[targetId] || targetsToSources[targetId].length > 1) {
+                        var numberOfNodesToCluster = findNumberOfNodesToCluster(targetId, targetsToSources, sourcesToTargets);
+                        if($scope.options.useNodeClusters && numberOfNodesToCluster > 1) {
+                            if(shouldAddClusterNode(targetId, targetsToSources, sourcesToTargets, numberOfNodesToCluster)) {
+                                targetsToClusterSources[targetId] = addCluster(targetsToClusterSources[targetId], null, targetId, node);
+                            }
+                        } else if(shouldAddSingleLinkNode(targetId, targetsToSources)) {
                             resultNodes.push(node);
                         }
                     } else if(node.numberOfSources === 1) {
                         var sourceId = targetsToSources[node.id][0];
-                        if(shouldCluster(sourceId, sourcesToTargets, targetsToSources)) {
-                            sourcesToClusterTargets[sourceId] = addCluster(sourcesToClusterTargets[sourceId], sourceId, null, node);
-                        } else if(!$scope.options.hideNodesWithZeroOrOneLink || !$scope.data.nodeIdsToFlags[sourceId] || sourcesToTargets[sourceId].length > 1) {
+                        var numberOfNodesToCluster = findNumberOfNodesToCluster(sourceId, sourcesToTargets, targetsToSources);
+                        if($scope.options.useNodeClusters && numberOfNodesToCluster > 1) {
+                            if(shouldAddClusterNode(sourceId, sourcesToTargets, targetsToSources, numberOfNodesToCluster)) {
+                                sourcesToClusterTargets[sourceId] = addCluster(sourcesToClusterTargets[sourceId], sourceId, null, node);
+                            }
+                        } else if(shouldAddSingleLinkNode(sourceId, sourcesToTargets)) {
                             resultNodes.push(node);
                         }
-                    } else if(!$scope.options.hideNodesWithZeroOrOneLink) {
+                    } else if(!$scope.options.hideNodesWithZeroOrOneLink || $scope.selected.graphNodeIds.length) {
                         if($scope.options.useNodeClusters) {
                             // If the node has no links, add it to the cluster node for unlinked nodes.
                             unlinkedCluster.nodes.push(node);
@@ -1061,23 +1073,64 @@ function($filter, $timeout, connectionService, datasetService, errorNotification
             };
 
             /**
-             * Returns whether to cluster the node linked to the node with the given ID based on whether the cluster to be created would contain more than one node.
-             * @param {Number} or {String} id The ID of the node linked to the node in question.
-             * @param {Object} map The mapping from the given ID to the node in question.
+             * Returns whether to add the node with the given ID and multiple links to other nodes to the graph.
+             * @param {Number} or {String} id The ID of the node in question.
+             * @param {Object} map The mapping from the node in question to two or more other nodes.
              * @param {Object} reverseMap The reverse mapping.
-             * @method shouldCluster
+             * @method shouldAddMultipleLinkNode
              * @private
              * @return {Boolean}
              */
-            var shouldCluster = function(id, map, reverseMap) {
-                // Check if the linked node itself has other linked nodes.  If not, the node in question should not be clustered.
-                if($scope.options.useNodeClusters && map[id] && map[id].length > 1) {
-                    // Check if the cluster would contain more than one node.  If not, the node in question should not be clustered.
+            var shouldAddMultipleLinkNode = function(id, map, reverseMap) {
+                if($scope.options.hideNodesWithZeroOrOneLink && !$scope.selected.graphNodeIds.length) {
+                    var add = false;
                     return map[id].filter(function(otherId) {
-                        return reverseMap[otherId].length === 1;
-                    }).length > 1;
+                        return map[otherId] || reverseMap[otherId].length > 1 || !$scope.data.nodeIdsToFlags[otherId];
+                    }).length > 0;
                 }
-                return false;
+                return true;
+            };
+
+            /**
+             * Returns the number of nodes that would be contained within a cluster node that would be linked to the node with the given ID.
+             * Cluster nodes should contain more than one node.
+             * @param {Number} or {String} id The ID of the node linked to the cluster node in question.
+             * @param {Object} map The mapping from the given ID to the cluster node in question.
+             * @param {Object} reverseMap The reverse mapping.
+             * @method findNumberOfNodesToCluster
+             * @private
+             * @return {Number}
+             */
+            var findNumberOfNodesToCluster = function(id, map, reverseMap) {
+                return map[id].filter(function(otherId) {
+                    return reverseMap[otherId].length === 1;
+                }).length;
+            };
+
+            /**
+             * Returns whether to add the cluster node linked to the node with the given ID to the graph.
+             * @param {Number} or {String} id The ID of the node linked to the cluster node in question.
+             * @param {Object} map The mapping from the given ID to the cluster node in question.
+             * @param {Object} reverseMap The reverse mapping.
+             * @param {Number} numberOfNodesToCluster The number of nodes that would be contained within the cluster node.
+             * @method shouldAddClusterNode
+             * @private
+             * @return {Boolean}
+             */
+            var shouldAddClusterNode = function(id, map, reverseMap, numberOfNodesToCluster) {
+                return !$scope.options.hideNodesWithZeroOrOneLink || !$scope.data.nodeIdsToFlags[id] || $scope.selected.graphNodeIds.length || numberOfNodesToCluster !== map[id].length || reverseMap[id];
+            };
+
+            /**
+             * Returns whether to add the node only linked to the node with the given ID to the graph.
+             * @param {Number} or {String} id The ID of the node linked to the node in question.
+             * @param {Object} map The mapping from the given ID to the node in question.
+             * @method shouldAddSingleLinkNode
+             * @private
+             * @return {Boolean}
+             */
+            var shouldAddSingleLinkNode = function(id, map) {
+                return !$scope.options.hideNodesWithZeroOrOneLink || !$scope.data.nodeIdsToFlags[id] || $scope.selected.graphNodeIds.length || map[id].length > 1;
             };
 
             /**
