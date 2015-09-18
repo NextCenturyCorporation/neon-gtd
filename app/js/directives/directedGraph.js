@@ -811,8 +811,8 @@ function($filter, $timeout, connectionService, datasetService, errorNotification
                     if(nodeId) {
                         var node = addNodeIfUnique(nodeId, nodeName, nodeSize);
                         node.dates.push(itemDate);
-                        // Add a flag using a boolean field in the data if configured to do so.  The flag defaults to true.
-                        node.flag = ($scope.options.flagMode === FLAG_RESULT_NODES || $scope.options.flagMode === FLAG_ALL_NODES) ? nodeFlag : true;
+                        // Add a flag using a boolean field in the data if configured to do so.  The flag defaults to false.
+                        node.flag = ($scope.options.flagMode === FLAG_RESULT_NODES || $scope.options.flagMode === FLAG_ALL_NODES) ? nodeFlag : false;
                         $scope.data.nodeIdsToFlags[node.id] = node.flag;
                         // Mark this node as a node created from a data item.
                         node.inData = true;
@@ -828,8 +828,8 @@ function($filter, $timeout, connectionService, datasetService, errorNotification
                                 // Linked nodes have no date because each date is an instance of the node in the data.  Future instances of the linked node in the data will add
                                 // their dates to the linked node's date array.  If the linked node is not in the data, the user will see its type and empty date array.
                                 var linkedNode = addNodeIfUnique(linkedNodeId, linkedNodeNames[index], linkedNodeSizes[index]);
-                                // Add a flag using a boolean field in the data if configured to do so.  The flag defaults to true.
-                                linkedNode.flag = ($scope.options.flagMode === FLAG_LINKED_NODES || $scope.options.flagMode === FLAG_ALL_NODES) ? nodeFlag : true;
+                                // Add a flag using a boolean field in the data if configured to do so.  The flag defaults to false.
+                                linkedNode.flag = ($scope.options.flagMode === FLAG_LINKED_NODES || $scope.options.flagMode === FLAG_ALL_NODES) ? nodeFlag : false;
                                 $scope.data.nodeIdsToFlags[linkedNode.id] = $scope.data.nodeIdsToFlags[linkedNode.id] || linkedNode.flag;
                                 addLinkIfUnique(linkedNodeId, nodeId, itemDate);
                             }
@@ -993,7 +993,7 @@ function($filter, $timeout, connectionService, datasetService, errorNotification
                     node.numberOfTargets = sourcesToTargets[node.id] ? sourcesToTargets[node.id].length : 0;
                     node.numberOfSources = targetsToSources[node.id] ? targetsToSources[node.id].length : 0;
 
-                    if(!$scope.data.nodeIdsToFlags[node.id]) {
+                    if($scope.data.nodeIdsToFlags[node.id]) {
                         resultNodes.push(node);
                     } else if(node.numberOfTargets > 1 || node.numberOfSources > 1 || (node.numberOfTargets === 1 && node.numberOfSources === 1)) {
                         var nodeIdsForCluster = $scope.options.useNodeClusters ? findNodeIdsForMultipleLinkCluster(node, sourcesToTargets, targetsToSources) : [];
@@ -1129,7 +1129,7 @@ function($filter, $timeout, connectionService, datasetService, errorNotification
                 if($scope.options.hideNodesWithZeroOrOneLink && !$scope.selected.graphNodeIds.length) {
                     var add = false;
                     return map[id].filter(function(otherId) {
-                        return map[otherId] || reverseMap[otherId].length > 1 || !$scope.data.nodeIdsToFlags[otherId];
+                        return map[otherId] || reverseMap[otherId].length > 1 || $scope.data.nodeIdsToFlags[otherId];
                     }).length > 0;
                 }
                 return true;
@@ -1162,7 +1162,7 @@ function($filter, $timeout, connectionService, datasetService, errorNotification
              * @return {Boolean}
              */
             var shouldAddClusterNode = function(id, map, reverseMap, numberOfNodesToCluster) {
-                return !$scope.options.hideNodesWithZeroOrOneLink || !$scope.data.nodeIdsToFlags[id] || $scope.selected.graphNodeIds.length || numberOfNodesToCluster !== map[id].length || reverseMap[id];
+                return !$scope.options.hideNodesWithZeroOrOneLink || $scope.data.nodeIdsToFlags[id] || $scope.selected.graphNodeIds.length || numberOfNodesToCluster !== map[id].length || reverseMap[id];
             };
 
             /**
@@ -1174,7 +1174,7 @@ function($filter, $timeout, connectionService, datasetService, errorNotification
              * @return {Boolean}
              */
             var shouldAddSingleLinkNode = function(id, map) {
-                return !$scope.options.hideNodesWithZeroOrOneLink || !$scope.data.nodeIdsToFlags[id] || $scope.selected.graphNodeIds.length || map[id].length > 1;
+                return !$scope.options.hideNodesWithZeroOrOneLink || $scope.data.nodeIdsToFlags[id] || $scope.selected.graphNodeIds.length || map[id].length > 1;
             };
 
             /**
@@ -1488,7 +1488,7 @@ function($filter, $timeout, connectionService, datasetService, errorNotification
                     }
                     return CLUSTER_COLOR;
                 }
-                return node.flag ? DEFAULT_COLOR : FLAGGED_COLOR;
+                return node.flag ? FLAGGED_COLOR : DEFAULT_COLOR;
             };
 
             /**
@@ -1500,7 +1500,7 @@ function($filter, $timeout, connectionService, datasetService, errorNotification
              */
             var calculateNodeOpacity = function(node) {
                 var opacity = $scope.graph.DEFAULT_NODE_OPACITY;
-                if(!node.inData && node.type !== CLUSTER_TYPE && $scope.data.nodeIdsToFlags[node.id]) {
+                if(!node.inData && node.type !== CLUSTER_TYPE && !$scope.data.nodeIdsToFlags[node.id]) {
                     opacity /= 2.0;
                 }
                 if(($scope.selected.mouseoverNetworkId && $scope.selected.mouseoverNetworkId !== node.network) || ($scope.selected.graphNetworkId && $scope.selected.graphNetworkId !== node.network)) {
@@ -1571,7 +1571,7 @@ function($filter, $timeout, connectionService, datasetService, errorNotification
                     '<span class="graph-tooltip-value">' + node.numberOfTargets + '</span>' +
                     '</div>';
 
-                if(node.type !== CLUSTER_TYPE && !$scope.data.nodeIdsToFlags[node.id]) {
+                if(node.type !== CLUSTER_TYPE && $scope.data.nodeIdsToFlags[node.id]) {
                     text += '<div class="graph-tooltip-block">' +
                         '<span class="graph-tooltip-label">' + $scope.tooltip.flagLabel + '</span>' +
                         '</div>';
