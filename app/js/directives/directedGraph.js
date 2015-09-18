@@ -67,7 +67,30 @@ function($filter, $timeout, connectionService, datasetService, errorNotification
             var DEFAULT_TOOLTIP_TARGET_LABEL = "To";
             var DEFAULT_TOOLTIP_NAME_LABEL = "Name";
             var DEFAULT_TOOLTIP_SIZE_LABEL = "Size";
-            var DEFAULT_TOOLTIP_FLAG_LABEL = "Flag";
+            var DEFAULT_TOOLTIP_FLAG_LABEL = "Flagged";
+
+            $scope.legend = [{
+                color: DEFAULT_COLOR,
+                label: "In Data"
+            }, {
+                color: MISSING_COLOR,
+                label: "Filtered Out From Data"
+            }, {
+                color: FOCUSED_COLOR,
+                label: "Selected"
+            }, {
+                color: CLUSTER_COLOR,
+                label: "Clustered",
+                display: function() {
+                    return $scope.options.useNodeClusters;
+                }
+            }, {
+                color: FLAGGED_COLOR,
+                label: DEFAULT_TOOLTIP_FLAG_LABEL,
+                display: function() {
+                    return datasetService.isFieldValid($scope.options.selectedFlagField);
+                }
+            }];
 
             $scope.tooltip = {
                 idLabel: DEFAULT_TOOLTIP_ID_LABEL,
@@ -142,6 +165,7 @@ function($filter, $timeout, connectionService, datasetService, errorNotification
                 $element.find(".header-container").each(function() {
                     headerHeight += $(this).outerHeight(true);
                 });
+                headerHeight += $element.find(".legend").outerHeight(true);
                 return $element.height() - headerHeight;
             };
 
@@ -442,6 +466,8 @@ function($filter, $timeout, connectionService, datasetService, errorNotification
                     sourceSizeLabel: datasetService.getMapping($scope.options.database.name, $scope.options.table.name, "graph_tooltip_source_size_label") || DEFAULT_TOOLTIP_SOURCE_LABEL,
                     targetSizeLabel: datasetService.getMapping($scope.options.database.name, $scope.options.table.name, "graph_tooltip_target_size_label") || DEFAULT_TOOLTIP_TARGET_LABEL
                 };
+
+                $scope.legend[$scope.legend.length - 1].label = $scope.tooltip.flagLabel;
 
                 $scope.selected.graphNodeIds = [];
                 $scope.queryForData();

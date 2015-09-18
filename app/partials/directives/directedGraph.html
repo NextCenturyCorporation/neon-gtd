@@ -36,21 +36,21 @@
 
         <div class="form-group" ng-show="!(hideAdvancedOptions)">
             <label>Linked Node(s) Field</label>
-            <select class="form-control" ng-model="options.selectedLinkField" ng-options="field.prettyName for field in fields" ng-required="false" ng-disabled="(fields.length == 0)" ng-change="queryForData()">
+            <select class="form-control" ng-model="options.selectedLinkedNodeField" ng-options="field.prettyName for field in fields" ng-required="false" ng-disabled="(fields.length == 0)" ng-change="queryForData()">
                 <option value="">None</option>
             </select>
         </div>
 
         <div class="form-group" ng-show="!(hideAdvancedOptions)">
             <label>Linked Node(s) Name Field</label>
-            <select class="form-control" ng-model="options.selectedLinkNameField" ng-options="field.prettyName for field in fields" ng-required="false" ng-disabled="(fields.length == 0)" ng-change="queryForData()">
+            <select class="form-control" ng-model="options.selectedLinkedNameField" ng-options="field.prettyName for field in fields" ng-required="false" ng-disabled="(fields.length == 0)" ng-change="queryForData()">
                 <option value="">None</option>
             </select>
         </div>
 
         <div class="form-group" ng-show="!(hideAdvancedOptions)">
-            <label>Link Size Field</label>
-            <select class="form-control" ng-model="options.selectedLinkSizeField" ng-options="field.prettyName for field in fields" ng-required="false" ng-disabled="(fields.length == 0)" ng-change="queryForData()">
+            <label>Linked Node(s) Size Field</label>
+            <select class="form-control" ng-model="options.selectedLinkedSizeField" ng-options="field.prettyName for field in fields" ng-required="false" ng-disabled="(fields.length == 0)" ng-change="queryForData()">
                 <option value="">None</option>
             </select>
         </div>
@@ -156,4 +156,16 @@
 
 <div class="directed-graph">
     <div class="directed-graph-container"></div>
+</div>
+
+<div class="clearfix"></div>
+
+<div class="legend">
+    <span class="legend-item" title="Legend">
+        <span class="legend-text">Legend:</span>
+    </span>
+    <span class="legend-item" ng-repeat="item in legend" ng-show="(item.display ? item.display() : true)" title="{{item.label}}">
+        <span class="legend-icon" style="background-color: {{item.color}};"></span>
+        <span class="legend-text" ng-bind="item.label"></span>
+    </span>
 </div>
