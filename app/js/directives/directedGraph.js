@@ -56,6 +56,7 @@ function($filter, $timeout, connectionService, datasetService, errorNotification
             var CLUSTER_COLOR = "#9467bd"; // purple
             var FLAGGED_COLOR = "#ff7f0e"; // orange
             var FOCUSED_COLOR = "#2ca02c"; // green
+            var MISSING_COLOR = "#17becf"; // light blue
 
             // Name for the arrowhead marker with the focused color.
             var FOCUSED_COLOR_ARROWHEAD = "focused";
@@ -1488,7 +1489,7 @@ function($filter, $timeout, connectionService, datasetService, errorNotification
                     }
                     return CLUSTER_COLOR;
                 }
-                return node.flag ? FLAGGED_COLOR : DEFAULT_COLOR;
+                return node.flag ? FLAGGED_COLOR : (node.inData ? DEFAULT_COLOR : MISSING_COLOR);
             };
 
             /**
@@ -1499,14 +1500,13 @@ function($filter, $timeout, connectionService, datasetService, errorNotification
              * @return {Number}
              */
             var calculateNodeOpacity = function(node) {
-                var opacity = $scope.graph.DEFAULT_NODE_OPACITY;
-                if(!node.inData && node.type !== CLUSTER_TYPE && !$scope.data.nodeIdsToFlags[node.id]) {
-                    opacity /= 2.0;
+                if($scope.selected.mouseoverNetworkId && $scope.selected.mouseoverNetworkId !== node.network) {
+                    return $scope.graph.DEFAULT_NODE_OPACITY / 2;
                 }
-                if(($scope.selected.mouseoverNetworkId && $scope.selected.mouseoverNetworkId !== node.network) || ($scope.selected.graphNetworkId && $scope.selected.graphNetworkId !== node.network)) {
-                    opacity /= 2.0;
+                if($scope.selected.graphNetworkId && $scope.selected.graphNetworkId !== node.network) {
+                    return $scope.graph.DEFAULT_NODE_OPACITY / 2;
                 }
-                return opacity;
+                return $scope.graph.DEFAULT_NODE_OPACITY;
             };
 
             /**
