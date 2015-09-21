@@ -21,7 +21,7 @@
 
 .query-results-grid {
     background-color: @main-background;
-    border: @border;
+    //border: @border;
     border-radius: 2px;
     box-shadow: 0 1px 4px @shadow;
     box-sizing: content-box;
@@ -87,22 +87,29 @@
         }
     }
 
-    .slick-row{
-        background: @main-background-lighten;
+    .slick-cell {
+        border: 0px;
+        border-bottom: 1px solid @main-text-color;
+    }
 
-        &.odd {
-            background: @main-background;
-        }
+    .slick-row{
+        color: @main-text-color;
+        background: @visualization-box-background;
 
         &.selectable {
             .slick-cell {
                 cursor: pointer;
             }
         }
+
+        &:hover {
+            color: @light-text-color;
+        }
     }
 
     .slick-header{
-        border-top: 0;
+        border: 0px;
+        border-right: 1px solid @main-text-color;
 
         .slick-header-column{
             color: @mid-text-color;
@@ -145,6 +152,7 @@
 .query-results-grid.row-selected {
     .slick-row{
         &.active {
+            color: @accent-dulled-text-color;
             background: @accent-dulled;
         }
     }

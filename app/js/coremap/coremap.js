@@ -462,7 +462,7 @@ coreMap.Map.prototype.createSelectControl =  function(layer) {
  */
 
 coreMap.Map.prototype.setupLayers = function() {
-    var baseLayer = new OpenLayers.Layer.OSM("OSM", coreMap.Map.LIGHT_MAP_TILES, {
+    var baseLayer = new OpenLayers.Layer.OSM("OSM", coreMap.Map.DARK_MAP_TILES, {
         attribution:  "Map tiles by CartoDB, under CC BY 3.0. Data by OpenStreetMap, under ODbL.",
         wrapDateLine: false
     });

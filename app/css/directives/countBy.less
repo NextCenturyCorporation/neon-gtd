@@ -15,7 +15,7 @@
 
 .count-by-grid {
     background-color: @main-background;
-    border: @border;
+    //border: @border;
     border-radius: 2px;
     box-shadow: 0 1px 4px @shadow;
     box-sizing: content-box;
@@ -37,21 +37,22 @@
 
     &.filtered {
         .slick-row {
-            opacity: 0.5;
-
             &.active {
+                color: @accent-dulled-text-color;
                 background: @accent-dulled;
-                opacity: 1.0;
             }
         }
     }
 
     .slick-cell {
         cursor: pointer;
+        border: 0px;
+        border-bottom: 1px solid @main-text-color;
     }
 
     .slick-header{
-        border-top: 0;
+        /*border-top: 0ox;
+        border-right: 1px solid @main-text-color;
 
         .slick-header-column{
             color: @light-text-color;
@@ -75,14 +76,64 @@
 
         .slick-header-sortable {
             cursor: pointer;
+        }*/
+
+        border: 0px;
+        border-right: 1px solid @main-text-color;
+
+        .slick-header-column{
+            color: @mid-text-color;
+            background: @main-background-darken;
+            cursor: pointer;
+
+            &.ui-state-hover{
+                color: @accent-bright;
+                background: @light-background;
+
+                .remove-column-button {
+                    color: #999999;
+                    background: #FFFFFF;
+
+                    &:focus, &:hover {
+                        color: #39B54A;
+                        background: #FFFFFF;
+                    }
+                }
+            }
+
+            .remove-column-button {
+                color: #999999;
+                position: absolute;
+                right: 5px;
+            }
+        }
+
+        .slick-header-column-sorted{
+            color: @accent-bright;
+            font-style: normal;
+        }
+
+        .slick-sortable-placeholder{
+            background: @border-color;
         }
     }
 
     .slick-row {
-        background: @main-background-lighten;
+        color: @main-text-color;
+        background: @visualization-box-background;
 
-        &.odd {
-            background: @main-background;
+        &:hover {
+            color: @light-text-color;
+        }
+    }
+
+}
+
+.count-by-grid.row-selected {
+    .slick-row {
+        &.active {
+            color: @accent-dulled-text-color;
+            background: @accent-dulled;
         }
     }
 }
