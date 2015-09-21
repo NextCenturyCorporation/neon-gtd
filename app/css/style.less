@@ -378,6 +378,11 @@ label{
     margin-right: 5px;
     margin-top: 5px;
     margin-bottom: 5px;
+
+    .glyphicon {
+        margin-right: 2px;
+        top: 2px;
+    }
 }
 
 button {
@@ -426,10 +431,12 @@ button {
     }
 
     .glyphicon {
+        cursor: pointer;
         float: left;
         padding: 7px 8px;
-        cursor: pointer;
         top: 0px;
+        /* Remove the margin set by .header-item .glyphicon (above).*/
+        margin: 0px;
 
         &.glyphicon-remove {
             color: @error-color;
@@ -600,30 +607,6 @@ button {
         -moz-user-select: none;
         -ms-user-select: none;
         user-select: none;
-    }
-}
-
-.legend-scale {
-    .legend-item {
-        color: @main-text-color;
-
-        .legend-text {
-            &:first-child {
-                margin-left: 0;
-            }
-        }
-
-        .legend-text-small {
-            max-width: 75px;
-        }
-
-        .legend-text-large {
-            max-width: 200px;
-        }
-    }
-
-    .legend-text {
-        margin: 0 5px;
     }
 }
 
@@ -978,11 +961,6 @@ tr.borderedRow {
 }
 
 .neon-datetimepicker {
-    .glyphicon {
-        margin-right: 2px;
-        top: 2px;
-    }
-
     .dropdown-menu {
         overflow-y: scroll;
         padding: 10px;

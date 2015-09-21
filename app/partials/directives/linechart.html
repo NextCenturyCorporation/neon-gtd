@@ -77,7 +77,7 @@
         <div class="legend-item legend-item-clickable" title="{{colorMapping.series}} {{getLegendItemAggregationText(colorMapping)}}" ng-repeat="colorMapping in colorMappings" ng-click="toggleSeries(colorMapping.series)" ng-class="{true: 'legend-hidden', false: ''}[colorMapping.hidden]">
             <span class="legend-icon" style="background-color: {{colorMapping.color}}"></span>
             <span class="legend-text" ng-bind="colorMapping.series"></span>
-            <span class="legend-text legend-text-small" ng-bind="getLegendItemAggregationText(colorMapping)"></span>
+            <span class="legend-text" ng-bind="getLegendItemAggregationText(colorMapping)"></span>
         </div>
 
         <span class="no-data pull-left" ng-show="noData">No data for current filters.</span>

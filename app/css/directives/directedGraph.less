@@ -26,13 +26,14 @@
         color: @light-text-color;
         font-size: 15px;
         font-weight: bold;
-        padding: 5px;
+        padding: 0px 5px 5px;
         position: absolute;
         pointer-events: none;
         white-space: nowrap;
         z-index: 1060;
 
         .graph-tooltip-block {
+            line-height: 30px;
             text-align: center;
 
             .graph-tooltip-label {
@@ -61,5 +62,15 @@
 
     .node-text {
       cursor: pointer;
+    }
+
+    .legend {
+        /* Override the default legend styling from the style.less file. */
+        margin-bottom: 0px;
+        min-height: 0px;
+
+        .legend-item {
+            margin-top: 0px;
+        }
     }
 }

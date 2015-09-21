@@ -1440,11 +1440,10 @@ angular.module('neonDemo.directives')
 
                 // Remove layer from the map.
                 $scope.map.removeLayer(layer.olLayer);
-                layer.olLayer = undefined;
 
                 // Remove layer from the global list of layers.
                 index = _.findIndex($scope.options.layers, function(element) {
-                    return element.name === layer.name;
+                    return element.olLayer.id === layer.olLayer.id;
                 });
                 $scope.options.layers.splice(index, 1);
             };

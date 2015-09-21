@@ -1,3 +1,4 @@
+
 'use strict';
 /*
  * Copyright 2013 Next Century Corporation
@@ -413,10 +414,6 @@ coreMap.Map.prototype.createSelectControl =  function(layer) {
                 }
             }
             text += '</table></div>';
-
-            if(feature.layer.CLASS_NAME === "coreMap.Map.Layer.PointsLayer") {
-                feature.layer.drawFeature(feature, feature.layer.createPointSelectStyleObject(feature.style.pointRadius));
-            }
         }
 
         me.featurePopup = new OpenLayers.Popup.FramedCloud("Data",
