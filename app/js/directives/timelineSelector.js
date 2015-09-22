@@ -171,13 +171,44 @@ function($interval, $filter, connectionService, datasetService, errorNotificatio
             };
 
             /**
-             * Get the animation frame for the first bucket within our brushed time range, or simply
-             * the first time bucket if no brush exists.
+             * Get the animation frame for the first non-empty bucket within our brushed time range, or simply
+             * the first non-empty time bucket if no brush exists.
              * @method getAnimationStartFrame
              */
             $scope.getAnimationStartFrame = function() {
-                return ($scope.brush.length && $scope.brush[0]) ?
+                var origStartBucketIndex = ($scope.brush.length && $scope.brush[0]) ?
                     $scope.bucketizer.getBucketIndex($scope.brush[0]) : 0;
+
+                var indexLimit = ($scope.brush.length && $scope.brush[1]) ?
+                    $scope.bucketizer.getBucketIndex($scope.brush[1]) : $scope.bucketizer.getNumBuckets();
+
+                var startBucketIndex = nextNonEmptyDate(origStartBucketIndex, indexLimit);
+
+                return (startBucketIndex === -1) ? origStartBucketIndex : startBucketIndex;
+            };
+
+            /**
+             * Get the first non-empty bucket index (within indexLimit) starting with bucketIndex.
+             * @param {int} bucketIndex
+             * @param {int} indexLimit
+             * @method nextNonEmptyDate
+             * @return {int} The first non-empty bucket index or -1 if there is none within indexLimit (exclusive)
+             * @private
+             */
+            var nextNonEmptyDate = function(bucketIndex, indexLimit) {
+                if(bucketIndex >= indexLimit) {
+                    return -1;
+                }
+
+                var dateData = _.find($scope.options.primarySeries.data, {
+                    date: $scope.bucketizer.getDateForBucket(bucketIndex)
+                });
+
+                if(dateData && dateData.value > 0) {
+                    return bucketIndex;
+                }
+
+                return nextNonEmptyDate(bucketIndex + 1, indexLimit);
             };
 
             /**
@@ -186,8 +217,39 @@ function($interval, $filter, connectionService, datasetService, errorNotificatio
              * @method getAnimationFrameLimit
              */
             $scope.getAnimationFrameLimit = function() {
-                return ($scope.brush.length && $scope.brush[1]) ?
+                var origFrameLimit = ($scope.brush.length && $scope.brush[1]) ?
                     $scope.bucketizer.getBucketIndex($scope.brush[1]) : $scope.bucketizer.getNumBuckets();
+
+                var indexMin = ($scope.brush.length && $scope.brush[0]) ?
+                    $scope.bucketizer.getBucketIndex($scope.brush[0]) : 0;
+
+                var frameLimit = previousNonEmptyDate(origFrameLimit - 1, indexMin);
+
+                return (frameLimit === -1) ? origFrameLimit : frameLimit + 1;
+            };
+
+            /**
+             * Get the first non-empty bucket index within indexMin starting with bucketIndex and going backwards.
+             * @param {int} bucketIndex
+             * @param {int} indexMin
+             * @method previousNonEmptyDate
+             * @return {int} The first non-empty bucket index or -1 if there is none within indexMin (inclusive)
+             * @private
+             */
+            var previousNonEmptyDate = function(bucketIndex, indexMin) {
+                if(bucketIndex < indexMin) {
+                    return -1;
+                }
+
+                var dateData = _.find($scope.options.primarySeries.data, {
+                    date: $scope.bucketizer.getDateForBucket(bucketIndex)
+                });
+
+                if(dateData && dateData.value > 0) {
+                    return bucketIndex;
+                }
+
+                return previousNonEmptyDate(bucketIndex - 1, indexMin);
             };
 
             /**
