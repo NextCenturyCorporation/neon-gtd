@@ -174,7 +174,8 @@ angular.element(document).ready(function() {
             hideAdvancedOptions: false,
             hideErrorNotifications: false,
             hideHeader: false,
-            showImport: false
+            showImport: false,
+            showExport: true
         };
         dashboardConfig.gridsterColumns = dashboardConfig.gridsterColumns || 8;
         dashboardConfig.gridsterMargins = dashboardConfig.gridsterMargins || 10;

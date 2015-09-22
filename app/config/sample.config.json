@@ -25,7 +25,9 @@
         "hideErrorNotifications": false,
         "hideHeaders": false,
         "hideCloseButton": false,
-        "showVideoOnLoad": false
+        "showVideoOnLoad": false,
+        "showImport": false,
+        "showExport": false
     },
 
     "help": {
