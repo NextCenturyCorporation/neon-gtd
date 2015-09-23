@@ -135,10 +135,11 @@ charts.BarChart.DEFAULT_HEIGHT_ = 250;
 charts.BarChart.DEFAULT_WIDTH_ = 600;
 charts.BarChart.DEFAULT_MARGIN_ = {
     top: 10,
-    bottom: 50,
+    bottom: 65,
     left: 30,
     right: 0
 };
+charts.BarChart.DEFAULT_BAR_WIDTH_ = 15;
 charts.BarChart.TOOLTIP_ID_ = 'tooltip';
 charts.BarChart.SVG_ELEMENT_ = 'rect';
 charts.BarChart.ACTIVE_STYLE_KEY_ = 'active';
@@ -397,6 +398,7 @@ charts.BarChart.prototype.drawChartSVG_ = function() {
         .append('svg')
         //.attr("viewBox", this.determineViewboxString())
         .attr('id', 'plot')
+        .attr("width", this.width)
         .append('g')
         .attr('transform', 'translate(' + this.margin.left + ',' + this.margin.top + ')');
     return chart;
@@ -815,12 +817,20 @@ charts.BarChart.prototype.removeDataWithNoMatchingCategory_ = function(aggregate
 };
 
 charts.BarChart.prototype.determineWidth_ = function(element) {
+    var width = charts.BarChart.DEFAULT_WIDTH_;
+
     if(this.userSetWidth_) {
-        return this.userSetWidth_;
+        width = this.userSetWidth_;
     } else if($(element[0]).width() !== 0) {
-        return $(element[0]).width();
+        width = $(element[0]).width();
     }
-    return charts.BarChart.DEFAULT_WIDTH_;
+
+    var calculatedChartWidth = (this.categories.length * charts.BarChart.DEFAULT_BAR_WIDTH_) + this.margin.left + this.margin.right;
+
+    if(calculatedChartWidth > width) {
+        return calculatedChartWidth;
+    }
+    return width;
 };
 
 charts.BarChart.prototype.determineHeight_ = function(element) {

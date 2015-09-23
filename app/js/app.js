@@ -184,7 +184,7 @@ angular.element(document).ready(function() {
         dashboardConfig.gridsterDefaultMinSizeX = Math.floor(dashboardConfig.gridsterColumns / 4);
         dashboardConfig.gridsterDefaultMinSizeY = Math.floor(dashboardConfig.gridsterColumns / 6);
         dashboardConfig.help = helpConfig;
-        dashboardConfig.showExport = (dashboardConfig.showExport == undefined || dashboardConfig.showExport)? true : false;
+        dashboardConfig.showExport = (dashboardConfig.showExport === undefined || dashboardConfig.showExport) ? true : false;
         neonDemo.constant('config', dashboardConfig);
 
         neonDemo.value('popups', {
