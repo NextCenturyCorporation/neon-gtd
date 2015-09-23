@@ -27,7 +27,7 @@
         "hideCloseButton": false,
         "showVideoOnLoad": false,
         "showImport": false,
-        "showExport": false
+        "showExport": true
     },
 
     "help": {
