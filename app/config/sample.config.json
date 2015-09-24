@@ -236,6 +236,9 @@
             "longitudeMapping": "longitude",
             "limit": 5000,
             "colorBy": "magType",
+            "colors": {
+                "typeA": "#123456"
+            },
             "sizeBy": "mag"
         }],
         "linkyConfig": {
