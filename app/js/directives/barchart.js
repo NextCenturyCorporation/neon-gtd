@@ -34,6 +34,7 @@ function(connectionService, datasetService, errorNotificationService, filterServ
         templateUrl: 'partials/directives/barchart.html',
         restrict: 'EA',
         scope: {
+            bindTitle: '=',
             bindXAxisField: '=',
             bindYAxisField: '=',
             bindAggregationField: '=',
@@ -70,12 +71,16 @@ function(connectionService, datasetService, errorNotificationService, filterServ
             var COUNT_FIELD_NAME = 'Count';
 
             var updateChartSize = function() {
+                var titleWidth = $element.width() - $element.find(".chart-options").outerWidth(true);
+                $element.find(".title").css("maxWidth", titleWidth - 20);
+
                 if($scope.chart) {
                     var headerHeight = 0;
                     $element.find(".header-container").each(function() {
                         headerHeight += $(this).outerHeight(true);
                     });
                     $element.find('.barchart').height($element.height() - headerHeight);
+
                     $scope.chart.draw();
                 }
             };

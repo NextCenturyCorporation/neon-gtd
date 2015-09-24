@@ -23,6 +23,7 @@ function(external, popups, connectionService, datasetService, errorNotificationS
         templateUrl: 'partials/directives/countby.html',
         restrict: 'EA',
         scope: {
+            bindTitle: '=',
             bindCountField: '=',
             bindAggregation: '=',
             bindAggregationField: '=',
@@ -86,6 +87,10 @@ function(external, popups, connectionService, datasetService, errorNotificationS
                 });
                 // Subtract an additional 2 pixels from the table height to account for the its border.
                 $('#' + $scope.tableId).height($element.height() - headerHeight - 2);
+
+                var titleWidth = $element.width() - $element.find(".chart-options").outerWidth(true);
+                $element.find(".title").css("maxWidth", titleWidth - 20);
+
                 if($scope.table) {
                     $scope.table.refreshLayout();
                 }

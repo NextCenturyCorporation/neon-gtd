@@ -1,13 +1,13 @@
 <div class="header-container" ng-show="!(hideHeader)">
-    <span class="header-text pull-left" ng-bind="options.table.prettyName"></span>
+    <div class="title header-text pull-left" ng-bind="(bindTitle != undefined) ? bindTitle : options.table.prettyName + ' / ' + options.dateField.prettyName"></div>
 
-    <h4 class="pull-left">
+    <h4 class="next-to-title pull-left">
         <span class="count text-primary" ng-bind="recordCount | number"></span>
         <span>valid</span>
         <span ng-hide="(width < 600)">records</span>
     </h4>
 
-    <h4 class="invalid-record-count pull-left" ng-click="sendInvalidDates()">
+    <h4 class="invalid-record-count next-to-title pull-left" ng-click="sendInvalidDates()">
         <span class="count text-primary" ng-bind="invalidRecordCount | number"></span>
         <span>invalid</span>
         <span ng-hide="(width < 600)">records</span>

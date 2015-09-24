@@ -180,10 +180,10 @@ label{
 
 .chart-options {
     > a {
+        color: @accent-bright;
         font-size: 16px;
         padding: 0;
         border: 0;
-        color: @accent-bright;
 
         &.collapsed {
             color: @main-text-color;
@@ -532,14 +532,19 @@ button {
         margin-bottom: 5px;
     }
 
-    span {
-        &.header-text {
-            color: @main-text-color;
-            font-size: 16px;
-            font-weight: bold;
-            line-height: 1.33;
-            text-transform: uppercase;
-        }
+    .title {
+        display: inline-block;
+        overflow: hidden;
+        white-space: nowrap;
+        text-overflow: ellipsis;
+    }
+
+    .header-text {
+        color: @main-text-color;
+        font-size: 16px;
+        font-weight: bold;
+        line-height: 1.33;
+        text-transform: uppercase;
     }
 }
 
