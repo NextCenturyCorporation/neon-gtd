@@ -508,7 +508,7 @@ function(connectionService, datasetService, errorNotificationService, filterServ
                     return "Sum " + $scope.options.attrY.prettyName + " vs. " + $scope.options.attrX.prettyName;
                 }
                 if($scope.options.barType === "count") {
-                    return "Count";
+                    return "Count of " + $scope.options.attrX.prettyName;
                 }
                 return "";
             };
