@@ -1355,6 +1355,7 @@ angular.module('neonDemo.directives')
 
                 if(layer.type === coreMap.Map.POINTS_LAYER) {
                     layer.olLayer = new coreMap.Map.Layer.PointsLayer(layer.name, {
+                        colors: layer.colors || {},
                         latitudeMapping: layer.latitudeMapping,
                         longitudeMapping: layer.longitudeMapping,
                         sizeMapping: layer.sizeBy,
@@ -1373,6 +1374,7 @@ angular.module('neonDemo.directives')
                     $scope.map.addLayer(layer.olLayer);
                 } else if(layer.type === coreMap.Map.CLUSTER_LAYER) {
                     layer.olLayer = new coreMap.Map.Layer.PointsLayer(layer.name, {
+                        colors: layer.colors || {},
                         latitudeMapping: layer.latitudeMapping,
                         longitudeMapping: layer.longitudeMapping,
                         sizeMapping: layer.sizeBy,
@@ -1440,11 +1442,10 @@ angular.module('neonDemo.directives')
 
                 // Remove layer from the map.
                 $scope.map.removeLayer(layer.olLayer);
-                layer.olLayer = undefined;
 
                 // Remove layer from the global list of layers.
                 index = _.findIndex($scope.options.layers, function(element) {
-                    return element.name === layer.name;
+                    return element.olLayer.id === layer.olLayer.id;
                 });
                 $scope.options.layers.splice(index, 1);
             };

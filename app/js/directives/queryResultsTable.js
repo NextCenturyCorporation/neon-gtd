@@ -34,6 +34,7 @@ function(external, popups, connectionService, datasetService, errorNotificationS
         templateUrl: 'partials/directives/queryResultsTable.html',
         restrict: 'EA',
         scope: {
+            bindTitle: '=',
             bindTable: '=',
             bindDatabase: '=',
             hideHeader: '=?',
@@ -55,6 +56,10 @@ function(external, popups, connectionService, datasetService, errorNotificationS
                 });
                 var tableBufferY = $tableDiv.outerHeight(true) - $tableDiv.height();
                 $tableDiv.height($element.height() - headerHeight - tableBufferY);
+
+                var titleWidth = $element.width() - $element.find(".chart-options").outerWidth(true);
+                $element.find(".title").css("maxWidth", titleWidth - 20);
+
                 if($scope.table) {
                     $scope.table.refreshLayout();
                 }

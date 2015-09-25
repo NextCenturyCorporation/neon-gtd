@@ -58,12 +58,12 @@
                         </span>
                     </div>
 
-                    <options-menu parent-element="element" id= "navbar-option-menu" class="navbar-text pull-right navbar-option-menu" ng-show="!(hideAdvancedOptions)">
+                    <options-menu parent-element="element" id= "navbar-option-menu" class="navbar-text pull-right navbar-option-menu" ng-show="!(hideAdvancedOptions) && (showImport || showExport)">
                         <!-- Buttons to select file format -->
-                        <label>Export Format</label>
-                        <div file-formats gridster-configs="visualizations" ng-hide="hideNavbarItems"></div>
+                        <label ng-show="showExport">Export Format</label>
+                        <div file-formats gridster-configs="visualizations" ng-show="showExport"></div>
                         <!-- Export option -->
-                        <div export-widgets gridster-configs="visualizations" ng-hide="hideNavbarItems"></div>
+                        <div export-widgets gridster-configs="visualizations" ng-show="showExport"></div>
                         <!-- Import option -->
                         <div import-file gridster-configs="visualizations" ng-show="showImport"></div>
                         <div remove-dataset gridster-configs="visualizations" ng-show="showImport"></div>
@@ -186,6 +186,7 @@
         <script src="js/coremap/nodeLayer.js"></script>
         <script src="js/tables/table.js"></script>
         <script src="js/charts/sunburst.js"></script>
+        <script src="js/mediators/directedGraphMediator.js"></script>
 
         <!-- Include our custom Angular components here for now. -->
         <script src="js/app.js"></script>

@@ -37,6 +37,7 @@ function(connectionService, datasetService, errorNotificationService, exportServ
         templateUrl: 'partials/directives/circularHeatForm.html',
         restrict: 'EA',
         scope: {
+            bindTitle: '=',
             bindDateField: '=',
             bindTable: '=',
             bindDatabase: '=',
@@ -68,6 +69,11 @@ function(connectionService, datasetService, errorNotificationService, exportServ
             var HOURS_IN_WEEK = 168;
             var HOURS_IN_DAY = 24;
 
+            var updateSize = function() {
+                var titleWidth = $element.width() - $element.find(".chart-options").outerWidth(true);
+                $element.find(".title").css("maxWidth", titleWidth - 20);
+            };
+
             /**
              * Initializes the name of the date field used to query the current dataset
              * and the Neon Messenger used to monitor data change events.
@@ -94,9 +100,12 @@ function(connectionService, datasetService, errorNotificationService, exportServ
                         source: "system",
                         tags: ["remove", "circularheatform"]
                     });
+                    $element.off("resize", updateSize);
                     $scope.messenger.removeEvents();
                     exportService.unregister($scope.exportID);
                 });
+
+                $element.resize(updateSize);
             };
 
             /**

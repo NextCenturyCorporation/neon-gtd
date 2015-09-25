@@ -17,39 +17,6 @@
     padding: 10px;
     height: 100%;
     width: 100%;
-    /* Hide the area of the tooltip that overflows the visualization. */
-    overflow: hidden;
-
-    .graph-tooltip {
-        background: @dark-tooltip-background;
-        border-radius: 4px;
-        color: @light-text-color;
-        font-size: 15px;
-        font-weight: bold;
-        padding: 5px;
-        position: absolute;
-        pointer-events: none;
-        white-space: nowrap;
-        z-index: 1060;
-
-        .graph-tooltip-block {
-            text-align: center;
-
-            .graph-tooltip-label {
-                color: #ddd;
-            }
-
-            .graph-tooltip-value {
-                font-size: 22px;
-                position: relative;
-                top: 2px;
-            }
-
-            .graph-tooltip-label+.graph-tooltip-value {
-                margin-left: 5px;
-            }
-        }
-    }
 
     .link {
       cursor: pointer;
@@ -61,5 +28,47 @@
 
     .node-text {
       cursor: pointer;
+    }
+
+    .legend {
+        /* Override the default legend styling from the style.less file. */
+        margin-bottom: 0px;
+        min-height: 0px;
+
+        .legend-item {
+            margin-top: 0px;
+        }
+    }
+}
+
+.graph-tooltip {
+    border-radius: 4px;
+    color: @light-text-color;
+    font-size: 15px;
+    font-weight: bold;
+    padding: 0px 5px 5px;
+    pointer-events: none;
+    white-space: nowrap;
+    z-index: 1060;
+
+    .graph-tooltip-block {
+        line-height: 30px;
+        text-align: center;
+
+        .graph-tooltip-label {
+            color: #ddd;
+            display: inline-block !important;
+        }
+
+        .graph-tooltip-value {
+            font-size: 22px;
+            position: relative;
+            top: 2px;
+            display: inline-block !important;
+        }
+
+        .graph-tooltip-label+.graph-tooltip-value {
+            margin-left: 5px;
+        }
     }
 }

@@ -179,7 +179,8 @@ angular.element(document).ready(function() {
             hideAdvancedOptions: false,
             hideErrorNotifications: false,
             hideHeader: false,
-            showImport: false
+            showImport: false,
+            showExport: true
         };
         dashboardConfig.gridsterColumns = dashboardConfig.gridsterColumns || 8;
         dashboardConfig.gridsterMargins = dashboardConfig.gridsterMargins || 10;
@@ -188,6 +189,7 @@ angular.element(document).ready(function() {
         dashboardConfig.gridsterDefaultMinSizeX = Math.floor(dashboardConfig.gridsterColumns / 4);
         dashboardConfig.gridsterDefaultMinSizeY = Math.floor(dashboardConfig.gridsterColumns / 6);
         dashboardConfig.help = helpConfig;
+        dashboardConfig.showExport = (dashboardConfig.showExport === undefined || dashboardConfig.showExport) ? true : false;
         neonDemo.constant('config', dashboardConfig);
 
         neonDemo.value('popups', {

@@ -16,3 +16,4 @@
  */
 
 var charts = charts || {};
+var mediators = mediators || {};
