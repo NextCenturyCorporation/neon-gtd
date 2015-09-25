@@ -353,9 +353,25 @@ charts.LineChart.prototype.showTooltip = function(index, date) {
     $("#tooltip-container").html(html);
     $("#tooltip-container").show();
 
-    d3.select("#tooltip-container")
-        .style("top", (d3.event.pageY - ($("#tooltip-container").outerHeight(true) / 2))  + "px")
-        .style("left", (d3.event.pageX + 10) + "px");
+    this.positionTooltip_(d3.select('#tooltip-container'), d3.event);
+};
+
+charts.LineChart.prototype.positionTooltip_ = function(tooltip, mouseEvent) {
+    var attributeLeft = mouseEvent.pageX + 15;
+    var tooltipWidth = $("#tooltip-container").outerWidth(true);
+    var tooltipHeight = $("#tooltip-container").outerHeight(true);
+
+    if((attributeLeft + tooltipWidth) > $("body").width()) {
+        $("#tooltip-container").removeClass("east");
+        $("#tooltip-container").addClass("west");
+        tooltip.style('top', (mouseEvent.pageY - (tooltipHeight / 2)) + 'px')
+            .style('left', (attributeLeft - tooltipWidth - 30) + 'px');
+    } else {
+        $("#tooltip-container").removeClass("west");
+        $("#tooltip-container").addClass("east");
+        tooltip.style('top', (mouseEvent.pageY - (tooltipHeight / 2)) + 'px')
+            .style('left', attributeLeft + 'px');
+    }
 };
 
 /**
