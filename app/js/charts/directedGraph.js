@@ -22,11 +22,6 @@ charts.DirectedGraph = function(rootElement, selector, options) {
         links: []
     };
 
-    this.tooltip = d3.select(rootElement)
-        .append("div")
-        .attr("class", "graph-tooltip")
-        .style("opacity", 0);
-
     this.initializeGraphOptions(options || {});
     this.initializeGraphElement();
 };
@@ -183,9 +178,9 @@ charts.DirectedGraph.prototype.initializeGraphOptions = function(options) {
     this.getNodeKeyFunction = options.getNodeKey;
     this.getLinkKeyFunction = options.getLinkKey;
 
-    this.nodeMouseoverHandler = function(nodeData) {
-        if(options.nodeMouseoverHandler) {
-            options.nodeMouseoverHandler(nodeData);
+    this.NodeMousemoveHandler = function(nodeData) {
+        if(options.nodeMousemoveHandler) {
+            options.nodeMousemoveHandler(nodeData);
         }
     };
 
@@ -209,9 +204,9 @@ charts.DirectedGraph.prototype.initializeGraphOptions = function(options) {
         }
     };
 
-    this.linkMouseoverHandler = function(linkData) {
-        if(options.linkMouseoverHandler) {
-            options.linkMouseoverHandler(linkData);
+    this.linkMousemoveHandler = function(linkData) {
+        if(options.linkMousemoveHandler) {
+            options.linkMousemoveHandler(linkData);
         }
     };
 
@@ -364,7 +359,7 @@ charts.DirectedGraph.prototype.redrawNodesAndLinks = function() {
  */
 charts.DirectedGraph.prototype.updateGraph = function(newData) {
     var me = this;
-    me.tooltip.style("opacity", 0);
+
     me.updateGraphData(newData);
 
     var lineElements;
@@ -375,7 +370,7 @@ charts.DirectedGraph.prototype.updateGraph = function(newData) {
         // Add new D3 line elements for new data as necessary.
         lineElements.enter().append("line").attr("class", "link")
             .on("click", me.linkClickHandler)
-            .on("mouseover", me.createLinkMouseoverHandler(me))
+            .on("mousemove", me.createLinkMousemoveHandler(me))
             .on("mouseout", me.createLinkMouseoutHandler(me));
 
         // Remove old data saved in the D3 line elements.
@@ -389,7 +384,7 @@ charts.DirectedGraph.prototype.updateGraph = function(newData) {
     circleElements.enter().append("circle").attr("class", "node").call(me.forceLayout.drag)
         .on("click", me.nodeClickHandler)
         .on('dblclick', me.nodeDoubleClickHandler)
-        .on("mouseover", me.createNodeMouseoverHandler(me))
+        .on("mousemove", me.createNodeMousemoveHandler(me))
         .on("mouseout", me.createNodeMouseoutHandler(me));
 
     // Remove old data saved in the D3 circle elements.
@@ -402,7 +397,7 @@ charts.DirectedGraph.prototype.updateGraph = function(newData) {
     textElements.enter().append("text").attr("class", "node-text").call(me.forceLayout.drag)
         .on("click", me.nodeClickHandler)
         .on('dblclick', me.nodeDoubleClickHandler)
-        .on("mouseover", me.createNodeMouseoverHandler(me))
+        .on("mousemove", me.createNodeMousemoveHandler(me))
         .on("mouseout", me.createNodeMouseoutHandler(me));
 
     // Remove old data saved in the D3 text elements.
@@ -471,21 +466,37 @@ charts.DirectedGraph.prototype.handleZoom = function() {
 };
 
 charts.DirectedGraph.prototype.showTooltip = function(text) {
-    var parentOffset = $(this.rootElement).offset();
-    this.tooltip.transition().duration(200).style("opacity", 1)
-        .style("left", (d3.event.pageX - parentOffset.left + 10) + "px")
-        .style("top", (d3.event.pageY - parentOffset.top + 10) + "px");
-    this.tooltip.html(text);
+    var html = '<div class="graph-tooltip">' + text + '</div>';
+    $('#tooltip-container').html(html);
+    $('#tooltip-container').show();
+
+    var attributeLeft = d3.event.pageX + 15;
+    var tooltipWidth = $("#tooltip-container").outerWidth(true);
+    var tooltipHeight = $("#tooltip-container").outerHeight(true);
+
+    if((attributeLeft + tooltipWidth) > $("body").width()) {
+        $("#tooltip-container").removeClass("east");
+        $("#tooltip-container").addClass("west");
+        d3.select('#tooltip-container')
+            .style('top', (d3.event.pageY - (tooltipHeight / 2)) + 'px')
+            .style('left', (d3.event.pageX - tooltipWidth - 15) + 'px');
+    } else {
+        $("#tooltip-container").removeClass("west");
+        $("#tooltip-container").addClass("east");
+        d3.select('#tooltip-container')
+            .style('top', (d3.event.pageY - (tooltipHeight / 2)) + 'px')
+            .style('left', attributeLeft + 'px');
+    }
 };
 
 charts.DirectedGraph.prototype.hideTooltip = function() {
-    this.tooltip.transition().duration(500).style("opacity", 0);
+    $('#tooltip-container').hide();
 };
 
-charts.DirectedGraph.prototype.createLinkMouseoverHandler = function(me) {
+charts.DirectedGraph.prototype.createLinkMousemoveHandler = function(me) {
     return function(linkData) {
         me.showTooltip(me.getLinkTooltip(linkData));
-        me.linkMouseoverHandler(linkData);
+        me.linkMousemoveHandler(linkData);
     };
 };
 
@@ -496,10 +507,10 @@ charts.DirectedGraph.prototype.createLinkMouseoutHandler = function(me) {
     };
 };
 
-charts.DirectedGraph.prototype.createNodeMouseoverHandler = function(me) {
+charts.DirectedGraph.prototype.createNodeMousemoveHandler = function(me) {
     return function(nodeData) {
         me.showTooltip(me.getNodeTooltip(nodeData));
-        me.nodeMouseoverHandler(nodeData);
+        me.NodeMousemoveHandler(nodeData);
     };
 };
 
