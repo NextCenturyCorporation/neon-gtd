@@ -45,7 +45,12 @@ var neonDemo = angular.module('neonDemo', [
     'neonDemo.filters',
     'gridster',
     'ngDraggable',
-    'ui.bootstrap.datetimepicker'
+    'ui.bootstrap.datetimepicker',
+
+    'gantt',
+    'gantt.tooltips',
+    'gantt.tree',
+    'gantt.groups'
 ]);
 
 // AngularJS filter for reversing the order of an array.
