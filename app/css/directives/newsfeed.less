@@ -13,11 +13,14 @@
 // limitations under the License.
 //
 
-.newsfeed {
+.newsfeed-directive {
     height: @widget-height;
     width: @widget-width;
-    overflow: auto;
     padding: 10px;
+
+    .newsfeed {
+        overflow: auto;
+    }
 
     .item {
         color: @mid-text-color;
@@ -49,6 +52,10 @@
 
         .date {
             color: @main-text-color;
+        }
+
+        .text {
+            word-wrap: break-word;
         }
     }
 }
