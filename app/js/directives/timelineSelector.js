@@ -38,6 +38,7 @@ function($interval, $filter, connectionService, datasetService, errorNotificatio
         templateUrl: 'partials/directives/timelineSelector.html',
         restrict: 'EA',
         scope: {
+            bindTitle: '=',
             bindDateField: '=',
             bindTable: '=',
             bindDatabase: '=',
@@ -423,7 +424,14 @@ function($interval, $filter, connectionService, datasetService, errorNotificatio
             };
 
             var onResize = function() {
+                var titleWidth = $element.width() - $element.find(".chart-options").outerWidth(true);
+                $element.find(".next-to-title").each(function() {
+                    titleWidth -= $(this).outerWidth(true);
+                });
+                $element.find(".title").css("maxWidth", titleWidth - 20);
+
                 resizeDateTimePickerDropdown();
+
                 $scope.width = $element.outerWidth(true);
             };
 

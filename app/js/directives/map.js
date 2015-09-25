@@ -1355,6 +1355,7 @@ angular.module('neonDemo.directives')
 
                 if(layer.type === coreMap.Map.POINTS_LAYER) {
                     layer.olLayer = new coreMap.Map.Layer.PointsLayer(layer.name, {
+                        colors: layer.colors || {},
                         latitudeMapping: layer.latitudeMapping,
                         longitudeMapping: layer.longitudeMapping,
                         sizeMapping: layer.sizeBy,
@@ -1373,6 +1374,7 @@ angular.module('neonDemo.directives')
                     $scope.map.addLayer(layer.olLayer);
                 } else if(layer.type === coreMap.Map.CLUSTER_LAYER) {
                     layer.olLayer = new coreMap.Map.Layer.PointsLayer(layer.name, {
+                        colors: layer.colors || {},
                         latitudeMapping: layer.latitudeMapping,
                         longitudeMapping: layer.longitudeMapping,
                         sizeMapping: layer.sizeBy,

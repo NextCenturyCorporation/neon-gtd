@@ -92,27 +92,31 @@ coreMap.Map.Layer.PointsLayer = OpenLayers.Class(OpenLayers.Layer.Vector, {
         var args = [name, extendOptions];
         OpenLayers.Layer.Vector.prototype.initialize.apply(this, args);
 
+        if(this.colors) {
+            this.hasColorsConfigured = true;
+        }
+
         this.colorRange = [
-            '#39b54a',
-            '#C23333',
-            '#3662CC',
-            "#ff7f0e",
-            "#9467bd",
-            "#8c564b",
-            "#e377c2",
-            "#7f7f7f",
-            "#bcbd22",
-            "#17becf",
-            "#98df8a",
-            "#ff9896",
-            "#aec7e8",
-            "#ffbb78",
-            "#c5b0d5",
-            "#c49c94",
-            "#f7b6d2",
-            "#c7c7c7",
-            "#dbdb8d",
-            "#9edae5"
+            '#39b54a', // green
+            '#C23333', // red
+            '#3662CC', // blue
+            "#ff7f0e", // orange
+            "#9467bd", // purple
+            "#8c564b", // brown
+            "#e377c2", // pink
+            "#7f7f7f", // gray
+            "#bcbd22", // yellow
+            "#17becf", // cyan
+            "#98df8a", // light green
+            "#ff9896", // light red
+            "#aec7e8", // light blue
+            "#ffbb78", // light orange
+            "#c5b0d5", // light purple
+            "#c49c94", // light brown
+            "#f7b6d2", // light pink
+            "#c7c7c7", // light gray
+            "#dbdb8d", // light yellow
+            "#9edae5"  // light cyan
         ];
         this.visibility = true;
         this.colorScale = d3.scale.ordinal().range(this.colorRange);
@@ -235,7 +239,11 @@ coreMap.Map.Layer.PointsLayer.prototype.calculateColor = function(element) {
     var category = this.getValueFromDataElement(this.categoryMapping, element);
     var color;
 
-    if(category && this.gradient && _.isDate(category)) {
+    if(this.colors[category]) {
+        color = this.colors[category];
+    } else if(this.hasColorsConfigured) {
+        color = this.colors[""] || "#7f7f7f";
+    } else if(category && this.gradient && _.isDate(category)) {
         color = "#" + this.rainbow.colourAt(category.getTime());
     } else if(category && !this.gradient) {
         color = this.colorScale(category);
@@ -244,8 +252,8 @@ coreMap.Map.Layer.PointsLayer.prototype.calculateColor = function(element) {
         color = this.defaultColor || coreMap.Map.Layer.PointsLayer.DEFAULT_COLOR;
     }
 
-    // store the color in the registry so we know the color/category mappings
-    if(!(this.colors.hasOwnProperty(category))) {
+    // Save the color in the registry so we know the color/category mappings
+    if(!this.colors[category]) {
         this.colors[category] = color;
     }
 

@@ -36,6 +36,7 @@ function(connectionService, datasetService, errorNotificationService, filterServ
         templateUrl: 'partials/directives/linechart.html',
         restrict: 'EA',
         scope: {
+            bindTitle: '=',
             bindDateField: '=',
             bindYAxisField: '=',
             bindCategoryField: '=',
@@ -97,12 +98,16 @@ function(connectionService, datasetService, errorNotificationService, filterServ
             };
 
             var updateChartSize = function() {
+                var titleWidth = $element.width() - $element.find(".chart-options").outerWidth(true);
+                $element.find(".title").css("maxWidth", titleWidth - 20);
+
                 if($scope.chart) {
                     var headerHeight = 0;
                     $element.find(".header-container").each(function() {
                         headerHeight += $(this).outerHeight(true);
                     });
                     $element.find('.linechart').height($element.height() - headerHeight);
+
                     // Redraw the line chart.
                     $scope.chart.draw();
                     $scope.chart.showTrendlines(($scope.options.trendlines === 'show') ? true : false);

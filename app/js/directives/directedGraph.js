@@ -22,6 +22,7 @@ function($filter, $timeout, connectionService, datasetService, errorNotification
         templateUrl: 'partials/directives/directedGraph.html',
         restrict: 'EA',
         scope: {
+            bindTitle: '=',
             hideHeader: '=?',
             hideAdvancedOptions: '=?'
         },
@@ -111,6 +112,9 @@ function($filter, $timeout, connectionService, datasetService, errorNotification
             };
 
             var updateGraphSize = function() {
+                var titleWidth = $element.width() - $element.find(".chart-options").outerWidth(true);
+                $element.find(".title").css("maxWidth", titleWidth - 20);
+
                 // The D3 graph will resize itself but we need to trigger that resize event by changing the height and widget of the SVG.
                 // Setting the dimensions on the SVG performs better than just setting the dimensions on the directed-graph-container.
                 $element.find(".directed-graph .directed-graph-container svg").attr("height", calculateGraphHeight());
