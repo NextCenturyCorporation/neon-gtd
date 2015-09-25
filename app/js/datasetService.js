@@ -676,6 +676,19 @@ angular.module("neonDemo.services")
     };
 
     /**
+     * Returns the color maps option for the database, table, and field in the active dataset with the given names.
+     * @param {String} databaseName
+     * @param {String} tableName
+     * @param {String} fieldName
+     * @method getActiveDatasetColorMaps
+     * @return {Object}
+     */
+    service.getActiveDatasetColorMaps = function(databaseName, tableName, fieldName) {
+        var colorMaps = service.getActiveDatasetOptions().colorMaps || {};
+        return colorMaps[databaseName] && colorMaps[databaseName][tableName] ? colorMaps[databaseName][tableName][fieldName] || {} : {};
+    };
+
+    /**
      * Creates and returns a new blank field object.
      * @method createBlankField
      * @return {Object}

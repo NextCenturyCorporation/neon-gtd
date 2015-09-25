@@ -89,9 +89,9 @@ function(connectionService, datasetService, errorNotificationService, filterServ
             $scope.options = {
                 database: {},
                 table: {},
-                attrX: "",
-                attrY: "",
-                categoryField: "",
+                attrX: {},
+                attrY: {},
+                categoryField: {},
                 aggregation: "count",
                 granularity: DAY,
                 trendlines: 'hide'
@@ -832,7 +832,8 @@ function(connectionService, datasetService, errorNotificationService, filterServ
                     y: "value",
                     hoverListener: onHover,
                     responsive: true,
-                    granularity: $scope.options.granularity
+                    granularity: $scope.options.granularity,
+                    seriesToColors: datasetService.isFieldValid($scope.options.categoryField) ? datasetService.getActiveDatasetColorMaps($scope.options.database.name, $scope.options.table.name, $scope.options.categoryField.columnName) : {}
                 };
 
                 // Destroy the old chart and rebuild it.
