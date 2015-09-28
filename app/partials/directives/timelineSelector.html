@@ -82,10 +82,10 @@
             <label>Animation Controls</label>
             <div class="btn-group">
                 <label class="btn btn-default" ng-class="{true: 'active', false: ''}[options.showAnimationControls]">
-                    <input type="radio" style="display:none" ng-model="options.showAnimationControls" value="true"> Show 
+                    <input type="radio" style="display:none" ng-model="options.showAnimationControls" ng-value="true"> Show
                 </label>
                 <label class="btn btn-default" ng-class="{true: '', false: 'active'}[options.showAnimationControls]">
-                    <input type="radio" style="display:none" ng-model="options.showAnimationControls" value="false"> Hide
+                    <input type="radio" style="display:none" ng-model="options.showAnimationControls" ng-value="false"> Hide
                 </label>
             </div>
             <div class="clearfix"></div>
@@ -107,11 +107,12 @@
     </div>
 
     <div class="neon-datetimepicker dropdown pull-left">
-        <button class="btn btn-default header-item dropdown-toggle" role="button" data-toggle="dropdown" data-target="#" href="#" title="{{'From ' + (startDateForDisplay || '?') + ' to ' + (endDateForDisplay || '?')}}">
+        <div class="dropdown-toggle" role="button" data-toggle="dropdown" data-target="#" href="#"
+            title="{{'From ' + (startDateForDisplay || '?') + ' to ' + (endDateForDisplay || '?')}}">
+            <span ng-hide="(brush.length > 0 && width < 525) || (width < 400)"
+                ng-bind="(startDateForDisplay || '?') + ' - ' + (endDateForDisplay || '?')"></span>
             <span class="glyphicon glyphicon-calendar"></span>
-            <span ng-hide="(brush.length > 0 && width < 525) || (width < 400)" ng-bind="(startDateForDisplay || '?') + ' to ' + (endDateForDisplay || '?')"></span>
-            <span class="caret"></span>
-        </button>
+        </div>
 
         <ul class="dropdown-menu" role="menu">
             <div>
@@ -137,7 +138,7 @@
             <span class="btn-group">
                 <label class="btn btn-default header-item" role="button" title="{{(options.animatingTime) ? 'Pause' : ((options.animationFrame > getAnimationStartFrame()) ? 'Resume' : 'Play')}}"
                     ng-click="(options.animatingTime) ? pauseTimeAnimation() : playTimeAnimation()">
-                    <span class="glyphicon" ng-class="{true: 'glyphicon-pause', false: 'glyphicon-play-circle'}[options.animatingTime]"></span> 
+                    <span class="glyphicon" ng-class="{true: 'glyphicon-pause', false: 'glyphicon-play-circle'}[options.animatingTime]"></span>
                     <span ng-hide="(brush.length > 0 && width < 625) || (width < 500)" ng-bind="(options.animatingTime) ? 'Pause' : ((options.animationFrame > getAnimationStartFrame()) ? 'Resume' : 'Play')"></span>
                 </label>
                 <label class="btn btn-default header-item" role="button" title="Step" ng-click="stepTimeAnimation()">
