@@ -278,7 +278,7 @@ function(connectionService, datasetService, errorNotificationService, filterServ
             };
 
             var createGanttChart = function(data) {
-                var colorScale = d3.scale.category20();
+                var colorScale = d3.scale.ordinal().range(neonColors.LIST);
                 var colors = [];
                 if(datasetService.isFieldValid($scope.options.colorField)) {
                     colors = createFieldValueList($scope.options.colorField.columnName, data);

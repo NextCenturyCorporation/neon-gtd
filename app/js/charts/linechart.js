@@ -49,29 +49,7 @@ charts.LineChart = function(rootElement, selector, opts) {
 
     this.seriesToColors = opts.seriesToColors || {};
     this.colors = [];
-    this.colorRange = [
-        '#39b54a', // green
-        '#C23333', // red
-        '#3662CC', // blue
-        "#ff7f0e", // orange
-        "#9467bd", // purple
-        "#8c564b", // brown
-        "#e377c2", // pink
-        "#7f7f7f", // gray
-        "#bcbd22", // yellow
-        "#17becf", // cyan
-        "#98df8a", // light green
-        "#ff9896", // light red
-        "#aec7e8", // light blue
-        "#ffbb78", // light orange
-        "#c5b0d5", // light purple
-        "#c49c94", // light brown
-        "#f7b6d2", // light pink
-        "#c7c7c7", // light gray
-        "#dbdb8d", // light yellow
-        "#9edae5"  // light cyan
-    ];
-    this.colorScale = d3.scale.ordinal().range(this.colorRange);
+    this.colorScale = d3.scale.ordinal().range(neonColors.LIST);
 
     this.categories = [];
 
@@ -185,7 +163,7 @@ charts.LineChart.prototype.calculateColor = function(seriesObject) {
     if(this.seriesToColors[seriesObject.series]) {
         color = this.seriesToColors[seriesObject.series];
     } else if(Object.keys(this.seriesToColors).length) {
-        color = this.seriesToColors[""] || "#7f7f7f";
+        color = this.seriesToColors[""] || neonColors.DEFAULT;
     } else {
         color = this.colorScale(seriesObject.series);
     }
