@@ -879,6 +879,57 @@ tr.borderedRow {
         font-size: 12px;
         color: @mid-text-color;
     }
+
+    &:before {
+        content: '';
+        display: block;
+        width: 0;
+        height: 0;
+        position: absolute;
+        border-top: 8px solid transparent;
+        border-bottom: 8px solid transparent;
+        top: 50%;
+        transform: translateY(-50%);
+    }
+
+    &:after {
+        content: '';
+        display: block;
+        width: 0;
+        height: 0;
+        position: absolute;
+        border-top: 7px solid transparent;
+        border-bottom: 7px solid transparent;
+        top: 49%;
+        transform: translateY(-49%);
+    }
+
+    &.east {
+
+        &:before {
+            border-right: 8px solid @shadow;
+            left:-8px;
+            opacity: .5;
+        }
+
+        &:after {
+            border-right: 7px solid @tooltip-background;
+            left: -6px;
+        }
+    }
+
+    &.west {
+
+        &:before {
+            border-left:8px solid @shadow;
+            left: 100%;
+        }
+
+        &:after {
+            border-left: 7px solid @tooltip-background;
+            left: 100%;
+        }
+    }
 }
 
 .tray{

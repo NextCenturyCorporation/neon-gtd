@@ -65,10 +65,10 @@ mediators.DirectedGraphMediator = function(root, selector, callbacks) {
         getLinkOpacity: createFunctionToCalculateLinkOpacity(this),
         getLinkArrowhead: createFunctionToFindLinkArrowhead(this),
         getLinkTooltip: createFunctionToGenerateLinkTooltip(this),
-        nodeMouseoverHandler: createFunctionToHandleNodeSelect(this),
+        nodeMousemoveHandler: createFunctionToHandleNodeSelect(this),
         nodeMouseoutHandler: createFunctionToHandleNodeDeselect(this),
         nodeClickHandler: createFunctionToHandleNodeClick(this),
-        linkMouseoverHandler: createFunctionToHandleLinkSelect(this),
+        linkMousemoveHandler: createFunctionToHandleLinkSelect(this),
         linkMouseoutHandler: createFunctionToHandleLinkDeselect(this),
         linkClickHandler: createFunctionToHandleLinkClick(this)
     });

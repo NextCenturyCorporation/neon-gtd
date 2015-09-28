@@ -1266,8 +1266,21 @@ charts.TimelineSelectorChart = function(element, configuration) {
     };
 
     var positionTooltip = function(tooltip, mouseEvent) {
-        tooltip.style('top', (mouseEvent.pageY - ($("#tooltip-container").outerHeight(true) / 2)) + 'px')
-            .style('left', (mouseEvent.pageX + 10) + 'px');
+        var attributeLeft = mouseEvent.pageX + 15;
+        var tooltipWidth = $("#tooltip-container").outerWidth(true);
+        var tooltipHeight = $("#tooltip-container").outerHeight(true);
+
+        if((attributeLeft + tooltipWidth) > $("body").width()) {
+            $("#tooltip-container").removeClass("east");
+            $("#tooltip-container").addClass("west");
+            tooltip.style('top', (mouseEvent.pageY - (tooltipHeight / 2)) + 'px')
+                .style('left', (attributeLeft - tooltipWidth - 30) + 'px');
+        } else {
+            $("#tooltip-container").removeClass("west");
+            $("#tooltip-container").addClass("east");
+            tooltip.style('top', (mouseEvent.pageY - (tooltipHeight / 2)) + 'px')
+                .style('left', attributeLeft + 'px');
+        }
     };
 
     var hideTooltip = function() {
