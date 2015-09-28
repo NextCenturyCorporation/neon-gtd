@@ -66,6 +66,14 @@ coreMap.Map = function(elementId, opts) {
         this.height = opts.height || coreMap.Map.DEFAULT_HEIGHT;
     }
 
+    if(opts.https) {
+        this.DARK_MAP_TILES = "https://cartodb-basemaps-a.global.ssl.fastly.net/dark_all/${z}/${x}/${y}.png";
+        this. LIGHT_MAP_TILES = "https://cartodb-basemaps-a.global.ssl.fastly.net/light_all/${z}/${x}/${y}.png";
+    } else {
+        this.DARK_MAP_TILES = "http://a.basemaps.cartocdn.com/dark_all/${z}/${x}/${y}.png";
+        this.LIGHT_MAP_TILES = "http://a.basemaps.cartocdn.com/light_all/${z}/${x}/${y}.png";
+    }
+
     this.selectableLayers = [];
     this.selectControls = [];
     this.initializeMap();
@@ -73,6 +81,9 @@ coreMap.Map = function(elementId, opts) {
     this.setupControls();
     this.resetZoom();
 };
+
+// coreMap.Map.DARK_MAP_TILES = "http://a.api.cartocdn.com/dark_all/${z}/${x}/${y}.png";
+// coreMap.Map.LIGHT_MAP_TILES = "http://a.basemaps.cartocdn.com/light_all/${z}/${x}/${y}.png"
 
 coreMap.Map.DEFAULT_WIDTH = 1024;
 coreMap.Map.DEFAULT_HEIGHT = 680;
@@ -91,9 +102,6 @@ coreMap.Map.CLUSTER_LAYER = 'cluster';
 coreMap.Map.NODE_LAYER = 'node';
 
 // Dark Background Color = #242426
-coreMap.Map.DARK_MAP_TILES = "http://a.basemaps.cartocdn.com/dark_all/${z}/${x}/${y}.png";
-// Light Background Color = #CDD2D4
-coreMap.Map.LIGHT_MAP_TILES = "http://a.basemaps.cartocdn.com/light_all/${z}/${x}/${y}.png";
 
 /**
  * Resets the select control by temporarily removing it from the map
@@ -459,9 +467,13 @@ coreMap.Map.prototype.createSelectControl =  function(layer) {
  */
 
 coreMap.Map.prototype.setupLayers = function() {
-    var baseLayer = new OpenLayers.Layer.OSM("OSM", coreMap.Map.LIGHT_MAP_TILES, {
+    var baseLayer = new OpenLayers.Layer.OSM("OSM", this.LIGHT_MAP_TILES, {
         attribution:  "Map tiles by CartoDB, under CC BY 3.0. Data by OpenStreetMap, under ODbL.",
         wrapDateLine: false
+    },{
+        tileOptions: {
+            crossOriginKeyword: 'anonymous'
+        }
     });
     this.map.addLayer(baseLayer);
 
