@@ -191,6 +191,8 @@ function(connectionService, datasetService, errorNotificationService, filterServ
                     $scope.errorMessage = undefined;
                 }
 
+                $scope.legend.colors = [];
+
                 var connection = connectionService.getActiveConnection();
 
                 if(!connection || !datasetService.isFieldValid($scope.options.startField) || !datasetService.isFieldValid($scope.options.endField)) {
@@ -280,15 +282,27 @@ function(connectionService, datasetService, errorNotificationService, filterServ
             var createGanttChart = function(data) {
                 var colorScale = d3.scale.ordinal().range(neonColors.LIST);
                 var colors = [];
+
+                var groupsToColors = {};
+
                 if(datasetService.isFieldValid($scope.options.colorField)) {
-                    colors = createFieldValueList($scope.options.colorField.columnName, data);
-                    $scope.legend.colors = [];
-                    colors.forEach(function(color, index) {
-                        $scope.legend.colors.push({
-                            color: colorScale(index),
-                            text: color
+                    groupsToColors = datasetService.getActiveDatasetColorMaps($scope.options.database.name, $scope.options.table.name, $scope.options.colorField.columnName);
+                    if(Object.keys(groupsToColors).length) {
+                        Object.keys(groupsToColors).forEach(function(group) {
+                            $scope.legend.colors.push({
+                                color: groupsToColors[group],
+                                text: group
+                            });
                         });
-                    });
+                    } else {
+                        colors = createFieldValueList($scope.options.colorField.columnName, data);
+                        colors.forEach(function(color, index) {
+                            $scope.legend.colors.push({
+                                color: colorScale(index),
+                                text: color
+                            });
+                        });
+                    }
                 }
 
                 $scope.data = [];
@@ -308,12 +322,21 @@ function(connectionService, datasetService, errorNotificationService, filterServ
                         $scope.data.push(treeParent);
                     }
 
+                    var color;
+                    if(Object.keys(groupsToColors).length) {
+                        color = groupsToColors[item[$scope.options.colorField.columnName]] || neonColors.DEFAULT;
+                    } else if(colors.length) {
+                        color = colorScale(colors.indexOf(item[$scope.options.colorField.columnName]));
+                    } else {
+                        color = colorScale(index);
+                    }
+
                     treeParent.tasks.push({
                         id: item._id,
                         name: datasetService.isFieldValid($scope.options.titleField) ? item[$scope.options.titleField.columnName] : "",
                         from: item[$scope.options.startField.columnName],
                         to: item[$scope.options.endField.columnName],
-                        color: colors.length ? colorScale(colors.indexOf(item[$scope.options.colorField.columnName])) : colorScale(index)
+                        color: color
                     });
                 });
 
