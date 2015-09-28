@@ -243,6 +243,7 @@ angular.module('neonDemo.directives')
                 };
 
                 $element.resize(updateSize);
+                $element.ready(updateSize);
 
                 // Add a zoomRect handler to the map.
                 $scope.map.onZoomRect = function(bounds) {
@@ -1271,17 +1272,17 @@ angular.module('neonDemo.directives')
              */
             $scope.setDefaultView = function() {
                 var mapConfig = datasetService.getMapConfig();
-                if(mapConfig && mapConfig.bounds) {
-                    $scope.map.zoomToBounds(mapConfig.bounds);
-                } else if($scope.dataBounds) {
+                if($scope.dataBounds) {
                     $scope.zoomToDataBounds();
+                } else if(mapConfig && mapConfig.bounds) {
+                    $scope.map.zoomToBounds(mapConfig.bounds);
                 } else {
-                    $scope.map.zoomToBounds({
-                        left: -180,
-                        bottom: -90,
-                        right: 180,
-                        top: 90
-                    });
+                    // $scope.map.zoomToBounds({
+                    //     left: -180,
+                    //     bottom: -90,
+                    //     right: 180,
+                    //     top: 90
+                    // });
                 }
             };
 
