@@ -5,64 +5,56 @@
             <select class="form-control" ng-model="options.database" ng-options="database.prettyName for database in databases" ng-required="true" ng-disabled="(databases.length < 2)" ng-change="updateTables()">
             </select>
         </div>
+
         <div class="form-group" ng-show="!(hideAdvancedOptions)">
             <label>Table</label>
             <select class="form-control" ng-model="options.table" ng-options="table.prettyName for table in tables" ng-required="true" ng-disabled="(tables.length < 2)" ng-change="updateFields()">
             </select>
         </div>
+
         <div class="form-group" ng-show="!(hideAdvancedOptions)">
-            <label>First grouping</label>
-            <select class="form-control" ng-model="options.firstGroupField" ng-options="field.prettyName for field in fields" ng-disabled="!(fields.length > 0)" ng-change="queryForData()">
-                <option value="">None</option>
-            </select>
-        </div>
-        <div class="form-group" ng-show="!(hideAdvancedOptions) && options.firstGroupField && options.firstGroupField.columnName">
-            <label>Second grouping</label>
-            <select class="form-control" ng-model="options.secondGroupField" ng-options="field.prettyName for field in fields" ng-change="queryForData()">
-                <option value="">None</option>
-            </select>
-        </div>
-        <div class="form-group" ng-show="!(hideAdvancedOptions) && options.secondGroupField && options.secondGroupField.columnName">
-            <label>Third grouping</label>
-            <select class="form-control" ng-model="options.thirdGroupField" ng-options="field.prettyName for field in fields" ng-change="queryForData()">
-                <option value="">None</option>
-            </select>
-        </div>
-        <div class="form-group" ng-show="!(hideAdvancedOptions) && options.thirdGroupField && options.thirdGroupField.columnName">
-            <label>Fourth grouping</label>
-            <select class="form-control" ng-model="options.fourthGroupField" ng-options="field.prettyName for field in fields" ng-change="queryForData()">
-                <option value="">None</option>
+            <label>Start Field</label>
+            <select class="form-control" ng-model="options.startField" ng-options="field.prettyName for field in fields" ng-disabled="!(fields.length > 0)" ng-change="queryForData()">
             </select>
         </div>
 
         <div class="form-group" ng-show="!(hideAdvancedOptions)">
-            <label>Color by</label>
-            <select class="form-control" ng-model="options.colorField" ng-options="field.prettyName for field in fields" ng-disabled="!(fields.length > 0)" ng-change="formatData(queryData)">
+            <label>End Field</label>
+            <select class="form-control" ng-model="options.endField" ng-options="field.prettyName for field in fields" ng-disabled="!(fields.length > 0)" ng-change="queryForData()">
+            </select>
+        </div>
+
+        <div class="form-group" ng-show="!(hideAdvancedOptions)">
+            <label>Color Field</label>
+            <select class="form-control" ng-model="options.colorField" ng-options="field.prettyName for field in fields" ng-disabled="!(fields.length > 0)" ng-change="queryForData()">
                 <option value="">None</option>
             </select>
         </div>
 
         <div class="form-group" ng-show="!(hideAdvancedOptions)">
             <label>Title Field</label>
-            <select class="form-control" ng-model="bindings.rowTitleField" ng-options="field.prettyName for field in fields" ng-disabled="!(fields.length > 0)" ng-change="queryForData()">
+            <select class="form-control" ng-model="options.titleField" ng-options="field.prettyName for field in fields" ng-disabled="!(fields.length > 0)" ng-change="queryForData()">
+                <option value="">None</option>
+            </select>
+        </div>
+
+        <div class="form-group" ng-show="!(hideAdvancedOptions)" ng-repeat="groupField in options.groupFields">
+            <label ng-bind="'Group Field ' + ($index + 1)"></label>
+            <select class="form-control" ng-model="groupField" ng-options="field.prettyName for field in fields" ng-disabled="!(fields.length > 0)" ng-change="changeGroupField($index, groupField)">
+                <option value="">None</option>
             </select>
         </div>
 
         <div class="form-group" ng-show="!(hideAdvancedOptions)">
-            <label>Start Field</label>
-            <select class="form-control" ng-model="bindings.startField" ng-options="field.prettyName for field in fields" ng-disabled="!(fields.length > 0)" ng-change="queryForData()">
-            </select>
-        </div>
-
-        <div class="form-group" ng-show="!(hideAdvancedOptions)">
-            <label>End Field</label>
-            <select class="form-control" ng-model="bindings.endField" ng-options="field.prettyName for field in fields" ng-disabled="!(fields.length > 0)" ng-change="queryForData()">
+            <label ng-bind="'Group Field ' + (options.groupFields.length + 1)"></label>
+            <select class="form-control" ng-model="options.newGroupField" ng-options="field.prettyName for field in fields" ng-disabled="!(fields.length > 0)" ng-change="addGroupField()">
+                <option value="">None</option>
             </select>
         </div>
     </options-menu>
 </div>
 
-<div class="header-container filter-container" ng-show="(filterSet.key && filterSet.value) || legent.colors">
+<div class="header-container filter-container" ng-show="(filterSet.key && filterSet.value) || legend.colors">
     <div class="header-item filter-reset pull-right" ng-show="filterSet.key && filterSet.value" title="{{filterSet.key}}={{filterSet.value}}">
         <span class="filter-label">{{filterSet.key}}={{filterSet.value}}</span>
         <span class="glyphicon glyphicon-remove" ng-click="removeFilter()"></span>
@@ -79,6 +71,6 @@
 
 <div class="gantt-chart" gantt data="data" api="registerHooks">
     <gantt-tooltips></gantt-tooltips>
-    <gantt-tree enabled="(options.firstGroupField != undefined && options.firstGroupField.columnName != '')"></gantt-tree>
+    <gantt-tree enabled="(options.groupFields.length > 0 && options.groupFields[0].field.columnName != '')"></gantt-tree>
     <gantt-groups></gantt-groups>
 </div>
