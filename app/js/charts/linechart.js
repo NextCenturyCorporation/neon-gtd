@@ -425,7 +425,7 @@ charts.LineChart.prototype.drawLines = function(opts) {
     }
 
     me.x = d3.time.scale.utc()
-    .range([0, (me.width - (me.margin.left + me.margin.right))], 0.25);
+    .range([25, (me.width - (me.margin.left + me.margin.right))], 0.25);
 
     me.xDomain = d3.extent(fullDataSet, function(d) {
         return d[me.xAttribute];
