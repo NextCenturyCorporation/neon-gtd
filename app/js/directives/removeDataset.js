@@ -34,6 +34,7 @@ angular.module('neonDemo.directives')
             $scope.removeDatasetDatabaseName = '';
             $scope.datastoreType = datasetService.getDatastore() || 'mongo';
             $scope.datastoreHost = datasetService.getHostname() || 'localhost';
+            $scope.errorMessage = undefined;
 
             /**
              * Sends a request to remove a dataset associated with the username and database name currently entered in the text fields.
@@ -57,9 +58,6 @@ angular.module('neonDemo.directives')
                 $element.find('#removeDatasetModal').modal('hide');
             };
 
-            // TODO - window.alert technically works here, but isn't necessarily the prettiest solution.
-            // Should change this to use the errorNotificationService at some point - it's only not doing
-            // that now because the error shows up in the options menu rather than the modal for some reason.
             /**
              * Failure callback for $scope.removeDataset. Shows an error message saying what went wrong.
              * @method removeFailure
@@ -67,10 +65,12 @@ angular.module('neonDemo.directives')
              */
             var removeFailure = function(response) {
                 if(response.responseJSON && response.responseJSON.message) {
-                    window.alert(response.responseJSON.message);
+                    $scope.errorMessage = errorNotificationService.showErrorMessage($element.children('#removeDatasetModal'),
+                        response.responseJSON.message, response.responseJSON.stackTrace ? response.responseJSON.stackTrace : response.responseJSON.message);
                 } else {
                     var result = JSON.parse(response);
-                    window.alert(result.message);
+                    $scope.errorMessage = errorNotificationService.showErrorMessage($element.children('#removeDatasetModal'),
+                        result.message, result.stackTrace ? result.stackTrace : result.message);
                 }
             };
 
@@ -82,6 +82,10 @@ angular.module('neonDemo.directives')
              * @method removeDatasetModalOnShow
              */
             var removeDatasetModalOnShow = function() {
+                if($scope.errorMessage) {
+                    errorNotificationService.hideErrorMessage($scope.errorMessage);
+                    $scope.errorMessage = undefined;
+                }
                 $scope.removeDatasetDatabaseName = '';
                 $scope.removeDatasetUserName = importService.getUserName();
                 $scope.datastoreType = datasetService.getDatastore() || 'mongo';
