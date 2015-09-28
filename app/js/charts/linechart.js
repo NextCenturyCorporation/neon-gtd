@@ -47,28 +47,29 @@ charts.LineChart = function(rootElement, selector, opts) {
 
     this.hiddenSeries = [];
 
+    this.seriesToColors = opts.seriesToColors || {};
     this.colors = [];
     this.colorRange = [
-        '#39b54a',
-        '#C23333',
-        '#3662CC',
-        "#ff7f0e",
-        "#9467bd",
-        "#8c564b",
-        "#e377c2",
-        "#7f7f7f",
-        "#bcbd22",
-        "#17becf",
-        "#98df8a",
-        "#ff9896",
-        "#aec7e8",
-        "#ffbb78",
-        "#c5b0d5",
-        "#c49c94",
-        "#f7b6d2",
-        "#c7c7c7",
-        "#dbdb8d",
-        "#9edae5"
+        '#39b54a', // green
+        '#C23333', // red
+        '#3662CC', // blue
+        "#ff7f0e", // orange
+        "#9467bd", // purple
+        "#8c564b", // brown
+        "#e377c2", // pink
+        "#7f7f7f", // gray
+        "#bcbd22", // yellow
+        "#17becf", // cyan
+        "#98df8a", // light green
+        "#ff9896", // light red
+        "#aec7e8", // light blue
+        "#ffbb78", // light orange
+        "#c5b0d5", // light purple
+        "#c49c94", // light brown
+        "#f7b6d2", // light pink
+        "#c7c7c7", // light gray
+        "#dbdb8d", // light yellow
+        "#9edae5"  // light cyan
     ];
     this.colorScale = d3.scale.ordinal().range(this.colorRange);
 
@@ -177,9 +178,17 @@ charts.LineChart.prototype.drawChart = function() {
 };
 
 charts.LineChart.prototype.calculateColor = function(seriesObject) {
-    var color = this.colorScale(seriesObject.series);
     var hidden = this.hiddenSeries.indexOf(seriesObject.series) >= 0 ? true : false;
     var index = -1;
+    var color;
+
+    if(this.seriesToColors[seriesObject.series]) {
+        color = this.seriesToColors[seriesObject.series];
+    } else if(Object.keys(this.seriesToColors).length) {
+        color = this.seriesToColors[""] || "#7f7f7f";
+    } else {
+        color = this.colorScale(seriesObject.series);
+    }
 
     for(var i = this.colors.length - 1; i > -1; i--) {
         if(this.colors[i].series === seriesObject.series) {
