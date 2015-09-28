@@ -435,8 +435,8 @@ function($filter, $timeout, connectionService, datasetService, errorNotification
 
                 $scope.messenger.publish("news", {
                     news: news,
-                    name: bindFeedName || datasetService.getMapping($scope.options.database.name, $scope.options.table.name, "newsfeed_name") || "graph",
-                    type: bindFeedType || datasetService.getMapping($scope.options.database.name, $scope.options.table.name, "newsfeed_type") || ""
+                    name: $scope.bindFeedName || datasetService.getMapping($scope.options.database.name, $scope.options.table.name, "newsfeed_name") || "graph",
+                    type: $scope.bindFeedType || datasetService.getMapping($scope.options.database.name, $scope.options.table.name, "newsfeed_type") || ""
                 });
             };
 
@@ -447,7 +447,7 @@ function($filter, $timeout, connectionService, datasetService, errorNotification
              */
             var publishNewsHighlights = function() {
                 $scope.messenger.publish("news_highlights", {
-                    name: bindFeedName || datasetService.getMapping($scope.options.database.name, $scope.options.table.name, "newsfeed_name") || "graph",
+                    name: $scope.bindFeedName || datasetService.getMapping($scope.options.database.name, $scope.options.table.name, "newsfeed_name") || "graph",
                     show: {
                         heads: $scope.mediator ? $scope.mediator.getNodeIdsInSelectedNetwork() : []
                     },
