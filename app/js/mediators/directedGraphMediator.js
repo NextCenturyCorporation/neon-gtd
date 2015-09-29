@@ -73,7 +73,7 @@ mediators.DirectedGraphMediator = function(root, selector, callbacks) {
         linkClickHandler: createFunctionToHandleLinkClick(this)
     });
 
-    this.graph.createArrowhead(mediators.DirectedGraphMediator.FOCUSED_COLOR_ARROWHEAD, mediators.DirectedGraphMediator.FOCUSED_COLOR, this.graph.DEFAULT_LINK_STROKE_OPACITY);
+    this.graph.createArrowhead(mediators.DirectedGraphMediator.FOCUSED_COLOR_ARROWHEAD_NAME, mediators.DirectedGraphMediator.FOCUSED_COLOR, this.graph.DEFAULT_LINK_STROKE_OPACITY);
 };
 
 /**
@@ -1052,7 +1052,7 @@ var createFunctionToCalculateLinkOpacity = function(mediator) {
 var createFunctionToFindLinkArrowhead = function(mediator) {
     return function(link) {
         if(mediator.selected.mouseoverNetworkId === link.network || mediator.selected.graphNetworkId === link.network) {
-            return mediators.DirectedGraphMediator.FOCUSED_COLOR_ARROWHEAD;
+            return mediators.DirectedGraphMediator.FOCUSED_COLOR_ARROWHEAD_NAME;
         }
         return mediator.graph.DEFAULT_LINK_ARROWHEAD;
     };
@@ -1444,15 +1444,13 @@ mediators.DirectedGraphMediator.prototype.createLegend = function(useNodeCluster
 mediators.DirectedGraphMediator.NODE_TYPE = "node";
 mediators.DirectedGraphMediator.CLUSTER_TYPE = "cluster";
 
-// Color codes copied from d3.scale.category10().
-mediators.DirectedGraphMediator.DEFAULT_COLOR = "#1f77b4"; // blue
-mediators.DirectedGraphMediator.CLUSTER_COLOR = "#9467bd"; // purple
-mediators.DirectedGraphMediator.FLAGGED_COLOR = "#ff7f0e"; // orange
-mediators.DirectedGraphMediator.FOCUSED_COLOR = "#2ca02c"; // green
-mediators.DirectedGraphMediator.MISSING_COLOR = "#17becf"; // light blue
+mediators.DirectedGraphMediator.DEFAULT_COLOR = neonColors.BLUE;
+mediators.DirectedGraphMediator.CLUSTER_COLOR = neonColors.PURPLE;
+mediators.DirectedGraphMediator.FLAGGED_COLOR = neonColors.ORANGE;
+mediators.DirectedGraphMediator.FOCUSED_COLOR = neonColors.GREEN;
+mediators.DirectedGraphMediator.MISSING_COLOR = neonColors.CYAN;
 
-// Name for the arrowhead marker with the focused color.
-mediators.DirectedGraphMediator.FOCUSED_COLOR_ARROWHEAD = "focused";
+mediators.DirectedGraphMediator.FOCUSED_COLOR_ARROWHEAD_NAME = "focused";
 
 mediators.DirectedGraphMediator.FLAG_RESULT = "result";
 mediators.DirectedGraphMediator.FLAG_LINKED = "linked";

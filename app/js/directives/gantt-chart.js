@@ -25,29 +25,31 @@ function(connectionService, datasetService, errorNotificationService, filterServ
         scope: {
             bindRowTitleField: "=",
             bindStartField: "=",
-            bindEndField: "="
+            bindEndField: "=",
+            bindColorField: "=",
+            bindGroup1Field: "="
         },
         link: function($scope, $element) {
             $element.addClass('gantt-chart-directive');
+
             $scope.element = $element;
+
+            $scope.databases = [];
+            $scope.tables = [];
+            $scope.fields = [];
             $scope.legend = {};
             $scope.filterKeys = filterService.createFilterKeys("gantt-chart", datasetService.getDatabaseAndTableNames());
             $scope.filterSet = {};
 
-            $scope.bindings = {
-                rowTitleField: {},
-                startField: {},
-                endField: {}
-            };
-
             $scope.options = {
                 database: {},
                 table: {},
+                titleField: {},
+                startField: {},
+                endField: {},
                 colorField: {},
-                firstGroupField: {},
-                secondGroupField: {},
-                thirdGroupField: {},
-                fourthGroupField: {}
+                newGroupField: {},
+                groupFields: []
             };
 
             $scope.registerHooks = function(ganttApi) {
@@ -81,194 +83,6 @@ function(connectionService, datasetService, errorNotificationService, filterServ
                     $scope.filterSet = {};
                     $scope.queryForData();
                 });
-            };
-
-            var buildTree = function(data) {
-                $scope.tree = {};
-
-                for(var i = 0; i < data.length; i++) {
-                    var groupValue1;
-                    if($scope.options.firstGroupField && $scope.options.firstGroupField.columnName) {
-                        groupValue1 = data[i][$scope.options.firstGroupField.columnName];
-                        if(!$scope.tree[groupValue1]) {
-                            if(!$scope.options.secondGroupField || !$scope.options.secondGroupField.columnName) {
-                                $scope.tree[data[i][$scope.options.firstGroupField.columnName]] = {
-                                    tasks: []
-                                };
-                            } else {
-                                $scope.tree[data[i][$scope.options.firstGroupField.columnName]] = {};
-                            }
-                        }
-                    }
-
-                    var groupValue2;
-                    if($scope.options.secondGroupField && $scope.options.secondGroupField.columnName) {
-                        groupValue2 = data[i][$scope.options.secondGroupField.columnName];
-
-                        if(!$scope.tree[groupValue1][groupValue2]) {
-                            if(!$scope.options.thirdGroupField || !$scope.options.thirdGroupField.columnName) {
-                                $scope.tree[groupValue1][groupValue2] = {
-                                    tasks: []
-                                };
-                            } else {
-                                $scope.tree[groupValue1][groupValue2] = {};
-                            }
-                        }
-                    }
-
-                    var groupValue3;
-                    if($scope.options.thirdGroupField && $scope.options.thirdGroupField.columnName) {
-                        groupValue3 = data[i][$scope.options.thirdGroupField.columnName];
-
-                        if(!$scope.tree[groupValue1][groupValue2][groupValue3]) {
-                            if(!$scope.options.fourthGroupField || !$scope.options.fourthGroupField.columnName) {
-                                $scope.tree[groupValue1][groupValue2][groupValue3] = {
-                                    tasks: []
-                                };
-                            } else {
-                                $scope.tree[groupValue1][groupValue2][groupValue3] = {};
-                            }
-                        }
-                    }
-
-                    var groupValue4;
-                    if($scope.options.fourthGroupField && $scope.options.fourthGroupField.columnName) {
-                        groupValue4 = data[i][$scope.options.fourthGroupField.columnName];
-
-                        if(!$scope.tree[groupValue1][groupValue2][groupValue3][groupValue4]) {
-                            $scope.tree[groupValue1][groupValue2][groupValue3][groupValue4] = {
-                                tasks: []
-                            };
-                        }
-                    }
-                }
-            };
-
-            var formatData = function(data) {
-                var i;
-                var color = d3.scale.category20();
-                var colorList;
-                if($scope.options.colorField && $scope.options.colorField.columnName) {
-                    colorList = createFieldList($scope.options.colorField.columnName, data);
-                    $scope.legend.colors = [];
-                    for(i = 0; i < colorList.length; i++) {
-                        $scope.legend.colors.push({
-                            color: color(i),
-                            text: colorList[i]
-                        });
-                    }
-                }
-
-                if($scope.options.firstGroupField && $scope.options.firstGroupField.columnName) {
-                    $scope.data = [];
-                    buildTree(data);
-                } else {
-                    $scope.tree = undefined;
-                    var mainTask = {
-                        name: "Events"
-                    };
-                    $scope.data = [mainTask];
-                }
-
-                var row;
-
-                for(i = 0; i < data.length; i++) {
-                    var parent;
-                    if(!$scope.tree) {
-                        parent = {
-                            parent: 'Events',
-                            tasks: []
-                        };
-                        $scope.data.push(parent);
-                    } else {
-                        parent = getTreeParent(data[i]);
-                    }
-
-                    var colorVal;
-                    if($scope.options.colorField && $scope.options.colorField.columnName) {
-                        colorVal = color(colorList.indexOf(data[i][$scope.options.colorField.columnName]));
-                    } else {
-                        colorVal = color(i);
-                    }
-                    row = {
-                        id: data[i]._id,
-                        name: data[i][$scope.bindings.rowTitleField.columnName],
-                        from: data[i][$scope.bindings.startField.columnName],
-                        to: data[i][$scope.bindings.endField.columnName],
-                        color: colorVal
-                    };
-                    parent.tasks.push(row);
-                }
-
-                pushTreeToData();
-            };
-
-            var createFieldList = function(field, data) {
-                var fieldList = [];
-                var value;
-                for(var i = 0; i < data.length; i++) {
-                    value = data[i][field];
-                    if(fieldList.indexOf(value) === -1) {
-                        fieldList.push(value);
-                    }
-                }
-                return fieldList;
-            };
-
-            var getTreeParent = function(node) {
-                var groupValues = [];
-                var parent;
-                if($scope.options.fourthGroupField && $scope.options.fourthGroupField.columnName) {
-                    groupValues[0] = node[$scope.options.firstGroupField.columnName];
-                    groupValues[1] = node[$scope.options.secondGroupField.columnName];
-                    groupValues[2] = node[$scope.options.thirdGroupField.columnName];
-                    groupValues[3] = node[$scope.options.fourthGroupField.columnName];
-                    parent = $scope.tree[groupValues[0]][groupValues[1]][groupValues[2]][groupValues[3]];
-                } else if($scope.options.thirdGroupField && $scope.options.thirdGroupField.columnName) {
-                    groupValues[0] = node[$scope.options.firstGroupField.columnName];
-                    groupValues[1] = node[$scope.options.secondGroupField.columnName];
-                    groupValues[2] = node[$scope.options.thirdGroupField.columnName];
-                    parent = $scope.tree[groupValues[0]][groupValues[1]][groupValues[2]];
-                } else if($scope.options.secondGroupField && $scope.options.secondGroupField.columnName) {
-                    groupValues[0] = node[$scope.options.firstGroupField.columnName];
-                    groupValues[1] = node[$scope.options.secondGroupField.columnName];
-                    parent = $scope.tree[groupValues[0]][groupValues[1]];
-                } else if($scope.options.firstGroupField && $scope.options.firstGroupField.columnName) {
-                    parent = $scope.tree[node[$scope.options.firstGroupField.columnName]];
-                }
-                return parent;
-            };
-
-            var pushTreeToData = function() {
-                for(var key in $scope.tree) {
-                    if($scope.tree.hasOwnProperty(key)) {
-                        pushTreeNodeToData($scope.tree[key], key);
-                    }
-                }
-            };
-
-            var pushTreeNodeToData = function(node, nodeName, parentName) {
-                if(node.tasks) {
-                    $scope.data.push({
-                        parent: parentName,
-                        name: nodeName,
-                        tasks: node.tasks
-                    });
-                } else {
-                    var newNode = {
-                        name: nodeName
-                    };
-                    if(parent) {
-                        newNode.parent = parentName;
-                    }
-                    $scope.data.push(newNode);
-
-                    for(var key in node) {
-                        if(node.hasOwnProperty(key)) {
-                            pushTreeNodeToData(node[key], key, nodeName);
-                        }
-                    }
-                }
             };
 
             var initialize = function() {
@@ -341,48 +155,32 @@ function(connectionService, datasetService, errorNotificationService, filterServ
                 $scope.loadingData = true;
                 $scope.fields = datasetService.getSortedFields($scope.options.database.name, $scope.options.table.name);
 
-                $scope.options.colorField = {
-                    columnName: "",
-                    prettyName: ""
-                };
-                $scope.options.firstGroupField = {
-                    columnName: "",
-                    prettyName: ""
-                };
-                $scope.options.secondGroupField = {
-                    columnName: "",
-                    prettyName: ""
-                };
-                $scope.options.thirdGroupField = {
-                    columnName: "",
-                    prettyName: ""
-                };
-                $scope.options.fourthGroupField = {
-                    columnName: "",
-                    prettyName: ""
-                };
-
-                var rowTitleField = $scope.bindRowTitleField || "_id";
-                $scope.bindings.rowTitleField = _.find($scope.fields, function(field) {
-                    return field.columnName === rowTitleField;
-                }) || {
-                    columnName: "",
-                    prettyName: ""
-                };
                 var startField = $scope.bindStartField || "Start";
-                $scope.bindings.startField = _.find($scope.fields, function(field) {
+                $scope.options.startField = _.find($scope.fields, function(field) {
                     return field.columnName === startField;
-                }) || {
-                    columnName: "",
-                    prettyName: ""
-                };
+                }) || datasetService.createBlankField();
                 var endField = $scope.bindEndField || "End";
-                $scope.bindings.endField = _.find($scope.fields, function(field) {
+                $scope.options.endField = _.find($scope.fields, function(field) {
                     return field.columnName === endField;
-                }) || {
-                    columnName: "",
-                    prettyName: ""
-                };
+                }) || datasetService.createBlankField();
+                var colorField = $scope.bindColorField || "";
+                $scope.options.colorField = _.find($scope.fields, function(field) {
+                    return field.columnName === colorField;
+                }) || datasetService.createBlankField();
+                var titleField = $scope.bindRowTitleField || "";
+                $scope.options.titleField = _.find($scope.fields, function(field) {
+                    return field.columnName === titleField;
+                }) || datasetService.createBlankField();
+
+                $scope.options.groupFields = [];
+                if($scope.bindGroup1Field) {
+                    var group1 = _.find($scope.fields, function(field) {
+                        return field.columnName === $scope.bindGroup1Field;
+                    });
+                    if(group1) {
+                        $scope.options.groupFields.push(group1);
+                    }
+                }
 
                 $scope.queryForData();
             };
@@ -393,15 +191,15 @@ function(connectionService, datasetService, errorNotificationService, filterServ
                     $scope.errorMessage = undefined;
                 }
 
+                $scope.legend.colors = [];
+
                 var connection = connectionService.getActiveConnection();
 
-                if(!connection) {
+                if(!connection || !datasetService.isFieldValid($scope.options.startField) || !datasetService.isFieldValid($scope.options.endField)) {
+                    createGanttChart([]);
                     $scope.loadingData = false;
                     return;
                 }
-
-                var query = new neon.query.Query()
-                    .selectFrom($scope.options.database.name, $scope.options.table.name);
 
                 XDATA.userALE.log({
                     activity: "alter",
@@ -413,6 +211,8 @@ function(connectionService, datasetService, errorNotificationService, filterServ
                     source: "system",
                     tags: ["query", "gantt-chart"]
                 });
+
+                var query = buildQuery();
 
                 connection.executeQuery(query, function(queryResults) {
                     $scope.$apply(function() {
@@ -427,9 +227,11 @@ function(connectionService, datasetService, errorNotificationService, filterServ
                             tags: ["receive", "gantt-chart"]
                         });
 
-                        $scope.queryData = queryResults.data;
-                        formatData($scope.queryData);
+                        createGanttChart(queryResults.data);
                         $scope.loadingData = false;
+                        if($scope.options.groupFields.length) {
+                            $element.find(".gantt-side").width(200);
+                        }
 
                         XDATA.userALE.log({
                             activity: "alter",
@@ -454,13 +256,163 @@ function(connectionService, datasetService, errorNotificationService, filterServ
                         tags: ["failed", "gantt-chart"]
                     });
 
-                    formatData(queryResults.data);
+                    createGanttChart([]);
                     $scope.loadingData = false;
 
                     if(response.responseJSON) {
                         $scope.errorMessage = errorNotificationService.showErrorMessage($element, response.responseJSON.error, response.responseJSON.stackTrace);
                     }
                 });
+            };
+
+            var buildQuery = function() {
+                var fields = [$scope.options.startField.columnName, $scope.options.endField.columnName];
+                if(datasetService.isFieldValid($scope.options.colorField)) {
+                    fields.push($scope.options.colorField.columnName);
+                }
+                if(datasetService.isFieldValid($scope.options.titleField)) {
+                    fields.push($scope.options.titleField.columnName);
+                }
+                $scope.options.groupFields.forEach(function(groupField) {
+                    fields.push(groupField.columnName);
+                });
+                return new neon.query.Query().selectFrom($scope.options.database.name, $scope.options.table.name).withFields(fields);
+            };
+
+            var createGanttChart = function(data) {
+                var colorScale = d3.scale.ordinal().range(neonColors.LIST);
+                var colors = [];
+
+                var groupsToColors = {};
+
+                if(datasetService.isFieldValid($scope.options.colorField)) {
+                    groupsToColors = datasetService.getActiveDatasetColorMaps($scope.options.database.name, $scope.options.table.name, $scope.options.colorField.columnName);
+                    if(Object.keys(groupsToColors).length) {
+                        Object.keys(groupsToColors).forEach(function(group) {
+                            $scope.legend.colors.push({
+                                color: groupsToColors[group],
+                                text: group
+                            });
+                        });
+                    } else {
+                        colors = createFieldValueList($scope.options.colorField.columnName, data);
+                        colors.forEach(function(color, index) {
+                            $scope.legend.colors.push({
+                                color: colorScale(index),
+                                text: color
+                            });
+                        });
+                    }
+                }
+
+                $scope.data = [];
+                $scope.tree = {};
+                if($scope.options.groupFields.length) {
+                    buildTree(data);
+                }
+
+                data.forEach(function(item, index) {
+                    var treeParent;
+                    if($scope.options.groupFields.length) {
+                        treeParent = getTreeParent(item);
+                    } else {
+                        treeParent = {
+                            tasks: []
+                        };
+                        $scope.data.push(treeParent);
+                    }
+
+                    var color;
+                    if(Object.keys(groupsToColors).length) {
+                        color = groupsToColors[item[$scope.options.colorField.columnName]] || neonColors.DEFAULT;
+                    } else if(colors.length) {
+                        color = colorScale(colors.indexOf(item[$scope.options.colorField.columnName]));
+                    } else {
+                        color = colorScale(index);
+                    }
+
+                    treeParent.tasks.push({
+                        id: item._id,
+                        name: datasetService.isFieldValid($scope.options.titleField) ? item[$scope.options.titleField.columnName] : "",
+                        from: item[$scope.options.startField.columnName],
+                        to: item[$scope.options.endField.columnName],
+                        color: color
+                    });
+                });
+
+                if($scope.options.groupFields.length) {
+                    Object.keys($scope.tree).forEach(function(name) {
+                        saveTreeInData($scope.tree[name], name);
+                    });
+                }
+            };
+
+            var createFieldValueList = function(field, data) {
+                var list = [];
+                data.forEach(function(item) {
+                    if(list.indexOf(item[field]) < 0) {
+                        list.push(item[field]);
+                    }
+                });
+                return list;
+            };
+
+            var buildTree = function(data) {
+                if($scope.options.groupFields.length) {
+                    data.forEach(function(item) {
+                        $scope.tree[item[$scope.options.groupFields[0].columnName]] = buildSubtree($scope.tree, item, 0);
+                    });
+                }
+            };
+
+            var buildSubtree = function(tree, item, rowIndex) {
+                var field = $scope.options.groupFields[rowIndex];
+                if(rowIndex + 1 < $scope.options.groupFields.length) {
+                    tree[item[field.columnName]] = tree[item[field.columnName]] || {};
+                    tree[item[field.columnName]][item[$scope.options.groupFields[rowIndex + 1].columnName]] = buildSubtree(tree[item[field.columnName]], item, rowIndex + 1);
+                    return tree[item[field.columnName]];
+                }
+                return tree[item[field.columnName]] || {
+                    tasks: []
+                };
+            };
+
+            var getTreeParent = function(item) {
+                var treeParent = $scope.tree;
+                $scope.options.groupFields.forEach(function(groupField) {
+                    treeParent = treeParent[item[groupField.columnName]];
+                });
+                return treeParent;
+            };
+
+            var saveTreeInData = function(tree, name, parentName) {
+                $scope.data.push({
+                    name: name,
+                    parent: parentName,
+                    tasks: tree.tasks
+                });
+                if(!tree.tasks) {
+                    Object.keys(tree).forEach(function(childName) {
+                        saveTreeInData(tree[childName], childName, name);
+                    });
+                }
+            };
+
+            $scope.changeGroupField = function(index, field) {
+                if(datasetService.isFieldValid(field)) {
+                    $scope.options.groupFields[index] = field;
+                } else {
+                    $scope.options.groupFields.splice(index, 1);
+                };
+                $scope.queryForData();
+            };
+
+            $scope.addGroupField = function() {
+                if(datasetService.isFieldValid($scope.options.newGroupField)) {
+                    $scope.options.groupFields.push($scope.options.newGroupField);
+                };
+                $scope.options.newGroupField = {};
+                $scope.queryForData();
             };
 
             neon.ready(function() {

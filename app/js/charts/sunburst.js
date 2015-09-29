@@ -114,7 +114,7 @@ charts.SunburstChart = function(rootElement, selector, opts) {
     this.y = d3.scale.linear()
         .range([0, this.radius]);
 
-    this.color = d3.scale.category20c();
+    this.colorScale = d3.scale.ordinal().range(neonColors.LIST);
 
     this.countFormatter = d3.format(' ,.0f');
 
@@ -222,7 +222,7 @@ charts.SunburstChart = function(rootElement, selector, opts) {
             .enter().append("path")
                 .attr("d", this.arc)
                 .style("fill", function(d) {
-                    return me.color((d.children ? d : d.parent).name);
+                    return me.colorScale((d.children ? d : d.parent).name);
                 })
                 .on("click", click)
                 .on("mouseover", onMouseOver)

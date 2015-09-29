@@ -92,34 +92,12 @@ coreMap.Map.Layer.PointsLayer = OpenLayers.Class(OpenLayers.Layer.Vector, {
         var args = [name, extendOptions];
         OpenLayers.Layer.Vector.prototype.initialize.apply(this, args);
 
-        if(this.colors) {
+        if(Object.keys(this.colors).length) {
             this.hasColorsConfigured = true;
         }
 
-        this.colorRange = [
-            '#39b54a', // green
-            '#C23333', // red
-            '#3662CC', // blue
-            "#ff7f0e", // orange
-            "#9467bd", // purple
-            "#8c564b", // brown
-            "#e377c2", // pink
-            "#7f7f7f", // gray
-            "#bcbd22", // yellow
-            "#17becf", // cyan
-            "#98df8a", // light green
-            "#ff9896", // light red
-            "#aec7e8", // light blue
-            "#ffbb78", // light orange
-            "#c5b0d5", // light purple
-            "#c49c94", // light brown
-            "#f7b6d2", // light pink
-            "#c7c7c7", // light gray
-            "#dbdb8d", // light yellow
-            "#9edae5"  // light cyan
-        ];
         this.visibility = true;
-        this.colorScale = d3.scale.ordinal().range(this.colorRange);
+        this.colorScale = d3.scale.ordinal().range(neonColors.LIST);
     },
 
     createClusterStyle: function() {
@@ -242,7 +220,7 @@ coreMap.Map.Layer.PointsLayer.prototype.calculateColor = function(element) {
     if(this.colors[category]) {
         color = this.colors[category];
     } else if(this.hasColorsConfigured) {
-        color = this.colors[""] || "#7f7f7f";
+        color = this.colors[""] || neonColors.DEFAULT;
     } else if(category && this.gradient && _.isDate(category)) {
         color = "#" + this.rainbow.colourAt(category.getTime());
     } else if(category && !this.gradient) {
