@@ -42,6 +42,7 @@ function($interval, $filter, connectionService, datasetService, errorNotificatio
             bindDateField: '=',
             bindTable: '=',
             bindDatabase: '=',
+            bindGranularity: '=',
             hideHeader: '=?',
             hideAdvancedOptions: '=?',
             overrideStartDate: '=?',
@@ -333,16 +334,15 @@ function($interval, $filter, connectionService, datasetService, errorNotificatio
 
             /**
              * Update any book-keeping fields that need to change when the granularity changes.
-             * @param {String} the constant for the new granularity
              */
-            $scope.setGranularity = function(newGranularity) {
-                if(newGranularity === MONTH) {
+            $scope.updateBucketizer = function() {
+                if($scope.options.granularity === MONTH) {
                     $scope.bucketizer = $scope.monthBucketizer;
-                } else if(newGranularity === YEAR) {
+                } else if($scope.options.granularity === YEAR) {
                     $scope.bucketizer = $scope.yearBucketizer;
                 } else {
                     $scope.bucketizer = $scope.dayHourBucketizer;
-                    $scope.bucketizer.setGranularity(newGranularity);
+                    $scope.bucketizer.setGranularity($scope.options.granularity);
                 }
             };
 
@@ -450,6 +450,11 @@ function($interval, $filter, connectionService, datasetService, errorNotificatio
              * @method initialize
              */
             $scope.initialize = function() {
+                if($scope.bindGranularity) {
+                    $scope.options.granularity = $scope.bindGranularity.toLowerCase();
+                    $scope.updateBucketizer();
+                }
+
                 $element.find(".neon-datetimepicker").on("hide.bs.dropdown", function() {
                     return false;
                 });
@@ -472,7 +477,7 @@ function($interval, $filter, connectionService, datasetService, errorNotificatio
                         });
                         $scope.startDateForDisplay = undefined;
                         $scope.endDateForDisplay = undefined;
-                        $scope.setGranularity(newVal);
+                        $scope.updateBucketizer();
 
                         $scope.updateDates();
 

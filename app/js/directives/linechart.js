@@ -43,6 +43,7 @@ function(connectionService, datasetService, errorNotificationService, filterServ
             bindAggregationField: '=',
             bindTable: '=',
             bindDatabase: '=',
+            bindGranularity: '=',
             colorMappings: '&',
             hideHeader: '=?',
             hideAdvancedOptions: '=?'
@@ -93,7 +94,7 @@ function(connectionService, datasetService, errorNotificationService, filterServ
                 attrY: {},
                 categoryField: {},
                 aggregation: "count",
-                granularity: DAY,
+                granularity: $scope.bindGranularity ? $scope.bindGranularity.toLowerCase() : DAY,
                 trendlines: 'hide'
             };
 
