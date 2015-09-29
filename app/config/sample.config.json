@@ -236,9 +236,6 @@
             "longitudeMapping": "longitude",
             "limit": 5000,
             "colorBy": "magType",
-            "colors": {
-                "typeA": "#123456"
-            },
             "sizeBy": "mag"
         }],
         "linkyConfig": {
@@ -246,6 +243,18 @@
           "hashtags": false,
           "urls": true,
           "linkTo": "twitter"
+        },
+        "options": {
+            "colorMaps": {
+                "test": {
+                    "earthquakes": {
+                        "myField": {
+                            "fieldA": "#123456",
+                            "fieldB": "#654321"
+                        }
+                    }
+                }
+            }
         }
     }],
 
