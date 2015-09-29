@@ -14,26 +14,26 @@
 
         <div class="form-group" ng-show="!(hideAdvancedOptions)">
             <label>Start Field</label>
-            <select class="form-control" ng-model="options.startField" ng-options="field.prettyName for field in fields" ng-disabled="!(fields.length > 0)" ng-change="queryForData()">
+            <select class="form-control" ng-model="options.startField" ng-options="field.prettyName for field in fields" ng-disabled="!(fields.length > 0)" ng-change="queryForData(true)">
             </select>
         </div>
 
         <div class="form-group" ng-show="!(hideAdvancedOptions)">
             <label>End Field</label>
-            <select class="form-control" ng-model="options.endField" ng-options="field.prettyName for field in fields" ng-disabled="!(fields.length > 0)" ng-change="queryForData()">
+            <select class="form-control" ng-model="options.endField" ng-options="field.prettyName for field in fields" ng-disabled="!(fields.length > 0)" ng-change="queryForData(true)">
             </select>
         </div>
 
         <div class="form-group" ng-show="!(hideAdvancedOptions)">
             <label>Color Field</label>
-            <select class="form-control" ng-model="options.colorField" ng-options="field.prettyName for field in fields" ng-disabled="!(fields.length > 0)" ng-change="queryForData()">
+            <select class="form-control" ng-model="options.colorField" ng-options="field.prettyName for field in fields" ng-disabled="!(fields.length > 0)" ng-change="queryForData(true)">
                 <option value="">None</option>
             </select>
         </div>
 
         <div class="form-group" ng-show="!(hideAdvancedOptions)">
             <label>Title Field</label>
-            <select class="form-control" ng-model="options.titleField" ng-options="field.prettyName for field in fields" ng-disabled="!(fields.length > 0)" ng-change="queryForData()">
+            <select class="form-control" ng-model="options.titleField" ng-options="field.prettyName for field in fields" ng-disabled="!(fields.length > 0)" ng-change="queryForData(true)">
                 <option value="">None</option>
             </select>
         </div>
@@ -51,13 +51,35 @@
                 <option value="">None</option>
             </select>
         </div>
+
+        <div class="form-group" ng-show="(options.groupFields.length > 0 && options.groupFields[0].prettyName != '')">
+            <label ng-bind="'Select ' + options.groupFields[0].prettyName"></label>
+            <div class="input-group">
+                <input type="text" class="form-control" placeholder="{{'Enter ' + options.groupFields[0].prettyName + '...'}}" ng-model="options.selectedGroup" ng-disabled="(options.groupFields.length == 0)">
+                <div class="input-group-btn">
+                    <button type="button" class="btn btn-default refresh" title="Select Group" ng-click="selectGroup()">
+                        <span class="glyphicon glyphicon-plus"></span>
+                    </button>
+                </div>
+            </div>
+
+            <select class="form-control" ng-model="options.selectedGroup" ng-options="group for group in options.selectableGroups track by group" ng-required="false" ng-disabled="(options.selectableGroups.length == 0) || (options.groupFields.length == 0) || (options.groupFields[0].prettyName == '')" ng-change="selectGroup()">
+                <option value="" ng-bind="'Select ' + options.groupFields[0].prettyName + '...'"></option>
+            </select>
+            </div>
+        </div>
     </options-menu>
 </div>
 
-<div class="header-container filter-container" ng-show="(filterSet.key && filterSet.value) || legend.colors">
-    <div class="header-item filter-reset pull-right" ng-show="filterSet.key && filterSet.value" title="{{filterSet.key}}={{filterSet.value}}">
-        <span class="filter-label">{{filterSet.key}}={{filterSet.value}}</span>
+<div class="header-container filter-container">
+    <div class="header-item filter-reset pull-right" ng-show="(filterSet.key && filterSet.value)" title="Filtered on Item">
+        <span class="filter-label">Filter</span>
         <span class="glyphicon glyphicon-remove" ng-click="removeFilter()"></span>
+    </div>
+
+    <div class="header-item filter-reset pull-right" ng-show="(options.selectedGroups.length > 0)" title="Selected Group(s)">
+        <span class="filter-label" ng-bind="options.selectedGroups.length + ' Selected'"></span>
+        <span class="glyphicon glyphicon-remove" ng-click="removeSelectedGroups()"></span>
     </div>
 
     <div class="legend" ng-show="legend.colors">

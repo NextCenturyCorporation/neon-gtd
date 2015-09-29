@@ -27,7 +27,8 @@ function(connectionService, datasetService, errorNotificationService, filterServ
             bindStartField: "=",
             bindEndField: "=",
             bindColorField: "=",
-            bindGroup1Field: "="
+            bindGroupFields: "=",
+            bindSelectedGroups: "="
         },
         link: function($scope, $element) {
             $element.addClass('gantt-chart-directive');
@@ -49,7 +50,10 @@ function(connectionService, datasetService, errorNotificationService, filterServ
                 endField: {},
                 colorField: {},
                 newGroupField: {},
-                groupFields: []
+                groupFields: [],
+                selectableGroups: [],
+                selectedGroups: [],
+                selectedGroup: ""
             };
 
             $scope.registerHooks = function(ganttApi) {
@@ -73,7 +77,7 @@ function(connectionService, datasetService, errorNotificationService, filterServ
                     }, "Gantt Chart", function() {
                         $scope.filterSet.key = "_id";
                         $scope.filterSet.value = id;
-                        $scope.queryForData();
+                        $scope.queryForData(true);
                     });
                 }
             };
@@ -81,7 +85,7 @@ function(connectionService, datasetService, errorNotificationService, filterServ
             $scope.removeFilter = function() {
                 filterService.removeFilters($scope.messenger, $scope.filterKeys, function() {
                     $scope.filterSet = {};
-                    $scope.queryForData();
+                    $scope.queryForData(true);
                 });
             };
 
@@ -173,19 +177,25 @@ function(connectionService, datasetService, errorNotificationService, filterServ
                 }) || datasetService.createBlankField();
 
                 $scope.options.groupFields = [];
-                if($scope.bindGroup1Field) {
-                    var group1 = _.find($scope.fields, function(field) {
-                        return field.columnName === $scope.bindGroup1Field;
+                if($scope.bindGroupFields) {
+                    var groupFieldNames = $scope.bindGroupFields.split(",");
+                    groupFieldNames.forEach(function(groupFieldName) {
+                        var groupFieldObject = _.find($scope.fields, function(field) {
+                            return field.columnName === groupFieldName;
+                        });
+                        if(groupFieldObject) {
+                            $scope.options.groupFields.push(groupFieldObject);
+                        }
                     });
-                    if(group1) {
-                        $scope.options.groupFields.push(group1);
-                    }
                 }
+
+                $scope.options.selectableGroups = [];
+                $scope.options.selectedGroups = $scope.bindSelectedGroups ? $scope.bindSelectedGroups.split(",") : [];
 
                 $scope.queryForData();
             };
 
-            $scope.queryForData = function() {
+            $scope.queryForData = function(ignoreGroupQuery) {
                 if($scope.errorMessage) {
                     errorNotificationService.hideErrorMessage($scope.errorMessage);
                     $scope.errorMessage = undefined;
@@ -201,61 +211,43 @@ function(connectionService, datasetService, errorNotificationService, filterServ
                     return;
                 }
 
-                XDATA.userALE.log({
-                    activity: "alter",
-                    action: "query",
-                    elementId: "gantt-chart",
-                    elementType: "canvas",
-                    elementSub: "gantt-chart",
-                    elementGroup: "chart_group",
-                    source: "system",
-                    tags: ["query", "gantt-chart"]
-                });
+                if(!ignoreGroupQuery && $scope.options.groupFields.length && datasetService.isFieldValid($scope.options.groupFields[0])) {
+                    var query = new neon.query.Query().selectFrom($scope.options.database.name, $scope.options.table.name)
+                        .groupBy($scope.options.groupFields[0].columnName)
+                        .aggregate(neon.query.COUNT, "*", "count")
+                        .sortBy("count", neon.query.DESCENDING)
+                        .ignoreFilters([$scope.filterKeys[$scope.options.database.name][$scope.options.table.name]]);
 
+                    connection.executeQuery(query, function(queryResults) {
+                        $scope.$apply(function() {
+                            $scope.options.selectableGroups = queryResults.data.map(function(item) {
+                                return item[$scope.options.groupFields[0].columnName];
+                            }) || [];
+                        });
+                        queryForGanttChartData(connection);
+                    }, function(response) {
+                        $scope.$apply(function() {
+                            $scope.options.selectableGroups = [];
+                        });
+                        queryForGanttChartData(connection);
+                    });
+                } else {
+                    queryForGanttChartData(connection);
+                }
+            };
+
+            var queryForGanttChartData = function(connection) {
                 var query = buildQuery();
 
                 connection.executeQuery(query, function(queryResults) {
                     $scope.$apply(function() {
-                        XDATA.userALE.log({
-                            activity: "alter",
-                            action: "receive",
-                            elementId: "gantt-chart",
-                            elementType: "canvas",
-                            elementSub: "gantt-chart",
-                            elementGroup: "chart_group",
-                            source: "system",
-                            tags: ["receive", "gantt-chart"]
-                        });
-
                         createGanttChart(queryResults.data);
                         $scope.loadingData = false;
                         if($scope.options.groupFields.length) {
                             $element.find(".gantt-side").width(200);
                         }
-
-                        XDATA.userALE.log({
-                            activity: "alter",
-                            action: "render",
-                            elementId: "gantt-chart",
-                            elementType: "canvas",
-                            elementSub: "gantt-chart",
-                            elementGroup: "chart_group",
-                            source: "system",
-                            tags: ["render", "gantt-chart"]
-                        });
                     });
                 }, function(response) {
-                    XDATA.userALE.log({
-                        activity: "alter",
-                        action: "failed",
-                        elementId: "gantt-chart",
-                        elementType: "canvas",
-                        elementSub: "gantt-chart",
-                        elementGroup: "chart_group",
-                        source: "system",
-                        tags: ["failed", "gantt-chart"]
-                    });
-
                     createGanttChart([]);
                     $scope.loadingData = false;
 
@@ -276,7 +268,17 @@ function(connectionService, datasetService, errorNotificationService, filterServ
                 $scope.options.groupFields.forEach(function(groupField) {
                     fields.push(groupField.columnName);
                 });
-                return new neon.query.Query().selectFrom($scope.options.database.name, $scope.options.table.name).withFields(fields);
+                var query = new neon.query.Query().selectFrom($scope.options.database.name, $scope.options.table.name).withFields(fields);
+
+                if($scope.options.groupFields.length && datasetService.isFieldValid($scope.options.groupFields[0])) {
+                    var whereClauses = $scope.options.selectedGroups.map(function(group) {
+                        return neon.query.where($scope.options.groupFields[0].columnName, "=", group);
+                    }) || [];
+                    if(whereClauses.length) {
+                        query.where(whereClauses.length === 1 ? whereClauses[0] : neon.query.or.apply(neon.query, whereClauses));
+                    }
+                }
+                return query;
             };
 
             var createGanttChart = function(data) {
@@ -413,6 +415,19 @@ function(connectionService, datasetService, errorNotificationService, filterServ
                 };
                 $scope.options.newGroupField = {};
                 $scope.queryForData();
+            };
+
+            $scope.selectGroup = function() {
+                if($scope.options.selectableGroups.indexOf($scope.options.selectedGroup) >= 0) {
+                    $scope.options.selectedGroups.push($scope.options.selectedGroup);
+                    $scope.queryForData(true);
+                }
+                $scope.options.selectedGroup = "";
+            };
+
+            $scope.removeSelectedGroups = function() {
+                $scope.options.selectedGroups = [];
+                $scope.queryForData(true);
             };
 
             neon.ready(function() {
