@@ -41,8 +41,8 @@ charts.TimelineSelectorChart = function(element, configuration) {
         }
     ];
 
-    // Cache our element.
     this.element = element;
+    this.config = {};
     this.d3element = d3.select(element);
     this.brushHandler = undefined;
     this.hoverListener = undefined;
@@ -94,14 +94,13 @@ charts.TimelineSelectorChart = function(element, configuration) {
      * @method configure
      */
     this.configure = function(configuration) {
-        this.config = configuration || {};
-        this.config.marginFocus = this.config.marginFocus || {
+        this.config.marginFocus = configuration.marginFocus || this.config.marginFocus || {
             top: 0,
             right: this.DEFAULT_MARGIN,
             bottom: (this.collapsed ? this.determineHeight(this.d3element) : this.DEFAULT_HEIGHT),
             left: this.DEFAULT_MARGIN
         };
-        this.config.marginContext = this.config.marginContext || {
+        this.config.marginContext = configuration.marginContext || this.config.marginContext || {
             top: this.DEFAULT_MARGIN,
             right: this.DEFAULT_MARGIN,
             bottom: 0,
@@ -283,7 +282,7 @@ charts.TimelineSelectorChart = function(element, configuration) {
                 }
             });
         } else {
-            this.configure();
+            this.configure({});
         }
 
         if(this.data.length && this.data[0].data) {
@@ -545,13 +544,13 @@ charts.TimelineSelectorChart = function(element, configuration) {
         if(this.collapsed) {
             svgHeight = this.determineHeight(this.d3element);
             $(this.d3element[0]).css("height", svgHeight);
-            this.heightFocus = (svgHeight - (this.config.marginFocus.top) - this.config.marginFocus.bottom);
-            heightContext = (svgHeight - (this.config.marginContext.top) - this.config.marginContext.bottom);
+            this.heightFocus = Math.max(0, svgHeight - this.config.marginFocus.top - this.config.marginFocus.bottom);
+            heightContext = Math.max(0, svgHeight - this.config.marginContext.top - this.config.marginContext.bottom);
         } else {
             svgHeight = this.DEFAULT_HEIGHT * values.length;
             $(this.d3element[0]).css("height", svgHeight);
-            this.heightFocus = (this.DEFAULT_HEIGHT - (this.config.marginFocus.top) - this.config.marginFocus.bottom);
-            heightContext = (this.DEFAULT_HEIGHT - (this.config.marginContext.top) - this.config.marginContext.bottom);
+            this.heightFocus = Math.max(0, this.DEFAULT_HEIGHT - this.config.marginFocus.top - this.config.marginFocus.bottom);
+            heightContext = Math.max(0, this.DEFAULT_HEIGHT - this.config.marginContext.top - this.config.marginContext.bottom);
         }
 
         var fullDataSet = [];
@@ -1292,5 +1291,5 @@ charts.TimelineSelectorChart = function(element, configuration) {
     };
 
     // initialization
-    return this.configure(configuration);
+    return this.configure(configuration || {});
 };
