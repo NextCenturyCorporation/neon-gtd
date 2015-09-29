@@ -42,9 +42,10 @@ function(connectionService, datasetService, errorNotificationService) {
             $scope.DESCENDING = neon.query.DESCENDING;
 
             var DEFAULT_TYPE = "TWITTER";
+            var LIMIT_INTERVAL = 100;
 
             $scope.feedName = $scope.bindFeedName || "";
-            $scope.feedType = $scope.bindFeedType || DEFAULT_TYPE;
+            $scope.feedType = $scope.bindFeedType ? $scope.bindFeedType.toUpperCase() : DEFAULT_TYPE;
             $scope.databases = [];
             $scope.tables = [];
             $scope.fields = [];
@@ -55,8 +56,7 @@ function(connectionService, datasetService, errorNotificationService) {
 
             $scope.data = {
                 news: [],
-                newsSubset: [],
-                type: undefined,
+                newsCount: 0,
                 show: {
                     heads: [],
                     names: []
@@ -74,15 +74,16 @@ function(connectionService, datasetService, errorNotificationService) {
                 nameField: {},
                 dateField: {},
                 textField: {},
-                sortDirection: neon.query.ASCENDING
+                sortDirection: neon.query.ASCENDING,
+                limit: LIMIT_INTERVAL
             };
 
             $scope.optionsMenuButtonText = function() {
-                if($scope.data.newsSubset.length) {
-                    if($scope.data.newsSubset.length < $scope.data.news.length) {
-                        return $scope.data.newsSubset.length + " of " + $scope.data.news.length;
+                if($scope.data.news.length) {
+                    if($scope.data.news.length < $scope.data.newsCount) {
+                        return $scope.data.news.length + " of " + $scope.data.newsCount + " Items";
                     }
-                    return $scope.data.newsSubset.length;
+                    return $scope.data.news.length + " Items";
                 }
                 return "No News";
             };
@@ -104,7 +105,7 @@ function(connectionService, datasetService, errorNotificationService) {
                 $scope.messenger.subscribe("news_highlights", onNewsHighlights);
                 $scope.messenger.subscribe("date_selected", onDateSelected);
                 $scope.messenger.subscribe(datasetService.UPDATE_DATA_CHANNEL, function() {
-                    queryForData();
+                    resetAndQueryForData();
                 });
 
                 handleResize();
@@ -130,8 +131,9 @@ function(connectionService, datasetService, errorNotificationService) {
                 if(!$scope.loadingNews) {
                     if($element.find(".item").last().position().top <= $element.height()) {
                         $scope.loadingNews = true;
-                        $scope.$apply(function() {
-                            $scope.data.newsSubset = $scope.data.newsSubset.concat($scope.data.news.slice($scope.data.newsSubset.length, $scope.data.newsSubset.length + 100));
+                        $scope.options.limit = $scope.options.limit + LIMIT_INTERVAL;
+                        queryForData(function(data) {
+                            updateData(data.slice($scope.options.limit - LIMIT_INTERVAL, $scope.options.limit));
                             $scope.loadingNews = false;
                         });
                     }
@@ -146,7 +148,7 @@ function(connectionService, datasetService, errorNotificationService) {
              */
             var onFiltersChanged = function(message) {
                 if(message.addedFilter && message.addedFilter.databaseName === $scope.options.database.name && message.addedFilter.tableName === $scope.options.table.name) {
-                    queryForData();
+                    resetAndQueryForData();
                 }
             };
 
@@ -159,8 +161,8 @@ function(connectionService, datasetService, errorNotificationService) {
             var onNews = function(message) {
                 if(message.news && message.name && message.name === $scope.feedName) {
                     $scope.data.news = message.news;
-                    $scope.data.newsSubset = message.news;
-                    $scope.data.type = (message.type || $scope.feedType).toUpperCase();
+                    $scope.data.newsCount = message.news.length;
+                    $scope.feedType = (message.type || $scope.feedType).toUpperCase();
                 }
             };
 
@@ -270,17 +272,32 @@ function(connectionService, datasetService, errorNotificationService) {
                 }) || datasetService.createBlankField();
 
                 $scope.feedName = $scope.bindFeedName || datasetService.getMapping($scope.options.database.name, $scope.options.table.name, "newsfeed_name") || "";
-                $scope.feedType = $scope.bindFeedType || datasetService.getMapping($scope.options.database.name, $scope.options.table.name, "newsfeed_type") || DEFAULT_TYPE;
+                $scope.feedType = $scope.bindFeedType ? $scope.bindFeedType.toUpperCase() : datasetService.getMapping($scope.options.database.name, $scope.options.table.name, "newsfeed_type") || DEFAULT_TYPE;
 
-                queryForData();
+                resetAndQueryForData();
+            };
+
+            /**
+             * Clear the data and query for new data to display in this visualization using the Neon Connection.
+             * @method resetAndQueryForData
+             * @private
+             */
+            var resetAndQueryForData = function() {
+                $scope.data.news = [];
+                queryForData(function(data, connection) {
+                    updateData(data);
+                    $scope.loadingData = false;
+                    queryForNewsCount(connection);
+                });
             };
 
             /**
              * Query for data to display in this visualization using the Neon Connection.
-             * @method queryForData
+             * @param {Function} callback
+             * @method resetAndQueryForData
              * @private
              */
-            var queryForData = function() {
+            var queryForData = function(callback) {
                 if($scope.errorMessage) {
                     errorNotificationService.hideErrorMessage($scope.errorMessage);
                     $scope.errorMessage = undefined;
@@ -298,12 +315,12 @@ function(connectionService, datasetService, errorNotificationService) {
 
                 connection.executeQuery(query, function(results) {
                     $scope.$apply(function() {
-                        updateData(results.data);
-                        $scope.loadingData = false;
+                        callback(results.data, connection);
                     });
                 }, function(response) {
-                    updateData([]);
-                    $scope.loadingData = false;
+                    $scope.$apply(function() {
+                        callback([], connection);
+                    });
                     if(response.responseJSON) {
                         $scope.errorMessage = errorNotificationService.showErrorMessage($element, response.responseJSON.error, response.responseJSON.stackTrace);
                     }
@@ -325,10 +342,9 @@ function(connectionService, datasetService, errorNotificationService) {
                     fields.push($scope.options.nameField.columnName);
                 }
 
-                var query = new neon.query.Query().selectFrom($scope.options.database.name, $scope.options.table.name).withFields(fields)
+                return new neon.query.Query().selectFrom($scope.options.database.name, $scope.options.table.name).withFields(fields)
                     .sortBy($scope.options.dateField.columnName, $scope.options.sortDirection)
-
-                return query;
+                    .limit($scope.options.limit);
             };
 
             /**
@@ -338,7 +354,6 @@ function(connectionService, datasetService, errorNotificationService) {
              * @private
              */
             var updateData = function(data) {
-                $scope.data.news = [];
                 data.forEach(function(item) {
                     $scope.data.news.push({
                         head: datasetService.isFieldValid($scope.options.headField) ? item[$scope.options.headField.columnName] : "",
@@ -347,7 +362,23 @@ function(connectionService, datasetService, errorNotificationService) {
                         text: item[$scope.options.textField.columnName]
                     });
                 });
-                $scope.data.newsSubset = $scope.data.news.slice(0, 100);
+            };
+
+            var queryForNewsCount = function(connection) {
+                var query = new neon.query.Query().selectFrom($scope.options.database.name, $scope.options.table.name).aggregate(neon.query.COUNT, "*", "count");
+
+                connection.executeQuery(query, function(results) {
+                    $scope.$apply(function() {
+                        $scope.data.newsCount = results.data[0].count;
+                    });
+                }, function(response) {
+                    $scope.$apply(function() {
+                        $scope.data.newsCount = 0;
+                    });
+                    if(response.responseJSON) {
+                        $scope.errorMessage = errorNotificationService.showErrorMessage($element, response.responseJSON.error, response.responseJSON.stackTrace);
+                    }
+                });
             };
 
             /**
@@ -355,7 +386,7 @@ function(connectionService, datasetService, errorNotificationService) {
              */
             $scope.onFieldChanged = function() {
                 if(!$scope.loadingData) {
-                    queryForData();
+                    resetAndQueryForData();
                 }
             };
 
@@ -364,7 +395,7 @@ function(connectionService, datasetService, errorNotificationService) {
              */
             $scope.handleAscButtonClick = function() {
                 if($scope.options.sortDirection === $scope.ASCENDING) {
-                    queryForData();
+                    resetAndQueryForData();
                 }
             };
 
@@ -373,7 +404,7 @@ function(connectionService, datasetService, errorNotificationService) {
              */
             $scope.handleDescButtonClick = function() {
                 if($scope.options.sortDirection === $scope.DESCENDING) {
-                    queryForData();
+                    resetAndQueryForData();
                 }
             };
 
