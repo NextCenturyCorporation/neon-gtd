@@ -104,7 +104,7 @@ angular.module('neonDemo.directives')
                         if($scope.resizePromise) {
                             $timeout.cancel($scope.resizePromise);
                         }
-                        $scope.resizePromise = $timeout(redrawOnResize, 200);
+                        $scope.resizePromise = $timeout(redrawOnResize, 500);
                     }
                 });
 

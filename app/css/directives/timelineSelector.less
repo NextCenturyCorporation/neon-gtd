@@ -84,20 +84,19 @@
     }
 
     .neon-datetimepicker {
-        margin-top: 10px;
 
         .dropdown-toggle {
-            cursor: pointer;
             font-family: "Open Sans", Helvetica, arial, sans-serif;
             color: @main-text-color;
             font-size: 16px;
 
-            &:hover {
-                color: goldenrod;
-            }
+            button {
+                cursor: pointer;
+                margin-left: 5px;
 
-            * {
-                margin-right: 5px;
+                .glyphicon {
+                    margin-right: 0px;
+                }
             }
         }
 
@@ -144,10 +143,6 @@
         h4 {
             margin-left: 15px;
             margin-top: 0px;
-
-            .count {
-                font-size: 20px;
-            }
         }
     }
 }
