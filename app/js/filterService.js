@@ -98,15 +98,16 @@ angular.module("neonDemo.services")
      * Creates and returns a filter on the given table and field(s) using the given callback.
      * @param {Object} relation A relation object containing:
      * <ul>
-     * <li> {String} database The database name </li>
-     * <li> {Stirng} table The table name </li>
-     * <li> {Object} fields The map of field names to arrays of related field names </li>
+     *      <li> {String} database The database name </li>
+     *      <li> {Stirng} table The table name </li>
+     *      <li> {Object} fields The map of field names to arrays of related field names </li>
      * </ul>
      * @param {Function} createFilterClauseFunction The function used to create the filter clause for each field, with arguments:
      *  <ul>
      *      <li> {Object} An object containing {String} database (the database name) and {String} table (the table name) </li>
      *      <li> {String} or {Array} The field name(s) </li>
      *  </ul>
+     * @param {String} or {Object} filterName The name of the visualization or an object containing {String} visName and {String} text
      * @method createFilter
      * @return {Object} A neon.query.Filter object or undefined if no filter clause could be created
      */
@@ -156,6 +157,7 @@ angular.module("neonDemo.services")
      *      <li> {Object} An object containing {String} database (the database name) and {String} table (the table name) </li>
      *      <li> {String} or {Array} The field name(s) </li>
      *  </ul>
+     * @param {String} or {Object} filterName The name of the visualization or an object containing {String} visName and {String} text
      * @param {Function} successCallback The function called once all the filters have been added (optional)
      * @param {Function} errorCallback The function called if an error is returned for any of the filter calls (optional)
      * @method addFilters
@@ -196,6 +198,7 @@ angular.module("neonDemo.services")
      *      <li> {Object} An object containing {String} database (the database name) and {String} table (the table name) </li>
      *      <li> {String} or {Array} The field name(s) </li>
      *  </ul>
+     * @param {String} or {Object} filterName The name of the visualization or an object containing {String} visName and {String} text
      * @param {Function} successFunction The function called once all the filters have been replaced (optional)
      * @param {Function} errorFunction The function called if an error is returned for any of the filter calls (optional)
      * @method replaceFilters
