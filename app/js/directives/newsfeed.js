@@ -119,6 +119,11 @@ function(connectionService, datasetService, errorNotificationService) {
                 });
             };
 
+            /**
+             * Handles resize events for this visualization.
+             * @method handleResize
+             * @private
+             */
             var handleResize = function() {
                 var headerHeight = 0;
                 $element.find(".header-container").each(function() {
@@ -127,6 +132,11 @@ function(connectionService, datasetService, errorNotificationService) {
                 $element.find(".newsfeed").height($element.height() - headerHeight);
             };
 
+            /**
+             * Handles scroll events for the newsfeed in this visualization.
+             * @method handleScroll
+             * @private
+             */
             var handleScroll = function() {
                 if(!$scope.loadingNews) {
                     if($element.find(".item").last().position().top <= $element.height()) {
@@ -364,6 +374,12 @@ function(connectionService, datasetService, errorNotificationService) {
                 });
             };
 
+            /**
+             * Query for the unlimited count of news data to display in this visualization using the given Neon Connection.
+             * @param {Object} connection
+             * @method queryForNewsCount
+             * @private
+             */
             var queryForNewsCount = function(connection) {
                 var query = new neon.query.Query().selectFrom($scope.options.database.name, $scope.options.table.name).aggregate(neon.query.COUNT, "*", "count");
 
