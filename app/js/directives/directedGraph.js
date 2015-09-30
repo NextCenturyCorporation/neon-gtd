@@ -105,7 +105,7 @@ function($filter, $timeout, connectionService, datasetService, errorNotification
                 $element.find(".header-container").each(function() {
                     headerHeight += $(this).outerHeight(true);
                 });
-                headerHeight += $element.find(".legend").outerHeight(true);
+                headerHeight += $element.find(".legend").outerHeight(true) || parseInt($element.find(".legend").css("min-height"), 10);
                 return $element.height() - headerHeight;
             };
 
