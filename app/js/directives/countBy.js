@@ -61,6 +61,7 @@ function(external, popups, connectionService, datasetService, errorNotificationS
             $scope.filterSet = undefined;
             $scope.errorMessage = undefined;
             $scope.loadingData = false;
+            $scope.showTooMuchDataError = false;
             $scope.outstandingQuery = undefined;
 
             $scope.options = {
@@ -369,6 +370,8 @@ function(external, popups, connectionService, datasetService, errorNotificationS
                     $scope.errorMessage = undefined;
                 }
 
+                $scope.showTooMuchDataError = false;
+
                 var connection = connectionService.getActiveConnection();
 
                 if(!connection || !$scope.options.field.columnName || ($scope.options.aggregation !== "count" && !$scope.options.aggregationField.columnName)) {
@@ -455,6 +458,11 @@ function(external, popups, connectionService, datasetService, errorNotificationS
                         $scope.loadingData = false;
                         if(response.responseJSON) {
                             $scope.errorMessage = errorNotificationService.showErrorMessage($element, response.responseJSON.error, response.responseJSON.stackTrace);
+                            if(response.responseJSON.error === errorNotificationService.TOO_MUCH_DATA_ERROR) {
+                                $scope.$apply(function() {
+                                    $scope.showTooMuchDataError = true;
+                                });
+                            }
                         }
                     }
                 });

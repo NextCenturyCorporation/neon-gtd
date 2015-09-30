@@ -15,7 +15,7 @@
         </div>
 
         <div class="form-group" ng-show="!(hideAdvancedOptions)">
-            <label>Count Field</label>
+            <label>Aggregation Field</label>
             <select class="form-control" ng-model="options.field" ng-required="true" ng-disabled="!(fields.length > 0)" ng-options="field.prettyName for field in fields" ng-change="handleChangeField()">
                 <option disabled selected value="">Please choose a field</option>
             </select>
@@ -53,7 +53,9 @@
 <div class="clearfix"></div>
 
 <div class="header-container filter-container">
-    <h4 class="pull-left"><span class="count text-primary ng-binding" ng-bind="count | number"></span> values</h4>
+    <h4 class="pull-left" ng-if="showTooMuchDataError">The query exceeded the memory limit.  Please add a filter to requery.</h4>
+
+    <h4 class="pull-left" ng-hide="showTooMuchDataError"><span class="count text-primary ng-binding" ng-bind="count | number"></span> values</h4>
 
     <div class="header-item filter-reset pull-right" ng-class="{true: 'hidden', false: ''}[filterSet === undefined]" title="{{filterSet.key}}={{filterSet.value}}">
         <span class="filter-label" ng-bind="filterSet.value"></span>
@@ -63,4 +65,4 @@
 
 <div class="clearfix"></div>
 
-<div class="count-by-grid"></div>
+<div class="count-by-grid" ng-hide="showTooMuchDataError"></div>
