@@ -19,8 +19,8 @@
  * This directive is for building a tag cloud
  */
 angular.module('neonDemo.directives')
-.directive('tagCloud', ['ConnectionService', 'DatasetService', 'ErrorNotificationService', 'FilterService', 'ExportService', '$timeout',
-function(connectionService, datasetService, errorNotificationService, filterService, exportService, $timeout) {
+.directive('tagCloud', ['ConnectionService', 'DatasetService', 'ErrorNotificationService', 'FilterService', 'ExportService', '$timeout', 'TranslationService',
+function(connectionService, datasetService, errorNotificationService, filterService, exportService, $timeout, translationService) {
     return {
         templateUrl: 'partials/directives/tagCloud.html',
         restrict: 'EA',
@@ -337,6 +337,12 @@ function(connectionService, datasetService, errorNotificationService, filterServ
                     tags: ["filter", "tag-cloud", tagName]
                 });
                 if($scope.filterTags.indexOf(tagName) === -1) {
+                    translationService.translate(tagName.substring(1)).then(function(response) {
+                        console.debug(response.data.data.translations[0].translatedText);
+                    }, function(response) {
+                        console.debug("ERROR!");
+                        console.debug(response);
+                    });
                     $scope.filterTags.push(tagName);
                 }
             };
