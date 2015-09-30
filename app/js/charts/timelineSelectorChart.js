@@ -94,19 +94,19 @@ charts.TimelineSelectorChart = function(element, configuration) {
      * @method configure
      */
     this.configure = function(configuration) {
-        this.config.marginFocus = configuration.marginFocus || this.config.marginFocus || {
+        this.config.marginFocus = configuration.marginFocus || {
             top: 0,
             right: this.DEFAULT_MARGIN,
             bottom: (this.collapsed ? this.determineHeight(this.d3element) : this.DEFAULT_HEIGHT),
             left: this.DEFAULT_MARGIN
         };
-        this.config.marginContext = configuration.marginContext || this.config.marginContext || {
+        this.config.marginContext = configuration.marginContext || {
             top: this.DEFAULT_MARGIN,
             right: this.DEFAULT_MARGIN,
             bottom: 0,
             left: this.DEFAULT_MARGIN
         };
-        this.granularity = this.config.granularity || this.granularity;
+        this.granularity = configuration.granularity || this.granularity;
         this.redrawOnResize();
 
         return this;
