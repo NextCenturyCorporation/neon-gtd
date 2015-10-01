@@ -21,14 +21,28 @@ angular.module('neonDemo.services')
 
     service.messenger = new neon.eventing.Messenger();
 
-    // Field mappings from the JSON configuration file.
-    var USERNAME_MAPPING = "username";
+    service.FILTER_KEY_PREFIX = "dashboard";
+
+    // Mappings from the JSON configuration file.
     var LATITUDE_MAPPING = "latitude";
     var LONGITUDE_MAPPING = "longitude";
+    var DATE_MAPPING = "date";
+    var TAG_MAPPING = "tag";
+    var URL_MAPPING = "url";
+    var ID_1_MAPPING = "parameter_id_1";
+    var TEXT_1_MAPPING = "parameter_text_1";
+    var TYPE_1_MAPPING = "parameter_type_1";
+    var USER_1_MAPPING = "parameter_user_1";
 
-    // URL parameters.
-    var DASHBOARD_USERNAME = "dashboard.user";
+    // Keys for URL parameters.
     var DASHBOARD_BOUNDS = "dashboard.bounds";
+    var DASHBOARD_DATE = "dashboard.date";
+    var DASHBOARD_TAG = "dashboard.tag";
+    var DASHBOARD_URL = "dashboard.url";
+    var DASHBOARD_ID_1 = "dashboard.id1";
+    var DASHBOARD_TEXT_1 = "dashboard.text1";
+    var DASHBOARD_TYPE_1 = "dashboard.type1";
+    var DASHBOARD_USER_1 = "dashboard.user1";
 
     // Array index for the min/max lat/lon in the bounds.
     var BOUNDS_MIN_LON = 0;
@@ -36,27 +50,8 @@ angular.module('neonDemo.services')
     var BOUNDS_MIN_LAT = 2;
     var BOUNDS_MAX_LAT = 3;
 
-    var createFilterNameObject = function(text) {
-        return {
-            text: text
-        };
-    };
-
-    var callNextFunction = function(parameters, functions) {
-        if(functions.length) {
-            var next = functions.shift();
-            next(parameters, functions);
-        }
-    };
-
-    var createCallNextFunctionCallback = function(parameters, functions) {
-        return function() {
-            callNextFunction(parameters, functions);
-        };
-    };
-
     /**
-     * Adds the filters specified in the URL parameters.
+     * Adds the filters specified in the URL parameters to the dashboard.
      * @method addFiltersFromUrl
      */
     service.addFiltersFromUrl = function() {
@@ -65,59 +60,172 @@ angular.module('neonDemo.services')
         }
 
         var parameters = $location.search();
-        var functions = [service.addFilterForDashboardUser, service.addFilterForDashboardBounds];
-        callNextFunction(parameters, functions);
+        var argsList = [{
+            mappings: [DATE_MAPPING],
+            parameterKey: DASHBOARD_DATE,
+            cleanParameter: splitArray,
+            isParameterValid: areDatesValid,
+            filterName: "date",
+            createFilterClauseCallback: createDateFilterClauseCallback
+        }, {
+            mappings: [TAG_MAPPING],
+            parameterKey: DASHBOARD_TAG,
+            cleanParameter: cleanValue,
+            isParameterValid: doesParameterExist,
+            filterName: "tag",
+            operator: "contains",
+            createFilterClauseCallback: createSimpleFilterClauseCallback
+        }, {
+            mappings: [URL_MAPPING],
+            parameterKey: DASHBOARD_URL,
+            cleanParameter: cleanValue,
+            isParameterValid: doesParameterExist,
+            filterName: "url",
+            operator: "contains",
+            createFilterClauseCallback: createSimpleFilterClauseCallback
+        }, {
+            mappings: [TEXT_1_MAPPING],
+            parameterKey: DASHBOARD_TEXT_1,
+            cleanParameter: cleanValue,
+            isParameterValid: doesParameterExist,
+            filterName: "text-1",
+            operator: "contains",
+            createFilterClauseCallback: createSimpleFilterClauseCallback
+        }, {
+            mappings: [TYPE_1_MAPPING],
+            parameterKey: DASHBOARD_TYPE_1,
+            cleanParameter: cleanValue,
+            isParameterValid: doesParameterExist,
+            filterName: "type-1",
+            operator: "contains",
+            createFilterClauseCallback: createSimpleFilterClauseCallback
+        }, {
+            mappings: [USER_1_MAPPING],
+            parameterKey: DASHBOARD_USER_1,
+            cleanParameter: cleanValue,
+            isParameterValid: doesParameterExist,
+            filterName: "user-1",
+            operator: "contains",
+            createFilterClauseCallback: createSimpleFilterClauseCallback
+        }, {
+            mappings: [ID_1_MAPPING],
+            parameterKey: DASHBOARD_ID_1,
+            cleanParameter: cleanValue,
+            isParameterValid: doesParameterExist,
+            filterName: "id-1",
+            operator: "=",
+            createFilterClauseCallback: createSimpleFilterClauseCallback
+        }, {
+            mappings: [LATITUDE_MAPPING, LONGITUDE_MAPPING],
+            parameterKey: DASHBOARD_BOUNDS,
+            cleanParameter: splitArray,
+            isParameterValid: hasBounds,
+            filterName: "bounds",
+            createFilterClauseCallback: createBoundsFilterClauseCallback
+        }];
+        addFiltersForDashboardParameters(parameters, argsList);
     };
 
     /**
-     * Adds the filter for the username from the given parameters to the dashboard.  Then calls the first function in the given list of functions.
+     * Adds a filter to the dashboard for the first item in the given list of arguments using the given parameters.  Then calls itself for the next item in the list of arguments.
      * @param {Object} parameters
-     * @param {Array} functions
-     * @method addFilterForDashboardUser
+     * @param {Array} argsList
+     * @method addFiltersForDashboardParameters
+     * @private
      */
-    service.addFilterForDashboardUser = function(parameters, functions) {
-        var user = parameters[DASHBOARD_USERNAME];
-        var callback = createCallNextFunctionCallback(parameters, functions);
-        var result = datasetService.getFirstDatabaseAndTableWithMappings([USERNAME_MAPPING]);
-        if(user && result.database && result.table && result.fields && result.fields[USERNAME_MAPPING]) {
-            var relations = datasetService.getRelations(result.database, result.table, [result.fields[USERNAME_MAPPING]]);
-            var filterKeys = filterService.createFilterKeys("dashboard-username", datasetService.getDatabaseAndTableNames());
-            filterService.addFilters(service.messenger, relations, filterKeys, createUserFilterClauseCallback(user), createFilterNameObject(USERNAME_MAPPING + " = " + user), callback, callback);
+    var addFiltersForDashboardParameters = function(parameters, argsList) {
+        var args = argsList.shift();
+        var parameterValue = args.cleanParameter(parameters[args.parameterKey]);
+        var dataWithMappings = datasetService.getFirstDatabaseAndTableWithMappings(args.mappings);
+        var callNextFunction = function() {
+            if(argsList.length) {
+                addFiltersForDashboardParameters(parameters, argsList);
+            }
+        };
+
+        if(args.isParameterValid(parameterValue) && isDatasetValid(dataWithMappings, args.mappings)) {
+            var relations = datasetService.getRelations(dataWithMappings.database, dataWithMappings.table, findFieldsForMappings(dataWithMappings, args.mappings));
+            var filterKeys = filterService.createFilterKeys(service.FILTER_KEY_PREFIX + "-" + args.filterName, datasetService.getDatabaseAndTableNames());
+            var filterName = {
+                text: (args.mappings.length > 1 ? args.filterName : dataWithMappings.fields[args.mappings[0]]) + " " + (args.operator || "=") + " " + parameterValue
+            };
+            filterService.addFilters(service.messenger, relations, filterKeys, args.createFilterClauseCallback(args.operator, parameterValue), filterName, callNextFunction, callNextFunction);
         } else {
-            callback();
+            callNextFunction();
         }
     };
 
-    var createUserFilterClauseCallback = function(user) {
+    var cleanValue = function(value) {
+        if($.isNumeric(value) && args.operator !== "contains") {
+            value = parseFloat(value);
+        } else if(value && ((value.charAt(0) === '"' && value.charAt(value.length - 1) === '"') || (value.charAt(0) === "'" && value.charAt(value.length - 1) === "'"))) {
+            value = value.substring(1, value.length - 1);
+        }
+        return value;
+    };
+
+    var splitArray = function(array) {
+        return array ? array.split(",") : [];
+    };
+
+    var areDatesValid = function(array) {
+        var notValid = false;
+        array.forEach(function(dateString) {
+            var dateObject = new Date(dateString);
+            if(!dateObject.getTime()) {
+                notValid = true;
+            }
+        });
+        return !notValid && array.length;
+    };
+
+    var doesParameterExist = function(parameter) {
+        return parameter;
+    };
+
+    var hasBounds = function(array) {
+        return array.length === 4;
+    };
+
+    var isDatasetValid = function(dataset, mappings) {
+        return dataset.database && dataset.table && dataset.fields && mappings.every(function(mapping) {
+            return dataset.fields[mapping];
+        });
+    };
+
+    var findFieldsForMappings = function(dataset, mappings) {
+        var fields = [];
+        mappings.forEach(function(mapping) {
+            fields.push(dataset.fields[mapping]);
+        });
+        return fields;
+    };
+
+    var createSimpleFilterClauseCallback = function(operator, text) {
         return function(databaseAndTableName, fieldName) {
-            return neon.query.where(fieldName, "=", user);
+            return neon.query.where(fieldName, operator, text);
         };
     };
 
-    /**
-     * Adds the filter for the geographic bounds from the given parameters to the dashboard.  Then calls the first function in the given list of functions.
-     * @param {Object} parameters
-     * @param {Array} functions
-     * @method addFilterForDashboardBounds
-     */
-    service.addFilterForDashboardBounds = function(parameters, functions) {
-        var bounds = parameters[DASHBOARD_BOUNDS] ? parameters[DASHBOARD_BOUNDS].split(",") : [];
-        var callback = createCallNextFunctionCallback(parameters, functions);
-        var result = datasetService.getFirstDatabaseAndTableWithMappings([LATITUDE_MAPPING, LONGITUDE_MAPPING]);
-        if(bounds.length === 4 && result.database && result.table && result.fields && result.fields[LATITUDE_MAPPING] && result.fields[LONGITUDE_MAPPING]) {
-            var relations = datasetService.getRelations(result.database, result.table, [result.fields[LATITUDE_MAPPING], result.fields[LONGITUDE_MAPPING]]);
-            var filterKeys = filterService.createFilterKeys("dashboard-bounds", datasetService.getDatabaseAndTableNames());
-            filterService.addFilters(service.messenger, relations, filterKeys, createBoundsFilterClauseCallback(bounds), createFilterNameObject("bounds" + " = [" + bounds + "]"), callback, callback);
-        } else {
-            callback();
-        }
+    var createDateFilterClauseCallback = function(operator, dateList) {
+        var startDate = dateList[0];
+        var endDate = dateList.length > 1 ? dateList[1] : null;
+
+        return function(databaseAndTableName, fieldName) {
+            var startFilterClause = neon.query.where(fieldName, ">=", startDate);
+            if(!endDate) {
+                return startFilterClause;
+            }
+            var endFilterClause = neon.query.where(fieldName, "<", endDate);
+            return neon.query.and.apply(neon.query, [startFilterClause, endFilterClause]);
+        };
     };
 
-    var createBoundsFilterClauseCallback = function(bounds) {
-        var minimumLongitude = Number(bounds[BOUNDS_MIN_LON]);
-        var maximumLongitude = Number(bounds[BOUNDS_MAX_LON]);
-        var minimumLatitude = Number(bounds[BOUNDS_MIN_LAT]);
-        var maximumLatitude = Number(bounds[BOUNDS_MAX_LAT]);
+    var createBoundsFilterClauseCallback = function(operator, geographicBounds) {
+        var minimumLongitude = Number(geographicBounds[BOUNDS_MIN_LON]);
+        var maximumLongitude = Number(geographicBounds[BOUNDS_MAX_LON]);
+        var minimumLatitude = Number(geographicBounds[BOUNDS_MIN_LAT]);
+        var maximumLatitude = Number(geographicBounds[BOUNDS_MAX_LAT]);
 
         return function(databaseAndTableName, fieldNames) {
             // Copied from map.js
