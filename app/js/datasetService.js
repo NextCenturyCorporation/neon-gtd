@@ -239,10 +239,10 @@ angular.module("neonDemo.services")
      * If no match was found, an empty object is returned instead.
      */
     service.getFirstDatabaseAndTableWithMappings = function(keys) {
-        var result = {};
-
-        service.dataset.databases.forEach(function(database) {
-            database.tables.forEach(function(table) {
+        for(var i = 0; i < service.dataset.databases.length; ++i) {
+            var database = service.dataset.databases[i];
+            for(var j = 0; j < database.tables.length; ++j) {
+                var table = database.tables[j];
                 var success = true;
                 var fields = {};
                 keys.forEach(function(key) {
@@ -250,20 +250,20 @@ angular.module("neonDemo.services")
                         fields[key] = table.mappings[key];
                     } else {
                         success = false;
-                        return;
                     }
                 });
 
                 if(success) {
-                    result.database = database.name;
-                    result.table = table.name;
-                    result.fields = fields;
-                    return;
+                    return {
+                        database: database.name,
+                        table: table.name,
+                        fields: fields
+                    };
                 }
-            });
-        });
+            }
+        }
 
-        return result;
+        return {};
     };
 
     /**
