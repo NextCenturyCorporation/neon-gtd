@@ -35,20 +35,31 @@ angular.module('neonDemo.services')
     var USER_1_MAPPING = "parameter_user_1";
 
     // Keys for URL parameters.
-    var DASHBOARD_BOUNDS = "dashboard.bounds";
-    var DASHBOARD_DATE = "dashboard.date";
-    var DASHBOARD_TAG = "dashboard.tag";
-    var DASHBOARD_URL = "dashboard.url";
-    var DASHBOARD_ID_1 = "dashboard.id1";
-    var DASHBOARD_TEXT_1 = "dashboard.text1";
-    var DASHBOARD_TYPE_1 = "dashboard.type1";
-    var DASHBOARD_USER_1 = "dashboard.user1";
+    var ACTIVE_DATASET = "dataset";
+    var DASHBOARD_FILTER_BOUNDS = "dashboard.bounds";
+    var DASHBOARD_FILTER_DATE = "dashboard.date";
+    var DASHBOARD_FILTER_TAG = "dashboard.tag";
+    var DASHBOARD_FILTER_URL = "dashboard.url";
+    var DASHBOARD_FILTER_ID_1 = "dashboard.id1";
+    var DASHBOARD_FILTER_TEXT_1 = "dashboard.text1";
+    var DASHBOARD_FILTER_TYPE_1 = "dashboard.type1";
+    var DASHBOARD_FILTER_USER_1 = "dashboard.user1";
 
     // Array index for the min/max lat/lon in the bounds.
     var BOUNDS_MIN_LON = 0;
     var BOUNDS_MAX_LON = 1;
     var BOUNDS_MIN_LAT = 2;
     var BOUNDS_MAX_LAT = 3;
+
+    /**
+     * Returns the name of the dataset specified in the URL parameters to set as the active dataset on initial load of the dashboard.
+     * @method findActiveDatasetInUrl
+     * @return {String}
+     */
+    service.findActiveDatasetInUrl = function() {
+        var parameters = $location.search();
+        return parameters[ACTIVE_DATASET];
+    };
 
     /**
      * Adds the filters specified in the URL parameters to the dashboard.
@@ -60,16 +71,17 @@ angular.module('neonDemo.services')
         }
 
         var parameters = $location.search();
+
         var argsList = [{
             mappings: [DATE_MAPPING],
-            parameterKey: DASHBOARD_DATE,
+            parameterKey: DASHBOARD_FILTER_DATE,
             cleanParameter: splitArray,
             isParameterValid: areDatesValid,
             filterName: "date",
             createFilterClauseCallback: createDateFilterClauseCallback
         }, {
             mappings: [TAG_MAPPING],
-            parameterKey: DASHBOARD_TAG,
+            parameterKey: DASHBOARD_FILTER_TAG,
             cleanParameter: cleanValue,
             isParameterValid: doesParameterExist,
             filterName: "tag",
@@ -77,7 +89,7 @@ angular.module('neonDemo.services')
             createFilterClauseCallback: createSimpleFilterClauseCallback
         }, {
             mappings: [URL_MAPPING],
-            parameterKey: DASHBOARD_URL,
+            parameterKey: DASHBOARD_FILTER_URL,
             cleanParameter: cleanValue,
             isParameterValid: doesParameterExist,
             filterName: "url",
@@ -85,7 +97,7 @@ angular.module('neonDemo.services')
             createFilterClauseCallback: createSimpleFilterClauseCallback
         }, {
             mappings: [TEXT_1_MAPPING],
-            parameterKey: DASHBOARD_TEXT_1,
+            parameterKey: DASHBOARD_FILTER_TEXT_1,
             cleanParameter: cleanValue,
             isParameterValid: doesParameterExist,
             filterName: "text-1",
@@ -93,7 +105,7 @@ angular.module('neonDemo.services')
             createFilterClauseCallback: createSimpleFilterClauseCallback
         }, {
             mappings: [TYPE_1_MAPPING],
-            parameterKey: DASHBOARD_TYPE_1,
+            parameterKey: DASHBOARD_FILTER_TYPE_1,
             cleanParameter: cleanValue,
             isParameterValid: doesParameterExist,
             filterName: "type-1",
@@ -101,7 +113,7 @@ angular.module('neonDemo.services')
             createFilterClauseCallback: createSimpleFilterClauseCallback
         }, {
             mappings: [USER_1_MAPPING],
-            parameterKey: DASHBOARD_USER_1,
+            parameterKey: DASHBOARD_FILTER_USER_1,
             cleanParameter: cleanValue,
             isParameterValid: doesParameterExist,
             filterName: "user-1",
@@ -109,7 +121,7 @@ angular.module('neonDemo.services')
             createFilterClauseCallback: createSimpleFilterClauseCallback
         }, {
             mappings: [ID_1_MAPPING],
-            parameterKey: DASHBOARD_ID_1,
+            parameterKey: DASHBOARD_FILTER_ID_1,
             cleanParameter: cleanValue,
             isParameterValid: doesParameterExist,
             filterName: "id-1",
@@ -117,12 +129,13 @@ angular.module('neonDemo.services')
             createFilterClauseCallback: createSimpleFilterClauseCallback
         }, {
             mappings: [LATITUDE_MAPPING, LONGITUDE_MAPPING],
-            parameterKey: DASHBOARD_BOUNDS,
+            parameterKey: DASHBOARD_FILTER_BOUNDS,
             cleanParameter: splitArray,
             isParameterValid: hasBounds,
             filterName: "bounds",
             createFilterClauseCallback: createBoundsFilterClauseCallback
         }];
+
         addFiltersForDashboardParameters(parameters, argsList);
     };
 
