@@ -51,8 +51,15 @@ function(connectionService, datasetService, errorNotificationService) {
             $scope.fields = [];
             $scope.selectedDate = undefined;
             $scope.errorMessage = undefined;
+
+            // Prevent extraneous queries from onFieldChanged during updateFields.
             $scope.loadingData = false;
+
+            // Prevent extraneous queries from handleScroll.
             $scope.loadingNews = false;
+
+            // Whether the data displayed in the newsfeed was taken from a news event.
+            $scope.newsEventData = false;
 
             $scope.data = {
                 news: [],
@@ -105,7 +112,9 @@ function(connectionService, datasetService, errorNotificationService) {
                 $scope.messenger.subscribe("news_highlights", onNewsHighlights);
                 $scope.messenger.subscribe("date_selected", onDateSelected);
                 $scope.messenger.subscribe(datasetService.UPDATE_DATA_CHANNEL, function() {
-                    resetAndQueryForData();
+                    if(!$scope.newsEventData) {
+                        resetAndQueryForData();
+                    }
                 });
 
                 handleResize();
@@ -115,7 +124,7 @@ function(connectionService, datasetService, errorNotificationService) {
                 $scope.$on('$destroy', function() {
                     $scope.messenger.removeEvents();
                     $element.off("resize", handleResize);
-                    $element.off("scroll", handleScroll);
+                    $element.find(".newsfeed").off("scroll", handleScroll);
                 });
             };
 
@@ -138,15 +147,14 @@ function(connectionService, datasetService, errorNotificationService) {
              * @private
              */
             var handleScroll = function() {
-                if(!$scope.loadingNews) {
-                    if($element.find(".item").last().position().top <= $element.height()) {
-                        $scope.loadingNews = true;
-                        $scope.options.limit = $scope.options.limit + LIMIT_INTERVAL;
-                        queryForData(function(data) {
-                            updateData(data.slice($scope.options.limit - LIMIT_INTERVAL, $scope.options.limit));
-                            $scope.loadingNews = false;
-                        });
-                    }
+                // If the user has scrolled to the bottom, query for more news items and add them to the newsfeed.
+                if(!$scope.loadingNews && !$scope.newsEventData && $element.find(".item") && $element.find(".item").last().position().top <= $element.height()) {
+                    $scope.loadingNews = true;
+                    $scope.options.limit = $scope.options.limit + LIMIT_INTERVAL;
+                    queryForData(function(data) {
+                        updateData(data.slice($scope.options.limit - LIMIT_INTERVAL, $scope.options.limit));
+                        $scope.loadingNews = false;
+                    });
                 }
             };
 
@@ -157,7 +165,7 @@ function(connectionService, datasetService, errorNotificationService) {
              * @private
              */
             var onFiltersChanged = function(message) {
-                if(message.addedFilter && message.addedFilter.databaseName === $scope.options.database.name && message.addedFilter.tableName === $scope.options.table.name) {
+                if(message.addedFilter && message.addedFilter.databaseName === $scope.options.database.name && message.addedFilter.tableName === $scope.options.table.name && !$scope.newsEventData) {
                     resetAndQueryForData();
                 }
             };
@@ -173,6 +181,7 @@ function(connectionService, datasetService, errorNotificationService) {
                     $scope.data.news = message.news;
                     $scope.data.newsCount = message.news.length;
                     $scope.feedType = (message.type || $scope.feedType).toUpperCase();
+                    $scope.newsEventData = true;
                 }
             };
 
@@ -260,7 +269,6 @@ function(connectionService, datasetService, errorNotificationService) {
              * @method updateFields
              */
             $scope.updateFields = function() {
-                // Prevent extraneous queries from onFieldChanged.
                 $scope.loadingData = true;
 
                 $scope.fields = datasetService.getSortedFields($scope.options.database.name, $scope.options.table.name);
@@ -284,6 +292,7 @@ function(connectionService, datasetService, errorNotificationService) {
                 $scope.feedName = $scope.bindFeedName || datasetService.getMapping($scope.options.database.name, $scope.options.table.name, "newsfeed_name") || "";
                 $scope.feedType = $scope.bindFeedType ? $scope.bindFeedType.toUpperCase() : datasetService.getMapping($scope.options.database.name, $scope.options.table.name, "newsfeed_type") || DEFAULT_TYPE;
 
+                $scope.newsEventData = false;
                 resetAndQueryForData();
             };
 
@@ -375,7 +384,7 @@ function(connectionService, datasetService, errorNotificationService) {
             };
 
             /**
-             * Query for the unlimited count of news data to display in this visualization using the given Neon Connection.
+             * Query for the (non-limited) count of news data to display in this visualization using the given Neon Connection.
              * @param {Object} connection
              * @method queryForNewsCount
              * @private
@@ -399,28 +408,27 @@ function(connectionService, datasetService, errorNotificationService) {
 
             /**
              * Triggered by changing a field in the options menu.
+             * @method onFieldChanged
              */
             $scope.onFieldChanged = function() {
                 if(!$scope.loadingData) {
+                    $scope.newsEventData = false;
                     resetAndQueryForData();
                 }
             };
 
             /**
-             * Triggered by clicking the sort-by-date-ascending button.
+             * Triggered by clicking one of the sort-by-date buttons.
+             * @param {Number} direction Either $scope.ASCENDING or $scope.DESCENDING
+             * @method handleSortButtonClick
              */
-            $scope.handleAscButtonClick = function() {
-                if($scope.options.sortDirection === $scope.ASCENDING) {
-                    resetAndQueryForData();
-                }
-            };
-
-            /**
-             * Triggered by clicking the sort-by-date-descending button.
-             */
-            $scope.handleDescButtonClick = function() {
-                if($scope.options.sortDirection === $scope.DESCENDING) {
-                    resetAndQueryForData();
+            $scope.handleSortButtonClick = function(direction) {
+                if($scope.options.sortDirection === direction) {
+                    if($scope.newsEventData) {
+                        $scope.data.news.reverse();
+                    } else {
+                        resetAndQueryForData();
+                    }
                 }
             };
 
