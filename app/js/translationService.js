@@ -53,15 +53,18 @@ angular.module("neonDemo.services")
         }
 
         var params = service.apis[service.chosenApi].params.key + "=" + service.apis[service.chosenApi].key;
-        params += "&" + service.apis[service.chosenApi].params.text + "=" + encodeURI(text);
 
-        if(to && translationLanguages[service.chosenApi].indexOf(to) < 0) {
+        text.forEach(function(elem) {
+            params += "&" + service.apis[service.chosenApi].params.text + "=" + encodeURI(elem);
+        });
+
+        if(to && !translationLanguages[service.chosenApi][to]) {
             return $q.reject("Unknown target language");
         }
 
         params += "&" + service.apis[service.chosenApi].params.to + "=" + (to ? to : service.defaultToLanguage);
 
-        if(from && translationLanguages[service.chosenApi].indexOf(from) < 0) {
+        if(from && !translationLanguages[service.chosenApi][from]) {
             return $q.reject("Unknown source language");
         } else if(from) {
             params += "&" + service.apis[service.chosenApi].params.from + "=" + from;
@@ -82,7 +85,7 @@ angular.module("neonDemo.services")
     };
 
     service.setDefaultFromLanguage = function(from) {
-        if(from && translationLanguages[service.chosenApi].indexOf(from) < 0) {
+        if(from && !translationLanguages[service.chosenApi][from]) {
             return false;
         }
         service.defaultFromLanguage = from;
@@ -91,7 +94,7 @@ angular.module("neonDemo.services")
     };
 
     service.setDefaultToLanguage = function(to) {
-        if(to && translationLanguages[service.chosenApi].indexOf(to) < 0) {
+        if(to && !translationLanguages[service.chosenApi][to]) {
             return false;
         }
         service.defaultToLanguage = to;

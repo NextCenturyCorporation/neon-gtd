@@ -50,13 +50,25 @@ function(connectionService, datasetService, errorNotificationService, filterServ
             $scope.filterKeys = {};
             $scope.errorMessage = undefined;
             $scope.loadingData = false;
+            $scope.usingTranslation = false;
+            $scope.translationLanguages = {
+                fromLanguageOptions: {},
+                toLanguageOptions: {},
+                chosenFromLanguage: "",
+                chosenToLanguage: ""
+
+            };
 
             $scope.options = {
                 database: {},
                 table: {},
                 tagField: "",
                 andTags: true,
-                tagLimit: 40
+                tagLimit: 40,
+                translate: {
+                    fromLanguageField: "",
+                    toLanguageField: ""
+                }
             };
 
             var updateSize = function() {
@@ -86,6 +98,11 @@ function(connectionService, datasetService, errorNotificationService, filterServ
                         $scope.setTagFilter();
                     }
                 });
+
+                $scope.translationLanguages.fromLanguageOptions= translationLanguages[translationService.chosenApi];
+                $scope.translationLanguages.toLanguageOptions = translationLanguages[translationService.chosenApi];
+                $scope.options.translate.fromLanguageField = (translationService.defaultFromLanguage) ? translationService.defaultFromLanguage : undefined;
+                $scope.options.translate.toLanguageField =  translationService.defaultToLanguage;
 
                 // Setup our messenger.
                 $scope.messenger = new neon.eventing.Messenger();
@@ -302,18 +319,22 @@ function(connectionService, datasetService, errorNotificationService, filterServ
 
             /**
              * Updates the the tag cloud visualization.
-             * @param {Array} tagCounts An array of objects with "tag" and "count" properties for the tag
+             * @param {Array} tagCounts An array of objects with "key" and "count" properties for the tag
              * name and number of occurrences.
              * @method updateTagData
              */
             $scope.updateTagData = function(tagCounts) {
                 if($scope.options.andTags) {
-                    $scope.data = tagCounts.filter(function(elem) {
-                        return $scope.filterTags.indexOf(elem.tag) === -1;
+                    tagCounts = tagCounts.filter(function(elem) {
+                        return _.findIndex($scope.filterTags, {name: elem.key}) === -1;
                     });
-                } else {
-                    $scope.data = tagCounts;
                 }
+
+                $scope.resetTranslation();
+                $scope.data = tagCounts.map(function(elem) {
+                    elem.keyTranslated = elem.key;
+                    return elem;
+                });
 
                 // style the tags after they are displayed
                 $timeout(function() {
@@ -326,7 +347,7 @@ function(connectionService, datasetService, errorNotificationService, filterServ
              * @param tagName {String} the tag that should be filtered on, e.g., "#lol"
              * @method addTagFilter
              */
-            $scope.addTagFilter = function(tagName) {
+            $scope.addTagFilter = function(tagName, tagNameTranslated) {
                 XDATA.userALE.log({
                     activity: "add",
                     action: "click",
@@ -336,14 +357,11 @@ function(connectionService, datasetService, errorNotificationService, filterServ
                     source: "user",
                     tags: ["filter", "tag-cloud", tagName]
                 });
-                if($scope.filterTags.indexOf(tagName) === -1) {
-                    translationService.translate(tagName.substring(1)).then(function(response) {
-                        console.debug(response.data.data.translations[0].translatedText);
-                    }, function(response) {
-                        console.debug("ERROR!");
-                        console.debug(response);
+                if(_.findIndex($scope.filterTags, {name: tagName}) === -1) {
+                    $scope.filterTags.push({
+                        name: tagName,
+                        nameTranslated: tagNameTranslated
                     });
-                    $scope.filterTags.push(tagName);
                 }
             };
 
@@ -367,8 +385,8 @@ function(connectionService, datasetService, errorNotificationService, filterServ
              * @return {Object} A neon.query.Filter object
              */
             $scope.createFilterClauseForTags = function(databaseAndTableName, tagFieldName) {
-                var filterClauses = $scope.filterTags.map(function(tagName) {
-                    return neon.query.where(tagFieldName, "=", tagName);
+                var filterClauses = $scope.filterTags.map(function(tag) {
+                    return neon.query.where(tagFieldName, "=", tag.name);
                 });
                 if(filterClauses.length === 1) {
                     return filterClauses[0];
@@ -387,7 +405,7 @@ function(connectionService, datasetService, errorNotificationService, filterServ
                 var relations = datasetService.getRelations($scope.options.database.name, $scope.options.table.name, [$scope.options.tagField.columnName]);
                 filterService.replaceFilters($scope.messenger, relations, $scope.filterKeys, $scope.createFilterClauseForTags, {
                     visName: "Tag Cloud",
-                    text: $scope.filterTags.join(', ')
+                    text: (_.pluck($scope.filterTags, name)).join(', ')
                 },function() {
                     $scope.$apply(function() {
                         $scope.queryForTags();
@@ -434,7 +452,10 @@ function(connectionService, datasetService, errorNotificationService, filterServ
                     source: "user",
                     tags: ["filter", "tag-cloud", tagName]
                 });
-                $scope.filterTags = _.without($scope.filterTags, tagName);
+                var index = _.findIndex($scope.filterTags, {
+                    name: tagName
+                });
+                $scope.filterTags.splice(index, 1);
             };
 
             $scope.updateTagField = function() {
@@ -442,6 +463,54 @@ function(connectionService, datasetService, errorNotificationService, filterServ
                 if(!$scope.loadingData) {
                     $scope.queryForTags();
                 }
+            };
+
+            $scope.translate = function(from, to) {
+                if(from != $scope.translationLanguages.chosenFromLanguage || to != $scope.translationLanguages.chosenToLanguage) {
+                    console.debug("translate()");
+
+                    $scope.usingTranslation = true;
+                    $scope.translationLanguages.chosenFromLanguage = from;
+                    $scope.translationLanguages.chosenToLanguage = to;
+
+                    var dataKeys = $scope.data.map(function(elem) {
+                        return elem.key.substring(1);
+                    });
+
+                    $scope.filterTags.forEach(function(tag) {
+                        dataKeys.push(tag.name.substring(1));
+                    });
+
+                    translationService.translate(dataKeys, $scope.translationLanguages.chosenToLanguage, $scope.translationLanguages.chosenFromLanguage)
+                    .then(function(response) {
+                        console.debug(response.data.data.translations);
+                        response.data.data.translations.forEach(function(elem, index) {
+                            if(index < $scope.data.length) {
+                                $scope.data[index].keyTranslated = "#" + elem.translatedText;
+                            } else {
+                                $scope.filterTags[index - $scope.data.length].nameTranslated = "#" + elem.translatedText;
+                            }
+                        });
+                    }, function(response) {
+                        console.debug(response.data.error.code + " ERROR -> " + response.data.error.message);
+                    });
+                }
+            };
+
+            $scope.resetTranslation = function() {
+                $scope.usingTranslation = false;
+                $scope.data = $scope.data.map(function(elem) {
+                    elem.keyTranslated = elem.key;
+                    return elem;
+                });
+                $scope.filterTags = _.map($scope.filterTags, function(tag) {
+                    tag.nameTranslated = tag.name;
+                    return tag;
+                });
+                $scope.options.translate.fromLanguageField = (translationService.defaultFromLanguage) ? translationService.defaultFromLanguage : undefined;
+                $scope.options.translate.toLanguageField =  translationService.defaultToLanguage;
+                $scope.translationLanguages.chosenFromLanguage = "";
+                $scope.translationLanguages.chosenToLanguage = "";
             };
 
             /**
