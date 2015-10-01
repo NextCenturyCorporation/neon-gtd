@@ -105,7 +105,7 @@ function($filter, $timeout, connectionService, datasetService, errorNotification
                 $element.find(".header-container").each(function() {
                     headerHeight += $(this).outerHeight(true);
                 });
-                headerHeight += $element.find(".legend").outerHeight(true) || parseInt($element.find(".legend").css("min-height"), 10);
+                headerHeight += $element.find(".legend").outerHeight(true);
                 return $element.height() - headerHeight;
             };
 
@@ -170,11 +170,13 @@ function($filter, $timeout, connectionService, datasetService, errorNotification
                         tags: ["remove", "directed-graph"]
                     });
                     $element.off("resize", updateSize);
+                    $element.find(".legend").off("resize", updateSize);
                     $scope.messenger.removeEvents();
                     exportService.unregister($scope.exportID);
                 });
 
                 $element.resize(updateSize);
+                $element.find(".legend").resize(updateSize);
             };
 
             /**
