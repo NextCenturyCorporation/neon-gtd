@@ -16,7 +16,7 @@
  */
 
 angular.module("neonDemo.services")
-.factory("DatasetService", function(datasets) {
+.factory("DatasetService", ["datasets", "$interval", function(datasets, $interval) {
     var service = {};
 
     service.datasets = datasets;
@@ -34,7 +34,10 @@ angular.module("neonDemo.services")
     service.messenger = new neon.eventing.Messenger();
 
     // The Dataset Service saves the brush extent used to filter the date for each database/table.
-    service.DATE_CHANGED = "date_changed";
+    service.DATE_CHANGED_CHANNEL = "date_changed";
+
+    // The Dataset Service may ask the visualizations to update their data.
+    service.UPDATE_DATA_CHANNEL = "update_data";
 
     /**
      * Returns the list of datasets maintained by this service.
@@ -51,7 +54,7 @@ angular.module("neonDemo.services")
      * @return {Array}
      */
     service.addDataset = function(dataset) {
-        // TODO Validate
+        validateDatabases(dataset);
         service.datasets.push(dataset);
         return service.datasets;
     };
@@ -72,13 +75,16 @@ angular.module("neonDemo.services")
         service.dataset.datastore = dataset.datastore || "";
         service.dataset.hostname = dataset.hostname || "";
         service.dataset.databases = dataset.databases || [];
-
+        service.dataset.options = dataset.options || {};
         service.dataset.mapLayers = dataset.mapLayers || [];
         service.dataset.mapConfig = dataset.mapConfig || {};
         service.dataset.relations = dataset.relations || [];
         service.dataset.linkyConfig = dataset.linkyConfig || {};
 
-        validateDatabases(service.dataset);
+        if(service.dataset.options.requeryInterval) {
+            var delay = Math.max(0.5, service.dataset.options.requeryInterval) * 60000;
+            $interval(publishUpdateData, delay);
+        }
     };
 
     /**
@@ -226,6 +232,41 @@ angular.module("neonDemo.services")
     };
 
     /**
+     * Returns an object containing the first database, table, and fields found in the active dataset with all the given mappings.
+     * @param {Array} The array of mapping keys that the database and table must contain.
+     * @method getFirstDatabaseAndTableWithMappings
+     * @return {Object} An object containing {String} database, {String} table, and {Object} fields linking {String} mapping to {String} field.
+     * If no match was found, an empty object is returned instead.
+     */
+    service.getFirstDatabaseAndTableWithMappings = function(keys) {
+        var result = {};
+
+        service.dataset.databases.forEach(function(database) {
+            database.tables.forEach(function(table) {
+                var success = true;
+                var fields = {};
+                keys.forEach(function(key) {
+                    if(table.mappings[key]) {
+                        fields[key] = table.mappings[key];
+                    } else {
+                        success = false;
+                        return;
+                    }
+                });
+
+                if(success) {
+                    result.database = database.name;
+                    result.table = table.name;
+                    result.fields = fields;
+                    return;
+                }
+            });
+        });
+
+        return result;
+    };
+
+    /**
      * Returns the field objects for the database and table with the given names.
      * @param {String} The database name
      * @param {String} The table name
@@ -335,10 +376,6 @@ angular.module("neonDemo.services")
      * the relation object for the table and fields given in the arguments
      */
     service.getRelations = function(databaseName, tableName, fieldNames) {
-        var i;
-        var j;
-        var k;
-        var l;
         var relations = service.dataset.relations;
 
         var initializeMapAsNeeded = function(map, key1, key2) {
@@ -355,29 +392,31 @@ angular.module("neonDemo.services")
         var relationToFields = {};
 
         // Iterate through each field to find its relations.
-        for(i = 0; i < fieldNames.length; ++i) {
-            var fieldName = fieldNames[i];
+        fieldNames.forEach(function(fieldName) {
             // Iterate through each relation to compare with the current field.
-            for(j = 0; j < relations.length; ++j) {
-                var relation = relations[j];
+            relations.forEach(function(relation) {
                 // If the current relation contains a match for the input database/table/field, iterate through the elements in the current relation.
                 if(relation[databaseName] && fieldName === relation[databaseName][tableName]) {
                     var databaseNames = Object.keys(relation);
                     // Add each database/table/field in the current relation to the map.  Note that this will include the input database/table/field.
-                    for(k = 0; k < databaseNames.length; ++k) {
-                        var relationDatabaseName = databaseNames[k];
+                    databaseNames.forEach(function(relationDatabaseName) {
                         var tableNames = Object.keys(relation[relationDatabaseName]);
-                        for(l = 0; l < tableNames.length; ++l) {
-                            var relationTableName = tableNames[l];
+                        tableNames.forEach(function(relationTableName) {
                             var relationFieldName = relation[relationDatabaseName][relationTableName];
                             relationToFields = initializeMapAsNeeded(relationToFields, relationDatabaseName, relationTableName);
 
-                            var existingIndex = relationToFields[relationDatabaseName][relationTableName].map(function(object) {
+                            var existingFieldIndex = relationToFields[relationDatabaseName][relationTableName].map(function(object) {
                                 return object.initial;
                             }).indexOf(fieldName);
-                            if(existingIndex >= 0) {
-                                // If the database/table/field exists in the relation, add another related field.
-                                relationToFields[relationDatabaseName][relationTableName][existingIndex].related.push(relationFieldName);
+
+                            // If the database/table/field exists in the relation...
+                            if(existingFieldIndex >= 0) {
+                                // If the relation field exists in the relation, don't add it again.
+                                if(relationToFields[relationDatabaseName][relationTableName][existingFieldIndex].related.indexOf(relationFieldName) >= 0) {
+                                    return;
+                                }
+                                // Else add the related field.
+                                relationToFields[relationDatabaseName][relationTableName][existingFieldIndex].related.push(relationFieldName);
                             } else {
                                 // Else create a new object for the database/table/field in the relation and add its related field.
                                 relationToFields[relationDatabaseName][relationTableName].push({
@@ -385,26 +424,26 @@ angular.module("neonDemo.services")
                                     related: [relationFieldName]
                                 });
                             }
-                        }
-                    }
+                        });
+                    });
                 }
-            }
-        }
+            });
+        });
 
         var resultDatabaseNames = Object.keys(relationToFields);
         if(resultDatabaseNames.length) {
             var results = [];
             // Iterate through the relations for each relation's database/table/field and add a relation object for each database/table pair to the final list of results.
-            for(i = 0; i < resultDatabaseNames.length; ++i) {
-                var resultTableNames = Object.keys(relationToFields[resultDatabaseNames[i]]);
-                for(j = 0; j < resultTableNames.length; ++j) {
+            resultDatabaseNames.forEach(function(resultDatabaseName) {
+                var resultTableNames = Object.keys(relationToFields[resultDatabaseName]);
+                resultTableNames.forEach(function(resultTableName) {
                     results.push({
-                        database: resultDatabaseNames[i],
-                        table: resultTableNames[j],
-                        fields: relationToFields[resultDatabaseNames[i]][resultTableNames[j]]
+                        database: resultDatabaseName,
+                        table: resultTableName,
+                        fields: relationToFields[resultDatabaseName][resultTableName]
                     });
-                }
-            }
+                });
+            });
             return results;
         }
 
@@ -415,12 +454,12 @@ angular.module("neonDemo.services")
             fields: []
         };
 
-        for(i = 0; i < fieldNames.length; ++i) {
+        fieldNames.forEach(function(fieldName) {
             result.fields.push({
-                initial: fieldNames[i],
-                related: [fieldNames[i]]
+                initial: fieldName,
+                related: [fieldName]
             });
-        }
+        });
 
         return [result];
     };
@@ -509,7 +548,7 @@ angular.module("neonDemo.services")
      * @private
      */
     var publishDateChanged = function(databaseName, tableName, brushExtent) {
-        service.messenger.publish(service.DATE_CHANGED, {
+        service.messenger.publish(service.DATE_CHANGED_CHANNEL, {
             databaseName: databaseName,
             tableName: tableName,
             brushExtent: brushExtent
@@ -569,13 +608,6 @@ angular.module("neonDemo.services")
      * @private
      */
     service.updateDatabases = function(dataset, connection, callback, index) {
-        if(dataset.updatedFields) {
-            if(callback) {
-                callback(dataset);
-            }
-            return;
-        }
-
         var databaseIndex = index ? index : 0;
         var database = dataset.databases[databaseIndex];
         connection.getTableNamesAndFieldNames(database.name, function(tableNamesAndFieldNames) {
@@ -604,7 +636,7 @@ angular.module("neonDemo.services")
             if(++databaseIndex < dataset.databases.length) {
                 service.updateDatabases(dataset, connection, callback, databaseIndex);
             } else if(callback) {
-                dataset.updatedFields = true;
+                dataset.hasUpdatedFields = true;
                 callback(dataset);
             }
         });
@@ -660,5 +692,63 @@ angular.module("neonDemo.services")
         removeFromArray(dataset.databases, indexListToRemove);
     };
 
+    /**
+     * Publishes an update data message.
+     * @method publishUpdateData
+     * @private
+     */
+    var publishUpdateData = function() {
+        service.messenger.publish(service.UPDATE_DATA_CHANNEL, {});
+    };
+
+    /**
+     * Returns the options for the active dataset.
+     * @method getActiveDatasetOptions
+     * @return {Object}
+     */
+    service.getActiveDatasetOptions = function() {
+        return service.dataset.options;
+    };
+
+    /**
+     * Returns the color maps option for the database, table, and field in the active dataset with the given names.
+     * @param {String} databaseName
+     * @param {String} tableName
+     * @param {String} fieldName
+     * @method getActiveDatasetColorMaps
+     * @return {Object}
+     */
+    service.getActiveDatasetColorMaps = function(databaseName, tableName, fieldName) {
+        var colorMaps = service.getActiveDatasetOptions().colorMaps || {};
+        return colorMaps[databaseName] && colorMaps[databaseName][tableName] ? colorMaps[databaseName][tableName][fieldName] || {} : {};
+    };
+
+    /**
+     * Creates and returns a new blank field object.
+     * @method createBlankField
+     * @return {Object}
+     */
+    service.createBlankField = function() {
+        return {
+            columnName: "",
+            prettyName: ""
+        };
+    };
+
+    /**
+     * Returns whether the given field object is valid.
+     * @param {Object} fieldObject
+     * @method isFieldValid
+     * @return {Boolean}
+     */
+    service.isFieldValid = function(fieldObject) {
+        return fieldObject && fieldObject.columnName;
+    };
+
+    // Validate the datasets from the configuration file on initialization.
+    service.datasets.forEach(function(dataset) {
+        validateDatabases(dataset);
+    });
+
     return service;
-});
+}]);

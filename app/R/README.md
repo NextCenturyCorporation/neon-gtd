@@ -26,3 +26,4 @@ Note: To get the prerequisites, you will need to run
     > install.packages("devtools")
     > devtools::install_github("twitter/AnomalyDetection")
     > devtools::install_github("giantoak/mmppr")
+    > devtools::install_github("hafen/stl2")

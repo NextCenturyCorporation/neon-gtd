@@ -82,6 +82,10 @@ var yearBucketizer = yearBucketizer || function() {
         return rounded;
     };
 
+    var getDateFormat = function() {
+        return "yyyy";
+    };
+
     return {
         setStartDate: setStartDate,
         getStartDate: getStartDate,
@@ -92,6 +96,7 @@ var yearBucketizer = yearBucketizer || function() {
         getDateForBucket: getDateForBucket,
         getNumBuckets: getNumBuckets,
         roundDownBucket: roundDownBucket,
-        roundUpBucket: roundUpBucket
+        roundUpBucket: roundUpBucket,
+        getDateFormat: getDateFormat
     };
 };

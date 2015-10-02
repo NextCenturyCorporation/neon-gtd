@@ -17,12 +17,13 @@
  */
 
 angular.module('neonDemo.directives')
-.directive('countBy', ['external', 'popups', 'ConnectionService', 'DatasetService', 'ErrorNotificationService', 'FilterService', 'ExportService',
-function(external, popups, connectionService, datasetService, errorNotificationService, filterService, exportService) {
+.directive('countBy', ['external', 'popups', 'ConnectionService', 'DatasetService', 'ErrorNotificationService', 'FilterService', 'ExportService', '$filter',
+function(external, popups, connectionService, datasetService, errorNotificationService, filterService, exportService, $filter) {
     return {
         templateUrl: 'partials/directives/countby.html',
         restrict: 'EA',
         scope: {
+            bindTitle: '=',
             bindCountField: '=',
             bindAggregation: '=',
             bindAggregationField: '=',
@@ -60,6 +61,8 @@ function(external, popups, connectionService, datasetService, errorNotificationS
             $scope.filterSet = undefined;
             $scope.errorMessage = undefined;
             $scope.loadingData = false;
+            $scope.showTooMuchDataError = false;
+            $scope.outstandingQuery = undefined;
 
             $scope.options = {
                 database: {},
@@ -85,6 +88,10 @@ function(external, popups, connectionService, datasetService, errorNotificationS
                 });
                 // Subtract an additional 2 pixels from the table height to account for the its border.
                 $('#' + $scope.tableId).height($element.height() - headerHeight - 2);
+
+                var titleWidth = $element.width() - $element.find(".chart-options").outerWidth(true);
+                $element.find(".title").css("maxWidth", titleWidth - 20);
+
                 if($scope.table) {
                     $scope.table.refreshLayout();
                 }
@@ -101,6 +108,9 @@ function(external, popups, connectionService, datasetService, errorNotificationS
 
                 $scope.messenger.events({
                     filtersChanged: onFiltersChanged
+                });
+                $scope.messenger.subscribe(datasetService.UPDATE_DATA_CHANNEL, function() {
+                    $scope.queryForData();
                 });
 
                 $scope.messenger.subscribe(filterService.REQUEST_REMOVE_FILTER, function(ids) {
@@ -218,6 +228,9 @@ function(external, popups, connectionService, datasetService, errorNotificationS
                 }, {
                     name: createAggregationColumnName(),
                     field: $scope.options.aggregation === "count" ? "count" : $scope.options.aggregationField.columnName,
+                    formatter: function(row, cell, value) {
+                        return $filter('number')(value);
+                    },
                     width: tableWidth
                 }];
 
@@ -363,6 +376,8 @@ function(external, popups, connectionService, datasetService, errorNotificationS
                     $scope.errorMessage = undefined;
                 }
 
+                $scope.showTooMuchDataError = false;
+
                 var connection = connectionService.getActiveConnection();
 
                 if(!connection || !$scope.options.field.columnName || ($scope.options.aggregation !== "count" && !$scope.options.aggregationField.columnName)) {
@@ -386,7 +401,15 @@ function(external, popups, connectionService, datasetService, errorNotificationS
                     tags: ["query", "count-by"]
                 });
 
-                connection.executeQuery(query, function(queryResults) {
+                if($scope.outstandingQuery) {
+                    $scope.outstandingQuery.abort();
+                }
+
+                $scope.outstandingQuery = connection.executeQuery(query);
+                $scope.outstandingQuery.always(function() {
+                    $scope.outstandingQuery = undefined;
+                });
+                $scope.outstandingQuery.done(function(queryResults) {
                     $scope.$apply(function() {
                         XDATA.userALE.log({
                             activity: "alter",
@@ -411,23 +434,42 @@ function(external, popups, connectionService, datasetService, errorNotificationS
                             tags: ["render", "count-by"]
                         });
                     });
-                }, function(response) {
-                    XDATA.userALE.log({
-                        activity: "alter",
-                        action: "failed",
-                        elementId: "count-by",
-                        elementType: "canvas",
-                        elementSub: "count-by",
-                        elementGroup: "table_group",
-                        source: "system",
-                        tags: ["failed", "count-by"]
-                    });
-                    $scope.updateData({
-                        data: []
-                    });
-                    $scope.loadingData = false;
-                    if(response.responseJSON) {
-                        $scope.errorMessage = errorNotificationService.showErrorMessage($element, response.responseJSON.error, response.responseJSON.stackTrace);
+                });
+                $scope.outstandingQuery.fail(function(response) {
+                    if(response.status === 0) {
+                        XDATA.userALE.log({
+                            activity: "alter",
+                            action: "canceled",
+                            elementId: "count-by",
+                            elementType: "canvas",
+                            elementSub: "count-by",
+                            elementGroup: "table_group",
+                            source: "system",
+                            tags: ["canceled", "count-by"]
+                        });
+                    } else {
+                        XDATA.userALE.log({
+                            activity: "alter",
+                            action: "failed",
+                            elementId: "count-by",
+                            elementType: "canvas",
+                            elementSub: "count-by",
+                            elementGroup: "table_group",
+                            source: "system",
+                            tags: ["failed", "count-by"]
+                        });
+                        $scope.updateData({
+                            data: []
+                        });
+                        $scope.loadingData = false;
+                        if(response.responseJSON) {
+                            $scope.errorMessage = errorNotificationService.showErrorMessage($element, response.responseJSON.error, response.responseJSON.stackTrace);
+                            if(response.responseJSON.error === errorNotificationService.TOO_MUCH_DATA_ERROR) {
+                                $scope.$apply(function() {
+                                    $scope.showTooMuchDataError = true;
+                                });
+                            }
+                        }
                     }
                 });
             };
@@ -645,7 +687,7 @@ function(external, popups, connectionService, datasetService, errorNotificationS
              * @method buildQuery
              */
             $scope.buildQuery = function() {
-                var query = new neon.query.Query().selectFrom($scope.options.database.name, $scope.options.table.name).groupBy($scope.options.field.columnName);
+                var query = new neon.query.Query().selectFrom($scope.options.database.name, $scope.options.table.name).groupBy($scope.options.field.columnName).where($scope.options.field.columnName, "!=", null);
 
                 // The widget displays its own ignored rows with 0.5 opacity.
                 query.ignoreFilters([$scope.filterKeys[$scope.options.database.name][$scope.options.table.name]]);

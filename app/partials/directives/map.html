@@ -1,5 +1,5 @@
 <div class="header-container menu-container">
-    <options-menu parent-element="element" resize="resizeOptionsMenu" export-function="makeMapExportObject" button-text="optionsMenuButtonText" show-button-text="showOptionsMenuButtonText">
+    <options-menu parent-element="element" export-function="makeMapExportObject" resize="resizeOptionsMenu" button-text="optionsMenuButtonText" show-button-text="showOptionsMenuButtonText">
         <div class="form-group info-container">
             <label><span class="glyphicon glyphicon-info-sign margin-right"></span>SHIFT + DRAG on Map to Filter</label>
         </div>
@@ -259,7 +259,7 @@
 
                             <label class="layer-options-error" ng-show="!(layer.valid)">Please choose a unique layer name.</label>
 
-                            <label class="layer-options-error" ng-show="layer.error != undefined" ng-bind="layer.error"></label>
+                            <label class="layer-options-error" ng-show="layer.error != undefined">{{layer.error}}</label>
                         </div>
                     </div>
                 </div>
@@ -269,7 +269,7 @@
 </div>
 
 <div class="header-container filter-container">
-    <div class="filter-reset pull-right" ng-class="{true: '', false: 'hidden'}[showFilter]" title="Latitude from {{extent.minimumLatitude}} to {{extent.maximumLatitude}}, Longitude from {{extent.minimumLongitude}} to {{extent.maximumLongitude}}">
+    <div class="header-item filter-reset pull-right" ng-class="{true: '', false: 'hidden'}[showFilter]" title="Latitude from {{extent.minimumLatitude}} to {{extent.maximumLatitude}}, Longitude from {{extent.minimumLongitude}} to {{extent.maximumLongitude}}">
         <span class="filter-label">Map Filter</span>
         <span class="glyphicon glyphicon-remove" ng-click="clearFilters(true)"></span>
     </div>

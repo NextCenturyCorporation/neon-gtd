@@ -13,6 +13,14 @@
 // limitations under the License.
 //
 
+.bold {
+    font-weight: bold;
+}
+
+.centered {
+    text-align: center;
+}
+
 @-webkit-keyframes load8 {
     0% {
         -webkit-transform: rotate(0deg);
@@ -44,6 +52,7 @@ a {
 
     &:hover, &:focus {
         color: @accent-dark;
+        cursor: pointer;
     }
 
     .navbar-text {
@@ -68,6 +77,11 @@ h6, .h6 {
     font-family: "Open Sans", Helvetica, arial, sans-serif;
     color: @main-text-color;
 
+}
+
+html {
+    width:100vw;
+    overflow-x:hidden;
 }
 
 label{
@@ -166,10 +180,10 @@ label{
 
 .chart-options {
     > a {
+        color: @accent-bright;
         font-size: 16px;
         padding: 0;
         border: 0;
-        color: @accent-bright;
 
         &.collapsed {
             color: @main-text-color;
@@ -202,6 +216,7 @@ label{
         right: 0px;
         top: 35px;
         margin-top: 0;
+        min-width: 320px;
 
         background: none;
         padding: 10px;
@@ -350,7 +365,7 @@ label{
     }
 }
 
-.filter-reset {
+.header-item {
     font-size: 14px;
     font-weight: bold;
     color: @main-text-color;
@@ -359,9 +374,42 @@ label{
     border-width: 1px;
     border-color: @button-border-color;
     border-radius: 4px;
-    margin-left: 5px;
+    padding: 4px 8px;
+    margin-right: 5px;
     margin-top: 5px;
     margin-bottom: 5px;
+
+    .glyphicon {
+        margin-right: 2px;
+        top: 2px;
+    }
+}
+
+button {
+    &.header-item {
+        &:hover {
+            color: @accent-bright;
+        }
+    }
+}
+
+.btn-group {
+    .header-item {
+        /* Remove the right margin set in header-item. */
+        margin-right: 0px;
+        /* Use the header-item padding instead of the btn-group>btn padding. */
+        padding: 4px 8px;
+    }
+}
+
+.filter-reset {
+    margin-right: 0px;
+    margin-left: 5px;
+    padding: 0px;
+
+    &:hover {
+        color: @main-text-color;
+    }
 
     /* Add padding so the height of the filter label and glyphicon equals the height of the filter-container (30 px). */
     .filter-label {
@@ -373,11 +421,22 @@ label{
         white-space: nowrap;
     }
 
+    .filter-lg-label {
+        float: left;
+        padding: 4px 8px;
+        max-width: 200px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
     .glyphicon {
+        cursor: pointer;
         float: left;
         padding: 7px 8px;
-        cursor: pointer;
         top: 0px;
+        /* Remove the margin set by .header-item .glyphicon (above).*/
+        margin: 0px;
 
         &.glyphicon-remove {
             color: @error-color;
@@ -395,21 +454,6 @@ label{
 
         &:first-child {
             border-left: none;
-        }
-    }
-}
-
-.footer-container {
-    min-height: 20px;
-    margin-top: 5px;
-
-    span {
-        &.footer-text {
-            color: @main-text-color;
-            font-size: 16px;
-            font-weight: bold;
-            line-height: 1.33;
-            text-transform: uppercase;
         }
     }
 }
@@ -435,6 +479,12 @@ label{
 
     .form-group {
         margin-bottom: 0px;
+    }
+
+    .input-group {
+        +.input-group {
+            margin-top: 5px;
+        }
     }
 
     label {
@@ -482,14 +532,19 @@ label{
         margin-bottom: 5px;
     }
 
-    span {
-        &.header-text {
-            color: @main-text-color;
-            font-size: 16px;
-            font-weight: bold;
-            line-height: 1.33;
-            text-transform: uppercase;
-        }
+    .title {
+        display: inline-block;
+        overflow: hidden;
+        white-space: nowrap;
+        text-overflow: ellipsis;
+    }
+
+    .header-text {
+        color: @main-text-color;
+        font-size: 16px;
+        font-weight: bold;
+        line-height: 1.33;
+        text-transform: uppercase;
     }
 }
 
@@ -560,30 +615,6 @@ label{
     }
 }
 
-.legend-scale {
-    .legend-item {
-        color: @main-text-color;
-
-        .legend-text {
-            &:first-child {
-                margin-left: 0;
-            }
-        }
-
-        .legend-text-small {
-            max-width: 75px;
-        }
-
-        .legend-text-large {
-            max-width: 200px;
-        }
-    }
-
-    .legend-text {
-        margin: 0 5px;
-    }
-}
-
 .loader {
     border-radius: 50%;
     width: 10em;
@@ -603,6 +634,27 @@ label{
 .modal-backdrop{
     background: none;
     z-index: auto;
+}
+
+/* Applied to the main options menu to position it properly at the right side of the navbar. */
+#navbar-option-menu {
+    margin-top: 13px;
+    margin-right: 0px;
+}
+
+/* Makes items unselectable and forces the cursor to remain default. */
+.unselectable {
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
+    cursor: default;
+}
+
+tr.borderedRow {
+    border-top: 1px solid #666;
+    border-bottom: 1px solid #666;
+    border-collapse: collapse;
 }
 
 .navbar{
@@ -647,6 +699,11 @@ label{
 
                     &:focus, &:hover, &.collapsed:hover{
                         color: @accent-bright;
+                    }
+
+                    /* Can be applied to elements after the first in a list to prevent them from being spaced way too far apart. */
+                    &.navbar-list-bottom {
+                        padding-top: 0px;
                     }
                 }
             }
@@ -695,6 +752,14 @@ label{
         img{
             margin-left: 5px;
             margin-right: 5px;
+        }
+    }
+
+    .navbar-option-menu {
+        .chart-options {
+            .popover {
+                min-width: 200px;
+            }
         }
     }
 }
@@ -814,6 +879,57 @@ label{
         font-size: 12px;
         color: @mid-text-color;
     }
+
+    &:before {
+        content: '';
+        display: block;
+        width: 0;
+        height: 0;
+        position: absolute;
+        border-top: 8px solid transparent;
+        border-bottom: 8px solid transparent;
+        top: 50%;
+        transform: translateY(-50%);
+    }
+
+    &:after {
+        content: '';
+        display: block;
+        width: 0;
+        height: 0;
+        position: absolute;
+        border-top: 7px solid transparent;
+        border-bottom: 7px solid transparent;
+        top: 49%;
+        transform: translateY(-49%);
+    }
+
+    &.east {
+
+        &:before {
+            border-right: 8px solid @shadow;
+            left:-8px;
+            opacity: .5;
+        }
+
+        &:after {
+            border-right: 7px solid @tooltip-background;
+            left: -6px;
+        }
+    }
+
+    &.west {
+
+        &:before {
+            border-left:8px solid @shadow;
+            left: 100%;
+        }
+
+        &:after {
+            border-left: 7px solid @tooltip-background;
+            left: 100%;
+        }
+    }
 }
 
 .tray{
@@ -894,53 +1010,33 @@ label{
         fill: @chart-text-color;
         fill-opacity: 0.3;
     }
+
+    rect.background {
+        cursor: pointer !important;
+    }
 }
 
 .neon-datetimepicker {
-    .btn-default {
-        font-size: 14px;
-        font-weight: bold;
-        color: @main-text-color;
-        background-color: @button-color;
-        border-style: solid;
-        border-width: 1px;
-        border-color: @button-border-color;
-        border-radius: 4px;
-        padding: 3px 6px;
-
-        &:hover {
-            color: @accent-bright;
-        }
-
-        .glyphicon {
-            margin-right: 2px;
-            top: 2px;
-        }
-
-        &.reset {
-            color: @error-color;
-
-            &:hover {
-                background-color: @error-color;
-                border-color: @error-dark-color;
-                color: @light-text-color;
-            }
-
-            &.disabled {
-                color: #ccc;
-                opacity: 0.5;
-            }
-        }
-    }
-
     .dropdown-menu {
         overflow-y: scroll;
         padding: 10px;
 
         .table-responsive {
             display: inline-block;
-            /* Force the datetimepicker height because the year and month views are shorter by default and cause unwanted empty space. */
-            height: 300px;
+            font-size: 12px;
+            padding: 4px 5px;
+            /* Reduce the datetimepicker width because of the reduced font size. */
+            width: 250px;
+            /* Set the datetimepicker height because the year and month views are shorter by default and cause unwanted empty space. */
+            height: 250px;
+
+            .table {
+                th, td {
+                    padding: 6px;
+                    width: 34px;
+                    height: 30px;
+                }
+            }
         }
     }
 }
@@ -961,4 +1057,8 @@ label{
 
 .neon-well-thin {
     padding: 4px;
+}
+
+#removeDatasetModal {
+    font-weight: normal;
 }

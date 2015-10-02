@@ -17,7 +17,7 @@
     },
 
     "dashboard": {
-        "gridsterColumns": 6,
+        "gridsterColumns": 24,
         "gridsterMargins": 10,
         "hideNavbarItems": false,
         "hideAdvancedOptions": false,
@@ -25,7 +25,9 @@
         "hideErrorNotifications": false,
         "hideHeaders": false,
         "hideCloseButton": false,
-        "showVideoOnLoad": false
+        "showVideoOnLoad": false,
+        "showImport": false,
+        "showExport": true
     },
 
     "help": {
@@ -50,73 +52,80 @@
 
     "visualizations": [{
         "name": "Filter Builder",
-        "sizeX": 4,
-        "minSizeX": 3,
-        "sizeY": 2,
-        "minSizeY": 1,
+        "sizeX": 12,
+        "minSizeX": 12,
+        "sizeY": 4,
+        "minSizeY": 4,
         "type": "filter-builder",
         "icon": "img/visualizations/CreateFilter64.png"
     }, {
         "name": "Data Table",
         "sizeX": 6,
-        "sizeY": 2,
+        "sizeY": 4,
         "type": "query-results-table",
         "icon": "img/visualizations/ViewData64.png"
     }, {
         "name": "Timeline",
-        "sizeX": 6,
-        "sizeY": 1,
-        "minSizeY": 1,
+        "sizeX": 12,
+        "minSizeX": 12,
+        "sizeY": 4,
+        "minSizeY": 4,
         "type": "timeline-selector",
         "icon": "img/visualizations/Timeline64.png"
     }, {
         "name": "Map",
-        "sizeX": 4,
-        "sizeY": 2,
+        "sizeX": 12,
+        "sizeY": 6,
         "type": "map",
         "icon": "img/visualizations/Map64.png"
     }, {
         "name": "Ops Clock",
-        "sizeX": 2,
-        "sizeY": 2,
+        "sizeX": 6,
+        "sizeY": 4,
         "type": "circular-heat-form",
         "icon": "img/visualizations/OpsClock64.png"
     }, {
         "name": "Line Chart",
-        "sizeX": 2,
-        "sizeY": 2,
+        "sizeX": 6,
+        "sizeY": 4,
         "type": "linechart",
         "icon": "img/visualizations/LineChart64.png"
     }, {
         "name": "Bar Chart",
-        "sizeX": 2,
-        "sizeY": 2,
+        "sizeX": 6,
+        "sizeY": 4,
         "type": "barchart",
         "icon": "img/visualizations/BarChart64.png"
     }, {
         "name": "Sunburst Chart",
-        "sizeX": 2,
-        "sizeY": 2,
+        "sizeX": 6,
+        "sizeY": 4,
         "type": "sunburst",
         "icon": "img/visualizations/Sunburst64.png"
     }, {
         "name": "Text Cloud",
-        "sizeX": 2,
-        "sizeY": 2,
+        "sizeX": 6,
+        "sizeY": 4,
         "type": "tag-cloud",
         "icon": "img/visualizations/TagCloud64.png"
     }, {
         "name": "Aggregation Table",
-        "sizeX": 2,
-        "sizeY": 2,
+        "sizeX": 6,
+        "sizeY": 4,
         "type": "count-by",
         "icon": "img/visualizations/Count64.png"
     }, {
         "name": "Graph",
-        "sizeX": 4,
-        "sizeY": 2,
+        "sizeX": 12,
+        "sizeY": 6,
         "type": "directed-graph",
         "icon": "img/visualizations/Graph64.png"
+    }, {
+        "name": "Sample",
+        "sizeX": 6,
+        "sizeY": 4,
+        "type": "sample",
+        "icon": "img/Neon_60x34.png"
     }],
 
     "datasets": [{
@@ -234,42 +243,64 @@
           "hashtags": false,
           "urls": true,
           "linkTo": "twitter"
+        },
+        "options": {
+            "colorMaps": {
+                "test": {
+                    "earthquakes": {
+                        "myField": {
+                            "fieldA": "#123456",
+                            "fieldB": "#654321"
+                        }
+                    }
+                }
+            }
         }
     }],
 
     "layouts": {
         "default": [{
-            "sizeX": 6,
-            "sizeY": 1,
-            "minSizeY": 1,
+            "sizeX": 18,
+            "minSizeX": 12,
+            "sizeY": 4,
+            "minSizeY": 4,
             "type": "timeline-selector"
         }, {
-            "sizeX": 4,
-            "sizeY": 2,
+            "sizeX": 18,
+            "sizeY": 4,
             "type": "map"
         }, {
-            "sizeX": 2,
-            "sizeY": 2,
+            "sizeX": 18,
+            "sizeY": 4,
+            "type": "query-results-table"
+        }, {
+            "sizeX": 18,
+            "sizeY": 4,
+            "type": "filter-builder"
+        }, {
+            "sizeX": 6,
+            "sizeY": 4,
             "type": "circular-heat-form"
         }, {
-            "sizeX": 2,
-            "sizeY": 2,
+            "sizeX": 6,
+            "sizeY": 4,
             "type": "linechart"
         }, {
-            "sizeX": 2,
-            "sizeY": 2,
+            "sizeX": 6,
+            "sizeY": 4,
             "type": "barchart"
         }, {
-            "sizeX": 2,
-            "sizeY": 2,
+            "sizeX": 6,
+            "sizeY": 4,
             "type": "count-by"
         }],
 
         "example-with-bindings": [{
-            "sizeX": 6,
-            "sizeY": 1,
+            "sizeX": 12,
+            "sizeY": 4,
             "type": "timeline-selector",
             "bindings": {
+                "bind-title": "'myTitle'",
                 "bind-database": "'myDatabase'",
                 "bind-table": "'myTable'",
                 "bind-date-field": "'date'",
@@ -277,10 +308,11 @@
                 "override-end-date": "1388534399000"
             }
         }, {
-            "sizeX": 4,
-            "sizeY": 2,
+            "sizeX": 12,
+            "sizeY": 4,
             "type": "map",
             "bindings": {
+                "bind-title": "'myTitle'",
                 "bind-database": "'myDatabase'",
                 "bind-table": "'myTable'",
                 "bind-latitude-field": "'latitude'",
@@ -289,19 +321,21 @@
                 "bind-size-field": "'type'"
             }
         }, {
-            "sizeX": 2,
-            "sizeY": 2,
+            "sizeX": 6,
+            "sizeY": 4,
             "type": "circular-heat-form",
             "bindings": {
+                "bind-title": "'myTitle'",
                 "bind-database": "'myDatabase'",
                 "bind-table": "'myTable'",
                 "bind-date-field": "'date'"
             }
         }, {
-            "sizeX": 2,
-            "sizeY": 2,
+            "sizeX": 6,
+            "sizeY": 4,
             "type": "linechart",
             "bindings": {
+                "bind-title": "'myTitle'",
                 "bind-database": "'myDatabase'",
                 "bind-table": "'myTable'",
                 "bind-date-field": "'date'",
@@ -310,10 +344,11 @@
                 "bind-aggregation-field": "'count'"
             }
         }, {
-            "sizeX": 2,
-            "sizeY": 2,
+            "sizeX": 6,
+            "sizeY": 4,
             "type": "barchart",
             "bindings": {
+                "bind-title": "'myTitle'",
                 "bind-database": "'myDatabase'",
                 "bind-table": "'myTable'",
                 "bind-x-axis-field": "'type'",
@@ -321,36 +356,40 @@
                 "bind-aggregation-field": "'count'"
             }
         }, {
-            "sizeX": 2,
-            "sizeY": 2,
+            "sizeX": 6,
+            "sizeY": 4,
             "type": "count-by",
             "bindings": {
+                "bind-title": "'myTitle'",
                 "bind-database": "'myDatabase'",
                 "bind-table": "'myTable'",
                 "bind-count-field": "'type'"
             }
         }, {
-            "sizeX": 2,
-            "sizeY": 2,
+            "sizeX": 6,
+            "sizeY": 4,
             "type": "tag-cloud",
             "bindings": {
+                "bind-title": "'myTitle'",
                 "bind-database": "'myDatabase'",
                 "bind-table": "'myTable'",
                 "bind-tag-field": "'hashtags'"
             }
         }, {
-            "sizeX": 2,
-            "sizeY": 2,
+            "sizeX": 6,
+            "sizeY": 4,
             "type": "sunburst",
             "bindings": {
+                "bind-title": "'myTitle'",
                 "bind-database": "'myDatabase'",
                 "bind-table": "'myTable'"
             }
         }, {
-            "sizeX": 6,
-            "sizeY": 2,
+            "sizeX": 12,
+            "sizeY": 4,
             "type": "query-results-table",
             "bindings": {
+                "bind-title": "'myTitle'",
                 "bind-database": "'myDatabase'",
                 "bind-table": "'myTable'"
             }

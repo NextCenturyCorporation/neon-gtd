@@ -135,10 +135,11 @@ charts.BarChart.DEFAULT_HEIGHT_ = 250;
 charts.BarChart.DEFAULT_WIDTH_ = 600;
 charts.BarChart.DEFAULT_MARGIN_ = {
     top: 10,
-    bottom: 50,
+    bottom: 65,
     left: 30,
     right: 0
 };
+charts.BarChart.DEFAULT_BAR_WIDTH_ = 15;
 charts.BarChart.TOOLTIP_ID_ = 'tooltip';
 charts.BarChart.SVG_ELEMENT_ = 'rect';
 charts.BarChart.ACTIVE_STYLE_KEY_ = 'active';
@@ -397,8 +398,10 @@ charts.BarChart.prototype.drawChartSVG_ = function() {
         .append('svg')
         //.attr("viewBox", this.determineViewboxString())
         .attr('id', 'plot')
+        .attr("width", this.width)
         .append('g')
         .attr('transform', 'translate(' + this.margin.left + ',' + this.margin.top + ')');
+
     return chart;
 };
 
@@ -432,9 +435,11 @@ charts.BarChart.prototype.bindData_ = function(chart) {
         })
         // using the same color for the border of the bars as the svg background gives separation for adjacent bars
         .attr('stroke', '#FFFFFF')
-        .on('mouseover', function(d) {
+        .on('mousemove', function(d) {
+            me.showTooltip_(d, d3.event);
+        })
+        .on('mouseover', function() {
             me.toggleHoverStyle_(d3.select(this), true);
-            me.showTooltip_(d, d3.mouse(this));
         })
         .on('mouseout', function() {
             me.toggleHoverStyle_(d3.select(this), false);
@@ -515,7 +520,7 @@ charts.BarChart.prototype.setInactive = function(predicate) {
     this.applyStyle_(d3.selectAll('.' + charts.BarChart.INACTIVE_BAR_CLASS_), charts.BarChart.INACTIVE_STYLE_KEY_);
 };
 
-charts.BarChart.prototype.showTooltipXaxis_ = function(item) {
+charts.BarChart.prototype.showTooltipXaxis_ = function(item, mouseEvent) {
     var yValue = 0;
     this.data_.forEach(function(d) {
         if(item === d.key) {
@@ -523,21 +528,14 @@ charts.BarChart.prototype.showTooltipXaxis_ = function(item) {
         }
     });
 
-    var tooltip = this.element.append("div")
-        .property('id', charts.BarChart.TOOLTIP_ID_)
-        .classed({
-            charttooltip: true
-        });
+    var html = '<div><strong>' + this.xLabel_ + ':</strong> ' + item + '</div>' +
+                '<div><strong>' + this.yLabel_ + ':</strong> ' + yValue + '</div>';
 
-    tooltip.append("div").html('<strong>' + this.xLabel_ + ':</strong> ' + item)
-        .append("div").html('<strong>' + this.yLabel_ + ':</strong> ' + yValue);
-    $(tooltip[0]).hide();
+    $("#tooltip-container").html(html);
+    $("#tooltip-container").show();
 
-    // TODO:  Determine the correct location here.  The mouseLocation that is passed in is the
-    // location of the text within its bounding rectangle, rather than the entire div, so it appears
-    // in the upper left hand side
-    this.positionTooltip_(tooltip, [100, 20]);
-    $(tooltip[0]).fadeIn(500);
+    this.positionTooltip_(d3.select('#tooltip-container'), mouseEvent);
+
     XDATA.userALE.log({
         activity: "show",
         action: "mouseover",
@@ -550,22 +548,18 @@ charts.BarChart.prototype.showTooltipXaxis_ = function(item) {
     });
 };
 
-charts.BarChart.prototype.showTooltip_ = function(item, mouseLocation) {
+charts.BarChart.prototype.showTooltip_ = function(item, mouseEvent) {
     var xValue = this.tickFormat_ ? this.tickFormat_(item.key) : item.key;
     var yValue = this.isStacked ? (item.values - item[this.yMinAttribute_]) : item.values;
     yValue = d3.format("0,000.00")(yValue);
 
-    var tooltip = this.element.append("div")
-        .property('id', charts.BarChart.TOOLTIP_ID_)
-        .classed({
-            charttooltip: true
-        });
+    var html = '<div><strong>' + this.xLabel_ + ':</strong> ' + _.escape(xValue) + '</div>' +
+                '<div><strong>' + this.yLabel_ + ':</strong> ' + yValue + '</div>';
 
-    tooltip.append("div").html('<strong>' + this.xLabel_ + ':</strong> ' + _.escape(xValue))
-        .append("div").html('<strong>' + this.yLabel_ + ':</strong> ' + yValue);
-    $(tooltip[0]).hide();
-    this.positionTooltip_(tooltip, mouseLocation);
-    $(tooltip[0]).fadeIn(500);
+    $("#tooltip-container").html(html);
+    $("#tooltip-container").show();
+    this.positionTooltip_(d3.select('#tooltip-container'), mouseEvent);
+
     XDATA.userALE.log({
         activity: "show",
         action: "mouseover",
@@ -578,17 +572,26 @@ charts.BarChart.prototype.showTooltip_ = function(item, mouseLocation) {
     });
 };
 
-charts.BarChart.prototype.positionTooltip_ = function(tooltip, mouseLocation) {
-    // the extra 35px in the next two variables is needed to account for the padding of .charttooltip
+charts.BarChart.prototype.positionTooltip_ = function(tooltip, mouseEvent) {
+    var attributeLeft = mouseEvent.pageX + 15;
+    var tooltipWidth = $("#tooltip-container").outerWidth(true);
+    var tooltipHeight = $("#tooltip-container").outerHeight(true);
 
-    var top = mouseLocation[1] + 35;
-
-    tooltip.style('top', top + 'px')
-        .style('left', mouseLocation[0] + 'px');
+    if((attributeLeft + tooltipWidth) > $("body").width()) {
+        $("#tooltip-container").removeClass("east");
+        $("#tooltip-container").addClass("west");
+        tooltip.style('top', (mouseEvent.pageY - (tooltipHeight / 2)) + 'px')
+            .style('left', (attributeLeft - tooltipWidth - 30) + 'px');
+    } else {
+        $("#tooltip-container").removeClass("west");
+        $("#tooltip-container").addClass("east");
+        tooltip.style('top', (mouseEvent.pageY - (tooltipHeight / 2)) + 'px')
+            .style('left', attributeLeft + 'px');
+    }
 };
 
 charts.BarChart.prototype.hideTooltip_ = function() {
-    $('#' + charts.BarChart.TOOLTIP_ID_).remove();
+    $("#tooltip-container").hide();
     XDATA.userALE.log({
         activity: "hide",
         action: "mouseout",
@@ -624,7 +627,7 @@ charts.BarChart.prototype.drawXAxis_ = function(chart) {
             }
         })
         .on('mouseover', function(d) {
-            me.showTooltipXaxis_(d, d3.mouse(this));
+            me.showTooltipXaxis_(d, d3.event);
         })
         .on('mouseout', function() {
             me.hideTooltip_();
@@ -815,12 +818,20 @@ charts.BarChart.prototype.removeDataWithNoMatchingCategory_ = function(aggregate
 };
 
 charts.BarChart.prototype.determineWidth_ = function(element) {
+    var width = charts.BarChart.DEFAULT_WIDTH_;
+
     if(this.userSetWidth_) {
-        return this.userSetWidth_;
+        width = this.userSetWidth_;
     } else if($(element[0]).width() !== 0) {
-        return $(element[0]).width();
+        width = $(element[0]).width();
     }
-    return charts.BarChart.DEFAULT_WIDTH_;
+
+    var calculatedChartWidth = (this.categories.length * charts.BarChart.DEFAULT_BAR_WIDTH_) + this.margin.left + this.margin.right;
+
+    if(calculatedChartWidth > width) {
+        return calculatedChartWidth;
+    }
+    return width;
 };
 
 charts.BarChart.prototype.determineHeight_ = function(element) {

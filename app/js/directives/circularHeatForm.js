@@ -37,6 +37,7 @@ function(connectionService, datasetService, errorNotificationService, exportServ
         templateUrl: 'partials/directives/circularHeatForm.html',
         restrict: 'EA',
         scope: {
+            bindTitle: '=',
             bindDateField: '=',
             bindTable: '=',
             bindDatabase: '=',
@@ -57,6 +58,7 @@ function(connectionService, datasetService, errorNotificationService, exportServ
             $scope.maxTime = "";
             $scope.errorMessage = undefined;
             $scope.loadingData = false;
+            $scope.outstandingQuery = undefined;
 
             $scope.options = {
                 database: {},
@@ -67,6 +69,11 @@ function(connectionService, datasetService, errorNotificationService, exportServ
             var HOURS_IN_WEEK = 168;
             var HOURS_IN_DAY = 24;
 
+            var updateSize = function() {
+                var titleWidth = $element.width() - $element.find(".chart-options").outerWidth(true);
+                $element.find(".title").css("maxWidth", titleWidth - 20);
+            };
+
             /**
              * Initializes the name of the date field used to query the current dataset
              * and the Neon Messenger used to monitor data change events.
@@ -75,6 +82,9 @@ function(connectionService, datasetService, errorNotificationService, exportServ
             $scope.initialize = function() {
                 $scope.messenger.events({
                     filtersChanged: onFiltersChanged
+                });
+                $scope.messenger.subscribe(datasetService.UPDATE_DATA_CHANNEL, function() {
+                    $scope.queryForChartData();
                 });
 
                 $scope.exportID = exportService.register($scope.makeCircularHeatFormExportObject);
@@ -90,9 +100,12 @@ function(connectionService, datasetService, errorNotificationService, exportServ
                         source: "system",
                         tags: ["remove", "circularheatform"]
                     });
+                    $element.off("resize", updateSize);
                     $scope.messenger.removeEvents();
                     exportService.unregister($scope.exportID);
                 });
+
+                $element.resize(updateSize);
             };
 
             /**
@@ -246,7 +259,10 @@ function(connectionService, datasetService, errorNotificationService, exportServ
                 var query = new neon.query.Query()
                     .selectFrom($scope.options.database.name, $scope.options.table.name)
                     .groupBy(groupByDayClause, groupByHourClause)
-                    .where($scope.options.dateField.columnName, '!=', null)
+                    .where(neon.query.and(
+                        neon.query.where($scope.options.dateField.columnName, '>=', new Date("1970-01-01T00:00:00.000Z")),
+                        neon.query.where($scope.options.dateField.columnName, '<=', new Date("2025-01-01T00:00:00.000Z"))
+                    ))
                     .aggregate(neon.query.COUNT, '*', 'count');
 
                 // Issue the query and provide a success handler that will forcefully apply an update to the chart.
@@ -265,7 +281,15 @@ function(connectionService, datasetService, errorNotificationService, exportServ
                     tags: ["circularheatform"]
                 });
 
-                connection.executeQuery(query, function(queryResults) {
+                if($scope.outstandingQuery) {
+                    $scope.outstandingQuery.abort();
+                }
+
+                $scope.outstandingQuery = connection.executeQuery(query);
+                $scope.outstandingQuery.always(function() {
+                    $scope.outstandingQuery = undefined;
+                });
+                $scope.outstandingQuery.done(function(queryResults) {
                     XDATA.userALE.log({
                         activity: "alter",
                         action: "receive",
@@ -290,23 +314,37 @@ function(connectionService, datasetService, errorNotificationService, exportServ
                             tags: ["circularheatform"]
                         });
                     });
-                }, function(response) {
-                    XDATA.userALE.log({
-                        activity: "alter",
-                        action: "failed",
-                        elementId: "circularheatform",
-                        elementType: "canvas",
-                        elementSub: "circularheatform",
-                        elementGroup: "chart_group",
-                        source: "system",
-                        tags: ["circularheatform"]
-                    });
-                    $scope.updateChartData({
-                        data: []
-                    });
-                    $scope.loadingData = false;
-                    if(response.responseJSON) {
-                        $scope.errorMessage = errorNotificationService.showErrorMessage($element, response.responseJSON.error, response.responseJSON.stackTrace);
+                });
+                $scope.outstandingQuery.fail(function(response) {
+                    if(response.status === 0) {
+                        XDATA.userALE.log({
+                            activity: "alter",
+                            action: "canceled",
+                            elementId: "circularheatform",
+                            elementType: "canvas",
+                            elementSub: "circularheatform",
+                            elementGroup: "chart_group",
+                            source: "system",
+                            tags: ["circularheatform"]
+                        });
+                    } else {
+                        XDATA.userALE.log({
+                            activity: "alter",
+                            action: "failed",
+                            elementId: "circularheatform",
+                            elementType: "canvas",
+                            elementSub: "circularheatform",
+                            elementGroup: "chart_group",
+                            source: "system",
+                            tags: ["circularheatform"]
+                        });
+                        $scope.updateChartData({
+                            data: []
+                        });
+                        $scope.loadingData = false;
+                        if(response.responseJSON) {
+                            $scope.errorMessage = errorNotificationService.showErrorMessage($element, response.responseJSON.error, response.responseJSON.stackTrace);
+                        }
                     }
                 });
             };
@@ -405,7 +443,10 @@ function(connectionService, datasetService, errorNotificationService, exportServ
                 var query = new neon.query.Query()
                     .selectFrom($scope.options.database.name, $scope.options.table.name)
                     .groupBy(groupByDayClause, groupByHourClause)
-                    .where($scope.options.dateField.columnName, '!=', null)
+                    .where(neon.query.and(
+                        neon.query.where($scope.options.dateField.columnName, '>=', new Date("1970-01-01T00:00:00.000Z")),
+                        neon.query.where($scope.options.dateField.columnName, '<=', new Date("2025-01-01T00:00:00.000Z"))
+                    ))
                     .aggregate(neon.query.COUNT, '*', 'count');
                 query.limitClause = exportService.getLimitClause();
                 var finalObject = {

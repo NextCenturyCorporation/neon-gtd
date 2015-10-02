@@ -14,6 +14,9 @@
         <link rel="stylesheet" type="text/css" href="lib/openlayers/theme/default/style.css">
         <link rel="stylesheet" type="text/css" href="js/vendor/slick-grid/css/slick.grid.css">
         <link rel="stylesheet" type="text/css" href="lib/angular-gridster/css/angular-gridster.min.css">
+        <link rel="stylesheet" type="text/css" href="lib/angular-gantt/css/angular-gantt.min.css">
+        <link rel="stylesheet" type="text/css" href="lib/angular-gantt/css/angular-gantt-plugins.min.css">
+        <link rel="stylesheet" type="text/css" href="lib/angular-ui-tree/css/angular-ui-tree.min.css">
         <link rel="stylesheet" type="text/css" href="lib/angular-bootstrap-datetimepicker/css/datetimepicker.css">
 
         <link rel="stylesheet" type="text/css" href="css/app.css">
@@ -50,17 +53,18 @@
             <div class="navbar-default navbar-fixed-top" ng-class="{true: '', false: 'affix'}[hideNavbarItems == true]">
                 <div class="container" ng-hide="hideNavbarItems">
                     <div class="pull-left" ng-show="hideNavbarItems">
-                        <span class="navbar-text navbar-title-text">
-                            {{navbarTitle}}
-                        </span>
+                        <span class="navbar-text navbar-title-text" ng-bind="navbarTitle"></span>
                     </div>
 
-                    <options-menu parent-element="element" class="navbar-text pull-right" ng-show="!(hideAdvancedOptions)">
+                    <options-menu parent-element="element" id= "navbar-option-menu" class="navbar-text pull-right navbar-option-menu" ng-show="!(hideAdvancedOptions) && (showImport || showExport)">
                         <!-- Buttons to select file format -->
-                        <label>Export Format</label>
-                        <div file-formats gridster-configs="visualizations" ng-hide="hideNavbarItems"></div>
+                        <label ng-show="showExport">Export Format</label>
+                        <div file-formats gridster-configs="visualizations" ng-show="showExport"></div>
                         <!-- Export option -->
-                        <div export-widgets gridster-configs="visualizations" ng-hide="hideNavbarItems"></div>
+                        <div export-widgets gridster-configs="visualizations" ng-show="showExport"></div>
+                        <!-- Import option -->
+                        <div import-file gridster-configs="visualizations" ng-show="showImport"></div>
+                        <div remove-dataset gridster-configs="visualizations" ng-show="showImport"></div>
                     </options-menu>
 
                     <div powered-by-neon class="pull-right"></div>
@@ -136,7 +140,11 @@
         <script src="lib/angular/js/angular.min.js"></script>
         <script src="lib/angular-gridster/js/angular-gridster.min.js"></script>
         <script src="lib/moment/js/moment.min.js"></script>
+        <script src="lib/angular-moment/js/angular-moment.min.js"></script>
+        <script src="lib/angular-gantt/js/angular-gantt.min.js"></script>
+        <script src="lib/angular-gantt/js/angular-gantt-plugins.min.js"></script>
         <script src="lib/angular-ui-tree/js/angular-ui-tree.min.js"></script>
+        <script src="lib/angular-bootstrap-datetimepicker/js/datetimepicker.js"></script>
         <script src="lib/javascript-detect-element-resize/js/jquery.resize.js"></script>
 
         <!-- Include third party libs -->
@@ -162,10 +170,6 @@
         <script src="lib/remarkable-bootstrap-notify/js/bootstrap-notify.min.js"></script>
         <script src="lib/rainbowvis.js/js/rainbowvis.js"></script>
 
-        <!-- Moment required for angular-bootstrap-datetimepicker -->
-        <script src="lib/moment/js/moment.min.js"></script>
-        <script src="lib/angular-bootstrap-datetimepicker/js/datetimepicker.js"></script>
-
         <!-- Include required non-angular support modules -->
         <script src="js/neon-extensions/filtertable.js"></script>
         <script src="js/namespaces.js"></script>
@@ -180,6 +184,7 @@
         <script src="js/coremap/nodeLayer.js"></script>
         <script src="js/tables/table.js"></script>
         <script src="js/charts/sunburst.js"></script>
+        <script src="js/mediators/directedGraphMediator.js"></script>
 
         <!-- Include our custom Angular components here for now. -->
         <script src="js/app.js"></script>
@@ -188,6 +193,8 @@
         <script src="js/errorNotificationService.js"></script>
         <script src="js/filterService.js"></script>
         <script src="js/exportService.js"></script>
+        <script src="js/importService.js"></script>
+        <script src="js/parameterService.js"></script>
         <script src="js/neonDemoController.js"></script>
 
         <script src="js/charts/circularHeatChart.js"></script>
@@ -204,12 +211,17 @@
         <script src="js/directives/filterBuilder.js"></script>
         <script src="js/directives/filterState.js"></script>
         <script src="js/directives/filterTray.js"></script>
+        <script src="js/directives/gantt-chart.js"></script>
+        <script src="js/directives/importFile.js"></script>
         <script src="js/directives/linechart.js"></script>
         <script src="js/directives/linksPopup.js"></script>
         <script src="js/directives/map.js"></script>
+        <script src="js/directives/newsfeed.js"></script>
         <script src="js/directives/optionsMenu.js"></script>
         <script src="js/directives/poweredByNeon.js"></script>
         <script src="js/directives/queryResultsTable.js"></script>
+        <script src="js/directives/removeDataset.js"></script>
+        <script src="js/directives/sample.js"></script>
         <script src="js/directives/stackedBarchart.js"></script>
         <script src="js/directives/tagCloud.js"></script>
         <script src="js/time/dateBucketizer.js"></script>

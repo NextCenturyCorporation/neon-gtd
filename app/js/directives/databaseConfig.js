@@ -15,8 +15,8 @@
  *
  */
 angular.module('neonDemo.directives')
-.directive('databaseConfig', ['layouts', 'ConnectionService', 'DatasetService',
-    function(layouts, connectionService, datasetService) {
+.directive('databaseConfig', ['config', 'layouts', 'ConnectionService', 'DatasetService', 'ParameterService',
+    function(config, layouts, connectionService, datasetService, parameterService) {
     return {
         templateUrl: 'partials/directives/databaseConfig.html',
         restrict: 'E',
@@ -70,11 +70,12 @@ angular.module('neonDemo.directives')
             $scope.initialize = function() {
                 $scope.messenger = new neon.eventing.Messenger();
 
-                $scope.datasets.forEach(function(dataset, index) {
+                $scope.datasets.some(function(dataset, index) {
                     if(dataset.connectOnLoad) {
                         $scope.connectToPreset(index);
-                        return;
+                        return true;
                     }
+                    return false;
                 });
             };
 
@@ -121,13 +122,24 @@ angular.module('neonDemo.directives')
                     return;
                 }
 
+                var finishConnectToPreset = function(dataset) {
+                    datasetService.setActiveDataset(dataset);
+                    updateLayout();
+                };
+
+                // Don't update the dataset if its fields are already updated.
+                if($scope.datasets[index].hasUpdatedFields) {
+                    finishConnectToPreset($scope.datasets[index]);
+                    return;
+                }
+
                 // Update the fields within each database and table within the selected dataset to include fields that weren't listed in the configuration file.
                 datasetService.updateDatabases($scope.datasets[index], connection, function(dataset) {
                     $scope.datasets[index] = dataset;
-                    datasetService.setActiveDataset(dataset);
+                    // Update the layout inside a $scope.$apply because we're inside a jQuery ajax callback thread.
                     $scope.$apply(function() {
-                        // Wait to update the layout until after the update is finished.
-                        updateLayout();
+                        // Wait to update the layout until after we finish the dataset updates.
+                        finishConnectToPreset(dataset);
                     });
                 });
             };
@@ -161,16 +173,23 @@ angular.module('neonDemo.directives')
                 // Recreate the layout each time to ensure all visualizations are using the new dataset.
                 $scope.gridsterConfigs = layouts[layoutName] ? angular.copy(layouts[layoutName]) : [];
 
-                // TODO Set default minimum size in config.json
                 for(var i = 0; i < $scope.gridsterConfigs.length; ++i) {
                     $scope.gridsterConfigs[i].id = uuid();
                     if(!($scope.gridsterConfigs[i].minSizeX)) {
-                        $scope.gridsterConfigs[i].minSizeX = 2;
+                        $scope.gridsterConfigs[i].minSizeX = config.gridsterDefaultMinSizeX;
                     }
                     if(!($scope.gridsterConfigs[i].minSizeY)) {
-                        $scope.gridsterConfigs[i].minSizeY = 2;
+                        $scope.gridsterConfigs[i].minSizeY = config.gridsterDefaultMinSizeY;
+                    }
+                    if($scope.gridsterConfigs[i].sizeX < config.gridsterDefaultMinSizeX) {
+                        $scope.gridsterConfigs[i].sizeX = config.gridsterDefaultMinSizeX;
+                    }
+                    if($scope.gridsterConfigs[i].sizeY < config.gridsterDefaultMinSizeY) {
+                        $scope.gridsterConfigs[i].sizeY = config.gridsterDefaultMinSizeY;
                     }
                 }
+
+                parameterService.addFiltersFromUrl();
             };
 
             /**
@@ -401,7 +420,9 @@ angular.module('neonDemo.directives')
                     hostname: $scope.datastoreHost,
                     databases: [],
                     relations: [],
-                    layout: "default"
+                    options: {
+                        requery: 0
+                    }
                 };
 
                 $scope.customDatabases.forEach(function(customDatabase) {

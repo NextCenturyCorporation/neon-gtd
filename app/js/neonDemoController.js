@@ -29,10 +29,13 @@ function($scope, $timeout, config, datasets) {
 
     $scope.hideAddVisualizationsButton = config.hideAddVisualizationsButton;
     $scope.hideAdvancedOptions = config.hideAdvancedOptions;
+    $scope.showImport = config.showImport;
+    $scope.showExport = config.showExport;
 
     $scope.seeData = false;
     $scope.createFilters = false;
     $scope.filterCount = 0;
+    $scope.element = $("body");
     $scope.help = config.help;
 
     $scope.element = $(window);
@@ -122,8 +125,8 @@ function($scope, $timeout, config, datasets) {
         });
     };
 
-    var gridsterColumns = config.gridsterColumns || 6;
-    var gridsterMargins = config.gridsterMargins || 10;
+    var gridsterColumns = config.gridsterColumns;
+    var gridsterMargins = config.gridsterMargins;
 
     $scope.gridsterOpts = {
         columns: gridsterColumns, // the width of the grid, in columns

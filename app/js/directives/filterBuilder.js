@@ -46,6 +46,7 @@ angular.module('neonDemo.directives')
             $scope.selectedField = "";
             $scope.selectedFieldIsDate = false;
             $scope.andClauses = true;
+            $scope.instanceId = undefined;
 
             $element.addClass("filter-directive");
 
@@ -69,6 +70,8 @@ angular.module('neonDemo.directives')
              * @method initialize
              */
             $scope.initialize = function() {
+                $scope.instanceId = neon.widget.getInstanceId("filterBuilder");
+
                 $element.resize(resizeDateTimePickerDropdowns);
 
                 $scope.messenger = new neon.eventing.Messenger();
@@ -164,7 +167,7 @@ angular.module('neonDemo.directives')
 
                 for(var i = 0; i < $scope.databases.length; ++i) {
                     for(var j = 0; j < $scope.tables.length; ++j) {
-                        $scope.filterTable.setFilterKey($scope.databases[i].name, $scope.tables[j].name, neon.widget.getInstanceId("filterBuilder") + "-" + $scope.databases[i].name + "-" + $scope.tables[j].name);
+                        $scope.filterTable.setFilterKey($scope.databases[i].name, $scope.tables[j].name, $scope.instanceId + "-" + $scope.databases[i].name + "-" + $scope.tables[j].name);
                     }
                 }
 
@@ -272,38 +275,39 @@ angular.module('neonDemo.directives')
                 var filterRow = new neon.query.FilterRow(database, table, $scope.selectedField, $scope.selectedOperator, $scope.selectedValue, $scope.tables, $scope.fields);
                 filterRow.isDate = $scope.selectedFieldIsDate;
                 var rows = [{
-                    database: database,
-                    table: table,
+                    database: database.name,
+                    table: table.name,
                     row: filterRow
                 }];
 
-                var relations = DatasetService.getRelations(database.name, table.name, [$scope.selectedField.columnName]);
-                for(var i = 0; i < relations.length; ++i) {
-                    var relation = relations[i];
+                var relations = datasetService.getRelations(database.name, table.name, [$scope.selectedField.columnName]);
+                relations.forEach(function(relation) {
                     if(relation.database !== database.name || relation.table !== table.name) {
                         var relationInfo = findRelationInfo(relation);
-                        for(var j = 0; j < relation.fields.length; ++j) {
-                            var relationFields = relation.fields[j].related;
-                            for(var k = 0; k < relationFields.length; ++k) {
-                                var relationFilterRow = new neon.query.FilterRow(relationInfo.databaseObject, relationInfo.tableObject, relationFields[k], $scope.selectedOperator, $scope.selectedValue, relationInfo.tableObjects, relationInfo.databaseFields);
-                                relationFilterRow.isDate = DatasetService.hasDataset() && relationFields[k] === DatasetService.getMapping(relation.database, relation.table, "date");
+                        relation.fields.forEach(function(relationFields) {
+                            relationFields.related.forEach(function(relationField) {
+                                var relationFieldObject = _.find(relationInfo.databaseFields, function(databaseField) {
+                                    return databaseField.columnName === relationField;
+                                });
+                                var relationFilterRow = new neon.query.FilterRow(relationInfo.databaseObject, relationInfo.tableObject, relationFieldObject, $scope.selectedOperator, $scope.selectedValue, relationInfo.tableObjects, relationInfo.databaseFields);
+                                relationFilterRow.isDate = datasetService.hasDataset() && relationField === datasetService.getMapping(relation.database, relation.table, "date");
                                 rows.push({
-                                    database: relationInfo.databaseObject,
-                                    table: relationInfo.tableObject,
+                                    database: relationInfo.databaseObject.name,
+                                    table: relationInfo.tableObject.name,
                                     row: relationFilterRow
                                 });
-                            }
-                        }
+                            });
+                        });
                     }
-                }
+                });
 
                 var indexes = {};
-                for(var l = 0; l < rows.length; ++l) {
-                    if(!indexes[rows[l].database]) {
-                        indexes[rows[l].database] = {};
+                rows.forEach(function(row) {
+                    if(!indexes[row.database]) {
+                        indexes[row.database] = {};
                     }
-                    indexes[rows[l].database][rows[l].table] = $scope.filterTable.addFilterRow(rows[l].database.name, rows[l].table.name, rows[l].row);
-                }
+                    indexes[row.database][row.table] = $scope.filterTable.addFilterRow(row.database, row.table, row.row);
+                });
 
                 var filters = $scope.filterTable.buildFiltersFromData($scope.andClauses);
 
