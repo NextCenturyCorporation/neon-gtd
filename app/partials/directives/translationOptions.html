@@ -1,0 +1,23 @@
+<div class="form-group">
+    <label>Translate Text</label>
+    <div class="input-group translate">
+        <div class="sub-input-group">
+            <label>From</label>
+            <select class="form-control" ng-model="fromLanguageField"
+                ng-options="langCode as langName for (langCode, langName) in fromLanguageOptions"
+                ng-required="false">
+                <option value="" selected="selected">Detect</option>
+            </select>
+        </div>
+        <div class="sub-input-group">
+            <label>To</label>
+            <select class="form-control" ng-model="toLanguageField"
+                ng-options="langCode as langName for (langCode, langName) in toLanguageOptions"
+                ng-required="true">
+            </select>
+        </div>
+        <input class="translate-checkbox" type="checkbox" ng-model="showTranslation" ng-value="true" ng-disabled="!toLanguageField">
+        <label class="translate-checkbox" ng-class="{true: 'disabled', false: ''}[!toLanguageField]">Show translation</label>
+    </div>
+    <div class="clearfix"></div>
+</div>
