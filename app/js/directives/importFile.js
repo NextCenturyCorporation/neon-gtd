@@ -28,7 +28,6 @@ angular.module('neonDemo.directives')
         templateUrl: 'partials/directives/importFile.html',
         restrict: 'EA',
         link: function($scope, $element) {
-            $scope.canImport = (window.File && window.FileReader && window.FileList && window.Blob);
             $scope.nameTypePairs = undefined;
             $scope.currentJobID = undefined;
             $scope.importUserName = '';
