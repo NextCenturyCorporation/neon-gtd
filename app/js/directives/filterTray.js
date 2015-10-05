@@ -108,18 +108,18 @@ angular.module('neonDemo.directives')
 
                     //remove filters with empty string names
                     var filterList = _.filter(filters, function(filter) {
-                        return (filter.filterName && filter.filterName !== '');
+                        return (filter.filter.filterName && filter.filter.filterName !== '');
                     });
 
                     var result = {};
                     _.each(filterList, function(filter) {
-                        if(result[filter.filterName]) {
+                        if(result[filter.filter.filterName]) {
                             //add id to array
-                            result[filter.filterName].ids.push(filter.id);
+                            result[filter.filter.filterName].ids.push(filter.id);
                         } else {
-                            result[filter.filterName] = {
+                            result[filter.filter.filterName] = {
                                 ids: [filter.id],
-                                name: filter.filterName
+                                name: filter.filter.filterName
                             };
                         }
                     });
