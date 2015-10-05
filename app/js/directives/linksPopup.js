@@ -86,19 +86,19 @@ angular.module('neonDemo.directives')
                             }
 
                             if(link.server) {
-                                link.url = link.url.replace(popups.links.SERVER, link.server);
+                                link.url = link.url.replace(popups.links.VARIABLE_SERVER, link.server);
                             }
 
                             link.fields = link.fields || [];
                             link.fields.forEach(function(field) {
-                                if(field.type === popups.links.URL) {
+                                if(field.type === popups.links.TYPE_URL) {
                                     link.url = link.url.replace(field.variable, field.substitute);
                                 }
                             });
 
                             link.values = link.values || [];
                             link.values.forEach(function(value) {
-                                if(value.type === popups.links.URL) {
+                                if(value.type === popups.links.TYPE_URL) {
                                     link.url = link.url.replace(value.variable, value.substitute);
                                 }
                             });
@@ -109,13 +109,13 @@ angular.module('neonDemo.directives')
                             link.args = link.args || [];
                             link.args.forEach(function(arg) {
                                 link.fields.forEach(function(field) {
-                                    if(field.type === popups.links.HIDDEN) {
+                                    if(field.type === popups.links.TYPE_HIDDEN) {
                                         arg.value = arg.value.replace(field.variable, field.substitute);
                                     }
                                 });
 
                                 link.values.forEach(function(value) {
-                                    if(value.type === popups.links.HIDDEN) {
+                                    if(value.type === popups.links.TYPE_HIDDEN) {
                                         arg.value = arg.value.replace(value.variable, value.substitute);
                                     }
                                 });

@@ -544,13 +544,13 @@ function(external, popups, connectionService, datasetService, errorNotificationS
                     server: config.server,
                     tab: tab,
                     fields: [{
-                        type: popups.links.HIDDEN,
-                        variable: popups.links.FIELD,
+                        type: popups.links.TYPE_HIDDEN,
+                        variable: popups.links.VARIABLE_FIELD,
                         substitute: field
                     }],
                     values: [{
-                        type: popups.links.HIDDEN,
-                        variable: popups.links.VALUE,
+                        type: popups.links.TYPE_HIDDEN,
+                        variable: popups.links.VARIABLE_VALUE,
                         substitute: value
                     }],
                     args: []
@@ -572,7 +572,7 @@ function(external, popups, connectionService, datasetService, errorNotificationS
                     image: service.apps[app].image,
                     url: service.apps[app].url,
                     values: [{
-                        type: popups.links.URL,
+                        type: popups.links.TYPE_URL,
                         variable: service.mappings[mapping],
                         substitute: value
                     }]

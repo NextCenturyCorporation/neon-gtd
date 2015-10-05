@@ -715,8 +715,8 @@ function(external, popups, connectionService, datasetService, errorNotificationS
                     server: config.server,
                     tab: tab,
                     values: [{
-                        type: popups.links.HIDDEN,
-                        variable: popups.links.VALUE,
+                        type: popups.links.TYPE_HIDDEN,
+                        variable: popups.links.VARIABLE_VALUE,
                         substitute: id
                     }],
                     args: []
