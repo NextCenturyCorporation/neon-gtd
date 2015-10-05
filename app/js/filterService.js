@@ -19,6 +19,8 @@ angular.module("neonDemo.services")
 .factory("FilterService", function(DatasetService) {
     var service = {};
 
+    service.REQUEST_REMOVE_FILTER = "filter_service.request_remove_filter";
+
     /**
      * Creates and returns a mapping of names from the given database and table names to unique filter keys for each database and table pair.
      * Uses the mapping of global filter keys (if given) for all possible database and table pairs.
@@ -282,6 +284,25 @@ angular.module("neonDemo.services")
         } else {
             return name;
         }
+    };
+
+    service.containsKey = function(visFilterKeys, toMatchArray) {
+        if(!_.isArray(visFilterKeys)) {
+            visFilterKeys = [visFilterKeys];
+        }
+        if(!_.isArray(toMatchArray)) {
+            toMatchArray = [toMatchArray];
+        }
+
+        //For each visualization filter key, check for any db/table key to be contained in the toMatchArray
+        //underscore some stops as soon as it hits a truthy result
+        return _.some(visFilterKeys, function(visFilterKey) {
+            return _.some(_.values(visFilterKey), function(tableObj) {
+                return _.some(_.values(tableObj), function(key) {
+                    return _.contains(toMatchArray, key);
+                });
+            });
+        });
     };
 
     return service;

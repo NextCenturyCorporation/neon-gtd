@@ -117,6 +117,12 @@ function(external, popups, connectionService, datasetService, errorNotificationS
                     $scope.queryForData();
                 });
 
+                $scope.messenger.subscribe(filterService.REQUEST_REMOVE_FILTER, function(ids) {
+                    if(filterService.containsKey($scope.filterKeys, ids)) {
+                        $scope.clearFilter();
+                    }
+                });
+
                 $scope.exportID = exportService.register($scope.makeCountByExportObject);
 
                 $scope.$on('$destroy', function() {

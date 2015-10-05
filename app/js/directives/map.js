@@ -175,6 +175,18 @@ angular.module('neonDemo.directives')
 
                 $scope.exportID = exportService.register($scope.makeMapExportObject);
 
+                $scope.messenger.subscribe(filterService.REQUEST_REMOVE_FILTER, function(ids) {
+                    var keys = [];
+
+                    _.each($scope.options.layers, function(layer) {
+                        keys.push(layer.filterKeys);
+                    });
+
+                    if(filterService.containsKey(keys, ids)) {
+                        $scope.clearFilters(true);
+                    }
+                });
+
                 $scope.linkyConfig = datasetService.getLinkyConfig();
 
                 $scope.messenger.subscribe('date_selected', onDateSelected);
