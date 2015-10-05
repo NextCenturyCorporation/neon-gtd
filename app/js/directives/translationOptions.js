@@ -27,23 +27,23 @@ angular.module('neonDemo.directives')
             toLanguageOptions: "=?",
             showTranslation: "=?"
         },
-        link: function($scope, $element) {
+        link: function($scope) {
             $scope.disableTranslate = true;
 
             if(!$scope.fromLanguageField) {
-               $scope.fromLanguageField = "";
+                $scope.fromLanguageField = "";
             }
             if(!$scope.toLanguageField) {
-               $scope.toLanguageField = "en";
+                $scope.toLanguageField = "en";
             }
             if(!$scope.fromLanguageOptions || Object.keys($scope.fromLanguageOptions).length === 0) {
-               $scope.fromLanguageOptions = {};
+                $scope.fromLanguageOptions = {};
             }
             if(!$scope.toLanguageOptions || Object.keys($scope.toLanguageOptions).length === 0) {
-               $scope.toLanguageOptions = {};
+                $scope.toLanguageOptions = {};
             }
 
-            $scope.$watch("toLanguageOptions", function(newVal, oldVal) {
+            $scope.$watch("toLanguageOptions", function(newVal) {
                 if(!newVal || Object.keys($scope.fromLanguageOptions).length === 0) {
                     $scope.disableTranslate = true;
                 } else {
