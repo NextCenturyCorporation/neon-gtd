@@ -23,10 +23,6 @@ angular.module('neonDemo.directives')
         scope: {
         },
         link: function($scope) {
-            $scope.SERVER = "SERVER";
-            $scope.FIELD = "FIELD";
-            $scope.VALUE = "VALUE";
-
             // Map that stores the array of cleaned link data for all the visualizations by a unique name.
             $scope.cleanData = {};
 
@@ -79,27 +75,57 @@ angular.module('neonDemo.directives')
 
             popups.links.setData = function(source, data) {
                 var cleanData = [];
-                for(var i = 0; i < data.length; ++i) {
+                data.forEach(function(links) {
                     var cleanLinks = [];
-                    var links = data[i];
-                    for(var j = 0; j < links.length; ++j) {
-                        var link = links[j];
-                        link.tab = link.data.query;
-                        link.url = link.url.replace($scope.SERVER, link.data.server);
-                        // Notify angular that this is a trusted URL so angular will inject it into a form's action.
-                        link.url = $sce.trustAsResourceUrl(link.url);
-                        for(var k = 0; k < link.args.length; ++k) {
-                            if(link.data.field) {
-                                link.args[k].value = link.args[k].value.replace($scope.FIELD, link.data.field);
+                    links.forEach(function(link) {
+                        if(link.name && link.image && link.url) {
+                            link.tab = link.tab || link.name;
+
+                            if(link.image.charAt(0) === '/') {
+                                link.image = '.' + link.image;
                             }
-                            if(link.data.value) {
-                                link.args[k].value = link.args[k].value.replace($scope.VALUE, link.data.value);
+
+                            if(link.server) {
+                                link.url = link.url.replace(popups.links.SERVER, link.server);
                             }
+
+                            link.fields = link.fields || [];
+                            link.fields.forEach(function(field) {
+                                if(field.type === popups.links.URL) {
+                                    link.url = link.url.replace(field.variable, field.substitute);
+                                }
+                            });
+
+                            link.values = link.values || [];
+                            link.values.forEach(function(value) {
+                                if(value.type === popups.links.URL) {
+                                    link.url = link.url.replace(value.variable, value.substitute);
+                                }
+                            });
+
+                            // Notify angular that this is a trusted URL so angular will inject it into a form's action.
+                            link.url = $sce.trustAsResourceUrl(link.url);
+
+                            link.args = link.args || [];
+                            link.args.forEach(function(arg) {
+                                link.fields.forEach(function(field) {
+                                    if(field.type === popups.links.HIDDEN) {
+                                        arg.value = arg.value.replace(field.variable, field.substitute);
+                                    }
+                                });
+
+                                link.values.forEach(function(value) {
+                                    if(value.type === popups.links.HIDDEN) {
+                                        arg.value = arg.value.replace(value.variable, value.substitute);
+                                    }
+                                });
+                            });
+
+                            cleanLinks.push(link);
                         }
-                        cleanLinks.push(link);
-                    }
+                    });
                     cleanData.push(cleanLinks);
-                }
+                });
                 $scope.cleanData[source] = cleanData;
             };
 
@@ -113,6 +139,15 @@ angular.module('neonDemo.directives')
                 if($scope.cleanData[source]) {
                     delete $scope.cleanData[source];
                 }
+            };
+
+            popups.links.createLinkHtml = function(index, source) {
+                return "<a data-toggle=\"modal\" data-target=\".links-popup\" data-links-index=\"" + index + "\" data-links-source=\"" + source + "\"" +
+                    "class=\"collapsed dropdown-toggle primary neon-popup-button\"><span class=\"glyphicon glyphicon-link\"></span></a>";
+            };
+
+            popups.links.createDisabledLinkHtml = function() {
+                return "<a class=\"disabled\" disabled><span class=\"glyphicon glyphicon-link\"></span></a>";
             };
         }
     };

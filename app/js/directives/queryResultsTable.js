@@ -693,15 +693,12 @@ function(external, popups, connectionService, datasetService, errorNotificationS
                     var links = [];
 
                     if(external.dig.enabled) {
-                        links.push($scope.createLinkObject(external.dig, id, query));
+                        links.push(createLinkObject(external.dig, id, query));
                     }
 
-                    var linksIndex = tableLinks.length;
+                    var index = tableLinks.length;
                     tableLinks.push(links);
-
-                    row[$scope.EXTERNAL_APP_FIELD_NAME] = "<a data-toggle=\"modal\" data-target=\".links-popup\" data-links-index=\"" + linksIndex +
-                        "\" data-links-source=\"" + $scope.tableId + "\" class=\"collapsed dropdown-toggle primary neon-popup-button\">" +
-                        "<span class=\"glyphicon glyphicon-link\"></span></a>";
+                    row[$scope.EXTERNAL_APP_FIELD_NAME] = links.length ? popups.links.createLinkHtml(index, $scope.tableId) : popups.links.createDisabledLinkHtml();
                 });
 
                 // Set the link data for the links popup for this visualization.
@@ -710,26 +707,27 @@ function(external, popups, connectionService, datasetService, errorNotificationS
                 return data;
             };
 
-            $scope.createLinkObject = function(config, id, query) {
+            var createLinkObject = function(config, id, tab) {
                 var link = {
                     name: config.data_table.name,
                     image: config.data_table.image,
                     url: config.data_table.url,
-                    args: [],
-                    data: {
-                        server: config.server,
-                        value: id,
-                        query: query
-                    }
+                    server: config.server,
+                    tab: tab,
+                    values: [{
+                        type: popups.links.HIDDEN,
+                        variable: popups.links.VALUE,
+                        substitute: id
+                    }],
+                    args: []
                 };
 
-                for(var i = 0; i < config.data_table.args.length; ++i) {
-                    var arg = config.data_table.args[i];
+                config.data_table.args.forEach(function(arg) {
                     link.args.push({
-                        name: arg.name,
-                        value: arg.value
+                        variable: arg.name,
+                        substitute: arg.value
                     });
-                }
+                });
 
                 return link;
             };

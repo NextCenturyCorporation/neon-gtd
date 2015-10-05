@@ -497,15 +497,25 @@ function(external, popups, connectionService, datasetService, errorNotificationS
                     var links = [];
 
                     if(external.dig.enabled) {
-                        links.push($scope.createLinkObject(external.dig, field, value, query));
+                        links.push(createLinkObject(external.dig, field, value, query));
                     }
 
-                    var linksIndex = tableLinks.length;
-                    tableLinks.push(links);
+                    if(Object.keys(external.services)) {
+                        var mappings = datasetService.getMappings($scope.options.database.name, $scope.options.table.name);
+                        Object.keys(mappings).filter(function(mapping) {
+                            return mappings[mapping] === field;
+                        }).forEach(function(mapping) {
+                            if(external.services[mapping]) {
+                                Object.keys(external.services[mapping].apps).forEach(function(app) {
+                                    links.push(createServiceLinkObject(external.services[mapping], app, mapping, value));
+                                });
+                            }
+                        });
+                    }
 
-                    row[$scope.EXTERNAL_APP_FIELD_NAME] = "<a data-toggle=\"modal\" data-target=\".links-popup\" data-links-index=\"" + linksIndex +
-                        "\" data-links-source=\"" + $scope.tableId + "\" class=\"collapsed dropdown-toggle primary neon-popup-button\">" +
-                        "<span class=\"glyphicon glyphicon-link\"></span></a>";
+                    var index = tableLinks.length;
+                    tableLinks.push(links);
+                    row[$scope.EXTERNAL_APP_FIELD_NAME] = links.length ? popups.links.createLinkHtml(index, $scope.tableId) : popups.links.createDisabledLinkHtml();
                 });
 
                 // Set the link data for the links popup for this visualization.
@@ -514,29 +524,47 @@ function(external, popups, connectionService, datasetService, errorNotificationS
                 return data;
             };
 
-            $scope.createLinkObject = function(config, field, value, query) {
+            var createLinkObject = function(config, field, value, tab) {
                 var link = {
                     name: config.count_by.name,
                     image: config.count_by.image,
                     url: config.count_by.url,
-                    args: [],
-                    data: {
-                        server: config.server,
-                        field: field,
-                        value: value,
-                        query: query
-                    }
+                    server: config.server,
+                    tab: tab,
+                    fields: [{
+                        type: popups.links.HIDDEN,
+                        variable: popups.links.FIELD,
+                        substitute: field
+                    }],
+                    values: [{
+                        type: popups.links.HIDDEN,
+                        variable: popups.links.VALUE,
+                        substitute: value
+                    }],
+                    args: []
                 };
 
-                for(var i = 0; i < config.count_by.args.length; ++i) {
-                    var arg = config.count_by.args[i];
+                config.count_by.args.forEach(function(arg) {
                     link.args.push({
-                        name: arg.name,
-                        value: arg.value
+                        variable: arg.name,
+                        substitute: arg.value
                     });
-                }
+                });
 
                 return link;
+            };
+
+            var createServiceLinkObject = function(service, app, mapping, value) {
+                return {
+                    name: app,
+                    image: service.apps[app].image,
+                    url: service.apps[app].url,
+                    values: [{
+                        type: popups.links.URL,
+                        variable: service.mappings[mapping],
+                        substitute: value
+                    }]
+                };
             };
 
             /**

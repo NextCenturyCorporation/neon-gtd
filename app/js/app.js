@@ -93,6 +93,83 @@ var startAngular = function() {
     angular.bootstrap(document, ['neonDemo']);
 };
 
+var readExternalAppServicesConfig = function(config, callback) {
+    if(!(config.file && config.fileProps && config.fileProps.apps && config.fileProps.image && config.fileProps.url && config.fileProps.args && config.servicesMappings && config.argsMappings)) {
+        callback({});
+        return;
+    }
+
+    // Example result:
+    //  {
+    //      date: {
+    //          apps: {
+    //              App1: {
+    //                  image: file_path,
+    //                  url: app/?date_string
+    //              }
+    //          },
+    //          mappings: {
+    //              date: date_string
+    //          }
+    //      },
+    //      bounds: {
+    //          apps: {
+    //              App2: {
+    //                  image: file_path,
+    //                  url: app/?min_lon_string,max_lon_string,min_lat_string,max_lat_string
+    //              }
+    //          },
+    //          mappings: {
+    //              minLon: min_lon_string,
+    //              maxLon: max_lon_string,
+    //              minLat: min_lat_string,
+    //              maxLat: max_lat_string
+    //          }
+    //      }
+    //  }
+
+    $.ajax({
+        url: config.file,
+        success: function(json) {
+            var data = $.parseJSON(json);
+            var services = {};
+
+            var appsProperty = config.fileProps.apps;
+            var imageProperty = config.fileProps.image;
+            var urlProperty = config.fileProps.url;
+            var argsProperty = config.fileProps.args;
+
+            Object.keys(config.servicesMappings).forEach(function(neonService) {
+                var serviceName = config.servicesMappings[neonService] || neonService;
+                if(data[serviceName] && data[serviceName][appsProperty] && Object.keys(data[serviceName][appsProperty]).length) {
+                    services[neonService] = {
+                        apps: {},
+                        mappings: {}
+                    };
+
+                    Object.keys(data[serviceName][appsProperty]).forEach(function(appName) {
+                        services[neonService].apps[appName] = {
+                            image: data[serviceName][appsProperty][appName][imageProperty],
+                            url: data[serviceName][appsProperty][appName][urlProperty]
+                        };
+                    });
+
+                    Object.keys(data[serviceName][argsProperty]).forEach(function(argName) {
+                        var neonMappings = Object.keys(config.argsMappings).filter(function(argMapping) {
+                            return config.argsMappings[argMapping] === argName;
+                        });
+                        neonMappings.forEach(function(neonMapping) {
+                            services[neonService].mappings[neonMapping] = data[serviceName][argsProperty][argName];
+                        });
+                    });
+                }
+            });
+
+            callback(services);
+        }
+    });
+};
+
 var saveLayouts = function(layouts) {
     neonDemo.constant('layouts', layouts);
 };
@@ -194,20 +271,29 @@ angular.element(document).ready(function() {
 
         neonDemo.value('popups', {
             links: {
+                URL: "URL",
+                FIELD: "FIELD",
+                VALUE: "VALUE",
+                HIDDEN: "HIDDEN",
+                SERVER: "SERVER",
                 setData: function() {},
                 setView: function() {},
-                deleteData: function() {}
+                deleteData: function() {},
+                createLinkHtml: function() {},
+                createDisabledLinkHtml: function() {}
             }
         });
 
         var digConfig = (config.dig || {
             enabled: false
         });
+
         var externalAppConfig = {
             anyEnabled: digConfig.enabled,
             dig: digConfig
         };
-        neonDemo.constant('external', externalAppConfig);
+
+        var externalAppServicesConfig = config.externalAppServices || {}
 
         var visualizations = (config.visualizations || []);
         neonDemo.constant('visualizations', visualizations);
@@ -219,9 +305,15 @@ angular.element(document).ready(function() {
         }
         var datasets = (config.datasets || []);
 
-        // Read each layout config file and set the layouts, then read each dataset config file and set the datasets, then start angular.
-        readLayoutFiles($http, layouts, (files.layouts || []), function() {
-            readDatasetFiles($http, datasets, (files.datasets || []), startAngular);
+        // Read the external application services config file and create the services, then read each layout config file and set the layouts,
+        // then read each dataset config file and set the datasets, then start angular.
+        readExternalAppServicesConfig(externalAppServicesConfig, function(services) {
+            externalAppConfig.anyEnabled = Object.keys(services).length || externalAppConfig.anyEnabled;
+            externalAppConfig.services = services;
+            neonDemo.constant('external', externalAppConfig);
+            readLayoutFiles($http, layouts, (files.layouts || []), function() {
+                readDatasetFiles($http, datasets, (files.datasets || []), startAngular);
+            });
         });
 
         // Keep the autoplay video code here because when it was in the neonDemoController the dashboard would start playing the video whenever the dataset was changed.

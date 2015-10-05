@@ -29,21 +29,16 @@ angular.module('neonDemo.services')
     var DATE_MAPPING = "date";
     var TAG_MAPPING = "tag";
     var URL_MAPPING = "url";
-    var ID_1_MAPPING = "parameter_id_1";
-    var TEXT_1_MAPPING = "parameter_text_1";
-    var TYPE_1_MAPPING = "parameter_type_1";
-    var USER_1_MAPPING = "parameter_user_1";
+    var CUSTOM_NUMBER_MAPPING_PREFIX = "custom_number_";
+    var CUSTOM_STRING_MAPPING_PREFIX = "custom_string_";
 
     // Keys for URL parameters.
     var ACTIVE_DATASET = "dataset";
-    var DASHBOARD_FILTER_BOUNDS = "dashboard.bounds";
-    var DASHBOARD_FILTER_DATE = "dashboard.date";
-    var DASHBOARD_FILTER_TAG = "dashboard.tag";
-    var DASHBOARD_FILTER_URL = "dashboard.url";
-    var DASHBOARD_FILTER_ID_1 = "dashboard.id1";
-    var DASHBOARD_FILTER_TEXT_1 = "dashboard.text1";
-    var DASHBOARD_FILTER_TYPE_1 = "dashboard.type1";
-    var DASHBOARD_FILTER_USER_1 = "dashboard.user1";
+    var DASHBOARD_FILTER_PREFIX = "dashboard.";
+    var DASHBOARD_FILTER_BOUNDS = DASHBOARD_FILTER_PREFIX + "bounds";
+    var DASHBOARD_FILTER_DATE = DASHBOARD_FILTER_PREFIX + "date";
+    var DASHBOARD_FILTER_TAG = DASHBOARD_FILTER_PREFIX + "tag";
+    var DASHBOARD_FILTER_URL = DASHBOARD_FILTER_PREFIX + "url";
 
     // Array index for the min/max lat/lon in the bounds.
     var BOUNDS_MIN_LON = 0;
@@ -69,6 +64,17 @@ angular.module('neonDemo.services')
         if(!datasetService.hasDataset()) {
             return;
         }
+
+        var customMappings = {};
+        datasetService.getDatabases().forEach(function(database) {
+            database.tables.forEach(function(table) {
+                Object.keys(table.mappings).forEach(function(mapping) {
+                    if(mapping.indexOf(CUSTOM_NUMBER_MAPPING_PREFIX) === 0 || mapping.indexOf(CUSTOM_STRING_MAPPING_PREFIX) === 0) {
+                        customMappings[mapping] = true;
+                    }
+                });
+            });
+        });
 
         var parameters = $location.search();
 
@@ -96,38 +102,6 @@ angular.module('neonDemo.services')
             operator: "contains",
             createFilterClauseCallback: createSimpleFilterClauseCallback
         }, {
-            mappings: [TEXT_1_MAPPING],
-            parameterKey: DASHBOARD_FILTER_TEXT_1,
-            cleanParameter: cleanValue,
-            isParameterValid: doesParameterExist,
-            filterName: "text-1",
-            operator: "contains",
-            createFilterClauseCallback: createSimpleFilterClauseCallback
-        }, {
-            mappings: [TYPE_1_MAPPING],
-            parameterKey: DASHBOARD_FILTER_TYPE_1,
-            cleanParameter: cleanValue,
-            isParameterValid: doesParameterExist,
-            filterName: "type-1",
-            operator: "contains",
-            createFilterClauseCallback: createSimpleFilterClauseCallback
-        }, {
-            mappings: [USER_1_MAPPING],
-            parameterKey: DASHBOARD_FILTER_USER_1,
-            cleanParameter: cleanValue,
-            isParameterValid: doesParameterExist,
-            filterName: "user-1",
-            operator: "contains",
-            createFilterClauseCallback: createSimpleFilterClauseCallback
-        }, {
-            mappings: [ID_1_MAPPING],
-            parameterKey: DASHBOARD_FILTER_ID_1,
-            cleanParameter: cleanValue,
-            isParameterValid: doesParameterExist,
-            filterName: "id-1",
-            operator: "=",
-            createFilterClauseCallback: createSimpleFilterClauseCallback
-        }, {
             mappings: [LATITUDE_MAPPING, LONGITUDE_MAPPING],
             parameterKey: DASHBOARD_FILTER_BOUNDS,
             cleanParameter: splitArray,
@@ -135,6 +109,30 @@ angular.module('neonDemo.services')
             filterName: "bounds",
             createFilterClauseCallback: createBoundsFilterClauseCallback
         }];
+
+        Object.keys(customMappings).forEach(function(mapping) {
+            var cleanMapping = "";
+            var operator = "=";
+            if(mapping.indexOf(CUSTOM_NUMBER_MAPPING_PREFIX) === 0) {
+                cleanMapping = mapping.substring(CUSTOM_NUMBER_MAPPING_PREFIX.length, mapping.length);
+            }
+            if(mapping.indexOf(CUSTOM_STRING_MAPPING_PREFIX) === 0) {
+                cleanMapping = mapping.substring(CUSTOM_STRING_MAPPING_PREFIX.length, mapping.length);
+                operator = "contains";
+            }
+
+            if(cleanMapping) {
+                argsList.push({
+                    mappings: [mapping],
+                    parameterKey: DASHBOARD_FILTER_PREFIX + cleanMapping,
+                    cleanParameter: cleanValue,
+                    isParameterValid: doesParameterExist,
+                    filterName: "custom-" + cleanMapping,
+                    operator: operator,
+                    createFilterClauseCallback: createSimpleFilterClauseCallback
+                });
+            }
+        });
 
         addFiltersForDashboardParameters(parameters, argsList);
     };
