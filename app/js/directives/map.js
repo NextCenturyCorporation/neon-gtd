@@ -28,8 +28,8 @@
  * @constructor
  */
 angular.module('neonDemo.directives')
-.directive('map', ['ConnectionService', 'DatasetService', 'ErrorNotificationService', 'FilterService', 'ExportService', '$timeout',
-    function(connectionService, datasetService, errorNotificationService, filterService, exportService, $timeout) {
+.directive('map', ['ConnectionService', 'DatasetService', 'ErrorNotificationService', 'FilterService', 'ExportService', '$timeout', '$filter',
+    function(connectionService, datasetService, errorNotificationService, filterService, exportService, $timeout, $filter) {
     return {
         templateUrl: 'partials/directives/map.html',
         restrict: 'EA',
@@ -55,7 +55,7 @@ angular.module('neonDemo.directives')
                             for(var j = 0; j < limitedLayers.length; ++j) {
                                 text += (j ? ", " + limitedLayers[j] : limitedLayers[j]);
                             }
-                            text += " limit " + limits[i];
+                            text += " limit " + $filter('number')(limits[i]);
                         }
                     }
                 }
@@ -174,6 +174,18 @@ angular.module('neonDemo.directives')
                 $scope.messenger.subscribe($scope.SELECTION_EVENT_CHANNEL, $scope.createPoint);
 
                 $scope.exportID = exportService.register($scope.makeMapExportObject);
+
+                $scope.messenger.subscribe(filterService.REQUEST_REMOVE_FILTER, function(ids) {
+                    var keys = [];
+
+                    _.each($scope.options.layers, function(layer) {
+                        keys.push(layer.filterKeys);
+                    });
+
+                    if(filterService.containsKey(keys, ids)) {
+                        $scope.clearFilters(true);
+                    }
+                });
 
                 $scope.linkyConfig = datasetService.getLinkyConfig();
 
@@ -732,7 +744,11 @@ angular.module('neonDemo.directives')
                     $scope.outstandingQuery.abort();
                 }
 
-                $scope.outstandingQuery = connection.executeQuery(query).xhr.done(function(queryResults) {
+                $scope.outstandingQuery = connection.executeQuery(query);
+                $scope.outstandingQuery.always(function() {
+                    $scope.outstandingQuery = undefined;
+                });
+                $scope.outstandingQuery.done(function(queryResults) {
                     $scope.$apply(function() {
                         XDATA.userALE.log({
                             activity: "alter",
@@ -744,7 +760,6 @@ angular.module('neonDemo.directives')
                             source: "system",
                             tags: ["receive", "map"]
                         });
-                        $scope.outstandingQuery = undefined;
                         $scope.updateMapData(database, table, queryResults);
 
                         XDATA.userALE.log({
@@ -758,8 +773,8 @@ angular.module('neonDemo.directives')
                             tags: ["render", "map"]
                         });
                     });
-                }).fail(function(response) {
-                    $scope.outstandingQuery = undefined;
+                });
+                $scope.outstandingQuery.fail(function(response) {
                     if(response.status === 0) {
                         XDATA.userALE.log({
                             activity: "alter",
@@ -1352,6 +1367,7 @@ angular.module('neonDemo.directives')
 
                 if(layer.type === coreMap.Map.POINTS_LAYER) {
                     layer.olLayer = new coreMap.Map.Layer.PointsLayer(layer.name, {
+                        colors: layer.colorBy ? datasetService.getActiveDatasetColorMaps(layer.database, layer.table, layer.colorBy) || {} : {},
                         latitudeMapping: layer.latitudeMapping,
                         longitudeMapping: layer.longitudeMapping,
                         sizeMapping: layer.sizeBy,
@@ -1437,11 +1453,10 @@ angular.module('neonDemo.directives')
 
                 // Remove layer from the map.
                 $scope.map.removeLayer(layer.olLayer);
-                layer.olLayer = undefined;
 
                 // Remove layer from the global list of layers.
                 index = _.findIndex($scope.options.layers, function(element) {
-                    return element.name === layer.name;
+                    return element.olLayer.id === layer.olLayer.id;
                 });
                 $scope.options.layers.splice(index, 1);
             };

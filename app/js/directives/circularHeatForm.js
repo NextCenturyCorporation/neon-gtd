@@ -37,6 +37,7 @@ function(connectionService, datasetService, errorNotificationService, exportServ
         templateUrl: 'partials/directives/circularHeatForm.html',
         restrict: 'EA',
         scope: {
+            bindTitle: '=',
             bindDateField: '=',
             bindTable: '=',
             bindDatabase: '=',
@@ -68,6 +69,11 @@ function(connectionService, datasetService, errorNotificationService, exportServ
             var HOURS_IN_WEEK = 168;
             var HOURS_IN_DAY = 24;
 
+            var updateSize = function() {
+                var titleWidth = $element.width() - $element.find(".chart-options").outerWidth(true);
+                $element.find(".title").css("maxWidth", titleWidth - 20);
+            };
+
             /**
              * Initializes the name of the date field used to query the current dataset
              * and the Neon Messenger used to monitor data change events.
@@ -94,9 +100,12 @@ function(connectionService, datasetService, errorNotificationService, exportServ
                         source: "system",
                         tags: ["remove", "circularheatform"]
                     });
+                    $element.off("resize", updateSize);
                     $scope.messenger.removeEvents();
                     exportService.unregister($scope.exportID);
                 });
+
+                $element.resize(updateSize);
             };
 
             /**
@@ -250,7 +259,10 @@ function(connectionService, datasetService, errorNotificationService, exportServ
                 var query = new neon.query.Query()
                     .selectFrom($scope.options.database.name, $scope.options.table.name)
                     .groupBy(groupByDayClause, groupByHourClause)
-                    .where($scope.options.dateField.columnName, '!=', null)
+                    .where(neon.query.and(
+                        neon.query.where($scope.options.dateField.columnName, '>=', new Date("1970-01-01T00:00:00.000Z")),
+                        neon.query.where($scope.options.dateField.columnName, '<=', new Date("2025-01-01T00:00:00.000Z"))
+                    ))
                     .aggregate(neon.query.COUNT, '*', 'count');
 
                 // Issue the query and provide a success handler that will forcefully apply an update to the chart.
@@ -273,7 +285,11 @@ function(connectionService, datasetService, errorNotificationService, exportServ
                     $scope.outstandingQuery.abort();
                 }
 
-                $scope.outstandingQuery = connection.executeQuery(query).xhr.done(function(queryResults) {
+                $scope.outstandingQuery = connection.executeQuery(query);
+                $scope.outstandingQuery.always(function() {
+                    $scope.outstandingQuery = undefined;
+                });
+                $scope.outstandingQuery.done(function(queryResults) {
                     XDATA.userALE.log({
                         activity: "alter",
                         action: "receive",
@@ -285,7 +301,6 @@ function(connectionService, datasetService, errorNotificationService, exportServ
                         tags: ["circularheatform"]
                     });
                     $scope.$apply(function() {
-                        $scope.outstandingQuery = undefined;
                         $scope.updateChartData(queryResults);
                         $scope.loadingData = false;
                         XDATA.userALE.log({
@@ -299,8 +314,8 @@ function(connectionService, datasetService, errorNotificationService, exportServ
                             tags: ["circularheatform"]
                         });
                     });
-                }).fail(function(response) {
-                    $scope.outstandingQuery = undefined;
+                });
+                $scope.outstandingQuery.fail(function(response) {
                     if(response.status === 0) {
                         XDATA.userALE.log({
                             activity: "alter",
@@ -428,7 +443,10 @@ function(connectionService, datasetService, errorNotificationService, exportServ
                 var query = new neon.query.Query()
                     .selectFrom($scope.options.database.name, $scope.options.table.name)
                     .groupBy(groupByDayClause, groupByHourClause)
-                    .where($scope.options.dateField.columnName, '!=', null)
+                    .where(neon.query.and(
+                        neon.query.where($scope.options.dateField.columnName, '>=', new Date("1970-01-01T00:00:00.000Z")),
+                        neon.query.where($scope.options.dateField.columnName, '<=', new Date("2025-01-01T00:00:00.000Z"))
+                    ))
                     .aggregate(neon.query.COUNT, '*', 'count');
                 query.limitClause = exportService.getLimitClause();
                 var finalObject = {

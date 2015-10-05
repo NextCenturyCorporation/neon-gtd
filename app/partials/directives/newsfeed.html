@@ -1,0 +1,87 @@
+<div class="header-container" ng-show="!(hideHeader)">
+    <div class="title header-text pull-left" ng-bind="(bindTitle != undefined) ? bindTitle : options.table.prettyName"></div>
+
+    <options-menu parent-element="element" button-text="optionsMenuButtonText" show-button-text="showOptionsMenuButtonText">
+        <div class="form-group" ng-show="!(hideAdvancedOptions)">
+            <label>Database</label>
+            <select class="form-control" ng-model="options.database" ng-options="database.prettyName for database in databases" ng-required="true" ng-disabled="(databases.length < 2)" ng-change="updateTables()">
+            </select>
+        </div>
+        <div class="form-group" ng-show="!(hideAdvancedOptions)">
+            <label>Table</label>
+            <select class="form-control" ng-model="options.table" ng-options="table.prettyName for table in tables" ng-required="true" ng-disabled="(tables.length < 2)" ng-change="updateFields()">
+            </select>
+        </div>
+
+        <div class="form-group" ng-show="!(hideAdvancedOptions)">
+            <label>Head Field</label>
+            <select class="form-control" ng-model="options.headField" ng-required="false" ng-disabled="!(fields.length > 0)" ng-options="field.prettyName for field in fields" ng-change="onFieldChanged()">
+                <option value="">None</option>
+            </select>
+        </div>
+
+        <div class="form-group" ng-show="!(hideAdvancedOptions)">
+            <label>Name Field</label>
+            <select class="form-control" ng-model="options.nameField" ng-required="false" ng-disabled="!(fields.length > 0)" ng-options="field.prettyName for field in fields" ng-change="onFieldChanged()">
+                <option value="">None</option>
+            </select>
+        </div>
+
+        <div class="form-group" ng-show="!(hideAdvancedOptions)">
+            <label>Date Field</label>
+            <select class="form-control" ng-model="options.dateField" ng-required="true" ng-disabled="!(fields.length > 0)" ng-options="field.prettyName for field in fields" ng-change="onFieldChanged()">
+                <option disabled selected value="">Please choose a field</option>
+            </select>
+        </div>
+
+        <div class="form-group" ng-show="!(hideAdvancedOptions)">
+            <label>Text Field</label>
+            <select class="form-control" ng-model="options.textField" ng-required="true" ng-disabled="!(fields.length > 0)" ng-options="field.prettyName for field in fields" ng-change="onFieldChanged()">
+                <option disabled selected value="">Please choose a field</option>
+            </select>
+        </div>
+
+        <div class="form-group">
+            <label>Sort By Date</label>
+            <div class="btn-group">
+                <label class="btn btn-default active" ng-class="{true: 'active', false: ''}[options.sortDirection === ASCENDING]">
+                    <input type="radio" ng-model="options.sortDirection" style="display:none" ng-value="ASCENDING" ng-change="handleSortButtonClick(ASCENDING)">ASC
+                </label>
+                <label class="btn btn-default" ng-class="{true: 'active', false: ''}[options.sortDirection === DESCENDING]">
+                    <input type="radio" ng-model="options.sortDirection" style="display:none" ng-value="DESCENDING" ng-change="handleSortButtonClick(DESCENDING)">DESC
+                </label>
+            </div>
+            <div class="clearfix"></div>
+        </div>
+
+        <div class="form-group">
+            <label>News Limit</label>
+            <div class="input-group">
+                <input type="number" min="1" class="form-control" ng-model="options.limit" required>
+                <div class="input-group-btn">
+                    <button type="button" class="btn btn-default refresh" title="Refresh" ng-click="onFieldChanged()">
+                        <span class="glyphicon glyphicon-refresh"></span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </options-menu>
+</div>
+
+<div class="clearfix"></div>
+
+<div class="newsfeed">
+	<div class="item" ng-class="getNewsItemStyleClass(item)" ng-repeat='item in data.news'>
+        <div>
+            <img class="image" src="img/Twitter.png" ng-if="feedType == 'TWITTER'">
+            <span class="head" ng-if="item.head != undefined" ng-bind="item.head"></span>
+            <span class="name" ng-if="item.name != undefined" ng-bind="item.name"></span>
+        </div>
+        <div>
+            <span class="date" ng-bind="item.date.toUTCString()"></span>
+        </div>
+        <div>
+            <span class="text" ng-bind="item.text"></span>
+        </div>
+	</div>
+</div>

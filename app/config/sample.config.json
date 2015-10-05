@@ -25,7 +25,9 @@
         "hideErrorNotifications": false,
         "hideHeaders": false,
         "hideCloseButton": false,
-        "showVideoOnLoad": false
+        "showVideoOnLoad": false,
+        "showImport": false,
+        "showExport": true
     },
 
     "help": {
@@ -241,6 +243,18 @@
           "hashtags": false,
           "urls": true,
           "linkTo": "twitter"
+        },
+        "options": {
+            "colorMaps": {
+                "test": {
+                    "earthquakes": {
+                        "myField": {
+                            "fieldA": "#123456",
+                            "fieldB": "#654321"
+                        }
+                    }
+                }
+            }
         }
     }],
 
@@ -286,6 +300,7 @@
             "sizeY": 4,
             "type": "timeline-selector",
             "bindings": {
+                "bind-title": "'myTitle'",
                 "bind-database": "'myDatabase'",
                 "bind-table": "'myTable'",
                 "bind-date-field": "'date'",
@@ -297,6 +312,7 @@
             "sizeY": 4,
             "type": "map",
             "bindings": {
+                "bind-title": "'myTitle'",
                 "bind-database": "'myDatabase'",
                 "bind-table": "'myTable'",
                 "bind-latitude-field": "'latitude'",
@@ -309,6 +325,7 @@
             "sizeY": 4,
             "type": "circular-heat-form",
             "bindings": {
+                "bind-title": "'myTitle'",
                 "bind-database": "'myDatabase'",
                 "bind-table": "'myTable'",
                 "bind-date-field": "'date'"
@@ -318,6 +335,7 @@
             "sizeY": 4,
             "type": "linechart",
             "bindings": {
+                "bind-title": "'myTitle'",
                 "bind-database": "'myDatabase'",
                 "bind-table": "'myTable'",
                 "bind-date-field": "'date'",
@@ -330,6 +348,7 @@
             "sizeY": 4,
             "type": "barchart",
             "bindings": {
+                "bind-title": "'myTitle'",
                 "bind-database": "'myDatabase'",
                 "bind-table": "'myTable'",
                 "bind-x-axis-field": "'type'",
@@ -341,6 +360,7 @@
             "sizeY": 4,
             "type": "count-by",
             "bindings": {
+                "bind-title": "'myTitle'",
                 "bind-database": "'myDatabase'",
                 "bind-table": "'myTable'",
                 "bind-count-field": "'type'"
@@ -350,6 +370,7 @@
             "sizeY": 4,
             "type": "tag-cloud",
             "bindings": {
+                "bind-title": "'myTitle'",
                 "bind-database": "'myDatabase'",
                 "bind-table": "'myTable'",
                 "bind-tag-field": "'hashtags'"
@@ -359,6 +380,7 @@
             "sizeY": 4,
             "type": "sunburst",
             "bindings": {
+                "bind-title": "'myTitle'",
                 "bind-database": "'myDatabase'",
                 "bind-table": "'myTable'"
             }
@@ -367,6 +389,7 @@
             "sizeY": 4,
             "type": "query-results-table",
             "bindings": {
+                "bind-title": "'myTitle'",
                 "bind-database": "'myDatabase'",
                 "bind-table": "'myTable'"
             }

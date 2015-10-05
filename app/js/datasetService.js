@@ -232,6 +232,41 @@ angular.module("neonDemo.services")
     };
 
     /**
+     * Returns an object containing the first database, table, and fields found in the active dataset with all the given mappings.
+     * @param {Array} The array of mapping keys that the database and table must contain.
+     * @method getFirstDatabaseAndTableWithMappings
+     * @return {Object} An object containing {String} database, {String} table, and {Object} fields linking {String} mapping to {String} field.
+     * If no match was found, an empty object is returned instead.
+     */
+    service.getFirstDatabaseAndTableWithMappings = function(keys) {
+        var result = {};
+
+        service.dataset.databases.forEach(function(database) {
+            database.tables.forEach(function(table) {
+                var success = true;
+                var fields = {};
+                keys.forEach(function(key) {
+                    if(table.mappings[key]) {
+                        fields[key] = table.mappings[key];
+                    } else {
+                        success = false;
+                        return;
+                    }
+                });
+
+                if(success) {
+                    result.database = database.name;
+                    result.table = table.name;
+                    result.fields = fields;
+                    return;
+                }
+            });
+        });
+
+        return result;
+    };
+
+    /**
      * Returns the field objects for the database and table with the given names.
      * @param {String} The database name
      * @param {String} The table name
@@ -673,6 +708,41 @@ angular.module("neonDemo.services")
      */
     service.getActiveDatasetOptions = function() {
         return service.dataset.options;
+    };
+
+    /**
+     * Returns the color maps option for the database, table, and field in the active dataset with the given names.
+     * @param {String} databaseName
+     * @param {String} tableName
+     * @param {String} fieldName
+     * @method getActiveDatasetColorMaps
+     * @return {Object}
+     */
+    service.getActiveDatasetColorMaps = function(databaseName, tableName, fieldName) {
+        var colorMaps = service.getActiveDatasetOptions().colorMaps || {};
+        return colorMaps[databaseName] && colorMaps[databaseName][tableName] ? colorMaps[databaseName][tableName][fieldName] || {} : {};
+    };
+
+    /**
+     * Creates and returns a new blank field object.
+     * @method createBlankField
+     * @return {Object}
+     */
+    service.createBlankField = function() {
+        return {
+            columnName: "",
+            prettyName: ""
+        };
+    };
+
+    /**
+     * Returns whether the given field object is valid.
+     * @param {Object} fieldObject
+     * @method isFieldValid
+     * @return {Boolean}
+     */
+    service.isFieldValid = function(fieldObject) {
+        return fieldObject && fieldObject.columnName;
     };
 
     // Validate the datasets from the configuration file on initialization.

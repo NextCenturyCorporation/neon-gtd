@@ -1,5 +1,5 @@
 <div class="header-container" ng-show="!(hideHeader)">
-    <span class="header-text pull-left" ng-bind="options.table.prettyName"></span>
+    <div class="title header-text pull-left" ng-bind="(bindTitle != undefined) ? bindTitle : options.table.prettyName + ' / ' + options.selectedNodeField.prettyName"></div>
 
     <options-menu parent-element="element" button-text="optionsMenuButtonText" show-button-text="showOptionsMenuButtonText" export-function="makeDirectedGraphExportObject">
         <div class="form-group" ng-show="!(hideAdvancedOptions)">
@@ -16,31 +16,80 @@
 
         <div class="form-group" ng-show="!(hideAdvancedOptions)">
             <label>Node Field</label>
-            <select class="form-control" ng-model="options.selectedNodeField" ng-options="field.prettyName for field in fields" ng-required="true" ng-disabled="(fields.length == 0)" ng-change="clearFilters()">
+            <select class="form-control" ng-model="options.selectedNodeField" ng-options="field.prettyName for field in fields" ng-required="true" ng-disabled="(fields.length == 0)" ng-change="queryForData()">
+            </select>
+        </div>
+
+        <div class="form-group" ng-show="!(hideAdvancedOptions)">
+            <label>Name Field</label>
+            <select class="form-control" ng-model="options.selectedNameField" ng-options="field.prettyName for field in fields" ng-required="false" ng-disabled="(fields.length == 0)" ng-change="queryForData()">
+                <option value="">None</option>
+            </select>
+        </div>
+
+        <div class="form-group" ng-show="!(hideAdvancedOptions)">
+            <label>Size Field</label>
+            <select class="form-control" ng-model="options.selectedSizeField" ng-options="field.prettyName for field in fields" ng-required="false" ng-disabled="(fields.length == 0)" ng-change="queryForData()">
+                <option value="">None</option>
             </select>
         </div>
 
         <div class="form-group" ng-show="!(hideAdvancedOptions)">
             <label>Linked Node(s) Field</label>
-            <select class="form-control" ng-model="options.selectedLinkField" ng-options="field.prettyName for field in fields" ng-required="false" ng-disabled="(fields.length == 0)" ng-change="clearFilters()">
+            <select class="form-control" ng-model="options.selectedLinkedNodeField" ng-options="field.prettyName for field in fields" ng-required="false" ng-disabled="(fields.length == 0)" ng-change="queryForData()">
+                <option value="">None</option>
+            </select>
+        </div>
+
+        <div class="form-group" ng-show="!(hideAdvancedOptions)">
+            <label>Linked Node(s) Name Field</label>
+            <select class="form-control" ng-model="options.selectedLinkedNameField" ng-options="field.prettyName for field in fields" ng-required="false" ng-disabled="(fields.length == 0)" ng-change="queryForData()">
+                <option value="">None</option>
+            </select>
+        </div>
+
+        <div class="form-group" ng-show="!(hideAdvancedOptions)">
+            <label>Linked Node(s) Size Field</label>
+            <select class="form-control" ng-model="options.selectedLinkedSizeField" ng-options="field.prettyName for field in fields" ng-required="false" ng-disabled="(fields.length == 0)" ng-change="queryForData()">
+                <option value="">None</option>
+            </select>
+        </div>
+
+        <div class="form-group" ng-show="!(hideAdvancedOptions)">
+            <label>Date Field</label>
+            <select class="form-control" ng-model="options.selectedDateField" ng-options="field.prettyName for field in fields" ng-required="false" ng-disabled="(fields.length == 0)" ng-change="queryForData()">
+                <option value="">None</option>
+            </select>
+        </div>
+
+        <div class="form-group" ng-show="!(hideAdvancedOptions)">
+            <label>Flag Field</label>
+            <select class="form-control" ng-model="options.selectedFlagField" ng-options="field.prettyName for field in fields" ng-required="false" ng-disabled="(fields.length == 0)" ng-change="queryForData()">
+                <option value="">None</option>
+            </select>
+        </div>
+
+        <div class="form-group" ng-show="!(hideAdvancedOptions)">
+            <label>Text Field</label>
+            <select class="form-control" ng-model="options.selectedTextField" ng-options="field.prettyName for field in fields" ng-required="false" ng-disabled="(fields.length == 0)" ng-change="queryForData()">
                 <option value="">None</option>
             </select>
         </div>
 
         <div class="form-group" ng-hide="!(options.selectedNodeField && options.selectedNodeField.columnName)">
-            <label ng-bind="'Set Filter on ' + options.selectedNodeField.prettyName"></label>
+            <label ng-bind="'Select ' + options.selectedNodeField.prettyName"></label>
             <div class="input-group">
-                <input type="text" class="form-control" placeholder="{{'Enter ' + options.selectedNodeField.prettyName + ' to Filter'}}" ng-model="options.selectedNode" ng-disabled="!(options.selectedNodeField)">
+                <input type="text" class="form-control" placeholder="{{'Enter ' + options.selectedNodeField.prettyName + '...'}}" ng-model="options.selectedNodeId" ng-disabled="!(options.selectedNodeField)">
                 <div class="input-group-btn">
-                    <button type="button" class="btn btn-default refresh" title="Add Node Filter" ng-click="selectNode()">
+                    <button type="button" class="btn btn-default refresh" title="Select Node" ng-click="selectNodeAndNetworkFromNodeId(options.selectedNodeId)">
                         <span class="glyphicon glyphicon-plus"></span>
                     </button>
                 </div>
             </div>
 
             <div class="input-group">
-                <select class="form-control" ng-model="options.selectedNode" ng-options="node for node in nodes track by node" ng-required="false" ng-disabled="(nodes.length == 0) || !(options.selectedNodeField)" ng-change="selectNode()">
-                    <option value="" ng-bind="'Select ' + options.selectedNodeField.prettyName + ' to Filter...'"></option>
+                <select class="form-control" ng-model="options.selectedNodeId" ng-options="nodeId for nodeId in existingNodeIds track by nodeId" ng-required="false" ng-disabled="(existingNodeIds.length == 0) || !(options.selectedNodeField)" ng-change="selectNodeAndNetworkFromNodeId(options.selectedNodeId)">
+                    <option value="" ng-bind="'Select ' + options.selectedNodeField.prettyName + '...'"></option>
                 </select>
                 <div class="input-group-btn">
                     <button type="button" class="btn btn-default refresh" title="Refresh Node List" ng-click="queryForData(false, true)">
@@ -61,31 +110,62 @@
                 </div>
             </div>
         </div>
-
-        <div class="form-group">
-            <label class="btn btn-default" ng-class="{true: 'active', false: ''}[options.reloadOnFilter]" title="Reload Graph on Filter">
-                <input type="checkbox" ng-model="options.reloadOnFilter" style="display:none" ng-value="false"/>
-                Reload Graph on Filter
-            </label>
-        </div>
     </options-menu>
 </div>
 
 <div class="clearfix"></div>
 
 <div class="header-container filter-container">
-    <button type="button" class="btn btn-default header-item" title="Load Graph" ng-click="queryForData(true)">
-        Load Graph
-    </button>
+    <div class="header-item filter-reset pull-right" ng-class="{hidden: (selectedNodeIds.length == 0)}" title="{{'Selected ' + selectedNodeIds.length + ((selectedNodeIds.length == 1) ? ' Node' : ' Nodes')}}">
+        <span class="filter-label" ng-bind="selectedNodeIds.length + ((selectedNodeIds.length == 1) ? ' Node' : ' Nodes')"></span>
+        <span class="glyphicon glyphicon-remove" ng-click="deselectAllNodesAndNetwork()"></span>
+    </div>
 
-    <div class="header-item filter-reset pull-right" ng-repeat="value in filteredNodes" title="{{options.selectedNodeField.prettyName}}={{value}}">
-        <span class="filter-label" ng-bind="value"></span>
-        <span class="glyphicon glyphicon-remove" ng-click="removeFilter(value)"></span>
+    <div class="pull-left">
+        <label type="button" class="btn btn-default header-item" title="{{'Load ' + (selectedNodeIds.length ? 'Selected ' : '') + 'Network Graph'}}"
+            ng-bind="'Load ' + (selectedNodeIds.length ? 'Selected ' : '') + 'Network'" ng-click="queryForData(true)"/>
+    </div>
+
+    <div class="pull-left">
+        <span class="form-group">
+            <span class="btn-group">
+                <label class="btn btn-default header-item" ng-class="{true: 'active', false: ''}[options.hideSimpleNetworks]" title="Hide Single-Link Networks and Unlinked Nodes">
+                    <input type="checkbox" ng-model="options.hideSimpleNetworks" style="display:none" ng-value="false"/>
+                    <span class="glyphicon glyphicon-eye-open" ng-show="!(options.hideSimpleNetworks)"></span>
+                    <span class="glyphicon glyphicon-eye-close" ng-show="(options.hideSimpleNetworks)"></span>
+                    <span ng-hide="(width < 725) || (selectedNodeIds.length > 0 && width < 925)" ng-bind="(options.hideSimpleNetworks ? 'Hide' : 'Show') + ' Simple Networks'"</span>
+                </label>
+
+                <label class="btn btn-default header-item" ng-class="{true: 'active', false: ''}[options.useNodeClusters]" title="Cluster Leaf Nodes and Unlinked Nodes">
+                    <input type="checkbox" ng-model="options.useNodeClusters" style="display:none" ng-value="false"/>
+                    <span class="glyphicon glyphicon-cloud"></span>
+                    <span ng-hide="(width < 725) || (selectedNodeIds.length > 0 && width < 925)" ng-bind="'Clustering ' + (options.useNodeClusters ? 'On' : 'Off')"</span>
+                </label>
+
+                <label class="btn btn-default header-item" ng-class="{true: 'active', false: ''}[options.reloadOnFilter]" title="Auto-Reload Network Graph on Adding Filters">
+                    <input type="checkbox" ng-model="options.reloadOnFilter" style="display:none" ng-value="false"/>
+                    <span class="glyphicon glyphicon-refresh"></span>
+                    <span ng-hide="(width < 725) || (selectedNodeIds.length > 0 && width < 925)" ng-bind="'Auto-Reload ' + (options.reloadOnFilter ? 'On' : 'Off')"</span>
+                </label>
+            </span>
+        </span>
     </div>
 </div>
 
 <div class="clearfix"></div>
 
 <div class="directed-graph">
-    <div class="directed-graph-container directed-graph-container-{{uniqueId}}"></div>
+    <div class="directed-graph-container"></div>
+</div>
+
+<div class="clearfix"></div>
+
+<div class="legend" ng-show="(legend.length > 0)">
+    <span class="legend-item" title="Legend">
+        <span class="legend-text">Legend:</span>
+    </span>
+    <span class="legend-item" ng-repeat="item in legend" ng-show="(item.display ? item.display() : true)" title="{{item.label}}">
+        <span class="legend-icon" style="background-color: {{item.color}};"></span>
+        <span class="legend-text" ng-bind="item.label"></span>
+    </span>
 </div>

@@ -205,11 +205,14 @@ function(connectionService, datasetService, errorNotificationService) {
                         $scope.outstandingQuery.abort();
                     }
 
-                    $scope.outstandingQuery = connection.executeQuery(query).xhr.done(function(queryResults) {
+                    $scope.outstandingQuery = connection.executeQuery(query);
+                    $scope.outstandingQuery.done(function() {
                         $scope.outstandingQuery = undefined;
+                    });
+                    $scope.outstandingQuery.done(function(queryResults) {
                         next(queryResults);
-                    }).fail(function(response) {
-                        $scope.outstandingQuery = undefined;
+                    });
+                    $scope.outstandingQuery.fail(function(response) {
                         if(response.status !== 0) {
                             $scope.drawBlankChart();
                             if(response.responseJSON) {

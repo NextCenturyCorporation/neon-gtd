@@ -34,6 +34,7 @@ function(external, popups, connectionService, datasetService, errorNotificationS
         templateUrl: 'partials/directives/queryResultsTable.html',
         restrict: 'EA',
         scope: {
+            bindTitle: '=',
             bindTable: '=',
             bindDatabase: '=',
             hideHeader: '=?',
@@ -55,10 +56,16 @@ function(external, popups, connectionService, datasetService, errorNotificationS
                 });
                 var tableBufferY = $tableDiv.outerHeight(true) - $tableDiv.height();
                 $tableDiv.height($element.height() - headerHeight - tableBufferY);
+
+                var titleWidth = $element.width() - $element.find(".chart-options").outerWidth(true);
+                $element.find(".title").css("maxWidth", titleWidth - 20);
+
                 if($scope.table) {
                     $scope.table.refreshLayout();
                 }
             };
+
+            $element.resize(updateSize);
 
             $scope.ASCENDING = neon.query.ASCENDING;
             $scope.DESCENDING = neon.query.DESCENDING;
@@ -132,8 +139,6 @@ function(external, popups, connectionService, datasetService, errorNotificationS
                         tags: ["options", "datagrid", "limit", newVal]
                     });
                 });
-
-                $element.resize(updateSize);
 
                 // Setup our messenger.
                 $scope.messenger = new neon.eventing.Messenger();
@@ -415,7 +420,11 @@ function(external, popups, connectionService, datasetService, errorNotificationS
                     $scope.outstandingDataQuery.abort();
                 }
 
-                $scope.outstandingDataQuery = connection.executeQuery(query).xhr.done(function(queryResults) {
+                $scope.outstandingDataQuery = connection.executeQuery(query);
+                $scope.outstandingDataQuery.done(function() {
+                    $scope.outstandingDataQuery = undefined;
+                });
+                $scope.outstandingDataQuery.done(function(queryResults) {
                     XDATA.userALE.log({
                         activity: "alter",
                         action: "receive",
@@ -427,7 +436,6 @@ function(external, popups, connectionService, datasetService, errorNotificationS
                         tags: ["receive", "datagrid"]
                     });
                     $scope.$apply(function() {
-                        $scope.outstandingDataQuery = undefined;
                         $scope.updateData(queryResults, refreshColumns);
                         queryForTotalRows(connection);
                         XDATA.userALE.log({
@@ -441,8 +449,8 @@ function(external, popups, connectionService, datasetService, errorNotificationS
                             tags: ["render", "datagrid"]
                         });
                     });
-                }).fail(function(response) {
-                    $scope.outstandingDataQuery = undefined;
+                });
+                $scope.outstandingDataQuery.fail(function(response) {
                     if(response.status === 0) {
                         XDATA.userALE.log({
                             activity: "alter",
@@ -500,9 +508,12 @@ function(external, popups, connectionService, datasetService, errorNotificationS
                     $scope.outstandingTotalRowsQuery.abort();
                 }
 
-                $scope.outstandingTotalRowsQuery = connection.executeQuery(query).xhr.done(function(queryResults) {
+                $scope.outstandingTotalRowsQuery = connection.executeQuery(query);
+                $scope.outstandingTotalRowsQuery.always(function() {
+                    $scope.outstandingTotalRowsQuery = undefined;
+                });
+                $scope.outstandingTotalRowsQuery.done(function(queryResults) {
                     $scope.$apply(function() {
-                        $scope.outstandingTotalRowsQuery = undefined;
                         if(queryResults.data.length > 0) {
                             $scope.totalRows = queryResults.data[0].count;
                         } else {
@@ -520,8 +531,8 @@ function(external, popups, connectionService, datasetService, errorNotificationS
                             tags: ["receive", "datagrid"]
                         });
                     });
-                }).fail(function(response) {
-                    $scope.outstandingTotalRowsQuery = undefined;
+                });
+                $scope.outstandingTotalRowsQuery.fail(function(response) {
                     if(response.status === 0) {
                         XDATA.userALE.log({
                             activity: "alter",
@@ -651,6 +662,7 @@ function(external, popups, connectionService, datasetService, errorNotificationS
                  *  - It is only guaranteed to work correctly if there is only one data table showing this collection
                  */
                 if($scope.options.table.enableRowSelection) {
+                    $(".query-results-grid .slick-row").addClass("selectable");
                     $scope.addOnClickListener();
                     $scope.clearSelection();
                     $scope.addSortListener();

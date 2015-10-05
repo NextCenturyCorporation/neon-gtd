@@ -39,6 +39,7 @@ angular.module('neonDemo.directives')
             $scope.convertingMessage = "";
             $scope.datastoreType = datasetService.getDatastore() || 'mongo';
             $scope.datastoreHost = datasetService.getHostname() || 'localhost';
+            $scope.errorMessage = undefined;
             var file;
             var pollDelay = 1500;
 
@@ -63,9 +64,6 @@ angular.module('neonDemo.directives')
                 connection.executeUploadFile(formData, uploadSuccess, uploadFailure, $scope.datastoreHost, $scope.datastoreType);
             };
 
-            // TODO - window.alert technically works here, but isn't necessarily the prettiest solution.
-            // Should change this to use the errorNotificationService at some point - it's only not doing
-            // that now because the error shows up in the options menu rather than the modal for some reason.
             /**
              * Failure callback for $scope.uploadFile, in case it fails for some reason. Displays an error message saying what went wrong.
              * @method uploadFailure
@@ -76,7 +74,8 @@ angular.module('neonDemo.directives')
                 if(result.status === 406) {
                     $('#overwriteModal').modal('show');
                 } else {
-                    window.alert(result.message);
+                    $scope.errorMessage = errorNotificationService.showErrorMessage($element.children('#importModal'),
+                        result.message, result.stackTrace ? result.stackTrace : result.message);
                 }
             };
 
@@ -183,9 +182,6 @@ angular.module('neonDemo.directives')
                 connection.executeRemoveDataset($scope.importUserName, $scope.importDatabaseName, $scope.uploadFile, removeFailure, $scope.datastoreHost, $scope.datastoreType);
             };
 
-            // TODO - window.alert technically works here, but isn't necessarily the prettiest solution.
-            // Should change this to use the errorNotificationService at some point - it's only not doing
-            // that now because the error shows up in the options menu rather than the modal for some reason.
             /**
              * Failure callback for $scope.overwriteDatabase, in case it fails for some reason. Displays an error
              * message saying what went wrong.
@@ -194,7 +190,8 @@ angular.module('neonDemo.directives')
              */
             var removeFailure = function(response) {
                 var result = JSON.parse(response);
-                window.alert(result.message);
+                $scope.errorMessage = errorNotificationService.showErrorMessage($element.children('#importModal'),
+                        result.message, result.stackTrace ? result.stackTrace : result.message);
             };
 
             /**
@@ -238,9 +235,6 @@ angular.module('neonDemo.directives')
                 waitForImportComplete(response.jobID);
             };
 
-            // TODO - window.alert technically works here, but isn't necessarily the prettiest solution.
-            // Should change this to use the errorNotificationService at some point - it's only not doing
-            // that now because the error shows up in the options menu rather than the modal for some reason.
             /**
              * Failure callback for $scope.sendConfirmedChoices. Shows an error message saying what went wrong.
              * @method confirmChoicesFailure
@@ -249,7 +243,8 @@ angular.module('neonDemo.directives')
             var confirmChoicesFailure = function(response) {
                 $element.find("#confirmChoicesButton").removeClass("disabled");
                 var result = JSON.parse(response);
-                window.alert(result.message);
+                $scope.errorMessage = errorNotificationService.showErrorMessage($element.children('#importModal'),
+                        result.message, result.stackTrace ? result.stackTrace : result.message);
             };
 
             /**
@@ -499,6 +494,10 @@ angular.module('neonDemo.directives')
              * @method importModalOnShow
              */
             var importModalOnShow = function() {
+                if($scope.errorMessage) {
+                    errorNotificationService.hideErrorMessage($scope.errorMessage);
+                    $scope.errorMessage = undefined;
+                }
                 $(".upload-file")[0].reset();
                 file = undefined;
                 $scope.importDatabaseName = '';

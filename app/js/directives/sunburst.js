@@ -34,6 +34,7 @@ function(connectionService, datasetService, errorNotificationService, exportServ
         templateUrl: 'partials/directives/sunburst.html',
         restrict: 'EA',
         scope: {
+            bindTitle: '=',
             bindTable: '=',
             bindDatabase: '=',
             hideHeader: '=?',
@@ -135,6 +136,9 @@ function(connectionService, datasetService, errorNotificationService, exportServ
             };
 
             var updateChartSize = function() {
+                var titleWidth = $element.width() - $element.find(".chart-options").outerWidth(true);
+                $element.find(".title").css("maxWidth", titleWidth - 20);
+
                 if($scope.chart) {
                     var headerHeight = 0;
                     $element.find(".header-container").each(function() {
@@ -254,7 +258,11 @@ function(connectionService, datasetService, errorNotificationService, exportServ
                     $scope.outstandingQuery.abort();
                 }
 
-                $scope.outstandingQuery = connection.executeQuery(query).xhr.done(function(queryResults) {
+                $scope.outstandingQuery = connection.executeQuery(query);
+                $scope.outstandingQuery.done(function() {
+                    $scope.outstandingQuery = undefined;
+                });
+                $scope.outstandingQuery.done(function(queryResults) {
                     XDATA.userALE.log({
                         activity: "alter",
                         action: "receive",
@@ -265,7 +273,6 @@ function(connectionService, datasetService, errorNotificationService, exportServ
                         source: "system",
                         tags: ["receive", "sunburst"]
                     });
-                    $scope.outstandingQuery = undefined;
                     $scope.$apply(function() {
                         updateChartSize();
                         doDrawChart(buildDataTree(queryResults));
@@ -281,8 +288,8 @@ function(connectionService, datasetService, errorNotificationService, exportServ
                             tags: ["render", "sunburst"]
                         });
                     });
-                }).fail(function(response) {
-                    $scope.outstandingQuery = undefined;
+                });
+                $scope.outstandingQuery.fail(function(response) {
                     if(response.status === 0) {
                         XDATA.userALE.log({
                             activity: "alter",

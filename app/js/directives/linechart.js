@@ -36,12 +36,14 @@ function(connectionService, datasetService, errorNotificationService, filterServ
         templateUrl: 'partials/directives/linechart.html',
         restrict: 'EA',
         scope: {
+            bindTitle: '=',
             bindDateField: '=',
             bindYAxisField: '=',
             bindCategoryField: '=',
             bindAggregationField: '=',
             bindTable: '=',
             bindDatabase: '=',
+            bindGranularity: '=',
             colorMappings: '&',
             hideHeader: '=?',
             hideAdvancedOptions: '=?'
@@ -88,21 +90,25 @@ function(connectionService, datasetService, errorNotificationService, filterServ
             $scope.options = {
                 database: {},
                 table: {},
-                attrX: "",
-                attrY: "",
-                categoryField: "",
+                attrX: {},
+                attrY: {},
+                categoryField: {},
                 aggregation: "count",
-                granularity: DAY,
+                granularity: $scope.bindGranularity ? $scope.bindGranularity.toLowerCase() : DAY,
                 trendlines: 'hide'
             };
 
             var updateChartSize = function() {
+                var titleWidth = $element.width() - $element.find(".chart-options").outerWidth(true);
+                $element.find(".title").css("maxWidth", titleWidth - 20);
+
                 if($scope.chart) {
                     var headerHeight = 0;
                     $element.find(".header-container").each(function() {
                         headerHeight += $(this).outerHeight(true);
                     });
                     $element.find('.linechart').height($element.height() - headerHeight);
+
                     // Redraw the line chart.
                     $scope.chart.draw();
                     $scope.chart.showTrendlines(($scope.options.trendlines === 'show') ? true : false);
@@ -118,6 +124,12 @@ function(connectionService, datasetService, errorNotificationService, filterServ
                 });
                 $scope.messenger.subscribe(datasetService.DATE_CHANGED_CHANNEL, onDateChanged);
                 $scope.messenger.subscribe("date_selected", onDateSelected);
+
+                $scope.messenger.subscribe(filterService.REQUEST_REMOVE_FILTER, function(ids) {
+                    if(filterService.containsKey($scope.filterKeys, ids)) {
+                        $scope.removeBrush();
+                    }
+                });
 
                 $scope.exportID = exportService.register($scope.makeLinechartExportObject);
 
@@ -348,7 +360,12 @@ function(connectionService, datasetService, errorNotificationService, filterServ
                     $scope.outstandingQuery.abort();
                 }
 
-                $scope.outstandingQuery = connection.executeQuery(query).xhr.done(handleQuerySuccess).fail(handleQueryFailure);
+                $scope.outstandingQuery = connection.executeQuery(query);
+                $scope.outstandingQuery.always(function() {
+                    $scope.outstandingQuery = undefined;
+                });
+                $scope.outstandingQuery.done(handleQuerySuccess);
+                $scope.outstandingQuery.fail(handleQueryFailure);
             };
 
             /**
@@ -373,7 +390,10 @@ function(connectionService, datasetService, errorNotificationService, filterServ
 
                 var query = new neon.query.Query()
                     .selectFrom($scope.options.database.name, $scope.options.table.name)
-                    .where($scope.options.attrX.columnName, '!=', null);
+                    .where(neon.query.and(
+                        neon.query.where($scope.options.attrX.columnName, '>=', new Date("1970-01-01T00:00:00.000Z")),
+                        neon.query.where($scope.options.attrX.columnName, '<=', new Date("2025-01-01T00:00:00.000Z"))
+                    ));
 
                 query.groupBy.apply(query, groupByClause);
 
@@ -579,7 +599,6 @@ function(connectionService, datasetService, errorNotificationService, filterServ
              * @method handleQuerySuccess
              */
             var handleQuerySuccess = function(results) {
-                $scope.outstandingQuery = undefined;
                 $scope.data = results.data;
 
                 var seriesData = createLineSeriesData(results.data);
@@ -657,7 +676,6 @@ function(connectionService, datasetService, errorNotificationService, filterServ
              * @method handleQueryFailure
              */
             var handleQueryFailure = function(response) {
-                $scope.outstandingQuery = undefined;
                 if(response.status === 0) {
                     XDATA.userALE.log({
                         activity: "alter",
@@ -802,9 +820,11 @@ function(connectionService, datasetService, errorNotificationService, filterServ
             };
 
             var onHover = function(startDate, endDate) {
-                $scope.messenger.publish("date_selected", {
-                    start: startDate,
-                    end: endDate
+                $scope.$apply(function() {
+                    $scope.messenger.publish("date_selected", {
+                        start: startDate,
+                        end: endDate
+                    });
                 });
             };
 
@@ -819,7 +839,8 @@ function(connectionService, datasetService, errorNotificationService, filterServ
                     y: "value",
                     hoverListener: onHover,
                     responsive: true,
-                    granularity: $scope.options.granularity
+                    granularity: $scope.options.granularity,
+                    seriesToColors: datasetService.isFieldValid($scope.options.categoryField) ? datasetService.getActiveDatasetColorMaps($scope.options.database.name, $scope.options.table.name, $scope.options.categoryField.columnName) : {}
                 };
 
                 // Destroy the old chart and rebuild it.

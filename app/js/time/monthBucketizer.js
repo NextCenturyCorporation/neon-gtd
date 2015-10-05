@@ -83,6 +83,10 @@ var monthBucketizer = monthBucketizer || function() {
         return rounded;
     };
 
+    var getDateFormat = function() {
+        return "MMM yyyy";
+    };
+
     return {
         setStartDate: setStartDate,
         getStartDate: getStartDate,
@@ -93,6 +97,7 @@ var monthBucketizer = monthBucketizer || function() {
         getDateForBucket: getDateForBucket,
         getNumBuckets: getNumBuckets,
         roundUpBucket: roundUpBucket,
-        roundDownBucket: roundDownBucket
+        roundDownBucket: roundDownBucket,
+        getDateFormat: getDateFormat
     };
 };

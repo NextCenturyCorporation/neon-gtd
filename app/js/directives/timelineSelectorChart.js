@@ -32,6 +32,7 @@ angular.module('neonDemo.directives')
     return {
         restrict: 'EA',
         scope: {
+            timelineElement: '=',
             timelineData: '=',
             timelineBrush: '=',
             extentDirty: '=',
@@ -72,18 +73,19 @@ angular.module('neonDemo.directives')
             $scope.chart.render([]);
 
             var redrawOnResize = function() {
-                // Start at 30 to add extra padding to chart
+                // Start at 25 to add extra padding to chart
                 var headerHeight = 25;
 
-                $(".timeline-selector").find(".header-container").each(function() {
+                $scope.timelineElement.find(".header-container").each(function() {
                     headerHeight += $(this).outerHeight(true);
                 });
 
-                $(".timeline-selector").find(".mmpp").each(function() {
+                $scope.timelineElement.find(".mmpp").each(function() {
                     headerHeight += $(this).outerHeight(true);
                 });
 
-                $element.height($(".timeline-selector").height() - headerHeight);
+                $scope.chart.config.height = $scope.timelineElement.height() - headerHeight;
+                $scope.chart.config.width = $scope.timelineElement.outerWidth(true);
 
                 if($scope.showFocus === "always" || ($scope.showFocus === "on_filter" && $scope.timelineBrush.length > 0)) {
                     $scope.chart.toggleFocus(true);
@@ -97,14 +99,13 @@ angular.module('neonDemo.directives')
             // Watch for changes in the element size and update us.
             $scope.$watch(
                 function() {
-                    return $(".timeline-selector")[0].clientWidth + "x" + $(".timeline-selector")[0].clientHeight;
+                    return $scope.timelineElement.outerWidth(true) + "x" + $scope.timelineElement.outerHeight(true);
                 },
                 function(newVal) {
                     if(newVal && $scope.chart) {
-                        if($scope.resizePromise) {
-                            $timeout.cancel($scope.resizePromise);
+                        if(!$scope.resizePromise) {
+                            $scope.resizePromise = $timeout(redrawOnResize, 500);
                         }
-                        $scope.resizePromise = $timeout(redrawOnResize, 200);
                     }
                 });
 
@@ -178,9 +179,11 @@ angular.module('neonDemo.directives')
             };
 
             var onHover = function(startDate, endDate) {
-                $scope.messenger.publish('date_selected', {
-                    start: startDate,
-                    end: endDate
+                $scope.$apply(function() {
+                    $scope.messenger.publish('date_selected', {
+                        start: startDate,
+                        end: endDate
+                    });
                 });
             };
 

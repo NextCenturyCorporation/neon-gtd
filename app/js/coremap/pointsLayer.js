@@ -92,30 +92,12 @@ coreMap.Map.Layer.PointsLayer = OpenLayers.Class(OpenLayers.Layer.Vector, {
         var args = [name, extendOptions];
         OpenLayers.Layer.Vector.prototype.initialize.apply(this, args);
 
-        this.colorRange = [
-            '#39b54a',
-            '#C23333',
-            '#3662CC',
-            "#ff7f0e",
-            "#9467bd",
-            "#8c564b",
-            "#e377c2",
-            "#7f7f7f",
-            "#bcbd22",
-            "#17becf",
-            "#98df8a",
-            "#ff9896",
-            "#aec7e8",
-            "#ffbb78",
-            "#c5b0d5",
-            "#c49c94",
-            "#f7b6d2",
-            "#c7c7c7",
-            "#dbdb8d",
-            "#9edae5"
-        ];
+        if(Object.keys(this.colors).length) {
+            this.hasColorsConfigured = true;
+        }
+
         this.visibility = true;
-        this.colorScale = d3.scale.ordinal().range(this.colorRange);
+        this.colorScale = d3.scale.ordinal().range(neonColors.LIST);
     },
 
     createClusterStyle: function() {
@@ -126,7 +108,8 @@ coreMap.Map.Layer.PointsLayer = OpenLayers.Class(OpenLayers.Layer.Vector, {
             fillOpacity: coreMap.Map.Layer.PointsLayer.DEFAULT_OPACITY,
             strokeOpacity: coreMap.Map.Layer.PointsLayer.DEFAULT_OPACITY,
             strokeWidth: "${strokeWidth}",
-            pointRadius: "${radius}"
+            pointRadius: "${radius}",
+            cursor: coreMap.Map.Layer.PointsLayer.DEFAULT_CURSOR
         }, {
             context: {
                 strokeWidth: function(feature) {
@@ -148,22 +131,79 @@ coreMap.Map.Layer.PointsLayer = OpenLayers.Class(OpenLayers.Layer.Vector, {
                 }
             }
         });
+        var clusterPointStyleSelect = new OpenLayers.Style({
+            label: "${count}",
+            fillColor: coreMap.Map.Layer.PointsLayer.DEFAULT_SELECT_COLOR,
+            fillOpacity: coreMap.Map.Layer.PointsLayer.DEFAULT_SELECT_OPACITY,
+            strokeOpacity: coreMap.Map.Layer.PointsLayer.DEFAULT_OPACITY,
+            strokeWidth: "${strokeWidth}",
+            pointRadius: "${radius}",
+            cursor: coreMap.Map.Layer.PointsLayer.DEFAULT_CURSOR
+        }, {
+            context: {
+                strokeWidth: function(feature) {
+                    return coreMap.Map.Layer.PointsLayer.DEFAULT_STROKE_WIDTH ? ((feature.cluster.length > 1) ? 2 : 1) : 0;
+                },
+                radius: function(feature) {
+                    // Here, we are basing the size of the cluster on the number of
+                    // digits in the total feature count.
+                    var count = feature.cluster.length;
+                    var digits = Math.log10(count);
+                    digits = (digits >= 1) ? digits : 1;
+                    return Math.floor(5 + (5 * digits)) * 1.5;
+                },
+                count: function(feature) {
+                    return feature.cluster.length;
+                }
+            }
+        });
+
         return new OpenLayers.StyleMap({
-            default: clusterPointStyle
+            default: clusterPointStyle,
+            select: clusterPointStyleSelect
         });
     },
 
     createPointsStyleMap: function() {
-        return new OpenLayers.StyleMap(OpenLayers.Util.applyDefaults({
-                fillColor: coreMap.Map.Layer.PointsLayer.DEFAULT_COLOR,
-                fillOpacity: coreMap.Map.Layer.PointsLayer.DEFAULT_OPACITY,
-                strokeOpacity: coreMap.Map.Layer.PointsLayer.DEFAULT_OPACITY,
-                strokeWidth: coreMap.Map.Layer.PointsLayer.DEFAULT_STROKE_WIDTH,
-                stroke: coreMap.Map.Layer.PointsLayer.DEFAULT_STROKE_COLOR,
-                pointRadius: coreMap.Map.Layer.PointsLayer.MIN_RADIUS
-            },
-            OpenLayers.Feature.Vector.style["default"]
-        ));
+        var layer = this;
+        var pointStyle = new OpenLayers.Style({
+            fillColor: "${fillColor}",
+            fillOpacity: coreMap.Map.Layer.PointsLayer.DEFAULT_OPACITY,
+            strokeOpacity: coreMap.Map.Layer.PointsLayer.DEFAULT_OPACITY,
+            strokeWidth: coreMap.Map.Layer.PointsLayer.DEFAULT_STROKE_WIDTH,
+            stroke: coreMap.Map.Layer.PointsLayer.DEFAULT_STROKE_COLOR,
+            pointRadius: "${radius}",
+            cursor: coreMap.Map.Layer.PointsLayer.DEFAULT_CURSOR
+        }, {
+            context: {
+                fillColor: function(feature) {
+                    return (layer.calculateColor(feature.attributes) || coreMap.Map.Layer.PointsLayer.DEFAULT_COLOR);
+                },
+                radius: function(feature) {
+                    return (layer.calculateRadius(feature.attributes) || coreMap.Map.Layer.PointsLayer.MIN_RADIUS);
+                }
+            }
+        });
+        var pointStyleSelect = new OpenLayers.Style({
+            fillColor: coreMap.Map.Layer.PointsLayer.DEFAULT_SELECT_COLOR,
+            fillOpacity: coreMap.Map.Layer.PointsLayer.DEFAULT_SELECT_OPACITY,
+            strokeOpacity: coreMap.Map.Layer.PointsLayer.DEFAULT_OPACITY,
+            strokeWidth: coreMap.Map.Layer.PointsLayer.DEFAULT_STROKE_WIDTH,
+            stroke: coreMap.Map.Layer.PointsLayer.DEFAULT_STROKE_COLOR,
+            pointRadius: "${radius}",
+            cursor: coreMap.Map.Layer.PointsLayer.DEFAULT_CURSOR
+        }, {
+            context: {
+                radius: function(feature) {
+                    return (layer.calculateRadius(feature.attributes) || coreMap.Map.Layer.PointsLayer.MIN_RADIUS) * 1.5;
+                }
+            }
+        });
+
+        return new OpenLayers.StyleMap({
+            default: pointStyle,
+            select: pointStyleSelect
+        });
     }
 });
 
@@ -177,7 +217,11 @@ coreMap.Map.Layer.PointsLayer.prototype.calculateColor = function(element) {
     var category = this.getValueFromDataElement(this.categoryMapping, element);
     var color;
 
-    if(category && this.gradient && _.isDate(category)) {
+    if(this.colors[category]) {
+        color = this.colors[category];
+    } else if(this.hasColorsConfigured) {
+        color = this.colors[""] || neonColors.DEFAULT;
+    } else if(category && this.gradient && _.isDate(category)) {
         color = "#" + this.rainbow.colourAt(category.getTime());
     } else if(category && !this.gradient) {
         color = this.colorScale(category);
@@ -186,8 +230,8 @@ coreMap.Map.Layer.PointsLayer.prototype.calculateColor = function(element) {
         color = this.defaultColor || coreMap.Map.Layer.PointsLayer.DEFAULT_COLOR;
     }
 
-    // store the color in the registry so we know the color/category mappings
-    if(!(this.colors.hasOwnProperty(category))) {
+    // Save the color in the registry so we know the color/category mappings
+    if(!this.colors[category]) {
         this.colors[category] = color;
     }
 
@@ -245,7 +289,6 @@ coreMap.Map.Layer.PointsLayer.prototype.createPoint = function(element, longitud
     point.transform(coreMap.Map.SOURCE_PROJECTION, coreMap.Map.DESTINATION_PROJECTION);
 
     var feature = new OpenLayers.Feature.Vector(point);
-    feature.style = this.stylePoint(element);
     feature.attributes = element;
 
     if(this.cluster) {
@@ -253,24 +296,6 @@ coreMap.Map.Layer.PointsLayer.prototype.createPoint = function(element, longitud
     }
 
     return feature;
-};
-
-/**
- * Creates the style object for a point
- * @param {String} color The color of the point
- * @param {number} radius The radius of the point
- * @return {OpenLayers.Symbolizer.Point} The style object
- * @method createPointStyleObject
- */
-coreMap.Map.Layer.PointsLayer.prototype.createPointStyleObject = function(color, radius) {
-    return new OpenLayers.Symbolizer.Point({
-        fillColor: (color || coreMap.Map.Layer.PointsLayer.DEFAULT_COLOR),
-        fillOpacity: coreMap.Map.Layer.PointsLayer.DEFAULT_OPACITY,
-        strokeOpacity: coreMap.Map.Layer.PointsLayer.DEFAULT_OPACITY,
-        strokeWidth: coreMap.Map.Layer.PointsLayer.DEFAULT_STROKE_WIDTH,
-        stroke: coreMap.Map.Layer.PointsLayer.DEFAULT_STROKE_COLOR,
-        pointRadius: (radius || coreMap.Map.Layer.PointsLayer.MIN_RADIUS)
-    });
 };
 
 /**
@@ -299,19 +324,6 @@ coreMap.Map.Layer.PointsLayer.prototype.areValuesInDataElement = function(elemen
     }
 
     return false;
-};
-
-/**
- * Styles the data element based on the size and color.
- * @param {Object} element One data element of the map's data array.
- * @return {OpenLayers.Symbolizer.Point} The style object
- * @method stylePoint
- */
-coreMap.Map.Layer.PointsLayer.prototype.stylePoint = function(element) {
-    var radius = this.calculateRadius(element);
-    var color = this.calculateColor(element);
-
-    return this.createPointStyleObject(color, radius);
 };
 
 coreMap.Map.Layer.PointsLayer.prototype.setData = function(data) {
@@ -421,8 +433,11 @@ coreMap.Map.Layer.PointsLayer.DEFAULT_LATITUDE_MAPPING = "latitude";
 coreMap.Map.Layer.PointsLayer.DEFAULT_LONGITUDE_MAPPING = "longitude";
 coreMap.Map.Layer.PointsLayer.DEFAULT_DATE_MAPPING = "date";
 coreMap.Map.Layer.PointsLayer.DEFAULT_OPACITY = 0.8;
+coreMap.Map.Layer.PointsLayer.DEFAULT_SELECT_OPACITY = 1;
+coreMap.Map.Layer.PointsLayer.DEFAULT_SELECT_COLOR = "#88d292";
 coreMap.Map.Layer.PointsLayer.DEFAULT_SIZE_MAPPING = "count_";
 coreMap.Map.Layer.PointsLayer.DEFAULT_STROKE_WIDTH = 0;
 coreMap.Map.Layer.PointsLayer.DEFAULT_STROKE_COLOR = "#ffffff";
 coreMap.Map.Layer.PointsLayer.MIN_RADIUS = 4;
 coreMap.Map.Layer.PointsLayer.MAX_RADIUS = 8;
+coreMap.Map.Layer.PointsLayer.DEFAULT_CURSOR = "pointer";

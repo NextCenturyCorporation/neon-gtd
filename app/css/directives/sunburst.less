@@ -26,7 +26,8 @@
         opacity: .8;
 
         &:hover {
-          opacity: 1;
+            opacity: 1;
+            cursor: pointer;
         }
     }
 
@@ -47,6 +48,10 @@
 .sunburst-controls  {
     width:100%;
     margin-bottom: 10px;
+
+    label:hover {
+        cursor: pointer;
+    }
 }
 
 .sunburst-tooltip {
@@ -66,11 +71,14 @@
 
 .sunburst-tooltip-title {
     font-weight: bold;
-    font-size: 18px;
+    font-size: 14px;
+    margin-bottom: 5px;
+    color: #39b54a;
 }
 
 .sunburst-tooltip-field {
-    font-weight: bold;
+    font-weight: normal !important;
+    color: @mid-text-color !important;
 }
 
 .sunburst-transient-breadcrumb {

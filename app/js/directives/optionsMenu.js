@@ -1,6 +1,6 @@
 'use strict';
 angular.module('neonDemo.directives')
-.directive('optionsMenu', ['ConnectionService', 'ErrorNotificationService', 'ExportService', function(connectionService, errorNotificationService, exportService) {
+.directive('optionsMenu', ['ConnectionService', 'ErrorNotificationService', 'ExportService', 'config', function(connectionService, errorNotificationService, exportService, config) {
     return {
         templateUrl: 'partials/directives/optionsMenu.html',
         restrict: 'EA',
@@ -16,6 +16,7 @@ angular.module('neonDemo.directives')
             // Buffer needed above and below the chart options popover based on popover position, container padding (both set in the CSS), and UX.
             $scope.CHART_OPTIONS_BUFFER_Y = 65;
 
+            $scope.showExport = config.showExport;
             $scope.optionsDisplayed = false;
             $scope.uniqueVisualizationOptions = 'chart-options-' + uuid();
             $element.find('.chart-options').addClass($scope.uniqueVisualizationOptions);

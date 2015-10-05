@@ -34,6 +34,7 @@ function(connectionService, datasetService, errorNotificationService, filterServ
         templateUrl: 'partials/directives/barchart.html',
         restrict: 'EA',
         scope: {
+            bindTitle: '=',
             bindXAxisField: '=',
             bindYAxisField: '=',
             bindAggregationField: '=',
@@ -70,12 +71,16 @@ function(connectionService, datasetService, errorNotificationService, filterServ
             var COUNT_FIELD_NAME = 'Count';
 
             var updateChartSize = function() {
+                var titleWidth = $element.width() - $element.find(".chart-options").outerWidth(true);
+                $element.find(".title").css("maxWidth", titleWidth - 20);
+
                 if($scope.chart) {
                     var headerHeight = 0;
                     $element.find(".header-container").each(function() {
                         headerHeight += $(this).outerHeight(true);
                     });
                     $element.find('.barchart').height($element.height() - headerHeight);
+
                     $scope.chart.draw();
                 }
             };
@@ -88,6 +93,12 @@ function(connectionService, datasetService, errorNotificationService, filterServ
                 });
                 $scope.messenger.subscribe(datasetService.UPDATE_DATA_CHANNEL, function() {
                     $scope.queryForData(false);
+                });
+
+                $scope.messenger.subscribe(filterService.REQUEST_REMOVE_FILTER, function(ids) {
+                    if(filterService.containsKey($scope.filterKeys, ids)) {
+                        $scope.clearFilterSet();
+                    }
                 });
 
                 $scope.exportID = exportService.register($scope.makeBarchartExportObject);
@@ -311,7 +322,11 @@ function(connectionService, datasetService, errorNotificationService, filterServ
                     $scope.outstandingQuery.abort();
                 }
 
-                $scope.outstandingQuery = connection.executeQuery(query).xhr.done(function(queryResults) {
+                $scope.outstandingQuery = connection.executeQuery(query);
+                $scope.outstandingQuery.always(function() {
+                    $scope.outstandingQuery = undefined;
+                });
+                $scope.outstandingQuery.done(function(queryResults) {
                     $scope.$apply(function() {
                         XDATA.userALE.log({
                             activity: "alter",
@@ -323,7 +338,6 @@ function(connectionService, datasetService, errorNotificationService, filterServ
                             source: "system",
                             tags: ["receive", "barchart"]
                         });
-                        $scope.outstandingQuery = undefined;
                         $scope.results = {
                             count: queryResults.data.length
                         };
@@ -340,7 +354,8 @@ function(connectionService, datasetService, errorNotificationService, filterServ
                             tags: ["render", "barchart"]
                         });
                     });
-                }).fail(function(response) {
+                });
+                $scope.outstandingQuery.fail(function(response) {
                     $scope.outstandingQuery = undefined;
                     if(response.status === 0) {
                         XDATA.userALE.log({
@@ -499,7 +514,7 @@ function(connectionService, datasetService, errorNotificationService, filterServ
                     return "Sum " + $scope.options.attrY.prettyName + " vs. " + $scope.options.attrX.prettyName;
                 }
                 if($scope.options.barType === "count") {
-                    return "Count";
+                    return "Count of " + $scope.options.attrX.prettyName;
                 }
                 return "";
             };

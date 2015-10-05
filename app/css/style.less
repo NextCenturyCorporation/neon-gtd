@@ -180,10 +180,10 @@ label{
 
 .chart-options {
     > a {
+        color: @accent-bright;
         font-size: 16px;
         padding: 0;
         border: 0;
-        color: @accent-bright;
 
         &.collapsed {
             color: @main-text-color;
@@ -378,6 +378,11 @@ label{
     margin-right: 5px;
     margin-top: 5px;
     margin-bottom: 5px;
+
+    .glyphicon {
+        margin-right: 2px;
+        top: 2px;
+    }
 }
 
 button {
@@ -385,6 +390,15 @@ button {
         &:hover {
             color: @accent-bright;
         }
+    }
+}
+
+.btn-group {
+    .header-item {
+        /* Remove the right margin set in header-item. */
+        margin-right: 0px;
+        /* Use the header-item padding instead of the btn-group>btn padding. */
+        padding: 4px 8px;
     }
 }
 
@@ -407,11 +421,22 @@ button {
         white-space: nowrap;
     }
 
+    .filter-lg-label {
+        float: left;
+        padding: 4px 8px;
+        max-width: 200px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
     .glyphicon {
+        cursor: pointer;
         float: left;
         padding: 7px 8px;
-        cursor: pointer;
         top: 0px;
+        /* Remove the margin set by .header-item .glyphicon (above).*/
+        margin: 0px;
 
         &.glyphicon-remove {
             color: @error-color;
@@ -507,14 +532,19 @@ button {
         margin-bottom: 5px;
     }
 
-    span {
-        &.header-text {
-            color: @main-text-color;
-            font-size: 16px;
-            font-weight: bold;
-            line-height: 1.33;
-            text-transform: uppercase;
-        }
+    .title {
+        display: inline-block;
+        overflow: hidden;
+        white-space: nowrap;
+        text-overflow: ellipsis;
+    }
+
+    .header-text {
+        color: @main-text-color;
+        font-size: 16px;
+        font-weight: bold;
+        line-height: 1.33;
+        text-transform: uppercase;
     }
 }
 
@@ -582,30 +612,6 @@ button {
         -moz-user-select: none;
         -ms-user-select: none;
         user-select: none;
-    }
-}
-
-.legend-scale {
-    .legend-item {
-        color: @main-text-color;
-
-        .legend-text {
-            &:first-child {
-                margin-left: 0;
-            }
-        }
-
-        .legend-text-small {
-            max-width: 75px;
-        }
-
-        .legend-text-large {
-            max-width: 200px;
-        }
-    }
-
-    .legend-text {
-        margin: 0 5px;
     }
 }
 
@@ -873,6 +879,57 @@ tr.borderedRow {
         font-size: 12px;
         color: @mid-text-color;
     }
+
+    &:before {
+        content: '';
+        display: block;
+        width: 0;
+        height: 0;
+        position: absolute;
+        border-top: 8px solid transparent;
+        border-bottom: 8px solid transparent;
+        top: 50%;
+        transform: translateY(-50%);
+    }
+
+    &:after {
+        content: '';
+        display: block;
+        width: 0;
+        height: 0;
+        position: absolute;
+        border-top: 7px solid transparent;
+        border-bottom: 7px solid transparent;
+        top: 49%;
+        transform: translateY(-49%);
+    }
+
+    &.east {
+
+        &:before {
+            border-right: 8px solid @shadow;
+            left:-8px;
+            opacity: .5;
+        }
+
+        &:after {
+            border-right: 7px solid @tooltip-background;
+            left: -6px;
+        }
+    }
+
+    &.west {
+
+        &:before {
+            border-left:8px solid @shadow;
+            left: 100%;
+        }
+
+        &:after {
+            border-left: 7px solid @tooltip-background;
+            left: 100%;
+        }
+    }
 }
 
 .tray{
@@ -953,14 +1010,13 @@ tr.borderedRow {
         fill: @chart-text-color;
         fill-opacity: 0.3;
     }
+
+    rect.background {
+        cursor: pointer !important;
+    }
 }
 
 .neon-datetimepicker {
-    .glyphicon {
-        margin-right: 2px;
-        top: 2px;
-    }
-
     .dropdown-menu {
         overflow-y: scroll;
         padding: 10px;
