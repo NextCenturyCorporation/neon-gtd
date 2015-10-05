@@ -51,28 +51,17 @@
         <!-- This could be made into either a directive or a partial -->
         <nav role="navigation" class="navbar">
             <div class="navbar-default navbar-fixed-top" ng-class="{true: '', false: 'affix'}[hideNavbarItems == true]">
+                <div class="pull-left" ng-show="hideNavbarItems">
+                    <span class="navbar-text navbar-title-text" ng-bind="navbarTitle"></span>
+                </div>
+
                 <div class="container" ng-hide="hideNavbarItems">
-                    <div class="pull-left" ng-show="hideNavbarItems">
-                        <span class="navbar-text navbar-title-text" ng-bind="navbarTitle"></span>
-                    </div>
-
-                    <options-menu parent-element="element" id= "navbar-option-menu" class="navbar-text pull-right navbar-option-menu" ng-show="!(hideAdvancedOptions) && (showImport || showExport)">
-                        <!-- Buttons to select file format -->
-                        <label ng-show="showExport">Export Format</label>
-                        <div file-formats gridster-configs="visualizations" ng-show="showExport"></div>
-                        <!-- Export option -->
-                        <div export-widgets gridster-configs="visualizations" ng-show="showExport"></div>
-                        <!-- Import option -->
-                        <div import-file gridster-configs="visualizations" ng-show="showImport"></div>
-                        <div remove-dataset gridster-configs="visualizations" ng-show="showImport"></div>
-                    </options-menu>
-
                     <div powered-by-neon class="pull-right"></div>
 
                     <!-- Help Button -->
                     <div class="dropdown pull-right" ng-show="(help.guide || help.video)">
                         <a class="dropdown-toggle navbar-text" data-toggle="dropdown" href="#" role="button">
-                            <img class="brand-image" src="img/Help_34x34.png" style="margin-right: 5px;"></img>Help<span class="caret" style="margin-left: 5px;"></span>
+                            <img class="brand-image" src="img/Help_64x64.png" height="34"></img>Help<span class="caret"></span>
                         </a>
                         <ul class="dropdown-menu">
                             <li ng-show="(help.guide)"><a href="{{help.guide}}" target="guide">
@@ -84,13 +73,39 @@
                         </ul>
                     </div>
 
+                    <!-- Options Button -->
+                    <div class="dropdown pull-right" ng-show="!(hideAdvancedOptions) && (showImport || showExport)">
+                        <a class="dropdown-toggle navbar-text" data-toggle="dropdown" href="#" role="button">
+                            <img class="brand-image" src="img/Options_64x64.png" height="34"></img>Options<span class="caret"></span>
+                        </a>
+                        <ul class="dropdown-menu">
+                            <li ng-show="showExport"><a href="#" class="unselectable">Export Format:</a></li>
+                            <li file-formats gridster-configs="visualizations" ng-show="showExport"></li>
+                            <li export-widgets gridster-configs="visualizations" ng-show="showExport"></li>
+                            <li class="divider" ng-show="showExport && showImport"></li>
+                            <li ng-show="showImport"><a href="#" data-toggle="modal" data-target="#importModal" ng-show="canImport">
+                                Import File
+                            </a>
+                            <a href="#" class=unselectable" ng-show="!canImport">
+                                This browser does not support data import
+                            </a></li>
+                            <li ng-show="showImport"><a href="#" data-toggle="modal" data-target="#removeDatasetModal" ng-show="canImport">
+                                Drop Dataset
+                            </a>
+                        </ul>
+                    </div>
+
+                    <!-- Import and Remove Dataset Popups -->
+                    <div import-file gridster-configs="visualizations" ng-show="showImport"></div>
+                    <div remove-dataset gridster-configs="visualizations" ng-show="showImport"></div>
+
                     <div class="clearfix visible-xs"></div>
 
                     <!-- Database Config -->
-                    <database-config gridster-configs="visualizations" hide-advanced-options="hideAdvancedOptions" ng-hide="hideNavbarItems"></database-config>
+                    <database-config gridster-configs="visualizations" hide-advanced-options="hideAdvancedOptions" ng-show="!hideNavbarItems"></database-config>
 
                     <!-- Add visualization control -->
-                    <div add-visualization gridster-configs="visualizations" ng-hide="hideNavbarItems || hideAddVisualizationsButton"></div>
+                    <div add-visualization gridster-configs="visualizations" ng-show="!hideNavbarItems && !hideAddVisualizationsButton"></div>
                 </div>
 
                 <!-- FILTER STATUS TRAY -->

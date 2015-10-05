@@ -15,6 +15,12 @@
  *
  */
 
+/**
+ * This directive adds a D3 force directed graph.
+ * @namespace neonDemo.directives
+ * @class directedGraph
+ * @constructor
+ */
 angular.module('neonDemo.directives')
 .directive('directedGraph', ['$filter', '$timeout', 'ConnectionService', 'DatasetService', 'ErrorNotificationService', 'ExportService',
 function($filter, $timeout, connectionService, datasetService, errorNotificationService, exportService) {
@@ -32,24 +38,6 @@ function($filter, $timeout, connectionService, datasetService, errorNotification
             $element.addClass('directedGraphDirective');
 
             $scope.element = $element;
-
-            $scope.optionsMenuButtonText = function() {
-                if(!$scope.mediator || $scope.mediator.getNumberOfNodes() === 0) {
-                    return "No data available";
-                }
-                var text = $scope.mediator.getNumberOfNodes() + " nodes";
-                if($scope.bucketizer && $scope.mediator && $scope.mediator.getSelectedDateBucket()) {
-                    var date = $filter("date")($scope.bucketizer.getDateForBucket($scope.mediator.getSelectedDateBucket()).toISOString(), $scope.bucketizer.getDateFormat());
-                    text += " (" + date + ")";
-                }
-                if($scope.dataLimited) {
-                    text += " [data limited]";
-                }
-                return text;
-            };
-            $scope.showOptionsMenuButtonText = function() {
-                return true;
-            };
 
             $scope.TIMEOUT_MS = 250;
 
@@ -100,12 +88,31 @@ function($filter, $timeout, connectionService, datasetService, errorNotification
                 flagMode: ""
             };
 
+            // Functions for the options-menu directive.
+            $scope.optionsMenuButtonText = function() {
+                if(!$scope.mediator || $scope.mediator.getNumberOfNodes() === 0) {
+                    return "No data available";
+                }
+                var text = $scope.mediator.getNumberOfNodes() + " nodes";
+                if($scope.bucketizer && $scope.mediator && $scope.mediator.getSelectedDateBucket()) {
+                    var date = $filter("date")($scope.bucketizer.getDateForBucket($scope.mediator.getSelectedDateBucket()).toISOString(), $scope.bucketizer.getDateFormat());
+                    text += " (" + date + ")";
+                }
+                if($scope.dataLimited) {
+                    text += " [data limited]";
+                }
+                return text;
+            };
+            $scope.showOptionsMenuButtonText = function() {
+                return true;
+            };
+
             var calculateGraphHeight = function() {
                 var headerHeight = 0;
                 $element.find(".header-container").each(function() {
                     headerHeight += $(this).outerHeight(true);
                 });
-                headerHeight += $element.find(".legend").outerHeight(true) || parseInt($element.find(".legend").css("min-height"), 10);
+                headerHeight += $element.find(".legend").outerHeight(true);
                 return $element.height() - headerHeight;
             };
 
@@ -158,6 +165,12 @@ function($filter, $timeout, connectionService, datasetService, errorNotification
 
                 $scope.exportID = exportService.register($scope.makeDirectedGraphExportObject);
 
+                $scope.messenger.subscribe(filterService.REQUEST_REMOVE_FILTER, function(ids) {
+                    if(filterService.containsKey($scope.filterKeys, ids)) {
+                        $scope.clearFilters();
+                    }
+                });
+
                 $scope.$on('$destroy', function() {
                     XDATA.userALE.log({
                         activity: "remove",
@@ -170,11 +183,13 @@ function($filter, $timeout, connectionService, datasetService, errorNotification
                         tags: ["remove", "directed-graph"]
                     });
                     $element.off("resize", updateSize);
+                    $element.find(".legend").off("resize", updateSize);
                     $scope.messenger.removeEvents();
                     exportService.unregister($scope.exportID);
                 });
 
                 $element.resize(updateSize);
+                $element.find(".legend").resize(updateSize);
             };
 
             /**
@@ -208,9 +223,10 @@ function($filter, $timeout, connectionService, datasetService, errorNotification
                         selectNodeNetworkFromWhereClause(whereClause.whereClauses[i]);
                     }
                 } else if(whereClause.lhs && whereClause.rhs) {
+                    // See if the filter is either on the node field (e.g. user) or on the linked-node field (e.g. friend).
                     if(whereClause.lhs === $scope.options.selectedNodeField.columnName) {
                         $scope.selectNodeAndNetworkFromNodeId(whereClause.rhs);
-                    } else if(datasetService.isFieldValid($scope.options.selectedLinkedNodeField && whereClause.lhs === $scope.options.selectedLinkedNodeField.columnName)) {
+                    } else if(datasetService.isFieldValid($scope.options.selectedLinkedNodeField) && whereClause.lhs === $scope.options.selectedLinkedNodeField.columnName) {
                         $scope.selectNodeAndNetworkFromNodeId(whereClause.rhs);
                     }
                 }

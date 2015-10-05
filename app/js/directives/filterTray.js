@@ -15,7 +15,7 @@
  *
  */
 angular.module('neonDemo.directives')
-.directive('filterTray', function($timeout) {
+.directive('filterTray', function($timeout, FilterService) {
     return {
         templateUrl: 'partials/directives/filterTray.html',
         restrict: 'EA',
@@ -24,6 +24,8 @@ angular.module('neonDemo.directives')
             includeParentHeight: '='
         },
         link: function($scope, el) {
+            $scope.filterRemoveChannel = 'filter_tray.remove_filter';
+
             var init = function() {
                 el.addClass('filterTrayDirective');
 
@@ -77,6 +79,10 @@ angular.module('neonDemo.directives')
                 console.error(arguments);
             };
 
+            $scope.handleFilterRemove = function(filterIds) {
+                $scope.messenger.publish(FilterService.REQUEST_REMOVE_FILTER, filterIds);
+            };
+
             $scope.updateFilterTray = function(rawState) {
                 $scope.filters.raw = rawState;
                 var filters = formatFilters(rawState);
@@ -96,20 +102,31 @@ angular.module('neonDemo.directives')
                 $scope.container.height(newHeight);
             };
 
-            //Drop duplicate names.
             var formatFilters = function(filters) {
                 if(filters.length > 0) {
-                    //We only want unique filter names to eliminate multiple filters created by filter service
-                    var uniqueNameList = _.uniq(filters, false, function(filter) {
-                        return filter.filterName;
+                    //We only want unique filter names to eliminate display of multiple filters created by filter service
+
+                    //remove filters with empty string names
+                    var filterList = _.filter(filters, function(filter) {
+                        return (filter.filterName && filter.filterName !== '');
                     });
 
-                    var resultList = _.map(uniqueNameList, function(uniqueName) {
-                        return uniqueName.filterName;
+                    var result = {};
+                    _.each(filterList, function(filter) {
+                        if(result[filter.filterName]) {
+                            //add id to array
+                            result[filter.filterName].ids.push(filter.id);
+                        } else {
+                            result[filter.filterName] = {
+                                ids: [filter.id],
+                                name: filter.filterName
+                            };
+                        }
                     });
 
-                    resultList = _.filter(resultList, function(name) {
-                        return (name && name !== '');
+                    var resultList = [];
+                    _.each(result, function(filter) {
+                        resultList.push(filter);
                     });
 
                     return resultList;

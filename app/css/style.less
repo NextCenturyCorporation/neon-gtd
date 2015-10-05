@@ -709,11 +709,6 @@ tr.borderedRow {
                     &:focus, &:hover, &.collapsed:hover{
                         color: @accent-bright;
                     }
-
-                    /* Can be applied to elements after the first in a list to prevent them from being spaced way too far apart. */
-                    &.navbar-list-bottom {
-                        padding-top: 0px;
-                    }
                 }
             }
 
@@ -759,6 +754,11 @@ tr.borderedRow {
         }
 
         img{
+            margin-left: 5px;
+            margin-right: 5px;
+        }
+
+        .caret {
             margin-left: 5px;
             margin-right: 5px;
         }
@@ -1066,6 +1066,10 @@ tr.borderedRow {
 
 .neon-well-thin {
     padding: 4px;
+}
+
+.file-format-btn-group {
+    padding: 5px 40px;
 }
 
 #removeDatasetModal {

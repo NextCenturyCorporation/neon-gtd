@@ -22,135 +22,95 @@ charts.DirectedGraph = function(rootElement, selector, options) {
         links: []
     };
 
+    // Initialize the options first because they're needed to initialize the graph element.
     this.initializeGraphOptions(options || {});
     this.initializeGraphElement();
 };
 
+/**
+ * Initializes the options for this graph using the given options.
+ * @param {Object} options
+ * @method initializeGraphOptions
+ */
 charts.DirectedGraph.prototype.initializeGraphOptions = function(options) {
     this.getRenderWidth = function() {
-        if(options.getWidth) {
-            if(_.isFunction(options.getWidth)) {
-                return options.getWidth();
-            }
-            return options.getWidth;
-        }
-        if($(this.element[0]).width() !== 0) {
-            return $(this.element[0]).width();
-        }
-        return this.DEFAULT_WIDTH;
+        var defaultWidth = (this.element ? $(this.element[0]).width() : 0) || this.DEFAULT_WIDTH;
+        return _.result(options, "getWidth", defaultWidth);
     };
 
     this.getRenderHeight = function() {
-        if(options.getHeight) {
-            if(_.isFunction(options.getHeight)) {
-                return options.getHeight();
-            }
-            return options.getHeight;
-        }
-        if($(this.element[0]).height() !== 0) {
-            return $(this.element[0]).height();
-        }
-        return this.DEFAULT_HEIGHT;
+        var defaultHeight = (this.element ? $(this.element[0]).height() : 0) || this.DEFAULT_HEIGHT;
+        return _.result(options, "getHeight", defaultHeight);
     };
 
     this.getNodeSize = function(nodeData) {
-        if(options.getNodeSize) {
-            if(_.isFunction(options.getNodeSize)) {
-                return options.getNodeSize(nodeData);
-            }
-            return options.getNodeSize;
+        if(options.getNodeSize && _.isFunction(options.getNodeSize)) {
+            return options.getNodeSize(nodeData);
         }
-        return this.DEFAULT_NODE_SIZE;
+        return _.result(options, "getNodeSize", this.DEFAULT_NODE_SIZE);
     };
 
     this.getNodeColor = function(nodeData) {
-        if(options.getNodeColor) {
-            if(_.isFunction(options.getNodeColor)) {
-                return options.getNodeColor(nodeData);
-            }
-            return options.getNodeColor;
+        if(options.getNodeColor && _.isFunction(options.getNodeColor)) {
+            return options.getNodeColor(nodeData);
         }
-        return this.DEFAULT_NODE_COLOR;
+        return _.result(options, "getNodeColor", this.DEFAULT_NODE_COLOR);
     };
 
     this.getNodeOpacity = function(nodeData) {
-        if(options.getNodeOpacity) {
-            if(_.isFunction(options.getNodeOpacity)) {
-                return options.getNodeOpacity(nodeData);
-            }
-            return options.getNodeOpacity;
+        if(options.getNodeOpacity && _.isFunction(options.getNodeOpacity)) {
+            return options.getNodeOpacity(nodeData);
         }
-        return this.DEFAULT_NODE_OPACITY;
+        return _.result(options, "getNodeOpacity", this.DEFAULT_NODE_OPACITY);
     };
 
     this.getNodeStrokeColor = function(nodeData) {
-        if(options.getNodeStrokeColor) {
-            if(_.isFunction(options.getNodeStrokeColor)) {
-                return options.getNodeStrokeColor(nodeData);
-            }
-            return options.getNodeStrokeColor;
+        if(options.getNodeStrokeColor && _.isFunction(options.getNodeStrokeColor)) {
+            return options.getNodeStrokeColor(nodeData);
         }
-        return this.DEFAULT_NODE_STROKE_COLOR;
+        return _.result(options, "getNodeStrokeColor", this.DEFAULT_NODE_STROKE_COLOR);
     };
 
     this.getNodeStrokeSize = function(nodeData) {
-        if(options.getNodeStrokeSize) {
-            if(_.isFunction(options.getNodeStrokeSize)) {
-                return options.getNodeStrokeSize(nodeData);
-            }
-            return options.getNodeStrokeSize;
+        if(options.getNodeStrokeSize && _.isFunction(options.getNodeStrokeSize)) {
+            return options.getNodeStrokeSize(nodeData);
         }
-        return this.DEFAULT_NODE_STROKE_SIZE;
+        return _.result(options, "getNodeStrokeSize", this.DEFAULT_NODE_STROKE_SIZE);
     };
 
     this.getNodeText = function(nodeData) {
-        if(options.getNodeText) {
-            if(_.isFunction(options.getNodeText)) {
-                return options.getNodeText(nodeData);
-            }
-            return options.getNodeText;
+        if(options.getNodeText && _.isFunction(options.getNodeText)) {
+            return options.getNodeText(nodeData);
         }
-        return "";
+        return _.result(options, "getNodeText", "");
     };
 
     this.getNodeTooltip = function(nodeData) {
-        if(options.getNodeTooltip) {
-            if(_.isFunction(options.getNodeTooltip)) {
-                return options.getNodeTooltip(nodeData);
-            }
-            return options.getNodeTooltip;
+        if(options.getNodeTooltip && _.isFunction(options.getNodeTooltip)) {
+            return options.getNodeTooltip(nodeData);
         }
-        return nodeData.name || nodeData.id || "";
+        return _.result(options, "getNodeTooltip", (nodeData.name || nodeData.id || ""));
     };
 
     this.getLinkSize = function(linkData) {
-        if(options.getLinkSize) {
-            if(_.isFunction(options.getLinkSize)) {
-                return options.getLinkSize(linkData);
-            }
-            return options.getLinkSize;
+        if(options.getLinkSize && _.isFunction(options.getLinkSize)) {
+            return options.getLinkSize(linkData);
         }
-        return this.DEFAULT_LINK_SIZE;
+        return _.result(options, "getLinkSize", this.DEFAULT_LINK_SIZE);
     };
 
     this.getLinkColor = function(linkData) {
-        if(options.getLinkColor) {
-            if(_.isFunction(options.getLinkColor)) {
-                return options.getLinkColor(linkData);
-            }
-            return options.getLinkColor;
+        if(options.getLinkColor && _.isFunction(options.getLinkColor)) {
+            return options.getLinkColor(linkData);
         }
-        return this.DEFAULT_LINK_STROKE_COLOR;
+        return _.result(options, "getLinkColor", this.DEFAULT_LINK_STROKE_COLOR);
     };
 
     this.getLinkOpacity = function(linkData) {
-        if(options.getLinkOpacity) {
-            if(_.isFunction(options.getLinkOpacity)) {
-                return options.getLinkOpacity(linkData);
-            }
-            return options.getLinkOpacity;
+        if(options.getLinkOpacity && _.isFunction(options.getLinkOpacity)) {
+            return options.getLinkOpacity(linkData);
         }
-        return this.DEFAULT_LINK_STROKE_OPACITY;
+        return _.result(options, "getLinkOpacity", this.DEFAULT_LINK_STROKE_OPACITY);
     };
 
     this.getLinkArrowhead = function(linkData) {
@@ -166,13 +126,10 @@ charts.DirectedGraph.prototype.initializeGraphOptions = function(options) {
     };
 
     this.getLinkTooltip = function(linkData) {
-        if(options.getLinkTooltip) {
-            if(_.isFunction(options.getLinkTooltip)) {
-                return options.getLinkTooltip(linkData);
-            }
-            return options.getLinkTooltip;
+        if(options.getLinkTooltip && _.isFunction(options.getLinkTooltip)) {
+            return options.getLinkTooltip(linkData);
         }
-        return linkData.name || linkData.id || "";
+        return _.result(options, "getLinkTooltip", (linkData.name || linkData.id || ""));
     };
 
     this.getNodeKeyFunction = options.getNodeKey;
@@ -250,6 +207,10 @@ charts.DirectedGraph.prototype.createArrowhead = function(name, color, opacity) 
         .attr("d", "M0,-5L10,0L0,5");
 };
 
+/**
+ * Initializes the element for this graph.
+ * @method initializeGraphElement
+ */
 charts.DirectedGraph.prototype.initializeGraphElement = function() {
     var me = this;
 
@@ -260,6 +221,7 @@ charts.DirectedGraph.prototype.initializeGraphElement = function() {
     var height = me.getRenderHeight();
     var width = me.getRenderWidth();
 
+    // Remove the SVG created by the previous instance of DirectedGraph.
     var svg = me.element.select(".directed-graph-svg");
     if(svg) {
         svg.remove();
@@ -290,11 +252,19 @@ charts.DirectedGraph.prototype.initializeGraphElement = function() {
     me.forceLayoutLinks = me.forceLayout.links();
 };
 
+/**
+ * Updates the data for this graph using the given data.
+ * @param {Array} newData
+ * @method updateGraphData
+ */
 charts.DirectedGraph.prototype.updateGraphData = function(newData) {
     var i;
 
     newData.nodes = newData.nodes || [];
     newData.links = newData.links || [];
+
+    // The following code updates the nodes and links in the D3 graph.  The forceLayoutNodes and forceLayoutLinks arrays correspond to the SVG DOM elements so don't clear the
+    // arrays and recreate all of the objects because doing so is very slow.  Instead, reassign the new data to the existing objects and create or remove objects as needed.
 
     // Update the data saved in the D3 force layout nodes.
     for(i = 0; i < Math.min(this.oldData.nodes.length, newData.nodes.length); ++i) {
@@ -353,7 +323,7 @@ charts.DirectedGraph.prototype.redrawNodesAndLinks = function() {
 };
 
 /**
- * Updates the graph using the given data.
+ * Updates this graph using the given data.
  * @param {Array} newData
  * @method updateGraph
  */
@@ -411,6 +381,8 @@ charts.DirectedGraph.prototype.updateGraph = function(newData) {
     var fixed = false;
 
     me.forceLayout.on("tick", function(event) {
+        // Reset the index to 1 if the force layout alpha is its starting value (0.099); otherwise, increase the index by 1 for each tick.
+        // The alpha can be reset to its starting value if the user moves a node before the graph is fixed.
         index = (event.alpha === 0.099 ? 1 : ++index);
 
         if(lineElements) {
@@ -419,8 +391,6 @@ charts.DirectedGraph.prototype.updateGraph = function(newData) {
                 .attr("x2", me.getLinkEndXFunction(me))
                 .attr("y2", me.getLinkEndYFunction(me));
         }
-
-        //circleElements.each(me.getCollisionFunction());
 
         circleElements.attr("transform", function(nodeData) {
             return "translate(" + (nodeData.x) + "," + (nodeData.y) + ")";
@@ -461,12 +431,20 @@ charts.DirectedGraph.prototype.redraw = function() {
     }
 };
 
+/**
+ * Handles zoom by transforming the graph element.
+ * @method handleZoom
+ */
 charts.DirectedGraph.prototype.handleZoom = function() {
     $(this).children("g").attr("transform", "translate(" + d3.event.translate + ")" + " scale(" + d3.event.scale + ")");
 };
 
+/**
+ * Shows the graph tooltip containing the given text.
+ * @method showTooltip
+ */
 charts.DirectedGraph.prototype.showTooltip = function(text) {
-    var html = '<div class="graph-tooltip">' + text + '</div>';
+    var html = '<table class="graph-tooltip">' + text + '</table>';
     $('#tooltip-container').html(html);
     $('#tooltip-container').show();
 
@@ -489,10 +467,19 @@ charts.DirectedGraph.prototype.showTooltip = function(text) {
     }
 };
 
+/**
+ * Hides the graph tooltip.
+ * @method hideTooltip
+ */
 charts.DirectedGraph.prototype.hideTooltip = function() {
     $('#tooltip-container').hide();
 };
 
+/**
+ * Returns the link mousemove handler function.
+ * @method createLinkMousemoveHandler
+ * @return {Function}
+ */
 charts.DirectedGraph.prototype.createLinkMousemoveHandler = function(me) {
     return function(linkData) {
         me.showTooltip(me.getLinkTooltip(linkData));
@@ -500,6 +487,11 @@ charts.DirectedGraph.prototype.createLinkMousemoveHandler = function(me) {
     };
 };
 
+/**
+ * Returns the link mouseout handler function.
+ * @method createLinkMouseoutHandler
+ * @return {Function}
+ */
 charts.DirectedGraph.prototype.createLinkMouseoutHandler = function(me) {
     return function(linkData) {
         me.hideTooltip();
@@ -507,6 +499,11 @@ charts.DirectedGraph.prototype.createLinkMouseoutHandler = function(me) {
     };
 };
 
+/**
+ * Returns the node mousemove handler function.
+ * @method createNodeMousemoveHandler
+ * @return {Function}
+ */
 charts.DirectedGraph.prototype.createNodeMousemoveHandler = function(me) {
     return function(nodeData) {
         me.showTooltip(me.getNodeTooltip(nodeData));
@@ -514,6 +511,11 @@ charts.DirectedGraph.prototype.createNodeMousemoveHandler = function(me) {
     };
 };
 
+/**
+ * Returns the node mouseout handler function.
+ * @method createNodeMouseoutHandler
+ * @return {Function}
+ */
 charts.DirectedGraph.prototype.createNodeMouseoutHandler = function(me) {
     return function(nodeData) {
         me.hideTooltip();
@@ -521,6 +523,11 @@ charts.DirectedGraph.prototype.createNodeMouseoutHandler = function(me) {
     };
 };
 
+/**
+ * Returns the link start X calculation function.
+ * @method getLinkStartXFunction
+ * @return {Function}
+ */
 charts.DirectedGraph.prototype.getLinkStartXFunction = function(me) {
     return function(linkData) {
         // Ensure the line starts at the radius of the source node so the line does not overlap the node.
@@ -532,6 +539,11 @@ charts.DirectedGraph.prototype.getLinkStartXFunction = function(me) {
     };
 };
 
+/**
+ * Returns the link end X calculation function.
+ * @method getLinkEndXFunction
+ * @return {Function}
+ */
 charts.DirectedGraph.prototype.getLinkEndXFunction = function(me) {
     return function(linkData) {
         // Ensure the line ends at the arrowhead which ends at the radius of the target node so the line does not overlap the node.
@@ -543,6 +555,11 @@ charts.DirectedGraph.prototype.getLinkEndXFunction = function(me) {
     };
 };
 
+/**
+ * Returns the link start Y calculation function.
+ * @method getLinkStartYFunction
+ * @return {Function}
+ */
 charts.DirectedGraph.prototype.getLinkStartYFunction = function(me) {
     return function(linkData) {
         // Ensure the line starts at the radius of the source node so the line does not overlap the node.
@@ -554,6 +571,11 @@ charts.DirectedGraph.prototype.getLinkStartYFunction = function(me) {
     };
 };
 
+/**
+ * Returns the link end Y calculation function.
+ * @method getLinkEndYFunction
+ * @return {Function}
+ */
 charts.DirectedGraph.prototype.getLinkEndYFunction = function(me) {
     return function(linkData) {
         // Ensure the line ends at the arrowhead which ends at the radius of the target node so the line does not overlap the node.
@@ -565,6 +587,11 @@ charts.DirectedGraph.prototype.getLinkEndYFunction = function(me) {
     };
 };
 
+/**
+ * Returns the node collision detection function.
+ * @method getCollisionFunction
+ * @return {Function}
+ */
 charts.DirectedGraph.prototype.getCollisionFunction = function() {
     var me = this;
     var quadtree = d3.geom.quadtree(this.forceLayoutNodes);
@@ -601,9 +628,9 @@ charts.DirectedGraph.prototype.pulseNodes = function(filterFunction) {
     var me = this;
 
     me.vis.selectAll(".node").filter(filterFunction).call(function(nodeData) {
-        nodeData.transition().duration(500).attr("r", function(nodeData) {
+        nodeData.transition().duration(me.TRANSITION_DURATION).attr("r", function(nodeData) {
             return me.getNodeSize(nodeData) * 5;
-        }).transition().duration(500).attr("r", me.getNodeSize).ease("sine");
+        }).transition().duration(me.TRANSITION_DURATION).attr("r", me.getNodeSize).ease("sine");
     });
 };
 
@@ -616,8 +643,11 @@ charts.DirectedGraph.prototype.DEFAULT_NODE_SIZE = 10;
 charts.DirectedGraph.prototype.DEFAULT_NODE_STROKE_COLOR = "black";
 charts.DirectedGraph.prototype.DEFAULT_NODE_STROKE_SIZE = 0;
 charts.DirectedGraph.prototype.DEFAULT_NODE_TEXT_COLOR = "black";
+
 charts.DirectedGraph.prototype.DEFAULT_LINK_ARROWHEAD = "default";
 charts.DirectedGraph.prototype.DEFAULT_LINK_ARROWHEAD_SIZE = 20;
 charts.DirectedGraph.prototype.DEFAULT_LINK_SIZE = 2;
 charts.DirectedGraph.prototype.DEFAULT_LINK_STROKE_COLOR = "#999999";
 charts.DirectedGraph.prototype.DEFAULT_LINK_STROKE_OPACITY = 0.5;
+
+charts.DirectedGraph.prototype.TRANSITION_DURATION = 500;
