@@ -159,10 +159,7 @@ function(connectionService, datasetService, errorNotificationService, filterServ
                     }
                 });
 
-                $scope.translationLanguages.fromLanguageOptions = translationService.getSupportedLanguages();
-                $scope.translationLanguages.toLanguageOptions = translationService.getSupportedLanguages();
-                $scope.options.translate.fromLanguageField = (translationService.getDefaultFromLanguage()) ? translationService.getDefaultFromLanguage() : undefined;
-                $scope.options.translate.toLanguageField = translationService.getDefaultToLanguage();
+                translationService.getSupportedLanguages(getSupportedLanguagesSuccessCallback, translationFailureCallback);
 
                 // Setup our messenger.
                 $scope.messenger = new neon.eventing.Messenger();
@@ -216,6 +213,33 @@ function(connectionService, datasetService, errorNotificationService, filterServ
                         $scope.setTagFilter();
                     }
                 });
+            };
+
+            /**
+             * Sets the 'to' and 'from' language options for translating.
+             * @param {Object} languages A mapping of language codes to their names.
+             * @method getSupportedLanguagesSuccessCallback
+             * @private
+             */
+            var getSupportedLanguagesSuccessCallback = function(languages) {
+                $scope.translationLanguages.fromLanguageOptions = languages;
+                $scope.translationLanguages.toLanguageOptions = languages;
+            };
+
+            /**
+             * Shows an error message when an error occurs in the translation service.
+             * @param {Object} response An error response containing the message and reason.
+             * @param {String} response.message
+             * @param {String} response.reason
+             * @method translationFailureCallback
+             * @private
+             */
+            var translationFailureCallback = function(response) {
+                if($scope.errorMessage) {
+                    errorNotificationService.hideErrorMessage($scope.errorMessage);
+                    $scope.errorMessage = undefined;
+                }
+                $scope.errorMessage = errorNotificationService.showErrorMessage($element, response.message,  response.reason);
             };
 
             /**
@@ -548,19 +572,29 @@ function(connectionService, datasetService, errorNotificationService, filterServ
                     dataKeys.push(tag.name.substring(1));
                 });
 
-                translationService.translate(dataKeys, $scope.translationLanguages.chosenToLanguage, $scope.translationLanguages.chosenFromLanguage)
-                    .then(function(response) {
-                        // Note: Google returns all translations in the order they were given
-                        response.data.data.translations.forEach(function(elem, index) {
-                            if(index < $scope.data.length) {
-                                $scope.data[index].keyTranslated = "#" + elem.translatedText;
-                            } else {
-                                $scope.filterTags[index - $scope.data.length].nameTranslated = "#" + elem.translatedText;
-                            }
-                        });
-                    }, function(response) {
-                        console.debug(response.data.error.code + " ERROR -> " + response.data.error.message);
-                    });
+                translationService.translate(dataKeys, $scope.translationLanguages.chosenToLanguage,
+                    translateSuccessCallback, translationFailureCallback, $scope.translationLanguages.chosenFromLanguage);
+            };
+
+            /**
+             * Refreshes all data and filter tags with their new translations.
+             * @param {Object} response Response object containing all the translations.
+             * @param {Array} response.data.data.translations List of all translations. It's assumed that
+             * all translations are given in the order the original text to translate was received in.
+             * @param {String} response.data.data.translations[].translatedText
+             * @param {String} [response.data.data.translations[].detectedSourceLanguage] Detected language
+             * code of the original version of translatedText. Only provided if the source language was auto-detected.
+             * @method translateSuccessCallback
+             * @private
+             */
+            var translateSuccessCallback = function(response) {
+                response.data.data.translations.forEach(function(elem, index) {
+                    if(index < $scope.data.length) {
+                        $scope.data[index].keyTranslated = "#" + elem.translatedText;
+                    } else {
+                        $scope.filterTags[index - $scope.data.length].nameTranslated = "#" + elem.translatedText;
+                    }
+                });
             };
 
             /**
