@@ -1,5 +1,5 @@
 <div class="header-container" ng-show="!(hideHeader)">
-    <span class="header-text pull-left" ng-bind="options.table.prettyName"></span>
+    <div class="title header-text pull-left" ng-bind="(bindTitle != undefined) ? bindTitle : options.table.prettyName + ' / ' + options.attrY.prettyName"></div>
 
     <options-menu parent-element="element" export-function="makeLinechartExportObject" button-text="optionsMenuButtonText" show-button-text="showOptionsMenuButtonText" ng-show="!(hideAdvancedOptions)">
         <div class="form-group" ng-show="!(hideAdvancedOptions)">
@@ -41,7 +41,7 @@
         <div class="form-group">
             <label>Date Granularity</label>
             <div class="btn-group">
-              <label class="btn btn-default active" ng-class="{true: 'active', false: ''}[options.granularity === 'day']">
+              <label class="btn btn-default" ng-class="{true: 'active', false: ''}[options.granularity === 'day']">
                 <input type="radio" style="display:none" ng-model="options.granularity" value="day"> Day
               </label>
               <label class="btn btn-default" ng-class="{true: 'active', false: ''}[options.granularity === 'hour']">

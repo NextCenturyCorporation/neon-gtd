@@ -85,6 +85,21 @@
 
     .neon-datetimepicker {
 
+        .dropdown-toggle {
+            font-family: "Open Sans", Helvetica, arial, sans-serif;
+            color: @main-text-color;
+            font-size: 16px;
+
+            button {
+                cursor: pointer;
+                margin-left: 5px;
+
+                .glyphicon {
+                    margin-right: 0px;
+                }
+            }
+        }
+
         .dropdown-menu {
             /* Match the width of two datetimepickers plus margin/padding/scrollbar. */
             width: 550px;
@@ -128,10 +143,6 @@
         h4 {
             margin-left: 15px;
             margin-top: 0px;
-
-            .count {
-                font-size: 20px;
-            }
         }
     }
 }

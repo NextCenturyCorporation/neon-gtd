@@ -25,6 +25,7 @@ function(connectionService, datasetService, errorNotificationService, filterServ
         templateUrl: 'partials/directives/tagCloud.html',
         restrict: 'EA',
         scope: {
+            bindTitle: '=',
             bindTagField: '=',
             bindTable: '=',
             bindDatabase: '=',
@@ -56,6 +57,11 @@ function(connectionService, datasetService, errorNotificationService, filterServ
                 tagField: "",
                 andTags: true,
                 tagLimit: 40
+            };
+
+            var updateSize = function() {
+                var titleWidth = $element.width() - $element.find(".chart-options").outerWidth(true);
+                $element.find(".title").css("maxWidth", titleWidth - 20);
             };
 
             /**
@@ -91,6 +97,12 @@ function(connectionService, datasetService, errorNotificationService, filterServ
                     $scope.queryForTags();
                 });
 
+                $scope.messenger.subscribe(filterService.REQUEST_REMOVE_FILTER, function(ids) {
+                    if(filterService.containsKey($scope.filterKeys, ids)) {
+                        $scope.clearTagFilters();
+                    }
+                });
+
                 $scope.exportID = exportService.register($scope.makeTagCloudExportObject);
 
                 $scope.$on('$destroy', function() {
@@ -104,6 +116,7 @@ function(connectionService, datasetService, errorNotificationService, filterServ
                         source: "system",
                         tags: ["remove", "tag-cloud"]
                     });
+                    $element.off("resize", updateSize);
                     $scope.messenger.removeEvents();
                     // Remove our filter if we had an active one.
                     if(0 < $scope.filterTags.length) {
@@ -111,6 +124,8 @@ function(connectionService, datasetService, errorNotificationService, filterServ
                     }
                     exportService.unregister($scope.exportID);
                 });
+
+                $element.resize(updateSize);
 
                 // setup tag cloud color/size changes
                 $.fn.tagcloud.defaults = {

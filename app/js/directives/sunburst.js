@@ -34,6 +34,7 @@ function(connectionService, datasetService, errorNotificationService, exportServ
         templateUrl: 'partials/directives/sunburst.html',
         restrict: 'EA',
         scope: {
+            bindTitle: '=',
             bindTable: '=',
             bindDatabase: '=',
             hideHeader: '=?',
@@ -135,6 +136,9 @@ function(connectionService, datasetService, errorNotificationService, exportServ
             };
 
             var updateChartSize = function() {
+                var titleWidth = $element.width() - $element.find(".chart-options").outerWidth(true);
+                $element.find(".title").css("maxWidth", titleWidth - 20);
+
                 if($scope.chart) {
                     var headerHeight = 0;
                     $element.find(".header-container").each(function() {

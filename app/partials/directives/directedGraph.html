@@ -1,5 +1,5 @@
 <div class="header-container" ng-show="!(hideHeader)">
-    <span class="header-text pull-left" ng-bind="options.table.prettyName"></span>
+    <div class="title header-text pull-left" ng-bind="(bindTitle != undefined) ? bindTitle : options.table.prettyName + ' / ' + options.selectedNodeField.prettyName"></div>
 
     <options-menu parent-element="element" button-text="optionsMenuButtonText" show-button-text="showOptionsMenuButtonText" export-function="makeDirectedGraphExportObject">
         <div class="form-group" ng-show="!(hideAdvancedOptions)">
@@ -88,7 +88,7 @@
             </div>
 
             <div class="input-group">
-                <select class="form-control" ng-model="options.selectedNodeId" ng-options="nodeId for nodeId in data.availableNodeIds track by nodeId" ng-required="false" ng-disabled="(data.availableNodeIds.length == 0) || !(options.selectedNodeField)" ng-change="selectNodeAndNetworkFromNodeId(options.selectedNodeId)">
+                <select class="form-control" ng-model="options.selectedNodeId" ng-options="nodeId for nodeId in existingNodeIds track by nodeId" ng-required="false" ng-disabled="(existingNodeIds.length == 0) || !(options.selectedNodeField)" ng-change="selectNodeAndNetworkFromNodeId(options.selectedNodeId)">
                     <option value="" ng-bind="'Select ' + options.selectedNodeField.prettyName + '...'"></option>
                 </select>
                 <div class="input-group-btn">
@@ -116,36 +116,36 @@
 <div class="clearfix"></div>
 
 <div class="header-container filter-container">
-    <div class="header-item filter-reset pull-right" ng-class="{hidden: (selected.graphNodeIds.length == 0)}" title="{{'Selected ' + selected.graphNodeIds.length + ((selected.graphNodeIds.length == 1) ? ' Node' : ' Nodes')}}">
-        <span class="filter-label" ng-bind="selected.graphNodeIds.length + ((selected.graphNodeIds.length == 1) ? ' Node' : ' Nodes')"></span>
+    <div class="header-item filter-reset pull-right" ng-class="{hidden: (selectedNodeIds.length == 0)}" title="{{'Selected ' + selectedNodeIds.length + ((selectedNodeIds.length == 1) ? ' Node' : ' Nodes')}}">
+        <span class="filter-label" ng-bind="selectedNodeIds.length + ((selectedNodeIds.length == 1) ? ' Node' : ' Nodes')"></span>
         <span class="glyphicon glyphicon-remove" ng-click="deselectAllNodesAndNetwork()"></span>
     </div>
 
     <div class="pull-left">
-        <label type="button" class="btn btn-default header-item" title="{{'Load ' + (selected.graphNodeIds.length ? 'Selected ' : '') + 'Network Graph'}}"
-            ng-bind="'Load ' + (selected.graphNodeIds.length ? 'Selected ' : '') + 'Network'" ng-click="queryForData(true)"/>
+        <label type="button" class="btn btn-default header-item" title="{{'Load ' + (selectedNodeIds.length ? 'Selected ' : '') + 'Network Graph'}}"
+            ng-bind="'Load ' + (selectedNodeIds.length ? 'Selected ' : '') + 'Network'" ng-click="queryForData(true)"/>
     </div>
 
     <div class="pull-left">
         <span class="form-group">
             <span class="btn-group">
-                <label class="btn btn-default header-item" ng-class="{true: 'active', false: ''}[options.hideNodesWithZeroOrOneLink]" title="Hide Single-Link Networks and Unlinked Nodes">
-                    <input type="checkbox" ng-model="options.hideNodesWithZeroOrOneLink" style="display:none" ng-value="false" ng-change="queryForData(numberOfVisibleNodes > 0)"/>
-                    <span class="glyphicon glyphicon-eye-open" ng-show="!(options.hideNodesWithZeroOrOneLink)"></span>
-                    <span class="glyphicon glyphicon-eye-close" ng-show="(options.hideNodesWithZeroOrOneLink)"></span>
-                    <span ng-hide="(width < 725) || (selected.graphNodeIds.length > 0 && width < 925)" ng-bind="(options.hideNodesWithZeroOrOneLink ? 'Hide' : 'Show') + ' Simple Networks'"</span>
+                <label class="btn btn-default header-item" ng-class="{true: 'active', false: ''}[options.hideSimpleNetworks]" title="Hide Single-Link Networks and Unlinked Nodes">
+                    <input type="checkbox" ng-model="options.hideSimpleNetworks" style="display:none" ng-value="false"/>
+                    <span class="glyphicon glyphicon-eye-open" ng-show="!(options.hideSimpleNetworks)"></span>
+                    <span class="glyphicon glyphicon-eye-close" ng-show="(options.hideSimpleNetworks)"></span>
+                    <span ng-hide="(width < 725) || (selectedNodeIds.length > 0 && width < 925)" ng-bind="(options.hideSimpleNetworks ? 'Hide' : 'Show') + ' Simple Networks'"</span>
                 </label>
 
                 <label class="btn btn-default header-item" ng-class="{true: 'active', false: ''}[options.useNodeClusters]" title="Cluster Leaf Nodes and Unlinked Nodes">
-                    <input type="checkbox" ng-model="options.useNodeClusters" style="display:none" ng-value="false" ng-change="queryForData(numberOfVisibleNodes > 0)"/>
+                    <input type="checkbox" ng-model="options.useNodeClusters" style="display:none" ng-value="false"/>
                     <span class="glyphicon glyphicon-cloud"></span>
-                    <span ng-hide="(width < 725) || (selected.graphNodeIds.length > 0 && width < 925)" ng-bind="'Clustering ' + (options.useNodeClusters ? 'On' : 'Off')"</span>
+                    <span ng-hide="(width < 725) || (selectedNodeIds.length > 0 && width < 925)" ng-bind="'Clustering ' + (options.useNodeClusters ? 'On' : 'Off')"</span>
                 </label>
 
                 <label class="btn btn-default header-item" ng-class="{true: 'active', false: ''}[options.reloadOnFilter]" title="Auto-Reload Network Graph on Adding Filters">
                     <input type="checkbox" ng-model="options.reloadOnFilter" style="display:none" ng-value="false"/>
                     <span class="glyphicon glyphicon-refresh"></span>
-                    <span ng-hide="(width < 725) || (selected.graphNodeIds.length > 0 && width < 925)" ng-bind="'Auto-Reload ' + (options.reloadOnFilter ? 'On' : 'Off')"</span>
+                    <span ng-hide="(width < 725) || (selectedNodeIds.length > 0 && width < 925)" ng-bind="'Auto-Reload ' + (options.reloadOnFilter ? 'On' : 'Off')"</span>
                 </label>
             </span>
         </span>
@@ -160,7 +160,7 @@
 
 <div class="clearfix"></div>
 
-<div class="legend">
+<div class="legend" ng-show="(legend.length > 0)">
     <span class="legend-item" title="Legend">
         <span class="legend-text">Legend:</span>
     </span>

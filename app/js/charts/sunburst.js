@@ -114,7 +114,7 @@ charts.SunburstChart = function(rootElement, selector, opts) {
     this.y = d3.scale.linear()
         .range([0, this.radius]);
 
-    this.color = d3.scale.category20c();
+    this.colorScale = d3.scale.ordinal().range(neonColors.LIST);
 
     this.countFormatter = d3.format(' ,.0f');
 
@@ -180,9 +180,6 @@ charts.SunburstChart = function(rootElement, selector, opts) {
     this.drawBlank = function() {
         var me = this;
 
-        this.tooltip = me.element.append("div")
-            .attr("class", "sunburst-tooltip");
-
         this.svg = me.element.append("svg")
             .attr("viewBox", "0 0 " + this.viewBoxWidth + " " + this.viewBoxHeight)
             .attr("preserveAspectRatio", "xMidYMid meet")
@@ -225,7 +222,7 @@ charts.SunburstChart = function(rootElement, selector, opts) {
             .enter().append("path")
                 .attr("d", this.arc)
                 .style("fill", function(d) {
-                    return me.color((d.children ? d : d.parent).name);
+                    return me.colorScale((d.children ? d : d.parent).name);
                 })
                 .on("click", click)
                 .on("mouseover", onMouseOver)
@@ -241,36 +238,52 @@ charts.SunburstChart = function(rootElement, selector, opts) {
         }
 
         function onMouseOver(d) {
-            var text = "<span class='sunburst-tooltip-title'>" + d.name + "</span><br>";
+            var text = "<span class='sunburst-tooltip-title'>" + d.name + "</span>";
 
             if(!d.count && !d.total && d.value) {
-                text = text + "<span class='sunburst-tooltip-field'>";
+                text = text + "<span class='sunburst-tooltip-field'><strong>";
                 text = text + ((me.partitionType ===  charts.SunburstChart.COUNT_PARTITION) ? "Count" : "Total");
-                text = text + ":</span> " + me.countFormatter(d.value) + "<br>";
+                text = text + ":</strong> " + me.countFormatter(d.value) + "</span>";
             }
 
-            text = (d.count) ? text + "<span class='sunburst-tooltip-field'>Count:</span> " + me.countFormatter(d.count) + "<br>" : text;
-            text = (d.total) ? text + "<span class='sunburst-tooltip-field'>Total:</span> " + me.moneyFormatter(d.total) + "<br>" : text;
+            text = (d.count) ? text + "<span class='sunburst-tooltip-field'><strong>Count:</strong> " + me.countFormatter(d.count) + "</span>" : text;
+            text = (d.total) ? text + "<span class='sunburst-tooltip-field'><strong>Total:</strong>" + me.moneyFormatter(d.total) + "</span>" : text;
 
-            me.tooltip.html(text);
-            me.tooltip.style("opacity", 0.9);
-            me.tooltip.style("left", d3.event.offsetX + "px")
-                .style("top", d3.event.offsetY + "px");
+            $("#tooltip-container").html(text);
+            $("#tooltip-container").show();
+            positionTooltip(d3.select('#tooltip-container'), d3.event);
         }
 
         function onMouseMove() {
-            me.tooltip.style("left", d3.event.offsetX + "px")
-                .style("top", d3.event.offsetY + "px");
+            positionTooltip(d3.select('#tooltip-container'), d3.event);
         }
 
         function onMouseOut() {
-            me.tooltip.style("opacity", 0);
+            $("#tooltip-container").hide();
         }
 
         // Setup for switching data: stash the old values for transition.
         function stash(d) {
             d.x0 = d.x;
             d.dx0 = d.dx;
+        }
+
+        function positionTooltip(tooltip, mouseEvent) {
+            var attributeLeft = mouseEvent.pageX + 15;
+            var tooltipWidth = $("#tooltip-container").outerWidth(true);
+            var tooltipHeight = $("#tooltip-container").outerHeight(true);
+
+            if((attributeLeft + tooltipWidth) > $("body").width()) {
+                $("#tooltip-container").removeClass("east");
+                $("#tooltip-container").addClass("west");
+                tooltip.style('top', (mouseEvent.pageY - (tooltipHeight / 2)) + 'px')
+                    .style('left', (attributeLeft - tooltipWidth - 30) + 'px');
+            } else {
+                $("#tooltip-container").removeClass("west");
+                $("#tooltip-container").addClass("east");
+                tooltip.style('top', (mouseEvent.pageY - (tooltipHeight / 2)) + 'px')
+                    .style('left', attributeLeft + 'px');
+            }
         }
     };
 };

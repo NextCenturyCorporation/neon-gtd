@@ -19,6 +19,8 @@ angular.module("neonDemo.services")
 .factory("FilterService", function(DatasetService) {
     var service = {};
 
+    service.REQUEST_REMOVE_FILTER = "filter_service.request_remove_filter";
+
     /**
      * Creates and returns a mapping of names from the given database and table names to unique filter keys for each database and table pair.
      * Uses the mapping of global filter keys (if given) for all possible database and table pairs.
@@ -98,15 +100,16 @@ angular.module("neonDemo.services")
      * Creates and returns a filter on the given table and field(s) using the given callback.
      * @param {Object} relation A relation object containing:
      * <ul>
-     * <li> {String} database The database name </li>
-     * <li> {Stirng} table The table name </li>
-     * <li> {Object} fields The map of field names to arrays of related field names </li>
+     *      <li> {String} database The database name </li>
+     *      <li> {Stirng} table The table name </li>
+     *      <li> {Object} fields The map of field names to arrays of related field names </li>
      * </ul>
      * @param {Function} createFilterClauseFunction The function used to create the filter clause for each field, with arguments:
      *  <ul>
      *      <li> {Object} An object containing {String} database (the database name) and {String} table (the table name) </li>
      *      <li> {String} or {Array} The field name(s) </li>
      *  </ul>
+     * @param {String} or {Object} filterName The name of the visualization or an object containing {String} visName and {String} text
      * @method createFilter
      * @return {Object} A neon.query.Filter object or undefined if no filter clause could be created
      */
@@ -156,6 +159,7 @@ angular.module("neonDemo.services")
      *      <li> {Object} An object containing {String} database (the database name) and {String} table (the table name) </li>
      *      <li> {String} or {Array} The field name(s) </li>
      *  </ul>
+     * @param {String} or {Object} filterName The name of the visualization or an object containing {String} visName and {String} text
      * @param {Function} successCallback The function called once all the filters have been added (optional)
      * @param {Function} errorCallback The function called if an error is returned for any of the filter calls (optional)
      * @method addFilters
@@ -196,6 +200,7 @@ angular.module("neonDemo.services")
      *      <li> {Object} An object containing {String} database (the database name) and {String} table (the table name) </li>
      *      <li> {String} or {Array} The field name(s) </li>
      *  </ul>
+     * @param {String} or {Object} filterName The name of the visualization or an object containing {String} visName and {String} text
      * @param {Function} successFunction The function called once all the filters have been replaced (optional)
      * @param {Function} errorFunction The function called if an error is returned for any of the filter calls (optional)
      * @method replaceFilters
@@ -260,25 +265,44 @@ angular.module("neonDemo.services")
 
     var getFilterNameString = function(name, relations) {
         if(typeof name === 'object') {
+            var string = "";
             if(name.visName) {
-                var tableString;
-                var table;
-                if(relations.length > 0) {
-                    table = DatasetService.getTableWithName(relations[0].database, relations[0].table);
-                    tableString = table.prettyName;
-                }
-                for(var i = 1; i < relations.length; i++) {
-                    table = DatasetService.getTableWithName(relations[i].database, relations[i].table);
-                    tableString += ("/" + table.prettyName);
-                }
-
-                return name.visName + " - " + tableString + (name.text ? ": " + name.text : "");
-            } else {
-                return null;
+                string += name.visName + " - ";
             }
+            var tableString;
+            var table;
+            if(relations.length > 0) {
+                table = DatasetService.getTableWithName(relations[0].database, relations[0].table);
+                tableString = table.prettyName;
+            }
+            for(var i = 1; i < relations.length; i++) {
+                table = DatasetService.getTableWithName(relations[i].database, relations[i].table);
+                tableString += ("/" + table.prettyName);
+            }
+
+            return string + tableString + (name.text ? ": " + name.text : "");
         } else {
             return name;
         }
+    };
+
+    service.containsKey = function(visFilterKeys, toMatchArray) {
+        if(!_.isArray(visFilterKeys)) {
+            visFilterKeys = [visFilterKeys];
+        }
+        if(!_.isArray(toMatchArray)) {
+            toMatchArray = [toMatchArray];
+        }
+
+        //For each visualization filter key, check for any db/table key to be contained in the toMatchArray
+        //underscore some stops as soon as it hits a truthy result
+        return _.some(visFilterKeys, function(visFilterKey) {
+            return _.some(_.values(visFilterKey), function(tableObj) {
+                return _.some(_.values(tableObj), function(key) {
+                    return _.contains(toMatchArray, key);
+                });
+            });
+        });
     };
 
     return service;

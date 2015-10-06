@@ -92,30 +92,12 @@ coreMap.Map.Layer.PointsLayer = OpenLayers.Class(OpenLayers.Layer.Vector, {
         var args = [name, extendOptions];
         OpenLayers.Layer.Vector.prototype.initialize.apply(this, args);
 
-        this.colorRange = [
-            '#39b54a',
-            '#C23333',
-            '#3662CC',
-            "#ff7f0e",
-            "#9467bd",
-            "#8c564b",
-            "#e377c2",
-            "#7f7f7f",
-            "#bcbd22",
-            "#17becf",
-            "#98df8a",
-            "#ff9896",
-            "#aec7e8",
-            "#ffbb78",
-            "#c5b0d5",
-            "#c49c94",
-            "#f7b6d2",
-            "#c7c7c7",
-            "#dbdb8d",
-            "#9edae5"
-        ];
+        if(Object.keys(this.colors).length) {
+            this.hasColorsConfigured = true;
+        }
+
         this.visibility = true;
-        this.colorScale = d3.scale.ordinal().range(this.colorRange);
+        this.colorScale = d3.scale.ordinal().range(neonColors.LIST);
     },
 
     createClusterStyle: function() {
@@ -235,7 +217,11 @@ coreMap.Map.Layer.PointsLayer.prototype.calculateColor = function(element) {
     var category = this.getValueFromDataElement(this.categoryMapping, element);
     var color;
 
-    if(category && this.gradient && _.isDate(category)) {
+    if(this.colors[category]) {
+        color = this.colors[category];
+    } else if(this.hasColorsConfigured) {
+        color = this.colors[""] || neonColors.DEFAULT;
+    } else if(category && this.gradient && _.isDate(category)) {
         color = "#" + this.rainbow.colourAt(category.getTime());
     } else if(category && !this.gradient) {
         color = this.colorScale(category);
@@ -244,8 +230,8 @@ coreMap.Map.Layer.PointsLayer.prototype.calculateColor = function(element) {
         color = this.defaultColor || coreMap.Map.Layer.PointsLayer.DEFAULT_COLOR;
     }
 
-    // store the color in the registry so we know the color/category mappings
-    if(!(this.colors.hasOwnProperty(category))) {
+    // Save the color in the registry so we know the color/category mappings
+    if(!this.colors[category]) {
         this.colors[category] = color;
     }
 

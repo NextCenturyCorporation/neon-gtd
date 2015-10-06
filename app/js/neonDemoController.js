@@ -29,7 +29,9 @@ function($scope, $timeout, config, datasets) {
 
     $scope.hideAddVisualizationsButton = config.hideAddVisualizationsButton;
     $scope.hideAdvancedOptions = config.hideAdvancedOptions;
+    $scope.canImport = (window.File && window.FileReader && window.FileList && window.Blob);
     $scope.showImport = config.showImport;
+    $scope.showExport = config.showExport;
 
     $scope.seeData = false;
     $scope.createFilters = false;

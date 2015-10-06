@@ -36,12 +36,14 @@ function(connectionService, datasetService, errorNotificationService, filterServ
         templateUrl: 'partials/directives/linechart.html',
         restrict: 'EA',
         scope: {
+            bindTitle: '=',
             bindDateField: '=',
             bindYAxisField: '=',
             bindCategoryField: '=',
             bindAggregationField: '=',
             bindTable: '=',
             bindDatabase: '=',
+            bindGranularity: '=',
             colorMappings: '&',
             hideHeader: '=?',
             hideAdvancedOptions: '=?'
@@ -88,21 +90,25 @@ function(connectionService, datasetService, errorNotificationService, filterServ
             $scope.options = {
                 database: {},
                 table: {},
-                attrX: "",
-                attrY: "",
-                categoryField: "",
+                attrX: {},
+                attrY: {},
+                categoryField: {},
                 aggregation: "count",
-                granularity: DAY,
+                granularity: $scope.bindGranularity ? $scope.bindGranularity.toLowerCase() : DAY,
                 trendlines: 'hide'
             };
 
             var updateChartSize = function() {
+                var titleWidth = $element.width() - $element.find(".chart-options").outerWidth(true);
+                $element.find(".title").css("maxWidth", titleWidth - 20);
+
                 if($scope.chart) {
                     var headerHeight = 0;
                     $element.find(".header-container").each(function() {
                         headerHeight += $(this).outerHeight(true);
                     });
                     $element.find('.linechart').height($element.height() - headerHeight);
+
                     // Redraw the line chart.
                     $scope.chart.draw();
                     $scope.chart.showTrendlines(($scope.options.trendlines === 'show') ? true : false);
@@ -118,6 +124,12 @@ function(connectionService, datasetService, errorNotificationService, filterServ
                 });
                 $scope.messenger.subscribe(datasetService.DATE_CHANGED_CHANNEL, onDateChanged);
                 $scope.messenger.subscribe("date_selected", onDateSelected);
+
+                $scope.messenger.subscribe(filterService.REQUEST_REMOVE_FILTER, function(ids) {
+                    if(filterService.containsKey($scope.filterKeys, ids)) {
+                        $scope.removeBrush();
+                    }
+                });
 
                 $scope.exportID = exportService.register($scope.makeLinechartExportObject);
 
@@ -827,7 +839,8 @@ function(connectionService, datasetService, errorNotificationService, filterServ
                     y: "value",
                     hoverListener: onHover,
                     responsive: true,
-                    granularity: $scope.options.granularity
+                    granularity: $scope.options.granularity,
+                    seriesToColors: datasetService.isFieldValid($scope.options.categoryField) ? datasetService.getActiveDatasetColorMaps($scope.options.database.name, $scope.options.table.name, $scope.options.categoryField.columnName) : {}
                 };
 
                 // Destroy the old chart and rebuild it.

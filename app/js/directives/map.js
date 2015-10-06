@@ -175,6 +175,18 @@ angular.module('neonDemo.directives')
 
                 $scope.exportID = exportService.register($scope.makeMapExportObject);
 
+                $scope.messenger.subscribe(filterService.REQUEST_REMOVE_FILTER, function(ids) {
+                    var keys = [];
+
+                    _.each($scope.options.layers, function(layer) {
+                        keys.push(layer.filterKeys);
+                    });
+
+                    if(filterService.containsKey(keys, ids)) {
+                        $scope.clearFilters(true);
+                    }
+                });
+
                 $scope.linkyConfig = datasetService.getLinkyConfig();
 
                 $scope.messenger.subscribe('date_selected', onDateSelected);
@@ -1355,6 +1367,7 @@ angular.module('neonDemo.directives')
 
                 if(layer.type === coreMap.Map.POINTS_LAYER) {
                     layer.olLayer = new coreMap.Map.Layer.PointsLayer(layer.name, {
+                        colors: layer.colorBy ? datasetService.getActiveDatasetColorMaps(layer.database, layer.table, layer.colorBy) || {} : {},
                         latitudeMapping: layer.latitudeMapping,
                         longitudeMapping: layer.longitudeMapping,
                         sizeMapping: layer.sizeBy,

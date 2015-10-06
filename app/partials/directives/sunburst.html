@@ -1,5 +1,5 @@
 <div class="header-container" ng-show="!(hideHeader)">
-    <span class="header-text pull-left" ng-bind="options.table.prettyName"></span>
+    <div class="title header-text pull-left" ng-bind="(bindTitle != undefined) ? bindTitle : options.table.prettyName"></div>
 
     <options-menu parent-element="element" export-function="makeSunburstExportObject">
         <div class="form-group" ng-show="!(hideAdvancedOptions)">
