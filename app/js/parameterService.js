@@ -132,7 +132,7 @@ angular.module('neonDemo.services')
             if(cleanMapping) {
                 argsList.push({
                     mappings: [mapping],
-                    parameterKey: DASHBOARD_FILTER_PREFIX + cleanMapping,
+                    parameterKey: DASHBOARD_FILTER_PREFIX + mapping,
                     cleanParameter: cleanValue,
                     isParameterValid: doesParameterExist,
                     filterName: "custom-" + cleanMapping,

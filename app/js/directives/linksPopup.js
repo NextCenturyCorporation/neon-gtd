@@ -90,7 +90,7 @@ angular.module('neonDemo.directives')
                             }
 
                             link.args = link.args || [];
-                            if(link.url.indexOf("?") >= 0) {
+                            if(link.url.indexOf("?") >= 0 && link.url.indexOf("#?") < 0) {
                                 var args = link.url.substring(link.url.indexOf("?") + 1, link.url.length).split("&");
                                 args.forEach(function(arg) {
                                     var nameAndValue = arg.split("=");
