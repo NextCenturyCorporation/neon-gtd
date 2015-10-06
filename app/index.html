@@ -56,8 +56,6 @@
                 </div>
 
                 <div class="container" ng-hide="hideNavbarItems">
-                    <div powered-by-neon class="pull-right"></div>
-
                     <!-- Help Button -->
                     <div class="dropdown pull-right" ng-show="(help.guide || help.video)">
                         <a class="dropdown-toggle navbar-text" data-toggle="dropdown" href="#" role="button">
@@ -78,8 +76,6 @@
                         <a class="dropdown-toggle navbar-text options" data-toggle="dropdown" href="#" role="button">
                             <!--img class="brand-image" src="img/Options_64x64.png" height="34"></img-->
                             <span class="glyphicon glyphicon-cog options-gear"></span>
-                            <span class="options-text">Options</span>
-                            <span class="caret"></span>
                         </a>
                         <ul class="dropdown-menu">
                             <li ng-show="showExport"><a href="#" class="unselectable">Export Format:</a></li>
@@ -99,6 +95,9 @@
                             </a>
                         </ul>
                     </div>
+
+                    <div powered-by-neon class="pull-right"></div>
+
 
                     <!-- Import and Remove Dataset Popups -->
                     <div import-file gridster-configs="visualizations" ng-show="showImport"></div>
