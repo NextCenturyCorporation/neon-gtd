@@ -27,9 +27,14 @@
         font-size: 13px;
         background-color: @light-background;
         border: @border;
+        border-top: 0px;
         -moz-box-sizing: border-box;
         box-sizing: border-box;
         padding: 10px;
+
+        &:first-child {
+            border: @border;
+        }
 
         &.future {
             background-color: @main-background;
