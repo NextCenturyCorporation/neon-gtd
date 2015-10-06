@@ -75,20 +75,25 @@
 
                     <!-- Options Button -->
                     <div class="dropdown pull-right" ng-show="!(hideAdvancedOptions) && (showImport || showExport)">
-                        <a class="dropdown-toggle navbar-text" data-toggle="dropdown" href="#" role="button">
-                            <img class="brand-image" src="img/Options_64x64.png" height="34"></img>Options<span class="caret"></span>
+                        <a class="dropdown-toggle navbar-text options" data-toggle="dropdown" href="#" role="button">
+                            <!--img class="brand-image" src="img/Options_64x64.png" height="34"></img-->
+                            <span class="glyphicon glyphicon-cog options-gear"></span>
+                            <span class="options-text">Options</span>
+                            <span class="caret"></span>
                         </a>
                         <ul class="dropdown-menu">
                             <li ng-show="showExport"><a href="#" class="unselectable">Export Format:</a></li>
                             <li file-formats gridster-configs="visualizations" ng-show="showExport"></li>
                             <li export-widgets gridster-configs="visualizations" ng-show="showExport"></li>
                             <li class="divider" ng-show="showExport && showImport"></li>
-                            <li ng-show="showImport"><a href="#" data-toggle="modal" data-target="#importModal" ng-show="canImport">
-                                Import File
-                            </a>
-                            <a href="#" class=unselectable" ng-show="!canImport">
-                                This browser does not support data import
-                            </a></li>
+                            <li ng-show="showImport">
+                                <a href="#" data-toggle="modal" data-target="#importModal" ng-show="canImport">
+                                    Import File
+                                </a>
+                                <a href="#" class="unselectable" ng-show="!canImport">
+                                    This browser does not support data import
+                                </a>
+                            </li>
                             <li ng-show="showImport"><a href="#" data-toggle="modal" data-target="#removeDatasetModal" ng-show="canImport">
                                 Drop Dataset
                             </a>
