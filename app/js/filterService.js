@@ -234,7 +234,7 @@ angular.module("neonDemo.services")
     /**
      * Removes filters for all the given filter keys.
      * @param {Object} messenger The messenger object used to remove the filters
-     * @param {Object} filterKeys The map of database and table names to filter keys used by the messenger
+     * @param {Array} or {Object} filterKeys The array of filter keys or the map of database and table names to filter keys used by the messenger
      * @param {Function} successCallback The function called once all the filters have been removed (optional)
      * @param {Function} errorCallback The function called if an error is returned for any of the filter calls (optional)
      * @method removeFilters
@@ -252,11 +252,15 @@ angular.module("neonDemo.services")
         };
 
         var filterKeysToRemove = [];
-        var databaseNames = Object.keys(filterKeys);
-        for(var i = 0; i < databaseNames.length; ++i) {
-            var tableNames = Object.keys(filterKeys[databaseNames[i]]);
-            for(var j = 0; j < tableNames.length; ++j) {
-                filterKeysToRemove.push(filterKeys[databaseNames[i]][tableNames[j]]);
+        if(filterKeys.constructor === Array) {
+            filterKeysToRemove = filterKeys;
+        } else {
+            var databaseNames = Object.keys(filterKeys);
+            for(var i = 0; i < databaseNames.length; ++i) {
+                var tableNames = Object.keys(filterKeys[databaseNames[i]]);
+                for(var j = 0; j < tableNames.length; ++j) {
+                    filterKeysToRemove.push(filterKeys[databaseNames[i]][tableNames[j]]);
+                }
             }
         }
 

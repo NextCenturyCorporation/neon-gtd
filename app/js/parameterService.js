@@ -46,6 +46,14 @@ angular.module('neonDemo.services')
     var BOUNDS_MIN_LAT = 2;
     var BOUNDS_MAX_LAT = 3;
 
+    var onRequestRemoveFilter = function(filterKeys) {
+        if(filterKeys.length && filterKeys[0].indexOf(service.FILTER_KEY_PREFIX) === 0) {
+            filterService.removeFilters(service.messenger, filterKeys);
+        }
+    };
+
+    service.messenger.subscribe(filterService.REQUEST_REMOVE_FILTER, onRequestRemoveFilter);
+
     /**
      * Returns the name of the dataset specified in the URL parameters to set as the active dataset on initial load of the dashboard.
      * @method findActiveDatasetInUrl
