@@ -53,11 +53,8 @@ coreMap.Map = function(elementId, opts) {
     this.elementId = elementId;
     this.selector = $("#" + elementId);
     this.onZoomRect = opts.onZoomRect;
-    this.responsive = true;
-
-    if(opts.responsive === false) {
-        this.responsive = false;
-    }
+    this.responsive = opts.responsive;
+    this.popupsService = {};
 
     if(this.responsive) {
         this.resizeOnWindowResize();
@@ -251,6 +248,7 @@ coreMap.Map.prototype.initializeMap = function() {
         height: this.height
     });
     this.map = new OpenLayers.Map(this.elementId);
+    this.map.events.fallThrough = true;
     this.map.layerContainerDiv.style.removeProperty("z-index");
     this.configureFilterOnZoomRectangle();
 };
@@ -408,11 +406,9 @@ coreMap.Map.prototype.createSelectControl =  function(layer) {
                 attributes = feature.attributes;
             }
 
-            for(var key in attributes) {
-                if(Object.prototype.hasOwnProperty.call(attributes, key)) {
-                    text += '<tr><th>' + _.escape(key) + '</th><td>' + attributes[key] + '</td>';
-                }
-            }
+            Object.keys(attributes).forEach(function(attribute) {
+                text += '<tr><th>' + _.escape(attribute) + '</th><td>' + attributes[attribute] + '</td>';
+            });
             text += '</table></div>';
         }
 
@@ -423,9 +419,15 @@ coreMap.Map.prototype.createSelectControl =  function(layer) {
             null,
             true,
             onFeatureUnselect);
+        me.featurePopup.events.remove("click");
         me.map.addPopup(me.featurePopup, true);
 
         $(".olFramedCloudPopupContent td").linky(feature.layer.linkyConfig);
+
+        if(me.popupsService.links && feature.index >= 0 && feature.layer.linksSource) {
+            var link = me.popupsService.links.createLinkHtml(feature.index, feature.layer.linksSource);
+            $("#" + me.elementId).find(".olPopupCloseBox").after("<div class='link-div'><button class='link-btn'>" + link + "</button></div>");
+        }
     };
 
     var onFeatureUnselect = function() {

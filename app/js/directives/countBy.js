@@ -558,8 +558,8 @@ function(external, popups, connectionService, datasetService, errorNotificationS
 
                 config.count_by.args.forEach(function(arg) {
                     link.args.push({
-                        variable: arg.name,
-                        substitute: arg.value
+                        name: arg.name,
+                        value: arg.value
                     });
                 });
 

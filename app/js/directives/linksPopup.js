@@ -89,35 +89,41 @@ angular.module('neonDemo.directives')
                                 link.url = link.url.replace(popups.links.VARIABLE_SERVER, link.server);
                             }
 
+                            link.args = link.args || [];
+                            if(link.url.indexOf("?") >= 0) {
+                                var args = link.url.substring(link.url.indexOf("?") + 1, link.url.length).split("&");
+                                args.forEach(function(arg) {
+                                    var nameAndValue = arg.split("=");
+                                    if(nameAndValue.length === 2) {
+                                        link.args.push({
+                                            name: nameAndValue[0],
+                                            value: nameAndValue[1]
+                                        });
+                                    }
+                                });
+                                link.url = link.url.substring(0, link.url.indexOf("?"));
+                            }
+
                             link.fields = link.fields || [];
                             link.fields.forEach(function(field) {
-                                if(field.type === popups.links.TYPE_URL) {
-                                    link.url = link.url.replace(field.variable, field.substitute);
-                                }
+                                link.url = link.url.replace(field.variable, field.substitute);
                             });
 
                             link.values = link.values || [];
                             link.values.forEach(function(value) {
-                                if(value.type === popups.links.TYPE_URL) {
-                                    link.url = link.url.replace(value.variable, value.substitute);
-                                }
+                                link.url = link.url.replace(value.variable, value.substitute);
                             });
 
                             // Notify angular that this is a trusted URL so angular will inject it into a form's action.
                             link.url = $sce.trustAsResourceUrl(link.url);
 
-                            link.args = link.args || [];
                             link.args.forEach(function(arg) {
                                 link.fields.forEach(function(field) {
-                                    if(field.type === popups.links.TYPE_HIDDEN) {
-                                        arg.value = arg.value.replace(field.variable, field.substitute);
-                                    }
+                                    arg.value = arg.value.replace(field.variable, field.substitute);
                                 });
 
                                 link.values.forEach(function(value) {
-                                    if(value.type === popups.links.TYPE_HIDDEN) {
-                                        arg.value = arg.value.replace(value.variable, value.substitute);
-                                    }
+                                    arg.value = arg.value.replace(value.variable, value.substitute);
                                 });
                             });
 

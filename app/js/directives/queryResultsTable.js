@@ -724,8 +724,8 @@ function(external, popups, connectionService, datasetService, errorNotificationS
 
                 config.data_table.args.forEach(function(arg) {
                     link.args.push({
-                        variable: arg.name,
-                        substitute: arg.value
+                        name: arg.name,
+                        value: arg.value
                     });
                 });
 

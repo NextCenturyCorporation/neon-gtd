@@ -28,8 +28,8 @@
  * @constructor
  */
 angular.module('neonDemo.directives')
-.directive('map', ['ConnectionService', 'DatasetService', 'ErrorNotificationService', 'FilterService', 'ExportService', '$timeout', '$filter',
-    function(connectionService, datasetService, errorNotificationService, filterService, exportService, $timeout, $filter) {
+.directive('map', ['external', 'popups', 'ConnectionService', 'DatasetService', 'ErrorNotificationService', 'FilterService', 'ExportService', '$timeout', '$filter',
+    function(external, popups, connectionService, datasetService, errorNotificationService, filterService, exportService, $timeout, $filter) {
     return {
         templateUrl: 'partials/directives/map.html',
         restrict: 'EA',
@@ -115,6 +115,7 @@ angular.module('neonDemo.directives')
             $scope.map = new coreMap.Map($scope.mapId, {
                 responsive: false
             });
+            $scope.map.popupsService = popups;
 
             /**
              * Returns the list of tables for which we currently have layers.
@@ -202,6 +203,7 @@ angular.module('neonDemo.directives')
                         source: "system",
                         tags: ["remove", "map"]
                     });
+                    popups.links.deleteData($scope.mapId);
                     $element.off("resize", updateSize);
                     $scope.messenger.removeEvents();
                     if($scope.showFilter) {
@@ -843,7 +845,11 @@ angular.module('neonDemo.directives')
                         if($scope.map.doAttributesExist(data, $scope.options.layers[i].olLayer)) {
                             $scope.options.layers[i].error = undefined;
                             $scope.options.layers[i].olLayer.setData(data);
-                            $scope.options.layers[i].olLayer.updateFeatures();
+                            if(external.services.point) {
+                                var linksSource = $scope.mapId + "-" + database + "-" + table;
+                                createLinks(data, linksSource, $scope.options.layers[i].latitudeMapping, $scope.options.layers[i].longitudeMapping);
+                                $scope.options.layers[i].olLayer.linksSource = linksSource;
+                            }
                         } else {
                             $scope.options.layers[i].error = "Error - cannot create layer due to missing fields in data";
                         }
@@ -972,6 +978,63 @@ angular.module('neonDemo.directives')
                         top: maxLat === -90 ? 90 : maxLat
                     };
                 }
+            };
+
+            /**
+             * Creates the links for the given data and source with the given latitude and longitude fields.
+             * @param {Array} data
+             * @param {String} source
+             * @param {String} latitudeField
+             * @param {String} longitudeField
+             * @method createLinks
+             * @private
+             */
+            var createLinks = function(data, source, latitudeField, longitudeField) {
+                var mapLinks = [];
+
+                data.forEach(function(row) {
+                    var latitudeValue = row[latitudeField];
+                    var longitudeValue = row[longitudeField];
+
+                    var rowLinks = [];
+                    if(external.services.point) {
+                        Object.keys(external.services.point.apps).forEach(function(app) {
+                            rowLinks.push(createPointLinkObject(external.services.point, app, latitudeValue, longitudeValue));
+                        });
+                    };
+
+                    var index = mapLinks.length;
+                    mapLinks.push(rowLinks);
+                });
+
+                popups.links.setData(source, mapLinks);
+            };
+
+            /**
+             * Creates and returns the point link object for the given app using the given service and latitude and longitude values.
+             * @param {Object} service
+             * @param {String} app
+             * @param {Number} latitudeValue
+             * @param {Number} longitudeValue
+             * @method createPointLinkObject
+             * @private
+             * @return {Object}
+             */
+            var createPointLinkObject = function(service, app, latitudeValue, longitudeValue) {
+                return {
+                    name: app,
+                    image: service.apps[app].image,
+                    url: service.apps[app].url,
+                    values: [{
+                        type: popups.links.TYPE_URL,
+                        variable: service.mappings.latitude,
+                        substitute: latitudeValue
+                    }, {
+                        type: popups.links.TYPE_URL,
+                        variable: service.mappings.longitude,
+                        substitute: longitudeValue
+                    }]
+                };
             };
 
             $scope.buildPointQuery = function(database, table) {
