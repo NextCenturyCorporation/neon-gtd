@@ -21,21 +21,18 @@ angular.module('neonDemo.directives')
         templateUrl: 'partials/directives/translationOptions.html',
         restrict: 'EA',
         scope: {
-            fromLanguageField: "=?",
-            toLanguageField: "=?",
+            onTranslate: "=",
+            fromLanguageChange: "=",
+            toLanguageChange: "=",
             fromLanguageOptions: "=?",
-            toLanguageOptions: "=?",
-            showTranslation: "=?"
+            toLanguageOptions: "=?"
         },
         link: function($scope) {
             $scope.disableTranslate = true;
+            $scope.showTranslation = false;
+            $scope.fromLanguageField = "";
+            $scope.toLanguageField = "en";
 
-            if(!$scope.fromLanguageField) {
-                $scope.fromLanguageField = "";
-            }
-            if(!$scope.toLanguageField) {
-                $scope.toLanguageField = "en";
-            }
             if(!$scope.fromLanguageOptions || Object.keys($scope.fromLanguageOptions).length === 0) {
                 $scope.fromLanguageOptions = {};
             }
@@ -44,12 +41,11 @@ angular.module('neonDemo.directives')
             }
 
             $scope.$watch("toLanguageOptions", function(newVal) {
-                if(!newVal || Object.keys($scope.fromLanguageOptions).length === 0) {
-                    $scope.disableTranslate = true;
-                } else {
-                    $scope.disableTranslate = false;
-                }
+                $scope.disableTranslate = !newVal || !Object.keys($scope.fromLanguageOptions).length;
             });
+
+            // Send initial values
+            $scope.onTranslate($scope.showTranslation, $scope.fromLanguageField, $scope.toLanguageField);
         }
     };
 }]);

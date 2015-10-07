@@ -67,6 +67,15 @@ angular.module("neonDemo.services")
     };
 
     /**
+     * If the service being used has an API key.
+     * @method hasKey
+     * @return {Boolean} True if there is an API key being used, false otherwise.
+     */
+    service.hasKey = function() {
+        return apis[chosenApi].key ? true : false;
+    };
+
+    /**
      * Translates all strings in text with language code specified in 'from' to the language
      * code specified in 'to'. If no 'from' is provided, it will be automatically detected.
      * @param {Array} text List of strings to translate
@@ -83,54 +92,59 @@ angular.module("neonDemo.services")
                 message: "Key not provided",
                 reason: "Key not provided"
             });
-        }
-
-        var translateCallback = function() {
-            var deferred = $q.defer();
-
-            var params = apis[chosenApi].params.key + "=" + apis[chosenApi].key;
-
-            text.forEach(function(elem) {
-                params += "&" + apis[chosenApi].params.text + "=" + encodeURI(elem);
+        } else if(!text.length) {
+            failureCallback({
+                message: "No text provided",
+                reason: "No text provided"
             });
-
-            if(!to || !apis[chosenApi].languages[to]) {
-                deferred.reject({
-                    message: "Unknown target language",
-                    reason: "Unknown target language"
-                });
-                return deferred.promise;
-            }
-
-            params += "&" + apis[chosenApi].params.to + "=" + to;
-
-            if(from && !apis[chosenApi].languages[from]) {
-                deferred.reject({
-                    message: "Unknown source language",
-                    reason: "Unknown source language"
-                });
-                return deferred.promise;
-            } else if(from) {
-                params += "&" + apis[chosenApi].params.from + "=" + from;
-            }
-
-            $http.get(apis[chosenApi].base + apis[chosenApi].methods.translate + "?" + params)
-                .then(function(response) {
-                    deferred.resolve(response);
-                }, function(response) {
-                    deferred.reject({
-                        message: response.data.error.message,
-                        reason: concatErrorResponses(response.data.error.errors)
-                    });
-                });
-
-            return deferred.promise;
-        };
-
-        if(!apis[chosenApi].languages || _.keys(apis[chosenApi].languages).length === 0) {
-            setSupportedLanguages().then(translateCallback().then(successCallback, failureCallback), failureCallback);
         } else {
-            translateCallback().then(successCallback, failureCallback);
+            var translateCallback = function() {
+                var deferred = $q.defer();
+
+                var params = apis[chosenApi].params.key + "=" + apis[chosenApi].key;
+
+                text.forEach(function(elem) {
+                    params += "&" + apis[chosenApi].params.text + "=" + encodeURI(elem);
+                });
+
+                if(!to || !apis[chosenApi].languages[to]) {
+                    deferred.reject({
+                        message: "Unknown target language",
+                        reason: "Unknown target language"
+                    });
+                    return deferred.promise;
+                }
+
+                params += "&" + apis[chosenApi].params.to + "=" + to;
+
+                if(from && !apis[chosenApi].languages[from]) {
+                    deferred.reject({
+                        message: "Unknown source language",
+                        reason: "Unknown source language"
+                    });
+                    return deferred.promise;
+                } else if(from) {
+                    params += "&" + apis[chosenApi].params.from + "=" + from;
+                }
+
+                $http.get(apis[chosenApi].base + apis[chosenApi].methods.translate + "?" + params)
+                    .then(function(response) {
+                        deferred.resolve(response);
+                    }, function(response) {
+                        deferred.reject({
+                            message: response.data.error.message,
+                            reason: concatErrorResponses(response.data.error.errors)
+                        });
+                    });
+
+                return deferred.promise;
+            };
+
+            if(!apis[chosenApi].languages || _.keys(apis[chosenApi].languages).length === 0) {
+                setSupportedLanguages().then(translateCallback().then(successCallback, failureCallback), failureCallback);
+            } else {
+                translateCallback().then(successCallback, failureCallback);
+            }
         }
     };
 

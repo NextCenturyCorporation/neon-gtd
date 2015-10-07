@@ -64,11 +64,7 @@ function(connectionService, datasetService, errorNotificationService, filterServ
                 tagField: "",
                 andTags: true,
                 tagLimit: 40,
-                showTranslation: false,
-                translate: {
-                    fromLanguageField: "",
-                    toLanguageField: ""
-                }
+                showTranslation: false
             };
 
             var updateSize = function() {
@@ -99,67 +95,8 @@ function(connectionService, datasetService, errorNotificationService, filterServ
                     }
                 });
 
-                $scope.$watch('options.showTranslation', function(newVal, oldVal) {
-                    XDATA.userALE.log({
-                        activity: "select",
-                        action: ($scope.loadingData) ? "reset" : "click",
-                        elementId: "tag-cloud-options",
-                        elementType: "button",
-                        elementSub: (newVal) ? "show-translation" : "remove-translation",
-                        elementGroup: "chart_group",
-                        source: ($scope.loadingData) ? "system" : "user",
-                        tags: ["options", "tag-cloud"]
-                    });
-                    if(newVal && newVal !== oldVal) {
-                        $scope.translationLanguages.chosenFromLanguage = $scope.options.translate.fromLanguageField;
-                        $scope.translationLanguages.chosenToLanguage = $scope.options.translate.toLanguageField;
-                        $scope.translate();
-                    } else if(!newVal && newVal !== oldVal) {
-                        $scope.resetTranslation();
-                    }
-                });
-
-                $scope.$watch('options.translate.fromLanguageField', function(newVal, oldVal) {
-                    XDATA.userALE.log({
-                        activity: "select",
-                        action: ($scope.loadingData) ? "reset" : "click",
-                        elementId: "tag-cloud-options",
-                        elementType: "combobox",
-                        elementSub: "target-translation-language",
-                        elementGroup: "chart_group",
-                        source: ($scope.loadingData) ? "system" : "user",
-                        tags: ["options", "tag-cloud"]
-                    });
-                    if(newVal && newVal !== oldVal) {
-                        $scope.translationLanguages.chosenFromLanguage = newVal;
-
-                        if($scope.options.showTranslation) {
-                            $scope.translate();
-                        }
-                    }
-                });
-
-                $scope.$watch('options.translate.toLanguageField', function(newVal, oldVal) {
-                    XDATA.userALE.log({
-                        activity: "select",
-                        action: ($scope.loadingData) ? "reset" : "click",
-                        elementId: "tag-cloud-options",
-                        elementType: "combobox",
-                        elementSub: "target-translation-language",
-                        elementGroup: "chart_group",
-                        source: ($scope.loadingData) ? "system" : "user",
-                        tags: ["options", "tag-cloud"]
-                    });
-                    if(newVal && newVal !== oldVal) {
-                        $scope.translationLanguages.chosenToLanguage = newVal;
-
-                        if($scope.options.showTranslation) {
-                            $scope.translate();
-                        }
-                    }
-                });
-
                 translationService.getSupportedLanguages(getSupportedLanguagesSuccessCallback, translationFailureCallback);
+                $scope.translationAvailable = translationService.hasKey();
 
                 // Setup our messenger.
                 $scope.messenger = new neon.eventing.Messenger();
@@ -235,6 +172,8 @@ function(connectionService, datasetService, errorNotificationService, filterServ
              * @private
              */
             var translationFailureCallback = function(response) {
+                $scope.loadingData = false;
+
                 if($scope.errorMessage) {
                     errorNotificationService.hideErrorMessage($scope.errorMessage);
                     $scope.errorMessage = undefined;
@@ -423,7 +362,7 @@ function(connectionService, datasetService, errorNotificationService, filterServ
                 });
 
                 if($scope.options.showTranslation) {
-                    $scope.translate();
+                    translate();
                 }
 
                 // style the tags after they are displayed
@@ -560,10 +499,95 @@ function(connectionService, datasetService, errorNotificationService, filterServ
             };
 
             /**
+             * Updates the 'from' language on translation and translates if 'Show Translation' is checked
+             * @param {String} language The 'from' translation language to change to
+             * @method onFromLanguageChange
+             */
+            $scope.onFromLanguageChange = function(language) {
+                XDATA.userALE.log({
+                    activity: "select",
+                    action: ($scope.loadingData) ? "reset" : "click",
+                    elementId: "tag-cloud-options",
+                    elementType: "combobox",
+                    elementSub: "target-translation-language",
+                    elementGroup: "chart_group",
+                    source: ($scope.loadingData) ? "system" : "user",
+                    tags: ["options", "tag-cloud"]
+                });
+                $scope.translationLanguages.chosenFromLanguage = language;
+
+                if($scope.options.showTranslation) {
+                    translate();
+                }
+            };
+
+            /**
+             * Updates the 'to' language on translation and translates if 'Show Translation' is checked
+             * @param {String} language The 'to' translation language to change to
+             * @method onToLanguageChange
+             */
+            $scope.onToLanguageChange = function(language) {
+                XDATA.userALE.log({
+                    activity: "select",
+                    action: ($scope.loadingData) ? "reset" : "click",
+                    elementId: "tag-cloud-options",
+                    elementType: "combobox",
+                    elementSub: "target-translation-language",
+                    elementGroup: "chart_group",
+                    source: ($scope.loadingData) ? "system" : "user",
+                    tags: ["options", "tag-cloud"]
+                });
+                $scope.translationLanguages.chosenToLanguage = language;
+
+                if($scope.options.showTranslation) {
+                    translate();
+                }
+            };
+
+            /**
+             * Translates all text back to its original form if checked is false, or to the specified 'to' language
+             * if checked is true.
+             * @param {Boolean} checked Whether 'Show Translation' is checked or unchecked
+             * @param {String} fromLang The 'from' language to use for translation
+             * @param {String} toLang The 'to' language to use for translation
+             * @method updateTranslation
+             */
+            $scope.updateTranslation = function(checked, fromLang, toLang) {
+                XDATA.userALE.log({
+                    activity: "select",
+                    action: ($scope.loadingData) ? "reset" : "click",
+                    elementId: "tag-cloud-options",
+                    elementType: "button",
+                    elementSub: (checked) ? "show-translation" : "remove-translation",
+                    elementGroup: "chart_group",
+                    source: ($scope.loadingData) ? "system" : "user",
+                    tags: ["options", "tag-cloud"]
+                });
+
+                $scope.options.showTranslation = checked;
+
+                if(checked) {
+                    $scope.translationLanguages.chosenFromLanguage = fromLang;
+                    $scope.translationLanguages.chosenToLanguage = toLang;
+                    translate();
+                } else {
+                    resetTranslation();
+                }
+            };
+
+            /**
              * Translates all tags and filter tags with the from/to languages specified.
              * @method translate
+             * @private
              */
-            $scope.translate = function() {
+            var translate = function() {
+                $scope.loadingData = true;
+
+                if($scope.errorMessage) {
+                    errorNotificationService.hideErrorMessage($scope.errorMessage);
+                    $scope.errorMessage = undefined;
+                }
+
                 var dataKeys = $scope.data.map(function(elem) {
                     return elem.key.substring(1);
                 });
@@ -588,6 +612,8 @@ function(connectionService, datasetService, errorNotificationService, filterServ
              * @private
              */
             var translateSuccessCallback = function(response) {
+                $scope.loadingData = false;
+
                 response.data.data.translations.forEach(function(elem, index) {
                     if(index < $scope.data.length) {
                         $scope.data[index].keyTranslated = "#" + elem.translatedText;
@@ -600,8 +626,9 @@ function(connectionService, datasetService, errorNotificationService, filterServ
             /**
              * Resets all tags and filter tags to its original text.
              * @method resetTranslation
+             * @private
              */
-            $scope.resetTranslation = function() {
+            var resetTranslation = function() {
                 $scope.data = $scope.data.map(function(elem) {
                     elem.keyTranslated = elem.key;
                     return elem;

@@ -31,9 +31,8 @@
             </div>
             <div class="clearfix"></div>
         </div>
-        <translation-options from-language-field="options.translate.fromLanguageField" to-language-field="options.translate.toLanguageField"
-            from-language-options="translationLanguages.fromLanguageOptions" to-language-options="translationLanguages.toLanguageOptions"
-            show-translation="options.showTranslation">
+        <translation-options ng-show="translationAvailable" on-translate="updateTranslation" from-language-change="onFromLanguageChange" to-language-change="onToLanguageChange"
+            from-language-options="translationLanguages.fromLanguageOptions" to-language-options="translationLanguages.toLanguageOptions">
         </translation-options>
     </options-menu>
 </div>
