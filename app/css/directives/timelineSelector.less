@@ -86,12 +86,16 @@
     .neon-datetimepicker {
 
         .dropdown-toggle {
+            cursor: pointer;
             font-family: "Open Sans", Helvetica, arial, sans-serif;
             color: @main-text-color;
             font-size: 16px;
 
-            button {
-                cursor: pointer;
+            &:hover {
+                color: @accent-bright;
+            }
+
+            i {
                 margin-left: 5px;
 
                 .glyphicon {

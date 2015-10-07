@@ -25,6 +25,33 @@ html {
     }
 }
 
+.dropdown-menu {
+    background-color: @visualization-box-background;
+    color: @main-text-color;
+    border: @shadow-border;
+
+    li {
+        a {
+            color: @main-text-color;
+
+            &:hover {
+                background-color: @mid-background;
+                color: @main-text-color;
+            }
+        }
+    }
+
+    .unselectable {
+        color: @main-text-color;
+        cursor: default;
+
+        &:hover {
+            background-color: @visualization-box-background;
+            color: @main-text-color;
+        }
+    }
+}
+
 .no-margin {
     margin-left: 0px !important;
     margin-right: 0px !important;
@@ -39,6 +66,18 @@ html {
 
     .options-text {
         vertical-align: middle;
+    }
+}
+
+.overlay-above {
+    .start-here {
+        background-color: @visualization-box-background;
+        color: @main-text-color;
+        border: @shadow-border;
+
+        .popover-title {
+            background-color: @visualization-box-background;
+        }
     }
 }
 

@@ -32,7 +32,7 @@
 
     .legend-item {
         background-color: @light-background;
-        border: @border;
+        border: @main-border;
         border-radius: 5px;
         color: @mid-text-color;
         font-size: 14px;
@@ -104,10 +104,6 @@
                 .layer-options-container {
                     /* Make the width match the width of the layer-options-well element + border. */
                     width: 540px;
-                    /* Create a hidden (white) border so that the div doesn't move when it has the drag-enter class and shows a colored border (see below). */
-                    border-color: #ffffff;
-                    border-style: dotted;
-                    border-width: 5px;
 
                     &.drag-enter {
                         border-color: @accent-dark;
@@ -210,7 +206,6 @@
 
     .olMap {
         background-color: #242424;
-        border: @border;
         border-radius: 0 0 4px 4px;
         width: auto !important;
         height: 100% !important;
@@ -256,7 +251,7 @@
     }
 
     .olControlAttribution {
-        
+
         a {
             pointer-events: none;
         }

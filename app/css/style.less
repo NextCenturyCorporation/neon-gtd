@@ -232,7 +232,7 @@ label{
     }
 
     .popover-content {
-        background-color: @light-background;
+        background-color: @visualization-box-background;
         overflow: auto;
         padding: 15px 15px 0;
         border: @shadow-border;
@@ -450,7 +450,7 @@ button {
     }
 
     span {
-        border-left: @border;
+        border-left: @main-border;
 
         &:first-child {
             border-left: none;
@@ -661,7 +661,7 @@ tr.borderedRow {
     margin-bottom: 0;
 
     .navbar-default{
-        background-color: @light-background;
+        background-color: @visualization-box-background;
         border: 0;
         box-shadow: 0 1px 2px @shadow;
         z-index: auto;
@@ -726,7 +726,7 @@ tr.borderedRow {
                         width: auto;
                         margin: 2px 0 0;
                         background-color: @light-background;
-                        border: @border;
+                        border: @main-border;
                         border: @shadow-border;
                         -webkit-box-shadow: 0 6px 12px @shadow;
                         box-shadow: 0 6px 12px @shadow;
@@ -828,7 +828,7 @@ tr.borderedRow {
 }
 
 .table-responsive{
-    border: @border;
+    border: @main-border;
     border-radius: 4px;
 }
 
@@ -961,9 +961,10 @@ tr.borderedRow {
 }
 
 .well{
-    background-color: @light-background;
+    background-color: @visualization-box-background;
     box-shadow: 0 1px 4px @shadow;
-    border: @border;
+    border: @visualization-border;
+    border-radius: @visualization-border-radius;
     margin: 0px;
     padding: 20px;
     position: relative;

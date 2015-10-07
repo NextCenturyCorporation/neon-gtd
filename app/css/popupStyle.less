@@ -24,8 +24,8 @@
         padding: 0px;
 
         button {
-            background: @light-background;
-            border: 1px solid @light-background;
+            background: @visualization-box-background;
+            border: 1px solid @visualization-box-background;
             border-radius: 4px;
             height: 100%;
             padding: 5px;
@@ -95,11 +95,23 @@
 
     .modal-dialog {
         margin: 70px auto;
-    }
+        border: @shadow-border;
 
-    .modal-body {
-        max-height: 410px;
-        overflow-y: auto;
+        .modal-content {
+            background-color: @visualization-box-background;
+            color: @main-text-color;
+
+            .modal-header {
+                .close {
+                    color: @light-text-color;
+                }
+            }
+
+            .modal-body {
+                max-height: 410px;
+                overflow-y: auto;
+            }
+        }
     }
 }
 
