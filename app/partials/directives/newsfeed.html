@@ -45,10 +45,10 @@
             <label>Sort By Date</label>
             <div class="btn-group">
                 <label class="btn btn-default active" ng-class="{true: 'active', false: ''}[options.sortDirection === ASCENDING]">
-                    <input type="radio" ng-model="options.sortDirection" style="display:none" ng-value="ASCENDING" ng-change="handleAscButtonClick()">ASC
+                    <input type="radio" ng-model="options.sortDirection" style="display:none" ng-value="ASCENDING" ng-change="handleSortButtonClick(ASCENDING)">ASC
                 </label>
                 <label class="btn btn-default" ng-class="{true: 'active', false: ''}[options.sortDirection === DESCENDING]">
-                    <input type="radio" ng-model="options.sortDirection" style="display:none" ng-value="DESCENDING" ng-change="handleDescButtonClick()">DESC
+                    <input type="radio" ng-model="options.sortDirection" style="display:none" ng-value="DESCENDING" ng-change="handleSortButtonClick(DESCENDING)">DESC
                 </label>
             </div>
             <div class="clearfix"></div>

@@ -232,6 +232,41 @@ angular.module("neonDemo.services")
     };
 
     /**
+     * Returns an object containing the first database, table, and fields found in the active dataset with all the given mappings.
+     * @param {Array} The array of mapping keys that the database and table must contain.
+     * @method getFirstDatabaseAndTableWithMappings
+     * @return {Object} An object containing {String} database, {String} table, and {Object} fields linking {String} mapping to {String} field.
+     * If no match was found, an empty object is returned instead.
+     */
+    service.getFirstDatabaseAndTableWithMappings = function(keys) {
+        for(var i = 0; i < service.dataset.databases.length; ++i) {
+            var database = service.dataset.databases[i];
+            for(var j = 0; j < database.tables.length; ++j) {
+                var table = database.tables[j];
+                var success = true;
+                var fields = {};
+                keys.forEach(function(key) {
+                    if(table.mappings[key]) {
+                        fields[key] = table.mappings[key];
+                    } else {
+                        success = false;
+                    }
+                });
+
+                if(success) {
+                    return {
+                        database: database.name,
+                        table: table.name,
+                        fields: fields
+                    };
+                }
+            }
+        }
+
+        return {};
+    };
+
+    /**
      * Returns the field objects for the database and table with the given names.
      * @param {String} The database name
      * @param {String} The table name

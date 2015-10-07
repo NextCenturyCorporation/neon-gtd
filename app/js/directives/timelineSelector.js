@@ -562,6 +562,12 @@ function($interval, $filter, connectionService, datasetService, errorNotificatio
                 });
                 $scope.messenger.subscribe(datasetService.DATE_CHANGED_CHANNEL, onDateChanged);
 
+                $scope.messenger.subscribe(filterService.REQUEST_REMOVE_FILTER, function(ids) {
+                    if(filterService.containsKey($scope.filterKeys, ids)) {
+                        removeBrushFromTimelineAndDatasetService();
+                    }
+                });
+
                 $scope.exportID = exportService.register($scope.makeTimelineSelectorExportObject);
 
                 $scope.$on('$destroy', function() {
@@ -884,11 +890,7 @@ function($interval, $filter, connectionService, datasetService, errorNotificatio
                     return;
                 }
 
-                var queryDates = $scope.createChartDataQuery();
-                var queryUnknownDates = $scope.createInvalidDatesQuery();
-                var queryGroup = new neon.query.QueryGroup();
-                queryGroup.addQuery(queryDates);
-                queryGroup.addQuery(queryUnknownDates);
+                var query = $scope.createChartDataQuery();
 
                 XDATA.userALE.log({
                     activity: "alter",
@@ -905,7 +907,7 @@ function($interval, $filter, connectionService, datasetService, errorNotificatio
                     $scope.outstandingQuery.abort();
                 }
 
-                $scope.outstandingQuery = connection.executeQueryGroup(queryGroup);
+                $scope.outstandingQuery = connection.executeQuery(query);
                 $scope.outstandingQuery.done(function() {
                     $scope.outstandingQuery = undefined;
                 });
@@ -919,10 +921,7 @@ function($interval, $filter, connectionService, datasetService, errorNotificatio
                         if($scope.invalidDatesFilter) {
                             dateQueryResults.data = [];
                         }
-                        var invalidDates = _.filter(queryResults.data, function(datum) {
-                            return _.keys(datum).length === 2 && datum._id && datum.count;
-                        });
-                        $scope.invalidRecordCount = (invalidDates.length ? invalidDates[0].count : 0);
+                        invalidDatesQuery(connection);
                         $scope.updateChartData(dateQueryResults);
                         $scope.loadingData = false;
                         XDATA.userALE.log({
@@ -963,8 +962,81 @@ function($interval, $filter, connectionService, datasetService, errorNotificatio
                         $scope.updateChartData({
                             data: []
                         });
+                        $scope.invalidRecordCount = 0;
                         $scope.loadingData = false;
                         if(response.responseJSON) {
+                            $scope.errorMessage = errorNotificationService.showErrorMessage($element, response.responseJSON.error, response.responseJSON.stackTrace);
+                        }
+                    }
+                });
+            };
+
+            /**
+             * Triggers a Neon query that will aggregate the invalid dates data for the currently selected dataset.
+             * @param {neon.query.Connection} connection
+             * @method invalidDatesQuery
+             * @private
+             */
+            var invalidDatesQuery = function(connection) {
+                var query = $scope.createInvalidDatesQuery();
+
+                if($scope.outstandingQuery) {
+                    $scope.outstandingQuery.abort();
+                }
+
+                $scope.outstandingQuery = connection.executeQuery(query);
+                $scope.outstandingQuery.done(function() {
+                    $scope.outstandingQuery = undefined;
+                });
+                $scope.outstandingQuery.done(function(queryResults) {
+                    $scope.$apply(function() {
+                        var invalidDates = _.filter(queryResults.data, function(datum) {
+                            return _.keys(datum).length === 2 && datum._id && datum.count;
+                        });
+                        $scope.invalidRecordCount = (invalidDates.length ? invalidDates[0].count : 0);
+                        $scope.loadingData = false;
+                        XDATA.userALE.log({
+                            activity: "alter",
+                            action: "receive",
+                            elementId: "timeline",
+                            elementType: "canvas",
+                            elementSub: "timeline",
+                            elementGroup: "chart_group",
+                            source: "system",
+                            tags: ["receive", "timeline", "data"]
+                        });
+                    });
+                });
+                $scope.outstandingQuery.fail(function(response) {
+                    if(response.status === 0) {
+                        XDATA.userALE.log({
+                            activity: "alter",
+                            action: "canceled",
+                            elementId: "timeline",
+                            elementType: "canvas",
+                            elementSub: "timeline",
+                            elementGroup: "chart_group",
+                            source: "system",
+                            tags: ["canceled", "timeline", "data"]
+                        });
+                    } else {
+                        XDATA.userALE.log({
+                            activity: "alter",
+                            action: "failed",
+                            elementId: "timeline",
+                            elementType: "canvas",
+                            elementSub: "timeline",
+                            elementGroup: "chart_group",
+                            source: "system",
+                            tags: ["failed", "timeline", "data"]
+                        });
+                        $scope.invalidRecordCount = 0;
+                        $scope.loadingData = false;
+                        if(response.responseJSON) {
+                            if($scope.errorMessage) {
+                                errorNotificationService.hideErrorMessage($scope.errorMessage);
+                                $scope.errorMessage = undefined;
+                            }
                             $scope.errorMessage = errorNotificationService.showErrorMessage($element, response.responseJSON.error, response.responseJSON.stackTrace);
                         }
                     }

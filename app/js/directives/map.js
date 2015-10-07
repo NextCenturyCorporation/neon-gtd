@@ -112,9 +112,6 @@ angular.module('neonDemo.directives')
             // Setup our map.
             $scope.mapId = uuid();
             $element.append('<div id="' + $scope.mapId + '" class="map"></div>');
-            $scope.map = new coreMap.Map($scope.mapId, {
-                responsive: false
-            });
 
             /**
              * Returns the list of tables for which we currently have layers.
@@ -156,6 +153,9 @@ angular.module('neonDemo.directives')
              * @method initialize
              */
             $scope.initialize = function() {
+                $scope.map = new coreMap.Map($scope.mapId, {
+                    responsive: false
+                });
                 $scope.draw();
                 $scope.map.register("movestart", this, onMapEvent);
                 $scope.map.register("moveend", this, onMapEvent);
@@ -174,6 +174,18 @@ angular.module('neonDemo.directives')
                 $scope.messenger.subscribe($scope.SELECTION_EVENT_CHANNEL, $scope.createPoint);
 
                 $scope.exportID = exportService.register($scope.makeMapExportObject);
+
+                $scope.messenger.subscribe(filterService.REQUEST_REMOVE_FILTER, function(ids) {
+                    var keys = [];
+
+                    _.each($scope.options.layers, function(layer) {
+                        keys.push(layer.filterKeys);
+                    });
+
+                    if(filterService.containsKey(keys, ids)) {
+                        $scope.clearFilters(true);
+                    }
+                });
 
                 $scope.linkyConfig = datasetService.getLinkyConfig();
 
