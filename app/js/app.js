@@ -45,6 +45,7 @@ var neonDemo = angular.module('neonDemo', [
     'neonDemo.filters',
     'gridster',
     'ngDraggable',
+    'ngRoute',
     'ui.bootstrap.datetimepicker',
 
     'gantt',
@@ -52,6 +53,17 @@ var neonDemo = angular.module('neonDemo', [
     'gantt.tree',
     'gantt.groups'
 ]);
+
+neonDemo.config(function($routeProvider, $locationProvider) {
+    $routeProvider.when('/', {
+        templateUrl: 'index.html',
+        controller: 'neonDemoController'
+    });
+    $locationProvider.html5Mode({
+        enabled: true,
+        requireBase: false
+    });
+});
 
 // AngularJS filter for reversing the order of an array.
 // http://stackoverflow.com/questions/15266671/angular-ng-repeat-in-reverse
