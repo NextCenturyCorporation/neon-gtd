@@ -50,12 +50,12 @@ function(connectionService, datasetService, errorNotificationService, filterServ
             $scope.filterKeys = {};
             $scope.errorMessage = undefined;
             $scope.loadingData = false;
+            $scope.translationAvailable = false;
             $scope.translationLanguages = {
                 fromLanguageOptions: {},
                 toLanguageOptions: {},
                 chosenFromLanguage: "",
                 chosenToLanguage: ""
-
             };
 
             $scope.options = {
@@ -95,8 +95,10 @@ function(connectionService, datasetService, errorNotificationService, filterServ
                     }
                 });
 
-                translationService.getSupportedLanguages(getSupportedLanguagesSuccessCallback, translationFailureCallback);
-                $scope.translationAvailable = translationService.hasKey();
+                if(translationService.hasKey()) {
+                    $scope.translationAvailable = true;
+                    translationService.getSupportedLanguages(getSupportedLanguagesSuccessCallback, translationFailureCallback);
+                }
 
                 // Setup our messenger.
                 $scope.messenger = new neon.eventing.Messenger();

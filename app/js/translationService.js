@@ -50,10 +50,19 @@ angular.module("neonDemo.services")
     service.setService = function(serviceName, successCallback, failureCallback) {
         chosenApi = serviceName;
 
-        if(!apis[chosenApi].languages || _.keys(apis[chosenApi].languages).length === 0) {
+        if(!apis[chosenApi].key) {
+            if(failureCallback) {
+                failureCallback({
+                    message: "No key available",
+                    reason: "No key set for " + chosenApi
+                });
+            }
+        } else if(!apis[chosenApi].languages || _.keys(apis[chosenApi].languages).length === 0) {
             setSupportedLanguages().then(successCallback, failureCallback);
         } else {
-            successCallback();
+            if(successCallback) {
+                successCallback();
+            }
         }
     };
 
@@ -83,7 +92,7 @@ angular.module("neonDemo.services")
      * @param {Function} successCallback
      * @param {Function} failureCallback
      * @param {String} [from] Optional language code that all the text are in. If none is
-     * provided then it will be detected for each string in the text array.
+     * provided then it will be detected for each string individually in the text array.
      * @method translate
      */
     service.translate = function(text, to, successCallback, failureCallback, from) {
@@ -117,6 +126,8 @@ angular.module("neonDemo.services")
 
                 params += "&" + apis[chosenApi].params.to + "=" + to;
 
+                // If no 'from' (source) language is given, each text is auto-detected individually.
+                // If it does exist, check that the language code is in the set of supported languages
                 if(from && !apis[chosenApi].languages[from]) {
                     deferred.reject({
                         message: "Unknown source language",
