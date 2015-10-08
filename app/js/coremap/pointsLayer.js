@@ -93,6 +93,8 @@ coreMap.Map.Layer.PointsLayer = OpenLayers.Class(OpenLayers.Layer.Vector, {
         var args = [name, extendOptions];
         OpenLayers.Layer.Vector.prototype.initialize.apply(this, args);
 
+        this.colors = this.options.colors || {};
+
         if(Object.keys(this.colors).length) {
             this.hasColorsConfigured = true;
         }

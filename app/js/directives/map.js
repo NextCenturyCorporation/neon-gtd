@@ -112,10 +112,6 @@ angular.module('neonDemo.directives')
             // Setup our map.
             $scope.mapId = uuid();
             $element.append('<div id="' + $scope.mapId + '" class="map"></div>');
-            $scope.map = new coreMap.Map($scope.mapId, {
-                responsive: false
-            });
-            $scope.map.popupsService = popups;
 
             /**
              * Returns the list of tables for which we currently have layers.
@@ -157,6 +153,10 @@ angular.module('neonDemo.directives')
              * @method initialize
              */
             $scope.initialize = function() {
+                $scope.map = new coreMap.Map($scope.mapId, {
+                    responsive: false
+                });
+                $scope.map.popupsService = popups;
                 $scope.draw();
                 $scope.map.register("movestart", this, onMapEvent);
                 $scope.map.register("moveend", this, onMapEvent);

@@ -27,7 +27,11 @@
         "hideCloseButton": false,
         "showVideoOnLoad": false,
         "showImport": false,
-        "showExport": true
+        "showExport": true,
+        "translationKeys": {
+            "google": "API_KEY"
+        }
+    },
     },
 
     "help": {

@@ -19,8 +19,8 @@
  * This directive is for building a tag cloud
  */
 angular.module('neonDemo.directives')
-.directive('tagCloud', ['ConnectionService', 'DatasetService', 'ErrorNotificationService', 'FilterService', 'ExportService', '$timeout',
-function(connectionService, datasetService, errorNotificationService, filterService, exportService, $timeout) {
+.directive('tagCloud', ['ConnectionService', 'DatasetService', 'ErrorNotificationService', 'FilterService', 'ExportService', '$timeout', 'TranslationService',
+function(connectionService, datasetService, errorNotificationService, filterService, exportService, $timeout, translationService) {
     return {
         templateUrl: 'partials/directives/tagCloud.html',
         restrict: 'EA',
@@ -50,13 +50,21 @@ function(connectionService, datasetService, errorNotificationService, filterServ
             $scope.filterKeys = {};
             $scope.errorMessage = undefined;
             $scope.loadingData = false;
+            $scope.translationAvailable = false;
+            $scope.translationLanguages = {
+                fromLanguageOptions: {},
+                toLanguageOptions: {},
+                chosenFromLanguage: "",
+                chosenToLanguage: ""
+            };
 
             $scope.options = {
                 database: {},
                 table: {},
                 tagField: "",
                 andTags: true,
-                tagLimit: 40
+                tagLimit: 40,
+                showTranslation: false
             };
 
             var updateSize = function() {
@@ -86,6 +94,11 @@ function(connectionService, datasetService, errorNotificationService, filterServ
                         $scope.setTagFilter();
                     }
                 });
+
+                if(translationService.hasKey()) {
+                    $scope.translationAvailable = true;
+                    translationService.getSupportedLanguages(getSupportedLanguagesSuccessCallback, translationFailureCallback);
+                }
 
                 // Setup our messenger.
                 $scope.messenger = new neon.eventing.Messenger();
@@ -145,6 +158,35 @@ function(connectionService, datasetService, errorNotificationService, filterServ
                         $scope.setTagFilter();
                     }
                 });
+            };
+
+            /**
+             * Sets the 'to' and 'from' language options for translating.
+             * @param {Object} languages A mapping of language codes to their names.
+             * @method getSupportedLanguagesSuccessCallback
+             * @private
+             */
+            var getSupportedLanguagesSuccessCallback = function(languages) {
+                $scope.translationLanguages.fromLanguageOptions = languages;
+                $scope.translationLanguages.toLanguageOptions = languages;
+            };
+
+            /**
+             * Shows an error message when an error occurs in the translation service.
+             * @param {Object} response An error response containing the message and reason.
+             * @param {String} response.message
+             * @param {String} response.reason
+             * @method translationFailureCallback
+             * @private
+             */
+            var translationFailureCallback = function(response) {
+                $scope.loadingData = false;
+
+                if($scope.errorMessage) {
+                    errorNotificationService.hideErrorMessage($scope.errorMessage);
+                    $scope.errorMessage = undefined;
+                }
+                $scope.errorMessage = errorNotificationService.showErrorMessage($element, response.message,  response.reason);
             };
 
             /**
@@ -308,17 +350,27 @@ function(connectionService, datasetService, errorNotificationService, filterServ
 
             /**
              * Updates the the tag cloud visualization.
-             * @param {Array} tagCounts An array of objects with "tag" and "count" properties for the tag
+             * @param {Array} tagCounts An array of objects with "key" and "count" properties for the tag
              * name and number of occurrences.
              * @method updateTagData
              */
             $scope.updateTagData = function(tagCounts) {
                 if($scope.options.andTags) {
-                    $scope.data = tagCounts.filter(function(elem) {
-                        return $scope.filterTags.indexOf(elem.tag) === -1;
+                    tagCounts = tagCounts.filter(function(elem) {
+                        var index = _.findIndex($scope.filterTags, {
+                            name: elem.key
+                        });
+                        return index === -1;
                     });
-                } else {
-                    $scope.data = tagCounts;
+                }
+
+                $scope.data = tagCounts.map(function(elem) {
+                    elem.keyTranslated = elem.key;
+                    return elem;
+                });
+
+                if($scope.options.showTranslation) {
+                    translate();
                 }
 
                 // style the tags after they are displayed
@@ -330,9 +382,10 @@ function(connectionService, datasetService, errorNotificationService, filterServ
             /**
              * Ensures that the tag filter includes the argument, and updates the tag cloud if necessary.
              * @param tagName {String} the tag that should be filtered on, e.g., "#lol"
+             * @param tagNameTranslated {String} the translated version of tagName
              * @method addTagFilter
              */
-            $scope.addTagFilter = function(tagName) {
+            $scope.addTagFilter = function(tagName, tagNameTranslated) {
                 XDATA.userALE.log({
                     activity: "add",
                     action: "click",
@@ -340,10 +393,16 @@ function(connectionService, datasetService, errorNotificationService, filterServ
                     elementType: "tag",
                     elementGroup: "chart_group",
                     source: "user",
-                    tags: ["filter", "tag-cloud", tagName]
+                    tags: ["filter", "tag-cloud", ($scope.options.showTranslation ? tagNameTranslated : tagName)]
                 });
-                if($scope.filterTags.indexOf(tagName) === -1) {
-                    $scope.filterTags.push(tagName);
+                var index = _.findIndex($scope.filterTags, {
+                    name: tagName
+                });
+                if(index === -1) {
+                    $scope.filterTags.push({
+                        name: tagName,
+                        nameTranslated: tagNameTranslated
+                    });
                 }
             };
 
@@ -367,8 +426,8 @@ function(connectionService, datasetService, errorNotificationService, filterServ
              * @return {Object} A neon.query.Filter object
              */
             $scope.createFilterClauseForTags = function(databaseAndTableName, tagFieldName) {
-                var filterClauses = $scope.filterTags.map(function(tagName) {
-                    return neon.query.where(tagFieldName, "=", tagName);
+                var filterClauses = $scope.filterTags.map(function(tag) {
+                    return neon.query.where(tagFieldName, "=", tag.name);
                 });
                 if(filterClauses.length === 1) {
                     return filterClauses[0];
@@ -387,7 +446,7 @@ function(connectionService, datasetService, errorNotificationService, filterServ
                 var relations = datasetService.getRelations($scope.options.database.name, $scope.options.table.name, [$scope.options.tagField.columnName]);
                 filterService.replaceFilters($scope.messenger, relations, $scope.filterKeys, $scope.createFilterClauseForTags, {
                     visName: "Tag Cloud",
-                    text: $scope.filterTags.join(', ')
+                    text: (_.pluck($scope.filterTags, ($scope.options.showTranslation ? 'nameTranslated' : 'name'))).join(', ')
                 },function() {
                     $scope.$apply(function() {
                         $scope.queryForTags();
@@ -434,7 +493,10 @@ function(connectionService, datasetService, errorNotificationService, filterServ
                     source: "user",
                     tags: ["filter", "tag-cloud", tagName]
                 });
-                $scope.filterTags = _.without($scope.filterTags, tagName);
+                var index = _.findIndex($scope.filterTags, {
+                    name: tagName
+                });
+                $scope.filterTags.splice(index, 1);
             };
 
             $scope.updateTagField = function() {
@@ -442,6 +504,149 @@ function(connectionService, datasetService, errorNotificationService, filterServ
                 if(!$scope.loadingData) {
                     $scope.queryForTags();
                 }
+            };
+
+            /**
+             * Updates the 'from' language on translation and translates if 'Show Translation' is checked
+             * @param {String} language The 'from' translation language to change to
+             * @method onFromLanguageChange
+             */
+            $scope.onFromLanguageChange = function(language) {
+                XDATA.userALE.log({
+                    activity: "select",
+                    action: ($scope.loadingData) ? "reset" : "click",
+                    elementId: "tag-cloud-options",
+                    elementType: "combobox",
+                    elementSub: "target-translation-language",
+                    elementGroup: "chart_group",
+                    source: ($scope.loadingData) ? "system" : "user",
+                    tags: ["options", "tag-cloud"]
+                });
+                $scope.translationLanguages.chosenFromLanguage = language;
+
+                if($scope.options.showTranslation) {
+                    translate();
+                }
+            };
+
+            /**
+             * Updates the 'to' language on translation and translates if 'Show Translation' is checked
+             * @param {String} language The 'to' translation language to change to
+             * @method onToLanguageChange
+             */
+            $scope.onToLanguageChange = function(language) {
+                XDATA.userALE.log({
+                    activity: "select",
+                    action: ($scope.loadingData) ? "reset" : "click",
+                    elementId: "tag-cloud-options",
+                    elementType: "combobox",
+                    elementSub: "target-translation-language",
+                    elementGroup: "chart_group",
+                    source: ($scope.loadingData) ? "system" : "user",
+                    tags: ["options", "tag-cloud"]
+                });
+                $scope.translationLanguages.chosenToLanguage = language;
+
+                if($scope.options.showTranslation) {
+                    translate();
+                }
+            };
+
+            /**
+             * Translates all text back to its original form if checked is false, or to the specified 'to' language
+             * if checked is true.
+             * @param {Boolean} checked Whether 'Show Translation' is checked or unchecked
+             * @param {String} fromLang The 'from' language to use for translation
+             * @param {String} toLang The 'to' language to use for translation
+             * @method updateTranslation
+             */
+            $scope.updateTranslation = function(checked, fromLang, toLang) {
+                XDATA.userALE.log({
+                    activity: "select",
+                    action: ($scope.loadingData) ? "reset" : "click",
+                    elementId: "tag-cloud-options",
+                    elementType: "button",
+                    elementSub: (checked) ? "show-translation" : "remove-translation",
+                    elementGroup: "chart_group",
+                    source: ($scope.loadingData) ? "system" : "user",
+                    tags: ["options", "tag-cloud"]
+                });
+
+                $scope.options.showTranslation = checked;
+
+                if(checked) {
+                    $scope.translationLanguages.chosenFromLanguage = fromLang;
+                    $scope.translationLanguages.chosenToLanguage = toLang;
+                    translate();
+                } else {
+                    resetTranslation();
+                }
+            };
+
+            /**
+             * Translates all tags and filter tags with the from/to languages specified.
+             * @method translate
+             * @private
+             */
+            var translate = function() {
+                $scope.loadingData = true;
+
+                if($scope.errorMessage) {
+                    errorNotificationService.hideErrorMessage($scope.errorMessage);
+                    $scope.errorMessage = undefined;
+                }
+
+                var dataKeys = $scope.data.map(function(elem) {
+                    return elem.key.substring(1);
+                });
+
+                $scope.filterTags.forEach(function(tag) {
+                    dataKeys.push(tag.name.substring(1));
+                });
+
+                translationService.translate(dataKeys, $scope.translationLanguages.chosenToLanguage,
+                    translateSuccessCallback, translationFailureCallback, $scope.translationLanguages.chosenFromLanguage);
+            };
+
+            /**
+             * Refreshes all data and filter tags with their new translations.
+             * @param {Object} response Response object containing all the translations.
+             * @param {Array} response.data.data.translations List of all translations. It's assumed that
+             * all translations are given in the order the original text to translate was received in.
+             * @param {String} response.data.data.translations[].translatedText
+             * @param {String} [response.data.data.translations[].detectedSourceLanguage] Detected language
+             * code of the original version of translatedText. Only provided if the source language was auto-detected.
+             * @method translateSuccessCallback
+             * @private
+             */
+            var translateSuccessCallback = function(response) {
+                $scope.loadingData = false;
+
+                response.data.data.translations.forEach(function(elem, index) {
+                    if(index < $scope.data.length) {
+                        $scope.data[index].keyTranslated = "#" + elem.translatedText;
+                    } else {
+                        $scope.filterTags[index - $scope.data.length].nameTranslated = "#" + elem.translatedText;
+                    }
+                });
+            };
+
+            /**
+             * Resets all tags and filter tags to its original text.
+             * @method resetTranslation
+             * @private
+             */
+            var resetTranslation = function() {
+                $scope.data = $scope.data.map(function(elem) {
+                    elem.keyTranslated = elem.key;
+                    return elem;
+                });
+                $scope.filterTags = _.map($scope.filterTags, function(tag) {
+                    tag.nameTranslated = tag.name;
+                    return tag;
+                });
+                $scope.translationLanguages.chosenFromLanguage = "";
+                $scope.translationLanguages.chosenToLanguage = "";
             };
 
             /**
