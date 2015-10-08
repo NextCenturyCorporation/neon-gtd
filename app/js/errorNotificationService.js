@@ -84,8 +84,10 @@ angular.module("neonDemo.services")
                 offset: {
                     x: 5,
                     // Include space for the navbar.
-                    y: 55
+                    y: $('.navbar').height() + 5
                 },
+                // Display over filter tray
+                z_index: 1040,
                 icon_type: "src",
                 template: ERROR_AND_PROGRESS_BAR_TEMPLATE
             });
