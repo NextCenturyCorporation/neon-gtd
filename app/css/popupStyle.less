@@ -20,16 +20,16 @@
 .neon-popup {
     ul {
         list-style: none;
-        margin: 5px 0px 0px 15px;
+        margin-left: 15px;
         padding: 0px;
 
-        button {
+        a, button {
+            float: left;
             background: @light-background;
             border: 1px solid @light-background;
-            border-radius: 4px;
+            border-radius: 10px;
             height: 100%;
             padding: 5px;
-            width: 100px;
 
             &:focus, &:hover {
                 border: 1px solid @accent-light;
@@ -40,29 +40,18 @@
             }
         }
 
-        li {
-            display: block;
-            float:left;
-            height: 120px;
-            margin: 0px 5px 5px 0px;
-            width: 100px;
-
-            img {
-               border: 0px;
-            }
-        }
-
         span {
             color: @main-text-color;
-            font-weight: bold;
-            height: 35px;
-            letter-spacing: 0.05em;
             display: inline-block;
+            font-weight: bold;
+            letter-spacing: 0.05em;
+            text-align: center;
+            height: 55px;
+            width: 110px;
         }
 
         .neon-popup-thumbnail {
             height: 100%;
-            width: 100px;
         }
 
         .selected {
@@ -73,6 +62,30 @@
 
             span {
                 color: @light-text-color;
+            }
+        }
+
+        li {
+            display: block;
+            float:left;
+            margin: 5px;
+            height: 150px;
+            width: 120px;
+
+            img {
+               border: 0px;
+               height: 64px;
+               width: 64px;
+               margin-top: 8px;
+               margin-bottom: 8px;
+            }
+
+            &.short {
+                height: 130px;
+
+                span {
+                    height: 35px;
+                }
             }
         }
     }
@@ -95,10 +108,11 @@
 
     .modal-dialog {
         margin: 70px auto;
+        width: 700px;
     }
 
     .modal-body {
-        max-height: 410px;
+        max-height: 510px;
         overflow-y: auto;
     }
 }

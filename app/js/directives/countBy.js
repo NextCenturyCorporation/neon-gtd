@@ -240,7 +240,7 @@ function(external, popups, connectionService, datasetService, errorNotificationS
                     width: tableWidth
                 }];
 
-                if(external.anyEnabled && data.length) {
+                if(external.active && data.length) {
                     var externalAppColumn = {
                         name: "",
                         field: $scope.EXTERNAL_APP_FIELD_NAME,
@@ -498,36 +498,37 @@ function(external, popups, connectionService, datasetService, errorNotificationS
                 return dataObject;
             };
 
-            $scope.addExternalAppUrlColumnData = function(data) {
+            /**
+             * Creates and adds the external links to the given data and returns the data.
+             * @param {Array} data
+             * @method addExternalLinksToColumnData
+             * @private
+             * @return {Array}
+             */
+            var addExternalLinksToColumnData = function(data) {
                 var tableLinks = [];
 
-                data.data.forEach(function(row) {
+                data.forEach(function(row) {
                     var field = $scope.options.field.columnName;
                     var value = row[$scope.options.field.columnName];
-                    var query = field + "=" + value;
+                    var tooltip = value;
+                    var rowLinks = [];
+                    var mappings = datasetService.getMappings($scope.options.database.name, $scope.options.table.name);
 
-                    var links = [];
-
-                    if(external.dig.enabled) {
-                        links.push(createLinkObject(external.dig, field, value, query));
-                    }
-
-                    if(Object.keys(external.services)) {
-                        var mappings = datasetService.getMappings($scope.options.database.name, $scope.options.table.name);
-                        Object.keys(mappings).filter(function(mapping) {
-                            return mappings[mapping] === field;
-                        }).forEach(function(mapping) {
-                            if(external.services[mapping]) {
-                                Object.keys(external.services[mapping].apps).forEach(function(app) {
-                                    links.push(createServiceLinkObject(external.services[mapping], app, mapping, value));
-                                });
-                            }
-                        });
-                    }
+                    // For each mapping to the query field, if a service exists for that mapping, create the links for that service.
+                    Object.keys(mappings).filter(function(mapping) {
+                        return mappings[mapping] === field;
+                    }).forEach(function(mapping) {
+                        if(external.services[mapping]) {
+                            Object.keys(external.services[mapping].apps).forEach(function(app) {
+                                rowLinks.push(createServiceLinkObject(external.services[mapping], app, mapping, value));
+                            });
+                        }
+                    });
 
                     var index = tableLinks.length;
-                    tableLinks.push(links);
-                    row[$scope.EXTERNAL_APP_FIELD_NAME] = links.length ? popups.links.createLinkHtml(index, $scope.tableId) : popups.links.createDisabledLinkHtml();
+                    tableLinks.push(rowLinks);
+                    row[$scope.EXTERNAL_APP_FIELD_NAME] = rowLinks.length ? popups.links.createLinkHtml(index, $scope.tableId, tooltip) : popups.links.createDisabledLinkHtml(tooltip);
                 });
 
                 // Set the link data for the links popup for this visualization.
@@ -536,46 +537,26 @@ function(external, popups, connectionService, datasetService, errorNotificationS
                 return data;
             };
 
-            var createLinkObject = function(config, field, value, tab) {
-                var link = {
-                    name: config.count_by.name,
-                    image: config.count_by.image,
-                    url: config.count_by.url,
-                    server: config.server,
-                    tab: tab,
-                    fields: [{
-                        type: popups.links.TYPE_HIDDEN,
-                        variable: popups.links.VARIABLE_FIELD,
-                        substitute: field
-                    }],
-                    values: [{
-                        type: popups.links.TYPE_HIDDEN,
-                        variable: popups.links.VARIABLE_VALUE,
-                        substitute: value
-                    }],
-                    args: []
-                };
-
-                config.count_by.args.forEach(function(arg) {
-                    link.args.push({
-                        name: arg.name,
-                        value: arg.value
-                    });
-                });
-
-                return link;
-            };
-
+            /**
+             * Creates and returns the service link object for the given app using the given service, mapping, and field value.
+             * @param {Object} service
+             * @param {String} app
+             * @param {String} mapping
+             * @param {Number} or {String} value
+             * @method createServiceLinkObject
+             * @private
+             * @return {Object}
+             */
             var createServiceLinkObject = function(service, app, mapping, value) {
+                var data = {};
+                data[mapping] = value;
+
                 return {
                     name: app,
                     image: service.apps[app].image,
                     url: service.apps[app].url,
-                    values: [{
-                        type: popups.links.TYPE_URL,
-                        variable: service.mappings[mapping],
-                        substitute: value
-                    }]
+                    args: service.args,
+                    data: data
                 };
             };
 
@@ -646,7 +627,7 @@ function(external, popups, connectionService, datasetService, errorNotificationS
              */
             $scope.addOnClickListener = function() {
                 $scope.table.addOnClickListener(function(columns, row) {
-                    var columnIndex = external.anyEnabled ? 1 : 0;
+                    var columnIndex = external.active ? 1 : 0;
                     var field = columns[columnIndex].field;
 
                     // If the user clicks on the filtered row/cell, clear the filter.
@@ -688,8 +669,8 @@ function(external, popups, connectionService, datasetService, errorNotificationS
                 $scope.tableOptions = createOptions(cleanData);
 
                 // Add the URLs for the external applications after the table options have been created because it already includes the column.
-                if(external.anyEnabled && cleanData.data.length) {
-                    cleanData = $scope.addExternalAppUrlColumnData(cleanData);
+                if(external.active && cleanData.data.length) {
+                    cleanData.data = addExternalLinksToColumnData(cleanData.data);
                 }
 
                 $scope.count = cleanData.data.length;

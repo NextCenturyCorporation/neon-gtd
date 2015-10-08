@@ -78,54 +78,37 @@ angular.module('neonDemo.directives')
                 data.forEach(function(links) {
                     var cleanLinks = [];
                     links.forEach(function(link) {
-                        if(link.name && link.image && link.url) {
+                        if(link.url && link.name && link.image && link.args && link.data) {
                             link.tab = link.tab || link.name;
 
                             if(link.image.charAt(0) === '/') {
                                 link.image = '.' + link.image;
                             }
 
-                            if(link.server) {
-                                link.url = link.url.replace(popups.links.VARIABLE_SERVER, link.server);
-                            }
+                            var args = {};
 
-                            link.args = link.args || [];
-                            if(link.url.indexOf("?") >= 0 && link.url.indexOf("#?") < 0) {
-                                var args = link.url.substring(link.url.indexOf("?") + 1, link.url.length).split("&");
-                                args.forEach(function(arg) {
-                                    var nameAndValue = arg.split("=");
-                                    if(nameAndValue.length === 2) {
-                                        link.args.push({
-                                            name: nameAndValue[0],
-                                            value: nameAndValue[1]
+                            // For each argument, replace the starting value (a neon mapping) with the value corresponding to that neon mapping in the data.
+                            link.args.forEach(function(linkArg) {
+                                var argsMappings = angular.copy(linkArg.mappings);
+
+                                Object.keys(link.data).forEach(function(dataMapping) {
+                                    if(_.isString(argsMappings)) {
+                                        argsMappings = (argsMappings === dataMapping ? link.data[dataMapping] : argsMappings);
+                                    } else {
+                                        Object.keys(argsMappings).forEach(function(argMapping) {
+                                            argsMappings[argMapping] = (argsMappings[argMapping] === dataMapping ? link.data[dataMapping] : argsMappings[argMapping]);
                                         });
                                     }
                                 });
-                                link.url = link.url.substring(0, link.url.indexOf("?"));
-                            }
 
-                            link.fields = link.fields || [];
-                            link.fields.forEach(function(field) {
-                                link.url = link.url.replace(field.variable, field.substitute);
+                                args[linkArg.variable] = argsMappings;
                             });
 
-                            link.values = link.values || [];
-                            link.values.forEach(function(value) {
-                                link.url = link.url.replace(value.variable, value.substitute);
-                            });
+                            // Use the Mustache library to replace the JSON variables in the URL with the given arguments.
+                            link.url = Mustache.render(link.url, args);
 
                             // Notify angular that this is a trusted URL so angular will inject it into a form's action.
                             link.url = $sce.trustAsResourceUrl(link.url);
-
-                            link.args.forEach(function(arg) {
-                                link.fields.forEach(function(field) {
-                                    arg.value = arg.value.replace(field.variable, field.substitute);
-                                });
-
-                                link.values.forEach(function(value) {
-                                    arg.value = arg.value.replace(value.variable, value.substitute);
-                                });
-                            });
 
                             cleanLinks.push(link);
                         }
@@ -147,13 +130,15 @@ angular.module('neonDemo.directives')
                 }
             };
 
-            popups.links.createLinkHtml = function(index, source) {
+            popups.links.createLinkHtml = function(index, source, tooltip) {
                 return "<a data-toggle=\"modal\" data-target=\".links-popup\" data-links-index=\"" + index + "\" data-links-source=\"" + source + "\"" +
-                    "class=\"collapsed dropdown-toggle primary neon-popup-button\"><span class=\"glyphicon glyphicon-link\"></span></a>";
+                    "class=\"collapsed dropdown-toggle primary neon-popup-button\" title=\"Open " + tooltip + " in another application...\">" +
+                    "<span class=\"glyphicon glyphicon-link\"></span></a>";
             };
 
-            popups.links.createDisabledLinkHtml = function() {
-                return "<a class=\"disabled\" disabled><span class=\"glyphicon glyphicon-link\"></span></a>";
+            popups.links.createDisabledLinkHtml = function(tooltip) {
+                return "<a class=\"disabled\" title=\"No other applications available for " + tooltip + "\" disabled>" +
+                    "<span class=\"glyphicon glyphicon-link\"></span></a>";
             };
         }
     };

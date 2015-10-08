@@ -105,76 +105,87 @@ var startAngular = function() {
     angular.bootstrap(document, ['neonDemo']);
 };
 
-var readExternalAppServicesConfig = function(config, callback) {
-    if(!(config.file && config.fileProps && config.fileProps.apps && config.fileProps.image && config.fileProps.url && config.fileProps.args && config.servicesMappings && config.argsMappings)) {
+var createAppService = function(args, argsMappings) {
+    var service = {
+        apps: {},
+        args: []
+    };
+
+    args.forEach(function(argName) {
+        service.args.push({
+            variable: argName,
+            mappings: argsMappings[argName]
+        });
+    });
+
+    return service;
+};
+
+var readExternalServicesConfig = function(config, callback) {
+    if(!(config.jsonConfigFile && config.servicesMappings && config.argsMappings)) {
         callback({});
         return;
     }
 
     // Example result:
     //  {
-    //      date: {
+    //      user: {
     //          apps: {
     //              App1: {
     //                  image: file_path,
-    //                  url: app/?date_string
+    //                  url: app/{{userVariable}}
     //              }
     //          },
-    //          mappings: {
-    //              date: date_string
-    //          }
+    //          args: [{
+    //              variable: userVariable,
+    //              mappings: neonUserMapping
+    //          }]
     //      },
     //      bounds: {
     //          apps: {
     //              App2: {
     //                  image: file_path,
-    //                  url: app/?min_lon_string,max_lon_string,min_lat_string,max_lat_string
+    //                  url: app/?bounds={{boundsVariable.min_lat}},{{boundsVariable.min_lon}},{{boundsVariable.max_lat}},{{boundsVariable.max_lon}}
     //              }
     //          },
-    //          mappings: {
-    //              minLon: min_lon_string,
-    //              maxLon: max_lon_string,
-    //              minLat: min_lat_string,
-    //              maxLat: max_lat_string
-    //          }
+    //          args: [{
+    //              variable: boundsVariable,
+    //              mappings: {
+    //                  min_lat: neonMinLatMapping,
+    //                  min_lon: neonMinLonMapping,
+    //                  max_lat: neonMaxLatMapping,
+    //                  max_lat: neonMaxLonMapping
+    //              }
+    //          }]
     //      }
     //  }
 
     $.ajax({
-        url: config.file,
+        url: config.jsonConfigFile,
         success: function(json) {
             var data = $.parseJSON(json);
             var services = {};
 
-            var appsProperty = config.fileProps.apps;
-            var imageProperty = config.fileProps.image;
-            var urlProperty = config.fileProps.url;
-            var argsProperty = config.fileProps.args;
+            var urlProperty = config.fileProps.url || "url";
+            var nameProperty = config.fileProps.name || "name";
+            var imageProperty = config.fileProps.image || "image";
+            var servicesProperty = config.fileProps.services || "services";
 
-            Object.keys(config.servicesMappings).forEach(function(neonService) {
-                var serviceName = config.servicesMappings[neonService] || neonService;
-                if(data[serviceName] && data[serviceName][appsProperty] && Object.keys(data[serviceName][appsProperty]).length) {
-                    services[neonService] = {
-                        apps: {},
-                        mappings: {}
-                    };
+            Object.keys(data).forEach(function(appType) {
+                Object.keys(data[appType][servicesProperty]).forEach(function(serviceType) {
+                    var neonServiceMappings = Object.keys(config.servicesMappings).filter(function(neonServiceMapping) {
+                        return config.servicesMappings[neonServiceMapping] === serviceType;
+                    });
 
-                    Object.keys(data[serviceName][appsProperty]).forEach(function(appName) {
-                        services[neonService].apps[appName] = {
-                            image: data[serviceName][appsProperty][appName][imageProperty],
-                            url: data[serviceName][appsProperty][appName][urlProperty]
+                    neonServiceMappings.forEach(function(neonServiceMapping) {
+                        services[neonServiceMapping] = services[neonServiceMapping] || createAppService(serviceType.split(","), config.argsMappings[neonServiceMapping]);
+
+                        services[neonServiceMapping].apps[data[appType][nameProperty]] = {
+                            image: (config.appImagePath || ".") + "/" + data[appType][imageProperty],
+                            url: data[appType][urlProperty] + "/" + data[appType][servicesProperty][serviceType]
                         };
                     });
-
-                    Object.keys(data[serviceName][argsProperty]).forEach(function(argName) {
-                        var neonMappings = Object.keys(config.argsMappings).filter(function(argMapping) {
-                            return config.argsMappings[argMapping] === argName;
-                        });
-                        neonMappings.forEach(function(neonMapping) {
-                            services[neonService].mappings[neonMapping] = data[serviceName][argsProperty][argName];
-                        });
-                    });
-                }
+                });
             });
 
             callback(services);
@@ -296,17 +307,6 @@ angular.element(document).ready(function() {
             }
         });
 
-        var digConfig = (config.dig || {
-            enabled: false
-        });
-
-        var externalAppConfig = {
-            anyEnabled: digConfig.enabled,
-            dig: digConfig
-        };
-
-        var externalAppServicesConfig = config.externalAppServices || {}
-
         var visualizations = (config.visualizations || []);
         neonDemo.constant('visualizations', visualizations);
 
@@ -319,10 +319,11 @@ angular.element(document).ready(function() {
 
         // Read the external application services config file and create the services, then read each layout config file and set the layouts,
         // then read each dataset config file and set the datasets, then start angular.
-        readExternalAppServicesConfig(externalAppServicesConfig, function(services) {
-            externalAppConfig.anyEnabled = Object.keys(services).length || externalAppConfig.anyEnabled;
-            externalAppConfig.services = services;
-            neonDemo.constant('external', externalAppConfig);
+        readExternalServicesConfig((config.externalServices || {}), function(services) {
+            neonDemo.constant('external', {
+                active: Object.keys(services).length,
+                services: services
+            });
             readLayoutFiles($http, layouts, (files.layouts || []), function() {
                 readDatasetFiles($http, datasets, (files.datasets || []), startAngular);
             });

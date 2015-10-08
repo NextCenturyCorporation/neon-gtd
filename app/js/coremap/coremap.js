@@ -425,7 +425,8 @@ coreMap.Map.prototype.createSelectControl =  function(layer) {
         $(".olFramedCloudPopupContent td").linky(feature.layer.linkyConfig);
 
         if(me.popupsService.links && feature.index >= 0 && feature.layer.linksSource) {
-            var link = me.popupsService.links.createLinkHtml(feature.index, feature.layer.linksSource);
+            var tooltip = "latitude " + attributes[feature.layer.latitudeMapping] + ", longitude " + attributes[feature.layer.longitudeMapping];
+            var link = me.popupsService.links.createLinkHtml(feature.index, feature.layer.linksSource, tooltip);
             $("#" + me.elementId).find(".olPopupCloseBox").after("<div class='link-div'><button class='link-btn'>" + link + "</button></div>");
         }
     };

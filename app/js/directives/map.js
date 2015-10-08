@@ -847,7 +847,7 @@ angular.module('neonDemo.directives')
                             $scope.options.layers[i].olLayer.setData(data);
                             if(external.services.point) {
                                 var linksSource = $scope.mapId + "-" + database + "-" + table;
-                                createLinks(data, linksSource, $scope.options.layers[i].latitudeMapping, $scope.options.layers[i].longitudeMapping);
+                                createExternalLinks(data, linksSource, $scope.options.layers[i].latitudeMapping, $scope.options.layers[i].longitudeMapping);
                                 $scope.options.layers[i].olLayer.linksSource = linksSource;
                             }
                         } else {
@@ -981,25 +981,25 @@ angular.module('neonDemo.directives')
             };
 
             /**
-             * Creates the links for the given data and source with the given latitude and longitude fields.
+             * Creates the external links for the given data and source with the given latitude and longitude fields.
              * @param {Array} data
              * @param {String} source
              * @param {String} latitudeField
              * @param {String} longitudeField
-             * @method createLinks
+             * @method createExternalLinks
              * @private
              */
-            var createLinks = function(data, source, latitudeField, longitudeField) {
+            var createExternalLinks = function(data, source, latitudeField, longitudeField) {
                 var mapLinks = [];
 
                 data.forEach(function(row) {
                     var latitudeValue = row[latitudeField];
                     var longitudeValue = row[longitudeField];
-
                     var rowLinks = [];
+
                     if(external.services.point) {
                         Object.keys(external.services.point.apps).forEach(function(app) {
-                            rowLinks.push(createPointLinkObject(external.services.point, app, latitudeValue, longitudeValue));
+                            rowLinks.push(createPointServiceLinkObject(external.services.point, app, latitudeValue, longitudeValue));
                         });
                     };
 
@@ -1007,33 +1007,30 @@ angular.module('neonDemo.directives')
                     mapLinks.push(rowLinks);
                 });
 
+                // Set the link data for the links popup for this visualization.
                 popups.links.setData(source, mapLinks);
             };
 
             /**
-             * Creates and returns the point link object for the given app using the given service and latitude and longitude values.
+             * Creates and returns the point service link object for the given app using the given service and latitude/longitude values.
              * @param {Object} service
              * @param {String} app
              * @param {Number} latitudeValue
              * @param {Number} longitudeValue
-             * @method createPointLinkObject
+             * @method createPointServiceLinkObject
              * @private
              * @return {Object}
              */
-            var createPointLinkObject = function(service, app, latitudeValue, longitudeValue) {
+            var createPointServiceLinkObject = function(service, app, latitudeValue, longitudeValue) {
                 return {
                     name: app,
                     image: service.apps[app].image,
                     url: service.apps[app].url,
-                    values: [{
-                        type: popups.links.TYPE_URL,
-                        variable: service.mappings.latitude,
-                        substitute: latitudeValue
-                    }, {
-                        type: popups.links.TYPE_URL,
-                        variable: service.mappings.longitude,
-                        substitute: longitudeValue
-                    }]
+                    args: service.args,
+                    data: {
+                        "latitude": latitudeValue,
+                        "longitude": longitudeValue
+                    }
                 };
             };
 

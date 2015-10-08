@@ -37,6 +37,7 @@ function(external, popups, connectionService, datasetService, errorNotificationS
             bindTitle: '=',
             bindTable: '=',
             bindDatabase: '=',
+            bindIdField: '=',
             hideHeader: '=?',
             hideAdvancedOptions: '=?'
         },
@@ -232,7 +233,7 @@ function(external, popups, connectionService, datasetService, errorNotificationS
                 var columns = tables.createColumns(knownColumns, data, hiddenColumnNames, [$scope.createDeleteColumnButton("")]);
                 columns = tables.addLinkabilityToColumns(columns);
 
-                if(external.anyEnabled) {
+                if(external.active) {
                     var externalAppColumn = {
                         name: "",
                         field: $scope.EXTERNAL_APP_FIELD_NAME,
@@ -651,8 +652,8 @@ function(external, popups, connectionService, datasetService, errorNotificationS
 
                 $scope.tableOptions = $scope.createOptions(queryResults, refreshColumns);
 
-                if(external.anyEnabled) {
-                    queryResults = $scope.addExternalAppUrlColumnData(queryResults);
+                if(external.active) {
+                    queryResults.data = addExternalLinksToColumnData(queryResults.data);
                 }
 
                 $scope.table = new tables.Table("#" + $scope.tableId, $scope.tableOptions).draw();
@@ -683,22 +684,36 @@ function(external, popups, connectionService, datasetService, errorNotificationS
                 $scope.createDeleteColumnButtons();
             };
 
-            $scope.addExternalAppUrlColumnData = function(data) {
+            /**
+             * Creates and adds the external links to the given data and returns the data.
+             * @param {Array} data
+             * @method addExternalLinksToColumnData
+             * @private
+             * @return {Array}
+             */
+            var addExternalLinksToColumnData = function(data) {
                 var tableLinks = [];
 
-                data.data.forEach(function(row) {
-                    var id = row._id;
-                    var query = "id=" + id;
+                data.forEach(function(row) {
+                    var field = $scope.bindIdField || "_id";
+                    var id = row[field];
+                    var tooltip = id;
+                    var rowLinks = [];
 
-                    var links = [];
-
-                    if(external.dig.enabled) {
-                        links.push(createLinkObject(external.dig, id, query));
-                    }
+                    // For each mapping to the row ID, if a service exists for that mapping, create the links for that service.
+                    Object.keys(mappings).filter(function(mapping) {
+                        return mappings[mapping] === field;
+                    }).forEach(function(mapping) {
+                        if(external.services[mapping]) {
+                            Object.keys(external.services[mapping].apps).forEach(function(app) {
+                                rowLinks.push(createServiceLinkObject(external.services[mapping], app, mapping, id));
+                            });
+                        }
+                    });
 
                     var index = tableLinks.length;
-                    tableLinks.push(links);
-                    row[$scope.EXTERNAL_APP_FIELD_NAME] = links.length ? popups.links.createLinkHtml(index, $scope.tableId) : popups.links.createDisabledLinkHtml();
+                    tableLinks.push(rowLinks);
+                    row[$scope.EXTERNAL_APP_FIELD_NAME] = rowLinks.length ? popups.links.createLinkHtml(index, $scope.tableId, tooltip) : popups.links.createDisabledLinkHtml(tooltip);
                 });
 
                 // Set the link data for the links popup for this visualization.
@@ -707,29 +722,27 @@ function(external, popups, connectionService, datasetService, errorNotificationS
                 return data;
             };
 
-            var createLinkObject = function(config, id, tab) {
-                var link = {
-                    name: config.data_table.name,
-                    image: config.data_table.image,
-                    url: config.data_table.url,
-                    server: config.server,
-                    tab: tab,
-                    values: [{
-                        type: popups.links.TYPE_HIDDEN,
-                        variable: popups.links.VARIABLE_VALUE,
-                        substitute: id
-                    }],
-                    args: []
+            /**
+             * Creates and returns the service link object for the given app using the given service, mapping, and ID.
+             * @param {Object} service
+             * @param {String} app
+             * @param {String} mapping
+             * @param {Number} id
+             * @method createServiceLinkObject
+             * @private
+             * @return {Object}
+             */
+            var createServiceLinkObject = function(service, app, mapping, ID) {
+                var data = {};
+                data[mapping] = ID;
+
+                return {
+                    name: app,
+                        image: service.apps[app].image,
+                        url: service.apps[app].url,
+                        args: service.args,
+                        data: data
                 };
-
-                config.data_table.args.forEach(function(arg) {
-                    link.args.push({
-                        name: arg.name,
-                        value: arg.value
-                    });
-                });
-
-                return link;
             };
 
             $scope.createDeleteColumnButtons = function() {
