@@ -17,8 +17,8 @@
  */
 
 angular.module('neonDemo.directives')
-.directive('newsfeed', ['ConnectionService', 'DatasetService', 'ErrorNotificationService',
-function(connectionService, datasetService, errorNotificationService) {
+.directive('newsfeed', ['ConnectionService', 'DatasetService', 'ErrorNotificationService', 'TranslationService',
+function(connectionService, datasetService, errorNotificationService, translationService) {
     return {
         templateUrl: 'partials/directives/newsfeed.html',
         restrict: 'EA',
@@ -74,6 +74,14 @@ function(connectionService, datasetService, errorNotificationService) {
                 }
             };
 
+            $scope.translationAvailable = false;
+            $scope.translationLanguages = {
+                fromLanguageOptions: {},
+                toLanguageOptions: {},
+                chosenFromLanguage: "",
+                chosenToLanguage: ""
+            };
+
             $scope.options = {
                 database: {},
                 table: {},
@@ -82,7 +90,8 @@ function(connectionService, datasetService, errorNotificationService) {
                 dateField: {},
                 textField: {},
                 sortDirection: neon.query.ASCENDING,
-                limit: LIMIT_INTERVAL
+                limit: LIMIT_INTERVAL,
+                showTranslation: false
             };
 
             $scope.optionsMenuButtonText = function() {
@@ -117,6 +126,11 @@ function(connectionService, datasetService, errorNotificationService) {
                     }
                 });
 
+                if(translationService.hasKey()) {
+                    $scope.translationAvailable = true;
+                    translationService.getSupportedLanguages(getSupportedLanguagesSuccessCallback, translationFailureCallback);
+                }
+
                 handleResize();
                 $element.resize(handleResize);
                 $element.find(".newsfeed").scroll(handleScroll);
@@ -126,6 +140,35 @@ function(connectionService, datasetService, errorNotificationService) {
                     $element.off("resize", handleResize);
                     $element.find(".newsfeed").off("scroll", handleScroll);
                 });
+            };
+
+            /**
+             * Sets the 'to' and 'from' language options for translating.
+             * @param {Object} languages A mapping of language codes to their names.
+             * @method getSupportedLanguagesSuccessCallback
+             * @private
+             */
+            var getSupportedLanguagesSuccessCallback = function(languages) {
+                $scope.translationLanguages.fromLanguageOptions = languages;
+                $scope.translationLanguages.toLanguageOptions = languages;
+            };
+
+            /**
+             * Shows an error message when an error occurs in the translation service.
+             * @param {Object} response An error response containing the message and reason.
+             * @param {String} response.message
+             * @param {String} response.reason
+             * @method translationFailureCallback
+             * @private
+             */
+            var translationFailureCallback = function(response) {
+                $scope.loadingData = false;
+
+                if($scope.errorMessage) {
+                    errorNotificationService.hideErrorMessage($scope.errorMessage);
+                    $scope.errorMessage = undefined;
+                }
+                $scope.errorMessage = errorNotificationService.showErrorMessage($element, response.message,  response.reason);
             };
 
             /**
@@ -178,10 +221,19 @@ function(connectionService, datasetService, errorNotificationService) {
              */
             var onNews = function(message) {
                 if(message.news && message.name && message.name === $scope.feedName) {
-                    $scope.data.news = message.news;
+                    $scope.data.news = _.map(message.news, function(elem) {
+                        if(elem.text) {
+                            elem.textTranslated = elem.text;
+                        }
+                        return elem;
+                    });
                     $scope.data.newsCount = message.news.length;
                     $scope.feedType = (message.type || $scope.feedType).toUpperCase();
                     $scope.newsEventData = true;
+
+                    if($scope.options.showTranslation && message.news.length) {
+                        translate();
+                    }
                 }
             };
 
@@ -378,9 +430,121 @@ function(connectionService, datasetService, errorNotificationService) {
                         head: datasetService.isFieldValid($scope.options.headField) ? item[$scope.options.headField.columnName] : "",
                         name: datasetService.isFieldValid($scope.options.nameField) ? item[$scope.options.nameField.columnName] : "",
                         date: new Date(item[$scope.options.dateField.columnName]),
-                        text: item[$scope.options.textField.columnName]
+                        text: item[$scope.options.textField.columnName],
+                        textTranslated: item[$scope.options.textField.columnName]
                     });
                 });
+
+                if($scope.options.showTranslation) {
+                    translate();
+                }
+            };
+
+            /**
+             * Updates the 'from' language on translation and translates if 'Show Translation' is checked
+             * @param {String} language The 'from' translation language to change to
+             * @method onFromLanguageChange
+             */
+            $scope.onFromLanguageChange = function(language) {
+                $scope.translationLanguages.chosenFromLanguage = language;
+
+                if($scope.options.showTranslation) {
+                    translate();
+                }
+            };
+
+            /**
+             * Updates the 'to' language on translation and translates if 'Show Translation' is checked
+             * @param {String} language The 'to' translation language to change to
+             * @method onToLanguageChange
+             */
+            $scope.onToLanguageChange = function(language) {
+                $scope.translationLanguages.chosenToLanguage = language;
+
+                if($scope.options.showTranslation) {
+                    translate();
+                }
+            };
+
+            /**
+             * Translates all text back to its original form if checked is false, or to the specified 'to' language
+             * if checked is true.
+             * @param {Boolean} checked Whether 'Show Translation' is checked or unchecked
+             * @param {String} fromLang The 'from' language to use for translation
+             * @param {String} toLang The 'to' language to use for translation
+             * @method updateTranslation
+             */
+            $scope.updateTranslation = function(checked, fromLang, toLang) {
+                $scope.options.showTranslation = checked;
+
+                if(checked) {
+                    $scope.translationLanguages.chosenFromLanguage = fromLang;
+                    $scope.translationLanguages.chosenToLanguage = toLang;
+                    translate();
+                } else {
+                    resetTranslation();
+                }
+            };
+
+            /**
+             * Translates all text with the from/to languages specified.
+             * @method translate
+             * @private
+             */
+            var translate = function() {
+                $scope.loadingData = true;
+
+                if($scope.errorMessage) {
+                    errorNotificationService.hideErrorMessage($scope.errorMessage);
+                    $scope.errorMessage = undefined;
+                }
+
+                var dataText = _.pluck($scope.data.news, 'text');
+                dataText = dataText.filter(function(data) {
+                    return data;
+                });
+
+                translationService.translate(dataText, $scope.translationLanguages.chosenToLanguage,
+                    translateSuccessCallback, translationFailureCallback, $scope.translationLanguages.chosenFromLanguage);
+            };
+
+            /**
+             * Refreshes all text with their new translations.
+             * @param {Object} response Response object containing all the translations.
+             * @param {Array} response.data.data.translations List of all translations. It's assumed that
+             * all translations are given in the order the original text to translate was received in.
+             * @param {String} response.data.data.translations[].translatedText
+             * @param {String} [response.data.data.translations[].detectedSourceLanguage] Detected language
+             * code of the original version of translatedText. Only provided if the source language was auto-detected.
+             * @method translateSuccessCallback
+             * @private
+             */
+            var translateSuccessCallback = function(response) {
+                $scope.loadingData = false;
+                var index = 0;
+                var dataSize = $scope.data.news.length;
+
+                response.data.data.translations.forEach(function(elem) {
+                    while(!$scope.data.news[index].text && index < dataSize) {
+                        index++;
+                    }
+                    $scope.data.news[index].textTranslated = elem.translatedText;
+                    index++;
+                });
+            };
+
+            /**
+             * Resets all text to its original.
+             * @method resetTranslation
+             * @private
+             */
+            var resetTranslation = function() {
+                $scope.data.news = $scope.data.news.map(function(elem) {
+                    elem.textTranslated = elem.text;
+                    return elem;
+                });
+                $scope.translationLanguages.chosenFromLanguage = "";
+                $scope.translationLanguages.chosenToLanguage = "";
             };
 
             /**

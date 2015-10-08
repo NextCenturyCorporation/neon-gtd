@@ -65,6 +65,11 @@
                 </div>
             </div>
         </div>
+
+        <translation-options ng-show="translationAvailable" on-translate="updateTranslation" from-language-change="onFromLanguageChange"
+            to-language-change="onToLanguageChange" from-language-options="translationLanguages.fromLanguageOptions"
+            to-language-options="translationLanguages.toLanguageOptions">
+        </translation-options>
     </options-menu>
 </div>
 
@@ -81,7 +86,8 @@
             <span class="date" ng-bind="item.date.toUTCString()"></span>
         </div>
         <div>
-            <span class="text" ng-bind="item.text"></span>
+            <span class="text" ng-bind="item.text" ng-show="!options.showTranslation"></span>
+            <span class="text" ng-bind="item.textTranslated" ng-show="options.showTranslation"></span>
         </div>
 	</div>
 </div>
