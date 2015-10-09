@@ -233,6 +233,17 @@ angular.module('neonDemo.directives')
                     tooltip: tooltip
                 });
             };
+
+            /**
+             * Creates and returns the key for a point with the given latitude and longitude values.
+             * @param {Number} latitude
+             * @param {Number} longitude
+             * @method createPointKey
+             * @return {String}
+             */
+            popups.links.createPointKey = function(latitude, longitude) {
+                return latitude + "," + longitude;
+            };
         }
     };
 }]);

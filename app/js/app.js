@@ -302,7 +302,8 @@ angular.element(document).ready(function() {
                 removeLinksAtIndex: function() {},
                 deleteData: function() {},
                 createLinkHtml: function() {},
-                createDisabledLinkHtml: function() {}
+                createDisabledLinkHtml: function() {},
+                createPointKey: function() {}
             }
         });
 

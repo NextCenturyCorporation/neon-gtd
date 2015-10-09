@@ -73,7 +73,6 @@ angular.module('neonDemo.directives')
             $scope.tables = [];
             $scope.fields = [];
             $scope.filterKeys = {};
-            $scope.showFilter = false;
             $scope.dataBounds = undefined;
             $scope.resizeRedrawDelay = 1500; // Time in ms to wait after a resize event flood to try redrawing the map.
             $scope.errorMessage = undefined;
@@ -203,10 +202,15 @@ angular.module('neonDemo.directives')
                         source: "system",
                         tags: ["remove", "map"]
                     });
+
                     popups.links.deleteData($scope.mapId);
+                    $scope.options.layers.forEach(function(layer) {
+                        popups.links.deleteData(createPointLinksSource(layer.database, layer.table));
+                    });
+
                     $element.off("resize", updateSize);
                     $scope.messenger.removeEvents();
-                    if($scope.showFilter) {
+                    if($scope.extent) {
                         $scope.clearFilters();
                     }
                     exportService.unregister($scope.exportID);
@@ -260,6 +264,13 @@ angular.module('neonDemo.directives')
                 // Add a zoomRect handler to the map.
                 $scope.map.onZoomRect = function(bounds) {
                     $scope.extent = boundsToExtent(bounds);
+                    if(external.services.bounds) {
+                        var boundsLinks = [];
+                        Object.keys(external.services.bounds.apps).forEach(function(app) {
+                            boundsLinks.push(createBoundsServiceLinkObject(external.services.bounds, app, $scope.extent));
+                        });
+                        popups.links.addLinks($scope.mapId, "bounds", boundsLinks);
+                    }
 
                     XDATA.userALE.log({
                         activity: "select",
@@ -310,8 +321,6 @@ angular.module('neonDemo.directives')
                                 top: $scope.extent.maximumLatitude
                             });
 
-                            // Show the Clear Filter button.
-                            $scope.showFilter = true;
                             $scope.error = "";
                             XDATA.userALE.log({
                                 activity: "alter",
@@ -586,9 +595,9 @@ angular.module('neonDemo.directives')
 
                 // Clear the zoom Rect from the map before reinitializing it.
                 clearZoomRect();
+                clearExtent();
 
                 $scope.dataBounds = undefined;
-                $scope.hideClearFilterButton();
 
                 // Call removeLayer on all existing layers.
                 $scope.clearLayers();
@@ -722,6 +731,8 @@ angular.module('neonDemo.directives')
 
                 var connection = connectionService.getActiveConnection();
 
+                popups.links.deleteData(createPointLinksSource(database, table));
+
                 if(!connection) {
                     $scope.updateMapData(database, table, {
                         data: []
@@ -810,6 +821,18 @@ angular.module('neonDemo.directives')
             };
 
             /**
+             * Creates and returns the source to use in the links popup for the map layer using the database and table with the given names.
+             * @param {String} database
+             * @param {String} table
+             * @method createPointLinksSource
+             * @private
+             * @return {String}
+             */
+            var createPointLinksSource = function(database, table) {
+                return $scope.mapId + "-" + database + "-" + table;
+            };
+
+            /**
              * Redraws the map
              */
             $scope.draw = function() {
@@ -846,7 +869,7 @@ angular.module('neonDemo.directives')
                             $scope.options.layers[i].error = undefined;
                             $scope.options.layers[i].olLayer.setData(data);
                             if(external.services.point) {
-                                var linksSource = $scope.mapId + "-" + database + "-" + table;
+                                var linksSource = createPointLinksSource(database, table);
                                 createExternalLinks(data, linksSource, $scope.options.layers[i].latitudeMapping, $scope.options.layers[i].longitudeMapping);
                                 $scope.options.layers[i].olLayer.linksSource = linksSource;
                             }
@@ -1028,8 +1051,32 @@ angular.module('neonDemo.directives')
                     url: service.apps[app].url,
                     args: service.args,
                     data: {
-                        "latitude": latitudeValue,
-                        "longitude": longitudeValue
+                        latitude: latitudeValue,
+                        longitude: longitudeValue
+                    }
+                };
+            };
+
+            /**
+             * Creates and returns the bounds service link object for the given app using the given service and bounds.
+             * @param {Object} service
+             * @param {String} app
+             * @param {Object} bounds
+             * @method createBoundsServiceLinkObject
+             * @private
+             * @return {Object}
+             */
+            var createBoundsServiceLinkObject = function(service, app, bounds) {
+                return {
+                    name: app,
+                    image: service.apps[app].image,
+                    url: service.apps[app].url,
+                    args: service.args,
+                    data: {
+                        minLat: bounds.minimumLatitude,
+                        minLon: bounds.minimumLongitude,
+                        maxLat: bounds.maximumLatitude,
+                        maxLon: bounds.maximumLongitude
                     }
                 };
             };
@@ -1056,12 +1103,6 @@ angular.module('neonDemo.directives')
                     return query.where(neon.query.or.apply(neon.query, filterClauses));
                 }
                 return query;
-            };
-
-            $scope.hideClearFilterButton = function() {
-                // hide the Clear Filter button.
-                $scope.showFilter = false;
-                $scope.error = "";
             };
 
             /**
@@ -1108,7 +1149,7 @@ angular.module('neonDemo.directives')
              * Clear Neon query filters set by the map.
              * @param {boolean} updateDisplay True, to update the map and layers after the filters are cleared;
              * false to simply clear the filters
-             * @method clearFilter
+             * @method clearFilters
              */
             $scope.clearFilters = function(updateLayers) {
                 XDATA.userALE.log({
@@ -1143,7 +1184,7 @@ angular.module('neonDemo.directives')
                 if(updateLayers) {
                     clearFiltersRecursively(layerFilterKeysList, function() {
                         clearZoomRect();
-                        $scope.hideClearFilterButton();
+                        clearExtent();
                         queryAllLayerTables();
                     });
                 } else {
@@ -1160,6 +1201,12 @@ angular.module('neonDemo.directives')
                         callback();
                     }
                 });
+            };
+
+            var clearExtent = function() {
+                $scope.extent = undefined;
+                $scope.error = "";
+                popups.links.removeLinksForKey($scope.mapId);
             };
 
             var removeFiltersForKeys = function(filterKeys, callback) {
