@@ -44,6 +44,9 @@ function(connectionService, datasetService, errorNotificationService, translatio
             var DEFAULT_TYPE = "TWITTER";
             var LIMIT_INTERVAL = 100;
 
+            // Prevents translation api calls from getting too long and returning an error
+            var TRANSLATION_LIMIT_INTERVAL = 10;
+
             $scope.feedName = $scope.bindFeedName || "";
             $scope.feedType = $scope.bindFeedType ? $scope.bindFeedType.toUpperCase() : DEFAULT_TYPE;
             $scope.databases = [];
@@ -91,7 +94,8 @@ function(connectionService, datasetService, errorNotificationService, translatio
                 textField: {},
                 sortDirection: neon.query.ASCENDING,
                 limit: LIMIT_INTERVAL,
-                showTranslation: false
+                showTranslation: false,
+                translationLimit: TRANSLATION_LIMIT_INTERVAL
             };
 
             $scope.optionsMenuButtonText = function() {
@@ -447,10 +451,7 @@ function(connectionService, datasetService, errorNotificationService, translatio
              */
             $scope.onFromLanguageChange = function(language) {
                 $scope.translationLanguages.chosenFromLanguage = language;
-
-                if($scope.options.showTranslation) {
-                    translate();
-                }
+                $scope.refreshTranslation();
             };
 
             /**
@@ -460,10 +461,7 @@ function(connectionService, datasetService, errorNotificationService, translatio
              */
             $scope.onToLanguageChange = function(language) {
                 $scope.translationLanguages.chosenToLanguage = language;
-
-                if($scope.options.showTranslation) {
-                    translate();
-                }
+                $scope.refreshTranslation();
             };
 
             /**
@@ -487,11 +485,23 @@ function(connectionService, datasetService, errorNotificationService, translatio
             };
 
             /**
-             * Translates all text with the from/to languages specified.
+             * Refreshes the translations if translation is on.
+             * @method refreshTranslation
+             */
+            $scope.refreshTranslation = function() {
+                if($scope.options.showTranslation) {
+                    translate();
+                }
+            };
+
+            /**
+             * Translates text within the translation limit with the from/to languages specified.
+             * @param {Integer} [sliceStart] Optional field to specify at what index to start translating text at.
+             * @param {Integer} [sliceEnd] Optional field to specify at what index to end translating text at (exclusive).
              * @method translate
              * @private
              */
-            var translate = function() {
+            var translate = function(sliceStart, sliceEnd) {
                 $scope.loadingData = true;
 
                 if($scope.errorMessage) {
@@ -504,33 +514,52 @@ function(connectionService, datasetService, errorNotificationService, translatio
                     return data;
                 });
 
-                translationService.translate(dataText, $scope.translationLanguages.chosenToLanguage,
-                    translateSuccessCallback, translationFailureCallback, $scope.translationLanguages.chosenFromLanguage);
+                sliceStart = (sliceStart? sliceStart : 0);
+
+                if(!sliceEnd) {
+                    sliceEnd = ($scope.options.translationLimit < TRANSLATION_LIMIT_INTERVAL) ? $scope.options.translationLimit : TRANSLATION_LIMIT_INTERVAL;
+                }
+
+                var successCallback = function(response) {
+                    translateSuccessCallback(response, sliceStart, sliceEnd);
+                };
+
+                translationService.translate(dataText.slice(sliceStart, sliceEnd), $scope.translationLanguages.chosenToLanguage,
+                    successCallback, translationFailureCallback, $scope.translationLanguages.chosenFromLanguage);
             };
 
             /**
-             * Refreshes all text with their new translations.
+             * Refreshes text with their new translations.
              * @param {Object} response Response object containing all the translations.
              * @param {Array} response.data.data.translations List of all translations. It's assumed that
              * all translations are given in the order the original text to translate was received in.
              * @param {String} response.data.data.translations[].translatedText
              * @param {String} [response.data.data.translations[].detectedSourceLanguage] Detected language
              * code of the original version of translatedText. Only provided if the source language was auto-detected.
+             * @param {Integer} sliceStart Index to specify where to start inserting the new translations at in the data.
+             * @param {Integer} sliceEnd Index to specify where to end inserting the new translations at in the data (exclusive).
              * @method translateSuccessCallback
              * @private
              */
-            var translateSuccessCallback = function(response) {
+            var translateSuccessCallback = function(response, sliceStart, sliceEnd) {
                 $scope.loadingData = false;
-                var index = 0;
-                var dataSize = $scope.data.news.length;
+                var index = sliceStart;
 
                 response.data.data.translations.forEach(function(elem) {
-                    while(!$scope.data.news[index].text && index < dataSize) {
+                    while(!$scope.data.news[index].text && index < sliceEnd) {
                         index++;
                     }
                     $scope.data.news[index].textTranslated = elem.translatedText;
                     index++;
                 });
+
+                // Translate more text if only part of the data was translated
+                if($scope.options.translationLimit - sliceEnd >= 1) {
+                    sliceStart = sliceEnd;
+                    sliceEnd += (($scope.options.translationLimit - sliceEnd < TRANSLATION_LIMIT_INTERVAL) ?
+                        ($scope.options.translationLimit - sliceEnd) : TRANSLATION_LIMIT_INTERVAL);
+                    translate(sliceStart, sliceEnd);
+                }
             };
 
             /**

@@ -69,6 +69,15 @@
         <translation-options ng-show="translationAvailable" on-translate="updateTranslation" from-language-change="onFromLanguageChange"
             to-language-change="onToLanguageChange" from-language-options="translationLanguages.fromLanguageOptions"
             to-language-options="translationLanguages.toLanguageOptions">
+            <div class="sub-input-group">
+                <label>Limit</label>
+                <input type="number" min="1" class="form-control" ng-model="options.translationLimit" required>
+                <div class="input-group-btn">
+                    <button type="button" class="btn btn-default refresh" title="Refresh" ng-click="refreshTranslation()">
+                        <span class="glyphicon glyphicon-refresh"></span>
+                    </button>
+                </div>
+            </div>
         </translation-options>
     </options-menu>
 </div>
