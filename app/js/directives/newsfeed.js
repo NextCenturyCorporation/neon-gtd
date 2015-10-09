@@ -514,7 +514,7 @@ function(connectionService, datasetService, errorNotificationService, translatio
                     return data;
                 });
 
-                sliceStart = (sliceStart? sliceStart : 0);
+                sliceStart = (sliceStart ? sliceStart : 0);
 
                 if(!sliceEnd) {
                     sliceEnd = ($scope.options.translationLimit < TRANSLATION_LIMIT_INTERVAL) ? $scope.options.translationLimit : TRANSLATION_LIMIT_INTERVAL;
