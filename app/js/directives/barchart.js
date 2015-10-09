@@ -28,8 +28,8 @@
  * @constructor
  */
 angular.module('neonDemo.directives')
-.directive('barchart', ['ConnectionService', 'DatasetService', 'ErrorNotificationService', 'FilterService', 'ExportService',
-function(connectionService, datasetService, errorNotificationService, filterService, exportService) {
+.directive('barchart', ['external', 'popups', 'ConnectionService', 'DatasetService', 'ErrorNotificationService', 'FilterService', 'ExportService',
+function(external, popups, connectionService, datasetService, errorNotificationService, filterService, exportService) {
     return {
         templateUrl: 'partials/directives/barchart.html',
         restrict: 'EA',
@@ -48,6 +48,7 @@ function(connectionService, datasetService, errorNotificationService, filterServ
             $element.addClass('barchartDirective');
 
             $scope.element = $element;
+            $scope.visualizationId = "barchart-" + uuid();
 
             $scope.databases = [];
             $scope.tables = [];
@@ -113,6 +114,7 @@ function(connectionService, datasetService, errorNotificationService, filterServ
                         source: "system",
                         tags: ["remove", "barchart"]
                     });
+                    popups.links.deleteData($scope.visualizationId);
                     $element.off("resize", updateChartSize);
                     $scope.messenger.removeEvents();
                     // Remove our filter if we had an active one.
@@ -456,11 +458,54 @@ function(connectionService, datasetService, errorNotificationService, filterServ
                     key: key,
                     value: val
                 };
+
+                var links = [];
+                var mappings = datasetService.getMappings($scope.options.database.name, $scope.options.table.name);
+
+                // For each mapping to the filter field, if a service exists for that mapping, create the links for that service.
+                Object.keys(mappings).filter(function(mapping) {
+                    return mappings[mapping] === key;
+                }).forEach(function(mapping) {
+                    if(external.services[mapping]) {
+                        Object.keys(external.services[mapping].apps).forEach(function(app) {
+                            links.push(createServiceLinkObject(external.services[mapping], app, mapping, val));
+                        });
+                    }
+                });
+
+                var chartLinks = {};
+                chartLinks[val] = links;
+                popups.links.setData($scope.visualizationId, chartLinks);
+
                 //no need to requery because barchart ignores its own filter
+            };
+
+            /**
+             * Creates and returns the service link object for the given app using the given service, mapping, and field value.
+             * @param {Object} service
+             * @param {String} app
+             * @param {String} mapping
+             * @param {Number} or {String} value
+             * @method createServiceLinkObject
+             * @private
+             * @return {Object}
+             */
+            var createServiceLinkObject = function(service, app, mapping, value) {
+                var data = {};
+                data[mapping] = value;
+
+                return {
+                    name: app,
+                    image: service.apps[app].image,
+                    url: service.apps[app].url,
+                    args: service.args,
+                    data: data
+                };
             };
 
             var clearFilterSet = function() {
                 $scope.filterSet = undefined;
+                popups.links.deleteData($scope.visualizationId);
             };
 
             $scope.clearFilterSet = function() {
