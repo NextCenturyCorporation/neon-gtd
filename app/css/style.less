@@ -221,7 +221,7 @@ label{
         background: none;
         padding: 10px;
         border: 0;
-        border-radius: 0;
+        border-radius: 2px;
         box-shadow: none;
 
         > .arrow{
@@ -236,8 +236,12 @@ label{
         overflow: auto;
         padding: 15px 15px 0;
         border: @shadow-border;
-        border-radius: 6px;
+        border-radius: @border-radius;
         box-shadow: 0 5px 10px @shadow;
+
+        .form-control[disabled] {
+            background-color: @light-background;
+        }
     }
 
     span {
@@ -1053,7 +1057,7 @@ tr.borderedRow {
 }
 
 .neon-well-dark {
-    background-color: @main-background-darken;
+    background-color: @visualization-box-background;
 }
 
 .neon-well-thin {

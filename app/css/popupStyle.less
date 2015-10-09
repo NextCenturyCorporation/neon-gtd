@@ -26,7 +26,7 @@
         button {
             background: @visualization-box-background;
             border: 1px solid @visualization-box-background;
-            border-radius: 4px;
+            border-radius: @border-radius;
             height: 100%;
             padding: 5px;
             width: 100px;
@@ -86,16 +86,22 @@
     }
 
     .btn-default {
-        color: @main-text-color;
+        color: @light-text-color;
+        background-color: @accent-bright;
+        border-color: @accent-bright;
+        border-radius: @border-radius;
 
         &:hover, &:focus, &:active {
-            color: @mid-text-color;
+            color: @light-text-color;
+            background-color: @accent-dark;
+            border-color: @accent-dark;
         }
     }
 
     .modal-dialog {
         margin: 70px auto;
         border: @shadow-border;
+        border-radius: @border-radius;
 
         .modal-content {
             background-color: @visualization-box-background;
