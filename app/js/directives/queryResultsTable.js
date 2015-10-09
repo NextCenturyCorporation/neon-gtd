@@ -670,16 +670,6 @@ function(external, popups, connectionService, datasetService, errorNotificationS
                 }
 
                 $scope.table.refreshLayout();
-
-                // Set the displayed link data for the links popup for the application using the source and index stored in to the triggering button.
-                $(".links-popup").on("show.bs.modal", function(event) {
-                    var button = $(event.relatedTarget);
-                    var source = button.data("links-source");
-                    var index = button.data("links-index");
-                    $scope.$apply(function() {
-                        popups.links.setView(source, index);
-                    });
-                });
                 $scope.table.addOnColumnsReorderedListener($scope.createDeleteColumnButtons);
                 $scope.createDeleteColumnButtons();
             };

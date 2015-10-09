@@ -684,16 +684,6 @@ function(external, popups, connectionService, datasetService, errorNotificationS
                 if($scope.filterSet !== undefined) {
                     $scope.table.setActiveCellIfMatchExists($scope.filterSet.key, $scope.filterSet.value);
                 }
-
-                // Set the displayed link data for the links popup for the application using the source and index stored in to the triggering button.
-                $(".links-popup").on("show.bs.modal", function(event) {
-                    var button = $(event.relatedTarget);
-                    var source = button.data("links-source");
-                    var index = button.data("links-index");
-                    $scope.$apply(function() {
-                        popups.links.setView(source, index);
-                    });
-                });
             };
 
             /**
