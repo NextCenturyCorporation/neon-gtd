@@ -20,8 +20,13 @@
     </options-menu>
 </div>
 
-<div class="header-container filter-container">
-    <h4 class="pull-left">Most active times of the week were <span class="count text-primary" ng-bind="maxTime"></span> and <span class="count text-primary" ng-bind="maxDay"></span></h4>
-</div>
-
 <div circular-heat-chart cell-values="data"></div>
+
+<div class="header-container filter-container">
+    <div class="pull-left most-active">
+        Most active:
+        <div class="ops-clock-active">
+            <span class="active-count" ng-bind="maxTime"></span>, <span class="active-count" ng-bind="maxDay"></span>
+        </div>
+    </div>
+</div>
