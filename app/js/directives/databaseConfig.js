@@ -70,9 +70,9 @@ angular.module('neonDemo.directives')
             $scope.initialize = function() {
                 $scope.messenger = new neon.eventing.Messenger();
 
-                var activeDataset = parameterService.findActiveDatasetInUrl();
+                var activeDataset = (parameterService.findActiveDatasetInUrl() || "").toLowerCase();
                 $scope.datasets.some(function(dataset, index) {
-                    if((activeDataset && activeDataset === dataset.name) || (!activeDataset && dataset.connectOnLoad)) {
+                    if((activeDataset && activeDataset === dataset.name.toLowerCase()) || (!activeDataset && dataset.connectOnLoad)) {
                         $scope.connectToPreset(index);
                         return true;
                     }
