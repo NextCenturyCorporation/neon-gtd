@@ -24,7 +24,7 @@ angular.module('neonDemo.directives')
         },
         link: function($scope) {
             // Map that stores the array of cleaned link data for all the visualizations by a unique name.
-            $scope.cleanData = {};
+            $scope.cleanedData = {};
 
             // The links currently displayed in the popup.
             $scope.links = [];
@@ -73,10 +73,10 @@ angular.module('neonDemo.directives')
                 $(".links-popup").off("show.bs.modal", $scope.onOpen);
             });
 
-            popups.links.setData = function(source, data) {
-                var cleanData = [];
+            var cleanData = function(data) {
+                var cleanedData = [];
                 data.forEach(function(links) {
-                    var cleanLinks = [];
+                    var cleanedLinks = [];
                     links.forEach(function(link) {
                         if(link.url && link.name && link.image && link.args && link.data) {
                             link.tab = link.tab || link.name;
@@ -110,35 +110,62 @@ angular.module('neonDemo.directives')
                             // Notify angular that this is a trusted URL so angular will inject it into a form's action.
                             link.url = $sce.trustAsResourceUrl(link.url);
 
-                            cleanLinks.push(link);
+                            cleanedLinks.push(link);
                         }
                     });
-                    cleanData.push(cleanLinks);
+                    cleanedData.push(cleanedLinks);
                 });
-                $scope.cleanData[source] = cleanData;
+                return cleanedData;
+            };
+
+            popups.links.setData = function(source, data) {
+                $scope.cleanedData[source] = cleanData(data);
             };
 
             popups.links.setView = function(source, index) {
-                if($scope.cleanData[source] && $scope.cleanData[source].length && index >= 0) {
-                    $scope.links = $scope.cleanData[source][index];
+                if($scope.cleanedData[source] && $scope.cleanedData[source].length && index >= 0) {
+                    $scope.links = $scope.cleanedData[source][index];
+                }
+            };
+
+            popups.links.addLinks = function(source, links) {
+                $scope.cleanedData[source] = $scope.cleanedData[source] || [];
+                var index = $scope.cleanedData[source].length;
+                $scope.cleanedData[source].push(cleanData([links])[0]);
+                return index;
+            };
+
+            popups.links.removeLinksAtIndex = function(source, index) {
+                if($scope.cleanedData[source] && $scope.cleanedData[source].length > index && index >= 0) {
+                    $scope.cleanedData[source].splice(index, 1);
                 }
             };
 
             popups.links.deleteData = function(source) {
-                if($scope.cleanData[source]) {
-                    delete $scope.cleanData[source];
+                if($scope.cleanedData[source]) {
+                    delete $scope.cleanedData[source];
                 }
             };
 
+            popups.links.ENABLED_TEMPLATE = "<a data-toggle='modal' data-target='.links-popup' data-links-index='{{index}}' data-links-source='{{source}}'" +
+                "class='collapsed dropdown-toggle primary neon-popup-button' title='Open {{tooltip}} in another application...'>" +
+                "<span class='glyphicon glyphicon-link'></span></a>";
+
+            popups.links.DISABLED_TEMPLATE = "<a class='disabled' title='No other applications available for {{tooltip}}' disabled>" +
+                "<span class='glyphicon glyphicon-link'></span></a>";
+
             popups.links.createLinkHtml = function(index, source, tooltip) {
-                return "<a data-toggle=\"modal\" data-target=\".links-popup\" data-links-index=\"" + index + "\" data-links-source=\"" + source + "\"" +
-                    "class=\"collapsed dropdown-toggle primary neon-popup-button\" title=\"Open " + tooltip + " in another application...\">" +
-                    "<span class=\"glyphicon glyphicon-link\"></span></a>";
+                return Mustache.render(popups.links.ENABLED_TEMPLATE, {
+                    index: index,
+                   source: source,
+                   tooltip: tooltip
+                });
             };
 
             popups.links.createDisabledLinkHtml = function(tooltip) {
-                return "<a class=\"disabled\" title=\"No other applications available for " + tooltip + "\" disabled>" +
-                    "<span class=\"glyphicon glyphicon-link\"></span></a>";
+                return Mustache.render(popups.links.DISABLED_TEMPLATE, {
+                    tooltip: tooltip
+                });
             };
         }
     };

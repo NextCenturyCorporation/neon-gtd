@@ -444,6 +444,7 @@ button {
     }
 
     .glyphicon {
+        color: @mid-text-color;
         cursor: pointer;
         float: left;
         padding: 7px 8px;
@@ -451,12 +452,16 @@ button {
         /* Remove the margin set by .header-item .glyphicon (above).*/
         margin: 0px;
 
+        &:hover {
+            background-color: @accent-dark;
+            color: @light-text-color;
+        }
+
         &.glyphicon-remove {
             color: @error-color;
 
             &:hover {
                 background-color: @error-color;
-                border-color: @error-dark-color;
                 color: @light-text-color;
             }
         }

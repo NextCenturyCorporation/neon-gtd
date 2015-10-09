@@ -19,8 +19,8 @@
  * This directive is for building a tag cloud
  */
 angular.module('neonDemo.directives')
-.directive('tagCloud', ['ConnectionService', 'DatasetService', 'ErrorNotificationService', 'FilterService', 'ExportService', '$timeout', 'TranslationService',
-function(connectionService, datasetService, errorNotificationService, filterService, exportService, $timeout, translationService) {
+.directive('tagCloud', ['external', 'popups', 'ConnectionService', 'DatasetService', 'ErrorNotificationService', 'FilterService', 'ExportService', '$timeout', 'TranslationService',
+function(external, popups, connectionService, datasetService, errorNotificationService, filterService, exportService, $timeout, translationService) {
     return {
         templateUrl: 'partials/directives/tagCloud.html',
         restrict: 'EA',
@@ -36,6 +36,7 @@ function(connectionService, datasetService, errorNotificationService, filterServ
             $element.addClass("tagcloud-container");
 
             $scope.element = $element;
+            $scope.visualizationId = "text-cloud-" + uuid();
 
             $scope.showOptionsMenuButtonText = function() {
                 return $scope.filterTags.length === 0 && $scope.data.length === 0;
@@ -399,11 +400,40 @@ function(connectionService, datasetService, errorNotificationService, filterServ
                     name: tagName
                 });
                 if(index === -1) {
-                    $scope.filterTags.push({
+                    var filterTag = {
                         name: tagName,
                         nameTranslated: tagNameTranslated
-                    });
+                    };
+                    if(external.services.tags) {
+                        var tagLinks = [];
+                        Object.keys(external.services.tags.apps).forEach(function(app) {
+                            tagLinks.push(createServiceLinkObject(external.services.tags, app, tagName));
+                        });
+                        filterTag.linksPopupIndex = popups.links.addLinks($scope.visualizationId, tagLinks);
+                    }
+                    $scope.filterTags.push(filterTag);
                 }
+            };
+
+            /**
+             * Creates and returns the service link object for the given app using the given service, mapping, and field value.
+             * @param {Object} service
+             * @param {String} app
+             * @param {Number} or {String} value
+             * @method createServiceLinkObject
+             * @private
+             * @return {Object}
+             */
+            var createServiceLinkObject = function(service, app, value) {
+                return {
+                    name: app,
+                    image: service.apps[app].image,
+                    url: service.apps[app].url,
+                    args: service.args,
+                    data: {
+                        tags: value
+                    }
+                };
             };
 
             /**
@@ -467,6 +497,7 @@ function(connectionService, datasetService, errorNotificationService, filterServ
             $scope.clearTagFilters = function() {
                 filterService.removeFilters($scope.messenger, $scope.filterKeys, function() {
                     $scope.$apply(function() {
+                        popups.links.deleteData($scope.visualizationId);
                         $scope.showFilter = false;
                         $scope.filterTags = [];
                         $scope.error = "";
@@ -496,6 +527,8 @@ function(connectionService, datasetService, errorNotificationService, filterServ
                 var index = _.findIndex($scope.filterTags, {
                     name: tagName
                 });
+                var linksPopupIndex = $scope.filterTags[index].linksPopupIndex;
+                popups.removeLinksAtIndex($scope.visualizationId, linksPopupIndex);
                 $scope.filterTags.splice(index, 1);
             };
 

@@ -294,13 +294,12 @@ angular.element(document).ready(function() {
 
         neonDemo.value('popups', {
             links: {
-                TYPE_URL: "URL",
-                TYPE_HIDDEN: "HIDDEN",
-                VARIABLE_FIELD: "FIELD",
-                VARIABLE_VALUE: "VALUE",
-                VARIABLE_SERVER: "SERVER",
+                ENABLED_TEMPLATE: "",
+                DISABLED_TEMPLATE: "",
                 setData: function() {},
                 setView: function() {},
+                addLinks: function() {},
+                removeLinksAtIndex: function() {},
                 deleteData: function() {},
                 createLinkHtml: function() {},
                 createDisabledLinkHtml: function() {}
