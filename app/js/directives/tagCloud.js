@@ -130,6 +130,7 @@ function(external, popups, connectionService, datasetService, errorNotificationS
                         source: "system",
                         tags: ["remove", "tag-cloud"]
                     });
+                    popups.links.deleteData($scope.visualizationId);
                     $element.off("resize", updateSize);
                     $scope.messenger.removeEvents();
                     // Remove our filter if we had an active one.

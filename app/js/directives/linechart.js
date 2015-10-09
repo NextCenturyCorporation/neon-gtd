@@ -145,6 +145,7 @@ function(external, popups, connectionService, datasetService, errorNotificationS
                         source: "system",
                         tags: ["remove", "linechart"]
                     });
+                    popups.links.deleteData($scope.visualizationId);
                     $element.off("resize", updateChartSize);
                     $scope.messenger.removeEvents();
                     exportService.unregister($scope.exportID);
