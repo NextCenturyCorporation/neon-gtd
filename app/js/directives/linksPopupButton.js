@@ -22,9 +22,9 @@ angular.module('neonDemo.directives')
         template: "<span ng-if='enabled'>" + popups.links.ENABLED_TEMPLATE + "</span><span ng-if='!enabled'>" + popups.links.DISABLED_TEMPLATE + "</span>",
         restrict: "EA",
         scope: {
-            key: '=',
-            source: '=',
-            tooltip: '=',
+            key: '@',
+            source: '@',
+            tooltip: '@',
             disabled: '=?'
         },
         link: function($scope) {
