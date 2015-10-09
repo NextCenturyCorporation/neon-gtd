@@ -1,6 +1,20 @@
-<div class="filter-tray-filters" ng-show="filters.formatted.length > -100">
-    <div ng-repeat="filter in filters.formatted" class="filter-tray-filter">
-        <span class="filter-label">{{filter.name}}</span>
-        <span class="glyphicon glyphicon-remove" ng-click="handleFilterRemove(filter.ids)" ng-hide="(filter.name.indexOf('Filter Builder') !== -1)"></span>
-    </div>
+<div class="dropdown filter-tray-filters" ng-show="filters.formatted.length > 0">
+    <a class="dropdown-toggle navbar-text" data-toggle="dropdown" hre="#" role="button">
+        <img class="brand-image" src="img/FilterTray_64x64.png" height="34"></img>
+        <span ng-bind="filters.formatted.length + ' filter' + ((filters.formatted.length === 1) ? '': 's')"></span>
+        <span class="caret"></span>
+    </a>
+    <ul class="dropdown-menu">
+        <li ng-repeat="filter in filters.formatted" class="filter-tray-filter">
+            <span class="filter-remove-btn glyphicon glyphicon-trash" ng-click="handleFilterRemove(filter.ids)"
+                ng-hide="(filter.name.indexOf('Filter Builder') !== -1)">
+            </span>
+            <span class="filter-label">{{filter.name}}</span>
+        </li>
+    </ul>
 </div>
+
+
+
+
+
