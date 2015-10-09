@@ -28,8 +28,8 @@
  * @constructor
  */
 angular.module('neonDemo.directives')
-.directive('linechart', ['ConnectionService', 'DatasetService', 'ErrorNotificationService', 'FilterService','ExportService',  '$timeout', '$filter',
-function(connectionService, datasetService, errorNotificationService, filterService, exportService, $timeout, $filter) {
+.directive('linechart', ['external', 'popups', 'ConnectionService', 'DatasetService', 'ErrorNotificationService', 'FilterService','ExportService',  '$timeout', '$filter',
+function(external, popups, connectionService, datasetService, errorNotificationService, filterService, exportService, $timeout, $filter) {
     var COUNT_FIELD_NAME = 'value';
 
     return {
@@ -55,6 +55,7 @@ function(connectionService, datasetService, errorNotificationService, filterServ
             $element.addClass('linechartDirective');
 
             $scope.element = $element;
+            $scope.visualizationId = "linechart-" + uuid();
 
             $scope.optionsMenuButtonText = function() {
                 if($scope.noData) {
@@ -328,6 +329,40 @@ function(connectionService, datasetService, errorNotificationService, filterServ
 
             var renderBrushExtent = function(brushExtent) {
                 $scope.brushExtent = brushExtent || [];
+                if(!$scope.brushExtent.length) {
+                    popups.links.deleteData($scope.visualizationId);
+                } else if(external.services.date) {
+                    var dateLinks = [];
+                    Object.keys(external.services.date.apps).forEach(function(app) {
+                        dateLinks.push(createServiceLinkObject(external.services.date, app, $scope.brushExtent[0], $scope.brushExtent[1]));
+                    });
+                    popups.links.setData($scope.visualizationId, {
+                        "date": dateLinks
+                    });
+                }
+            };
+
+            /**
+             * Creates and returns the service link object for the given app using the given service and start/end dates.
+             * @param {Object} service
+             * @param {String} app
+             * @param {Date} start
+             * @param {Date} end
+             * @method createServiceLinkObject
+             * @private
+             * @return {Object}
+             */
+            var createServiceLinkObject = function(service, app, start, end) {
+                return {
+                    name: app,
+                    image: service.apps[app].image,
+                    url: service.apps[app].url,
+                    args: service.args,
+                    data: {
+                        startDate: start.toISOString(),
+                        endDate: end.toISOString()
+                    }
+                };
             };
 
             $scope.queryForData = function() {

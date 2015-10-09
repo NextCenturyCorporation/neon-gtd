@@ -32,8 +32,8 @@
  * @constructor
  */
 angular.module('neonDemo.directives')
-.directive('timelineSelector', ['$interval', '$filter', 'ConnectionService', 'DatasetService', 'ErrorNotificationService', 'FilterService', 'ExportService', 'opencpu',
-function($interval, $filter, connectionService, datasetService, errorNotificationService, filterService, exportService, opencpu) {
+.directive('timelineSelector', ['$interval', '$filter', 'external', 'popups', 'ConnectionService', 'DatasetService', 'ErrorNotificationService', 'FilterService', 'ExportService', 'opencpu',
+function($interval, $filter, external, popups, connectionService, datasetService, errorNotificationService, filterService, exportService, opencpu) {
     return {
         templateUrl: 'partials/directives/timelineSelector.html',
         restrict: 'EA',
@@ -55,6 +55,7 @@ function($interval, $filter, connectionService, datasetService, errorNotificatio
             var DAY = "day";
 
             $element.addClass('timeline-selector');
+            $scope.visualizationId = "timeline-" + uuid();
 
             $scope.element = $element;
             $scope.opencpu = opencpu;
@@ -366,11 +367,58 @@ function($interval, $filter, connectionService, datasetService, errorNotificatio
             };
 
             /**
-             * Sets the display dates, that are used by the template, to the provided values.
+             * Sets the display dates that are used by the template to the provided values.
+             * @param {Date} displayStartDate
+             * @param {Date} displayEndDate
+             * @method setDisplayDates
+             * @private
              */
-            $scope.setDisplayDates = function(displayStartDate, displayEndDate) {
+            var setDisplayDates = function(displayStartDate, displayEndDate) {
                 $scope.startDateForDisplay = $scope.formatStartDate(displayStartDate);
                 $scope.endDateForDisplay = $scope.formatEndDate(displayEndDate);
+                if(external.services.date) {
+                    var dateLinks = [];
+                    Object.keys(external.services.date.apps).forEach(function(app) {
+                        dateLinks.push(createServiceLinkObject(external.services.date, app, displayStartDate, displayEndDate));
+                    });
+                    popups.links.setData($scope.visualizationId, {
+                        "date": dateLinks
+                    });
+                }
+            };
+
+            /**
+             * Creates and returns the service link object for the given app using the given service and start/end dates.
+             * @param {Object} service
+             * @param {String} app
+             * @param {Date} start
+             * @param {Date} end
+             * @method createServiceLinkObject
+             * @private
+             * @return {Object}
+             */
+            var createServiceLinkObject = function(service, app, start, end) {
+                return {
+                    name: app,
+                    image: service.apps[app].image,
+                    url: service.apps[app].url,
+                    args: service.args,
+                    data: {
+                        startDate: start.toISOString(),
+                        endDate: end.toISOString()
+                    }
+                };
+            };
+
+            /**
+             * Clears the display dates.
+             * @method clearDisplayDates
+             * @private
+             */
+            var clearDisplayDates = function() {
+                $scope.startDateForDisplay = undefined;
+                $scope.endDateForDisplay = undefined;
+                popups.links.deleteData($scope.visualizationId);
             };
 
             $scope.formatStartDate = function(startDate) {
@@ -475,8 +523,7 @@ function($interval, $filter, connectionService, datasetService, errorNotificatio
                             source: ($scope.loadingData) ? "system" : "user",
                             tags: ["timeline", "granularity", newVal]
                         });
-                        $scope.startDateForDisplay = undefined;
-                        $scope.endDateForDisplay = undefined;
+                        clearDisplayDates();
                         $scope.updateBucketizer();
 
                         $scope.updateDates();
@@ -810,8 +857,7 @@ function($interval, $filter, connectionService, datasetService, errorNotificatio
 
             $scope.resetAndQueryForChartData = function() {
                 $scope.bucketizer.setStartDate(undefined);
-                $scope.startDateForDisplay = undefined;
-                $scope.endDateForDisplay = undefined;
+                clearDisplayDates();
                 $scope.referenceStartDate = undefined;
                 $scope.referenceEndDate = undefined;
                 $scope.data = [];
@@ -1108,11 +1154,10 @@ function($interval, $filter, connectionService, datasetService, errorNotificatio
                 }
 
                 if(isNaN(extentStartDate) || isNaN(extentEndDate)) {
-                    $scope.startDateForDisplay = undefined;
-                    $scope.endDateForDisplay = undefined;
+                    clearDisplayDates();
                 } else {
                     neon.safeApply($scope, function() {
-                        $scope.setDisplayDates(extentStartDate, extentEndDate);
+                        setDisplayDates(extentStartDate, extentEndDate);
                     });
                 }
 

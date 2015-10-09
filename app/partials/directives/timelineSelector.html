@@ -97,6 +97,7 @@
 
 <div class="header-container filter-container">
     <div class="header-item filter-reset pull-right" ng-class="{true: '', false: 'hidden'}[brush.length > 0]" title="Date from {{startDateForDisplay}} to {{endDateForDisplay}}">
+        <links-popup-button key="date" source="{{visualizationId}}" tooltip="{{startDateForDisplay}} to {{endDateForDisplay}}"></links-popup-button>
         <span class="filter-label">Date Filter</span>
         <span class="glyphicon glyphicon-remove" ng-click="clearBrush()"></span>
     </div>
