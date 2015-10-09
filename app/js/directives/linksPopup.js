@@ -66,12 +66,12 @@ angular.module('neonDemo.directives')
                     tags: ["external", "link"]
                 });
 
-                // Set the link data for the links popup using the source and index from the triggering element.
+                // Set the link data for the links popup using the source and key from the triggering element.
                 var element = $(event.relatedTarget);
                 var source = element.data("links-source");
-                var index = element.data("links-index");
+                var key = element.data("links-key");
                 $scope.$apply(function() {
-                    popups.links.setView(source, index);
+                    popups.links.setView(source, key);
                 });
             };
 
@@ -82,15 +82,16 @@ angular.module('neonDemo.directives')
             });
 
             /**
-             * Cleans and returns the given list of links by replacing variables in the links with values as needed.
-             * @param {Array} data
+             * Cleans and returns the given collection of links by replacing variables in the links with values as needed.
+             * @param {Object} data
              * @method cleanData
              * @private
-             * @return {Array}
+             * @return {Object}
              */
             var cleanData = function(data) {
-                var cleanedData = [];
-                data.forEach(function(links) {
+                var cleanedData = {};
+                Object.keys(data).forEach(function(key) {
+                    var links = data[key];
                     var cleanedLinks = [];
                     links.forEach(function(link) {
                         if(link.url && link.name && link.image && link.args && link.data) {
@@ -128,7 +129,7 @@ angular.module('neonDemo.directives')
                             cleanedLinks.push(link);
                         }
                     });
-                    cleanedData.push(cleanedLinks);
+                    cleanedData[key] = cleanedLinks;
                 });
                 return cleanedData;
             };
@@ -144,40 +145,40 @@ angular.module('neonDemo.directives')
             };
 
             /**
-             * Sets the view of the links popup to the link data for the given source at the given index.
+             * Sets the view of the links popup to the link data for the given source at the given key.
              * @param {String} source
-             * @param {Number} index
+             * @param {String} key
              * @method setView
              */
-            popups.links.setView = function(source, index) {
-                if($scope.cleanedData[source] && $scope.cleanedData[source].length && index >= 0) {
-                    $scope.links = $scope.cleanedData[source][index];
+            popups.links.setView = function(source, key) {
+                if($scope.cleanedData[source] && $scope.cleanedData[source][key]) {
+                    $scope.links = $scope.cleanedData[source][key];
                 }
             };
 
             /**
-             * Adds the given links to the link data for the given source and returns the index at which the links were added.
+             * Adds the given links to the link data for the given source and key.
              * @param {String} source
+             * @param {String} key
              * @param {Array} links
              * @method addLinks
-             * @return {Number}
              */
-            popups.links.addLinks = function(source, links) {
-                $scope.cleanedData[source] = $scope.cleanedData[source] || [];
-                var index = $scope.cleanedData[source].length;
-                $scope.cleanedData[source].push(cleanData([links])[0]);
-                return index;
+            popups.links.addLinks = function(source, key, links) {
+                $scope.cleanedData[source] = $scope.cleanedData[source] || {};
+                var data = {};
+                data[key] = links;
+                $scope.cleanedData[source][key] = (cleanData(data))[key];
             };
 
             /**
-             * Removes the links in the link data for the given source at the given index, if it exists.
+             * Removes the links in the link data for the given source at the given key, if it exists.
              * @param {String} source
-             * @param {Number} index
-             * @method removeLinksAtIndex
+             * @param {String} key
+             * @method removeLinksForKey
              */
-            popups.links.removeLinksAtIndex = function(source, index) {
-                if($scope.cleanedData[source] && $scope.cleanedData[source].length > index && index >= 0) {
-                    $scope.cleanedData[source].splice(index, 1);
+            popups.links.removeLinksForKey = function(source, key) {
+                if($scope.cleanedData[source] && $scope.cleanedData[source][key]) {
+                    delete $scope.cleanedData[source][key];
                 }
             };
 
@@ -195,7 +196,7 @@ angular.module('neonDemo.directives')
             /**
              * The template for a link element that triggers the links popup used in the linksPopup and linksPopupButton directives.
              */
-            popups.links.ENABLED_TEMPLATE = "<a data-toggle='modal' data-target='.links-popup' data-links-index='{{index}}' data-links-source='{{source}}'" +
+            popups.links.ENABLED_TEMPLATE = "<a data-toggle='modal' data-target='.links-popup' data-links-key='{{key}}' data-links-source='{{source}}'" +
                 "class='collapsed dropdown-toggle primary neon-popup-button' title='Open {{tooltip}} in another application...'>" +
                 "<span class='glyphicon glyphicon-link'></span></a>";
 
@@ -206,18 +207,18 @@ angular.module('neonDemo.directives')
                 "<span class='glyphicon glyphicon-link'></span></a>";
 
             /**
-             * Creates and returns the HTML for a link using the given index, source, and tooltip.
-             * @param {Number} index
+             * Creates and returns the HTML for a link using the given key, source, and tooltip.
+             * @param {Number} key
              * @param {String} source
              * @param {String} tooltip
              * @method createLinkHtml
              * @return {String}
              */
-            popups.links.createLinkHtml = function(index, source, tooltip) {
+            popups.links.createLinkHtml = function(key, source, tooltip) {
                 return Mustache.render(popups.links.ENABLED_TEMPLATE, {
-                    index: index,
-                   source: source,
-                   tooltip: tooltip
+                    key: key,
+                    source: source,
+                    tooltip: tooltip
                 });
             };
 

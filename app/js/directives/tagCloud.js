@@ -409,7 +409,7 @@ function(external, popups, connectionService, datasetService, errorNotificationS
                         Object.keys(external.services.tags.apps).forEach(function(app) {
                             tagLinks.push(createServiceLinkObject(external.services.tags, app, tagName));
                         });
-                        filterTag.linksPopupIndex = popups.links.addLinks($scope.visualizationId, tagLinks);
+                        popups.links.addLinks($scope.visualizationId, tagName, tagLinks);
                     }
                     $scope.filterTags.push(filterTag);
                 }
@@ -527,8 +527,7 @@ function(external, popups, connectionService, datasetService, errorNotificationS
                 var index = _.findIndex($scope.filterTags, {
                     name: tagName
                 });
-                var linksPopupIndex = $scope.filterTags[index].linksPopupIndex;
-                popups.removeLinksAtIndex($scope.visualizationId, linksPopupIndex);
+                popups.links.removeLinksForKey($scope.visualizationId, tagName);
                 $scope.filterTags.splice(index, 1);
             };
 

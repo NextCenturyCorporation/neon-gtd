@@ -682,7 +682,7 @@ function(external, popups, connectionService, datasetService, errorNotificationS
              * @return {Array}
              */
             var addExternalLinksToColumnData = function(data) {
-                var tableLinks = [];
+                var tableLinks = {};
 
                 data.forEach(function(row) {
                     var field = $scope.bindIdField || "_id";
@@ -701,9 +701,8 @@ function(external, popups, connectionService, datasetService, errorNotificationS
                         }
                     });
 
-                    var index = tableLinks.length;
-                    tableLinks.push(rowLinks);
-                    row[$scope.EXTERNAL_APP_FIELD_NAME] = rowLinks.length ? popups.links.createLinkHtml(index, $scope.tableId, tooltip) : popups.links.createDisabledLinkHtml(tooltip);
+                    tableLinks[id] = rowLinks;
+                    row[$scope.EXTERNAL_APP_FIELD_NAME] = rowLinks.length ? popups.links.createLinkHtml(id, $scope.tableId, tooltip) : popups.links.createDisabledLinkHtml(tooltip);
                 });
 
                 // Set the link data for the links popup for this visualization.

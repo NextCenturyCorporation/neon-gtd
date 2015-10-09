@@ -42,7 +42,7 @@
 <div class="header-container filter-container" ng-show="(filterTags.length > 0)">
     <div class="header-item filter-reset pull-right" ng-repeat="tag in filterTags"
         title="{{options.tagField.prettyName}}={{options.showTranslation ? tag.nameTranslated : tag.name}}">
-        <links-popup-button index="tag.linksPopupIndex" source="visualizationId" tooltip="tag.name"></links-popup-button>
+        <links-popup-button key="tag.name" source="visualizationId" tooltip="tag.name"></links-popup-button>
         <span class="filter-label" ng-bind="tag.name" ng-show="!options.showTranslation"></span>
         <span class="filter-label" ng-bind="tag.nameTranslated" ng-show="options.showTranslation"></span>
         <span class="glyphicon glyphicon-remove" ng-click="removeFilter(tag.name)"></span>

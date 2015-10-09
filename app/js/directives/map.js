@@ -995,6 +995,7 @@ angular.module('neonDemo.directives')
                 data.forEach(function(row) {
                     var latitudeValue = row[latitudeField];
                     var longitudeValue = row[longitudeField];
+                    var key = latitudeValue + "," + longitudeValue;
                     var rowLinks = [];
 
                     if(external.services.point) {
@@ -1003,8 +1004,7 @@ angular.module('neonDemo.directives')
                         });
                     };
 
-                    var index = mapLinks.length;
-                    mapLinks.push(rowLinks);
+                    mapLinks[key] = rowLinks;
                 });
 
                 // Set the link data for the links popup for this visualization.
