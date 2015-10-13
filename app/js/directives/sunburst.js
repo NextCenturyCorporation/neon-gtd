@@ -34,6 +34,7 @@ function(connectionService, datasetService, errorNotificationService, exportServ
         templateUrl: 'partials/directives/sunburst.html',
         restrict: 'EA',
         scope: {
+            bindTitle: '=',
             bindTable: '=',
             bindDatabase: '=',
             hideHeader: '=?',
@@ -54,6 +55,7 @@ function(connectionService, datasetService, errorNotificationService, exportServ
             $scope.chart = undefined;
             $scope.errorMessage = undefined;
             $scope.loadingData = false;
+            $scope.outstandingQuery = undefined;
 
             $scope.options = {
                 database: {},
@@ -134,6 +136,9 @@ function(connectionService, datasetService, errorNotificationService, exportServ
             };
 
             var updateChartSize = function() {
+                var titleWidth = $element.width() - $element.find(".chart-options").outerWidth(true);
+                $element.find(".title").css("maxWidth", titleWidth - 20);
+
                 if($scope.chart) {
                     var headerHeight = 0;
                     $element.find(".header-container").each(function() {
@@ -249,7 +254,15 @@ function(connectionService, datasetService, errorNotificationService, exportServ
                     tags: ["query", "sunburst"]
                 });
 
-                connection.executeQuery(query, function(queryResults) {
+                if($scope.outstandingQuery) {
+                    $scope.outstandingQuery.abort();
+                }
+
+                $scope.outstandingQuery = connection.executeQuery(query);
+                $scope.outstandingQuery.done(function() {
+                    $scope.outstandingQuery = undefined;
+                });
+                $scope.outstandingQuery.done(function(queryResults) {
                     XDATA.userALE.log({
                         activity: "alter",
                         action: "receive",
@@ -275,23 +288,37 @@ function(connectionService, datasetService, errorNotificationService, exportServ
                             tags: ["render", "sunburst"]
                         });
                     });
-                }, function(response) {
-                    XDATA.userALE.log({
-                        activity: "alter",
-                        action: "failed",
-                        elementId: "sunburst",
-                        elementType: "canvas",
-                        elementSub: "sunburst",
-                        elementGroup: "chart_group",
-                        source: "system",
-                        tags: ["failed", "sunburst"]
-                    });
-                    doDrawChart(buildDataTree({
-                        data: []
-                    }));
-                    $scope.loadingData = false;
-                    if(response.responseJSON) {
-                        $scope.errorMessage = errorNotificationService.showErrorMessage($element, response.responseJSON.error, response.responseJSON.stackTrace);
+                });
+                $scope.outstandingQuery.fail(function(response) {
+                    if(response.status === 0) {
+                        XDATA.userALE.log({
+                            activity: "alter",
+                            action: "canceled",
+                            elementId: "sunburst",
+                            elementType: "canvas",
+                            elementSub: "sunburst",
+                            elementGroup: "chart_group",
+                            source: "system",
+                            tags: ["canceled", "sunburst"]
+                        });
+                    } else {
+                        XDATA.userALE.log({
+                            activity: "alter",
+                            action: "failed",
+                            elementId: "sunburst",
+                            elementType: "canvas",
+                            elementSub: "sunburst",
+                            elementGroup: "chart_group",
+                            source: "system",
+                            tags: ["failed", "sunburst"]
+                        });
+                        doDrawChart(buildDataTree({
+                            data: []
+                        }));
+                        $scope.loadingData = false;
+                        if(response.responseJSON) {
+                            $scope.errorMessage = errorNotificationService.showErrorMessage($element, response.responseJSON.error, response.responseJSON.stackTrace);
+                        }
                     }
                 });
             };

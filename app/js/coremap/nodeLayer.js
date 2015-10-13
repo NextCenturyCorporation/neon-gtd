@@ -21,6 +21,7 @@ coreMap.Map.Layer.NodeLayer = OpenLayers.Class(OpenLayers.Layer.Vector, {
     baseLineWidthDiff: 0,
     baseRadiusDiff: 0,
     edges: [],
+    dateMapping: '',
     latitudeMapping: '',
     lineColor: '',
     lineColors: {},
@@ -44,6 +45,17 @@ coreMap.Map.Layer.NodeLayer = OpenLayers.Class(OpenLayers.Layer.Vector, {
         // Override the style for our specialization.
         var extendOptions = options || {};
         extendOptions.styleMap = this.createNodeStyleMap();
+
+        // Set a default date filter strategy.  Use date.now for the default values;
+        // This will be overridden before use.
+        this.dateFilter = new OpenLayers.Filter.Comparison({
+            type: OpenLayers.Filter.Comparison.BETWEEN,
+            property: options.dateMapping || coreMap.Map.Layer.NodeLayer.DEFAULT_DATE_MAPPING,
+            lowerBoundary: Date.now(),
+            upperBoundary: Date.now()
+        });
+        this.dateFilterStrategy = new OpenLayers.Strategy.Filter({});
+        extendOptions.strategies = [this.dateFilterStrategy];
 
         // Call the super constructor, you will have to define the variables geometry, attributes and style
         var args = [name, extendOptions];
@@ -71,6 +83,7 @@ coreMap.Map.Layer.NodeLayer = OpenLayers.Class(OpenLayers.Layer.Vector, {
             "#dbdb8d",
             "#9edae5"
         ];
+        this.dateFilterStrategy.deactivate();
         this.visibility = true;
         this.colorScale = d3.scale.ordinal().range(this.colorRange);
     },
@@ -269,8 +282,8 @@ coreMap.Map.Layer.NodeLayer.prototype.createWeightedLine = function(pt1, pt2, we
         coreMap.Map.DESTINATION_PROJECTION);
 
     var featureLine = new OpenLayers.Feature.Vector(line);
-
     featureLine.style = this.createLineStyleObject(lineMappingElement, wt);
+    featureLine.attributes.weight = weight;
 
     return featureLine;
 };
@@ -288,7 +301,8 @@ coreMap.Map.Layer.NodeLayer.prototype.createWeightedLine = function(pt1, pt2, we
  */
 coreMap.Map.Layer.NodeLayer.prototype.createWeightedArrow = function(pt1, pt2, weight, element, lineMappingElement) {
     var wt = this.calculateLineWidth(weight);
-
+    wt = (wt < coreMap.Map.Layer.NodeLayer.MIN_ARROW_POINT_RADIUS) ?
+        coreMap.Map.Layer.NodeLayer.MIN_ARROW_POINT_RADIUS : wt;
     var angle = this.calculateAngle(pt1[0], pt1[1], pt2[0], pt2[1]);
 
     var point = new OpenLayers.Geometry.Point(pt2[0], pt2[1]);
@@ -375,6 +389,19 @@ coreMap.Map.Layer.NodeLayer.prototype.styleNode = function(element, nodeMappingE
 coreMap.Map.Layer.NodeLayer.prototype.setData = function(edges) {
     this.edges = edges;
     this.updateFeatures();
+    this.dateFilterStrategy.setFilter();
+};
+
+coreMap.Map.Layer.NodeLayer.prototype.setDateFilter = function(filterBounds) {
+    if(filterBounds && filterBounds.start && filterBounds.end) {
+        // Update the filter
+        this.dateFilter.lowerBoundary = filterBounds.start;
+        this.dateFilter.upperBoundary = filterBounds.end;
+        this.dateFilterStrategy.setFilter(this.dateFilter);
+    } else {
+        // Clear the filter
+        this.dateFilterStrategy.setFilter();
+    }
 };
 
 /**
@@ -422,6 +449,13 @@ coreMap.Map.Layer.NodeLayer.prototype.updateFeatures = function() {
         var src = me.getValueFromDataElement(me.sourceMapping || coreMap.Map.Layer.NodeLayer.DEFAULT_SOURCE, element);
         var tgt = me.getValueFromDataElement(me.targetMapping || coreMap.Map.Layer.NodeLayer.DEFAULT_TARGET, element);
         var weight = me.getValueFromDataElement(me.weightMapping || coreMap.Map.Layer.NodeLayer.DEFAULT_WEIGHT_MAPPING, element);
+        var date = 'none';
+        var dateMapping = me.dateMapping || coreMap.Map.Layer.PointsLayer.DEFAULT_DATE_MAPPING;
+        var key = '';
+
+        if(element[dateMapping]) {
+            date = new Date(element[dateMapping]);
+        }
 
         var pt1 = [
             me.getValueFromDataElement(me.longitudeMapping || coreMap.Map.Layer.NodeLayer.DEFAULT_LONGITUDE_MAPPING, src),
@@ -436,20 +470,28 @@ coreMap.Map.Layer.NodeLayer.prototype.updateFeatures = function() {
         // If the line has substance, render it.
         if(weight > 0) {
             var lineMappingElement = me.getValueFromDataElement(me.lineMapping, element);
+            var line = me.createWeightedLine(pt1, pt2, weight, lineMappingElement);
+            line.attributes[dateMapping] = date;
+            lines.push(line);
 
-            lines.push(me.createWeightedLine(pt1, pt2, weight, lineMappingElement));
-            arrows.push(me.createWeightedArrow(pt1, pt2, weight, tgt, lineMappingElement));
+            var arrow = me.createWeightedArrow(pt1, pt2, weight, tgt, lineMappingElement);
+            arrow.attributes[dateMapping] = date;
+            arrows.push(arrow);
         }
-        
+
         var nodeMappingElement = me.getValueFromDataElement(me.nodeMapping, element);
 
         // Add the nodes to the node list if necesary.
-        if(!nodes[pt1]) {
-            nodes[pt1] = me.createNode(src, nodeMappingElement);
+        key = pt1 + date;
+        if(!nodes[key]) {
+            nodes[key] = me.createNode(src, nodeMappingElement);
+            nodes[key].attributes[dateMapping] = date;
         }
 
-        if(!nodes[pt2]) {
-            nodes[pt2] = me.createNode(tgt, nodeMappingElement);
+        key = pt2 + date;
+        if(!nodes[key]) {
+            nodes[key] = me.createNode(tgt, nodeMappingElement);
+            nodes[key].attributes[dateMapping] = date;
         }
     });
 
@@ -463,15 +505,15 @@ coreMap.Map.Layer.NodeLayer.DEFAULT_LONGITUDE_MAPPING = "longitude";
 coreMap.Map.Layer.NodeLayer.DEFAULT_WEIGHT_MAPPING = "wgt";
 coreMap.Map.Layer.NodeLayer.DEFAULT_SOURCE = "from";
 coreMap.Map.Layer.NodeLayer.DEFAULT_TARGET = "to";
+coreMap.Map.Layer.NodeLayer.DEFAULT_DATE_MAPPING = "date";
 
-coreMap.Map.Layer.NodeLayer.DEFAULT_ARROW_POINT_RADIUS = 5;
 coreMap.Map.Layer.NodeLayer.DEFAULT_OPACITY = 1;
 coreMap.Map.Layer.NodeLayer.DEFAULT_STROKE_WIDTH = 1;
 coreMap.Map.Layer.NodeLayer.DEFAULT_COLOR = "#00ff00";
-coreMap.Map.Layer.NodeLayer.DEFAULT_LINE_COLOR = "#ffff00";
+coreMap.Map.Layer.NodeLayer.DEFAULT_LINE_COLOR =  "#888888"; //  "#a6d96a";
 coreMap.Map.Layer.NodeLayer.DEFAULT_STROKE_COLOR = "#777";
-coreMap.Map.Layer.NodeLayer.MIN_RADIUS = 3;
+coreMap.Map.Layer.NodeLayer.MIN_RADIUS = 5;
 coreMap.Map.Layer.NodeLayer.MAX_RADIUS = 13;
+coreMap.Map.Layer.NodeLayer.MIN_ARROW_POINT_RADIUS = 5;
 coreMap.Map.Layer.NodeLayer.MIN_LINE_WIDTH = 1;
 coreMap.Map.Layer.NodeLayer.MAX_LINE_WIDTH = 13;
-

@@ -51,6 +51,7 @@ function(connectionService, datasetService, errorNotificationService) {
             $scope.tables = [];
             $scope.fields = [];
             $scope.errorMessage = undefined;
+            $scope.outstandingQuery = undefined;
 
             $scope.options = {
                 database: {},
@@ -200,12 +201,23 @@ function(connectionService, datasetService, errorNotificationService) {
 
                 var connection = connectionService.getActiveConnection();
                 if(connection) {
-                    connection.executeQuery(query, function(queryResults) {
+                    if($scope.outstandingQuery) {
+                        $scope.outstandingQuery.abort();
+                    }
+
+                    $scope.outstandingQuery = connection.executeQuery(query);
+                    $scope.outstandingQuery.done(function() {
+                        $scope.outstandingQuery = undefined;
+                    });
+                    $scope.outstandingQuery.done(function(queryResults) {
                         next(queryResults);
-                    }, function(response) {
-                        $scope.drawBlankChart();
-                        if(response.responseJSON) {
-                            $scope.errorMessage = errorNotificationService.showErrorMessage($element, response.responseJSON.error, response.responseJSON.stackTrace);
+                    });
+                    $scope.outstandingQuery.fail(function(response) {
+                        if(response.status !== 0) {
+                            $scope.drawBlankChart();
+                            if(response.responseJSON) {
+                                $scope.errorMessage = errorNotificationService.showErrorMessage($element, response.responseJSON.error, response.responseJSON.stackTrace);
+                            }
                         }
                     });
                 }

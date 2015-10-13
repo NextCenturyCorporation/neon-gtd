@@ -13,53 +13,50 @@
 // limitations under the License.
 //
 
-div {
-    .config-row-div {
-        padding-bottom: 5px;
-    }
-
-    .directed-graph {
-        height: @widget-height;
-        width: @widget-width;
-
-        div {
-            .directed-graph-container {
-                height: @widget-height;
-                width: @widget-width;
-            }
-        }
-    }
-
-    .draw-button-div {
-        padding-left: 0px;
-    }
-
-    .graph-tooltip {
-        position: absolute;
-        text-align: center;
-        height: 20px;
-        padding: 5px;
-        font: 12px sans-serif;
-        background: @tooltip-background;
-        border: 0px;
-        border-radius: 8px;
-        pointer-events: none;
-    }
-}
-
 .directedGraphDirective {
     padding: 10px;
     height: 100%;
     width: 100%;
+
+    .link {
+      cursor: pointer;
+    }
+
+    .node {
+      cursor: pointer;
+    }
+
+    .node-text {
+      cursor: pointer;
+    }
+
+    .legend {
+        /* Override the default legend styling from the style.less file. */
+        margin-bottom: 0px;
+
+        .legend-item {
+            margin-top: 0px;
+        }
+    }
 }
 
-.node {
-  stroke: @chart-empty-dot-color;
-  stroke-width: 1.5px;
-  cursor: pointer;
-}
+.graph-tooltip {
+    color: @accent-bright;
+    font-size: 15px;
+    font-weight: bold;
 
-.link {
-  stroke: @chart-line-color;
-  stroke-opacity: .6;
+    .graph-tooltip-block {
+        line-height: 30px;
+        text-align: center;
+
+        .graph-tooltip-value {
+            font-size: 22px;
+            position: relative;
+            top: -1px;
+        }
+
+        .graph-tooltip-label+.graph-tooltip-value {
+            padding-left: 5px;
+        }
+    }
 }

@@ -29,22 +29,38 @@
  * @constructor
  */
 angular.module('neonDemo.directives')
-.directive('poweredByNeon', function() {
+.directive('poweredByNeon', function($http) {
     return {
         templateUrl: 'partials/directives/poweredByNeon.html',
         restrict: 'EA',
         link: function($scope) {
-            $scope.versionString = "Loading...";
-            $scope.infoLoaded = false;
+            var NEON_GTD_VERSION_FILE = './config/version.json';
+            $scope.serverVersionString = "Loading...";
+            $scope.neonGTDVersionString = "Loading...";
+
+            $scope.serverInfoLoaded = false;
+            $scope.neonGTDVersionLoaded = false;
 
             $scope.loadNeonInfo = function() {
-                if(!$scope.infoLoaded) {
+                if(!$scope.serverInfoLoaded) {
                     neon.util.infoUtils.getNeonVersion(function(result) {
                         $scope.$apply(function() {
-                            $scope.versionString = result;
-                            $scope.infoLoaded = true;
+                            $scope.serverVersionString = result;
+                            $scope.serverInfoLoaded = false;
                         });
                     });
+                }
+
+                if(!$scope.neonGTDVersionLoaded) {
+                    $http.get(NEON_GTD_VERSION_FILE).
+                        success(function(data) {
+                            $scope.neonGTDVersionString = data.version;
+                            $scope.neonGTDVersionLoaded = true;
+                        }).
+                        error(function() {
+                            $scope.neonGTDVersionString = "Unavailable";
+                            $scope.neonGTDVersionLoaded = true;
+                        });
                 }
             };
         }

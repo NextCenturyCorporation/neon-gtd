@@ -1,5 +1,5 @@
 <div class="header-container" ng-show="!(hideHeader)">
-    <span class="header-text pull-left" ng-bind="options.table.prettyName"></span>
+    <div class="title header-text pull-left" ng-bind="(bindTitle != undefined) ? bindTitle : options.table.prettyName"></div>
 
     <options-menu parent-element="element" export-function="makeQueryResultsTableExportObject">
         <div class="form-group" ng-show="!(hideAdvancedOptions)">
@@ -60,8 +60,8 @@
 
 <div class="header-container filter-container">
     <h4 class="pull-left">Showing 
-        <span class="count text-primary" ng-bind="tableOptions.data.length"></span> of 
-        <span ng-bind="totalRows"></span>
+        <span class="count text-primary" ng-bind="tableOptions.data.length | number"></span> of 
+        <span ng-bind="totalRows | number"></span>
     </h4>
 </div>
 

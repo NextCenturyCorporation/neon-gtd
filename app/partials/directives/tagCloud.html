@@ -1,5 +1,5 @@
 <div class="header-container" ng-show="!(hideHeader)">
-    <span class="header-text pull-left" ng-bind="options.table.prettyName"></span>
+    <div class="title header-text pull-left" ng-bind="(bindTitle != undefined) ? bindTitle : options.table.prettyName + ' / ' + options.tagField.prettyName"></div>
 
     <options-menu parent-element="element" export-function="makeTagCloudExportObject"  button-text="'No tag data'" show-button-text="showOptionsMenuButtonText">
         <div class="form-group" ng-show="!(hideAdvancedOptions)">
@@ -31,20 +31,26 @@
             </div>
             <div class="clearfix"></div>
         </div>
+        <translation-options ng-show="translationAvailable" on-translate="updateTranslation" from-language-change="onFromLanguageChange" to-language-change="onToLanguageChange"
+            from-language-options="translationLanguages.fromLanguageOptions" to-language-options="translationLanguages.toLanguageOptions">
+        </translation-options>
     </options-menu>
 </div>
 
 <div class="clearfix"></div>
 
 <div class="header-container filter-container" ng-show="(filterTags.length > 0)">
-    <div class="filter-reset pull-right" ng-repeat="tagName in filterTags" title="{{options.tagField.prettyName}}={{tagName}}">
-        <span class="filter-label" ng-bind="tagName"></span>
-        <span class="glyphicon glyphicon-remove" ng-click="removeFilter(tagName)"></span>
+    <div class="header-item filter-reset pull-right" ng-repeat="tag in filterTags"
+        title="{{options.tagField.prettyName}}={{options.showTranslation ? tag.nameTranslated : tag.name}}">
+        <span class="filter-label" ng-bind="tag.name" ng-show="!options.showTranslation"></span>
+        <span class="filter-label" ng-bind="tag.nameTranslated" ng-show="options.showTranslation"></span>
+        <span class="glyphicon glyphicon-remove" ng-click="removeFilter(tag.name)"></span>
     </div>
 </div>
 
 <div class="clearfix"></div>
 
 <div class="tagcloud" ng-show="filterTags.length > 0 || data.length > 0">
-    <a ng-click="addTagFilter(tagCount.key)" class="tag" ng-repeat="tagCount in data" rel="{{tagCount.count}}" title="Count:  {{tagCount.count}}" ng-bind="tagCount.key"></a>
+    <a ng-click="addTagFilter(tagCount.key, tagCount.keyTranslated)" class="tag" ng-repeat="tagCount in data" rel="{{tagCount.count}}" title="Count:  {{tagCount.count}}" ng-bind="tagCount.key" ng-show="!options.showTranslation"></a>
+    <a ng-click="addTagFilter(tagCount.key, tagCount.keyTranslated)" class="tag" ng-repeat="tagCount in data" rel="{{tagCount.count}}" title="Count:  {{tagCount.count}}" ng-bind="tagCount.keyTranslated" ng-show="options.showTranslation"></a>
 </div>
