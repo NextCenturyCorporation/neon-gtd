@@ -32,7 +32,8 @@ angular.module("neonDemo.services")
                 key: "key",
                 from: "source",
                 to: "target",
-                text: "q"
+                text: "q",
+                other: ["format=text"]
             },
             languages: {}
         }
@@ -112,8 +113,12 @@ angular.module("neonDemo.services")
 
                 var params = apis[chosenApi].params.key + "=" + apis[chosenApi].key;
 
+                apis[chosenApi].params.other.forEach(function(param) {
+                    params += "&" + param;
+                });
+
                 text.forEach(function(elem) {
-                    params += "&" + apis[chosenApi].params.text + "=" + encodeURI(elem);
+                    params += "&" + apis[chosenApi].params.text + "=" + encodeURIComponent(elem);
                 });
 
                 if(!to || !apis[chosenApi].languages[to]) {

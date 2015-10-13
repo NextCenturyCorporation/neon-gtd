@@ -16,6 +16,7 @@
                 ng-required="true">
             </select>
         </div>
+        <ng-transclude></ng-transclude>
         <input class="translate-checkbox" type="checkbox" ng-model="showTranslation"
             ng-change="onTranslate(showTranslation, fromLanguageField, toLanguageField)"
             ng-value="true" ng-disabled="!toLanguageField || disableTranslate">

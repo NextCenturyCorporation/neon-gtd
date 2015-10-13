@@ -20,6 +20,7 @@ angular.module('neonDemo.directives')
     return {
         templateUrl: 'partials/directives/translationOptions.html',
         restrict: 'EA',
+        transclude: true,
         scope: {
             onTranslate: "=",
             fromLanguageChange: "=",
