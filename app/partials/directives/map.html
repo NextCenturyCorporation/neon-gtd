@@ -112,26 +112,26 @@
                     <div class="layer-options-row" ng-show="(options.newLayer.type == 'node')">
                         <div class="form-group layer-options-col">
                             <label>Point Color Field</label>
-                            <select class="form-control" ng-model="options.newLayer.pointColor" ng-options="field.prettyName for field in fields" ng-required="false" ng-disabled="!(fields.length > 0)">
+                            <select class="form-control" ng-model="options.newLayer.nodeColorBy" ng-options="field.prettyName for field in fields" ng-required="false" ng-disabled="!(fields.length > 0)">
                                 <option value="">None</option>
                             </select>
                         </div>
 
                         <div class="form-group layer-options-col">
                             <label>Line Color Field</label>
-                            <select class="form-control" ng-model="options.newLayer.lineColor" ng-options="field.prettyName for field in fields" ng-required="false" ng-disabled="!(fields.length > 0)">
+                            <select class="form-control" ng-model="options.newLayer.lineColorBy" ng-options="field.prettyName for field in fields" ng-required="false" ng-disabled="!(fields.length > 0)">
                                 <option value="">None</option>
                             </select>
                         </div>
 
                         <div class="form-group layer-options-col">
                             <label>Point Color Code</label>
-                            <input type="text" class="form-control" placeholder="None" ng-model="options.newLayer.nodeColorCode" ng-required="false"/>
+                            <input type="text" class="form-control" placeholder="None" ng-model="options.newLayer.nodeDefaultColor" ng-required="false"/>
                         </div>
 
                         <div class="form-group layer-options-col">
                             <label>Line Color Code</label>
-                            <input type="text" class="form-control" placeholder="None" ng-model="options.newLayer.lineColorCode" ng-required="false"/>
+                            <input type="text" class="form-control" placeholder="None" ng-model="options.newLayer.lineDefaultColor" ng-required="false"/>
                         </div>
                     </div>
 
@@ -258,26 +258,26 @@
 
                                 <div class="form-group layer-options-col">
                                     <label>Point Color Field</label>
-                                    <select class="form-control" ng-cancel-drag ng-model="layer.pointColor" ng-options="field.prettyName for field in layer.fields" ng-required="false" ng-disabled="!(layer.fields.length > 0)">
+                                    <select class="form-control" ng-cancel-drag ng-model="layer.nodeColorField" ng-options="field.prettyName for field in layer.fields" ng-required="false" ng-disabled="!(layer.fields.length > 0)">
                                         <option value="">None</option>
                                     </select>
                                 </div>
 
                                 <div class="form-group layer-options-col">
                                     <label>Line Color Field</label>
-                                    <select class="form-control" ng-cancel-drag ng-model="layer.lineColor" ng-options="field.prettyName for field in layer.fields" ng-required="false" ng-disabled="!(layer.fields.length > 0)">
+                                    <select class="form-control" ng-cancel-drag ng-model="layer.lineColorField" ng-options="field.prettyName for field in layer.fields" ng-required="false" ng-disabled="!(layer.fields.length > 0)">
                                         <option value="">None</option>
                                     </select>
                                 </div>
 
                                 <div class="form-group layer-options-col">
                                     <label>Point Color Code</label>
-                                    <input type="text" class="form-control" placeholder="{{layer.nodeColorCode || 'None'}}" ng-cancel-drag ng-model="layer.nodeColorCode" ng-required="false"/>
+                                    <input type="text" class="form-control" placeholder="{{layer.nodeDefaultColor || 'None'}}" ng-cancel-drag ng-model="layer.nodeDefaultColor" ng-required="false"/>
                                 </div>
 
                                 <div class="form-group layer-options-col">
                                     <label>Line Color Code</label>
-                                    <input type="text" class="form-control" placeholder="{{layer.lineColorCode || 'None'}}" ng-cancel-drag ng-model="layer.lineColorCode" ng-required="false"/>
+                                    <input type="text" class="form-control" placeholder="{{layer.lineDefaultColor || 'None'}}" ng-cancel-drag ng-model="layer.lineDefaultColor" ng-required="false"/>
                                 </div>
                             </div>
 

@@ -23,7 +23,7 @@ coreMap.Map.Layer.NodeLayer = OpenLayers.Class(OpenLayers.Layer.Vector, {
     edges: [],
     dateMapping: '',
     latitudeMapping: '',
-    lineColor: '',
+    lineDefaultColor: '',
     lineColors: {},
     lineWidthDiff: 0,
     longitudeMapping: '',
@@ -33,7 +33,7 @@ coreMap.Map.Layer.NodeLayer = OpenLayers.Class(OpenLayers.Layer.Vector, {
     minNodeRadius: 0,
     maxLineWidth: 0,
     minLineWidth: 0,
-    nodeColor: '',
+    nodeDefaultColor: '',
     nodeColors: {},
     nodeRadiusDiff: 0,
     weightMapping: '',
@@ -61,31 +61,12 @@ coreMap.Map.Layer.NodeLayer = OpenLayers.Class(OpenLayers.Layer.Vector, {
         var args = [name, extendOptions];
         OpenLayers.Layer.Vector.prototype.initialize.apply(this, args);
 
-        this.colorRange = [
-            '#39b54a',
-            '#C23333',
-            '#3662CC',
-            "#ff7f0e",
-            "#9467bd",
-            "#8c564b",
-            "#e377c2",
-            "#7f7f7f",
-            "#bcbd22",
-            "#17becf",
-            "#98df8a",
-            "#ff9896",
-            "#aec7e8",
-            "#ffbb78",
-            "#c5b0d5",
-            "#c49c94",
-            "#f7b6d2",
-            "#c7c7c7",
-            "#dbdb8d",
-            "#9edae5"
-        ];
+        this.nodeColors = this.options.nodeColors || {};
+        this.lineColors = this.options.lineColors || {};
+
         this.dateFilterStrategy.deactivate();
         this.visibility = true;
-        this.colorScale = d3.scale.ordinal().range(this.colorRange);
+        this.colorScale = d3.scale.ordinal().range(neonColors.LIST);
     },
 
     createNodeStyleMap: function() {
@@ -168,7 +149,7 @@ coreMap.Map.Layer.NodeLayer.prototype.createNodeStyleObject = function(nodeMappi
         color = this.colorScale(nodeMappingElement);
     } else {
         nodeMappingElement = '(Uncategorized)';
-        color = this.nodeColor || coreMap.Map.Layer.NodeLayer.DEFAULT_COLOR;
+        color = this.nodeDefaultColor || coreMap.Map.Layer.NodeLayer.DEFAULT_COLOR;
     }
 
     // store the color in the registry so we know the color/category mappings
@@ -201,7 +182,7 @@ coreMap.Map.Layer.NodeLayer.prototype.createLineStyleObject = function(lineMappi
         color = this.colorScale(lineMappingElement);
     } else {
         lineMappingElement = '(Uncategorized)';
-        color = this.lineColor || coreMap.Map.Layer.NodeLayer.DEFAULT_LINE_COLOR;
+        color = this.lineDefaultColor || coreMap.Map.Layer.NodeLayer.DEFAULT_LINE_COLOR;
     }
 
     // store the color in the registry so we know the color/category mappings
@@ -242,7 +223,7 @@ coreMap.Map.Layer.NodeLayer.prototype.createArrowStyleObject = function(lineMapp
         color = this.colorScale(lineMappingElement);
     } else {
         lineMappingElement = '(Uncategorized)';
-        color = this.lineColor || coreMap.Map.Layer.NodeLayer.DEFAULT_LINE_COLOR;
+        color = this.lineDefaultColor || coreMap.Map.Layer.NodeLayer.DEFAULT_LINE_COLOR;
     }
 
     // store the color in the registry so we know the color/category mappings
@@ -479,17 +460,18 @@ coreMap.Map.Layer.NodeLayer.prototype.updateFeatures = function() {
             arrows.push(arrow);
         }
 
-        var nodeMappingElement = me.getValueFromDataElement(me.nodeMapping, element);
-
         // Add the nodes to the node list if necesary.
+        var nodeMappingElement;
         key = pt1 + date;
         if(!nodes[key]) {
+            nodeMappingElement = me.getValueFromDataElement(me.nodeMapping, src);
             nodes[key] = me.createNode(src, nodeMappingElement);
             nodes[key].attributes[dateMapping] = date;
         }
 
         key = pt2 + date;
         if(!nodes[key]) {
+            nodeMappingElement = me.getValueFromDataElement(me.nodeMapping, tgt);
             nodes[key] = me.createNode(tgt, nodeMappingElement);
             nodes[key].attributes[dateMapping] = date;
         }

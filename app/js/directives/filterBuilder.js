@@ -280,7 +280,7 @@ angular.module('neonDemo.directives')
                     row: filterRow
                 }];
 
-                var relations = datasetService.getRelations(database.name, table.name, [$scope.selectedField.columnName]);
+                var relations = DatasetService.getRelations(database.name, table.name, [$scope.selectedField.columnName]);
                 relations.forEach(function(relation) {
                     if(relation.database !== database.name || relation.table !== table.name) {
                         var relationInfo = findRelationInfo(relation);
@@ -290,7 +290,7 @@ angular.module('neonDemo.directives')
                                     return databaseField.columnName === relationField;
                                 });
                                 var relationFilterRow = new neon.query.FilterRow(relationInfo.databaseObject, relationInfo.tableObject, relationFieldObject, $scope.selectedOperator, $scope.selectedValue, relationInfo.tableObjects, relationInfo.databaseFields);
-                                relationFilterRow.isDate = datasetService.hasDataset() && relationField === datasetService.getMapping(relation.database, relation.table, "date");
+                                relationFilterRow.isDate = DatasetService.hasDataset() && relationField === DatasetService.getMapping(relation.database, relation.table, "date");
                                 rows.push({
                                     database: relationInfo.databaseObject.name,
                                     table: relationInfo.tableObject.name,

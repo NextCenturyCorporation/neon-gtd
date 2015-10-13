@@ -102,10 +102,10 @@ angular.module('neonDemo.directives')
                     size: "",
                     source: "",
                     target: "",
-                    pointColor: "",
-                    lineColor: "",
-                    pointColorCode: "",
-                    lineColorCode: "",
+                    nodeColorBy: "",
+                    lineColorBy: "",
+                    nodeDefaultColor: "",
+                    lineDefaultColor: "",
                     limit: $scope.DEFAULT_LIMIT,
                     type: $scope.DEFAULT_NEW_LAYER_TYPE
                 }
@@ -539,6 +539,8 @@ angular.module('neonDemo.directives')
                 layer.colorField = findField(layer.fields, layer.colorBy);
                 layer.sourceField = findField(layer.fields, layer.sourceMapping);
                 layer.targetField = findField(layer.fields, layer.targetMapping);
+                layer.nodeColorField = findField(layer.fields, layer.nodeColorBy);
+                layer.lineColorField = findField(layer.fields, layer.lineColorBy);
 
                 return layer;
             };
@@ -609,8 +611,8 @@ angular.module('neonDemo.directives')
                 $scope.fields = datasetService.getSortedFields($scope.options.newLayer.database.name, $scope.options.newLayer.table.name);
                 $scope.options.newLayer.source = $scope.fields[0];
                 $scope.options.newLayer.target = $scope.fields[0];
-                $scope.options.newLayer.pointColorCode = "";
-                $scope.options.newLayer.lineColorCode = "";
+                $scope.options.newLayer.nodeDefaultColor = "";
+                $scope.options.newLayer.lineDefaultColor = "";
                 $scope.options.newLayer.colorCode = "";
 
                 var latitude = datasetService.getMapping($scope.options.newLayer.database.name, $scope.options.newLayer.table.name, "latitude") || "";
@@ -641,16 +643,16 @@ angular.module('neonDemo.directives')
                     columnName: "",
                     prettyName: ""
                 };
-                var pointColor = datasetService.getMapping($scope.options.newLayer.database.name, $scope.options.newLayer.table.name, "pointColorBy") || "";
-                $scope.options.newLayer.pointColor = _.find($scope.fields, function(field) {
-                    return field.columnName === pointColor;
+                var nodeColorBy = datasetService.getMapping($scope.options.newLayer.database.name, $scope.options.newLayer.table.name, "nodeColorBy") || "";
+                $scope.options.newLayer.nodeColorBy = _.find($scope.fields, function(field) {
+                    return field.columnName === nodeColorBy;
                 }) || {
                     columnName: "",
                     prettyName: ""
                 };
-                var lineColor = datasetService.getMapping($scope.options.newLayer.database.name, $scope.options.newLayer.table.name, "lineColorBy") || "";
-                $scope.options.newLayer.lineColor = _.find($scope.fields, function(field) {
-                    return field.columnName === lineColor;
+                var lineColorBy = datasetService.getMapping($scope.options.newLayer.database.name, $scope.options.newLayer.table.name, "lineColorBy") || "";
+                $scope.options.newLayer.lineColorBy = _.find($scope.fields, function(field) {
+                    return field.columnName === lineColorBy;
                 }) || {
                     columnName: "",
                     prettyName: ""
@@ -1327,6 +1329,8 @@ angular.module('neonDemo.directives')
                 layer.weightMapping = layer.sizeField ? layer.sizeField.columnName : "";
                 layer.sourceMapping = layer.sourceField.columnName;
                 layer.targetMapping = layer.targetField.columnName;
+                layer.nodeColorBy = layer.nodeColorField.columnName;
+                layer.lineColorBy = layer.lineColorField.columnName;
                 return layer;
             };
 
@@ -1439,8 +1443,8 @@ angular.module('neonDemo.directives')
                         dateMapping: mappings.date,
                         nodeMapping: layer.nodeColorBy,
                         lineMapping: layer.lineColorBy,
-                        nodeColor: layer.nodeColor,
-                        lineColor: layer.lineColor
+                        nodeDefaultColor: layer.nodeDefaultColor,
+                        lineDefaultColor: layer.lineDefaultColor
                     });
                     $scope.map.addLayer(layer.olLayer);
                 }
@@ -1507,10 +1511,12 @@ angular.module('neonDemo.directives')
                     sourceMapping: $scope.options.newLayer.source.columnName,
                     targetField: $scope.options.newLayer.target,
                     targetMapping: $scope.options.newLayer.target.columnName,
-                    nodeColor: $scope.options.newLayer.nodeColor,
-                    lineColor: $scope.options.newLayer.lineColor,
-                    nodeColorCode: $scope.options.newLayer.pointColorCode,
-                    lineColorCode: $scope.options.newLayer.lineColorCode,
+                    nodeColorField: $scope.options.newLayer.nodeColorBy,
+                    nodeColorBy: $scope.options.newLayer.nodeColorBy.columnName,
+                    lineColorField: $scope.options.newLayer.lineColorBy,
+                    lineColorBy: $scope.options.newLayer.lineColorBy.columnName,
+                    nodeDefaultColor: $scope.options.newLayer.nodeDefaultColor,
+                    lineDefaultColor: $scope.options.newLayer.lineDefaultColor,
                     active: $scope.options.newLayer.active,
                     visible: $scope.options.newLayer.visible,
                     valid: true,
