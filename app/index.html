@@ -106,11 +106,9 @@
 
                     <!-- Add visualization control -->
                     <div add-visualization gridster-configs="visualizations" ng-show="!hideNavbarItems && !hideAddVisualizationsButton"></div>
-                </div>
 
-                <!-- FILTER STATUS TRAY -->
-                <div class="container" ng-show="showFilterStatusTray">
-                    <filter-tray bound-parent="'nav.navbar'" include-parent-height="!hideNavbarItems"></filter-tray>
+                    <!-- FILTER STATUS TRAY -->
+                    <div filter-tray bound-parent="'nav.navbar'" include-parent-height="!hideNavbarItems" ng-show="showFilterStatusTray" class="pull-right"></div>
                 </div>
             </div>
         </nav>

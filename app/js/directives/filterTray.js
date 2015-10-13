@@ -37,7 +37,7 @@ angular.module('neonDemo.directives')
 
                 $scope.filters = {
                     raw: [],
-                    formatted: {}
+                    formatted: []
                 };
 
                 $scope.messenger.events({
@@ -48,10 +48,6 @@ angular.module('neonDemo.directives')
                 $scope.$on('$destroy', function() {
                     $scope.messenger.removeEvents();
                 });
-
-                $scope.$watch('filters.formatted', function() {
-                    $timeout(updateContainerHeight, 0);
-                }, true);
 
                 //FIXME needs promise with timeout to not fire a bunch of times
                 //$(window).resize(updateContainerHeight);
@@ -89,17 +85,6 @@ angular.module('neonDemo.directives')
                 $scope.$apply(function() {
                     $scope.filters.formatted = filters;
                 });
-            };
-
-            //calculate normal height of navbar (min-height) and add the size of the filter tray.
-            var updateContainerHeight = function() {
-                var height = $(el).parent().height();
-                var minHeight = 0;
-                if($scope.includeParentHeight) {
-                    minHeight = parseInt($scope.container.css("min-height"), 10);
-                }
-                var newHeight = minHeight + height;
-                $scope.container.height(newHeight);
             };
 
             var formatFilters = function(filters) {
