@@ -153,8 +153,10 @@ angular.module('neonDemo.directives')
              * @method initialize
              */
             $scope.initialize = function() {
+                var datasetOptions = datasetService.getActiveDatasetOptions();
                 $scope.map = new coreMap.Map($scope.mapId, {
-                    responsive: false
+                    responsive: false,
+                    mapBaseLayer: (datasetOptions ? datasetOptions.mapBaseLayer : undefined)
                 });
                 $scope.draw();
                 $scope.map.register("movestart", this, onMapEvent);
