@@ -70,16 +70,9 @@ angular.module('neonDemo.directives')
 
                 // Set the link data for the links popup using the source and key from the triggering button.
                 var button = $(event.relatedTarget);
-                var source = button.data("links-source");
-                var key = button.data("links-key");
-                var json = button.data("links-json-override");
+                var json = button.data("links-json");
                 $scope.$apply(function() {
-                    if(json || (source && key)) {
-                        popups.links.setView(json || [{
-                            source: source,
-                            key: key
-                        }]);
-                    }
+                    popups.links.setView(json || []);
                 });
             };
 
@@ -203,33 +196,18 @@ angular.module('neonDemo.directives')
             };
 
             /**
-             * The template for a link element that triggers the links popup used in the linksPopup and linksPopupButton directives.
-             */
-            popups.links.ENABLED_TEMPLATE = "<a data-toggle='modal' data-target='.links-popup' data-links-key='{{key}}' data-links-source='{{source}}' data-links-json-override='{{json}}'" +
-                "class='collapsed dropdown-toggle primary neon-popup-button' title='Open {{tooltip}} in another application...'>" +
-                "<span class='glyphicon glyphicon-link'></span></a>";
-
-            /**
-             * The template for a disabled link element used in the linksPopup and linksPopupButton directives.
-             */
-            popups.links.DISABLED_TEMPLATE = "<a class='disabled' title='No other applications available for {{tooltip}}' disabled>" +
-                "<span class='glyphicon glyphicon-link'></span></a>";
-
-            /**
-             * Creates and returns the HTML for a link using the given key, source, and tooltip.
-             * @param {Number} key
+             * Creates and returns the HTML for a link using the given source, key, and tooltip.
              * @param {String} source
+             * @param {String} key
              * @param {String} tooltip
              * @method createLinkHtml
              * @return {String}
              */
-            popups.links.createLinkHtml = function(key, source, tooltip) {
-                return Mustache.render(popups.links.ENABLED_TEMPLATE, {
-                    key: key,
+            popups.links.createLinkHtml = function(source, key, tooltip) {
+                return popups.links.createLinkHtmlFromList([{
                     source: source,
-                    tooltip: tooltip,
-                    json: ""
-                });
+                    key: key
+                }]);
             };
 
             /**
@@ -241,20 +219,32 @@ angular.module('neonDemo.directives')
              */
             popups.links.createLinkHtmlFromList = function(list, tooltip) {
                 return Mustache.render(popups.links.ENABLED_TEMPLATE, {
-                    key: "",
-                    source: "",
                     tooltip: tooltip,
-                    json: popups.links.createJsonOverrideFromList(list)
+                    json: popups.links.createButtonJsonFromList(list)
                 });
+            };
+
+            /**
+             * Creates and returns the JSON string for a button that opens the links popup using the given source and key.
+             * @param {String} source
+             * @param {String} key
+             * @method createButtonJson
+             * @return {String}
+             */
+            popups.links.createButtonJson = function(source, key) {
+                return popups.links.createButtonJsonFromList([{
+                    source: source,
+                    key: key
+                }]);
             };
 
             /**
              * Creates and returns the JSON string for a button that opens the links popup using the sources and keys in the given list.
              * @param {Array} list A list of {Object} objects containing {String} source and {String} key
-             * @method createJsonOverrideFromList
+             * @method createButtonJsonFromList
              * @return {String}
              */
-            popups.links.createJsonOverrideFromList = function(list) {
+            popups.links.createButtonJsonFromList = function(list) {
                 var json = [];
                 list.forEach(function(item) {
                     if(item.source && item.key) {
@@ -370,6 +360,19 @@ angular.module('neonDemo.directives')
             popups.links.generateRangeKey = function(start, end) {
                 return start + " to " + end;
             };
+
+            /**
+             * The template for a link element that triggers the links popup used in the linksPopup and linksPopupButton directives.
+             */
+            popups.links.ENABLED_TEMPLATE = "<a data-toggle='modal' data-target='.links-popup' data-links-json='{{json}}'" +
+                "class='collapsed dropdown-toggle primary neon-popup-button' title='Open {{tooltip}} in another application...'>" +
+                "<span class='glyphicon glyphicon-link'></span></a>";
+
+            /**
+             * The template for a disabled link element used in the linksPopup and linksPopupButton directives.
+             */
+            popups.links.DISABLED_TEMPLATE = "<a class='disabled' title='No other applications available for {{tooltip}}' disabled>" +
+                "<span class='glyphicon glyphicon-link'></span></a>";
         }
     };
 }]);

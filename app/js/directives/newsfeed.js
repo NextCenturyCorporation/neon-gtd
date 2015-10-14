@@ -516,7 +516,7 @@ function(external, popups, connectionService, datasetService, errorNotificationS
                         key: name
                     });
                 }
-                return popups.links.createJsonOverrideFromList(list);
+                return popups.links.createButtonJsonFromList(list);
             };
 
             /**

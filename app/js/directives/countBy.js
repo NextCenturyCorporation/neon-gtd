@@ -513,7 +513,7 @@ function(external, popups, connectionService, datasetService, errorNotificationS
                     var field = $scope.options.field.columnName;
                     var value = row[field];
                     tableLinks[value] = popups.links.createAllServiceLinkObjects(external.services, mappings, field, value);
-                    row[$scope.EXTERNAL_APP_FIELD_NAME] = tableLinks[value].length ? popups.links.createLinkHtml(value, $scope.tableId, value) : popups.links.createDisabledLinkHtml(value);
+                    row[$scope.EXTERNAL_APP_FIELD_NAME] = tableLinks[value].length ? popups.links.createLinkHtml($scope.tableId, value, value) : popups.links.createDisabledLinkHtml(value);
                 });
 
                 // Set the link data for the links popup for this visualization.

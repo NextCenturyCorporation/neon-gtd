@@ -25,10 +25,11 @@ angular.module('neonDemo.directives')
             key: '@',
             source: '@',
             tooltip: '@',
-            json: '@',
+            json: '@?',
             disable: '@?'
         },
         link: function($scope) {
+            $scope.json = $scope.json || popups.links.createButtonJson($scope.source, $scope.key);
             $scope.enabled = $scope.disable === undefined || $scope.disable === "false" || $scope.disable === "0" || $scope.disable === "";
         }
     };
