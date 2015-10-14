@@ -46,6 +46,12 @@ angular.module('neonDemo.services')
     var BOUNDS_MIN_LAT = 2;
     var BOUNDS_MAX_LAT = 3;
 
+    /**
+     * Removes the filters with the given keys if they were added by the parameter service.
+     * @param {Array} filterKeys
+     * @method onRequestRemoveFilter
+     * @private
+     */
     var onRequestRemoveFilter = function(filterKeys) {
         if(filterKeys.length && filterKeys[0].indexOf(service.FILTER_KEY_PREFIX) === 0) {
             filterService.removeFilters(service.messenger, filterKeys);
@@ -154,7 +160,7 @@ angular.module('neonDemo.services')
      */
     var addFiltersForDashboardParameters = function(parameters, argsList) {
         var args = argsList.shift();
-        var parameterValue = args.cleanParameter(parameters[args.parameterKey]);
+        var parameterValue = args.cleanParameter(parameters[args.parameterKey], args.operator);
         var dataWithMappings = datasetService.getFirstDatabaseAndTableWithMappings(args.mappings);
         var callNextFunction = function() {
             if(argsList.length) {
@@ -174,8 +180,16 @@ angular.module('neonDemo.services')
         }
     };
 
-    var cleanValue = function(value) {
-        if($.isNumeric(value) && args.operator !== "contains") {
+    /**
+     * Cleans the given value and returns it as a number or string based on its type and the given operator.
+     * @param {String} value
+     * @param {String} operator
+     * @method cleanValue
+     * @private
+     * @return {Number} or {String}
+     */
+    var cleanValue = function(value, operator) {
+        if($.isNumeric(value) && operator !== "contains") {
             value = parseFloat(value);
         } else if(value && ((value.charAt(0) === '"' && value.charAt(value.length - 1) === '"') || (value.charAt(0) === "'" && value.charAt(value.length - 1) === "'"))) {
             value = value.substring(1, value.length - 1);
@@ -183,10 +197,24 @@ angular.module('neonDemo.services')
         return value;
     };
 
+    /**
+     * Splits the given array string and returns the result.
+     * @param {String} array
+     * @method splitArray
+     * @private
+     * @return {Array}
+     */
     var splitArray = function(array) {
         return array ? array.split(",") : [];
     };
 
+    /**
+     * Returns whether date strings in the given array create valid date objects.
+     * @param {Array} array
+     * @method areDatesValid
+     * @private
+     * @return {Boolean}
+     */
     var areDatesValid = function(array) {
         var notValid = false;
         array.forEach(function(dateString) {
@@ -198,20 +226,50 @@ angular.module('neonDemo.services')
         return !notValid && array.length;
     };
 
+    /**
+     * Returns whether the given parameter exists.
+     * @param {Object} parameter
+     * @method doesParameterExist
+     * @private
+     * @return {Object}
+     */
     var doesParameterExist = function(parameter) {
         return parameter;
     };
 
+    /**
+     * Returns whether the given array is big enough to contain geographic bounds.
+     * @param {Array} array
+     * @method hasBounds
+     * @private
+     * @return {Boolean}
+     */
     var hasBounds = function(array) {
         return array.length === 4;
     };
 
+    /**
+     * Returns whether the given dataset is valid and contains all of the given mappings.
+     * @param {Object} dataset
+     * @param {Array} mappings
+     * @method isDatasetValid
+     * @private
+     * @return {Boolean}
+     */
     var isDatasetValid = function(dataset, mappings) {
         return dataset.database && dataset.table && dataset.fields && mappings.every(function(mapping) {
             return dataset.fields[mapping];
         });
     };
 
+    /**
+     * Returns the array of fields in the given dataset for the given mappings.
+     * @param {Object} dataset
+     * @param {Array} mappings
+     * @method findFieldsForMappings
+     * @private
+     * @return {Array}
+     */
     var findFieldsForMappings = function(dataset, mappings) {
         var fields = [];
         mappings.forEach(function(mapping) {
@@ -220,12 +278,28 @@ angular.module('neonDemo.services')
         return fields;
     };
 
-    var createSimpleFilterClauseCallback = function(operator, text) {
+    /**
+     * Returns a function to create a filter clause using the given operator and value.
+     * @param {String} operator
+     * @param {Number} or {String} value
+     * @method createSimpleFilterClauseCallback
+     * @private
+     * @return {Function}
+     */
+    var createSimpleFilterClauseCallback = function(operator, value) {
         return function(databaseAndTableName, fieldName) {
-            return neon.query.where(fieldName, operator, text);
+            return neon.query.where(fieldName, operator, value);
         };
     };
 
+    /**
+     * Returns a function to create a date filter clause using the given operator and list of dates.
+     * @param {String} operator
+     * @param {Array} dateList
+     * @method createDateFilterClauseCallback
+     * @private
+     * @return {Function}
+     */
     var createDateFilterClauseCallback = function(operator, dateList) {
         var startDate = dateList[0];
         var endDate = dateList.length > 1 ? dateList[1] : null;
@@ -240,11 +314,19 @@ angular.module('neonDemo.services')
         };
     };
 
-    var createBoundsFilterClauseCallback = function(operator, geographicBounds) {
-        var minimumLongitude = Number(geographicBounds[BOUNDS_MIN_LON]);
-        var maximumLongitude = Number(geographicBounds[BOUNDS_MAX_LON]);
-        var minimumLatitude = Number(geographicBounds[BOUNDS_MIN_LAT]);
-        var maximumLatitude = Number(geographicBounds[BOUNDS_MAX_LAT]);
+    /**
+     * Returns a function to create a geographic bounds filter clause using the given operator and list of geographic bounds.
+     * @param {String} operator
+     * @param {Array} boundsList
+     * @method createBoundsFilterClauseCallback
+     * @private
+     * @return {Function}
+     */
+    var createBoundsFilterClauseCallback = function(operator, boundsList) {
+        var minimumLongitude = Number(boundsList[BOUNDS_MIN_LON]);
+        var maximumLongitude = Number(boundsList[BOUNDS_MAX_LON]);
+        var minimumLatitude = Number(boundsList[BOUNDS_MIN_LAT]);
+        var maximumLatitude = Number(boundsList[BOUNDS_MAX_LAT]);
 
         return function(databaseAndTableName, fieldNames) {
             // Copied from map.js
