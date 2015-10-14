@@ -302,6 +302,8 @@ angular.element(document).ready(function() {
                 removeLinksAtIndex: function() {},
                 deleteData: function() {},
                 createLinkHtml: function() {},
+                createLinkHtmlFromList: function() {},
+                createJsonOverrideFromList: function() {},
                 createDisabledLinkHtml: function() {},
                 createPointKey: function() {}
             }

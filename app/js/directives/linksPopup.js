@@ -27,7 +27,9 @@ angular.module('neonDemo.directives')
             $scope.cleanedData = {};
 
             // The links currently displayed in the popup.
-            $scope.links = [];
+            $scope.links = {};
+
+            $scope.linksCount = 0;
 
             $scope.logLinkEvent = function(name) {
                 XDATA.userALE.log({
@@ -66,12 +68,18 @@ angular.module('neonDemo.directives')
                     tags: ["external", "link"]
                 });
 
-                // Set the link data for the links popup using the source and key from the triggering element.
-                var element = $(event.relatedTarget);
-                var source = element.data("links-source");
-                var key = element.data("links-key");
+                // Set the link data for the links popup using the source and key from the triggering button.
+                var button = $(event.relatedTarget);
+                var source = button.data("links-source");
+                var key = button.data("links-key");
+                var json = button.data("links-json-override");
                 $scope.$apply(function() {
-                    popups.links.setView(source, key);
+                    if(json || (source && key)) {
+                        popups.links.setView(json || [{
+                            source: source,
+                            key: key
+                        }]);
+                    }
                 });
             };
 
@@ -145,15 +153,16 @@ angular.module('neonDemo.directives')
             };
 
             /**
-             * Sets the view of the links popup to the link data for the given source at the given key.
-             * @param {String} source
-             * @param {String} key
+             * Sets the view of the links popup to the link data for the given sources at the given keys.
+             * @param {Array} list A list of objects containing {String} source and {String} key
              * @method setView
              */
-            popups.links.setView = function(source, key) {
-                if($scope.cleanedData[source] && $scope.cleanedData[source][key]) {
-                    $scope.links = $scope.cleanedData[source][key];
-                }
+            popups.links.setView = function(list) {
+                $scope.links = {};
+                list.forEach(function(object) {
+                    $scope.links[object.key] = ($scope.cleanedData[object.source] ? $scope.cleanedData[object.source][object.key] : []) || [];
+                });
+                $scope.linksCount = Object.keys($scope.links).length;
             };
 
             /**
@@ -196,7 +205,7 @@ angular.module('neonDemo.directives')
             /**
              * The template for a link element that triggers the links popup used in the linksPopup and linksPopupButton directives.
              */
-            popups.links.ENABLED_TEMPLATE = "<a data-toggle='modal' data-target='.links-popup' data-links-key='{{key}}' data-links-source='{{source}}'" +
+            popups.links.ENABLED_TEMPLATE = "<a data-toggle='modal' data-target='.links-popup' data-links-key='{{key}}' data-links-source='{{source}}' data-links-json-override='{{json}}'" +
                 "class='collapsed dropdown-toggle primary neon-popup-button' title='Open {{tooltip}} in another application...'>" +
                 "<span class='glyphicon glyphicon-link'></span></a>";
 
@@ -218,8 +227,41 @@ angular.module('neonDemo.directives')
                 return Mustache.render(popups.links.ENABLED_TEMPLATE, {
                     key: key,
                     source: source,
-                    tooltip: tooltip
+                    tooltip: tooltip,
+                    json: ""
                 });
+            };
+
+            /**
+             * Creates and returns the HTML for a link using the given tooltip and the sources and keys in the given list.
+             * @param {Array} list A list of {Object} objects containing {String} source and {String} key
+             * @param {String} tooltip
+             * @method createLinkHtmlFromList
+             * @return {String}
+             */
+            popups.links.createLinkHtmlFromList = function(list, tooltip) {
+                return Mustache.render(popups.links.ENABLED_TEMPLATE, {
+                    key: "",
+                    source: "",
+                    tooltip: tooltip,
+                    json: popups.links.createJsonOverrideFromList(list)
+                });
+            };
+
+            /**
+             * Creates and returns the JSON string for a button that opens the links popup using the sources and keys in the given list.
+             * @param {Array} list A list of {Object} objects containing {String} source and {String} key
+             * @method createJsonOverrideFromList
+             * @return {String}
+             */
+            popups.links.createJsonOverrideFromList = function(list) {
+                var json = [];
+                list.forEach(function(item) {
+                    if(item.source && item.key) {
+                        json.push("{\"source\":\"" + item.source + "\",\"key\":\"" + item.key + "\"}");
+                    }
+                });
+                return "[" + json.join(",") + "]";
             };
 
             /**

@@ -25,11 +25,11 @@ angular.module('neonDemo.directives')
             key: '@',
             source: '@',
             tooltip: '@',
-            disabled: '=?'
+            json: '@',
+            disable: '@?'
         },
         link: function($scope) {
-            // If disabled is undefined, set enabled to true by default.
-            $scope.enabled = !$scope.disabled;
+            $scope.enabled = $scope.disable === undefined || $scope.disable === "false" || $scope.disable === "0" || $scope.disable === "";
         }
     };
 }]);

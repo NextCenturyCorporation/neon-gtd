@@ -88,8 +88,11 @@
 	<div class="item" ng-class="getNewsItemStyleClass(item)" ng-repeat='item in data.news'>
         <div>
             <img class="image" src="img/Twitter.png" ng-if="feedType == 'TWITTER'">
-            <span class="head" ng-if="item.head != undefined" ng-bind="item.head"></span>
-            <span class="name" ng-if="item.name != undefined" ng-bind="item.name"></span>
+            <span ng-class="{true: 'vertical-align', false: ''}[feedType == 'TWITTER']">
+                <span class="head" ng-if="item.head != undefined" ng-bind="item.head"></span>
+                <span class="name" ng-if="item.name != undefined" ng-bind="item.name"></span>
+                <links-popup-button key="" source="" tooltip="{{item.head}} or {{item.name}}" json="{{item.linksPopupButtonJson}}" disable="{{item.linksPopupButtonDisabled}}"></links-popup-button>
+            </span>
         </div>
         <div>
             <span class="date" ng-bind="item.date.toUTCString()"></span>

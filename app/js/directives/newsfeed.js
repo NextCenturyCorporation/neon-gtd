@@ -17,8 +17,8 @@
  */
 
 angular.module('neonDemo.directives')
-.directive('newsfeed', ['ConnectionService', 'DatasetService', 'ErrorNotificationService', 'TranslationService',
-function(connectionService, datasetService, errorNotificationService, translationService) {
+.directive('newsfeed', ['external', 'popups', 'ConnectionService', 'DatasetService', 'ErrorNotificationService', 'TranslationService',
+function(external, popups, connectionService, datasetService, errorNotificationService, translationService) {
     return {
         templateUrl: 'partials/directives/newsfeed.html',
         restrict: 'EA',
@@ -37,11 +37,14 @@ function(connectionService, datasetService, errorNotificationService, translatio
             $element.addClass('newsfeed-directive');
 
             $scope.element = $element;
+            $scope.visualizationId = "newsfeed-" + uuid();
 
             $scope.ASCENDING = neon.query.ASCENDING;
             $scope.DESCENDING = neon.query.DESCENDING;
 
             var DEFAULT_TYPE = "TWITTER";
+
+            // The default limit and the number of news items added to the feed whenever the user scrolls to the bottom of the feed.
             var LIMIT_INTERVAL = 100;
 
             // Prevents translation api calls from getting too long and returning an error
@@ -140,6 +143,8 @@ function(connectionService, datasetService, errorNotificationService, translatio
                 $element.find(".newsfeed").scroll(handleScroll);
 
                 $scope.$on('$destroy', function() {
+                    popups.links.deleteData($scope.visualizationId + "-head");
+                    popups.links.deleteData($scope.visualizationId + "-name");
                     $scope.messenger.removeEvents();
                     $element.off("resize", handleResize);
                     $element.find(".newsfeed").off("scroll", handleScroll);
@@ -194,11 +199,12 @@ function(connectionService, datasetService, errorNotificationService, translatio
              * @private
              */
             var handleScroll = function() {
-                // If the user has scrolled to the bottom, query for more news items and add them to the newsfeed.
+                // If the user has scrolled to the bottom, query for more news items and add them to the feed.
                 if(!$scope.loadingNews && !$scope.newsEventData && $element.find(".item") && $element.find(".item").last().position().top <= $element.height()) {
                     $scope.loadingNews = true;
                     $scope.options.limit = $scope.options.limit + LIMIT_INTERVAL;
                     queryForData(function(data) {
+                        // Only add the items to the feed that aren't there already.
                         updateData(data.slice($scope.options.limit - LIMIT_INTERVAL, $scope.options.limit));
                         $scope.loadingNews = false;
                     });
@@ -235,8 +241,8 @@ function(connectionService, datasetService, errorNotificationService, translatio
                     $scope.feedType = (message.type || $scope.feedType).toUpperCase();
                     $scope.newsEventData = true;
 
-                    if($scope.options.showTranslation && message.news.length) {
-                        translate();
+                    if(message.news.length) {
+                        $scope.refreshTranslation();
                     }
                 }
             };
@@ -359,6 +365,8 @@ function(connectionService, datasetService, errorNotificationService, translatio
              */
             var resetAndQueryForData = function() {
                 $scope.data.news = [];
+                popups.links.deleteData($scope.visualizationId + "-head");
+                popups.links.deleteData($scope.visualizationId + "-name");
                 queryForData(function(data, connection) {
                     updateData(data);
                     $scope.loadingData = false;
@@ -429,19 +437,118 @@ function(connectionService, datasetService, errorNotificationService, translatio
              * @private
              */
             var updateData = function(data) {
+                var mappings = datasetService.getMappings($scope.options.database.name, $scope.options.table.name);
+
                 data.forEach(function(item) {
+                    var head = datasetService.isFieldValid($scope.options.headField) ? item[$scope.options.headField.columnName] : "";
+                    var name = datasetService.isFieldValid($scope.options.nameField) ? item[$scope.options.nameField.columnName] : "";
+                    var hasLinks = createExternalLinksForNewsItemData(head, name, mappings);
+
                     $scope.data.news.push({
-                        head: datasetService.isFieldValid($scope.options.headField) ? item[$scope.options.headField.columnName] : "",
-                        name: datasetService.isFieldValid($scope.options.nameField) ? item[$scope.options.nameField.columnName] : "",
+                        head: head,
+                        name: name,
                         date: new Date(item[$scope.options.dateField.columnName]),
                         text: item[$scope.options.textField.columnName],
-                        textTranslated: item[$scope.options.textField.columnName]
+                        textTranslated: item[$scope.options.textField.columnName],
+                        linksPopupButtonJson: createLinksPopupButtonJson(head, name),
+                        linksPopupButtonDisabled: !hasLinks
                     });
                 });
 
-                if($scope.options.showTranslation) {
-                    translate();
+                $scope.refreshTranslation();
+            };
+
+            /**
+             * Creates the external links for the given news 'head' and 'name' properties using the given mappings and returns if any links were created.
+             * @param {String} head
+             * @param {String} name
+             * @param {Array} mappings
+             * @method createExternalLinksForNewsItemData
+             * @private
+             * @return {Boolean}
+             */
+            var createExternalLinksForNewsItemData = function(head, name, mappings) {
+                var headLinksCount = head ? createExternalLinks($scope.options.headField.columnName, head, mappings, $scope.visualizationId + "-head") : 0;
+                var nameLinksCount = name ? createExternalLinks($scope.options.nameField.columnName, name, mappings, $scope.visualizationId + "-name") : 0;
+                return headLinksCount || nameLinksCount;
+            };
+
+            /**
+             * Creates the external links for the given field and value using the given mappings, saves the links in the links popup using the given source, and
+             * returns the number of links that were created.
+             * @param {String} field
+             * @param {Number} or {String} value
+             * @param {Array} mappings
+             * @param {String} source
+             * @method createExternalLinks
+             * @private
+             * @return {Number}
+             */
+            var createExternalLinks = function(field, value, mappings, source) {
+                var links = [];
+
+                Object.keys(mappings).filter(function(mapping) {
+                    return mappings[mapping] === field;
+                }).forEach(function(mapping) {
+                    if(external.services[mapping]) {
+                        Object.keys(external.services[mapping].apps).forEach(function(app) {
+                            links.push(createServiceLinkObject(external.services[mapping], app, mapping, value));
+                        });
+                    }
+                });
+
+                popups.links.addLinks(source, value, links);
+
+                return links.length;
+            };
+
+            /**
+             * Creates and returns the service link object for the given app using the given service, mapping, and field value.
+             * @param {Object} service
+             * @param {String} app
+             * @param {String} mapping
+             * @param {Number} or {String} value
+             * @method createServiceLinkObject
+             * @private
+             * @return {Object}
+             */
+            var createServiceLinkObject = function(service, app, mapping, value) {
+                var data = {};
+                data[mapping] = value;
+
+                return {
+                    name: app,
+                    image: service.apps[app].image,
+                    url: service.apps[app].url,
+                    key: value,
+                    args: service.args,
+                    data: data
+                };
+            };
+
+            /**
+             * Creates and returns the JSON string for the links popup button using the given news 'head' and 'name' properties.
+             * @param {String} head
+             * @param {String} name
+             * @method createLinksPopupButtonJson
+             * @private
+             * @return {String}
+             */
+            var createLinksPopupButtonJson = function(head, name) {
+                var list = [];
+                if(head) {
+                    list.push({
+                        source: $scope.visualizationId + "-head",
+                        key: head
+                    });
                 }
+                if(name) {
+                    list.push({
+                        source: $scope.visualizationId + "-name",
+                        key: name
+                    });
+                }
+                return popups.links.createJsonOverrideFromList(list);
             };
 
             /**
