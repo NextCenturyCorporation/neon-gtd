@@ -463,7 +463,7 @@ coreMap.Map.prototype.setupLayers = function(mapBaseLayer) {
 
     if(mapBaseLayer === "dark") {
         tiles = "DARK_MAP_TILES";
-        $("#" + this.elementId).css("background-color", "#242426")
+        $("#" + this.elementId).css("background-color", "#242426");
     }
 
     var baseLayer = new OpenLayers.Layer.OSM("OSM", coreMap.Map[tiles], {
