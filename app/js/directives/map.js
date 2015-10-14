@@ -1493,6 +1493,7 @@ angular.module('neonDemo.directives')
                     targetMapping: $scope.options.newLayer.target.columnName,
                     nodeColor: $scope.options.newLayer.pointColor,
                     lineColor: $scope.options.newLayer.lineColor,
+                    popupFields: $scope.options.newLayer.popupFields,
                     active: $scope.options.newLayer.active,
                     visible: $scope.options.newLayer.visible,
                     valid: true,
