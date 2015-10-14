@@ -428,7 +428,12 @@ coreMap.Map.prototype.createSelectControl =  function(layer) {
             var key = me.popupsService.links.generatePointKey(attributes[feature.layer.latitudeMapping], attributes[feature.layer.longitudeMapping]);
             var tooltip = "latitude " + attributes[feature.layer.latitudeMapping] + ", longitude " + attributes[feature.layer.longitudeMapping];
             var link = me.popupsService.links.createLinkHtml(feature.layer.linksSource, key, tooltip);
-            $("#" + me.elementId).find(".olPopupCloseBox").after("<div class='btn btn-default links-popup-button'>" + link + "</div>");
+
+            // Position the button below the 'close box' which can have one of a few different 'top' values depending on the location of the point on the layer.
+            var topCss = $(".olPopupCloseBox").css("top");
+            topCss = Number(topCss.substring(0, topCss.length - 2)) + 25;
+
+            $("#" + me.elementId).find(".olPopupCloseBox").after("<div class='btn btn-default links-popup-button' style='top: " + topCss + "px;'>" + link + "</div>");
         }
     };
 
