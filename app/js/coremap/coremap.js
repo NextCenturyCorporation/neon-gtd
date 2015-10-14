@@ -69,7 +69,7 @@ coreMap.Map = function(elementId, opts) {
     this.selectableLayers = [];
     this.selectControls = [];
     this.initializeMap();
-    this.setupLayers();
+    this.setupLayers(opts.mapBaseLayer);
     this.setupControls();
     this.resetZoom();
 };
@@ -458,8 +458,15 @@ coreMap.Map.prototype.createSelectControl =  function(layer) {
  * @method setupLayers
  */
 
-coreMap.Map.prototype.setupLayers = function() {
-    var baseLayer = new OpenLayers.Layer.OSM("OSM", coreMap.Map.LIGHT_MAP_TILES, {
+coreMap.Map.prototype.setupLayers = function(mapBaseLayer) {
+    var tiles = "LIGHT_MAP_TILES";
+
+    if(mapBaseLayer === "dark") {
+        tiles = "DARK_MAP_TILES";
+        $("#" + this.elementId).css("background-color", "#242426")
+    }
+
+    var baseLayer = new OpenLayers.Layer.OSM("OSM", coreMap.Map[tiles], {
         attribution:  "Map tiles by CartoDB, under CC BY 3.0. Data by OpenStreetMap, under ODbL.",
         wrapDateLine: false
     });

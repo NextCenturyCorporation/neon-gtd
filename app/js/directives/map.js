@@ -28,8 +28,8 @@
  * @constructor
  */
 angular.module('neonDemo.directives')
-.directive('map', ['ConnectionService', 'DatasetService', 'ErrorNotificationService', 'FilterService', 'ExportService', '$timeout', '$filter',
-    function(connectionService, datasetService, errorNotificationService, filterService, exportService, $timeout, $filter) {
+.directive('map', ['ConnectionService', 'DatasetService', 'ErrorNotificationService', 'FilterService', 'ExportService', '$timeout', '$filter', 'config',
+    function(connectionService, datasetService, errorNotificationService, filterService, exportService, $timeout, $filter, config) {
     return {
         templateUrl: 'partials/directives/map.html',
         restrict: 'EA',
@@ -153,8 +153,10 @@ angular.module('neonDemo.directives')
              * @method initialize
              */
             $scope.initialize = function() {
+                var datasetOptions = datasetService.getActiveDatasetOptions();
                 $scope.map = new coreMap.Map($scope.mapId, {
-                    responsive: false
+                    responsive: false,
+                    mapBaseLayer: (datasetOptions ? datasetOptions.mapBaseLayer : undefined)
                 });
                 $scope.draw();
                 $scope.map.register("movestart", this, onMapEvent);
