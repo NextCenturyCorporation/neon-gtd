@@ -408,33 +408,12 @@ function(external, popups, connectionService, datasetService, errorNotificationS
                     if(external.services.tags) {
                         var tagLinks = [];
                         Object.keys(external.services.tags.apps).forEach(function(app) {
-                            tagLinks.push(createServiceLinkObject(external.services.tags, app, tagName));
+                            tagLinks.push(popups.links.createServiceLinkObject(external.services.tags, app, "tags", tagName));
                         });
                         popups.links.addLinks($scope.visualizationId, tagName, tagLinks);
                     }
                     $scope.filterTags.push(filterTag);
                 }
-            };
-
-            /**
-             * Creates and returns the service link object for the given app using the given service, mapping, and field value.
-             * @param {Object} service
-             * @param {String} app
-             * @param {Number} or {String} value
-             * @method createServiceLinkObject
-             * @private
-             * @return {Object}
-             */
-            var createServiceLinkObject = function(service, app, value) {
-                return {
-                    name: app,
-                    image: service.apps[app].image,
-                    url: service.apps[app].url,
-                    args: service.args,
-                    data: {
-                        tags: value
-                    }
-                };
             };
 
             /**

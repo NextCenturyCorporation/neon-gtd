@@ -305,7 +305,12 @@ angular.element(document).ready(function() {
                 createLinkHtmlFromList: function() {},
                 createJsonOverrideFromList: function() {},
                 createDisabledLinkHtml: function() {},
-                createPointKey: function() {}
+                createAllServiceLinkObjects: function() {},
+                createServiceLinkObject: function() {},
+                createServiceLinkObjectWithData: function() {},
+                generateBoundsKey: function() {},
+                generatePointKey: function() {},
+                generateRangeKey: function() {}
             }
         });
 

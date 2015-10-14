@@ -7,8 +7,9 @@
             </div>
             <div class="modal-body">
                 <div ng-repeat="(key, array) in links">
-                    <label ng-if="linksCount > 1" ng-bind="key"></label>
-                    <label ng-if="array.length == 0" class="label-small">None Available</label>
+                    <label ng-bind="key"></label>
+                    <label class="text-primary label-small" ng-if="array.length > 0">Applications Available</label>
+                    <label class="text-danger label-small" ng-if="array.length == 0">No Applications Available</label>
                     <ul>
                         <li ng-repeat="link in array">
                             <a href="{{link.url}}" target="{{link.tab}}" title="Open {{link.name}} in a new tab" ng-click="logLinkEvent(link.name)">

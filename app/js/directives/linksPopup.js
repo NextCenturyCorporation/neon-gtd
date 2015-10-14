@@ -277,14 +277,98 @@ angular.module('neonDemo.directives')
             };
 
             /**
-             * Creates and returns the key for a point with the given latitude and longitude values.
-             * @param {Number} latitude
-             * @param {Number} longitude
-             * @method createPointKey
+             * Creates and returns the service links for the given field and value using the given lists of external services and dataset mappings.
+             * returns the number of links that were created.
+             * @param {Array} services
+             * @param {Array} mappings
+             * @param {String} field
+             * @param {Number} or {String} value
+             * @method createAllServiceLinkObjects
+             * @return {Array}
+             */
+            popups.links.createAllServiceLinkObjects = function(services, mappings, field, value) {
+                var links = [];
+
+                // For each mapping to the given field, if services exist for that mapping, create the links for the services.
+                Object.keys(mappings).filter(function(mapping) {
+                    return mappings[mapping] === field;
+                }).forEach(function(mapping) {
+                    if(services[mapping]) {
+                        Object.keys(services[mapping].apps).forEach(function(app) {
+                            links.push(popups.links.createServiceLinkObject(services[mapping], app, mapping, value));
+                        });
+                    }
+                });
+
+                return links;
+            };
+
+            /**
+             * Creates and returns the service link object for the given app using the given service, mapping, and field value.
+             * @param {Object} service
+             * @param {String} app
+             * @param {String} mapping
+             * @param {Number} or {String} value
+             * @method createServiceLinkObject
+             * @return {Object}
+             */
+            popups.links.createServiceLinkObject = function(service, app, mapping, value) {
+                var data = {};
+                data[mapping] = value;
+                return popups.links.createServiceLinkObjectWithData(service, app, data);
+            };
+
+            /**
+             * Creates and returns the service link object for the given app using the given service and data collection of mappings to field values.
+             * @param {Object} service
+             * @param {String} app
+             * @param {Object} data A list of objects containing {String} mapping and {Number} or {String} value
+             * @method createServiceLinkObjectWithData
+             * @return {Object}
+             */
+            popups.links.createServiceLinkObjectWithData = function(service, app, data) {
+                return {
+                    name: app,
+                    image: service.apps[app].image,
+                    url: service.apps[app].url,
+                    args: service.args,
+                    data: data
+                };
+            };
+
+            /**
+             * Returns the key for bounds with the given minimum and maximum latitude and longitude values.
+             * @param {Number} minLat
+             * @param {Number} minLon
+             * @param {Number} maxLat
+             * @param {Number} maxLon
+             * @method generateBoundsKey
              * @return {String}
              */
-            popups.links.createPointKey = function(latitude, longitude) {
-                return latitude + "," + longitude;
+            popups.links.generateBoundsKey = function(minLat, minLon, maxLat, maxLon) {
+                return "Latitude " + minLat + " to " + maxLat + ", Longitude " + minLon + " to " + maxLon;
+            };
+
+            /**
+             * Returns the key for a point with the given latitude and longitude values.
+             * @param {Number} latitude
+             * @param {Number} longitude
+             * @method generatePointKey
+             * @return {String}
+             */
+            popups.links.generatePointKey = function(latitude, longitude) {
+                return "Latitude " + latitude + ", Longitude " + longitude;
+            };
+
+            /**
+             * Returns the key for a range with the given start and end values.
+             * @param {Number} or {String} start
+             * @param {Number} or {String} end
+             * @method generateRangeKey
+             * @return {String}
+             */
+            popups.links.generateRangeKey = function(start, end) {
+                return start + " to " + end;
             };
         }
     };

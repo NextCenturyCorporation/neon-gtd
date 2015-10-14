@@ -459,48 +459,12 @@ function(external, popups, connectionService, datasetService, errorNotificationS
                     value: val
                 };
 
-                var links = [];
                 var mappings = datasetService.getMappings($scope.options.database.name, $scope.options.table.name);
-
-                // For each mapping to the filter field, if a service exists for that mapping, create the links for that service.
-                Object.keys(mappings).filter(function(mapping) {
-                    return mappings[mapping] === key;
-                }).forEach(function(mapping) {
-                    if(external.services[mapping]) {
-                        Object.keys(external.services[mapping].apps).forEach(function(app) {
-                            links.push(createServiceLinkObject(external.services[mapping], app, mapping, val));
-                        });
-                    }
-                });
-
                 var chartLinks = {};
-                chartLinks[val] = links;
+                chartLinks[val] = popups.links.createAllServiceLinkObjects(external.services, mappings, key, val);
                 popups.links.setData($scope.visualizationId, chartLinks);
 
                 //no need to requery because barchart ignores its own filter
-            };
-
-            /**
-             * Creates and returns the service link object for the given app using the given service, mapping, and field value.
-             * @param {Object} service
-             * @param {String} app
-             * @param {String} mapping
-             * @param {Number} or {String} value
-             * @method createServiceLinkObject
-             * @private
-             * @return {Object}
-             */
-            var createServiceLinkObject = function(service, app, mapping, value) {
-                var data = {};
-                data[mapping] = value;
-
-                return {
-                    name: app,
-                    image: service.apps[app].image,
-                    url: service.apps[app].url,
-                    args: service.args,
-                    data: data
-                };
             };
 
             var clearFilterSet = function() {

@@ -379,35 +379,15 @@ function($interval, $filter, external, popups, connectionService, datasetService
                 if(external.services.date) {
                     var dateLinks = [];
                     Object.keys(external.services.date.apps).forEach(function(app) {
-                        dateLinks.push(createServiceLinkObject(external.services.date, app, displayStartDate, displayEndDate));
+                        dateLinks.push(popups.links.createServiceLinkObjectWithData(external.services.date, app, {
+                            startDate: displayStartDate.toISOString(),
+                            endDate: displayEndDate.toISOString()
+                        }));
                     });
-                    popups.links.setData($scope.visualizationId, {
-                        "date": dateLinks
-                    });
+                    var timelineLinks = {};
+                    timelineLinks[$scope.getDateKeyForLinksPopupButton()] = dateLinks;
+                    popups.links.setData($scope.visualizationId, timelineLinks);
                 }
-            };
-
-            /**
-             * Creates and returns the service link object for the given app using the given service and start/end dates.
-             * @param {Object} service
-             * @param {String} app
-             * @param {Date} start
-             * @param {Date} end
-             * @method createServiceLinkObject
-             * @private
-             * @return {Object}
-             */
-            var createServiceLinkObject = function(service, app, start, end) {
-                return {
-                    name: app,
-                    image: service.apps[app].image,
-                    url: service.apps[app].url,
-                    args: service.args,
-                    data: {
-                        startDate: start.toISOString(),
-                        endDate: end.toISOString()
-                    }
-                };
             };
 
             /**
@@ -446,6 +426,10 @@ function($interval, $filter, external, popups, connectionService, datasetService
                 var format = $scope.bucketizer.getDateFormat();
                 formattedEndDate = $filter("date")(formattedEndDate.toISOString(), format);
                 return formattedEndDate;
+            };
+
+            $scope.getDateKeyForLinksPopupButton = function() {
+                return $scope.startDateForDisplay && $scope.endDateForDisplay ? popups.links.generateRangeKey($scope.startDateForDisplay, $scope.endDateForDisplay) : "";
             };
 
             /**

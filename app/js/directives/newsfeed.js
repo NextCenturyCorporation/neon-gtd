@@ -442,7 +442,7 @@ function(external, popups, connectionService, datasetService, errorNotificationS
                 data.forEach(function(item) {
                     var head = datasetService.isFieldValid($scope.options.headField) ? item[$scope.options.headField.columnName] : "";
                     var name = datasetService.isFieldValid($scope.options.nameField) ? item[$scope.options.nameField.columnName] : "";
-                    var hasLinks = createExternalLinksForNewsItemData(head, name, mappings);
+                    var hasLinks = createExternalLinksForNewsItemData(mappings, head, name);
 
                     $scope.data.news.push({
                         head: head,
@@ -460,70 +460,38 @@ function(external, popups, connectionService, datasetService, errorNotificationS
 
             /**
              * Creates the external links for the given news 'head' and 'name' properties using the given mappings and returns if any links were created.
+             * @param {Array} mappings
              * @param {String} head
              * @param {String} name
-             * @param {Array} mappings
              * @method createExternalLinksForNewsItemData
              * @private
              * @return {Boolean}
              */
-            var createExternalLinksForNewsItemData = function(head, name, mappings) {
-                var headLinksCount = head ? createExternalLinks($scope.options.headField.columnName, head, mappings, $scope.visualizationId + "-head") : 0;
-                var nameLinksCount = name ? createExternalLinks($scope.options.nameField.columnName, name, mappings, $scope.visualizationId + "-name") : 0;
+            var createExternalLinksForNewsItemData = function(mappings, head, name) {
+                var headLinksCount = head ? createExternalLinks(mappings, $scope.options.headField.columnName, head, $scope.visualizationId + "-head") : 0;
+                var nameLinksCount = name ? createExternalLinks(mappings, $scope.options.nameField.columnName, name, $scope.visualizationId + "-name") : 0;
                 return headLinksCount || nameLinksCount;
             };
 
             /**
              * Creates the external links for the given field and value using the given mappings, saves the links in the links popup using the given source, and
              * returns the number of links that were created.
+             * @param {Array} mappings
              * @param {String} field
              * @param {Number} or {String} value
-             * @param {Array} mappings
              * @param {String} source
              * @method createExternalLinks
              * @private
              * @return {Number}
              */
-            var createExternalLinks = function(field, value, mappings, source) {
-                var links = [];
+            var createExternalLinks = function(mappings, field, value, source) {
+                var links = popups.links.createAllServiceLinkObjects(external.services, mappings, field, value);
 
-                Object.keys(mappings).filter(function(mapping) {
-                    return mappings[mapping] === field;
-                }).forEach(function(mapping) {
-                    if(external.services[mapping]) {
-                        Object.keys(external.services[mapping].apps).forEach(function(app) {
-                            links.push(createServiceLinkObject(external.services[mapping], app, mapping, value));
-                        });
-                    }
-                });
-
-                popups.links.addLinks(source, value, links);
+                if(links.length) {
+                    popups.links.addLinks(source, value, links);
+                }
 
                 return links.length;
-            };
-
-            /**
-             * Creates and returns the service link object for the given app using the given service, mapping, and field value.
-             * @param {Object} service
-             * @param {String} app
-             * @param {String} mapping
-             * @param {Number} or {String} value
-             * @method createServiceLinkObject
-             * @private
-             * @return {Object}
-             */
-            var createServiceLinkObject = function(service, app, mapping, value) {
-                var data = {};
-                data[mapping] = value;
-
-                return {
-                    name: app,
-                    image: service.apps[app].image,
-                    url: service.apps[app].url,
-                    key: value,
-                    args: service.args,
-                    data: data
-                };
             };
 
             /**

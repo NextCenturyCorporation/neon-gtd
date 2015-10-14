@@ -270,7 +270,7 @@
 
 <div class="header-container filter-container">
     <div class="header-item filter-reset pull-right" ng-class="{true: '', false: 'hidden'}[extent != undefined]" title="Latitude from {{extent.minimumLatitude}} to {{extent.maximumLatitude}}, Longitude from {{extent.minimumLongitude}} to {{extent.maximumLongitude}}">
-        <links-popup-button key="bounds" source="{{mapId}}" tooltip="latitude {{extent.minimumLatitude}} to {{extent.maximumLatitude}}, longitude {{extent.minimumLongitude}} to {{extent.maximumLongitude}}"></links-popup-button>
+        <links-popup-button key="{{getBoundsKeyForLinksPopupButton()}}" source="{{mapId}}" tooltip="latitude {{extent.minimumLatitude}} to {{extent.maximumLatitude}}, longitude {{extent.minimumLongitude}} to {{extent.maximumLongitude}}"></links-popup-button>
         <span class="filter-label">Map Filter</span>
         <span class="glyphicon glyphicon-remove" ng-click="clearFilters(true)"></span>
     </div>

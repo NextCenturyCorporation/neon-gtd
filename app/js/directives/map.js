@@ -205,7 +205,7 @@ angular.module('neonDemo.directives')
 
                     popups.links.deleteData($scope.mapId);
                     $scope.options.layers.forEach(function(layer) {
-                        popups.links.deleteData(createPointLinksSource(layer.database, layer.table));
+                        popups.links.deleteData(generatePointLinksSource(layer.database, layer.table));
                     });
 
                     $element.off("resize", updateSize);
@@ -267,9 +267,14 @@ angular.module('neonDemo.directives')
                     if(external.services.bounds) {
                         var boundsLinks = [];
                         Object.keys(external.services.bounds.apps).forEach(function(app) {
-                            boundsLinks.push(createBoundsServiceLinkObject(external.services.bounds, app, $scope.extent));
+                            boundsLinks.push(popups.links.createServiceLinkObjectWithData(external.services.bounds, app, {
+                                minLat: $scope.extent.minimumLatitude,
+                                minLon: $scope.extent.minimumLongitude,
+                                maxLat: $scope.extent.maximumLatitude,
+                                maxLon: $scope.extent.maximumLongitude
+                            }));
                         });
-                        popups.links.addLinks($scope.mapId, "bounds", boundsLinks);
+                        popups.links.addLinks($scope.mapId, $scope.getBoundsKeyForLinksPopupButton(), boundsLinks);
                     }
 
                     XDATA.userALE.log({
@@ -295,6 +300,10 @@ angular.module('neonDemo.directives')
 
                     addFilters();
                 };
+            };
+
+            $scope.getBoundsKeyForLinksPopupButton = function() {
+                return $scope.extent ? popups.links.generateBoundsKey($scope.extent.minimumLatitude, $scope.extent.minimumLongitude, $scope.extent.maximumLatitude, $scope.extent.maximumLongitude) : "";
             };
 
             /**
@@ -731,7 +740,7 @@ angular.module('neonDemo.directives')
 
                 var connection = connectionService.getActiveConnection();
 
-                popups.links.deleteData(createPointLinksSource(database, table));
+                popups.links.deleteData(generatePointLinksSource(database, table));
 
                 if(!connection) {
                     $scope.updateMapData(database, table, {
@@ -821,14 +830,14 @@ angular.module('neonDemo.directives')
             };
 
             /**
-             * Creates and returns the source to use in the links popup for the map layer using the database and table with the given names.
+             * Returns the source to use in the links popup for the map layer using the database and table with the given names.
              * @param {String} database
              * @param {String} table
-             * @method createPointLinksSource
+             * @method generatePointLinksSource
              * @private
              * @return {String}
              */
-            var createPointLinksSource = function(database, table) {
+            var generatePointLinksSource = function(database, table) {
                 return $scope.mapId + "-" + database + "-" + table;
             };
 
@@ -869,7 +878,7 @@ angular.module('neonDemo.directives')
                             $scope.options.layers[i].error = undefined;
                             $scope.options.layers[i].olLayer.setData(data);
                             if(external.services.point) {
-                                var linksSource = createPointLinksSource(database, table);
+                                var linksSource = generatePointLinksSource(database, table);
                                 createExternalLinks(data, linksSource, $scope.options.layers[i].latitudeMapping, $scope.options.layers[i].longitudeMapping);
                                 $scope.options.layers[i].olLayer.linksSource = linksSource;
                             }
@@ -1018,67 +1027,22 @@ angular.module('neonDemo.directives')
                 data.forEach(function(row) {
                     var latitudeValue = row[latitudeField];
                     var longitudeValue = row[longitudeField];
-                    var key = latitudeValue + "," + longitudeValue;
                     var rowLinks = [];
 
                     if(external.services.point) {
                         Object.keys(external.services.point.apps).forEach(function(app) {
-                            rowLinks.push(createPointServiceLinkObject(external.services.point, app, latitudeValue, longitudeValue));
+                            rowLinks.push(popups.links.createServiceLinkObjectWithData(external.services.point, app, {
+                                latitude: latitudeValue,
+                                longitude: longitudeValue
+                            }));
                         });
                     };
 
-                    mapLinks[key] = rowLinks;
+                    mapLinks[popups.links.generatePointKey(latitudeValue, longitudeValue)] = rowLinks;
                 });
 
                 // Set the link data for the links popup for this visualization.
                 popups.links.setData(source, mapLinks);
-            };
-
-            /**
-             * Creates and returns the point service link object for the given app using the given service and latitude/longitude values.
-             * @param {Object} service
-             * @param {String} app
-             * @param {Number} latitudeValue
-             * @param {Number} longitudeValue
-             * @method createPointServiceLinkObject
-             * @private
-             * @return {Object}
-             */
-            var createPointServiceLinkObject = function(service, app, latitudeValue, longitudeValue) {
-                return {
-                    name: app,
-                    image: service.apps[app].image,
-                    url: service.apps[app].url,
-                    args: service.args,
-                    data: {
-                        latitude: latitudeValue,
-                        longitude: longitudeValue
-                    }
-                };
-            };
-
-            /**
-             * Creates and returns the bounds service link object for the given app using the given service and bounds.
-             * @param {Object} service
-             * @param {String} app
-             * @param {Object} bounds
-             * @method createBoundsServiceLinkObject
-             * @private
-             * @return {Object}
-             */
-            var createBoundsServiceLinkObject = function(service, app, bounds) {
-                return {
-                    name: app,
-                    image: service.apps[app].image,
-                    url: service.apps[app].url,
-                    args: service.args,
-                    data: {
-                        minLat: bounds.minimumLatitude,
-                        minLon: bounds.minimumLongitude,
-                        maxLat: bounds.maximumLatitude,
-                        maxLon: bounds.maximumLongitude
-                    }
-                };
             };
 
             $scope.buildPointQuery = function(database, table) {
@@ -1206,7 +1170,7 @@ angular.module('neonDemo.directives')
             var clearExtent = function() {
                 $scope.extent = undefined;
                 $scope.error = "";
-                popups.links.removeLinksForKey($scope.mapId);
+                popups.links.deleteData($scope.mapId);
             };
 
             var removeFiltersForKeys = function(filterKeys, callback) {

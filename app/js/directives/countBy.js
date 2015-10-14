@@ -507,56 +507,19 @@ function(external, popups, connectionService, datasetService, errorNotificationS
              */
             var addExternalLinksToColumnData = function(data) {
                 var tableLinks = {};
+                var mappings = datasetService.getMappings($scope.options.database.name, $scope.options.table.name);
 
                 data.forEach(function(row) {
                     var field = $scope.options.field.columnName;
-                    var value = row[$scope.options.field.columnName];
-                    var tooltip = value;
-                    var rowLinks = [];
-                    var mappings = datasetService.getMappings($scope.options.database.name, $scope.options.table.name);
-
-                    // For each mapping to the query field, if a service exists for that mapping, create the links for that service.
-                    Object.keys(mappings).filter(function(mapping) {
-                        return mappings[mapping] === field;
-                    }).forEach(function(mapping) {
-                        if(external.services[mapping]) {
-                            Object.keys(external.services[mapping].apps).forEach(function(app) {
-                                rowLinks.push(createServiceLinkObject(external.services[mapping], app, mapping, value));
-                            });
-                        }
-                    });
-
-                    tableLinks[value] = rowLinks;
-                    row[$scope.EXTERNAL_APP_FIELD_NAME] = rowLinks.length ? popups.links.createLinkHtml(value, $scope.tableId, tooltip) : popups.links.createDisabledLinkHtml(tooltip);
+                    var value = row[field];
+                    tableLinks[value] = popups.links.createAllServiceLinkObjects(external.services, mappings, field, value);
+                    row[$scope.EXTERNAL_APP_FIELD_NAME] = tableLinks[value].length ? popups.links.createLinkHtml(value, $scope.tableId, value) : popups.links.createDisabledLinkHtml(value);
                 });
 
                 // Set the link data for the links popup for this visualization.
                 popups.links.setData($scope.tableId, tableLinks);
 
                 return data;
-            };
-
-            /**
-             * Creates and returns the service link object for the given app using the given service, mapping, and field value.
-             * @param {Object} service
-             * @param {String} app
-             * @param {String} mapping
-             * @param {Number} or {String} value
-             * @method createServiceLinkObject
-             * @private
-             * @return {Object}
-             */
-            var createServiceLinkObject = function(service, app, mapping, value) {
-                var data = {};
-                data[mapping] = value;
-
-                return {
-                    name: app,
-                    image: service.apps[app].image,
-                    url: service.apps[app].url,
-                    args: service.args,
-                    data: data
-                };
             };
 
             /**

@@ -335,35 +335,19 @@ function(external, popups, connectionService, datasetService, errorNotificationS
                 } else if(external.services.date) {
                     var dateLinks = [];
                     Object.keys(external.services.date.apps).forEach(function(app) {
-                        dateLinks.push(createServiceLinkObject(external.services.date, app, $scope.brushExtent[0], $scope.brushExtent[1]));
+                        dateLinks.push(popups.links.createServiceLinkObjectWithData(external.services.date, app, {
+                            startDate: $scope.brushExtent[0].toISOString(),
+                            endDate: $scope.brushExtent[1].toISOString()
+                        }));
                     });
-                    popups.links.setData($scope.visualizationId, {
-                        "date": dateLinks
-                    });
+                    var chartLinks = {};
+                    chartLinks[$scope.getDateKeyForLinksPopupButton()] = dateLinks;
+                    popups.links.setData($scope.visualizationId, chartLinks);
                 }
             };
 
-            /**
-             * Creates and returns the service link object for the given app using the given service and start/end dates.
-             * @param {Object} service
-             * @param {String} app
-             * @param {Date} start
-             * @param {Date} end
-             * @method createServiceLinkObject
-             * @private
-             * @return {Object}
-             */
-            var createServiceLinkObject = function(service, app, start, end) {
-                return {
-                    name: app,
-                    image: service.apps[app].image,
-                    url: service.apps[app].url,
-                    args: service.args,
-                    data: {
-                        startDate: start.toISOString(),
-                        endDate: end.toISOString()
-                    }
-                };
+            $scope.getDateKeyForLinksPopupButton = function() {
+                return $scope.brushExtent.length >= 2 ? popups.links.generateRangeKey($scope.brushExtent[0].toUTCString(), $scope.brushExtent[1].toUTCString()) : "";
             };
 
             $scope.queryForData = function() {
