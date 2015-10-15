@@ -48,7 +48,7 @@ function(external, popups, connectionService, datasetService, errorNotificationS
             var LIMIT_INTERVAL = 100;
 
             // Prevents translation api calls from getting too long and returning an error
-            var TRANSLATION_LIMIT_INTERVAL = 10;
+            var TRANSLATION_INTERVAL = 10;
 
             $scope.feedName = $scope.bindFeedName || "";
             $scope.feedType = $scope.bindFeedType ? $scope.bindFeedType.toUpperCase() : DEFAULT_TYPE;
@@ -70,6 +70,7 @@ function(external, popups, connectionService, datasetService, errorNotificationS
             $scope.data = {
                 news: [],
                 newsCount: 0,
+                translatedRange: [-1, -1],
                 show: {
                     heads: [],
                     names: []
@@ -97,8 +98,7 @@ function(external, popups, connectionService, datasetService, errorNotificationS
                 textField: {},
                 sortDirection: neon.query.ASCENDING,
                 limit: LIMIT_INTERVAL,
-                showTranslation: false,
-                translationLimit: TRANSLATION_LIMIT_INTERVAL
+                showTranslation: false
             };
 
             $scope.optionsMenuButtonText = function() {
@@ -199,8 +199,14 @@ function(external, popups, connectionService, datasetService, errorNotificationS
              * @private
              */
             var handleScroll = function() {
+                if(!$element.find(".item")) {
+                    return;
+                }
+
+                updateTopNewsItemIndex();
+
                 // If the user has scrolled to the bottom, query for more news items and add them to the feed.
-                if(!$scope.loadingNews && !$scope.newsEventData && $element.find(".item") && $element.find(".item").last().position().top <= $element.height()) {
+                if(!$scope.loadingNews && !$scope.newsEventData && $element.find(".item").last().position().top <= $element.height()) {
                     $scope.loadingNews = true;
                     $scope.options.limit = $scope.options.limit + LIMIT_INTERVAL;
                     queryForData(function(data) {
@@ -208,6 +214,42 @@ function(external, popups, connectionService, datasetService, errorNotificationS
                         updateData(data.slice($scope.options.limit - LIMIT_INTERVAL, $scope.options.limit));
                         $scope.loadingNews = false;
                     });
+                }
+
+                if(!$scope.loadingData && $scope.options.showTranslation) {
+                    // See if the news item before the first translated news item is visible; if so, translate it.
+                    if($scope.data.translatedRange[0] > 0) {
+                        var index = $scope.data.translatedRange[0] + 1;
+                        var newsItem = $element.find(".item:nth-of-type(" + index + ")");
+                        if(newsItem.position().top >= 0) {
+                            translate(Math.max(0, $scope.data.translatedRange[0] - TRANSLATION_INTERVAL), $scope.data.translatedRange[0]);
+                        }
+                    }
+
+                    // See if the news item after the final translated news item is visible; if so, translate it.
+                    if($scope.data.translatedRange[1] > 0 && $scope.data.translatedRange[1] < $scope.data.news.length) {
+                        var index = $scope.data.translatedRange[1] + 1;
+                        var newsItem = $element.find(".item:nth-of-type(" + index + ")");
+                        if(newsItem.position().top <= $element.height()) {
+                            translate($scope.data.translatedRange[1], Math.min($scope.data.news.length, $scope.data.translatedRange[1] + TRANSLATION_INTERVAL));
+                        }
+                    }
+                }
+            };
+
+            /**
+             * Updates the top news item index based on the position of the news item at the current top index.
+             * @method updateTopNewsItemIndex
+             * @private
+             */
+            var updateTopNewsItemIndex = function() {
+                var topNewsItemIndex = $scope.topNewsItemIndex + 1;
+                var topNewsItem = $element.find(".item:nth-of-type(" + topNewsItemIndex + ")");
+                if(topNewsItem && topNewsItem.position().top > 0) {
+                    $scope.topNewsItemIndex = Math.max(0, $scope.topNewsItemIndex - 1);
+                }
+                if(topNewsItem && topNewsItem.position().top + topNewsItem.outerHeight(true) < 0) {
+                    $scope.topNewsItemIndex = Math.min($scope.data.news.length, $scope.topNewsItemIndex + 1);
                 }
             };
 
@@ -240,9 +282,10 @@ function(external, popups, connectionService, datasetService, errorNotificationS
                     $scope.data.newsCount = message.news.length;
                     $scope.feedType = (message.type || $scope.feedType).toUpperCase();
                     $scope.newsEventData = true;
+                    $scope.topNewsItemIndex = 0;
 
                     if(message.news.length) {
-                        $scope.refreshTranslation();
+                        refreshTranslation();
                     }
                 }
             };
@@ -365,10 +408,13 @@ function(external, popups, connectionService, datasetService, errorNotificationS
              */
             var resetAndQueryForData = function() {
                 $scope.data.news = [];
+                $scope.topNewsItemIndex = 0;
                 popups.links.deleteData($scope.visualizationId + "-head");
                 popups.links.deleteData($scope.visualizationId + "-name");
+
                 queryForData(function(data, connection) {
                     updateData(data);
+                    refreshTranslation();
                     $scope.loadingData = false;
                     queryForNewsCount(connection);
                 });
@@ -385,6 +431,8 @@ function(external, popups, connectionService, datasetService, errorNotificationS
                     errorNotificationService.hideErrorMessage($scope.errorMessage);
                     $scope.errorMessage = undefined;
                 }
+
+                $scope.newsEventData = false;
 
                 var connection = connectionService.getActiveConnection();
 
@@ -454,8 +502,6 @@ function(external, popups, connectionService, datasetService, errorNotificationS
                         linksPopupButtonDisabled: !hasLinks
                     });
                 });
-
-                $scope.refreshTranslation();
             };
 
             /**
@@ -526,7 +572,7 @@ function(external, popups, connectionService, datasetService, errorNotificationS
              */
             $scope.onFromLanguageChange = function(language) {
                 $scope.translationLanguages.chosenFromLanguage = language;
-                $scope.refreshTranslation();
+                refreshTranslation();
             };
 
             /**
@@ -536,7 +582,7 @@ function(external, popups, connectionService, datasetService, errorNotificationS
              */
             $scope.onToLanguageChange = function(language) {
                 $scope.translationLanguages.chosenToLanguage = language;
-                $scope.refreshTranslation();
+                refreshTranslation();
             };
 
             /**
@@ -549,23 +595,20 @@ function(external, popups, connectionService, datasetService, errorNotificationS
              */
             $scope.updateTranslation = function(checked, fromLang, toLang) {
                 $scope.options.showTranslation = checked;
-
-                if(checked) {
-                    $scope.translationLanguages.chosenFromLanguage = fromLang;
-                    $scope.translationLanguages.chosenToLanguage = toLang;
-                    translate();
-                } else {
-                    resetTranslation();
-                }
+                $scope.translationLanguages.chosenFromLanguage = fromLang;
+                $scope.translationLanguages.chosenToLanguage = toLang;
+                refreshTranslation();
             };
 
             /**
              * Refreshes the translations if translation is on.
              * @method refreshTranslation
+             * @private
              */
-            $scope.refreshTranslation = function() {
+            var refreshTranslation = function() {
+                $scope.data.translatedRange = [-1, -1];
                 if($scope.options.showTranslation) {
-                    translate();
+                    translate($scope.topNewsItemIndex, $scope.topNewsItemIndex + TRANSLATION_INTERVAL);
                 }
             };
 
@@ -584,16 +627,12 @@ function(external, popups, connectionService, datasetService, errorNotificationS
                     $scope.errorMessage = undefined;
                 }
 
-                var dataText = _.pluck($scope.data.news, 'text');
-                dataText = dataText.filter(function(data) {
+                var dataText = _.pluck($scope.data.news, 'text').filter(function(data) {
                     return data;
                 });
 
-                sliceStart = (sliceStart ? sliceStart : 0);
-
-                if(!sliceEnd) {
-                    sliceEnd = ($scope.options.translationLimit < TRANSLATION_LIMIT_INTERVAL) ? $scope.options.translationLimit : TRANSLATION_LIMIT_INTERVAL;
-                }
+                sliceStart = sliceStart || 0;
+                sliceEnd = sliceEnd || sliceStart + TRANSLATION_INTERVAL;
 
                 var successCallback = function(response) {
                     translateSuccessCallback(response, sliceStart, sliceEnd);
@@ -618,8 +657,10 @@ function(external, popups, connectionService, datasetService, errorNotificationS
              */
             var translateSuccessCallback = function(response, sliceStart, sliceEnd) {
                 $scope.loadingData = false;
-                var index = sliceStart;
+                $scope.data.translatedRange[0] = $scope.data.translatedRange[0] < 0 ? sliceStart : Math.min($scope.data.translatedRange[0], sliceStart);
+                $scope.data.translatedRange[1] = $scope.data.translatedRange[1] < 0 ? sliceEnd : Math.max($scope.data.translatedRange[1], sliceEnd);
 
+                var index = sliceStart;
                 response.data.data.translations.forEach(function(elem) {
                     while(!$scope.data.news[index].text && index < sliceEnd) {
                         index++;
@@ -627,28 +668,6 @@ function(external, popups, connectionService, datasetService, errorNotificationS
                     $scope.data.news[index].textTranslated = elem.translatedText;
                     index++;
                 });
-
-                // Translate more text if only part of the data was translated
-                if($scope.options.translationLimit - sliceEnd >= 1) {
-                    sliceStart = sliceEnd;
-                    sliceEnd += (($scope.options.translationLimit - sliceEnd < TRANSLATION_LIMIT_INTERVAL) ?
-                        ($scope.options.translationLimit - sliceEnd) : TRANSLATION_LIMIT_INTERVAL);
-                    translate(sliceStart, sliceEnd);
-                }
-            };
-
-            /**
-             * Resets all text to its original.
-             * @method resetTranslation
-             * @private
-             */
-            var resetTranslation = function() {
-                $scope.data.news = $scope.data.news.map(function(elem) {
-                    elem.textTranslated = elem.text;
-                    return elem;
-                });
-                $scope.translationLanguages.chosenFromLanguage = "";
-                $scope.translationLanguages.chosenToLanguage = "";
             };
 
             /**
@@ -694,6 +713,7 @@ function(external, popups, connectionService, datasetService, errorNotificationS
                 if($scope.options.sortDirection === direction) {
                     if($scope.newsEventData) {
                         $scope.data.news.reverse();
+                        $scope.data.translatedRange = [$scope.data.news.length - $scope.data.translatedRange[1], $scope.data.news.length - $scope.data.translatedRange[0]];
                     } else {
                         resetAndQueryForData();
                     }

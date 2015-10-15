@@ -69,15 +69,6 @@
         <translation-options ng-show="translationAvailable" on-translate="updateTranslation" from-language-change="onFromLanguageChange"
             to-language-change="onToLanguageChange" from-language-options="translationLanguages.fromLanguageOptions"
             to-language-options="translationLanguages.toLanguageOptions">
-            <div class="sub-input-group">
-                <label>Limit</label>
-                <input type="number" min="1" class="form-control" ng-model="options.translationLimit" required>
-                <div class="input-group-btn">
-                    <button type="button" class="btn btn-default refresh" title="Refresh" ng-click="refreshTranslation()">
-                        <span class="glyphicon glyphicon-refresh"></span>
-                    </button>
-                </div>
-            </div>
         </translation-options>
     </options-menu>
 </div>
@@ -92,6 +83,7 @@
                 <span class="head" ng-if="item.head != undefined" ng-bind="item.head"></span>
                 <span class="name" ng-if="item.name != undefined" ng-bind="item.name"></span>
                 <links-popup-button key="" source="" tooltip="{{item.head}} or {{item.name}}" json="{{item.linksPopupButtonJson}}" disable="{{item.linksPopupButtonDisabled}}"></links-popup-button>
+                <span class="glyphicon glyphicon-comment" ng-show="options.showTranslation && item.text != item.textTranslated" title="Translated"></span>
             </span>
         </div>
         <div>
@@ -99,7 +91,7 @@
         </div>
         <div>
             <span class="text" ng-bind="item.text" ng-show="!options.showTranslation"></span>
-            <span class="text" ng-bind="item.textTranslated" ng-show="options.showTranslation"></span>
+            <span class="text" ng-bind="item.textTranslated" ng-show="options.showTranslation" title="{{item.text}}"></span>
         </div>
 	</div>
 </div>
