@@ -384,7 +384,7 @@ function(connectionService, datasetService, errorNotificationService, filterServ
                     var hourGroupClause = new neon.query.GroupByFunctionClause(neon.query.HOUR, $scope.options.attrX.columnName, 'hour');
                     groupByClause.push(hourGroupClause);
                 }
-                if($scope.options.categoryField.columnName) {
+                if($scope.options.categoryField && $scope.options.categoryField.columnName) {
                     groupByClause.push($scope.options.categoryField.columnName);
                 }
 
@@ -763,7 +763,7 @@ function(connectionService, datasetService, errorNotificationService, filterServ
 
                 // Scrape data for unique series
                 for(i = 0; i < data.length; i++) {
-                    if($scope.options.categoryField.columnName) {
+                    if($scope.options.categoryField && $scope.options.categoryField.columnName) {
                         series = data[i][$scope.options.categoryField.columnName] !== '' ? data[i][$scope.options.categoryField.columnName] : 'Unknown';
                     }
 
@@ -797,7 +797,7 @@ function(connectionService, datasetService, errorNotificationService, filterServ
                 for(i = 0; i < data.length; i++) {
                     indexDate = new Date(data[i].date);
 
-                    if($scope.options.categoryField.columnName) {
+                    if($scope.options.categoryField && $scope.options.categoryField.columnName) {
                         series = data[i][$scope.options.categoryField.columnName] !== '' ? data[i][$scope.options.categoryField.columnName] : 'Unknown';
                     }
 
