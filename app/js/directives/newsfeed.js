@@ -135,7 +135,9 @@ function(external, popups, connectionService, datasetService, errorNotificationS
 
                 if(translationService.hasKey()) {
                     $scope.translationAvailable = true;
-                    translationService.getSupportedLanguages(getSupportedLanguagesSuccessCallback, translationFailureCallback);
+                    translationService.getSupportedLanguages(getSupportedLanguagesSuccessCallback, function(response) {
+                        $scope.errorMessage = errorNotificationService.showErrorMessage($element, response.message,  response.reason);
+                    });
                 }
 
                 handleResize();
@@ -160,24 +162,6 @@ function(external, popups, connectionService, datasetService, errorNotificationS
             var getSupportedLanguagesSuccessCallback = function(languages) {
                 $scope.translationLanguages.fromLanguageOptions = languages;
                 $scope.translationLanguages.toLanguageOptions = languages;
-            };
-
-            /**
-             * Shows an error message when an error occurs in the translation service.
-             * @param {Object} response An error response containing the message and reason.
-             * @param {String} response.message
-             * @param {String} response.reason
-             * @method translationFailureCallback
-             * @private
-             */
-            var translationFailureCallback = function(response) {
-                $scope.loadingData = false;
-
-                if($scope.errorMessage) {
-                    errorNotificationService.hideErrorMessage($scope.errorMessage);
-                    $scope.errorMessage = undefined;
-                }
-                $scope.errorMessage = errorNotificationService.showErrorMessage($element, response.message,  response.reason);
             };
 
             /**
@@ -273,11 +257,17 @@ function(external, popups, connectionService, datasetService, errorNotificationS
              */
             var onNews = function(message) {
                 if(message.news && message.name && message.name === $scope.feedName) {
-                    $scope.data.news = _.map(message.news, function(elem) {
-                        if(elem.text) {
-                            elem.textTranslated = elem.text;
+                    $scope.data.news = message.news;
+                    $scope.data.news.forEach(function(item) {
+                        if(item.head) {
+                            item.headTranslated = item.head;
                         }
-                        return elem;
+                        if(item.name) {
+                            item.nameTranslated = item.name;
+                        }
+                        if(item.text) {
+                            item.textTranslated = item.text;
+                        }
                     });
                     $scope.data.newsCount = message.news.length;
                     $scope.feedType = (message.type || $scope.feedType).toUpperCase();
@@ -493,9 +483,11 @@ function(external, popups, connectionService, datasetService, errorNotificationS
                     var hasLinks = createExternalLinksForNewsItemData(mappings, head, name);
 
                     $scope.data.news.push({
-                        head: head,
-                        name: name,
                         date: new Date(item[$scope.options.dateField.columnName]),
+                        head: head,
+                        headTranslated: head,
+                        name: name,
+                        nameTranslated: name,
                         text: item[$scope.options.textField.columnName],
                         textTranslated: item[$scope.options.textField.columnName],
                         linksPopupButtonJson: createLinksPopupButtonJson(head, name),
@@ -627,47 +619,61 @@ function(external, popups, connectionService, datasetService, errorNotificationS
                     $scope.errorMessage = undefined;
                 }
 
-                var dataText = _.pluck($scope.data.news, 'text').filter(function(data) {
-                    return data;
-                });
-
                 sliceStart = sliceStart || 0;
                 sliceEnd = sliceEnd || sliceStart + TRANSLATION_INTERVAL;
 
-                var successCallback = function(response) {
-                    translateSuccessCallback(response, sliceStart, sliceEnd);
-                };
-
-                translationService.translate(dataText.slice(sliceStart, sliceEnd), $scope.translationLanguages.chosenToLanguage,
-                    successCallback, translationFailureCallback, $scope.translationLanguages.chosenFromLanguage);
+                translateNewsProperty("head", sliceStart, sliceEnd, function() {
+                    translateNewsProperty("name", sliceStart, sliceEnd, function() {
+                        translateNewsProperty("text", sliceStart, sliceEnd, function() {
+                            $scope.data.translatedRange[0] = $scope.data.translatedRange[0] < 0 ? sliceStart : Math.min($scope.data.translatedRange[0], sliceStart);
+                            $scope.data.translatedRange[1] = $scope.data.translatedRange[1] < 0 ? sliceEnd : Math.max($scope.data.translatedRange[1], sliceEnd);
+                            $scope.loadingData = false;
+                        });
+                    });
+                });
             };
 
             /**
-             * Refreshes text with their new translations.
-             * @param {Object} response Response object containing all the translations.
-             * @param {Array} response.data.data.translations List of all translations. It's assumed that
-             * all translations are given in the order the original text to translate was received in.
-             * @param {String} response.data.data.translations[].translatedText
-             * @param {String} [response.data.data.translations[].detectedSourceLanguage] Detected language
-             * code of the original version of translatedText. Only provided if the source language was auto-detected.
-             * @param {Integer} sliceStart Index to specify where to start inserting the new translations at in the data.
-             * @param {Integer} sliceEnd Index to specify where to end inserting the new translations at in the data (exclusive).
-             * @method translateSuccessCallback
+             * Translates the given property in the news data between the given start and end indices.
+             * @param {String} newsProperty
+             * @param {Integer} sliceStart
+             * @param {Integer} sliceEnd
+             * @param {Function} successCallback
+             * @method translateNewsProperty
              * @private
              */
-            var translateSuccessCallback = function(response, sliceStart, sliceEnd) {
-                $scope.loadingData = false;
-                $scope.data.translatedRange[0] = $scope.data.translatedRange[0] < 0 ? sliceStart : Math.min($scope.data.translatedRange[0], sliceStart);
-                $scope.data.translatedRange[1] = $scope.data.translatedRange[1] < 0 ? sliceEnd : Math.max($scope.data.translatedRange[1], sliceEnd);
-
-                var index = sliceStart;
-                response.data.data.translations.forEach(function(elem) {
-                    while(!$scope.data.news[index].text && index < sliceEnd) {
-                        index++;
-                    }
-                    $scope.data.news[index].textTranslated = elem.translatedText;
-                    index++;
+            var translateNewsProperty = function(newsProperty, sliceStart, sliceEnd, successCallback) {
+                var dataText = _.pluck($scope.data.news, newsProperty).filter(function(data) {
+                    return data;
                 });
+
+                var translationSuccessCallback = function(response) {
+                    var index = sliceStart;
+                    response.data.data.translations.forEach(function(item) {
+                        while(!$scope.data.news[index][newsProperty] && index < sliceEnd) {
+                            index++;
+                        }
+                        if(index < sliceEnd) {
+                            var newsItem = $scope.data.news[index];
+                            newsItem[newsProperty + "Translated"] = item.translatedText;
+                            newsItem.isTranslated = newsItem.isTranslated || newsItem[newsProperty] !== newsItem[newsProperty + "Translated"];
+                            index++;
+                        }
+                    });
+                    successCallback();
+                };
+
+                var translationFailureCallback = function(response) {
+                    for(var i = sliceStart; i < sliceEnd; ++i) {
+                        $scope.data.news[i][newsProperty + "Translated"] = $scope.data.news[i][newsProperty];
+                        $scope.data.news[i].isTranslated = false;
+                    }
+                    $scope.errorMessage = errorNotificationService.showErrorMessage($element, response.message,  response.reason);
+                    $scope.loadingData = false;
+                };
+
+                translationService.translate(dataText.slice(sliceStart, sliceEnd), $scope.translationLanguages.chosenToLanguage,
+                    translationSuccessCallback, translationFailureCallback, $scope.translationLanguages.chosenFromLanguage);
             };
 
             /**

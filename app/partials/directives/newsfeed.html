@@ -80,10 +80,12 @@
         <div>
             <img class="image" src="img/Twitter.png" ng-if="feedType == 'TWITTER'">
             <span ng-class="{true: 'vertical-align', false: ''}[feedType == 'TWITTER']">
-                <span class="head" ng-if="item.head != undefined" ng-bind="item.head"></span>
-                <span class="name" ng-if="item.name != undefined" ng-bind="item.name"></span>
+                <span class="head" ng-if="item.head != undefined" ng-bind="item.head" ng-show="!options.showTranslation"></span>
+                <span class="head" ng-if="item.headTranslated != undefined" ng-bind="item.headTranslated" ng-show="options.showTranslation" title="{{item.head}}"></span>
+                <span class="name" ng-if="item.name != undefined" ng-bind="item.name" ng-show="!options.showTranslation"></span>
+                <span class="name" ng-if="item.nameTranslated != undefined" ng-bind="item.nameTranslated" ng-show="options.showTranslation" title="{{item.name}}"></span>
                 <links-popup-button key="" source="" tooltip="{{item.head}} or {{item.name}}" json="{{item.linksPopupButtonJson}}" disable="{{item.linksPopupButtonDisabled}}"></links-popup-button>
-                <span class="glyphicon glyphicon-comment" ng-show="options.showTranslation && item.text != item.textTranslated" title="Translated"></span>
+                <span class="glyphicon glyphicon-comment" ng-show="options.showTranslation && item.isTranslated" title="Translated"></span>
             </span>
         </div>
         <div>
