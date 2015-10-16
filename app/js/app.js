@@ -163,7 +163,7 @@ var readExternalServicesConfig = function(config, callback) {
     $.ajax({
         url: config.jsonConfigFile,
         success: function(json) {
-            var data = $.parseJSON(json);
+            var data = _.isString(json) ? $.parseJSON(json) : json;
             var services = {};
 
             var urlProperty = config.fileProps.url || "url";
