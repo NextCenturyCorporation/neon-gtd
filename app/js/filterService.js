@@ -16,7 +16,7 @@
  */
 
 angular.module("neonDemo.services")
-.factory("FilterService", function(DatasetService) {
+.factory("FilterService", ["DatasetService", function(datasetService) {
     var service = {};
 
     service.REQUEST_REMOVE_FILTER = "filter_service.request_remove_filter";
@@ -276,11 +276,11 @@ angular.module("neonDemo.services")
             var tableString;
             var table;
             if(relations.length > 0) {
-                table = DatasetService.getTableWithName(relations[0].database, relations[0].table);
+                table = datasetService.getTableWithName(relations[0].database, relations[0].table);
                 tableString = table.prettyName;
             }
             for(var i = 1; i < relations.length; i++) {
-                table = DatasetService.getTableWithName(relations[i].database, relations[i].table);
+                table = datasetService.getTableWithName(relations[i].database, relations[i].table);
                 tableString += ("/" + table.prettyName);
             }
 
@@ -310,4 +310,4 @@ angular.module("neonDemo.services")
     };
 
     return service;
-});
+}]);
