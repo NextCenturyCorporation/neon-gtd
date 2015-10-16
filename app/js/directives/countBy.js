@@ -89,16 +89,12 @@ function(external, popups, connectionService, datasetService, errorNotificationS
                 // Subtract an additional 2 pixels from the table height to account for the its border.
                 $('#' + $scope.tableId).height($element.height() - headerHeight - 2);
 
-                updateTitleSize();
+                var titleWidth = $element.width() - $element.find(".chart-options").outerWidth(true);
+                $element.find(".title").css("maxWidth", titleWidth - 20);
 
                 if($scope.table) {
                     $scope.table.refreshLayout();
                 }
-            };
-
-            var updateTitleSize = function() {
-                var titleWidth = $element.width() - $element.find(".chart-options").outerWidth(true);
-                $element.find(".title").css("maxWidth", titleWidth - 20);
             };
 
             /**
@@ -138,7 +134,6 @@ function(external, popups, connectionService, datasetService, errorNotificationS
                     });
                     popups.links.deleteData($scope.tableId);
                     $element.off("resize", updateSize);
-                    $element.find(".chart-options").off("resize", updateTitleSize);
                     $scope.messenger.removeEvents();
                     if($scope.filterSet) {
                         filterService.removeFilters($scope.messenger, $scope.filterKeys);
@@ -147,7 +142,6 @@ function(external, popups, connectionService, datasetService, errorNotificationS
                 });
 
                 $element.resize(updateSize);
-                $element.find(".chart-options").resize(updateTitleSize);
             };
 
             var logOptionsMenuDropdownChange = function(element, value) {

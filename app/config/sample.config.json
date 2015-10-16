@@ -258,6 +258,10 @@
                         }
                     }
                 }
+            },
+            "mapBaseLayer": {
+                "color": "dark",
+                "protocol": "https"
             }
         }
     }],

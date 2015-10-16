@@ -280,7 +280,7 @@ angular.module('neonDemo.directives')
                     row: filterRow
                 }];
 
-                var relations = datasetService.getRelations(database.name, table.name, [$scope.selectedField.columnName]);
+                var relations = DatasetService.getRelations(database.name, table.name, [$scope.selectedField.columnName]);
                 relations.forEach(function(relation) {
                     if(relation.database !== database.name || relation.table !== table.name) {
                         var relationInfo = findRelationInfo(relation);

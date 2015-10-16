@@ -76,7 +76,7 @@
 <div class="clearfix"></div>
 
 <div class="newsfeed">
-	<div class="item" ng-class="getNewsItemStyleClass(item)" ng-repeat='item in data.news'>
+	<div class="item" ng-class="getNewsItemStyleClass(item)" ng-repeat='item in data.news track by $index'>
         <div>
             <img ng-if="feedType == 'TWITTER'" src="img/Twitter.png" height="32" title="Tweet">
             <img ng-show="options.showTranslation && item.isTranslated" src="img/Translated.png" height="12" title="Showing Translation">

@@ -72,8 +72,8 @@ function(external, popups, $timeout, connectionService, datasetService, errorNot
             // Prevent extraneous queries from handleScroll.
             $scope.loadingNews = false;
 
-            // Whether the data displayed in the newsfeed was taken from a news event.
-            $scope.newsEventData = false;
+            // The data in this newsfeed from a news event or an empty array if the data in this newsfeed is from a query.
+            $scope.dataFromNewsEvent = [];
 
             $scope.data = {
                 news: [],
@@ -136,7 +136,7 @@ function(external, popups, $timeout, connectionService, datasetService, errorNot
                 $scope.messenger.subscribe("news_highlights", onNewsHighlights);
                 $scope.messenger.subscribe("date_selected", onDateSelected);
                 $scope.messenger.subscribe(datasetService.UPDATE_DATA_CHANNEL, function() {
-                    if(!$scope.newsEventData) {
+                    if(!$scope.dataFromNewsEvent.length) {
                         resetAndQueryForData();
                     }
                 });
@@ -198,15 +198,20 @@ function(external, popups, $timeout, connectionService, datasetService, errorNot
                 updateTopNewsItemIndex();
 
                 // If the user has scrolled to the bottom, query for more news items and add them to the feed.
-                if(!$scope.loadingNews && !$scope.newsEventData && $element.find(".item").last().position().top <= $element.height()) {
+                if(!$scope.loadingNews && !$scope.dataFromNewsEvent && $element.find(".item").last().position().top <= $element.height()) {
                     $scope.loadingNews = true;
                     $scope.options.limit = $scope.options.limit + LIMIT_INTERVAL;
-                    queryForData(function(data) {
-                        // Only add the items to the feed that aren't there already.
-                        updateData(data.slice($scope.options.limit - LIMIT_INTERVAL, $scope.options.limit));
-                        runLinky();
-                        $scope.loadingNews = false;
-                    });
+                    if($scope.dataFromNewsEvent.length) {
+                        updateData($scope.dataFromNewsEvent.slice($scope.options.limit - LIMIT_INTERVAL, $scope.options.limit));
+                    } else {
+                        $scope.loadingNews = true;
+                        queryForData(function(data) {
+                            // Only add the items to the feed that aren't there already.
+                            updateData(data.slice($scope.options.limit - LIMIT_INTERVAL, $scope.options.limit));
+                            runLinky();
+                            $scope.loadingNews = false;
+                        });
+                    }
                 }
 
                 if(!$scope.loadingData && $scope.options.showTranslation) {
@@ -267,7 +272,7 @@ function(external, popups, $timeout, connectionService, datasetService, errorNot
              * @private
              */
             var onFiltersChanged = function(message) {
-                if(message.addedFilter && message.addedFilter.databaseName === $scope.options.database.name && message.addedFilter.tableName === $scope.options.table.name && !$scope.newsEventData) {
+                if(message.addedFilter && message.addedFilter.databaseName === $scope.options.database.name && message.addedFilter.tableName === $scope.options.table.name && !$scope.dataFromNewsEvent.length) {
                     resetAndQueryForData();
                 }
             };
@@ -280,7 +285,7 @@ function(external, popups, $timeout, connectionService, datasetService, errorNot
              */
             var onNews = function(message) {
                 if(message.news && message.name && message.name === $scope.feedName) {
-                    $scope.data.news = message.news;
+                    $scope.data.news = message.news.slice(0, $scope.options.limit);
                     $scope.data.news.forEach(function(item) {
                         if(item.head) {
                             item.headTranslated = item.head;
@@ -294,7 +299,7 @@ function(external, popups, $timeout, connectionService, datasetService, errorNot
                     });
                     $scope.data.newsCount = message.news.length;
                     $scope.feedType = (message.type || $scope.feedType).toUpperCase();
-                    $scope.newsEventData = true;
+                    $scope.dataFromNewsEvent = message.news;
                     $scope.topNewsItemIndex = 0;
                     runLinky();
 
@@ -412,7 +417,7 @@ function(external, popups, $timeout, connectionService, datasetService, errorNot
                 $scope.feedName = $scope.bindFeedName || datasetService.getMapping($scope.options.database.name, $scope.options.table.name, neonMappings.NEWSFEED_NAME) || "";
                 $scope.feedType = $scope.bindFeedType ? $scope.bindFeedType.toUpperCase() : datasetService.getMapping($scope.options.database.name, $scope.options.table.name, neonMappings.NEWSFEED_TYPE) || DEFAULT_TYPE;
 
-                $scope.newsEventData = false;
+                $scope.dataFromNewsEvent = [];
                 resetAndQueryForData();
             };
 
@@ -448,7 +453,7 @@ function(external, popups, $timeout, connectionService, datasetService, errorNot
                     $scope.errorMessage = undefined;
                 }
 
-                $scope.newsEventData = false;
+                $scope.dataFromNewsEvent = false;
 
                 var connection = connectionService.getActiveConnection();
 
@@ -731,7 +736,7 @@ function(external, popups, $timeout, connectionService, datasetService, errorNot
              */
             $scope.onFieldChanged = function() {
                 if(!$scope.loadingData) {
-                    $scope.newsEventData = false;
+                    $scope.dataFromNewsEvent = [];
                     resetAndQueryForData();
                 }
             };
@@ -743,7 +748,7 @@ function(external, popups, $timeout, connectionService, datasetService, errorNot
              */
             $scope.handleSortButtonClick = function(direction) {
                 if($scope.options.sortDirection === direction) {
-                    if($scope.newsEventData) {
+                    if($scope.dataFromNewsEvent.length) {
                         $scope.data.news.reverse();
                         $scope.data.translatedRange = [$scope.data.news.length - $scope.data.translatedRange[1], $scope.data.news.length - $scope.data.translatedRange[0]];
                     } else {
