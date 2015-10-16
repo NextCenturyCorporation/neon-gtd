@@ -513,14 +513,19 @@ function(external, popups, $timeout, connectionService, datasetService, errorNot
                     var name = datasetService.isFieldValid($scope.options.nameField) ? item[$scope.options.nameField.columnName] : "";
                     var hasLinks = createExternalLinksForNewsItemData(mappings, head, name);
 
+                    var text = item[$scope.options.textField.columnName];
+                    if(_.isArray(text)) {
+                        text = text.join("\n");
+                    }
+
                     $scope.data.news.push({
                         date: new Date(item[$scope.options.dateField.columnName]),
                         head: head,
                         headTranslated: head,
                         name: name,
                         nameTranslated: name,
-                        text: item[$scope.options.textField.columnName],
-                        textTranslated: item[$scope.options.textField.columnName],
+                        text: text,
+                        textTranslated: text,
                         linksPopupButtonJson: createLinksPopupButtonJson(head, name),
                         linksPopupButtonDisabled: !hasLinks
                     });
