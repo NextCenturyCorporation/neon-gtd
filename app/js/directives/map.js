@@ -533,10 +533,7 @@ angular.module('neonDemo.directives')
             var findField = function(fields, fieldName) {
                 return _.find(fields, function(field) {
                     return field.columnName === fieldName;
-                }) || {
-                    columnName: "",
-                    prettyName: ""
-                };
+                }) || datasetService.createBlankField();
             };
 
             var setDefaultLayerProperties = function(layer) {
@@ -631,39 +628,27 @@ angular.module('neonDemo.directives')
                 $scope.options.newLayer.lineColor = "";
                 $scope.options.newLayer.colorCode = "";
 
-                var latitude = datasetService.getMapping($scope.options.newLayer.database.name, $scope.options.newLayer.table.name, "latitude") || "";
+                var latitude = datasetService.getMapping($scope.options.newLayer.database.name, $scope.options.newLayer.table.name, neonMappings.LATITUDE) || "";
                 $scope.options.newLayer.latitude = _.find($scope.fields, function(field) {
                     return field.columnName === latitude;
-                }) || {
-                    columnName: "",
-                    prettyName: ""
-                };
-                var longitude = datasetService.getMapping($scope.options.newLayer.database.name, $scope.options.newLayer.table.name, "longitude") || "";
+                }) || datasetService.createBlankField();
+                var longitude = datasetService.getMapping($scope.options.newLayer.database.name, $scope.options.newLayer.table.name, neonMappings.LONGITUDE) || "";
                 $scope.options.newLayer.longitude = _.find($scope.fields, function(field) {
                     return field.columnName === longitude;
-                }) || {
-                    columnName: "",
-                    prettyName: ""
-                };
-                var color = datasetService.getMapping($scope.options.newLayer.database.name, $scope.options.newLayer.table.name, "colorBy") || "";
+                }) || datasetService.createBlankField();
+                var color = datasetService.getMapping($scope.options.newLayer.database.name, $scope.options.newLayer.table.name, neonMappings.COLOR) || "";
                 $scope.options.newLayer.color = _.find($scope.fields, function(field) {
                     return field.columnName === color;
-                }) || {
-                    columnName: "",
-                    prettyName: ""
-                };
-                var size = datasetService.getMapping($scope.options.newLayer.database.name, $scope.options.newLayer.table.name, "sizeBy") || "";
+                }) || datasetService.createBlankField();
+                var size = datasetService.getMapping($scope.options.newLayer.database.name, $scope.options.newLayer.table.name, neonMappings.SIZE) || "";
                 $scope.options.newLayer.size = _.find($scope.fields, function(field) {
                     return field.columnName === size;
-                }) || {
-                    columnName: "",
-                    prettyName: ""
-                };
+                }) || datasetService.createBlankField();
             };
 
             $scope.updateTables = function() {
                 $scope.tables = datasetService.getTables($scope.options.newLayer.database.name);
-                $scope.options.newLayer.table = datasetService.getFirstTableWithMappings($scope.options.newLayer.database.name, ["latitude", "longitude"]) || $scope.tables[0];
+                $scope.options.newLayer.table = datasetService.getFirstTableWithMappings($scope.options.newLayer.database.name, [neonMappings.LATITUDE, neonMappings.LONGITUDE]) || $scope.tables[0];
                 $scope.validateLayerName($scope.options.newLayer, -1);
                 $scope.updateFields();
             };

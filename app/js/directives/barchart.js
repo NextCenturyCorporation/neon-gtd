@@ -228,7 +228,7 @@ function(external, popups, connectionService, datasetService, errorNotificationS
 
             $scope.updateTables = function() {
                 $scope.tables = datasetService.getTables($scope.options.database.name);
-                $scope.options.table = datasetService.getFirstTableWithMappings($scope.options.database.name, ["bar_x_axis", "y_axis"]) || $scope.tables[0];
+                $scope.options.table = datasetService.getFirstTableWithMappings($scope.options.database.name, [neonMappings.BAR_GROUPS, neonMappings.Y_AXIS]) || $scope.tables[0];
                 if($scope.bindTable) {
                     for(var i = 0; i < $scope.tables.length; ++i) {
                         if($scope.bindTable === $scope.tables[i].name) {
@@ -244,20 +244,14 @@ function(external, popups, connectionService, datasetService, errorNotificationS
                 $scope.loadingData = true;
                 $scope.fields = datasetService.getSortedFields($scope.options.database.name, $scope.options.table.name);
 
-                var attrX = $scope.bindXAxisField || datasetService.getMapping($scope.options.database.name, $scope.options.table.name, "bar_x_axis") || "";
+                var attrX = $scope.bindXAxisField || datasetService.getMapping($scope.options.database.name, $scope.options.table.name, neonMappings.BAR_GROUPS) || "";
                 $scope.options.attrX = _.find($scope.fields, function(field) {
                     return field.columnName === attrX;
-                }) || {
-                    columnName: "",
-                    prettyName: ""
-                };
-                var attrY = $scope.bindYAxisField || datasetService.getMapping($scope.options.database.name, $scope.options.table.name, "y_axis") || "";
+                }) || datasetService.createBlankField();
+                var attrY = $scope.bindYAxisField || datasetService.getMapping($scope.options.database.name, $scope.options.table.name, neonMappings.Y_AXIS) || "";
                 $scope.options.attrY = _.find($scope.fields, function(field) {
                     return field.columnName === attrY;
-                }) || {
-                    columnName: "",
-                    prettyName: ""
-                };
+                }) || datasetService.createBlankField();
 
                 if($scope.filterSet) {
                     $scope.clearFilterSet();
@@ -301,7 +295,7 @@ function(external, popups, connectionService, datasetService, errorNotificationS
 
                 var connection = connectionService.getActiveConnection();
 
-                if(!connection || !$scope.options.attrX.columnName || (!$scope.options.attrY.columnName && $scope.options.barType !== "count")) {
+                if(!connection || !datasetService.isFieldValid($scope.options.attrX) || (!$scope.options.attrY.columnName && $scope.options.barType !== "count")) {
                     drawBlankChart();
                     $scope.loadingData = false;
                     return;

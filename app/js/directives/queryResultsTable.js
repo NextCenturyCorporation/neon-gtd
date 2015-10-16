@@ -319,10 +319,7 @@ function(external, popups, connectionService, datasetService, errorNotificationS
             $scope.updateFields = function() {
                 $scope.loadingData = true;
                 $scope.fields = datasetService.getSortedFields($scope.options.database.name, $scope.options.table.name);
-                $scope.options.addField = {
-                    columnName: "",
-                    prettyName: ""
-                };
+                $scope.options.addField = datasetService.createBlankField();
 
                 if(!($scope.deletedFieldsMap[$scope.options.database.name][$scope.options.table.name])) {
                     $scope.deletedFieldsMap[$scope.options.database.name][$scope.options.table.name] = [];
@@ -347,13 +344,10 @@ function(external, popups, connectionService, datasetService, errorNotificationS
                     $scope.options.addField = $scope.deletedFieldsMap[$scope.options.database.name][$scope.options.table.name][0];
                 }
 
-                var sortByField = datasetService.getMapping($scope.options.database.name, $scope.options.table.name, "sort_by") || "";
+                var sortByField = datasetService.getMapping($scope.options.database.name, $scope.options.table.name, neonMappings.SORT) || "";
                 $scope.options.sortByField = _.find($scope.fields, function(field) {
                     return field.columnName === sortByField;
-                }) || {
-                    columnName: "",
-                    prettyName: ""
-                };
+                }) || datasetService.createBlankField();
 
                 queryForData(true);
             };
@@ -742,10 +736,7 @@ function(external, popups, connectionService, datasetService, errorNotificationS
                     });
                     $scope.deletedFieldsMap[$scope.options.database.name][$scope.options.table.name].splice(indexToSplice, 1);
                     $scope.fields.push($scope.options.addField);
-                    $scope.options.addField = $scope.deletedFieldsMap[$scope.options.database.name][$scope.options.table.name].length > 0 ? $scope.deletedFieldsMap[$scope.options.database.name][$scope.options.table.name][0] : {
-                        columnName: "",
-                        prettyName: ""
-                    };
+                    $scope.options.addField = $scope.deletedFieldsMap[$scope.options.database.name][$scope.options.table.name].length > 0 ? $scope.deletedFieldsMap[$scope.options.database.name][$scope.options.table.name][0] : datasetService.createBlankField();
                     $scope.createDeleteColumnButtons();
 
                     XDATA.userALE.log({
@@ -767,7 +758,7 @@ function(external, popups, connectionService, datasetService, errorNotificationS
              */
             $scope.buildQuery = function() {
                 var query = new neon.query.Query().selectFrom($scope.options.database.name, $scope.options.table.name).limit($scope.options.limit);
-                if($scope.options.sortByField && $scope.options.sortByField.columnName) {
+                if(datasetService.isFieldValid($scope.options.sortByField)) {
                     query.sortBy($scope.options.sortByField.columnName, $scope.options.sortDirection);
                 }
                 return query;

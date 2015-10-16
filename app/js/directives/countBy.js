@@ -328,7 +328,7 @@ function(external, popups, connectionService, datasetService, errorNotificationS
 
             $scope.updateTables = function() {
                 $scope.tables = datasetService.getTables($scope.options.database.name);
-                $scope.options.table = datasetService.getFirstTableWithMappings($scope.options.database.name, ["count_by"]) || $scope.tables[0];
+                $scope.options.table = datasetService.getFirstTableWithMappings($scope.options.database.name, [neonMappings.AGGREGATE]) || $scope.tables[0];
                 if($scope.bindTable) {
                     for(var i = 0; i < $scope.tables.length; ++i) {
                         if($scope.bindTable === $scope.tables[i].name) {
@@ -345,20 +345,14 @@ function(external, popups, connectionService, datasetService, errorNotificationS
                 $scope.fields = datasetService.getSortedFields($scope.options.database.name, $scope.options.table.name);
                 $scope.options.aggregation = $scope.bindAggregation || "count";
 
-                var fieldName = $scope.bindCountField || datasetService.getMapping($scope.options.database.name, $scope.options.table.name, "count_by") || "";
+                var fieldName = $scope.bindCountField || datasetService.getMapping($scope.options.database.name, $scope.options.table.name, neonMappings.AGGREGATE) || "";
                 $scope.options.field = _.find($scope.fields, function(field) {
                     return field.columnName === fieldName;
-                }) || {
-                    columnName: "",
-                    prettyName: ""
-                };
+                }) || datasetService.createBlankField();
                 var aggregationFieldName = $scope.bindAggregationField || "";
                 $scope.options.aggregationField = _.find($scope.fields, function(field) {
                     return field.columnName === aggregationFieldName;
-                }) || {
-                    columnName: "",
-                    prettyName: ""
-                };
+                }) || datasetService.createBlankField();
 
                 if($scope.filterSet) {
                     $scope.clearFilter();

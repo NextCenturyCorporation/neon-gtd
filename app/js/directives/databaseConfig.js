@@ -278,22 +278,10 @@ angular.module('neonDemo.directives')
              * @private
              */
             var resetFieldMappings = function(customTable) {
-                customTable.date = {
-                    columnName: "",
-                    prettyName: ""
-                };
-                customTable.latitude = {
-                    columnName: "",
-                    prettyName: ""
-                };
-                customTable.longitude = {
-                    columnName: "",
-                    prettyName: ""
-                };
-                customTable.tags = {
-                    columnName: "",
-                    prettyName: ""
-                };
+                customTable.date = datasetService.createBlankField();
+                customTable.latitude = datasetService.createBlankField();
+                customTable.longitude = datasetService.createBlankField();
+                customTable.tags = datasetService.createBlankField();
                 return customTable;
             };
 
@@ -434,16 +422,17 @@ angular.module('neonDemo.directives')
                     };
 
                     customDatabase.customTables.forEach(function(customTable) {
+                        var mappings = {};
+                        mappings[neonMappings.DATE] = customTable.date.columnName;
+                        mappings[neonMappings.TAGS] = customTable.tags.columnName;
+                        mappings[neonMappings.LATITUDE] = customTable.latitude.columnName;
+                        mappings[neonMappings.LONGITUDE] = customTable.longitude.columnName;
+
                         var tableObject = {
                             name: customTable.table.name,
                             prettyName: customTable.table.prettyName,
                             fields: customTable.table.fields,
-                            mappings: {
-                                latitude: customTable.latitude.columnName,
-                                longitude: customTable.longitude.columnName,
-                                date: customTable.date.columnName,
-                                tags: customTable.tags.columnName
-                            }
+                            mappings: mappings
                         };
 
                         database.tables.push(tableObject);

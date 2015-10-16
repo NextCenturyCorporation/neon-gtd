@@ -196,7 +196,7 @@ angular.module('neonDemo.directives')
                     tags: ["filter-builder", "field", $scope.selectedfield]
                 });
 
-                $scope.selectedFieldIsDate = DatasetService.hasDataset() && $scope.selectedField.columnName === DatasetService.getMapping($scope.selectedDatabase.name, $scope.selectedTable.name, "date");
+                $scope.selectedFieldIsDate = DatasetService.hasDataset() && $scope.selectedField.columnName === DatasetService.getMapping($scope.selectedDatabase.name, $scope.selectedTable.name, neonMappings.DATE);
             };
 
             $scope.onSelectedOperatorChange = function() {
@@ -290,7 +290,7 @@ angular.module('neonDemo.directives')
                                     return databaseField.columnName === relationField;
                                 });
                                 var relationFilterRow = new neon.query.FilterRow(relationInfo.databaseObject, relationInfo.tableObject, relationFieldObject, $scope.selectedOperator, $scope.selectedValue, relationInfo.tableObjects, relationInfo.databaseFields);
-                                relationFilterRow.isDate = datasetService.hasDataset() && relationField === datasetService.getMapping(relation.database, relation.table, "date");
+                                relationFilterRow.isDate = datasetService.hasDataset() && relationField === datasetService.getMapping(relation.database, relation.table, neonMappings.DATE);
                                 rows.push({
                                     database: relationInfo.databaseObject.name,
                                     table: relationInfo.tableObject.name,

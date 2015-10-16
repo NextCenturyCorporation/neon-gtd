@@ -246,7 +246,7 @@ function(external, popups, connectionService, datasetService, errorNotificationS
 
             $scope.updateTables = function() {
                 $scope.tables = datasetService.getTables($scope.options.database.name);
-                $scope.options.table = datasetService.getFirstTableWithMappings($scope.options.database.name, ["tags"]) || $scope.tables[0];
+                $scope.options.table = datasetService.getFirstTableWithMappings($scope.options.database.name, [neonMappings.TAGS]) || $scope.tables[0];
                 if($scope.bindTable) {
                     for(var i = 0; i < $scope.tables.length; ++i) {
                         if($scope.bindTable === $scope.tables[i].name) {
@@ -262,13 +262,10 @@ function(external, popups, connectionService, datasetService, errorNotificationS
                 $scope.loadingData = true;
                 $scope.fields = datasetService.getSortedFields($scope.options.database.name, $scope.options.table.name);
 
-                var tagField = $scope.bindTagField || datasetService.getMapping($scope.options.database.name, $scope.options.table.name, "tags") || "";
+                var tagField = $scope.bindTagField || datasetService.getMapping($scope.options.database.name, $scope.options.table.name, neonMappings.TAGS) || "";
                 $scope.options.tagField = _.find($scope.fields, function(field) {
                     return field.columnName === tagField;
-                }) || {
-                    columnName: "",
-                    prettyName: ""
-                };
+                }) || datasetService.createBlankField();
 
                 if($scope.showFilter) {
                     $scope.clearTagFilters();
@@ -289,7 +286,7 @@ function(external, popups, connectionService, datasetService, errorNotificationS
 
                 var connection = connectionService.getActiveConnection();
 
-                if(!connection || !$scope.options.tagField.columnName) {
+                if(!connection || !datasetService.isFieldValid($scope.options.tagField)) {
                     $scope.updateTagData([]);
                     $scope.loadingData = false;
                     return;
@@ -405,10 +402,10 @@ function(external, popups, connectionService, datasetService, errorNotificationS
                         name: tagName,
                         nameTranslated: tagNameTranslated
                     };
-                    if(external.services.tags) {
+                    if(external.services[neonMappings.TAGS]) {
                         var tagLinks = [];
-                        Object.keys(external.services.tags.apps).forEach(function(app) {
-                            tagLinks.push(popups.links.createServiceLinkObject(external.services.tags, app, "tags", tagName));
+                        Object.keys(external.services[neonMappings.TAGS].apps).forEach(function(app) {
+                            tagLinks.push(popups.links.createServiceLinkObject(external.services[neonMappings.TAGS], app, neonMappings.TAGS, tagName));
                         });
                         popups.links.addLinks($scope.visualizationId, tagName, tagLinks);
                     }

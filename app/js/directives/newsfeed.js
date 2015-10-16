@@ -400,7 +400,7 @@ function(external, popups, $timeout, connectionService, datasetService, errorNot
                 $scope.options.nameField = _.find($scope.fields, function(field) {
                     return field.columnName === nameFieldName;
                 }) || datasetService.createBlankField();
-                var dateFieldName = $scope.bindDateField || datasetService.getMapping($scope.options.database.name, $scope.options.table.name, "date") || "";
+                var dateFieldName = $scope.bindDateField || datasetService.getMapping($scope.options.database.name, $scope.options.table.name, neonMappings.DATE) || "";
                 $scope.options.dateField = _.find($scope.fields, function(field) {
                     return field.columnName === dateFieldName;
                 }) || datasetService.createBlankField();
@@ -409,8 +409,8 @@ function(external, popups, $timeout, connectionService, datasetService, errorNot
                     return field.columnName === textFieldName;
                 }) || datasetService.createBlankField();
 
-                $scope.feedName = $scope.bindFeedName || datasetService.getMapping($scope.options.database.name, $scope.options.table.name, "newsfeed_name") || "";
-                $scope.feedType = $scope.bindFeedType ? $scope.bindFeedType.toUpperCase() : datasetService.getMapping($scope.options.database.name, $scope.options.table.name, "newsfeed_type") || DEFAULT_TYPE;
+                $scope.feedName = $scope.bindFeedName || datasetService.getMapping($scope.options.database.name, $scope.options.table.name, neonMappings.NEWSFEED_NAME) || "";
+                $scope.feedType = $scope.bindFeedType ? $scope.bindFeedType.toUpperCase() : datasetService.getMapping($scope.options.database.name, $scope.options.table.name, neonMappings.NEWSFEED_TYPE) || DEFAULT_TYPE;
 
                 $scope.newsEventData = false;
                 resetAndQueryForData();

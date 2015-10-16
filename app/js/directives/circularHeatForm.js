@@ -205,7 +205,7 @@ function(connectionService, datasetService, errorNotificationService, exportServ
 
             $scope.updateTables = function() {
                 $scope.tables = datasetService.getTables($scope.options.database.name);
-                $scope.options.table = datasetService.getFirstTableWithMappings($scope.options.database.name, ["date"]) || $scope.tables[0];
+                $scope.options.table = datasetService.getFirstTableWithMappings($scope.options.database.name, [neonMappings.DATE]) || $scope.tables[0];
                 if($scope.bindTable) {
                     for(var i = 0; i < $scope.tables.length; ++i) {
                         if($scope.bindTable === $scope.tables[i].name) {
@@ -221,13 +221,10 @@ function(connectionService, datasetService, errorNotificationService, exportServ
                 $scope.loadingData = true;
                 $scope.fields = datasetService.getSortedFields($scope.options.database.name, $scope.options.table.name);
 
-                var dateField = $scope.bindDateField || datasetService.getMapping($scope.options.database.name, $scope.options.table.name, "date") || "";
+                var dateField = $scope.bindDateField || datasetService.getMapping($scope.options.database.name, $scope.options.table.name, neonMappings.DATE) || "";
                 $scope.options.dateField = _.find($scope.fields, function(field) {
                     return field.columnName === dateField;
-                }) || {
-                    columnName: "",
-                    prettyName: ""
-                };
+                }) || datasetService.createBlankField();
 
                 $scope.queryForChartData();
             };
@@ -244,7 +241,7 @@ function(connectionService, datasetService, errorNotificationService, exportServ
 
                 var connection = connectionService.getActiveConnection();
 
-                if(!connection || !$scope.options.dateField.columnName) {
+                if(!connection || !datasetService.isFieldValid($scope.options.dateField)) {
                     $scope.updateChartData({
                         data: []
                     });
