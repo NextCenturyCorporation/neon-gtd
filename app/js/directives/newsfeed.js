@@ -17,8 +17,8 @@
  */
 
 angular.module('neonDemo.directives')
-.directive('newsfeed', ['external', 'popups', 'ConnectionService', 'DatasetService', 'ErrorNotificationService', 'TranslationService',
-function(external, popups, connectionService, datasetService, errorNotificationService, translationService) {
+.directive('newsfeed', ['external', 'popups', '$timeout', 'ConnectionService', 'DatasetService', 'ErrorNotificationService', 'TranslationService',
+function(external, popups, $timeout, connectionService, datasetService, errorNotificationService, translationService) {
     return {
         templateUrl: 'partials/directives/newsfeed.html',
         restrict: 'EA',
@@ -44,6 +44,13 @@ function(external, popups, connectionService, datasetService, errorNotificationS
 
             var DEFAULT_TYPE = "TWITTER";
 
+            var DEFAULT_LINKY_CONFIG = {
+                mentions: false,
+                hashtags: false,
+                urls: true,
+                linkTo: ""
+            };
+
             // The default limit and the number of news items added to the feed whenever the user scrolls to the bottom of the feed.
             var LIMIT_INTERVAL = 100;
 
@@ -55,6 +62,7 @@ function(external, popups, connectionService, datasetService, errorNotificationS
             $scope.databases = [];
             $scope.tables = [];
             $scope.fields = [];
+            $scope.linkyConfig = DEFAULT_LINKY_CONFIG;
             $scope.selectedDate = undefined;
             $scope.errorMessage = undefined;
 
@@ -196,6 +204,7 @@ function(external, popups, connectionService, datasetService, errorNotificationS
                     queryForData(function(data) {
                         // Only add the items to the feed that aren't there already.
                         updateData(data.slice($scope.options.limit - LIMIT_INTERVAL, $scope.options.limit));
+                        runLinky();
                         $scope.loadingNews = false;
                     });
                 }
@@ -229,12 +238,26 @@ function(external, popups, connectionService, datasetService, errorNotificationS
             var updateTopNewsItemIndex = function() {
                 var topNewsItemIndex = $scope.topNewsItemIndex + 1;
                 var topNewsItem = $element.find(".item:nth-of-type(" + topNewsItemIndex + ")");
-                if(topNewsItem && topNewsItem.position().top > 0) {
+                var topNewsItemPosition = topNewsItem.position();
+
+                if(topNewsItemPosition && topNewsItemPosition.top > 0) {
                     $scope.topNewsItemIndex = Math.max(0, $scope.topNewsItemIndex - 1);
                 }
-                if(topNewsItem && topNewsItem.position().top + topNewsItem.outerHeight(true) < 0) {
+                if(topNewsItemPosition && topNewsItemPosition.top + topNewsItem.outerHeight(true) < 0) {
                     $scope.topNewsItemIndex = Math.min($scope.data.news.length, $scope.topNewsItemIndex + 1);
                 }
+            };
+
+            /**
+             * Runs the linky library on the text of news items in the feed.
+             * @method runLinky
+             * @private
+             */
+            var runLinky = function() {
+                // Use $timeout to ensure that linky is run after angular's digest updates the items in the feed.
+                $timeout(function() {
+                    $element.find(".item .text").linky($scope.linkyConfig);
+                });
             };
 
             /**
@@ -273,6 +296,7 @@ function(external, popups, connectionService, datasetService, errorNotificationS
                     $scope.feedType = (message.type || $scope.feedType).toUpperCase();
                     $scope.newsEventData = true;
                     $scope.topNewsItemIndex = 0;
+                    runLinky();
 
                     if(message.news.length) {
                         refreshTranslation();
@@ -320,6 +344,7 @@ function(external, popups, connectionService, datasetService, errorNotificationS
                     return;
                 }
 
+                $scope.linkyConfig = datasetService.getLinkyConfig() || DEFAULT_LINKY_CONFIG;;
                 $scope.databases = datasetService.getDatabases();
                 $scope.options.database = $scope.databases[0];
                 if($scope.bindDatabase) {
@@ -405,6 +430,7 @@ function(external, popups, connectionService, datasetService, errorNotificationS
                 queryForData(function(data, connection) {
                     updateData(data);
                     refreshTranslation();
+                    runLinky();
                     $scope.loadingData = false;
                     queryForNewsCount(connection);
                 });
