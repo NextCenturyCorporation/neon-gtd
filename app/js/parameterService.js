@@ -23,12 +23,6 @@ angular.module('neonDemo.services')
 
     service.FILTER_KEY_PREFIX = "dashboard";
 
-    // Mappings from the JSON configuration file.
-    var LATITUDE_MAPPING = "latitude";
-    var LONGITUDE_MAPPING = "longitude";
-    var DATE_MAPPING = "date";
-    var TAG_MAPPING = "tag";
-    var URL_MAPPING = "url";
     var CUSTOM_NUMBER_MAPPING_PREFIX = "custom_number_";
     var CUSTOM_STRING_MAPPING_PREFIX = "custom_string_";
 
@@ -41,10 +35,10 @@ angular.module('neonDemo.services')
     var DASHBOARD_FILTER_URL = DASHBOARD_FILTER_PREFIX + "url";
 
     // Array index for the min/max lat/lon in the bounds.
-    var BOUNDS_MIN_LON = 0;
-    var BOUNDS_MAX_LON = 1;
-    var BOUNDS_MIN_LAT = 2;
-    var BOUNDS_MAX_LAT = 3;
+    var BOUNDS_MIN_LAT = 0;
+    var BOUNDS_MIN_LON = 1;
+    var BOUNDS_MAX_LAT = 2;
+    var BOUNDS_MAX_LON = 3;
 
     /**
      * Removes the filters with the given keys if they were added by the parameter service.
@@ -93,14 +87,14 @@ angular.module('neonDemo.services')
         var parameters = $location.search();
 
         var argsList = [{
-            mappings: [DATE_MAPPING],
+            mappings: [neonMappings.DATE],
             parameterKey: DASHBOARD_FILTER_DATE,
             cleanParameter: splitArray,
             isParameterValid: areDatesValid,
             filterName: "date",
             createFilterClauseCallback: createDateFilterClauseCallback
         }, {
-            mappings: [TAG_MAPPING],
+            mappings: [neonMappings.TAGS],
             parameterKey: DASHBOARD_FILTER_TAG,
             cleanParameter: cleanValue,
             isParameterValid: doesParameterExist,
@@ -108,7 +102,7 @@ angular.module('neonDemo.services')
             operator: "contains",
             createFilterClauseCallback: createSimpleFilterClauseCallback
         }, {
-            mappings: [URL_MAPPING],
+            mappings: [neonMappings.URLS],
             parameterKey: DASHBOARD_FILTER_URL,
             cleanParameter: cleanValue,
             isParameterValid: doesParameterExist,
@@ -116,7 +110,7 @@ angular.module('neonDemo.services')
             operator: "contains",
             createFilterClauseCallback: createSimpleFilterClauseCallback
         }, {
-            mappings: [LATITUDE_MAPPING, LONGITUDE_MAPPING],
+            mappings: [neonMappings.LATITUDE, neonMappings.LONGITUDE],
             parameterKey: DASHBOARD_FILTER_BOUNDS,
             cleanParameter: splitArray,
             isParameterValid: hasBounds,
@@ -323,10 +317,10 @@ angular.module('neonDemo.services')
      * @return {Function}
      */
     var createBoundsFilterClauseCallback = function(operator, boundsList) {
-        var minimumLongitude = Number(boundsList[BOUNDS_MIN_LON]);
-        var maximumLongitude = Number(boundsList[BOUNDS_MAX_LON]);
         var minimumLatitude = Number(boundsList[BOUNDS_MIN_LAT]);
         var maximumLatitude = Number(boundsList[BOUNDS_MAX_LAT]);
+        var minimumLongitude = Number(boundsList[BOUNDS_MIN_LON]);
+        var maximumLongitude = Number(boundsList[BOUNDS_MAX_LON]);
 
         return function(databaseAndTableName, fieldNames) {
             // Copied from map.js
