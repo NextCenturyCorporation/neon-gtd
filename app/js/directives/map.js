@@ -364,59 +364,6 @@ angular.module('neonDemo.directives')
             };
 
             /**
-             * This method will apply filters to a particular layer.
-             * @method addFiltersForLayer
-             * @private
-             */
-            //jshint unused:false
-            var addFiltersForLayer = function(layer) {
-                //jshint unused:true
-                var relations = datasetService.getRelations(layer.database, layer.table, [layer.latitudeMapping, layer.longitudeMapping]);
-                filterService.replaceFilters($scope.messenger, relations, layer.filterKeys, $scope.createFilterClauseForExtent, {
-                    visName: "Map"
-                }, function() {
-                    $scope.$apply(function() {
-                        // TODO: Need a way to defer this so we don't reload everything
-                        // for every filtering layer and related filter.
-                        queryAllLayerTables();
-                        drawZoomRect({
-                            left: $scope.extent.minimumLongitude,
-                            bottom: $scope.extent.minimumLatitude,
-                            right: $scope.extent.maximumLongitude,
-                            top: $scope.extent.maximumLatitude
-                        });
-
-                        // Show the Clear Filter button.
-                        $scope.showFilter = true;
-                        $scope.error = "";
-                        XDATA.userALE.log({
-                            activity: "alter",
-                            action: "filter",
-                            elementId: "map",
-                            elementType: "canvas",
-                            elementSub: "map-filter-box",
-                            elementGroup: "map_group",
-                            source: "system",
-                            tags: ["render", "map"]
-                        });
-                    });
-                }, function() {
-                    XDATA.userALE.log({
-                        activity: "alter",
-                        action: "failed",
-                        elementId: "map",
-                        elementType: "canvas",
-                        elementSub: "map",
-                        elementGroup: "map_group",
-                        source: "system",
-                        tags: ["failed", "map", "filter"]
-                    });
-                    // Notify the user of the error.
-                    $scope.error = "Error: Failed to create filter.";
-                });
-            };
-
-            /**
              * A simple handler for emitting USER-ALE messages from common user events on a map.
              * @method onMapEvent
              * @private
@@ -455,7 +402,6 @@ angular.module('neonDemo.directives')
              * @private
              */
             var onDateSelected = function(message) {
-                //console.log(message);
                 // Set a date range on any node layers to start.
                 for(var i = 0; i < $scope.options.layers.length; i++) {
                     if($scope.options.layers[i].type === coreMap.Map.NODE_LAYER ||
