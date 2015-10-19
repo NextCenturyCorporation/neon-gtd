@@ -32,7 +32,6 @@
             "google": "API_KEY"
         }
     },
-    },
 
     "help": {
         "guide": "",
@@ -49,9 +48,30 @@
         "url": "http://neon-opencpu/ocpu/library/NeonAngularDemo/R"
     },
 
-    "dig": {
-        "enabled": false,
-        "server": "http://localhost:9000"
+    "externalServices": {
+        "jsonConfigFile": "",
+        "appImagePath": "",
+        "fileProps": {
+            "url": "url",
+            "name": "name",
+            "image": "image",
+            "services": "services"
+        },
+        "servicesMappings": {
+            "neonMapping1": "serviceName1",
+            "neonMapping2": "serviceName2"
+        },
+        "argsMappings": {
+            "neonMapping1": {
+                "serviceName1": "neonMapping1"
+            },
+            "neonMapping2": {
+                "serviceName2": {
+                    "propertyName1": "neonMapping3",
+                    "propertyName2": "neonMapping4"
+                }
+            }
+        }
     },
 
     "visualizations": [{
@@ -124,6 +144,18 @@
         "sizeY": 6,
         "type": "directed-graph",
         "icon": "img/visualizations/Graph64.png"
+    }, {
+        "name": "Newsfeed",
+        "sizeX": 6,
+        "sizeY": 4,
+        "type": "newsfeed",
+        "icon": "img/visualizations/News64.png"
+    }, {
+        "name": "Gantt Chart",
+        "sizeX": 6,
+        "sizeY": 4,
+        "type": "gantt-chart",
+        "icon": "img/visualizations/Gantt64.png"
     }, {
         "name": "Sample",
         "sizeX": 6,

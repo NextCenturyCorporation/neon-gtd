@@ -105,7 +105,104 @@ var startAngular = function() {
     angular.bootstrap(document, ['neonDemo']);
 };
 
-var createAppService = function(args, argsMappings) {
+var saveUserAleConfig = function(config) {
+    // Configure the user-ale logger.
+    var aleConfig = (config.user_ale || {
+        loggingUrl: "http://192.168.1.100",
+        toolName: "Neon Dashboard",
+        elementGroups: [
+            "top",
+            "map_group",
+            "table_group",
+            "chart_group",
+            "query_group",
+            "graph_group"
+        ],
+        workerUrl: "lib/user-ale/js/userale-worker.js",
+        debug: false,
+        sendLogs: false
+    });
+    XDATA.userALE = new userale(aleConfig);
+    XDATA.userALE.register();
+};
+
+var saveOpenCpuConfig = function(config) {
+    var opencpuConfig = (config.opencpu || {
+        enableOpenCpu: false
+    });
+    if(opencpuConfig.enableOpenCpu) {
+        ocpu.enableLogging = opencpuConfig.enableLogging;
+        ocpu.useAlerts = opencpuConfig.useAlerts;
+        ocpu.seturl(opencpuConfig.url);
+        ocpu.connected = true;
+    }
+    neonDemo.constant('opencpu', opencpuConfig);
+};
+
+var saveDashboardConfig = function(config) {
+    var helpConfig = (config.help || {
+        guide: undefined,
+        video: undefined
+    });
+    var dashboardConfig = config.dashboard || {
+        hideNavbarItems: false,
+        hideAddVisualizationsButton: false,
+        hideAdvancedOptions: false,
+        hideErrorNotifications: false,
+        hideHeader: false,
+        showImport: false,
+        showExport: true
+    };
+    dashboardConfig.gridsterColumns = dashboardConfig.gridsterColumns || 8;
+    dashboardConfig.gridsterMargins = dashboardConfig.gridsterMargins || 10;
+    // Most visualizations should have a minimum size of about 300px square to have space for their UI elements.
+    // TODO Use the browser width to determine the minimum size for visualizations and update it on browser resize.
+    dashboardConfig.gridsterDefaultMinSizeX = Math.floor(dashboardConfig.gridsterColumns / 4);
+    dashboardConfig.gridsterDefaultMinSizeY = Math.floor(dashboardConfig.gridsterColumns / 6);
+    dashboardConfig.help = helpConfig;
+    dashboardConfig.showExport = (dashboardConfig.showExport === undefined || dashboardConfig.showExport) ? true : false;
+    neonDemo.constant('config', dashboardConfig);
+
+    // Keep the autoplay video code here because when it was in the neonDemoController the dashboard would start playing the video whenever the dataset was changed.
+    if(dashboardConfig.showVideoOnLoad && dashboardConfig.help.video) {
+        neon.ready(function() {
+            $("#videoModal").modal("show");
+            $("#helpVideo").attr("autoplay", "");
+        });
+    }
+};
+
+var saveVisualizationsConfig = function(config) {
+    var visualizations = (config.visualizations || []);
+    neonDemo.constant('visualizations', visualizations);
+};
+
+var initializePopupsObject = function() {
+    neonDemo.value('popups', {
+        links: {
+            ENABLED_TEMPLATE: "",
+            DISABLED_TEMPLATE: "",
+            setData: function() {},
+            setView: function() {},
+            addLinks: function() {},
+            removeLinksAtIndex: function() {},
+            deleteData: function() {},
+            createLinkHtml: function() {},
+            createLinkHtmlFromList: function() {},
+            createButtonJson: function() {},
+            createButtonJsonFromList: function() {},
+            createDisabledLinkHtml: function() {},
+            createAllServiceLinkObjects: function() {},
+            createServiceLinkObject: function() {},
+            createServiceLinkObjectWithData: function() {},
+            generateBoundsKey: function() {},
+            generatePointKey: function() {},
+            generateRangeKey: function() {}
+        }
+    });
+};
+
+var createExternalService = function(args, argsMappings) {
     var service = {
         apps: {},
         args: []
@@ -121,12 +218,14 @@ var createAppService = function(args, argsMappings) {
     return service;
 };
 
-var readExternalServicesConfig = function(config, callback) {
-    if(!(config.jsonConfigFile && config.servicesMappings && config.argsMappings)) {
-        callback({});
-        return;
-    }
+var saveServicesConfig = function(services) {
+    neonDemo.constant('external', {
+        active: Object.keys(services).length,
+        services: services
+    });
+};
 
+var readExternalServicesFileAndSaveServicesConfig = function(config, callback) {
     // Example result:
     //  {
     //      user: {
@@ -160,6 +259,18 @@ var readExternalServicesConfig = function(config, callback) {
     //      }
     //  }
 
+    var saveServicesConfigAndFinish = function(services) {
+        saveServicesConfig({});
+        if(callback) {
+            callback();
+        }
+    };
+
+    if(!(config.jsonConfigFile && config.servicesMappings && config.argsMappings)) {
+        saveServicesConfigAndFinish({});
+        return;
+    }
+
     $.ajax({
         url: config.jsonConfigFile,
         success: function(json) {
@@ -178,7 +289,7 @@ var readExternalServicesConfig = function(config, callback) {
                     });
 
                     neonServiceMappings.forEach(function(neonServiceMapping) {
-                        services[neonServiceMapping] = services[neonServiceMapping] || createAppService(serviceType.split(","), config.argsMappings[neonServiceMapping]);
+                        services[neonServiceMapping] = services[neonServiceMapping] || createExternalService(serviceType.split(","), config.argsMappings[neonServiceMapping]);
 
                         services[neonServiceMapping].apps[data[appType][nameProperty]] = {
                             image: (config.appImagePath || ".") + "/" + data[appType][imageProperty],
@@ -188,8 +299,9 @@ var readExternalServicesConfig = function(config, callback) {
                 });
             });
 
-            callback(services);
-        }
+            saveServicesConfigAndFinish(services);
+        },
+        error: saveServicesConfigAndFinish({})
     });
 };
 
@@ -197,14 +309,17 @@ var saveLayouts = function(layouts) {
     neonDemo.constant('layouts', layouts);
 };
 
-var readLayoutFiles = function($http, layouts, layoutFiles, callback) {
+var readLayoutFilesAndSaveLayouts = function($http, layouts, layoutFiles, callback) {
     if(layoutFiles.length) {
         var layoutFile = layoutFiles.shift();
-        $http.get(layoutFile).success(function(layoutConfig) {
+        $http.get(layoutFile).then(function(response) {
+            var layoutConfig = layoutFile.substring(layoutFile.length - 4) === "yaml" ? jsyaml.load(response.data) : response.data;
             if(layoutConfig.name && layoutConfig.layout) {
                 layouts[layoutConfig.name] = layoutConfig.layout;
             }
-            readLayoutFiles($http, layouts, layoutFiles, callback);
+            readLayoutFilesAndSaveLayouts($http, layouts, layoutFiles, callback);
+        }, function(response) {
+            readLayoutFilesAndSaveLayouts($http, layouts, layoutFiles, callback);
         });
     } else {
         saveLayouts(layouts);
@@ -218,14 +333,17 @@ var saveDatasets = function(datasets) {
     neonDemo.value('datasets', datasets);
 };
 
-var readDatasetFiles = function($http, datasets, datasetFiles, callback) {
+var readDatasetFilesAndSaveDatasets = function($http, datasets, datasetFiles, callback) {
     if(datasetFiles.length) {
         var datasetFile = datasetFiles.shift();
-        $http.get(datasetFile).success(function(datasetConfig) {
+        $http.get(datasetFile).then(function(response) {
+            var datasetConfig = datasetFile.substring(datasetFile.length - 4) === "yaml" ? jsyaml.load(response.data) : response.data;
             if(datasetConfig.dataset) {
                 datasets.push(datasetConfig.dataset);
             }
-            readDatasetFiles($http, datasets, datasetFiles, callback);
+            readDatasetFilesAndSaveDatasets($http, datasets, datasetFiles, callback);
+        }, function(response) {
+            readDatasetFilesAndSaveDatasets($http, datasets, datasetFiles, callback);
         });
     } else {
         saveDatasets(datasets);
@@ -235,114 +353,36 @@ var readDatasetFiles = function($http, datasets, datasetFiles, callback) {
     }
 };
 
+var saveConfig = function($http, config) {
+    saveUserAleConfig(config);
+    saveOpenCpuConfig(config);
+    saveDashboardConfig(config);
+    saveVisualizationsConfig(config);
+    initializePopupsObject();
+
+    var files = (config.files || []);
+    var layouts = (config.layouts || {});
+    if(!(layouts.default)) {
+        layouts.default = [];
+    }
+    var datasets = (config.datasets || []);
+
+    // Read the external application services config file and create the services, then read each layout config file and add the layouts,
+    // then read each dataset config file and add the datasets, then start angular.
+    readExternalServicesFileAndSaveServicesConfig((config.externalServices || {}), function() {
+        readLayoutFilesAndSaveLayouts($http, layouts, (files.layouts || []), function() {
+            readDatasetFilesAndSaveDatasets($http, datasets, (files.datasets || []), startAngular);
+        });
+    });
+};
+
 angular.element(document).ready(function() {
     var $http = angular.injector(['ng']).get('$http');
-    $http.get('./config/config.json').success(function(config) {
-        // Configure the user-ale logger.
-        var aleConfig = (config.user_ale || {
-            loggingUrl: "http://192.168.1.100",
-            toolName: "Neon Dashboard",
-            elementGroups: [
-                "top",
-                "map_group",
-                "table_group",
-                "chart_group",
-                "query_group",
-                "graph_group"
-            ],
-            workerUrl: "lib/user-ale/js/userale-worker.js",
-            debug: false,
-            sendLogs: false
+    $http.get("./config/config.yaml").then(function(response) {
+        saveConfig($http, jsyaml.load(response.data));
+    }, function() {
+        $http.get("./config/config.json").then(function(response) {
+            saveConfig($http, response.data);
         });
-        XDATA.userALE = new userale(aleConfig);
-        XDATA.userALE.register();
-
-        var opencpuConfig = (config.opencpu || {
-            enableOpenCpu: false
-        });
-
-        if(opencpuConfig.enableOpenCpu) {
-            ocpu.enableLogging = opencpuConfig.enableLogging;
-            ocpu.useAlerts = opencpuConfig.useAlerts;
-            ocpu.seturl(opencpuConfig.url);
-            ocpu.connected = true;
-        }
-        neonDemo.constant('opencpu', opencpuConfig);
-
-        var helpConfig = (config.help || {
-            guide: undefined,
-            video: undefined
-        });
-        var dashboardConfig = config.dashboard || {
-            hideNavbarItems: false,
-            hideAddVisualizationsButton: false,
-            hideAdvancedOptions: false,
-            hideErrorNotifications: false,
-            hideHeader: false,
-            showImport: false,
-            showExport: true
-        };
-        dashboardConfig.gridsterColumns = dashboardConfig.gridsterColumns || 8;
-        dashboardConfig.gridsterMargins = dashboardConfig.gridsterMargins || 10;
-        // Most visualizations should have a minimum size of about 300px square to have space for their UI elements.
-        // TODO Use the browser width to determine the minimum size for visualizations and update it on browser resize.
-        dashboardConfig.gridsterDefaultMinSizeX = Math.floor(dashboardConfig.gridsterColumns / 4);
-        dashboardConfig.gridsterDefaultMinSizeY = Math.floor(dashboardConfig.gridsterColumns / 6);
-        dashboardConfig.help = helpConfig;
-        dashboardConfig.showExport = (dashboardConfig.showExport === undefined || dashboardConfig.showExport) ? true : false;
-        neonDemo.constant('config', dashboardConfig);
-
-        neonDemo.value('popups', {
-            links: {
-                ENABLED_TEMPLATE: "",
-                DISABLED_TEMPLATE: "",
-                setData: function() {},
-                setView: function() {},
-                addLinks: function() {},
-                removeLinksAtIndex: function() {},
-                deleteData: function() {},
-                createLinkHtml: function() {},
-                createLinkHtmlFromList: function() {},
-                createButtonJson: function() {},
-                createButtonJsonFromList: function() {},
-                createDisabledLinkHtml: function() {},
-                createAllServiceLinkObjects: function() {},
-                createServiceLinkObject: function() {},
-                createServiceLinkObjectWithData: function() {},
-                generateBoundsKey: function() {},
-                generatePointKey: function() {},
-                generateRangeKey: function() {}
-            }
-        });
-
-        var visualizations = (config.visualizations || []);
-        neonDemo.constant('visualizations', visualizations);
-
-        var files = (config.files || []);
-        var layouts = (config.layouts || {});
-        if(!(layouts.default)) {
-            layouts.default = [];
-        }
-        var datasets = (config.datasets || []);
-
-        // Read the external application services config file and create the services, then read each layout config file and set the layouts,
-        // then read each dataset config file and set the datasets, then start angular.
-        readExternalServicesConfig((config.externalServices || {}), function(services) {
-            neonDemo.constant('external', {
-                active: Object.keys(services).length,
-                services: services
-            });
-            readLayoutFiles($http, layouts, (files.layouts || []), function() {
-                readDatasetFiles($http, datasets, (files.datasets || []), startAngular);
-            });
-        });
-
-        // Keep the autoplay video code here because when it was in the neonDemoController the dashboard would start playing the video whenever the dataset was changed.
-        if(dashboardConfig.showVideoOnLoad && dashboardConfig.help.video) {
-            neon.ready(function() {
-                $("#videoModal").modal("show");
-                $("#helpVideo").attr("autoplay", "");
-            });
-        }
     });
 });
