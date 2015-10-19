@@ -69,7 +69,7 @@ coreMap.Map = function(elementId, opts) {
     this.selectableLayers = [];
     this.selectControls = [];
     this.initializeMap();
-    this.setupLayers();
+    this.setupLayers(opts.mapBaseLayer);
     this.setupControls();
     this.resetZoom();
 };
@@ -90,10 +90,16 @@ coreMap.Map.HEATMAP_LAYER = 'heatmap';
 coreMap.Map.CLUSTER_LAYER = 'cluster';
 coreMap.Map.NODE_LAYER = 'node';
 
-// Dark Background Color = #242426
-coreMap.Map.DARK_MAP_TILES = "http://a.basemaps.cartocdn.com/dark_all/${z}/${x}/${y}.png";
-// Light Background Color = #CDD2D4
-coreMap.Map.LIGHT_MAP_TILES = "http://a.basemaps.cartocdn.com/light_all/${z}/${x}/${y}.png";
+coreMap.Map.DARK_MAP_TILES = {
+    http: "http://a.basemaps.cartocdn.com/dark_all/${z}/${x}/${y}.png",
+    https: "https://cartodb-basemaps-a.global.ssl.fastly.net/dark_all/${z}/${x}/${y}.png",
+    backgroundColor: "#242426"
+};
+coreMap.Map.LIGHT_MAP_TILES = {
+    http: "http://a.basemaps.cartocdn.com/light_all/${z}/${x}/${y}.png",
+    https: "https://cartodb-basemaps-a.global.ssl.fastly.net/light_all/${z}/${x}/${y}.png",
+    backgroundColor: "#CDD2D4"
+};
 
 /**
  * Resets the select control by temporarily removing it from the map
@@ -458,8 +464,15 @@ coreMap.Map.prototype.createSelectControl =  function(layer) {
  * @method setupLayers
  */
 
-coreMap.Map.prototype.setupLayers = function() {
-    var baseLayer = new OpenLayers.Layer.OSM("OSM", coreMap.Map.LIGHT_MAP_TILES, {
+coreMap.Map.prototype.setupLayers = function(mapBaseLayer) {
+    var tilesURL = (mapBaseLayer && mapBaseLayer.protocol) ? coreMap.Map.LIGHT_MAP_TILES[mapBaseLayer.protocol] : coreMap.Map.LIGHT_MAP_TILES.http;
+
+    if(mapBaseLayer && mapBaseLayer.color === "dark") {
+        tilesURL = (mapBaseLayer.protocol) ? coreMap.Map.DARK_MAP_TILES[mapBaseLayer.protocol] : coreMap.Map.DARK_MAP_TILES.http;
+        $("#" + this.elementId).css("background-color", coreMap.Map.DARK_MAP_TILES.backgroundColor);
+    }
+
+    var baseLayer = new OpenLayers.Layer.OSM("OSM", tilesURL, {
         attribution:  "Map tiles by CartoDB, under CC BY 3.0. Data by OpenStreetMap, under ODbL.",
         wrapDateLine: false
     });

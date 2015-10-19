@@ -85,7 +85,7 @@
 <div class="clearfix"></div>
 
 <div class="newsfeed">
-	<div class="item" ng-class="getNewsItemStyleClass(item)" ng-repeat='item in data.news'>
+	<div class="item" ng-class="getNewsItemStyleClass(item)" ng-repeat='item in data.news track by $index'>
         <div>
             <img class="image" src="img/Twitter.png" ng-if="feedType == 'TWITTER'">
             <span class="head" ng-if="item.head != undefined" ng-bind="item.head"></span>

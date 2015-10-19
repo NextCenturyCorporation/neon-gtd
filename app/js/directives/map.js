@@ -155,8 +155,10 @@ angular.module('neonDemo.directives')
              * @method initialize
              */
             $scope.initialize = function() {
+                var datasetOptions = datasetService.getActiveDatasetOptions();
                 $scope.map = new coreMap.Map($scope.mapId, {
-                    responsive: false
+                    responsive: false,
+                    mapBaseLayer: (datasetOptions ? datasetOptions.mapBaseLayer : undefined)
                 });
                 $scope.draw();
                 $scope.map.register("movestart", this, onMapEvent);
@@ -1463,6 +1465,7 @@ angular.module('neonDemo.directives')
                     lineColorBy: $scope.options.newLayer.lineColorBy.columnName,
                     nodeDefaultColor: $scope.options.newLayer.nodeDefaultColor,
                     lineDefaultColor: $scope.options.newLayer.lineDefaultColor,
+                    popupFields: $scope.options.newLayer.popupFields,
                     active: $scope.options.newLayer.active,
                     visible: $scope.options.newLayer.visible,
                     valid: true,

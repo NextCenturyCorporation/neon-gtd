@@ -102,10 +102,20 @@
                         </div>
                     </div>
 
-                    <div class="layer-options-row" ng-show="(options.newLayer.type == 'points' || options.newLayer.type == 'cluster')">
+                    <div class="layer-options-row row-large" ng-show="(options.newLayer.type == 'points' || options.newLayer.type == 'cluster')">
                         <div class="form-group layer-options-col">
                             <label>Color Code</label>
                             <input type="text" class="form-control" placeholder="None" ng-model="options.newLayer.colorCode" ng-required="false"/>
+                        </div>
+
+                        <div class="form-group layer-options-col" ng-show="options.newLayer.type == 'cluster'">
+                            <label>Popup Fields</label>
+                            <select class="form-control" ng-model="options.newLayer.popupFields"
+                                ng-disabled="!(fields.length > 0)" multiple>
+                                <option ng-repeat="field in fields" ng-cancel-drag value="{{field.columnName}}">
+                                    {{ field.prettyName }}
+                                </option>
+                            </select>
                         </div>
                     </div>
 
@@ -247,10 +257,21 @@
                                 </div>
                             </div>
 
-                            <div class="layer-options-row" ng-show="layer.type == 'points' || layer.type == 'cluster'">
+                            <div class="layer-options-row row-large" ng-show="layer.type == 'points' || layer.type == 'cluster'">
                                 <div class="form-group layer-options-col">
                                     <label>Color Code</label>
                                     <input type="text" class="form-control" placeholder="{{layer.defaultColor || 'None'}}" ng-cancel-drag ng-model="layer.defaultColor" ng-required="false">
+                                </div>
+
+                                <div class="form-group layer-options-col" ng-show="layer.type == 'cluster'">
+                                    <label>Popup Fields</label>
+                                    <select class="form-control" ng-model="layer.popupFields"
+                                        ng-disabled="!(layer.fields.length > 0)" multiple>
+                                        <option ng-repeat="field in layer.fields" ng-cancel-drag value="{{field.columnName}}"
+                                            ng-selected="{{layer.popupFields.indexOf(field.columnName) >= 0}}">
+                                            {{field.prettyName}}
+                                        </option>
+                                    </select>
                                 </div>
                             </div>
 
