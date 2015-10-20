@@ -72,9 +72,7 @@
                 /* Give the menu container a background to make it more readable.  Make it the same height (30 px) and color of the filter reset notifications. */
                 a {
                     background-color: @button-color;
-                    border-style: solid;
-                    border-width: 1px;
-                    border-color: @button-border-color;
+                    border: @button-border;
                     border-radius: 4px;
                     padding: 5px 5px 2px;
                 }
@@ -157,9 +155,6 @@
                                         padding: 3px 22px 3px 21px;
 
                                         &.btn-default {
-                                            /* Make the border color darker so it stands out against the background. */
-                                            border-color: @main-text-color;
-
                                             &.active, &.active&:hover, &.active&:focus {
                                                 color: #FFFFFF;
                                                 background-color: @accent-dark;

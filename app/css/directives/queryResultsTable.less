@@ -19,7 +19,14 @@
     width: 100%;
 
     .table-counts {
+        display: inline-block;
+        padding-left: 30px;
+        color: @main-text-color;
 
+        .showing-number {
+            color: @accent-bright;
+            font-weight: bold;
+        }
     }
 
     .query-results-grid {
@@ -121,7 +128,7 @@
 
             .slick-header-column{
                 color: @mid-text-color;
-                background: @main-background-darken;
+                background: @main-background;
                 cursor: pointer;
 
                 &.ui-state-hover{
