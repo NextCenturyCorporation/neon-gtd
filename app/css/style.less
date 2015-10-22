@@ -66,6 +66,12 @@ html {
         border: @button-active-border;
     }
 
+    &.disabled, &[disabled] {
+        background-color: @button-background-color;
+        border: @button-border;
+        border-radius: @border-radius;
+    }
+
     .btn-danger{
         background-color: @error-color;
         border-color: @error-dark-color;
@@ -81,13 +87,19 @@ html {
         border: @button-border;
         border-radius: @border-radius;
 
+        &.active {
+            background-color: @button-active-background-color;
+            color: @button-active-color;
+            border: @button-active-border;
+        }
+
         &:hover {
             background-color: @button-hover-background-color;
             color: @button-hover-color;
             border: @button-hover-border;
         }
 
-        &.disabled {
+        &.disabled, &[disabled] {
             background-color: @button-background-color;
             border: @button-border;
             border-radius: @border-radius;
@@ -513,20 +525,6 @@ html {
 //     display: inline-block;
 //     margin-right: 5px;
 //     position: relative;
-// }
-
-
-
-// .dropdown-menu {
-//     > .active {
-//         > a {
-//             background-color: @accent-bright;
-
-//             &:hover, &:focus {
-//                 background-color: @accent-bright;
-//             }
-//         }
-//     }
 // }
 
 // .header-item {

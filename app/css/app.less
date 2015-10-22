@@ -32,6 +32,13 @@
         }
     }
 
+    .active {
+        a {
+            background-color: @accent-bright;
+            color: @light-text-color;
+        }
+    }
+
     .unselectable {
         color: @main-text-color;
         cursor: default;
@@ -39,6 +46,18 @@
         &:hover {
             background-color: @visualization-box-background;
             color: @main-text-color;
+        }
+    }
+}
+
+.dropdown-menu {
+    > .active {
+        > a {
+            background-color: @accent-bright;
+
+            &:hover, &:focus {
+                background-color: @accent-bright;
+            }
         }
     }
 }

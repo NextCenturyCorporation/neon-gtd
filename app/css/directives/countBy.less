@@ -25,6 +25,11 @@
         }
     }
 
+    .chart-options {
+        /* This is to override 'position: relative' that is being added to the options menu for only this viz -- can't figure out why */
+        position: static !important;
+    }
+
     .count-by-grid {
         background-color: @main-background;
         //border: @border;
@@ -69,12 +74,15 @@
         .slick-header{
             border: 0px;
             border-right: 1px solid @main-text-color;
+            box-sizing: content-box;
+            -webkit-box-sizing: content-box;
 
             .slick-header-column{
                 color: @mid-text-color;
                 background: @main-background;
                 cursor: pointer;
-                height: 20px;
+                box-sizing: content-box;
+                -webkit-box-sizing: content-box;
 
                 &.ui-state-hover{
                     color: @accent-bright;

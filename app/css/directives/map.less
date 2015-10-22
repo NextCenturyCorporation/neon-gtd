@@ -71,8 +71,8 @@
 
                 /* Give the menu container a background to make it more readable.  Make it the same height (30 px) and color of the filter reset notifications. */
                 a {
-                    background-color: @button-color;
-                    border: @button-border;
+                    background-color: transparent;
+                    border: none;
                     border-radius: 4px;
                     padding: 5px 5px 2px;
                 }
@@ -206,6 +206,27 @@
         height: 100% !important;
         position: static;
         margin: 0px !important;
+
+        .olMapViewport {
+            .olControlZoom {
+                top: 50px;
+                left: 10px;
+                background: transparent;
+
+                a {
+                    background-color: @accent-bright;
+                    opacity: .7;
+                    font-size: 20px;
+                    font-family: "Open Sans", Helvetica, arial, sans-serif;
+                    line-height: 24px;
+
+                    &:hover{
+                        background-color: @accent-bright;
+                        opacity: 1;
+                    }
+                }
+            }
+        }
     }
 
     .olPopup {
@@ -225,24 +246,6 @@
         bottom: 0;
         right: 5px;
         color: @main-text-color;
-    }
-
-    .olControlZoom {
-        top: 50px;
-        left: 10px;
-
-        a {
-            background-color: @accent-bright;
-            opacity: .7;
-            font-size: 20px;
-            font-family: "Open Sans", Helvetica, arial, sans-serif;
-            line-height: 24px;
-
-            &:hover{
-                background-color: @accent-bright;
-                opacity: 1;
-            }
-        }
     }
 
     .olControlAttribution {
