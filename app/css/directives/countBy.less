@@ -13,142 +13,45 @@
 // limitations under the License.
 //
 
-.count-by-grid {
-    background-color: @main-background;
-    //border: @border;
-    border-radius: 2px;
-    box-shadow: 0 1px 4px @shadow;
-    box-sizing: content-box;
-    -webkit-box-sizing: content-box;
-    -moz-box-sizing: content-box;
+.countByDirective {
+    margin: 0px;
+    padding: 10px;
+    display: block;
 
+    .header-container {
+        .count {
+            color: @accent-bright;
+            font-weight: bold;
+        }
+    }
 
-    * {
+    .count-by-grid {
+        background-color: @main-background;
+        //border: @border;
+        border-radius: 2px;
+        box-shadow: 0 1px 4px @shadow;
         box-sizing: content-box;
         -webkit-box-sizing: content-box;
         -moz-box-sizing: content-box;
 
-        &:before, &:after {
-            box-sizing: content-box;
-            -webkit-box-sizing: content-box;
-            -moz-box-sizing: content-box;
-        }
-    }
-
-    &.filtered {
-        .slick-row {
-            &.active {
-                color: @accent-dulled-text-color;
-                background: @accent-dulled;
-            }
-        }
-    }
-
-    .slick-cell {
-        cursor: pointer;
-        border: 0px;
-        border-bottom: 1px solid @main-text-color;
-    }
-
-    .slick-header{
-        /*border-top: 0ox;
-        border-right: 1px solid @main-text-color;
-
-        .slick-header-column{
-            color: @light-text-color;
-            background: @accent-bright;
-
-            &.ui-state-hover{
-                color: @accent-bright;
-                background: @light-background;
-            }
-        }
-
-        .slick-header-column-sorted{
-            color: @accent-bright;
-            background: @light-background;
-            font-style: normal;
-        }
-
-        .slick-sortable-placeholder{
-            background: @border-color;
-        }
-
-        .slick-header-sortable {
-            cursor: pointer;
-        }*/
-
-        border: 0px;
-        border-right: 1px solid @main-text-color;
-
-        .slick-header-column{
-            color: @mid-text-color;
-            background: @main-background;
-            cursor: pointer;
-
-            &.ui-state-hover{
-                color: @accent-bright;
-                background: @light-background;
-
-                .remove-column-button {
-                    color: #999999;
-                    background: #FFFFFF;
-
-                    &:focus, &:hover {
-                        color: #39B54A;
-                        background: #FFFFFF;
-                    }
+        &.row-selected {
+            .slick-row {
+                &.active {
+                    color: @accent-dulled-text-color;
+                    background: @accent-dulled;
                 }
             }
+        }
 
-            .remove-column-button {
-                color: #999999;
-                position: absolute;
-                right: 5px;
+        &.filtered {
+            .slick-row {
+                &.active {
+                    color: @accent-dulled-text-color;
+                    background: @accent-dulled;
+                }
             }
         }
 
-        .slick-header-column-sorted{
-            color: @accent-bright;
-            font-style: normal;
-        }
-
-        .slick-sortable-placeholder{
-            background: @border-color;
-        }
-    }
-
-    .slick-row {
-        color: @main-text-color;
-        background: @visualization-box-background;
-
-        &:hover {
-            color: @light-text-color;
-        }
-    }
-
-}
-
-.count-by-grid.row-selected {
-    .slick-row {
-        &.active {
-            color: @accent-dulled-text-color;
-            background: @accent-dulled;
-        }
-    }
-}
-
-.count-by-header {
-    margin-bottom: 5px;
-}
-
-.countByDirective {
-    margin: 0px;
-    padding: 10px;
-    height: @widget-height;
-    width: @widget-width;
-
-    .count-by-grid {
         span {
             &.glyphicon {
                 &:focus, &:hover {
@@ -156,6 +59,64 @@
                 }
             }
         }
+
+        .slick-cell {
+            cursor: pointer;
+            border: 0px;
+            border-bottom: 1px solid @main-text-color;
+        }
+
+        .slick-header{
+            border: 0px;
+            border-right: 1px solid @main-text-color;
+
+            .slick-header-column{
+                color: @mid-text-color;
+                background: @main-background;
+                cursor: pointer;
+                height: 20px;
+
+                &.ui-state-hover{
+                    color: @accent-bright;
+                    background: @light-background;
+
+                    .remove-column-button {
+                        color: #999999;
+                        background: #FFFFFF;
+
+                        &:focus, &:hover {
+                            color: #39B54A;
+                            background: #FFFFFF;
+                        }
+                    }
+                }
+
+                .remove-column-button {
+                    color: #999999;
+                    position: absolute;
+                    right: 5px;
+                }
+            }
+
+            .slick-header-column-sorted{
+                color: @accent-bright;
+                font-style: normal;
+            }
+
+            .slick-sortable-placeholder{
+                background: @border-color;
+            }
+        }
+
+        .slick-row {
+            color: @main-text-color;
+            background: @visualization-box-background;
+
+            &:hover {
+                color: @light-text-color;
+            }
+        }
+
     }
 }
 
