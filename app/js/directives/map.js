@@ -79,7 +79,7 @@ angular.module('neonDemo.directives')
             $scope.errorMessage = undefined;
             $scope.loadingData = false;
             $scope.selectedPointLayer = {};
-            $scope.outstandingQuery = undefined;
+            $scope.outstandingQuery = {};
 
             $scope.MAP_LAYER_TYPES = [coreMap.Map.POINTS_LAYER, coreMap.Map.CLUSTER_LAYER, coreMap.Map.HEATMAP_LAYER, coreMap.Map.NODE_LAYER];
             $scope.DEFAULT_LIMIT = 1000;
@@ -143,7 +143,13 @@ angular.module('neonDemo.directives')
                 var tables = [];
                 for(var i = 0; i < keys.length; i++) {
                     tables = sets[keys[i]];
+                    if(!$scope.outstandingQuery[keys[i]]) {
+                        $scope.outstandingQuery[keys[i]] = {};
+                    }
                     for(var j = 0; j < tables.length; j++) {
+                        if(!$scope.outstandingQuery[keys[i]][tables[j]]) {
+                            $scope.outstandingQuery[keys[i]][tables[j]] = undefined;
+                        }
                         $scope.queryForMapData(keys[i], tables[j]);
                     }
                 }
@@ -706,15 +712,15 @@ angular.module('neonDemo.directives')
                     tags: ["query", "map"]
                 });
 
-                if($scope.outstandingQuery) {
-                    $scope.outstandingQuery.abort();
+                if($scope.outstandingQuery[database] && $scope.outstandingQuery[database][table]) {
+                    $scope.outstandingQuery[database][table].abort();
                 }
 
-                $scope.outstandingQuery = connection.executeQuery(query);
-                $scope.outstandingQuery.always(function() {
-                    $scope.outstandingQuery = undefined;
+                $scope.outstandingQuery[database][table] = connection.executeQuery(query);
+                $scope.outstandingQuery[database][table].always(function() {
+                    $scope.outstandingQuery[database][table] = undefined;
                 });
-                $scope.outstandingQuery.done(function(queryResults) {
+                $scope.outstandingQuery[database][table].done(function(queryResults) {
                     $scope.$apply(function() {
                         XDATA.userALE.log({
                             activity: "alter",
@@ -740,7 +746,7 @@ angular.module('neonDemo.directives')
                         });
                     });
                 });
-                $scope.outstandingQuery.fail(function(response) {
+                $scope.outstandingQuery[database][table].fail(function(response) {
                     if(response.status === 0) {
                         XDATA.userALE.log({
                             activity: "alter",
