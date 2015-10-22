@@ -1387,7 +1387,6 @@ angular.module('neonDemo.directives')
                         weightMapping: layer.weightMapping,
                         latitudeMapping: layer.latitudeMapping,
                         longitudeMapping: layer.longitudeMapping,
-                        idMapping: layer.nodeIdMapping,
                         dateMapping: mappings.date,
                         nodeMapping: layer.nodeColorBy,
                         lineMapping: layer.lineColorBy,
