@@ -68,7 +68,11 @@
                     "color_by": "magType",
                     "size_by": "mag",
                     "sort_by": "time",
-                    "count_by": "net"
+                    "count_by": "net",
+                    "allCoordinates": [{
+                        "latitude": "latitude",
+                        "longitude": "longitude"
+                    }]
                 }
             }]
         }],
