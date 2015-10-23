@@ -122,7 +122,7 @@ function(external, popups, connectionService, datasetService, errorNotificationS
                     filtersChanged: onFiltersChanged
                 });
                 $scope.messenger.subscribe(datasetService.UPDATE_DATA_CHANNEL, function() {
-                    $scope.queryForData();
+                    queryForData();
                 });
                 $scope.messenger.subscribe(datasetService.DATE_CHANGED_CHANNEL, onDateChanged);
                 $scope.messenger.subscribe("date_selected", onDateSelected);
@@ -165,28 +165,28 @@ function(external, popups, connectionService, datasetService, errorNotificationS
                 $scope.$watch('options.attrX', function(newValue) {
                     onFieldChange('attrX', newValue);
                     if(!$scope.loadingData && $scope.options.database.name && $scope.options.table.name) {
-                        $scope.queryForData();
+                        resetAndQueryForData();
                         $scope.queryOnChangeBrush = $scope.queryOnChangeBrush || ($scope.brushExtent.length > 0);
                     }
                 });
                 $scope.$watch('options.attrY', function(newValue) {
                     onFieldChange('attrY', newValue);
                     if(!$scope.loadingData && $scope.options.database.name && $scope.options.table.name) {
-                        $scope.queryForData();
+                        resetAndQueryForData();
                         $scope.queryOnChangeBrush = $scope.queryOnChangeBrush || ($scope.brushExtent.length > 0);
                     }
                 });
                 $scope.$watch('options.categoryField', function(newValue) {
                     onFieldChange('categoryField', newValue);
                     if(!$scope.loadingData && $scope.options.database.name && $scope.options.table.name) {
-                        $scope.queryForData();
+                        resetAndQueryForData();
                         $scope.queryOnChangeBrush = $scope.queryOnChangeBrush || ($scope.brushExtent.length > 0);
                     }
                 });
                 $scope.$watch('options.aggregation', function(newValue) {
                     onFieldChange('aggregation', newValue);
                     if(!$scope.loadingData && $scope.options.database.name && $scope.options.table.name) {
-                        $scope.queryForData();
+                        resetAndQueryForData();
                         $scope.queryOnChangeBrush = $scope.queryOnChangeBrush || ($scope.brushExtent.length > 0);
                     }
                 });
@@ -203,7 +203,7 @@ function(external, popups, connectionService, datasetService, errorNotificationS
                             tags: ["linechart", "granularity", newVal]
                         });
                         $scope.chart.setGranularity(newVal);
-                        $scope.queryForData();
+                        resetAndQueryForData();
                         $scope.queryOnChangeBrush = $scope.queryOnChangeBrush || ($scope.brushExtent.length > 0);
                     }
                 });
@@ -295,7 +295,7 @@ function(external, popups, connectionService, datasetService, errorNotificationS
                         tags: ["filter-change", "linechart"]
                     });
 
-                    $scope.queryForData();
+                    queryForData();
                     $scope.queryOnChangeBrush = $scope.queryOnChangeBrush || ($scope.brushExtent.length > 0);
                 }
             };
@@ -353,7 +353,7 @@ function(external, popups, connectionService, datasetService, errorNotificationS
                 return $scope.brushExtent.length >= 2 ? popups.links.generateRangeKey($scope.brushExtent[0].toUTCString(), $scope.brushExtent[1].toUTCString()) : "";
             };
 
-            $scope.queryForData = function() {
+            var queryForData = function() {
                 XDATA.userALE.log({
                     activity: "alter",
                     action: "query",
@@ -508,15 +508,17 @@ function(external, popups, connectionService, datasetService, errorNotificationS
                     return field.columnName === categoryField;
                 }) || datasetService.createBlankField();
 
+                $scope.queryOnChangeBrush = false;
+                resetAndQueryForData();
+            };
+
+            var resetAndQueryForData = function() {
                 var globalBrushExtent = datasetService.isFieldValid($scope.options.attrX) ? datasetService.getDateBrushExtent($scope.options.database.name, $scope.options.table.name, $scope.options.attrX.columnName) : [];
                 if($scope.brushExtent !== globalBrushExtent) {
                     renderBrushExtent(globalBrushExtent);
                 } else if($scope.brushExtent.length) {
                     $scope.removeBrush();
                 }
-
-                $scope.queryOnChangeBrush = false;
-                $scope.queryForData();
 
                 // Get the date filter keys for the current database/table/field and change the current filter keys as appropriate.
                 if(datasetService.isFieldValid($scope.options.attrX)) {
@@ -525,6 +527,8 @@ function(external, popups, connectionService, datasetService, errorNotificationS
                 } else {
                     $scope.filterKeys = $scope.visualizationFilterKeys;
                 }
+
+                queryForData();
             };
 
             /**
@@ -1058,7 +1062,7 @@ function(external, popups, connectionService, datasetService, errorNotificationS
                 // If the user changed a field or filter while the chart contained data filtered by date then the chart will need to query for new data since the saved data from
                 // the previous query will be stale.  Otherwise use the data from the previous query and the current brush extent to redraw the chart.
                 if($scope.queryOnChangeBrush) {
-                    $scope.queryForData();
+                    queryForData();
                     // We need to query for new data until there is no date filter and we query for the whole dataset.
                     $scope.queryOnChangeBrush = $scope.brushExtent.length >= 2 ? true : false;
                     return;

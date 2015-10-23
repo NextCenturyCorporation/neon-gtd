@@ -520,9 +520,9 @@ function($interval, $filter, external, popups, connectionService, datasetService
                             if(newBrushStart.getTime() !== $scope.brush[0].getTime() || newBrushEnd.getTime() !== $scope.brush[1].getTime()) {
                                 $scope.brush = [newBrushStart, newBrushEnd];
                             }
-                            $scope.queryForChartData();
+                            resetAndQueryForChartData();
                         } else {
-                            $scope.queryForChartData();
+                            resetAndQueryForChartData();
                         }
                     }
                 });
@@ -590,7 +590,7 @@ function($interval, $filter, external, popups, connectionService, datasetService
                     filtersChanged: onFiltersChanged
                 });
                 $scope.messenger.subscribe(datasetService.UPDATE_DATA_CHANNEL, function() {
-                    $scope.queryForChartData();
+                    queryForChartData();
                 });
                 $scope.messenger.subscribe(datasetService.DATE_CHANGED_CHANNEL, onDateChanged);
 
@@ -664,7 +664,7 @@ function($interval, $filter, external, popups, connectionService, datasetService
             $scope.sendInvalidDates = function() {
                 $scope.clearBrush();
                 $scope.invalidDatesFilter = true;
-                replaceDateFilters(true, $scope.queryForChartData);
+                replaceDateFilters(true, queryForChartData);
             };
 
             /**
@@ -673,7 +673,7 @@ function($interval, $filter, external, popups, connectionService, datasetService
              */
             $scope.clearInvalidDatesFilter = function() {
                 $scope.invalidDatesFilter = false;
-                filterService.removeFilters($scope.messenger, $scope.filterKeys, $scope.queryForChartData);
+                filterService.removeFilters($scope.messenger, $scope.filterKeys, queryForChartData);
             };
 
             /**
@@ -762,7 +762,7 @@ function($interval, $filter, external, popups, connectionService, datasetService
                         tags: ["filter-change", "timeline"]
                     });
 
-                    $scope.queryForChartData();
+                    queryForChartData();
                 }
             };
 
@@ -840,18 +840,10 @@ function($interval, $filter, external, popups, connectionService, datasetService
                     return field.columnName === dateField;
                 }) || datasetService.createBlankField();
 
-                $scope.resetAndQueryForChartData();
-
-                // Get the date filter keys for the current database/table/field and change the current filter keys as appropriate.
-                if(datasetService.isFieldValid($scope.options.dateField)) {
-                    var dateFilterKeys = datasetService.getDateFilterKeys($scope.options.database.name, $scope.options.table.name, $scope.options.dateField.columnName);
-                    $scope.filterKeys = filterService.getFilterKeysFromCollections(datasetService.getDatabaseAndTableNames(), $scope.visualizationFilterKeys, dateFilterKeys);
-                } else {
-                    $scope.filterKeys = $scope.visualizationFilterKeys;
-                }
+                resetAndQueryForChartData();
             };
 
-            $scope.resetAndQueryForChartData = function() {
+            var resetAndQueryForChartData = function() {
                 $scope.bucketizer.setStartDate(undefined);
                 clearDisplayDates();
                 $scope.referenceStartDate = undefined;
@@ -865,7 +857,15 @@ function($interval, $filter, external, popups, connectionService, datasetService
                     $scope.extentDirty = true;
                 }
 
-                $scope.queryForChartData();
+                // Get the date filter keys for the current database/table/field and change the current filter keys as appropriate.
+                if(datasetService.isFieldValid($scope.options.dateField)) {
+                    var dateFilterKeys = datasetService.getDateFilterKeys($scope.options.database.name, $scope.options.table.name, $scope.options.dateField.columnName);
+                    $scope.filterKeys = filterService.getFilterKeysFromCollections(datasetService.getDatabaseAndTableNames(), $scope.visualizationFilterKeys, dateFilterKeys);
+                } else {
+                    $scope.filterKeys = $scope.visualizationFilterKeys;
+                }
+
+                queryForChartData();
             };
 
             /**
@@ -916,7 +916,7 @@ function($interval, $filter, external, popups, connectionService, datasetService
              * Triggers a Neon query that will aggregate the time data for the currently selected dataset.
              * @method queryForChartData
              */
-            $scope.queryForChartData = function() {
+            var queryForChartData = function() {
                 if($scope.errorMessage) {
                     errorNotificationService.hideErrorMessage($scope.errorMessage);
                     $scope.errorMessage = undefined;
@@ -1643,7 +1643,7 @@ function($interval, $filter, external, popups, connectionService, datasetService
             $scope.updateDateField = function() {
                 // TODO Logging
                 if(!$scope.loadingData) {
-                    $scope.resetAndQueryForChartData();
+                    resetAndQueryForChartData();
                 }
             };
 
