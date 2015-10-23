@@ -74,6 +74,7 @@ function(external, popups, connectionService, datasetService, errorNotificationS
             $scope.tables = [];
             $scope.totalType = 'count';
             $scope.fields = [];
+            $scope.masterFilterKeys = {};
             $scope.filterKeys = {};
             $scope.chart = undefined;
             $scope.brushExtent = [];
@@ -306,9 +307,11 @@ function(external, popups, connectionService, datasetService, errorNotificationS
              * @private
              */
             var onDateChanged = function(message) {
-                if($scope.options.database.name === message.databaseName && $scope.options.table.name === message.tableName && $scope.brushExtent !== message.brushExtent) {
-                    renderBrushExtent(message.brushExtent);
-                    updateLineChartForBrushExtent();
+                if($scope.options.database.name === message.databaseName && $scope.options.table.name === message.tableName) {
+                    if(datasetService.isFieldValid($scope.options.attrX) && message.fieldNames.indexOf($scope.options.attrX.columnName) >= 0 && $scope.brushExtent !== message.brushExtent) {
+                        renderBrushExtent(message.brushExtent);
+                        updateLineChartForBrushExtent();
+                    }
                 }
             };
 
@@ -458,7 +461,11 @@ function(external, popups, connectionService, datasetService, errorNotificationS
                         }
                     }
                 }
-                $scope.filterKeys = filterService.createFilterKeys("linechart", datasetService.getDatabaseAndTableNames(), datasetService.getDateFilterKeys());
+
+                // Create the master filter keys for this visualization for each database/table pair in the dataset.
+                $scope.masterFilterKeys = filterService.createFilterKeys("linechart", datasetService.getDatabaseAndTableNames());
+                // The filter keys will be set to the global date filter key for each database/table pair when available and the master filter key otherwise.
+                $scope.filterKeys = $scope.masterFilterKeys;
 
                 if(initializing) {
                     $scope.updateTables();
@@ -501,14 +508,23 @@ function(external, popups, connectionService, datasetService, errorNotificationS
                     return field.columnName === categoryField;
                 }) || datasetService.createBlankField();
 
-                var globalBrushExtent = datasetService.getDateBrushExtent($scope.options.database.name, $scope.options.table.name);
+                var globalBrushExtent = datasetService.isFieldValid($scope.options.attrX) ? datasetService.getDateBrushExtent($scope.options.database.name, $scope.options.table.name, $scope.options.attrX.columnName) : [];
                 if($scope.brushExtent !== globalBrushExtent) {
                     renderBrushExtent(globalBrushExtent);
                 } else if($scope.brushExtent.length) {
                     $scope.removeBrush();
                 }
+
                 $scope.queryOnChangeBrush = false;
                 $scope.queryForData();
+
+                // Get the date filter keys for the current database/table/field and change the current filter keys as appropriate.
+                if(datasetService.isFieldValid($scope.options.attrX)) {
+                    var dateFilterKeys = datasetService.getDateFilterKeys($scope.options.database.name, $scope.options.table.name, $scope.options.attrX.columnName);
+                    $scope.filterKeys = filterService.assembleFilterKeys(datasetService.getDatabaseAndTableNames(), $scope.masterFilterKeys, dateFilterKeys);
+                } else {
+                    $scope.filterKeys = $scope.masterFilterKeys;
+                }
             };
 
             /**
@@ -988,7 +1004,7 @@ function(external, popups, connectionService, datasetService, errorNotificationS
 
                 renderBrushExtent(brushExtent);
 
-                var globalBrushExtent = datasetService.getDateBrushExtent($scope.options.database.name, $scope.options.table.name);
+                var globalBrushExtent = datasetService.getDateBrushExtent($scope.options.database.name, $scope.options.table.name, $scope.options.attrX.columnName);
                 // We're comparing the date strings here because comparing the date objects doesn't seem to work.
                 if(globalBrushExtent.length && $scope.brushExtent[0].toDateString() === globalBrushExtent[0].toDateString() && $scope.brushExtent[1].toDateString() === globalBrushExtent[1].toDateString()) {
                     return;

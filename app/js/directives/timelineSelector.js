@@ -85,6 +85,7 @@ function($interval, $filter, external, popups, connectionService, datasetService
             $scope.databases = [];
             $scope.tables = [];
             $scope.fields = [];
+            $scope.masterFilterKeys = {};
             $scope.filterKeys = {};
             $scope.filter = {
                 start: undefined,
@@ -631,8 +632,7 @@ function($interval, $filter, external, popups, connectionService, datasetService
              * @methd replaceDateFilters
              */
             var replaceDateFilters = function(showInvalidDates, callback) {
-                if(($scope.brush === datasetService.getDateBrushExtent($scope.options.database.name, $scope.options.table.name)) &&
-                    !showInvalidDates) {
+                if(($scope.brush === datasetService.getDateBrushExtent($scope.options.database.name, $scope.options.table.name, $scope.options.dateField.columnName)) && !showInvalidDates) {
                     return;
                 }
 
@@ -773,10 +773,12 @@ function($interval, $filter, external, popups, connectionService, datasetService
              * @private
              */
             var onDateChanged = function(message) {
-                if($scope.options.database.name === message.databaseName && $scope.options.table.name === message.tableName && $scope.brush !== message.brushExtent) {
-                    $scope.brush = message.brushExtent;
-                    $scope.extentDirty = true;
-                    $scope.updateChartTimesAndTotal();
+                if($scope.options.database.name === message.databaseName && $scope.options.table.name === message.tableName) {
+                    if(datasetService.isFieldValid($scope.options.dateField) && message.fieldNames.indexOf($scope.options.dateField.columnName) >= 0 && $scope.brush !== message.brushExtent) {
+                        $scope.brush = message.brushExtent;
+                        $scope.extentDirty = true;
+                        $scope.updateChartTimesAndTotal();
+                    }
                 }
             };
 
@@ -800,7 +802,11 @@ function($interval, $filter, external, popups, connectionService, datasetService
                         }
                     }
                 }
-                $scope.filterKeys = filterService.createFilterKeys("timeline", datasetService.getDatabaseAndTableNames(), datasetService.getDateFilterKeys());
+
+                // Create the master filter keys for this visualization for each database/table pair in the dataset.
+                $scope.masterFilterKeys = filterService.createFilterKeys("timeline", datasetService.getDatabaseAndTableNames());
+                // The filter keys will be set to the global date filter key for each database/table pair when available and the master filter key otherwise.
+                $scope.filterKeys = $scope.masterFilterKeys;
 
                 if(initializing) {
                     $scope.updateTables();
@@ -835,6 +841,14 @@ function($interval, $filter, external, popups, connectionService, datasetService
                 }) || datasetService.createBlankField();
 
                 $scope.resetAndQueryForChartData();
+
+                // Get the date filter keys for the current database/table/field and change the current filter keys as appropriate.
+                if(datasetService.isFieldValid($scope.options.dateField)) {
+                    var dateFilterKeys = datasetService.getDateFilterKeys($scope.options.database.name, $scope.options.table.name, $scope.options.dateField.columnName);
+                    $scope.filterKeys = filterService.assembleFilterKeys(datasetService.getDatabaseAndTableNames(), $scope.masterFilterKeys, dateFilterKeys);
+                } else {
+                    $scope.filterKeys = $scope.masterFilterKeys;
+                }
             };
 
             $scope.resetAndQueryForChartData = function() {
@@ -845,7 +859,7 @@ function($interval, $filter, external, popups, connectionService, datasetService
                 $scope.data = [];
                 $scope.noData = true;
 
-                var globalBrushExtent = datasetService.getDateBrushExtent($scope.options.database.name, $scope.options.table.name);
+                var globalBrushExtent = datasetService.isFieldValid($scope.options.dateField) ? datasetService.getDateBrushExtent($scope.options.database.name, $scope.options.table.name, $scope.options.dateField.columnName) : [];
                 if($scope.brush !== globalBrushExtent) {
                     $scope.brush = globalBrushExtent;
                     $scope.extentDirty = true;
