@@ -400,7 +400,6 @@ coreMap.Map.Layer.PointsLayer.prototype.updateFeatures = function() {
 
         if($.isNumeric(latitude) && $.isNumeric(longitude)) {
             var pointFeature = me.createPoint(element, longitude, latitude);
-            pointFeature.index = index;
 
             var date = 'none';
             var dateMapping = me.dateMapping || coreMap.Map.Layer.PointsLayer.DEFAULT_DATE_MAPPING;

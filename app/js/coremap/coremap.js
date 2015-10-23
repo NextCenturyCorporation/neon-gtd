@@ -254,6 +254,7 @@ coreMap.Map.prototype.initializeMap = function() {
         height: this.height
     });
     this.map = new OpenLayers.Map(this.elementId);
+    // Set fallThrough to true so users can trigger modal data-toggle events from the links popup button inside the map popup.
     this.map.events.fallThrough = true;
     this.map.layerContainerDiv.style.removeProperty("z-index");
     this.configureFilterOnZoomRectangle();
@@ -425,6 +426,7 @@ coreMap.Map.prototype.createSelectControl =  function(layer) {
             null,
             true,
             onFeatureUnselect);
+        // Remove the default popup click handler so it doesn't destroy click events before they trigger the modal data-toggle in the links popup button.
         me.featurePopup.events.remove("click");
         me.map.addPopup(me.featurePopup, true);
 

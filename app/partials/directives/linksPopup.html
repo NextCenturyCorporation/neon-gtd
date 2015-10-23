@@ -12,7 +12,7 @@
                     <label class="text-danger label-small" ng-if="array.length == 0">No Applications Available</label>
                     <ul>
                         <li ng-repeat="link in array">
-                            <a href="{{link.url}}" target="{{link.tab}}" title="Open {{link.name}} in a new tab" ng-click="logLinkEvent(link.name)">
+                            <a ng-href="{{link.url}}" target="{{link.tab}}" title="Open {{link.name}} in a new tab" ng-click="logLinkEvent(link.name)">
                                 <img alt="{{link.name}}" class="img-thumbnail center-block" ng-src="{{link.image}}">
                                 <span class="text-uppercase small" ng-bind="link.name"></span>
                             </a>

@@ -29,8 +29,6 @@ angular.module('neonDemo.directives')
             // The links currently displayed in the popup.
             $scope.links = {};
 
-            $scope.linksCount = 0;
-
             $scope.logLinkEvent = function(name) {
                 XDATA.userALE.log({
                     activity: "perform",
@@ -155,7 +153,6 @@ angular.module('neonDemo.directives')
                 list.forEach(function(object) {
                     $scope.links[object.key] = ($scope.cleanedData[object.source] ? $scope.cleanedData[object.source][object.key] : []) || [];
                 });
-                $scope.linksCount = Object.keys($scope.links).length;
             };
 
             /**

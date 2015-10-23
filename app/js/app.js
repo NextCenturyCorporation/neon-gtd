@@ -105,7 +105,7 @@ var startAngular = function() {
     angular.bootstrap(document, ['neonDemo']);
 };
 
-var saveUserAleConfig = function(config) {
+var saveUserAle = function(config) {
     // Configure the user-ale logger.
     var aleConfig = (config.user_ale || {
         loggingUrl: "http://192.168.1.100",
@@ -126,7 +126,7 @@ var saveUserAleConfig = function(config) {
     XDATA.userALE.register();
 };
 
-var saveOpenCpuConfig = function(config) {
+var saveOpenCpu = function(config) {
     var opencpuConfig = (config.opencpu || {
         enableOpenCpu: false
     });
@@ -139,7 +139,7 @@ var saveOpenCpuConfig = function(config) {
     neonDemo.constant('opencpu', opencpuConfig);
 };
 
-var saveDashboardConfig = function(config) {
+var saveDashboards = function(config) {
     var helpConfig = (config.help || {
         guide: undefined,
         video: undefined
@@ -172,7 +172,7 @@ var saveDashboardConfig = function(config) {
     }
 };
 
-var saveVisualizationsConfig = function(config) {
+var saveVisualizations = function(config) {
     var visualizations = (config.visualizations || []);
     neonDemo.constant('visualizations', visualizations);
 };
@@ -218,91 +218,104 @@ var createExternalService = function(args, argsMappings) {
     return service;
 };
 
-var saveServicesConfig = function(services) {
+var saveExternal = function(services) {
     neonDemo.constant('external', {
         active: Object.keys(services).length,
         services: services
     });
 };
 
-var readExternalServicesFileAndSaveServicesConfig = function(config, callback) {
-    // Example result:
-    //  {
-    //      user: {
-    //          apps: {
-    //              App1: {
-    //                  image: file_path,
-    //                  url: app/{{userVariable}}
-    //              }
-    //          },
-    //          args: [{
-    //              variable: userVariable,
-    //              mappings: neonUserMapping
-    //          }]
-    //      },
-    //      bounds: {
-    //          apps: {
-    //              App2: {
-    //                  image: file_path,
-    //                  url: app/?bounds={{boundsVariable.min_lat}},{{boundsVariable.min_lon}},{{boundsVariable.max_lat}},{{boundsVariable.max_lon}}
-    //              }
-    //          },
-    //          args: [{
-    //              variable: boundsVariable,
-    //              mappings: {
-    //                  min_lat: neonMinLatMapping,
-    //                  min_lon: neonMinLonMapping,
-    //                  max_lat: neonMaxLatMapping,
-    //                  max_lat: neonMaxLonMapping
-    //              }
-    //          }]
-    //      }
-    //  }
-
-    var saveServicesConfigAndFinish = function(services) {
-        saveServicesConfig({});
+/**
+ * @example of external.services
+ *  {
+ *      user: {
+ *          apps: {
+ *              App1: {
+ *                  image: file_path,
+ *                  url: app/{{userVariable}}
+ *              }
+ *          },
+ *          args: [{
+ *              variable: userVariable,
+ *              mappings: neonUserMapping
+ *          }]
+ *      },
+ *      bounds: {
+ *          apps: {
+ *              App2: {
+ *                  image: file_path,
+ *                  url: app/?bounds={{boundsVariable.min_lat}},{{boundsVariable.min_lon}},{{boundsVariable.max_lat}},{{boundsVariable.max_lon}}
+ *              }
+ *          },
+ *          args: [{
+ *              variable: boundsVariable,
+ *              mappings: {
+ *                  min_lat: neonMinLatMapping,
+ *                  min_lon: neonMinLonMapping,
+ *                  max_lat: neonMaxLatMapping,
+ *                  max_lat: neonMaxLonMapping
+ *              }
+ *          }]
+ *      }
+ *  }
+ */
+var readAndSaveExternalServices = function(config, callback) {
+    var saveExternalServicesAndRunCallback = function(services) {
+        saveExternal(services);
         if(callback) {
             callback();
         }
     };
 
-    if(!(config.jsonConfigFile && config.servicesMappings && config.argsMappings)) {
-        saveServicesConfigAndFinish({});
+    if(!(config.configList && config.configList.length && config.servicesMappings && config.argsMappings)) {
+        saveExternalServicesAndRunCallback({});
         return;
     }
 
-    $.ajax({
-        url: config.jsonConfigFile,
-        success: function(json) {
-            var data = _.isString(json) ? $.parseJSON(json) : json;
-            var services = {};
+    var services = {};
+    var urlProperty = (config.fileProperties ? config.fileProperties.url : undefined) || "url";
+    var nameProperty = (config.fileProperties ? config.fileProperties.name : undefined) || "name";
+    var imageProperty = (config.fileProperties ? config.fileProperties.image : undefined) || "image";
+    var servicesProperty = (config.fileProperties ? config.fileProperties.services : undefined) || "services";
 
-            var urlProperty = config.fileProps.url || "url";
-            var nameProperty = config.fileProps.name || "name";
-            var imageProperty = config.fileProps.image || "image";
-            var servicesProperty = config.fileProps.services || "services";
+    var readConfigCallback = function(configList) {
+        if(configList.length) {
+            readConfig(configList);
+        } else {
+            saveExternalServicesAndRunCallback(services);
+        }
+    };
 
-            Object.keys(data).forEach(function(appType) {
-                Object.keys(data[appType][servicesProperty]).forEach(function(serviceType) {
-                    var neonServiceMappings = Object.keys(config.servicesMappings).filter(function(neonServiceMapping) {
-                        return config.servicesMappings[neonServiceMapping] === serviceType;
-                    });
+    var readConfig = function(configList) {
+        $.ajax({
+            url: configList.shift(),
+            success: function(json) {
+                var data = _.isString(json) ? $.parseJSON(json) : json;
+                Object.keys(data).forEach(function(appType) {
+                    Object.keys(data[appType][servicesProperty]).forEach(function(serviceType) {
+                        var neonServiceMappings = Object.keys(config.servicesMappings).filter(function(neonServiceMapping) {
+                            return config.servicesMappings[neonServiceMapping] === serviceType;
+                        });
 
-                    neonServiceMappings.forEach(function(neonServiceMapping) {
-                        services[neonServiceMapping] = services[neonServiceMapping] || createExternalService(serviceType.split(","), config.argsMappings[neonServiceMapping]);
+                        neonServiceMappings.forEach(function(neonServiceMapping) {
+                            services[neonServiceMapping] = services[neonServiceMapping] || createExternalService(serviceType.split(","), config.argsMappings[neonServiceMapping]);
 
-                        services[neonServiceMapping].apps[data[appType][nameProperty]] = {
-                            image: (config.appImagePath || ".") + "/" + data[appType][imageProperty],
-                            url: data[appType][urlProperty] + "/" + data[appType][servicesProperty][serviceType]
-                        };
+                            services[neonServiceMapping].apps[data[appType][nameProperty]] = {
+                                image: (config.imageDirectory || ".") + "/" + data[appType][imageProperty],
+                                url: data[appType][urlProperty] + "/" + data[appType][servicesProperty][serviceType]
+                            };
+                        });
                     });
                 });
-            });
+                readConfigCallback(configList);
+            },
+            error: function() {
+                readConfigCallback(configList);
+            }
+        });
+    };
 
-            saveServicesConfigAndFinish(services);
-        },
-        error: saveServicesConfigAndFinish({})
-    });
+    readConfig(config.configList);
 };
 
 var saveLayouts = function(layouts) {
@@ -353,11 +366,11 @@ var readDatasetFilesAndSaveDatasets = function($http, datasets, datasetFiles, ca
     }
 };
 
-var saveConfig = function($http, config) {
-    saveUserAleConfig(config);
-    saveOpenCpuConfig(config);
-    saveDashboardConfig(config);
-    saveVisualizationsConfig(config);
+var saveNeonConfig = function($http, config) {
+    saveUserAle(config);
+    saveOpenCpu(config);
+    saveDashboards(config);
+    saveVisualizations(config);
     initializePopupsObject();
 
     var files = (config.files || []);
@@ -369,7 +382,7 @@ var saveConfig = function($http, config) {
 
     // Read the external application services config file and create the services, then read each layout config file and add the layouts,
     // then read each dataset config file and add the datasets, then start angular.
-    readExternalServicesFileAndSaveServicesConfig((config.externalServices || {}), function() {
+    readAndSaveExternalServices((config.externalServices || {}), function() {
         readLayoutFilesAndSaveLayouts($http, layouts, (files.layouts || []), function() {
             readDatasetFilesAndSaveDatasets($http, datasets, (files.datasets || []), startAngular);
         });
@@ -379,10 +392,10 @@ var saveConfig = function($http, config) {
 angular.element(document).ready(function() {
     var $http = angular.injector(['ng']).get('$http');
     $http.get("./config/config.yaml").then(function(response) {
-        saveConfig($http, jsyaml.load(response.data));
+        saveNeonConfig($http, jsyaml.load(response.data));
     }, function() {
         $http.get("./config/config.json").then(function(response) {
-            saveConfig($http, response.data);
+            saveNeonConfig($http, response.data);
         });
     });
 });

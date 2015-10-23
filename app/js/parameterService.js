@@ -289,7 +289,8 @@ angular.module('neonDemo.services')
     /**
      * Returns a function to create a date filter clause using the given operator and list of dates.
      * @param {String} operator
-     * @param {Array} dateList
+     * @param {Array} dateList An array containing two or more {Date} objects:  dateList[0] is the inclusive start date and date[1] is the exclusive end date;
+     * all other indices are ignored.
      * @method createDateFilterClauseCallback
      * @private
      * @return {Function}
@@ -312,6 +313,8 @@ angular.module('neonDemo.services')
      * Returns a function to create a geographic bounds filter clause using the given operator and list of geographic bounds.
      * @param {String} operator
      * @param {Array} boundsList
+     * @param {Array} boundsList An array containing four or more numbers:  the minimum and maximum latitude and longitude at indices BOUNDS_MIN_LAT,
+     * BOUNDS_MAX_LAT, BOUNDS_MIN_LON, and BOUNDS_MAX_LON; all other indices are ignored.
      * @method createBoundsFilterClauseCallback
      * @private
      * @return {Function}
