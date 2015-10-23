@@ -74,7 +74,7 @@ function(external, popups, connectionService, datasetService, errorNotificationS
             $scope.tables = [];
             $scope.totalType = 'count';
             $scope.fields = [];
-            $scope.masterFilterKeys = {};
+            $scope.visualizationFilterKeys = {};
             $scope.filterKeys = {};
             $scope.chart = undefined;
             $scope.brushExtent = [];
@@ -462,10 +462,10 @@ function(external, popups, connectionService, datasetService, errorNotificationS
                     }
                 }
 
-                // Create the master filter keys for this visualization for each database/table pair in the dataset.
-                $scope.masterFilterKeys = filterService.createFilterKeys("linechart", datasetService.getDatabaseAndTableNames());
-                // The filter keys will be set to the global date filter key for each database/table pair when available and the master filter key otherwise.
-                $scope.filterKeys = $scope.masterFilterKeys;
+                // Create the filter keys for this visualization for each database/table pair in the dataset.
+                $scope.visualizationFilterKeys = filterService.createFilterKeys("linechart", datasetService.getDatabaseAndTableNames());
+                // The filter keys will be set to the global date filter key for each database/table pair when available and the visualization filter key otherwise.
+                $scope.filterKeys = $scope.visualizationFilterKeys;
 
                 if(initializing) {
                     $scope.updateTables();
@@ -521,9 +521,9 @@ function(external, popups, connectionService, datasetService, errorNotificationS
                 // Get the date filter keys for the current database/table/field and change the current filter keys as appropriate.
                 if(datasetService.isFieldValid($scope.options.attrX)) {
                     var dateFilterKeys = datasetService.getDateFilterKeys($scope.options.database.name, $scope.options.table.name, $scope.options.attrX.columnName);
-                    $scope.filterKeys = filterService.assembleFilterKeys(datasetService.getDatabaseAndTableNames(), $scope.masterFilterKeys, dateFilterKeys);
+                    $scope.filterKeys = filterService.getFilterKeysFromCollections(datasetService.getDatabaseAndTableNames(), $scope.visualizationFilterKeys, dateFilterKeys);
                 } else {
-                    $scope.filterKeys = $scope.masterFilterKeys;
+                    $scope.filterKeys = $scope.visualizationFilterKeys;
                 }
             };
 

@@ -40,15 +40,15 @@ angular.module("neonDemo.services")
     };
 
     /**
-     * Creates and returns a mapping of names from the given database and table names to filter keys for each database and table pair from the given mappings.
+     * Creates and returns a mapping of names from the given database and table names to filter keys for each database and table pair using filter keys from the given mappings.
      * The filter key for each database and table pair is the global filter key for that pair, if one exists, or the visualization filter key otherwise.
      * @param {Object} databaseNamesToTableNames A map of database names to table names
      * @param {Object} visualizationFilterKeys A map of database names to table names to filter keys
      * @param {Object} globalFilterKeys A map of database names to table names to filter keys
-     * @method assembleFilterKeys
+     * @method getFilterKeysFromCollections
      * @return {Object} The mapping of database names to table names to filter keys
      */
-    service.assembleFilterKeys = function(databaseNamesToTableNames, visualizationFilterKeys, globalFilterKeys) {
+    service.getFilterKeysFromCollections = function(databaseNamesToTableNames, visualizationFilterKeys, globalFilterKeys) {
         var filterKeys = {};
         Object.keys(databaseNamesToTableNames).forEach(function(databaseName) {
             filterKeys[databaseName] = {};
