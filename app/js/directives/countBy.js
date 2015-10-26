@@ -17,8 +17,8 @@
  */
 
 angular.module('neonDemo.directives')
-.directive('countBy', ['external', 'popups', 'ConnectionService', 'DatasetService', 'ErrorNotificationService', 'FilterService', 'ExportService', '$filter',
-function(external, popups, connectionService, datasetService, errorNotificationService, filterService, exportService, $filter) {
+.directive('countBy', ['external', 'ConnectionService', 'DatasetService', 'ErrorNotificationService', 'FilterService', 'ExportService', 'LinksPopupService', '$filter',
+function(external, connectionService, datasetService, errorNotificationService, filterService, exportService, linksPopupService, $filter) {
     return {
         templateUrl: 'partials/directives/countby.html',
         restrict: 'EA',
@@ -132,7 +132,7 @@ function(external, popups, connectionService, datasetService, errorNotificationS
                         source: "system",
                         tags: ["remove", "count-by"]
                     });
-                    popups.links.deleteData($scope.tableId);
+                    linksPopupService.deleteLinks($scope.tableId);
                     $element.off("resize", updateSize);
                     $scope.messenger.removeEvents();
                     if($scope.filterSet) {
@@ -500,12 +500,12 @@ function(external, popups, connectionService, datasetService, errorNotificationS
                 data.forEach(function(row) {
                     var field = $scope.options.field.columnName;
                     var value = row[field];
-                    tableLinks[value] = popups.links.createAllServiceLinkObjects(external.services, mappings, field, value);
-                    row[$scope.EXTERNAL_APP_FIELD_NAME] = tableLinks[value].length ? popups.links.createLinkHtml($scope.tableId, value, value) : popups.links.createDisabledLinkHtml(value);
+                    tableLinks[value] = linksPopupService.createAllServiceLinkObjects(external.services, mappings, field, value);
+                    row[$scope.EXTERNAL_APP_FIELD_NAME] = tableLinks[value].length ? linksPopupService.createLinkHtml($scope.tableId, value, value) : linksPopupService.createDisabledLinkHtml(value);
                 });
 
                 // Set the link data for the links popup for this visualization.
-                popups.links.setData($scope.tableId, tableLinks);
+                linksPopupService.setLinks($scope.tableId, tableLinks);
 
                 return data;
             };

@@ -17,9 +17,9 @@
  */
 
 angular.module('neonDemo.directives')
-.directive('linksPopupButton', ['popups', function(popups) {
+.directive('linksPopupButton', ['LinksPopupService', function(linksPopupService) {
     return {
-        template: "<span ng-if='enabled'>" + popups.links.ENABLED_TEMPLATE + "</span><span ng-if='!enabled'>" + popups.links.DISABLED_TEMPLATE + "</span>",
+        template: "<span ng-if='enabled'>" + linksPopupService.ENABLED_TEMPLATE + "</span><span ng-if='!enabled'>" + linksPopupService.DISABLED_TEMPLATE + "</span>",
         restrict: "EA",
         scope: {
             key: '@',
@@ -29,7 +29,7 @@ angular.module('neonDemo.directives')
             disable: '@?'
         },
         link: function($scope) {
-            $scope.json = $scope.json || popups.links.createButtonJson($scope.source, $scope.key);
+            $scope.json = $scope.json || linksPopupService.createButtonJson($scope.source, $scope.key);
             $scope.enabled = $scope.disable === undefined || $scope.disable === "false" || $scope.disable === "0" || $scope.disable === "";
         }
     };

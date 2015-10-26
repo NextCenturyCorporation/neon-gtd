@@ -19,8 +19,8 @@
  * This directive is for building a tag cloud
  */
 angular.module('neonDemo.directives')
-.directive('tagCloud', ['external', 'popups', 'ConnectionService', 'DatasetService', 'ErrorNotificationService', 'FilterService', 'ExportService', '$timeout', 'TranslationService',
-function(external, popups, connectionService, datasetService, errorNotificationService, filterService, exportService, $timeout, translationService) {
+.directive('tagCloud', ['external', 'ConnectionService', 'DatasetService', 'ErrorNotificationService', 'FilterService', 'ExportService', 'LinksPopupService', 'TranslationService', '$timeout',
+function(external, connectionService, datasetService, errorNotificationService, filterService, exportService, linksPopupService, translationService, $timeout) {
     return {
         templateUrl: 'partials/directives/tagCloud.html',
         restrict: 'EA',
@@ -130,7 +130,7 @@ function(external, popups, connectionService, datasetService, errorNotificationS
                         source: "system",
                         tags: ["remove", "tag-cloud"]
                     });
-                    popups.links.deleteData($scope.visualizationId);
+                    linksPopupService.deleteLinks($scope.visualizationId);
                     $element.off("resize", updateSize);
                     $scope.messenger.removeEvents();
                     // Remove our filter if we had an active one.
@@ -405,9 +405,9 @@ function(external, popups, connectionService, datasetService, errorNotificationS
                     if(external.services[neonMappings.TAGS]) {
                         var tagLinks = [];
                         Object.keys(external.services[neonMappings.TAGS].apps).forEach(function(app) {
-                            tagLinks.push(popups.links.createServiceLinkObject(external.services[neonMappings.TAGS], app, neonMappings.TAGS, tagName));
+                            tagLinks.push(linksPopupService.createServiceLinkObject(external.services[neonMappings.TAGS], app, neonMappings.TAGS, tagName));
                         });
-                        popups.links.addLinks($scope.visualizationId, tagName, tagLinks);
+                        linksPopupService.addLinks($scope.visualizationId, tagName, tagLinks);
                     }
                     $scope.filterTags.push(filterTag);
                 }
@@ -474,7 +474,7 @@ function(external, popups, connectionService, datasetService, errorNotificationS
             $scope.clearTagFilters = function() {
                 filterService.removeFilters($scope.messenger, $scope.filterKeys, function() {
                     $scope.$apply(function() {
-                        popups.links.deleteData($scope.visualizationId);
+                        linksPopupService.deleteLinks($scope.visualizationId);
                         $scope.showFilter = false;
                         $scope.filterTags = [];
                         $scope.error = "";
@@ -504,7 +504,7 @@ function(external, popups, connectionService, datasetService, errorNotificationS
                 var index = _.findIndex($scope.filterTags, {
                     name: tagName
                 });
-                popups.links.removeLinksForKey($scope.visualizationId, tagName);
+                linksPopupService.removeLinksForKey($scope.visualizationId, tagName);
                 $scope.filterTags.splice(index, 1);
             };
 

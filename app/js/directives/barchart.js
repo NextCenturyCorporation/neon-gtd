@@ -28,8 +28,8 @@
  * @constructor
  */
 angular.module('neonDemo.directives')
-.directive('barchart', ['external', 'popups', 'ConnectionService', 'DatasetService', 'ErrorNotificationService', 'FilterService', 'ExportService',
-function(external, popups, connectionService, datasetService, errorNotificationService, filterService, exportService) {
+.directive('barchart', ['external', 'ConnectionService', 'DatasetService', 'ErrorNotificationService', 'FilterService', 'ExportService', 'LinksPopupService',
+function(external, connectionService, datasetService, errorNotificationService, filterService, exportService, linksPopupService) {
     return {
         templateUrl: 'partials/directives/barchart.html',
         restrict: 'EA',
@@ -114,7 +114,7 @@ function(external, popups, connectionService, datasetService, errorNotificationS
                         source: "system",
                         tags: ["remove", "barchart"]
                     });
-                    popups.links.deleteData($scope.visualizationId);
+                    linksPopupService.deleteLinks($scope.visualizationId);
                     $element.off("resize", updateChartSize);
                     $scope.messenger.removeEvents();
                     // Remove our filter if we had an active one.
@@ -455,15 +455,15 @@ function(external, popups, connectionService, datasetService, errorNotificationS
 
                 var mappings = datasetService.getMappings($scope.options.database.name, $scope.options.table.name);
                 var chartLinks = {};
-                chartLinks[val] = popups.links.createAllServiceLinkObjects(external.services, mappings, key, val);
-                popups.links.setData($scope.visualizationId, chartLinks);
+                chartLinks[val] = linksPopupService.createAllServiceLinkObjects(external.services, mappings, key, val);
+                linksPopupService.setLinks($scope.visualizationId, chartLinks);
 
                 //no need to requery because barchart ignores its own filter
             };
 
             var clearFilterSet = function() {
                 $scope.filterSet = undefined;
-                popups.links.deleteData($scope.visualizationId);
+                linksPopupService.deleteLinks($scope.visualizationId);
             };
 
             $scope.clearFilterSet = function() {

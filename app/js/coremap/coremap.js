@@ -54,7 +54,7 @@ coreMap.Map = function(elementId, opts) {
     this.selector = $("#" + elementId);
     this.onZoomRect = opts.onZoomRect;
     this.responsive = opts.responsive;
-    this.popupsService = {};
+    this.linksPopupService = {};
 
     if(this.responsive) {
         this.resizeOnWindowResize();
@@ -432,10 +432,10 @@ coreMap.Map.prototype.createSelectControl =  function(layer) {
 
         $(".olFramedCloudPopupContent td").linky(feature.layer.linkyConfig);
 
-        if(me.popupsService.links && feature.layer.linksSource) {
-            var key = me.popupsService.links.generatePointKey(attributes[feature.layer.latitudeMapping], attributes[feature.layer.longitudeMapping]);
+        if(me.linksPopupService && feature.layer.linksSource) {
+            var key = me.linksPopupService.generatePointKey(attributes[feature.layer.latitudeMapping], attributes[feature.layer.longitudeMapping]);
             var tooltip = "latitude " + attributes[feature.layer.latitudeMapping] + ", longitude " + attributes[feature.layer.longitudeMapping];
-            var link = me.popupsService.links.createLinkHtml(feature.layer.linksSource, key, tooltip);
+            var link = me.linksPopupService.createLinkHtml(feature.layer.linksSource, key, tooltip);
 
             // Position the button below the 'close box' which can have one of a few different 'top' values depending on the location of the point on the layer.
             var topCss = $(".olPopupCloseBox").css("top");

@@ -28,8 +28,8 @@
  * @constructor
  */
 angular.module('neonDemo.directives')
-.directive('linechart', ['external', 'popups', 'ConnectionService', 'DatasetService', 'ErrorNotificationService', 'FilterService','ExportService',  '$timeout', '$filter',
-function(external, popups, connectionService, datasetService, errorNotificationService, filterService, exportService, $timeout, $filter) {
+.directive('linechart', ['external', 'ConnectionService', 'DatasetService', 'ErrorNotificationService', 'FilterService', 'ExportService', 'LinksPopupService', '$timeout', '$filter',
+function(external, connectionService, datasetService, errorNotificationService, filterService, exportService, linksPopupService, $timeout, $filter) {
     var COUNT_FIELD_NAME = 'value';
 
     return {
@@ -145,7 +145,7 @@ function(external, popups, connectionService, datasetService, errorNotificationS
                         source: "system",
                         tags: ["remove", "linechart"]
                     });
-                    popups.links.deleteData($scope.visualizationId);
+                    linksPopupService.deleteLinks($scope.visualizationId);
                     $element.off("resize", updateChartSize);
                     $scope.messenger.removeEvents();
                     exportService.unregister($scope.exportID);
@@ -331,23 +331,23 @@ function(external, popups, connectionService, datasetService, errorNotificationS
             var renderBrushExtent = function(brushExtent) {
                 $scope.brushExtent = brushExtent || [];
                 if(!$scope.brushExtent.length) {
-                    popups.links.deleteData($scope.visualizationId);
+                    linksPopupService.deleteLinks($scope.visualizationId);
                 } else if(external.services[neonMappings.DATE]) {
                     var dateLinks = [];
                     Object.keys(external.services[neonMappings.DATE].apps).forEach(function(app) {
-                        dateLinks.push(popups.links.createServiceLinkObjectWithData(external.services[neonMappings.DATE], app, {
+                        dateLinks.push(linksPopupService.createServiceLinkObjectWithData(external.services[neonMappings.DATE], app, {
                             startDate: $scope.brushExtent[0].toISOString(),
                             endDate: $scope.brushExtent[1].toISOString()
                         }));
                     });
                     var chartLinks = {};
                     chartLinks[$scope.getDateKeyForLinksPopupButton()] = dateLinks;
-                    popups.links.setData($scope.visualizationId, chartLinks);
+                    linksPopupService.setLinks($scope.visualizationId, chartLinks);
                 }
             };
 
             $scope.getDateKeyForLinksPopupButton = function() {
-                return $scope.brushExtent.length >= 2 ? popups.links.generateRangeKey($scope.brushExtent[0].toUTCString(), $scope.brushExtent[1].toUTCString()) : "";
+                return $scope.brushExtent.length >= 2 ? linksPopupService.generateRangeKey($scope.brushExtent[0].toUTCString(), $scope.brushExtent[1].toUTCString()) : "";
             };
 
             $scope.queryForData = function() {

@@ -28,8 +28,8 @@
  * @constructor
  */
 angular.module('neonDemo.directives')
-.directive('map', ['external', 'popups', 'ConnectionService', 'DatasetService', 'ErrorNotificationService', 'FilterService', 'ExportService', '$timeout', '$filter',
-    function(external, popups, connectionService, datasetService, errorNotificationService, filterService, exportService, $timeout, $filter) {
+.directive('map', ['external', 'ConnectionService', 'DatasetService', 'ErrorNotificationService', 'FilterService', 'ExportService', 'LinksPopupService', '$timeout', '$filter',
+    function(external, connectionService, datasetService, errorNotificationService, filterService, exportService, linksPopupService, $timeout, $filter) {
     return {
         templateUrl: 'partials/directives/map.html',
         restrict: 'EA',
@@ -157,7 +157,7 @@ angular.module('neonDemo.directives')
                     responsive: false,
                     mapBaseLayer: (datasetOptions ? datasetOptions.mapBaseLayer : undefined)
                 });
-                $scope.map.popupsService = popups;
+                $scope.map.linksPopupService = linksPopupService;
                 $scope.draw();
                 $scope.map.register("movestart", this, onMapEvent);
                 $scope.map.register("moveend", this, onMapEvent);
@@ -205,9 +205,9 @@ angular.module('neonDemo.directives')
                         tags: ["remove", "map"]
                     });
 
-                    popups.links.deleteData($scope.mapId);
+                    linksPopupService.deleteLinks($scope.mapId);
                     $scope.options.layers.forEach(function(layer) {
-                        popups.links.deleteData(generatePointLinksSource(layer.database, layer.table));
+                        linksPopupService.deleteLinks(generatePointLinksSource(layer.database, layer.table));
                     });
 
                     $element.off("resize", updateSize);
@@ -269,14 +269,14 @@ angular.module('neonDemo.directives')
                     if(external.services.bounds) {
                         var boundsLinks = [];
                         Object.keys(external.services.bounds.apps).forEach(function(app) {
-                            boundsLinks.push(popups.links.createServiceLinkObjectWithData(external.services.bounds, app, {
+                            boundsLinks.push(linksPopupService.createServiceLinkObjectWithData(external.services.bounds, app, {
                                 minLat: $scope.extent.minimumLatitude,
                                 minLon: $scope.extent.minimumLongitude,
                                 maxLat: $scope.extent.maximumLatitude,
                                 maxLon: $scope.extent.maximumLongitude
                             }));
                         });
-                        popups.links.addLinks($scope.mapId, $scope.getBoundsKeyForLinksPopupButton(), boundsLinks);
+                        linksPopupService.addLinks($scope.mapId, $scope.getBoundsKeyForLinksPopupButton(), boundsLinks);
                     }
 
                     XDATA.userALE.log({
@@ -305,7 +305,7 @@ angular.module('neonDemo.directives')
             };
 
             $scope.getBoundsKeyForLinksPopupButton = function() {
-                return $scope.extent ? popups.links.generateBoundsKey($scope.extent.minimumLatitude, $scope.extent.minimumLongitude, $scope.extent.maximumLatitude, $scope.extent.maximumLongitude) : "";
+                return $scope.extent ? linksPopupService.generateBoundsKey($scope.extent.minimumLatitude, $scope.extent.minimumLongitude, $scope.extent.maximumLatitude, $scope.extent.maximumLongitude) : "";
             };
 
             /**
@@ -727,7 +727,7 @@ angular.module('neonDemo.directives')
 
                 var connection = connectionService.getActiveConnection();
 
-                popups.links.deleteData(generatePointLinksSource(database, table));
+                linksPopupService.deleteLinks(generatePointLinksSource(database, table));
 
                 if(!connection) {
                     $scope.updateMapData(database, table, {
@@ -1018,18 +1018,18 @@ angular.module('neonDemo.directives')
 
                     if(external.services.point) {
                         Object.keys(external.services.point.apps).forEach(function(app) {
-                            rowLinks.push(popups.links.createServiceLinkObjectWithData(external.services.point, app, {
+                            rowLinks.push(linksPopupService.createServiceLinkObjectWithData(external.services.point, app, {
                                 latitude: latitudeValue,
                                 longitude: longitudeValue
                             }));
                         });
                     };
 
-                    mapLinks[popups.links.generatePointKey(latitudeValue, longitudeValue)] = rowLinks;
+                    mapLinks[linksPopupService.generatePointKey(latitudeValue, longitudeValue)] = rowLinks;
                 });
 
                 // Set the link data for the links popup for this visualization.
-                popups.links.setData(source, mapLinks);
+                linksPopupService.setLinks(source, mapLinks);
             };
 
             $scope.buildPointQuery = function(database, table) {
@@ -1157,7 +1157,7 @@ angular.module('neonDemo.directives')
             var clearExtent = function() {
                 $scope.extent = undefined;
                 $scope.error = "";
-                popups.links.deleteData($scope.mapId);
+                linksPopupService.deleteLinks($scope.mapId);
             };
 
             var removeFiltersForKeys = function(filterKeys, callback) {

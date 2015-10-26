@@ -32,8 +32,8 @@
  * @constructor
  */
 angular.module('neonDemo.directives')
-.directive('timelineSelector', ['$interval', '$filter', 'external', 'popups', 'ConnectionService', 'DatasetService', 'ErrorNotificationService', 'FilterService', 'ExportService', 'opencpu',
-function($interval, $filter, external, popups, connectionService, datasetService, errorNotificationService, filterService, exportService, opencpu) {
+.directive('timelineSelector', ['$interval', '$filter', 'external', 'ConnectionService', 'DatasetService', 'ErrorNotificationService', 'FilterService', 'ExportService', 'LinksPopupService', 'opencpu',
+function($interval, $filter, external, connectionService, datasetService, errorNotificationService, filterService, exportService, linksPopupService, opencpu) {
     return {
         templateUrl: 'partials/directives/timelineSelector.html',
         restrict: 'EA',
@@ -379,14 +379,14 @@ function($interval, $filter, external, popups, connectionService, datasetService
                 if(external.services.date) {
                     var dateLinks = [];
                     Object.keys(external.services.date.apps).forEach(function(app) {
-                        dateLinks.push(popups.links.createServiceLinkObjectWithData(external.services.date, app, {
+                        dateLinks.push(linksPopupService.createServiceLinkObjectWithData(external.services.date, app, {
                             startDate: displayStartDate.toISOString(),
                             endDate: displayEndDate.toISOString()
                         }));
                     });
                     var timelineLinks = {};
                     timelineLinks[$scope.getDateKeyForLinksPopupButton()] = dateLinks;
-                    popups.links.setData($scope.visualizationId, timelineLinks);
+                    linksPopupService.setLinks($scope.visualizationId, timelineLinks);
                 }
             };
 
@@ -398,7 +398,7 @@ function($interval, $filter, external, popups, connectionService, datasetService
             var clearDisplayDates = function() {
                 $scope.startDateForDisplay = undefined;
                 $scope.endDateForDisplay = undefined;
-                popups.links.deleteData($scope.visualizationId);
+                linksPopupService.deleteLinks($scope.visualizationId);
             };
 
             $scope.formatStartDate = function(startDate) {
@@ -429,7 +429,7 @@ function($interval, $filter, external, popups, connectionService, datasetService
             };
 
             $scope.getDateKeyForLinksPopupButton = function() {
-                return $scope.startDateForDisplay && $scope.endDateForDisplay ? popups.links.generateRangeKey($scope.startDateForDisplay, $scope.endDateForDisplay) : "";
+                return $scope.startDateForDisplay && $scope.endDateForDisplay ? linksPopupService.generateRangeKey($scope.startDateForDisplay, $scope.endDateForDisplay) : "";
             };
 
             /**
@@ -612,7 +612,7 @@ function($interval, $filter, external, popups, connectionService, datasetService
                         source: "system",
                         tags: ["remove", "timeline"]
                     });
-                    popups.links.deleteData($scope.visualizationId);
+                    linksPopupService.deleteLinks($scope.visualizationId);
                     $scope.messenger.removeEvents();
                     // Remove our filter if we had an active one.
                     if($scope.brush.length) {

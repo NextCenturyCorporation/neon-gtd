@@ -177,31 +177,6 @@ var saveVisualizations = function(config) {
     neonDemo.constant('visualizations', visualizations);
 };
 
-var initializePopupsObject = function() {
-    neonDemo.value('popups', {
-        links: {
-            ENABLED_TEMPLATE: "",
-            DISABLED_TEMPLATE: "",
-            setData: function() {},
-            setView: function() {},
-            addLinks: function() {},
-            removeLinksAtIndex: function() {},
-            deleteData: function() {},
-            createLinkHtml: function() {},
-            createLinkHtmlFromList: function() {},
-            createButtonJson: function() {},
-            createButtonJsonFromList: function() {},
-            createDisabledLinkHtml: function() {},
-            createAllServiceLinkObjects: function() {},
-            createServiceLinkObject: function() {},
-            createServiceLinkObjectWithData: function() {},
-            generateBoundsKey: function() {},
-            generatePointKey: function() {},
-            generateRangeKey: function() {}
-        }
-    });
-};
-
 var createExternalService = function(args, argsMappings) {
     var service = {
         apps: {},
@@ -371,7 +346,6 @@ var saveNeonConfig = function($http, config) {
     saveOpenCpu(config);
     saveDashboards(config);
     saveVisualizations(config);
-    initializePopupsObject();
 
     var files = (config.files || []);
     var layouts = (config.layouts || {});

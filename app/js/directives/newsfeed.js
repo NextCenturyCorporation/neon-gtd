@@ -17,8 +17,8 @@
  */
 
 angular.module('neonDemo.directives')
-.directive('newsfeed', ['external', 'popups', '$timeout', 'ConnectionService', 'DatasetService', 'ErrorNotificationService', 'TranslationService',
-function(external, popups, $timeout, connectionService, datasetService, errorNotificationService, translationService) {
+.directive('newsfeed', ['external', '$timeout', 'ConnectionService', 'DatasetService', 'ErrorNotificationService', 'LinksPopupService', 'TranslationService',
+function(external, $timeout, connectionService, datasetService, errorNotificationService, linksPopupService, translationService) {
     return {
         templateUrl: 'partials/directives/newsfeed.html',
         restrict: 'EA',
@@ -153,8 +153,8 @@ function(external, popups, $timeout, connectionService, datasetService, errorNot
                 $element.find(".newsfeed").scroll(handleScroll);
 
                 $scope.$on('$destroy', function() {
-                    popups.links.deleteData($scope.visualizationId + "-head");
-                    popups.links.deleteData($scope.visualizationId + "-name");
+                    linksPopupService.deleteLinks($scope.visualizationId + "-head");
+                    linksPopupService.deleteLinks($scope.visualizationId + "-name");
                     $scope.messenger.removeEvents();
                     $element.off("resize", handleResize);
                     $element.find(".newsfeed").off("scroll", handleScroll);
@@ -429,8 +429,8 @@ function(external, popups, $timeout, connectionService, datasetService, errorNot
             var resetAndQueryForData = function() {
                 $scope.data.news = [];
                 $scope.topNewsItemIndex = 0;
-                popups.links.deleteData($scope.visualizationId + "-head");
-                popups.links.deleteData($scope.visualizationId + "-name");
+                linksPopupService.deleteLinks($scope.visualizationId + "-head");
+                linksPopupService.deleteLinks($scope.visualizationId + "-name");
 
                 queryForData(function(data, connection) {
                     updateData(data);
@@ -559,10 +559,10 @@ function(external, popups, $timeout, connectionService, datasetService, errorNot
              * @return {Number}
              */
             var createExternalLinks = function(mappings, field, value, source) {
-                var links = popups.links.createAllServiceLinkObjects(external.services, mappings, field, value);
+                var links = linksPopupService.createAllServiceLinkObjects(external.services, mappings, field, value);
 
                 if(links.length) {
-                    popups.links.addLinks(source, value, links);
+                    linksPopupService.addLinks(source, value, links);
                 }
 
                 return links.length;
@@ -590,7 +590,7 @@ function(external, popups, $timeout, connectionService, datasetService, errorNot
                         key: name
                     });
                 }
-                return popups.links.createButtonJsonFromList(list);
+                return linksPopupService.createButtonJsonFromList(list);
             };
 
             /**

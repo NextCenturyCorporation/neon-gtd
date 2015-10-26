@@ -28,8 +28,8 @@
  * @constructor
  */
 angular.module('neonDemo.directives')
-.directive('queryResultsTable', ['external', 'popups', 'ConnectionService', 'DatasetService', 'ErrorNotificationService', 'ExportService', '$compile', '$interval', '$timeout',
-function(external, popups, connectionService, datasetService, errorNotificationService, exportService, $compile, $interval, $timeout) {
+.directive('queryResultsTable', ['external', 'ConnectionService', 'DatasetService', 'ErrorNotificationService', 'ExportService', 'LinksPopupService', '$compile', '$interval', '$timeout',
+function(external, connectionService, datasetService, errorNotificationService, exportService, linksPopupService, $compile, $interval, $timeout) {
     return {
         templateUrl: 'partials/directives/queryResultsTable.html',
         restrict: 'EA',
@@ -164,7 +164,7 @@ function(external, popups, connectionService, datasetService, errorNotificationS
                         source: "system",
                         tags: ["remove", "datagrid"]
                     });
-                    popups.links.deleteData($scope.tableId);
+                    linksPopupService.deleteLinks($scope.tableId);
                     $element.off("resize", updateSize);
                     $scope.messenger.removeEvents();
                     exportService.unregister($scope.exportID);
@@ -682,12 +682,12 @@ function(external, popups, connectionService, datasetService, errorNotificationS
                 data.forEach(function(row) {
                     var field = $scope.bindIdField || "_id";
                     var id = row[field];
-                    tableLinks[id] = popups.links.createAllServiceLinkObjects(external.services, mappings, field, id);
-                    row[$scope.EXTERNAL_APP_FIELD_NAME] = tableLinks[id].length ? popups.links.createLinkHtml($scope.tableId, id, id) : popups.links.createDisabledLinkHtml(id);
+                    tableLinks[id] = linksPopupService.createAllServiceLinkObjects(external.services, mappings, field, id);
+                    row[$scope.EXTERNAL_APP_FIELD_NAME] = tableLinks[id].length ? linksPopupService.createLinkHtml($scope.tableId, id, id) : linksPopupService.createDisabledLinkHtml(id);
                 });
 
                 // Set the link data for the links popup for this visualization.
-                popups.links.setData($scope.tableId, tableLinks);
+                linksPopupService.setLinks($scope.tableId, tableLinks);
 
                 return data;
             };
