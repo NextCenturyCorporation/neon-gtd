@@ -403,14 +403,11 @@ function(external, connectionService, datasetService, errorNotificationService, 
                         name: tagName,
                         nameTranslated: tagNameTranslated
                     };
-                    if(external.services[neonMappings.TAGS]) {
-                        var tagLinks = [];
-                        Object.keys(external.services[neonMappings.TAGS].apps).forEach(function(app) {
-                            tagLinks.push(linksPopupService.createServiceLinkObject(external.services[neonMappings.TAGS], app, neonMappings.TAGS, tagName));
-                        });
-                        linksPopupService.addLinks($scope.visualizationId, tagName, tagLinks);
-                        $scope.linksPopupButtonIsDisabled = !tagLinks.length;
-                    }
+
+                    var mappings = datasetService.getMappings($scope.options.database.name, $scope.options.table.name);
+                    var cloudLinks = linksPopupService.createAllServiceLinkObjects(external.services, mappings, $scope.options.tagField.columnName, tagName);
+                    linksPopupService.addLinks($scope.visualizationId, tagName, cloudLinks);
+                    $scope.linksPopupButtonIsDisabled = !cloudLinks.length;
                     $scope.filterTags.push(filterTag);
                 }
             };
