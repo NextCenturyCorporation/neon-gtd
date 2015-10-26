@@ -31,6 +31,8 @@ angular.module('neonDemo.services')
             // Set the link data for the links popup using the source and key from the triggering button.
             var button = $(event.relatedTarget);
             var json = button.data("links-json");
+            // The JSON may be a string or an object depending on whether it was set using angular or jQuery.
+            json = _.isString(json) ? $.parseJSON(json) : json;
             service.showLinks(json || []);
         });
     };

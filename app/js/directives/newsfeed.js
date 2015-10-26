@@ -527,7 +527,7 @@ function(external, $timeout, connectionService, datasetService, errorNotificatio
                         text: text,
                         textTranslated: text,
                         linksPopupButtonJson: createLinksPopupButtonJson(head, name),
-                        linksPopupButtonDisabled: !hasLinks
+                        linksPopupButtonIsDisabled: !hasLinks
                     });
                 });
             };

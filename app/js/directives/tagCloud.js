@@ -51,6 +51,7 @@ function(external, connectionService, datasetService, errorNotificationService, 
             $scope.filterKeys = {};
             $scope.errorMessage = undefined;
             $scope.loadingData = false;
+            $scope.linksPopupButtonIsDisabled = true;
             $scope.translationAvailable = false;
             $scope.translationLanguages = {
                 fromLanguageOptions: {},
@@ -408,6 +409,7 @@ function(external, connectionService, datasetService, errorNotificationService, 
                             tagLinks.push(linksPopupService.createServiceLinkObject(external.services[neonMappings.TAGS], app, neonMappings.TAGS, tagName));
                         });
                         linksPopupService.addLinks($scope.visualizationId, tagName, tagLinks);
+                        $scope.linksPopupButtonIsDisabled = !tagLinks.length;
                     }
                     $scope.filterTags.push(filterTag);
                 }

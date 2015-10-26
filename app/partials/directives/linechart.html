@@ -70,7 +70,7 @@
 <div class="header-container filter-container">
     <div class="legend">
         <div class="header-item filter-reset pull-right" ng-class="{true: '', false: 'hidden'}[brushExtent.length > 0]" title="Date from {{brushExtent[0].toUTCString()}} to {{brushExtent[1].toUTCString()}}">
-            <links-popup-button key="{{getDateKeyForLinksPopupButton()}}" source="{{visualizationId}}" tooltip="{{brushExtent[0].toUTCString()}} to {{brushExtent[1].toUTCString()}}"></links-popup-button>
+            <links-popup-button key="{{getDateKeyForLinksPopupButton()}}" source="{{visualizationId}}" tooltip="{{brushExtent[0].toUTCString()}} to {{brushExtent[1].toUTCString()}}" is-disabled="{{linksPopupButtonIsDisabled}}"></links-popup-button>
             <span class="filter-label">Date Filter</span>
             <span class="glyphicon glyphicon-remove" ng-click="removeBrush()"></span>
         </div>

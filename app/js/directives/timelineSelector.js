@@ -90,6 +90,7 @@ function($interval, $filter, external, connectionService, datasetService, errorN
                 start: undefined,
                 end: undefined
             };
+            $scope.linksPopupButtonIsDisabled = true;
 
             $scope.outstandingQuery = undefined;
 
@@ -387,6 +388,7 @@ function($interval, $filter, external, connectionService, datasetService, errorN
                     var timelineLinks = {};
                     timelineLinks[$scope.getDateKeyForLinksPopupButton()] = dateLinks;
                     linksPopupService.setLinks($scope.visualizationId, timelineLinks);
+                    $scope.linksPopupButtonIsDisabled = !dateLinks.length;
                 }
             };
 

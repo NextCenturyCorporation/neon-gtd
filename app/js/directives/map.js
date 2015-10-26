@@ -79,6 +79,7 @@ angular.module('neonDemo.directives')
             $scope.loadingData = false;
             $scope.selectedPointLayer = {};
             $scope.outstandingQuery = undefined;
+            $scope.linksPopupButtonIsDisabled = true;
 
             $scope.MAP_LAYER_TYPES = [coreMap.Map.POINTS_LAYER, coreMap.Map.CLUSTER_LAYER, coreMap.Map.HEATMAP_LAYER, coreMap.Map.NODE_LAYER];
             $scope.DEFAULT_LIMIT = 1000;
@@ -277,6 +278,7 @@ angular.module('neonDemo.directives')
                             }));
                         });
                         linksPopupService.addLinks($scope.mapId, $scope.getBoundsKeyForLinksPopupButton(), boundsLinks);
+                        $scope.linksPopupButtonIsDisabled = !boundsLinks.length;
                     }
 
                     XDATA.userALE.log({

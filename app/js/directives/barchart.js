@@ -59,6 +59,7 @@ function(external, connectionService, datasetService, errorNotificationService, 
             $scope.errorMessage = undefined;
             $scope.loadingData = false;
             $scope.outstandingQuery = undefined;
+            $scope.linksPopupButtonIsDisabled = true;
 
             $scope.options = {
                 database: {},
@@ -457,6 +458,7 @@ function(external, connectionService, datasetService, errorNotificationService, 
                 var chartLinks = {};
                 chartLinks[val] = linksPopupService.createAllServiceLinkObjects(external.services, mappings, key, val);
                 linksPopupService.setLinks($scope.visualizationId, chartLinks);
+                $scope.linksPopupButtonIsDisabled = !chartLinks[val].length;
 
                 //no need to requery because barchart ignores its own filter
             };

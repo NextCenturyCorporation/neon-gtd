@@ -19,18 +19,50 @@
 angular.module('neonDemo.directives')
 .directive('linksPopupButton', ['LinksPopupService', function(linksPopupService) {
     return {
-        template: "<span ng-if='enabled'>" + linksPopupService.ENABLED_TEMPLATE + "</span><span ng-if='!enabled'>" + linksPopupService.DISABLED_TEMPLATE + "</span>",
+        template: "<span ng-show='isEnabled()'>" + linksPopupService.ENABLED_TEMPLATE + "</span>" + 
+            "<span ng-show='showIfDisabled && !isEnabled()'>" + linksPopupService.DISABLED_TEMPLATE + "</span>",
         restrict: "EA",
         scope: {
             key: '@',
             source: '@',
             tooltip: '@',
             json: '@?',
-            disable: '@?'
+            isDisabled: '@?',
+            showIfDisabled: '=?'
         },
-        link: function($scope) {
-            $scope.json = $scope.json || linksPopupService.createButtonJson($scope.source, $scope.key);
-            $scope.enabled = $scope.disable === undefined || $scope.disable === "false" || $scope.disable === "0" || $scope.disable === "";
+        link: function($scope, $element) {
+            $scope.showIfDisabled = $scope.showIfDisabled || false;
+
+            $scope.isEnabled = function() {
+                return $scope.isDisabled === undefined || $scope.isDisabled === "false" || $scope.isDisabled === "0" || $scope.isDisabled === "";
+            };
+
+            var updateDataLinksJson = function() {
+                // Update the custom data attribute using jQuery because it ignores angular digest cycles.
+                $element.find("a").data("links-json", $scope.json);
+            };
+
+            var updateFromSourceAndKey = function() {
+                $scope.json = $scope.source && $scope.key ? linksPopupService.createButtonJson($scope.source, $scope.key) : "[]";
+                updateDataLinksJson();
+            };
+
+            var updateFromJson = function() {
+                $scope.json = $scope.json || "[]";
+                updateDataLinksJson();
+            };
+
+            $scope.$watch("key", function() {
+                updateFromSourceAndKey();
+            });
+
+            $scope.$watch("source", function() {
+                updateFromSourceAndKey();
+            });
+
+            $scope.$watch("json", function() {
+                updateFromJson();
+            });
         }
     };
 }]);

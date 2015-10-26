@@ -87,6 +87,7 @@ function(external, connectionService, datasetService, errorNotificationService, 
             $scope.queryOnChangeBrush = false;
             $scope.automaticHourSet = false;
             $scope.outstandingQuery = undefined;
+            $scope.linksPopupButtonIsDisabled = true;
 
             $scope.options = {
                 database: {},
@@ -343,6 +344,7 @@ function(external, connectionService, datasetService, errorNotificationService, 
                     var chartLinks = {};
                     chartLinks[$scope.getDateKeyForLinksPopupButton()] = dateLinks;
                     linksPopupService.setLinks($scope.visualizationId, chartLinks);
+                    $scope.linksPopupButtonIsDisabled = !dateLinks.length;
                 }
             };
 
