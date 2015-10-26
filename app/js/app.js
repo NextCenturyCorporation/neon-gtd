@@ -272,14 +272,19 @@ var readAndSaveExternalServices = function(config, callback) {
                             return config.servicesMappings[neonServiceMapping] === serviceType;
                         });
 
-                        neonServiceMappings.forEach(function(neonServiceMapping) {
-                            services[neonServiceMapping] = services[neonServiceMapping] || createExternalService(serviceType.split(","), config.argsMappings[neonServiceMapping]);
+                        var appName = data[appType][nameProperty];
 
-                            services[neonServiceMapping].apps[data[appType][nameProperty]] = {
-                                image: (config.imageDirectory || ".") + "/" + data[appType][imageProperty],
-                                url: data[appType][urlProperty] + "/" + data[appType][servicesProperty][serviceType]
-                            };
-                        });
+                        // Ignore linking to the Neon Dashboard itself.
+                        if(!(appName.toLowerCase().indexOf("neon") === 0)) {
+                            neonServiceMappings.forEach(function(neonServiceMapping) {
+                                services[neonServiceMapping] = services[neonServiceMapping] || createExternalService(serviceType.split(","), config.argsMappings[neonServiceMapping]);
+
+                                services[neonServiceMapping].apps[appName] = {
+                                    image: (config.imageDirectory || ".") + "/" + data[appType][imageProperty],
+                                    url: data[appType][urlProperty] + "/" + data[appType][servicesProperty][serviceType]
+                                };
+                            });
+                        }
                     });
                 });
                 readConfigCallback(configList);
