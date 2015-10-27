@@ -7,7 +7,9 @@ app/lib
 app/css/app.css
 bower_components/
 config.json
+*.config.json
 config.yaml
+*.config.yaml
 docs/
 logs/*
 node_modules/
