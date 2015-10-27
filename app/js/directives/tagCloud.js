@@ -19,8 +19,8 @@
  * This directive is for building a tag cloud
  */
 angular.module('neonDemo.directives')
-.directive('tagCloud', ['ConnectionService', 'DatasetService', 'ErrorNotificationService', 'FilterService', 'ExportService', '$timeout', 'TranslationService',
-function(connectionService, datasetService, errorNotificationService, filterService, exportService, $timeout, translationService) {
+.directive('tagCloud', ['external', 'ConnectionService', 'DatasetService', 'ErrorNotificationService', 'FilterService', 'ExportService', 'LinksPopupService', 'TranslationService', '$timeout',
+function(external, connectionService, datasetService, errorNotificationService, filterService, exportService, linksPopupService, translationService, $timeout) {
     return {
         templateUrl: 'partials/directives/tagCloud.html',
         restrict: 'EA',
@@ -36,6 +36,7 @@ function(connectionService, datasetService, errorNotificationService, filterServ
             $element.addClass("tagcloud-container");
 
             $scope.element = $element;
+            $scope.visualizationId = "text-cloud-" + uuid();
 
             $scope.showOptionsMenuButtonText = function() {
                 return $scope.filterTags.length === 0 && $scope.data.length === 0;
@@ -50,6 +51,7 @@ function(connectionService, datasetService, errorNotificationService, filterServ
             $scope.filterKeys = {};
             $scope.errorMessage = undefined;
             $scope.loadingData = false;
+            $scope.linksPopupButtonIsDisabled = true;
             $scope.translationAvailable = false;
             $scope.translationLanguages = {
                 fromLanguageOptions: {},
@@ -129,6 +131,7 @@ function(connectionService, datasetService, errorNotificationService, filterServ
                         source: "system",
                         tags: ["remove", "tag-cloud"]
                     });
+                    linksPopupService.deleteLinks($scope.visualizationId);
                     $element.off("resize", updateSize);
                     $scope.messenger.removeEvents();
                     // Remove our filter if we had an active one.
@@ -244,7 +247,7 @@ function(connectionService, datasetService, errorNotificationService, filterServ
 
             $scope.updateTables = function() {
                 $scope.tables = datasetService.getTables($scope.options.database.name);
-                $scope.options.table = datasetService.getFirstTableWithMappings($scope.options.database.name, ["tags"]) || $scope.tables[0];
+                $scope.options.table = datasetService.getFirstTableWithMappings($scope.options.database.name, [neonMappings.TAGS]) || $scope.tables[0];
                 if($scope.bindTable) {
                     for(var i = 0; i < $scope.tables.length; ++i) {
                         if($scope.bindTable === $scope.tables[i].name) {
@@ -260,13 +263,10 @@ function(connectionService, datasetService, errorNotificationService, filterServ
                 $scope.loadingData = true;
                 $scope.fields = datasetService.getSortedFields($scope.options.database.name, $scope.options.table.name);
 
-                var tagField = $scope.bindTagField || datasetService.getMapping($scope.options.database.name, $scope.options.table.name, "tags") || "";
+                var tagField = $scope.bindTagField || datasetService.getMapping($scope.options.database.name, $scope.options.table.name, neonMappings.TAGS) || "";
                 $scope.options.tagField = _.find($scope.fields, function(field) {
                     return field.columnName === tagField;
-                }) || {
-                    columnName: "",
-                    prettyName: ""
-                };
+                }) || datasetService.createBlankField();
 
                 if($scope.showFilter) {
                     $scope.clearTagFilters();
@@ -287,7 +287,7 @@ function(connectionService, datasetService, errorNotificationService, filterServ
 
                 var connection = connectionService.getActiveConnection();
 
-                if(!connection || !$scope.options.tagField.columnName) {
+                if(!connection || !datasetService.isFieldValid($scope.options.tagField)) {
                     $scope.updateTagData([]);
                     $scope.loadingData = false;
                     return;
@@ -399,10 +399,16 @@ function(connectionService, datasetService, errorNotificationService, filterServ
                     name: tagName
                 });
                 if(index === -1) {
-                    $scope.filterTags.push({
+                    var filterTag = {
                         name: tagName,
                         nameTranslated: tagNameTranslated
-                    });
+                    };
+
+                    var mappings = datasetService.getMappings($scope.options.database.name, $scope.options.table.name);
+                    var cloudLinks = linksPopupService.createAllServiceLinkObjects(external.services, mappings, $scope.options.tagField.columnName, tagName);
+                    linksPopupService.addLinks($scope.visualizationId, tagName, cloudLinks);
+                    $scope.linksPopupButtonIsDisabled = !cloudLinks.length;
+                    $scope.filterTags.push(filterTag);
                 }
             };
 
@@ -467,6 +473,7 @@ function(connectionService, datasetService, errorNotificationService, filterServ
             $scope.clearTagFilters = function() {
                 filterService.removeFilters($scope.messenger, $scope.filterKeys, function() {
                     $scope.$apply(function() {
+                        linksPopupService.deleteLinks($scope.visualizationId);
                         $scope.showFilter = false;
                         $scope.filterTags = [];
                         $scope.error = "";
@@ -496,6 +503,7 @@ function(connectionService, datasetService, errorNotificationService, filterServ
                 var index = _.findIndex($scope.filterTags, {
                     name: tagName
                 });
+                linksPopupService.removeLinksForKey($scope.visualizationId, tagName);
                 $scope.filterTags.splice(index, 1);
             };
 

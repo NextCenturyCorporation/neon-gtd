@@ -28,8 +28,8 @@
  * @constructor
  */
 angular.module('neonDemo.directives')
-.directive('linechart', ['ConnectionService', 'DatasetService', 'ErrorNotificationService', 'FilterService','ExportService',  '$timeout', '$filter',
-function(connectionService, datasetService, errorNotificationService, filterService, exportService, $timeout, $filter) {
+.directive('linechart', ['external', 'ConnectionService', 'DatasetService', 'ErrorNotificationService', 'FilterService', 'ExportService', 'LinksPopupService', '$timeout', '$filter',
+function(external, connectionService, datasetService, errorNotificationService, filterService, exportService, linksPopupService, $timeout, $filter) {
     var COUNT_FIELD_NAME = 'value';
 
     return {
@@ -55,6 +55,7 @@ function(connectionService, datasetService, errorNotificationService, filterServ
             $element.addClass('linechartDirective');
 
             $scope.element = $element;
+            $scope.visualizationId = "linechart-" + uuid();
 
             $scope.optionsMenuButtonText = function() {
                 if($scope.noData) {
@@ -86,6 +87,7 @@ function(connectionService, datasetService, errorNotificationService, filterServ
             $scope.queryOnChangeBrush = false;
             $scope.automaticHourSet = false;
             $scope.outstandingQuery = undefined;
+            $scope.linksPopupButtonIsDisabled = true;
 
             $scope.options = {
                 database: {},
@@ -144,6 +146,7 @@ function(connectionService, datasetService, errorNotificationService, filterServ
                         source: "system",
                         tags: ["remove", "linechart"]
                     });
+                    linksPopupService.deleteLinks($scope.visualizationId);
                     $element.off("resize", updateChartSize);
                     $scope.messenger.removeEvents();
                     exportService.unregister($scope.exportID);
@@ -328,6 +331,25 @@ function(connectionService, datasetService, errorNotificationService, filterServ
 
             var renderBrushExtent = function(brushExtent) {
                 $scope.brushExtent = brushExtent || [];
+                if(!$scope.brushExtent.length) {
+                    linksPopupService.deleteLinks($scope.visualizationId);
+                } else if(external.services[neonMappings.DATE]) {
+                    var dateLinks = [];
+                    Object.keys(external.services[neonMappings.DATE].apps).forEach(function(app) {
+                        dateLinks.push(linksPopupService.createServiceLinkObjectWithData(external.services[neonMappings.DATE], app, {
+                            startDate: $scope.brushExtent[0].toISOString(),
+                            endDate: $scope.brushExtent[1].toISOString()
+                        }));
+                    });
+                    var chartLinks = {};
+                    chartLinks[$scope.getDateKeyForLinksPopupButton()] = dateLinks;
+                    linksPopupService.setLinks($scope.visualizationId, chartLinks);
+                    $scope.linksPopupButtonIsDisabled = !dateLinks.length;
+                }
+            };
+
+            $scope.getDateKeyForLinksPopupButton = function() {
+                return $scope.brushExtent.length >= 2 ? linksPopupService.generateRangeKey($scope.brushExtent[0].toUTCString(), $scope.brushExtent[1].toUTCString()) : "";
             };
 
             $scope.queryForData = function() {
@@ -384,7 +406,7 @@ function(connectionService, datasetService, errorNotificationService, filterServ
                     var hourGroupClause = new neon.query.GroupByFunctionClause(neon.query.HOUR, $scope.options.attrX.columnName, 'hour');
                     groupByClause.push(hourGroupClause);
                 }
-                if($scope.options.categoryField && $scope.options.categoryField.columnName) {
+                if(datasetService.isFieldValid($scope.options.categoryField)) {
                     groupByClause.push($scope.options.categoryField.columnName);
                 }
 
@@ -451,7 +473,7 @@ function(connectionService, datasetService, errorNotificationService, filterServ
 
             $scope.updateTables = function() {
                 $scope.tables = datasetService.getTables($scope.options.database.name);
-                $scope.options.table = datasetService.getFirstTableWithMappings($scope.options.database.name, ["date", "y_axis"]) || $scope.tables[0];
+                $scope.options.table = datasetService.getFirstTableWithMappings($scope.options.database.name, [neonMappings.DATE, neonMappings.Y_AXIS]) || $scope.tables[0];
                 if($scope.bindTable) {
                     for(var i = 0; i < $scope.tables.length; ++i) {
                         if($scope.bindTable === $scope.tables[i].name) {
@@ -468,27 +490,18 @@ function(connectionService, datasetService, errorNotificationService, filterServ
                 $scope.fields = datasetService.getSortedFields($scope.options.database.name, $scope.options.table.name);
                 $scope.options.aggregation = $scope.bindAggregationField || "count";
 
-                var attrX = $scope.bindDateField || datasetService.getMapping($scope.options.database.name, $scope.options.table.name, "date") || "";
+                var attrX = $scope.bindDateField || datasetService.getMapping($scope.options.database.name, $scope.options.table.name, neonMappings.DATE) || "";
                 $scope.options.attrX = _.find($scope.fields, function(field) {
                     return field.columnName === attrX;
-                }) || {
-                    columnName: "",
-                    prettyName: ""
-                };
-                var attrY = $scope.bindYAxisField || datasetService.getMapping($scope.options.database.name, $scope.options.table.name, "y_axis") || "";
+                }) || datasetService.createBlankField();
+                var attrY = $scope.bindYAxisField || datasetService.getMapping($scope.options.database.name, $scope.options.table.name, neonMappings.Y_AXIS) || "";
                 $scope.options.attrY = _.find($scope.fields, function(field) {
                     return field.columnName === attrY;
-                }) || {
-                    columnName: "",
-                    prettyName: ""
-                };
-                var categoryField = $scope.bindCategoryField || datasetService.getMapping($scope.options.database.name, $scope.options.table.name, "line_category") || "";
+                }) || datasetService.createBlankField();
+                var categoryField = $scope.bindCategoryField || datasetService.getMapping($scope.options.database.name, $scope.options.table.name, neonMappings.LINE_GROUP) || "";
                 $scope.options.categoryField = _.find($scope.fields, function(field) {
                     return field.columnName === categoryField;
-                }) || {
-                    columnName: "",
-                    prettyName: ""
-                };
+                }) || datasetService.createBlankField();
 
                 var globalBrushExtent = datasetService.getDateBrushExtent($scope.options.database.name, $scope.options.table.name);
                 if($scope.brushExtent !== globalBrushExtent) {
@@ -763,7 +776,7 @@ function(connectionService, datasetService, errorNotificationService, filterServ
 
                 // Scrape data for unique series
                 for(i = 0; i < data.length; i++) {
-                    if($scope.options.categoryField && $scope.options.categoryField.columnName) {
+                    if(datasetService.isFieldValid($scope.options.categoryField)) {
                         series = data[i][$scope.options.categoryField.columnName] !== '' ? data[i][$scope.options.categoryField.columnName] : 'Unknown';
                     }
 
@@ -797,7 +810,7 @@ function(connectionService, datasetService, errorNotificationService, filterServ
                 for(i = 0; i < data.length; i++) {
                     indexDate = new Date(data[i].date);
 
-                    if($scope.options.categoryField && $scope.options.categoryField.columnName) {
+                    if(datasetService.isFieldValid($scope.options.categoryField)) {
                         series = data[i][$scope.options.categoryField.columnName] !== '' ? data[i][$scope.options.categoryField.columnName] : 'Unknown';
                     }
 

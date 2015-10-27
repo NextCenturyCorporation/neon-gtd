@@ -402,6 +402,20 @@ button {
     }
 }
 
+.disabled {
+    cursor: default;
+    opacity: .65;
+
+    &:hover, &:focus {
+        cursor: default;
+    }
+
+    .glyphicon {
+        color: #999;
+        pointer-events: none;
+    }
+}
+
 .filter-reset {
     margin-right: 0px;
     margin-left: 5px;
@@ -415,7 +429,7 @@ button {
     .filter-label {
         float: left;
         padding: 4px 8px;
-        max-width: 90px;
+        max-width: 100px;
         overflow: hidden;
         text-overflow: ellipsis;
         white-space: nowrap;
@@ -431,6 +445,7 @@ button {
     }
 
     .glyphicon {
+        color: @mid-text-color;
         cursor: pointer;
         float: left;
         padding: 7px 8px;
@@ -438,23 +453,23 @@ button {
         /* Remove the margin set by .header-item .glyphicon (above).*/
         margin: 0px;
 
+        &:hover {
+            background-color: @accent-dark;
+            color: @light-text-color;
+        }
+
         &.glyphicon-remove {
             color: @error-color;
 
             &:hover {
                 background-color: @error-color;
-                border-color: @error-dark-color;
                 color: @light-text-color;
             }
         }
     }
 
-    span {
+    .border-left {
         border-left: @border;
-
-        &:first-child {
-            border-left: none;
-        }
     }
 }
 
@@ -596,7 +611,7 @@ button {
 
         .legend-text {
             display: inline-block;
-            max-width: 200px;
+            max-width: 180px;
             overflow: hidden;
             white-space: nowrap;
             text-overflow: ellipsis;

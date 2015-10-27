@@ -28,8 +28,8 @@
  * @constructor
  */
 angular.module('neonDemo.directives')
-.directive('queryResultsTable', ['external', 'popups', 'ConnectionService', 'DatasetService', 'ErrorNotificationService', 'ExportService', '$compile', '$interval', '$timeout',
-function(external, popups, connectionService, datasetService, errorNotificationService, exportService, $compile, $interval, $timeout) {
+.directive('queryResultsTable', ['external', 'ConnectionService', 'DatasetService', 'ErrorNotificationService', 'ExportService', 'LinksPopupService', '$compile', '$interval', '$timeout',
+function(external, connectionService, datasetService, errorNotificationService, exportService, linksPopupService, $compile, $interval, $timeout) {
     return {
         templateUrl: 'partials/directives/queryResultsTable.html',
         restrict: 'EA',
@@ -37,6 +37,7 @@ function(external, popups, connectionService, datasetService, errorNotificationS
             bindTitle: '=',
             bindTable: '=',
             bindDatabase: '=',
+            bindIdField: '=',
             hideHeader: '=?',
             hideAdvancedOptions: '=?'
         },
@@ -163,7 +164,7 @@ function(external, popups, connectionService, datasetService, errorNotificationS
                         source: "system",
                         tags: ["remove", "datagrid"]
                     });
-                    popups.links.deleteData($scope.tableId);
+                    linksPopupService.deleteLinks($scope.tableId);
                     $element.off("resize", updateSize);
                     $scope.messenger.removeEvents();
                     exportService.unregister($scope.exportID);
@@ -232,7 +233,7 @@ function(external, popups, connectionService, datasetService, errorNotificationS
                 var columns = tables.createColumns(knownColumns, data, hiddenColumnNames, [$scope.createDeleteColumnButton("")]);
                 columns = tables.addLinkabilityToColumns(columns);
 
-                if(external.anyEnabled) {
+                if(external.active) {
                     var externalAppColumn = {
                         name: "",
                         field: $scope.EXTERNAL_APP_FIELD_NAME,
@@ -318,10 +319,7 @@ function(external, popups, connectionService, datasetService, errorNotificationS
             $scope.updateFields = function() {
                 $scope.loadingData = true;
                 $scope.fields = datasetService.getSortedFields($scope.options.database.name, $scope.options.table.name);
-                $scope.options.addField = {
-                    columnName: "",
-                    prettyName: ""
-                };
+                $scope.options.addField = datasetService.createBlankField();
 
                 if(!($scope.deletedFieldsMap[$scope.options.database.name][$scope.options.table.name])) {
                     $scope.deletedFieldsMap[$scope.options.database.name][$scope.options.table.name] = [];
@@ -346,13 +344,10 @@ function(external, popups, connectionService, datasetService, errorNotificationS
                     $scope.options.addField = $scope.deletedFieldsMap[$scope.options.database.name][$scope.options.table.name][0];
                 }
 
-                var sortByField = datasetService.getMapping($scope.options.database.name, $scope.options.table.name, "sort_by") || "";
+                var sortByField = datasetService.getMapping($scope.options.database.name, $scope.options.table.name, neonMappings.SORT) || "";
                 $scope.options.sortByField = _.find($scope.fields, function(field) {
                     return field.columnName === sortByField;
-                }) || {
-                    columnName: "",
-                    prettyName: ""
-                };
+                }) || datasetService.createBlankField();
 
                 queryForData(true);
             };
@@ -651,8 +646,8 @@ function(external, popups, connectionService, datasetService, errorNotificationS
 
                 $scope.tableOptions = $scope.createOptions(queryResults, refreshColumns);
 
-                if(external.anyEnabled) {
-                    queryResults = $scope.addExternalAppUrlColumnData(queryResults);
+                if(external.active) {
+                    queryResults.data = addExternalLinksToColumnData(queryResults.data);
                 }
 
                 $scope.table = new tables.Table("#" + $scope.tableId, $scope.tableOptions).draw();
@@ -669,69 +664,32 @@ function(external, popups, connectionService, datasetService, errorNotificationS
                 }
 
                 $scope.table.refreshLayout();
-
-                // Set the displayed link data for the links popup for the application using the source and index stored in to the triggering button.
-                $(".links-popup").on("show.bs.modal", function(event) {
-                    var button = $(event.relatedTarget);
-                    var source = button.data("links-source");
-                    var index = button.data("links-index");
-                    $scope.$apply(function() {
-                        popups.links.setView(source, index);
-                    });
-                });
                 $scope.table.addOnColumnsReorderedListener($scope.createDeleteColumnButtons);
                 $scope.createDeleteColumnButtons();
             };
 
-            $scope.addExternalAppUrlColumnData = function(data) {
-                var tableLinks = [];
+            /**
+             * Creates and adds the external links to the given data and returns the data.
+             * @param {Array} data
+             * @method addExternalLinksToColumnData
+             * @private
+             * @return {Array}
+             */
+            var addExternalLinksToColumnData = function(data) {
+                var tableLinks = {};
+                var mappings = datasetService.getMappings($scope.options.database.name, $scope.options.table.name);
 
-                data.data.forEach(function(row) {
-                    var id = row._id;
-                    var query = "id=" + id;
-
-                    var links = [];
-
-                    if(external.dig.enabled) {
-                        links.push($scope.createLinkObject(external.dig, id, query));
-                    }
-
-                    var linksIndex = tableLinks.length;
-                    tableLinks.push(links);
-
-                    row[$scope.EXTERNAL_APP_FIELD_NAME] = "<a data-toggle=\"modal\" data-target=\".links-popup\" data-links-index=\"" + linksIndex +
-                        "\" data-links-source=\"" + $scope.tableId + "\" class=\"collapsed dropdown-toggle primary neon-popup-button\">" +
-                        "<span class=\"glyphicon glyphicon-link\"></span></a>";
+                data.forEach(function(row) {
+                    var field = $scope.bindIdField || "_id";
+                    var id = row[field];
+                    tableLinks[id] = linksPopupService.createAllServiceLinkObjects(external.services, mappings, field, id);
+                    row[$scope.EXTERNAL_APP_FIELD_NAME] = tableLinks[id].length ? linksPopupService.createLinkHtml($scope.tableId, id, id) : linksPopupService.createDisabledLinkHtml(id);
                 });
 
                 // Set the link data for the links popup for this visualization.
-                popups.links.setData($scope.tableId, tableLinks);
+                linksPopupService.setLinks($scope.tableId, tableLinks);
 
                 return data;
-            };
-
-            $scope.createLinkObject = function(config, id, query) {
-                var link = {
-                    name: config.data_table.name,
-                    image: config.data_table.image,
-                    url: config.data_table.url,
-                    args: [],
-                    data: {
-                        server: config.server,
-                        value: id,
-                        query: query
-                    }
-                };
-
-                for(var i = 0; i < config.data_table.args.length; ++i) {
-                    var arg = config.data_table.args[i];
-                    link.args.push({
-                        name: arg.name,
-                        value: arg.value
-                    });
-                }
-
-                return link;
             };
 
             $scope.createDeleteColumnButtons = function() {
@@ -778,10 +736,7 @@ function(external, popups, connectionService, datasetService, errorNotificationS
                     });
                     $scope.deletedFieldsMap[$scope.options.database.name][$scope.options.table.name].splice(indexToSplice, 1);
                     $scope.fields.push($scope.options.addField);
-                    $scope.options.addField = $scope.deletedFieldsMap[$scope.options.database.name][$scope.options.table.name].length > 0 ? $scope.deletedFieldsMap[$scope.options.database.name][$scope.options.table.name][0] : {
-                        columnName: "",
-                        prettyName: ""
-                    };
+                    $scope.options.addField = $scope.deletedFieldsMap[$scope.options.database.name][$scope.options.table.name].length > 0 ? $scope.deletedFieldsMap[$scope.options.database.name][$scope.options.table.name][0] : datasetService.createBlankField();
                     $scope.createDeleteColumnButtons();
 
                     XDATA.userALE.log({
@@ -803,7 +758,7 @@ function(external, popups, connectionService, datasetService, errorNotificationS
              */
             $scope.buildQuery = function() {
                 var query = new neon.query.Query().selectFrom($scope.options.database.name, $scope.options.table.name).limit($scope.options.limit);
-                if($scope.options.sortByField && $scope.options.sortByField.columnName) {
+                if(datasetService.isFieldValid($scope.options.sortByField)) {
                     query.sortBy($scope.options.sortByField.columnName, $scope.options.sortDirection);
                 }
                 return query;

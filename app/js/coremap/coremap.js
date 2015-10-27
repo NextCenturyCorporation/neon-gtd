@@ -53,11 +53,8 @@ coreMap.Map = function(elementId, opts) {
     this.elementId = elementId;
     this.selector = $("#" + elementId);
     this.onZoomRect = opts.onZoomRect;
-    this.responsive = true;
-
-    if(opts.responsive === false) {
-        this.responsive = false;
-    }
+    this.responsive = opts.responsive;
+    this.linksPopupService = {};
 
     if(this.responsive) {
         this.resizeOnWindowResize();
@@ -257,6 +254,8 @@ coreMap.Map.prototype.initializeMap = function() {
         height: this.height
     });
     this.map = new OpenLayers.Map(this.elementId);
+    // Set fallThrough to true so users can trigger modal data-toggle events from the links popup button inside the map popup.
+    this.map.events.fallThrough = true;
     this.map.layerContainerDiv.style.removeProperty("z-index");
     this.configureFilterOnZoomRectangle();
 };
@@ -414,11 +413,9 @@ coreMap.Map.prototype.createSelectControl =  function(layer) {
                 attributes = feature.attributes;
             }
 
-            for(var key in attributes) {
-                if(Object.prototype.hasOwnProperty.call(attributes, key)) {
-                    text += '<tr><th>' + _.escape(key) + '</th><td>' + attributes[key] + '</td>';
-                }
-            }
+            Object.keys(attributes).forEach(function(attribute) {
+                text += '<tr><th>' + _.escape(attribute) + '</th><td>' + attributes[attribute] + '</td>';
+            });
             text += '</table></div>';
         }
 
@@ -429,9 +426,23 @@ coreMap.Map.prototype.createSelectControl =  function(layer) {
             null,
             true,
             onFeatureUnselect);
+        // Remove the default popup click handler so it doesn't destroy click events before they trigger the modal data-toggle in the links popup button.
+        me.featurePopup.events.remove("click");
         me.map.addPopup(me.featurePopup, true);
 
         $(".olFramedCloudPopupContent td").linky(feature.layer.linkyConfig);
+
+        if(me.linksPopupService && feature.layer.linksSource) {
+            var key = me.linksPopupService.generatePointKey(attributes[feature.layer.latitudeMapping], attributes[feature.layer.longitudeMapping]);
+            var tooltip = "latitude " + attributes[feature.layer.latitudeMapping] + ", longitude " + attributes[feature.layer.longitudeMapping];
+            var link = me.linksPopupService.createLinkHtml(feature.layer.linksSource, key, tooltip);
+
+            // Position the button below the 'close box' which can have one of a few different 'top' values depending on the location of the point on the layer.
+            var topCss = $(".olPopupCloseBox").css("top");
+            topCss = Number(topCss.substring(0, topCss.length - 2)) + 25;
+
+            $("#" + me.elementId).find(".olPopupCloseBox").after("<div class='btn btn-default links-popup-button' style='top: " + topCss + "px;'>" + link + "</div>");
+        }
     };
 
     var onFeatureUnselect = function() {

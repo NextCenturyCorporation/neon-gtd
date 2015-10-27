@@ -42,9 +42,8 @@
 
     .filter-container {
         .filter-label {
-            max-width: none;
+            /* Ensure long text strings (like urls) don't cause the filter reset notification to line wrap. */
+            max-width: 200px;
         }
     }
 }
-
-

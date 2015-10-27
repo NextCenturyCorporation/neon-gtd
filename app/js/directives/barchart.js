@@ -28,8 +28,8 @@
  * @constructor
  */
 angular.module('neonDemo.directives')
-.directive('barchart', ['ConnectionService', 'DatasetService', 'ErrorNotificationService', 'FilterService', 'ExportService',
-function(connectionService, datasetService, errorNotificationService, filterService, exportService) {
+.directive('barchart', ['external', 'ConnectionService', 'DatasetService', 'ErrorNotificationService', 'FilterService', 'ExportService', 'LinksPopupService',
+function(external, connectionService, datasetService, errorNotificationService, filterService, exportService, linksPopupService) {
     return {
         templateUrl: 'partials/directives/barchart.html',
         restrict: 'EA',
@@ -48,6 +48,7 @@ function(connectionService, datasetService, errorNotificationService, filterServ
             $element.addClass('barchartDirective');
 
             $scope.element = $element;
+            $scope.visualizationId = "barchart-" + uuid();
 
             $scope.databases = [];
             $scope.tables = [];
@@ -58,6 +59,7 @@ function(connectionService, datasetService, errorNotificationService, filterServ
             $scope.errorMessage = undefined;
             $scope.loadingData = false;
             $scope.outstandingQuery = undefined;
+            $scope.linksPopupButtonIsDisabled = true;
 
             $scope.options = {
                 database: {},
@@ -113,6 +115,7 @@ function(connectionService, datasetService, errorNotificationService, filterServ
                         source: "system",
                         tags: ["remove", "barchart"]
                     });
+                    linksPopupService.deleteLinks($scope.visualizationId);
                     $element.off("resize", updateChartSize);
                     $scope.messenger.removeEvents();
                     // Remove our filter if we had an active one.
@@ -226,7 +229,7 @@ function(connectionService, datasetService, errorNotificationService, filterServ
 
             $scope.updateTables = function() {
                 $scope.tables = datasetService.getTables($scope.options.database.name);
-                $scope.options.table = datasetService.getFirstTableWithMappings($scope.options.database.name, ["bar_x_axis", "y_axis"]) || $scope.tables[0];
+                $scope.options.table = datasetService.getFirstTableWithMappings($scope.options.database.name, [neonMappings.BAR_GROUPS, neonMappings.Y_AXIS]) || $scope.tables[0];
                 if($scope.bindTable) {
                     for(var i = 0; i < $scope.tables.length; ++i) {
                         if($scope.bindTable === $scope.tables[i].name) {
@@ -242,20 +245,14 @@ function(connectionService, datasetService, errorNotificationService, filterServ
                 $scope.loadingData = true;
                 $scope.fields = datasetService.getSortedFields($scope.options.database.name, $scope.options.table.name);
 
-                var attrX = $scope.bindXAxisField || datasetService.getMapping($scope.options.database.name, $scope.options.table.name, "bar_x_axis") || "";
+                var attrX = $scope.bindXAxisField || datasetService.getMapping($scope.options.database.name, $scope.options.table.name, neonMappings.BAR_GROUPS) || "";
                 $scope.options.attrX = _.find($scope.fields, function(field) {
                     return field.columnName === attrX;
-                }) || {
-                    columnName: "",
-                    prettyName: ""
-                };
-                var attrY = $scope.bindYAxisField || datasetService.getMapping($scope.options.database.name, $scope.options.table.name, "y_axis") || "";
+                }) || datasetService.createBlankField();
+                var attrY = $scope.bindYAxisField || datasetService.getMapping($scope.options.database.name, $scope.options.table.name, neonMappings.Y_AXIS) || "";
                 $scope.options.attrY = _.find($scope.fields, function(field) {
                     return field.columnName === attrY;
-                }) || {
-                    columnName: "",
-                    prettyName: ""
-                };
+                }) || datasetService.createBlankField();
 
                 if($scope.filterSet) {
                     $scope.clearFilterSet();
@@ -299,7 +296,7 @@ function(connectionService, datasetService, errorNotificationService, filterServ
 
                 var connection = connectionService.getActiveConnection();
 
-                if(!connection || !$scope.options.attrX.columnName || (!$scope.options.attrY.columnName && $scope.options.barType !== "count")) {
+                if(!connection || !datasetService.isFieldValid($scope.options.attrX) || (!$scope.options.attrY.columnName && $scope.options.barType !== "count")) {
                     drawBlankChart();
                     $scope.loadingData = false;
                     return;
@@ -456,11 +453,19 @@ function(connectionService, datasetService, errorNotificationService, filterServ
                     key: key,
                     value: val
                 };
+
+                var mappings = datasetService.getMappings($scope.options.database.name, $scope.options.table.name);
+                var chartLinks = {};
+                chartLinks[val] = linksPopupService.createAllServiceLinkObjects(external.services, mappings, key, val);
+                linksPopupService.setLinks($scope.visualizationId, chartLinks);
+                $scope.linksPopupButtonIsDisabled = !chartLinks[val].length;
+
                 //no need to requery because barchart ignores its own filter
             };
 
             var clearFilterSet = function() {
                 $scope.filterSet = undefined;
+                linksPopupService.deleteLinks($scope.visualizationId);
             };
 
             $scope.clearFilterSet = function() {

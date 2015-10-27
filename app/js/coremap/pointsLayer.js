@@ -48,6 +48,7 @@ coreMap.Map.Layer.PointsLayer = OpenLayers.Class(OpenLayers.Layer.Vector, {
         linkTo: "twitter"
     },
     clusterPopupFields: [],
+    linksSource: "",
 
     /**
      * Override the OpenLayers Contructor
@@ -393,7 +394,7 @@ coreMap.Map.Layer.PointsLayer.prototype.updateGradient = function() {
 coreMap.Map.Layer.PointsLayer.prototype.updateFeatures = function() {
     var mapData = [];
     var me = this;
-    _.each(this.data, function(element) {
+    _.each(this.data, function(element, index) {
         var longitude = me.getValueFromDataElement(me.longitudeMapping, element);
         var latitude = me.getValueFromDataElement(me.latitudeMapping, element);
 

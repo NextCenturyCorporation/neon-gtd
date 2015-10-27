@@ -16,22 +16,13 @@
  */
 
 angular.module('neonDemo.directives')
-.directive('linksPopup', ['$sce', 'popups', function($sce, popups) {
+.directive('linksPopup', ['LinksPopupService', function(linksPopupService) {
     return {
         templateUrl: 'partials/directives/linksPopup.html',
         restrict: 'EA',
-        scope: {
-        },
+        scope: {},
         link: function($scope) {
-            $scope.SERVER = "SERVER";
-            $scope.FIELD = "FIELD";
-            $scope.VALUE = "VALUE";
-
-            // Map that stores the array of cleaned link data for all the visualizations by a unique name.
-            $scope.cleanData = {};
-
-            // The links currently displayed in the popup.
-            $scope.links = [];
+            $scope.links = {};
 
             $scope.logLinkEvent = function(name) {
                 XDATA.userALE.log({
@@ -58,7 +49,7 @@ angular.module('neonDemo.directives')
                 });
             };
 
-            $scope.onOpen = function() {
+            $scope.onOpen = function(event) {
                 XDATA.userALE.log({
                     activity: "show",
                     action: "click",
@@ -77,43 +68,14 @@ angular.module('neonDemo.directives')
                 $(".links-popup").off("show.bs.modal", $scope.onOpen);
             });
 
-            popups.links.setData = function(source, data) {
-                var cleanData = [];
-                for(var i = 0; i < data.length; ++i) {
-                    var cleanLinks = [];
-                    var links = data[i];
-                    for(var j = 0; j < links.length; ++j) {
-                        var link = links[j];
-                        link.tab = link.data.query;
-                        link.url = link.url.replace($scope.SERVER, link.data.server);
-                        // Notify angular that this is a trusted URL so angular will inject it into a form's action.
-                        link.url = $sce.trustAsResourceUrl(link.url);
-                        for(var k = 0; k < link.args.length; ++k) {
-                            if(link.data.field) {
-                                link.args[k].value = link.args[k].value.replace($scope.FIELD, link.data.field);
-                            }
-                            if(link.data.value) {
-                                link.args[k].value = link.args[k].value.replace($scope.VALUE, link.data.value);
-                            }
-                        }
-                        cleanLinks.push(link);
-                    }
-                    cleanData.push(cleanLinks);
-                }
-                $scope.cleanData[source] = cleanData;
-            };
+            // Register the modal listener here to ensure that the links-popup DOM element exists.
+            linksPopupService.registerLinksPopupModalListener();
 
-            popups.links.setView = function(source, index) {
-                if($scope.cleanData[source] && $scope.cleanData[source].length && index >= 0) {
-                    $scope.links = $scope.cleanData[source][index];
-                }
-            };
-
-            popups.links.deleteData = function(source) {
-                if($scope.cleanData[source]) {
-                    delete $scope.cleanData[source];
-                }
-            };
+            linksPopupService.registerListener(function(keysToLinks) {
+                $scope.$apply(function() {
+                    $scope.links = keysToLinks;
+                });
+            });
         }
     };
 }]);
