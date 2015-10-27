@@ -36,15 +36,14 @@
 <div class="clearfix"></div>
 
 <div class="header-container filter-container">
+    <div class="header-item filter-reset pull-right" ng-class="{true: 'hidden', false: ''}[filterSet === undefined]" title="{{filterSet.key}}={{filterSet.value}}">
+        <links-popup-button key="{{filterSet.value}}" source="{{visualizationId}}" tooltip="{{filterSet.value}}" is-disabled="{{linksPopupButtonIsDisabled}}"></links-popup-button>
+        <span class="filter-label" ng-class="{true: '', false: 'border-left'}[linksPopupButtonIsDisabled]" ng-bind="filterSet.value"></span>
+        <span class="border-left glyphicon glyphicon-remove" ng-click="clearFilterSet()"></span>
+    </div>
+
     <div class="legend">
-
-        <div class="header-item filter-reset pull-right" ng-class="{true: 'hidden', false: ''}[filterSet === undefined]" title="{{filterSet.key}}={{filterSet.value}}">
-            <links-popup-button key="{{filterSet.value}}" source="{{visualizationId}}" tooltip="{{filterSet.value}}" is-disabled="{{linksPopupButtonIsDisabled}}"></links-popup-button>
-            <span class="filter-label" ng-bind="filterSet.value"></span>
-            <span class="glyphicon glyphicon-remove" ng-click="clearFilterSet()"></span>
-        </div>
         <h4 class="pull-right limit-message" ng-show="results.count >= options.limitCount">Limited to {{options.limitCount}} bars</h4>
-
 
         <div class="legend-item" title="{{getLegendText()}}">
             <span class="legend-icon" style="background-color: #39b54a"></span>

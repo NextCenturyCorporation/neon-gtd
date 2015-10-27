@@ -118,7 +118,7 @@
 <div class="header-container filter-container">
     <div class="header-item filter-reset pull-right" ng-class="{hidden: (selectedNodeIds.length == 0)}" title="{{'Selected ' + selectedNodeIds.length + ((selectedNodeIds.length == 1) ? ' Node' : ' Nodes')}}">
         <span class="filter-label" ng-bind="selectedNodeIds.length + ((selectedNodeIds.length == 1) ? ' Node' : ' Nodes')"></span>
-        <span class="glyphicon glyphicon-remove" ng-click="deselectAllNodesAndNetwork()"></span>
+        <span class="border-left glyphicon glyphicon-remove" ng-click="deselectAllNodesAndNetwork()"></span>
     </div>
 
     <div class="pull-left">

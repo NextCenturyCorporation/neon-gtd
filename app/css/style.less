@@ -412,6 +412,7 @@ button {
 
     .glyphicon {
         color: #999;
+        pointer-events: none;
     }
 }
 
@@ -467,12 +468,8 @@ button {
         }
     }
 
-    span {
+    .border-left {
         border-left: @border;
-
-        &:first-child {
-            border-left: none;
-        }
     }
 }
 
