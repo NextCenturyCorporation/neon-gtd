@@ -194,14 +194,10 @@ function(connectionService, datasetService, errorNotificationService, filterServ
 
                 // Set the default table to use in this visualization.  Check if a binding was set in the config.json file.
                 var fieldName = $scope.bindField || "";
+                // Field objects contain {String} columnName (the name matching the field in the database) and {String} prettyName (the name to display in the dashboard).
                 $scope.options.field = _.find($scope.fields, function(field) {
                     return field.columnName === fieldName;
-                }) || {
-                    // The name matching the field in the database.
-                    columnName: "",
-                    // The name to display in the dashboard.
-                    prettyName: ""
-                };
+                }) || datasetService.createBlankField();
 
                 if($scope.filter) {
                     $scope.removeFilter();
@@ -226,7 +222,7 @@ function(connectionService, datasetService, errorNotificationService, filterServ
                 var connection = connectionService.getActiveConnection();
 
                 // If no connection or field is available, reset the visualization.
-                if(!connection || !$scope.options.field.columnName) {
+                if(!connection || !datasetService.isFieldValid($scope.options.field)) {
                     updateData({
                         data: []
                     });

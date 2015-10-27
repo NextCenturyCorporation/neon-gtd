@@ -69,15 +69,6 @@
         <translation-options ng-show="translationAvailable" on-translate="updateTranslation" from-language-change="onFromLanguageChange"
             to-language-change="onToLanguageChange" from-language-options="translationLanguages.fromLanguageOptions"
             to-language-options="translationLanguages.toLanguageOptions">
-            <div class="sub-input-group">
-                <label>Limit</label>
-                <input type="number" min="1" class="form-control" ng-model="options.translationLimit" required>
-                <div class="input-group-btn">
-                    <button type="button" class="btn btn-default refresh" title="Refresh" ng-click="refreshTranslation()">
-                        <span class="glyphicon glyphicon-refresh"></span>
-                    </button>
-                </div>
-            </div>
         </translation-options>
     </options-menu>
 </div>
@@ -87,16 +78,22 @@
 <div class="newsfeed">
 	<div class="item" ng-class="getNewsItemStyleClass(item)" ng-repeat='item in data.news track by $index'>
         <div>
-            <img class="image" src="img/Twitter.png" ng-if="feedType == 'TWITTER'">
-            <span class="head" ng-if="item.head != undefined" ng-bind="item.head"></span>
-            <span class="name" ng-if="item.name != undefined" ng-bind="item.name"></span>
+            <img ng-if="feedType == 'TWITTER'" src="img/Twitter.png" height="32" title="Tweet">
+            <img ng-show="options.showTranslation && item.isTranslated" src="img/Translated.png" height="12" title="Showing Translation">
+            <span ng-class="{true: 'vertical-align', false: ''}[feedType == 'TWITTER']">
+                <span class="head" ng-if="item.head != undefined" ng-show="!options.showTranslation" ng-bind="item.head"></span>
+                <span class="head" ng-if="item.headTranslated != undefined" ng-show="options.showTranslation" ng-bind="item.headTranslated" title="{{item.head}}"></span>
+                <span class="name" ng-if="item.name != undefined" ng-show="!options.showTranslation" ng-bind="item.name"></span>
+                <span class="name" ng-if="item.nameTranslated != undefined" ng-show="options.showTranslation" ng-bind="item.nameTranslated" title="{{item.name}}"></span>
+                <links-popup-button key="" source="" tooltip="{{item.head}} or {{item.name}}" json="{{item.linksPopupButtonJson}}" is-disabled="{{item.linksPopupButtonIsDisabled}}" show-if-disabled="'true'"></links-popup-button>
+            </span>
         </div>
         <div>
             <span class="date" ng-bind="item.date.toUTCString()"></span>
         </div>
         <div>
-            <span class="text" ng-bind="item.text" ng-show="!options.showTranslation"></span>
-            <span class="text" ng-bind="item.textTranslated" ng-show="options.showTranslation"></span>
+            <span class="text" ng-show="!options.showTranslation" ng-bind="item.text"></span>
+            <span class="text" ng-show="options.showTranslation" ng-bind="item.textTranslated" title="{{item.text}}"></span>
         </div>
 	</div>
 </div>

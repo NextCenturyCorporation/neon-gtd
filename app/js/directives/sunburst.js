@@ -161,7 +161,7 @@ function(connectionService, datasetService, errorNotificationService, exportServ
 
                 //take based on selected count or total
                 query.aggregate(neon.query.COUNT, '*', 'count');
-                if($scope.options.valueField.columnName) {
+                if(datasetService.isFieldValid($scope.options.valueField)) {
                     query.aggregate(neon.query.SUM, $scope.options.valueField.columnName, $scope.options.valueField.columnName);
                 }
 
@@ -218,10 +218,7 @@ function(connectionService, datasetService, errorNotificationService, exportServ
             $scope.updateFields = function() {
                 $scope.loadingData = true;
                 $scope.fields = datasetService.getSortedFields($scope.options.database.name, $scope.options.table.name);
-                $scope.options.valueField = {
-                    columnName: "",
-                    prettyName: ""
-                };
+                $scope.options.valueField = datasetService.createBlankField();
                 $scope.queryForData();
             };
 

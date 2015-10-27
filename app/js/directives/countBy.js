@@ -17,8 +17,8 @@
  */
 
 angular.module('neonDemo.directives')
-.directive('countBy', ['external', 'popups', 'ConnectionService', 'DatasetService', 'ErrorNotificationService', 'FilterService', 'ExportService', '$filter',
-function(external, popups, connectionService, datasetService, errorNotificationService, filterService, exportService, $filter) {
+.directive('countBy', ['external', 'ConnectionService', 'DatasetService', 'ErrorNotificationService', 'FilterService', 'ExportService', 'LinksPopupService', '$filter',
+function(external, connectionService, datasetService, errorNotificationService, filterService, exportService, linksPopupService, $filter) {
     return {
         templateUrl: 'partials/directives/countby.html',
         restrict: 'EA',
@@ -132,7 +132,7 @@ function(external, popups, connectionService, datasetService, errorNotificationS
                         source: "system",
                         tags: ["remove", "count-by"]
                     });
-                    popups.links.deleteData($scope.tableId);
+                    linksPopupService.deleteLinks($scope.tableId);
                     $element.off("resize", updateSize);
                     $scope.messenger.removeEvents();
                     if($scope.filterSet) {
@@ -234,7 +234,7 @@ function(external, popups, connectionService, datasetService, errorNotificationS
                     width: tableWidth
                 }];
 
-                if(external.anyEnabled && data.length) {
+                if(external.active && data.length) {
                     var externalAppColumn = {
                         name: "",
                         field: $scope.EXTERNAL_APP_FIELD_NAME,
@@ -322,7 +322,7 @@ function(external, popups, connectionService, datasetService, errorNotificationS
 
             $scope.updateTables = function() {
                 $scope.tables = datasetService.getTables($scope.options.database.name);
-                $scope.options.table = datasetService.getFirstTableWithMappings($scope.options.database.name, ["count_by"]) || $scope.tables[0];
+                $scope.options.table = datasetService.getFirstTableWithMappings($scope.options.database.name, [neonMappings.AGGREGATE]) || $scope.tables[0];
                 if($scope.bindTable) {
                     for(var i = 0; i < $scope.tables.length; ++i) {
                         if($scope.bindTable === $scope.tables[i].name) {
@@ -339,20 +339,14 @@ function(external, popups, connectionService, datasetService, errorNotificationS
                 $scope.fields = datasetService.getSortedFields($scope.options.database.name, $scope.options.table.name);
                 $scope.options.aggregation = $scope.bindAggregation || "count";
 
-                var fieldName = $scope.bindCountField || datasetService.getMapping($scope.options.database.name, $scope.options.table.name, "count_by") || "";
+                var fieldName = $scope.bindCountField || datasetService.getMapping($scope.options.database.name, $scope.options.table.name, neonMappings.AGGREGATE) || "";
                 $scope.options.field = _.find($scope.fields, function(field) {
                     return field.columnName === fieldName;
-                }) || {
-                    columnName: "",
-                    prettyName: ""
-                };
+                }) || datasetService.createBlankField();
                 var aggregationFieldName = $scope.bindAggregationField || "";
                 $scope.options.aggregationField = _.find($scope.fields, function(field) {
                     return field.columnName === aggregationFieldName;
-                }) || {
-                    columnName: "",
-                    prettyName: ""
-                };
+                }) || datasetService.createBlankField();
 
                 if($scope.filterSet) {
                     $scope.clearFilter();
@@ -492,57 +486,28 @@ function(external, popups, connectionService, datasetService, errorNotificationS
                 return dataObject;
             };
 
-            $scope.addExternalAppUrlColumnData = function(data) {
-                var tableLinks = [];
+            /**
+             * Creates and adds the external links to the given data and returns the data.
+             * @param {Array} data
+             * @method addExternalLinksToColumnData
+             * @private
+             * @return {Array}
+             */
+            var addExternalLinksToColumnData = function(data) {
+                var tableLinks = {};
+                var mappings = datasetService.getMappings($scope.options.database.name, $scope.options.table.name);
 
-                data.data.forEach(function(row) {
+                data.forEach(function(row) {
                     var field = $scope.options.field.columnName;
-                    var value = row[$scope.options.field.columnName];
-                    var query = field + "=" + value;
-
-                    var links = [];
-
-                    if(external.dig.enabled) {
-                        links.push($scope.createLinkObject(external.dig, field, value, query));
-                    }
-
-                    var linksIndex = tableLinks.length;
-                    tableLinks.push(links);
-
-                    row[$scope.EXTERNAL_APP_FIELD_NAME] = "<a data-toggle=\"modal\" data-target=\".links-popup\" data-links-index=\"" + linksIndex +
-                        "\" data-links-source=\"" + $scope.tableId + "\" class=\"collapsed dropdown-toggle primary neon-popup-button\">" +
-                        "<span class=\"glyphicon glyphicon-link\"></span></a>";
+                    var value = row[field];
+                    tableLinks[value] = linksPopupService.createAllServiceLinkObjects(external.services, mappings, field, value);
+                    row[$scope.EXTERNAL_APP_FIELD_NAME] = tableLinks[value].length ? linksPopupService.createLinkHtml($scope.tableId, value, value) : linksPopupService.createDisabledLinkHtml(value);
                 });
 
                 // Set the link data for the links popup for this visualization.
-                popups.links.setData($scope.tableId, tableLinks);
+                linksPopupService.setLinks($scope.tableId, tableLinks);
 
                 return data;
-            };
-
-            $scope.createLinkObject = function(config, field, value, query) {
-                var link = {
-                    name: config.count_by.name,
-                    image: config.count_by.image,
-                    url: config.count_by.url,
-                    args: [],
-                    data: {
-                        server: config.server,
-                        field: field,
-                        value: value,
-                        query: query
-                    }
-                };
-
-                for(var i = 0; i < config.count_by.args.length; ++i) {
-                    var arg = config.count_by.args[i];
-                    link.args.push({
-                        name: arg.name,
-                        value: arg.value
-                    });
-                }
-
-                return link;
             };
 
             /**
@@ -612,7 +577,7 @@ function(external, popups, connectionService, datasetService, errorNotificationS
              */
             $scope.addOnClickListener = function() {
                 $scope.table.addOnClickListener(function(columns, row) {
-                    var columnIndex = external.anyEnabled ? 1 : 0;
+                    var columnIndex = external.active ? 1 : 0;
                     var field = columns[columnIndex].field;
 
                     // If the user clicks on the filtered row/cell, clear the filter.
@@ -654,8 +619,8 @@ function(external, popups, connectionService, datasetService, errorNotificationS
                 $scope.tableOptions = createOptions(cleanData);
 
                 // Add the URLs for the external applications after the table options have been created because it already includes the column.
-                if(external.anyEnabled && cleanData.data.length) {
-                    cleanData = $scope.addExternalAppUrlColumnData(cleanData);
+                if(external.active && cleanData.data.length) {
+                    cleanData.data = addExternalLinksToColumnData(cleanData.data);
                 }
 
                 $scope.count = cleanData.data.length;
@@ -669,16 +634,6 @@ function(external, popups, connectionService, datasetService, errorNotificationS
                 if($scope.filterSet !== undefined) {
                     $scope.table.setActiveCellIfMatchExists($scope.filterSet.key, $scope.filterSet.value);
                 }
-
-                // Set the displayed link data for the links popup for the application using the source and index stored in to the triggering button.
-                $(".links-popup").on("show.bs.modal", function(event) {
-                    var button = $(event.relatedTarget);
-                    var source = button.data("links-source");
-                    var index = button.data("links-index");
-                    $scope.$apply(function() {
-                        popups.links.setView(source, index);
-                    });
-                });
             };
 
             /**

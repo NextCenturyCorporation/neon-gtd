@@ -234,6 +234,24 @@
         td, th {
             padding: 2px;
         }
+
+        .links-popup-button {
+            /* Align under the olPopupCloseBox; the 'top' position will be set by the map because the 'close box' can have different 'top' positions itself. */
+            position: absolute;
+            right: 13px;
+            z-index: 1;
+
+            /* Ensure the width matches the width of the olPopupCloseBox. */
+            padding: 1px;
+            line-height: 13px;
+
+            .neon-popup-button {
+                .glyphicon {
+                    color: #333;
+                    font-size: 13px;
+                }
+            }
+        }
     }
 
     .olControlAttribution {
@@ -257,13 +275,6 @@
                 background-color: @accent-bright;
                 opacity: 1;
             }
-        }
-    }
-
-    .olControlAttribution {
-
-        a {
-            pointer-events: none;
         }
     }
 

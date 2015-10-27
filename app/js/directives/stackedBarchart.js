@@ -140,27 +140,21 @@ function(connectionService, datasetService, errorNotificationService) {
 
             $scope.updateTables = function() {
                 $scope.tables = datasetService.getTables($scope.options.database.name);
-                $scope.options.table = datasetService.getFirstTableWithMappings($scope.options.database.name, ["x_axis", "y_axis"]) || $scope.tables[0];
+                $scope.options.table = datasetService.getFirstTableWithMappings($scope.options.database.name, [neonMappings.BAR_GROUPS, neonMappings.Y_AXIS]) || $scope.tables[0];
                 $scope.updateFields();
             };
 
             $scope.updateFields = function() {
                 $scope.fields = datasetService.getSortedFields($scope.options.database.name, $scope.options.table.name);
 
-                var attrX = datasetService.getMapping($scope.options.database.name, $scope.options.table.name, "x_axis") || "";
+                var attrX = datasetService.getMapping($scope.options.database.name, $scope.options.table.name, neonMappings.BAR_GROUPS) || "";
                 $scope.options.attrX = _.find($scope.fields, function(field) {
                     return field.columnName === attrX;
-                }) || {
-                    columnName: "",
-                    prettyName: ""
-                };
-                var attrY = datasetService.getMapping($scope.options.database.name, $scope.options.table.name, "y_axis") || "";
+                }) || datasetService.createBlankField();
+                var attrY = datasetService.getMapping($scope.options.database.name, $scope.options.table.name, neonMappings.Y_AXIS) || "";
                 $scope.options.attrY = _.find($scope.fields, function(field) {
                     return field.columnName === attrY;
-                }) || {
-                    columnName: "",
-                    prettyName: ""
-                };
+                }) || datasetService.createBlankField();
 
                 $scope.queryForData(true);
             };
@@ -171,8 +165,8 @@ function(connectionService, datasetService, errorNotificationService) {
                     $scope.errorMessage = undefined;
                 }
 
-                var xAxis = $scope.options.attrX.columnName || datasetService.getMapping($scope.options.database.name, $scope.options.table.name, "x_axis");
-                var yAxis = $scope.options.attrY.columnName || datasetService.getMapping($scope.options.database.name, $scope.options.table.name, "y_axis");
+                var xAxis = $scope.options.attrX.columnName || datasetService.getMapping($scope.options.database.name, $scope.options.table.name, neonMappings.BAR_GROUPS);
+                var yAxis = $scope.options.attrY.columnName || datasetService.getMapping($scope.options.database.name, $scope.options.table.name, neonMappings.Y_AXIS);
                 if(!yAxis) {
                     yAxis = COUNT_FIELD_NAME;
                 }
@@ -224,8 +218,8 @@ function(connectionService, datasetService, errorNotificationService) {
             };
 
             $scope.queryForData = function() {
-                var xAxis = $scope.options.attrX.columnName || datasetService.getMapping($scope.options.database.name, $scope.options.table.name, "x_axis");
-                var yAxis = $scope.options.attrY.columnName || datasetService.getMapping($scope.options.database.name, $scope.options.table.name, "y_axis");
+                var xAxis = $scope.options.attrX.columnName || datasetService.getMapping($scope.options.database.name, $scope.options.table.name, neonMappings.BAR_GROUPS);
+                var yAxis = $scope.options.attrY.columnName || datasetService.getMapping($scope.options.database.name, $scope.options.table.name, neonMappings.Y_AXIS);
                 if(!yAxis) {
                     yAxis = COUNT_FIELD_NAME;
                 }
@@ -315,8 +309,8 @@ function(connectionService, datasetService, errorNotificationService) {
             var doDrawChart = function(data) {
                 charts.BarChart.destroy($element[0], '.barchart');
 
-                var xAxis = datasetService.getMapping($scope.options.database.name, $scope.options.table.name, "x_axis") || $scope.options.attrX.columnName;
-                var yAxis = datasetService.getMapping($scope.options.database.name, $scope.options.table.name, "y_axis") || $scope.options.attrY.columnName;
+                var xAxis = datasetService.getMapping($scope.options.database.name, $scope.options.table.name, neonMappings.BAR_GROUPS) || $scope.options.attrX.columnName;
+                var yAxis = datasetService.getMapping($scope.options.database.name, $scope.options.table.name, neonMappings.Y_AXIS) || $scope.options.attrY.columnName;
                 if(!yAxis) {
                     yAxis = COUNT_FIELD_NAME;
                 }

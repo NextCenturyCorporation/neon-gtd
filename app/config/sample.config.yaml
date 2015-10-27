@@ -1,0 +1,400 @@
+user_ale: 
+  loggingUrl: http://192.168.1.100
+  toolName: Neon Dashboard
+  toolVersion: 1.1.0
+  elementGroups: 
+    - top
+    - map_group
+    - table_group
+    - chart_group
+    - query_group
+    - graph_group
+  workerUrl: lib/user-ale/js/userale-worker.js
+  debug: false
+  sendLogs: false
+dashboard: 
+  gridsterColumns: 24
+  gridsterMargins: 10
+  hideNavbarItems: false
+  hideAdvancedOptions: false
+  showFilterStatusTray: false
+  hideErrorNotifications: false
+  hideHeaders: false
+  hideCloseButton: false
+  showVideoOnLoad: false
+  showImport: false
+  showExport: true
+  translationKeys: 
+    google: API_KEY
+help: 
+  guide: 
+  video: 
+opencpu: 
+  enableOpenCpu: false
+  enableLogging: false
+  useAlerts: false
+  enableAnomalyDetection: true
+  enableStl2: false
+  enableMmpp: false
+  url: http://neon-opencpu/ocpu/library/NeonAngularDemo/R
+externalServices: 
+  jsonConfigFile: 
+  appImagePath: 
+  fileProps: 
+    url: url
+    name: name
+    image: image
+    services: services
+  servicesMappings: 
+    neonMapping1: serviceName1
+    neonMapping2: serviceName2
+  argsMappings: 
+    neonMapping1: 
+      serviceName1: neonMapping1
+    neonMapping2: 
+      serviceName2: 
+        propertyName1: neonMapping3
+        propertyName2: neonMapping4
+visualizations: 
+  - 
+    name: Filter Builder
+    sizeX: 12
+    minSizeX: 12
+    sizeY: 4
+    minSizeY: 4
+    type: filter-builder
+    icon: img/visualizations/CreateFilter64.png
+  - 
+    name: Data Table
+    sizeX: 6
+    sizeY: 4
+    type: query-results-table
+    icon: img/visualizations/ViewData64.png
+  - 
+    name: Timeline
+    sizeX: 12
+    minSizeX: 12
+    sizeY: 4
+    minSizeY: 4
+    type: timeline-selector
+    icon: img/visualizations/Timeline64.png
+  - 
+    name: Map
+    sizeX: 12
+    sizeY: 6
+    type: map
+    icon: img/visualizations/Map64.png
+  - 
+    name: Ops Clock
+    sizeX: 6
+    sizeY: 4
+    type: circular-heat-form
+    icon: img/visualizations/OpsClock64.png
+  - 
+    name: Line Chart
+    sizeX: 6
+    sizeY: 4
+    type: linechart
+    icon: img/visualizations/LineChart64.png
+  - 
+    name: Bar Chart
+    sizeX: 6
+    sizeY: 4
+    type: barchart
+    icon: img/visualizations/BarChart64.png
+  - 
+    name: Sunburst Chart
+    sizeX: 6
+    sizeY: 4
+    type: sunburst
+    icon: img/visualizations/Sunburst64.png
+  - 
+    name: Text Cloud
+    sizeX: 6
+    sizeY: 4
+    type: tag-cloud
+    icon: img/visualizations/TagCloud64.png
+  - 
+    name: Aggregation Table
+    sizeX: 6
+    sizeY: 4
+    type: count-by
+    icon: img/visualizations/Count64.png
+  - 
+    name: Graph
+    sizeX: 12
+    sizeY: 6
+    type: directed-graph
+    icon: img/visualizations/Graph64.png
+  - 
+    name: Newsfeed
+    sizeX: 6
+    sizeY: 4
+    type: newsfeed
+    icon: img/visualizations/News64.png
+  - 
+    name: Gantt Chart
+    sizeX: 6
+    sizeY: 4
+    type: gantt-chart
+    icon: img/visualizations/Gantt64.png
+  - 
+    name: Sample
+    sizeX: 6
+    sizeY: 4
+    type: sample
+    icon: img/Neon_60x34.png
+datasets: 
+  - 
+    name: Earthquakes
+    datastore: mongo
+    hostname: localhost
+    databases: 
+      - 
+        name: test
+        prettyName: Test
+        tables: 
+          - 
+            name: earthquakes
+            prettyName: Earthquakes
+            fields: 
+              - 
+                columnName: _id
+                prettyName: Database ID
+              - 
+                columnName: time
+                prettyName: Time
+              - 
+                columnName: latitude
+                prettyName: Latitude
+              - 
+                columnName: longitude
+                prettyName: Longitude
+              - 
+                columnName: depth
+                prettyName: Depth
+              - 
+                columnName: mag
+                prettyName: Magnitude
+              - 
+                columnName: magType
+                prettyName: Magnitude Type
+              - 
+                columnName: nst
+                prettyName: NST
+              - 
+                columnName: gap
+                prettyName: Gap
+              - 
+                columnName: dmin
+                prettyName: DMIN
+              - 
+                columnName: rms
+                prettyName: RMS
+              - 
+                columnName: net
+                prettyName: Net
+              - 
+                columnName: id
+                prettyName: ID
+              - 
+                columnName: updated
+                prettyName: Updated
+              - 
+                columnName: place
+                prettyName: Place
+              - 
+                columnName: type
+                prettyName: Type
+            mappings: 
+              date: time
+              latitude: latitude
+              longitude: longitude
+              line_category: type
+              bar_x_axis: net
+              y_axis: mag
+              color_by: magType
+              size_by: mag
+              sort_by: time
+              count_by: net
+    mapConfig: 
+      bounds: 
+        left: -180
+        bottom: -90
+        right: 180
+        top: 90
+    mapLayers: 
+      - 
+        database: test
+        table: earthquakes
+        type: heatmap
+        latitudeMapping: latitude
+        longitudeMapping: longitude
+        limit: 5000
+        sizeBy: mag
+      - 
+        database: test
+        table: earthquakes
+        active: true
+        type: cluster
+        latitudeMapping: latitude
+        longitudeMapping: longitude
+        limit: 5000
+        colorBy: magType
+        sizeBy: mag
+      - 
+        database: test
+        table: earthquakes
+        active: true
+        type: points
+        latitudeMapping: latitude
+        longitudeMapping: longitude
+        limit: 5000
+        colorBy: magType
+        sizeBy: mag
+    linkyConfig: 
+      mentions: false
+      hashtags: false
+      urls: true
+      linkTo: twitter
+    options: 
+      colorMaps: 
+        test: 
+          earthquakes: 
+            myField: 
+              fieldA: #123456
+              fieldB: #654321
+      mapBaseLayer: 
+        color: dark
+        protocol: https
+layouts: 
+  default: 
+    - 
+      sizeX: 18
+      minSizeX: 12
+      sizeY: 4
+      minSizeY: 4
+      type: timeline-selector
+    - 
+      sizeX: 18
+      sizeY: 4
+      type: map
+    - 
+      sizeX: 18
+      sizeY: 4
+      type: query-results-table
+    - 
+      sizeX: 18
+      sizeY: 4
+      type: filter-builder
+    - 
+      sizeX: 6
+      sizeY: 4
+      type: circular-heat-form
+    - 
+      sizeX: 6
+      sizeY: 4
+      type: linechart
+    - 
+      sizeX: 6
+      sizeY: 4
+      type: barchart
+    - 
+      sizeX: 6
+      sizeY: 4
+      type: count-by
+  example-with-bindings: 
+    - 
+      sizeX: 12
+      sizeY: 4
+      type: timeline-selector
+      bindings: 
+        bind-title: "'myTitle'"
+        bind-database: "'myDatabase'"
+        bind-table: "'myTable'"
+        bind-date-field: "'date'"
+        override-start-date: "'1/1/2013'"
+        override-end-date: "1388534399000"
+    - 
+      sizeX: 12
+      sizeY: 4
+      type: map
+      bindings: 
+        bind-title: "'myTitle'"
+        bind-database: "'myDatabase'"
+        bind-table: "'myTable'"
+        bind-latitude-field: "'latitude'"
+        bind-longitude-field: "'longitude'"
+        bind-color-field: "'type'"
+        bind-size-field: "'type'"
+    - 
+      sizeX: 6
+      sizeY: 4
+      type: circular-heat-form
+      bindings: 
+        bind-title: "'myTitle'"
+        bind-database: "'myDatabase'"
+        bind-table: "'myTable'"
+        bind-date-field: "'date'"
+    - 
+      sizeX: 6
+      sizeY: 4
+      type: linechart
+      bindings: 
+        bind-title: "'myTitle'"
+        bind-database: "'myDatabase'"
+        bind-table: "'myTable'"
+        bind-date-field: "'date'"
+        bind-y-axis-field: "'type'"
+        bind-category-field: "'type'"
+        bind-aggregation-field: "'count'"
+    - 
+      sizeX: 6
+      sizeY: 4
+      type: barchart
+      bindings: 
+        bind-title: "'myTitle'"
+        bind-database: "'myDatabase'"
+        bind-table: "'myTable'"
+        bind-x-axis-field: "'type'"
+        bind-y-axis-field: "'type'"
+        bind-aggregation-field: "'count'"
+    - 
+      sizeX: 6
+      sizeY: 4
+      type: count-by
+      bindings: 
+        bind-title: "'myTitle'"
+        bind-database: "'myDatabase'"
+        bind-table: "'myTable'"
+        bind-count-field: "'type'"
+    - 
+      sizeX: 6
+      sizeY: 4
+      type: tag-cloud
+      bindings: 
+        bind-title: "'myTitle'"
+        bind-database: "'myDatabase'"
+        bind-table: "'myTable'"
+        bind-tag-field: "'hashtags'"
+    - 
+      sizeX: 6
+      sizeY: 4
+      type: sunburst
+      bindings: 
+        bind-title: "'myTitle'"
+        bind-database: "'myDatabase'"
+        bind-table: "'myTable'"
+    - 
+      sizeX: 12
+      sizeY: 4
+      type: query-results-table
+      bindings: 
+        bind-title: "'myTitle'"
+        bind-database: "'myDatabase'"
+        bind-table: "'myTable'"
+files: 
+  datasets: 
+    - ./config/sample.dataset.config.json
+  layouts: 
+    - ./config/sample.layout.config.json

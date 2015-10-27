@@ -17,8 +17,8 @@
  */
 
 angular.module('neonDemo.directives')
-.directive('newsfeed', ['ConnectionService', 'DatasetService', 'ErrorNotificationService', 'TranslationService',
-function(connectionService, datasetService, errorNotificationService, translationService) {
+.directive('newsfeed', ['external', '$timeout', 'ConnectionService', 'DatasetService', 'ErrorNotificationService', 'LinksPopupService', 'TranslationService',
+function(external, $timeout, connectionService, datasetService, errorNotificationService, linksPopupService, translationService) {
     return {
         templateUrl: 'partials/directives/newsfeed.html',
         restrict: 'EA',
@@ -37,21 +37,32 @@ function(connectionService, datasetService, errorNotificationService, translatio
             $element.addClass('newsfeed-directive');
 
             $scope.element = $element;
+            $scope.visualizationId = "newsfeed-" + uuid();
 
             $scope.ASCENDING = neon.query.ASCENDING;
             $scope.DESCENDING = neon.query.DESCENDING;
 
             var DEFAULT_TYPE = "TWITTER";
+
+            var DEFAULT_LINKY_CONFIG = {
+                mentions: false,
+                hashtags: false,
+                urls: true,
+                linkTo: ""
+            };
+
+            // The default limit and the number of news items added to the feed whenever the user scrolls to the bottom of the feed.
             var LIMIT_INTERVAL = 100;
 
             // Prevents translation api calls from getting too long and returning an error
-            var TRANSLATION_LIMIT_INTERVAL = 10;
+            var TRANSLATION_INTERVAL = 10;
 
             $scope.feedName = $scope.bindFeedName || "";
             $scope.feedType = $scope.bindFeedType ? $scope.bindFeedType.toUpperCase() : DEFAULT_TYPE;
             $scope.databases = [];
             $scope.tables = [];
             $scope.fields = [];
+            $scope.linkyConfig = DEFAULT_LINKY_CONFIG;
             $scope.selectedDate = undefined;
             $scope.errorMessage = undefined;
 
@@ -67,6 +78,7 @@ function(connectionService, datasetService, errorNotificationService, translatio
             $scope.data = {
                 news: [],
                 newsCount: 0,
+                translatedRange: [-1, -1],
                 show: {
                     heads: [],
                     names: []
@@ -94,8 +106,7 @@ function(connectionService, datasetService, errorNotificationService, translatio
                 textField: {},
                 sortDirection: neon.query.ASCENDING,
                 limit: LIMIT_INTERVAL,
-                showTranslation: false,
-                translationLimit: TRANSLATION_LIMIT_INTERVAL
+                showTranslation: false
             };
 
             $scope.optionsMenuButtonText = function() {
@@ -132,7 +143,9 @@ function(connectionService, datasetService, errorNotificationService, translatio
 
                 if(translationService.hasKey()) {
                     $scope.translationAvailable = true;
-                    translationService.getSupportedLanguages(getSupportedLanguagesSuccessCallback, translationFailureCallback);
+                    translationService.getSupportedLanguages(getSupportedLanguagesSuccessCallback, function(response) {
+                        $scope.errorMessage = errorNotificationService.showErrorMessage($element, response.message,  response.reason);
+                    });
                 }
 
                 handleResize();
@@ -140,6 +153,8 @@ function(connectionService, datasetService, errorNotificationService, translatio
                 $element.find(".newsfeed").scroll(handleScroll);
 
                 $scope.$on('$destroy', function() {
+                    linksPopupService.deleteLinks($scope.visualizationId + "-head");
+                    linksPopupService.deleteLinks($scope.visualizationId + "-name");
                     $scope.messenger.removeEvents();
                     $element.off("resize", handleResize);
                     $element.find(".newsfeed").off("scroll", handleScroll);
@@ -155,24 +170,6 @@ function(connectionService, datasetService, errorNotificationService, translatio
             var getSupportedLanguagesSuccessCallback = function(languages) {
                 $scope.translationLanguages.fromLanguageOptions = languages;
                 $scope.translationLanguages.toLanguageOptions = languages;
-            };
-
-            /**
-             * Shows an error message when an error occurs in the translation service.
-             * @param {Object} response An error response containing the message and reason.
-             * @param {String} response.message
-             * @param {String} response.reason
-             * @method translationFailureCallback
-             * @private
-             */
-            var translationFailureCallback = function(response) {
-                $scope.loadingData = false;
-
-                if($scope.errorMessage) {
-                    errorNotificationService.hideErrorMessage($scope.errorMessage);
-                    $scope.errorMessage = undefined;
-                }
-                $scope.errorMessage = errorNotificationService.showErrorMessage($element, response.message,  response.reason);
             };
 
             /**
@@ -194,19 +191,78 @@ function(connectionService, datasetService, errorNotificationService, translatio
              * @private
              */
             var handleScroll = function() {
-                // If the user has scrolled to the bottom, query for more news items and add them to the newsfeed.
-                if(!$scope.loadingNews && $element.find(".item") && $element.find(".item").last().position().top <= $element.height()) {
+                if(!$element.find(".item")) {
+                    return;
+                }
+
+                updateTopNewsItemIndex();
+
+                // If the user has scrolled to the bottom, query for more news items and add them to the feed.
+                if(!$scope.loadingNews && !$scope.dataFromNewsEvent && $element.find(".item").last().position().top <= $element.height()) {
+                    $scope.loadingNews = true;
                     $scope.options.limit = $scope.options.limit + LIMIT_INTERVAL;
                     if($scope.dataFromNewsEvent.length) {
                         updateData($scope.dataFromNewsEvent.slice($scope.options.limit - LIMIT_INTERVAL, $scope.options.limit));
                     } else {
                         $scope.loadingNews = true;
                         queryForData(function(data) {
+                            // Only add the items to the feed that aren't there already.
                             updateData(data.slice($scope.options.limit - LIMIT_INTERVAL, $scope.options.limit));
+                            runLinky();
                             $scope.loadingNews = false;
                         });
                     }
                 }
+
+                if(!$scope.loadingData && $scope.options.showTranslation) {
+                    // See if the news item before the first translated news item is visible; if so, translate it.
+                    if($scope.data.translatedRange[0] > 0) {
+                        var index = $scope.data.translatedRange[0] + 1;
+                        var newsItem = $element.find(".item:nth-of-type(" + index + ")");
+                        if(newsItem.position().top >= 0) {
+                            translate(Math.max(0, $scope.data.translatedRange[0] - TRANSLATION_INTERVAL), $scope.data.translatedRange[0]);
+                        }
+                    }
+
+                    // See if the news item after the final translated news item is visible; if so, translate it.
+                    if($scope.data.translatedRange[1] > 0 && $scope.data.translatedRange[1] < $scope.data.news.length) {
+                        var index = $scope.data.translatedRange[1] + 1;
+                        var newsItem = $element.find(".item:nth-of-type(" + index + ")");
+                        if(newsItem.position().top <= $element.height()) {
+                            translate($scope.data.translatedRange[1], Math.min($scope.data.news.length, $scope.data.translatedRange[1] + TRANSLATION_INTERVAL));
+                        }
+                    }
+                }
+            };
+
+            /**
+             * Updates the top news item index based on the position of the news item at the current top index.
+             * @method updateTopNewsItemIndex
+             * @private
+             */
+            var updateTopNewsItemIndex = function() {
+                var topNewsItemIndex = $scope.topNewsItemIndex + 1;
+                var topNewsItem = $element.find(".item:nth-of-type(" + topNewsItemIndex + ")");
+                var topNewsItemPosition = topNewsItem.position();
+
+                if(topNewsItemPosition && topNewsItemPosition.top > 0) {
+                    $scope.topNewsItemIndex = Math.max(0, $scope.topNewsItemIndex - 1);
+                }
+                if(topNewsItemPosition && topNewsItemPosition.top + topNewsItem.outerHeight(true) < 0) {
+                    $scope.topNewsItemIndex = Math.min($scope.data.news.length, $scope.topNewsItemIndex + 1);
+                }
+            };
+
+            /**
+             * Runs the linky library on the text of news items in the feed.
+             * @method runLinky
+             * @private
+             */
+            var runLinky = function() {
+                // Use $timeout to ensure that linky is run after angular's digest updates the items in the feed.
+                $timeout(function() {
+                    $element.find(".item .text").linky($scope.linkyConfig);
+                });
             };
 
             /**
@@ -229,18 +285,26 @@ function(connectionService, datasetService, errorNotificationService, translatio
              */
             var onNews = function(message) {
                 if(message.news && message.name && message.name === $scope.feedName) {
-                    $scope.data.news = _.map(message.news.slice(0, $scope.options.limit), function(elem) {
-                        if(elem.text) {
-                            elem.textTranslated = elem.text;
+                    $scope.data.news = message.news.slice(0, $scope.options.limit);
+                    $scope.data.news.forEach(function(item) {
+                        if(item.head) {
+                            item.headTranslated = item.head;
                         }
-                        return elem;
+                        if(item.name) {
+                            item.nameTranslated = item.name;
+                        }
+                        if(item.text) {
+                            item.textTranslated = item.text;
+                        }
                     });
                     $scope.data.newsCount = message.news.length;
                     $scope.feedType = (message.type || $scope.feedType).toUpperCase();
                     $scope.dataFromNewsEvent = message.news;
+                    $scope.topNewsItemIndex = 0;
+                    runLinky();
 
-                    if($scope.options.showTranslation && message.news.length) {
-                        translate();
+                    if(message.news.length) {
+                        refreshTranslation();
                     }
                 }
             };
@@ -285,6 +349,7 @@ function(connectionService, datasetService, errorNotificationService, translatio
                     return;
                 }
 
+                $scope.linkyConfig = datasetService.getLinkyConfig() || DEFAULT_LINKY_CONFIG;;
                 $scope.databases = datasetService.getDatabases();
                 $scope.options.database = $scope.databases[0];
                 if($scope.bindDatabase) {
@@ -340,7 +405,7 @@ function(connectionService, datasetService, errorNotificationService, translatio
                 $scope.options.nameField = _.find($scope.fields, function(field) {
                     return field.columnName === nameFieldName;
                 }) || datasetService.createBlankField();
-                var dateFieldName = $scope.bindDateField || datasetService.getMapping($scope.options.database.name, $scope.options.table.name, "date") || "";
+                var dateFieldName = $scope.bindDateField || datasetService.getMapping($scope.options.database.name, $scope.options.table.name, neonMappings.DATE) || "";
                 $scope.options.dateField = _.find($scope.fields, function(field) {
                     return field.columnName === dateFieldName;
                 }) || datasetService.createBlankField();
@@ -349,8 +414,8 @@ function(connectionService, datasetService, errorNotificationService, translatio
                     return field.columnName === textFieldName;
                 }) || datasetService.createBlankField();
 
-                $scope.feedName = $scope.bindFeedName || datasetService.getMapping($scope.options.database.name, $scope.options.table.name, "newsfeed_name") || "";
-                $scope.feedType = $scope.bindFeedType ? $scope.bindFeedType.toUpperCase() : datasetService.getMapping($scope.options.database.name, $scope.options.table.name, "newsfeed_type") || DEFAULT_TYPE;
+                $scope.feedName = $scope.bindFeedName || datasetService.getMapping($scope.options.database.name, $scope.options.table.name, neonMappings.NEWSFEED_NAME) || "";
+                $scope.feedType = $scope.bindFeedType ? $scope.bindFeedType.toUpperCase() : datasetService.getMapping($scope.options.database.name, $scope.options.table.name, neonMappings.NEWSFEED_TYPE) || DEFAULT_TYPE;
 
                 $scope.dataFromNewsEvent = [];
                 resetAndQueryForData();
@@ -363,8 +428,14 @@ function(connectionService, datasetService, errorNotificationService, translatio
              */
             var resetAndQueryForData = function() {
                 $scope.data.news = [];
+                $scope.topNewsItemIndex = 0;
+                linksPopupService.deleteLinks($scope.visualizationId + "-head");
+                linksPopupService.deleteLinks($scope.visualizationId + "-name");
+
                 queryForData(function(data, connection) {
                     updateData(data);
+                    refreshTranslation();
+                    runLinky();
                     $scope.loadingData = false;
                     queryForNewsCount(connection);
                 });
@@ -381,6 +452,8 @@ function(connectionService, datasetService, errorNotificationService, translatio
                     errorNotificationService.hideErrorMessage($scope.errorMessage);
                     $scope.errorMessage = undefined;
                 }
+
+                $scope.dataFromNewsEvent = false;
 
                 var connection = connectionService.getActiveConnection();
 
@@ -433,19 +506,91 @@ function(connectionService, datasetService, errorNotificationService, translatio
              * @private
              */
             var updateData = function(data) {
+                var mappings = datasetService.getMappings($scope.options.database.name, $scope.options.table.name);
+
                 data.forEach(function(item) {
+                    var head = datasetService.isFieldValid($scope.options.headField) ? item[$scope.options.headField.columnName] : "";
+                    var name = datasetService.isFieldValid($scope.options.nameField) ? item[$scope.options.nameField.columnName] : "";
+                    var hasLinks = createExternalLinksForNewsItemData(mappings, head, name);
+
+                    var text = item[$scope.options.textField.columnName];
+                    if(_.isArray(text)) {
+                        text = text.join("\n");
+                    }
+
                     $scope.data.news.push({
-                        head: datasetService.isFieldValid($scope.options.headField) ? item[$scope.options.headField.columnName] : "",
-                        name: datasetService.isFieldValid($scope.options.nameField) ? item[$scope.options.nameField.columnName] : "",
                         date: new Date(item[$scope.options.dateField.columnName]),
-                        text: item[$scope.options.textField.columnName],
-                        textTranslated: item[$scope.options.textField.columnName]
+                        head: head,
+                        headTranslated: head,
+                        name: name,
+                        nameTranslated: name,
+                        text: text,
+                        textTranslated: text,
+                        linksPopupButtonJson: createLinksPopupButtonJson(head, name),
+                        linksPopupButtonIsDisabled: !hasLinks
                     });
                 });
+            };
 
-                if($scope.options.showTranslation) {
-                    translate();
+            /**
+             * Creates the external links for the given news 'head' and 'name' properties using the given mappings and returns if any links were created.
+             * @param {Array} mappings
+             * @param {String} head
+             * @param {String} name
+             * @method createExternalLinksForNewsItemData
+             * @private
+             * @return {Boolean}
+             */
+            var createExternalLinksForNewsItemData = function(mappings, head, name) {
+                var headLinksCount = head ? createExternalLinks(mappings, $scope.options.headField.columnName, head, $scope.visualizationId + "-head") : 0;
+                var nameLinksCount = name ? createExternalLinks(mappings, $scope.options.nameField.columnName, name, $scope.visualizationId + "-name") : 0;
+                return headLinksCount || nameLinksCount;
+            };
+
+            /**
+             * Creates the external links for the given field and value using the given mappings, saves the links in the links popup using the given source, and
+             * returns the number of links that were created.
+             * @param {Array} mappings
+             * @param {String} field
+             * @param {Number} or {String} value
+             * @param {String} source
+             * @method createExternalLinks
+             * @private
+             * @return {Number}
+             */
+            var createExternalLinks = function(mappings, field, value, source) {
+                var links = linksPopupService.createAllServiceLinkObjects(external.services, mappings, field, value);
+
+                if(links.length) {
+                    linksPopupService.addLinks(source, value, links);
                 }
+
+                return links.length;
+            };
+
+            /**
+             * Creates and returns the JSON string for the links popup button using the given news 'head' and 'name' properties.
+             * @param {String} head
+             * @param {String} name
+             * @method createLinksPopupButtonJson
+             * @private
+             * @return {String}
+             */
+            var createLinksPopupButtonJson = function(head, name) {
+                var list = [];
+                if(head) {
+                    list.push({
+                        source: $scope.visualizationId + "-head",
+                        key: head
+                    });
+                }
+                if(name) {
+                    list.push({
+                        source: $scope.visualizationId + "-name",
+                        key: name
+                    });
+                }
+                return linksPopupService.createButtonJsonFromList(list);
             };
 
             /**
@@ -455,7 +600,7 @@ function(connectionService, datasetService, errorNotificationService, translatio
              */
             $scope.onFromLanguageChange = function(language) {
                 $scope.translationLanguages.chosenFromLanguage = language;
-                $scope.refreshTranslation();
+                refreshTranslation();
             };
 
             /**
@@ -465,7 +610,7 @@ function(connectionService, datasetService, errorNotificationService, translatio
              */
             $scope.onToLanguageChange = function(language) {
                 $scope.translationLanguages.chosenToLanguage = language;
-                $scope.refreshTranslation();
+                refreshTranslation();
             };
 
             /**
@@ -478,23 +623,20 @@ function(connectionService, datasetService, errorNotificationService, translatio
              */
             $scope.updateTranslation = function(checked, fromLang, toLang) {
                 $scope.options.showTranslation = checked;
-
-                if(checked) {
-                    $scope.translationLanguages.chosenFromLanguage = fromLang;
-                    $scope.translationLanguages.chosenToLanguage = toLang;
-                    translate();
-                } else {
-                    resetTranslation();
-                }
+                $scope.translationLanguages.chosenFromLanguage = fromLang;
+                $scope.translationLanguages.chosenToLanguage = toLang;
+                refreshTranslation();
             };
 
             /**
              * Refreshes the translations if translation is on.
              * @method refreshTranslation
+             * @private
              */
-            $scope.refreshTranslation = function() {
+            var refreshTranslation = function() {
+                $scope.data.translatedRange = [-1, -1];
                 if($scope.options.showTranslation) {
-                    translate();
+                    translate($scope.topNewsItemIndex, $scope.topNewsItemIndex + TRANSLATION_INTERVAL);
                 }
             };
 
@@ -513,71 +655,61 @@ function(connectionService, datasetService, errorNotificationService, translatio
                     $scope.errorMessage = undefined;
                 }
 
-                var dataText = _.pluck($scope.data.news, 'text');
-                dataText = dataText.filter(function(data) {
+                sliceStart = sliceStart || 0;
+                sliceEnd = sliceEnd || sliceStart + TRANSLATION_INTERVAL;
+
+                translateNewsProperty("head", sliceStart, sliceEnd, function() {
+                    translateNewsProperty("name", sliceStart, sliceEnd, function() {
+                        translateNewsProperty("text", sliceStart, sliceEnd, function() {
+                            $scope.data.translatedRange[0] = $scope.data.translatedRange[0] < 0 ? sliceStart : Math.min($scope.data.translatedRange[0], sliceStart);
+                            $scope.data.translatedRange[1] = $scope.data.translatedRange[1] < 0 ? sliceEnd : Math.max($scope.data.translatedRange[1], sliceEnd);
+                            $scope.loadingData = false;
+                        });
+                    });
+                });
+            };
+
+            /**
+             * Translates the given property in the news data between the given start and end indices.
+             * @param {String} newsProperty
+             * @param {Integer} sliceStart
+             * @param {Integer} sliceEnd
+             * @param {Function} successCallback
+             * @method translateNewsProperty
+             * @private
+             */
+            var translateNewsProperty = function(newsProperty, sliceStart, sliceEnd, successCallback) {
+                var dataText = _.pluck($scope.data.news, newsProperty).filter(function(data) {
                     return data;
                 });
 
-                sliceStart = (sliceStart ? sliceStart : 0);
+                var translationSuccessCallback = function(response) {
+                    var index = sliceStart;
+                    response.data.data.translations.forEach(function(item) {
+                        while(!$scope.data.news[index][newsProperty] && index < sliceEnd) {
+                            index++;
+                        }
+                        if(index < sliceEnd) {
+                            var newsItem = $scope.data.news[index];
+                            newsItem[newsProperty + "Translated"] = item.translatedText;
+                            newsItem.isTranslated = newsItem.isTranslated || newsItem[newsProperty] !== newsItem[newsProperty + "Translated"];
+                            index++;
+                        }
+                    });
+                    successCallback();
+                };
 
-                if(!sliceEnd) {
-                    sliceEnd = ($scope.options.translationLimit < TRANSLATION_LIMIT_INTERVAL) ? $scope.options.translationLimit : TRANSLATION_LIMIT_INTERVAL;
-                }
-
-                var successCallback = function(response) {
-                    translateSuccessCallback(response, sliceStart, sliceEnd);
+                var translationFailureCallback = function(response) {
+                    for(var i = sliceStart; i < sliceEnd; ++i) {
+                        $scope.data.news[i][newsProperty + "Translated"] = $scope.data.news[i][newsProperty];
+                        $scope.data.news[i].isTranslated = false;
+                    }
+                    $scope.errorMessage = errorNotificationService.showErrorMessage($element, response.message,  response.reason);
+                    $scope.loadingData = false;
                 };
 
                 translationService.translate(dataText.slice(sliceStart, sliceEnd), $scope.translationLanguages.chosenToLanguage,
-                    successCallback, translationFailureCallback, $scope.translationLanguages.chosenFromLanguage);
-            };
-
-            /**
-             * Refreshes text with their new translations.
-             * @param {Object} response Response object containing all the translations.
-             * @param {Array} response.data.data.translations List of all translations. It's assumed that
-             * all translations are given in the order the original text to translate was received in.
-             * @param {String} response.data.data.translations[].translatedText
-             * @param {String} [response.data.data.translations[].detectedSourceLanguage] Detected language
-             * code of the original version of translatedText. Only provided if the source language was auto-detected.
-             * @param {Integer} sliceStart Index to specify where to start inserting the new translations at in the data.
-             * @param {Integer} sliceEnd Index to specify where to end inserting the new translations at in the data (exclusive).
-             * @method translateSuccessCallback
-             * @private
-             */
-            var translateSuccessCallback = function(response, sliceStart, sliceEnd) {
-                $scope.loadingData = false;
-                var index = sliceStart;
-
-                response.data.data.translations.forEach(function(elem) {
-                    while(!$scope.data.news[index].text && index < sliceEnd) {
-                        index++;
-                    }
-                    $scope.data.news[index].textTranslated = elem.translatedText;
-                    index++;
-                });
-
-                // Translate more text if only part of the data was translated
-                if($scope.options.translationLimit - sliceEnd >= 1) {
-                    sliceStart = sliceEnd;
-                    sliceEnd += (($scope.options.translationLimit - sliceEnd < TRANSLATION_LIMIT_INTERVAL) ?
-                        ($scope.options.translationLimit - sliceEnd) : TRANSLATION_LIMIT_INTERVAL);
-                    translate(sliceStart, sliceEnd);
-                }
-            };
-
-            /**
-             * Resets all text to its original.
-             * @method resetTranslation
-             * @private
-             */
-            var resetTranslation = function() {
-                $scope.data.news = $scope.data.news.map(function(elem) {
-                    elem.textTranslated = elem.text;
-                    return elem;
-                });
-                $scope.translationLanguages.chosenFromLanguage = "";
-                $scope.translationLanguages.chosenToLanguage = "";
+                    translationSuccessCallback, translationFailureCallback, $scope.translationLanguages.chosenFromLanguage);
             };
 
             /**
@@ -623,6 +755,7 @@ function(connectionService, datasetService, errorNotificationService, translatio
                 if($scope.options.sortDirection === direction) {
                     if($scope.dataFromNewsEvent.length) {
                         $scope.data.news.reverse();
+                        $scope.data.translatedRange = [$scope.data.news.length - $scope.data.translatedRange[1], $scope.data.news.length - $scope.data.translatedRange[0]];
                     } else {
                         resetAndQueryForData();
                     }
