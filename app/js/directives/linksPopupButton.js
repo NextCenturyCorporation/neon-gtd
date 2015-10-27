@@ -52,16 +52,22 @@ angular.module('neonDemo.directives')
                 updateDataLinksJson();
             };
 
-            $scope.$watch("key", function() {
-                updateFromSourceAndKey();
+            $scope.$watch("key", function(key) {
+                if(key) {
+                    updateFromSourceAndKey();
+                }
             });
 
-            $scope.$watch("source", function() {
-                updateFromSourceAndKey();
+            $scope.$watch("source", function(source) {
+                if(source) {
+                    updateFromSourceAndKey();
+                }
             });
 
-            $scope.$watch("json", function() {
-                updateFromJson();
+            $scope.$watch("json", function(json) {
+                if(json) {
+                    updateFromJson();
+                }
             });
         }
     };
