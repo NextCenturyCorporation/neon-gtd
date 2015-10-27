@@ -481,9 +481,7 @@ coreMap.Map.prototype.setupLayers = function(mapBaseLayer) {
     // lets clients draw boxes on the map
     this.boxLayer = new OpenLayers.Layer.Boxes('Filter Box', {
         visibility: true,
-        displayInLayerSwitcher: false,
-        zIndex: 745,
-        fallThrough: true
+        displayInLayerSwitcher: false
     });
     this.map.addLayer(this.boxLayer);
 };
