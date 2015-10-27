@@ -120,6 +120,21 @@ module.exports = function(grunt) {
                 files: {
                     'app/css/app.css': 'app/css/app.less'
                 }
+            },
+            themeDarkGreen: {
+                files: {
+                    'app/css/dark-green.css': 'app/css/theme-green-on-dark.less'
+                }
+            },
+            themeLightGreen: {
+                files: {
+                    'app/css/light-green.css': 'app/css/theme-green-on-light.less'
+                }
+            },
+            themeDarkPurple: {
+                files: {
+                    'app/css/dark-purple.css': 'app/css/theme-purple-on-dark.less'
+                }
             }
         },
 
