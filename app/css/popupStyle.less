@@ -32,10 +32,10 @@
             width: 100px;
 
             &:focus, &:hover {
-                border: 1px solid @accent-light;
+                border: 1px solid @accent-bright;
 
                 span {
-                    color: @accent-light;
+                    color: @accent-bright;
                 }
             }
         }
@@ -108,8 +108,12 @@
             color: @main-text-color;
 
             .modal-header {
-                .close {
+                .close when (lightness(@visualization-box-background) < 50%) {
                     color: @light-text-color;
+                }
+
+                .close when (lightness(@visualization-box-background) > 50%) {
+                    color: @mid-text-color;
                 }
             }
 

@@ -182,6 +182,7 @@ angular.element(document).ready(function() {
             showImport: false,
             showExport: true
         };
+        dashboardConfig.theme = config.theme;
         dashboardConfig.gridsterColumns = dashboardConfig.gridsterColumns || 8;
         dashboardConfig.gridsterMargins = dashboardConfig.gridsterMargins || 10;
         // Most visualizations should have a minimum size of about 300px square to have space for their UI elements.

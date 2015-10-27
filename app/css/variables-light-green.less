@@ -14,27 +14,21 @@
 //
 
 @main-background: #F1F1F1;
-@main-background-lighten: lighten(@main-background, 4%);
-@main-background-darken: darken(@main-background, 6%);
+@visualization-box-background: #FFFFFF;
+@mid-background: #F5F5F5;
 @light-background: #FFFFFF;
-@mid-background: #314551;
-@visualization-box-background: #F1F1F1;
 
-// General accent colors to highlight areas of tables or visualizations
 @accent-bright: #39B54A;
-@accent-light: #7C398E;
-@accent-dark: #82F9F3E;
+@accent-dark: #2F9F3E;
 @accent-dulled: #88D292;
+@accent-light: #7CE98E;
 @accent-lightest: #E0D5E0;
 @callout: #FEF59C;
 
-// Text colors to contrast well against accent colored backgrounds.
 @accent-dulled-text-color: #000000;
-
 @main-text-color: #777777;
-@light-text-color: #FFFFFF;
 @mid-text-color: darken(@main-text-color, 50%);
-
+@light-text-color: #FFFFFF;
 
 @error-text-color: #AA1E13;
 @error-color: #C2360D;
@@ -42,25 +36,34 @@
 
 
 @border-color: #CCCCCC;
+@border-radius: 4px;
 @shadow: rgba(0, 0, 0, 0.2);
 @text-shadow-color: #FFFFFF;
-@border: 0px solid @border-color;
-@shadow-border: 0px solid @shadow;
+@main-border: 1px solid @border-color;
+@visualization-border: 0px solid @border-color;
+@visualization-border-radius: @border-radius;
+@shadow-border: 1px solid @shadow;
 
-@button-border-color: #787878;
-@button-color: #EEEEEE;
+/** buttons **/
+@button-color: @light-text-color;
+@button-border: 1px solid @accent-bright;
+@button-background-color: @accent-bright;
+@button-hover-color: @light-text-color;
+@button-hover-background-color: @accent-dark;
+@button-hover-border: 1px solid @accent-dark;
+@button-active-color: @light-text-color;
+@button-active-background-color: @accent-dark;
+@button-active-border: 1px solid @accent-dark;
 
 @chart-text-color: @main-text-color;
 @chart-axis-color: @main-text-color;
 @light-chart-axis-color: @light-text-color;
 @chart-empty-dot-color: @light-text-color;
 
-
 @widget-height: 100%;
 @widget-width: 100%;
 @mobile-widget-height: 400px;
 @mobile-widget-width: 100%;
-
 
 @tooltip-background: rgba(255,255,255,0.9);
 @dark-tooltip-background: rgba(100,100,100,0.8);
@@ -70,7 +73,7 @@
 @dark-map-background: #242424;
 
 @powered-by-neon-image: url('../img/Neon_60x34.png');
-@timeline-label-shadow: 1px 1px 0 @text-shadow-color,
+@visualization-label-shadow: 1px 1px 0 @text-shadow-color,
     1px 0px 0 @text-shadow-color,
     1px -1px 0 @text-shadow-color,
     -1px 1px 0 @text-shadow-color,

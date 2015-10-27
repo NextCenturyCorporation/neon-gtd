@@ -117,8 +117,16 @@
                 }
             }
 
-            &:hover {
+            &:hover when (lightness(@visualization-box-background) < 50%) {
                 color: @light-text-color;
+            }
+
+            &:hover when (lightness(@visualization-box-background) > 50%) {
+                color: @mid-text-color;
+            }
+
+            &.odd {
+                background-color: @main-background;
             }
         }
 

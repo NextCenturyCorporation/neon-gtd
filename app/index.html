@@ -19,8 +19,6 @@
         <link rel="stylesheet" type="text/css" href="lib/angular-ui-tree/css/angular-ui-tree.min.css">
         <link rel="stylesheet" type="text/css" href="lib/angular-bootstrap-datetimepicker/css/datetimepicker.css">
 
-        <link rel="stylesheet" type="text/css" href="css/app.css">
-
         <!-- HTML5 Shim and Respond.js IE8 support of HTML5 elements and media queries -->
         <!-- WARNING: Respond.js doesn't work if you view the page via file:// -->
         <!--[if lt IE 9]>
@@ -29,6 +27,7 @@
         <![endif]-->
     </head>
     <body class="ng-hide" ng-controller="neonDemoController" ng-show="displayDashboard">
+        <link rel="stylesheet" type="text/css" ng-href="css/{{theme.name}}.css">
 
         <!-- Help Video Modal -->
         <div class="modal fade neon-popup" id="videoModal" tabindex="-1" role="dialog" aria-hidden="true">
@@ -92,8 +91,17 @@
                             </li>
                             <li ng-show="showImport"><a href="#" data-toggle="modal" data-target="#removeDatasetModal" ng-show="canImport">
                                 Drop Dataset
-                            </a>
+                            </a></li>
+                            <div class="row">
+                                <div class='col-lg-12'>
+                                    <button class="btn btn-default" ng-click="updateTheme('light-green')">Light Green</button>
+                                    <button class="btn btn-default" ng-click="updateTheme('dark-green')">Dark Green</button>
+                                    <button class="btn btn-default" ng-click="updateTheme('dark-purple')">Dark Purple</button>
+                                </div>
+                            </div>
                         </ul>
+
+
                     </div>
 
                     <div powered-by-neon class="pull-right"></div>

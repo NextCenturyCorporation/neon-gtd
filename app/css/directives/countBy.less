@@ -35,9 +35,18 @@
         //border: @border;
         border-radius: 2px;
         box-shadow: 0 1px 4px @shadow;
-        box-sizing: content-box;
-        -webkit-box-sizing: content-box;
-        -moz-box-sizing: content-box;
+
+        &:before, &:after {
+            box-sizing: content-box;
+            -webkit-box-sizing: content-box;
+            -moz-box-sizing: content-box;
+        }
+
+        *, *:before, *:after {
+            box-sizing: content-box;
+            -webkit-box-sizing: content-box;
+            -moz-box-sizing: content-box;
+        }
 
         &.row-selected {
             .slick-row {
@@ -74,8 +83,6 @@
         .slick-header{
             border: 0px;
             border-right: 1px solid @main-text-color;
-            box-sizing: content-box;
-            -webkit-box-sizing: content-box;
 
             .slick-header-column{
                 color: @mid-text-color;
@@ -120,8 +127,16 @@
             color: @main-text-color;
             background: @visualization-box-background;
 
-            &:hover {
+            &:hover when (lightness(@visualization-box-background) < 50%) {
                 color: @light-text-color;
+            }
+
+            &:hover when (lightness(@visualization-box-background) > 50%) {
+                color: @mid-text-color;
+            }
+
+            &.odd {
+                background-color: @main-background;
             }
         }
 
