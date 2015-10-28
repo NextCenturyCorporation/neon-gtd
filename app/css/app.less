@@ -183,6 +183,47 @@
         }
     }
 
+    .options-dropdown {
+        right: 0px;
+        left: auto;
+        top: 40px;
+        background-color: @visualization-box-background;
+        border: @main-border;
+        border-radius: @border-radius;
+        color: @main-text-color;
+
+        .arrow {
+            left: auto;
+            right: 25px;
+        }
+
+        .options-container {
+            width: 250px;
+
+            .row {
+                .export-options {
+                    .btn-group {
+                        padding: 5px 25px;
+                    }
+                }
+
+                .format {
+                    padding: 3px 20px;
+                }
+
+                .theme-label {
+                    padding: 10px 20px 3px 20px;
+                }
+            }
+
+            .theme-options {
+                .btn {
+                    display: inline-block;
+                }
+            }
+        }
+    }
+
     .open {
         .navbar-text {
             &.options {

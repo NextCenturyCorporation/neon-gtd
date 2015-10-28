@@ -28,8 +28,9 @@ function($scope, $timeout, config, datasets) {
         themes: ['light-green', 'dark-green', 'dark-purple']
     };
     $scope.theme.name = config.theme || $scope.theme.thems[0];
-    $scope.updateTheme = function(theme) {
-        $scope.theme.name = theme;
+    $scope.theme.selected = $scope.theme.name;
+    $scope.updateTheme = function() {
+        $scope.theme.name = $scope.theme.selected;
     };
 
     $scope.hideNavbarItems = config.hideNavbarItems;

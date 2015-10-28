@@ -116,11 +116,6 @@ module.exports = function(grunt) {
                     'app/components'
                 ]
             },
-            gtd: {
-                files: {
-                    'app/css/app.css': 'app/css/app.less'
-                }
-            },
             themeDarkGreen: {
                 files: {
                     'app/css/dark-green.css': 'app/css/theme-green-on-dark.less'
@@ -204,7 +199,7 @@ module.exports = function(grunt) {
     grunt.loadNpmTasks('grunt-karma');
     grunt.loadNpmTasks('grunt-war');
 
-    grunt.registerTask('compile-less', ['clean:less', 'less']);
+    grunt.registerTask('compile-less', ['clean:less', 'less:themeLightGreen', 'less:themeDarkGreen', 'less:themeDarkPurple']);
     grunt.registerTask('saveRevision', function() {
         grunt.event.once('git-describe', function(rev) {
             var date = new Date(Date.now()).toISOString();
