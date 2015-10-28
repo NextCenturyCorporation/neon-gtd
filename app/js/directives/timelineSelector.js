@@ -944,9 +944,7 @@ function($interval, $filter, external, connectionService, datasetService, errorN
                 $scope.outstandingQuery.done(function(queryResults) {
                     $scope.$apply(function() {
                         var dateQueryResults = {
-                            data: _.filter(queryResults.data, function(datum) {
-                                return _.keys(datum).length > 2;
-                            })
+                            data: queryResults.data
                         };
                         if($scope.invalidDatesFilter) {
                             dateQueryResults.data = [];
@@ -1020,10 +1018,7 @@ function($interval, $filter, external, connectionService, datasetService, errorN
                 });
                 $scope.outstandingQuery.done(function(queryResults) {
                     $scope.$apply(function() {
-                        var invalidDates = _.filter(queryResults.data, function(datum) {
-                            return _.keys(datum).length === 2 && datum._id && datum.count;
-                        });
-                        $scope.invalidRecordCount = (invalidDates.length ? invalidDates[0].count : 0);
+                        $scope.invalidRecordCount = (queryResults.data.length ? queryResults.data[0].count : 0);
                         $scope.loadingData = false;
                         XDATA.userALE.log({
                             activity: "alter",
