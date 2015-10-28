@@ -380,10 +380,10 @@ function($interval, $filter, external, connectionService, datasetService, errorN
                 if(external.services.date) {
                     var dateLinks = [];
                     Object.keys(external.services.date.apps).forEach(function(app) {
-                        dateLinks.push(linksPopupService.createServiceLinkObjectWithData(external.services.date, app, {
-                            startDate: displayStartDate.toISOString(),
-                            endDate: displayEndDate.toISOString()
-                        }));
+                        var linkData = {};
+                        linkData[neonMappings.START_DATE] = displayStartDate.toISOString();
+                        linkData[neonMappings.END_DATE] = displayEndDate.toISOString();
+                        dateLinks.push(linksPopupService.createServiceLinkObjectWithData(external.services.date, app, linkData));
                     });
                     var timelineLinks = {};
                     timelineLinks[$scope.getDateKeyForLinksPopupButton()] = dateLinks;

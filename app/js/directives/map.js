@@ -278,12 +278,12 @@ angular.module('neonDemo.directives')
                     if(external.services.bounds) {
                         var boundsLinks = [];
                         Object.keys(external.services.bounds.apps).forEach(function(app) {
-                            boundsLinks.push(linksPopupService.createServiceLinkObjectWithData(external.services.bounds, app, {
-                                minLat: $scope.extent.minimumLatitude,
-                                minLon: $scope.extent.minimumLongitude,
-                                maxLat: $scope.extent.maximumLatitude,
-                                maxLon: $scope.extent.maximumLongitude
-                            }));
+                            var linkData = {};
+                            linkData[neonMappings.MIN_LAT] = $scope.extent.minimumLatitude;
+                            linkData[neonMappings.MIN_LON] = $scope.extent.minimumLongitude;
+                            linkData[neonMappings.MAX_LAT] = $scope.extent.maximumLatitude;
+                            linkData[neonMappings.MAX_LON] = $scope.extent.maximumLongitude;
+                            boundsLinks.push(linksPopupService.createServiceLinkObjectWithData(external.services.bounds, app, linkData));
                         });
                         linksPopupService.addLinks($scope.mapId, $scope.getBoundsKeyForLinksPopupButton(), boundsLinks);
                         $scope.linksPopupButtonIsDisabled = !boundsLinks.length;
