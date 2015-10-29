@@ -324,6 +324,7 @@ function(connectionService, datasetService, errorNotificationService, exportServ
                 var nodes = {};
                 var tree = {
                     name: $scope.options.table.name,
+                    key: $scope.options.table.name,
                     children: []
                 };
                 var leafObject;
@@ -350,6 +351,7 @@ function(connectionService, datasetService, errorNotificationService, exportServ
                             if(i !== $scope.groupFields.length - 1) {
                                 nodeObject = {};
                                 nodeObject.name = field + ": " + doc[field];
+                                nodeObject.key = nodeKeyString;
                                 nodeObject.children = [];
                                 parent.children.push(nodeObject);
                                 parent = nodeObject;
@@ -358,6 +360,7 @@ function(connectionService, datasetService, errorNotificationService, exportServ
                                 leafObject.name = field + ": " + doc[field];
                                 leafObject.count = doc.count;
                                 leafObject.total = doc[$scope.options.valueField.columnName];
+                                leafObject.key = nodeKeyString;
                                 parent.children.push(leafObject);
                             }
                         } else {
@@ -371,7 +374,11 @@ function(connectionService, datasetService, errorNotificationService, exportServ
 
             var doDrawChart = function(data) {
                 $scope.chart.clearData();
-                $scope.chart.drawData(data);
+                $scope.dataShown = $scope.chart.drawData(data);
+            };
+
+            $scope.showChart = function() {
+                $scope.dataShown = true;
             };
 
             $scope.addGroup = function() {
