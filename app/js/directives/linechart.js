@@ -74,6 +74,7 @@ function(external, connectionService, datasetService, errorNotificationService, 
             $scope.tables = [];
             $scope.totalType = 'count';
             $scope.fields = [];
+            $scope.visualizationFilterKeys = {};
             $scope.filterKeys = {};
             $scope.chart = undefined;
             $scope.brushExtent = [];
@@ -122,7 +123,7 @@ function(external, connectionService, datasetService, errorNotificationService, 
                     filtersChanged: onFiltersChanged
                 });
                 $scope.messenger.subscribe(datasetService.UPDATE_DATA_CHANNEL, function() {
-                    $scope.queryForData();
+                    queryForData();
                 });
                 $scope.messenger.subscribe(datasetService.DATE_CHANGED_CHANNEL, onDateChanged);
                 $scope.messenger.subscribe("date_selected", onDateSelected);
@@ -165,28 +166,28 @@ function(external, connectionService, datasetService, errorNotificationService, 
                 $scope.$watch('options.attrX', function(newValue) {
                     onFieldChange('attrX', newValue);
                     if(!$scope.loadingData && $scope.options.database.name && $scope.options.table.name) {
-                        $scope.queryForData();
+                        resetAndQueryForData();
                         $scope.queryOnChangeBrush = $scope.queryOnChangeBrush || ($scope.brushExtent.length > 0);
                     }
                 });
                 $scope.$watch('options.attrY', function(newValue) {
                     onFieldChange('attrY', newValue);
                     if(!$scope.loadingData && $scope.options.database.name && $scope.options.table.name) {
-                        $scope.queryForData();
+                        resetAndQueryForData();
                         $scope.queryOnChangeBrush = $scope.queryOnChangeBrush || ($scope.brushExtent.length > 0);
                     }
                 });
                 $scope.$watch('options.categoryField', function(newValue) {
                     onFieldChange('categoryField', newValue);
                     if(!$scope.loadingData && $scope.options.database.name && $scope.options.table.name) {
-                        $scope.queryForData();
+                        resetAndQueryForData();
                         $scope.queryOnChangeBrush = $scope.queryOnChangeBrush || ($scope.brushExtent.length > 0);
                     }
                 });
                 $scope.$watch('options.aggregation', function(newValue) {
                     onFieldChange('aggregation', newValue);
                     if(!$scope.loadingData && $scope.options.database.name && $scope.options.table.name) {
-                        $scope.queryForData();
+                        resetAndQueryForData();
                         $scope.queryOnChangeBrush = $scope.queryOnChangeBrush || ($scope.brushExtent.length > 0);
                     }
                 });
@@ -203,7 +204,7 @@ function(external, connectionService, datasetService, errorNotificationService, 
                             tags: ["linechart", "granularity", newVal]
                         });
                         $scope.chart.setGranularity(newVal);
-                        $scope.queryForData();
+                        resetAndQueryForData();
                         $scope.queryOnChangeBrush = $scope.queryOnChangeBrush || ($scope.brushExtent.length > 0);
                     }
                 });
@@ -295,7 +296,7 @@ function(external, connectionService, datasetService, errorNotificationService, 
                         tags: ["filter-change", "linechart"]
                     });
 
-                    $scope.queryForData();
+                    queryForData();
                     $scope.queryOnChangeBrush = $scope.queryOnChangeBrush || ($scope.brushExtent.length > 0);
                 }
             };
@@ -307,9 +308,11 @@ function(external, connectionService, datasetService, errorNotificationService, 
              * @private
              */
             var onDateChanged = function(message) {
-                if($scope.options.database.name === message.databaseName && $scope.options.table.name === message.tableName && $scope.brushExtent !== message.brushExtent) {
-                    renderBrushExtent(message.brushExtent);
-                    updateLineChartForBrushExtent();
+                if($scope.options.database.name === message.databaseName && $scope.options.table.name === message.tableName) {
+                    if(datasetService.isFieldValid($scope.options.attrX) && message.fieldNames.indexOf($scope.options.attrX.columnName) >= 0 && $scope.brushExtent !== message.brushExtent) {
+                        renderBrushExtent(message.brushExtent);
+                        updateLineChartForBrushExtent();
+                    }
                 }
             };
 
@@ -352,7 +355,7 @@ function(external, connectionService, datasetService, errorNotificationService, 
                 return $scope.brushExtent.length >= 2 ? linksPopupService.generateRangeKey($scope.brushExtent[0].toUTCString(), $scope.brushExtent[1].toUTCString()) : "";
             };
 
-            $scope.queryForData = function() {
+            var queryForData = function() {
                 XDATA.userALE.log({
                     activity: "alter",
                     action: "query",
@@ -460,7 +463,11 @@ function(external, connectionService, datasetService, errorNotificationService, 
                         }
                     }
                 }
-                $scope.filterKeys = filterService.createFilterKeys("linechart", datasetService.getDatabaseAndTableNames(), datasetService.getDateFilterKeys());
+
+                // Create the filter keys for this visualization for each database/table pair in the dataset.
+                $scope.visualizationFilterKeys = filterService.createFilterKeys("linechart", datasetService.getDatabaseAndTableNames());
+                // The filter keys will be set to the global date filter key for each database/table pair when available and the visualization filter key otherwise.
+                $scope.filterKeys = $scope.visualizationFilterKeys;
 
                 if(initializing) {
                     $scope.updateTables();
@@ -503,14 +510,27 @@ function(external, connectionService, datasetService, errorNotificationService, 
                     return field.columnName === categoryField;
                 }) || datasetService.createBlankField();
 
-                var globalBrushExtent = datasetService.getDateBrushExtent($scope.options.database.name, $scope.options.table.name);
+                $scope.queryOnChangeBrush = false;
+                resetAndQueryForData();
+            };
+
+            var resetAndQueryForData = function() {
+                var globalBrushExtent = datasetService.isFieldValid($scope.options.attrX) ? datasetService.getDateBrushExtent($scope.options.database.name, $scope.options.table.name, $scope.options.attrX.columnName) : [];
                 if($scope.brushExtent !== globalBrushExtent) {
                     renderBrushExtent(globalBrushExtent);
                 } else if($scope.brushExtent.length) {
                     $scope.removeBrush();
                 }
-                $scope.queryOnChangeBrush = false;
-                $scope.queryForData();
+
+                // Get the date filter keys for the current database/table/field and change the current filter keys as appropriate.
+                if(datasetService.isFieldValid($scope.options.attrX)) {
+                    var dateFilterKeys = datasetService.getDateFilterKeys($scope.options.database.name, $scope.options.table.name, $scope.options.attrX.columnName);
+                    $scope.filterKeys = filterService.getFilterKeysFromCollections(datasetService.getDatabaseAndTableNames(), $scope.visualizationFilterKeys, dateFilterKeys);
+                } else {
+                    $scope.filterKeys = $scope.visualizationFilterKeys;
+                }
+
+                queryForData();
             };
 
             /**
@@ -990,7 +1010,7 @@ function(external, connectionService, datasetService, errorNotificationService, 
 
                 renderBrushExtent(brushExtent);
 
-                var globalBrushExtent = datasetService.getDateBrushExtent($scope.options.database.name, $scope.options.table.name);
+                var globalBrushExtent = datasetService.getDateBrushExtent($scope.options.database.name, $scope.options.table.name, $scope.options.attrX.columnName);
                 // We're comparing the date strings here because comparing the date objects doesn't seem to work.
                 if(globalBrushExtent.length && $scope.brushExtent[0].toDateString() === globalBrushExtent[0].toDateString() && $scope.brushExtent[1].toDateString() === globalBrushExtent[1].toDateString()) {
                     return;
@@ -1044,7 +1064,7 @@ function(external, connectionService, datasetService, errorNotificationService, 
                 // If the user changed a field or filter while the chart contained data filtered by date then the chart will need to query for new data since the saved data from
                 // the previous query will be stale.  Otherwise use the data from the previous query and the current brush extent to redraw the chart.
                 if($scope.queryOnChangeBrush) {
-                    $scope.queryForData();
+                    queryForData();
                     // We need to query for new data until there is no date filter and we query for the whole dataset.
                     $scope.queryOnChangeBrush = $scope.brushExtent.length >= 2 ? true : false;
                     return;

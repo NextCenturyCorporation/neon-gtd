@@ -23,25 +23,38 @@ angular.module("neonDemo.services")
 
     /**
      * Creates and returns a mapping of names from the given database and table names to unique filter keys for each database and table pair.
-     * Uses the mapping of global filter keys (if given) for all possible database and table pairs.
      * @param {String} visualizationName The name of the visualization
      * @param {Object} databaseNamesToTableNames A map of database names to table names
-     * @param {Object} globalFilterKeys (Optional) A map of database names to table names to filter keys
      * @method createFilterKeys
      * @return {Object} The mapping of database names to table names to filter keys
      */
-    service.createFilterKeys = function(visualizationName, databaseNamesToTableNames, globalFilterKeys) {
+    service.createFilterKeys = function(visualizationName, databaseNamesToTableNames) {
         var filterKeys = {};
-        var databaseNames = Object.keys(databaseNamesToTableNames);
-        databaseNames.forEach(function(databaseName) {
+        Object.keys(databaseNamesToTableNames).forEach(function(databaseName) {
             filterKeys[databaseName] = {};
-            var tableNames = databaseNamesToTableNames[databaseName];
-            tableNames.forEach(function(tableName) {
-                if(globalFilterKeys && globalFilterKeys[databaseName] && globalFilterKeys[databaseName][tableName]) {
-                    filterKeys[databaseName][tableName] = globalFilterKeys[databaseName][tableName];
-                } else {
-                    filterKeys[databaseName][tableName] = visualizationName + "-" + databaseName + "-" + tableName + "-" + uuid();
-                }
+            databaseNamesToTableNames[databaseName].forEach(function(tableName) {
+                filterKeys[databaseName][tableName] = visualizationName + "-" + databaseName + "-" + tableName + "-" + uuid();
+            });
+        });
+        return filterKeys;
+    };
+
+    /**
+     * Creates and returns a mapping of names from the given database and table names to filter keys for each database and table pair using filter keys from the given mappings.
+     * The filter key for each database and table pair is the global filter key for that pair, if one exists, or the visualization filter key otherwise.
+     * @param {Object} databaseNamesToTableNames A map of database names to table names
+     * @param {Object} visualizationFilterKeys A map of database names to table names to filter keys
+     * @param {Object} globalFilterKeys A map of database names to table names to filter keys
+     * @method getFilterKeysFromCollections
+     * @return {Object} The mapping of database names to table names to filter keys
+     */
+    service.getFilterKeysFromCollections = function(databaseNamesToTableNames, visualizationFilterKeys, globalFilterKeys) {
+        var filterKeys = {};
+        Object.keys(databaseNamesToTableNames).forEach(function(databaseName) {
+            filterKeys[databaseName] = {};
+            databaseNamesToTableNames[databaseName].forEach(function(tableName) {
+                // Use the global filter key for the database/table if one exists; else use the visualization filter key for the database/table.
+                filterKeys[databaseName][tableName] = (globalFilterKeys[databaseName] ? globalFilterKeys[databaseName][tableName] : null) || visualizationFilterKeys[databaseName][tableName];
             });
         });
         return filterKeys;
