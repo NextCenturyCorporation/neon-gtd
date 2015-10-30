@@ -1,4 +1,6 @@
 <div class="header-container" ng-hide="hideHeader">
+    <div class="title header-text pull-left" ng-bind="(bindTitle != undefined) ? bindTitle : options.table.prettyName"></div>
+
     <options-menu parent-element="element">
         <div class="form-group" ng-show="!(hideAdvancedOptions)">
             <label>Database</label>
