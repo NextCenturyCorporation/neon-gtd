@@ -569,7 +569,7 @@ function(external, connectionService, datasetService, errorNotificationService, 
                 if(filterClauses.length === 1) {
                     return filterClauses[0];
                 }
-                if($scope.andTags) {
+                if($scope.options.andTags) {
                     return neon.query.and.apply(neon.query, filterClauses);
                 }
                 return neon.query.or.apply(neon.query, filterClauses);
