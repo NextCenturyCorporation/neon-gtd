@@ -1,5 +1,5 @@
 <div class="header-container" ng-show="!(hideHeader)">
-    <div class="title header-text pull-left" ng-bind="(bindTitle != undefined) ? bindTitle : options.table.prettyName + ' / ' + options.tagField.prettyName"></div>
+    <div class="title header-text pull-left" ng-bind="(bindTitle != undefined) ? bindTitle : options.table.prettyName + (options.tagField.prettyName ? ' / ' + options.tagField.prettyName : '')"></div>
 
     <options-menu parent-element="element" export-function="makeTagCloudExportObject"  button-text="'No tag data'" show-button-text="showOptionsMenuButtonText">
         <div class="form-group" ng-show="!(hideAdvancedOptions)">

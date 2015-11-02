@@ -85,6 +85,7 @@ function($interval, $filter, external, connectionService, datasetService, errorN
             $scope.databases = [];
             $scope.tables = [];
             $scope.fields = [];
+            $scope.visualizationFilterKeys = {};
             $scope.filterKeys = {};
             $scope.filter = {
                 start: undefined,
@@ -521,9 +522,9 @@ function($interval, $filter, external, connectionService, datasetService, errorN
                             if(newBrushStart.getTime() !== $scope.brush[0].getTime() || newBrushEnd.getTime() !== $scope.brush[1].getTime()) {
                                 $scope.brush = [newBrushStart, newBrushEnd];
                             }
-                            $scope.queryForChartData();
+                            resetAndQueryForChartData();
                         } else {
-                            $scope.queryForChartData();
+                            resetAndQueryForChartData();
                         }
                     }
                 });
@@ -591,7 +592,7 @@ function($interval, $filter, external, connectionService, datasetService, errorN
                     filtersChanged: onFiltersChanged
                 });
                 $scope.messenger.subscribe(datasetService.UPDATE_DATA_CHANNEL, function() {
-                    $scope.queryForChartData();
+                    queryForChartData();
                 });
                 $scope.messenger.subscribe(datasetService.DATE_CHANGED_CHANNEL, onDateChanged);
 
@@ -633,8 +634,7 @@ function($interval, $filter, external, connectionService, datasetService, errorN
              * @methd replaceDateFilters
              */
             var replaceDateFilters = function(showInvalidDates, callback) {
-                if(($scope.brush === datasetService.getDateBrushExtent($scope.options.database.name, $scope.options.table.name)) &&
-                    !showInvalidDates) {
+                if(($scope.brush === datasetService.getDateBrushExtent($scope.options.database.name, $scope.options.table.name, $scope.options.dateField.columnName)) && !showInvalidDates) {
                     return;
                 }
 
@@ -666,7 +666,7 @@ function($interval, $filter, external, connectionService, datasetService, errorN
             $scope.sendInvalidDates = function() {
                 $scope.clearBrush();
                 $scope.invalidDatesFilter = true;
-                replaceDateFilters(true, $scope.queryForChartData);
+                replaceDateFilters(true, queryForChartData);
             };
 
             /**
@@ -675,7 +675,7 @@ function($interval, $filter, external, connectionService, datasetService, errorN
              */
             $scope.clearInvalidDatesFilter = function() {
                 $scope.invalidDatesFilter = false;
-                filterService.removeFilters($scope.messenger, $scope.filterKeys, $scope.queryForChartData);
+                filterService.removeFilters($scope.messenger, $scope.filterKeys, queryForChartData);
             };
 
             /**
@@ -764,7 +764,7 @@ function($interval, $filter, external, connectionService, datasetService, errorN
                         tags: ["filter-change", "timeline"]
                     });
 
-                    $scope.queryForChartData();
+                    queryForChartData();
                 }
             };
 
@@ -775,10 +775,12 @@ function($interval, $filter, external, connectionService, datasetService, errorN
              * @private
              */
             var onDateChanged = function(message) {
-                if($scope.options.database.name === message.databaseName && $scope.options.table.name === message.tableName && $scope.brush !== message.brushExtent) {
-                    $scope.brush = message.brushExtent;
-                    $scope.extentDirty = true;
-                    $scope.updateChartTimesAndTotal();
+                if($scope.options.database.name === message.databaseName && $scope.options.table.name === message.tableName) {
+                    if(datasetService.isFieldValid($scope.options.dateField) && message.fieldNames.indexOf($scope.options.dateField.columnName) >= 0 && $scope.brush !== message.brushExtent) {
+                        $scope.brush = message.brushExtent;
+                        $scope.extentDirty = true;
+                        $scope.updateChartTimesAndTotal();
+                    }
                 }
             };
 
@@ -802,7 +804,11 @@ function($interval, $filter, external, connectionService, datasetService, errorN
                         }
                     }
                 }
-                $scope.filterKeys = filterService.createFilterKeys("timeline", datasetService.getDatabaseAndTableNames(), datasetService.getDateFilterKeys());
+
+                // Create the filter keys for this visualization for each database/table pair in the dataset.
+                $scope.visualizationFilterKeys = filterService.createFilterKeys("timeline", datasetService.getDatabaseAndTableNames());
+                // The filter keys will be set to the global date filter key for each database/table pair when available and the visualization filter key otherwise.
+                $scope.filterKeys = $scope.visualizationFilterKeys;
 
                 if(initializing) {
                     $scope.updateTables();
@@ -836,10 +842,10 @@ function($interval, $filter, external, connectionService, datasetService, errorN
                     return field.columnName === dateField;
                 }) || datasetService.createBlankField();
 
-                $scope.resetAndQueryForChartData();
+                resetAndQueryForChartData();
             };
 
-            $scope.resetAndQueryForChartData = function() {
+            var resetAndQueryForChartData = function() {
                 $scope.bucketizer.setStartDate(undefined);
                 clearDisplayDates();
                 $scope.referenceStartDate = undefined;
@@ -847,13 +853,21 @@ function($interval, $filter, external, connectionService, datasetService, errorN
                 $scope.data = [];
                 $scope.noData = true;
 
-                var globalBrushExtent = datasetService.getDateBrushExtent($scope.options.database.name, $scope.options.table.name);
+                var globalBrushExtent = datasetService.isFieldValid($scope.options.dateField) ? datasetService.getDateBrushExtent($scope.options.database.name, $scope.options.table.name, $scope.options.dateField.columnName) : [];
                 if($scope.brush !== globalBrushExtent) {
                     $scope.brush = globalBrushExtent;
                     $scope.extentDirty = true;
                 }
 
-                $scope.queryForChartData();
+                // Get the date filter keys for the current database/table/field and change the current filter keys as appropriate.
+                if(datasetService.isFieldValid($scope.options.dateField)) {
+                    var dateFilterKeys = datasetService.getDateFilterKeys($scope.options.database.name, $scope.options.table.name, $scope.options.dateField.columnName);
+                    $scope.filterKeys = filterService.getFilterKeysFromCollections(datasetService.getDatabaseAndTableNames(), $scope.visualizationFilterKeys, dateFilterKeys);
+                } else {
+                    $scope.filterKeys = $scope.visualizationFilterKeys;
+                }
+
+                queryForChartData();
             };
 
             /**
@@ -904,7 +918,7 @@ function($interval, $filter, external, connectionService, datasetService, errorN
              * Triggers a Neon query that will aggregate the time data for the currently selected dataset.
              * @method queryForChartData
              */
-            $scope.queryForChartData = function() {
+            var queryForChartData = function() {
                 if($scope.errorMessage) {
                     errorNotificationService.hideErrorMessage($scope.errorMessage);
                     $scope.errorMessage = undefined;
@@ -1626,7 +1640,7 @@ function($interval, $filter, external, connectionService, datasetService, errorN
             $scope.updateDateField = function() {
                 // TODO Logging
                 if(!$scope.loadingData) {
-                    $scope.resetAndQueryForChartData();
+                    resetAndQueryForChartData();
                 }
             };
 
