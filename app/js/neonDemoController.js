@@ -27,7 +27,7 @@ function($scope, $timeout, config, datasets) {
     $scope.theme = {
         themes: ['light-green', 'dark-green', 'dark-purple']
     };
-    $scope.theme.name = config.theme || $scope.theme.thems[0];
+    $scope.theme.name = config.theme || $scope.theme.themes[0];
     $scope.theme.selected = $scope.theme.name;
     $scope.updateTheme = function() {
         $scope.theme.name = $scope.theme.selected;
