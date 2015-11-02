@@ -1,4 +1,5 @@
 {
+    "theme": "dark-purple",
     "user_ale": {
         "loggingUrl": "http://192.168.1.100",
         "toolName": "Neon Dashboard",
