@@ -273,9 +273,12 @@ coreMap.Map.Layer.PointsLayer.prototype.calculateMinRadius = function() {
  * @method calculateRadius
  */
 coreMap.Map.Layer.PointsLayer.prototype.calculateRadius = function(element) {
+    var zoomLevel = this.map.zoom;
     var dataVal = this.getValueFromDataElement(this.sizeMapping, element);
     var percentOfDataRange = (dataVal - this.minRadius) / this._dataRadiusDiff;
-    return coreMap.Map.Layer.PointsLayer.MIN_RADIUS + (percentOfDataRange * this._baseRadiusDiff);
+    var radius = coreMap.Map.Layer.PointsLayer.MIN_RADIUS + (percentOfDataRange * this._baseRadiusDiff) || coreMap.Map.Layer.PointsLayer.MIN_RADIUS;
+
+    return radius * (zoomLevel / 3);
 };
 
 /**

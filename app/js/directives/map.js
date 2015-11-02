@@ -1535,6 +1535,14 @@ angular.module('neonDemo.directives')
                 layer.olLayer = addLayer(layer);
                 layer.filterKeys = filterService.createFilterKeys("map", datasetService.getDatabaseAndTableNames());
                 $scope.options.layers.push(layer);
+
+                if(!$scope.outstandingQuery[layer.database]) {
+                    $scope.outstandingQuery[layer.database] = {};
+                    $scope.outstandingQuery[layer.database][layer.table] = undefined;
+                } else if($scope.outstandingQuery[layer.database] && !$scope.outstandingQuery[layer.database][layer.table]) {
+                    $scope.outstandingQuery[layer.database][layer.table] = undefined;
+                }
+
                 $scope.queryForMapData(layer.database, layer.table);
                 $scope.resetNewLayer();
             };
