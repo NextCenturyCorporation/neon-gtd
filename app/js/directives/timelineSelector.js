@@ -889,7 +889,6 @@ function($interval, $filter, external, connectionService, datasetService, errorN
                 // TODO: Does this need to be an aggregate on the date field? What is MIN doing or is this just an arbitrary function to include the date with the query?
                 query.aggregate(neon.query.MIN, $scope.options.dateField.columnName, 'date');
                 query.sortBy('date', neon.query.ASCENDING);
-                query.ignoreFilters([$scope.filterKeys[$scope.options.database.name][$scope.options.table.name]]);
 
                 return query;
             };
@@ -908,8 +907,7 @@ function($interval, $filter, external, connectionService, datasetService, errorN
                         neon.query.where($scope.options.dateField.columnName, '=', null)
                     ));
 
-                query.aggregate(neon.query.COUNT, '*', 'count');
-                query.ignoreFilters([$scope.filterKeys[$scope.options.database.name][$scope.options.table.name]]);
+                query.aggregate(neon.query.COUNT, '*', 'invalidCount');
 
                 return query;
             };
@@ -934,7 +932,12 @@ function($interval, $filter, external, connectionService, datasetService, errorN
                     return;
                 }
 
-                var query = $scope.createChartDataQuery();
+                var queryGroup = new neon.query.QueryGroup();
+                var queryValidDates = $scope.createChartDataQuery();
+                var queryInvalidDates = $scope.createInvalidDatesQuery();
+                queryGroup.addQuery(queryValidDates);
+                queryGroup.addQuery(queryInvalidDates);
+                queryGroup.ignoreFilters([$scope.filterKeys[$scope.options.database.name][$scope.options.table.name]]);
 
                 XDATA.userALE.log({
                     activity: "alter",
@@ -951,20 +954,28 @@ function($interval, $filter, external, connectionService, datasetService, errorN
                     $scope.outstandingQuery.abort();
                 }
 
-                $scope.outstandingQuery = connection.executeQuery(query);
+                $scope.outstandingQuery = connection.executeQueryGroup(queryGroup);
                 $scope.outstandingQuery.done(function() {
                     $scope.outstandingQuery = undefined;
                 });
                 $scope.outstandingQuery.done(function(queryResults) {
                     $scope.$apply(function() {
-                        var dateQueryResults = {
-                            data: queryResults.data
-                        };
+                        var validQueryResults = {};
+
+                        var invalidQueryResults = _.filter(queryResults.data, function(datum) {
+                                return datum.invalidCount;
+                            });
+
+                        $scope.invalidRecordCount = (invalidQueryResults.length ? invalidQueryResults[0].invalidCount : 0);
+
                         if($scope.invalidDatesFilter) {
-                            dateQueryResults.data = [];
+                            validQueryResults.data = [];
+                        } else {
+                            validQueryResults.data = _.filter(queryResults.data, function(datum) {
+                                return !datum.invalidCount;
+                            });
                         }
-                        invalidDatesQuery(connection);
-                        $scope.updateChartData(dateQueryResults);
+                        $scope.updateChartData(validQueryResults);
                         $scope.loadingData = false;
                         XDATA.userALE.log({
                             activity: "alter",
@@ -1007,75 +1018,6 @@ function($interval, $filter, external, connectionService, datasetService, errorN
                         $scope.invalidRecordCount = 0;
                         $scope.loadingData = false;
                         if(response.responseJSON) {
-                            $scope.errorMessage = errorNotificationService.showErrorMessage($element, response.responseJSON.error, response.responseJSON.stackTrace);
-                        }
-                    }
-                });
-            };
-
-            /**
-             * Triggers a Neon query that will aggregate the invalid dates data for the currently selected dataset.
-             * @param {neon.query.Connection} connection
-             * @method invalidDatesQuery
-             * @private
-             */
-            var invalidDatesQuery = function(connection) {
-                var query = $scope.createInvalidDatesQuery();
-
-                if($scope.outstandingQuery) {
-                    $scope.outstandingQuery.abort();
-                }
-
-                $scope.outstandingQuery = connection.executeQuery(query);
-                $scope.outstandingQuery.done(function() {
-                    $scope.outstandingQuery = undefined;
-                });
-                $scope.outstandingQuery.done(function(queryResults) {
-                    $scope.$apply(function() {
-                        $scope.invalidRecordCount = (queryResults.data.length ? queryResults.data[0].count : 0);
-                        $scope.loadingData = false;
-                        XDATA.userALE.log({
-                            activity: "alter",
-                            action: "receive",
-                            elementId: "timeline",
-                            elementType: "canvas",
-                            elementSub: "timeline",
-                            elementGroup: "chart_group",
-                            source: "system",
-                            tags: ["receive", "timeline", "data"]
-                        });
-                    });
-                });
-                $scope.outstandingQuery.fail(function(response) {
-                    if(response.status === 0) {
-                        XDATA.userALE.log({
-                            activity: "alter",
-                            action: "canceled",
-                            elementId: "timeline",
-                            elementType: "canvas",
-                            elementSub: "timeline",
-                            elementGroup: "chart_group",
-                            source: "system",
-                            tags: ["canceled", "timeline", "data"]
-                        });
-                    } else {
-                        XDATA.userALE.log({
-                            activity: "alter",
-                            action: "failed",
-                            elementId: "timeline",
-                            elementType: "canvas",
-                            elementSub: "timeline",
-                            elementGroup: "chart_group",
-                            source: "system",
-                            tags: ["failed", "timeline", "data"]
-                        });
-                        $scope.invalidRecordCount = 0;
-                        $scope.loadingData = false;
-                        if(response.responseJSON) {
-                            if($scope.errorMessage) {
-                                errorNotificationService.hideErrorMessage($scope.errorMessage);
-                                $scope.errorMessage = undefined;
-                            }
                             $scope.errorMessage = errorNotificationService.showErrorMessage($element, response.responseJSON.error, response.responseJSON.stackTrace);
                         }
                     }
