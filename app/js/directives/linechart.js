@@ -204,7 +204,7 @@ function(external, connectionService, datasetService, errorNotificationService, 
                             tags: ["linechart", "granularity", newVal]
                         });
                         $scope.chart.setGranularity(newVal);
-                        resetAndQueryForData();
+                        queryForData();
                         $scope.queryOnChangeBrush = $scope.queryOnChangeBrush || ($scope.brushExtent.length > 0);
                     }
                 });
