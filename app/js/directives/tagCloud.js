@@ -356,7 +356,7 @@ function(external, connectionService, datasetService, errorNotificationService, 
                     tags: ["query", "tag-cloud"]
                 });
 
-                if($scope.fieldTypes[$scope.options.tagField.columnName] !== "array") {
+                if(datasetService.getDatastore() != "elasticsearch" && $scope.fieldTypes[$scope.options.tagField.columnName] !== "array") {
                     var query = new neon.query.Query().selectFrom($scope.options.database.name, $scope.options.table.name)
                         .groupBy($scope.options.tagField.columnName)
                         .where($scope.options.tagField.columnName, "!=", null);
