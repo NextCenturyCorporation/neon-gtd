@@ -1,22 +1,25 @@
 <div class="header-container" ng-show="!(hideHeader)">
     <div class="title header-text pull-left" ng-bind="(bindTitle != undefined) ? bindTitle : options.table.prettyName + (options.attrY.prettyName ? ' / ' + options.attrY.prettyName : '')"></div>
 
-    <options-menu parent-element="element" export-function="makeLinechartExportObject" button-text="optionsMenuButtonText" show-button-text="showOptionsMenuButtonText" ng-show="!(hideAdvancedOptions)">
+    <options-menu parent-element="element" export-function="makeLinechartExportObject" button-text="optionsMenuButtonText" show-button-text="showOptionsMenuButtonText">
         <div class="form-group" ng-show="!(hideAdvancedOptions)">
             <label>Database</label>
             <select class="form-control" ng-model="options.database" ng-options="database.prettyName for database in databases" ng-required="true" ng-disabled="(databases.length < 2)" ng-change="updateTables()">
             </select>
         </div>
+
         <div class="form-group" ng-show="!(hideAdvancedOptions)">
             <label>Table</label>
             <select class="form-control" ng-model="options.table" ng-options="table.prettyName for table in tables" ng-required="true" ng-disabled="(tables.length < 2)" ng-change="updateFields()">
             </select>
         </div>
+
         <div class="form-group" ng-show="!(hideAdvancedOptions)">
             <label>Date Field (X Axis)</label>
             <select class="form-control" ng-model="options.attrX" ng-options="field.prettyName for field in fields" ng-required="true" ng-disabled="!(fields.length > 0)">
             </select>
         </div>
+
         <div class="form-group" ng-show="!(hideAdvancedOptions)">
             <label>Aggregation</label>
             <select class="form-control" ng-model="options.aggregation" ng-disabled="!(fields.length > 0)">
@@ -27,17 +30,20 @@
                 <option value="max">Maximum</option>
             </select>
         </div>
+
         <div class="form-group" ng-show="!(hideAdvancedOptions) && (options.aggregation !== 'count')">
             <label>Value Field (Y Axis)</label>
             <select class="form-control" ng-model="options.attrY" ng-options="field.prettyName for field in fields" ng-required="true" ng-disabled="!(fields.length > 0)">
             </select>
         </div>
+
         <div class="form-group" ng-show="!(hideAdvancedOptions)">
             <label>Group Field</label>
             <select class="form-control" ng-model="options.categoryField" ng-options="field.prettyName for field in fields" ng-disabled="!(fields.length > 0)">
                 <option value="">None</option>
             </select>
         </div>
+
         <div class="form-group">
             <label>Date Granularity</label>
             <div class="btn-group">
@@ -50,6 +56,7 @@
             </div>
             <div class="clearfix"></div>
         </div>
+
         <div class="form-group">
             <label>Trendlines</label>
             <div class="btn-group">
