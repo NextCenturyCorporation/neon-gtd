@@ -27,6 +27,8 @@ function(external, connectionService, datasetService, errorNotificationService, 
             bindCountField: '=',
             bindAggregation: '=',
             bindAggregationField: '=',
+            bindFilterField: '=',
+            bindFilterValue: '=',
             bindTable: '=',
             bindDatabase: '=',
             hideHeader: '=?',
@@ -67,9 +69,11 @@ function(external, connectionService, datasetService, errorNotificationService, 
             $scope.options = {
                 database: {},
                 table: {},
-                field: "",
+                field: {},
                 aggregation: "",
-                aggregationField: "",
+                aggregationField: {},
+                filterField: {},
+                filterValue: "",
                 limitCount: $scope.limitCount || 10000
             };
 
@@ -110,7 +114,7 @@ function(external, connectionService, datasetService, errorNotificationService, 
                     filtersChanged: onFiltersChanged
                 });
                 $scope.messenger.subscribe(datasetService.UPDATE_DATA_CHANNEL, function() {
-                    $scope.queryForData();
+                    queryForData();
                 });
 
                 $scope.messenger.subscribe(filterService.REQUEST_REMOVE_FILTER, function(ids) {
@@ -157,31 +161,54 @@ function(external, connectionService, datasetService, errorNotificationService, 
                 });
             };
 
-            $scope.handleChangeField = function() {
+            $scope.handleChangedDataField = function() {
                 logOptionsMenuDropdownChange("count-field", $scope.options.field);
                 if(!$scope.loadingData) {
-                    $scope.queryForData();
+                    queryForData();
                 }
             };
 
-            $scope.handleChangeAggregation = function() {
+            $scope.handleChangedAggregation = function() {
                 logOptionsMenuDropdownChange("aggregation", $scope.options.aggregation);
                 if(!$scope.loadingData) {
-                    $scope.queryForData();
+                    queryForData();
                 }
             };
 
-            $scope.handleChangeAggregationField = function() {
+            $scope.handleChangedAggregationField = function() {
                 logOptionsMenuDropdownChange("aggregation-field", $scope.options.aggregationField);
                 if(!$scope.loadingData) {
-                    $scope.queryForData();
+                    queryForData();
                 }
             };
 
-            $scope.handleChangeLimit = function() {
+            $scope.handleChangedUnsharedFilterField = function() {
+                logOptionsMenuDropdownChange("filter-field", $scope.options.filterField);
+                if(!$scope.loadingData && $scope.options.filterValue) {
+                    $scope.options.filterValue = "";
+                    queryForData();
+                }
+            };
+
+            $scope.handleChangedUnsharedFilterValue = function() {
+                logOptionsMenuDropdownChange("filter-value", $scope.options.filterValue);
+                if(!$scope.loadingData) {
+                    queryForData();
+                }
+            };
+
+            $scope.handleRemovedUnsharedFilter = function() {
+                logOptionsMenuDropdownChange("filter-value", $scope.options.filterValue);
+                $scope.options.filterValue = "";
+                if(!$scope.loadingData) {
+                    queryForData();
+                }
+            };
+
+            $scope.handleChangedLimit = function() {
                 logOptionsMenuDropdownChange("limit", $scope.options.limitCount);
                 if(!$scope.loadingData) {
-                    $scope.queryForData();
+                    queryForData();
                 }
             };
 
@@ -285,7 +312,7 @@ function(external, connectionService, datasetService, errorNotificationService, 
                         source: "system",
                         tags: ["filter-change", "count-by"]
                     });
-                    $scope.queryForData();
+                    queryForData();
                 }
             };
 
@@ -347,11 +374,16 @@ function(external, connectionService, datasetService, errorNotificationService, 
                 $scope.options.aggregationField = _.find($scope.fields, function(field) {
                     return field.columnName === aggregationFieldName;
                 }) || datasetService.createBlankField();
+                var filterFieldName = $scope.bindFilterField || "";
+                $scope.options.filterField = _.find($scope.fields, function(field) {
+                    return field.columnName === filterFieldName;
+                }) || datasetService.createBlankField();
+                $scope.options.filterValue = $scope.bindFilterValue || "";
 
                 if($scope.filterSet) {
                     $scope.clearFilter();
                 }
-                $scope.queryForData();
+                queryForData();
             };
 
             /**
@@ -363,8 +395,9 @@ function(external, connectionService, datasetService, errorNotificationService, 
              * poll for data and should show data.
              * Resets internal "need to query" state to false.
              * @method queryForData
+             * @private
              */
-            $scope.queryForData = function() {
+            var queryForData = function() {
                 if($scope.errorMessage) {
                     errorNotificationService.hideErrorMessage($scope.errorMessage);
                     $scope.errorMessage = undefined;
@@ -642,7 +675,8 @@ function(external, connectionService, datasetService, errorNotificationService, 
              * @method buildQuery
              */
             $scope.buildQuery = function() {
-                var query = new neon.query.Query().selectFrom($scope.options.database.name, $scope.options.table.name).groupBy($scope.options.field.columnName).where($scope.options.field.columnName, "!=", null);
+                var whereNotNull = neon.query.where($scope.options.field.columnName, "!=", null);
+                var query = new neon.query.Query().selectFrom($scope.options.database.name, $scope.options.table.name).groupBy($scope.options.field.columnName).where(whereNotNull);
 
                 // The widget displays its own ignored rows with 0.5 opacity.
                 query.ignoreFilters([$scope.filterKeys[$scope.options.database.name][$scope.options.table.name]]);
@@ -658,6 +692,11 @@ function(external, connectionService, datasetService, errorNotificationService, 
                 if($scope.options.aggregation === "max") {
                     query.aggregate(neon.query.MAX, $scope.options.aggregationField.columnName, $scope.options.aggregationField.columnName);
                     query.sortBy($scope.options.aggregationField, neon.query.DESCENDING);
+                }
+
+                if(datasetService.isFieldValid($scope.options.filterField) && $scope.options.filterValue) {
+                    var operator = $.isNumeric($scope.options.filterValue) ? "=" : "contains";
+                    query.where(neon.query.and(whereNotNull, neon.query.where($scope.options.filterField.columnName, operator, $scope.options.filterValue)));
                 }
 
                 if($scope.options.limitCount) {
@@ -703,6 +742,12 @@ function(external, connectionService, datasetService, errorNotificationService, 
                     source: "user",
                     tags: ["options", "count-by", "export"]
                 });
+
+                var capitalizeFirstLetter = function(str) {
+                    var first = str[0].toUpperCase();
+                    return first + str.slice(1);
+                };
+
                 var query = $scope.buildQuery();
                 query.limitClause = exportService.getLimitClause();
                 var finalObject = {
@@ -735,13 +780,16 @@ function(external, connectionService, datasetService, errorNotificationService, 
             };
 
             /**
-             * Helper function for makeBarchartExportObject that capitalizes the first letter of a string.
-             * @param str {String} The string to capitalize the first letter of.
-             * @return {String} The string given, but with its first letter capitalized.
+             * Generates and returns the title for this visualization.
+             * @method generateTitle
+             * @return {String}
              */
-            var capitalizeFirstLetter = function(str) {
-                var first = str[0].toUpperCase();
-                return first + str.slice(1);
+            $scope.generateTitle = function() {
+                var title = $scope.options.filterValue ? $scope.options.filterValue + " " : "";
+                if($scope.bindTitle) {
+                    return title + $scope.bindTitle;
+                }
+                return title + $scope.options.table.prettyName + ($scope.options.field.prettyName ? " / " + $scope.options.field.prettyName : "");
             };
 
             neon.ready(function() {
