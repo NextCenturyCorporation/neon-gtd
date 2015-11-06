@@ -27,6 +27,8 @@ function(external, connectionService, datasetService, errorNotificationService, 
         scope: {
             bindTitle: '=',
             bindTagField: '=',
+            bindFilterField: '=',
+            bindFilterValue: '=',
             bindTable: '=',
             bindDatabase: '=',
             hideHeader: '=?',
@@ -65,7 +67,9 @@ function(external, connectionService, datasetService, errorNotificationService, 
             $scope.options = {
                 database: {},
                 table: {},
-                tagField: "",
+                tagField: {},
+                filterField: {},
+                filterValue: "",
                 andTags: true,
                 tagLimit: 40,
                 showTranslation: false
@@ -111,7 +115,7 @@ function(external, connectionService, datasetService, errorNotificationService, 
                     filtersChanged: onFiltersChanged
                 });
                 $scope.messenger.subscribe(datasetService.UPDATE_DATA_CHANNEL, function() {
-                    $scope.queryForTags();
+                    queryForTags();
                 });
 
                 $scope.messenger.subscribe(filterService.REQUEST_REMOVE_FILTER, function(ids) {
@@ -135,6 +139,7 @@ function(external, connectionService, datasetService, errorNotificationService, 
                     });
                     linksPopupService.deleteLinks($scope.visualizationId);
                     $element.off("resize", updateSize);
+                    $element.find(".chart-options").off("resize", updateSize);
                     $scope.messenger.removeEvents();
                     // Remove our filter if we had an active one.
                     if(0 < $scope.filterTags.length) {
@@ -144,6 +149,7 @@ function(external, connectionService, datasetService, errorNotificationService, 
                 });
 
                 $element.resize(updateSize);
+                $element.find(".chart-options").resize(updateSize);
 
                 // setup tag cloud color/size changes
                 $.fn.tagcloud.defaults = {
@@ -212,7 +218,7 @@ function(external, connectionService, datasetService, errorNotificationService, 
                         source: "system",
                         tags: ["filter-change", "tag-cloud"]
                     });
-                    $scope.queryForTags();
+                    queryForTags();
                 }
             };
 
@@ -286,11 +292,16 @@ function(external, connectionService, datasetService, errorNotificationService, 
                             $scope.options.tagField = _.find($scope.fields, function(field) {
                                 return field.columnName === tagField;
                             }) || datasetService.createBlankField();
+                            var filterField = $scope.bindFilterField || "";
+                            $scope.options.filterField = _.find($scope.fields, function(field) {
+                                return field.columnName === filterField;
+                            }) || datasetService.createBlankField();
+                            $scope.options.filterValue = $scope.bindFilterValue || "";
 
                             if($scope.showFilter) {
                                 $scope.clearTagFilters();
                             } else {
-                                $scope.queryForTags();
+                                queryForTags();
                             }
                         });
                     });
@@ -330,8 +341,9 @@ function(external, connectionService, datasetService, errorNotificationService, 
             /**
              * Triggers a query that will aggregate the most popular tags in the tag cloud
              * @method queryForTags
+             * @private
              */
-            $scope.queryForTags = function() {
+            var queryForTags = function() {
                 if($scope.errorMessage) {
                     errorNotificationService.hideErrorMessage($scope.errorMessage);
                     $scope.errorMessage = undefined;
@@ -434,7 +446,13 @@ function(external, connectionService, datasetService, errorNotificationService, 
                         }
                     });
                 } else {
-                    connection.executeArrayCountQuery($scope.options.database.name, $scope.options.table.name, $scope.options.tagField.columnName, $scope.options.tagLimit, function(tagCounts) {
+                    var whereClause = null;
+                    if(datasetService.isFieldValid($scope.options.filterField) && $scope.options.filterValue) {
+                        var operator = $.isNumeric($scope.options.filterValue) ? "=" : "contains";
+                        whereClause = neon.query.where($scope.options.filterField.columnName, operator, $scope.options.filterValue);
+                    }
+
+                    connection.executeArrayCountQuery($scope.options.database.name, $scope.options.table.name, $scope.options.tagField.columnName, $scope.options.tagLimit, whereClause, function(tagCounts) {
                         XDATA.userALE.log({
                             activity: "alter",
                             action: "query",
@@ -586,7 +604,7 @@ function(external, connectionService, datasetService, errorNotificationService, 
                     text: (_.pluck($scope.filterTags, ($scope.options.showTranslation ? 'nameTranslated' : 'name'))).join(', ')
                 },function() {
                     $scope.$apply(function() {
-                        $scope.queryForTags();
+                        queryForTags();
                         // Show the Clear Filter button.
                         $scope.showFilter = true;
                         $scope.error = "";
@@ -608,7 +626,7 @@ function(external, connectionService, datasetService, errorNotificationService, 
                         $scope.showFilter = false;
                         $scope.filterTags = [];
                         $scope.error = "";
-                        $scope.queryForTags();
+                        queryForTags();
                     });
                 }, function() {
                     // Notify the user of the error.
@@ -638,10 +656,33 @@ function(external, connectionService, datasetService, errorNotificationService, 
                 $scope.filterTags.splice(index, 1);
             };
 
-            $scope.updateTagField = function() {
+            $scope.handleChangedTagField = function() {
                 // TODO Logging
                 if(!$scope.loadingData) {
-                    $scope.queryForTags();
+                    queryForTags();
+                }
+            };
+
+            $scope.handleChangedUnsharedFilterField = function() {
+                // TODO Logging
+                if(!$scope.loadingData && $scope.options.filterValue) {
+                    $scope.options.filterValue = "";
+                    queryForTags();
+                }
+            };
+
+            $scope.handleChangedUnsharedFilterValue = function() {
+                // TODO Logging
+                if(!$scope.loadingData) {
+                    queryForTags();
+                }
+            };
+
+            $scope.handleRemovedUnsharedFilter = function() {
+                // TODO Logging
+                $scope.options.filterValue = "";
+                if(!$scope.loadingData) {
+                    queryForTags();
                 }
             };
 
@@ -823,6 +864,19 @@ function(external, connectionService, datasetService, errorNotificationService, 
                     pretty: "Count"
                 });
                 return finalObject;
+            };
+
+            /**
+             * Generates and returns the title for this visualization.
+             * @method generateTitle
+             * @return {String}
+             */
+            $scope.generateTitle = function() {
+                var title = $scope.options.filterValue ? $scope.options.filterValue + " " : "";
+                if($scope.bindTitle) {
+                    return title + $scope.bindTitle;
+                }
+                return title + $scope.options.table.prettyName + ($scope.options.tagField.prettyName ? " / " + $scope.options.tagField.prettyName : "");
             };
 
             // Wait for neon to be ready, the create our messenger and intialize the view and data.
