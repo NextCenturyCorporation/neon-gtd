@@ -33,6 +33,8 @@ coreMap.Map.Layer.PointsLayer = OpenLayers.Class(OpenLayers.Layer.Vector, {
     CLASS_NAME: "coreMap.Map.Layer.PointsLayer",
     colors: {},
     data: [],
+    database: '',
+    table: '',
     latitudeMapping: '',
     longitudeMapping: '',
     sizeMapping: '',
