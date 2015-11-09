@@ -661,6 +661,7 @@ function(external, $timeout, connectionService, datasetService, errorNotificatio
                 translateNewsProperty("head", sliceStart, sliceEnd, function() {
                     translateNewsProperty("name", sliceStart, sliceEnd, function() {
                         translateNewsProperty("text", sliceStart, sliceEnd, function() {
+                            runLinky();
                             $scope.data.translatedRange[0] = $scope.data.translatedRange[0] < 0 ? sliceStart : Math.min($scope.data.translatedRange[0], sliceStart);
                             $scope.data.translatedRange[1] = $scope.data.translatedRange[1] < 0 ? sliceEnd : Math.max($scope.data.translatedRange[1], sliceEnd);
                             $scope.loadingData = false;
