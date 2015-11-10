@@ -14,3 +14,6 @@ reports
 target/
 tmp
 version.json
+app/css/dark-green.css
+app/css/dark-purple.css
+app/css/light-green.css
