@@ -555,7 +555,7 @@ function(external, connectionService, datasetService, errorNotificationService, 
 
                     var mappings = datasetService.getMappings($scope.options.database.name, $scope.options.table.name);
                     var cloudLinks = linksPopupService.createAllServiceLinkObjects(external.services, mappings, $scope.options.tagField.columnName, tagName);
-                    linksPopupService.addLinks($scope.visualizationId, tagName, cloudLinks);
+                    linksPopupService.addLinks($scope.visualizationId, linksPopupService.generateKey($scope.options.tagField, tagName), cloudLinks);
                     $scope.linksPopupButtonIsDisabled = !cloudLinks.length;
                     $scope.filterTags.push(filterTag);
                 }
@@ -652,7 +652,7 @@ function(external, connectionService, datasetService, errorNotificationService, 
                 var index = _.findIndex($scope.filterTags, {
                     name: tagName
                 });
-                linksPopupService.removeLinksForKey($scope.visualizationId, tagName);
+                linksPopupService.removeLinksForKey($scope.visualizationId, linksPopupService.generateKey($scope.options.tagField, tagName));
                 $scope.filterTags.splice(index, 1);
             };
 
@@ -877,6 +877,15 @@ function(external, connectionService, datasetService, errorNotificationService, 
                     return title + $scope.bindTitle;
                 }
                 return title + $scope.options.table.prettyName + ($scope.options.tagField.prettyName ? " / " + $scope.options.tagField.prettyName : "");
+            };
+
+            /**
+             * Generates and returns the links popup key for this visualization.
+             * @method generateLinksPopupKey
+             * @return {String}
+             */
+            $scope.generateLinksPopupKey = function(value) {
+                return linksPopupService.generateKey($scope.options.tagField, value);
             };
 
             // Wait for neon to be ready, the create our messenger and intialize the view and data.

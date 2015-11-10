@@ -448,17 +448,18 @@ function(external, connectionService, datasetService, errorNotificationService, 
                 return neon.query.where(xAxisFieldName, '=', $scope.filterValue);
             };
 
-            var handleFilterSet = function(key, val) {
+            var handleFilterSet = function(field, value) {
                 $scope.filterSet = {
-                    key: key,
-                    value: val
+                    key: field,
+                    value: value
                 };
 
                 var mappings = datasetService.getMappings($scope.options.database.name, $scope.options.table.name);
                 var chartLinks = {};
-                chartLinks[val] = linksPopupService.createAllServiceLinkObjects(external.services, mappings, key, val);
+                var key = linksPopupService.generateKey($scope.options.attrX, value);
+                chartLinks[key] = linksPopupService.createAllServiceLinkObjects(external.services, mappings, field, value);
                 linksPopupService.setLinks($scope.visualizationId, chartLinks);
-                $scope.linksPopupButtonIsDisabled = !chartLinks[val].length;
+                $scope.linksPopupButtonIsDisabled = !chartLinks[key].length;
 
                 //no need to requery because barchart ignores its own filter
             };
@@ -538,6 +539,12 @@ function(external, connectionService, datasetService, errorNotificationService, 
                     source: "user",
                     tags: ["options", "barchart", "export"]
                 });
+
+                var capitalizeFirstLetter = function(str) {
+                    var first = str[0].toUpperCase();
+                    return first + str.slice(1);
+                };
+
                 var query = $scope.buildQuery();
                 query.limitClause = exportService.getLimitClause();
                 query.ignoreFilters_ = exportService.getIgnoreFilters();
@@ -580,13 +587,12 @@ function(external, connectionService, datasetService, errorNotificationService, 
             };
 
             /**
-             * Helper function for makeBarchartExportObject that capitalizes the first letter of a string.
-             * @param str {String} The string to capitalize the first letter of.
-             * @return {String} The string given, but with its first letter capitalized.
+             * Generates and returns the links popup key for this visualization.
+             * @method generateLinksPopupKey
+             * @return {String}
              */
-            var capitalizeFirstLetter = function(str) {
-                var first = str[0].toUpperCase();
-                return first + str.slice(1);
+            $scope.generateLinksPopupKey = function(value) {
+                return linksPopupService.generateKey($scope.options.attrX, value);
             };
 
             neon.ready(function() {

@@ -293,6 +293,17 @@ angular.module('neonDemo.services')
     };
 
     /**
+     * Returns the key for the given field object and value.
+     * @param {Object} fieldObject
+     * @param {Number} or {String} value
+     * @method generateKey
+     * @return {String}
+     */
+    service.generateKey = function(fieldObject, value) {
+        return fieldObject.prettyName ? fieldObject.prettyName + " = " + value : value;
+    };
+
+    /**
      * Returns the key for bounds with the given minimum and maximum latitude and longitude values.
      * @param {Number} minLat
      * @param {Number} minLon
@@ -302,7 +313,7 @@ angular.module('neonDemo.services')
      * @return {String}
      */
     service.generateBoundsKey = function(minLat, minLon, maxLat, maxLon) {
-        return "Latitude " + minLat + " to " + maxLat + ", Longitude " + minLon + " to " + maxLon;
+        return "Latitude = " + minLat + " to " + maxLat + ", Longitude = " + minLon + " to " + maxLon;
     };
 
     /**
@@ -313,7 +324,7 @@ angular.module('neonDemo.services')
      * @return {String}
      */
     service.generatePointKey = function(latitude, longitude) {
-        return "Latitude " + latitude + ", Longitude " + longitude;
+        return "Latitude = " + latitude + ", Longitude = " + longitude;
     };
 
     /**
@@ -324,7 +335,7 @@ angular.module('neonDemo.services')
      * @return {String}
      */
     service.generateRangeKey = function(start, end) {
-        return start + " to " + end;
+        return "Date = " + start + " to " + end;
     };
 
     /**

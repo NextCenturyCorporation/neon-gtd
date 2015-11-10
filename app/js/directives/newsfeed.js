@@ -52,7 +52,7 @@ function(external, $timeout, connectionService, datasetService, errorNotificatio
             };
 
             // The default limit and the number of news items added to the feed whenever the user scrolls to the bottom of the feed.
-            var LIMIT_INTERVAL = 100;
+            var LIMIT_INTERVAL = 50;
 
             // Prevents translation api calls from getting too long and returning an error
             var TRANSLATION_INTERVAL = 10;
@@ -542,8 +542,8 @@ function(external, $timeout, connectionService, datasetService, errorNotificatio
              * @return {Boolean}
              */
             var createExternalLinksForNewsItemData = function(mappings, head, name) {
-                var headLinksCount = head ? createExternalLinks(mappings, $scope.options.headField.columnName, head, $scope.visualizationId + "-head") : 0;
-                var nameLinksCount = name ? createExternalLinks(mappings, $scope.options.nameField.columnName, name, $scope.visualizationId + "-name") : 0;
+                var headLinksCount = head ? createExternalLinks(mappings, $scope.options.headField, head, $scope.visualizationId + "-head") : 0;
+                var nameLinksCount = name ? createExternalLinks(mappings, $scope.options.nameField, name, $scope.visualizationId + "-name") : 0;
                 return headLinksCount || nameLinksCount;
             };
 
@@ -551,18 +551,18 @@ function(external, $timeout, connectionService, datasetService, errorNotificatio
              * Creates the external links for the given field and value using the given mappings, saves the links in the links popup using the given source, and
              * returns the number of links that were created.
              * @param {Array} mappings
-             * @param {String} field
+             * @param {Object} fieldObject
              * @param {Number} or {String} value
              * @param {String} source
              * @method createExternalLinks
              * @private
              * @return {Number}
              */
-            var createExternalLinks = function(mappings, field, value, source) {
-                var links = linksPopupService.createAllServiceLinkObjects(external.services, mappings, field, value);
+            var createExternalLinks = function(mappings, fieldObject, value, source) {
+                var links = linksPopupService.createAllServiceLinkObjects(external.services, mappings, fieldObject.columnName, value);
 
                 if(links.length) {
-                    linksPopupService.addLinks(source, value, links);
+                    linksPopupService.addLinks(source, linksPopupService.generateKey(fieldObject, value), links);
                 }
 
                 return links.length;
@@ -581,13 +581,13 @@ function(external, $timeout, connectionService, datasetService, errorNotificatio
                 if(head) {
                     list.push({
                         source: $scope.visualizationId + "-head",
-                        key: head
+                        key: linksPopupService.generateKey($scope.options.headField, head)
                     });
                 }
                 if(name) {
                     list.push({
                         source: $scope.visualizationId + "-name",
-                        key: name
+                        key: linksPopupService.generateKey($scope.options.nameField, name)
                     });
                 }
                 return linksPopupService.createButtonJsonFromList(list);

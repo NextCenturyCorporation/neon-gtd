@@ -74,11 +74,21 @@ function(external, connectionService, datasetService, errorNotificationService, 
                 aggregationField: {},
                 filterField: {},
                 filterValue: "",
-                limitCount: $scope.limitCount || 10000
+                limitCount: $scope.limitCount || 500
             };
 
             var $tableDiv = $element.find('.count-by-grid');
             $tableDiv.attr("id", $scope.tableId);
+
+            /**
+             * Updates the size of the title for this visualization.
+             * @method updateTitleSize
+             * @private
+             */
+            var updateTitleSize = function() {
+                var titleWidth = $element.width() - $element.find(".chart-options").outerWidth(true);
+                $element.find(".title").css("maxWidth", titleWidth - 20);
+            };
 
             /**
              * Updates the size of the table to fill the available space in the directive's area.
@@ -93,8 +103,7 @@ function(external, connectionService, datasetService, errorNotificationService, 
                 // Subtract an additional 2 pixels from the table height to account for the its border.
                 $('#' + $scope.tableId).height($element.height() - headerHeight - 2);
 
-                var titleWidth = $element.width() - $element.find(".chart-options").outerWidth(true);
-                $element.find(".title").css("maxWidth", titleWidth - 20);
+                updateTitleSize();
 
                 if($scope.table) {
                     $scope.table.refreshLayout();
@@ -138,6 +147,7 @@ function(external, connectionService, datasetService, errorNotificationService, 
                     });
                     linksPopupService.deleteLinks($scope.tableId);
                     $element.off("resize", updateSize);
+                    $element.find(".chart-options").off("resize", updateTitleSize);
                     $scope.messenger.removeEvents();
                     if($scope.filterSet) {
                         filterService.removeFilters($scope.messenger, $scope.filterKeys);
@@ -146,6 +156,7 @@ function(external, connectionService, datasetService, errorNotificationService, 
                 });
 
                 $element.resize(updateSize);
+                $element.find(".chart-options").resize(updateTitleSize);
             };
 
             var logOptionsMenuDropdownChange = function(element, value) {
@@ -531,10 +542,10 @@ function(external, connectionService, datasetService, errorNotificationService, 
                 var mappings = datasetService.getMappings($scope.options.database.name, $scope.options.table.name);
 
                 data.forEach(function(row) {
-                    var field = $scope.options.field.columnName;
-                    var value = row[field];
-                    tableLinks[value] = linksPopupService.createAllServiceLinkObjects(external.services, mappings, field, value);
-                    row[$scope.EXTERNAL_APP_FIELD_NAME] = tableLinks[value].length ? linksPopupService.createLinkHtml($scope.tableId, value, value) : linksPopupService.createDisabledLinkHtml(value);
+                    var value = row[$scope.options.field.columnName];
+                    var key = linksPopupService.generateKey($scope.options.field, value);
+                    tableLinks[key] = linksPopupService.createAllServiceLinkObjects(external.services, mappings, $scope.options.field.columnName, value);
+                    row[$scope.EXTERNAL_APP_FIELD_NAME] = tableLinks[key].length ? linksPopupService.createLinkHtml($scope.tableId, key, value) : linksPopupService.createDisabledLinkHtml(value);
                 });
 
                 // Set the link data for the links popup for this visualization.
