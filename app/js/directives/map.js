@@ -1020,17 +1020,31 @@ angular.module('neonDemo.directives')
                 var latitudesAndLongitudes = [];
                 var fields = {};
                 var limit;
+
+                var addField = function(field) {
+                    if(field) {
+                        fields[field] = true;
+                    }
+                };
+
                 $scope.options.layers.forEach(function(layer) {
                     if(layer.database === database && layer.table === table) {
                         latitudesAndLongitudes.push({
                             latitude: layer.latitudeMapping,
                             longitude: layer.longitudeMapping
                         });
-                        fields[layer.categoryMapping] = true;
-                        fields[layer.dateMapping] = true;
-                        fields[layer.latitudeMapping] = true;
-                        fields[layer.longitudeMapping] = true;
-                        fields[layer.sizeMapping] = true;
+
+                        addField(layer.categoryMapping);
+                        addField(layer.dateMapping);
+                        addField(layer.latitudeMapping);
+                        addField(layer.longitudeMapping);
+                        addField(layer.sizeMapping);
+                        addField(layer.sourceMapping);
+                        addField(layer.targetMapping);
+                        addField(layer.weightMapping);
+                        addField(layer.nodeColorBy);
+                        addField(layer.lineColorBy);
+
                         // Use the highest limit for the query from all layers for the given database/table; only the first X elements will be used for each layer based on the limit of the layer.
                         limit = limit ? Math.max(limit, layer.limit) : layer.limit;
                     }
