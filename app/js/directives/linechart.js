@@ -339,10 +339,11 @@ function(external, connectionService, datasetService, errorNotificationService, 
                 } else if(external.services[neonMappings.DATE]) {
                     var dateLinks = [];
                     Object.keys(external.services[neonMappings.DATE].apps).forEach(function(app) {
-                        dateLinks.push(linksPopupService.createServiceLinkObjectWithData(external.services[neonMappings.DATE], app, {
-                            startDate: $scope.brushExtent[0].toISOString(),
-                            endDate: $scope.brushExtent[1].toISOString()
-                        }));
+                        var linkData = {};
+                        linkData[neonMappings.DATE] = {};
+                        linkData[neonMappings.DATE][neonMappings.START_DATE] = $scope.brushExtent[0].toISOString();
+                        linkData[neonMappings.DATE][neonMappings.END_DATE] = $scope.brushExtent[1].toISOString();
+                        dateLinks.push(linksPopupService.createServiceLinkObjectWithData(external.services[neonMappings.DATE], app, linkData));
                     });
                     var chartLinks = {};
                     chartLinks[$scope.getDateKeyForLinksPopupButton()] = dateLinks;
@@ -352,7 +353,7 @@ function(external, connectionService, datasetService, errorNotificationService, 
             };
 
             $scope.getDateKeyForLinksPopupButton = function() {
-                return $scope.brushExtent.length >= 2 ? linksPopupService.generateRangeKey($scope.brushExtent[0].toUTCString(), $scope.brushExtent[1].toUTCString()) : "";
+                return $scope.brushExtent.length >= 2 ? linksPopupService.generateDateRangeKey($scope.brushExtent[0].toUTCString(), $scope.brushExtent[1].toUTCString()) : "";
             };
 
             var queryForData = function() {

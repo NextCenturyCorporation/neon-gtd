@@ -297,10 +297,11 @@ angular.module('neonDemo.directives')
                         var boundsLinks = [];
                         Object.keys(external.services.bounds.apps).forEach(function(app) {
                             var linkData = {};
-                            linkData[neonMappings.MIN_LAT] = $scope.extent.minimumLatitude;
-                            linkData[neonMappings.MIN_LON] = $scope.extent.minimumLongitude;
-                            linkData[neonMappings.MAX_LAT] = $scope.extent.maximumLatitude;
-                            linkData[neonMappings.MAX_LON] = $scope.extent.maximumLongitude;
+                            linkData[neonMappings.BOUNDS] = {};
+                            linkData[neonMappings.BOUNDS][neonMappings.MIN_LAT] = $scope.extent.minimumLatitude;
+                            linkData[neonMappings.BOUNDS][neonMappings.MIN_LON] = $scope.extent.minimumLongitude;
+                            linkData[neonMappings.BOUNDS][neonMappings.MAX_LAT] = $scope.extent.maximumLatitude;
+                            linkData[neonMappings.BOUNDS][neonMappings.MAX_LON] = $scope.extent.maximumLongitude;
                             boundsLinks.push(linksPopupService.createServiceLinkObjectWithData(external.services.bounds, app, linkData));
                         });
                         linksPopupService.addLinks($scope.mapId, $scope.getBoundsKeyForLinksPopupButton(), boundsLinks);
@@ -1002,10 +1003,11 @@ angular.module('neonDemo.directives')
 
                     if(external.services.point) {
                         Object.keys(external.services.point.apps).forEach(function(app) {
-                            rowLinks.push(linksPopupService.createServiceLinkObjectWithData(external.services.point, app, {
-                                latitude: latitudeValue,
-                                longitude: longitudeValue
-                            }));
+                            var linkData = {};
+                            linkData[neonMappings.POINT] = {};
+                            linkData[neonMappings.POINT][neonMappings.LATITUDE] = latitudeValue;
+                            linkData[neonMappings.POINT][neonMappings.LONGITUDE] = longitudeValue;
+                            rowLinks.push(linksPopupService.createServiceLinkObjectWithData(external.services.point, app, linkData));
                         });
                     };
 

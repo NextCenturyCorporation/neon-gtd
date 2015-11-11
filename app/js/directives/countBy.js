@@ -74,7 +74,7 @@ function(external, connectionService, datasetService, errorNotificationService, 
                 aggregationField: {},
                 filterField: {},
                 filterValue: "",
-                limitCount: $scope.limitCount || 500
+                limitCount: $scope.limitCount || 100
             };
 
             var $tableDiv = $element.find('.count-by-grid');

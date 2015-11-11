@@ -72,15 +72,21 @@ angular.module('neonDemo.services')
                     link.args.forEach(function(linkArg) {
                         var argsMappings = angular.copy(linkArg.mappings);
 
-                        Object.keys(link.data).forEach(function(dataMapping) {
-                            if(_.isString(argsMappings)) {
-                                argsMappings = (argsMappings === dataMapping ? link.data[dataMapping] : argsMappings);
-                            } else {
+                        if(_.isString(argsMappings)) {
+                            Object.keys(link.data).forEach(function(neonMapping) {
+                                if(argsMappings === neonMapping) {
+                                    argsMappings = link.data[neonMapping];
+                                }
+                            });
+                        } else {
+                            Object.keys(link.data).forEach(function(neonMapping) {
                                 Object.keys(argsMappings).forEach(function(argMapping) {
-                                    argsMappings[argMapping] = (argsMappings[argMapping] === dataMapping ? link.data[dataMapping] : argsMappings[argMapping]);
+                                    if(link.data[neonMapping][argsMappings[argMapping]]) {
+                                        argsMappings[argMapping] = link.data[neonMapping][argsMappings[argMapping]];
+                                    }
                                 });
-                            }
-                        });
+                            });
+                        }
 
                         args[linkArg.variable] = argsMappings;
                     });
@@ -328,14 +334,52 @@ angular.module('neonDemo.services')
     };
 
     /**
-     * Returns the key for a range with the given start and end values.
+     * Returns the key for a date range with the given start and end values.
+     * @param {Number} or {String} start
+     * @param {Number} or {String} end
+     * @method generateDateRangeKey
+     * @return {String}
+     */
+    service.generateDateRangeKey = function(start, end) {
+        return service.generateRangeKey("Date", start, end);
+    };
+
+    /**
+     * Returns the key for a range with the given name and start and end values.
+     * @param {String} name
      * @param {Number} or {String} start
      * @param {Number} or {String} end
      * @method generateRangeKey
      * @return {String}
      */
-    service.generateRangeKey = function(start, end) {
-        return "Date = " + start + " to " + end;
+    service.generateRangeKey = function(name, start, end) {
+        return name + " = " + start + " to " + end;
+    };
+
+    /**
+     * Returns the key for the given mapping for multiple services with the given data.
+     * @param {String} servicesMapping
+     * @param {Object} data
+     * @method generateMultipleServicesKey
+     * @return {String}
+     */
+    service.generateMultipleServicesKey = function(servicesMapping, data) {
+        var key = "";
+        servicesMapping.split(",").forEach(function(neonMapping) {
+            if(key) {
+                key += ", ";
+            }
+            if(neonMapping === neonMappings.DATE) {
+                key += service.generateDateRangeKey(data[neonMappings.DATE][neonMappings.START_DATE], data[neonMappings.DATE][neonMappings.END_DATE]);
+            } else if(neonMapping === neonMappings.BOUNDS) {
+                key += service.generateBoundsKey(data[neonMappings.BOUNDS][neonMappings.MIN_LAT], data[neonMappings.BOUNDS][neonMappings.MIN_LON], data[neonMappings.BOUNDS][neonMappings.MAX_LAT], data[neonMappings.BOUNDS][neonMappings.MAX_LON]);
+            } else if(neonMapping === neonMappings.POINT) {
+                key += service.generatePointKey(data[neonMappings.POINT][neonMappings.LATITUDE], data[neonMappings.POINT][neonMappings.LONGITUDE]);
+            } else {
+                key += neonMapping + (data[neonMapping] ? " = " + data[neonMapping] : "");
+            }
+        });
+        return key;
     };
 
     /**

@@ -261,6 +261,80 @@ var readAndSaveExternalServices = function(config, callback) {
         }
     };
 
+    // http://stackoverflow.com/questions/17192796/generate-all-combinations-from-multiple-lists
+    var generatePermutations = function(lists, result, depth, current) {
+        if(depth === lists.length) {
+            result.push(angular.copy(current));
+            return;
+        }
+
+        for(var i = 0; i < lists[depth].length; ++i) {
+            generatePermutations(lists, result, depth + 1, current.concat([lists[depth][i]]));
+        }
+    };
+
+    var createServices = function(data, appType, serviceType) {
+        var neonServiceMappings = [];
+        Object.keys(config.servicesMappings).forEach(function(neonServiceMapping) {
+            if(serviceType === config.servicesMappings[neonServiceMapping]) {
+                neonServiceMappings.push(neonServiceMapping);
+            } else if(serviceType.indexOf(config.servicesMappings[neonServiceMapping]) >= 0) {
+                // Create a neon service mapping for the the multiple-service mapping (like "bounds,date,user") by combining the neon service configuration for each subservice.
+                var subserviceTypes = serviceType.split(",");
+                var neonSubservicesMappingsList = [];
+                var failure = false;
+
+                subserviceTypes.forEach(function(subserviceType) {
+                    var neonSubservicesMappings = [];
+                    Object.keys(config.servicesMappings).forEach(function(otherNeonServiceMapping) {
+                        if(subserviceType === config.servicesMappings[otherNeonServiceMapping]) {
+                            neonSubservicesMappings.push(otherNeonServiceMapping);
+                        }
+                    });
+                    neonSubservicesMappingsList.push(neonSubservicesMappings);
+                    failure = failure || !neonSubservicesMappings.length;
+                });
+
+                if(!failure) {
+                    var neonMultipleServicesMappingsLists = [];
+                    generatePermutations(neonSubservicesMappingsList, neonMultipleServicesMappingsLists, 0, []);
+                    neonMultipleServicesMappingsLists.forEach(function(neonMultipleServicesMappingList) {
+                        var neonMultipleServicesMapping = neonMultipleServicesMappingList.sort().join(",");
+                        if(neonServiceMappings.indexOf(neonMultipleServicesMapping) < 0) {
+                            neonServiceMappings.push(neonMultipleServicesMapping);
+                        }
+                    });
+                }
+            }
+        });
+
+        var appName = data[appType][nameProperty];
+
+        // Ignore linking to the Neon Dashboard itself.
+        if(!(appName.toLowerCase().indexOf("neon") === 0)) {
+            neonServiceMappings.forEach(function(neonServiceMapping) {
+                var argsMappings = config.argsMappings[neonServiceMapping];
+                if(!argsMappings) {
+                    argsMappings = {};
+                    // Create an arg mapping for the the multiple-service mapping (like "bounds,date,user") by combining the neon arg mapping configuration for each subservice.
+                    neonServiceMapping.split(",").forEach(function(neonSubservicesMapping) {
+                        var subservicesArgsMappings = config.argsMappings[neonSubservicesMapping];
+                        Object.keys(subservicesArgsMappings).forEach(function(subserviceType) {
+                            argsMappings[subserviceType] = subservicesArgsMappings[subserviceType];
+                        });
+                    });
+                }
+
+                services[neonServiceMapping] = services[neonServiceMapping] || createExternalService(serviceType.split(","), argsMappings);
+
+                services[neonServiceMapping].apps[appName] = {
+                    image: (config.imageDirectory || ".") + "/" + data[appType][imageProperty],
+                    url: data[appType][urlProperty] + "/" + data[appType][servicesProperty][serviceType]
+                };
+            });
+        }
+    };
+
     var readConfig = function(configList) {
         $.ajax({
             url: configList.shift(),
@@ -268,23 +342,7 @@ var readAndSaveExternalServices = function(config, callback) {
                 var data = _.isString(json) ? $.parseJSON(json) : json;
                 Object.keys(data).forEach(function(appType) {
                     Object.keys(data[appType][servicesProperty]).forEach(function(serviceType) {
-                        var neonServiceMappings = Object.keys(config.servicesMappings).filter(function(neonServiceMapping) {
-                            return config.servicesMappings[neonServiceMapping] === serviceType;
-                        });
-
-                        var appName = data[appType][nameProperty];
-
-                        // Ignore linking to the Neon Dashboard itself.
-                        if(!(appName.toLowerCase().indexOf("neon") === 0)) {
-                            neonServiceMappings.forEach(function(neonServiceMapping) {
-                                services[neonServiceMapping] = services[neonServiceMapping] || createExternalService(serviceType.split(","), config.argsMappings[neonServiceMapping]);
-
-                                services[neonServiceMapping].apps[appName] = {
-                                    image: (config.imageDirectory || ".") + "/" + data[appType][imageProperty],
-                                    url: data[appType][urlProperty] + "/" + data[appType][servicesProperty][serviceType]
-                                };
-                            });
-                        }
+                        createServices(data, appType, serviceType);
                     });
                 });
                 readConfigCallback(configList);
