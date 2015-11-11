@@ -264,7 +264,7 @@ function(external, connectionService, datasetService, errorNotificationService, 
                 var query = new neon.query.Query()
                     .selectFrom($scope.options.database.name, $scope.options.table.name)
                     .where($scope.options.attrX.columnName, '!=', null)
-                    .groupBy($scope.options.attrX.columnName);
+                    .groupBy($scope.options.attrX);
 
                 query.ignoreFilters([$scope.filterKeys[$scope.options.database.name][$scope.options.table.name]]);
 
@@ -397,7 +397,7 @@ function(external, connectionService, datasetService, errorNotificationService, 
                 }
 
                 var filterExists = $scope.filterSet ? true : false;
-                handleFilterSet($scope.options.attrX.prettyName, value);
+                handleFilterSet($scope.options.attrX, value);
 
                 // Store the value for the filter to use during filter creation.
                 $scope.filterValue = value;
@@ -448,15 +448,15 @@ function(external, connectionService, datasetService, errorNotificationService, 
                 return neon.query.where(xAxisFieldName, '=', $scope.filterValue);
             };
 
-            var handleFilterSet = function(key, val) {
+            var handleFilterSet = function(keyObj, val) {
                 $scope.filterSet = {
-                    key: key,
+                    key: keyObj.prettyName,
                     value: val
                 };
 
                 var mappings = datasetService.getMappings($scope.options.database.name, $scope.options.table.name);
                 var chartLinks = {};
-                chartLinks[val] = linksPopupService.createAllServiceLinkObjects(external.services, mappings, key, val);
+                chartLinks[val] = linksPopupService.createAllServiceLinkObjects(external.services, mappings, keyObj.columnName, val);
                 linksPopupService.setLinks($scope.visualizationId, chartLinks);
                 $scope.linksPopupButtonIsDisabled = !chartLinks[val].length;
 

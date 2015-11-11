@@ -34,7 +34,7 @@
     <div class="sunburst-controls" ng-show="groupFields.length > 0">
         <div class="sunburst-transient-breadcrumb" ng-repeat="groupField in groupFields">
             <a class="breadcrumb-title" ng-click="dropGroup(groupField)">
-              <span ng-bind="groupField"></span></span>
+              <span ng-bind="groupField.prettyName"></span></span>
             </a>
             <a class="breadcrumb-remove" ng-click="dropGroup(groupField)">
               <span class="glyphicon glyphicon-remove"></span>

@@ -44,7 +44,6 @@ function(external, connectionService, datasetService, errorNotificationService, 
             bindTable: '=',
             bindDatabase: '=',
             bindGranularity: '=',
-            colorMappings: '&',
             hideHeader: '=?',
             hideAdvancedOptions: '=?'
         },
@@ -410,7 +409,7 @@ function(external, connectionService, datasetService, errorNotificationService, 
                     groupByClause.push(hourGroupClause);
                 }
                 if(datasetService.isFieldValid($scope.options.categoryField)) {
-                    groupByClause.push($scope.options.categoryField.columnName);
+                    groupByClause.push($scope.options.categoryField);
                 }
 
                 var query = new neon.query.Query()
@@ -1178,7 +1177,7 @@ function(external, connectionService, datasetService, errorNotificationService, 
                     query: "day",
                     pretty: "Day"
                 });
-                var aggr = (query.groupByClauses[3]) ? query.groupByClauses[3].field : null;
+                var aggr = (query.groupByClauses[query.groupByClauses.length]) ? query.groupByClauses[query.groupByClauses.length].field : null;
                 if(aggr) {
                     finalObject.data[0].fields.push({
                         query: aggr,

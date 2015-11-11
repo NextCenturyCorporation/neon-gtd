@@ -64,8 +64,8 @@ coreMap.Map.Layer.PointsLayer = OpenLayers.Class(OpenLayers.Layer.Vector, {
             this.ClusterClass = new OpenLayers.Class(OpenLayers.Strategy.Cluster, {
                 attribute: null,
                 shouldCluster: function(cluster, feature) {
-                    var clusterVal = cluster.cluster[0].attributes[me.categoryMapping];
-                    var featureVal = feature.attributes[me.categoryMapping];
+                    var clusterVal = me.getValueFromDataElement(me.categoryMapping, cluster.cluster[0].attributes);
+                    var featureVal = me.getValueFromDataElement(me.categoryMapping, feature.attributes);
                     var superProto = OpenLayers.Strategy.Cluster.prototype;
                     return (clusterVal === featureVal && superProto.shouldCluster.apply(this, arguments));
                 },
@@ -315,7 +315,13 @@ coreMap.Map.Layer.PointsLayer.prototype.getValueFromDataElement = function(mappi
     if(typeof mapping === 'function') {
         return mapping.call(this, element);
     }
-    return element[mapping];
+    var mappingArray = mapping.split(".");
+    mappingArray.forEach(function(field) {
+        if(element) {
+            element = element[field];
+        }
+    });
+    return element;
 };
 
 /**
@@ -325,7 +331,8 @@ coreMap.Map.Layer.PointsLayer.prototype.getValueFromDataElement = function(mappi
  * @method areValuesInDataElement
  */
 coreMap.Map.Layer.PointsLayer.prototype.areValuesInDataElement = function(element) {
-    if(element[this.latitudeMapping] && element[this.longitudeMapping]) {
+    if(this.getValueFromDataElement(this.latitudeMapping, element) !== undefined &&
+        this.getValueFromDataElement(this.longitudeMapping, element) !== undefined) {
         return true;
     }
 
@@ -397,6 +404,7 @@ coreMap.Map.Layer.PointsLayer.prototype.updateGradient = function() {
 coreMap.Map.Layer.PointsLayer.prototype.updateFeatures = function() {
     var mapData = [];
     var me = this;
+
     _.each(this.data, function(element, index) {
         var longitude = me.getValueFromDataElement(me.longitudeMapping, element);
         var latitude = me.getValueFromDataElement(me.latitudeMapping, element);
@@ -406,9 +414,13 @@ coreMap.Map.Layer.PointsLayer.prototype.updateFeatures = function() {
 
             var date = 'none';
             var dateMapping = me.dateMapping || coreMap.Map.Layer.PointsLayer.DEFAULT_DATE_MAPPING;
-            if(element[dateMapping]) {
-                date = new Date(element[dateMapping]);
+            if(me.getValueFromDataElement(dateMapping, element)) {
+                date = new Date(me.getValueFromDataElement(dateMapping, element));
             }
+
+            // Note: The date mapping must be on the top level of attributes in order for filtering to work.
+            // This means even if the date is in to.date, keep the date at the top level with key "to.date" instead
+            // of in the object "to".
             pointFeature.attributes[dateMapping] = date;
 
             mapData.push(pointFeature);

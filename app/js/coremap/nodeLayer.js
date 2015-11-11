@@ -335,7 +335,13 @@ coreMap.Map.Layer.NodeLayer.prototype.getValueFromDataElement = function(mapping
     if(typeof mapping === 'function') {
         return mapping.call(this, element);
     }
-    return element[mapping];
+    var mappingArray = mapping.split(".");
+    mappingArray.forEach(function(field) {
+        if(element) {
+            element = element[field];
+        }
+    });
+    return element;
 };
 
 /**
@@ -345,9 +351,14 @@ coreMap.Map.Layer.NodeLayer.prototype.getValueFromDataElement = function(mapping
  * @method areValuesInDataElement
  */
 coreMap.Map.Layer.NodeLayer.prototype.areValuesInDataElement = function(element) {
-    if(element[this.sourceMapping] && element[this.targetMapping] && element[this.weightMapping]) {
-        if(element[this.sourceMapping][this.latitudeMapping] && element[this.sourceMapping][this.longitudeMapping] &&
-            element[this.targetMapping][this.latitudeMapping] && element[this.targetMapping][this.longitudeMapping]) {
+    var source = this.getValueFromDataElement(this.sourceMapping, element);
+    var target = this.getValueFromDataElement(this.targetMapping, element);
+
+    if(source !== undefined && target !== undefined && this.getValueFromDataElement(this.weightMapping, element) !== undefined) {
+        if(this.getValueFromDataElement(this.latitudeMapping, source) !== undefined &&
+            this.getValueFromDataElement(this.longitudeMapping, source) !== undefined &&
+            this.getValueFromDataElement(this.latitudeMapping, target) !== undefined &&
+            this.getValueFromDataElement(this.longitudeMapping, target) !== undefined) {
             return true;
         }
     }
@@ -434,8 +445,8 @@ coreMap.Map.Layer.NodeLayer.prototype.updateFeatures = function() {
         var dateMapping = me.dateMapping || coreMap.Map.Layer.PointsLayer.DEFAULT_DATE_MAPPING;
         var key = '';
 
-        if(element[dateMapping]) {
-            date = new Date(element[dateMapping]);
+        if(me.getValueFromDataElement(dateMapping, element)) {
+            date = new Date(me.getValueFromDataElement(dateMapping, element));
         }
 
         var pt1 = [
@@ -447,6 +458,10 @@ coreMap.Map.Layer.NodeLayer.prototype.updateFeatures = function() {
             me.getValueFromDataElement(me.longitudeMapping || coreMap.Map.Layer.NodeLayer.DEFAULT_LONGITUDE_MAPPING, tgt),
             me.getValueFromDataElement(me.latitudeMapping || coreMap.Map.Layer.NodeLayer.DEFAULT_LATITUDE_MAPPING, tgt)
         ];
+
+        // Note: The date mappings must be on the top level of each attributes in order for filtering to work.
+        // This means even if the date is in to.date, keep the date at the top level with key "to.date" instead
+        // of in the object "to".
 
         // If the line has substance, render it.
         if(weight > 0) {

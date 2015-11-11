@@ -1189,7 +1189,7 @@ function($interval, $filter, external, connectionService, datasetService, errorN
                                     source: "system",
                                     tags: ["receive", "timeline", "min-date"]
                                 });
-                                $scope.referenceStartDate = new Date(queryResults.data[0][$scope.options.dateField.columnName]);
+                                $scope.referenceStartDate = new Date(getDateField(queryResults.data[0]));
                                 if($scope.referenceEndDate !== undefined) {
                                     $scope.$apply(success);
                                 }
@@ -1255,7 +1255,7 @@ function($interval, $filter, external, connectionService, datasetService, errorN
                                     source: "system",
                                     tags: ["received", "timeline", "max-date"]
                                 });
-                                $scope.referenceEndDate = new Date(queryResults.data[0][$scope.options.dateField.columnName]);
+                                $scope.referenceEndDate = new Date(getDateField(queryResults.data[0]));
                                 if($scope.referenceStartDate !== undefined) {
                                     $scope.$apply(success);
                                 }
@@ -1281,6 +1281,24 @@ function($interval, $filter, external, connectionService, datasetService, errorN
                         });
                     }
                 }
+            };
+
+            /**
+             * Finds and returns the date field in the data. If the date contains '.', representing that the date is in an object
+             * within the data, it will find the nested value.
+             * @param {Object} data
+             * @method getDateField
+             * @private
+             */
+            var getDateField = function(data) {
+                var dateFieldArray = $scope.options.dateField.columnName.split(".");
+                var dateField = data;
+                dateFieldArray.forEach(function(field) {
+                    if(dateField) {
+                        dateField = dateField[field];
+                    }
+                });
+                return dateField;
             };
 
             /**

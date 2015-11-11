@@ -376,6 +376,35 @@ coreMap.Map.prototype.createSelectControl =  function(layer) {
         });
         var text;
 
+        // Finds and returns the field value in data. If field contains '.', representing that the field is in an object
+        // within data, it will find the nested field value.
+        var getNestedValue = function(data, field) {
+            var fieldArray = field.split(".");
+            var dataValue = data;
+            fieldArray.forEach(function(field) {
+                if(dataValue) {
+                    dataValue = dataValue[field];
+                }
+            });
+            return dataValue;
+        };
+
+        // Creates and returns table rows in data, recursively
+        var getNestedFields = function(data, fieldName) {
+            var text = "";
+            Object.keys(data).forEach(function(datum) {
+                if(datum.indexOf(".") === -1) {
+                    var name = fieldName ? fieldName + "." + datum : datum;
+                    if(typeof data[datum] === "object" && !data[datum].length) {
+                        text += getNestedFields(data[datum], name);
+                    } else {
+                        text += '<tr><th>' + _.escape(name) + '</th><td>' + data[datum] + '</td>';
+                    }
+                }
+            });
+            return text;
+        };
+
         // If we're on a cluster layer, show specific fields, if defined
         if(feature.cluster && feature.layer.clusterPopupFields.length) {
             text = '<div><table class="table table-striped table-condensed table-bordered">';
@@ -392,8 +421,9 @@ coreMap.Map.prototype.createSelectControl =  function(layer) {
 
                 for(var j = 0; j < feature.layer.clusterPopupFields.length; j++) {
                     var field = feature.layer.clusterPopupFields[j];
-                    if(Object.prototype.hasOwnProperty.call(feature.cluster[i].attributes, field)) {
-                        text += '<td>' + feature.cluster[i].attributes[field] + '</td>';
+                    var fieldValue = getNestedValue(feature.cluster[i].attributes, field);
+                    if(fieldValue) {
+                        text += '<td>' + fieldValue + '</td>';
                     } else {
                         text += '<td></td>';
                     }
@@ -413,10 +443,7 @@ coreMap.Map.prototype.createSelectControl =  function(layer) {
                 attributes = feature.attributes;
             }
 
-            Object.keys(attributes).forEach(function(attribute) {
-                text += '<tr><th>' + _.escape(attribute) + '</th><td>' + attributes[attribute] + '</td>';
-            });
-            text += '</table></div>';
+            text += getNestedFields(attributes) + '</table></div>';
         }
 
         me.featurePopup = new OpenLayers.Popup.FramedCloud("Data",
@@ -433,8 +460,10 @@ coreMap.Map.prototype.createSelectControl =  function(layer) {
         $(".olFramedCloudPopupContent td").linky(feature.layer.linkyConfig);
 
         if(me.linksPopupService && feature.layer.linksSource) {
-            var key = me.linksPopupService.generatePointKey(attributes[feature.layer.latitudeMapping], attributes[feature.layer.longitudeMapping]);
-            var tooltip = "latitude " + attributes[feature.layer.latitudeMapping] + ", longitude " + attributes[feature.layer.longitudeMapping];
+            var latitudeValue = getNestedValue(attributes, feature.layer.latitudeMapping);
+            var longitudeValue = getNestedValue(attributes, feature.layer.longitudeMapping);
+            var key = me.linksPopupService.generatePointKey(latitudeValue, longitudeValue);
+            var tooltip = "latitude " + longitudeValue + ", longitude " + longitudeValue;
             var link = me.linksPopupService.createLinkHtml(feature.layer.linksSource, key, tooltip);
 
             // Position the button below the 'close box' which can have one of a few different 'top' values depending on the location of the point on the layer.
@@ -621,8 +650,7 @@ coreMap.Map.prototype.doAttributesExist = function(data, layer) {
     var allExist = true;
 
     _.forEach(data, function(el) {
-        // Check for undefined because a value could exist in the layer and just be false.
-        if(layer.areValuesInDataElement(el) === undefined) {
+        if(!layer.areValuesInDataElement(el)) {
             allExist = false;
         }
     });

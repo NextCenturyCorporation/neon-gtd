@@ -114,11 +114,11 @@ mediators.DirectedGraphMediator = (function() {
 
         // Add each unique node from the data to the graph as a node.
         data.forEach(function(item) {
-            var nodeId = item[options.nodeField];
-            var nodeName = options.nameField ? item[options.nameField] : nodeId;
-            var nodeSize = options.sizeField ? item[options.sizeField] : 1;
-            var nodeFlag = options.flagField ? item[options.flagField] : true;
-            var itemDate = options.dateField ? new Date(item[options.dateField]) : undefined;
+            var nodeId = getNestedValue(item, options.nodeField);
+            var nodeName = options.nameField ? getNestedValue(item, options.nameField) : nodeId;
+            var nodeSize = options.sizeField ? getNestedValue(item, options.sizeField) : 1;
+            var nodeFlag = options.flagField ? getNestedValue(item, options.flagField) : true;
+            var itemDate = options.dateField ? new Date(getNestedValue(item, options.dateField)) : undefined;
 
             if(nodeId) {
                 var node = addNodeIfUnique(nodes, nodeId, nodeName, nodeSize);
@@ -167,6 +167,25 @@ mediators.DirectedGraphMediator = (function() {
         delete this.maps.targetsToSources;
         delete this.maps.sourcesToTargetsToLinkDates;
         delete this.maps.nodeIdsToClusterIds;
+    };
+
+    /**
+     * Finds and returns the field value in data. If field contains '.', representing that the field is in an object within data, it will
+     * find the nested field value.
+     * @param {Object} data
+     * @param {String} field
+     * @method getNestedValue
+     * @private
+     */
+    var getNestedValue = function(data, field) {
+        var fieldArray = field.split(".");
+        var dataValue = data;
+        fieldArray.forEach(function(field) {
+            if(dataValue) {
+                dataValue = dataValue[field];
+            }
+        });
+        return dataValue;
     };
 
     /**
@@ -310,7 +329,7 @@ mediators.DirectedGraphMediator = (function() {
     var createFieldArray = function(columnName, item, length) {
         var array = [];
         if(columnName) {
-            array = item[columnName] || [];
+            array = getNestedValue(item, columnName) || [];
             array = (array.constructor === Array) ? array : [array];
         }
         if(array.length < length) {
@@ -995,7 +1014,7 @@ mediators.DirectedGraphMediator = (function() {
                 text += '<tr class="graph-tooltip-block">' +
                     '<td class="graph-tooltip-label">' + mediator.tooltip.flagLabel + '</td>' +
                     '</tr>';
-            };
+            }
 
             return text;
         };

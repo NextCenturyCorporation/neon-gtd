@@ -349,7 +349,7 @@ function(external, $timeout, connectionService, datasetService, errorNotificatio
                     return;
                 }
 
-                $scope.linkyConfig = datasetService.getLinkyConfig() || DEFAULT_LINKY_CONFIG;;
+                $scope.linkyConfig = datasetService.getLinkyConfig() || DEFAULT_LINKY_CONFIG;
                 $scope.databases = datasetService.getDatabases();
                 $scope.options.database = $scope.databases[0];
                 if($scope.bindDatabase) {
@@ -509,17 +509,17 @@ function(external, $timeout, connectionService, datasetService, errorNotificatio
                 var mappings = datasetService.getMappings($scope.options.database.name, $scope.options.table.name);
 
                 data.forEach(function(item) {
-                    var head = datasetService.isFieldValid($scope.options.headField) ? item[$scope.options.headField.columnName] : "";
-                    var name = datasetService.isFieldValid($scope.options.nameField) ? item[$scope.options.nameField.columnName] : "";
+                    var head = datasetService.isFieldValid($scope.options.headField) ? getNestedValue(item, $scope.options.headField.columnName) : "";
+                    var name = datasetService.isFieldValid($scope.options.nameField) ? getNestedValue(item, $scope.options.nameField.columnName) : "";
                     var hasLinks = createExternalLinksForNewsItemData(mappings, head, name);
 
-                    var text = item[$scope.options.textField.columnName];
+                    var text = getNestedValue(item, $scope.options.textField.columnName);
                     if(_.isArray(text)) {
                         text = text.join("\n");
                     }
 
                     $scope.data.news.push({
-                        date: new Date(item[$scope.options.dateField.columnName]),
+                        date: new Date(getNestedValue(item, $scope.options.dateField.columnName)),
                         head: head,
                         headTranslated: head,
                         name: name,
@@ -530,6 +530,25 @@ function(external, $timeout, connectionService, datasetService, errorNotificatio
                         linksPopupButtonIsDisabled: !hasLinks
                     });
                 });
+            };
+
+            /**
+             * Finds and returns the field value in data. If field contains '.', representing that the field is in an object within data, it will
+             * find the nested field value.
+             * @param {Object} data
+             * @param {String} field
+             * @method getNestedValue
+             * @private
+             */
+            var getNestedValue = function(data, field) {
+                var fieldArray = field.split(".");
+                var dataValue = data;
+                fieldArray.forEach(function(field) {
+                    if(dataValue) {
+                        dataValue = dataValue[field];
+                    }
+                });
+                return dataValue;
             };
 
             /**

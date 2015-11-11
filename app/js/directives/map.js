@@ -34,8 +34,6 @@ angular.module('neonDemo.directives')
         templateUrl: 'partials/directives/map.html',
         restrict: 'EA',
         scope: {
-            // map of categories to colors used for the legend
-            colorMappings: '&',
             hideHeader: '=?',
             hideAdvancedOptions: '=?'
         },
@@ -167,7 +165,6 @@ angular.module('neonDemo.directives')
                     mapBaseLayer: (datasetOptions ? datasetOptions.mapBaseLayer : undefined)
                 });
                 $scope.map.linksPopupService = linksPopupService;
-                $scope.draw();
                 $scope.map.register("movestart", this, onMapEvent);
                 $scope.map.register("moveend", this, onMapEvent);
                 $scope.map.register("zoom", this, onMapEvent);
@@ -795,18 +792,10 @@ angular.module('neonDemo.directives')
             };
 
             /**
-             * Redraws the map
-             */
-            $scope.draw = function() {
-                // TODO: Puzzle out where this goes when there's no longer 2 fixed layers.
-                $scope.colorMappings = [];
-            };
-
-            /**
              * Updates the data bound to the map managed by this directive.  This will trigger a change in
              * the chart's visualization.
              * @param {Object} queryResults Results returned from a Neon query.
-             * @param {Array} queryResults.data The aggregate numbers for the heat chart cells.
+             * @param {Array} queryResults.data
              * @method updateMapData
              */
             $scope.updateMapData = function(database, table, queryResults) {
@@ -829,7 +818,7 @@ angular.module('neonDemo.directives')
                         // Only set data and update features if all attributes exist in data
                         if($scope.map.doAttributesExist(data, $scope.options.layers[i].olLayer)) {
                             $scope.options.layers[i].error = undefined;
-                            $scope.options.layers[i].olLayer.setData(data);
+                            $scope.options.layers[i].olLayer.setData(angular.copy(data));
                             if(external.services.point) {
                                 var linksSource = generatePointLinksSource(database, table);
                                 createExternalLinks(data, linksSource, $scope.options.layers[i].latitudeMapping, $scope.options.layers[i].longitudeMapping);
@@ -858,8 +847,6 @@ angular.module('neonDemo.directives')
                     }
                 }
 
-                $scope.draw();
-
                 if(initializing) {
                     $scope.setDefaultView();
                 }
@@ -873,8 +860,10 @@ angular.module('neonDemo.directives')
             };
 
             /**
-             * Computes the minimum bounding rect to bound the data
-             * @param data
+             * Computes the minimum bounding rectangle to bound the data
+             * @param {Array} data
+             * @method computeDataBounds
+             * @return {Object} Returns object with keys 'left', 'bottom', 'right', and 'top' representing the minimum lat/lon bounds
              */
             $scope.computeDataBounds = function(data) {
                 if(data && data.length === 0) {
@@ -885,84 +874,77 @@ angular.module('neonDemo.directives')
                         top: 90
                     };
                 } else if(data) {
-                    var minLon = 180;
-                    var minLat = 90;
-                    var maxLon = -180;
-                    var maxLat = -90;
-                    var latMapping = "latitude";
-                    var lonMapping = "longitude";
+                    var bounds = {
+                        minLon: 180,
+                        minLat: 90,
+                        maxLon: -180,
+                        maxLat: -90
+                    };
 
-                    if($scope.options.layers.length && $scope.options.layers[0].type === "node") {
-                        var targetMapping = $scope.options.layers[0].targetMapping ? $scope.options.layers[0].targetMapping : "to";
-                        var sourceMapping = $scope.options.layers[0].sourceMapping ? $scope.options.layers[0].sourceMapping : "from";
-                        latMapping = $scope.options.layers[0].latitudeMapping ? $scope.options.layers[0].latitudeMapping : latMapping;
-                        lonMapping = $scope.options.layers[0].longitudeMapping ? $scope.options.layers[0].longitudeMapping : lonMapping;
+                    $scope.options.layers.forEach(function(layer) {
+                        var latMapping = layer.latitudeMapping ? layer.latitudeMapping : coreMap.Map.Layer.HeatmapLayer.DEFAULT_LATITUDE_MAPPING;
+                        var lonMapping = layer.longitudeMapping ? layer.longitudeMapping : coreMap.Map.Layer.HeatmapLayer.DEFAULT_LONGITUDE_MAPPING;
 
-                        data.forEach(function(d) {
-                            var lat = d[targetMapping][latMapping];
-                            var lon = d[targetMapping][lonMapping];
-                            if($.isNumeric(lat) && $.isNumeric(lon)) {
-                                if(lon < minLon) {
-                                    minLon = lon;
-                                }
-                                if(lon > maxLon) {
-                                    maxLon = lon;
-                                }
-                                if(lat < minLat) {
-                                    minLat = lat;
-                                }
-                                if(lat > maxLat) {
-                                    maxLat = lat;
-                                }
-                            }
-                            lat = d[sourceMapping][latMapping];
-                            lon = d[sourceMapping][lonMapping];
-                            if($.isNumeric(lat) && $.isNumeric(lon)) {
-                                if(lon < minLon) {
-                                    minLon = lon;
-                                }
-                                if(lon > maxLon) {
-                                    maxLon = lon;
-                                }
-                                if(lat < minLat) {
-                                    minLat = lat;
-                                }
-                                if(lat > maxLat) {
-                                    maxLat = lat;
-                                }
-                            }
-                        });
-                    } else {
-                        latMapping = $scope.options.layers[0].latitudeMapping ? $scope.options.layers[0].latitudeMapping : latMapping;
-                        lonMapping = $scope.options.layers[0].longitudeMapping ? $scope.options.layers[0].longitudeMapping : lonMapping;
+                        if(layer.type === "node") {
+                            var sourceMapping = layer.sourceMapping ? layer.sourceMapping : coreMap.Map.Layer.NodeLayer.DEFAULT_SOURCE;
+                            var targetMapping = layer.targetMapping ? layer.targetMapping : coreMap.Map.Layer.NodeLayer.DEFAULT_TARGET;
 
-                        data.forEach(function(d) {
-                            var lat = d[latMapping];
-                            var lon = d[lonMapping];
-                            if($.isNumeric(lat) && $.isNumeric(lon)) {
-                                if(lon < minLon) {
-                                    minLon = lon;
-                                }
-                                if(lon > maxLon) {
-                                    maxLon = lon;
-                                }
-                                if(lat < minLat) {
-                                    minLat = lat;
-                                }
-                                if(lat > maxLat) {
-                                    maxLat = lat;
-                                }
-                            }
-                        });
-                    }
+                            data.forEach(function(d) {
+                                var lat = getNestedValue(d, targetMapping)[latMapping];
+                                var lon = getNestedValue(d, targetMapping)[lonMapping];
+                                bounds = calculateMinMaxBounds(bounds, lat, lon);
+
+                                lat = getNestedValue(d, sourceMapping)[latMapping];
+                                lon = getNestedValue(d, sourceMapping)[lonMapping];
+                                bounds = calculateMinMaxBounds(bounds, lat, lon);
+                            });
+                        } else {
+                            data.forEach(function(d) {
+                                var lat = getNestedValue(d, latMapping);
+                                var lon = getNestedValue(d, lonMapping);
+                                bounds = calculateMinMaxBounds(bounds, lat, lon);
+                            });
+                        }
+                    });
 
                     return {
-                        left: minLon === 180 ? -180 : minLon,
-                        bottom: minLat === 90 ? -90 : minLat,
-                        right: maxLon === -180 ? 180 : maxLon,
-                        top: maxLat === -90 ? 90 : maxLat
+                        left: bounds.minLon === 180 ? -180 : bounds.minLon,
+                        bottom: bounds.minLat === 90 ? -90 : bounds.minLat,
+                        right: bounds.maxLon === -180 ? 180 : bounds.maxLon,
+                        top: bounds.maxLat === -90 ? 90 : bounds.maxLat
                     };
                 }
+            };
+
+            /**
+             * Calculates the new minimum lat/lon values based on the current bounds and the new lat and lon values.
+             * @param {Object} bounds Object of latitude and longitude values representing bounds
+             * @param {Number} bounds.maxLat The maximum latitude value
+             * @param {Number} bounds.maxLon The maximum longitude value
+             * @param {Number} bounds.minLat The minimum latitude value
+             * @param {Number} bounds.minLon The minimum longitude value
+             * @param {Number} lat Latitude to compare bounds against
+             * @param {Number} lon Longitude to compare bounds against
+             * @method calculateMinMaxBounds
+             * @return {Object} Returns bounds with updated lat/lons
+             */
+            var calculateMinMaxBounds = function(bounds, lat, lon) {
+                if($.isNumeric(lat) && $.isNumeric(lon)) {
+                    if(lon < bounds.minLon) {
+                        bounds.minLon = lon;
+                    }
+                    if(lon > bounds.maxLon) {
+                        bounds.maxLon = lon;
+                    }
+                    if(lat < bounds.minLat) {
+                        bounds.minLat = lat;
+                    }
+                    if(lat > bounds.maxLat) {
+                        bounds.maxLat = lat;
+                    }
+                }
+
+                return bounds;
             };
 
             /**
@@ -978,8 +960,8 @@ angular.module('neonDemo.directives')
                 var mapLinks = [];
 
                 data.forEach(function(row) {
-                    var latitudeValue = row[latitudeField];
-                    var longitudeValue = row[longitudeField];
+                    var latitudeValue = getNestedValue(row, latitudeField);
+                    var longitudeValue = getNestedValue(row, longitudeField);
                     var rowLinks = [];
 
                     if(external.services.point) {
@@ -989,7 +971,7 @@ angular.module('neonDemo.directives')
                                 longitude: longitudeValue
                             }));
                         });
-                    };
+                    }
 
                     mapLinks[linksPopupService.generatePointKey(latitudeValue, longitudeValue)] = rowLinks;
                 });
@@ -1260,7 +1242,7 @@ angular.module('neonDemo.directives')
                             latMapping = mappings.allCoordinates[i].latitude;
                             lonMapping = mappings.allCoordinates[i].longitude;
 
-                            point = new OpenLayers.Geometry.Point(msg.data[lonMapping], msg.data[latMapping]);
+                            point = new OpenLayers.Geometry.Point(getNestedValue(msg.data, lonMapping), getNestedValue(msg.data, latMapping));
                             point.transform(coreMap.Map.SOURCE_PROJECTION, coreMap.Map.DESTINATION_PROJECTION);
 
                             feature = new OpenLayers.Feature.Vector(point);
@@ -1282,7 +1264,7 @@ angular.module('neonDemo.directives')
                             lonMapping = pointsLayer.longitudeMapping;
                         }
 
-                        point = new OpenLayers.Geometry.Point(msg.data[lonMapping], msg.data[latMapping]);
+                        point = new OpenLayers.Geometry.Point(getNestedValue(msg.data, lonMapping), getNestedValue(msg.data, latMapping));
                         point.transform(coreMap.Map.SOURCE_PROJECTION, coreMap.Map.DESTINATION_PROJECTION);
 
                         feature = new OpenLayers.Feature.Vector(point);
@@ -1297,6 +1279,25 @@ angular.module('neonDemo.directives')
                     $scope.map.removeLayer($scope.selectedPointLayer);
                     $scope.selectedPointLayer = {};
                 }
+            };
+
+            /**
+             * Finds and returns the field value in data. If field contains '.', representing that the field is in an object within data, it will
+             * find the nested field value.
+             * @param {Object} data
+             * @param {String} field
+             * @method getNestedValue
+             * @private
+             */
+            var getNestedValue = function(data, field) {
+                var fieldArray = field.split(".");
+                var dataValue = data;
+                fieldArray.forEach(function(field) {
+                    if(dataValue) {
+                        dataValue = dataValue[field];
+                    }
+                });
+                return dataValue;
             };
 
             /**

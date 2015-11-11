@@ -605,11 +605,11 @@ function(external, connectionService, datasetService, errorNotificationService, 
                 }
 
                 var dataKeys = $scope.data.map(function(elem) {
-                    return elem.key.substring(1);
+                    return elem.key;
                 });
 
                 $scope.filterTags.forEach(function(tag) {
-                    dataKeys.push(tag.name.substring(1));
+                    dataKeys.push(tag.name);
                 });
 
                 translationService.translate(dataKeys, $scope.translationLanguages.chosenToLanguage,
@@ -632,9 +632,9 @@ function(external, connectionService, datasetService, errorNotificationService, 
 
                 response.data.data.translations.forEach(function(elem, index) {
                     if(index < $scope.data.length) {
-                        $scope.data[index].keyTranslated = "#" + elem.translatedText;
+                        $scope.data[index].keyTranslated = elem.translatedText;
                     } else {
-                        $scope.filterTags[index - $scope.data.length].nameTranslated = "#" + elem.translatedText;
+                        $scope.filterTags[index - $scope.data.length].nameTranslated = elem.translatedText;
                     }
                 });
             };

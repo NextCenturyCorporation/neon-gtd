@@ -19,7 +19,7 @@
 angular.module('neonDemo.directives')
 .directive('linksPopupButton', ['LinksPopupService', function(linksPopupService) {
     return {
-        template: "<span ng-show='isEnabled()'>" + linksPopupService.ENABLED_TEMPLATE + "</span>" + 
+        template: "<span ng-show='isEnabled()'>" + linksPopupService.ENABLED_TEMPLATE + "</span>" +
             "<span ng-show='showIfDisabled && !isEnabled()'>" + linksPopupService.DISABLED_TEMPLATE + "</span>",
         restrict: "EA",
         scope: {

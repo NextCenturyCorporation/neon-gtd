@@ -95,7 +95,13 @@ coreMap.Map.Layer.HeatmapLayer.prototype.getValueFromDataElement = function(mapp
     if(typeof mapping === 'function') {
         return mapping.call(this, element);
     }
-    return element[mapping];
+    var mappingArray = mapping.split(".");
+    mappingArray.forEach(function(field) {
+        if(element) {
+            element = element[field];
+        }
+    });
+    return element;
 };
 
 /**
@@ -105,7 +111,8 @@ coreMap.Map.Layer.HeatmapLayer.prototype.getValueFromDataElement = function(mapp
  * @method areValuesInDataElement
  */
 coreMap.Map.Layer.HeatmapLayer.prototype.areValuesInDataElement = function(element) {
-    if(element[this.latitudeMapping] && element[this.longitudeMapping]) {
+    if(this.getValueFromDataElement(this.latitudeMapping, element) !== undefined &&
+        this.getValueFromDataElement(this.longitudeMapping, element) !== undefined) {
         return true;
     }
 

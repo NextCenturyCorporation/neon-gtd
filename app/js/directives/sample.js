@@ -262,7 +262,7 @@ function(connectionService, datasetService, errorNotificationService, filterServ
                 var query = new neon.query.Query().selectFrom($scope.options.database.name, $scope.options.table.name);
 
                 // TODO Replace the follwing code with your own query properties.
-                query.groupBy($scope.options.field.columnName);
+                query.groupBy($scope.options.field);
                 query.aggregate(neon.query.COUNT, '*', 'count');
                 query.sortBy('count', neon.query.DESCENDING);
                 query.where($scope.options.field.columnName, "!=", null);

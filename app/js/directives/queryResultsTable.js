@@ -188,7 +188,8 @@ function(external, connectionService, datasetService, errorNotificationService, 
                         enableTextSelectionOnCells: true,
                         forceFitColumns: false,
                         enableColumnReorder: true,
-                        forceSyncScrolling: true
+                        forceSyncScrolling: true,
+                        dataItemColumnValueExtractor: getItemColumnValue
                     }
                 };
 
@@ -202,6 +203,25 @@ function(external, connectionService, datasetService, errorNotificationService, 
                     options.id = _id;
                 }
                 return options;
+            };
+
+            /**
+             * Finds and returns the column value in the item. If the column name contains '.', representing that the column name is in an object
+             * within the item, it will find the nested value.
+             * @param {Object} item
+             * @param {String} column
+             * @method getItemColumnValue
+             * @private
+             */
+            var getItemColumnValue = function(item, column) {
+                var fieldArray = column.field.split(".");
+                var itemValue = item;
+                fieldArray.forEach(function(field) {
+                    if(itemValue) {
+                        itemValue = itemValue[field];
+                    }
+                });
+                return itemValue;
             };
 
             var createColumns = function(data, refreshColumns) {
@@ -681,7 +701,7 @@ function(external, connectionService, datasetService, errorNotificationService, 
 
                 data.forEach(function(row) {
                     var field = $scope.bindIdField || "_id";
-                    var id = row[field];
+                    var id = getNestedValue(row, field);
                     tableLinks[id] = linksPopupService.createAllServiceLinkObjects(external.services, mappings, field, id);
                     row[$scope.EXTERNAL_APP_FIELD_NAME] = tableLinks[id].length ? linksPopupService.createLinkHtml($scope.tableId, id, id) : linksPopupService.createDisabledLinkHtml(id);
                 });
@@ -690,6 +710,25 @@ function(external, connectionService, datasetService, errorNotificationService, 
                 linksPopupService.setLinks($scope.tableId, tableLinks);
 
                 return data;
+            };
+
+            /**
+             * Finds and returns the field value in data. If field contains '.', representing that the field is in an object within data, it will
+             * find the nested field value.
+             * @param {Object} data
+             * @param {String} field
+             * @method getNestedValue
+             * @private
+             */
+            var getNestedValue = function(data, field) {
+                var fieldArray = field.split(".");
+                var dataValue = data;
+                fieldArray.forEach(function(field) {
+                    if(dataValue) {
+                        dataValue = dataValue[field];
+                    }
+                });
+                return dataValue;
             };
 
             $scope.createDeleteColumnButtons = function() {
@@ -711,7 +750,15 @@ function(external, connectionService, datasetService, errorNotificationService, 
                     var indexToSplice = _.findIndex($scope.fields, function(field) {
                         return name === field.prettyName;
                     });
-                    var deletedField = $scope.fields.splice(indexToSplice, 1)[0];
+
+                    var deletedField = {
+                        columnName: name,
+                        prettyName: name
+                    };
+                    if(indexToSplice >= 0) {
+                        deletedField = $scope.fields.splice(indexToSplice, 1)[0];
+                    }
+
                     $scope.options.sortByField = $scope.options.sortByField === name ? $scope.fields[0] : $scope.options.sortByField;
                     $scope.deletedFieldsMap[$scope.options.database.name][$scope.options.table.name].push(deletedField);
                     $scope.options.addField = deletedField;
