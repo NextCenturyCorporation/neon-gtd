@@ -1036,10 +1036,14 @@ angular.module('neonDemo.directives')
                             longitude: layer.longitudeMapping
                         });
 
+                        // TODO Not sure whether to use categoryMapping or colorBy, date or dateMapping, etc.
                         addField(layer.categoryMapping);
+                        addField(layer.colorBy);
+                        addField(layer.date);
                         addField(layer.dateMapping);
                         addField(layer.latitudeMapping);
                         addField(layer.longitudeMapping);
+                        addField(layer.sizeBy);
                         addField(layer.sizeMapping);
                         addField(layer.sourceMapping);
                         addField(layer.targetMapping);
