@@ -6,12 +6,12 @@
                 <h4 class="modal-title" id="customConnectionModalLabel">Open External Applications</h4>
             </div>
             <div class="modal-body">
-                <div ng-repeat="(key, array) in links">
-                    <label ng-bind="key"></label>
-                    <label class="text-primary label-small" ng-if="array.length > 0">Applications Available</label>
-                    <label class="text-danger label-small" ng-if="array.length == 0">No Applications Available</label>
+                <div ng-repeat="key in linkKeys">
+                    <label ng-bind-html="getLinkHeader(key)"></label>
+                    <label class="text-primary label-block label-small" ng-if="links[key].length > 0">Applications Available</label>
+                    <label class="text-danger label-block label-small" ng-if="links[key].length == 0">No Applications Available</label>
                     <ul>
-                        <li ng-repeat="link in array">
+                        <li ng-repeat="link in links[key]">
                             <a ng-href="{{link.url}}" target="{{link.tab}}" title="Open {{link.name}} in a new tab" ng-click="logLinkEvent(link.name)">
                                 <img alt="{{link.name}}" class="img-thumbnail center-block" ng-src="{{link.image}}">
                                 <span class="text-uppercase small" ng-bind="link.name"></span>

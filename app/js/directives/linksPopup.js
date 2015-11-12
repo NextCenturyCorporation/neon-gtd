@@ -23,6 +23,7 @@ angular.module('neonDemo.directives')
         scope: {},
         link: function($scope) {
             $scope.links = {};
+            $scope.linkKeys = [];
 
             $scope.logLinkEvent = function(name) {
                 XDATA.userALE.log({
@@ -62,6 +63,10 @@ angular.module('neonDemo.directives')
                 });
             };
 
+            $scope.getLinkHeader = function(key) {
+                return linksPopupService.generateLinkHeader(key);
+            };
+
             // Add a handler to detect when the dialog is shown so we can log it.
             $(".links-popup").on("show.bs.modal", $scope.onOpen);
             $scope.$on('$destroy', function() {
@@ -74,6 +79,7 @@ angular.module('neonDemo.directives')
             linksPopupService.registerListener(function(keysToLinks) {
                 $scope.$apply(function() {
                     $scope.links = keysToLinks;
+                    $scope.linkKeys = linksPopupService.sortKeys(Object.keys(keysToLinks));
                 });
             });
         }
