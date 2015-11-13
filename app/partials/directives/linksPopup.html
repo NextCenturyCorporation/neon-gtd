@@ -7,7 +7,7 @@
             </div>
             <div class="modal-body">
                 <div ng-repeat="key in linkKeys">
-                    <label ng-bind-html="getLinkHeader(key)"></label>
+                    <label class="label-small" ng-bind-html="getLinkHeader(key)"></label>
                     <label class="text-primary label-block label-small" ng-if="links[key].length > 0">Applications Available</label>
                     <label class="text-danger label-block label-small" ng-if="links[key].length == 0">No Applications Available</label>
                     <ul>
