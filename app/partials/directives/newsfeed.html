@@ -1,5 +1,5 @@
 <div class="header-container" ng-show="!(hideHeader)">
-    <div class="title header-text pull-left" ng-bind="(bindTitle != undefined) ? bindTitle : options.table.prettyName"></div>
+    <div class="title header-text pull-left" ng-bind="generateTitle()" title="{{generateTitle()}}"></div>
 
     <options-menu parent-element="element" button-text="optionsMenuButtonText" show-button-text="showOptionsMenuButtonText">
         <div class="form-group" ng-show="!(hideAdvancedOptions)">
@@ -15,40 +15,59 @@
 
         <div class="form-group" ng-show="!(hideAdvancedOptions)">
             <label>Head Field</label>
-            <select class="form-control" ng-model="options.headField" ng-required="false" ng-disabled="!(fields.length > 0)" ng-options="field.prettyName for field in fields" ng-change="onFieldChanged()">
+            <select class="form-control" ng-model="options.headField" ng-required="false" ng-disabled="!(fields.length > 0)" ng-options="field.prettyName for field in fields" ng-change="handleChangedField()">
                 <option value="">None</option>
             </select>
         </div>
 
         <div class="form-group" ng-show="!(hideAdvancedOptions)">
             <label>Name Field</label>
-            <select class="form-control" ng-model="options.nameField" ng-required="false" ng-disabled="!(fields.length > 0)" ng-options="field.prettyName for field in fields" ng-change="onFieldChanged()">
+            <select class="form-control" ng-model="options.nameField" ng-required="false" ng-disabled="!(fields.length > 0)" ng-options="field.prettyName for field in fields" ng-change="handleChangedField()">
                 <option value="">None</option>
             </select>
         </div>
 
         <div class="form-group" ng-show="!(hideAdvancedOptions)">
             <label>Date Field</label>
-            <select class="form-control" ng-model="options.dateField" ng-required="true" ng-disabled="!(fields.length > 0)" ng-options="field.prettyName for field in fields" ng-change="onFieldChanged()">
+            <select class="form-control" ng-model="options.dateField" ng-required="true" ng-disabled="!(fields.length > 0)" ng-options="field.prettyName for field in fields" ng-change="handleChangedField()">
                 <option disabled selected value="">Please choose a field</option>
             </select>
         </div>
 
         <div class="form-group" ng-show="!(hideAdvancedOptions)">
             <label>Text Field</label>
-            <select class="form-control" ng-model="options.textField" ng-required="true" ng-disabled="!(fields.length > 0)" ng-options="field.prettyName for field in fields" ng-change="onFieldChanged()">
+            <select class="form-control" ng-model="options.textField" ng-required="true" ng-disabled="!(fields.length > 0)" ng-options="field.prettyName for field in fields" ng-change="handleChangedField()">
                 <option disabled selected value="">Please choose a field</option>
             </select>
+        </div>
+
+        <div class="form-group" ng-show="!(hideAdvancedOptions)">
+            <label>Unshared Filter</label>
+            <select class="form-control" ng-model="options.filterField" ng-required="false" ng-disabled="!(fields.length > 0)" ng-options="field.prettyName for field in fields" ng-change="handleChangedUnsharedFilterField()">
+                <option selected value="">None</option>
+            </select>
+
+            <div class="input-group">
+                <input type="text" class="form-control" placeholder="{{'Filter for ' + options.filterField.prettyName + '...'}}" ng-model="options.filterValue" ng-disabled="!(options.filterField.columnName)">
+                <div class="input-group-btn">
+                    <button type="button" class="btn btn-default refresh" title="Remove Unshared Filter" ng-click="handleRemovedUnsharedFilter()">
+                        <span class="glyphicon glyphicon-remove"></span>
+                    </button>
+                    <button type="button" class="btn btn-default refresh" title="Set Unshared Filter" ng-click="handleChangedUnsharedFilterValue()">
+                        <span class="glyphicon glyphicon-refresh"></span>
+                    </button>
+                </div>
+            </div>
         </div>
 
         <div class="form-group">
             <label>Sort By Date</label>
             <div class="btn-group">
                 <label class="btn btn-default active" ng-class="{true: 'active', false: ''}[options.sortDirection === ASCENDING]">
-                    <input type="radio" ng-model="options.sortDirection" style="display:none" ng-value="ASCENDING" ng-change="handleSortButtonClick(ASCENDING)">ASC
+                    <input type="radio" ng-model="options.sortDirection" style="display:none" ng-value="ASCENDING" ng-change="handleChangedSort(ASCENDING)">ASC
                 </label>
                 <label class="btn btn-default" ng-class="{true: 'active', false: ''}[options.sortDirection === DESCENDING]">
-                    <input type="radio" ng-model="options.sortDirection" style="display:none" ng-value="DESCENDING" ng-change="handleSortButtonClick(DESCENDING)">DESC
+                    <input type="radio" ng-model="options.sortDirection" style="display:none" ng-value="DESCENDING" ng-change="handleChangedSort(DESCENDING)">DESC
                 </label>
             </div>
             <div class="clearfix"></div>
@@ -59,7 +78,7 @@
             <div class="input-group">
                 <input type="number" min="1" class="form-control" ng-model="options.limit" required>
                 <div class="input-group-btn">
-                    <button type="button" class="btn btn-default refresh" title="Refresh" ng-click="onFieldChanged()">
+                    <button type="button" class="btn btn-default refresh" title="Refresh" ng-click="handleChangedField()">
                         <span class="glyphicon glyphicon-refresh"></span>
                     </button>
                 </div>
