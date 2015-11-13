@@ -208,10 +208,15 @@ tables.addLinkabilityToColumns = function(columns) {
 tables.Table.sortComparator_ = function(field, sortAsc) {
     var fieldArray = field.split(".");
     return function(a, b) {
-        fieldArray.forEach(function(field) {
-            a = a ? a[field] : a;
-            b = b ? b[field] : b;
-        });
+        if(a[field] && b[field]) {
+            a = a[field];
+            b = b[field];
+        } else {
+            fieldArray.forEach(function(field) {
+                a = a ? a[field] : a;
+                b = b ? b[field] : b;
+            });
+        }
         var result = 0;
         if((a && (b === undefined)) || a > b) {
             result = 1;

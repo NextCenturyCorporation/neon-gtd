@@ -640,10 +640,12 @@ function($interval, $filter, external, connectionService, datasetService, errorN
 
                 var relations = datasetService.getRelations($scope.options.database.name, $scope.options.table.name, [$scope.options.dateField.columnName]);
 
-                var filterText = $scope.formatStartDate(getFilterStartDate()) + " to " + $scope.formatEndDate(getFilterEndDate());
+                var filterText;
 
                 if(showInvalidDates) {
                     filterText = "Invalid Dates";
+                } else {
+                    filterText = $scope.formatStartDate(getFilterStartDate()) + " to " + $scope.formatEndDate(getFilterEndDate());
                 }
 
                 var filterNameObj = {

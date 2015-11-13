@@ -395,7 +395,7 @@ coreMap.Map.prototype.createSelectControl =  function(layer) {
             Object.keys(data).forEach(function(datum) {
                 if(datum.indexOf(".") === -1) {
                     var name = fieldName ? fieldName + "." + datum : datum;
-                    if(typeof data[datum] === "object" && !data[datum].length) {
+                    if(typeof data[datum] === "object" && data[datum] && !data[datum].length) {
                         text += getNestedFields(data[datum], name);
                     } else {
                         text += '<tr><th>' + _.escape(name) + '</th><td>' + data[datum] + '</td>';
