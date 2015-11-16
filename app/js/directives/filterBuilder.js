@@ -83,8 +83,8 @@ angular.module('neonDemo.directives')
                 });
 
                 $scope.messenger.subscribe(filterService.REQUEST_REMOVE_FILTER, function(ids) {
-                    if(filterService.containsKey($scope.filterKeys, ids)) {
-                        $scope.resetFilters();
+                    if($scope.filterTable.containsFilterKey(ids)) {
+                        $scope.resetFilters(ids);
                     }
                 });
 
@@ -421,7 +421,7 @@ angular.module('neonDemo.directives')
              * Resets the current filter.
              * @method resetFilters
              */
-            $scope.resetFilters = function() {
+            $scope.resetFilters = function(ids) {
                 XDATA.userALE.log({
                     activity: "remove",
                     action: "click",
@@ -431,8 +431,12 @@ angular.module('neonDemo.directives')
                     source: "user",
                     tags: ["filter-builder", "filter", "clear"]
                 });
-
-                var databaseAndTableNames = $scope.filterTable.getDatabaseAndTableNames();
+                var databaseAndTableNames;
+                if(ids && ids.length) {
+                    databaseAndTableNames = $scope.filterTable.getDatabaseAndTableNamesForKeys(ids);
+                } else {
+                    databaseAndTableNames = $scope.filterTable.getDatabaseAndTableNames();
+                }
                 if(databaseAndTableNames.length) {
                     $scope.publishRemoveFilterEvents(databaseAndTableNames, function(successDatabase, successTable) {
                         $scope.$apply(function() {
