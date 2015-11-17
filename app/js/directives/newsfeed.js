@@ -215,7 +215,7 @@ function(external, $timeout, connectionService, datasetService, errorNotificatio
                 updateTopNewsItemIndex();
 
                 // If the user has scrolled to the bottom, query for more news items and add them to the feed.
-                if(!$scope.loadingNews && !$scope.dataFromNewsEvent && $element.find(".item").last().position().top <= $element.height()) {
+                if(!$scope.loadingNews && $scope.data.news.length < $scope.data.newsCount && $element.find(".item").last().position().top <= $element.height()) {
                     $scope.loadingNews = true;
                     $scope.options.limit = $scope.options.limit + LIMIT_INTERVAL;
                     if($scope.dataFromNewsEvent.length) {
