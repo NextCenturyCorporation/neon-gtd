@@ -2,6 +2,11 @@
     <div class="title header-text pull-left" ng-bind="generateTitle()" title="{{generateTitle()}}"></div>
 
     <options-menu parent-element="element" button-text="optionsMenuButtonText" show-button-text="showOptionsMenuButtonText">
+        <translation-options ng-show="translationAvailable" on-translate="updateTranslation" from-language-change="onFromLanguageChange"
+            to-language-change="onToLanguageChange" from-language-options="translationLanguages.fromLanguageOptions"
+            to-language-options="translationLanguages.toLanguageOptions">
+        </translation-options>
+
         <div class="form-group" ng-show="!(hideAdvancedOptions)">
             <label>Database</label>
             <select class="form-control" ng-model="options.database" ng-options="database.prettyName for database in databases" ng-required="true" ng-disabled="(databases.length < 2)" ng-change="updateTables()">
@@ -84,11 +89,6 @@
                 </div>
             </div>
         </div>
-
-        <translation-options ng-show="translationAvailable" on-translate="updateTranslation" from-language-change="onFromLanguageChange"
-            to-language-change="onToLanguageChange" from-language-options="translationLanguages.fromLanguageOptions"
-            to-language-options="translationLanguages.toLanguageOptions">
-        </translation-options>
     </options-menu>
 </div>
 
