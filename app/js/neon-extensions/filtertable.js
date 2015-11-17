@@ -123,6 +123,37 @@ neon.query.FilterTable.prototype.setFilterRow = function(databaseName, tableName
 };
 
 /**
+ * Updates the FilterRow to reflect any database or table changes.
+ * @param {neon.query.FilterRow} row
+ * @method updateFilterRow
+ */
+neon.query.FilterTable.prototype.updateFilterRow = function(row) {
+    var nameObject = {};
+
+    var databases = Object.keys(this.filterState);
+    for(var i = 0; i < databases.length; ++i) {
+        var tables = Object.keys(this.filterState[databases[i]]);
+        for(var j = 0; j < tables.length; ++j) {
+            var rows = this.filterState[databases[i]][tables[j]];
+            for(var k = 0; k < rows.length; ++k) {
+                if(rows[k] === row) {
+                    nameObject = {
+                        database: databases[i],
+                        table: tables[j],
+                        index: rows[k].index
+                    };
+                }
+            }
+        }
+    }
+
+    if(nameObject.database !== row.database.name || nameObject.table !== row.table.name) {
+        this.addFilterRow(row.database.name, row.table.name, row);
+        this.removeFilterRow(nameObject.database, nameObject.table, nameObject.index);
+    }
+};
+
+/**
  * Clears the state for the FilterTable, removing all rows from the given database and table, or all rows from the FilterTable if no database and table are given.
  * @param {String} databaseName (optional)
  * @param {String} tableName (optional)
