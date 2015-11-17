@@ -27,6 +27,8 @@ function(external, connectionService, datasetService, errorNotificationService, 
             bindCountField: '=',
             bindAggregation: '=',
             bindAggregationField: '=',
+            bindFilterField: '=',
+            bindFilterValue: '=',
             bindTable: '=',
             bindDatabase: '=',
             hideHeader: '=?',
@@ -67,14 +69,26 @@ function(external, connectionService, datasetService, errorNotificationService, 
             $scope.options = {
                 database: {},
                 table: {},
-                field: "",
+                field: {},
                 aggregation: "",
-                aggregationField: "",
-                limitCount: $scope.limitCount || 10000
+                aggregationField: {},
+                filterField: {},
+                filterValue: "",
+                limitCount: $scope.limitCount || 100
             };
 
             var $tableDiv = $element.find('.count-by-grid');
             $tableDiv.attr("id", $scope.tableId);
+
+            /**
+             * Updates the size of the title for this visualization.
+             * @method updateTitleSize
+             * @private
+             */
+            var updateTitleSize = function() {
+                var titleWidth = $element.width() - $element.find(".chart-options").outerWidth(true);
+                $element.find(".title").css("maxWidth", titleWidth - 20);
+            };
 
             /**
              * Updates the size of the table to fill the available space in the directive's area.
@@ -89,8 +103,7 @@ function(external, connectionService, datasetService, errorNotificationService, 
                 // Subtract an additional 2 pixels from the table height to account for the its border.
                 $('#' + $scope.tableId).height($element.height() - headerHeight - 2);
 
-                var titleWidth = $element.width() - $element.find(".chart-options").outerWidth(true);
-                $element.find(".title").css("maxWidth", titleWidth - 20);
+                updateTitleSize();
 
                 if($scope.table) {
                     $scope.table.refreshLayout();
@@ -110,7 +123,7 @@ function(external, connectionService, datasetService, errorNotificationService, 
                     filtersChanged: onFiltersChanged
                 });
                 $scope.messenger.subscribe(datasetService.UPDATE_DATA_CHANNEL, function() {
-                    $scope.queryForData();
+                    queryForData();
                 });
 
                 $scope.messenger.subscribe(filterService.REQUEST_REMOVE_FILTER, function(ids) {
@@ -134,6 +147,7 @@ function(external, connectionService, datasetService, errorNotificationService, 
                     });
                     linksPopupService.deleteLinks($scope.tableId);
                     $element.off("resize", updateSize);
+                    $element.find(".chart-options").off("resize", updateTitleSize);
                     $scope.messenger.removeEvents();
                     if($scope.filterSet) {
                         filterService.removeFilters($scope.messenger, $scope.filterKeys);
@@ -142,6 +156,7 @@ function(external, connectionService, datasetService, errorNotificationService, 
                 });
 
                 $element.resize(updateSize);
+                $element.find(".chart-options").resize(updateTitleSize);
             };
 
             var logOptionsMenuDropdownChange = function(element, value) {
@@ -157,31 +172,54 @@ function(external, connectionService, datasetService, errorNotificationService, 
                 });
             };
 
-            $scope.handleChangeField = function() {
+            $scope.handleChangedDataField = function() {
                 logOptionsMenuDropdownChange("count-field", $scope.options.field);
                 if(!$scope.loadingData) {
-                    $scope.queryForData();
+                    queryForData();
                 }
             };
 
-            $scope.handleChangeAggregation = function() {
+            $scope.handleChangedAggregation = function() {
                 logOptionsMenuDropdownChange("aggregation", $scope.options.aggregation);
                 if(!$scope.loadingData) {
-                    $scope.queryForData();
+                    queryForData();
                 }
             };
 
-            $scope.handleChangeAggregationField = function() {
+            $scope.handleChangedAggregationField = function() {
                 logOptionsMenuDropdownChange("aggregation-field", $scope.options.aggregationField);
                 if(!$scope.loadingData) {
-                    $scope.queryForData();
+                    queryForData();
                 }
             };
 
-            $scope.handleChangeLimit = function() {
+            $scope.handleChangedUnsharedFilterField = function() {
+                logOptionsMenuDropdownChange("filter-field", $scope.options.filterField);
+                if(!$scope.loadingData && $scope.options.filterValue) {
+                    $scope.options.filterValue = "";
+                    queryForData();
+                }
+            };
+
+            $scope.handleChangedUnsharedFilterValue = function() {
+                logOptionsMenuDropdownChange("filter-value", $scope.options.filterValue);
+                if(!$scope.loadingData) {
+                    queryForData();
+                }
+            };
+
+            $scope.handleRemovedUnsharedFilter = function() {
+                logOptionsMenuDropdownChange("filter-value", $scope.options.filterValue);
+                $scope.options.filterValue = "";
+                if(!$scope.loadingData) {
+                    queryForData();
+                }
+            };
+
+            $scope.handleChangedLimit = function() {
                 logOptionsMenuDropdownChange("limit", $scope.options.limitCount);
                 if(!$scope.loadingData) {
-                    $scope.queryForData();
+                    queryForData();
                 }
             };
 
@@ -285,7 +323,7 @@ function(external, connectionService, datasetService, errorNotificationService, 
                         source: "system",
                         tags: ["filter-change", "count-by"]
                     });
-                    $scope.queryForData();
+                    queryForData();
                 }
             };
 
@@ -347,11 +385,16 @@ function(external, connectionService, datasetService, errorNotificationService, 
                 $scope.options.aggregationField = _.find($scope.fields, function(field) {
                     return field.columnName === aggregationFieldName;
                 }) || datasetService.createBlankField();
+                var filterFieldName = $scope.bindFilterField || "";
+                $scope.options.filterField = _.find($scope.fields, function(field) {
+                    return field.columnName === filterFieldName;
+                }) || datasetService.createBlankField();
+                $scope.options.filterValue = $scope.bindFilterValue || "";
 
                 if($scope.filterSet) {
                     $scope.clearFilter();
                 }
-                $scope.queryForData();
+                queryForData();
             };
 
             /**
@@ -363,8 +406,9 @@ function(external, connectionService, datasetService, errorNotificationService, 
              * poll for data and should show data.
              * Resets internal "need to query" state to false.
              * @method queryForData
+             * @private
              */
-            $scope.queryForData = function() {
+            var queryForData = function() {
                 if($scope.errorMessage) {
                     errorNotificationService.hideErrorMessage($scope.errorMessage);
                     $scope.errorMessage = undefined;
@@ -498,10 +542,10 @@ function(external, connectionService, datasetService, errorNotificationService, 
                 var mappings = datasetService.getMappings($scope.options.database.name, $scope.options.table.name);
 
                 data.forEach(function(row) {
-                    var field = $scope.options.field.columnName;
-                    var value = row[field];
-                    tableLinks[value] = linksPopupService.createAllServiceLinkObjects(external.services, mappings, field, value);
-                    row[$scope.EXTERNAL_APP_FIELD_NAME] = tableLinks[value].length ? linksPopupService.createLinkHtml($scope.tableId, value, value) : linksPopupService.createDisabledLinkHtml(value);
+                    var value = row[$scope.options.field.columnName];
+                    var key = linksPopupService.generateKey($scope.options.field, value);
+                    tableLinks[key] = linksPopupService.createAllServiceLinkObjects(external.services, mappings, $scope.options.field.columnName, value);
+                    row[$scope.EXTERNAL_APP_FIELD_NAME] = tableLinks[key].length ? linksPopupService.createLinkHtml($scope.tableId, key, value) : linksPopupService.createDisabledLinkHtml(value);
                 });
 
                 // Set the link data for the links popup for this visualization.
@@ -642,7 +686,8 @@ function(external, connectionService, datasetService, errorNotificationService, 
              * @method buildQuery
              */
             $scope.buildQuery = function() {
-                var query = new neon.query.Query().selectFrom($scope.options.database.name, $scope.options.table.name).groupBy($scope.options.field.columnName).where($scope.options.field.columnName, "!=", null);
+                var whereNotNull = neon.query.where($scope.options.field.columnName, "!=", null);
+                var query = new neon.query.Query().selectFrom($scope.options.database.name, $scope.options.table.name).groupBy($scope.options.field.columnName).where(whereNotNull);
 
                 // The widget displays its own ignored rows with 0.5 opacity.
                 query.ignoreFilters([$scope.filterKeys[$scope.options.database.name][$scope.options.table.name]]);
@@ -658,6 +703,11 @@ function(external, connectionService, datasetService, errorNotificationService, 
                 if($scope.options.aggregation === "max") {
                     query.aggregate(neon.query.MAX, $scope.options.aggregationField.columnName, $scope.options.aggregationField.columnName);
                     query.sortBy($scope.options.aggregationField, neon.query.DESCENDING);
+                }
+
+                if(datasetService.isFieldValid($scope.options.filterField) && $scope.options.filterValue) {
+                    var operator = $.isNumeric($scope.options.filterValue) ? "=" : "contains";
+                    query.where(neon.query.and(whereNotNull, neon.query.where($scope.options.filterField.columnName, operator, $scope.options.filterValue)));
                 }
 
                 if($scope.options.limitCount) {
@@ -703,6 +753,12 @@ function(external, connectionService, datasetService, errorNotificationService, 
                     source: "user",
                     tags: ["options", "count-by", "export"]
                 });
+
+                var capitalizeFirstLetter = function(str) {
+                    var first = str[0].toUpperCase();
+                    return first + str.slice(1);
+                };
+
                 var query = $scope.buildQuery();
                 query.limitClause = exportService.getLimitClause();
                 var finalObject = {
@@ -735,13 +791,16 @@ function(external, connectionService, datasetService, errorNotificationService, 
             };
 
             /**
-             * Helper function for makeBarchartExportObject that capitalizes the first letter of a string.
-             * @param str {String} The string to capitalize the first letter of.
-             * @return {String} The string given, but with its first letter capitalized.
+             * Generates and returns the title for this visualization.
+             * @method generateTitle
+             * @return {String}
              */
-            var capitalizeFirstLetter = function(str) {
-                var first = str[0].toUpperCase();
-                return first + str.slice(1);
+            $scope.generateTitle = function() {
+                var title = $scope.options.filterValue ? $scope.options.filterValue + " " : "";
+                if($scope.bindTitle) {
+                    return title + $scope.bindTitle;
+                }
+                return title + $scope.options.table.prettyName + ($scope.options.field.prettyName ? " / " + $scope.options.field.prettyName : "");
             };
 
             neon.ready(function() {

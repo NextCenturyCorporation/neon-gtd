@@ -382,8 +382,9 @@ function($interval, $filter, external, connectionService, datasetService, errorN
                     var dateLinks = [];
                     Object.keys(external.services.date.apps).forEach(function(app) {
                         var linkData = {};
-                        linkData[neonMappings.START_DATE] = displayStartDate.toISOString();
-                        linkData[neonMappings.END_DATE] = displayEndDate.toISOString();
+                        linkData[neonMappings.DATE] = {};
+                        linkData[neonMappings.DATE][neonMappings.START_DATE] = displayStartDate.toISOString();
+                        linkData[neonMappings.DATE][neonMappings.END_DATE] = displayEndDate.toISOString();
                         dateLinks.push(linksPopupService.createServiceLinkObjectWithData(external.services.date, app, linkData));
                     });
                     var timelineLinks = {};
@@ -432,7 +433,7 @@ function($interval, $filter, external, connectionService, datasetService, errorN
             };
 
             $scope.getDateKeyForLinksPopupButton = function() {
-                return $scope.startDateForDisplay && $scope.endDateForDisplay ? linksPopupService.generateRangeKey($scope.startDateForDisplay, $scope.endDateForDisplay) : "";
+                return $scope.startDateForDisplay && $scope.endDateForDisplay ? linksPopupService.generateDateRangeKey($scope.startDateForDisplay, $scope.endDateForDisplay) : "";
             };
 
             /**

@@ -105,3 +105,4 @@ neonMappings.MIN_LAT = "minLat";
 neonMappings.MIN_LON = "minLon";
 neonMappings.MAX_LAT = "maxLat";
 neonMappings.MAX_LON = "maxLon";
+neonMappings.BOUNDS = "bounds";

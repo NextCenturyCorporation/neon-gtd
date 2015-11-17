@@ -155,6 +155,23 @@ angular.module('neonDemo.directives')
                 }
             };
 
+            var queryForMapPopupData = function(database, table, id, callback) {
+                var connection = connectionService.getActiveConnection();
+
+                if(!connection) {
+                    callback({});
+                    return;
+                }
+
+                var query = new neon.query.Query().selectFrom(database, table).where(neon.query.where("_id", "=", id));
+
+                connection.executeQuery(query, function(results) {
+                    callback(results.data.length ? results.data[0] : {});
+                }, function(response) {
+                    callback({});
+                });
+            };
+
             /**
              * Initializes the name of the directive's scope variables
              * and the Neon Messenger used to monitor data change events.
@@ -164,7 +181,8 @@ angular.module('neonDemo.directives')
                 var datasetOptions = datasetService.getActiveDatasetOptions();
                 $scope.map = new coreMap.Map($scope.mapId, {
                     responsive: false,
-                    mapBaseLayer: (datasetOptions ? datasetOptions.mapBaseLayer : undefined)
+                    mapBaseLayer: (datasetOptions ? datasetOptions.mapBaseLayer : undefined),
+                    queryForMapPopupDataFunction: queryForMapPopupData
                 });
                 $scope.map.linksPopupService = linksPopupService;
                 $scope.draw();
@@ -279,10 +297,11 @@ angular.module('neonDemo.directives')
                         var boundsLinks = [];
                         Object.keys(external.services.bounds.apps).forEach(function(app) {
                             var linkData = {};
-                            linkData[neonMappings.MIN_LAT] = $scope.extent.minimumLatitude;
-                            linkData[neonMappings.MIN_LON] = $scope.extent.minimumLongitude;
-                            linkData[neonMappings.MAX_LAT] = $scope.extent.maximumLatitude;
-                            linkData[neonMappings.MAX_LON] = $scope.extent.maximumLongitude;
+                            linkData[neonMappings.BOUNDS] = {};
+                            linkData[neonMappings.BOUNDS][neonMappings.MIN_LAT] = $scope.extent.minimumLatitude;
+                            linkData[neonMappings.BOUNDS][neonMappings.MIN_LON] = $scope.extent.minimumLongitude;
+                            linkData[neonMappings.BOUNDS][neonMappings.MAX_LAT] = $scope.extent.maximumLatitude;
+                            linkData[neonMappings.BOUNDS][neonMappings.MAX_LON] = $scope.extent.maximumLongitude;
                             boundsLinks.push(linksPopupService.createServiceLinkObjectWithData(external.services.bounds, app, linkData));
                         });
                         linksPopupService.addLinks($scope.mapId, $scope.getBoundsKeyForLinksPopupButton(), boundsLinks);
@@ -984,10 +1003,11 @@ angular.module('neonDemo.directives')
 
                     if(external.services.point) {
                         Object.keys(external.services.point.apps).forEach(function(app) {
-                            rowLinks.push(linksPopupService.createServiceLinkObjectWithData(external.services.point, app, {
-                                latitude: latitudeValue,
-                                longitude: longitudeValue
-                            }));
+                            var linkData = {};
+                            linkData[neonMappings.POINT] = {};
+                            linkData[neonMappings.POINT][neonMappings.LATITUDE] = latitudeValue;
+                            linkData[neonMappings.POINT][neonMappings.LONGITUDE] = longitudeValue;
+                            rowLinks.push(linksPopupService.createServiceLinkObjectWithData(external.services.point, app, linkData));
                         });
                     };
 
@@ -1000,19 +1020,43 @@ angular.module('neonDemo.directives')
 
             $scope.buildPointQuery = function(database, table) {
                 var latitudesAndLongitudes = [];
+                var fields = {};
                 var limit;
+
+                var addField = function(field) {
+                    if(field) {
+                        fields[field] = true;
+                    }
+                };
+
                 $scope.options.layers.forEach(function(layer) {
                     if(layer.database === database && layer.table === table) {
                         latitudesAndLongitudes.push({
                             latitude: layer.latitudeMapping,
                             longitude: layer.longitudeMapping
                         });
+
+                        // TODO Not sure whether to use categoryMapping or colorBy, date or dateMapping, etc.
+                        addField(layer.categoryMapping);
+                        addField(layer.colorBy);
+                        addField(layer.date);
+                        addField(layer.dateMapping);
+                        addField(layer.latitudeMapping);
+                        addField(layer.longitudeMapping);
+                        addField(layer.sizeBy);
+                        addField(layer.sizeMapping);
+                        addField(layer.sourceMapping);
+                        addField(layer.targetMapping);
+                        addField(layer.weightMapping);
+                        addField(layer.nodeColorBy);
+                        addField(layer.lineColorBy);
+
                         // Use the highest limit for the query from all layers for the given database/table; only the first X elements will be used for each layer based on the limit of the layer.
                         limit = limit ? Math.max(limit, layer.limit) : layer.limit;
                     }
                 });
 
-                var query = new neon.query.Query().selectFrom(database, table).limit(limit || $scope.DEFAULT_LIMIT);
+                var query = new neon.query.Query().selectFrom(database, table).limit(limit || $scope.DEFAULT_LIMIT).withFields(Object.keys(fields));
                 if(datasetService.getActiveDatasetOptions().checkForNullCoordinates) {
                     var filterClauses = latitudesAndLongitudes.map(function(element) {
                         return neon.query.and(neon.query.where(element.latitude, "!=", null), neon.query.where(element.longitude, "!=", null));
@@ -1393,6 +1437,8 @@ angular.module('neonDemo.directives')
 
                 if(layer.type === coreMap.Map.POINTS_LAYER) {
                     layer.olLayer = new coreMap.Map.Layer.PointsLayer(layer.name, {
+                        database: layer.database,
+                        table: layer.table,
                         colors: layer.colorBy ? datasetService.getActiveDatasetColorMaps(layer.database, layer.table, layer.colorBy) || {} : {},
                         latitudeMapping: layer.latitudeMapping,
                         longitudeMapping: layer.longitudeMapping,
@@ -1412,6 +1458,8 @@ angular.module('neonDemo.directives')
                     $scope.map.addLayer(layer.olLayer);
                 } else if(layer.type === coreMap.Map.CLUSTER_LAYER) {
                     layer.olLayer = new coreMap.Map.Layer.PointsLayer(layer.name, {
+                        database: layer.database,
+                        table: layer.table,
                         colors: layer.colorBy ? datasetService.getActiveDatasetColorMaps(layer.database, layer.table, layer.colorBy) || {} : {},
                         latitudeMapping: layer.latitudeMapping,
                         longitudeMapping: layer.longitudeMapping,
