@@ -254,7 +254,7 @@ function($timeout, external, datasetService, filterService, linksPopupService) {
              */
             var findCombinations = function(items, current, results) {
                 if(!current.length && !items.length) {
-                    return;
+                    return [];
                 }
                 if(!items.length) {
                     // Ignore single items.
