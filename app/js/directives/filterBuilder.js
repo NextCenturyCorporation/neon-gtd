@@ -463,6 +463,14 @@ angular.module('neonDemo.directives')
                 var tableName = filterObject.tableName;
                 var filterKey = $scope.filterTable.getFilterKey(databaseName, tableName);
 
+                if(!filter.whereClause) {
+                    $scope.resetFilters([filterKey]);
+                    if(filters.length) {
+                        $scope.publishReplaceFilterEvents(filters, successCallback, errorCallback);
+                    }
+                    return;
+                }
+
                 XDATA.userALE.log({
                     activity: "alter",
                     action: "filter",
