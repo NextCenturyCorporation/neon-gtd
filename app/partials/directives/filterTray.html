@@ -6,9 +6,7 @@
     </a>
     <ul class="dropdown-menu">
         <li ng-repeat="filter in filters.formatted" class="filter-tray-item filter-tray-filter">
-            <span class="filter-remove-btn glyphicon glyphicon-trash" ng-click="handleFilterRemove(filter.ids)"
-                ng-hide="(filter.name.indexOf('Filter Builder') !== -1)">
-            </span>
+            <span class="filter-remove-btn glyphicon glyphicon-trash" ng-click="handleFilterRemove(filter.ids)"></span>
             <span class="filter-label">{{filter.name}}</span>
         </li>
         <li class="divider"></li>
