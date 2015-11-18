@@ -1266,7 +1266,7 @@ angular.module('neonDemo.directives')
 
             var clearFiltersRecursively = function(filterKeysList, callback) {
                 var filterKeys = filterKeysList.shift();
-                if(!_.isArray(filterKeys)) {
+                if(_.isString(filterKeys)) {
                     filterKeys = [filterKeys];
                 }
                 removeFiltersForKeys(filterKeys, function() {
