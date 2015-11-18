@@ -205,14 +205,26 @@ angular.module('neonDemo.directives')
                 $scope.exportID = exportService.register($scope.makeMapExportObject);
 
                 $scope.messenger.subscribe(filterService.REQUEST_REMOVE_FILTER, function(ids) {
-                    var keys = [];
+                    var filterKeysList = [];
+                    var database;
+                    var table;
 
                     _.each($scope.options.layers, function(layer) {
-                        keys.push(layer.filterKeys);
+                        var key = $scope.filterKeys[layer.database][layer.table][layer.latitudeMapping + "," + layer.longitudeMapping];
+                        if(ids.indexOf(key) !== -1) {
+                            if(!_.contains(filterKeysList, key)) {
+                                filterKeysList.push(key);
+                                database = layer.database;
+                                table = layer.table;
+                            }
+                            layer.active = false;
+                        }
                     });
 
-                    if(filterService.containsKey(keys, ids)) {
-                        $scope.clearFilters(true);
+                    if(filterKeysList) {
+                        clearFiltersRecursively(filterKeysList, function() {
+                            $scope.queryForMapData(database, table);
+                        });
                     }
                 });
 
@@ -338,20 +350,38 @@ angular.module('neonDemo.directives')
             };
 
             /**
-             * Adds the current map filter to all active map layers, queries for map data, and redraws the layers on the map.
+             * Adds the current map filter to all active map layers, or any layers with the given filter keys, queries for
+             * map data, and redraws the layers on the map.
+             * @param {Array} [filterKeysList] Optional list of filter keys to add
              * @method addFilters
              * @private
              */
-            var addFilters = function() {
-                var activeLayers = [];
-                for(var i = 0; i < $scope.options.layers.length; i++) {
-                    if($scope.options.layers[i].active) {
-                        activeLayers.push($scope.options.layers[i]);
-                    }
+            var addFilters = function(filterKeysList) {
+                var filterKeys = [];
+
+                if(filterKeysList) {
+                    _.forEach($scope.filterKeys, function(tableObj, database) {
+                        _.forEach(tableObj, function(latLonObj, table) {
+                            _.forEach(latLonObj, function(key, latLonMapping) {
+                                if(filterKeysList.indexOf(key) !== -1) {
+                                    var latLon = latLonMapping.split(",");
+                                    filterKeys.push({
+                                        latitudeMapping: latLon[0],
+                                        longitudeMapping: latLon[1],
+                                        database: database,
+                                        table: table,
+                                        filterKey: createDatabaseTableObject(database, table, key)
+                                    });
+                                }
+                            });
+                        });
+                    });
+                } else {
+                    filterKeys = getActiveLayersFilterKeys();
                 }
 
-                if(activeLayers.length > 0) {
-                    filterActiveLayersRecursively(activeLayers, function() {
+                if(filterKeys.length > 0) {
+                    filterActiveLayersRecursively(filterKeys, function() {
                         $scope.$apply(function() {
                             queryAllLayerTables();
                             drawZoomRect({
@@ -377,20 +407,72 @@ angular.module('neonDemo.directives')
                 }
             };
 
+            /*
+             * Finds all active layers and returns a unique list of the filter keys, database, table, latitude mapping,
+             * and longitude mapping.
+             * @return {Array} A list of objects containing keys with filterKey, table, database, latitudeMapping, and
+             * longitudeMapping.
+             * @method getActiveLayersFilterKeys
+             * @private
+             */
+            var getActiveLayersFilterKeys = function() {
+                var filterKeys = [];
+
+                for(var i = 0; i < $scope.options.layers.length; i++) {
+                    if($scope.options.layers[i].active) {
+                        var latMapping = $scope.options.layers[i].latitudeMapping;
+                        var lonMapping = $scope.options.layers[i].longitudeMapping;
+                        var database = $scope.options.layers[i].database;
+                        var table = $scope.options.layers[i].table;
+
+                        var index = _.findIndex(filterKeys, {
+                                latitudeMapping: latMapping,
+                                longitudeMapping: lonMapping,
+                                database: database,
+                                table: table
+                            });
+
+                        if(index === -1) {
+                            filterKeys.push({
+                                latitudeMapping: latMapping,
+                                longitudeMapping: lonMapping,
+                                database: database,
+                                table: table,
+                                filterKey: createDatabaseTableObject(database, table, $scope.filterKeys[database][table][latMapping + "," + lonMapping])
+                            });
+                        }
+                    }
+                }
+
+                return filterKeys;
+            };
+
+            /*
+             * Returns a map of a database name to a table name that contains the given key.
+             * @method createDatabaseTableObject
+             * @return {Object}
+             */
+            var createDatabaseTableObject = function(database, table, key) {
+                var obj = {};
+                obj[database] = {};
+                obj[database][table] = key;
+                return obj;
+            };
+
             /**
              * This method will apply filters to all actively filtering layers and trigger a single
              * callback after all filters have been applied.
              * @method filterActiveLayersRecursively
              * @private
              */
-            var filterActiveLayersRecursively = function(activeLayers, callback) {
-                var layer = activeLayers.shift();
-                var relations = datasetService.getRelations(layer.database, layer.table, [layer.latitudeMapping, layer.longitudeMapping]);
-                filterService.replaceFilters($scope.messenger, relations, layer.filterKeys, $scope.createFilterClauseForExtent, {
+            var filterActiveLayersRecursively = function(activeFilterKeys, callback) {
+                var filter = activeFilterKeys.shift();
+                var relations = datasetService.getRelations(filter.database, filter.table, [filter.latitudeMapping, filter.longitudeMapping]);
+                filterService.replaceFilters($scope.messenger, relations, filter.filterKey, $scope.createFilterClauseForExtent, {
                     visName: "Map"
                 }, function() {
-                    if(activeLayers.length) {
-                        filterActiveLayersRecursively(activeLayers, callback);
+                    if(activeFilterKeys.length) {
+                        filterActiveLayersRecursively(activeFilterKeys, callback);
                     } else {
                         if(callback) {
                             callback();
@@ -527,6 +609,8 @@ angular.module('neonDemo.directives')
                 layer.fields = datasetService.getSortedFields(layer.database, layer.table);
                 layer.latitudeField = findField(layer.fields, layer.latitudeMapping);
                 layer.longitudeField = findField(layer.fields, layer.longitudeMapping);
+                layer.previousLatitudeMapping = layer.latitudeMapping;
+                layer.previousLongitudeMapping = layer.longitudeMapping;
                 layer.sizeField = layer.weightMapping ? findField(layer.fields, layer.weightMapping) : findField(layer.fields, layer.sizeBy);
                 layer.colorField = findField(layer.fields, layer.colorBy);
                 layer.sourceField = findField(layer.fields, layer.sourceMapping);
@@ -669,7 +753,7 @@ angular.module('neonDemo.directives')
                     layer = $scope.options.layers[i];
                     if(!layer.olLayer) {
                         layer.olLayer = addLayer(layer);
-                        layer.filterKeys = filterService.createFilterKeys("map", datasetService.getDatabaseAndTableNames());
+                        setFilterKey(layer);
                     }
                 }
 
@@ -678,6 +762,29 @@ angular.module('neonDemo.directives')
                     $scope.clearFilters(true);
                 } else {
                     queryAllLayerTables();
+                }
+            };
+
+            /*
+             * Adds a new filter key, if it doesn't exist already, for the given layer.
+             * @method setFilterKey
+             * @private
+             */
+            var setFilterKey = function(layer) {
+                var database = layer.database;
+                var table = layer.table;
+                var latMapping = layer.latitudeMapping;
+                var lonMapping = layer.longitudeMapping;
+                var filterKeys = filterService.createFilterKeys("map", datasetService.getDatabaseAndTableNames());
+
+                if(!$scope.filterKeys[database]) {
+                    $scope.filterKeys[database] = {};
+                }
+                if(!$scope.filterKeys[database][table]) {
+                    $scope.filterKeys[database][table] = {};
+                }
+                if(!$scope.filterKeys[database][table][latMapping + "," + lonMapping]) {
+                    $scope.filterKeys[database][table][latMapping + "," + lonMapping] = filterKeys[database][table];
                 }
             };
 
@@ -1009,7 +1116,7 @@ angular.module('neonDemo.directives')
                             linkData[neonMappings.POINT][neonMappings.LONGITUDE] = longitudeValue;
                             rowLinks.push(linksPopupService.createServiceLinkObjectWithData(external.services.point, app, linkData));
                         });
-                    };
+                    }
 
                     mapLinks[linksPopupService.generatePointKey(latitudeValue, longitudeValue)] = rowLinks;
                 });
@@ -1108,7 +1215,7 @@ angular.module('neonDemo.directives')
 
             /**
              * Clear Neon query filters set by the map.
-             * @param {boolean} updateDisplay True, to update the map and layers after the filters are cleared;
+             * @param {boolean} updateLayers True, to update the map and layers after the filters are cleared
              * false to simply clear the filters
              * @method clearFilters
              */
@@ -1135,26 +1242,33 @@ angular.module('neonDemo.directives')
                     tags: ["filter", "map"]
                 });
 
-                var layerFilterKeysList = [];
-                for(var i = 0; i < $scope.options.layers.length; ++i) {
-                    layerFilterKeysList.push($scope.options.layers[i].filterKeys);
-                }
+                var activeFilterKeys = _.map(getActiveLayersFilterKeys(), function(obj) {
+                    return obj.filterKey;
+                });
 
-                // Update our table queries for the various layers.  Defer via recursion
-                // until we've received responses from our filter requests.
-                if(updateLayers) {
-                    clearFiltersRecursively(layerFilterKeysList, function() {
-                        clearZoomRect();
-                        clearExtent();
-                        queryAllLayerTables();
-                    });
+                if(activeFilterKeys.length) {
+                    // Update our table queries for the various layers.  Defer via recursion
+                    // until we've received responses from our filter requests.
+                    if(updateLayers) {
+                        clearFiltersRecursively(activeFilterKeys, function() {
+                            clearZoomRect();
+                            clearExtent();
+                            queryAllLayerTables();
+                        });
+                    } else {
+                        clearFiltersRecursively(activeFilterKeys);
+                    }
                 } else {
-                    clearFiltersRecursively(layerFilterKeysList);
+                    clearZoomRect();
+                    clearExtent();
                 }
             };
 
             var clearFiltersRecursively = function(filterKeysList, callback) {
                 var filterKeys = filterKeysList.shift();
+                if(!_.isArray(filterKeys)) {
+                    filterKeys = [filterKeys];
+                }
                 removeFiltersForKeys(filterKeys, function() {
                     if(filterKeysList.length) {
                         clearFiltersRecursively(filterKeysList, callback);
@@ -1233,21 +1347,21 @@ angular.module('neonDemo.directives')
                 });
 
                 // Save the filter keys for each affected layer so all their filters can be removed if necessary.
-                var layerFilterKeysList = [];
+                var filterKeyList = [];
 
                 $scope.options.layers.forEach(function(element) {
-                    // Ensure all map layers with the same database/table/latitude/longitude as the given layer have the same active status.
-                    if(element.database === layer.database && element.table === layer.table && element.latitudeMapping === layer.latitudeMapping && element.longitudeMapping === layer.longitudeMapping) {
+                    // Ensure all map layers with the same database/table as the given layer have the same active status.
+                    if(element.database === layer.database && element.table === layer.table) {
                         element.active = layer.active;
-                        layerFilterKeysList.push(element.filterKeys);
+                        filterKeyList.push($scope.filterKeys[element.database][element.table][element.latitudeMapping + "," + element.longitudeMapping]);
                     }
                 });
 
                 if($scope.zoomRectId) {
                     if(layer.active) {
-                        addFilters();
+                        addFilters(filterKeyList);
                     } else {
-                        clearFiltersRecursively(layerFilterKeysList, function() {
+                        clearFiltersRecursively(filterKeyList, function() {
                             $scope.queryForMapData(layer.database, layer.table);
                         });
                     }
@@ -1390,6 +1504,9 @@ angular.module('neonDemo.directives')
              * @method updateLayer
              */
             $scope.updateLayer = function(layer) {
+                var previousLat = layer.previousLatitudeMapping;
+                var previousLon = layer.previousLongitudeMapping;
+
                 layer.name = (layer.name || layer.table).toUpperCase();
                 layer = updateLayerFieldMappings(layer);
 
@@ -1420,10 +1537,19 @@ angular.module('neonDemo.directives')
 
                 layer.previousName = layer.name;
                 layer.previousLimit = layer.limit;
+                layer.previousLatitudeMapping = layer.latitudeMapping;
+                layer.previousLongitudeMapping = layer.longitudeMapping;
                 layer.editing = false;
+                setFilterKey(layer);
                 layer.olLayer = addLayer(layer);
                 $scope.map.setLayerVisibility(layer.olLayer.id, layer.visible);
-                $scope.queryForMapData(layer.database, layer.table);
+                refreshFilterKeys(layer.database, layer.table, previousLat, previousLon, function() {
+                    if($scope.zoomRectId) {
+                        $scope.updateFilteringOnLayer(layer);
+                    } else {
+                        $scope.queryForMapData(layer.database, layer.table);
+                    }
+                });
             };
 
             /**
@@ -1535,6 +1661,33 @@ angular.module('neonDemo.directives')
                     return element.olLayer.id === layer.olLayer.id;
                 });
                 $scope.options.layers.splice(index, 1);
+                refreshFilterKeys(layer.database, layer.table, layer.latitudeMapping, layer.longitudeMapping);
+            };
+
+            /*
+             * Removes the filter associated with the given parameters.
+             * @method refreshFilterKeys
+             * @private
+             */
+            var refreshFilterKeys = function(database, table, latitudeMapping, longitudeMapping, callback) {
+                var matchingLayer = _.findWhere($scope.options.layers, {
+                        database: database,
+                        table: table,
+                        latitudeMapping: latitudeMapping,
+                        longitudeMapping: longitudeMapping
+                    });
+
+                if(!matchingLayer) {
+                    var key = $scope.filterKeys[database][table][latitudeMapping + "," + longitudeMapping];
+                    delete $scope.filterKeys[database][table][latitudeMapping + "," + longitudeMapping];
+                    clearFiltersRecursively([key], function() {
+                        if(callback) {
+                            callback();
+                        }
+                    });
+                } else if(callback) {
+                    callback();
+                }
             };
 
             /**
@@ -1580,9 +1733,11 @@ angular.module('neonDemo.directives')
 
                 layer.previousName = layer.name;
                 layer.previousLimit = layer.limit;
+                layer.previousLatitudeMapping = layer.latitudeMapping;
+                layer.previousLongitudeMapping = layer.longitudeMapping;
                 layer.olLayer = addLayer(layer);
-                layer.filterKeys = filterService.createFilterKeys("map", datasetService.getDatabaseAndTableNames());
                 $scope.options.layers.push(layer);
+                setFilterKey(layer);
 
                 if(!$scope.outstandingQuery[layer.database]) {
                     $scope.outstandingQuery[layer.database] = {};
@@ -1591,7 +1746,12 @@ angular.module('neonDemo.directives')
                     $scope.outstandingQuery[layer.database][layer.table] = undefined;
                 }
 
-                $scope.queryForMapData(layer.database, layer.table);
+                if($scope.zoomRectId) {
+                    $scope.updateFilteringOnLayer(layer);
+                } else {
+                    $scope.queryForMapData(layer.database, layer.table);
+                }
+
                 $scope.resetNewLayer();
             };
 
