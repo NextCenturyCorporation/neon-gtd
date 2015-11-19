@@ -210,7 +210,7 @@ angular.module('neonDemo.directives')
                     var table;
 
                     _.each($scope.options.layers, function(layer) {
-                        var key = $scope.filterKeys[layer.database][layer.table][layer.latitudeMapping + "," + layer.longitudeMapping];
+                        var key = $scope.filterKeys[layer.database][layer.table][getFilterLatLonKey(layer)];
                         if(ids.indexOf(key) !== -1) {
                             if(!_.contains(filterKeysList, key)) {
                                 filterKeysList.push(key);
@@ -365,13 +365,23 @@ angular.module('neonDemo.directives')
                             _.forEach(latLonObj, function(key, latLonMapping) {
                                 if(filterKeysList.indexOf(key) !== -1) {
                                     var latLon = latLonMapping.split(",");
-                                    filterKeys.push({
-                                        latitudeMapping: latLon[0],
-                                        longitudeMapping: latLon[1],
-                                        database: database,
-                                        table: table,
-                                        filterKey: createDatabaseTableObject(database, table, key)
-                                    });
+                                    if(latLon.length === 2) {
+                                        filterKeys.push({
+                                            latitudeMappings: [latLon[0]],
+                                            longitudeMappings: [latLon[1]],
+                                            database: database,
+                                            table: table,
+                                            filterKey: createDatabaseTableObject(database, table, key)
+                                        });
+                                    } else if(latLon.length === 4) {
+                                        filterKeys.push({
+                                            latitudeMappings: [latLon[0], latLon[2]],
+                                            longitudeMappings: [latLon[1], latLon[3]],
+                                            database: database,
+                                            table: table,
+                                            filterKey: createDatabaseTableObject(database, table, key)
+                                        });
+                                    }
                                 }
                             });
                         });
@@ -420,25 +430,33 @@ angular.module('neonDemo.directives')
 
                 for(var i = 0; i < $scope.options.layers.length; i++) {
                     if($scope.options.layers[i].active) {
-                        var latMapping = $scope.options.layers[i].latitudeMapping;
-                        var lonMapping = $scope.options.layers[i].longitudeMapping;
                         var database = $scope.options.layers[i].database;
                         var table = $scope.options.layers[i].table;
+                        var latLonKey = getFilterLatLonKey($scope.options.layers[i]);
+                        var latitudeMappings = [];
+                        var longitudeMappings = [];
+                        _.forEach(latLonKey.split(","), function(coordinate, index) {
+                            if(index % 2 === 0) {
+                                latitudeMappings.push(coordinate);
+                            } else {
+                                longitudeMappings.push(coordinate);
+                            }
+                        });
 
                         var index = _.findIndex(filterKeys, {
-                                latitudeMapping: latMapping,
-                                longitudeMapping: lonMapping,
+                                latitudeMappings: latitudeMappings,
+                                longitudeMappings: longitudeMappings,
                                 database: database,
                                 table: table
                             });
 
                         if(index === -1) {
                             filterKeys.push({
-                                latitudeMapping: latMapping,
-                                longitudeMapping: lonMapping,
+                                latitudeMappings: latitudeMappings,
+                                longitudeMappings: longitudeMappings,
                                 database: database,
                                 table: table,
-                                filterKey: createDatabaseTableObject(database, table, $scope.filterKeys[database][table][latMapping + "," + lonMapping])
+                                filterKey: createDatabaseTableObject(database, table, $scope.filterKeys[database][table][latLonKey])
                             });
                         }
                     }
@@ -467,7 +485,12 @@ angular.module('neonDemo.directives')
              */
             var filterActiveLayersRecursively = function(activeFilterKeys, callback) {
                 var filter = activeFilterKeys.shift();
-                var relations = datasetService.getRelations(filter.database, filter.table, [filter.latitudeMapping, filter.longitudeMapping]);
+                var coordinatesRelations = [filter.latitudeMappings[0], filter.longitudeMappings[0]];
+                if(filter.latitudeMappings.length === 2) {
+                    coordinatesRelations.push(filter.latitudeMappings[1]);
+                    coordinatesRelations.push(filter.longitudeMappings[1]);
+                }
+                var relations = datasetService.getRelations(filter.database, filter.table, coordinatesRelations);
                 filterService.replaceFilters($scope.messenger, relations, filter.filterKey, $scope.createFilterClauseForExtent, {
                     visName: "Map"
                 }, function() {
@@ -609,8 +632,6 @@ angular.module('neonDemo.directives')
                 layer.fields = datasetService.getSortedFields(layer.database, layer.table);
                 layer.latitudeField = findField(layer.fields, layer.latitudeMapping);
                 layer.longitudeField = findField(layer.fields, layer.longitudeMapping);
-                layer.previousLatitudeMapping = layer.latitudeMapping;
-                layer.previousLongitudeMapping = layer.longitudeMapping;
                 layer.sizeField = layer.weightMapping ? findField(layer.fields, layer.weightMapping) : findField(layer.fields, layer.sizeBy);
                 layer.colorField = findField(layer.fields, layer.colorBy);
                 layer.sourceField = findField(layer.fields, layer.sourceMapping);
@@ -773,8 +794,7 @@ angular.module('neonDemo.directives')
             var setFilterKey = function(layer) {
                 var database = layer.database;
                 var table = layer.table;
-                var latMapping = layer.latitudeMapping;
-                var lonMapping = layer.longitudeMapping;
+                var latLonKey = getFilterLatLonKey(layer);
                 var filterKeys = filterService.createFilterKeys("map", datasetService.getDatabaseAndTableNames());
 
                 if(!$scope.filterKeys[database]) {
@@ -783,8 +803,24 @@ angular.module('neonDemo.directives')
                 if(!$scope.filterKeys[database][table]) {
                     $scope.filterKeys[database][table] = {};
                 }
-                if(!$scope.filterKeys[database][table][latMapping + "," + lonMapping]) {
-                    $scope.filterKeys[database][table][latMapping + "," + lonMapping] = filterKeys[database][table];
+                if(!$scope.filterKeys[database][table][latLonKey]) {
+                    $scope.filterKeys[database][table][latLonKey] = filterKeys[database][table];
+                }
+            };
+
+            /*
+             * Creates a latitude and longitude key for filterKeys
+             * @param layer
+             * @method getFilterLatLonKey
+             * @private
+             */
+            var getFilterLatLonKey = function(layer) {
+                if(layer.type === "node") {
+                    var sourceMapping = layer.sourceMapping + "." + layer.latitudeMapping + "," + layer.sourceMapping + "." + layer.longitudeMapping;
+                    var targetMapping = layer.targetMapping + "." + layer.latitudeMapping + "," + layer.targetMapping + "." + layer.longitudeMapping;
+                    return sourceMapping + "," + targetMapping;
+                } else {
+                    return layer.latitudeMapping + "," + layer.longitudeMapping;
                 }
             };
 
@@ -1176,14 +1212,29 @@ angular.module('neonDemo.directives')
             /**
              * Creates and returns a filter on the given latitude/longitude fields using the extent set by this visualization.
              * @param {Object} databaseAndTableName Contains the database and table name
-             * @param {Array} fieldNames An array containing the names of the latitude and longitude fields (as its first and second elements) on which to filter
+             * @param {Array} fieldNames An array containing the names of the latitude and longitude fields (as its first and
+             * second elements) on which to filter. It may contain two sets of latitude and longitude fields in which case the
+             * third and fourth elements contain the next latitude and longitude fields, respectively.
              * @method createFilterClauseForExtent
              * @return {Object} A neon.query.Filter object
              */
             $scope.createFilterClauseForExtent = function(databaseAndTableName, fieldNames) {
-                var latitudeFieldName = fieldNames[0];
-                var longitudeFieldName = fieldNames[1];
+                if(fieldNames.length === 2) {
+                    return createFilterClauseForFields(fieldNames[0], fieldNames[1]);
+                } else if(fieldNames.length === 4) {
+                    var clauses = [createFilterClauseForFields(fieldNames[0], fieldNames[1]), createFilterClauseForFields(fieldNames[2], fieldNames[3])];
+                    return neon.query.and.apply(neon.query, clauses);
+                }
+            };
 
+            /**
+             * Creates and returns a filter on the given latitude/longitude fields
+             * @param {String} latitudeFieldName The name of the latitude field
+             * @param {String} longitudeFieldName The name of the longitude field
+             * @method createFilterClauseForFields
+             * @return {Object} A neon.query.Filter object
+             */
+            var createFilterClauseForFields = function(latitudeFieldName, longitudeFieldName) {
                 var leftClause = neon.query.where(longitudeFieldName, ">=", $scope.extent.minimumLongitude);
                 var rightClause = neon.query.where(longitudeFieldName, "<=", $scope.extent.maximumLongitude);
                 var bottomClause = neon.query.where(latitudeFieldName, ">=", $scope.extent.minimumLatitude);
@@ -1353,7 +1404,7 @@ angular.module('neonDemo.directives')
                     // Ensure all map layers with the same database/table as the given layer have the same active status.
                     if(element.database === layer.database && element.table === layer.table) {
                         element.active = layer.active;
-                        filterKeyList.push($scope.filterKeys[element.database][element.table][element.latitudeMapping + "," + element.longitudeMapping]);
+                        filterKeyList.push($scope.filterKeys[element.database][element.table][getFilterLatLonKey(element)]);
                     }
                 });
 
@@ -1504,29 +1555,33 @@ angular.module('neonDemo.directives')
              * @method updateLayer
              */
             $scope.updateLayer = function(layer) {
-                var previousLat = layer.previousLatitudeMapping;
-                var previousLon = layer.previousLongitudeMapping;
+                var previousLayer = _.clone(layer);
 
                 layer.name = (layer.name || layer.table).toUpperCase();
                 layer = updateLayerFieldMappings(layer);
 
                 var index;
                 if(layer.previousLimit !== layer.limit) {
-                    // Remove the old limit/name.
-                    index = $scope.limitedLayers[layer.previousLimit].indexOf(layer.previousName);
-                    if(index >= 0) {
-                        $scope.limitedLayers[layer.previousLimit].splice(index, 1);
+                    if($scope.limitedLayers[layer.previousLimit]) {
+                        // Remove the old limit/name.
+                        index = $scope.limitedLayers[layer.previousLimit].indexOf(layer.previousName);
+                        if(index >= 0) {
+                            $scope.limitedLayers[layer.previousLimit].splice(index, 1);
+                        }
                     }
+
                     // Add the new limit/name.
                     if(!$scope.limitedLayers[layer.limit]) {
                         $scope.limitedLayers[layer.limit] = [];
                     }
                     $scope.limitedLayers[layer.limit].push(layer.name);
                 } else if(layer.previousName !== layer.name) {
-                    // Replace the old name with the new name.
-                    index = $scope.limitedLayers[layer.limit].indexOf(layer.previousName);
-                    if(index >= 0) {
-                        $scope.limitedLayers[layer.limit].splice(index, 1, layer.name);
+                    if($scope.limitedLayers[layer.limit]) {
+                        // Replace the old name with the new name.
+                        index = $scope.limitedLayers[layer.limit].indexOf(layer.previousName);
+                        if(index >= 0) {
+                            $scope.limitedLayers[layer.limit].splice(index, 1, layer.name);
+                        }
                     }
                 }
 
@@ -1537,13 +1592,11 @@ angular.module('neonDemo.directives')
 
                 layer.previousName = layer.name;
                 layer.previousLimit = layer.limit;
-                layer.previousLatitudeMapping = layer.latitudeMapping;
-                layer.previousLongitudeMapping = layer.longitudeMapping;
                 layer.editing = false;
                 setFilterKey(layer);
                 layer.olLayer = addLayer(layer);
                 $scope.map.setLayerVisibility(layer.olLayer.id, layer.visible);
-                refreshFilterKeys(layer.database, layer.table, previousLat, previousLon, function() {
+                refreshFilterKeys(previousLayer, function() {
                     if($scope.zoomRectId) {
                         $scope.updateFilteringOnLayer(layer);
                     } else {
@@ -1661,25 +1714,29 @@ angular.module('neonDemo.directives')
                     return element.olLayer.id === layer.olLayer.id;
                 });
                 $scope.options.layers.splice(index, 1);
-                refreshFilterKeys(layer.database, layer.table, layer.latitudeMapping, layer.longitudeMapping);
+                refreshFilterKeys(layer, function() {
+                    if($scope.filterKeys[layer.database] && $scope.filterKeys[layer.database][layer.table]) {
+                        $scope.queryForMapData(layer.database, layer.table);
+                    }
+                });
             };
 
             /*
-             * Removes the filter associated with the given parameters.
+             * Removes the filter associated with the given layer, if not needed anymore.
              * @method refreshFilterKeys
              * @private
              */
-            var refreshFilterKeys = function(database, table, latitudeMapping, longitudeMapping, callback) {
+            var refreshFilterKeys = function(layer, callback) {
                 var matchingLayer = _.findWhere($scope.options.layers, {
-                        database: database,
-                        table: table,
-                        latitudeMapping: latitudeMapping,
-                        longitudeMapping: longitudeMapping
+                        database: layer.database,
+                        table: layer.table,
+                        latitudeMapping: layer.latitudeMapping,
+                        longitudeMapping: layer.longitudeMapping
                     });
 
                 if(!matchingLayer) {
-                    var key = $scope.filterKeys[database][table][latitudeMapping + "," + longitudeMapping];
-                    delete $scope.filterKeys[database][table][latitudeMapping + "," + longitudeMapping];
+                    var key = $scope.filterKeys[layer.database][layer.table][getFilterLatLonKey(layer)];
+                    delete $scope.filterKeys[layer.database][layer.table][getFilterLatLonKey(layer)];
                     clearFiltersRecursively([key], function() {
                         if(callback) {
                             callback();
@@ -1733,8 +1790,6 @@ angular.module('neonDemo.directives')
 
                 layer.previousName = layer.name;
                 layer.previousLimit = layer.limit;
-                layer.previousLatitudeMapping = layer.latitudeMapping;
-                layer.previousLongitudeMapping = layer.longitudeMapping;
                 layer.olLayer = addLayer(layer);
                 $scope.options.layers.push(layer);
                 setFilterKey(layer);
