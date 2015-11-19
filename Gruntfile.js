@@ -41,19 +41,7 @@ module.exports = function(grunt) {
         "app/lib/rainbowvis.js/js/rainbowvis.js"
     ];
 
-    var jsDeps = [
-        "app/js/namespaces.js",
-        "app/js/neon-extensions/*.js",
-        "app/js/charts/*.js",
-        "app/js/coremap/*.js",
-        "app/js/tables/*.js",
-        "app/js/mediators/*.js",
-        "app/js/app.js",
-        "app/js/*Service.js",
-        "app/js/*Controller.js",
-        "app/js/time/*.js",
-        "app/js/directives/*.js"
-    ];
+    var jsLibsDest = "app/build/js/neon-dashboard-lib.js";
 
     grunt.initConfig({
         bower: {
@@ -84,8 +72,8 @@ module.exports = function(grunt) {
             docs: ["docs"],
             war: ["target"],
             tests: ["reports"],
-            js: ["app/build/js/neon-dashboard*.js"],
-            less: ["app/build/css/neon-dashboard*.css"],
+            js: ["app/build/js/*.js"],
+            css: ["app/build/css/*.css"],
             build: ["app/build"]
         },
 
@@ -100,10 +88,22 @@ module.exports = function(grunt) {
             }
         },
 
-        concat: {
+        uglify: {
             dashboard: {
-                src: [].concat(jsLibs).concat(jsDeps),
-                dest: "app/build/js/neon-dashboard.js"
+                options: {
+                    mangle: false
+                },
+                files: [{
+                    src: ["app/js/namespaces.js", "app/js/neon-extensions/*.js", "app/js/charts/*.js", "app/js/coremap/*.js", "app/js/mediators/*.js", "app/js/tables/*.js", "app/js/time/*.js", "app/js/app.js", "app/js/*Service.js", "app/js/*Controller.js", "app/js/directives/*.js"],
+                    dest: "app/build/js/neon-dashboard.min.js"
+                }]
+            }
+        },
+
+        concat: {
+            libs: {
+                src: [].concat(jsLibs),
+                dest: jsLibsDest
             }
         },
 
@@ -143,8 +143,8 @@ module.exports = function(grunt) {
         replace: {
             // Remove the sourceMappingURLs from javascript libraries in the master javascript file.
             sourceMappingUrls: {
-                src: ["app/build/js/neon-dashboard.js"],
-                dest: "app/build/js/neon-dashboard.js",
+                src: [jsLibsDest],
+                dest: jsLibsDest,
                 replacements: [{
                     from: /\/\/# sourceMappingURL=.*/g,
                     to: ""
@@ -221,9 +221,9 @@ module.exports = function(grunt) {
                     'app/components'
                 ]
             },
-            nodeps: {
+            nolibs: {
                 files: {
-                    'app/build/css/neon-dashboard-nodeps.css': 'app/css/app.less'
+                    'app/build/css/neon-dashboard-nolibs.css': 'app/css/app.less'
                 }
             },
             dashboard: {
@@ -288,11 +288,12 @@ module.exports = function(grunt) {
 
     grunt.loadNpmTasks('grunt-bower-task');
     grunt.loadNpmTasks('grunt-contrib-clean');
-    grunt.loadNpmTasks('grunt-contrib-jshint');
-    grunt.loadNpmTasks('grunt-contrib-less');
-    grunt.loadNpmTasks('grunt-contrib-yuidoc');
     grunt.loadNpmTasks('grunt-contrib-concat');
     grunt.loadNpmTasks('grunt-contrib-copy');
+    grunt.loadNpmTasks('grunt-contrib-jshint');
+    grunt.loadNpmTasks('grunt-contrib-less');
+    grunt.loadNpmTasks('grunt-contrib-uglify');
+    grunt.loadNpmTasks('grunt-contrib-yuidoc');
     grunt.loadNpmTasks('grunt-git-describe');
     grunt.loadNpmTasks('grunt-jscs');
     grunt.loadNpmTasks('grunt-karma');
@@ -300,7 +301,8 @@ module.exports = function(grunt) {
     grunt.loadNpmTasks('grunt-text-replace');
     grunt.loadNpmTasks('grunt-war');
 
-    grunt.registerTask('compile-less', ['clean:less', 'less']);
+    grunt.registerTask('compile-js', ['clean:js', 'uglify', 'concat', 'copy', 'replace']);
+    grunt.registerTask('compile-css', ['clean:css', 'less', 'sprite']);
     grunt.registerTask('saveRevision', function() {
         grunt.event.once('git-describe', function(rev) {
             var date = new Date(Date.now()).toISOString();
@@ -314,7 +316,6 @@ module.exports = function(grunt) {
         });
         grunt.task.run('git-describe');
     });
-    grunt.registerTask('compile-js', ['clean:js', 'concat', 'copy', 'replace']);
     grunt.registerTask('test', ['jshint:console', 'jscs:console', 'karma']);
-    grunt.registerTask('default', ['clean', 'bower:install', 'saveRevision', 'compile-js', 'jshint:xml', 'jscs:xml', 'yuidoc', 'compile-less', 'sprite', 'war']);
+    grunt.registerTask('default', ['clean', 'bower:install', 'saveRevision', 'compile-js', 'jshint:xml', 'jscs:xml', 'yuidoc', 'compile-css', 'war']);
 };
