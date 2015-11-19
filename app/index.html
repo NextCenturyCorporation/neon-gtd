@@ -39,7 +39,7 @@
                         <h4 class="modal-title">Neon Dashboard Demo Video</h4>
                     </div>
                     <div class="modal-body">
-                        <video id="helpVideo" ng-src="{{help.video}}" controls>
+                        <video id="helpVideo" ng-src="{{help.localVideo}}" controls>
                             Your browser does not support the video tag.
                         </video>
                     </div>
@@ -59,15 +59,18 @@
                     <div powered-by-neon class="pull-right"></div>
 
                     <!-- Help Button -->
-                    <div class="dropdown pull-right" ng-show="(help.guide || help.video)">
+                    <div class="dropdown pull-right" ng-show="(help.guide || help.webVideo || help.localVideo)">
                         <a class="dropdown-toggle navbar-text" data-toggle="dropdown" href="#" role="button">
                             <img class="brand-image" src="img/Help_64x64.png" height="34"></img>Help<span class="caret"></span>
                         </a>
                         <ul class="dropdown-menu">
-                            <li ng-show="(help.guide)"><a href="{{help.guide}}" target="guide">
+                            <li ng-show="(help.guide)"><a href="{{help.guide}}" target="guide" title="User Guide (Opens in a New Tab)">
                                 User Guide
                             </a></li>
-                            <li ng-show="(help.video)"><a href="#" data-toggle="modal" data-target="#videoModal">
+                            <li ng-show="(help.webVideo)"><a href="{{help.webVideo}}" target="video" title="Demo Video (Opens in a New Tab)">
+                                Demo Video
+                            </a></li>
+                            <li ng-show="(help.localVideo)"><a href="#" data-toggle="modal" data-target="#videoModal" title="Demo Video (Opens in a Popup)">
                                 Demo Video
                             </a></li>
                         </ul>

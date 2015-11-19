@@ -142,7 +142,8 @@ var saveOpenCpu = function(config) {
 var saveDashboards = function(config) {
     var helpConfig = (config.help || {
         guide: undefined,
-        video: undefined
+        webVideo: undefined,
+        localVideo: undefined
     });
     var dashboardConfig = config.dashboard || {
         hideNavbarItems: false,
@@ -164,7 +165,7 @@ var saveDashboards = function(config) {
     neonDemo.constant('config', dashboardConfig);
 
     // Keep the autoplay video code here because when it was in the neonDemoController the dashboard would start playing the video whenever the dataset was changed.
-    if(dashboardConfig.showVideoOnLoad && dashboardConfig.help.video) {
+    if(dashboardConfig.showVideoOnLoad && dashboardConfig.help.localVideo) {
         neon.ready(function() {
             $("#videoModal").modal("show");
             $("#helpVideo").attr("autoplay", "");
