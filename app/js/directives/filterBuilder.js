@@ -166,8 +166,9 @@ angular.module('neonDemo.directives')
                 $scope.selectedTable = $scope.tables[0];
 
                 for(var i = 0; i < $scope.databases.length; ++i) {
-                    for(var j = 0; j < $scope.tables.length; ++j) {
-                        $scope.filterTable.setFilterKey($scope.databases[i].name, $scope.tables[j].name, $scope.instanceId + "-" + $scope.databases[i].name + "-" + $scope.tables[j].name);
+                    var databaseTables = datasetService.getTables($scope.databases[i].name);
+                    for(var j = 0; j < databaseTables.length; ++j) {
+                        $scope.filterTable.setFilterKey($scope.databases[i].name, databaseTables[j].name, $scope.instanceId + "-" + $scope.databases[i].name + "-" + databaseTables[j].name);
                     }
                 }
 
@@ -176,7 +177,7 @@ angular.module('neonDemo.directives')
 
             $scope.updateTablesForFilterRow = function(filterRow) {
                 filterRow.tableOptions = datasetService.getTables(filterRow.database.name);
-                filterRow.tableName = filterRow.tableOptions[0];
+                filterRow.table = filterRow.tableOptions[0];
                 $scope.updateFieldsForFilterRow(filterRow);
             };
 
@@ -230,7 +231,8 @@ angular.module('neonDemo.directives')
             };
 
             $scope.updateFieldsForFilterRow = function(filterRow) {
-                filterRow.columnOptions = datasetService.getSortedFields(filterRow.database.name, filterRow.tableName, true);
+                $scope.filterTable.updateFilterRow(filterRow);
+                filterRow.columnOptions = datasetService.getSortedFields(filterRow.database.name, filterRow.table.name, true);
                 filterRow.columnValue = findDefaultField(filterRow.columnOptions);
                 $scope.dirtyFilterRow(filterRow);
             };
@@ -454,12 +456,20 @@ angular.module('neonDemo.directives')
                 if(filter.whereClause && filter.whereClause.lhs) {
                     filter.name("Filter Builder: " + filter.whereClause.lhs + " " + filter.whereClause.operator + " " + filter.whereClause.rhs);
                 } else if(filter.whereClause && filter.whereClause.whereClauses) {
-                    filter.name("Filter Builder: " + filter.whereClause.whereClauses.length + " filters");
+                    filter.name("Filter Builder: " + filter.tableName + " - " + filter.whereClause.whereClauses.length + " filters");
                 }
 
                 var databaseName = filterObject.databaseName;
                 var tableName = filterObject.tableName;
                 var filterKey = $scope.filterTable.getFilterKey(databaseName, tableName);
+
+                if(!filter.whereClause) {
+                    $scope.resetFilters([filterKey]);
+                    if(filters.length) {
+                        $scope.publishReplaceFilterEvents(filters, successCallback, errorCallback);
+                    }
+                    return;
+                }
 
                 XDATA.userALE.log({
                     activity: "alter",

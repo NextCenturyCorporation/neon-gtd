@@ -28,7 +28,8 @@ dashboard:
     google: API_KEY
 help: 
   guide: 
-  video: 
+  webVideo: 
+  localVideo: 
 opencpu: 
   enableOpenCpu: false
   enableLogging: false
