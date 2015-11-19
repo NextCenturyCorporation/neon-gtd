@@ -77,7 +77,7 @@ angular.module("neonDemo.services")
             // Display a temporary notification in the corner of the dashboard.
             // Bootstrap Notify Format:  $.notify({ options }, { settings });
             $.notify({
-                icon: "img/Error_512x512.png",
+                icon: "img/Error_64x64.png",
                 message: _.escape(message)
             }, {
                 type: "danger",
@@ -94,7 +94,7 @@ angular.module("neonDemo.services")
 
             // Display a notification in the bottom of the input element.
             $.notify({
-                icon: "img/Error_512x512.png",
+                icon: "img/Error_64x64.png",
                 // The title property is a keyword that will be used in the template.
                 title: _.escape(stacktrace).replace(/\n/g, "<br>").replace(/\t/g, "&nbsp; "),
                 message: _.escape(message)

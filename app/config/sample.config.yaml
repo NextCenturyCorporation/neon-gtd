@@ -63,13 +63,13 @@ visualizations:
     sizeY: 4
     minSizeY: 4
     type: filter-builder
-    icon: img/visualizations/CreateFilter64.png
+    icon: CreateFilter64
   - 
     name: Data Table
     sizeX: 6
     sizeY: 4
     type: query-results-table
-    icon: img/visualizations/ViewData64.png
+    icon: ViewData64
   - 
     name: Timeline
     sizeX: 12
@@ -77,73 +77,73 @@ visualizations:
     sizeY: 4
     minSizeY: 4
     type: timeline-selector
-    icon: img/visualizations/Timeline64.png
+    icon: Timeline64
   - 
     name: Map
     sizeX: 12
     sizeY: 6
     type: map
-    icon: img/visualizations/Map64.png
+    icon: Map64
   - 
     name: Ops Clock
     sizeX: 6
     sizeY: 4
     type: circular-heat-form
-    icon: img/visualizations/OpsClock64.png
+    icon: OpsClock64
   - 
     name: Line Chart
     sizeX: 6
     sizeY: 4
     type: linechart
-    icon: img/visualizations/LineChart64.png
+    icon: LineChart64
   - 
     name: Bar Chart
     sizeX: 6
     sizeY: 4
     type: barchart
-    icon: img/visualizations/BarChart64.png
+    icon: BarChart64
   - 
     name: Sunburst Chart
     sizeX: 6
     sizeY: 4
     type: sunburst
-    icon: img/visualizations/Sunburst64.png
+    icon: Sunburst64
   - 
     name: Text Cloud
     sizeX: 6
     sizeY: 4
     type: tag-cloud
-    icon: img/visualizations/TagCloud64.png
+    icon: TagCloud64
   - 
     name: Aggregation Table
     sizeX: 6
     sizeY: 4
     type: count-by
-    icon: img/visualizations/Count64.png
+    icon: Count64
   - 
     name: Graph
     sizeX: 12
     sizeY: 6
     type: directed-graph
-    icon: img/visualizations/Graph64.png
+    icon: Graph64
   - 
     name: Newsfeed
     sizeX: 6
     sizeY: 4
     type: newsfeed
-    icon: img/visualizations/News64.png
+    icon: News64
   - 
     name: Gantt Chart
     sizeX: 6
     sizeY: 4
     type: gantt-chart
-    icon: img/visualizations/Gantt64.png
+    icon: Gantt64
   - 
     name: Sample
     sizeX: 6
     sizeY: 4
     type: sample
-    icon: img/Neon_60x34.png
+    icon: Neon_60x34
 datasets: 
   - 
     name: Earthquakes

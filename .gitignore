@@ -17,3 +17,4 @@ reports
 target/
 tmp
 version.json
+app/build

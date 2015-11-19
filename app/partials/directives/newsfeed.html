@@ -97,8 +97,8 @@
 <div class="newsfeed">
 	<div class="item" ng-class="getNewsItemStyleClass(item)" ng-repeat='item in data.news track by $index'>
         <div>
-            <img ng-if="feedType == 'TWITTER'" src="img/Twitter.png" height="32" title="Tweet">
-            <img ng-show="options.showTranslation && item.isTranslated" src="img/Translated.png" height="12" title="Showing Translation">
+            <span ng-if="feedType == 'TWITTER'" class="icon-Twitter_32x32 neon-sprite" title="Tweet"></span>
+            <span ng-show="options.showTranslation && item.isTranslated" class="icon-Translated_20x20 neon-sprite" title="Showing Translation"></span>
             <span ng-class="{true: 'vertical-align', false: ''}[feedType == 'TWITTER']">
                 <span class="head" ng-if="item.head != undefined" ng-show="!options.showTranslation" ng-bind="item.head"></span>
                 <span class="head" ng-if="item.headTranslated != undefined" ng-show="options.showTranslation" ng-bind="item.headTranslated" title="{{item.head}}"></span>

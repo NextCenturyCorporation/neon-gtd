@@ -13,8 +13,8 @@
                     <ul>
                         <li ng-repeat="link in links[key]">
                             <a ng-href="{{link.url}}" target="{{link.tab}}" title="Open {{link.name}} in a new tab" ng-click="logLinkEvent(link.name)">
-                                <img alt="{{link.name}}" class="img-thumbnail center-block" ng-src="{{link.image}}">
-                                <span class="text-uppercase small" ng-bind="link.name"></span>
+                                <img alt="{{link.name}}" class="center-block" ng-src="{{link.image}}">
+                                <span class="text-uppercase" ng-bind="link.name"></span>
                             </a>
                         </li>
                     </ul>
