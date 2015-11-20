@@ -54,7 +54,7 @@ var neonDemo = angular.module('neonDemo', [
     'gantt.groups'
 ]);
 
-neonDemo.config(function($routeProvider, $locationProvider) {
+neonDemo.config(["$routeProvider", "$locationProvider", function($routeProvider, $locationProvider) {
     $routeProvider.when('/', {
         templateUrl: 'index.html',
         controller: 'neonDemoController'
@@ -63,7 +63,7 @@ neonDemo.config(function($routeProvider, $locationProvider) {
         enabled: true,
         requireBase: false
     });
-});
+}]);
 
 // AngularJS filter for reversing the order of an array.
 // http://stackoverflow.com/questions/15266671/angular-ng-repeat-in-reverse
@@ -102,7 +102,10 @@ var XDATA = {};
 
 // Start angular once all of the configuration variables have been read from the JSON file(s) and set in the module.
 var startAngular = function() {
-    angular.bootstrap(document, ['neonDemo']);
+    angular.bootstrap(document, ['neonDemo'], {
+        // Throws errors if angular code will not work correctly once minified.
+        strictDi: true
+    });
 };
 
 var saveUserAle = function(config) {

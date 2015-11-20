@@ -29,7 +29,7 @@
  * @constructor
  */
 angular.module('neonDemo.directives')
-.directive('poweredByNeon', function($http) {
+.directive('poweredByNeon', ["$http", function($http) {
     return {
         templateUrl: 'partials/directives/poweredByNeon.html',
         restrict: 'EA',
@@ -65,4 +65,4 @@ angular.module('neonDemo.directives')
             };
         }
     };
-});
+}]);
