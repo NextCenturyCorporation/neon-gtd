@@ -94,7 +94,7 @@ function(external, connectionService, datasetService, errorNotificationService, 
                     filtersChanged: onFiltersChanged
                 });
                 $scope.messenger.subscribe(datasetService.UPDATE_DATA_CHANNEL, function() {
-                    $scope.queryForData(false);
+                    queryForData(false);
                 });
 
                 $scope.messenger.subscribe(filterService.REQUEST_REMOVE_FILTER, function(ids) {
@@ -126,23 +126,23 @@ function(external, connectionService, datasetService, errorNotificationService, 
                 });
 
                 $scope.$watch('options.attrX', function(newValue) {
-                    onFieldChange('attrX', newValue);
+                    handleChangedField('attrX', newValue);
                     if(!$scope.loadingData && $scope.options.database.name && $scope.options.table.name) {
-                        $scope.queryForData(true);
+                        queryForData(true);
                     }
                 });
 
                 $scope.$watch('options.attrY', function(newValue) {
-                    onFieldChange('attrY', newValue);
+                    handleChangedField('attrY', newValue);
                     if(!$scope.loadingData && $scope.options.database.name && $scope.options.table.name) {
-                        $scope.queryForData(true);
+                        queryForData(true);
                     }
                 });
 
                 $scope.$watch('options.barType', function(newValue) {
-                    onFieldChange('aggregation', newValue);
+                    handleChangedField('aggregation', newValue);
                     if(!$scope.loadingData && $scope.options.database.name && $scope.options.table.name) {
-                        $scope.queryForData(false);
+                        queryForData(false);
                     }
                 });
 
@@ -151,7 +151,7 @@ function(external, connectionService, datasetService, errorNotificationService, 
                 $element.resize(updateChartSize);
             };
 
-            var onFieldChange = function(field, newValue) {
+            var handleChangedField = function(field, newValue) {
                 var source = "user";
                 var action = "click";
 
@@ -174,6 +174,13 @@ function(external, connectionService, datasetService, errorNotificationService, 
                 });
             };
 
+            $scope.handleChangedLimit = function() {
+                handleChangedField("limit", $scope.options.limitCount);
+                if(!$scope.loadingData && $scope.options.database.name && $scope.options.table.name) {
+                    queryForData(true);
+                }
+            };
+
             /**
              * Event handler for filter changed events issued over Neon's messaging channels.
              * @param {Object} message A Neon filter changed message.
@@ -192,16 +199,16 @@ function(external, connectionService, datasetService, errorNotificationService, 
                         source: "system",
                         tags: ["filter-change", "barchart"]
                     });
-                    $scope.queryForData(false);
+                    queryForData(false);
                 }
             };
 
             /**
              * Displays data for any currently active datasets.
-             * @param {Boolean} Whether this function was called during visualization initialization.
              * @method displayActiveDataset
+             * @private
              */
-            $scope.displayActiveDataset = function(initializing) {
+            var displayActiveDataset = function() {
                 if(!datasetService.hasDataset() || $scope.loadingData) {
                     return;
                 }
@@ -217,14 +224,7 @@ function(external, connectionService, datasetService, errorNotificationService, 
                     }
                 }
                 $scope.filterKeys = filterService.createFilterKeys("barchart", datasetService.getDatabaseAndTableNames());
-
-                if(initializing) {
-                    $scope.updateTables();
-                } else {
-                    $scope.$apply(function() {
-                        $scope.updateTables();
-                    });
-                }
+                $scope.updateTables();
             };
 
             $scope.updateTables = function() {
@@ -257,10 +257,10 @@ function(external, connectionService, datasetService, errorNotificationService, 
                 if($scope.filterSet) {
                     $scope.clearFilterSet();
                 }
-                $scope.queryForData(true);
+                queryForData(true);
             };
 
-            $scope.buildQuery = function() {
+            var buildQuery = function() {
                 var query = new neon.query.Query()
                     .selectFrom($scope.options.database.name, $scope.options.table.name)
                     .where($scope.options.attrX.columnName, '!=', null)
@@ -288,7 +288,7 @@ function(external, connectionService, datasetService, errorNotificationService, 
                 return query;
             };
 
-            $scope.queryForData = function(rebuildChart) {
+            var queryForData = function(rebuildChart) {
                 if($scope.errorMessage) {
                     errorNotificationService.hideErrorMessage($scope.errorMessage);
                     $scope.errorMessage = undefined;
@@ -302,7 +302,7 @@ function(external, connectionService, datasetService, errorNotificationService, 
                     return;
                 }
 
-                var query = $scope.buildQuery();
+                var query = buildQuery();
 
                 XDATA.userALE.log({
                     activity: "alter",
@@ -420,7 +420,7 @@ function(external, connectionService, datasetService, errorNotificationService, 
                             source: "user",
                             tags: ["filter", "barchart"]
                         });
-                        filterService.replaceFilters($scope.messenger, relations, $scope.filterKeys, $scope.createFilterClauseForXAxis, filterNameObj);
+                        filterService.replaceFilters($scope.messenger, relations, $scope.filterKeys, createFilterClauseForXAxis, filterNameObj);
                     } else {
                         XDATA.userALE.log({
                             activity: "select",
@@ -432,7 +432,7 @@ function(external, connectionService, datasetService, errorNotificationService, 
                             source: "user",
                             tags: ["filter", "barchart"]
                         });
-                        filterService.addFilters($scope.messenger, relations, $scope.filterKeys, $scope.createFilterClauseForXAxis, filterNameObj);
+                        filterService.addFilters($scope.messenger, relations, $scope.filterKeys, createFilterClauseForXAxis, filterNameObj);
                     }
                 }
             };
@@ -442,9 +442,10 @@ function(external, connectionService, datasetService, errorNotificationService, 
              * @param {Object} databaseAndTableName Contains the database and table name
              * @param {String} xAxisFieldName The name of the x-axis field on which to filter
              * @method createFilterClauseForXAxis
+             * @private
              * @return {Object} A neon.query.Filter object
              */
-            $scope.createFilterClauseForXAxis = function(databaseAndTableName, xAxisFieldName) {
+            var createFilterClauseForXAxis = function(databaseAndTableName, xAxisFieldName) {
                 return neon.query.where(xAxisFieldName, '=', $scope.filterValue);
             };
 
@@ -545,7 +546,7 @@ function(external, connectionService, datasetService, errorNotificationService, 
                     return first + str.slice(1);
                 };
 
-                var query = $scope.buildQuery();
+                var query = buildQuery();
                 query.limitClause = exportService.getLimitClause();
                 query.ignoreFilters_ = exportService.getIgnoreFilters();
                 query.ignoredFilterIds_ = exportService.getIgnoredFilterIds();
@@ -598,7 +599,7 @@ function(external, connectionService, datasetService, errorNotificationService, 
             neon.ready(function() {
                 $scope.messenger = new neon.eventing.Messenger();
                 initialize();
-                $scope.displayActiveDataset(true);
+                displayActiveDataset();
             });
         }
     };
