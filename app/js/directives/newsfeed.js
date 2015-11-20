@@ -302,7 +302,8 @@ function(external, $timeout, connectionService, datasetService, errorNotificatio
              */
             var onNews = function(message) {
                 if(message.news && message.name && message.name === $scope.feedName) {
-                    $scope.data.news = message.news.slice(0, $scope.options.limit);
+                    // Show all of the news instead of slicing it to avoid odd behavior during news-highlights events.
+                    $scope.data.news = message.news;
                     $scope.data.news.forEach(function(item) {
                         if(item.head) {
                             item.headTranslated = item.head;
