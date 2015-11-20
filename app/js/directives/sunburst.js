@@ -75,7 +75,7 @@ function(connectionService, datasetService, errorNotificationService, exportServ
                     filtersChanged: onFiltersChanged
                 });
                 $scope.messenger.subscribe(datasetService.UPDATE_DATA_CHANNEL, function() {
-                    $scope.queryForData();
+                    queryForData();
                 });
 
                 $scope.exportID = exportService.register($scope.makeSunburstExportObject);
@@ -102,7 +102,7 @@ function(connectionService, datasetService, errorNotificationService, exportServ
 
                 $scope.$watch('options.valueField', function(newValue, oldValue) {
                     if(!$scope.loadingData && newValue !== oldValue) {
-                        $scope.queryForData();
+                        queryForData();
                     }
                 }, true);
 
@@ -131,7 +131,7 @@ function(connectionService, datasetService, errorNotificationService, exportServ
                         source: "system",
                         tags: ["filter-change", "sunburst"]
                     });
-                    $scope.queryForData();
+                    queryForData();
                 }
             };
 
@@ -152,8 +152,9 @@ function(connectionService, datasetService, errorNotificationService, exportServ
              * Builds a query to pull a limited set of records that match any existing filter sets.
              * @return neon.query.Query
              * @method buildQuery
+             * @private
              */
-            $scope.buildQuery = function() {
+            var buildQuery = function() {
                 var query = new neon.query.Query().selectFrom($scope.options.database.name, $scope.options.table.name);
                 if($scope.groupFields.length > 0) {
                     query.groupBy.apply(query, $scope.groupFields);
@@ -170,10 +171,10 @@ function(connectionService, datasetService, errorNotificationService, exportServ
 
             /**
              * Displays data for any currently active datasets.
-             * @param {Boolean} Whether this function was called during visualization initialization.
              * @method displayActiveDataset
+             * @private
              */
-            $scope.displayActiveDataset = function(initializing) {
+            var displayActiveDataset = function() {
                 if(!datasetService.hasDataset() || $scope.loadingData) {
                     return;
                 }
@@ -191,14 +192,7 @@ function(connectionService, datasetService, errorNotificationService, exportServ
                         }
                     }
                 }
-
-                if(initializing) {
-                    $scope.updateTables();
-                } else {
-                    $scope.$apply(function() {
-                        $scope.updateTables();
-                    });
-                }
+                $scope.updateTables();
             };
 
             $scope.updateTables = function() {
@@ -219,10 +213,10 @@ function(connectionService, datasetService, errorNotificationService, exportServ
                 $scope.loadingData = true;
                 $scope.fields = datasetService.getSortedFields($scope.options.database.name, $scope.options.table.name);
                 $scope.options.valueField = datasetService.createBlankField();
-                $scope.queryForData();
+                queryForData();
             };
 
-            $scope.queryForData = function() {
+            var queryForData = function() {
                 if($scope.errorMessage) {
                     errorNotificationService.hideErrorMessage($scope.errorMessage);
                     $scope.errorMessage = undefined;
@@ -238,7 +232,7 @@ function(connectionService, datasetService, errorNotificationService, exportServ
                     return;
                 }
 
-                var query = $scope.buildQuery();
+                var query = buildQuery();
 
                 XDATA.userALE.log({
                     activity: "alter",
@@ -386,7 +380,7 @@ function(connectionService, datasetService, errorNotificationService, exportServ
                     $scope.groupFields.push($scope.options.selectedItem.columnName);
                 }
                 $scope.options.selectedItem = {};
-                $scope.queryForData();
+                queryForData();
             };
 
             $scope.dropGroup = function(groupField) {
@@ -394,7 +388,7 @@ function(connectionService, datasetService, errorNotificationService, exportServ
                 if(index !== -1) {
                     $scope.groupFields.splice(index, 1);
                 }
-                $scope.queryForData();
+                queryForData();
             };
 
             /**
@@ -411,7 +405,7 @@ function(connectionService, datasetService, errorNotificationService, exportServ
                     source: "user",
                     tags: ["options", "sunburst", "export"]
                 });
-                var query = $scope.buildQuery();
+                var query = buildQuery();
                 query.limitClause = exportService.getLimitClause();
                 // Sort results by each group field so the resulting file won't be ugly.
                 var sortByArgs = [];
@@ -455,7 +449,7 @@ function(connectionService, datasetService, errorNotificationService, exportServ
             neon.ready(function() {
                 $scope.messenger = new neon.eventing.Messenger();
                 initialize();
-                $scope.displayActiveDataset(true);
+                displayActiveDataset();
             });
         }
     };

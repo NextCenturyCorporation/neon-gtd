@@ -114,8 +114,9 @@ function(external, connectionService, datasetService, errorNotificationService, 
              * Initializes the name of the directive's scope variables
              * and the Neon Messenger used to monitor data change events.
              * @method initialize
+             * @private
              */
-            $scope.initialize = function() {
+            var initialize = function() {
                 // Setup our messenger.
                 $scope.messenger = new neon.eventing.Messenger();
 
@@ -329,10 +330,10 @@ function(external, connectionService, datasetService, errorNotificationService, 
 
             /**
              * Displays data for any currently active datasets.
-             * @param {Boolean} Whether this function was called during visualization initialization.
              * @method displayActiveDataset
+             * @private
              */
-            $scope.displayActiveDataset = function(initializing) {
+            var displayActiveDataset = function() {
                 if(!datasetService.hasDataset() || $scope.loadingData) {
                     return;
                 }
@@ -348,14 +349,7 @@ function(external, connectionService, datasetService, errorNotificationService, 
                     }
                 }
                 $scope.filterKeys = filterService.createFilterKeys("countby", datasetService.getDatabaseAndTableNames());
-
-                if(initializing) {
-                    $scope.updateTables();
-                } else {
-                    $scope.$apply(function() {
-                        $scope.updateTables();
-                    });
-                }
+                $scope.updateTables();
             };
 
             $scope.updateTables = function() {
@@ -419,14 +413,14 @@ function(external, connectionService, datasetService, errorNotificationService, 
                 var connection = connectionService.getActiveConnection();
 
                 if(!connection || !$scope.options.field.columnName || ($scope.options.aggregation !== "count" && !$scope.options.aggregationField.columnName)) {
-                    $scope.updateData({
+                    updateData({
                         data: []
                     });
                     $scope.loadingData = false;
                     return;
                 }
 
-                var query = $scope.buildQuery();
+                var query = buildQuery();
 
                 XDATA.userALE.log({
                     activity: "alter",
@@ -459,7 +453,7 @@ function(external, connectionService, datasetService, errorNotificationService, 
                             source: "system",
                             tags: ["receive", "count-by"]
                         });
-                        $scope.updateData(queryResults);
+                        updateData(queryResults);
                         $scope.loadingData = false;
                         XDATA.userALE.log({
                             activity: "alter",
@@ -496,7 +490,7 @@ function(external, connectionService, datasetService, errorNotificationService, 
                             source: "system",
                             tags: ["failed", "count-by"]
                         });
-                        $scope.updateData({
+                        updateData({
                             data: []
                         });
                         $scope.loadingData = false;
@@ -512,7 +506,7 @@ function(external, connectionService, datasetService, errorNotificationService, 
                 });
             };
 
-            $scope.stripIdField = function(dataObject) {
+            var stripIdField = function(dataObject) {
                 var data = dataObject.data;
 
                 var cleanData = [];
@@ -559,8 +553,10 @@ function(external, connectionService, datasetService, errorNotificationService, 
              * dashboard and this widget.
              * @param {String} The filter field
              * @param {String} The filter value
+             * @method setFilter
+             * @private
              */
-            $scope.setFilter = function(field, value) {
+            var setFilter = function(field, value) {
                 var filterExists = $scope.filterSet ? true : false;
                 handleSetFilter(field, value);
 
@@ -581,7 +577,7 @@ function(external, connectionService, datasetService, errorNotificationService, 
                             source: "user",
                             tags: ["filter", "count-by"]
                         });
-                        filterService.replaceFilters($scope.messenger, relations, $scope.filterKeys, $scope.createFilterClauseForCount, {
+                        filterService.replaceFilters($scope.messenger, relations, $scope.filterKeys, createFilterClauseForCount, {
                             visName: "Aggregation Table",
                             text: $scope.options.field.columnName + " = " + $scope.filterSet.value
                         });
@@ -596,7 +592,7 @@ function(external, connectionService, datasetService, errorNotificationService, 
                             source: "user",
                             tags: ["filter", "count-by"]
                         });
-                        filterService.addFilters($scope.messenger, relations, $scope.filterKeys, $scope.createFilterClauseForCount, {
+                        filterService.addFilters($scope.messenger, relations, $scope.filterKeys, createFilterClauseForCount, {
                             visName: "Aggregation Table",
                             text: $scope.options.field.columnName + " = " + $scope.filterSet.value
                         });
@@ -609,9 +605,10 @@ function(external, connectionService, datasetService, errorNotificationService, 
              * @param {Object} databaseAndTableName Contains the database and table name
              * @param {String} fieldName The name of the field on which to filter
              * @method createFilterClauseForCount
+             * @private
              * @return {Object} A neon.query.Filter object
              */
-            $scope.createFilterClauseForCount = function(databaseAndTableName, fieldName) {
+            var createFilterClauseForCount = function(databaseAndTableName, fieldName) {
                 return neon.query.where(fieldName, '=', $scope.filterValue);
             };
 
@@ -619,7 +616,7 @@ function(external, connectionService, datasetService, errorNotificationService, 
              * Adds an onClick listener for selecting the rows in the table that
              * sets a filter on the data in the selected row.
              */
-            $scope.addOnClickListener = function() {
+            var addOnClickListener = function() {
                 $scope.table.addOnClickListener(function(columns, row) {
                     var columnIndex = external.active ? 1 : 0;
                     var field = columns[columnIndex].field;
@@ -634,7 +631,7 @@ function(external, connectionService, datasetService, errorNotificationService, 
 
                     $tableDiv.addClass("filtered");
                     $scope.$apply(function() {
-                        $scope.setFilter(field, row[field]);
+                        setFilter(field, row[field]);
                     });
                 });
             };
@@ -645,13 +642,14 @@ function(external, connectionService, datasetService, errorNotificationService, 
              * @param {Object} queryResults Results returned from a Neon query.
              * @param {Array} queryResults.data The aggregate numbers for the heat chart cells.
              * @method updateData
+             * @private
              */
-            $scope.updateData = function(queryResults) {
+            var updateData = function(queryResults) {
                 if(!($("#" + $scope.tableId).length)) {
                     return;
                 }
 
-                var cleanData = $scope.stripIdField(queryResults);
+                var cleanData = stripIdField(queryResults);
 
                 // If the table is recreated while sorting is set, we must redo the sorting on the new table; else, sort the table by the aggregation field.
                 var sortInfo = $scope.table ? $scope.table.sortInfo_ : {
@@ -669,7 +667,7 @@ function(external, connectionService, datasetService, errorNotificationService, 
 
                 $scope.count = cleanData.data.length;
                 $scope.table = new tables.Table("#" + $scope.tableId, $scope.tableOptions).draw();
-                $scope.addOnClickListener();
+                addOnClickListener();
                 updateSize();
 
                 $scope.table.sortColumnAndChangeGlyph(sortInfo);
@@ -684,8 +682,9 @@ function(external, connectionService, datasetService, errorNotificationService, 
              * Builds a query to pull a limited set of records that match any existing filter sets.
              * @return neon.query.Query
              * @method buildQuery
+             * @private
              */
-            $scope.buildQuery = function() {
+            var buildQuery = function() {
                 var whereNotNull = neon.query.where($scope.options.field.columnName, "!=", null);
                 var query = new neon.query.Query().selectFrom($scope.options.database.name, $scope.options.table.name).groupBy($scope.options.field.columnName).where(whereNotNull);
 
@@ -759,7 +758,7 @@ function(external, connectionService, datasetService, errorNotificationService, 
                     return first + str.slice(1);
                 };
 
-                var query = $scope.buildQuery();
+                var query = buildQuery();
                 query.limitClause = exportService.getLimitClause();
                 var finalObject = {
                     name: "Count_By",
@@ -804,8 +803,8 @@ function(external, connectionService, datasetService, errorNotificationService, 
             };
 
             neon.ready(function() {
-                $scope.initialize();
-                $scope.displayActiveDataset(true);
+                initialize();
+                displayActiveDataset();
             });
         }
     };

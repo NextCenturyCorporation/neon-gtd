@@ -150,7 +150,7 @@ angular.module('neonDemo.directives')
                         if(!$scope.outstandingQuery[keys[i]][tables[j]]) {
                             $scope.outstandingQuery[keys[i]][tables[j]] = undefined;
                         }
-                        $scope.queryForMapData(keys[i], tables[j]);
+                        queryForMapData(keys[i], tables[j]);
                     }
                 }
             };
@@ -176,8 +176,9 @@ angular.module('neonDemo.directives')
              * Initializes the name of the directive's scope variables
              * and the Neon Messenger used to monitor data change events.
              * @method initialize
+             * @private
              */
-            $scope.initialize = function() {
+            var initialize = function() {
                 var datasetOptions = datasetService.getActiveDatasetOptions();
                 $scope.map = new coreMap.Map($scope.mapId, {
                     responsive: false,
@@ -185,7 +186,7 @@ angular.module('neonDemo.directives')
                     queryForMapPopupDataFunction: queryForMapPopupData
                 });
                 $scope.map.linksPopupService = linksPopupService;
-                $scope.draw();
+                draw();
                 $scope.map.register("movestart", this, onMapEvent);
                 $scope.map.register("moveend", this, onMapEvent);
                 $scope.map.register("zoom", this, onMapEvent);
@@ -200,7 +201,7 @@ angular.module('neonDemo.directives')
                 $scope.messenger.subscribe(datasetService.UPDATE_DATA_CHANNEL, function() {
                     queryAllLayerTables();
                 });
-                $scope.messenger.subscribe($scope.SELECTION_EVENT_CHANNEL, $scope.createPoint);
+                $scope.messenger.subscribe($scope.SELECTION_EVENT_CHANNEL, createPoint);
 
                 $scope.exportID = exportService.register($scope.makeMapExportObject);
 
@@ -223,7 +224,7 @@ angular.module('neonDemo.directives')
 
                     if(filterKeysList) {
                         clearFiltersRecursively(filterKeysList, function() {
-                            $scope.queryForMapData(database, table);
+                            queryForMapData(database, table);
                         });
                     }
                 });
@@ -491,7 +492,7 @@ angular.module('neonDemo.directives')
                     coordinatesRelations.push(filter.longitudeMappings[1]);
                 }
                 var relations = datasetService.getRelations(filter.database, filter.table, coordinatesRelations);
-                filterService.replaceFilters($scope.messenger, relations, filter.filterKey, $scope.createFilterClauseForExtent, {
+                filterService.replaceFilters($scope.messenger, relations, filter.filterKey, createFilterClauseForExtent, {
                     visName: "Map"
                 }, function() {
                     if(activeFilterKeys.length) {
@@ -583,7 +584,7 @@ angular.module('neonDemo.directives')
                         source: "system",
                         tags: ["filter-change", "map"]
                     });
-                    $scope.queryForMapData(message.addedFilter.databaseName, message.addedFilter.tableName);
+                    queryForMapData(message.addedFilter.databaseName, message.addedFilter.tableName);
                 }
             };
 
@@ -675,10 +676,10 @@ angular.module('neonDemo.directives')
 
             /**
              * Displays data for any currently active datasets.
-             * @param {Boolean} Whether this function was called during visualization initialization.
              * @method displayActiveDataset
+             * @private
              */
-            $scope.displayActiveDataset = function(initializing) {
+            var displayActiveDataset = function() {
                 if(!datasetService.hasDataset() || $scope.loadingData) {
                     return;
                 }
@@ -694,14 +695,7 @@ angular.module('neonDemo.directives')
 
                 // Set the map viewing bounds
                 $scope.setDefaultView();
-
-                if(initializing) {
-                    $scope.updateAndQueryForMapData();
-                } else {
-                    $scope.$apply(function() {
-                        $scope.updateAndQueryForMapData();
-                    });
-                }
+                $scope.updateAndQueryForMapData();
             };
 
             $scope.updateFields = function() {
@@ -762,7 +756,7 @@ angular.module('neonDemo.directives')
             /**
              * Updates the queries to support the current set of configured layers.
              */
-            $scope.updateLayersAndQueries = function() {
+            var updateLayersAndQueries = function() {
                 var i = 0;
                 var layer = {};
 
@@ -830,7 +824,7 @@ angular.module('neonDemo.directives')
 
                 $timeout(function() {
                     $scope.resetNewLayer();
-                    $scope.updateLayersAndQueries();
+                    updateLayersAndQueries();
                     $scope.loadingData = false;
                 });
             };
@@ -838,7 +832,7 @@ angular.module('neonDemo.directives')
             /**
              * @method queryForMapData
              */
-            $scope.queryForMapData = function(database, table) {
+            var queryForMapData = function(database, table) {
                 if($scope.errorMessage) {
                     errorNotificationService.hideErrorMessage($scope.errorMessage);
                     $scope.errorMessage = undefined;
@@ -858,13 +852,13 @@ angular.module('neonDemo.directives')
                 linksPopupService.deleteLinks(generatePointLinksSource(database, table));
 
                 if(!connection) {
-                    $scope.updateMapData(database, table, {
+                    updateMapData(database, table, {
                         data: []
                     });
                     return;
                 }
 
-                var query = $scope.buildPointQuery(database, table);
+                var query = buildPointQuery(database, table);
 
                 XDATA.userALE.log({
                     activity: "alter",
@@ -897,7 +891,7 @@ angular.module('neonDemo.directives')
                             source: "system",
                             tags: ["receive", "map"]
                         });
-                        $scope.updateMapData(database, table, queryResults);
+                        updateMapData(database, table, queryResults);
 
                         XDATA.userALE.log({
                             activity: "alter",
@@ -934,7 +928,7 @@ angular.module('neonDemo.directives')
                             source: "system",
                             tags: ["failed", "map"]
                         });
-                        $scope.updateMapData(database, table, {
+                        updateMapData(database, table, {
                             data: []
                         });
                         if(response.responseJSON) {
@@ -959,7 +953,7 @@ angular.module('neonDemo.directives')
             /**
              * Redraws the map
              */
-            $scope.draw = function() {
+            var draw = function() {
                 // TODO: Puzzle out where this goes when there's no longer 2 fixed layers.
                 $scope.colorMappings = [];
             };
@@ -970,15 +964,16 @@ angular.module('neonDemo.directives')
              * @param {Object} queryResults Results returned from a Neon query.
              * @param {Array} queryResults.data The aggregate numbers for the heat chart cells.
              * @method updateMapData
+             * @private
              */
-            $scope.updateMapData = function(database, table, queryResults) {
+            var updateMapData = function(database, table, queryResults) {
                 var data = queryResults.data;
                 var initializing = false;
 
                 // Set data bounds on load
                 if(!$scope.dataBounds) {
                     initializing = true;
-                    $scope.dataBounds = $scope.computeDataBounds(queryResults.data);
+                    $scope.dataBounds = computeDataBounds(queryResults.data);
                 }
 
                 $scope.dataLength = data.length;
@@ -1020,7 +1015,7 @@ angular.module('neonDemo.directives')
                     }
                 }
 
-                $scope.draw();
+                draw();
 
                 if(initializing) {
                     $scope.setDefaultView();
@@ -1030,7 +1025,7 @@ angular.module('neonDemo.directives')
             /**
              * Zooms the map to the current data bounds
              */
-            $scope.zoomToDataBounds = function() {
+            var zoomToDataBounds = function() {
                 $scope.map.zoomToBounds($scope.dataBounds);
             };
 
@@ -1038,7 +1033,7 @@ angular.module('neonDemo.directives')
              * Computes the minimum bounding rect to bound the data
              * @param data
              */
-            $scope.computeDataBounds = function(data) {
+            var computeDataBounds = function(data) {
                 if(data && data.length === 0) {
                     return {
                         left: -180,
@@ -1161,7 +1156,7 @@ angular.module('neonDemo.directives')
                 linksPopupService.setLinks(source, mapLinks);
             };
 
-            $scope.buildPointQuery = function(database, table) {
+            var buildPointQuery = function(database, table) {
                 var latitudesAndLongitudes = [];
                 var fields = {};
                 var limit;
@@ -1216,9 +1211,10 @@ angular.module('neonDemo.directives')
              * second elements) on which to filter. It may contain two sets of latitude and longitude fields in which case the
              * third and fourth elements contain the next latitude and longitude fields, respectively.
              * @method createFilterClauseForExtent
+             * @private
              * @return {Object} A neon.query.Filter object
              */
-            $scope.createFilterClauseForExtent = function(databaseAndTableName, fieldNames) {
+            var createFilterClauseForExtent = function(databaseAndTableName, fieldNames) {
                 if(fieldNames.length === 2) {
                     return createFilterClauseForFields(fieldNames[0], fieldNames[1]);
                 } else if(fieldNames.length === 4) {
@@ -1372,20 +1368,6 @@ angular.module('neonDemo.directives')
                 });
             };
 
-            /**
-             * Sets the category mapping field used by the map for its layers.  This should be a top level
-             * field in the data objects passed to the map.  If a non-truthy mapping is provided, the
-             * @param String mapping
-             * @method setMapCategoryMapping
-             */
-            $scope.setMapCategoryMapping = function(mapping) {
-                if(mapping) {
-                    $scope.map.categoryMapping = mapping;
-                } else {
-                    $scope.map.categoryMapping = undefined;
-                }
-            };
-
             $scope.updateFilteringOnLayer = function(layer) {
                 XDATA.userALE.log({
                     activity: "alter",
@@ -1413,7 +1395,7 @@ angular.module('neonDemo.directives')
                         addFilters(filterKeyList);
                     } else {
                         clearFiltersRecursively(filterKeyList, function() {
-                            $scope.queryForMapData(layer.database, layer.table);
+                            queryForMapData(layer.database, layer.table);
                         });
                     }
                 }
@@ -1440,8 +1422,9 @@ angular.module('neonDemo.directives')
              * @param {String} msg.database
              * @param {String} msg.table
              * @method createPoint
+             * @private
              */
-            $scope.createPoint = function(msg) {
+            var createPoint = function(msg) {
                 if(msg.data) {
                     // Remove previously selected point, if exists
                     if($scope.selectedPointLayer.name) {
@@ -1518,7 +1501,7 @@ angular.module('neonDemo.directives')
                 if(mapConfig && mapConfig.bounds) {
                     $scope.map.zoomToBounds(mapConfig.bounds);
                 } else if($scope.dataBounds) {
-                    $scope.zoomToDataBounds();
+                    zoomToDataBounds();
                 } else {
                     $scope.map.zoomToBounds({
                         left: -180,
@@ -1600,7 +1583,7 @@ angular.module('neonDemo.directives')
                     if($scope.zoomRectId) {
                         $scope.updateFilteringOnLayer(layer);
                     } else {
-                        $scope.queryForMapData(layer.database, layer.table);
+                        queryForMapData(layer.database, layer.table);
                     }
                 });
             };
@@ -1716,7 +1699,7 @@ angular.module('neonDemo.directives')
                 $scope.options.layers.splice(index, 1);
                 refreshFilterKeys(layer, function() {
                     if($scope.filterKeys[layer.database] && $scope.filterKeys[layer.database][layer.table]) {
-                        $scope.queryForMapData(layer.database, layer.table);
+                        queryForMapData(layer.database, layer.table);
                     }
                 });
             };
@@ -1804,7 +1787,7 @@ angular.module('neonDemo.directives')
                 if($scope.zoomRectId) {
                     $scope.updateFilteringOnLayer(layer);
                 } else {
-                    $scope.queryForMapData(layer.database, layer.table);
+                    queryForMapData(layer.database, layer.table);
                 }
 
                 $scope.resetNewLayer();
@@ -1904,7 +1887,7 @@ angular.module('neonDemo.directives')
                 for(var i = 0; i < keys.length; i++) {
                     tables = sets[keys[i]];
                     for(var j = 0; j < tables.length; j++) {
-                        var query = $scope.buildPointQuery(keys[i], tables[j]);
+                        var query = buildPointQuery(keys[i], tables[j]);
                         query.limitClause = exportService.getLimitClause();
                         var tempObject = {
                             query: query,
@@ -1929,8 +1912,8 @@ angular.module('neonDemo.directives')
 
             // Wait for neon to be ready, the create our messenger and intialize the view and data.
             neon.ready(function() {
-                $scope.initialize();
-                $scope.displayActiveDataset(true);
+                initialize();
+                displayActiveDataset();
             });
         }
     };

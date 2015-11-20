@@ -357,11 +357,10 @@ function(external, $timeout, connectionService, datasetService, errorNotificatio
 
             /**
              * Displays data for any currently active datasets.
-             * @param {Boolean} Whether this function was called during visualization initialization.
              * @method displayActiveDataset
              * @private
              */
-            var displayActiveDataset = function(initializing) {
+            var displayActiveDataset = function() {
                 if(!datasetService.hasDataset() || $scope.loadingData) {
                     return;
                 }
@@ -377,14 +376,7 @@ function(external, $timeout, connectionService, datasetService, errorNotificatio
                         }
                     }
                 }
-
-                if(initializing) {
-                    $scope.updateTables();
-                } else {
-                    $scope.$apply(function() {
-                        $scope.updateTables();
-                    });
-                }
+                $scope.updateTables();
             };
 
             /**
@@ -872,7 +864,7 @@ function(external, $timeout, connectionService, datasetService, errorNotificatio
 
             neon.ready(function() {
                 initialize();
-                displayActiveDataset(true);
+                displayActiveDataset();
             });
         }
     };
