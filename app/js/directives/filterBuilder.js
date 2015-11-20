@@ -68,8 +68,9 @@ angular.module('neonDemo.directives')
              * Initializes the name of the date field used to query the current dataset
              * and the Neon Messenger used to monitor data change events.
              * @method initialize
+             * @private
              */
-            $scope.initialize = function() {
+            var initialize = function() {
                 $scope.instanceId = neon.widget.getInstanceId("filterBuilder");
 
                 $element.resize(resizeDateTimePickerDropdowns);
@@ -103,7 +104,7 @@ angular.module('neonDemo.directives')
                     $scope.messenger.removeEvents();
                     var databaseAndTableNames = $scope.filterTable.getDatabaseAndTableNames();
                     if(databaseAndTableNames.length) {
-                        $scope.publishRemoveFilterEvents($scope.filterTable.getDatabaseAndTableNames());
+                        publishRemoveFilterEvents($scope.filterTable.getDatabaseAndTableNames());
                     }
                     $element.off("resize", resizeDateTimePickerDropdowns);
                 });
@@ -138,10 +139,10 @@ angular.module('neonDemo.directives')
 
             /**
              * Displays data for any currently active datasets.
-             * @param {Boolean} Whether this function was called during visualization initialization.
              * @method displayActiveDataset
+             * @private
              */
-            $scope.displayActiveDataset = function(initializing) {
+            var displayActiveDataset = function() {
                 if(!datasetService.hasDataset()) {
                     return;
                 }
@@ -151,14 +152,7 @@ angular.module('neonDemo.directives')
 
                 $scope.databases = datasetService.getDatabases();
                 $scope.selectedDatabase = $scope.databases[0];
-
-                if(initializing) {
-                    $scope.updateTables();
-                } else {
-                    $scope.$apply(function() {
-                        $scope.updateTables();
-                    });
-                }
+                $scope.updateTables();
             };
 
             $scope.updateTables = function() {
@@ -284,10 +278,10 @@ angular.module('neonDemo.directives')
 
                 var relations = datasetService.getRelations(database.name, table.name, [$scope.selectedField.columnName]);
                 relations.forEach(function(relation) {
-                    if(relation.database !== database.name || relation.table !== table.name) {
-                        var relationInfo = findRelationInfo(relation);
-                        relation.fields.forEach(function(relationFields) {
-                            relationFields.related.forEach(function(relationField) {
+                    var relationInfo = findRelationInfo(relation);
+                    relation.fields.forEach(function(relationFields) {
+                        relationFields.related.forEach(function(relationField) {
+                            if(relation.database !== database.name || relation.table !== table.name || relationField !== $scope.selectedField.columnName) {
                                 var relationFieldObject = _.find(relationInfo.databaseFields, function(databaseField) {
                                     return databaseField.columnName === relationField;
                                 });
@@ -298,9 +292,9 @@ angular.module('neonDemo.directives')
                                     table: relationInfo.tableObject.name,
                                     row: relationFilterRow
                                 });
-                            });
+                            }
                         });
-                    }
+                    });
                 });
 
                 var indexes = {};
@@ -323,7 +317,7 @@ angular.module('neonDemo.directives')
                     tags: ["filter-builder", "filter", "add"]
                 });
 
-                $scope.publishReplaceFilterEvents(filters, function(successDatabase, successTable) {
+                publishReplaceFilterEvents(filters, function(successDatabase, successTable) {
                     // On succesful filter, reset the user input on the add filter row so it's obvious which rows
                     // are filters and which is the primary Add Filter row.
                     if(successDatabase === database.name, successTable === table.name) {
@@ -366,7 +360,7 @@ angular.module('neonDemo.directives')
                     tags: ["filter-builder", "filter", "remove"]
                 });
 
-                $scope.publishReplaceFilterEvents(filters, $scope.cleanFilterRowsForTable, function(errorDatabase, errorTable) {
+                publishReplaceFilterEvents(filters, $scope.cleanFilterRowsForTable, function(errorDatabase, errorTable) {
                     $scope.$apply(function() {
                         // Error handler:  the removal from the filter failed.  Add it.
                         if(errorDatabase === databaseName && errorTable === tableName) {
@@ -408,7 +402,7 @@ angular.module('neonDemo.directives')
                 var filters = $scope.filterTable.buildFiltersFromData($scope.andClauses);
 
                 if(filters.length) {
-                    $scope.publishReplaceFilterEvents(filters, $scope.cleanFilterRowsForTable, function(errorDatabase, errorTable) {
+                    publishReplaceFilterEvents(filters, $scope.cleanFilterRowsForTable, function(errorDatabase, errorTable) {
                         $scope.$apply(function() {
                             // Error handler:  If the new query failed, reset the previous value of the filter.
                             if(databaseName && errorDatabase === databaseName && tableName && errorTable === tableName) {
@@ -440,7 +434,7 @@ angular.module('neonDemo.directives')
                     databaseAndTableNames = $scope.filterTable.getDatabaseAndTableNames();
                 }
                 if(databaseAndTableNames.length) {
-                    $scope.publishRemoveFilterEvents(databaseAndTableNames, function(successDatabase, successTable) {
+                    publishRemoveFilterEvents(databaseAndTableNames, function(successDatabase, successTable) {
                         $scope.$apply(function() {
                             // Remove the visible filter list.
                             $scope.filterTable.clearFilterState(successDatabase, successTable);
@@ -449,7 +443,7 @@ angular.module('neonDemo.directives')
                 }
             };
 
-            $scope.publishReplaceFilterEvents = function(filters, successCallback, errorCallback) {
+            var publishReplaceFilterEvents = function(filters, successCallback, errorCallback) {
                 var filterObject = filters.shift();
                 var filter = filterObject.filter;
 
@@ -466,7 +460,7 @@ angular.module('neonDemo.directives')
                 if(!filter.whereClause) {
                     $scope.resetFilters([filterKey]);
                     if(filters.length) {
-                        $scope.publishReplaceFilterEvents(filters, successCallback, errorCallback);
+                        publishReplaceFilterEvents(filters, successCallback, errorCallback);
                     }
                     return;
                 }
@@ -494,7 +488,7 @@ angular.module('neonDemo.directives')
                         successCallback(databaseName, tableName);
                     }
                     if(filters.length) {
-                        $scope.publishReplaceFilterEvents(filters, successCallback, errorCallback);
+                        publishReplaceFilterEvents(filters, successCallback, errorCallback);
                     }
                 }, function() {
                     XDATA.userALE.log({
@@ -511,12 +505,12 @@ angular.module('neonDemo.directives')
                         errorCallback(databaseName, tableName);
                     }
                     if(filters.length) {
-                        $scope.publishReplaceFilterEvents(filters, successCallback, errorCallback);
+                        publishReplaceFilterEvents(filters, successCallback, errorCallback);
                     }
                 });
             };
 
-            $scope.publishRemoveFilterEvents = function(databaseAndTableNames, successCallback) {
+            var publishRemoveFilterEvents = function(databaseAndTableNames, successCallback) {
                 var databaseAndTableName = databaseAndTableNames.shift();
                 var filterKey = $scope.filterTable.getFilterKey(databaseAndTableName.database, databaseAndTableName.table);
 
@@ -534,7 +528,7 @@ angular.module('neonDemo.directives')
                         successCallback(databaseAndTableName.database, databaseAndTableName.table);
                     }
                     if(databaseAndTableNames.length) {
-                        $scope.publishRemoveFilterEvents(databaseAndTableNames, successCallback);
+                        publishRemoveFilterEvents(databaseAndTableNames, successCallback);
                     }
                 }, function() {
                     XDATA.userALE.log({
@@ -548,7 +542,7 @@ angular.module('neonDemo.directives')
                     });
                     // TODO: Notify the user of the error.
                     if(databaseAndTableNames.length) {
-                        $scope.publishRemoveFilterEvents(databaseAndTableNames, successCallback);
+                        publishRemoveFilterEvents(databaseAndTableNames, successCallback);
                     }
                 });
             };
@@ -589,8 +583,8 @@ angular.module('neonDemo.directives')
 
             // Wait for neon to be ready, the create our messenger and intialize the view and data.
             neon.ready(function() {
-                $scope.initialize();
-                $scope.displayActiveDataset(true);
+                initialize();
+                displayActiveDataset();
             });
         }
     };

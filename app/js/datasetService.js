@@ -397,14 +397,17 @@ angular.module("neonDemo.services")
         fieldNames.forEach(function(fieldName) {
             // Iterate through each relation to compare with the current field.
             relations.forEach(function(relation) {
+                var relationFieldNamesForInput = relation[databaseName] ? relation[databaseName][tableName] : [];
+                relationFieldNamesForInput = _.isArray(relationFieldNamesForInput) ? relationFieldNamesForInput : [relationFieldNamesForInput];
                 // If the current relation contains a match for the input database/table/field, iterate through the elements in the current relation.
-                if(relation[databaseName] && fieldName === relation[databaseName][tableName]) {
+                if(relationFieldNamesForInput.indexOf(fieldName) >= 0) {
                     var databaseNames = Object.keys(relation);
                     // Add each database/table/field in the current relation to the map.  Note that this will include the input database/table/field.
                     databaseNames.forEach(function(relationDatabaseName) {
                         var tableNames = Object.keys(relation[relationDatabaseName]);
                         tableNames.forEach(function(relationTableName) {
-                            var relationFieldName = relation[relationDatabaseName][relationTableName];
+                            var relationFieldNames = relation[relationDatabaseName][relationTableName];
+                            relationFieldNames = _.isArray(relationFieldNames) ? relationFieldNames : [relationFieldNames];
                             relationToFields = initializeMapAsNeeded(relationToFields, relationDatabaseName, relationTableName);
 
                             var existingFieldIndex = relationToFields[relationDatabaseName][relationTableName].map(function(object) {
@@ -413,15 +416,17 @@ angular.module("neonDemo.services")
 
                             // If the database/table/field exists in the relation...
                             if(existingFieldIndex >= 0) {
-                                // If the relation field does not exist in the relation, add it.
-                                if(relationToFields[relationDatabaseName][relationTableName][existingFieldIndex].related.indexOf(relationFieldName) < 0) {
-                                    relationToFields[relationDatabaseName][relationTableName][existingFieldIndex].related.push(relationFieldName);
-                                }
+                                relationFieldNames.forEach(function(relationFieldName) {
+                                    // If the relation fields do not exist in the relation, add them to the mapping.
+                                    if(relationToFields[relationDatabaseName][relationTableName][existingFieldIndex].related.indexOf(relationFieldName) < 0) {
+                                        relationToFields[relationDatabaseName][relationTableName][existingFieldIndex].related.push(relationFieldName);
+                                    }
+                                });
                             } else {
-                                // Else create a new object for the database/table/field in the relation and add its related field.
+                                // Else create a new object in the mapping for the database/table/field in the relation and add its related fields.
                                 relationToFields[relationDatabaseName][relationTableName].push({
                                     initial: fieldName,
-                                    related: [relationFieldName]
+                                    related: [].concat(relationFieldNames)
                                 });
                             }
                         });
