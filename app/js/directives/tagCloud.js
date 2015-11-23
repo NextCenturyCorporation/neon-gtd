@@ -84,8 +84,9 @@ function(external, connectionService, datasetService, errorNotificationService, 
              * Initializes the name of the directive's scope variables
              * and the Neon Messenger used to monitor data change events.
              * @method initialize
+             * @private
              */
-            $scope.initialize = function() {
+            var initialize = function() {
                 // Toggle the points and clusters view when the user toggles between them.
                 $scope.$watch('options.andTags', function(newVal, oldVal) {
                     XDATA.userALE.log({
@@ -99,7 +100,7 @@ function(external, connectionService, datasetService, errorNotificationService, 
                         tags: ["options", "tag-cloud"]
                     });
                     if(newVal !== oldVal) {
-                        $scope.setTagFilter();
+                        setTagFilter();
                     }
                 });
 
@@ -120,7 +121,7 @@ function(external, connectionService, datasetService, errorNotificationService, 
 
                 $scope.messenger.subscribe(filterService.REQUEST_REMOVE_FILTER, function(ids) {
                     if(filterService.containsKey($scope.filterKeys, ids)) {
-                        $scope.clearTagFilters();
+                        clearTagFilters();
                     }
                 });
 
@@ -166,7 +167,7 @@ function(external, connectionService, datasetService, errorNotificationService, 
 
                 $scope.$watchCollection('filterTags', function(newValue, oldValue) {
                     if(newValue.length !== oldValue.length || newValue.length > 1) {
-                        $scope.setTagFilter();
+                        setTagFilter();
                     }
                 });
             };
@@ -224,10 +225,10 @@ function(external, connectionService, datasetService, errorNotificationService, 
 
             /**
              * Displays data for any currently active datasets.
-             * @param {Boolean} Whether this function was called during visualization initialization.
              * @method displayActiveDataset
+             * @private
              */
-            $scope.displayActiveDataset = function(initializing) {
+            var displayActiveDataset = function() {
                 if(!datasetService.hasDataset() || $scope.loadingData) {
                     return;
                 }
@@ -243,14 +244,7 @@ function(external, connectionService, datasetService, errorNotificationService, 
                     }
                 }
                 $scope.filterKeys = filterService.createFilterKeys("tagcloud", datasetService.getDatabaseAndTableNames());
-
-                if(initializing) {
-                    $scope.updateTables();
-                } else {
-                    $scope.$apply(function() {
-                        $scope.updateTables();
-                    });
-                }
+                $scope.updateTables();
             };
 
             $scope.updateTables = function() {
@@ -299,7 +293,7 @@ function(external, connectionService, datasetService, errorNotificationService, 
                             $scope.options.filterValue = $scope.bindFilterValue || "";
 
                             if($scope.showFilter) {
-                                $scope.clearTagFilters();
+                                clearTagFilters();
                             } else {
                                 queryForTags();
                             }
@@ -352,7 +346,7 @@ function(external, connectionService, datasetService, errorNotificationService, 
                 var connection = connectionService.getActiveConnection();
 
                 if(!connection || !datasetService.isFieldValid($scope.options.tagField)) {
-                    $scope.updateTagData([]);
+                    updateTagData([]);
                     $scope.loadingData = false;
                     return;
                 }
@@ -401,7 +395,7 @@ function(external, connectionService, datasetService, errorNotificationService, 
                                 datum.key = datum[$scope.options.tagField.columnName];
                                 return datum;
                             });
-                            $scope.updateTagData(tagCounts);
+                            updateTagData(tagCounts);
                             $scope.loadingData = false;
                             XDATA.userALE.log({
                                 activity: "alter",
@@ -438,7 +432,7 @@ function(external, connectionService, datasetService, errorNotificationService, 
                                 source: "system",
                                 tags: ["failed", "tag-cloud"]
                             });
-                            $scope.updateTagData([]);
+                            updateTagData([]);
                             $scope.loadingData = false;
                             if(response.responseJSON) {
                                 $scope.errorMessage = errorNotificationService.showErrorMessage($element, response.responseJSON.error, response.responseJSON.stackTrace);
@@ -464,7 +458,7 @@ function(external, connectionService, datasetService, errorNotificationService, 
                             tags: ["receive", "tag-cloud"]
                         });
                         $scope.$apply(function() {
-                            $scope.updateTagData(tagCounts);
+                            updateTagData(tagCounts);
                             $scope.loadingData = false;
                             XDATA.userALE.log({
                                 activity: "alter",
@@ -488,7 +482,7 @@ function(external, connectionService, datasetService, errorNotificationService, 
                             source: "system",
                             tags: ["failed", "tag-cloud"]
                         });
-                        $scope.updateTagData([]);
+                        updateTagData([]);
                         $scope.loadingData = false;
                         if(response.responseJSON) {
                             $scope.errorMessage = errorNotificationService.showErrorMessage($element, response.responseJSON.error, response.responseJSON.stackTrace);
@@ -502,8 +496,9 @@ function(external, connectionService, datasetService, errorNotificationService, 
              * @param {Array} tagCounts An array of objects with "key" and "count" properties for the tag
              * name and number of occurrences.
              * @method updateTagData
+             * @private
              */
-            $scope.updateTagData = function(tagCounts) {
+            var updateTagData = function(tagCounts) {
                 if($scope.options.andTags) {
                     tagCounts = tagCounts.filter(function(elem) {
                         var index = _.findIndex($scope.filterTags, {
@@ -564,12 +559,13 @@ function(external, connectionService, datasetService, errorNotificationService, 
             /**
              * Changes the filter to use the ones provided in the first argument.
              * @method setTagFilter
+             * @private
              */
-            $scope.setTagFilter = function() {
+            var setTagFilter = function() {
                 if($scope.filterTags.length > 0) {
-                    $scope.applyFilter();
+                    applyFilter();
                 } else {
-                    $scope.clearTagFilters();
+                    clearTagFilters();
                 }
             };
 
@@ -578,9 +574,10 @@ function(external, connectionService, datasetService, errorNotificationService, 
              * @param {Object} databaseAndTableName Contains the database and table name
              * @param {String} tagFieldName The name of the tag field on which to filter
              * @method createFilterClauseForTags
+             * @private
              * @return {Object} A neon.query.Filter object
              */
-            $scope.createFilterClauseForTags = function(databaseAndTableName, tagFieldName) {
+            var createFilterClauseForTags = function(databaseAndTableName, tagFieldName) {
                 var filterClauses = $scope.filterTags.map(function(tag) {
                     return neon.query.where(tagFieldName, "=", tag.name);
                 });
@@ -596,10 +593,11 @@ function(external, connectionService, datasetService, errorNotificationService, 
             /**
              * Applies the specified filter and updates the visualization on success
              * @method applyFilter
+             * @private
              */
-            $scope.applyFilter = function() {
+            var applyFilter = function() {
                 var relations = datasetService.getRelations($scope.options.database.name, $scope.options.table.name, [$scope.options.tagField.columnName]);
-                filterService.replaceFilters($scope.messenger, relations, $scope.filterKeys, $scope.createFilterClauseForTags, {
+                filterService.replaceFilters($scope.messenger, relations, $scope.filterKeys, createFilterClauseForTags, {
                     visName: "Tag Cloud",
                     text: (_.pluck($scope.filterTags, ($scope.options.showTranslation ? 'nameTranslated' : 'name'))).join(', ')
                 },function() {
@@ -618,8 +616,9 @@ function(external, connectionService, datasetService, errorNotificationService, 
             /**
              * Removes the filter and updates.
              * @method clearTagFilters
+             * @private
              */
-            $scope.clearTagFilters = function() {
+            var clearTagFilters = function() {
                 filterService.removeFilters($scope.messenger, $scope.filterKeys, function() {
                     $scope.$apply(function() {
                         linksPopupService.deleteLinks($scope.visualizationId);
@@ -890,8 +889,8 @@ function(external, connectionService, datasetService, errorNotificationService, 
 
             // Wait for neon to be ready, the create our messenger and intialize the view and data.
             neon.ready(function() {
-                $scope.initialize();
-                $scope.displayActiveDataset(true);
+                initialize();
+                displayActiveDataset();
             });
         }
     };

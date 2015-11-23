@@ -187,7 +187,7 @@ angular.module('neonDemo.directives')
                 });
             };
 
-            $scope.initialize = function() {
+            var initialize = function() {
                 $scope.messenger = new neon.eventing.Messenger();
                 $scope.messenger.subscribe("date_selected", onDateSelected);
                 $scope.chart.setHoverListener(onHover);
@@ -195,7 +195,7 @@ angular.module('neonDemo.directives')
 
             // Wait for neon to be ready, the create our messenger and intialize the view and data.
             neon.ready(function() {
-                $scope.initialize();
+                initialize();
             });
         }
     };

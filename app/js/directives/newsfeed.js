@@ -302,7 +302,8 @@ function(external, $timeout, connectionService, datasetService, errorNotificatio
              */
             var onNews = function(message) {
                 if(message.news && message.name && message.name === $scope.feedName) {
-                    $scope.data.news = message.news.slice(0, $scope.options.limit);
+                    // Show all of the news instead of slicing it to avoid odd behavior during news-highlights events.
+                    $scope.data.news = message.news;
                     $scope.data.news.forEach(function(item) {
                         if(item.head) {
                             item.headTranslated = item.head;
@@ -357,11 +358,10 @@ function(external, $timeout, connectionService, datasetService, errorNotificatio
 
             /**
              * Displays data for any currently active datasets.
-             * @param {Boolean} Whether this function was called during visualization initialization.
              * @method displayActiveDataset
              * @private
              */
-            var displayActiveDataset = function(initializing) {
+            var displayActiveDataset = function() {
                 if(!datasetService.hasDataset() || $scope.loadingData) {
                     return;
                 }
@@ -377,14 +377,7 @@ function(external, $timeout, connectionService, datasetService, errorNotificatio
                         }
                     }
                 }
-
-                if(initializing) {
-                    $scope.updateTables();
-                } else {
-                    $scope.$apply(function() {
-                        $scope.updateTables();
-                    });
-                }
+                $scope.updateTables();
             };
 
             /**
@@ -872,7 +865,7 @@ function(external, $timeout, connectionService, datasetService, errorNotificatio
 
             neon.ready(function() {
                 initialize();
-                displayActiveDataset(true);
+                displayActiveDataset();
             });
         }
     };
