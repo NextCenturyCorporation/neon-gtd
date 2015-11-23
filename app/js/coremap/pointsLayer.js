@@ -344,6 +344,7 @@ coreMap.Map.Layer.PointsLayer.prototype.setData = function(data) {
     if(this.dateFilterStrategy) {
         this.dateFilterStrategy.setFilter();
     }
+    return this.colors;
 };
 
 coreMap.Map.Layer.PointsLayer.prototype.setDateFilter = function(filterBounds) {

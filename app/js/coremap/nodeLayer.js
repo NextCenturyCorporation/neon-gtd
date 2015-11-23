@@ -371,6 +371,10 @@ coreMap.Map.Layer.NodeLayer.prototype.setData = function(edges) {
     this.edges = edges;
     this.updateFeatures();
     this.dateFilterStrategy.setFilter();
+    return {
+        lineColors: this.lineColors,
+        nodeColors: this.nodeColors
+    };
 };
 
 coreMap.Map.Layer.NodeLayer.prototype.setDateFilter = function(filterBounds) {

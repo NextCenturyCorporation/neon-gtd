@@ -80,6 +80,10 @@ angular.module('neonDemo.directives')
             $scope.selectedPointLayer = {};
             $scope.outstandingQuery = {};
             $scope.linksPopupButtonIsDisabled = true;
+            $scope.legend = {
+                display: false,
+                layers: []
+            };
 
             $scope.MAP_LAYER_TYPES = [coreMap.Map.POINTS_LAYER, coreMap.Map.CLUSTER_LAYER, coreMap.Map.HEATMAP_LAYER, coreMap.Map.NODE_LAYER];
             $scope.DEFAULT_LIMIT = 1000;
@@ -211,6 +215,18 @@ angular.module('neonDemo.directives')
 
                 $scope.messenger.subscribe('date_selected', onDateSelected);
 
+                $('.legend-container .legend').on({
+                    "shown.bs.dropdown": function() {
+                        this.closable = false;
+                    },
+                    click: function() {
+                        this.closable = true;
+                    },
+                    "hide.bs.dropdown": function() {
+                        return this.closable;
+                    }
+                });
+
                 $scope.$on('$destroy', function() {
                     XDATA.userALE.log({
                         activity: "remove",
@@ -272,11 +288,35 @@ angular.module('neonDemo.directives')
                     $scope.resizePromise = null;
                 };
 
+                var resizeLegend = function() {
+                    var container = $element.find(".legend-container");
+                    var containerCss = parseInt(container.css("margin-top").replace("px", "")) +
+                            parseInt(container.css("margin-bottom").replace("px", "")) +
+                            parseInt(container.css("padding-top").replace("px", "")) +
+                            parseInt(container.css("padding-bottom").replace("px", ""));
+
+                    var legend = container.find(".legend");
+                    var legendCss = parseInt(legend.css("margin-top").replace("px", "")) +
+                            parseInt(legend.css("margin-bottom").replace("px", "")) +
+                            parseInt(legend.css("padding-top").replace("px", "")) +
+                            parseInt(legend.css("padding-bottom").replace("px", ""));
+
+                    var divider = container.find(".legend>.divider");
+                    var dividerCss = divider.outerHeight(true);
+                    var header = container.find(".legend>.header-text");
+                    var headerCss = header.outerHeight(true);
+                    var height = $element.height() - containerCss - legendCss - dividerCss - headerCss - 10;
+
+                    var legendDetails = container.find(".legend-details");
+                    legendDetails.css("max-height", height + "px");
+                };
+
                 var updateSize = function() {
                     if($scope.resizePromise) {
                         $timeout.cancel($scope.resizePromise);
                     }
                     $scope.resizePromise = $timeout(redrawOnResize, $scope.resizeRedrawDelay);
+                    resizeLegend();
                 };
 
                 $element.resize(updateSize);
@@ -371,7 +411,7 @@ angular.module('neonDemo.directives')
                         });
                     });
                 }
-            }
+            };
 
             $scope.getBoundsKeyForLinksPopupButton = function() {
                 return $scope.extent ? linksPopupService.generateBoundsKey($scope.extent.minimumLatitude, $scope.extent.minimumLongitude, $scope.extent.maximumLatitude, $scope.extent.maximumLongitude) : "";
@@ -1024,6 +1064,23 @@ angular.module('neonDemo.directives')
             };
 
             /**
+             * Shows/hides the legend
+             * @method toggleLegend
+             */
+            $scope.toggleLegend = function() {
+                $scope.legend.display = !$scope.legend.display;
+            };
+
+            /**
+             * Shows/hides the legend for a single layer
+             * @param {Number} index The index in the legend that contains the layer to show/hide
+             * @method toggleLegend
+             */
+            $scope.toggleLegendLayer = function(index) {
+                $scope.legend.layers[index].display = !$scope.legend.layers[index].display;
+            };
+
+            /**
              * Updates the data bound to the map managed by this directive.  This will trigger a change in
              * the chart's visualization.
              * @param {Object} queryResults Results returned from a Neon query.
@@ -1051,7 +1108,38 @@ angular.module('neonDemo.directives')
                         // Only set data and update features if all attributes exist in data
                         if($scope.map.doAttributesExist(data, $scope.options.layers[i].olLayer)) {
                             $scope.options.layers[i].error = undefined;
-                            $scope.options.layers[i].olLayer.setData(data);
+                            var colorMappings  = $scope.options.layers[i].olLayer.setData(data);
+
+                            //Update the legend
+                            var index = _.findIndex($scope.legend.layers, {
+                                olLayerId: $scope.options.layers[i].olLayer.id
+                            });
+                            if($scope.options.layers[i].type === "node" && _.keys(colorMappings).length) {
+                                if(index >= 0) {
+                                    $scope.legend.layers[index].nodeColorMappings = colorMappings.nodeColors;
+                                    $scope.legend.layers[index].lineColorMappings = colorMappings.lineColors;
+                                } else {
+                                    $scope.legend.layers.push({
+                                        layerName: $scope.options.layers[i].name,
+                                        olLayerId: $scope.options.layers[i].olLayer.id,
+                                        display: false,
+                                        nodeColorMappings: colorMappings.nodeColors,
+                                        lineColorMappings: colorMappings.lineColors
+                                    });
+                                }
+                            } else if(_.keys(colorMappings).length) {
+                                if(index >= 0) {
+                                    $scope.legend.layers[index].colorMappings = colorMappings;
+                                } else {
+                                    $scope.legend.layers.push({
+                                        layerName: $scope.options.layers[i].name,
+                                        olLayerId: $scope.options.layers[i].olLayer.id,
+                                        display: false,
+                                        colorMappings: colorMappings
+                                    });
+                                }
+                            }
+
                             if(external.services.point) {
                                 var linksSource = generatePointLinksSource(database, table);
                                 createExternalLinks(data, linksSource, $scope.options.layers[i].latitudeMapping, $scope.options.layers[i].longitudeMapping);
@@ -1636,6 +1724,9 @@ angular.module('neonDemo.directives')
              */
             $scope.updateLayer = function(layer) {
                 var previousLayer = _.clone(layer);
+                var legendIndex = _.findIndex($scope.legend.layers, {
+                    olLayerId: layer.olLayer.id
+                });
 
                 layer.name = (layer.name || layer.table).toUpperCase();
                 layer = updateLayerFieldMappings(layer);
@@ -1675,6 +1766,7 @@ angular.module('neonDemo.directives')
                 layer.editing = false;
                 setFilterKey(layer);
                 layer.olLayer = addLayer(layer);
+                $scope.legend.layers[legendIndex].olLayerId = layer.olLayer.id;
                 $scope.map.setLayerVisibility(layer.olLayer.id, layer.visible);
                 refreshFilterKeys(previousLayer, function() {
                     if($scope.zoomRectId) {
@@ -1784,6 +1876,14 @@ angular.module('neonDemo.directives')
                 var index = $scope.limitedLayers[layer.limit] ? $scope.limitedLayers[layer.limit].indexOf(layer.name) : -1;
                 if(index >= 0) {
                     $scope.limitedLayers[layer.limit].splice(index, 1);
+                }
+
+                // Remove layer from the legend
+                index = _.findIndex($scope.legend.layers, {
+                    olLayerId: layer.olLayer.id
+                });
+                if(index >= 0) {
+                    $scope.legend.layers.splice(index, 1);
                 }
 
                 // Remove layer from the map.
