@@ -13,127 +13,22 @@
 // limitations under the License.
 //
 
-.count-by-grid {
-    background-color: @main-background;
-    border: @border;
-    border-radius: 2px;
-    box-shadow: 0 1px 4px @shadow;
-    box-sizing: content-box;
-    -webkit-box-sizing: content-box;
-    -moz-box-sizing: content-box;
-
-
-    * {
-        box-sizing: content-box;
-        -webkit-box-sizing: content-box;
-        -moz-box-sizing: content-box;
-
-        &:before, &:after {
-            box-sizing: content-box;
-            -webkit-box-sizing: content-box;
-            -moz-box-sizing: content-box;
-        }
-    }
-
-    &.filtered {
-        .slick-row {
-            opacity: 0.5;
-
-            &.active {
-                background: @accent-dulled;
-                opacity: 1.0;
-            }
-        }
-    }
-
-    .slick-cell {
-        cursor: pointer;
-    }
-
-    .slick-header{
-        border-top: 0;
-
-        .slick-header-column{
-            color: @light-text-color;
-            background: @accent-bright;
-
-            &.ui-state-hover{
-                color: @accent-bright;
-                background: @light-background;
-            }
-        }
-
-        .slick-header-column-sorted{
-            color: @accent-bright;
-            background: @light-background;
-            font-style: normal;
-        }
-
-        .slick-sortable-placeholder{
-            background: @border-color;
-        }
-
-        .slick-header-sortable {
-            cursor: pointer;
-        }
-    }
-
-    .slick-row {
-        background: @main-background-lighten;
-
-        &.odd {
-            background: @main-background;
-        }
-    }
-}
-
-.count-by-header {
-    margin-bottom: 5px;
-}
-
-.countByDirective {
+.count-by-directive {
     margin: 0px;
-    padding: 10px;
-    height: @widget-height;
-    width: @widget-width;
+    height: 100%;
+    width: 100%;
 
-    .count-by-grid {
-        span {
-            &.glyphicon {
-                &:focus, &:hover {
-                    color: @accent-bright;
-                }
-            }
-        }
+    .count-by-table {
+        height: 100%;
+
+        //This makes the autosizing work while taking into account the options menu.
+        padding-top: 25px;
+        margin-top: -25px;
     }
-}
-
-.data-tray {
-    .refresh{
-        margin-left: 10px;
-    }
-}
-
-.hidden-button {
-    background-color: inherit;
-    border: 0;
-    padding: 0;
-}
-
-.slick-sort-indicator {
-    float: none;
 }
 
 .visualization-widget {
-    .countByDirective {
-        height: @widget-height;
-        width: @widget-width;
-    }
-}
-
-.visualization-widget-mobile {
-    .countByDirective {
-        height: @mobile-widget-height;
-        width: @mobile-widget-width;
+    .count-by-directive {
+        padding: 10px;
     }
 }

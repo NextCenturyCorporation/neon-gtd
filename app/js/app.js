@@ -46,6 +46,7 @@ var neonDemo = angular.module('neonDemo', [
     'gridster',
     'ngDraggable',
     'ui.bootstrap.datetimepicker',
+    'linkify',
 
     'agGrid',
 
