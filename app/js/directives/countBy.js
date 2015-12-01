@@ -56,16 +56,28 @@ function(external, popups, connectionService, datasetService, errorNotificationS
             };
 
             $scope.init = function() {
+                $scope.filterKeys = filterService.createFilterKeys("countby", datasetService.getDatabaseAndTableNames());
+
                 $scope.messenger = new neon.eventing.Messenger();
 
                 $scope.messenger.subscribe(datasetService.UPDATE_DATA_CHANNEL, $scope.queryForData);
+                $scope.messenger.subscribe(filterService.REQUEST_REMOVE_FILTER, function(ids) {
+                    if(filterService.containsKey($scope.filterKeys, ids)) {
+                        $scope.clearFilter();
+                    }
+                });
                 $scope.messenger.events({
                     filtersChanged: onFiltersChanged
                 });
 
                 initializeDataset();
-
                 updateFields();
+
+                $scope.active.limitCount = ($scope.limitCount ? $scope.limitCount : 5000);
+                $scope.active.aggregation = ($scope.bindAggregation ? $scope.bindAggregation : 'count');
+
+                updateColumns();
+
                 $scope.queryForData();
             };
 
@@ -84,12 +96,27 @@ function(external, popups, connectionService, datasetService, errorNotificationS
                 $scope.active.sortByField = $scope.fields[0];
                 $scope.active.sortDirection = neon.query.ASCENDING;
 
-                var columnDefs = _.map($scope.fields, function(field) {
-                    return {
-                        headerName: field.prettyName,
-                        field: field.columnName,
-                        suppressSizeToFit: true //TODO not if fixed width table
-                    };
+                $scope.active.field = ($scope.bindAggregationField ? $scope.bindAggregationField : $scope.fields[0]);
+            };
+
+            var updateColumns = function() {
+                var columnDefs = [];
+
+                columnDefs.push({
+                    headerName: $scope.active.field.prettyName,
+                    field: $scope.active.field.columnName,
+                    suppressSizeToFit: false
+                });
+
+                var columnName = $scope.active.aggregation;
+                if($scope.active.aggregation !== 'count') {
+                    columnName += ' ' + $scope.active.aggregationField.prettyName;
+                }
+
+                columnDefs.push({
+                    headerName: columnName,
+                    field: $scope.active.aggregation,
+                    suppressSizeToFit: false
                 });
 
                 $scope.gridOptions.api.setColumnDefs(columnDefs);
@@ -98,7 +125,11 @@ function(external, popups, connectionService, datasetService, errorNotificationS
             };
 
             var getFields = function() {
-                return datasetService.getFields($scope.active.database.name, $scope.active.table.name);
+                var fields = datasetService.getFields($scope.active.database.name, $scope.active.table.name);
+                return _.filter(fields, function(field) {
+                    console.log(field);
+                    return field.columnName !== '_id';
+                });
             };
 
             var updateColumnSizes = function() {
@@ -137,16 +168,41 @@ function(external, popups, connectionService, datasetService, errorNotificationS
              * @method buildQuery
              */
             var buildQuery = function() {
-                var query = new neon.query.Query().selectFrom($scope.active.database.name, $scope.active.table.name).limit($scope.active.limit);
-                if($scope.active.sortByField && $scope.active.sortByField.columnName) {
-                    query.sortBy($scope.active.sortByField.columnName, $scope.active.sortDirection);
+                var query = new neon.query.Query().selectFrom($scope.active.database.name, $scope.active.table.name).groupBy($scope.active.field.columnName).where($scope.active.field.columnName, "!=", null);
+
+                // The widget displays its own ignored rows with 0.5 opacity.
+                query.ignoreFilters([$scope.filterKeys[$scope.active.database.name][$scope.active.table.name]]);
+
+                if($scope.active.aggregation === "count") {
+                    query.aggregate(neon.query.COUNT, '*', 'count');
+                    query.sortBy('count', neon.query.DESCENDING);
                 }
+                if($scope.active.aggregation === "min") {
+                    query.aggregate(neon.query.MIN, $scope.active.aggregationField.columnName, $scope.active.aggregation);
+                    query.sortBy($scope.active.aggregation, neon.query.ASCENDING);
+                }
+                if($scope.active.aggregation === "max") {
+                    query.aggregate(neon.query.MAX, $scope.active.aggregationField.columnName, $scope.active.aggregation);
+                    query.sortBy($scope.active.aggregation, neon.query.DESCENDING);
+                }
+
+                if($scope.active.limitCount) {
+                    query.limit($scope.active.limitCount);
+                }
+
                 return query;
             };
 
             var updateData = function(data) {
                 $scope.active.count = data.length;
-                $scope.gridOptions.api.setRowData(data);
+                $scope.gridOptions.api.setRowData(stripIdField(data));
+            };
+
+            var stripIdField = function(data) {
+                return _.map(data, function(row) {
+                    delete row._id;
+                    return row;
+                });
             };
 
             /**
@@ -171,24 +227,11 @@ function(external, popups, connectionService, datasetService, errorNotificationS
                 }
             };
 
-            $scope.updateSort = function(direction) {
-                var sort = {
-                    colId: $scope.active.sortByField.columnName,
-                };
-                if(direction && direction === 'asc') {
-                    sort.sort = 'asc';
-                } else if(direction) {
-                    sort.sort = 'desc';
-                } else {
-                    sort.sort = ($scope.active.sortDirection === 1 ? 'asc' : 'desc');
-                }
-
-                $scope.gridOptions.api.setSortModel([sort]);
-
+            $scope.updateAggregation = function() {
+                updateColumns();
                 $scope.queryForData();
             };
         }
-
 
     //         $scope.optionsMenuButtonText = function() {
     //             if($scope.options.limitCount && $scope.count >= $scope.options.limitCount) {
@@ -204,24 +247,10 @@ function(external, popups, connectionService, datasetService, errorNotificationS
     //         // This name should be one that is highly unlikely to be a column name in a real database.
     //         $scope.EXTERNAL_APP_FIELD_NAME = "neonExternalApps";
 
-    //         $scope.count = 0;
-    //         $scope.filterKeys = {};
     //         $scope.filterSet = undefined;
     //         $scope.errorMessage = undefined;
     //         $scope.loadingData = false;
     //         $scope.showTooMuchDataError = false;
-
-    //         $scope.options = {
-    //             database: {},
-    //             table: {},
-    //             field: "",
-    //             aggregation: "",
-    //             aggregationField: "",
-    //             limitCount: $scope.limitCount || 10000
-    //         };
-
-
-
 
     //         /**
     //          * Saves the given field and value as the current filter.
@@ -327,45 +356,6 @@ function(external, popups, connectionService, datasetService, errorNotificationS
 
     //             return data;
     //         };
-
-
-
-
-
-
-
-
-    //         /**
-    //          * Builds a query to pull a limited set of records that match any existing filter sets.
-    //          * @return neon.query.Query
-    //          * @method buildQuery
-    //          */
-    //         $scope.buildQuery = function() {
-    //             var query = new neon.query.Query().selectFrom($scope.options.database.name, $scope.options.table.name).groupBy($scope.options.field.columnName).where($scope.options.field.columnName, "!=", null);
-
-    //             // The widget displays its own ignored rows with 0.5 opacity.
-    //             query.ignoreFilters([$scope.filterKeys[$scope.options.database.name][$scope.options.table.name]]);
-
-    //             if($scope.options.aggregation === "count") {
-    //                 query.aggregate(neon.query.COUNT, '*', 'count');
-    //                 query.sortBy('count', neon.query.DESCENDING);
-    //             }
-    //             if($scope.options.aggregation === "min") {
-    //                 query.aggregate(neon.query.MIN, $scope.options.aggregationField.columnName, $scope.options.aggregationField.columnName);
-    //                 query.sortBy($scope.options.aggregationField, neon.query.ASCENDING);
-    //             }
-    //             if($scope.options.aggregation === "max") {
-    //                 query.aggregate(neon.query.MAX, $scope.options.aggregationField.columnName, $scope.options.aggregationField.columnName);
-    //                 query.sortBy($scope.options.aggregationField, neon.query.DESCENDING);
-    //             }
-
-    //             if($scope.options.limitCount) {
-    //                 query.limit($scope.options.limitCount);
-    //             }
-
-    //             return query;
-    //         };
-
 
 
 
