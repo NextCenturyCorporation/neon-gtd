@@ -16,9 +16,9 @@
  *
  */
 angular.module('neonDemo.directives')
-.directive('countBy', ['external', 'popups', 'ConnectionService', 'DatasetService', 'ErrorNotificationService', 'FilterService',
-'ExportService', '$filter', 'linksPopupService',
-function(external, popups, connectionService, datasetService, errorNotificationService, filterService, exportService, $filter, linksPopupService) {
+.directive('countBy', ['external', 'ConnectionService', 'DatasetService', 'ErrorNotificationService', 'FilterService',
+'ExportService', '$filter', 'LinksPopupService',
+function(external, connectionService, datasetService, errorNotificationService, filterService, exportService, $filter, linksPopupService) {
     return {
         templateUrl: 'partials/directives/countby.html',
         restrict: 'EA',
@@ -44,8 +44,14 @@ function(external, popups, connectionService, datasetService, errorNotificationS
             });
         },
         controller: function($scope) {
-            var handleRowClick = function(row) {
-                setFilter($scope.active.field.columnName, row.node.data[$scope.active.field.columnName]);
+            var handleRowClick = function(cell) {
+                if($scope.gridOptions.api.getSelectedNodes()[0] && $scope.gridOptions.api.getSelectedNodes()[0].id === cell.rowIndex) {
+                    $scope.gridOptions.api.deselectIndex(cell.rowIndex);
+                } else {
+                    $scope.gridOptions.api.selectIndex(cell.rowIndex, false);
+                }
+
+                setFilter($scope.active.field.columnName, cell.node.data[$scope.active.field.columnName]);
             };
 
             // Unique field name used for the SlickGrid column containing the URLs for the external apps.
@@ -60,8 +66,7 @@ function(external, popups, connectionService, datasetService, errorNotificationS
                 showToolPanel: false,
                 toolPanelSuppressPivot: true,
                 toolPanelSuppressValues: true,
-                rowSelection: 'single',
-                onRowSelected: handleRowClick
+                suppressRowClickSelection: true
             };
 
             $scope.init = function() {
@@ -115,9 +120,9 @@ function(external, popups, connectionService, datasetService, errorNotificationS
                     var externalAppColumn = {
                         headerName: "",
                         field: $scope.EXTERNAL_APP_FIELD_NAME,
-                        width: "15",
-                        cellClass: "centered"//,
-                        //onClick: externalClick
+                        suppressSizeToFit: false,
+                        cellClass: 'centered',
+                        width: 20
                     };
 
                     columnDefs.push(externalAppColumn);
@@ -126,7 +131,8 @@ function(external, popups, connectionService, datasetService, errorNotificationS
                 columnDefs.push({
                     headerName: $scope.active.field.prettyName,
                     field: $scope.active.field.columnName,
-                    suppressSizeToFit: false
+                    suppressSizeToFit: false,
+                    onCellClicked: handleRowClick
                 });
 
                 var columnName = $scope.active.aggregation;
@@ -148,7 +154,6 @@ function(external, popups, connectionService, datasetService, errorNotificationS
             var getFields = function() {
                 var fields = datasetService.getFields($scope.active.database.name, $scope.active.table.name);
                 return _.filter(fields, function(field) {
-                    console.log(field);
                     return field.columnName !== '_id';
                 });
             };
@@ -334,6 +339,8 @@ function(external, popups, connectionService, datasetService, errorNotificationS
                             text: $scope.active.field.columnName + " = " + $scope.filterSet.value
                         });
                     }
+                } else if($scope.filterSet.key === field && $scope.filterSet.value === value) {
+                    $scope.clearFilter();
                 }
             };
 
@@ -434,7 +441,5 @@ function(external, popups, connectionService, datasetService, errorNotificationS
     //                 }
     //             });
     //         };
-
-
     };
 }]);
