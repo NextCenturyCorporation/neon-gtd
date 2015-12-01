@@ -295,6 +295,44 @@ function(external, popups, connectionService, datasetService, errorNotificationS
                 $scope.queryForData();
             };
 
+            /**
+             * Creates and returns an object that contains information needed to export the data in this widget.
+             * @return {Object} An object containing all the information needed to export the data in this widget.
+             */
+            $scope.makeQueryResultsTableExportObject = function() {
+                XDATA.userALE.log({
+                    activity: "perform",
+                    action: "click",
+                    elementId: "datagrid-export",
+                    elementType: "button",
+                    elementGroup: "table_group",
+                    source: "user",
+                    tags: ["options", "datagrid", "export"]
+                });
+                var query = buildQuery();
+                query.limitClause = exportService.getLimitClause();
+                var finalObject = {
+                    name: "Query_Results_Table",
+                    data: [{
+                        query: query,
+                        name: "queryResultsTable-" + $scope.exportID,
+                        fields: [],
+                        ignoreFilters: query.ignoreFilters_,
+                        selectionOnly: query.selectionOnly_,
+                        ignoredFilterIds: query.ignoredFilterIds_,
+                        type: "query"
+                    }]
+                };
+                var addField = function(field) {
+                    finalObject.data[0].fields.push({
+                        query: field.columnName,
+                        pretty: field.prettyName || field.columnName
+                    });
+                };
+                datasetService.getFields($scope.active.database.name, $scope.active.table.name).forEach(addField);
+                return finalObject;
+            };
+
             //FIXME export
             //FIXME db and table?
             //FIXME themes

@@ -43,16 +43,20 @@ function(external, popups, connectionService, datasetService, errorNotificationS
             });
         },
         controller: function($scope) {
+            var handleRowClick = function(row) {
+                setFilter($scope.active.field.columnName, row.node.data[$scope.active.field.columnName]);
+            };
+
             $scope.gridOptions = {
                 columnDefs: [],
                 rowData: [],
-                rowSelection: 'multiple',
-                rowDeselection: true,
                 enableColResize: true,
                 enableSorting: true,
                 showToolPanel: false,
                 toolPanelSuppressPivot: true,
-                toolPanelSuppressValues: true
+                toolPanelSuppressValues: true,
+                rowSelection: 'single',
+                onRowSelected: handleRowClick
             };
 
             $scope.init = function() {
@@ -231,46 +235,122 @@ function(external, popups, connectionService, datasetService, errorNotificationS
                 updateColumns();
                 $scope.queryForData();
             };
+
+            /**
+             * Creates and returns an object that contains information needed to export the data in this widget.
+             * @return {Object} An object containing all the information needed to export the data in this widget.
+             */
+            $scope.makeCountByExportObject = function() {
+                XDATA.userALE.log({
+                    activity: "perform",
+                    action: "click",
+                    elementId: "count-by-export",
+                    elementType: "button",
+                    elementGroup: "table_group",
+                    source: "user",
+                    tags: ["options", "count-by", "export"]
+                });
+                var query = buildQuery();
+                query.limitClause = exportService.getLimitClause();
+                var finalObject = {
+                    name: "Count_By",
+                    data: [{
+                        query: query,
+                        name: "countBy-" + $scope.exportID,
+                        fields: [],
+                        ignoreFilters: query.ignoreFilters_,
+                        selectionOnly: query.selectionOnly_,
+                        ignoredFilterIds: query.ignoredFilterIds_,
+                        type: "query"
+                    }]
+                };
+                finalObject.data[0].fields.push({
+                    query: (query.groupByClauses[0]).field,
+                    pretty: (query.groupByClauses[0]).field
+                });
+                var op = '';
+                if($scope.active.aggregation === 'min') {
+                    op = 'Min of ';
+                } else if($scope.active.aggregation === 'max') {
+                    op = 'Max of ';
+                }
+                finalObject.data[0].fields.push({
+                    query: (query.aggregates[0]).name,
+                    pretty: op + (query.aggregates[0]).name
+                });
+                return finalObject;
+            };
+
+            /**
+             * Saves the given field and value as the current filter for the
+             * dashboard and this widget.
+             * @param {String} The filter field
+             * @param {String} The filter value
+             * @method setFilter
+             * @private
+             */
+            var setFilter = function(field, value) {
+                if(!$scope.filterSet || $scope.filterSet.key !== field || $scope.filterSet.value !== value) {
+                    $scope.filterSet = {
+                        key: field,
+                        value: value
+                    };
+
+                    var connection = connectionService.getActiveConnection();
+                    if($scope.messenger && connection) {
+                        var relations = datasetService.getRelations($scope.active.database.name, $scope.active.table.name, [field]);
+                        XDATA.userALE.log({
+                            activity: "select",
+                            action: "click",
+                            elementId: "count-by",
+                            elementType: "datagrid",
+                            elementSub: "row",
+                            elementGroup: "table_group",
+                            source: "user",
+                            tags: ["filter", "count-by"]
+                        });
+                        filterService.replaceFilters($scope.messenger, relations, $scope.filterKeys, createFilterClauseForCount, {
+                            visName: "Aggregation Table",
+                            text: $scope.active.field.columnName + " = " + $scope.filterSet.value
+                        });
+                    }
+                }
+            };
+
+            /**
+             * Creates and returns a filter on the given field using the value set by this visualization.
+             * @param {Object} databaseAndTableName Contains the database and table name
+             * @param {String} fieldName The name of the field on which to filter
+             * @method createFilterClauseForCount
+             * @private
+             * @return {Object} A neon.query.Filter object
+             */
+            var createFilterClauseForCount = function(databaseAndTableName, fieldName) {
+                return neon.query.where(fieldName, '=', $scope.filterSet.value);
+            };
+
+            /**
+             * Removes the current filter from the dashboard and this widget.
+             */
+            $scope.clearFilter = function() {
+                if($scope.messenger) {
+                    XDATA.userALE.log({
+                        activity: "deselect",
+                        action: "click",
+                        elementId: "count-by",
+                        elementType: "button",
+                        elementGroup: "table_group",
+                        source: "user",
+                        tags: ["filter", "count-by"]
+                    });
+
+                    filterService.removeFilters($scope.messenger, $scope.filterKeys, function() {
+                        //deselect row
+                        $scope.filterSet = undefined;
+                    });
+                }
+            };
         }
-
-    //         $scope.optionsMenuButtonText = function() {
-    //             if($scope.options.limitCount && $scope.count >= $scope.options.limitCount) {
-    //                 return $scope.options.limitCount + " limit";
-    //             }
-    //             return "";
-    //         };
-    //         $scope.showOptionsMenuButtonText = function() {
-    //             return $scope.count >= $scope.options.limitCount;
-    //         };
-
-    //         // Unique field name used for the SlickGrid column containing the URLs for the external apps.
-    //         // This name should be one that is highly unlikely to be a column name in a real database.
-    //         $scope.EXTERNAL_APP_FIELD_NAME = "neonExternalApps";
-
-    //         $scope.filterSet = undefined;
-    //         $scope.errorMessage = undefined;
-    //         $scope.loadingData = false;
-    //         $scope.showTooMuchDataError = false;
-
-    //         /**
-    //          * Saves the given field and value as the current filter.
-    //          * @param {String} The filter field
-    //          * @param {String} The filter value
-    //          */
-    //         var handleSetFilter = function(field, value) {
-    //             $scope.filterSet = {
-    //                 key: field,
-    //                 value: value
-    //             };
-    //         };
-
-    //         /**
-    //          * Clears the current filter.
-    //          */
-    //         var clearFilter = function() {
-    //             $scope.filterSet = undefined;
-    //         };
-
 
     //             $scope.outstandingQuery.fail(function(response) {
     //                 if(response.status === 0) {
@@ -311,23 +391,17 @@ function(external, popups, connectionService, datasetService, errorNotificationS
     //             });
     //         };
 
-    //         $scope.stripIdField = function(dataObject) {
-    //             var data = dataObject.data;
 
-    //             var cleanData = [];
-    //             for(var i = 0; i < data.length; i++) {
-    //                 var row = {};
-    //                 row[$scope.options.field.columnName] = data[i][$scope.options.field.columnName];
-    //                 if($scope.options.aggregation === "count") {
-    //                     row.count = data[i].count;
-    //                 } else {
-    //                     row[$scope.options.aggregationField.columnName] = data[i][$scope.options.aggregationField.columnName];
-    //                 }
-    //                 cleanData.push(row);
-    //             }
-    //             dataObject.data = cleanData;
-    //             return dataObject;
-    //         };
+
+
+
+
+
+
+
+    //         // Unique field name used for the SlickGrid column containing the URLs for the external apps.
+    //         // This name should be one that is highly unlikely to be a column name in a real database.
+    //         $scope.EXTERNAL_APP_FIELD_NAME = "neonExternalApps";
 
     //         $scope.addExternalAppUrlColumnData = function(data) {
     //             var tableLinks = [];
@@ -355,54 +429,6 @@ function(external, popups, connectionService, datasetService, errorNotificationS
     //             popups.links.setData($scope.tableId, tableLinks);
 
     //             return data;
-    //         };
-
-
-
-
-    //         /**
-    //          * Creates and returns an object that contains information needed to export the data in this widget.
-    //          * @return {Object} An object containing all the information needed to export the data in this widget.
-    //          */
-    //         $scope.makeCountByExportObject = function() {
-    //             XDATA.userALE.log({
-    //                 activity: "perform",
-    //                 action: "click",
-    //                 elementId: "count-by-export",
-    //                 elementType: "button",
-    //                 elementGroup: "table_group",
-    //                 source: "user",
-    //                 tags: ["options", "count-by", "export"]
-    //             });
-    //             var query = $scope.buildQuery();
-    //             query.limitClause = exportService.getLimitClause();
-    //             var finalObject = {
-    //                 name: "Count_By",
-    //                 data: [{
-    //                     query: query,
-    //                     name: "countBy-" + $scope.exportID,
-    //                     fields: [],
-    //                     ignoreFilters: query.ignoreFilters_,
-    //                     selectionOnly: query.selectionOnly_,
-    //                     ignoredFilterIds: query.ignoredFilterIds_,
-    //                     type: "query"
-    //                 }]
-    //             };
-    //             finalObject.data[0].fields.push({
-    //                 query: (query.groupByClauses[0]).field,
-    //                 pretty: capitalizeFirstLetter((query.groupByClauses[0]).field)
-    //             });
-    //             var op = '';
-    //             if($scope.options.aggregation === 'min') {
-    //                 op = 'Min of ';
-    //             } else if($scope.options.aggregation === 'max') {
-    //                 op = 'Max of ';
-    //             }
-    //             finalObject.data[0].fields.push({
-    //                 query: (query.aggregates[0]).name,
-    //                 pretty: op + capitalizeFirstLetter((query.aggregates[0]).name)
-    //             });
-    //             return finalObject;
     //         };
     };
 }]);
