@@ -16,32 +16,45 @@
  */
 
 angular.module("neonDemo.services")
-.factory("FilterService", function(DatasetService) {
+.factory("FilterService", ["DatasetService", function(datasetService) {
     var service = {};
 
     service.REQUEST_REMOVE_FILTER = "filter_service.request_remove_filter";
 
     /**
      * Creates and returns a mapping of names from the given database and table names to unique filter keys for each database and table pair.
-     * Uses the mapping of global filter keys (if given) for all possible database and table pairs.
      * @param {String} visualizationName The name of the visualization
      * @param {Object} databaseNamesToTableNames A map of database names to table names
-     * @param {Object} globalFilterKeys (Optional) A map of database names to table names to filter keys
      * @method createFilterKeys
      * @return {Object} The mapping of database names to table names to filter keys
      */
-    service.createFilterKeys = function(visualizationName, databaseNamesToTableNames, globalFilterKeys) {
+    service.createFilterKeys = function(visualizationName, databaseNamesToTableNames) {
         var filterKeys = {};
-        var databaseNames = Object.keys(databaseNamesToTableNames);
-        databaseNames.forEach(function(databaseName) {
+        Object.keys(databaseNamesToTableNames).forEach(function(databaseName) {
             filterKeys[databaseName] = {};
-            var tableNames = databaseNamesToTableNames[databaseName];
-            tableNames.forEach(function(tableName) {
-                if(globalFilterKeys && globalFilterKeys[databaseName] && globalFilterKeys[databaseName][tableName]) {
-                    filterKeys[databaseName][tableName] = globalFilterKeys[databaseName][tableName];
-                } else {
-                    filterKeys[databaseName][tableName] = visualizationName + "-" + databaseName + "-" + tableName + "-" + uuid();
-                }
+            databaseNamesToTableNames[databaseName].forEach(function(tableName) {
+                filterKeys[databaseName][tableName] = visualizationName + "-" + databaseName + "-" + tableName + "-" + uuid();
+            });
+        });
+        return filterKeys;
+    };
+
+    /**
+     * Creates and returns a mapping of names from the given database and table names to filter keys for each database and table pair using filter keys from the given mappings.
+     * The filter key for each database and table pair is the global filter key for that pair, if one exists, or the visualization filter key otherwise.
+     * @param {Object} databaseNamesToTableNames A map of database names to table names
+     * @param {Object} visualizationFilterKeys A map of database names to table names to filter keys
+     * @param {Object} globalFilterKeys A map of database names to table names to filter keys
+     * @method getFilterKeysFromCollections
+     * @return {Object} The mapping of database names to table names to filter keys
+     */
+    service.getFilterKeysFromCollections = function(databaseNamesToTableNames, visualizationFilterKeys, globalFilterKeys) {
+        var filterKeys = {};
+        Object.keys(databaseNamesToTableNames).forEach(function(databaseName) {
+            filterKeys[databaseName] = {};
+            databaseNamesToTableNames[databaseName].forEach(function(tableName) {
+                // Use the global filter key for the database/table if one exists; else use the visualization filter key for the database/table.
+                filterKeys[databaseName][tableName] = (globalFilterKeys[databaseName] ? globalFilterKeys[databaseName][tableName] : null) || visualizationFilterKeys[databaseName][tableName];
             });
         });
         return filterKeys;
@@ -234,7 +247,7 @@ angular.module("neonDemo.services")
     /**
      * Removes filters for all the given filter keys.
      * @param {Object} messenger The messenger object used to remove the filters
-     * @param {Object} filterKeys The map of database and table names to filter keys used by the messenger
+     * @param {Array} or {Object} filterKeys The array of filter keys or the map of database and table names to filter keys used by the messenger
      * @param {Function} successCallback The function called once all the filters have been removed (optional)
      * @param {Function} errorCallback The function called if an error is returned for any of the filter calls (optional)
      * @method removeFilters
@@ -252,11 +265,15 @@ angular.module("neonDemo.services")
         };
 
         var filterKeysToRemove = [];
-        var databaseNames = Object.keys(filterKeys);
-        for(var i = 0; i < databaseNames.length; ++i) {
-            var tableNames = Object.keys(filterKeys[databaseNames[i]]);
-            for(var j = 0; j < tableNames.length; ++j) {
-                filterKeysToRemove.push(filterKeys[databaseNames[i]][tableNames[j]]);
+        if(filterKeys.constructor === Array) {
+            filterKeysToRemove = filterKeys;
+        } else {
+            var databaseNames = Object.keys(filterKeys);
+            for(var i = 0; i < databaseNames.length; ++i) {
+                var tableNames = Object.keys(filterKeys[databaseNames[i]]);
+                for(var j = 0; j < tableNames.length; ++j) {
+                    filterKeysToRemove.push(filterKeys[databaseNames[i]][tableNames[j]]);
+                }
             }
         }
 
@@ -272,11 +289,11 @@ angular.module("neonDemo.services")
             var tableString;
             var table;
             if(relations.length > 0) {
-                table = DatasetService.getTableWithName(relations[0].database, relations[0].table);
+                table = datasetService.getTableWithName(relations[0].database, relations[0].table);
                 tableString = table.prettyName;
             }
             for(var i = 1; i < relations.length; i++) {
-                table = DatasetService.getTableWithName(relations[i].database, relations[i].table);
+                table = datasetService.getTableWithName(relations[i].database, relations[i].table);
                 tableString += ("/" + table.prettyName);
             }
 
@@ -306,4 +323,4 @@ angular.module("neonDemo.services")
     };
 
     return service;
-});
+}]);

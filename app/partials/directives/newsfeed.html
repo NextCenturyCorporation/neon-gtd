@@ -1,7 +1,12 @@
 <div class="header-container" ng-show="!(hideHeader)">
-    <div class="title header-text pull-left" ng-bind="(bindTitle != undefined) ? bindTitle : options.table.prettyName"></div>
+    <div class="title header-text pull-left" ng-bind="generateTitle()" title="{{generateTitle()}}"></div>
 
     <options-menu parent-element="element" button-text="optionsMenuButtonText" show-button-text="showOptionsMenuButtonText">
+        <translation-options ng-show="translationAvailable" on-translate="updateTranslation" from-language-change="onFromLanguageChange"
+            to-language-change="onToLanguageChange" from-language-options="translationLanguages.fromLanguageOptions"
+            to-language-options="translationLanguages.toLanguageOptions">
+        </translation-options>
+
         <div class="form-group" ng-show="!(hideAdvancedOptions)">
             <label>Database</label>
             <select class="form-control" ng-model="options.database" ng-options="database.prettyName for database in databases" ng-required="true" ng-disabled="(databases.length < 2)" ng-change="updateTables()">
@@ -15,40 +20,59 @@
 
         <div class="form-group" ng-show="!(hideAdvancedOptions)">
             <label>Head Field</label>
-            <select class="form-control" ng-model="options.headField" ng-required="false" ng-disabled="!(fields.length > 0)" ng-options="field.prettyName for field in fields" ng-change="onFieldChanged()">
+            <select class="form-control" ng-model="options.headField" ng-required="false" ng-disabled="!(fields.length > 0)" ng-options="field.prettyName for field in fields" ng-change="handleChangedField()">
                 <option value="">None</option>
             </select>
         </div>
 
         <div class="form-group" ng-show="!(hideAdvancedOptions)">
             <label>Name Field</label>
-            <select class="form-control" ng-model="options.nameField" ng-required="false" ng-disabled="!(fields.length > 0)" ng-options="field.prettyName for field in fields" ng-change="onFieldChanged()">
+            <select class="form-control" ng-model="options.nameField" ng-required="false" ng-disabled="!(fields.length > 0)" ng-options="field.prettyName for field in fields" ng-change="handleChangedField()">
                 <option value="">None</option>
             </select>
         </div>
 
         <div class="form-group" ng-show="!(hideAdvancedOptions)">
             <label>Date Field</label>
-            <select class="form-control" ng-model="options.dateField" ng-required="true" ng-disabled="!(fields.length > 0)" ng-options="field.prettyName for field in fields" ng-change="onFieldChanged()">
+            <select class="form-control" ng-model="options.dateField" ng-required="true" ng-disabled="!(fields.length > 0)" ng-options="field.prettyName for field in fields" ng-change="handleChangedField()">
                 <option disabled selected value="">Please choose a field</option>
             </select>
         </div>
 
         <div class="form-group" ng-show="!(hideAdvancedOptions)">
             <label>Text Field</label>
-            <select class="form-control" ng-model="options.textField" ng-required="true" ng-disabled="!(fields.length > 0)" ng-options="field.prettyName for field in fields" ng-change="onFieldChanged()">
+            <select class="form-control" ng-model="options.textField" ng-required="true" ng-disabled="!(fields.length > 0)" ng-options="field.prettyName for field in fields" ng-change="handleChangedField()">
                 <option disabled selected value="">Please choose a field</option>
             </select>
+        </div>
+
+        <div class="form-group" ng-show="!(hideAdvancedOptions)">
+            <label>Unshared Filter</label>
+            <select class="form-control" ng-model="options.filterField" ng-required="false" ng-disabled="!(fields.length > 0)" ng-options="field.prettyName for field in fields" ng-change="handleChangedUnsharedFilterField()">
+                <option selected value="">None</option>
+            </select>
+
+            <div class="input-group">
+                <input type="text" class="form-control" placeholder="{{'Filter for ' + options.filterField.prettyName + '...'}}" ng-model="options.filterValue" ng-disabled="!(options.filterField.columnName)">
+                <div class="input-group-btn">
+                    <button type="button" class="btn btn-default refresh" title="Remove Unshared Filter" ng-click="handleRemovedUnsharedFilter()">
+                        <span class="glyphicon glyphicon-remove"></span>
+                    </button>
+                    <button type="button" class="btn btn-default refresh" title="Set Unshared Filter" ng-click="handleChangedUnsharedFilterValue()">
+                        <span class="glyphicon glyphicon-refresh"></span>
+                    </button>
+                </div>
+            </div>
         </div>
 
         <div class="form-group">
             <label>Sort By Date</label>
             <div class="btn-group">
                 <label class="btn btn-default active" ng-class="{true: 'active', false: ''}[options.sortDirection === ASCENDING]">
-                    <input type="radio" ng-model="options.sortDirection" style="display:none" ng-value="ASCENDING" ng-change="handleSortButtonClick(ASCENDING)">ASC
+                    <input type="radio" ng-model="options.sortDirection" style="display:none" ng-value="ASCENDING" ng-change="handleChangedSort(ASCENDING)">ASC
                 </label>
                 <label class="btn btn-default" ng-class="{true: 'active', false: ''}[options.sortDirection === DESCENDING]">
-                    <input type="radio" ng-model="options.sortDirection" style="display:none" ng-value="DESCENDING" ng-change="handleSortButtonClick(DESCENDING)">DESC
+                    <input type="radio" ng-model="options.sortDirection" style="display:none" ng-value="DESCENDING" ng-change="handleChangedSort(DESCENDING)">DESC
                 </label>
             </div>
             <div class="clearfix"></div>
@@ -59,26 +83,12 @@
             <div class="input-group">
                 <input type="number" min="1" class="form-control" ng-model="options.limit" required>
                 <div class="input-group-btn">
-                    <button type="button" class="btn btn-default refresh" title="Refresh" ng-click="onFieldChanged()">
+                    <button type="button" class="btn btn-default refresh" title="Refresh" ng-click="handleChangedField()">
                         <span class="glyphicon glyphicon-refresh"></span>
                     </button>
                 </div>
             </div>
         </div>
-
-        <translation-options ng-show="translationAvailable" on-translate="updateTranslation" from-language-change="onFromLanguageChange"
-            to-language-change="onToLanguageChange" from-language-options="translationLanguages.fromLanguageOptions"
-            to-language-options="translationLanguages.toLanguageOptions">
-            <div class="sub-input-group">
-                <label>Limit</label>
-                <input type="number" min="1" class="form-control" ng-model="options.translationLimit" required>
-                <div class="input-group-btn">
-                    <button type="button" class="btn btn-default refresh" title="Refresh" ng-click="refreshTranslation()">
-                        <span class="glyphicon glyphicon-refresh"></span>
-                    </button>
-                </div>
-            </div>
-        </translation-options>
     </options-menu>
 </div>
 
@@ -87,16 +97,22 @@
 <div class="newsfeed">
 	<div class="item" ng-class="getNewsItemStyleClass(item)" ng-repeat='item in data.news track by $index'>
         <div>
-            <img class="image" src="img/Twitter.png" ng-if="feedType == 'TWITTER'">
-            <span class="head" ng-if="item.head != undefined" ng-bind="item.head"></span>
-            <span class="name" ng-if="item.name != undefined" ng-bind="item.name"></span>
+            <img ng-if="feedType == 'TWITTER'" src="img/Twitter.png" height="32" title="Tweet">
+            <img ng-show="options.showTranslation && item.isTranslated" src="img/Translated.png" height="12" title="Showing Translation">
+            <span ng-class="{true: 'vertical-align', false: ''}[feedType == 'TWITTER']">
+                <span class="head" ng-if="item.head != undefined" ng-show="!options.showTranslation" ng-bind="item.head"></span>
+                <span class="head" ng-if="item.headTranslated != undefined" ng-show="options.showTranslation" ng-bind="item.headTranslated" title="{{item.head}}"></span>
+                <span class="name" ng-if="item.name != undefined" ng-show="!options.showTranslation" ng-bind="item.name"></span>
+                <span class="name" ng-if="item.nameTranslated != undefined" ng-show="options.showTranslation" ng-bind="item.nameTranslated" title="{{item.name}}"></span>
+                <links-popup-button key="" source="" tooltip="{{item.head}} or {{item.name}}" json="{{item.linksPopupButtonJson}}" is-disabled="{{item.linksPopupButtonIsDisabled}}" show-if-disabled="'true'"></links-popup-button>
+            </span>
         </div>
         <div>
             <span class="date" ng-bind="item.date.toUTCString()"></span>
         </div>
         <div>
-            <span class="text" ng-bind="item.text" ng-show="!options.showTranslation"></span>
-            <span class="text" ng-bind="item.textTranslated" ng-show="options.showTranslation"></span>
+            <span class="text" ng-show="!options.showTranslation" ng-bind="item.text"></span>
+            <span class="text" ng-show="options.showTranslation" ng-bind="item.textTranslated" title="{{item.text}}"></span>
         </div>
 	</div>
 </div>

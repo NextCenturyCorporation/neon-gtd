@@ -95,9 +95,9 @@ charts.LineChart.prototype.setGranularity = function(granularity) {
 
 charts.LineChart.prototype.showTrendlines = function(display) {
     if(display) {
-        $("[class*='trendline']").show();
+        $(this.element[0]).find("[class*='trendline']").show();
     } else {
-        $("[class*='trendline']").hide();
+        $(this.element[0]).find("[class*='trendline']").hide();
     }
 };
 

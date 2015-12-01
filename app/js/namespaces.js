@@ -62,3 +62,47 @@ neonColors.LIST = [
     neonColors.LIGHT_CYAN
 ];
 neonColors.DEFAULT = neonColors.GRAY;
+
+// Mappings used in the JSON configuration file.
+var neonMappings = neonMappings || {};
+neonMappings.ID = "id";
+neonMappings.DATE = "date";
+neonMappings.TAGS = "tags";
+neonMappings.URLS = "url";
+neonMappings.LATITUDE = "latitude";
+neonMappings.LONGITUDE = "longitude";
+neonMappings.COLOR = "color_by";
+neonMappings.SIZE = "size_by";
+neonMappings.SORT = "sort_by";
+neonMappings.AGGREGATE = "count_by";
+neonMappings.Y_AXIS = "y_axis";
+neonMappings.BAR_GROUPS = "bar_x_axis";
+neonMappings.LINE_GROUPS = "line_category";
+neonMappings.GRAPH_NODE = "graph_nodes";
+neonMappings.GRAPH_LINKED_NODE = "graph_links";
+neonMappings.GRAPH_NODE_NAME = "graph_node_name";
+neonMappings.GRAPH_LINKED_NODE_NAME = "graph_link_name";
+neonMappings.GRAPH_NODE_SIZE = "graph_node_size";
+neonMappings.GRAPH_LINKED_NODE_SIZE = "graph_link_size";
+neonMappings.GRAPH_FLAG = "graph_flag";
+neonMappings.GRAPH_FLAG_MODE = "graph_flag_mode";
+neonMappings.GRAPH_TOOLTIP_ID_LABEL = "graph_tooltip_id_label";
+neonMappings.GRAPH_TOOLTIP_DATA_LABEL = "graph_tooltip_data_label";
+neonMappings.GRAPH_TOOLTIP_NAME_LABEL = "graph_tooltip_name_label";
+neonMappings.GRAPH_TOOLTIP_SIZE_LABEL = "graph_tooltip_size_label";
+neonMappings.GRAPH_TOOLTIP_FLAG_LABEL = "graph_tooltip_flag_label";
+neonMappings.GRAPH_TOOLTIP_SOURCE_NAME_LABEL = "graph_tooltip_source_name_label";
+neonMappings.GRAPH_TOOLTIP_TARGET_NAME_LABEL = "graph_tooltip_target_name_label";
+neonMappings.GRAPH_TOOLTIP_SOURCE_SIZE_LABEL = "graph_tooltip_source_size_label";
+neonMappings.GRAPH_TOOLTIP_TARGET_SIZE_LABEL = "graph_tooltip_target_size_label";
+neonMappings.NEWSFEED_NAME = "newsfeed_name";
+neonMappings.NEWSFEED_TYPE = "newsfeed_type";
+neonMappings.NEWSFEED_TEXT = "newsfeed_text";
+neonMappings.NEWSFEED_AUTHOR = "newsfeed_author";
+neonMappings.START_DATE = "startDate";
+neonMappings.END_DATE = "endDate";
+neonMappings.MIN_LAT = "minLat";
+neonMappings.MIN_LON = "minLon";
+neonMappings.MAX_LAT = "maxLat";
+neonMappings.MAX_LON = "maxLon";
+neonMappings.BOUNDS = "bounds";

@@ -1,5 +1,5 @@
 <div class="header-container" ng-show="!(hideHeader)">
-    <div class="title header-text pull-left" ng-bind="(bindTitle != undefined) ? bindTitle : options.table.prettyName + ' / ' + options.attrX.prettyName"></div>
+    <div class="title header-text pull-left" ng-bind="(bindTitle != undefined) ? bindTitle : options.table.prettyName + (options.attrX.prettyName ? ' / ' + options.attrX.prettyName : '')"></div>
 
     <options-menu parent-element="element" export-function="makeBarchartExportObject" ng-show="!(hideAdvancedOptions)">
         <div class="form-group" ng-show="!(hideAdvancedOptions)">
@@ -7,16 +7,19 @@
             <select class="form-control" ng-model="options.database" ng-options="database.prettyName for database in databases" ng-required="true" ng-disabled="(databases.length < 2)" ng-change="updateTables()">
             </select>
         </div>
+
         <div class="form-group" ng-show="!(hideAdvancedOptions)">
             <label>Table</label>
             <select class="form-control" ng-model="options.table" ng-options="table.prettyName for table in tables" ng-required="true" ng-disabled="(tables.length < 2)" ng-change="updateFields()">
             </select>
         </div>
+
         <div class="form-group" ng-show="!(hideAdvancedOptions)">
             <label>Group Field (X Axis)</label>
             <select class="form-control" ng-model="options.attrX" ng-options="field.prettyName for field in fields" ng-required="true" ng-disabled="!(fields.length > 0)">
             </select>
         </div>
+
         <div class="form-group" ng-show="!(hideAdvancedOptions)">
             <label>Aggregation</label>
             <select ng-model="options.barType" class="form-control">
@@ -25,25 +28,38 @@
                 <option value="average">Average</option>
             </select>
         </div>
+
         <div class="form-group" ng-show="!(hideAdvancedOptions) && (options.barType !== 'count')">
             <label>Value Field (Y Axis)</label>
             <select class="form-control" ng-model="options.attrY" ng-options="field.prettyName for field in fields" ng-required="true" ng-disabled="!(fields.length > 0)">
             </select>
         </div>        
+
+        <div class="form-group">
+            <label>Bar Limit</label>
+            <div class="input-group">
+                <input type="number" min="1" class="form-control" ng-model="options.limitCount" required>
+                <div class="input-group-btn">
+                    <button type="button" class="btn btn-default refresh" title="Refresh" ng-click="handleChangedLimit()">
+                        <span class="glyphicon glyphicon-refresh"></span>
+                    </button>
+                </div>
+            </div>
+        </div>
     </options-menu>
 </div>
 
 <div class="clearfix"></div>
 
 <div class="header-container filter-container">
+    <div class="header-item filter-reset pull-right" ng-class="{true: 'hidden', false: ''}[filterSet === undefined]" title="{{filterSet.key}}={{filterSet.value}}">
+        <links-popup-button key="{{generateLinksPopupKey(filterSet.value)}}" source="{{visualizationId}}" tooltip="{{filterSet.value}}" is-disabled="{{linksPopupButtonIsDisabled}}"></links-popup-button>
+        <span class="filter-label" ng-class="{true: '', false: 'border-left'}[linksPopupButtonIsDisabled]" ng-bind="filterSet.value"></span>
+        <span class="border-left glyphicon glyphicon-remove" ng-click="clearFilterSet()"></span>
+    </div>
+
     <div class="legend">
-
-        <div class="header-item filter-reset pull-right" ng-class="{true: 'hidden', false: ''}[filterSet === undefined]" title="{{filterSet.key}}={{filterSet.value}}">
-            <span class="filter-label" ng-bind="filterSet.value"></span>
-            <span class="glyphicon glyphicon-remove" ng-click="clearFilterSet()"></span>
-        </div>
         <h4 class="pull-right limit-message" ng-show="results.count >= options.limitCount">Limited to {{options.limitCount}} bars</h4>
-
 
         <div class="legend-item" title="{{getLegendText()}}">
             <span class="legend-icon" style="background-color: #39b54a"></span>

@@ -273,7 +273,7 @@ function($filter, $timeout, connectionService, datasetService, errorNotification
              */
             $scope.updateTables = function() {
                 $scope.tables = datasetService.getTables($scope.options.database.name);
-                $scope.options.table = datasetService.getFirstTableWithMappings($scope.options.database.name, ["graph_nodes"]) || $scope.tables[0];
+                $scope.options.table = datasetService.getFirstTableWithMappings($scope.options.database.name, [neonMappings.GRAPH_NODE]) || $scope.tables[0];
                 $scope.updateFields();
             };
 
@@ -285,40 +285,40 @@ function($filter, $timeout, connectionService, datasetService, errorNotification
                 $scope.loadingData = true;
                 $scope.fields = datasetService.getSortedFields($scope.options.database.name, $scope.options.table.name);
 
-                var selectedNodeField = datasetService.getMapping($scope.options.database.name, $scope.options.table.name, "graph_nodes") || "";
+                var selectedNodeField = datasetService.getMapping($scope.options.database.name, $scope.options.table.name, neonMappings.GRAPH_NODE) || "";
                 $scope.options.selectedNodeField = _.find($scope.fields, function(field) {
                     return field.columnName === selectedNodeField;
                 }) || datasetService.createBlankField();
-                var selectedNameField = datasetService.getMapping($scope.options.database.name, $scope.options.table.name, "graph_node_name") ||
-                    datasetService.getMapping($scope.options.database.name, $scope.options.table.name, "newsfeed_name") || "";
+                var selectedNameField = datasetService.getMapping($scope.options.database.name, $scope.options.table.name, neonMappings.GRAPH_NODE_NAME) ||
+                    datasetService.getMapping($scope.options.database.name, $scope.options.table.name, neonMappings.NEWSFEED_AUTHOR) || "";
                 $scope.options.selectedNameField = _.find($scope.fields, function(field) {
                     return field.columnName === selectedNameField;
                 }) || datasetService.createBlankField();
-                var selectedSizeField = datasetService.getMapping($scope.options.database.name, $scope.options.table.name, "graph_node_size");
+                var selectedSizeField = datasetService.getMapping($scope.options.database.name, $scope.options.table.name, neonMappings.GRAPH_NODE_SIZE);
                 $scope.options.selectedSizeField = _.find($scope.fields, function(field) {
                     return field.columnName === selectedSizeField;
                 }) || datasetService.createBlankField();
-                var selectedLinkedNodeField = datasetService.getMapping($scope.options.database.name, $scope.options.table.name, "graph_links") || "";
+                var selectedLinkedNodeField = datasetService.getMapping($scope.options.database.name, $scope.options.table.name, neonMappings.GRAPH_LINKED_NODE) || "";
                 $scope.options.selectedLinkedNodeField = _.find($scope.fields, function(field) {
                     return field.columnName === selectedLinkedNodeField;
                 }) || datasetService.createBlankField();
-                var selectedLinkedNameField = datasetService.getMapping($scope.options.database.name, $scope.options.table.name, "graph_link_name") || "";
+                var selectedLinkedNameField = datasetService.getMapping($scope.options.database.name, $scope.options.table.name, neonMappings.GRAPH_LINKED_NODE_NAME) || "";
                 $scope.options.selectedLinkedNameField = _.find($scope.fields, function(field) {
                     return field.columnName === selectedLinkedNameField;
                 }) || datasetService.createBlankField();
-                var selectedLinkedSizeField = datasetService.getMapping($scope.options.database.name, $scope.options.table.name, "graph_link_size");
+                var selectedLinkedSizeField = datasetService.getMapping($scope.options.database.name, $scope.options.table.name, neonMappings.GRAPH_LINKED_NODE_SIZE);
                 $scope.options.selectedLinkedSizeField = _.find($scope.fields, function(field) {
                     return field.columnName === selectedLinkedSizeField;
                 }) || datasetService.createBlankField();
-                var selectedFlagField = datasetService.getMapping($scope.options.database.name, $scope.options.table.name, "graph_flag");
+                var selectedFlagField = datasetService.getMapping($scope.options.database.name, $scope.options.table.name, neonMappings.GRAPH_FLAG);
                 $scope.options.selectedFlagField = _.find($scope.fields, function(field) {
                     return field.columnName === selectedFlagField;
                 }) || datasetService.createBlankField();
-                var selectedDateField = datasetService.getMapping($scope.options.database.name, $scope.options.table.name, "date") || "";
+                var selectedDateField = datasetService.getMapping($scope.options.database.name, $scope.options.table.name, neonMappings.DATE) || "";
                 $scope.options.selectedDateField = _.find($scope.fields, function(field) {
                     return field.columnName === selectedDateField;
                 }) || datasetService.createBlankField();
-                var selectedTextField = datasetService.getMapping($scope.options.database.name, $scope.options.table.name, "newsfeed_text") || "";
+                var selectedTextField = datasetService.getMapping($scope.options.database.name, $scope.options.table.name, neonMappings.NEWSFEED_TEXT) || "";
                 $scope.options.selectedTextField = _.find($scope.fields, function(field) {
                     return field.columnName === selectedTextField;
                 }) || datasetService.createBlankField();
@@ -334,18 +334,18 @@ function($filter, $timeout, connectionService, datasetService, errorNotification
              * @private
              */
             var updateGraphDataMappings = function() {
-                $scope.options.flagMode = datasetService.getMapping($scope.options.database.name, $scope.options.table.name, "graph_flag_mode") || "";
+                $scope.options.flagMode = datasetService.getMapping($scope.options.database.name, $scope.options.table.name, neonMappings.GRAPH_FLAG_MODE) || "";
 
                 $scope.tooltip = {
-                    idLabel: datasetService.getMapping($scope.options.database.name, $scope.options.table.name, "graph_tooltip_id_label") || "",
-                    dataLabel: datasetService.getMapping($scope.options.database.name, $scope.options.table.name, "graph_tooltip_data_label") || "",
-                    nameLabel: datasetService.getMapping($scope.options.database.name, $scope.options.table.name, "graph_tooltip_name_label") || "",
-                    sizeLabel: datasetService.getMapping($scope.options.database.name, $scope.options.table.name, "graph_tooltip_size_label") || "",
-                    flagLabel: datasetService.getMapping($scope.options.database.name, $scope.options.table.name, "graph_tooltip_flag_label") || "",
-                    sourceNameLabel: datasetService.getMapping($scope.options.database.name, $scope.options.table.name, "graph_tooltip_source_name_label") || "",
-                    targetNameLabel: datasetService.getMapping($scope.options.database.name, $scope.options.table.name, "graph_tooltip_target_name_label") || "",
-                    sourceSizeLabel: datasetService.getMapping($scope.options.database.name, $scope.options.table.name, "graph_tooltip_source_size_label") || "",
-                    targetSizeLabel: datasetService.getMapping($scope.options.database.name, $scope.options.table.name, "graph_tooltip_target_size_label") || ""
+                    idLabel: datasetService.getMapping($scope.options.database.name, $scope.options.table.name, neonMappings.GRAPH_TOOLTIP_ID_LABEL) || "",
+                    dataLabel: datasetService.getMapping($scope.options.database.name, $scope.options.table.name, neonMappings.GRAPH_TOOLTIP_DATA_LABEL) || "",
+                    nameLabel: datasetService.getMapping($scope.options.database.name, $scope.options.table.name, neonMappings.GRAPH_TOOLTIP_NAME_LABEL) || "",
+                    sizeLabel: datasetService.getMapping($scope.options.database.name, $scope.options.table.name, neonMappings.GRAPH_TOOLTIP_SIZE_LABEL) || "",
+                    flagLabel: datasetService.getMapping($scope.options.database.name, $scope.options.table.name, neonMappings.GRAPH_TOOLTIP_FLAG_LABEL) || "",
+                    sourceNameLabel: datasetService.getMapping($scope.options.database.name, $scope.options.table.name, neonMappings.GRAPH_TOOLTIP_SOURCE_NAME_LABEL) || "",
+                    targetNameLabel: datasetService.getMapping($scope.options.database.name, $scope.options.table.name, neonMappings.GRAPH_TOOLTIP_TARGET_NAME_LABEL) || "",
+                    sourceSizeLabel: datasetService.getMapping($scope.options.database.name, $scope.options.table.name, neonMappings.GRAPH_TOOLTIP_SOURCE_SIZE_LABEL) || "",
+                    targetSizeLabel: datasetService.getMapping($scope.options.database.name, $scope.options.table.name, neonMappings.GRAPH_TOOLTIP_TARGET_SIZE_LABEL) || ""
                 };
             };
 
@@ -451,8 +451,8 @@ function($filter, $timeout, connectionService, datasetService, errorNotification
 
                 $scope.messenger.publish("news", {
                     news: news,
-                    name: $scope.bindFeedName || datasetService.getMapping($scope.options.database.name, $scope.options.table.name, "newsfeed_name") || "graph",
-                    type: $scope.bindFeedType || datasetService.getMapping($scope.options.database.name, $scope.options.table.name, "newsfeed_type") || ""
+                    name: $scope.bindFeedName || datasetService.getMapping($scope.options.database.name, $scope.options.table.name, neonMappings.NEWSFEED_NAME) || "graph",
+                    type: $scope.bindFeedType || datasetService.getMapping($scope.options.database.name, $scope.options.table.name, neonMappings.NEWSFEED_TYPE) || ""
                 });
             };
 
@@ -463,7 +463,7 @@ function($filter, $timeout, connectionService, datasetService, errorNotification
              */
             var publishNewsHighlights = function() {
                 $scope.messenger.publish("news_highlights", {
-                    name: $scope.bindFeedName || datasetService.getMapping($scope.options.database.name, $scope.options.table.name, "newsfeed_name") || "graph",
+                    name: $scope.bindFeedName || datasetService.getMapping($scope.options.database.name, $scope.options.table.name, neonMappings.NEWSFEED_NAME) || "graph",
                     show: {
                         heads: $scope.mediator ? $scope.mediator.getNodeIdsInSelectedNetwork() : []
                     },

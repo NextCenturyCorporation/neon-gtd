@@ -40,6 +40,7 @@
         margin-right: 2px;
         opacity: .8;
         padding: 3px;
+        display: block;
     }
 
     .header-container {
@@ -203,8 +204,66 @@
         }
 
         &.legend-container {
-            top: 50px;
+            bottom: 0px;
             left: 10px;
+            z-index: 1009;
+
+            .legend {
+                background-color: @button-color;
+                border-style: solid;
+                border-width: 1px;
+                border-color: @button-border-color;
+                border-radius: 4px;
+                padding: 5px 5px 2px;
+
+                .legend-details {
+                    overflow: auto;
+
+                    .legend-layer {
+                        margin-bottom: 10px;
+
+                        .legend-header {
+                            cursor: pointer;
+                            position: relative;
+
+                            .legend-title {
+                                margin-right: 25px;
+                            }
+
+                            .glyphicon {
+                                position: absolute;
+                                right: 5px;
+                                top: 50%;
+                                transform: translate(0, -50%);
+                            }
+                        }
+
+                        .node-title {
+                            color: @main-text-color;
+                            font-size: 14px;
+                            font-weight: bold;
+                            line-height: 1.33;
+                            text-transform: uppercase;
+                            margin-left: 20px;
+                        }
+
+                        .legend-item {
+                            margin-left: 20px;
+                        }
+                    }
+                }
+
+                .divider {
+                    height: 1px;
+                    margin: 9px 0;
+                    overflow: hidden;
+                    background-color: @button-border-color;
+                }
+
+                .header-text {
+                    cursor: pointer;
+                }
+            }
         }
 
         &.filter-container {
@@ -234,6 +293,24 @@
         td, th {
             padding: 2px;
         }
+
+        .links-popup-button {
+            /* Align under the olPopupCloseBox; the 'top' position will be set by the map because the 'close box' can have different 'top' positions itself. */
+            position: absolute;
+            right: 13px;
+            z-index: 1;
+
+            /* Ensure the width matches the width of the olPopupCloseBox. */
+            padding: 1px;
+            line-height: 13px;
+
+            .neon-popup-button {
+                .glyphicon {
+                    color: #333;
+                    font-size: 13px;
+                }
+            }
+        }
     }
 
     .olControlAttribution {
@@ -243,8 +320,9 @@
     }
 
     .olControlZoom {
-        top: 50px;
-        left: 10px;
+        top: 110px;
+        right: 10px;
+        left: initial;
 
         a {
             background-color: @accent-bright;
@@ -260,11 +338,9 @@
         }
     }
 
-    .olControlAttribution {
-
-        a {
-            pointer-events: none;
-        }
+    [id^="OpenLayers_Layer_Boxes_"] {
+        z-index: 745 !important;
+        pointer-events: none;
     }
 }
 

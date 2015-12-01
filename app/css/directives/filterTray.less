@@ -1,7 +1,7 @@
 .filter-tray-filters {
     height: 50px;
 
-    .filter-tray-filter {
+    .filter-tray-item {
         margin-right: 5px;
         font-size: 12px;
         line-height: 20px;
@@ -12,18 +12,23 @@
         display: inline-block;
         width: 100%;
 
-        &:hover {
-            cursor: default;
-            color: #262626;
-            text-decoration: none;
-            background-color: #f5f5f5;
+        &.filter-tray-filter {
+            &:hover {
+                cursor: default;
+                color: #262626;
+                text-decoration: none;
+                background-color: #f5f5f5;
+            }
+        }
+
+        .glyphicon {
+            font-size: 14px;
+            padding-right: 10px;
         }
 
         .filter-remove-btn {
             cursor: pointer;
             color: @error-color;
-            font-size: 14px;
-            padding-right: 10px;
         }
     }
 }
