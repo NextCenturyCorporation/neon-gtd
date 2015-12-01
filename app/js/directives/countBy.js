@@ -16,8 +16,9 @@
  *
  */
 angular.module('neonDemo.directives')
-.directive('countBy', ['external', 'popups', 'ConnectionService', 'DatasetService', 'ErrorNotificationService', 'FilterService', 'ExportService', '$filter',
-function(external, popups, connectionService, datasetService, errorNotificationService, filterService, exportService, $filter) {
+.directive('countBy', ['external', 'popups', 'ConnectionService', 'DatasetService', 'ErrorNotificationService', 'FilterService',
+'ExportService', '$filter', 'linksPopupService',
+function(external, popups, connectionService, datasetService, errorNotificationService, filterService, exportService, $filter, linksPopupService) {
     return {
         templateUrl: 'partials/directives/countby.html',
         restrict: 'EA',
@@ -46,6 +47,10 @@ function(external, popups, connectionService, datasetService, errorNotificationS
             var handleRowClick = function(row) {
                 setFilter($scope.active.field.columnName, row.node.data[$scope.active.field.columnName]);
             };
+
+            // Unique field name used for the SlickGrid column containing the URLs for the external apps.
+            // This name should be one that is highly unlikely to be a column name in a real database.
+            $scope.EXTERNAL_APP_FIELD_NAME = "neonExternalApps";
 
             $scope.gridOptions = {
                 columnDefs: [],
@@ -105,6 +110,18 @@ function(external, popups, connectionService, datasetService, errorNotificationS
 
             var updateColumns = function() {
                 var columnDefs = [];
+
+                if(external.active) {
+                    var externalAppColumn = {
+                        headerName: "",
+                        field: $scope.EXTERNAL_APP_FIELD_NAME,
+                        width: "15",
+                        cellClass: "centered"//,
+                        //onClick: externalClick
+                    };
+
+                    columnDefs.push(externalAppColumn);
+                }
 
                 columnDefs.push({
                     headerName: $scope.active.field.prettyName,
@@ -198,6 +215,9 @@ function(external, popups, connectionService, datasetService, errorNotificationS
             };
 
             var updateData = function(data) {
+                if(external.active) {
+                    data = addExternalLinksToColumnData(data);
+                }
                 $scope.active.count = data.length;
                 $scope.gridOptions.api.setRowData(stripIdField(data));
             };
@@ -350,6 +370,30 @@ function(external, popups, connectionService, datasetService, errorNotificationS
                     });
                 }
             };
+
+            /**
+             * Creates and adds the external links to the given data and returns the data.
+             * @param {Array} data
+             * @method addExternalLinksToColumnData
+             * @private
+             * @return {Array}
+             */
+            var addExternalLinksToColumnData = function(data) {
+                var tableLinks = {};
+                var mappings = datasetService.getMappings($scope.active.database.name, $scope.active.table.name);
+
+                data.forEach(function(row) {
+                    var value = row[$scope.active.field.columnName];
+                    var key = linksPopupService.generateKey($scope.active.field, value);
+                    tableLinks[key] = linksPopupService.createAllServiceLinkObjects(external.services, mappings, $scope.active.field.columnName, value);
+                    row[$scope.EXTERNAL_APP_FIELD_NAME] = tableLinks[key].length ? linksPopupService.createLinkHtml($scope.tableId, key, value) : linksPopupService.createDisabledLinkHtml(value);
+                });
+
+                // Set the link data for the links popup for this visualization.
+                linksPopupService.setLinks($scope.tableId, tableLinks);
+
+                return data;
+            };
         }
 
     //             $scope.outstandingQuery.fail(function(response) {
@@ -392,43 +436,5 @@ function(external, popups, connectionService, datasetService, errorNotificationS
     //         };
 
 
-
-
-
-
-
-
-
-    //         // Unique field name used for the SlickGrid column containing the URLs for the external apps.
-    //         // This name should be one that is highly unlikely to be a column name in a real database.
-    //         $scope.EXTERNAL_APP_FIELD_NAME = "neonExternalApps";
-
-    //         $scope.addExternalAppUrlColumnData = function(data) {
-    //             var tableLinks = [];
-
-    //             data.data.forEach(function(row) {
-    //                 var field = $scope.options.field.columnName;
-    //                 var value = row[$scope.options.field.columnName];
-    //                 var query = field + "=" + value;
-
-    //                 var links = [];
-
-    //                 if(external.dig.enabled) {
-    //                     links.push($scope.createLinkObject(external.dig, field, value, query));
-    //                 }
-
-    //                 var linksIndex = tableLinks.length;
-    //                 tableLinks.push(links);
-
-    //                 row[$scope.EXTERNAL_APP_FIELD_NAME] = "<a data-toggle=\"modal\" data-target=\".links-popup\" data-links-index=\"" + linksIndex +
-    //                     "\" data-links-source=\"" + $scope.tableId + "\" class=\"collapsed dropdown-toggle primary neon-popup-button\">" +
-    //                     "<span class=\"glyphicon glyphicon-link\"></span></a>";
-    //             });
-
-    //             // Set the link data for the links popup for this visualization.
-    //             popups.links.setData($scope.tableId, tableLinks);
-
-    //             return data;
-    //         };
     };
 }]);
