@@ -1,5 +1,5 @@
 <div class="header-container" ng-show="!(hideHeader)">
-    <div class="title header-text pull-left" ng-bind="(bindTitle != undefined) ? bindTitle : options.table.prettyName + (options.attrY.prettyName ? ' / ' + options.attrY.prettyName : '')"></div>
+    <div class="title header-text pull-left" ng-bind="title"></div>
 
     <options-menu parent-element="element" export-function="makeLinechartExportObject" button-text="optionsMenuButtonText" show-button-text="showOptionsMenuButtonText">
         <div class="form-group" ng-show="!(hideAdvancedOptions)">
@@ -69,6 +69,52 @@
             </div>
             <div class="clearfix"></div>
         </div>
+
+        <div class="form-group">
+            <label>Overlays</label>
+            <div class="input-group" ng-hide="options.overlays.length === 0" ng-repeat="chart in options.overlays">
+                <input class="form-control" ng-model="chart.name" title="{{chart.name}}" readonly>
+
+                <div class="input-group-btn">
+                    <button class="btn btn-default" ng-click="removeOverlay(chart)">
+                        <span class="glyphicon glyphicon-minus"></span>
+                    </button>
+                </div>
+            </div>
+            <div class="input-group input-group-none" ng-show="options.overlays.length === 0">
+                None
+            </div>
+        </div>
+
+        <div class="form-group">
+            <label>Add Chart To</label>
+            <div class="input-group">
+                <select class="form-control" ng-model="options.selectedChart" ng-disabled="options.allCharts.length === 0 || noData" ng-options="chart.name for chart in options.allCharts">
+                    <option value="">Select Line Chart</option>
+                </select>
+
+                <div class="input-group-btn">
+                    <button class="btn btn-default" ng-click="addOverlayTo()" ng-disabled="options.allCharts.length === 0 || noData">
+                        <span class="glyphicon glyphicon-plus"></span>
+                    </button>
+                    <button class="btn btn-default" ng-click="refreshChartOptions()" ng-disabled="options.allCharts.length === 0 || noData">
+                        <span class="glyphicon glyphicon-refresh"></span>
+                    </button>
+                </div>
+            </div>
+            <div class="input-group" ng-hide="options.chartsAddedTo.length === 0" ng-repeat="chart in options.chartsAddedTo">
+                <input class="form-control" ng-model="chart.name" title="{{chart.name}}" readonly>
+
+                <div class="input-group-btn">
+                    <button class="btn btn-default" ng-click="removeOverlayFrom(chart)">
+                        <span class="glyphicon glyphicon-minus"></span>
+                    </button>
+                    <button class="btn btn-default" ng-click="refreshOverlay(chart)">
+                        <span class="glyphicon glyphicon-refresh"></span>
+                    </button>
+                </div>
+            </div>
+        </div>
     </options-menu>
 </div>
 
@@ -76,16 +122,22 @@
 
 <div class="header-container filter-container">
     <div class="legend">
-        <div class="header-item filter-reset pull-right" ng-class="{true: '', false: 'hidden'}[brushExtent.length > 0]" title="Date from {{brushExtent[0].toUTCString()}} to {{brushExtent[1].toUTCString()}}">
+        <div class="header-item filter-reset pull-right" ng-class="{true: '', false: 'hidden'}[brushExtent.length > 0]"
+            title="Date from {{brushExtent[0].toUTCString()}} to {{brushExtent[1].toUTCString()}}">
             <links-popup-button key="{{getDateKeyForLinksPopupButton()}}" source="{{visualizationId}}" tooltip="{{brushExtent[0].toUTCString()}} to {{brushExtent[1].toUTCString()}}" is-disabled="{{linksPopupButtonIsDisabled}}"></links-popup-button>
             <span class="filter-label" ng-class="{true: '', false: 'border-left'}[linksPopupButtonIsDisabled]">Date Filter</span>
             <span class="border-left glyphicon glyphicon-remove" ng-click="removeBrush()"></span>
         </div>
 
-        <div class="legend-item legend-item-clickable" title="{{colorMapping.series}} {{getLegendItemAggregationText(colorMapping)}}" ng-repeat="colorMapping in colorMappings" ng-click="toggleSeries(colorMapping.series)" ng-class="{true: 'legend-hidden', false: ''}[colorMapping.hidden]">
-            <span class="legend-icon" style="background-color: {{colorMapping.color}}"></span>
-            <span class="legend-text" ng-bind="colorMapping.series"></span>
-            <span class="legend-text" ng-bind="getLegendItemAggregationText(colorMapping)"></span>
+        <div class="legend-item" ng-repeat="chartColorMappings in colorMappings">
+            <div class="legend-overlay-title" ng-if="chartColorMappings[0].overlay" ng-bind="getTitleFromMapping(chartColorMappings[0])">
+            </div>
+            <div class="legend-item legend-item-clickable" title="{{getLegendItemAggregationText(colorMapping)}}"
+                ng-repeat="colorMapping in chartColorMappings" ng-click="toggleSeries(colorMapping)"
+                ng-class="{true: 'legend-hidden', false: ''}[colorMapping.hidden]">
+                <span class="legend-icon" style="background-color: {{colorMapping.color}}"></span>
+                <span class="legend-text" ng-bind="getLegendItemAggregationText(colorMapping)"></span>
+            </div>
         </div>
 
         <span class="no-data pull-left" ng-show="noData">No data for current filters.</span>

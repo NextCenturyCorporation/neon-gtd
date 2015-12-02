@@ -109,6 +109,20 @@
             &:nth-child(2) {
                 margin-top: 10px;
             }
+
+
+            .legend-overlay-title {
+                color: @main-text-color;
+                font-weight: bold;
+                line-height: 1.33;
+                text-transform: uppercase;
+                margin-top: 10px;
+                margin-bottom: -5px;
+                max-width: 180px;
+                overflow: hidden;
+                white-space: nowrap;
+                text-overflow: ellipsis;
+            }
         }
     }
 
@@ -116,6 +130,14 @@
         color: @main-text-color;
         font-weight: bold;
         margin-top: 10px;
+    }
+
+    .form-control {
+        &:read-only {
+            background-color: @light-background;
+            cursor: default;
+            text-overflow: ellipsis;
+        }
     }
 }
 

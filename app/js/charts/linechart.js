@@ -41,6 +41,8 @@ charts.LineChart = function(rootElement, selector, opts) {
     this.hoverCircles = {};
     this.hoverListener = opts.hoverListener;
 
+    this.trendlinesShown = false;
+
     this.x = [];
     this.y = [];
     this.xDomain = [];
@@ -94,6 +96,7 @@ charts.LineChart.prototype.setGranularity = function(granularity) {
 };
 
 charts.LineChart.prototype.showTrendlines = function(display) {
+    this.trendlinesShown = display;
     if(display) {
         $(this.element[0]).find("[class*='trendline']").show();
     } else {
@@ -155,13 +158,18 @@ charts.LineChart.prototype.drawChart = function() {
         .attr("transform", "translate(" + me.margin.left + "," + me.margin.top + ")");
 };
 
+charts.LineChart.prototype.getSeriesValue = function(series) {
+    return (series.split(":").length > 1) ? series.split(":")[1] : series;
+};
+
 charts.LineChart.prototype.calculateColor = function(seriesObject) {
     var hidden = this.hiddenSeries.indexOf(seriesObject.series) >= 0 ? true : false;
     var index = -1;
     var color;
+    var seriesValueForColors = (seriesObject.overlay) ? seriesObject.series : this.getSeriesValue(seriesObject.series);
 
-    if(this.seriesToColors[seriesObject.series]) {
-        color = this.seriesToColors[seriesObject.series];
+    if(this.seriesToColors[seriesValueForColors]) {
+        color = this.seriesToColors[seriesValueForColors];
     } else if(Object.keys(this.seriesToColors).length) {
         color = this.seriesToColors[""] || neonColors.DEFAULT;
     } else {
@@ -181,7 +189,9 @@ charts.LineChart.prototype.calculateColor = function(seriesObject) {
         min: seriesObject.min,
         max: seriesObject.max,
         data: seriesObject.data,
-        hidden: hidden
+        hidden: hidden,
+        overlay: seriesObject.overlay,
+        overlayTitle: seriesObject.overlayTitle
     };
 
     // store the color in the registry so we know the color/series mappings
@@ -197,14 +207,17 @@ charts.LineChart.prototype.calculateColor = function(seriesObject) {
 charts.LineChart.prototype.getColorMappings = function() {
     var me = this;
 
-    // convert to an array that is in alphabetical order for consistent iteration order
-    // var sortedColors = [];
-    // for (key in this.colors) {
-    //     var color = me.colors[key];
-    //     sortedColors.push({ 'color': color, 'series': key});
-    // }
+    // Group the color mappings by the line chart they are from
+    var colorMappings = _.groupBy(me.colors, function(mapping) {
+        return mapping.series.split(":")[0];
+    });
 
-    return me.colors;
+    // Sort so the main chart color mappings are first and all overlays come after
+    colorMappings = _.sortBy(colorMappings, function(values) {
+        return values[0].overlay;
+    });
+
+    return colorMappings;
 };
 
 /**
@@ -331,8 +344,9 @@ charts.LineChart.prototype.showTooltip = function(index, date) {
 
         if(!_.isUndefined(this.data[i].data[index].value)) {
             var color = this.calculateColor(this.data[i]);
+            var seriesText = this.getSeriesValue(this.data[i].series);
 
-            html += ('<span style="color: ' + color + '">' + this.data[i].series + ": " +
+            html += ('<span style="color: ' + color + '">' + seriesText + ": " +
                 numFormat(Math.round(this.data[i].data[index].value * 100) / 100) + '</span>');
         }
     }
@@ -618,7 +632,10 @@ charts.LineChart.prototype.drawLines = function(opts) {
                     return d[3];
                 })
                 .attr("stroke", color)
-                .attr("stroke-width", 4);
+                .attr("stroke-width", 4)
+                .attr({
+                    display: (me.trendlinesShown ? "inline" : "none")
+                });
         }
     }
 
@@ -989,10 +1006,6 @@ charts.LineChart.prototype.toggleSeries = function(series) {
     } else {
         this.hiddenSeries.push(series);
         activity = 'hide';
-    }
-
-    if(this.data && this.hiddenSeries.length >= this.data.length) {
-        this.hiddenSeries.splice(0);
     }
 
     this.draw();
