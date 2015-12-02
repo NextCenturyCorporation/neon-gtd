@@ -33,6 +33,8 @@ coreMap.Map.Layer.PointsLayer = OpenLayers.Class(OpenLayers.Layer.Vector, {
     CLASS_NAME: "coreMap.Map.Layer.PointsLayer",
     colors: {},
     data: [],
+    database: '',
+    table: '',
     latitudeMapping: '',
     longitudeMapping: '',
     sizeMapping: '',
@@ -48,6 +50,7 @@ coreMap.Map.Layer.PointsLayer = OpenLayers.Class(OpenLayers.Layer.Vector, {
         linkTo: "twitter"
     },
     clusterPopupFields: [],
+    linksSource: "",
 
     /**
      * Override the OpenLayers Contructor
@@ -91,6 +94,8 @@ coreMap.Map.Layer.PointsLayer = OpenLayers.Class(OpenLayers.Layer.Vector, {
         // Call the super constructor, you will have to define the variables geometry, attributes and style
         var args = [name, extendOptions];
         OpenLayers.Layer.Vector.prototype.initialize.apply(this, args);
+
+        this.colors = this.options.colors || {};
 
         if(Object.keys(this.colors).length) {
             this.hasColorsConfigured = true;
@@ -270,9 +275,12 @@ coreMap.Map.Layer.PointsLayer.prototype.calculateMinRadius = function() {
  * @method calculateRadius
  */
 coreMap.Map.Layer.PointsLayer.prototype.calculateRadius = function(element) {
+    var zoomLevel = this.map.zoom;
     var dataVal = this.getValueFromDataElement(this.sizeMapping, element);
     var percentOfDataRange = (dataVal - this.minRadius) / this._dataRadiusDiff;
-    return coreMap.Map.Layer.PointsLayer.MIN_RADIUS + (percentOfDataRange * this._baseRadiusDiff);
+    var radius = coreMap.Map.Layer.PointsLayer.MIN_RADIUS + (percentOfDataRange * this._baseRadiusDiff) || coreMap.Map.Layer.PointsLayer.MIN_RADIUS;
+
+    return radius * (zoomLevel / 3);
 };
 
 /**
@@ -336,6 +344,7 @@ coreMap.Map.Layer.PointsLayer.prototype.setData = function(data) {
     if(this.dateFilterStrategy) {
         this.dateFilterStrategy.setFilter();
     }
+    return this.colors;
 };
 
 coreMap.Map.Layer.PointsLayer.prototype.setDateFilter = function(filterBounds) {
@@ -391,7 +400,7 @@ coreMap.Map.Layer.PointsLayer.prototype.updateGradient = function() {
 coreMap.Map.Layer.PointsLayer.prototype.updateFeatures = function() {
     var mapData = [];
     var me = this;
-    _.each(this.data, function(element) {
+    _.each(this.data, function(element, index) {
         var longitude = me.getValueFromDataElement(me.longitudeMapping, element);
         var latitude = me.getValueFromDataElement(me.latitudeMapping, element);
 

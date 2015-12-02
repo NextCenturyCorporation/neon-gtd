@@ -28,8 +28,8 @@
  * @constructor
  */
 angular.module('neonDemo.directives')
-.directive('barchart', ['ConnectionService', 'DatasetService', 'ErrorNotificationService', 'FilterService', 'ExportService',
-function(connectionService, datasetService, errorNotificationService, filterService, exportService) {
+.directive('barchart', ['external', 'ConnectionService', 'DatasetService', 'ErrorNotificationService', 'FilterService', 'ExportService', 'LinksPopupService',
+function(external, connectionService, datasetService, errorNotificationService, filterService, exportService, linksPopupService) {
     return {
         templateUrl: 'partials/directives/barchart.html',
         restrict: 'EA',
@@ -48,6 +48,7 @@ function(connectionService, datasetService, errorNotificationService, filterServ
             $element.addClass('barchartDirective');
 
             $scope.element = $element;
+            $scope.visualizationId = "barchart-" + uuid();
 
             $scope.databases = [];
             $scope.tables = [];
@@ -58,6 +59,7 @@ function(connectionService, datasetService, errorNotificationService, filterServ
             $scope.errorMessage = undefined;
             $scope.loadingData = false;
             $scope.outstandingQuery = undefined;
+            $scope.linksPopupButtonIsDisabled = true;
 
             $scope.options = {
                 database: {},
@@ -92,7 +94,7 @@ function(connectionService, datasetService, errorNotificationService, filterServ
                     filtersChanged: onFiltersChanged
                 });
                 $scope.messenger.subscribe(datasetService.UPDATE_DATA_CHANNEL, function() {
-                    $scope.queryForData(false);
+                    queryForData(false);
                 });
 
                 $scope.messenger.subscribe(filterService.REQUEST_REMOVE_FILTER, function(ids) {
@@ -113,6 +115,7 @@ function(connectionService, datasetService, errorNotificationService, filterServ
                         source: "system",
                         tags: ["remove", "barchart"]
                     });
+                    linksPopupService.deleteLinks($scope.visualizationId);
                     $element.off("resize", updateChartSize);
                     $scope.messenger.removeEvents();
                     // Remove our filter if we had an active one.
@@ -123,23 +126,23 @@ function(connectionService, datasetService, errorNotificationService, filterServ
                 });
 
                 $scope.$watch('options.attrX', function(newValue) {
-                    onFieldChange('attrX', newValue);
+                    handleChangedField('attrX', newValue);
                     if(!$scope.loadingData && $scope.options.database.name && $scope.options.table.name) {
-                        $scope.queryForData(true);
+                        queryForData(true);
                     }
                 });
 
                 $scope.$watch('options.attrY', function(newValue) {
-                    onFieldChange('attrY', newValue);
+                    handleChangedField('attrY', newValue);
                     if(!$scope.loadingData && $scope.options.database.name && $scope.options.table.name) {
-                        $scope.queryForData(true);
+                        queryForData(true);
                     }
                 });
 
                 $scope.$watch('options.barType', function(newValue) {
-                    onFieldChange('aggregation', newValue);
+                    handleChangedField('aggregation', newValue);
                     if(!$scope.loadingData && $scope.options.database.name && $scope.options.table.name) {
-                        $scope.queryForData(false);
+                        queryForData(false);
                     }
                 });
 
@@ -148,7 +151,7 @@ function(connectionService, datasetService, errorNotificationService, filterServ
                 $element.resize(updateChartSize);
             };
 
-            var onFieldChange = function(field, newValue) {
+            var handleChangedField = function(field, newValue) {
                 var source = "user";
                 var action = "click";
 
@@ -171,6 +174,13 @@ function(connectionService, datasetService, errorNotificationService, filterServ
                 });
             };
 
+            $scope.handleChangedLimit = function() {
+                handleChangedField("limit", $scope.options.limitCount);
+                if(!$scope.loadingData && $scope.options.database.name && $scope.options.table.name) {
+                    queryForData(true);
+                }
+            };
+
             /**
              * Event handler for filter changed events issued over Neon's messaging channels.
              * @param {Object} message A Neon filter changed message.
@@ -189,16 +199,16 @@ function(connectionService, datasetService, errorNotificationService, filterServ
                         source: "system",
                         tags: ["filter-change", "barchart"]
                     });
-                    $scope.queryForData(false);
+                    queryForData(false);
                 }
             };
 
             /**
              * Displays data for any currently active datasets.
-             * @param {Boolean} Whether this function was called during visualization initialization.
              * @method displayActiveDataset
+             * @private
              */
-            $scope.displayActiveDataset = function(initializing) {
+            var displayActiveDataset = function() {
                 if(!datasetService.hasDataset() || $scope.loadingData) {
                     return;
                 }
@@ -214,19 +224,12 @@ function(connectionService, datasetService, errorNotificationService, filterServ
                     }
                 }
                 $scope.filterKeys = filterService.createFilterKeys("barchart", datasetService.getDatabaseAndTableNames());
-
-                if(initializing) {
-                    $scope.updateTables();
-                } else {
-                    $scope.$apply(function() {
-                        $scope.updateTables();
-                    });
-                }
+                $scope.updateTables();
             };
 
             $scope.updateTables = function() {
                 $scope.tables = datasetService.getTables($scope.options.database.name);
-                $scope.options.table = datasetService.getFirstTableWithMappings($scope.options.database.name, ["bar_x_axis", "y_axis"]) || $scope.tables[0];
+                $scope.options.table = datasetService.getFirstTableWithMappings($scope.options.database.name, [neonMappings.BAR_GROUPS, neonMappings.Y_AXIS]) || $scope.tables[0];
                 if($scope.bindTable) {
                     for(var i = 0; i < $scope.tables.length; ++i) {
                         if($scope.bindTable === $scope.tables[i].name) {
@@ -242,28 +245,22 @@ function(connectionService, datasetService, errorNotificationService, filterServ
                 $scope.loadingData = true;
                 $scope.fields = datasetService.getSortedFields($scope.options.database.name, $scope.options.table.name);
 
-                var attrX = $scope.bindXAxisField || datasetService.getMapping($scope.options.database.name, $scope.options.table.name, "bar_x_axis") || "";
+                var attrX = $scope.bindXAxisField || datasetService.getMapping($scope.options.database.name, $scope.options.table.name, neonMappings.BAR_GROUPS) || "";
                 $scope.options.attrX = _.find($scope.fields, function(field) {
                     return field.columnName === attrX;
-                }) || {
-                    columnName: "",
-                    prettyName: ""
-                };
-                var attrY = $scope.bindYAxisField || datasetService.getMapping($scope.options.database.name, $scope.options.table.name, "y_axis") || "";
+                }) || datasetService.createBlankField();
+                var attrY = $scope.bindYAxisField || datasetService.getMapping($scope.options.database.name, $scope.options.table.name, neonMappings.Y_AXIS) || "";
                 $scope.options.attrY = _.find($scope.fields, function(field) {
                     return field.columnName === attrY;
-                }) || {
-                    columnName: "",
-                    prettyName: ""
-                };
+                }) || datasetService.createBlankField();
 
                 if($scope.filterSet) {
                     $scope.clearFilterSet();
                 }
-                $scope.queryForData(true);
+                queryForData(true);
             };
 
-            $scope.buildQuery = function() {
+            var buildQuery = function() {
                 var query = new neon.query.Query()
                     .selectFrom($scope.options.database.name, $scope.options.table.name)
                     .where($scope.options.attrX.columnName, '!=', null)
@@ -291,7 +288,7 @@ function(connectionService, datasetService, errorNotificationService, filterServ
                 return query;
             };
 
-            $scope.queryForData = function(rebuildChart) {
+            var queryForData = function(rebuildChart) {
                 if($scope.errorMessage) {
                     errorNotificationService.hideErrorMessage($scope.errorMessage);
                     $scope.errorMessage = undefined;
@@ -299,13 +296,13 @@ function(connectionService, datasetService, errorNotificationService, filterServ
 
                 var connection = connectionService.getActiveConnection();
 
-                if(!connection || !$scope.options.attrX.columnName || (!$scope.options.attrY.columnName && $scope.options.barType !== "count")) {
+                if(!connection || !datasetService.isFieldValid($scope.options.attrX) || (!$scope.options.attrY.columnName && $scope.options.barType !== "count")) {
                     drawBlankChart();
                     $scope.loadingData = false;
                     return;
                 }
 
-                var query = $scope.buildQuery();
+                var query = buildQuery();
 
                 XDATA.userALE.log({
                     activity: "alter",
@@ -423,7 +420,7 @@ function(connectionService, datasetService, errorNotificationService, filterServ
                             source: "user",
                             tags: ["filter", "barchart"]
                         });
-                        filterService.replaceFilters($scope.messenger, relations, $scope.filterKeys, $scope.createFilterClauseForXAxis, filterNameObj);
+                        filterService.replaceFilters($scope.messenger, relations, $scope.filterKeys, createFilterClauseForXAxis, filterNameObj);
                     } else {
                         XDATA.userALE.log({
                             activity: "select",
@@ -435,7 +432,7 @@ function(connectionService, datasetService, errorNotificationService, filterServ
                             source: "user",
                             tags: ["filter", "barchart"]
                         });
-                        filterService.addFilters($scope.messenger, relations, $scope.filterKeys, $scope.createFilterClauseForXAxis, filterNameObj);
+                        filterService.addFilters($scope.messenger, relations, $scope.filterKeys, createFilterClauseForXAxis, filterNameObj);
                     }
                 }
             };
@@ -445,22 +442,32 @@ function(connectionService, datasetService, errorNotificationService, filterServ
              * @param {Object} databaseAndTableName Contains the database and table name
              * @param {String} xAxisFieldName The name of the x-axis field on which to filter
              * @method createFilterClauseForXAxis
+             * @private
              * @return {Object} A neon.query.Filter object
              */
-            $scope.createFilterClauseForXAxis = function(databaseAndTableName, xAxisFieldName) {
+            var createFilterClauseForXAxis = function(databaseAndTableName, xAxisFieldName) {
                 return neon.query.where(xAxisFieldName, '=', $scope.filterValue);
             };
 
-            var handleFilterSet = function(key, val) {
+            var handleFilterSet = function(field, value) {
                 $scope.filterSet = {
-                    key: key,
-                    value: val
+                    key: field,
+                    value: value
                 };
+
+                var mappings = datasetService.getMappings($scope.options.database.name, $scope.options.table.name);
+                var chartLinks = {};
+                var key = linksPopupService.generateKey($scope.options.attrX, value);
+                chartLinks[key] = linksPopupService.createAllServiceLinkObjects(external.services, mappings, field, value);
+                linksPopupService.setLinks($scope.visualizationId, chartLinks);
+                $scope.linksPopupButtonIsDisabled = !chartLinks[key].length;
+
                 //no need to requery because barchart ignores its own filter
             };
 
             var clearFilterSet = function() {
                 $scope.filterSet = undefined;
+                linksPopupService.deleteLinks($scope.visualizationId);
             };
 
             $scope.clearFilterSet = function() {
@@ -533,7 +540,13 @@ function(connectionService, datasetService, errorNotificationService, filterServ
                     source: "user",
                     tags: ["options", "barchart", "export"]
                 });
-                var query = $scope.buildQuery();
+
+                var capitalizeFirstLetter = function(str) {
+                    var first = str[0].toUpperCase();
+                    return first + str.slice(1);
+                };
+
+                var query = buildQuery();
                 query.limitClause = exportService.getLimitClause();
                 query.ignoreFilters_ = exportService.getIgnoreFilters();
                 query.ignoredFilterIds_ = exportService.getIgnoredFilterIds();
@@ -575,19 +588,18 @@ function(connectionService, datasetService, errorNotificationService, filterServ
             };
 
             /**
-             * Helper function for makeBarchartExportObject that capitalizes the first letter of a string.
-             * @param str {String} The string to capitalize the first letter of.
-             * @return {String} The string given, but with its first letter capitalized.
+             * Generates and returns the links popup key for this visualization.
+             * @method generateLinksPopupKey
+             * @return {String}
              */
-            var capitalizeFirstLetter = function(str) {
-                var first = str[0].toUpperCase();
-                return first + str.slice(1);
+            $scope.generateLinksPopupKey = function(value) {
+                return linksPopupService.generateKey($scope.options.attrX, value);
             };
 
             neon.ready(function() {
                 $scope.messenger = new neon.eventing.Messenger();
                 initialize();
-                $scope.displayActiveDataset(true);
+                displayActiveDataset();
             });
         }
     };

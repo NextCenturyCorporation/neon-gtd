@@ -28,8 +28,8 @@
  * @constructor
  */
 angular.module('neonDemo.directives')
-.directive('queryResultsTable', ['external', 'popups', 'ConnectionService', 'DatasetService', 'ErrorNotificationService', 'ExportService', '$compile', '$interval', '$timeout',
-function(external, popups, connectionService, datasetService, errorNotificationService, exportService, $compile, $interval, $timeout) {
+.directive('queryResultsTable', ['external', 'ConnectionService', 'DatasetService', 'ErrorNotificationService', 'ExportService', 'LinksPopupService', '$compile', '$interval', '$timeout',
+function(external, connectionService, datasetService, errorNotificationService, exportService, linksPopupService, $compile, $interval, $timeout) {
     return {
         templateUrl: 'partials/directives/queryResultsTable.html',
         restrict: 'EA',
@@ -37,6 +37,7 @@ function(external, popups, connectionService, datasetService, errorNotificationS
             bindTitle: '=',
             bindTable: '=',
             bindDatabase: '=',
+            bindIdField: '=',
             hideHeader: '=?',
             hideAdvancedOptions: '=?'
         },
@@ -102,8 +103,9 @@ function(external, popups, connectionService, datasetService, errorNotificationS
              * Initializes the name of the directive's scope variables
              * and the Neon Messenger used to monitor data change events.
              * @method initialize
+             * @private
              */
-            $scope.initialize = function() {
+            var initialize = function() {
                 $scope.$watch('options.sortByField', function(newVal) {
                     XDATA.userALE.log({
                         activity: "select",
@@ -163,14 +165,14 @@ function(external, popups, connectionService, datasetService, errorNotificationS
                         source: "system",
                         tags: ["remove", "datagrid"]
                     });
-                    popups.links.deleteData($scope.tableId);
+                    linksPopupService.deleteLinks($scope.tableId);
                     $element.off("resize", updateSize);
                     $scope.messenger.removeEvents();
                     exportService.unregister($scope.exportID);
                 });
             };
 
-            $scope.createOptions = function(data, refreshColumns) {
+            var createOptions = function(data, refreshColumns) {
                 var _id = "_id";
                 var has_id = true;
 
@@ -229,10 +231,10 @@ function(external, popups, connectionService, datasetService, errorNotificationS
                 var hiddenColumnNames = $scope.deletedFieldsMap[$scope.options.database.name][$scope.options.table.name].map(function(deletedField) {
                     return deletedField.columnName;
                 });
-                var columns = tables.createColumns(knownColumns, data, hiddenColumnNames, [$scope.createDeleteColumnButton("")]);
+                var columns = tables.createColumns(knownColumns, data, hiddenColumnNames, [createDeleteColumnButton("")]);
                 columns = tables.addLinkabilityToColumns(columns);
 
-                if(external.anyEnabled) {
+                if(external.active) {
                     var externalAppColumn = {
                         name: "",
                         field: $scope.EXTERNAL_APP_FIELD_NAME,
@@ -270,10 +272,10 @@ function(external, popups, connectionService, datasetService, errorNotificationS
 
             /**
              * Displays data for any currently active datasets.
-             * @param {Boolean} Whether this function was called during visualization initialization.
              * @method displayActiveDataset
+             * @private
              */
-            $scope.displayActiveDataset = function(initializing) {
+            var displayActiveDataset = function() {
                 if(!datasetService.hasDataset() || $scope.loadingData) {
                     return;
                 }
@@ -287,14 +289,7 @@ function(external, popups, connectionService, datasetService, errorNotificationS
                         }
                     }
                 }
-
-                if(initializing) {
-                    $scope.updateTables();
-                } else {
-                    $scope.$apply(function() {
-                        $scope.updateTables();
-                    });
-                }
+                $scope.updateTables();
             };
 
             $scope.updateTables = function() {
@@ -318,10 +313,7 @@ function(external, popups, connectionService, datasetService, errorNotificationS
             $scope.updateFields = function() {
                 $scope.loadingData = true;
                 $scope.fields = datasetService.getSortedFields($scope.options.database.name, $scope.options.table.name);
-                $scope.options.addField = {
-                    columnName: "",
-                    prettyName: ""
-                };
+                $scope.options.addField = datasetService.createBlankField();
 
                 if(!($scope.deletedFieldsMap[$scope.options.database.name][$scope.options.table.name])) {
                     $scope.deletedFieldsMap[$scope.options.database.name][$scope.options.table.name] = [];
@@ -346,13 +338,10 @@ function(external, popups, connectionService, datasetService, errorNotificationS
                     $scope.options.addField = $scope.deletedFieldsMap[$scope.options.database.name][$scope.options.table.name][0];
                 }
 
-                var sortByField = datasetService.getMapping($scope.options.database.name, $scope.options.table.name, "sort_by") || "";
+                var sortByField = datasetService.getMapping($scope.options.database.name, $scope.options.table.name, neonMappings.SORT) || "";
                 $scope.options.sortByField = _.find($scope.fields, function(field) {
                     return field.columnName === sortByField;
-                }) || {
-                    columnName: "",
-                    prettyName: ""
-                };
+                }) || datasetService.createBlankField();
 
                 queryForData(true);
             };
@@ -385,6 +374,7 @@ function(external, popups, connectionService, datasetService, errorNotificationS
              * @param {Boolean} refreshColumns Whether the columns should be refreshed and thus the
              * column ordering reverted back to the original
              * @method queryForData
+             * @private
              */
             var queryForData = function(refreshColumns) {
                 if($scope.errorMessage) {
@@ -395,7 +385,7 @@ function(external, popups, connectionService, datasetService, errorNotificationS
                 var connection = connectionService.getActiveConnection();
 
                 if(!connection) {
-                    $scope.updateData({
+                    updateData({
                         data: []
                     }, refreshColumns);
                     $scope.totalRows = 0;
@@ -403,7 +393,7 @@ function(external, popups, connectionService, datasetService, errorNotificationS
                     return;
                 }
 
-                var query = $scope.buildQuery();
+                var query = buildQuery();
 
                 XDATA.userALE.log({
                     activity: "alter",
@@ -436,7 +426,7 @@ function(external, popups, connectionService, datasetService, errorNotificationS
                         tags: ["receive", "datagrid"]
                     });
                     $scope.$apply(function() {
-                        $scope.updateData(queryResults, refreshColumns);
+                        updateData(queryResults, refreshColumns);
                         queryForTotalRows(connection);
                         XDATA.userALE.log({
                             activity: "alter",
@@ -473,7 +463,7 @@ function(external, popups, connectionService, datasetService, errorNotificationS
                             source: "system",
                             tags: ["failed", "datagrid"]
                         });
-                        $scope.updateData({
+                        updateData({
                             data: []
                         }, refreshColumns);
                         $scope.totalRows = 0;
@@ -488,6 +478,7 @@ function(external, popups, connectionService, datasetService, errorNotificationS
             /**
              * Triggers a Neon query that will aggregate the time data for the currently selected dataset.
              * @method queryForTotalRows
+             * @private
              */
             var queryForTotalRows = function(connection) {
                 var query = new neon.query.Query().selectFrom($scope.options.database.name, $scope.options.table.name)
@@ -565,7 +556,7 @@ function(external, popups, connectionService, datasetService, errorNotificationS
              * Adds an onClick listener for selecting a row in the table that
              * publishes the row to a channel
              */
-            $scope.addOnClickListener = function() {
+            var addOnClickListener = function() {
                 $scope.table.addOnClickListener(function(columns, row) {
                     // Deselect the row if already selected
                     if($scope.selectedRowId !== undefined && $scope.selectedRowId === row._id) {
@@ -579,7 +570,7 @@ function(external, popups, connectionService, datasetService, errorNotificationS
                             tags: ["datagrid", "row"]
                         });
 
-                        $scope.clearSelection();
+                        clearSelection();
                         return;
                     }
 
@@ -608,7 +599,7 @@ function(external, popups, connectionService, datasetService, errorNotificationS
             /**
              * Adds a sort listener in order to clear any row selection on column reorders
              */
-            $scope.addSortListener = function() {
+            var addSortListener = function() {
                 $scope.table.registerSortListener(function() {
                     XDATA.userALE.log({
                         activity: "deselect",
@@ -620,11 +611,11 @@ function(external, popups, connectionService, datasetService, errorNotificationS
                         tags: ["datagrid", "row"]
                     });
 
-                    $scope.clearSelection();
+                    clearSelection();
                 });
             };
 
-            $scope.clearSelection = function() {
+            var clearSelection = function() {
                 $scope.messenger.publish($scope.selectionEvent, {});
                 $scope.selectedRowId = undefined;
                 $tableDiv.removeClass("row-selected");
@@ -643,16 +634,17 @@ function(external, popups, connectionService, datasetService, errorNotificationS
              * @param {Boolean} refreshColumns Whether the columns should be refreshed and thus the
              * column ordering reverted back to the original
              * @method updateData
+             * @private
              */
-            $scope.updateData = function(queryResults, refreshColumns) {
+            var updateData = function(queryResults, refreshColumns) {
                 if(!($("#" + $scope.tableId).length)) {
                     return;
                 }
 
-                $scope.tableOptions = $scope.createOptions(queryResults, refreshColumns);
+                $scope.tableOptions = createOptions(queryResults, refreshColumns);
 
-                if(external.anyEnabled) {
-                    queryResults = $scope.addExternalAppUrlColumnData(queryResults);
+                if(external.active) {
+                    queryResults.data = addExternalLinksToColumnData(queryResults.data);
                 }
 
                 $scope.table = new tables.Table("#" + $scope.tableId, $scope.tableOptions).draw();
@@ -663,88 +655,51 @@ function(external, popups, connectionService, datasetService, errorNotificationS
                  */
                 if($scope.options.table.enableRowSelection) {
                     $(".query-results-grid .slick-row").addClass("selectable");
-                    $scope.addOnClickListener();
-                    $scope.clearSelection();
-                    $scope.addSortListener();
+                    addOnClickListener();
+                    clearSelection();
+                    addSortListener();
                 }
 
                 $scope.table.refreshLayout();
-
-                // Set the displayed link data for the links popup for the application using the source and index stored in to the triggering button.
-                $(".links-popup").on("show.bs.modal", function(event) {
-                    var button = $(event.relatedTarget);
-                    var source = button.data("links-source");
-                    var index = button.data("links-index");
-                    $scope.$apply(function() {
-                        popups.links.setView(source, index);
-                    });
-                });
-                $scope.table.addOnColumnsReorderedListener($scope.createDeleteColumnButtons);
-                $scope.createDeleteColumnButtons();
+                $scope.table.addOnColumnsReorderedListener(createDeleteColumnButtons);
+                createDeleteColumnButtons();
             };
 
-            $scope.addExternalAppUrlColumnData = function(data) {
-                var tableLinks = [];
+            /**
+             * Creates and adds the external links to the given data and returns the data.
+             * @param {Array} data
+             * @method addExternalLinksToColumnData
+             * @private
+             * @return {Array}
+             */
+            var addExternalLinksToColumnData = function(data) {
+                var tableLinks = {};
+                var mappings = datasetService.getMappings($scope.options.database.name, $scope.options.table.name);
 
-                data.data.forEach(function(row) {
-                    var id = row._id;
-                    var query = "id=" + id;
-
-                    var links = [];
-
-                    if(external.dig.enabled) {
-                        links.push($scope.createLinkObject(external.dig, id, query));
-                    }
-
-                    var linksIndex = tableLinks.length;
-                    tableLinks.push(links);
-
-                    row[$scope.EXTERNAL_APP_FIELD_NAME] = "<a data-toggle=\"modal\" data-target=\".links-popup\" data-links-index=\"" + linksIndex +
-                        "\" data-links-source=\"" + $scope.tableId + "\" class=\"collapsed dropdown-toggle primary neon-popup-button\">" +
-                        "<span class=\"glyphicon glyphicon-link\"></span></a>";
+                data.forEach(function(row) {
+                    var field = $scope.bindIdField || "_id";
+                    var id = row[field];
+                    tableLinks[id] = linksPopupService.createAllServiceLinkObjects(external.services, mappings, field, id);
+                    row[$scope.EXTERNAL_APP_FIELD_NAME] = tableLinks[id].length ? linksPopupService.createLinkHtml($scope.tableId, id, id) : linksPopupService.createDisabledLinkHtml(id);
                 });
 
                 // Set the link data for the links popup for this visualization.
-                popups.links.setData($scope.tableId, tableLinks);
+                linksPopupService.setLinks($scope.tableId, tableLinks);
 
                 return data;
             };
 
-            $scope.createLinkObject = function(config, id, query) {
-                var link = {
-                    name: config.data_table.name,
-                    image: config.data_table.image,
-                    url: config.data_table.url,
-                    args: [],
-                    data: {
-                        server: config.server,
-                        value: id,
-                        query: query
-                    }
-                };
-
-                for(var i = 0; i < config.data_table.args.length; ++i) {
-                    var arg = config.data_table.args[i];
-                    link.args.push({
-                        name: arg.name,
-                        value: arg.value
-                    });
-                }
-
-                return link;
-            };
-
-            $scope.createDeleteColumnButtons = function() {
+            var createDeleteColumnButtons = function() {
                 $element.find(".slick-header-column").each(function() {
                     var name = $(this).find(".slick-column-name").html();
                     // Check if the name is empty to ignore the external application link column.
                     if(name) {
-                        $(this).append($compile($scope.createDeleteColumnButton(name))($scope));
+                        $(this).append($compile(createDeleteColumnButton(name))($scope));
                     }
                 });
             };
 
-            $scope.createDeleteColumnButton = function(name) {
+            var createDeleteColumnButton = function(name) {
                 return "<span class=\"remove-column-button\" ng-click=\"deleteColumn('" + name + "'); $event.stopPropagation();\">&times;</span>";
             };
 
@@ -757,7 +712,7 @@ function(external, popups, connectionService, datasetService, errorNotificationS
                     $scope.options.sortByField = $scope.options.sortByField === name ? $scope.fields[0] : $scope.options.sortByField;
                     $scope.deletedFieldsMap[$scope.options.database.name][$scope.options.table.name].push(deletedField);
                     $scope.options.addField = deletedField;
-                    $scope.createDeleteColumnButtons();
+                    createDeleteColumnButtons();
 
                     XDATA.userALE.log({
                         activity: "remove",
@@ -778,11 +733,8 @@ function(external, popups, connectionService, datasetService, errorNotificationS
                     });
                     $scope.deletedFieldsMap[$scope.options.database.name][$scope.options.table.name].splice(indexToSplice, 1);
                     $scope.fields.push($scope.options.addField);
-                    $scope.options.addField = $scope.deletedFieldsMap[$scope.options.database.name][$scope.options.table.name].length > 0 ? $scope.deletedFieldsMap[$scope.options.database.name][$scope.options.table.name][0] : {
-                        columnName: "",
-                        prettyName: ""
-                    };
-                    $scope.createDeleteColumnButtons();
+                    $scope.options.addField = $scope.deletedFieldsMap[$scope.options.database.name][$scope.options.table.name].length > 0 ? $scope.deletedFieldsMap[$scope.options.database.name][$scope.options.table.name][0] : datasetService.createBlankField();
+                    createDeleteColumnButtons();
 
                     XDATA.userALE.log({
                         activity: "add",
@@ -800,10 +752,11 @@ function(external, popups, connectionService, datasetService, errorNotificationS
              * Builds a query to pull a limited set of records that match any existing filter sets.
              * @return neon.query.Query
              * @method buildQuery
+             * @private
              */
-            $scope.buildQuery = function() {
+            var buildQuery = function() {
                 var query = new neon.query.Query().selectFrom($scope.options.database.name, $scope.options.table.name).limit($scope.options.limit);
-                if($scope.options.sortByField && $scope.options.sortByField.columnName) {
+                if(datasetService.isFieldValid($scope.options.sortByField)) {
                     query.sortBy($scope.options.sortByField.columnName, $scope.options.sortDirection);
                 }
                 return query;
@@ -835,7 +788,7 @@ function(external, popups, connectionService, datasetService, errorNotificationS
                     source: "user",
                     tags: ["options", "datagrid", "export"]
                 });
-                var query = $scope.buildQuery();
+                var query = buildQuery();
                 query.limitClause = exportService.getLimitClause();
                 var finalObject = {
                     name: "Query_Results_Table",
@@ -861,8 +814,8 @@ function(external, popups, connectionService, datasetService, errorNotificationS
 
             // Wait for neon to be ready, the create our messenger and intialize the view and data.
             neon.ready(function() {
-                $scope.initialize();
-                $scope.displayActiveDataset(true);
+                initialize();
+                displayActiveDataset();
             });
         }
     };

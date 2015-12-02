@@ -75,7 +75,7 @@ function(connectionService, datasetService, errorNotificationService, exportServ
                     filtersChanged: onFiltersChanged
                 });
                 $scope.messenger.subscribe(datasetService.UPDATE_DATA_CHANNEL, function() {
-                    $scope.queryForData();
+                    queryForData();
                 });
 
                 $scope.exportID = exportService.register($scope.makeSunburstExportObject);
@@ -102,7 +102,7 @@ function(connectionService, datasetService, errorNotificationService, exportServ
 
                 $scope.$watch('options.valueField', function(newValue, oldValue) {
                     if(!$scope.loadingData && newValue !== oldValue) {
-                        $scope.queryForData();
+                        queryForData();
                     }
                 }, true);
 
@@ -131,7 +131,7 @@ function(connectionService, datasetService, errorNotificationService, exportServ
                         source: "system",
                         tags: ["filter-change", "sunburst"]
                     });
-                    $scope.queryForData();
+                    queryForData();
                 }
             };
 
@@ -152,8 +152,9 @@ function(connectionService, datasetService, errorNotificationService, exportServ
              * Builds a query to pull a limited set of records that match any existing filter sets.
              * @return neon.query.Query
              * @method buildQuery
+             * @private
              */
-            $scope.buildQuery = function() {
+            var buildQuery = function() {
                 var query = new neon.query.Query().selectFrom($scope.options.database.name, $scope.options.table.name);
                 if($scope.groupFields.length > 0) {
                     query.groupBy.apply(query, $scope.groupFields);
@@ -161,7 +162,7 @@ function(connectionService, datasetService, errorNotificationService, exportServ
 
                 //take based on selected count or total
                 query.aggregate(neon.query.COUNT, '*', 'count');
-                if($scope.options.valueField.columnName) {
+                if(datasetService.isFieldValid($scope.options.valueField)) {
                     query.aggregate(neon.query.SUM, $scope.options.valueField.columnName, $scope.options.valueField.columnName);
                 }
 
@@ -170,10 +171,10 @@ function(connectionService, datasetService, errorNotificationService, exportServ
 
             /**
              * Displays data for any currently active datasets.
-             * @param {Boolean} Whether this function was called during visualization initialization.
              * @method displayActiveDataset
+             * @private
              */
-            $scope.displayActiveDataset = function(initializing) {
+            var displayActiveDataset = function() {
                 if(!datasetService.hasDataset() || $scope.loadingData) {
                     return;
                 }
@@ -191,14 +192,7 @@ function(connectionService, datasetService, errorNotificationService, exportServ
                         }
                     }
                 }
-
-                if(initializing) {
-                    $scope.updateTables();
-                } else {
-                    $scope.$apply(function() {
-                        $scope.updateTables();
-                    });
-                }
+                $scope.updateTables();
             };
 
             $scope.updateTables = function() {
@@ -218,14 +212,11 @@ function(connectionService, datasetService, errorNotificationService, exportServ
             $scope.updateFields = function() {
                 $scope.loadingData = true;
                 $scope.fields = datasetService.getSortedFields($scope.options.database.name, $scope.options.table.name);
-                $scope.options.valueField = {
-                    columnName: "",
-                    prettyName: ""
-                };
-                $scope.queryForData();
+                $scope.options.valueField = datasetService.createBlankField();
+                queryForData();
             };
 
-            $scope.queryForData = function() {
+            var queryForData = function() {
                 if($scope.errorMessage) {
                     errorNotificationService.hideErrorMessage($scope.errorMessage);
                     $scope.errorMessage = undefined;
@@ -241,7 +232,7 @@ function(connectionService, datasetService, errorNotificationService, exportServ
                     return;
                 }
 
-                var query = $scope.buildQuery();
+                var query = buildQuery();
 
                 XDATA.userALE.log({
                     activity: "alter",
@@ -327,6 +318,7 @@ function(connectionService, datasetService, errorNotificationService, exportServ
                 var nodes = {};
                 var tree = {
                     name: $scope.options.table.name,
+                    key: $scope.options.table.name,
                     children: []
                 };
                 var leafObject;
@@ -353,6 +345,7 @@ function(connectionService, datasetService, errorNotificationService, exportServ
                             if(i !== $scope.groupFields.length - 1) {
                                 nodeObject = {};
                                 nodeObject.name = field + ": " + doc[field];
+                                nodeObject.key = nodeKeyString;
                                 nodeObject.children = [];
                                 parent.children.push(nodeObject);
                                 parent = nodeObject;
@@ -361,6 +354,7 @@ function(connectionService, datasetService, errorNotificationService, exportServ
                                 leafObject.name = field + ": " + doc[field];
                                 leafObject.count = doc.count;
                                 leafObject.total = doc[$scope.options.valueField.columnName];
+                                leafObject.key = nodeKeyString;
                                 parent.children.push(leafObject);
                             }
                         } else {
@@ -374,7 +368,11 @@ function(connectionService, datasetService, errorNotificationService, exportServ
 
             var doDrawChart = function(data) {
                 $scope.chart.clearData();
-                $scope.chart.drawData(data);
+                $scope.dataShown = $scope.chart.drawData(data);
+            };
+
+            $scope.showChart = function() {
+                $scope.dataShown = true;
             };
 
             $scope.addGroup = function() {
@@ -382,7 +380,7 @@ function(connectionService, datasetService, errorNotificationService, exportServ
                     $scope.groupFields.push($scope.options.selectedItem.columnName);
                 }
                 $scope.options.selectedItem = {};
-                $scope.queryForData();
+                queryForData();
             };
 
             $scope.dropGroup = function(groupField) {
@@ -390,7 +388,7 @@ function(connectionService, datasetService, errorNotificationService, exportServ
                 if(index !== -1) {
                     $scope.groupFields.splice(index, 1);
                 }
-                $scope.queryForData();
+                queryForData();
             };
 
             /**
@@ -407,7 +405,7 @@ function(connectionService, datasetService, errorNotificationService, exportServ
                     source: "user",
                     tags: ["options", "sunburst", "export"]
                 });
-                var query = $scope.buildQuery();
+                var query = buildQuery();
                 query.limitClause = exportService.getLimitClause();
                 // Sort results by each group field so the resulting file won't be ugly.
                 var sortByArgs = [];
@@ -451,7 +449,7 @@ function(connectionService, datasetService, errorNotificationService, exportServ
             neon.ready(function() {
                 $scope.messenger = new neon.eventing.Messenger();
                 initialize();
-                $scope.displayActiveDataset(true);
+                displayActiveDataset();
             });
         }
     };

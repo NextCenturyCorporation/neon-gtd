@@ -27,9 +27,14 @@
         font-size: 13px;
         background-color: @light-background;
         border: @main-border;
+        border-top: 0px;
         -moz-box-sizing: border-box;
         box-sizing: border-box;
         padding: 10px;
+
+        &:first-child {
+            border: @border;
+        }
 
         &.future {
             background-color: @main-background;
@@ -40,14 +45,23 @@
             background-color: #ffff66;
         }
 
+        img {
+            margin-right: 5px;
+        }
+
+        .vertical-align {
+            position: relative;
+            top: 2px;
+        }
+
         .head {
             font-size: 15px;
             font-weight: bold;
-            padding-top: 2px;
         }
 
         .name {
             color: @main-text-color;
+            font-size: 15px;
         }
 
         .date {
@@ -56,6 +70,17 @@
 
         .text {
             word-wrap: break-word;
+        }
+
+        .glyphicon {
+            color: #333;
+            font-size: 12px;
+        }
+    }
+
+    .translate {
+        .input-group-btn {
+            width: auto;
         }
     }
 }

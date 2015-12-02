@@ -6,18 +6,19 @@
                 <h4 class="modal-title" id="customConnectionModalLabel">Open External Applications</h4>
             </div>
             <div class="modal-body">
-                <div>
+                <div ng-repeat="key in linkKeys">
+                    <label class="label-small" ng-bind-html="getLinkHeader(key)"></label>
+                    <label class="text-primary label-block label-small" ng-if="links[key].length > 0">Applications Available</label>
+                    <label class="text-danger label-block label-small" ng-if="links[key].length == 0">No Applications Available</label>
                     <ul>
-                        <li ng-repeat="link in links">
-                        <form action="{{link.url}}" method="get" target="{{link.tab}}" ng-submit="logLinkEvent(link.name)">
-                            <input ng-repeat="arg in link.args" type="hidden" name="{{arg.name}}" value="{{arg.value}}">
-                            <button type="submit" value="submit" tabindex="0" title="{{link.name}}">
+                        <li ng-repeat="link in links[key]">
+                            <a ng-href="{{link.url}}" target="{{link.tab}}" title="Open {{link.name}} in a new tab" ng-click="logLinkEvent(link.name)">
                                 <img alt="{{link.name}}" class="img-thumbnail center-block" ng-src="{{link.image}}">
                                 <span class="text-uppercase small" ng-bind="link.name"></span>
-                            </button>
-                        </form>
+                            </a>
                         </li>
                     </ul>
+                    <div class="clearfix"></div>
                 </div>
             </div>
             <div class="modal-footer">

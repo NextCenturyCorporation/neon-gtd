@@ -1,24 +1,50 @@
 <div class="header-container" ng-show="!(hideHeader)">
-    <div class="title header-text pull-left" ng-bind="(bindTitle != undefined) ? bindTitle : options.table.prettyName + ' / ' + options.tagField.prettyName"></div>
+    <div class="title header-text pull-left" ng-bind="generateTitle()"></div>
 
     <options-menu parent-element="element" export-function="makeTagCloudExportObject"  button-text="'No tag data'" show-button-text="showOptionsMenuButtonText">
+        <translation-options ng-show="translationAvailable" on-translate="updateTranslation" from-language-change="onFromLanguageChange" to-language-change="onToLanguageChange"
+            from-language-options="translationLanguages.fromLanguageOptions" to-language-options="translationLanguages.toLanguageOptions">
+        </translation-options>
+
         <div class="form-group" ng-show="!(hideAdvancedOptions)">
             <label>Database</label>
             <select class="form-control" ng-model="options.database" ng-options="database.prettyName for database in databases" ng-required="true" ng-disabled="(databases.length < 2)" ng-change="updateTables()">
             </select>
         </div>
+
         <div class="form-group" ng-show="!(hideAdvancedOptions)">
             <label>Table</label>
             <select class="form-control" ng-model="options.table" ng-options="table.prettyName for table in tables" ng-required="true" ng-disabled="(tables.length < 2)" ng-change="updateFields()">
             </select>
         </div>
+
         <div class="form-group" ng-show="!(hideAdvancedOptions)">
             <label>Data Field</label>
-            <select class="form-control" ng-model="options.tagField" ng-options="field.prettyName for field in fields" ng-required="true" ng-disabled="(fields.length == 0)" ng-change="updateTagField()">
+            <select class="form-control" ng-model="options.tagField" ng-options="field.prettyName for field in fields" ng-required="true" ng-disabled="(fields.length == 0)" ng-change="handleChangedTagField()">
             </select>
         </div>
+
+        <div class="form-group" ng-show="!(hideAdvancedOptions)">
+            <label>Unshared Filter</label>
+            <select class="form-control" ng-model="options.filterField" ng-required="false" ng-disabled="!(fields.length > 0)" ng-options="field.prettyName for field in fields" ng-change="handleChangedUnsharedFilterField()">
+                <option selected value="">None</option>
+            </select>
+
+            <div class="input-group">
+                <input type="text" class="form-control" placeholder="{{'Filter for ' + options.filterField.prettyName + '...'}}" ng-model="options.filterValue" ng-disabled="!(options.filterField.columnName)">
+                <div class="input-group-btn">
+                    <button type="button" class="btn btn-default refresh" title="Remove Unshared Filter" ng-click="handleRemovedUnsharedFilter()">
+                        <span class="glyphicon glyphicon-remove"></span>
+                    </button>
+                    <button type="button" class="btn btn-default refresh" title="Set Unshared Filter" ng-click="handleChangedUnsharedFilterValue()">
+                        <span class="glyphicon glyphicon-refresh"></span>
+                    </button>
+                </div>
+            </div>
+        </div>
+
         <div class="form-group">
-            <label>Show records with</label>
+            <label>Show Records with</label>
             <div class="btn-group">
                 <label class="btn btn-default" ng-class="{true: 'active', false: ''}[options.andTags]" ng-disabled="(filterTags.length <= 1)">
                     <input type="radio" ng-model="options.andTags" style="display:none" ng-value="true">
@@ -37,14 +63,18 @@
 <div class="clearfix"></div>
 
 <div class="header-container filter-container" ng-show="(filterTags.length > 0)">
-    <div class="header-item filter-reset pull-right" ng-repeat="tagName in filterTags" title="{{options.tagField.prettyName}}={{tagName}}">
-        <span class="filter-label" ng-bind="tagName"></span>
-        <span class="glyphicon glyphicon-remove" ng-click="removeFilter(tagName)"></span>
+    <div class="header-item filter-reset pull-right" ng-repeat="tag in filterTags"
+        title="{{options.tagField.prettyName}}={{options.showTranslation ? tag.nameTranslated : tag.name}}">
+        <links-popup-button key="{{generateLinksPopupKey(tag.name)}}" source="{{visualizationId}}" tooltip="{{tag.name}}" is-disabled="{{linksPopupButtonIsDisabled}}"></links-popup-button>
+        <span class="filter-label" ng-class="{true: '', false: 'border-left'}[linksPopupButtonIsDisabled]" ng-bind="tag.name" ng-show="!options.showTranslation"></span>
+        <span class="filter-label" ng-class="{true: '', false: 'border-left'}[linksPopupButtonIsDisabled]" ng-bind="tag.nameTranslated" ng-show="options.showTranslation"></span>
+        <span class="border-left glyphicon glyphicon-remove" ng-click="removeFilter(tag.name)"></span>
     </div>
 </div>
 
 <div class="clearfix"></div>
 
 <div class="tagcloud" ng-show="filterTags.length > 0 || data.length > 0">
-    <a ng-click="addTagFilter(tagCount.key)" class="tag" ng-repeat="tagCount in data" rel="{{tagCount.count}}" title="Count:  {{tagCount.count}}" ng-bind="tagCount.key"></a>
+    <a ng-click="addTagFilter(tagCount.key, tagCount.keyTranslated)" class="tag" ng-repeat="tagCount in data" rel="{{tagCount.count}}" title="Count:  {{tagCount.count}}" ng-bind="tagCount.key" ng-show="!options.showTranslation"></a>
+    <a ng-click="addTagFilter(tagCount.key, tagCount.keyTranslated)" class="tag" ng-repeat="tagCount in data" rel="{{tagCount.count}}" title="Count:  {{tagCount.count}}" ng-bind="tagCount.keyTranslated" ng-show="options.showTranslation"></a>
 </div>

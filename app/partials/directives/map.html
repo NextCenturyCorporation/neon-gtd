@@ -102,24 +102,50 @@
                         </div>
                     </div>
 
-                    <div class="layer-options-row" ng-show="(options.newLayer.type == 'points' || options.newLayer.type == 'cluster')">
+                    <div class="layer-options-row row-large" ng-show="(options.newLayer.type == 'points' || options.newLayer.type == 'cluster')">
                         <div class="form-group layer-options-col">
                             <label>Color Code</label>
                             <input type="text" class="form-control" placeholder="None" ng-model="options.newLayer.colorCode" ng-required="false"/>
+                        </div>
+
+                        <div class="form-group layer-options-col" ng-show="options.newLayer.type == 'cluster'">
+                            <label>Popup Fields</label>
+                            <select class="form-control" ng-model="options.newLayer.popupFields"
+                                ng-disabled="!(fields.length > 0)" multiple>
+                                <option ng-repeat="field in fields" ng-cancel-drag value="{{field.columnName}}">
+                                    {{ field.prettyName }}
+                                </option>
+                            </select>
                         </div>
                     </div>
 
                     <div class="layer-options-row" ng-show="(options.newLayer.type == 'node')">
                         <div class="form-group layer-options-col">
+                            <label>Point Color Field</label>
+                            <select class="form-control" ng-model="options.newLayer.nodeColorBy" ng-options="field.prettyName for field in fields" ng-required="false" ng-disabled="!(fields.length > 0)">
+                                <option value="">None</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group layer-options-col">
+                            <label>Line Color Field</label>
+                            <select class="form-control" ng-model="options.newLayer.lineColorBy" ng-options="field.prettyName for field in fields" ng-required="false" ng-disabled="!(fields.length > 0)">
+                                <option value="">None</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group layer-options-col">
                             <label>Point Color Code</label>
-                            <input type="text" class="form-control" placeholder="None" ng-model="options.newLayer.pointColor" ng-required="false"/>
+                            <input type="text" class="form-control" placeholder="None" ng-model="options.newLayer.nodeDefaultColor" ng-required="false"/>
                         </div>
 
                         <div class="form-group layer-options-col">
                             <label>Line Color Code</label>
-                            <input type="text" class="form-control" placeholder="None" ng-model="options.newLayer.lineColor" ng-required="false"/>
+                            <input type="text" class="form-control" placeholder="None" ng-model="options.newLayer.lineDefaultColor" ng-required="false"/>
                         </div>
+                    </div>
 
+                    <div class="layer-options-row" ng-show="(options.newLayer.type == 'node')">
                         <div class="form-group layer-options-col">
                             <label>Size Field</label>
                             <select class="form-control" ng-model="options.newLayer.size" ng-options="field.prettyName for field in fields" ng-required="false" ng-disabled="!(fields.length > 0)">
@@ -138,26 +164,39 @@
                 <div ng-drag="true" ng-drag-data="layer">
                     <div class="form-group layer-options-well neon-well neon-well-dark">
                         <div class="layer-options-row">
-                            <div class="btn-group layer-options-col layer-options-col-wide">
-                                <label class="btn btn-default" ng-cancel-drag ng-class="{true: 'active', false: ''}[layer.visible === true]" title="Toggle Layer Visibility">
+                            <div class="btn-group layer-options-col layer-options-col-wide" ng-if="!hideAdvancedOptions">
+                                <label class="btn btn-default" ng-cancel-drag ng-class="{true: 'active', false: ''}[layer.visible === true]" title="{{'Layer Visibility ' + (layer.visible ? 'On' : 'Off')}}">
                                     <input type="checkbox" style="display:none" ng-model="layer.visible" ng-change="updateLayerVisibility(layer)">
                                     <span class="glyphicon glyphicon-eye-open"></span>
                                 </label>
-                                <label class="btn btn-default" ng-cancel-drag ng-class="{true: 'active', false: ''}[layer.active === true]" title="Toggle Map Filtering on Layer">
+                                <label class="btn btn-default" ng-cancel-drag ng-class="{true: 'active', false: ''}[layer.active === true]" title="{{'Layer Filtering ' + (layer.visible ? 'On' : 'Off')}}">
                                     <input type="checkbox" style="display:none" ng-model="layer.active" ng-change="updateFilteringOnLayer(layer)">
                                     <span class="glyphicon glyphicon-filter"></span>
                                 </label>
-                                <label class="btn btn-default" ng-cancel-drag title="Edit Layer" ng-show="!(layer.editing)">
+                                <label class="btn btn-default" ng-cancel-drag title="Edit Layer" ng-show="!layer.editing">
                                     <input type="button" style="display:none" ng-click="toggleEditing(layer)">
                                     <span class="glyphicon glyphicon-edit"></span>
                                 </label>
-                                <label class="btn btn-default" ng-cancel-drag ng-class="{true: '', false: 'disabled'}[layer.valid]" title="Save Layer" ng-show="(layer.editing)">
+                                <label class="btn btn-default" ng-cancel-drag ng-class="{true: '', false: 'disabled'}[layer.valid]" title="Save Layer" ng-show="layer.editing">
                                     <input type="button" style="display:none" ng-click="updateLayer(layer)">
                                     <span class="glyphicon glyphicon-ok"></span>
                                 </label>
                                 <label class="btn btn-danger" ng-cancel-drag title="Delete Layer">
                                     <input type="button" style="display:none" ng-click="deleteLayer(layer)">
                                     <span class="glyphicon glyphicon-trash"></span>
+                                </label>
+                            </div>
+
+                            <div class="btn-group layer-options-col layer-options-col-wide" ng-if="hideAdvancedOptions">
+                                <label class="btn btn-default" ng-cancel-drag ng-class="{true: 'active', false: ''}[layer.visible === true]" style="width: 50%;" title="{{'Layer Visibility ' + (layer.visible ? 'On' : 'Off')}}">
+                                    <input type="checkbox" style="display:none" ng-model="layer.visible" ng-change="updateLayerVisibility(layer)">
+                                    <span class="glyphicon glyphicon-eye-open"></span>
+                                    Visible
+                                </label>
+                                <label class="btn btn-default" ng-cancel-drag ng-class="{true: 'active', false: ''}[layer.active === true]" style="width: 50%;" title="{{'Layer Filtering ' + (layer.active ? 'On' : 'Off')}}">
+                                    <input type="checkbox" style="display:none" ng-model="layer.active" ng-change="updateFilteringOnLayer(layer)">
+                                    <span class="glyphicon glyphicon-filter"></span>
+                                    Filter
                                 </label>
                             </div>
 
@@ -231,24 +270,52 @@
                                 </div>
                             </div>
 
-                            <div class="layer-options-row" ng-show="layer.type == 'points' || layer.type == 'cluster'">
+                            <div class="layer-options-row row-large" ng-show="layer.type == 'points' || layer.type == 'cluster'">
                                 <div class="form-group layer-options-col">
                                     <label>Color Code</label>
                                     <input type="text" class="form-control" placeholder="{{layer.defaultColor || 'None'}}" ng-cancel-drag ng-model="layer.defaultColor" ng-required="false">
                                 </div>
+
+                                <div class="form-group layer-options-col" ng-show="layer.type == 'cluster'">
+                                    <label>Popup Fields</label>
+                                    <select class="form-control" ng-model="layer.popupFields"
+                                        ng-disabled="!(layer.fields.length > 0)" multiple>
+                                        <option ng-repeat="field in layer.fields" ng-cancel-drag value="{{field.columnName}}"
+                                            ng-selected="{{layer.popupFields.indexOf(field.columnName) >= 0}}">
+                                            {{field.prettyName}}
+                                        </option>
+                                    </select>
+                                </div>
                             </div>
 
                             <div class="layer-options-row" ng-show="layer.type == 'node'">
+
+                                <div class="form-group layer-options-col">
+                                    <label>Point Color Field</label>
+                                    <select class="form-control" ng-cancel-drag ng-model="layer.nodeColorField" ng-options="field.prettyName for field in layer.fields" ng-required="false" ng-disabled="!(layer.fields.length > 0)">
+                                        <option value="">None</option>
+                                    </select>
+                                </div>
+
+                                <div class="form-group layer-options-col">
+                                    <label>Line Color Field</label>
+                                    <select class="form-control" ng-cancel-drag ng-model="layer.lineColorField" ng-options="field.prettyName for field in layer.fields" ng-required="false" ng-disabled="!(layer.fields.length > 0)">
+                                        <option value="">None</option>
+                                    </select>
+                                </div>
+
                                 <div class="form-group layer-options-col">
                                     <label>Point Color Code</label>
-                                    <input type="text" class="form-control" placeholder="{{layer.nodeColor || 'None'}}" ng-cancel-drag ng-model="layer.nodeColor" ng-required="false"/>
+                                    <input type="text" class="form-control" placeholder="{{layer.nodeDefaultColor || 'None'}}" ng-cancel-drag ng-model="layer.nodeDefaultColor" ng-required="false"/>
                                 </div>
 
                                 <div class="form-group layer-options-col">
                                     <label>Line Color Code</label>
-                                    <input type="text" class="form-control" placeholder="{{layer.edgeColor || 'None'}}" ng-cancel-drag ng-model="layer.edgeColor" ng-required="false"/>
+                                    <input type="text" class="form-control" placeholder="{{layer.lineDefaultColor || 'None'}}" ng-cancel-drag ng-model="layer.lineDefaultColor" ng-required="false"/>
                                 </div>
+                            </div>
 
+                            <div class="layer-options-row" ng-show="layer.type == 'node'">
                                 <div class="form-group layer-options-col">
                                     <label>Size Field</label>
                                     <select class="form-control" ng-cancel-drag ng-model="layer.sizeField" ng-options="field.prettyName for field in layer.fields" ng-required="false" ng-disabled="!(layer.fields.length > 0)">
@@ -269,8 +336,49 @@
 </div>
 
 <div class="header-container filter-container">
-    <div class="header-item filter-reset pull-right" ng-class="{true: '', false: 'hidden'}[showFilter]" title="Latitude from {{extent.minimumLatitude}} to {{extent.maximumLatitude}}, Longitude from {{extent.minimumLongitude}} to {{extent.maximumLongitude}}">
-        <span class="filter-label">Map Filter</span>
-        <span class="glyphicon glyphicon-remove" ng-click="clearFilters(true)"></span>
+    <div class="header-item filter-reset pull-right" ng-class="{true: '', false: 'hidden'}[extent != undefined]" title="Latitude from {{extent.minimumLatitude}} to {{extent.maximumLatitude}}, Longitude from {{extent.minimumLongitude}} to {{extent.maximumLongitude}}">
+        <links-popup-button key="{{getBoundsKeyForLinksPopupButton()}}" source="{{mapId}}" tooltip="latitude {{extent.minimumLatitude}} to {{extent.maximumLatitude}}, longitude {{extent.minimumLongitude}} to {{extent.maximumLongitude}}" is-disabled="{{linksPopupButtonIsDisabled}}"></links-popup-button>
+        <span class="filter-label" ng-class="{true: '', false: 'border-left'}[linksPopupButtonIsDisabled]">Map Filter</span>
+        <span class="border-left glyphicon glyphicon-remove" ng-click="clearFilters(true)"></span>
+    </div>
+</div>
+
+<div class="header-container legend-container">
+    <div class="legend">
+        <div class="legend-details" ng-show="legend.display">
+            <div class="legend-layer" ng-repeat="legendLayer in legend.layers">
+                <div class="header-text legend-header" ng-click="toggleLegendLayer($index)">
+                    <span class="legend-title" ng-bind="legendLayer.layerName"></span>
+                    <span class="glyphicon glyphicon-chevron-down pull-right" ng-show="!legendLayer.display"></span>
+                    <span class="glyphicon glyphicon-chevron-up pull-right" ng-show="legendLayer.display"></span>
+                </div>
+                <div class="header-text node-title" ng-show="legendLayer.display && legendLayer.nodeColorMappings">
+                    <span>Nodes</span>
+                </div>
+                <div class="legend-item" title="{{category}}" ng-repeat="(category, color) in legendLayer.nodeColorMappings"
+                    ng-show="legendLayer.display && legendLayer.nodeColorMappings">
+                    <span class="legend-icon" style="background-color: {{color}}"></span>
+                    <span class="legend-text">{{category}}</span>
+                </div>
+                <div class="header-text node-title" ng-show="legendLayer.display && legendLayer.lineColorMappings">
+                    <span>Lines</span>
+                </div>
+                <div class="legend-item" title="{{category}}" ng-repeat="(category, color) in legendLayer.lineColorMappings"
+                    ng-show="legendLayer.display && legendLayer.lineColorMappings">
+                    <span class="legend-icon" style="background-color: {{color}}"></span>
+                    <span class="legend-text">{{category}}</span>
+                </div>
+                <div class="legend-item" title="{{category}}" ng-repeat="(category, color) in legendLayer.colorMappings"
+                    ng-show="legendLayer.display && legendLayer.colorMappings">
+                    <span class="legend-icon" style="background-color: {{color}}"></span>
+                    <span class="legend-text">{{category}}</span>
+                </div>
+            </div>
+        </div>
+        <div class="divider" ng-show="legend.display"></div>
+        <div class="header-text" ng-click="toggleLegend()">
+            <span class="glyphicon glyphicon-map-marker"></span>
+            <span>Legend</span>
+        </div>
     </div>
 </div>

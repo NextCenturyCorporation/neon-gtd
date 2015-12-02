@@ -27,7 +27,8 @@ angular.module("neonDemo.services")
         layout: "",
         datastore: "",
         hostname: "",
-        databases: []
+        databases: [],
+        dateFilterKeys: {}
     };
 
     // Use the Dataset Service to save settings for specific databases/tables and publish messages to all visualizations if those settings change.
@@ -80,6 +81,7 @@ angular.module("neonDemo.services")
         service.dataset.mapConfig = dataset.mapConfig || {};
         service.dataset.relations = dataset.relations || [];
         service.dataset.linkyConfig = dataset.linkyConfig || {};
+        service.dataset.dateFilterKeys = dataset.dateFilterKeys;
 
         if(service.dataset.options.requeryInterval) {
             var delay = Math.max(0.5, service.dataset.options.requeryInterval) * 60000;
@@ -395,14 +397,17 @@ angular.module("neonDemo.services")
         fieldNames.forEach(function(fieldName) {
             // Iterate through each relation to compare with the current field.
             relations.forEach(function(relation) {
+                var relationFieldNamesForInput = relation[databaseName] ? relation[databaseName][tableName] : [];
+                relationFieldNamesForInput = _.isArray(relationFieldNamesForInput) ? relationFieldNamesForInput : [relationFieldNamesForInput];
                 // If the current relation contains a match for the input database/table/field, iterate through the elements in the current relation.
-                if(relation[databaseName] && fieldName === relation[databaseName][tableName]) {
+                if(relationFieldNamesForInput.indexOf(fieldName) >= 0) {
                     var databaseNames = Object.keys(relation);
                     // Add each database/table/field in the current relation to the map.  Note that this will include the input database/table/field.
                     databaseNames.forEach(function(relationDatabaseName) {
                         var tableNames = Object.keys(relation[relationDatabaseName]);
                         tableNames.forEach(function(relationTableName) {
-                            var relationFieldName = relation[relationDatabaseName][relationTableName];
+                            var relationFieldNames = relation[relationDatabaseName][relationTableName];
+                            relationFieldNames = _.isArray(relationFieldNames) ? relationFieldNames : [relationFieldNames];
                             relationToFields = initializeMapAsNeeded(relationToFields, relationDatabaseName, relationTableName);
 
                             var existingFieldIndex = relationToFields[relationDatabaseName][relationTableName].map(function(object) {
@@ -411,17 +416,17 @@ angular.module("neonDemo.services")
 
                             // If the database/table/field exists in the relation...
                             if(existingFieldIndex >= 0) {
-                                // If the relation field exists in the relation, don't add it again.
-                                if(relationToFields[relationDatabaseName][relationTableName][existingFieldIndex].related.indexOf(relationFieldName) >= 0) {
-                                    return;
-                                }
-                                // Else add the related field.
-                                relationToFields[relationDatabaseName][relationTableName][existingFieldIndex].related.push(relationFieldName);
+                                relationFieldNames.forEach(function(relationFieldName) {
+                                    // If the relation fields do not exist in the relation, add them to the mapping.
+                                    if(relationToFields[relationDatabaseName][relationTableName][existingFieldIndex].related.indexOf(relationFieldName) < 0) {
+                                        relationToFields[relationDatabaseName][relationTableName][existingFieldIndex].related.push(relationFieldName);
+                                    }
+                                });
                             } else {
-                                // Else create a new object for the database/table/field in the relation and add its related field.
+                                // Else create a new object in the mapping for the database/table/field in the relation and add its related fields.
                                 relationToFields[relationDatabaseName][relationTableName].push({
                                     initial: fieldName,
-                                    related: [relationFieldName]
+                                    related: [].concat(relationFieldNames)
                                 });
                             }
                         });
@@ -524,33 +529,66 @@ angular.module("neonDemo.services")
     };
 
     /**
-     * Returns the map of date filter keys for this dataset.
+     * Generates and returns a date filter key for the database and table with the given names.
+     * @param {String} databaseName
+     * @param {String} tableName
+     * @method generateDateFilterKey
+     * @private
+     * @return {String}
+     */
+    var generateDateFilterKey = function(databaseName, tableName) {
+        return "date-" + databaseName + "-" + tableName + "-" + uuid();
+    };
+
+    /**
+     * Returns the map of date filter keys for the database, table, and field in the active dataset with the given names.
+     * @param {String} databaseName
+     * @param {String} tableName
+     * @param {String} fieldName
      * @method getDateFilterKeys
      * @return {Object}
      */
-    service.getDateFilterKeys = function() {
+    service.getDateFilterKeys = function(databaseName, tableName, fieldName) {
+        // If the date filter keys for the given database/table/field have already been generated, return the saved object.
+        if(service.dataset.dateFilterKeys[databaseName][tableName][fieldName]) {
+            return service.dataset.dateFilterKeys[databaseName][tableName][fieldName];
+        }
+
         var dateFilterKeys = {};
-        service.dataset.databases.forEach(function(database) {
-            dateFilterKeys[database.name] = {};
-            database.tables.forEach(function(table) {
-                dateFilterKeys[database.name][table.name] = table.dateFilterKey ? table.dateFilterKey : "";
+        var relations = service.getRelations(databaseName, tableName, [fieldName]);
+
+        // Generate the date filter keys for the given database/table/field and each of its relations.
+        relations.forEach(function(relation) {
+            dateFilterKeys[relation.database] = dateFilterKeys[relation.database] || {};
+            dateFilterKeys[relation.database][relation.table] = dateFilterKeys[relation.database][relation.table] || generateDateFilterKey(relation.database, relation.table);
+        });
+
+        // Save the generated date filter keys for the given database/table/field and each of its relations.
+        relations.forEach(function(relation) {
+            var relationField = relation.fields[0];
+            // Each relation will only contain a single field corresponding to the date field.
+            relation.fields[0].related.forEach(function(relatedFieldName) {
+                service.dataset.dateFilterKeys[relation.database][relation.table][relatedFieldName] = dateFilterKeys;
             });
         });
+
         return dateFilterKeys;
     };
 
     /**
-     * Publishes a date changed message with the given database name, table name, and brush extent.
+     * Publishes a date changed message with the given database name, table name, field names, and brush extent.
      * @param {String} databaseName
      * @param {String} tableName
+     * @param {Array} fieldNames
      * @param {Array} brushExtent
      * @method publishDateChanged
      * @private
      */
-    var publishDateChanged = function(databaseName, tableName, brushExtent) {
+    var publishDateChanged = function(databaseName, tableName, fieldNames, brushExtent) {
         service.messenger.publish(service.DATE_CHANGED_CHANNEL, {
             databaseName: databaseName,
             tableName: tableName,
+            fieldNames: fieldNames,
             brushExtent: brushExtent
         });
     };
@@ -565,22 +603,27 @@ angular.module("neonDemo.services")
         relations.forEach(function(relation) {
             var table = service.getTableWithName(relation.database, relation.table);
             if(table) {
-                table.dateBrushExtent = brushExtent;
-                publishDateChanged(relation.database, relation.table, brushExtent);
+                table.dateBrushExtent = table.dateBrushExtent || {};
+                // Each relation will only contain a single field corresponding to the date field.
+                relation.fields[0].related.forEach(function(relatedFieldName) {
+                    table.dateBrushExtent[relatedFieldName] = brushExtent;
+                });
+                publishDateChanged(relation.database, relation.table, relation.fields[0].related, brushExtent);
             }
         });
     };
 
     /**
-     * Returns the date brush extent for the database and table with the given names or an empty array if no brush extent has been set.
+     * Returns the date brush extent for the database, table, and fields with the given names or an empty array if no brush extent has been set.
      * @param {String} databaseName
      * @param {String} tableName
+     * @param {String} fieldName
      * @method getDateBrushExtent
      * @return {Array}
      */
-    service.getDateBrushExtent = function(databaseName, tableName) {
+    service.getDateBrushExtent = function(databaseName, tableName, fieldName) {
         var table = service.getTableWithName(databaseName, tableName);
-        return (table && table.dateBrushExtent) ? table.dateBrushExtent : [];
+        return ((table && table.dateBrushExtent) ? table.dateBrushExtent[fieldName] : []) || [];
     };
 
     /**
@@ -592,8 +635,12 @@ angular.module("neonDemo.services")
         relations.forEach(function(relation) {
             var table = service.getTableWithName(relation.database, relation.table);
             if(table) {
-                table.dateBrushExtent = [];
-                publishDateChanged(relation.database, relation.table, []);
+                table.dateBrushExtent = table.dateBrushExtent || {};
+                // Each relation will only contain a single field corresponding to the date field.
+                relation.fields[0].related.forEach(function(relatedFieldName) {
+                    table.dateBrushExtent[relatedFieldName] = [];
+                });
+                publishDateChanged(relation.database, relation.table, relation.fields[0].related, []);
             }
         });
     };
@@ -669,10 +716,6 @@ angular.module("neonDemo.services")
                 table.prettyName = table.prettyName || table.name;
                 table.fields = table.fields || [];
                 table.mappings = table.mappings || {};
-                // Create a filter key for each database/table pair with a date mapping.
-                if(table.mappings.date) {
-                    table.dateFilterKey = "date-" + database.name + "-" + table.name + "-" + uuid();
-                }
                 validateFields(table);
             }
         });
@@ -681,12 +724,18 @@ angular.module("neonDemo.services")
 
     var validateDatabases = function(dataset) {
         var indexListToRemove = [];
+        dataset.dateFilterKeys = {};
         dataset.databases.forEach(function(database, index) {
             if(!(database.name || database.tables || database.tables.length)) {
                 indexListToRemove.push(index);
             } else {
                 database.prettyName = database.prettyName || database.name;
                 validateTables(database);
+                // Initialize the date filter keys map for each database/table pair.
+                dataset.dateFilterKeys[database.name] = {};
+                database.tables.forEach(function(table) {
+                    dataset.dateFilterKeys[database.name][table.name] = {};
+                });
             }
         });
         removeFromArray(dataset.databases, indexListToRemove);

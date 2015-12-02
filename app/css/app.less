@@ -34,6 +34,10 @@
         a {
             background-color: @accent-bright;
             color: @light-text-color;
+
+            &:hover, &:focus {
+                background-color: @accent-bright;
+            }
         }
     }
 
@@ -44,18 +48,6 @@
         &:hover {
             background-color: @visualization-box-background;
             color: @main-text-color;
-        }
-    }
-}
-
-.dropdown-menu {
-    > .active {
-        > a {
-            background-color: @accent-bright;
-
-            &:hover, &:focus {
-                background-color: @accent-bright;
-            }
         }
     }
 }
@@ -365,4 +357,5 @@
 @import 'directives/tagCloud.less';
 @import 'directives/timelineSelector.less';
 @import 'directives/timelineSelectorChart.less';
+@import 'directives/translationOptions.less';
 @import 'directives/visualizationWidget.less';

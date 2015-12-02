@@ -14,7 +14,7 @@
         </div>
         <div class="form-group">
             <label>Add a Ring</label>
-            <select class="form-control" ng-model="options.selectedItem" ng-disabled="!(fields.length > 0)" 
+            <select class="form-control" ng-model="options.selectedItem" ng-disabled="!(fields.length > 0)"
                 ng-options="field.prettyName for field in fields" ng-change="addGroup()">
             <option value="">Add a Ring</option>
         </select>
@@ -48,11 +48,11 @@
 
     <div class="sunburst-controls" ng-show="options.valueField && options.valueField.columnName">
         <form>
-            <label><input type="radio" ng-model="arcValue" value="count" class="sunburst-chart-selector"> 
+            <label><input type="radio" ng-model="arcValue" value="count" class="sunburst-chart-selector">
                 Count
             </label>
             <label><input type="radio" ng-model="arcValue" value="total" class="sunburst-chart-selector"
-                ng-disabled="!(options.valueField.columnName && options.valueField.prettyName)"> 
+                ng-disabled="!(options.valueField.columnName && options.valueField.prettyName)">
                 <span ng-bind="'TOTAL (' + options.valueField.prettyName + ')'"></span>
             </label>
         </form>
@@ -63,4 +63,9 @@
 
 <div class="sunburst-tooltip"></div>
 
-<div class="sunburst-chart"></div>
+<div class="sunburst-chart" ng-show="dataShown"></div>
+
+<div class="no-data" ng-show="!dataShown">
+    No data for current filters.
+    <button ng-click="showChart()" class="btn btn-default">Zoom out</button>
+</div>

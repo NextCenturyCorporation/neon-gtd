@@ -211,11 +211,6 @@ charts.SunburstChart = function(rootElement, selector, opts) {
 
     this.drawData = function(root) {
         var me = this;
-        // Keep track of the node that is currentfoly being displayed as the root.
-        var node;
-
-        node = root;
-        this.node = root;
 
         this.path = this.svg.datum(root).selectAll("path")
             .data(this.partition.nodes)
@@ -229,6 +224,39 @@ charts.SunburstChart = function(rootElement, selector, opts) {
                 .on("mouseout", onMouseOut)
                 .on("mousemove", onMouseMove)
                 .each(stash);
+
+        // Get all data on path because it has extra fields that d3 calculated that the variable 'root' doesn't have
+        var newRoot = this.path.node().__data__;
+
+        // Find the previously selected partition, if any, inside the new data and zoom to it
+        if(this.node && _.keys(this.node).length && newRoot.key != this.node.key) {
+            var node = findNode(newRoot.children);
+            if(_.keys(node).length) {
+                newRoot = node;
+            } else {
+                click(newRoot);
+
+                return false;
+            }
+        }
+
+        click(newRoot);
+
+        return true;
+
+        function findNode(childNodes) {
+            var nodeToFind = {};
+
+            childNodes.forEach(function(aNode) {
+                if(me.node.key === aNode.key) {
+                    nodeToFind = aNode;
+                } else if(aNode.children && !nodeToFind.key) {
+                    nodeToFind = findNode(aNode.children);
+                }
+            });
+
+            return nodeToFind;
+        };
 
         function click(d) {
             me.node = d;
@@ -296,6 +324,7 @@ charts.SunburstChart.TOTAL_PARTITION = "total";
 charts.SunburstChart.prototype.clearData = function() {
     //clear
     $(this.element[0]).empty();
+
     //draw blank
     this.drawBlank();
 };

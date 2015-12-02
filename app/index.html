@@ -38,7 +38,7 @@
                         <h4 class="modal-title">Neon Dashboard Demo Video</h4>
                     </div>
                     <div class="modal-body">
-                        <video id="helpVideo" ng-src="{{help.video}}" controls>
+                        <video id="helpVideo" ng-src="{{help.localVideo}}" controls>
                             Your browser does not support the video tag.
                         </video>
                     </div>
@@ -56,15 +56,18 @@
 
                 <div class="container" ng-hide="hideNavbarItems">
                     <!-- Help Button -->
-                    <div class="dropdown pull-right" ng-show="(help.guide || help.video)">
+                    <div class="dropdown pull-right" ng-show="(help.guide || help.webVideo || help.localVideo)">
                         <a class="dropdown-toggle navbar-text" data-toggle="dropdown" href="#" role="button">
                             <img class="brand-image" src="img/Help_64x64.png" height="34"></img>Help<span class="caret"></span>
                         </a>
                         <ul class="dropdown-menu">
-                            <li ng-show="(help.guide)"><a href="{{help.guide}}" target="guide">
+                            <li ng-show="(help.guide)"><a href="{{help.guide}}" target="guide" title="User Guide (Opens in a New Tab)">
                                 User Guide
                             </a></li>
-                            <li ng-show="(help.video)"><a href="#" data-toggle="modal" data-target="#videoModal">
+                            <li ng-show="(help.webVideo)"><a href="{{help.webVideo}}" target="video" title="Demo Video (Opens in a New Tab)">
+                                Demo Video
+                            </a></li>
+                            <li ng-show="(help.localVideo)"><a href="#" data-toggle="modal" data-target="#videoModal" title="Demo Video (Opens in a Popup)">
                                 Demo Video
                             </a></li>
                         </ul>
@@ -141,11 +144,9 @@
 
                     <!-- Add visualization control -->
                     <div add-visualization gridster-configs="visualizations" ng-show="!hideNavbarItems && !hideAddVisualizationsButton"></div>
-                </div>
 
-                <!-- FILTER STATUS TRAY -->
-                <div class="container" ng-show="showFilterStatusTray">
-                    <filter-tray bound-parent="'nav.navbar'" include-parent-height="!hideNavbarItems"></filter-tray>
+                    <!-- FILTER STATUS TRAY -->
+                    <div filter-tray bound-parent="'nav.navbar'" include-parent-height="!hideNavbarItems" ng-show="showFilterStatusTray" class="pull-right"></div>
                 </div>
             </div>
         </nav>
@@ -187,12 +188,16 @@
         <!-- In production use:
         <script src="//ajax.googleapis.com/ajax/libs/angularjs/x.x.x/angular.min.js"></script>
         -->
+        <!--
+        <script src="js/vendor/angular.js"></script>
+        -->
         <script src="lib/angular/js/angular.min.js"></script>
         <script src="lib/angular-gridster/js/angular-gridster.min.js"></script>
         <script src="lib/moment/js/moment.min.js"></script>
         <script src="lib/angular-moment/js/angular-moment.min.js"></script>
         <script src="lib/angular-gantt/js/angular-gantt.min.js"></script>
         <script src="lib/angular-gantt/js/angular-gantt-plugins.min.js"></script>
+        <script src="lib/angular-route/js/angular-route.min.js"></script>
         <script src="lib/angular-ui-tree/js/angular-ui-tree.min.js"></script>
         <script src="lib/angular-bootstrap-datetimepicker/js/datetimepicker.js"></script>
         <script src="lib/javascript-detect-element-resize/js/jquery.resize.js"></script>
@@ -216,6 +221,8 @@
         <script src="js/vendor/slick-grid/js/slick.rowselectionmodel.js"></script>
         <script src="lib/mergesort/js/merge-sort.js"></script>
         <script src="lib/bootstrap/js/bootstrap.min.js"></script>
+        <script src="lib/js-yaml/js/js-yaml.min.js"></script>
+        <script src="lib/mustache/js/mustache.min.js"></script>
         <script src="lib/ngDraggable/js/ngDraggable.js"></script>
         <script src="lib/remarkable-bootstrap-notify/js/bootstrap-notify.min.js"></script>
         <script src="lib/rainbowvis.js/js/rainbowvis.js"></script>
@@ -244,7 +251,9 @@
         <script src="js/filterService.js"></script>
         <script src="js/exportService.js"></script>
         <script src="js/importService.js"></script>
+        <script src="js/linksPopupService.js"></script>
         <script src="js/parameterService.js"></script>
+        <script src="js/translationService.js"></script>
         <script src="js/neonDemoController.js"></script>
 
         <script src="js/charts/circularHeatChart.js"></script>
@@ -265,6 +274,7 @@
         <script src="js/directives/importFile.js"></script>
         <script src="js/directives/linechart.js"></script>
         <script src="js/directives/linksPopup.js"></script>
+        <script src="js/directives/linksPopupButton.js"></script>
         <script src="js/directives/map.js"></script>
         <script src="js/directives/newsfeed.js"></script>
         <script src="js/directives/optionsMenu.js"></script>
@@ -282,5 +292,6 @@
         <script src="js/directives/visualizationWidget.js"></script>
         <script src="js/directives/sunburst.js"></script>
         <script src="js/directives/arrayTextForm.js"></script>
+        <script src="js/directives/translationOptions.js"></script>
     </body>
 </html>

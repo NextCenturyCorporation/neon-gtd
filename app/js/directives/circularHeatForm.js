@@ -78,13 +78,14 @@ function(connectionService, datasetService, errorNotificationService, exportServ
              * Initializes the name of the date field used to query the current dataset
              * and the Neon Messenger used to monitor data change events.
              * @method initialize
+             * @private
              */
-            $scope.initialize = function() {
+            var initialize = function() {
                 $scope.messenger.events({
                     filtersChanged: onFiltersChanged
                 });
                 $scope.messenger.subscribe(datasetService.UPDATE_DATA_CHANNEL, function() {
-                    $scope.queryForChartData();
+                    queryForChartData();
                 });
 
                 $scope.exportID = exportService.register($scope.makeCircularHeatFormExportObject);
@@ -111,8 +112,9 @@ function(connectionService, datasetService, errorNotificationService, exportServ
             /**
              * Initializes the arrays and variables used to track the most active day of the week and time of day.
              * @method initDayTimeArrays
+             * @private
              */
-            $scope.initDayTimeArrays = function() {
+            var initDayTimeArrays = function() {
                 $scope.days = [{
                     name: "Sundays",
                     count: 0
@@ -170,16 +172,16 @@ function(connectionService, datasetService, errorNotificationService, exportServ
                         source: "system",
                         tags: ["filter-change", "circularheatform"]
                     });
-                    $scope.queryForChartData();
+                    queryForChartData();
                 }
             };
 
             /**
              * Displays data for any currently active datasets.
-             * @param {Boolean} Whether this function was called during visualization initialization.
              * @method displayActiveDataset
+             * @private
              */
-            $scope.displayActiveDataset = function(initializing) {
+            var displayActiveDataset = function() {
                 if(!datasetService.hasDataset() || $scope.loadingData) {
                     return;
                 }
@@ -193,19 +195,12 @@ function(connectionService, datasetService, errorNotificationService, exportServ
                         }
                     }
                 }
-
-                if(initializing) {
-                    $scope.updateTables();
-                } else {
-                    $scope.$apply(function() {
-                        $scope.updateTables();
-                    });
-                }
+                $scope.updateTables();
             };
 
             $scope.updateTables = function() {
                 $scope.tables = datasetService.getTables($scope.options.database.name);
-                $scope.options.table = datasetService.getFirstTableWithMappings($scope.options.database.name, ["date"]) || $scope.tables[0];
+                $scope.options.table = datasetService.getFirstTableWithMappings($scope.options.database.name, [neonMappings.DATE]) || $scope.tables[0];
                 if($scope.bindTable) {
                     for(var i = 0; i < $scope.tables.length; ++i) {
                         if($scope.bindTable === $scope.tables[i].name) {
@@ -221,22 +216,20 @@ function(connectionService, datasetService, errorNotificationService, exportServ
                 $scope.loadingData = true;
                 $scope.fields = datasetService.getSortedFields($scope.options.database.name, $scope.options.table.name);
 
-                var dateField = $scope.bindDateField || datasetService.getMapping($scope.options.database.name, $scope.options.table.name, "date") || "";
+                var dateField = $scope.bindDateField || datasetService.getMapping($scope.options.database.name, $scope.options.table.name, neonMappings.DATE) || "";
                 $scope.options.dateField = _.find($scope.fields, function(field) {
                     return field.columnName === dateField;
-                }) || {
-                    columnName: "",
-                    prettyName: ""
-                };
+                }) || datasetService.createBlankField();
 
-                $scope.queryForChartData();
+                queryForChartData();
             };
 
             /**
              * Triggers a Neon query that will aggregate the time data for the currently selected dataset.
              * @method queryForChartData
+             * @private
              */
-            $scope.queryForChartData = function() {
+            var queryForChartData = function() {
                 if($scope.errorMessage) {
                     errorNotificationService.hideErrorMessage($scope.errorMessage);
                     $scope.errorMessage = undefined;
@@ -244,8 +237,8 @@ function(connectionService, datasetService, errorNotificationService, exportServ
 
                 var connection = connectionService.getActiveConnection();
 
-                if(!connection || !$scope.options.dateField.columnName) {
-                    $scope.updateChartData({
+                if(!connection || !datasetService.isFieldValid($scope.options.dateField)) {
+                    updateChartData({
                         data: []
                     });
                     $scope.loadingData = false;
@@ -301,7 +294,7 @@ function(connectionService, datasetService, errorNotificationService, exportServ
                         tags: ["circularheatform"]
                     });
                     $scope.$apply(function() {
-                        $scope.updateChartData(queryResults);
+                        updateChartData(queryResults);
                         $scope.loadingData = false;
                         XDATA.userALE.log({
                             activity: "alter",
@@ -338,7 +331,7 @@ function(connectionService, datasetService, errorNotificationService, exportServ
                             source: "system",
                             tags: ["circularheatform"]
                         });
-                        $scope.updateChartData({
+                        updateChartData({
                             data: []
                         });
                         $scope.loadingData = false;
@@ -355,9 +348,10 @@ function(connectionService, datasetService, errorNotificationService, exportServ
              * @param {Object} queryResults Results returned from a Neon query.
              * @param {Array} queryResults.data The aggregate numbers for the heat chart cells.
              * @method updateChartData
+             * @private
              */
-            $scope.updateChartData = function(queryResults) {
-                $scope.data = $scope.createHeatChartData(queryResults);
+            var updateChartData = function(queryResults) {
+                $scope.data = createHeatChartData(queryResults);
             };
 
             /**
@@ -366,8 +360,9 @@ function(connectionService, datasetService, errorNotificationService, exportServ
              * @param {Object} queryResults Results returned from a Neon query.
              * @param {Array} queryResults.data The aggregate numbers for the heat chart cells.
              * @method createHeatChartData
+             * @private
              */
-            $scope.createHeatChartData = function(queryResults) {
+            var createHeatChartData = function(queryResults) {
                 var rawData = queryResults.data;
 
                 var data = [];
@@ -376,7 +371,7 @@ function(connectionService, datasetService, errorNotificationService, exportServ
                     data[i] = 0;
                 }
 
-                $scope.initDayTimeArrays();
+                initDayTimeArrays();
 
                 _.each(rawData, function(element) {
                     data[(element.day - 1) * HOURS_IN_DAY + element.hour] = element.count;
@@ -420,7 +415,7 @@ function(connectionService, datasetService, errorNotificationService, exportServ
             $scope.updateDateField = function() {
                 // TODO Logging
                 if(!$scope.loadingData) {
-                    $scope.queryForChartData();
+                    queryForChartData();
                 }
             };
 
@@ -479,8 +474,8 @@ function(connectionService, datasetService, errorNotificationService, exportServ
             // Wait for neon to be ready, the create our messenger and intialize the view and data.
             neon.ready(function() {
                 $scope.messenger = new neon.eventing.Messenger();
-                $scope.initialize();
-                $scope.displayActiveDataset(true);
+                initialize();
+                displayActiveDataset();
             });
         }
     };

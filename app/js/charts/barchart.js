@@ -136,7 +136,7 @@ charts.BarChart.DEFAULT_WIDTH_ = 600;
 charts.BarChart.DEFAULT_MARGIN_ = {
     top: 10,
     bottom: 65,
-    left: 30,
+    left: 35,
     right: 0
 };
 charts.BarChart.DEFAULT_BAR_WIDTH_ = 15;
