@@ -28,8 +28,8 @@
  * @constructor
  */
 angular.module('neonDemo.directives')
-.directive('queryResultsTable', ['external', 'ConnectionService', 'DatasetService', 'ErrorNotificationService', 'ExportService', 'linkify', '$sce', '$timeout',
-function(external, connectionService, datasetService, errorNotificationService, exportService, linkify, $sce, $timeout) {
+.directive('queryResultsTable', ['external', 'ConnectionService', 'DatasetService', 'ErrorNotificationService', 'ExportService', 'linkify', '$sce', '$timeout', 'LinksPopupService',
+function(external, connectionService, datasetService, errorNotificationService, exportService, linkify, $sce, $timeout, linksPopupService) {
     return {
         templateUrl: 'partials/directives/queryResultsTable.html',
         restrict: 'EA',
@@ -41,19 +41,22 @@ function(external, connectionService, datasetService, errorNotificationService, 
             hideAdvancedOptions: '=?'
         },
         controller: function($scope) {
+            // Unique field name used for the SlickGrid column containing the URLs for the external apps.
+            // This name should be one that is highly unlikely to be a column name in a real database.
+            $scope.EXTERNAL_APP_FIELD_NAME = "neonExternalApps";
+
             $scope.ASCENDING = neon.query.ASCENDING;
             $scope.DESCENDING = neon.query.DESCENDING;
 
             $scope.gridOptions = {
                 columnDefs: [],
                 rowData: [],
-                rowSelection: 'multiple',
-                rowDeselection: true,
                 enableColResize: true,
                 enableSorting: true,
                 showToolPanel: false,
                 toolPanelSuppressPivot: true,
-                toolPanelSuppressValues: true
+                toolPanelSuppressValues: true,
+                suppressRowClickSelection: true
             };
 
             $scope.init = function() {
@@ -82,19 +85,78 @@ function(external, connectionService, datasetService, errorNotificationService, 
                 $scope.active.limit = 5000;
             };
 
+            /**
+             * onClick listener for selecting a cell in the table that
+             * publishes the row to a channel
+             */
+            var handleRowClick = function(cell) {
+                if($scope.selectedRowId !== undefined && $scope.selectedRowId === cell.rowIndex) {
+                    XDATA.userALE.log({
+                        activity: "deselect",
+                        action: "click",
+                        elementId: "row",
+                        elementType: "datagrid",
+                        elementGroup: "table_group",
+                        source: "user",
+                        tags: ["datagrid", "row"]
+                    });
+
+                    $scope.gridOptions.api.deselectIndex(cell.rowIndex)
+                    return;
+                } else {
+                    $scope.$apply(function() {
+                        XDATA.userALE.log({
+                            activity: "select",
+                            action: "click",
+                            elementId: "row",
+                            elementType: "datagrid",
+                            elementGroup: "table_group",
+                            source: "user",
+                            tags: ["datagrid", "row"]
+                        });
+
+                        $scope.messenger.publish($scope.selectionEvent, {
+                            data: $scope.gridOptions.rowData[cell.rowIndex],
+                            database: $scope.active.database.name,
+                            table: $scope.active.table.name
+                        });
+
+                        $scope.gridOptions.api.selectIndex(cell.rowIndex, false);
+                        $scope.selectedRowId = cell.rowIndex;
+                    });
+                }
+            };
+
             var updateFields = function() {
                 $scope.fields = getFields();
 
                 $scope.active.sortByField = $scope.fields[0];
                 $scope.active.sortDirection = neon.query.ASCENDING;
 
-                var columnDefs = _.map($scope.fields, function(field) {
+                var columnDefs =  [];
+
+                if(external.active) {
+                    var externalAppColumn = {
+                        headerName: "",
+                        field: $scope.EXTERNAL_APP_FIELD_NAME,
+                        suppressSizeToFit: true,
+                        cellClass: 'centered',
+                        width: 20
+                    };
+
+                    columnDefs.push(externalAppColumn);
+                }
+
+                var fieldColumns = _.map($scope.fields, function(field) {
                     return {
                         headerName: field.prettyName,
                         field: field.columnName,
-                        suppressSizeToFit: true //TODO not if fixed width table
+                        suppressSizeToFit: true,
+                        onCellClicked: handleRowClick
                     };
                 });
+
+                columnDefs = columnDefs.concat(fieldColumns);
 
                 $scope.gridOptions.api.setColumnDefs(columnDefs);
 
@@ -149,11 +211,39 @@ function(external, connectionService, datasetService, errorNotificationService, 
             };
 
             var updateData = function(data) {
+                if(external.active) {
+                    data = addExternalLinksToColumnData(data);
+                }
+
                 $scope.active.count = data.length;
                 $scope.gridOptions.api.setRowData(data);
                 $timeout(function() {
                     linkifyRows(data);
                 });
+            };
+
+            /**
+             * Creates and adds the external links to the given data and returns the data.
+             * @param {Array} data
+             * @method addExternalLinksToColumnData
+             * @private
+             * @return {Array}
+             */
+            var addExternalLinksToColumnData = function(data) {
+                var tableLinks = {};
+                var mappings = datasetService.getMappings($scope.active.database.name, $scope.active.table.name);
+
+                data.forEach(function(row) {
+                    var field = $scope.bindIdField || "_id";
+                    var id = row[field];
+                    tableLinks[id] = linksPopupService.createAllServiceLinkObjects(external.services, mappings, field, id);
+                    row[$scope.EXTERNAL_APP_FIELD_NAME] = tableLinks[id].length ? linksPopupService.createLinkHtml($scope.tableId, id, id) : linksPopupService.createDisabledLinkHtml(id);
+                });
+
+                // Set the link data for the links popup for this visualization.
+                linksPopupService.setLinks($scope.tableId, tableLinks);
+
+                return data;
             };
 
             var linkifyRows = function(data) {

@@ -402,44 +402,5 @@ function(external, connectionService, datasetService, errorNotificationService, 
                 return data;
             };
         }
-
-    //             $scope.outstandingQuery.fail(function(response) {
-    //                 if(response.status === 0) {
-    //                     XDATA.userALE.log({
-    //                         activity: "alter",
-    //                         action: "canceled",
-    //                         elementId: "count-by",
-    //                         elementType: "canvas",
-    //                         elementSub: "count-by",
-    //                         elementGroup: "table_group",
-    //                         source: "system",
-    //                         tags: ["canceled", "count-by"]
-    //                     });
-    //                 } else {
-    //                     XDATA.userALE.log({
-    //                         activity: "alter",
-    //                         action: "failed",
-    //                         elementId: "count-by",
-    //                         elementType: "canvas",
-    //                         elementSub: "count-by",
-    //                         elementGroup: "table_group",
-    //                         source: "system",
-    //                         tags: ["failed", "count-by"]
-    //                     });
-    //                     $scope.updateData({
-    //                         data: []
-    //                     });
-    //                     $scope.loadingData = false;
-    //                     if(response.responseJSON) {
-    //                         $scope.errorMessage = errorNotificationService.showErrorMessage($element, response.responseJSON.error, response.responseJSON.stackTrace);
-    //                         if(response.responseJSON.error === errorNotificationService.TOO_MUCH_DATA_ERROR) {
-    //                             $scope.$apply(function() {
-    //                                 $scope.showTooMuchDataError = true;
-    //                             });
-    //                         }
-    //                     }
-    //                 }
-    //             });
-    //         };
     };
 }]);
