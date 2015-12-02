@@ -40,6 +40,16 @@ function(external, connectionService, datasetService, errorNotificationService, 
             hideHeader: '=?',
             hideAdvancedOptions: '=?'
         },
+        link: function($scope, $element) {
+            $element.addClass('query-results-directive');
+
+            $scope.element = $element;
+
+            //Wait for neon to be ready, the create our messenger and intialize the view and data.
+            neon.ready(function() {
+                $scope.init();
+            });
+        },
         controller: function($scope) {
             // Unique field name used for the SlickGrid column containing the URLs for the external apps.
             // This name should be one that is highly unlikely to be a column name in a real database.
@@ -423,23 +433,8 @@ function(external, connectionService, datasetService, errorNotificationService, 
                 return finalObject;
             };
 
-            //FIXME export
-            //FIXME db and table?
-            //FIXME themes
-            //FIXMe external apps
             //FIXME userale
-
             //FIXME text selection on cells -- https://github.com/ceolter/ag-grid/issues/87
-        },
-        link: function($scope, $element) {
-            $element.addClass('query-results-directive');
-
-            $scope.element = $element;
-
-            //Wait for neon to be ready, the create our messenger and intialize the view and data.
-            neon.ready(function() {
-                $scope.init();
-            });
         }
     };
 }]);
