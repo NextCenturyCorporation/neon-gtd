@@ -372,7 +372,7 @@ function(external, connectionService, datasetService, errorNotificationService, 
                     });
 
                     filterService.removeFilters($scope.messenger, $scope.filterKeys, function() {
-                        //deselect row
+                        $scope.gridOptions.api.deselectAll();
                         $scope.filterSet = undefined;
                     });
                 }

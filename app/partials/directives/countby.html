@@ -1,10 +1,7 @@
 <div class="header-container" ng-show="!(hideHeader)">
-    <div class="title header-text pull-left" ng-bind="(bindTitle != undefined) ? bindTitle : active.table.prettyName + ' / ' + active.field.prettyName"></div>
-    <div class="pull-left header-text" style="padding-left: 20px;" ng-hide="showTooMuchDataError">
-        <span class="text-primary ng-binding" ng-bind="active.count | number"></span> values
-    </div>
-
     <options-menu parent-element="element" export-function="makeCountByExportObject" button-text="optionsMenuButtonText" show-button-text="showOptionsMenuButtonText">
+        <label class="limit-warning" ng-show="gridOptions.rowData.length === active.limitCount">Limited to <span ng-bind="active.limitCount"></span> rows</label>
+
         <div class="form-group" ng-show="!(hideAdvancedOptions)">
             <label>Database</label>
             <select class="form-control" ng-model="active.database" ng-options="database.prettyName for database in databases" ng-required="true" ng-disabled="(databases.length < 2)" ng-change="updateTables()">
@@ -51,12 +48,15 @@
             </div>
         </div>
     </options-menu>
+
+    <div class="title header-text pull-left" ng-bind="(bindTitle != undefined) ? bindTitle : active.table.prettyName + ' / ' + active.field.prettyName"></div>
+    <div class="pull-left header-text record-count" ng-hide="showTooMuchDataError">
+        <span class="text-primary ng-binding" ng-bind="active.count | number"></span> values
+    </div>
 </div>
 <div class="clearfix"></div>
 
-<div class="header-container filter-container" ng-show="showTooMuchDataError">
-    <h4 class="pull-left" >The query exceeded the memory limit.  Please add a filter to requery.</h4>
-
+<div class="filter-container" ng-show="!!filterSet">
     <div class="header-item filter-reset pull-right" ng-class="{true: 'hidden', false: ''}[filterSet === undefined]" title="{{filterSet.key}}={{filterSet.value}}">
         <span class="filter-label" ng-bind="filterSet.value"></span>
         <span class="glyphicon glyphicon-remove" ng-click="clearFilter()"></span>
@@ -64,4 +64,8 @@
 </div>
 <div class="clearfix"></div>
 
-<div ag-grid="gridOptions" class="ag-dark count-by-table" ng-hide="showTooMuchDataError"></div>
+<div class="header-container" ng-show="showTooMuchDataError">
+    <h4 class="pull-left" >The query exceeded the memory limit.  Please add a filter to requery.</h4>
+</div>
+
+<div ag-grid="gridOptions" class="ag-fresh count-by-table" ng-class="{'filter-set': !!filterSet}" ng-hide="showTooMuchDataError"></div>
