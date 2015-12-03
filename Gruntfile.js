@@ -116,9 +116,19 @@ module.exports = function(grunt) {
                     'app/components'
                 ]
             },
-            gtd: {
+            themeDarkGreen: {
                 files: {
-                    'app/css/app.css': 'app/css/app.less'
+                    'app/css/dark-green.css': 'app/css/theme-green-on-dark.less'
+                }
+            },
+            themeLightGreen: {
+                files: {
+                    'app/css/light-green.css': 'app/css/theme-green-on-light.less'
+                }
+            },
+            themeDarkPurple: {
+                files: {
+                    'app/css/dark-purple.css': 'app/css/theme-purple-on-dark.less'
                 }
             }
         },
@@ -165,6 +175,16 @@ module.exports = function(grunt) {
                     outdir: 'docs'
                 }
             }
+        },
+
+        watch: {
+            less: {
+                files: ['app/css/**/*.less'],
+                tasks: ['compile-less'],
+                options: {
+                    spawn: false
+                }
+            }
         }
     });
 
@@ -172,13 +192,14 @@ module.exports = function(grunt) {
     grunt.loadNpmTasks('grunt-contrib-clean');
     grunt.loadNpmTasks('grunt-contrib-jshint');
     grunt.loadNpmTasks('grunt-contrib-less');
+    grunt.loadNpmTasks('grunt-contrib-watch');
     grunt.loadNpmTasks('grunt-contrib-yuidoc');
     grunt.loadNpmTasks('grunt-git-describe');
     grunt.loadNpmTasks('grunt-jscs');
     grunt.loadNpmTasks('grunt-karma');
     grunt.loadNpmTasks('grunt-war');
 
-    grunt.registerTask('compile-less', ['clean:less', 'less']);
+    grunt.registerTask('compile-less', ['clean:less', 'less:themeLightGreen', 'less:themeDarkGreen', 'less:themeDarkPurple']);
     grunt.registerTask('saveRevision', function() {
         grunt.event.once('git-describe', function(rev) {
             var date = new Date(Date.now()).toISOString();

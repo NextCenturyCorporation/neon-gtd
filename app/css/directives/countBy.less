@@ -13,89 +13,136 @@
 // limitations under the License.
 //
 
-.count-by-grid {
-    background-color: @main-background;
-    border: @border;
-    border-radius: 2px;
-    box-shadow: 0 1px 4px @shadow;
-    box-sizing: content-box;
-    -webkit-box-sizing: content-box;
-    -moz-box-sizing: content-box;
+.countByDirective {
+    margin: 0px;
+    padding: 10px;
+    display: block;
+    height: @widget-height;
+    width: @widget-width;
 
+    .header-container {
+        .count {
+            color: @accent-bright;
+            font-weight: bold;
+        }
+    }
 
-    * {
-        box-sizing: content-box;
-        -webkit-box-sizing: content-box;
-        -moz-box-sizing: content-box;
+    .chart-options {
+        /* This is to override 'position: relative' that is being added to the options menu for only this viz -- can't figure out why */
+        position: static !important;
+    }
+
+    .count-by-grid {
+        background-color: @main-background;
+        //border: @border;
+        border-radius: 2px;
+        box-shadow: 0 1px 4px @shadow;
 
         &:before, &:after {
             box-sizing: content-box;
             -webkit-box-sizing: content-box;
             -moz-box-sizing: content-box;
         }
-    }
 
-    &.filtered {
-        .slick-row {
-            opacity: 0.5;
-
-            &.active {
-                background: @accent-dulled;
-                opacity: 1.0;
-            }
+        *, *:before, *:after {
+            box-sizing: content-box;
+            -webkit-box-sizing: content-box;
+            -moz-box-sizing: content-box;
         }
-    }
 
-    .slick-cell {
-        cursor: pointer;
-    }
-
-    .slick-header{
-        border-top: 0;
-
-        .slick-header-column{
-            color: @light-text-color;
-            background: @accent-bright;
-
-            &.ui-state-hover{
-                color: @accent-bright;
-                background: @light-background;
+        &.row-selected {
+            .slick-row {
+                &.active {
+                    color: @accent-dulled-text-color;
+                    background: @accent-dulled;
+                }
             }
         }
 
-        .slick-header-column-sorted{
-            color: @accent-bright;
-            background: @light-background;
-            font-style: normal;
+        &.filtered {
+            .slick-row {
+                &.active {
+                    color: @accent-dulled-text-color;
+                    background: @accent-dulled;
+                }
+            }
         }
 
-        .slick-sortable-placeholder{
-            background: @border-color;
+        span {
+            &.glyphicon {
+                &:focus, &:hover {
+                    color: @accent-bright;
+                }
+            }
         }
 
-        .slick-header-sortable {
+        .slick-cell {
             cursor: pointer;
+            border: 0px;
+            border-bottom: 1px solid @main-text-color;
         }
-    }
 
-    .slick-row {
-        background: @main-background-lighten;
+        .slick-header{
+            border: 0px;
+            border-right: 1px solid @main-text-color;
 
-        &.odd {
-            background: @main-background;
+            .slick-header-column{
+                color: @mid-text-color;
+                background: @main-background;
+                cursor: pointer;
+                box-sizing: content-box;
+                -webkit-box-sizing: content-box;
+
+                &.ui-state-hover{
+                    color: @accent-bright;
+                    background: @light-background;
+
+                    .remove-column-button {
+                        color: #999999;
+                        background: #FFFFFF;
+
+                        &:focus, &:hover {
+                            color: #39B54A;
+                            background: #FFFFFF;
+                        }
+                    }
+                }
+
+                .remove-column-button {
+                    color: #999999;
+                    position: absolute;
+                    right: 5px;
+                }
+            }
+
+            .slick-header-column-sorted{
+                color: @accent-bright;
+                font-style: normal;
+            }
+
+            .slick-sortable-placeholder{
+                background: @border-color;
+            }
         }
+
+        .slick-row {
+            color: @main-text-color;
+            background: @visualization-box-background;
+
+            &:hover when (lightness(@visualization-box-background) < 50%) {
+                color: @light-text-color;
+            }
+
+            &:hover when (lightness(@visualization-box-background) > 50%) {
+                color: @mid-text-color;
+            }
+
+            &.odd {
+                background-color: @main-background;
+            }
+        }
+
     }
-}
-
-.count-by-header {
-    margin-bottom: 5px;
-}
-
-.countByDirective {
-    margin: 0px;
-    padding: 10px;
-    height: @widget-height;
-    width: @widget-width;
 }
 
 .data-tray {

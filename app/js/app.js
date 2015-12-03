@@ -174,6 +174,7 @@ var saveDashboards = function(config) {
         showImport: false,
         showExport: true
     };
+    dashboardConfig.theme = config.theme;
     dashboardConfig.gridsterColumns = dashboardConfig.gridsterColumns || 8;
     dashboardConfig.gridsterMargins = dashboardConfig.gridsterMargins || 10;
     // Most visualizations should have a minimum size of about 300px square to have space for their UI elements.
@@ -194,6 +195,7 @@ var saveDashboards = function(config) {
 };
 
 var saveVisualizations = function(config) {
+    console.log(config.visualizations);
     var visualizations = (config.visualizations || []);
     neonDemo.constant('visualizations', visualizations);
 };

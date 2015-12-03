@@ -23,23 +23,96 @@
         padding: 10px;
         width: 400px;
     }
-}
 
-.add-visualization-button{
-    padding: 0px;
-    display: block;
+    .add-visualization-image {
+        background-color: @visualization-box-background;
+    }
 
-    a {
-        background: none;
-        border: 0;
-        color: @main-text-color;
+    .add-visualization-button{
+        padding: 0px;
         display: block;
-        padding-bottom: 15px;
-        padding-top: 15px;
 
-        &:focus, &:hover, &.collapsed:hover {
-            color: @accent-bright;
-            cursor: pointer;
+        a {
+            background: none;
+            border: 0;
+            color: @main-text-color;
+            display: block;
+            padding-bottom: 15px;
+            padding-top: 15px;
+
+            &:focus, &:hover, &.collapsed:hover {
+                color: @accent-bright;
+                cursor: pointer;
+            }
+        }
+    }
+
+    .visualization-icon-image {
+        width: 64px;
+        height: 64px;
+
+        background-image: @neonIcon;
+        background-repeat: no-repeat;
+
+        &.bar-chart {
+            background-image: @barChartIcon;
+        }
+
+        &.count {
+            background-image: @countIcon;
+        }
+
+        &.create-filter {
+            background-image: @createFilterIcon;
+        }
+
+        &.gantt {
+            background-image: @ganttIcon;
+        }
+
+        &.graph {
+            background-image: @graphIcon;
+        }
+
+        &.line-chart {
+            background-image: @lineChartIcon;
+        }
+
+        &.map {
+            background-image: @mapIcon;
+        }
+
+        &.news {
+            background-image: @newsIcon;
+        }
+
+        &.ops {
+            background-image: @opsIcon;
+        }
+
+        &.ops-clock {
+            background-image: @opsClockIcon;
+        }
+
+        &.pie-chart {
+            background-image: @pieChartIcon;
+        }
+
+        &.sunburst {
+            background-image: @sunburstIcon;
+        }
+
+        &.tag-cloud {
+            background-image: @tagCloudIcon;
+        }
+
+        &.timeline {
+            background-image: @timelineIcon;
+        }
+
+        &.view-data {
+            background-image: @viewDataIcon;
         }
     }
 }
+

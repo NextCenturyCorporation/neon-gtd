@@ -17,135 +17,162 @@
     margin: 0px;
     height: 100%;
     width: 100%;
-}
 
-.query-results-grid {
-    background-color: @main-background;
-    border: @border;
-    border-radius: 2px;
-    box-shadow: 0 1px 4px @shadow;
-    box-sizing: content-box;
-    -webkit-box-sizing: content-box;
-    -moz-box-sizing: content-box;
+    .table-counts {
+        display: inline-block;
+        padding-left: 30px;
+        color: @main-text-color;
 
-    &:before, &:after {
+        .showing-number {
+            color: @accent-bright;
+            font-weight: bold;
+        }
+    }
+
+    .query-results-grid {
+        background-color: @main-background;
+        //border: @border;
+        border-radius: 2px;
+        box-shadow: 0 1px 4px @shadow;
         box-sizing: content-box;
         -webkit-box-sizing: content-box;
         -moz-box-sizing: content-box;
-    }
 
-    *, *:before, *:after {
-        box-sizing: content-box;
-        -webkit-box-sizing: content-box;
-        -moz-box-sizing: content-box;
-    }
+        &:before, &:after {
+            box-sizing: content-box;
+            -webkit-box-sizing: content-box;
+            -moz-box-sizing: content-box;
+        }
 
-    .form-inline {
-        .form-group {
-            &:first-child {
-                > label {
-                    margin-left: 0px;
+        *, *:before, *:after {
+            box-sizing: content-box;
+            -webkit-box-sizing: content-box;
+            -moz-box-sizing: content-box;
+        }
+
+        .form-inline {
+            .form-group {
+                &:first-child {
+                    > label {
+                        margin-left: 0px;
+                    }
                 }
-            }
 
-            > label {
-                margin-left: 10px;
-                margin-right: 5px;
-            }
+                > label {
+                    margin-left: 10px;
+                    margin-right: 5px;
+                }
 
-            input[type="number"] {
-                width: 100px;
-            }
+                input[type="number"] {
+                    width: 100px;
+                }
 
-            .btn-group {
-                label {
-                    &.btn {
-                        margin-right: 0px;
+                .btn-group {
+                    label {
+                        &.btn {
+                            margin-right: 0px;
+                        }
                     }
                 }
             }
+
+            .form-input-group {
+                display: inline-block;
+                margin-bottom: 0;
+                vertical-align: middle;
+
+                &:first-child {
+                    > label {
+                        margin-left: 0px;
+                    }
+                }
+
+                > label {
+                    margin-left: 10px;
+                    margin-right: 5px;
+                    float: left;
+                    margin-top: 9px;
+                    margin-right: 10px;
+                }
+            }
         }
 
-        .form-input-group {
-            display: inline-block;
-            margin-bottom: 0;
-            vertical-align: middle;
+        .slick-cell {
+            border: 0px;
+            border-bottom: 1px solid @main-text-color;
+        }
 
-            &:first-child {
-                > label {
-                    margin-left: 0px;
+        .slick-row{
+            color: @main-text-color;
+            background: @visualization-box-background;
+
+            &.active {
+                color: @accent-dulled-text-color;
+                background: @accent-light;
+            }
+
+            &.selectable {
+                .slick-cell {
+                    cursor: pointer;
                 }
             }
 
-            > label {
-                margin-left: 10px;
-                margin-right: 5px;
-                float: left;
-                margin-top: 9px;
-                margin-right: 10px;
+            &:hover when (lightness(@visualization-box-background) < 50%) {
+                color: @light-text-color;
+            }
+
+            &:hover when (lightness(@visualization-box-background) > 50%) {
+                color: @mid-text-color;
+            }
+
+            &.odd {
+                background-color: @main-background;
             }
         }
-    }
 
-    .slick-row{
-        background: @main-background-lighten;
+        .slick-header{
+            border: 0px;
+            border-right: 1px solid @main-text-color;
 
-        &.odd {
-            background: @main-background;
-        }
-
-        &.selectable {
-            .slick-cell {
+            .slick-header-column{
+                color: @mid-text-color;
+                background: @main-background;
                 cursor: pointer;
-            }
-        }
-    }
 
-    .slick-header{
-        border-top: 0;
+                &.ui-state-hover{
+                    color: @accent-bright;
+                    background: @light-background;
 
-        .slick-header-column{
-            color: @mid-text-color;
-            background: @main-background-darken;
-            cursor: pointer;
+                    .remove-column-button {
+                        color: @main-text-color;
+                        background: @light-background;
 
-            &.ui-state-hover{
-                color: @accent-bright;
-                background: @light-background;
+                        &:focus, &:hover {
+                            color: @accent-bright;
+                            background: @light-background;
+                        }
+                    }
+                }
+
+                &.ui-state-default {
+                    border-right: @visualization-border;
+                }
 
                 .remove-column-button {
-                    color: #999999;
-                    background: #FFFFFF;
-
-                    &:focus, &:hover {
-                        color: #39B54A;
-                        background: #FFFFFF;
-                    }
+                    color: @main-text-color;
+                    position: absolute;
+                    right: 5px;
                 }
             }
 
-            .remove-column-button {
-                color: #999999;
-                position: absolute;
-                right: 5px;
+            .slick-header-column-sorted{
+                color: @accent-bright;
+                font-style: normal;
             }
-        }
 
-        .slick-header-column-sorted{
-            color: @accent-bright;
-            font-style: normal;
-        }
-
-        .slick-sortable-placeholder{
-            background: @border-color;
-        }
-    }
-}
-
-.query-results-grid.row-selected {
-    .slick-row{
-        &.active {
-            background: @accent-dulled;
+            .slick-sortable-placeholder{
+                background: @border-color;
+            }
         }
     }
 }

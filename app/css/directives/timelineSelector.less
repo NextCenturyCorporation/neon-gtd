@@ -80,18 +80,21 @@
     }
 
     .highlight {
-        fill: goldenrod;
+        fill: @callout;
     }
 
     .neon-datetimepicker {
-
         .dropdown-toggle {
+            cursor: pointer;
             font-family: "Open Sans", Helvetica, arial, sans-serif;
             color: @main-text-color;
             font-size: 16px;
 
-            button {
-                cursor: pointer;
+            &:hover {
+                color: @accent-bright;
+            }
+
+            i {
                 margin-left: 5px;
 
                 .glyphicon {
@@ -103,6 +106,8 @@
         .dropdown-menu {
             /* Match the width of two datetimepickers plus margin/padding/scrollbar. */
             width: 550px;
+            overflow-y: scroll;
+            padding: 10px;
 
             label {
                 &.start-date {
@@ -119,6 +124,80 @@
             .datetimepicker {
                 float: left;
                 margin-right: 5px;
+            }
+
+            .table-responsive {
+                display: inline-block;
+                font-size: 12px;
+                padding: 4px 5px;
+                /* Reduce the datetimepicker width because of the reduced font size. */
+                width: 250px;
+                /* Set the datetimepicker height because the year and month views are shorter by default and cause unwanted empty space. */
+                height: 250px;
+
+                .table {
+                    th {
+                        padding: 6px;
+                        width: 34px;
+                        height: 30px;
+
+                        &.left, &.right, &.switch {
+                            background-color: transparent;
+
+                            &:hover {
+                                background-color: transparent;
+                                color: @accent-bright;
+                            }
+                        }
+                    }
+
+                    td {
+                        padding: 6px;
+                        width: 34px;
+                        height: 30px;
+
+                        &.day {
+                            &.active {
+                                color: @light-text-color;
+                                background: @accent-bright;
+
+                                &:hover {
+                                    color: @light-text-color;
+                                    background: @accent-bright;
+                                }
+                            }
+
+                            &:hover {
+                                color: @accent-bright;
+                                background-color: transparent;
+                            }
+                        }
+
+                        .month, .year {
+                            border-radius: @border-radius;
+                            background-color: transparent;
+
+                            &:hover {
+                                background-color: transparent;
+                                color: @accent-bright;
+                            }
+
+                            &.active {
+                                background-color: @button-active-background-color;
+                                color: @button-active-color;
+                                border: @button-active-border;
+                                background-image: none;
+
+                                &:hover {
+                                    background-color: @button-hover-background-color;
+                                    color: @button-hover-color;
+                                    border: @button-hover-border;
+                                    background-image: none;
+                                }
+                            }
+                        }
+                    }
+                }
             }
         }
     }
@@ -143,6 +222,13 @@
         h4 {
             margin-left: 15px;
             margin-top: 0px;
+        }
+
+        .next-to-title {
+            .count {
+                color: @accent-bright;
+                font-weight: bold;
+            }
         }
     }
 }
