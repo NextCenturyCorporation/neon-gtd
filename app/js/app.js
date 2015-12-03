@@ -162,6 +162,7 @@ var saveDashboards = function(config) {
     dashboardConfig.gridsterDefaultMinSizeY = Math.floor(dashboardConfig.gridsterColumns / 6);
     dashboardConfig.help = helpConfig;
     dashboardConfig.showExport = (dashboardConfig.showExport === undefined || dashboardConfig.showExport) ? true : false;
+    dashboardConfig.annotations = (config.annotations || {});
     neonDemo.constant('config', dashboardConfig);
 
     // Keep the autoplay video code here because when it was in the neonDemoController the dashboard would start playing the video whenever the dataset was changed.

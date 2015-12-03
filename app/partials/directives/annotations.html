@@ -1,0 +1,16 @@
+<div class="annotations-directive" ng-show="(data[ID] != undefined) && (data[ID].value != undefined)">
+    <div class="btn-group" ng-show="(data[SENTIMENT] != undefined) && (data[SENTIMENT].value != undefined)">
+        <label class="btn btn-default green" ng-class="{positive: 'active'}[data[SENTIMENT].value]" title="Positive Sentiment">
+            <input type="radio" ng-model="data[SENTIMENT].value" style="display:none" ng-value="'positive'" ng-change="updateSentiment('positive')">
+            <span class="icon-smile"></span>
+        </label>
+        <label class="btn btn-default yellow" ng-class="{neutral: 'active'}[data[SENTIMENT].value]" title="Neutral Sentiment">
+            <input type="radio" ng-model="data[SENTIMENT].value" style="display:none" ng-value="'neutral'" ng-change="updateSentiment('neutral')">
+            <span class="icon-neutral"></span>
+        </label>
+        <label class="btn btn-default red" ng-class="{negative: 'active'}[data[SENTIMENT].value]" title="Negative Sentiment">
+            <input type="radio" ng-model="data[SENTIMENT].value" style="display:none" ng-value="'negative'" ng-change="updateSentiment('negative')">
+            <span class="icon-sad"></span>
+        </label>
+    </span>
+</div>

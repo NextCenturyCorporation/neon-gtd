@@ -421,6 +421,28 @@
         "localVideo": "",
     },
 
+    "annotations": {
+        "url": "http://url",
+        "properties": {
+            "id": "name_of_id_property_in_post_request_payload",
+            "key": "name_of_key_property_in_post_request_payload",
+            "value": "name_of_value_property_in_post_request_payload",
+            "user": "name_of_user_property_in_post_request_payload"
+        },
+        "mappings": {
+            "databaseName": {
+                "tableName": {
+                    "fieldNameA": {
+                        "prefix": "value_prefix",
+                        "suffix": "value_suffix",
+                        "annotation": "annotation_key"
+                    },
+                    "fieldNameB": "annotation_key"
+                }
+            }
+        }
+    },
+
     "files": {
         "datasets": [
             "./config/sample.dataset.config.json"

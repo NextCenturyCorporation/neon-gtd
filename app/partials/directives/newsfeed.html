@@ -114,5 +114,6 @@
             <span class="text" ng-show="!options.showTranslation" ng-bind="item.text"></span>
             <span class="text" ng-show="options.showTranslation" ng-bind="item.textTranslated" title="{{item.text}}"></span>
         </div>
+        <annotations bind-data="{{item.annotations}}"></annotations>
 	</div>
 </div>

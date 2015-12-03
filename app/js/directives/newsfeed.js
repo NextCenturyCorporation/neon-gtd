@@ -17,8 +17,8 @@
  */
 
 angular.module('neonDemo.directives')
-.directive('newsfeed', ['external', '$timeout', 'ConnectionService', 'DatasetService', 'ErrorNotificationService', 'LinksPopupService', 'TranslationService',
-function(external, $timeout, connectionService, datasetService, errorNotificationService, linksPopupService, translationService) {
+.directive('newsfeed', ['external', '$timeout', 'AnnotationService', 'ConnectionService', 'DatasetService', 'ErrorNotificationService', 'LinksPopupService', 'TranslationService',
+function(external, $timeout, annotationService, connectionService, datasetService, errorNotificationService, linksPopupService, translationService) {
     return {
         templateUrl: 'partials/directives/newsfeed.html',
         restrict: 'EA',
@@ -33,7 +33,8 @@ function(external, $timeout, connectionService, datasetService, errorNotificatio
             bindFilterField: '=',
             bindFilterValue: '=',
             bindFeedName: '=',
-            bindFeedType: '='
+            bindFeedType: '=',
+            useAnnotations: '=?'
         },
         link: function($scope, $element) {
             $element.addClass('newsfeed-directive');
@@ -508,6 +509,9 @@ function(external, $timeout, connectionService, datasetService, errorNotificatio
                 if(datasetService.isFieldValid($scope.options.nameField)) {
                     fields.push($scope.options.nameField.columnName);
                 }
+                if($scope.useAnnotations) {
+                    fields = fields.concat(annotationService.getAnnotationFields($scope.options.database.name, $scope.options.table.name));
+                }
 
                 var query = new neon.query.Query().selectFrom($scope.options.database.name, $scope.options.table.name).withFields(fields)
                     .sortBy($scope.options.dateField.columnName, $scope.options.sortDirection)
@@ -540,6 +544,18 @@ function(external, $timeout, connectionService, datasetService, errorNotificatio
                         text = text.join("\n");
                     }
 
+                    var annotations = {};
+                    if($scope.useAnnotations) {
+                        var fieldsAndKeys = annotationService.getAnnotationFieldsAndKeys($scope.options.database.name, $scope.options.table.name);
+                        fieldsAndKeys.forEach(function(fieldAndKey) {
+                            annotations[fieldAndKey.key] = {
+                                prefix: fieldAndKey.prefix,
+                                suffix: fieldAndKey.suffix,
+                                value: item[fieldAndKey.field]
+                            };
+                        });
+                    }
+
                     $scope.data.news.push({
                         date: new Date(item[$scope.options.dateField.columnName]),
                         head: head,
@@ -549,7 +565,8 @@ function(external, $timeout, connectionService, datasetService, errorNotificatio
                         text: text,
                         textTranslated: text,
                         linksPopupButtonJson: createLinksPopupButtonJson(head, name),
-                        linksPopupButtonIsDisabled: !hasLinks
+                        linksPopupButtonIsDisabled: !hasLinks,
+                        annotations: JSON.stringify(annotations)
                     });
                 });
             };

@@ -17,6 +17,7 @@
         "bootstrap": "3.2.0",
         "d3": "3.0.8",
         "html5shiv": "3.7.2",
+        "icomoon": "0.1.0",
         "jquery": "1.11.1",
         "jquery-ui": "1.10.4",
         "threedubmedia.jquery.event": "2.2",
@@ -63,6 +64,11 @@
 
         "html5shiv": {
             "js": "**/*min.js"
+        },
+
+        "icomoon": {
+            ".": "style.css",
+            "fonts": "fonts/*"
         },
 
         "threedubmedia.jquery.event": {
