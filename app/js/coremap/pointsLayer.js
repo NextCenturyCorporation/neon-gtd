@@ -101,6 +101,7 @@ coreMap.Map.Layer.PointsLayer = OpenLayers.Class(OpenLayers.Layer.Vector, {
 
         this.visibility = true;
         this.colorScale = d3.scale.ordinal().range(neonColors.LIST);
+        this.getNestedValue = neon.helpers.getNestedValue;
     },
 
     createClusterStyle: function() {
@@ -315,13 +316,7 @@ coreMap.Map.Layer.PointsLayer.prototype.getValueFromDataElement = function(mappi
     if(typeof mapping === 'function') {
         return mapping.call(this, element);
     }
-    var mappingArray = mapping.split(".");
-    mappingArray.forEach(function(field) {
-        if(element) {
-            element = element[field];
-        }
-    });
-    return element;
+    return this.getNestedValue(element, mapping);
 };
 
 /**

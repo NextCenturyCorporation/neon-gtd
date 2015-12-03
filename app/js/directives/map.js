@@ -78,6 +78,7 @@ angular.module('neonDemo.directives')
             $scope.selectedPointLayer = {};
             $scope.outstandingQuery = {};
             $scope.linksPopupButtonIsDisabled = true;
+            $scope.helpers = neon.helpers;
 
             $scope.MAP_LAYER_TYPES = [coreMap.Map.POINTS_LAYER, coreMap.Map.CLUSTER_LAYER, coreMap.Map.HEATMAP_LAYER, coreMap.Map.NODE_LAYER];
             $scope.DEFAULT_LIMIT = 1000;
@@ -162,7 +163,8 @@ angular.module('neonDemo.directives')
                 var datasetOptions = datasetService.getActiveDatasetOptions();
                 $scope.map = new coreMap.Map($scope.mapId, {
                     responsive: false,
-                    mapBaseLayer: (datasetOptions ? datasetOptions.mapBaseLayer : undefined)
+                    mapBaseLayer: (datasetOptions ? datasetOptions.mapBaseLayer : undefined),
+                    getNestedValue: $scope.helpers.getNestedValue
                 });
                 $scope.map.linksPopupService = linksPopupService;
                 $scope.map.register("movestart", this, onMapEvent);
@@ -890,18 +892,18 @@ angular.module('neonDemo.directives')
                             var targetMapping = layer.targetMapping ? layer.targetMapping : coreMap.Map.Layer.NodeLayer.DEFAULT_TARGET;
 
                             data.forEach(function(d) {
-                                var lat = getNestedValue(d, targetMapping)[latMapping];
-                                var lon = getNestedValue(d, targetMapping)[lonMapping];
+                                var lat = $scope.helpers.getNestedValue(d, targetMapping)[latMapping];
+                                var lon = $scope.helpers.getNestedValue(d, targetMapping)[lonMapping];
                                 bounds = calculateMinMaxBounds(bounds, lat, lon);
 
-                                lat = getNestedValue(d, sourceMapping)[latMapping];
-                                lon = getNestedValue(d, sourceMapping)[lonMapping];
+                                lat = $scope.helpers.getNestedValue(d, sourceMapping)[latMapping];
+                                lon = $scope.helpers.getNestedValue(d, sourceMapping)[lonMapping];
                                 bounds = calculateMinMaxBounds(bounds, lat, lon);
                             });
                         } else {
                             data.forEach(function(d) {
-                                var lat = getNestedValue(d, latMapping);
-                                var lon = getNestedValue(d, lonMapping);
+                                var lat = $scope.helpers.getNestedValue(d, latMapping);
+                                var lon = $scope.helpers.getNestedValue(d, lonMapping);
                                 bounds = calculateMinMaxBounds(bounds, lat, lon);
                             });
                         }
@@ -960,8 +962,8 @@ angular.module('neonDemo.directives')
                 var mapLinks = [];
 
                 data.forEach(function(row) {
-                    var latitudeValue = getNestedValue(row, latitudeField);
-                    var longitudeValue = getNestedValue(row, longitudeField);
+                    var latitudeValue = $scope.helpers.getNestedValue(row, latitudeField);
+                    var longitudeValue = $scope.helpers.getNestedValue(row, longitudeField);
                     var rowLinks = [];
 
                     if(external.services.point) {
@@ -1242,7 +1244,7 @@ angular.module('neonDemo.directives')
                             latMapping = mappings.allCoordinates[i].latitude;
                             lonMapping = mappings.allCoordinates[i].longitude;
 
-                            point = new OpenLayers.Geometry.Point(getNestedValue(msg.data, lonMapping), getNestedValue(msg.data, latMapping));
+                            point = new OpenLayers.Geometry.Point($scope.helpers.getNestedValue(msg.data, lonMapping), $scope.helpers.getNestedValue(msg.data, latMapping));
                             point.transform(coreMap.Map.SOURCE_PROJECTION, coreMap.Map.DESTINATION_PROJECTION);
 
                             feature = new OpenLayers.Feature.Vector(point);
@@ -1264,7 +1266,7 @@ angular.module('neonDemo.directives')
                             lonMapping = pointsLayer.longitudeMapping;
                         }
 
-                        point = new OpenLayers.Geometry.Point(getNestedValue(msg.data, lonMapping), getNestedValue(msg.data, latMapping));
+                        point = new OpenLayers.Geometry.Point($scope.helpers.getNestedValue(msg.data, lonMapping), $scope.helpers.getNestedValue(msg.data, latMapping));
                         point.transform(coreMap.Map.SOURCE_PROJECTION, coreMap.Map.DESTINATION_PROJECTION);
 
                         feature = new OpenLayers.Feature.Vector(point);
@@ -1279,25 +1281,6 @@ angular.module('neonDemo.directives')
                     $scope.map.removeLayer($scope.selectedPointLayer);
                     $scope.selectedPointLayer = {};
                 }
-            };
-
-            /**
-             * Finds and returns the field value in data. If field contains '.', representing that the field is in an object within data, it will
-             * find the nested field value.
-             * @param {Object} data
-             * @param {String} field
-             * @method getNestedValue
-             * @private
-             */
-            var getNestedValue = function(data, field) {
-                var fieldArray = field.split(".");
-                var dataValue = data;
-                fieldArray.forEach(function(field) {
-                    if(dataValue) {
-                        dataValue = dataValue[field];
-                    }
-                });
-                return dataValue;
             };
 
             /**

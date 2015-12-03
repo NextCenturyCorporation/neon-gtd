@@ -61,6 +61,8 @@ coreMap.Map.Layer.HeatmapLayer = OpenLayers.Class(OpenLayers.Layer.Heatmap, {
         // to true.  We want the later to be active at any map scale.
         this.alwaysInRange = true;
 
+        this.getNestedValue = neon.helpers.getNestedValue;
+
         // When we are added to a map, add a resize handler on the map so we know when to rerender
         // our canvas.
         this.events.register('added', this, function() {
@@ -95,13 +97,7 @@ coreMap.Map.Layer.HeatmapLayer.prototype.getValueFromDataElement = function(mapp
     if(typeof mapping === 'function') {
         return mapping.call(this, element);
     }
-    var mappingArray = mapping.split(".");
-    mappingArray.forEach(function(field) {
-        if(element) {
-            element = element[field];
-        }
-    });
-    return element;
+    return this.getNestedValue(element, mapping);
 };
 
 /**

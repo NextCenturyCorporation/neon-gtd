@@ -67,6 +67,7 @@ coreMap.Map.Layer.NodeLayer = OpenLayers.Class(OpenLayers.Layer.Vector, {
         this.dateFilterStrategy.deactivate();
         this.visibility = true;
         this.colorScale = d3.scale.ordinal().range(neonColors.LIST);
+        this.getNestedValue = neon.helpers.getNestedValue;
     },
 
     createNodeStyleMap: function() {
@@ -335,13 +336,7 @@ coreMap.Map.Layer.NodeLayer.prototype.getValueFromDataElement = function(mapping
     if(typeof mapping === 'function') {
         return mapping.call(this, element);
     }
-    var mappingArray = mapping.split(".");
-    mappingArray.forEach(function(field) {
-        if(element) {
-            element = element[field];
-        }
-    });
-    return element;
+    return this.getNestedValue(element, mapping);
 };
 
 /**

@@ -38,6 +38,26 @@ neon.safeApply = function($scope, func) {
     }
 };
 
+neon.helpers = {
+    /**
+     * Finds and returns the field value in data. If field contains '.', representing that the field is in an object within data, it will
+     * find the nested field value.
+     * @param {Object} data
+     * @param {String} field
+     * @method getNestedValue
+     */
+    getNestedValue: function(data, field) {
+        var fieldArray = field.split(".");
+        var dataValue = data;
+        fieldArray.forEach(function(field) {
+            if(dataValue) {
+                dataValue = dataValue[field];
+            }
+        });
+        return dataValue;
+    }
+};
+
 var neonDemo = angular.module('neonDemo', [
     'neonDemo.controllers',
     'neonDemo.services',

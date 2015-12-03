@@ -82,6 +82,7 @@ function(external, connectionService, datasetService, errorNotificationService, 
             $scope.loadingData = false;
             $scope.outstandingDataQuery = undefined;
             $scope.outstandingTotalRowsQuery = undefined;
+            $scope.helpers = neon.helpers;
 
             $scope.options = {
                 database: {},
@@ -214,14 +215,7 @@ function(external, connectionService, datasetService, errorNotificationService, 
              * @private
              */
             var getItemColumnValue = function(item, column) {
-                var fieldArray = column.field.split(".");
-                var itemValue = item;
-                fieldArray.forEach(function(field) {
-                    if(itemValue) {
-                        itemValue = itemValue[field];
-                    }
-                });
-                return itemValue;
+                return $scope.helpers.getNestedValue(item, column.field);
             };
 
             var createColumns = function(data, refreshColumns) {
@@ -701,7 +695,7 @@ function(external, connectionService, datasetService, errorNotificationService, 
 
                 data.forEach(function(row) {
                     var field = $scope.bindIdField || "_id";
-                    var id = getNestedValue(row, field);
+                    var id = $scope.helpers.getNestedValue(row, field);
                     tableLinks[id] = linksPopupService.createAllServiceLinkObjects(external.services, mappings, field, id);
                     row[$scope.EXTERNAL_APP_FIELD_NAME] = tableLinks[id].length ? linksPopupService.createLinkHtml($scope.tableId, id, id) : linksPopupService.createDisabledLinkHtml(id);
                 });
@@ -710,25 +704,6 @@ function(external, connectionService, datasetService, errorNotificationService, 
                 linksPopupService.setLinks($scope.tableId, tableLinks);
 
                 return data;
-            };
-
-            /**
-             * Finds and returns the field value in data. If field contains '.', representing that the field is in an object within data, it will
-             * find the nested field value.
-             * @param {Object} data
-             * @param {String} field
-             * @method getNestedValue
-             * @private
-             */
-            var getNestedValue = function(data, field) {
-                var fieldArray = field.split(".");
-                var dataValue = data;
-                fieldArray.forEach(function(field) {
-                    if(dataValue) {
-                        dataValue = dataValue[field];
-                    }
-                });
-                return dataValue;
             };
 
             $scope.createDeleteColumnButtons = function() {

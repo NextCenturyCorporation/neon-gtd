@@ -55,6 +55,7 @@ function($filter, $timeout, connectionService, datasetService, errorNotification
             $scope.existingNodeIds = [];
             $scope.selectedNodeIds = [];
             $scope.legend = [];
+            $scope.helpers = neon.helpers;
 
             $scope.tooltip = {
                 idLabel: "",
@@ -405,7 +406,8 @@ function($filter, $timeout, connectionService, datasetService, errorNotification
                     calculateGraphHeight: calculateGraphHeight,
                     calculateGraphWidth: calculateGraphWidth,
                     redrawGraph: redrawGraphInAngularDigest,
-                    updateSelectedNodeIds: updateSelectedNodeIdsInAngularDigest
+                    updateSelectedNodeIds: updateSelectedNodeIdsInAngularDigest,
+                    getNestedValue: $scope.helpers.getNestedValue
                 });
 
                 $scope.mediator.setBucketizer($scope.bucketizer);
@@ -433,16 +435,16 @@ function($filter, $timeout, connectionService, datasetService, errorNotification
                 var news = [];
                 data.forEach(function(item) {
                     var newsItem = {
-                        head: getNestedValue(item, $scope.options.selectedNodeField.columnName)
+                        head: $scope.helpers.getNestedValue(item, $scope.options.selectedNodeField.columnName)
                     };
                     if(datasetService.isFieldValid($scope.options.selectedDateField)) {
-                        newsItem.date = new Date(getNestedValue(item, $scope.options.selectedDateField.columnName));
+                        newsItem.date = new Date($scope.helpers.getNestedValue(item, $scope.options.selectedDateField.columnName));
                     }
                     if(datasetService.isFieldValid($scope.options.selectedNameField)) {
-                        newsItem.name = getNestedValue(item, $scope.options.selectedNameField.columnName);
+                        newsItem.name = $scope.helpers.getNestedValue(item, $scope.options.selectedNameField.columnName);
                     }
                     if(datasetService.isFieldValid($scope.options.selectedTextField)) {
-                        newsItem.text = getNestedValue(item, $scope.options.selectedTextField.columnName);
+                        newsItem.text = $scope.helpers.getNestedValue(item, $scope.options.selectedTextField.columnName);
                         // Delete the text from the data to improve our memory preformance because we don't need it any longer.
                         delete item[$scope.options.selectedTextField.columnName];
                     }
@@ -471,25 +473,6 @@ function($filter, $timeout, connectionService, datasetService, errorNotification
                         heads: $scope.selectedNodeIds
                     }
                 });
-            };
-
-            /**
-             * Finds and returns the field value in item. If field contains '.', representing that the field is in an object within item, it will
-             * find the nested field value.
-             * @param {Object} item
-             * @param {String} field
-             * @method getNestedValue
-             * @private
-             */
-            var getNestedValue = function(item, field) {
-                var fieldArray = field.split(".");
-                var itemValue = item;
-                fieldArray.forEach(function(field) {
-                    if(itemValue) {
-                        itemValue = itemValue[field];
-                    }
-                });
-                return itemValue;
             };
 
             /**

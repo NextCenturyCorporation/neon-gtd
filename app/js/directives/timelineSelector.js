@@ -59,6 +59,7 @@ function($interval, $filter, external, connectionService, datasetService, errorN
 
             $scope.element = $element;
             $scope.opencpu = opencpu;
+            $scope.helpers = neon.helpers;
 
             // Default our time data to an empty array.
             $scope.data = [];
@@ -1293,14 +1294,7 @@ function($interval, $filter, external, connectionService, datasetService, errorN
              * @private
              */
             var getDateField = function(data) {
-                var dateFieldArray = $scope.options.dateField.columnName.split(".");
-                var dateField = data;
-                dateFieldArray.forEach(function(field) {
-                    if(dateField) {
-                        dateField = dateField[field];
-                    }
-                });
-                return dateField;
+                return $scope.helpers.getNestedValue(data, $scope.options.dateField.columnName);
             };
 
             /**

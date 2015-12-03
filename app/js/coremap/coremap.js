@@ -54,6 +54,7 @@ coreMap.Map = function(elementId, opts) {
     this.selector = $("#" + elementId);
     this.onZoomRect = opts.onZoomRect;
     this.responsive = opts.responsive;
+    this.getNestedValue = opts.getNestedValue;
     this.linksPopupService = {};
 
     if(this.responsive) {
@@ -376,19 +377,6 @@ coreMap.Map.prototype.createSelectControl =  function(layer) {
         });
         var text;
 
-        // Finds and returns the field value in data. If field contains '.', representing that the field is in an object
-        // within data, it will find the nested field value.
-        var getNestedValue = function(data, field) {
-            var fieldArray = field.split(".");
-            var dataValue = data;
-            fieldArray.forEach(function(field) {
-                if(dataValue) {
-                    dataValue = dataValue[field];
-                }
-            });
-            return dataValue;
-        };
-
         // Creates and returns table rows in data, recursively
         var getNestedFields = function(data, fieldName) {
             var text = "";
@@ -421,7 +409,7 @@ coreMap.Map.prototype.createSelectControl =  function(layer) {
 
                 for(var j = 0; j < feature.layer.clusterPopupFields.length; j++) {
                     var field = feature.layer.clusterPopupFields[j];
-                    var fieldValue = getNestedValue(feature.cluster[i].attributes, field);
+                    var fieldValue = me.getNestedValue(feature.cluster[i].attributes, field);
                     if(fieldValue) {
                         text += '<td>' + fieldValue + '</td>';
                     } else {
@@ -460,8 +448,8 @@ coreMap.Map.prototype.createSelectControl =  function(layer) {
         $(".olFramedCloudPopupContent td").linky(feature.layer.linkyConfig);
 
         if(me.linksPopupService && feature.layer.linksSource) {
-            var latitudeValue = getNestedValue(attributes, feature.layer.latitudeMapping);
-            var longitudeValue = getNestedValue(attributes, feature.layer.longitudeMapping);
+            var latitudeValue = me.getNestedValue(attributes, feature.layer.latitudeMapping);
+            var longitudeValue = me.getNestedValue(attributes, feature.layer.longitudeMapping);
             var key = me.linksPopupService.generatePointKey(latitudeValue, longitudeValue);
             var tooltip = "latitude " + longitudeValue + ", longitude " + longitudeValue;
             var link = me.linksPopupService.createLinkHtml(feature.layer.linksSource, key, tooltip);
