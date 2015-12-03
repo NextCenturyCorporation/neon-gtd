@@ -38,6 +38,9 @@ angular.module('neonDemo.directives')
 
             $scope.dialogDisplayed = false;
             $scope.visualizations = visualizations;
+
+            console.log(visualizations);
+
             for(var i = 0; i < $scope.visualizations.length; ++i) {
                 if(!($scope.visualizations[i].minSizeX)) {
                     $scope.visualizations[i].minSizeX = config.gridsterDefaultMinSizeX;

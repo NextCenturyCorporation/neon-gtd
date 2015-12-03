@@ -30,19 +30,6 @@
         color: @error-color;
     }
 
-    .legend-item {
-        background-color: @light-background;
-        border: @main-border;
-        border-radius: 5px;
-        color: @mid-text-color;
-        font-size: 14px;
-        margin-top: 0px;
-        margin-right: 2px;
-        opacity: .8;
-        padding: 3px;
-        display: block;
-    }
-
     .header-container {
         position: absolute;
         z-index: 1005;
@@ -200,12 +187,18 @@
             z-index: 1009;
 
             .legend {
-                background-color: @button-color;
-                border-style: solid;
-                border-width: 1px;
-                border-color: @button-border-color;
+                background-color: @button-background-color;
+                border: @button-border;
                 border-radius: 4px;
                 padding: 5px 5px 2px;
+                color: @button-color;
+
+                .divider {
+                    height: 1px;
+                    margin: 0 0 9px 0;
+                    overflow: hidden;
+                    background-color: @border-color;
+                }
 
                 .legend-details {
                     overflow: auto;
@@ -244,15 +237,23 @@
                     }
                 }
 
-                .divider {
-                    height: 1px;
-                    margin: 9px 0;
-                    overflow: hidden;
-                    background-color: @button-border-color;
-                }
-
                 .header-text {
                     cursor: pointer;
+                }
+            }
+
+            .legend-item {
+                border: @main-border;
+                border-radius: 5px;
+                font-size: 14px;
+                margin-top: 0px;
+                margin-right: 2px;
+                opacity: .8;
+                padding: 3px;
+                display: block;
+
+                .legend-text {
+                    color: inherit;
                 }
             }
         }

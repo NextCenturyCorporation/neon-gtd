@@ -52,6 +52,31 @@
     }
 }
 
+.legend {
+    .legend-item {
+        display: inline-block;
+        padding-right: 5px;
+
+        .legend-icon {
+            border-radius: 2px;
+            display: inline-block;
+            height: 1em;
+            vertical-align: middle;
+            width: 1em;
+        }
+
+        .legend-text {
+            display: inline-block;
+            max-width: 200px;
+            overflow: hidden;
+            white-space: nowrap;
+            text-overflow: ellipsis;
+            vertical-align: middle;
+            color: @main-text-color;
+        }
+    }
+}
+
 .navbar {
     margin-bottom: 0;
 

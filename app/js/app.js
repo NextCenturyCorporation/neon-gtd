@@ -175,6 +175,7 @@ var saveDashboards = function(config) {
 };
 
 var saveVisualizations = function(config) {
+    console.log(config.visualizations);
     var visualizations = (config.visualizations || []);
     neonDemo.constant('visualizations', visualizations);
 };

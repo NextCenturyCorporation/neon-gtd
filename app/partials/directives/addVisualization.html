@@ -16,15 +16,12 @@
             </div>
             <div class="modal-body">
                 <ul>
-                    <li class="short" ng-repeat="item in visualizations"
+                    <li ng-repeat="item in visualizations"
                         ng-init="item.selected = false"
                         ng-class="(item.selected) ? 'selected' : ''">
                         <div class="neon-popup-thumbnail center-block text-center">
                             <button  ng-click="onItemSelected(item)"
                                 tabindex="0">
-                                <!--img ng-src="{{(item.icon) ? item.icon : ''}}"
-                                    alt="{{(item.name) ? item.name : ''}}"
-                                    class="img-thumbnail center-block add-visualization-image" -->
                                 <span class="visualization-icon-image {{item.iconClass}}"></span>
                                 <span class="text-uppercase small" ng-bind="item.name"></span>
                             </button>
