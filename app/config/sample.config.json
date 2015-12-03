@@ -1,139 +1,4 @@
 {
-    "theme": "dark-purple",
-    "user_ale": {
-        "loggingUrl": "http://192.168.1.100",
-        "toolName": "Neon Dashboard",
-        "toolVersion": "1.1.0",
-        "elementGroups": [
-            "top",
-            "map_group",
-            "table_group",
-            "chart_group",
-            "query_group",
-            "graph_group"
-        ],
-        "workerUrl": "lib/user-ale/js/userale-worker.js",
-        "debug": false,
-        "sendLogs": false
-    },
-
-    "help": {
-        "guide": "",
-        "webVideo": "",
-        "localVideo": ""
-    },
-
-    "opencpu": {
-        "enableOpenCpu": false,
-        "enableLogging": false,
-        "useAlerts": false,
-        "enableAnomalyDetection": true,
-        "enableStl2": false,
-        "enableMmpp": false,
-        "url": "http://neon-opencpu/ocpu/library/NeonAngularDemo/R"
-    },
-
-    "dig": {
-        "enabled": false,
-        "server": "http://localhost:9000"
-    },
-
-    "dashboard": {
-        "gridsterColumns": 24,
-        "gridsterMargins": 10,
-        "hideNavbarItems": false,
-        "hideAdvancedOptions": false,
-        "hideAddVisualizationsButton": false,
-        "hideErrorNotifications": false,
-        "hideHeaders": false,
-        "showFilterStatusTray": false,
-        "hideCloseButton": false,
-        "showVideoOnLoad": false,
-        "showImport": false,
-        "showExport": true,
-        "translationKeys": {
-            "google": "API_KEY"
-        }
-    },
-
-    "visualizations": [{
-        "name": "Filter Builder",
-        "sizeX": 12,
-        "minSizeX": 12,
-        "sizeY": 4,
-        "minSizeY": 4,
-        "type": "filter-builder",
-        "iconClass": "create-filter"
-    }, {
-        "name": "Data Table",
-        "sizeX": 6,
-        "sizeY": 4,
-        "type": "query-results-table",
-        "iconClass": "view-data"
-    }, {
-        "name": "Timeline",
-        "sizeX": 12,
-        "minSizeX": 12,
-        "sizeY": 4,
-        "minSizeY": 4,
-        "type": "timeline-selector",
-        "iconClass": "timeline"
-    }, {
-        "name": "Map",
-        "sizeX": 12,
-        "sizeY": 6,
-        "type": "map",
-        "iconClass": "map"
-    }, {
-        "name": "Ops Clock",
-        "sizeX": 6,
-        "sizeY": 4,
-        "type": "circular-heat-form",
-        "iconClass": "ops-clock"
-    }, {
-        "name": "Line Chart",
-        "sizeX": 6,
-        "sizeY": 4,
-        "type": "linechart",
-        "iconClass": "line-chart"
-    }, {
-        "name": "Bar Chart",
-        "sizeX": 6,
-        "sizeY": 4,
-        "type": "barchart",
-        "iconClass": "bar-chart"
-    }, {
-        "name": "Sunburst Chart",
-        "sizeX": 6,
-        "sizeY": 4,
-        "type": "sunburst",
-        "iconClass": "sunburst"
-    }, {
-        "name": "Text Cloud",
-        "sizeX": 6,
-        "sizeY": 4,
-        "type": "tag-cloud",
-        "iconClass": "tag-cloud"
-    }, {
-        "name": "Aggregation Table",
-        "sizeX": 6,
-        "sizeY": 4,
-        "type": "count-by",
-        "iconClass": "count"
-    }, {
-        "name": "Graph",
-        "sizeX": 12,
-        "sizeY": 6,
-        "type": "directed-graph",
-        "iconClass": "graph"
-    }, {
-        "name": "Sample",
-        "sizeX": 6,
-        "sizeY": 4,
-        "type": "sample",
-        "iconClass": "neon"
-    }],
-
     "datasets": [{
         "name": "Earthquakes",
         "datastore": "mongo",
@@ -410,6 +275,152 @@
         }]
     },
 
+    "visualizations": [{
+        "name": "Filter Builder",
+        "sizeX": 12,
+        "minSizeX": 12,
+        "sizeY": 4,
+        "minSizeY": 4,
+        "type": "filter-builder",
+        "iconClass": "create-filter"
+    }, {
+        "name": "Data Table",
+        "sizeX": 6,
+        "sizeY": 4,
+        "type": "query-results-table",
+        "iconClass": "view-data"
+    }, {
+        "name": "Timeline",
+        "sizeX": 12,
+        "minSizeX": 12,
+        "sizeY": 4,
+        "minSizeY": 4,
+        "type": "timeline-selector",
+        "iconClass": "timeline"
+    }, {
+        "name": "Map",
+        "sizeX": 12,
+        "sizeY": 6,
+        "type": "map",
+        "iconClass": "map"
+    }, {
+        "name": "Ops Clock",
+        "sizeX": 6,
+        "sizeY": 4,
+        "type": "circular-heat-form",
+        "iconClass": "ops-clock"
+    }, {
+        "name": "Line Chart",
+        "sizeX": 6,
+        "sizeY": 4,
+        "type": "linechart",
+        "iconClass": "line-chart"
+    }, {
+        "name": "Bar Chart",
+        "sizeX": 6,
+        "sizeY": 4,
+        "type": "barchart",
+        "iconClass": "bar-chart"
+    }, {
+        "name": "Sunburst Chart",
+        "sizeX": 6,
+        "sizeY": 4,
+        "type": "sunburst",
+        "iconClass": "sunburst"
+    }, {
+        "name": "Text Cloud",
+        "sizeX": 6,
+        "sizeY": 4,
+        "type": "tag-cloud",
+        "iconClass": "tag-cloud"
+    }, {
+        "name": "Aggregation Table",
+        "sizeX": 6,
+        "sizeY": 4,
+        "type": "count-by",
+        "iconClass": "count"
+    }, {
+        "name": "Graph",
+        "sizeX": 12,
+        "sizeY": 6,
+        "type": "directed-graph",
+        "iconClass": "graph"
+    }, {
+        "name": "News Feed",
+        "sizeX": 6,
+        "sizeY": 4,
+        "type": "newsfeed",
+        "iconClass": "news"
+    }, {
+        "name": "Gantt Chart",
+        "sizeX": 12,
+        "sizeY": 6,
+        "type": "gantt-chart",
+        "iconClass": "gantt"
+    }, {
+        "name": "Sample",
+        "sizeX": 6,
+        "sizeY": 4,
+        "type": "sample",
+        "iconClass": "neon"
+    }],
+
+    "dashboard": {
+        "gridsterColumns": 24,
+        "gridsterMargins": 10,
+        "hideNavbarItems": false,
+        "hideAdvancedOptions": false,
+        "hideAddVisualizationsButton": false,
+        "hideErrorNotifications": false,
+        "hideHeaders": false,
+        "showFilterStatusTray": false,
+        "hideCloseButton": false,
+        "showVideoOnLoad": false,
+        "showImport": false,
+        "showExport": true,
+        "translationKeys": {
+            "google": "API_KEY"
+        }
+    },
+
+    "user_ale": {
+        "loggingUrl": "http://192.168.1.100",
+        "toolName": "Neon Dashboard",
+        "toolVersion": "1.1.0",
+        "elementGroups": [
+            "top",
+            "map_group",
+            "table_group",
+            "chart_group",
+            "query_group",
+            "graph_group"
+        ],
+        "workerUrl": "lib/user-ale/js/userale-worker.js",
+        "debug": false,
+        "sendLogs": false
+    },
+
+    "opencpu": {
+        "enableOpenCpu": false,
+        "enableLogging": false,
+        "useAlerts": false,
+        "enableAnomalyDetection": true,
+        "enableStl2": false,
+        "enableMmpp": false,
+        "url": "http://neon-opencpu/ocpu/library/NeonAngularDemo/R"
+    },
+
+    "dig": {
+        "enabled": false,
+        "server": "http://localhost:9000"
+    },
+
+    "help": {
+        "guide": "",
+        "webVideo": "",
+        "localVideo": ""
+    },
+
     "files": {
         "datasets": [
             "./config/sample.dataset.config.json"
@@ -417,5 +428,7 @@
         "layouts": [
             "./config/sample.layout.config.json"
         ]
-    }
+    },
+
+    "theme": "dark-purple"
 }
