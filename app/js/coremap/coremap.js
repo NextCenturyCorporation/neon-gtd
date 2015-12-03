@@ -55,6 +55,9 @@ coreMap.Map = function(elementId, opts) {
     this.onZoomRect = opts.onZoomRect;
     this.responsive = opts.responsive;
     this.getNestedValue = opts.getNestedValue;
+    this.queryForMapPopupDataFunction = opts.queryForMapPopupDataFunction || function(database, table, id, callback) {
+        callback({});
+    };
     this.linksPopupService = {};
 
     if(this.responsive) {
@@ -375,7 +378,67 @@ coreMap.Map.prototype.createSelectControl =  function(layer) {
             source: "user",
             tags: ["map", "tooltip"]
         });
-        var text;
+        var createAndShowFeaturePopup = function(attributes) {
+            var text;
+
+            // If we're on a cluster layer, show specific fields, if defined
+            if(feature.cluster && feature.layer.clusterPopupFields.length) {
+                text = '<div><table class="table table-striped table-condensed table-bordered">';
+                text += '<tr>';
+
+                for(var i = 0; i < feature.layer.clusterPopupFields.length; i++) {
+                    text += '<th>' + feature.layer.clusterPopupFields[i] + '</th>';
+                }
+
+                text += '</tr>';
+
+                for(i = 0; i < feature.cluster.length; i++) {
+                    text += '<tr>';
+
+                    for(var j = 0; j < feature.layer.clusterPopupFields.length; j++) {
+                        var field = feature.layer.clusterPopupFields[j];
+                        var fieldValue = me.getNestedValue(feature.cluster[i].attributes, field);
+                        if(fieldValue) {
+                            text += '<td>' + fieldValue + '</td>';
+                        } else {
+                            text += '<td></td>';
+                        }
+                    }
+
+                    text += '</tr>';
+                }
+                text += '</table></div>';
+            } else {
+                text = '<div><table class="table table-striped table-condensed">' + getNestedFields(attributes) + '</table></div>';
+            }
+
+            me.featurePopup = new OpenLayers.Popup.FramedCloud("Data",
+                feature.geometry.getBounds().getCenterLonLat(),
+                null,
+                text,
+                null,
+                true,
+                onFeatureUnselect);
+            // Remove the default popup click handler so it doesn't destroy click events before they trigger the modal data-toggle in the links popup button.
+            me.featurePopup.events.remove("click");
+            me.map.addPopup(me.featurePopup, true);
+
+            $(".olFramedCloudPopupContent td").linky(feature.layer.linkyConfig);
+
+            if(me.linksPopupService && feature.layer.linksSource) {
+                var latitudeValue = me.getNestedValue(attributes, feature.layer.latitudeMapping);
+                var longitudeValue = me.getNestedValue(attributes, feature.layer.longitudeMapping);
+                var key = me.linksPopupService.generatePointKey(latitudeValue, longitudeValue);
+                var tooltip = "latitude " + longitudeValue + ", longitude " + longitudeValue;
+                var link = me.linksPopupService.createLinkHtml(feature.layer.linksSource, key, tooltip);
+
+                // Position the button below the 'close box' which can have one of a few different 'top' values depending on the location of the point on the layer.
+                var topCss = $(".olPopupCloseBox").css("top");
+                topCss = Number(topCss.substring(0, topCss.length - 2)) + 25;
+
+                $("#" + me.elementId).find(".olPopupCloseBox").after("<div class='btn btn-default links-popup-button' style='top: " + topCss + "px;'>" + link + "</div>");
+            }
+        };
 
         // Creates and returns table rows in data, recursively
         var getNestedFields = function(data, fieldName) {
@@ -393,73 +456,8 @@ coreMap.Map.prototype.createSelectControl =  function(layer) {
             return text;
         };
 
-        // If we're on a cluster layer, show specific fields, if defined
-        if(feature.cluster && feature.layer.clusterPopupFields.length) {
-            text = '<div><table class="table table-striped table-condensed table-bordered">';
-            text += '<tr>';
-
-            for(var i = 0; i < feature.layer.clusterPopupFields.length; i++) {
-                text += '<th>' + feature.layer.clusterPopupFields[i] + '</th>';
-            }
-
-            text += '</tr>';
-
-            for(i = 0; i < feature.cluster.length; i++) {
-                text += '<tr>';
-
-                for(var j = 0; j < feature.layer.clusterPopupFields.length; j++) {
-                    var field = feature.layer.clusterPopupFields[j];
-                    var fieldValue = me.getNestedValue(feature.cluster[i].attributes, field);
-                    if(fieldValue) {
-                        text += '<td>' + fieldValue + '</td>';
-                    } else {
-                        text += '<td></td>';
-                    }
-                }
-
-                text += '</tr>';
-            }
-            text += '</table></div>';
-        } else {
-            var attributes;
-            text = '<div><table class="table table-striped table-condensed">';
-
-            // If we're on a cluster layer and have a cluster of 1, just show the attributes of the 1 item.
-            if(feature.cluster && feature.cluster.length === 1) {
-                attributes = feature.cluster[0].attributes;
-            } else {
-                attributes = feature.attributes;
-            }
-
-            text += getNestedFields(attributes) + '</table></div>';
-        }
-
-        me.featurePopup = new OpenLayers.Popup.FramedCloud("Data",
-            feature.geometry.getBounds().getCenterLonLat(),
-            null,
-            text,
-            null,
-            true,
-            onFeatureUnselect);
-        // Remove the default popup click handler so it doesn't destroy click events before they trigger the modal data-toggle in the links popup button.
-        me.featurePopup.events.remove("click");
-        me.map.addPopup(me.featurePopup, true);
-
-        $(".olFramedCloudPopupContent td").linky(feature.layer.linkyConfig);
-
-        if(me.linksPopupService && feature.layer.linksSource) {
-            var latitudeValue = me.getNestedValue(attributes, feature.layer.latitudeMapping);
-            var longitudeValue = me.getNestedValue(attributes, feature.layer.longitudeMapping);
-            var key = me.linksPopupService.generatePointKey(latitudeValue, longitudeValue);
-            var tooltip = "latitude " + longitudeValue + ", longitude " + longitudeValue;
-            var link = me.linksPopupService.createLinkHtml(feature.layer.linksSource, key, tooltip);
-
-            // Position the button below the 'close box' which can have one of a few different 'top' values depending on the location of the point on the layer.
-            var topCss = $(".olPopupCloseBox").css("top");
-            topCss = Number(topCss.substring(0, topCss.length - 2)) + 25;
-
-            $("#" + me.elementId).find(".olPopupCloseBox").after("<div class='btn btn-default links-popup-button' style='top: " + topCss + "px;'>" + link + "</div>");
-        }
+        var id = feature.cluster && feature.cluster.length === 1 ? feature.cluster[0].attributes._id : feature.attributes._id;
+        me.queryForMapPopupDataFunction(feature.layer.database, feature.layer.table, id, createAndShowFeaturePopup);
     };
 
     var onFeatureUnselect = function() {

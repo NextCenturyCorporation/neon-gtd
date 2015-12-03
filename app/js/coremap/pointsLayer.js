@@ -33,6 +33,8 @@ coreMap.Map.Layer.PointsLayer = OpenLayers.Class(OpenLayers.Layer.Vector, {
     CLASS_NAME: "coreMap.Map.Layer.PointsLayer",
     colors: {},
     data: [],
+    database: '',
+    table: '',
     latitudeMapping: '',
     longitudeMapping: '',
     sizeMapping: '',
@@ -344,6 +346,7 @@ coreMap.Map.Layer.PointsLayer.prototype.setData = function(data) {
     if(this.dateFilterStrategy) {
         this.dateFilterStrategy.setFilter();
     }
+    return this.colors;
 };
 
 coreMap.Map.Layer.PointsLayer.prototype.setDateFilter = function(filterBounds) {

@@ -67,7 +67,7 @@ angular.module('neonDemo.directives')
              */
             $scope.customRelations = [];
 
-            $scope.initialize = function() {
+            var initialize = function() {
                 $scope.messenger = new neon.eventing.Messenger();
 
                 var activeDataset = (parameterService.findActiveDatasetInUrl() || "").toLowerCase();
@@ -701,7 +701,7 @@ angular.module('neonDemo.directives')
 
             // Wait for neon to be ready, the create our messenger and intialize the view and data.
             neon.ready(function() {
-                $scope.initialize();
+                initialize();
             });
         }
     };

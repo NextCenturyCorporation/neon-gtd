@@ -30,6 +30,8 @@ function(external, $timeout, connectionService, datasetService, errorNotificatio
             bindNameField: '=',
             bindDateField: '=',
             bindTextField: '=',
+            bindFilterField: '=',
+            bindFilterValue: '=',
             bindFeedName: '=',
             bindFeedType: '='
         },
@@ -52,7 +54,7 @@ function(external, $timeout, connectionService, datasetService, errorNotificatio
             };
 
             // The default limit and the number of news items added to the feed whenever the user scrolls to the bottom of the feed.
-            var LIMIT_INTERVAL = 100;
+            var LIMIT_INTERVAL = 50;
 
             // Prevents translation api calls from getting too long and returning an error
             var TRANSLATION_INTERVAL = 10;
@@ -70,7 +72,7 @@ function(external, $timeout, connectionService, datasetService, errorNotificatio
             // Prevent extraneous queries from onFieldChanged during updateFields.
             $scope.loadingData = false;
 
-            // Prevent extraneous queries from handleScroll.
+            // Prevent extraneous queries from updateNewsfeedOnScroll.
             $scope.loadingNews = false;
 
             // The data in this newsfeed from a news event or an empty array if the data in this newsfeed is from a query.
@@ -105,6 +107,8 @@ function(external, $timeout, connectionService, datasetService, errorNotificatio
                 nameField: {},
                 dateField: {},
                 textField: {},
+                filterField: {},
+                filterValue: "",
                 sortDirection: neon.query.ASCENDING,
                 limit: LIMIT_INTERVAL,
                 showTranslation: false
@@ -149,16 +153,18 @@ function(external, $timeout, connectionService, datasetService, errorNotificatio
                     });
                 }
 
-                handleResize();
-                $element.resize(handleResize);
-                $element.find(".newsfeed").scroll(handleScroll);
+                resizeNewsfeed();
+                $element.resize(resizeNewsfeed);
+                $element.find(".chart-options").resize(resizeTitle);
+                $element.find(".newsfeed").scroll(updateNewsfeedOnScroll);
 
                 $scope.$on('$destroy', function() {
                     linksPopupService.deleteLinks($scope.visualizationId + "-head");
                     linksPopupService.deleteLinks($scope.visualizationId + "-name");
                     $scope.messenger.removeEvents();
-                    $element.off("resize", handleResize);
-                    $element.find(".newsfeed").off("scroll", handleScroll);
+                    $element.off("resize", resizeNewsfeed);
+                    $element.find(".chart-options").off("resize", resizeTitle);
+                    $element.find(".newsfeed").off("scroll", updateNewsfeedOnScroll);
                 });
             };
 
@@ -174,24 +180,35 @@ function(external, $timeout, connectionService, datasetService, errorNotificatio
             };
 
             /**
-             * Handles resize events for this visualization.
-             * @method handleResize
+             * Resizes the newsfeed.
+             * @method resizeNewsfeed
              * @private
              */
-            var handleResize = function() {
+            var resizeNewsfeed = function() {
                 var headerHeight = 0;
                 $element.find(".header-container").each(function() {
                     headerHeight += $(this).outerHeight(true);
                 });
                 $element.find(".newsfeed").height($element.height() - headerHeight);
+                resizeTitle();
             };
 
             /**
-             * Handles scroll events for the newsfeed in this visualization.
-             * @method handleScroll
+             * Resizes the title of the newsfeed.
+             * @method resizeTitle
              * @private
              */
-            var handleScroll = function() {
+            var resizeTitle = function() {
+                var titleWidth = $element.width() - $element.find(".chart-options").outerWidth(true);
+                $element.find(".title").css("maxWidth", titleWidth - 20);
+            };
+
+            /**
+             * Updates the newsfeed due to a scroll event.
+             * @method updateNewsfeedOnScroll
+             * @private
+             */
+            var updateNewsfeedOnScroll = function() {
                 if(!$element.find(".item")) {
                     return;
                 }
@@ -199,7 +216,7 @@ function(external, $timeout, connectionService, datasetService, errorNotificatio
                 updateTopNewsItemIndex();
 
                 // If the user has scrolled to the bottom, query for more news items and add them to the feed.
-                if(!$scope.loadingNews && !$scope.dataFromNewsEvent && $element.find(".item").last().position().top <= $element.height()) {
+                if(!$scope.loadingNews && $scope.data.news.length < $scope.data.newsCount && $element.find(".item").last().position().top <= $element.height()) {
                     $scope.loadingNews = true;
                     $scope.options.limit = $scope.options.limit + LIMIT_INTERVAL;
                     if($scope.dataFromNewsEvent.length) {
@@ -286,7 +303,8 @@ function(external, $timeout, connectionService, datasetService, errorNotificatio
              */
             var onNews = function(message) {
                 if(message.news && message.name && message.name === $scope.feedName) {
-                    $scope.data.news = message.news.slice(0, $scope.options.limit);
+                    // Show all of the news instead of slicing it to avoid odd behavior during news-highlights events.
+                    $scope.data.news = message.news;
                     $scope.data.news.forEach(function(item) {
                         if(item.head) {
                             item.headTranslated = item.head;
@@ -341,11 +359,10 @@ function(external, $timeout, connectionService, datasetService, errorNotificatio
 
             /**
              * Displays data for any currently active datasets.
-             * @param {Boolean} Whether this function was called during visualization initialization.
              * @method displayActiveDataset
              * @private
              */
-            var displayActiveDataset = function(initializing) {
+            var displayActiveDataset = function() {
                 if(!datasetService.hasDataset() || $scope.loadingData) {
                     return;
                 }
@@ -361,14 +378,7 @@ function(external, $timeout, connectionService, datasetService, errorNotificatio
                         }
                     }
                 }
-
-                if(initializing) {
-                    $scope.updateTables();
-                } else {
-                    $scope.$apply(function() {
-                        $scope.updateTables();
-                    });
-                }
+                $scope.updateTables();
             };
 
             /**
@@ -414,6 +424,11 @@ function(external, $timeout, connectionService, datasetService, errorNotificatio
                 $scope.options.textField = _.find($scope.fields, function(field) {
                     return field.columnName === textFieldName;
                 }) || datasetService.createBlankField();
+                var filterFieldName = $scope.bindFilterField || "";
+                $scope.options.filterField = _.find($scope.fields, function(field) {
+                    return field.columnName === filterFieldName;
+                }) || datasetService.createBlankField();
+                $scope.options.filterValue = $scope.bindFilterValue || "";
 
                 $scope.feedName = $scope.bindFeedName || datasetService.getMapping($scope.options.database.name, $scope.options.table.name, neonMappings.NEWSFEED_NAME) || "";
                 $scope.feedType = $scope.bindFeedType ? $scope.bindFeedType.toUpperCase() : datasetService.getMapping($scope.options.database.name, $scope.options.table.name, neonMappings.NEWSFEED_TYPE) || DEFAULT_TYPE;
@@ -495,9 +510,16 @@ function(external, $timeout, connectionService, datasetService, errorNotificatio
                     fields.push($scope.options.nameField.columnName);
                 }
 
-                return new neon.query.Query().selectFrom($scope.options.database.name, $scope.options.table.name).withFields(fields)
+                var query = new neon.query.Query().selectFrom($scope.options.database.name, $scope.options.table.name).withFields(fields)
                     .sortBy($scope.options.dateField.columnName, $scope.options.sortDirection)
                     .limit($scope.options.limit);
+
+                if(datasetService.isFieldValid($scope.options.filterField) && $scope.options.filterValue) {
+                    var operator = $.isNumeric($scope.options.filterValue) ? "=" : "contains";
+                    query.where(neon.query.where($scope.options.filterField.columnName, operator, $scope.options.filterValue));
+                }
+
+                return query;
             };
 
             /**
@@ -543,8 +565,8 @@ function(external, $timeout, connectionService, datasetService, errorNotificatio
              * @return {Boolean}
              */
             var createExternalLinksForNewsItemData = function(mappings, head, name) {
-                var headLinksCount = head ? createExternalLinks(mappings, $scope.options.headField.columnName, head, $scope.visualizationId + "-head") : 0;
-                var nameLinksCount = name ? createExternalLinks(mappings, $scope.options.nameField.columnName, name, $scope.visualizationId + "-name") : 0;
+                var headLinksCount = head ? createExternalLinks(mappings, $scope.options.headField, head, $scope.visualizationId + "-head") : 0;
+                var nameLinksCount = name ? createExternalLinks(mappings, $scope.options.nameField, name, $scope.visualizationId + "-name") : 0;
                 return headLinksCount || nameLinksCount;
             };
 
@@ -552,18 +574,18 @@ function(external, $timeout, connectionService, datasetService, errorNotificatio
              * Creates the external links for the given field and value using the given mappings, saves the links in the links popup using the given source, and
              * returns the number of links that were created.
              * @param {Array} mappings
-             * @param {String} field
+             * @param {Object} fieldObject
              * @param {Number} or {String} value
              * @param {String} source
              * @method createExternalLinks
              * @private
              * @return {Number}
              */
-            var createExternalLinks = function(mappings, field, value, source) {
-                var links = linksPopupService.createAllServiceLinkObjects(external.services, mappings, field, value);
+            var createExternalLinks = function(mappings, fieldObject, value, source) {
+                var links = linksPopupService.createAllServiceLinkObjects(external.services, mappings, fieldObject.columnName, value);
 
                 if(links.length) {
-                    linksPopupService.addLinks(source, value, links);
+                    linksPopupService.addLinks(source, linksPopupService.generateKey(fieldObject, value), links);
                 }
 
                 return links.length;
@@ -582,13 +604,13 @@ function(external, $timeout, connectionService, datasetService, errorNotificatio
                 if(head) {
                     list.push({
                         source: $scope.visualizationId + "-head",
-                        key: head
+                        key: linksPopupService.generateKey($scope.options.headField, head)
                     });
                 }
                 if(name) {
                     list.push({
                         source: $scope.visualizationId + "-name",
-                        key: name
+                        key: linksPopupService.generateKey($scope.options.nameField, name)
                     });
                 }
                 return linksPopupService.createButtonJsonFromList(list);
@@ -662,6 +684,7 @@ function(external, $timeout, connectionService, datasetService, errorNotificatio
                 translateNewsProperty("head", sliceStart, sliceEnd, function() {
                     translateNewsProperty("name", sliceStart, sliceEnd, function() {
                         translateNewsProperty("text", sliceStart, sliceEnd, function() {
+                            runLinky();
                             $scope.data.translatedRange[0] = $scope.data.translatedRange[0] < 0 ? sliceStart : Math.min($scope.data.translatedRange[0], sliceStart);
                             $scope.data.translatedRange[1] = $scope.data.translatedRange[1] < 0 ? sliceEnd : Math.max($scope.data.translatedRange[1], sliceEnd);
                             $scope.loadingData = false;
@@ -721,6 +744,10 @@ function(external, $timeout, connectionService, datasetService, errorNotificatio
              */
             var queryForNewsCount = function(connection) {
                 var query = new neon.query.Query().selectFrom($scope.options.database.name, $scope.options.table.name).aggregate(neon.query.COUNT, "*", "count");
+                if(datasetService.isFieldValid($scope.options.filterField) && $scope.options.filterValue) {
+                    var operator = $.isNumeric($scope.options.filterValue) ? "=" : "contains";
+                    query.where(neon.query.where($scope.options.filterField.columnName, operator, $scope.options.filterValue));
+                }
 
                 connection.executeQuery(query, function(results) {
                     $scope.$apply(function() {
@@ -738,9 +765,10 @@ function(external, $timeout, connectionService, datasetService, errorNotificatio
 
             /**
              * Triggered by changing a field in the options menu.
-             * @method onFieldChanged
+             * @method handleChangedField
              */
-            $scope.onFieldChanged = function() {
+            $scope.handleChangedField = function() {
+                // TODO Logging
                 if(!$scope.loadingData) {
                     $scope.dataFromNewsEvent = [];
                     resetAndQueryForData();
@@ -748,11 +776,47 @@ function(external, $timeout, connectionService, datasetService, errorNotificatio
             };
 
             /**
+             * Triggered by changing the unshared filter field in the options menu.
+             * @method handleChangedUnsharedFilterField
+             */
+            $scope.handleChangedUnsharedFilterField = function() {
+                // TODO Logging
+                if(!$scope.loadingData && $scope.options.filterValue) {
+                    $scope.options.filterValue = "";
+                    resetAndQueryForData();
+                }
+            };
+
+            /**
+             * Triggered by changing the unshared filter value in the options menu.
+             * @method handleChangedUnsharedFilterValue
+             */
+            $scope.handleChangedUnsharedFilterValue = function() {
+                // TODO Logging
+                if(!$scope.loadingData) {
+                    resetAndQueryForData();
+                }
+            };
+
+            /**
+             * Triggered by removing the unshared filter in the options menu.
+             * @method handleRemovedUnsharedFilter
+             */
+            $scope.handleRemovedUnsharedFilter = function() {
+                // TODO Logging
+                $scope.options.filterValue = "";
+                if(!$scope.loadingData) {
+                    resetAndQueryForData();
+                }
+            };
+
+            /**
              * Triggered by clicking one of the sort-by-date buttons.
              * @param {Number} direction Either $scope.ASCENDING or $scope.DESCENDING
-             * @method handleSortButtonClick
+             * @method handleChangedSort
              */
-            $scope.handleSortButtonClick = function(direction) {
+            $scope.handleChangedSort = function(direction) {
+                // TODO Logging
                 if($scope.options.sortDirection === direction) {
                     if($scope.dataFromNewsEvent.length) {
                         $scope.data.news.reverse();
@@ -787,9 +851,22 @@ function(external, $timeout, connectionService, datasetService, errorNotificatio
                 return style.join(" ");
             };
 
+            /**
+             * Generates and returns the title for this visualization.
+             * @method generateTitle
+             * @return {String}
+             */
+            $scope.generateTitle = function() {
+                var title = $scope.options.filterValue ? $scope.options.filterValue + " " : "";
+                if($scope.bindTitle) {
+                    return title + $scope.bindTitle;
+                }
+                return title + $scope.options.table.prettyName;
+            };
+
             neon.ready(function() {
                 initialize();
-                displayActiveDataset(true);
+                displayActiveDataset();
             });
         }
     };

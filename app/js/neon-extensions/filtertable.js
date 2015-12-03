@@ -123,6 +123,37 @@ neon.query.FilterTable.prototype.setFilterRow = function(databaseName, tableName
 };
 
 /**
+ * Updates the FilterRow to reflect any database or table changes.
+ * @param {neon.query.FilterRow} row
+ * @method updateFilterRow
+ */
+neon.query.FilterTable.prototype.updateFilterRow = function(row) {
+    var nameObject = {};
+
+    var databases = Object.keys(this.filterState);
+    for(var i = 0; i < databases.length; ++i) {
+        var tables = Object.keys(this.filterState[databases[i]]);
+        for(var j = 0; j < tables.length; ++j) {
+            var rows = this.filterState[databases[i]][tables[j]];
+            for(var k = 0; k < rows.length; ++k) {
+                if(rows[k] === row) {
+                    nameObject = {
+                        database: databases[i],
+                        table: tables[j],
+                        index: rows[k].index
+                    };
+                }
+            }
+        }
+    }
+
+    if(nameObject.database !== row.database.name || nameObject.table !== row.table.name) {
+        this.addFilterRow(row.database.name, row.table.name, row);
+        this.removeFilterRow(nameObject.database, nameObject.table, nameObject.index);
+    }
+};
+
+/**
  * Clears the state for the FilterTable, removing all rows from the given database and table, or all rows from the FilterTable if no database and table are given.
  * @param {String} databaseName (optional)
  * @param {String} tableName (optional)
@@ -167,7 +198,7 @@ neon.query.FilterTable.prototype.setFilterKey = function(databaseName, tableName
 /**
  * Returns a list of objects containing each database and table combination in the filter state.
  * @return {Array}
- * @method getTableNames
+ * @method getDatabaseAndTableNames
  */
 neon.query.FilterTable.prototype.getDatabaseAndTableNames = function() {
     var nameObjects = [];
@@ -182,6 +213,32 @@ neon.query.FilterTable.prototype.getDatabaseAndTableNames = function() {
             });
         }
     }
+
+    return nameObjects;
+};
+
+/**
+ * Returns a list of objects containing each database and table combination for the given keys.
+ * @param {Array|String} keys A string or list of strings containing filter keys
+ * @return {Array}
+ * @method getDatabaseAndTableNamesForKeys
+ */
+neon.query.FilterTable.prototype.getDatabaseAndTableNamesForKeys = function(keys) {
+    if(!_.isArray(keys)) {
+        keys = [keys];
+    }
+
+    var nameObjects = [];
+    _.forEach(this.filterKeys, function(tableKeys, database) {
+        _.forEach(tableKeys, function(key, table) {
+            if(_.contains(keys, key)) {
+                nameObjects.push({
+                    database: database,
+                    table: table
+                });
+            }
+        });
+    });
 
     return nameObjects;
 };
@@ -217,6 +274,25 @@ neon.query.FilterTable.prototype.getFilterRows = function() {
  */
 neon.query.FilterTable.prototype.getFilterKey = function(databaseName, tableName) {
     return this.filterKeys[databaseName][tableName];
+};
+
+/**
+ * Check if the filter table contains the given filter keys
+ * @param {Array|String} keys A string or list of strings containing filter keys
+ * @return {Boolean}
+ * @method containsFilterKey
+ */
+neon.query.FilterTable.prototype.containsFilterKey = function(keys) {
+    if(!_.isArray(keys)) {
+        keys = [keys];
+    }
+
+    // For each filter key, check for any db/table key to be contained in the given keys
+    return _.some(this.filterKeys, function(databaseObj) {
+        return _.some(_.values(databaseObj), function(key) {
+            return _.contains(keys, key);
+        });
+    });
 };
 
 /**

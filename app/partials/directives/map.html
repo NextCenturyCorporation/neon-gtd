@@ -342,3 +342,43 @@
         <span class="border-left glyphicon glyphicon-remove" ng-click="clearFilters(true)"></span>
     </div>
 </div>
+
+<div class="header-container legend-container">
+    <div class="legend">
+        <div class="legend-details" ng-show="legend.display">
+            <div class="legend-layer" ng-repeat="legendLayer in legend.layers">
+                <div class="header-text legend-header" ng-click="toggleLegendLayer($index)">
+                    <span class="legend-title" ng-bind="legendLayer.layerName"></span>
+                    <span class="glyphicon glyphicon-chevron-down pull-right" ng-show="!legendLayer.display"></span>
+                    <span class="glyphicon glyphicon-chevron-up pull-right" ng-show="legendLayer.display"></span>
+                </div>
+                <div class="header-text node-title" ng-show="legendLayer.display && legendLayer.nodeColorMappings">
+                    <span>Nodes</span>
+                </div>
+                <div class="legend-item" title="{{category}}" ng-repeat="(category, color) in legendLayer.nodeColorMappings"
+                    ng-show="legendLayer.display && legendLayer.nodeColorMappings">
+                    <span class="legend-icon" style="background-color: {{color}}"></span>
+                    <span class="legend-text">{{category}}</span>
+                </div>
+                <div class="header-text node-title" ng-show="legendLayer.display && legendLayer.lineColorMappings">
+                    <span>Lines</span>
+                </div>
+                <div class="legend-item" title="{{category}}" ng-repeat="(category, color) in legendLayer.lineColorMappings"
+                    ng-show="legendLayer.display && legendLayer.lineColorMappings">
+                    <span class="legend-icon" style="background-color: {{color}}"></span>
+                    <span class="legend-text">{{category}}</span>
+                </div>
+                <div class="legend-item" title="{{category}}" ng-repeat="(category, color) in legendLayer.colorMappings"
+                    ng-show="legendLayer.display && legendLayer.colorMappings">
+                    <span class="legend-icon" style="background-color: {{color}}"></span>
+                    <span class="legend-text">{{category}}</span>
+                </div>
+            </div>
+        </div>
+        <div class="divider" ng-show="legend.display"></div>
+        <div class="header-text" ng-click="toggleLegend()">
+            <span class="glyphicon glyphicon-map-marker"></span>
+            <span>Legend</span>
+        </div>
+    </div>
+</div>

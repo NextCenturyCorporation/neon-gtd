@@ -19,6 +19,7 @@ angular.module('neonDemo.services')
 .factory('LinksPopupService', ["$sce", function($sce) {
     var service = {
         sourcesToKeysToLinks: {},
+        keysToKeyMaps: {},
         listeners: []
     };
 
@@ -72,15 +73,21 @@ angular.module('neonDemo.services')
                     link.args.forEach(function(linkArg) {
                         var argsMappings = angular.copy(linkArg.mappings);
 
-                        Object.keys(link.data).forEach(function(dataMapping) {
-                            if(_.isString(argsMappings)) {
-                                argsMappings = (argsMappings === dataMapping ? link.data[dataMapping] : argsMappings);
-                            } else {
+                        if(_.isString(argsMappings)) {
+                            Object.keys(link.data).forEach(function(neonMapping) {
+                                if(argsMappings === neonMapping) {
+                                    argsMappings = link.data[neonMapping];
+                                }
+                            });
+                        } else {
+                            Object.keys(link.data).forEach(function(neonMapping) {
                                 Object.keys(argsMappings).forEach(function(argMapping) {
-                                    argsMappings[argMapping] = (argsMappings[argMapping] === dataMapping ? link.data[dataMapping] : argsMappings[argMapping]);
+                                    if(link.data[neonMapping][argsMappings[argMapping]]) {
+                                        argsMappings[argMapping] = link.data[neonMapping][argsMappings[argMapping]];
+                                    }
                                 });
-                            }
-                        });
+                            });
+                        }
 
                         args[linkArg.variable] = argsMappings;
                     });
@@ -293,6 +300,40 @@ angular.module('neonDemo.services')
     };
 
     /**
+     * Returns the key for the given field object and value.
+     * @param {Object} fieldObject
+     * @param {Number} or {String} value
+     * @method generateKey
+     * @return {String}
+     */
+    service.generateKey = function(fieldObject, value) {
+        if(fieldObject.prettyName) {
+            var keyMap = generateKeyMap(fieldObject.prettyName, value);
+            var key = generateKeyFromKeyMap(keyMap);
+            service.keysToKeyMaps[key] = keyMap;
+            return key;
+        }
+        return value;
+    };
+
+    var generateKeyMap = function(field, value) {
+        var keyMap = {};
+        keyMap[field] = value;
+        return keyMap;
+    };
+
+    var generateKeyFromKeyMap = function(keyMap) {
+        var key = "";
+        Object.keys(keyMap).forEach(function(mapping) {
+            if(!key) {
+                key += ",";
+            }
+            key += mapping + "=" + keyMap[mapping];
+        });
+        return key;
+    };
+
+    /**
      * Returns the key for bounds with the given minimum and maximum latitude and longitude values.
      * @param {Number} minLat
      * @param {Number} minLon
@@ -302,7 +343,17 @@ angular.module('neonDemo.services')
      * @return {String}
      */
     service.generateBoundsKey = function(minLat, minLon, maxLat, maxLon) {
-        return "Latitude " + minLat + " to " + maxLat + ", Longitude " + minLon + " to " + maxLon;
+        var keyMap = generateBoundsKeyMap(minLat, minLon, maxLat, maxLon);
+        var key = generateKeyFromKeyMap(keyMap);
+        service.keysToKeyMaps[key] = keyMap;
+        return key;
+    };
+
+    var generateBoundsKeyMap = function(minLat, minLon, maxLat, maxLon) {
+        return {
+            latitude: minLat + " to " + maxLat,
+            longitude: minLon + " to " + maxLon
+        };
     };
 
     /**
@@ -313,18 +364,109 @@ angular.module('neonDemo.services')
      * @return {String}
      */
     service.generatePointKey = function(latitude, longitude) {
-        return "Latitude " + latitude + ", Longitude " + longitude;
+        var keyMap = generatePointKeyMap(latitude, longitude);
+        var key = generateKeyFromKeyMap(keyMap);
+        service.keysToKeyMaps[key] = keyMap;
+        return key;
+    };
+
+    var generatePointKeyMap = function(latitude, longitude) {
+        return {
+            latitude: latitude,
+            longitude: longitude
+        };
     };
 
     /**
-     * Returns the key for a range with the given start and end values.
+     * Returns the key for a date range with the given start and end values.
      * @param {Number} or {String} start
      * @param {Number} or {String} end
-     * @method generateRangeKey
+     * @method generateDateRangeKey
      * @return {String}
      */
-    service.generateRangeKey = function(start, end) {
-        return start + " to " + end;
+    service.generateDateRangeKey = function(start, end) {
+        var keyMap = generateDateRangeKeyMap(start, end);
+        var key = generateKeyFromKeyMap(keyMap);
+        service.keysToKeyMaps[key] = keyMap;
+        return key;
+    };
+
+    var generateDateRangeKeyMap = function(start, end) {
+        return {
+            date: start + " to " + end
+        };
+    };
+
+    /**
+     * Returns the key for the given mapping for multiple services with the given data.
+     * @param {String} servicesMapping
+     * @param {Object} data
+     * @method generateMultipleServicesKey
+     * @return {String}
+     */
+    service.generateMultipleServicesKey = function(servicesMapping, data) {
+        var keyMap = {};
+        servicesMapping.split(",").forEach(function(neonMapping) {
+            if(neonMapping === neonMappings.DATE) {
+                var dateKeyMap = generateDateRangeKeyMap(data[neonMappings.DATE][neonMappings.START_DATE], data[neonMappings.DATE][neonMappings.END_DATE]);
+                keyMap.date = dateKeyMap.date;
+            } else if(neonMapping === neonMappings.BOUNDS) {
+                var boundsKeyMap = generateBoundsKeyMap(data[neonMappings.BOUNDS][neonMappings.MIN_LAT], data[neonMappings.BOUNDS][neonMappings.MIN_LON], data[neonMappings.BOUNDS][neonMappings.MAX_LAT], data[neonMappings.BOUNDS][neonMappings.MAX_LON]);
+                keyMap.latitude = boundsKeyMap.latitude;
+                keyMap.longitude = boundsKeyMap.longitude;
+            } else if(neonMapping === neonMappings.POINT) {
+                var pointKeyMap = generatePointKeyMap(data[neonMappings.POINT][neonMappings.LATITUDE], data[neonMappings.POINT][neonMappings.LONGITUDE]);
+                keyMap.latitude = pointKeyMap.latitude;
+                keyMap.longitude = pointKeyMap.longitude;
+            } else {
+                var dataKeyMap = generateKeyMap(neonMapping, data[neonMapping] || "");
+                keyMap[neonMapping] = dataKeyMap[neonMapping];
+            }
+        });
+
+        var key = generateKeyFromKeyMap(keyMap);
+        service.keysToKeyMaps[key] = keyMap;
+        return key;
+    };
+
+    /**
+     * Creates and returns the HTML for the sector header of the links popup showing the links for the given key.
+     * @param {String} key
+     * @method generateLinkHeader
+     * @return {Object} or {String} A string key or an object created by angular's $sce.trustAsHtml().
+     */
+    service.generateLinkHeader = function(key) {
+        var keyMap = service.keysToKeyMaps[key];
+        if(Object.keys(keyMap).length) {
+            var header = "<table>";
+            Object.keys(keyMap).sort().forEach(function(mapping) {
+                header += "<tr><td>" + mapping + ":</td><td>" + keyMap[mapping] + "</td></tr>";
+            });
+            return $sce.trustAsHtml(header + "</table>");
+        }
+        return key;
+    };
+
+    /**
+     * Sorts the given list of keys based on the size of their key maps.
+     * @param {Array} keys
+     * @method sortKeys
+     * @return {Array} The sorted list of keys.
+     */
+    service.sortKeys = function(keys) {
+        keys.sort(function(keyA, keyB) {
+            var keyMapSizeA = service.keysToKeyMaps[keyA] ? Object.keys(service.keysToKeyMaps[keyA]).length : 0;
+            var keyMapSizeB = service.keysToKeyMaps[keyB] ? Object.keys(service.keysToKeyMaps[keyB]).length : 0;
+            // Sort size descending.
+            if(keyMapSizeA < keyMapSizeB) {
+                return 1;
+            }
+            if(keyMapSizeA > keyMapSizeB) {
+                return -1;
+            }
+            return 0;
+        });
+        return keys;
     };
 
     /**
