@@ -131,7 +131,7 @@ tables.createColumns = function(knownColumns, data, ignoreColumnNames, headerEle
                 if(typeof row[subDataColumnName] === "object" && !row[subDataColumnName].length) {
                     checkAllFieldsText(row[subDataColumnName], name);
                 } else {
-                    updateColumnText(row, name);
+                    updateColumnText(row[subDataColumnName], name);
                 }
             }
         });

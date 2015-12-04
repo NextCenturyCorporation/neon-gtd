@@ -641,6 +641,27 @@ function(external, connectionService, datasetService, errorNotificationService, 
             };
 
             /**
+             * Escapes all values in the given data, recursively.
+             * @method escapeDataRecursively
+             * @private
+             */
+            var escapeDataRecursively = function(data) {
+                if(_.isArray(data)) {
+                    for(var i = 0; i < data.length; i++) {
+                        data[i] = escapeDataRecursively(data[i]);
+                    }
+                } else if( _.keys(data).length) {
+                    var keys = _.keys(data);
+                    for(var i = 0; i < keys.length; i++) {
+                        data[keys[i]] = escapeDataRecursively(data[keys[i]]);
+                    }
+                } else {
+                    data = _.escape(data);
+                }
+                return data;
+            };
+
+            /**
              * Updates the data bound to the table managed by this directive.  This will trigger a change in
              * the chart's visualization.
              * @param {Object} queryResults Results returned from a Neon query.
@@ -654,6 +675,8 @@ function(external, connectionService, datasetService, errorNotificationService, 
                 if(!($("#" + $scope.tableId).length)) {
                     return;
                 }
+
+                queryResults = escapeDataRecursively(queryResults);
 
                 $scope.tableOptions = createOptions(queryResults, refreshColumns);
 
