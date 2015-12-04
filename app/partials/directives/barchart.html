@@ -59,13 +59,15 @@
     </div>
 
     <div class="legend">
-        <h4 class="pull-right limit-message" ng-show="results.count >= options.limitCount">Limited to {{options.limitCount}} bars</h4>
-
         <div class="legend-item" title="{{getLegendText()}}">
             <span class="legend-icon" style="background-color: #39b54a"></span>
             <span class="legend-text" ng-bind="getLegendText()"></span>
         </div>
 
+        <div class="legend-item pull-right" ng-show="results.count >= options.limitCount" title="{{'Limited to ' + options.limitCount + ' Bars'}}">
+            <span class="legend-text" ng-show="!showAbbreviatedLimit" ng-bind="'Limited to ' + options.limitCount + ' Bars'"></span>
+            <span class="legend-text glyphicon glyphicon-exclamation-sign" ng-show="showAbbreviatedLimit"></span>
+        </div>
     </div>
 </div>
 
