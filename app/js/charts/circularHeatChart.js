@@ -27,7 +27,7 @@ function CircularHeatChart(el) {
     var numSegments = 24;
     var segmentHeight = 0;
     var domain = null;
-    var range = ["#ffffff", "#39b54a"];;
+    var range = ["#ffffff", "#39b54a"];
     var accessor = function(d) {
         return d;
     };
