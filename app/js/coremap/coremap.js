@@ -54,6 +54,7 @@ coreMap.Map = function(elementId, opts) {
     this.selector = $("#" + elementId);
     this.onZoomRect = opts.onZoomRect;
     this.responsive = opts.responsive;
+    this.getNestedValue = opts.getNestedValue;
     this.queryForMapPopupDataFunction = opts.queryForMapPopupDataFunction || function(database, table, id, callback) {
         callback({});
     };
@@ -377,7 +378,6 @@ coreMap.Map.prototype.createSelectControl =  function(layer) {
             source: "user",
             tags: ["map", "tooltip"]
         });
-
         var createAndShowFeaturePopup = function(attributes) {
             var text;
 
@@ -397,8 +397,9 @@ coreMap.Map.prototype.createSelectControl =  function(layer) {
 
                     for(var j = 0; j < feature.layer.clusterPopupFields.length; j++) {
                         var field = feature.layer.clusterPopupFields[j];
-                        if(Object.prototype.hasOwnProperty.call(feature.cluster[i].attributes, field)) {
-                            text += '<td>' + feature.cluster[i].attributes[field] + '</td>';
+                        var fieldValue = me.getNestedValue(feature.cluster[i].attributes, field);
+                        if(fieldValue) {
+                            text += '<td>' + fieldValue + '</td>';
                         } else {
                             text += '<td></td>';
                         }
@@ -408,12 +409,7 @@ coreMap.Map.prototype.createSelectControl =  function(layer) {
                 }
                 text += '</table></div>';
             } else {
-                text = '<div><table class="table table-striped table-condensed">';
-
-                Object.keys(attributes).forEach(function(attribute) {
-                    text += '<tr><th>' + _.escape(attribute) + '</th><td>' + attributes[attribute] + '</td>';
-                });
-                text += '</table></div>';
+                text = '<div><table class="table table-striped table-condensed">' + getNestedFields(attributes) + '</table></div>';
             }
 
             me.featurePopup = new OpenLayers.Popup.FramedCloud("Data",
@@ -430,8 +426,10 @@ coreMap.Map.prototype.createSelectControl =  function(layer) {
             $(".olFramedCloudPopupContent td").linky(feature.layer.linkyConfig);
 
             if(me.linksPopupService && feature.layer.linksSource) {
-                var key = me.linksPopupService.generatePointKey(attributes[feature.layer.latitudeMapping], attributes[feature.layer.longitudeMapping]);
-                var tooltip = "latitude " + attributes[feature.layer.latitudeMapping] + ", longitude " + attributes[feature.layer.longitudeMapping];
+                var latitudeValue = me.getNestedValue(attributes, feature.layer.latitudeMapping);
+                var longitudeValue = me.getNestedValue(attributes, feature.layer.longitudeMapping);
+                var key = me.linksPopupService.generatePointKey(latitudeValue, longitudeValue);
+                var tooltip = "latitude " + longitudeValue + ", longitude " + longitudeValue;
                 var link = me.linksPopupService.createLinkHtml(feature.layer.linksSource, key, tooltip);
 
                 // Position the button below the 'close box' which can have one of a few different 'top' values depending on the location of the point on the layer.
@@ -440,6 +438,22 @@ coreMap.Map.prototype.createSelectControl =  function(layer) {
 
                 $("#" + me.elementId).find(".olPopupCloseBox").after("<div class='btn btn-default links-popup-button' style='top: " + topCss + "px;'>" + link + "</div>");
             }
+        };
+
+        // Creates and returns table rows in data, recursively
+        var getNestedFields = function(data, fieldName) {
+            var text = "";
+            Object.keys(data).forEach(function(datum) {
+                if(datum.indexOf(".") === -1) {
+                    var name = fieldName ? fieldName + "." + datum : datum;
+                    if(typeof data[datum] === "object" && data[datum] && !data[datum].length) {
+                        text += getNestedFields(data[datum], name);
+                    } else {
+                        text += '<tr><th>' + _.escape(name) + '</th><td>' + data[datum] + '</td>';
+                    }
+                }
+            });
+            return text;
         };
 
         var id = feature.cluster && feature.cluster.length === 1 ? feature.cluster[0].attributes._id : feature.attributes._id;
@@ -622,8 +636,7 @@ coreMap.Map.prototype.doAttributesExist = function(data, layer) {
     var allExist = true;
 
     _.forEach(data, function(el) {
-        // Check for undefined because a value could exist in the layer and just be false.
-        if(layer.areValuesInDataElement(el) === undefined) {
+        if(!layer.areValuesInDataElement(el)) {
             allExist = false;
         }
     });

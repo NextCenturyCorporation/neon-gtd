@@ -105,8 +105,36 @@ tables.createColumns = function(knownColumns, data, ignoreColumnNames, headerEle
         });
         columnNameToInfo[columnName] = {
             index: columns.length - 1,
-            text: columnName
+            text: prettyName,
+            prettyName: prettyName
         };
+    };
+
+    // Update the column's text if a longer text length is found
+    var updateColumnText = function(rowData, dataColumnName) {
+        if(columnNameToInfo[dataColumnName]) {
+            // This is not technically correct since we're using a variable-width font but it's faster than calculating the width of the text by inserting it into a DOM element using jQuery.
+            if(columnNameToInfo[dataColumnName].text.length < rowData.length) {
+                columnNameToInfo[dataColumnName].text = rowData;
+            }
+        } else {
+            addColumnName(dataColumnName, dataColumnName);
+        }
+    };
+
+    // Go through all fields, recursively, to get the longest text in each column
+    var checkAllFieldsText = function(row, dataColumnName) {
+        Object.keys(row).forEach(function(subDataColumnName) {
+            if(row[subDataColumnName]) {
+                var name = dataColumnName ? dataColumnName + "." + subDataColumnName : subDataColumnName;
+                // Update any sub fields if the field is an object
+                if(typeof row[subDataColumnName] === "object" && !row[subDataColumnName].length) {
+                    checkAllFieldsText(row[subDataColumnName], name);
+                } else {
+                    updateColumnText(row[subDataColumnName], name);
+                }
+            }
+        });
     };
 
     knownColumns.forEach(function(knownColumn) {
@@ -114,18 +142,7 @@ tables.createColumns = function(knownColumns, data, ignoreColumnNames, headerEle
     });
 
     data.forEach(function(row) {
-        Object.keys(row).forEach(function(dataColumnName) {
-            if(row[dataColumnName]) {
-                if(columnNameToInfo[dataColumnName]) {
-                    // This is not technically correct since we're using a variable-width font but it's faster than calculating the width of the text by inserting it into a DOM element using jQuery.
-                    if(columnNameToInfo[dataColumnName].text.length < row[dataColumnName].length) {
-                        columnNameToInfo[dataColumnName].text = row[dataColumnName];
-                    }
-                } else {
-                    addColumnName(dataColumnName);
-                }
-            }
-        });
+        checkAllFieldsText(row);
     });
 
     // Use a hidden jQuery element with the same style as a SlickGrid header to calculate the column width.
@@ -146,7 +163,7 @@ tables.createColumns = function(knownColumns, data, ignoreColumnNames, headerEle
     // Create the SlickGrid column definitions.
     Object.keys(columnNameToInfo).forEach(function(columnName) {
         element.html(columnNameToInfo[columnName].text);
-        if(columnName === columnNameToInfo[columnName].text) {
+        if(columnNameToInfo[columnName].prettyName === columnNameToInfo[columnName].text) {
             element.append(sortElement).append(resizeElement);
             if(headerElements) {
                 for(var m = 0; m < headerElements.length; ++m) {
@@ -189,11 +206,21 @@ tables.addLinkabilityToColumns = function(columns) {
  * @private
  */
 tables.Table.sortComparator_ = function(field, sortAsc) {
+    var fieldArray = field.split(".");
     return function(a, b) {
+        if(a[field] && b[field]) {
+            a = a[field];
+            b = b[field];
+        } else {
+            fieldArray.forEach(function(field) {
+                a = a ? a[field] : a;
+                b = b ? b[field] : b;
+            });
+        }
         var result = 0;
-        if((a[field] && (b[field] === undefined)) || a[field] > b[field]) {
+        if((a && (b === undefined)) || a > b) {
             result = 1;
-        } else if((b[field] && (a[field] === undefined)) || a[field] < b[field]) {
+        } else if((b && (a === undefined)) || a < b) {
             result = -1;
         }
         return sortAsc ? result : -result;

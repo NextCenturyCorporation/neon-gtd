@@ -24,6 +24,15 @@
 angular.module('neonDemo.controllers')
 .controller('neonDemoController', ['$scope', '$timeout', 'config', 'datasets',
 function($scope, $timeout, config, datasets) {
+    $scope.theme = {
+        themes: ['light-green', 'dark-green', 'dark-purple']
+    };
+    $scope.theme.name = config.theme || $scope.theme.themes[0];
+    $scope.theme.selected = $scope.theme.name;
+    $scope.updateTheme = function() {
+        $scope.theme.name = $scope.theme.selected;
+    };
+
     $scope.hideNavbarItems = config.hideNavbarItems;
     $scope.showFilterStatusTray = config.showFilterStatusTray;
 

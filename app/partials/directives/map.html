@@ -1,7 +1,7 @@
 <div class="header-container menu-container">
     <options-menu parent-element="element" export-function="makeMapExportObject" resize="resizeOptionsMenu" button-text="optionsMenuButtonText" show-button-text="showOptionsMenuButtonText">
         <div class="form-group info-container">
-            <label><span class="glyphicon glyphicon-info-sign margin-right"></span>SHIFT + DRAG on Map to Filter</label>
+            <label><span class="glyphicon glyphicon-info-sign"></span>SHIFT + DRAG on Map to Filter</label>
         </div>
 
         <div class="form-group button-container">
@@ -347,12 +347,12 @@
     <div class="legend">
         <div class="legend-details" ng-show="legend.display">
             <div class="legend-layer" ng-repeat="legendLayer in legend.layers">
-                <div class="header-text legend-header" ng-click="toggleLegendLayer($index)">
-                    <span class="legend-title" ng-bind="legendLayer.layerName"></span>
+                <div class="legend-header" ng-click="toggleLegendLayer($index)">
+                    <span class="legend-title header-text" ng-bind="legendLayer.layerName"></span>
                     <span class="glyphicon glyphicon-chevron-down pull-right" ng-show="!legendLayer.display"></span>
                     <span class="glyphicon glyphicon-chevron-up pull-right" ng-show="legendLayer.display"></span>
                 </div>
-                <div class="header-text node-title" ng-show="legendLayer.display && legendLayer.nodeColorMappings">
+                <div class="node-title" ng-show="legendLayer.display && legendLayer.nodeColorMappings">
                     <span>Nodes</span>
                 </div>
                 <div class="legend-item" title="{{category}}" ng-repeat="(category, color) in legendLayer.nodeColorMappings"
@@ -360,7 +360,7 @@
                     <span class="legend-icon" style="background-color: {{color}}"></span>
                     <span class="legend-text">{{category}}</span>
                 </div>
-                <div class="header-text node-title" ng-show="legendLayer.display && legendLayer.lineColorMappings">
+                <div class="node-title" ng-show="legendLayer.display && legendLayer.lineColorMappings">
                     <span>Lines</span>
                 </div>
                 <div class="legend-item" title="{{category}}" ng-repeat="(category, color) in legendLayer.lineColorMappings"
@@ -376,7 +376,7 @@
             </div>
         </div>
         <div class="divider" ng-show="legend.display"></div>
-        <div class="header-text" ng-click="toggleLegend()">
+        <div class="legend-toggle header-text" ng-click="toggleLegend()">
             <span class="glyphicon glyphicon-map-marker"></span>
             <span>Legend</span>
         </div>

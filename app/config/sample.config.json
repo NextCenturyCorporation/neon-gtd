@@ -282,13 +282,13 @@
         "sizeY": 4,
         "minSizeY": 4,
         "type": "filter-builder",
-        "icon": "img/visualizations/CreateFilter64.png"
+        "iconClass": "create-filter"
     }, {
         "name": "Data Table",
         "sizeX": 6,
         "sizeY": 4,
         "type": "query-results-table",
-        "icon": "img/visualizations/ViewData64.png"
+        "iconClass": "view-data"
     }, {
         "name": "Timeline",
         "sizeX": 12,
@@ -296,73 +296,73 @@
         "sizeY": 4,
         "minSizeY": 4,
         "type": "timeline-selector",
-        "icon": "img/visualizations/Timeline64.png"
+        "iconClass": "timeline"
     }, {
         "name": "Map",
         "sizeX": 12,
         "sizeY": 6,
         "type": "map",
-        "icon": "img/visualizations/Map64.png"
+        "iconClass": "map"
     }, {
         "name": "Ops Clock",
         "sizeX": 6,
         "sizeY": 4,
         "type": "circular-heat-form",
-        "icon": "img/visualizations/OpsClock64.png"
+        "iconClass": "ops-clock"
     }, {
         "name": "Line Chart",
         "sizeX": 6,
         "sizeY": 4,
         "type": "linechart",
-        "icon": "img/visualizations/LineChart64.png"
+        "iconClass": "line-chart"
     }, {
         "name": "Bar Chart",
         "sizeX": 6,
         "sizeY": 4,
         "type": "barchart",
-        "icon": "img/visualizations/BarChart64.png"
+        "iconClass": "bar-chart"
     }, {
         "name": "Sunburst Chart",
         "sizeX": 6,
         "sizeY": 4,
         "type": "sunburst",
-        "icon": "img/visualizations/Sunburst64.png"
+        "iconClass": "sunburst"
     }, {
         "name": "Text Cloud",
         "sizeX": 6,
         "sizeY": 4,
         "type": "tag-cloud",
-        "icon": "img/visualizations/TagCloud64.png"
+        "iconClass": "tag-cloud"
     }, {
         "name": "Aggregation Table",
         "sizeX": 6,
         "sizeY": 4,
         "type": "count-by",
-        "icon": "img/visualizations/Count64.png"
+        "iconClass": "count"
     }, {
         "name": "Graph",
         "sizeX": 12,
         "sizeY": 6,
         "type": "directed-graph",
-        "icon": "img/visualizations/Graph64.png"
+        "iconClass": "graph"
     }, {
         "name": "News Feed",
         "sizeX": 6,
         "sizeY": 4,
         "type": "newsfeed",
-        "icon": "img/visualizations/News64.png"
+        "iconClass": "news"
     }, {
         "name": "Gantt Chart",
         "sizeX": 12,
         "sizeY": 6,
         "type": "gantt-chart",
-        "icon": "img/visualizations/Gantt64.png"
+        "iconClass": "gantt"
     }, {
         "name": "Sample",
         "sizeX": 6,
         "sizeY": 4,
         "type": "sample",
-        "icon": "img/Neon_60x34.png"
+        "iconClass": "neon"
     }],
 
     "dashboard": {
@@ -418,7 +418,7 @@
     "help": {
         "guide": "",
         "webVideo": "",
-        "localVideo": "",
+        "localVideo": ""
     },
 
     "annotations": {
@@ -450,5 +450,7 @@
         "layouts": [
             "./config/sample.layout.config.json"
         ]
-    }
+    },
+
+    "theme": "dark-purple"
 }

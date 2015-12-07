@@ -38,6 +38,26 @@ neon.safeApply = function($scope, func) {
     }
 };
 
+neon.helpers = {
+    /**
+     * Finds and returns the field value in data. If field contains '.', representing that the field is in an object within data, it will
+     * find the nested field value.
+     * @param {Object} data
+     * @param {String} field
+     * @method getNestedValue
+     */
+    getNestedValue: function(data, field) {
+        var fieldArray = field.split(".");
+        var dataValue = data;
+        fieldArray.forEach(function(field) {
+            if(dataValue) {
+                dataValue = dataValue[field];
+            }
+        });
+        return dataValue;
+    }
+};
+
 var neonDemo = angular.module('neonDemo', [
     'neonDemo.controllers',
     'neonDemo.services',
@@ -154,6 +174,7 @@ var saveDashboards = function(config) {
         showImport: false,
         showExport: true
     };
+    dashboardConfig.theme = config.theme;
     dashboardConfig.gridsterColumns = dashboardConfig.gridsterColumns || 8;
     dashboardConfig.gridsterMargins = dashboardConfig.gridsterMargins || 10;
     // Most visualizations should have a minimum size of about 300px square to have space for their UI elements.
@@ -175,6 +196,7 @@ var saveDashboards = function(config) {
 };
 
 var saveVisualizations = function(config) {
+    console.log(config.visualizations);
     var visualizations = (config.visualizations || []);
     neonDemo.constant('visualizations', visualizations);
 };

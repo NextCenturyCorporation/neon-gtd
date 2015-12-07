@@ -82,6 +82,7 @@ function(external, connectionService, datasetService, errorNotificationService, 
             $scope.loadingData = false;
             $scope.outstandingDataQuery = undefined;
             $scope.outstandingTotalRowsQuery = undefined;
+            $scope.helpers = neon.helpers;
 
             $scope.options = {
                 database: {},
@@ -189,7 +190,8 @@ function(external, connectionService, datasetService, errorNotificationService, 
                         enableTextSelectionOnCells: true,
                         forceFitColumns: false,
                         enableColumnReorder: true,
-                        forceSyncScrolling: true
+                        forceSyncScrolling: true,
+                        dataItemColumnValueExtractor: getItemColumnValue
                     }
                 };
 
@@ -203,6 +205,18 @@ function(external, connectionService, datasetService, errorNotificationService, 
                     options.id = _id;
                 }
                 return options;
+            };
+
+            /**
+             * Finds and returns the column value in the item. If the column name contains '.', representing that the column name is in an object
+             * within the item, it will find the nested value.
+             * @param {Object} item
+             * @param {String} column
+             * @method getItemColumnValue
+             * @private
+             */
+            var getItemColumnValue = function(item, column) {
+                return $scope.helpers.getNestedValue(item, column.field);
             };
 
             var createColumns = function(data, refreshColumns) {
@@ -627,6 +641,27 @@ function(external, connectionService, datasetService, errorNotificationService, 
             };
 
             /**
+             * Escapes all values in the given data, recursively.
+             * @method escapeDataRecursively
+             * @private
+             */
+            var escapeDataRecursively = function(data) {
+                if(_.isArray(data)) {
+                    for(var i = 0; i < data.length; i++) {
+                        data[i] = escapeDataRecursively(data[i]);
+                    }
+                } else if( _.keys(data).length) {
+                    var keys = _.keys(data);
+                    for(var i = 0; i < keys.length; i++) {
+                        data[keys[i]] = escapeDataRecursively(data[keys[i]]);
+                    }
+                } else {
+                    data = _.escape(data);
+                }
+                return data;
+            };
+
+            /**
              * Updates the data bound to the table managed by this directive.  This will trigger a change in
              * the chart's visualization.
              * @param {Object} queryResults Results returned from a Neon query.
@@ -640,6 +675,8 @@ function(external, connectionService, datasetService, errorNotificationService, 
                 if(!($("#" + $scope.tableId).length)) {
                     return;
                 }
+
+                queryResults = escapeDataRecursively(queryResults);
 
                 $scope.tableOptions = createOptions(queryResults, refreshColumns);
 
@@ -678,7 +715,7 @@ function(external, connectionService, datasetService, errorNotificationService, 
 
                 data.forEach(function(row) {
                     var field = $scope.bindIdField || "_id";
-                    var id = row[field];
+                    var id = $scope.helpers.getNestedValue(row, field);
                     tableLinks[id] = linksPopupService.createAllServiceLinkObjects(external.services, mappings, field, id);
                     row[$scope.EXTERNAL_APP_FIELD_NAME] = tableLinks[id].length ? linksPopupService.createLinkHtml($scope.tableId, id, id) : linksPopupService.createDisabledLinkHtml(id);
                 });
@@ -708,7 +745,15 @@ function(external, connectionService, datasetService, errorNotificationService, 
                     var indexToSplice = _.findIndex($scope.fields, function(field) {
                         return name === field.prettyName;
                     });
-                    var deletedField = $scope.fields.splice(indexToSplice, 1)[0];
+
+                    var deletedField = {
+                        columnName: name,
+                        prettyName: name
+                    };
+                    if(indexToSplice >= 0) {
+                        deletedField = $scope.fields.splice(indexToSplice, 1)[0];
+                    }
+
                     $scope.options.sortByField = $scope.options.sortByField === name ? $scope.fields[0] : $scope.options.sortByField;
                     $scope.deletedFieldsMap[$scope.options.database.name][$scope.options.table.name].push(deletedField);
                     $scope.options.addField = deletedField;
