@@ -680,6 +680,8 @@ function(external, connectionService, datasetService, errorNotificationService, 
                         $scope.filterTags[index - $scope.data.length].nameTranslated = elem.translatedText;
                     }
                 });
+
+                translationService.saveTranslationCache();
             };
 
             /**
