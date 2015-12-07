@@ -52,7 +52,7 @@
     }
 
     .highlight {
-        fill: goldenrod;
+        fill: @callout;
     }
 
     .y {
@@ -62,15 +62,6 @@
             }
 
             text{
-                text-shadow:
-                    1px 1px 0 @text-shadow-color,
-                    1px 0px 0 @text-shadow-color,
-                    1px -1px 0 @text-shadow-color,
-                    -1px 1px 0 @text-shadow-color,
-                    -1px 0px 0 @text-shadow-color,
-                    -1px -1px 0 @text-shadow-color,
-                    0px 2px 0 @text-shadow-color,
-                    0px -2px 0 @text-shadow-color;
                 font-weight: bold;
                 fill: @chart-text-color;
             }
@@ -88,6 +79,10 @@
     }
     .x {
         &.axis {
+            text {
+                fill: @chart-text-color;
+            }
+
             path {
                 display: none;
             }

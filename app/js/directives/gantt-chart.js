@@ -41,6 +41,7 @@ function(connectionService, datasetService, errorNotificationService, filterServ
             $scope.legend = {};
             $scope.filterKeys = filterService.createFilterKeys("gantt-chart", datasetService.getDatabaseAndTableNames());
             $scope.filterSet = {};
+            $scope.helpers = neon.helpers;
 
             $scope.options = {
                 database: {},
@@ -213,7 +214,7 @@ function(connectionService, datasetService, errorNotificationService, filterServ
 
                 if(!ignoreGroupQuery && $scope.options.groupFields.length && datasetService.isFieldValid($scope.options.groupFields[0])) {
                     var query = new neon.query.Query().selectFrom($scope.options.database.name, $scope.options.table.name)
-                        .groupBy($scope.options.groupFields[0].columnName)
+                        .groupBy($scope.options.groupFields[0])
                         .aggregate(neon.query.COUNT, "*", "count")
                         .sortBy("count", neon.query.DESCENDING)
                         .ignoreFilters([$scope.filterKeys[$scope.options.database.name][$scope.options.table.name]]);
@@ -221,7 +222,7 @@ function(connectionService, datasetService, errorNotificationService, filterServ
                     connection.executeQuery(query, function(queryResults) {
                         $scope.$apply(function() {
                             $scope.options.selectableGroups = queryResults.data.map(function(item) {
-                                return item[$scope.options.groupFields[0].columnName];
+                                return $scope.helpers.getNestedValue(item, $scope.options.groupFields[0].columnName);
                             }) || [];
                         });
                         queryForGanttChartData(connection);
@@ -325,19 +326,20 @@ function(connectionService, datasetService, errorNotificationService, filterServ
                     }
 
                     var color;
+                    var colorFieldValue = $scope.helpers.getNestedValue(item, $scope.options.colorField.columnName);
                     if(Object.keys(groupsToColors).length) {
-                        color = groupsToColors[item[$scope.options.colorField.columnName]] || neonColors.DEFAULT;
+                        color = groupsToColors[colorFieldValue] || neonColors.DEFAULT;
                     } else if(colors.length) {
-                        color = colorScale(colors.indexOf(item[$scope.options.colorField.columnName]));
+                        color = colorScale(colors.indexOf(colorFieldValue));
                     } else {
                         color = colorScale(index);
                     }
 
                     treeParent.tasks.push({
                         id: item._id,
-                        name: datasetService.isFieldValid($scope.options.titleField) ? item[$scope.options.titleField.columnName] : "",
-                        from: item[$scope.options.startField.columnName],
-                        to: item[$scope.options.endField.columnName],
+                        name: datasetService.isFieldValid($scope.options.titleField) ? $scope.helpers.getNestedValue(item, $scope.options.titleField.columnName) : "",
+                        from: $scope.helpers.getNestedValue(item, $scope.options.startField.columnName),
+                        to: $scope.helpers.getNestedValue(item, $scope.options.endField.columnName),
                         color: color
                     });
                 });
@@ -352,8 +354,9 @@ function(connectionService, datasetService, errorNotificationService, filterServ
             var createFieldValueList = function(field, data) {
                 var list = [];
                 data.forEach(function(item) {
-                    if(list.indexOf(item[field]) < 0) {
-                        list.push(item[field]);
+                    var value = $scope.helpers.getNestedValue(item, field);
+                    if(list.indexOf(value) < 0) {
+                        list.push(value);
                     }
                 });
                 return list;
@@ -362,19 +365,20 @@ function(connectionService, datasetService, errorNotificationService, filterServ
             var buildTree = function(data) {
                 if($scope.options.groupFields.length) {
                     data.forEach(function(item) {
-                        $scope.tree[item[$scope.options.groupFields[0].columnName]] = buildSubtree($scope.tree, item, 0);
+                        var groupValue = $scope.helpers.getNestedValue(item, $scope.options.groupFields[0].columnName);
+                        $scope.tree[groupValue] = buildSubtree($scope.tree, item, 0);
                     });
                 }
             };
 
             var buildSubtree = function(tree, item, rowIndex) {
-                var field = $scope.options.groupFields[rowIndex];
+                var fieldValue = $scope.helpers.getNestedValue(item, $scope.options.groupFields[rowIndex].columnName);
                 if(rowIndex + 1 < $scope.options.groupFields.length) {
-                    tree[item[field.columnName]] = tree[item[field.columnName]] || {};
-                    tree[item[field.columnName]][item[$scope.options.groupFields[rowIndex + 1].columnName]] = buildSubtree(tree[item[field.columnName]], item, rowIndex + 1);
-                    return tree[item[field.columnName]];
+                    tree[fieldValue] = tree[fieldValue] || {};
+                    tree[fieldValue][$scope.helpers.getNestedValue(item, $scope.options.groupFields[rowIndex + 1].columnName)] = buildSubtree(tree[fieldValue], item, rowIndex + 1);
+                    return tree[fieldValue];
                 }
-                return tree[item[field.columnName]] || {
+                return tree[fieldValue] || {
                     tasks: []
                 };
             };
@@ -382,7 +386,7 @@ function(connectionService, datasetService, errorNotificationService, filterServ
             var getTreeParent = function(item) {
                 var treeParent = $scope.tree;
                 $scope.options.groupFields.forEach(function(groupField) {
-                    treeParent = treeParent[item[groupField.columnName]];
+                    treeParent = treeParent[$scope.helpers.getNestedValue(item, groupField.columnName)];
                 });
                 return treeParent;
             };
@@ -405,14 +409,14 @@ function(connectionService, datasetService, errorNotificationService, filterServ
                     $scope.options.groupFields[index] = field;
                 } else {
                     $scope.options.groupFields.splice(index, 1);
-                };
+                }
                 $scope.queryForData();
             };
 
             $scope.addGroupField = function() {
                 if(datasetService.isFieldValid($scope.options.newGroupField)) {
                     $scope.options.groupFields.push($scope.options.newGroupField);
-                };
+                }
                 $scope.options.newGroupField = {};
                 $scope.queryForData();
             };

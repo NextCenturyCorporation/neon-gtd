@@ -13,9 +13,38 @@
 // limitations under the License.
 //
 
+.brush {
+    .extent {
+        fill-opacity: 0;
+        shape-rendering: crispEdges;
+    }
+
+    .mask{
+        fill: @main-background;
+        fill-opacity: 0.65;
+    }
+
+    .resize {
+        path {
+            fill: @light-chart-axis-color;
+            stroke: @chart-text-color;
+            stroke-opacity: 0.5;
+        }
+    }
+
+    .resize-divider{
+        fill: @chart-text-color;
+        fill-opacity: 0.3;
+    }
+
+    rect.background {
+        cursor: pointer !important;
+    }
+}
+
 .collapsed {
     .timeline-selector-chart {
-        
+
         [class*='series-y'] {
             display: none;
         }
@@ -71,15 +100,7 @@
     }
 
     .series-title {
-        text-shadow:
-            1px 1px 0 @text-shadow-color,
-            1px 0px 0 @text-shadow-color,
-            1px -1px 0 @text-shadow-color,
-            -1px 1px 0 @text-shadow-color,
-            -1px 0px 0 @text-shadow-color,
-            -1px -1px 0 @text-shadow-color,
-            0px 2px 0 @text-shadow-color,
-            0px -2px 0 @text-shadow-color;
+        text-shadow: @visualization-label-shadow;
         font-weight: bold;
         font-size: 13px;
     }
@@ -92,15 +113,7 @@
 
     .y.axis {
         text {
-            text-shadow:
-                1px 1px 0 @text-shadow-color,
-                1px 0px 0 @text-shadow-color,
-                1px -1px 0 @text-shadow-color,
-                -1px 1px 0 @text-shadow-color,
-                -1px 0px 0 @text-shadow-color,
-                -1px -1px 0 @text-shadow-color,
-                0px 2px 0 @text-shadow-color,
-                0px -2px 0 @text-shadow-color;
+            text-shadow: @visualization-label-shadow;
             font-weight: bold;
         }
 

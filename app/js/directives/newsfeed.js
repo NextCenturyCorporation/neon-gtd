@@ -67,6 +67,7 @@ function(external, $timeout, connectionService, datasetService, errorNotificatio
             $scope.linkyConfig = DEFAULT_LINKY_CONFIG;
             $scope.selectedDate = undefined;
             $scope.errorMessage = undefined;
+            $scope.helpers = neon.helpers;
 
             // Prevent extraneous queries from onFieldChanged during updateFields.
             $scope.loadingData = false;
@@ -366,7 +367,7 @@ function(external, $timeout, connectionService, datasetService, errorNotificatio
                     return;
                 }
 
-                $scope.linkyConfig = datasetService.getLinkyConfig() || DEFAULT_LINKY_CONFIG;;
+                $scope.linkyConfig = datasetService.getLinkyConfig() || DEFAULT_LINKY_CONFIG;
                 $scope.databases = datasetService.getDatabases();
                 $scope.options.database = $scope.databases[0];
                 if($scope.bindDatabase) {
@@ -531,17 +532,17 @@ function(external, $timeout, connectionService, datasetService, errorNotificatio
                 var mappings = datasetService.getMappings($scope.options.database.name, $scope.options.table.name);
 
                 data.forEach(function(item) {
-                    var head = datasetService.isFieldValid($scope.options.headField) ? item[$scope.options.headField.columnName] : "";
-                    var name = datasetService.isFieldValid($scope.options.nameField) ? item[$scope.options.nameField.columnName] : "";
+                    var head = datasetService.isFieldValid($scope.options.headField) ? $scope.helpers.getNestedValue(item, $scope.options.headField.columnName) : "";
+                    var name = datasetService.isFieldValid($scope.options.nameField) ? $scope.helpers.getNestedValue(item, $scope.options.nameField.columnName) : "";
                     var hasLinks = createExternalLinksForNewsItemData(mappings, head, name);
 
-                    var text = item[$scope.options.textField.columnName];
+                    var text = $scope.helpers.getNestedValue(item, $scope.options.textField.columnName);
                     if(_.isArray(text)) {
                         text = text.join("\n");
                     }
 
                     $scope.data.news.push({
-                        date: new Date(item[$scope.options.dateField.columnName]),
+                        date: new Date($scope.helpers.getNestedValue(item, $scope.options.dateField.columnName)),
                         head: head,
                         headTranslated: head,
                         name: name,

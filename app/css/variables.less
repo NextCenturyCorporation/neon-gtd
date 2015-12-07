@@ -13,21 +13,27 @@
 // limitations under the License.
 //
 
-@main-background: #F1F1F1;
+@main-background: #0B0D0D;
 @main-background-lighten: lighten(@main-background, 4%);
 @main-background-darken: darken(@main-background, 6%);
-@light-background: #FFFFFF;
+@light-background: #1B313D;
+@mid-background: #314551;
+@visualization-box-background: #1B313D;
 
+// General accent colors to highlight areas of tables or visualizations
+@accent-bright: #A654A1;
+@accent-light: #B585B4;
+@accent-dark: #854683;
+@accent-dulled: #CEB3CE;
+@accent-lightest: #E0D5E0;
+@callout: #FEF59C;
 
-@accent-bright: #39B54A;
-@accent-light: #7CE98E;
-@accent-dark: #2F9F3E;
-@accent-dulled: #88d292;
+// Text colors to contrast well against accent colored backgrounds.
+@accent-dulled-text-color: #000000;
 
-
-@main-text-color: #777777;
+@main-text-color: #85949C;
 @light-text-color: #FFFFFF;
-@mid-text-color: #333333;
+@mid-text-color: darken(@main-text-color, 10%);
 
 
 @error-text-color: #AA1E13;
@@ -38,16 +44,16 @@
 @border-color: #CCCCCC;
 @shadow: rgba(0, 0, 0, 0.2);
 @text-shadow-color: #FFFFFF;
-@border: 1px solid @border-color;
-@shadow-border: 1px solid @shadow;
+@border: 0px solid @border-color;
+@shadow-border: 0px solid @shadow;
 
 @button-border-color: #787878;
-@button-color: #EEEEEE;
+@button-color: #E0D5E0;
 
-@chart-text-color: #444444;
-@chart-axis-color: #CCCCCC;
-@light-chart-axis-color: #EEEEEE;
-@chart-empty-dot-color: #FFFFFF;
+@chart-text-color: @main-text-color;
+@chart-axis-color: @main-text-color;
+@light-chart-axis-color: @light-text-color;
+@chart-empty-dot-color: @light-text-color;
 
 
 @widget-height: 100%;
@@ -58,3 +64,7 @@
 
 @tooltip-background: rgba(255,255,255,0.9);
 @dark-tooltip-background: rgba(100,100,100,0.8);
+
+// Background colors to go behind map panes.
+@light-map-background: #CDD2D4;
+@dark-map-background: #242424;

@@ -55,6 +55,7 @@ function($filter, $timeout, connectionService, datasetService, errorNotification
             $scope.existingNodeIds = [];
             $scope.selectedNodeIds = [];
             $scope.legend = [];
+            $scope.helpers = neon.helpers;
 
             $scope.tooltip = {
                 idLabel: "",
@@ -405,7 +406,8 @@ function($filter, $timeout, connectionService, datasetService, errorNotification
                     calculateGraphHeight: calculateGraphHeight,
                     calculateGraphWidth: calculateGraphWidth,
                     redrawGraph: redrawGraphInAngularDigest,
-                    updateSelectedNodeIds: updateSelectedNodeIdsInAngularDigest
+                    updateSelectedNodeIds: updateSelectedNodeIdsInAngularDigest,
+                    getNestedValue: $scope.helpers.getNestedValue
                 });
 
                 $scope.mediator.setBucketizer($scope.bucketizer);
@@ -433,16 +435,16 @@ function($filter, $timeout, connectionService, datasetService, errorNotification
                 var news = [];
                 data.forEach(function(item) {
                     var newsItem = {
-                        head: item[$scope.options.selectedNodeField.columnName]
+                        head: $scope.helpers.getNestedValue(item, $scope.options.selectedNodeField.columnName)
                     };
                     if(datasetService.isFieldValid($scope.options.selectedDateField)) {
-                        newsItem.date = new Date(item[$scope.options.selectedDateField.columnName]);
+                        newsItem.date = new Date($scope.helpers.getNestedValue(item, $scope.options.selectedDateField.columnName));
                     }
                     if(datasetService.isFieldValid($scope.options.selectedNameField)) {
-                        newsItem.name = item[$scope.options.selectedNameField.columnName];
+                        newsItem.name = $scope.helpers.getNestedValue(item, $scope.options.selectedNameField.columnName);
                     }
                     if(datasetService.isFieldValid($scope.options.selectedTextField)) {
-                        newsItem.text = item[$scope.options.selectedTextField.columnName];
+                        newsItem.text = $scope.helpers.getNestedValue(item, $scope.options.selectedTextField.columnName);
                         // Delete the text from the data to improve our memory preformance because we don't need it any longer.
                         delete item[$scope.options.selectedTextField.columnName];
                     }
@@ -529,7 +531,7 @@ function($filter, $timeout, connectionService, datasetService, errorNotification
                 var query = new neon.query.Query()
                     .selectFrom($scope.options.database.name, $scope.options.table.name)
                     .withFields([$scope.options.selectedNodeField.columnName])
-                    .groupBy($scope.options.selectedNodeField.columnName)
+                    .groupBy($scope.options.selectedNodeField)
                     .aggregate(neon.query.COUNT, '*', 'count');
 
                 return query;
@@ -705,19 +707,19 @@ function($filter, $timeout, connectionService, datasetService, errorNotification
                         query: $scope.options.selectedLinkedNodeField.columnName,
                         pretty: $scope.options.selectedLinkedNodeField.prettyName
                     }];
-                    query.groupBy($scope.options.selectedNodeField.columnName, $scope.options.selectedLinkedNodeField.columnName);
+                    query.groupBy($scope.options.selectedNodeField, $scope.options.selectedLinkedNodeField);
                 } else if(datasetService.isFieldValid($scope.options.selectedNodeField)) {
                     fields = [{
                         query: $scope.options.selectedNodeField.columnName,
                         pretty: $scope.options.selectedNodeField.prettyName
                     }];
-                    query.groupBy($scope.options.selectedNodeField.columnName);
+                    query.groupBy($scope.options.selectedNodeField);
                 } else if(datasetService.isFieldValid($scope.options.selectedLinkedNodeField)) {
                     fields = [{
                         query: $scope.options.selectedLinkedNodeField.columnName,
                         pretty: $scope.options.selectedLinkedNodeField.prettyName
                     }];
-                    query.groupBy($scope.options.selectedLinkedNodeField.columnName);
+                    query.groupBy($scope.options.selectedLinkedNodeField);
                 }
 
                 var finalObject = {

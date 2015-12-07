@@ -229,7 +229,7 @@ charts.SunburstChart = function(rootElement, selector, opts) {
         var newRoot = this.path.node().__data__;
 
         // Find the previously selected partition, if any, inside the new data and zoom to it
-        if(this.node && _.keys(this.node).length && newRoot.key != this.node.key) {
+        if(this.node && _.keys(this.node).length && newRoot.key !== this.node.key) {
             var node = findNode(newRoot.children);
             if(_.keys(node).length) {
                 newRoot = node;
@@ -256,7 +256,7 @@ charts.SunburstChart = function(rootElement, selector, opts) {
             });
 
             return nodeToFind;
-        };
+        }
 
         function click(d) {
             me.node = d;
@@ -266,7 +266,7 @@ charts.SunburstChart = function(rootElement, selector, opts) {
         }
 
         function onMouseOver(d) {
-            var text = "<span class='sunburst-tooltip-title'>" + d.name + "</span>";
+            var text = "<span class='sunburst-tooltip-title'>" + d.prettyName + "</span>";
 
             if(!d.count && !d.total && d.value) {
                 text = text + "<span class='sunburst-tooltip-field'><strong>";

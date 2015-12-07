@@ -114,11 +114,11 @@ mediators.DirectedGraphMediator = (function() {
 
         // Add each unique node from the data to the graph as a node.
         data.forEach(function(item) {
-            var nodeId = item[options.nodeField];
-            var nodeName = options.nameField ? item[options.nameField] : nodeId;
-            var nodeSize = options.sizeField ? item[options.sizeField] : 1;
-            var nodeFlag = options.flagField ? item[options.flagField] : true;
-            var itemDate = options.dateField ? new Date(item[options.dateField]) : undefined;
+            var nodeId = mediator.callbacks.getNestedValue(item, options.nodeField);
+            var nodeName = options.nameField ? mediator.callbacks.getNestedValue(item, options.nameField) : nodeId;
+            var nodeSize = options.sizeField ? mediator.callbacks.getNestedValue(item, options.sizeField) : 1;
+            var nodeFlag = options.flagField ? mediator.callbacks.getNestedValue(item, options.flagField) : true;
+            var itemDate = options.dateField ? new Date(mediator.callbacks.getNestedValue(item, options.dateField)) : undefined;
 
             if(nodeId) {
                 var node = addNodeIfUnique(nodes, nodeId, nodeName, nodeSize);
@@ -130,9 +130,9 @@ mediators.DirectedGraphMediator = (function() {
                 node.inData = true;
 
                 // Find the data for the linked nodes (if configured) from the data item.
-                var linkedNodeIds = createFieldArray(options.linkedNodeField, item, 0);
-                var linkedNodeNames = createFieldArray(options.linkedNameField, item, linkedNodeIds.length);
-                var linkedNodeSizes = createFieldArray(options.linkedSizeField, item, linkedNodeIds.length);
+                var linkedNodeIds = createFieldArray(mediator.callbacks.getNestedValue(item, options.linkedNodeField), 0);
+                var linkedNodeNames = createFieldArray(mediator.callbacks.getNestedValue(item, options.linkedNameField), linkedNodeIds.length);
+                var linkedNodeSizes = createFieldArray(mediator.callbacks.getNestedValue(item, options.linkedSizeField), linkedNodeIds.length);
 
                 // Add each linked node to the graph as a node with a link to the original node.
                 linkedNodeIds.forEach(function(linkedNodeId, index) {
@@ -307,11 +307,10 @@ mediators.DirectedGraphMediator = (function() {
      * @private
      * @return {Array}
      */
-    var createFieldArray = function(columnName, item, length) {
+    var createFieldArray = function(columnValue, length) {
         var array = [];
-        if(columnName) {
-            array = item[columnName] || [];
-            array = (array.constructor === Array) ? array : [array];
+        if(columnValue) {
+            array = (columnValue.constructor === Array) ? columnValue : [columnValue];
         }
         if(array.length < length) {
             for(var i = array.length; i < length; ++i) {
@@ -995,7 +994,7 @@ mediators.DirectedGraphMediator = (function() {
                 text += '<tr class="graph-tooltip-block">' +
                     '<td class="graph-tooltip-label">' + mediator.tooltip.flagLabel + '</td>' +
                     '</tr>';
-            };
+            }
 
             return text;
         };

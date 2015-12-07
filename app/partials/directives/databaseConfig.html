@@ -2,21 +2,21 @@
 
 <ul class="nav navbar-nav overlay-above">
     <li class="dropdown">
-    <a data-toggle="dropdown" ng-bind="activeDataset.name" class="dropdown-toggle primary" href="#" ng-click="activeDataset.info = 'sr-only'"><b class="caret"></b></a>
-    <ul class="dropdown-menu">
-        <li ng-repeat="dataset in datasets" ng-class="{true: 'active', false: ''}[dataset.name == activeDataset.name]">
-        <a href="#" ng-click="connectToPreset($index)" ng-bind="dataset.name"></a>
-        </li>
+        <a data-toggle="dropdown" ng-bind="activeDataset.name" class="dropdown-toggle primary" href="#" ng-click="activeDataset.info = 'sr-only'"><b class="caret"></b></a>
+        <ul class="dropdown-menu">
+            <li ng-repeat="dataset in datasets" ng-class="{true: 'active', false: ''}[dataset.name == activeDataset.name]">
+            <a href="#" ng-click="connectToPreset($index)" ng-bind="dataset.name"></a>
+            </li>
 
-        <li class="divider" ng-hide="hideAdvancedOptions"></li>
+            <li class="divider" ng-hide="hideAdvancedOptions"></li>
 
-        <li ng-class="{true: 'active', false: ''}[activeDataset.custom || !(datasets.length > 0)]" ng-hide="hideAdvancedOptions">
-        <a data-toggle="modal" href="#customConnectionModal" ng-click="selectCustom()">Custom...</a>
-        </li>
-    </ul>
+            <li ng-class="{true: 'active', false: ''}[activeDataset.custom || !(datasets.length > 0)]" ng-hide="hideAdvancedOptions">
+            <a data-toggle="modal" href="#customConnectionModal" ng-click="selectCustom()">Custom...</a>
+            </li>
+        </ul>
     </li>
 
-    <div class="popover fade bottom in {{activeDataset.info}}" style="display: block; top: 51px;">
+    <div class="popover fade bottom in {{activeDataset.info}} start-here" style="display: block; top: 51px;">
         <div class="arrow"></div>
         <h3 class="popover-title">Start here!</h3>
         <div class="popover-content">

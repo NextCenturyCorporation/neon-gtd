@@ -686,7 +686,9 @@ function(external, connectionService, datasetService, errorNotificationService, 
              */
             var buildQuery = function() {
                 var whereNotNull = neon.query.where($scope.options.field.columnName, "!=", null);
-                var query = new neon.query.Query().selectFrom($scope.options.database.name, $scope.options.table.name).groupBy($scope.options.field.columnName).where(whereNotNull);
+                var query = new neon.query.Query().selectFrom($scope.options.database.name, $scope.options.table.name)
+                    .groupBy($scope.options.field.columnName)
+                    .where(whereNotNull);
 
                 // The widget displays its own ignored rows with 0.5 opacity.
                 query.ignoreFilters([$scope.filterKeys[$scope.options.database.name][$scope.options.table.name]]);
@@ -774,7 +776,7 @@ function(external, connectionService, datasetService, errorNotificationService, 
                 };
                 finalObject.data[0].fields.push({
                     query: (query.groupByClauses[0]).field,
-                    pretty: capitalizeFirstLetter((query.groupByClauses[0]).field)
+                    pretty: (query.groupByClauses[0]).field
                 });
                 var op = '';
                 if($scope.options.aggregation === 'min') {

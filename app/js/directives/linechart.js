@@ -45,7 +45,6 @@ function(external, connectionService, datasetService, errorNotificationService, 
             bindTable: '=',
             bindDatabase: '=',
             bindGranularity: '=',
-            colorMappings: '&',
             hideHeader: '=?',
             hideAdvancedOptions: '=?'
         },
@@ -527,7 +526,7 @@ function(external, connectionService, datasetService, errorNotificationService, 
                 var groupByClause = [yearGroupClause, monthGroupClause, dayGroupClause, hourGroupClause];
 
                 if(datasetService.isFieldValid($scope.options.categoryField)) {
-                    groupByClause.push($scope.options.categoryField.columnName);
+                    groupByClause.push($scope.options.categoryField);
                 }
 
                 var query = new neon.query.Query()
@@ -740,7 +739,7 @@ function(external, connectionService, datasetService, errorNotificationService, 
                     $scope.title = $scope.bindTitle;
                 } else {
                     $scope.title = $scope.options.table.prettyName +
-                        ($scope.options.attrY.prettyName ? ' / ' + $scope.options.attrY.prettyName : '');
+                        ($scope.options.attrY.prettyName && $scope.options.aggregation !== "count" ? ' / ' + $scope.options.attrY.prettyName : '');
                 }
                 lineChartService.setChart($scope.visualizationId, $scope.title);
             };
@@ -1616,6 +1615,7 @@ function(external, connectionService, datasetService, errorNotificationService, 
                     query: "hour",
                     pretty: "Hour"
                 });
+
                 if($scope.options.aggregation === "count") {
                     finalObject.data[0].fields.push({
                         query: "value",
