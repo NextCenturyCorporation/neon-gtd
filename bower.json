@@ -16,8 +16,8 @@
         "angular-ui-tree": "2.5.0",
         "bootstrap": "3.2.0",
         "d3": "3.0.8",
+        "fontawesome": "https://github.com/FortAwesome/Font-Awesome.git#4.5.0",
         "html5shiv": "3.7.2",
-        "icomoon": "0.1.0",
         "jquery": "1.11.1",
         "jquery-ui": "1.10.4",
         "threedubmedia.jquery.event": "2.2",
@@ -62,13 +62,13 @@
             "css": "**/*.css"
         },
 
-        "html5shiv": {
-            "js": "**/*min.js"
+        "fontawesome": {
+            "css": "css/*",
+            "fonts": "fonts/*"
         },
 
-        "icomoon": {
-            ".": "style.css",
-            "fonts": "fonts/*"
+        "html5shiv": {
+            "js": "**/*min.js"
         },
 
         "threedubmedia.jquery.event": {

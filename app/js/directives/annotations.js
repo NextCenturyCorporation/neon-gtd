@@ -40,7 +40,8 @@ angular.module("neonDemo.directives")
                     $scope.data[key] = {
                         prefix: (_.isObject(data[key]) ? data[key].prefix : undefined) || "",
                         suffix: (_.isObject(data[key]) ? data[key].suffix : undefined) || "",
-                        value: (_.isObject(data[key]) ? data[key].value : data[key]).toLowerCase()
+                        value: (_.isObject(data[key]) ? data[key].value : data[key]).toLowerCase(),
+                        annotated: false
                     };
                 });
 
@@ -48,6 +49,7 @@ angular.module("neonDemo.directives")
                     $http.get(annotationService.URL + "/" + createString($scope.ID)).then(function(response) {
                         response.data.forEach(function(item) {
                             $scope.data[item[annotationService.KEY]].value = item[annotationService.VALUE];
+                            $scope.data[item[annotationService.KEY]].annotated = true;
                         });
                     });
                 }
@@ -73,6 +75,7 @@ angular.module("neonDemo.directives")
                     postData[annotationService.USER] = "Neon-Test";
                 }
                 $http.post(annotationService.URL, postData);
+                $scope.data[$scope.SENTIMENT].annotated = true;
             };
         }
     };

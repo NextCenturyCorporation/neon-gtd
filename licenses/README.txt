@@ -47,6 +47,8 @@ MIT/X11 (mit.txt)
   -- bootstrap.min.js v3.2.0
 - Bootstrap Notify
   -- bootstrap-notify.min.js v3.0.0
+- Font Awesome
+  -- font-awesome.min.css v4.5.0
 - HTML5 Shiv
   -- html5shiv.js v3.7.0
 - JavaScript Detect Element Resize
@@ -78,6 +80,9 @@ MIT/X11 (mit.txt)
   -- grunt-contrib-yuidoc  0.5.2
   -- grunt-jscs  0.8.0
   -- grunt-war  0.3.3
+
+SIL OFL 1.1
+- Font Awesome fonts
 
 Yahoo BSD (yahoo-bsd.txt)
 - Yahoo getXY (this is including in OpenLayers.js)

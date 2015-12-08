@@ -14,27 +14,45 @@
 //
 
 .annotations-directive {
-    .btn-group {
-        margin: 10px 0px;
+    .annotations-group {
+        margin: 10px 0px 0px;
 
-        .btn {
+        span {
             font-size: 16px;
-            padding: 4px 6px;
+            padding: 6px;
+            vertical-align: middle;
+        }
 
-            &.green {
-                &.active, &:hover {
+        .btn-group {
+            .btn {
+                color: @mid-text-color;
+                background-color: #fff;
+                border-color: @border-color;
+                padding: 0px;
+
+                /* Colors match the neonColors namespace defined in app/js/namespaces.js */
+
+                &.blue.active, &.blue:hover {
+                    background-color: #aec7e8;
+                }
+
+                &.gray.active, &.gray:hover {
+                    background-color: #7f7f7f;
+                }
+
+                &.green.active, &.green:hover {
                     background-color: #98df8a;
                 }
-            }
 
-            &.red {
-                &.active, &:hover {
+                &.orange.active, &.orange:hover {
+                    background-color: #ffbb78;
+                }
+
+                &.red.active, &.red:hover {
                     background-color: #ff9896;
                 }
-            }
 
-            &.yellow {
-                &.active, &:hover {
+                &.yellow.active, &.yellow:hover {
                     background-color: #dbdb8d;
                 }
             }
