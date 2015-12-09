@@ -260,7 +260,7 @@
 
         &.filter-container {
             top: 50px;
-            right: 10px;
+            right: 45px;
         }
     }
 
@@ -274,9 +274,11 @@
 
         .olMapViewport {
             .olControlZoom {
+                left: inherit;
+                right: 10px;
                 top: 50px;
-                left: 10px;
                 background: transparent;
+                padding: 0px;
 
                 a {
                     background-color: @button-background-color;
@@ -335,25 +337,6 @@
 
         a {
             pointer-events: none;
-        }
-    }
-
-    .olControlZoom {
-        top: 110px;
-        right: 10px;
-        left: initial;
-
-        a {
-            background-color: @accent-bright;
-            opacity: .7;
-            font-size: 20px;
-            font-family: "Open Sans", Helvetica, arial, sans-serif;
-            line-height: 24px;
-
-            &:hover{
-                background-color: @accent-bright;
-                opacity: 1;
-            }
         }
     }
 
