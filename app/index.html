@@ -4,12 +4,30 @@
         <meta charset="utf-8">
         <meta http-equiv="X-UA-Compatible" content="IE=edge">
             <meta name="viewport" content="width=device-width, initial-scale=1">
-        <title>Neon</title>
+        <title>Neon Dashboard</title>
 
         <link type="image/png" rel="shortcut icon" href="img/Neon_16x16.png">
 
-        <link rel="stylesheet" type="text/css" href="build/css/neon-dashboard.css">
-        <link rel="stylesheet" type="text/css" href="build/css/neon-dashboard-sprites.css">
+        <!-- OpenLayers will automatically add the link for its style during runtime if it can't find it in the index.html file even if it's included in the CSS package.  Put the link here so the style is defined before the Neon Dashboard style. -->
+        <link rel="stylesheet" href="lib/openlayers/theme/default/style.css" />
+
+        <!-- build:css css/neon-dashboard.min.css -->
+        <!-- bower:css -->
+        <link rel="stylesheet" href="lib/angular-bootstrap-datetimepicker/src/css/datetimepicker.css" />
+        <link rel="stylesheet" href="lib/angular-gantt/assets/angular-gantt.css" />
+        <link rel="stylesheet" href="lib/angular-gantt/assets/angular-gantt-plugins.css" />
+        <link rel="stylesheet" href="lib/angular-gridster/dist/angular-gridster.min.css" />
+        <link rel="stylesheet" href="lib/angular-ui-tree/dist/angular-ui-tree.min.css" />
+        <link rel="stylesheet" href="lib/bootstrap/dist/css/bootstrap.css" />
+        <!-- endbower -->
+
+        <link rel="stylesheet" href="lib/jquery-ui/themes/ui-lightness/jquery-ui.css" />
+        <link rel="stylesheet" href="lib/jquery-ui/themes/ui-lightness/jquery-ui.theme.css" />
+        <link rel="stylesheet" href="js/vendor/slick-grid/css/slick.grid.css" />
+
+        <link rel="stylesheet" type="text/css" href="css/app.css">
+        <link rel="stylesheet" type="text/css" href="css/neon-dashboard-sprites.css">
+        <!-- endbuild -->
 
         <!-- HTML5 Shim and Respond.js IE8 support of HTML5 elements and media queries -->
         <!-- WARNING: Respond.js doesn't work if you view the page via file:// -->
@@ -135,83 +153,91 @@
              loaded first, angular should pick up the included jQuery. -->
         <script src="/neon/js/neon.js"></script>
 
+        <!-- Must include OpenLayers outside the JS package because OpenLayers scans the index.html file for its own include to extract the relative path. -->
         <script src="lib/openlayers/OpenLayers.js"></script>
 
-        <script src="build/js/neon-dashboard-lib.js"></script>
-        <script src="build/js/neon-dashboard.min.js"></script>
+        <!-- build:js(app) js/neon-dashboard-lib.min.js -->
+        <!-- bower:js -->
+        <script src="lib/jquery/dist/jquery.js"></script>
+        <script src="lib/angular/angular.js"></script>
+        <script src="lib/moment/moment.js"></script>
+        <script src="lib/angular-bootstrap-datetimepicker/src/js/datetimepicker.js"></script>
+        <script src="lib/angular-moment/angular-moment.js"></script>
+        <script src="lib/angular-gantt/assets/angular-gantt.js"></script>
+        <script src="lib/angular-gantt/assets/angular-gantt-plugins.js"></script>
+        <script src="lib/javascript-detect-element-resize/detect-element-resize.js"></script>
+        <script src="lib/angular-gridster/src/angular-gridster.js"></script>
+        <script src="lib/angular-loader/angular-loader.js"></script>
+        <script src="lib/angular-mocks/angular-mocks.js"></script>
+        <script src="lib/angular-route/angular-route.js"></script>
+        <script src="lib/angular-ui-tree/dist/angular-ui-tree.js"></script>
+        <script src="lib/angular-ui-tree/dist/angular-ui-tree.min.js"></script>
+        <script src="lib/bootstrap/dist/js/bootstrap.js"></script>
+        <script src="lib/d3/d3.js"></script>
+        <script src="lib/html5shiv/dist/html5shiv.js"></script>
+        <script src="lib/jquery-ui/ui/jquery-ui.js"></script>
+        <script src="lib/jquery.tagcloud/jquery.tagcloud.js"></script>
+        <script src="lib/js-yaml/dist/js-yaml.js"></script>
+        <script src="lib/mustache/mustache.js"></script>
+        <script src="lib/ngDraggable/ngDraggable.js"></script>
+        <script src="lib/remarkable-bootstrap-notify/bootstrap-notify.js"></script>
+        <script src="lib/respond/dest/respond.src.js"></script>
+        <!-- endbower -->
 
-        <!-- For Development
-        <script src="lib/user-ale/js/userale.js"></script>
-        <script src="lib/user-ale/js/userale-worker.js"></script>
+        <script src="lib/user-ale/helper-libs/javascript/userale.js"></script>
+        <script src="lib/user-ale/helper-libs/javascript/userale-worker.js"></script>
 
-        <script src="lib/jquery/js/jquery.min.js"></script>
+        <!-- Include the opencpu library. OpenCPU needs to be included after JQuery and before the app config. -->
+        <script src="lib/opencpu/opencpu-0.5.js"></script>
 
-        <script src="lib/opencpu/js/opencpu-0.5.js"></script>
-
-        <script src="js/vendor/angular.js"></script>
-        <script src="lib/angular-gridster/js/angular-gridster.min.js"></script>
-        <script src="lib/moment/js/moment.min.js"></script>
-        <script src="lib/angular-moment/js/angular-moment.min.js"></script>
-        <script src="lib/angular-gantt/js/angular-gantt.min.js"></script>
-        <script src="lib/angular-gantt/js/angular-gantt-plugins.min.js"></script>
-        <script src="lib/angular-route/js/angular-route.min.js"></script>
-        <script src="lib/angular-ui-tree/js/angular-ui-tree.min.js"></script>
-        <script src="lib/angular-bootstrap-datetimepicker/js/datetimepicker.js"></script>
-        <script src="lib/javascript-detect-element-resize/js/jquery.resize.js"></script>
-
-        <script src="lib/d3/js/d3.min.js"></script>
-
-        <script src="lib/openlayers/OpenLayers.js"></script>
-        <script src="lib/heatmapjs/js/heatmap.min.js"></script>
+        <!-- Include third party libs -->
+        <script src="lib/heatmapjs/build/heatmap.js"></script>
         <script src="js/vendor/openlayers-heatmapjs/heatmap-openlayers.js"></script>
-        <script src="lib/jquery.tagcloud/js/jquery.tagcloud.js"></script>
-        <script src="lib/threedubmedia.jquery.event/js/jquery.event.drag.js"></script>
-        <script src="lib/threedubmedia.jquery.event/js/jquery.event.drop.js"></script>
-        <script src="lib/jquery.linky/js/jquery.linky.min.js"></script>
-        <script src="lib/jquery-ui/js/jquery-ui.min.js"></script>
+        <script src="lib/threedubmedia.jquery.event/event.drag/jquery.event.drag.js"></script>
+        <script src="lib/threedubmedia.jquery.event/event.drop/jquery.event.drop.js"></script>
+        <script src="lib/jquery.linky/jquery.linky.js"></script>
         <script src="js/vendor/slick-grid/js/slick.core.js"></script>
         <script src="js/vendor/slick-grid/js/slick.grid.js"></script>
         <script src="js/vendor/slick-grid/js/slick.dataview.js"></script>
         <script src="js/vendor/slick-grid/js/slick.autotooltips.js"></script>
         <script src="js/vendor/slick-grid/js/slick.rowselectionmodel.js"></script>
-        <script src="lib/mergesort/js/merge-sort.js"></script>
-        <script src="lib/bootstrap/js/bootstrap.min.js"></script>
-        <script src="lib/js-yaml/js/js-yaml.min.js"></script>
-        <script src="lib/mustache/js/mustache.min.js"></script>
-        <script src="lib/ngDraggable/js/ngDraggable.js"></script>
-        <script src="lib/remarkable-bootstrap-notify/js/bootstrap-notify.min.js"></script>
-        <script src="lib/rainbowvis.js/js/rainbowvis.js"></script>
+        <script src="lib/mergesort/merge-sort.js"></script>
+        <script src="lib/rainbowvis.js/rainbowvis.js"></script>
+        <!-- endbuild -->
 
-        <script src="js/neon-extensions/filtertable.js"></script>
+        <!-- build:js(app) js/neon-dashboard.min.js -->
+        <!-- injector:js -->
         <script src="js/namespaces.js"></script>
+        <script src="js/neon-extensions/filtertable.js"></script>
         <script src="js/charts/barchart.js"></script>
+        <script src="js/charts/circularHeatChart.js"></script>
         <script src="js/charts/directedGraph.js"></script>
         <script src="js/charts/linechart.js"></script>
+        <script src="js/charts/sunburst.js"></script>
         <script src="js/charts/timelineSelectorChart.js"></script>
         <script src="js/coremap/coremap.js"></script>
         <script src="js/coremap/heatmapLayer.js"></script>
+        <script src="js/coremap/nodeLayer.js"></script>
         <script src="js/coremap/pointsLayer.js"></script>
         <script src="js/coremap/selectedPointsLayer.js"></script>
-        <script src="js/coremap/nodeLayer.js"></script>
-        <script src="js/tables/table.js"></script>
-        <script src="js/charts/sunburst.js"></script>
         <script src="js/mediators/directedGraphMediator.js"></script>
-
+        <script src="js/tables/table.js"></script>
+        <script src="js/time/dateBucketizer.js"></script>
+        <script src="js/time/monthBucketizer.js"></script>
+        <script src="js/time/yearBucketizer.js"></script>
         <script src="js/app.js"></script>
         <script src="js/connectionService.js"></script>
         <script src="js/datasetService.js"></script>
         <script src="js/errorNotificationService.js"></script>
-        <script src="js/filterService.js"></script>
         <script src="js/exportService.js"></script>
+        <script src="js/filterService.js"></script>
         <script src="js/importService.js"></script>
         <script src="js/linksPopupService.js"></script>
         <script src="js/parameterService.js"></script>
         <script src="js/translationService.js"></script>
         <script src="js/neonDemoController.js"></script>
-
-        <script src="js/charts/circularHeatChart.js"></script>
-
         <script src="js/directives/addVisualization.js"></script>
+        <script src="js/directives/arrayTextForm.js"></script>
         <script src="js/directives/barchart.js"></script>
         <script src="js/directives/circularHeatChart.js"></script>
         <script src="js/directives/circularHeatForm.js"></script>
@@ -236,16 +262,13 @@
         <script src="js/directives/removeDataset.js"></script>
         <script src="js/directives/sample.js"></script>
         <script src="js/directives/stackedBarchart.js"></script>
-        <script src="js/directives/tagCloud.js"></script>
-        <script src="js/time/dateBucketizer.js"></script>
-        <script src="js/time/monthBucketizer.js"></script>
-        <script src="js/time/yearBucketizer.js"></script>
-        <script src="js/directives/timelineSelectorChart.js"></script>
-        <script src="js/directives/timelineSelector.js"></script>
-        <script src="js/directives/visualizationWidget.js"></script>
         <script src="js/directives/sunburst.js"></script>
-        <script src="js/directives/arrayTextForm.js"></script>
+        <script src="js/directives/tagCloud.js"></script>
+        <script src="js/directives/timelineSelector.js"></script>
+        <script src="js/directives/timelineSelectorChart.js"></script>
         <script src="js/directives/translationOptions.js"></script>
-        -->
+        <script src="js/directives/visualizationWidget.js"></script>
+        <!-- endinjector -->
+        <!-- endbuild -->
     </body>
 </html>

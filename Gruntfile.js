@@ -4,66 +4,11 @@ module.exports = function(grunt) {
     var packageJSON = require('./package.json');
     var versionJSONFile = 'app/config/version.json';
 
-    var jsLibs = [
-        "app/lib/user-ale/js/userale.js",
-        "app/lib/user-ale/js/userale-worker.js",
-        "app/lib/jquery/js/jquery.min.js",
-        "app/lib/opencpu/js/opencpu-0.5.js",
-        "app/lib/angular/js/angular.min.js",
-        "app/lib/angular-gridster/js/angular-gridster.min.js",
-        "app/lib/moment/js/moment.min.js",
-        "app/lib/angular-moment/js/angular-moment.min.js",
-        "app/lib/angular-gantt/js/angular-gantt.min.js",
-        "app/lib/angular-gantt/js/angular-gantt-plugins.min.js",
-        "app/lib/angular-route/js/angular-route.min.js",
-        "app/lib/angular-ui-tree/js/angular-ui-tree.min.js",
-        "app/lib/angular-bootstrap-datetimepicker/js/datetimepicker.js",
-        "app/lib/javascript-detect-element-resize/js/jquery.resize.js",
-        "app/lib/d3/js/d3.min.js",
-        "app/lib/heatmapjs/js/heatmap.min.js",
-        "app/js/vendor/openlayers-heatmapjs/heatmap-openlayers.js",
-        "app/lib/jquery.tagcloud/js/jquery.tagcloud.js",
-        "app/lib/threedubmedia.jquery.event/js/jquery.event.drag.js",
-        "app/lib/threedubmedia.jquery.event/js/jquery.event.drop.js",
-        "app/lib/jquery.linky/js/jquery.linky.min.js",
-        "app/lib/jquery-ui/js/jquery-ui.min.js",
-        "app/js/vendor/slick-grid/js/slick.core.js",
-        "app/js/vendor/slick-grid/js/slick.grid.js",
-        "app/js/vendor/slick-grid/js/slick.dataview.js",
-        "app/js/vendor/slick-grid/js/slick.autotooltips.js",
-        "app/js/vendor/slick-grid/js/slick.rowselectionmodel.js",
-        "app/lib/mergesort/js/merge-sort.js",
-        "app/lib/bootstrap/js/bootstrap.min.js",
-        "app/lib/js-yaml/js/js-yaml.min.js",
-        "app/lib/mustache/js/mustache.min.js",
-        "app/lib/ngDraggable/js/ngDraggable.js",
-        "app/lib/remarkable-bootstrap-notify/js/bootstrap-notify.min.js",
-        "app/lib/rainbowvis.js/js/rainbowvis.js"
-    ];
-
-    var jsLibsDest = "app/build/js/neon-dashboard-lib.js";
-
     grunt.initConfig({
-        bower: {
-            cleanup: {
-                options: {
-                    targetDir: "app/lib",
-                    layout: "byComponent",
-                    cleanTargetDir: true,
-                    cleanBowerDir: true,
-                    install: false,
-                    copy: false
-                }
-            },
-            install: {
-                options: {
-                    targetDir: "app/lib",
-                    layout: "byComponent",
-                    cleanTargetDir: true,
-                    cleanBowerDir: true,
-                    install: true,
-                    copy: true
-                }
+        exec: {
+            bower_install: {
+                command: "bower install",
+                stdout: false
             }
         },
 
@@ -72,9 +17,8 @@ module.exports = function(grunt) {
             docs: ["docs"],
             war: ["target"],
             tests: ["reports"],
-            js: ["app/build/js/*.js"],
-            css: ["app/build/css/*.css"],
-            build: ["app/build"]
+            less: ["app/css/app.css"],
+            build: [".tmp", "build"]
         },
 
         "git-describe": {
@@ -88,67 +32,166 @@ module.exports = function(grunt) {
             }
         },
 
-        uglify: {
-            dashboard: {
+        // Injects the bower components into the <!-- bower --> blocks in our index.html file.
+        wiredep: {
+            app: {
+                src: "app/index.html",
+                directory: "app/lib",
+                ignorePath: "app/",
+                // The following libraries are added manually because they are (currently) not configured to work with wiredep.
+                exclude: [/threedubmedia/, /mergesort/, /opencpu/, /openlayers/, /heatmapjs/, /slickgrid/, /user-ale/, /rainbowvis.js/]
+            }
+        },
+
+        injector: {
+            js: {
                 options: {
-                    mangle: false
+                    transform: function(filePath) {
+                        filePath = filePath.replace("/app/", "");
+                        return '<script src="' + filePath + '"></script>';
+                    }
                 },
-                files: [{
-                    src: ["app/js/namespaces.js", "app/js/neon-extensions/*.js", "app/js/charts/*.js", "app/js/coremap/*.js", "app/js/mediators/*.js", "app/js/tables/*.js", "app/js/time/*.js", "app/js/app.js", "app/js/*Service.js", "app/js/*Controller.js", "app/js/directives/*.js"],
-                    dest: "app/build/js/neon-dashboard.min.js"
-                }]
+                files: {
+                    "app/index.html": [
+                        "app/js/namespaces.js",
+                        "app/js/neon-extensions/*.js",
+                        "app/js/charts/*.js",
+                        "app/js/coremap/*.js",
+                        "app/js/mediators/*.js",
+                        "app/js/tables/*.js",
+                        "app/js/time/*.js",
+                        "app/js/app.js",
+                        "app/js/*Service.js",
+                        "app/js/*Controller.js",
+                        "app/js/directives/*.js"
+                    ]
+                }
+            },
+
+            less: {
+                options: {
+                    starttag: "/* injector:less */",
+                    endtag: "/* endinjector */",
+                    transform: function(filePath) {
+                        filePath = filePath.replace("/app/css/", "");
+                        return '@import "' + filePath + '";';
+                    }
+                },
+                files: {
+                    "app/css/app.less": [
+                        "app/css/*.less",
+                        "app/css/directives/*.less",
+                        "!app/css/app.less",
+                        "!app/css/variables.less",
+                        "!app/css/widgetStyle.less"
+                    ]
+                }
             }
         },
 
-        concat: {
-            libs: {
-                src: [].concat(jsLibs),
-                dest: jsLibsDest
+        less: {
+            options: {
+                dumpLineNumbers: 'comments',
+                paths: ['app/components']
+            },
+            app: {
+                files: {
+                    'app/css/app.css': 'app/css/app.less'
+                }
             }
         },
 
+        // Packages all the images into a spritesheet and creates a CSS file for using the sprites.
+        sprite: {
+            app: {
+                src: ["app/img/*.png", "app/img/visualizations/*.png", "!app/img/neon-dashboard-spritesheet.png"],
+                dest: "app/img/neon-dashboard-spritesheet.png",
+                destCss: "app/css/neon-dashboard-sprites.css"
+            }
+        },
+
+        // Prepares concatenation and minification of CSS and JS dependencies in our index.html file.
+        // Automatically configures files for the concat, uglify, and cssmin tasks using the <!-- build --> blocks in our index.html.
+        useminPrepare: {
+            html: "app/index.html",
+            options: {
+                dest: "build"
+            }
+        },
+
+        // Copies concatenated, minified files into the build directory and inject dependencies into our index.html file.
+        usemin: {
+            html: ["build/{,*/}*.html"],
+            options: {
+                assetsDirs: ["build"]
+            }
+        },
+
+        // Packages all the HTML partials into a JS file.
+        ngtemplates: {
+            options: {
+                module: "neonDemo",
+                // Add the template JS file to the list of JS files that the usemin task configured to concatenate.
+                usemin: "build/js/neon-dashboard.min.js"
+                // TODO Use the htmlmin option when the html-minifier task fully supports angular (currently the task just hangs when run).
+            },
+            app: {
+                cwd: "app/",
+                src: ["partials/**/*.html"],
+                dest: "build/js/neon-dashboard-templates.js"
+            }
+        },
+
+        // Files for uglify are automatically configured by the useminPrepare task.
+        uglify: {
+            options: {
+                mangle: false
+            }
+        },
+
+        // Copy dependencies for third-party libraries (using their relative paths) and other Neon Dashboard files/folders for the production version.
         copy: {
             bootstrap: {
                 expand: true,
-                cwd: "app/lib/bootstrap/",
+                cwd: "app/lib/bootstrap/dist/",
                 src: ["fonts/**"],
-                dest: "app/build/"
+                dest: "build/"
             },
-            jqueryUiLightness: {
+            jquery_ui_lightness: {
                 expand: true,
                 cwd: "app/lib/jquery-ui/themes/ui-lightness",
                 src: ["images/**"],
-                dest: "app/build/css/"
+                dest: "build/css/"
             },
-            jqueryUiSmoothness: {
+            jquery_ui_smoothness: {
                 expand: true,
                 cwd: "app/lib/jquery-ui/themes/smoothness",
                 src: ["images/**"],
-                dest: "app/build/css/"
+                dest: "build/css/"
+            },
+            openlayers: {
+                expand: true,
+                cwd: "app/",
+                src: ["lib/openlayers/OpenLayers.js", "lib/openlayers/theme/default/style.css"],
+                dest: "build/"
             },
             slickgrid: {
                 expand: true,
                 cwd: "app/lib/slickgrid/",
-                src: ["css/images/**"],
-                dest: "app/build/"
+                src: ["images/**"],
+                dest: "build/css/"
             },
-            fonts: {
+            userale: {
                 expand: true,
                 cwd: "app/",
-                src: ["fonts/**"],
-                dest: "app/build/"
-            }
-        },
-
-        replace: {
-            // Remove the sourceMappingURLs from javascript libraries in the master javascript file.
-            sourceMappingUrls: {
-                src: [jsLibsDest],
-                dest: jsLibsDest,
-                replacements: [{
-                    from: /\/\/# sourceMappingURL=.*/g,
-                    to: ""
-                }]
+                src: ["lib/user-ale/helper-libs/javascript/userale-worker.js"],
+                dest: "build/"
+            },
+            app: {
+                expand: true,
+                cwd: "app/",
+                src: ["index.html", "config/**", "fonts/**", "help/**", "img/Neon_16x16.png", "img/neon-dashboard-spritesheet.png"],
+                dest: "build/"
             }
         },
 
@@ -214,38 +257,30 @@ module.exports = function(grunt) {
             }
         },
 
-        less: {
-            options: {
-                dumpLineNumbers: 'comments',
-                paths: [
-                    'app/components'
-                ]
-            },
-            nolibs: {
-                files: {
-                    'app/build/css/neon-dashboard-nolibs.css': 'app/css/app.less'
-                }
-            },
-            dashboard: {
-                files: {
-                    'app/build/css/neon-dashboard.css': 'app/master.less'
-                }
-            }
-        },
-
-        sprite: {
-            dashboard: {
-                src: ["app/img/*.png", "app/img/visualizations/*.png"],
-                dest: "app/build/img/neon-dashboard-spritesheet.png",
-                destCss: "app/build/css/neon-dashboard-sprites.css"
-            }
-        },
-
         /*
          * Build a WAR (web archive) without Maven or the JVM installed.
          */
         war: {
-            target: {
+            development: {
+                options: {
+                    war_dist_folder: "target",
+                    war_verbose: true,
+                    war_name: 'neon-gtd-dev-' + packageJSON.version,
+                    webxml_welcome: 'index.html',
+                    webxml_display_name: packageJSON.shortDescription,
+                    webxml_mime_mapping: [{
+                        extension: 'woff',
+                        mime_type: 'application/font-woff'
+                    }]
+                },
+                files: [{
+                    expand: true,
+                    cwd: ".",
+                    src: ["app/**", "!**/*.less"],
+                    dest: ""
+                }]
+            },
+            production: {
                 options: {
                     war_dist_folder: "target",
                     war_verbose: true,
@@ -257,16 +292,12 @@ module.exports = function(grunt) {
                         mime_type: 'application/font-woff'
                     }]
                 },
-                files: [
-                    {
-                        expand: true,
-                        cwd: ".",
-                        src: [
-                            "app/**",
-                            "!**/*.less"],
-                        dest: ""
-                    }
-                ]
+                files: [{
+                    expand: true,
+                    cwd: ".",
+                    src: ["build/**"],
+                    dest: ""
+                }]
             }
         },
 
@@ -286,23 +317,27 @@ module.exports = function(grunt) {
         }
     });
 
-    grunt.loadNpmTasks('grunt-bower-task');
+    grunt.loadNpmTasks('grunt-angular-templates');
     grunt.loadNpmTasks('grunt-contrib-clean');
     grunt.loadNpmTasks('grunt-contrib-concat');
     grunt.loadNpmTasks('grunt-contrib-copy');
+    grunt.loadNpmTasks('grunt-contrib-cssmin');
     grunt.loadNpmTasks('grunt-contrib-jshint');
     grunt.loadNpmTasks('grunt-contrib-less');
     grunt.loadNpmTasks('grunt-contrib-uglify');
     grunt.loadNpmTasks('grunt-contrib-yuidoc');
+    grunt.loadNpmTasks('grunt-exec');
     grunt.loadNpmTasks('grunt-git-describe');
+    grunt.loadNpmTasks('grunt-injector');
     grunt.loadNpmTasks('grunt-jscs');
     grunt.loadNpmTasks('grunt-karma');
     grunt.loadNpmTasks('grunt-spritesmith');
-    grunt.loadNpmTasks('grunt-text-replace');
+    grunt.loadNpmTasks('grunt-usemin');
     grunt.loadNpmTasks('grunt-war');
+    grunt.loadNpmTasks('grunt-wiredep');
 
-    grunt.registerTask('compile-js', ['clean:js', 'uglify', 'concat', 'copy', 'replace']);
-    grunt.registerTask('compile-css', ['clean:css', 'less', 'sprite']);
+    grunt.registerTask("bower_install", ["clean:lib", "exec:bower_install", "wiredep"]);
+    grunt.registerTask('compile-less', ['clean:less', 'injector:less', 'less', 'sprite']);
     grunt.registerTask('saveRevision', function() {
         grunt.event.once('git-describe', function(rev) {
             var date = new Date(Date.now()).toISOString();
@@ -317,5 +352,26 @@ module.exports = function(grunt) {
         grunt.task.run('git-describe');
     });
     grunt.registerTask('test', ['jshint:console', 'jscs:console', 'karma']);
-    grunt.registerTask('default', ['clean', 'bower:install', 'saveRevision', 'compile-js', 'jshint:xml', 'jscs:xml', 'yuidoc', 'compile-css', 'war']);
+
+    var defaultTasks = [
+        'saveRevision',
+        'wiredep',
+        'injector',
+        'less',
+        'sprite',
+        'useminPrepare',
+        'ngtemplates',
+        'concat',
+        'uglify',
+        'cssmin',
+        'copy',
+        'jshint:xml',
+        'jscs:xml',
+        'yuidoc',
+        'usemin',
+        'war'
+    ];
+
+    grunt.registerTask('no-bower', ['clean:docs', 'clean:war', 'clean:tests', 'clean:build'].concat(defaultTasks));
+    grunt.registerTask('default', ['clean', 'exec:bower_install'].concat(defaultTasks));
 };

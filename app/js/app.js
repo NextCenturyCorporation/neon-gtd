@@ -121,7 +121,7 @@ var saveUserAle = function(config) {
             "query_group",
             "graph_group"
         ],
-        workerUrl: "lib/user-ale/js/userale-worker.js",
+        workerUrl: "lib/user-ale/helper-libs/javascript/userale-worker.js",
         debug: false,
         sendLogs: false
     });
