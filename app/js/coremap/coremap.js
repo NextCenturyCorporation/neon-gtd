@@ -67,10 +67,13 @@ coreMap.Map = function(elementId, opts) {
         this.height = opts.height || coreMap.Map.DEFAULT_HEIGHT;
     }
 
+    this.baseLayerColor = opts.mapBaseLayer.color || "light";
+    this.baseLayerProtocol = opts.mapBaseLayer.protocol || "http";
+
     this.selectableLayers = [];
     this.selectControls = [];
     this.initializeMap();
-    this.setupLayers(opts.mapBaseLayer);
+    this.setupLayers();
     this.setupControls();
     this.resetZoom();
 };
@@ -91,15 +94,17 @@ coreMap.Map.HEATMAP_LAYER = 'heatmap';
 coreMap.Map.CLUSTER_LAYER = 'cluster';
 coreMap.Map.NODE_LAYER = 'node';
 
-coreMap.Map.DARK_MAP_TILES = {
-    http: "http://a.basemaps.cartocdn.com/dark_all/${z}/${x}/${y}.png",
-    https: "https://cartodb-basemaps-a.global.ssl.fastly.net/dark_all/${z}/${x}/${y}.png",
-    backgroundColor: "#242426"
-};
-coreMap.Map.LIGHT_MAP_TILES = {
-    http: "http://a.basemaps.cartocdn.com/light_all/${z}/${x}/${y}.png",
-    https: "https://cartodb-basemaps-a.global.ssl.fastly.net/light_all/${z}/${x}/${y}.png",
-    backgroundColor: "#CDD2D4"
+coreMap.Map.MAP_TILES = {
+    light: {
+        http: "http://a.basemaps.cartocdn.com/light_all/${z}/${x}/${y}.png",
+        https: "https://cartodb-basemaps-a.global.ssl.fastly.net/light_all/${z}/${x}/${y}.png",
+        backgroundColor: "#CDD2D4"
+    },
+    dark: {
+        http: "http://a.basemaps.cartocdn.com/dark_all/${z}/${x}/${y}.png",
+        https: "https://cartodb-basemaps-a.global.ssl.fastly.net/dark_all/${z}/${x}/${y}.png",
+        backgroundColor: "#242426"
+    }
 };
 
 /**
@@ -490,19 +495,8 @@ coreMap.Map.prototype.createSelectControl =  function(layer) {
  * @method setupLayers
  */
 
-coreMap.Map.prototype.setupLayers = function(mapBaseLayer) {
-    var tilesURL = (mapBaseLayer && mapBaseLayer.protocol) ? coreMap.Map.LIGHT_MAP_TILES[mapBaseLayer.protocol] : coreMap.Map.LIGHT_MAP_TILES.http;
-
-    if(mapBaseLayer && mapBaseLayer.color === "dark") {
-        tilesURL = (mapBaseLayer.protocol) ? coreMap.Map.DARK_MAP_TILES[mapBaseLayer.protocol] : coreMap.Map.DARK_MAP_TILES.http;
-        $("#" + this.elementId).css("background-color", coreMap.Map.DARK_MAP_TILES.backgroundColor);
-    }
-
-    var baseLayer = new OpenLayers.Layer.OSM("OSM", tilesURL, {
-        attribution:  "Map tiles by CartoDB, under CC BY 3.0. Data by OpenStreetMap, under ODbL.",
-        wrapDateLine: false
-    });
-    this.map.addLayer(baseLayer);
+coreMap.Map.prototype.setupLayers = function() {
+    this.addBaseLayer();
 
     // lets clients draw boxes on the map
     this.boxLayer = new OpenLayers.Layer.Boxes('Filter Box', {
@@ -510,6 +504,21 @@ coreMap.Map.prototype.setupLayers = function(mapBaseLayer) {
         displayInLayerSwitcher: false
     });
     this.map.addLayer(this.boxLayer);
+};
+
+/**
+ * Adds a base layer to the map using the global base layer color and protocol.
+ * @method addBaseLayer
+ */
+coreMap.Map.prototype.addBaseLayer = function() {
+    var tilesURL = coreMap.Map.MAP_TILES[this.baseLayerColor][this.baseLayerProtocol];
+    $("#" + this.elementId).css("background-color", coreMap.Map.MAP_TILES[this.baseLayerColor].backgroundColor);
+
+    this.baseLayer = new OpenLayers.Layer.OSM("OSM", tilesURL, {
+        attribution:  "Map tiles by CartoDB, under CC BY 3.0. Data by OpenStreetMap, under ODbL.",
+        wrapDateLine: false
+    });
+    this.map.addLayer(this.baseLayer);
 };
 
 coreMap.Map.prototype.setupControls = function() {
@@ -642,4 +651,15 @@ coreMap.Map.prototype.doAttributesExist = function(data, layer) {
     });
 
     return allExist;
+};
+
+/**
+ * Sets the color of the base layer to the given color by removing the base layer with the old color from the map and adding a new base layer.
+ * @param {String} color
+ * @method setBaseLayerColor
+ */
+coreMap.Map.prototype.setBaseLayerColor = function(color) {
+    this.map.removeLayer(this.baseLayer);
+    this.baseLayerColor = color;
+    this.addBaseLayer();
 };

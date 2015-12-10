@@ -90,6 +90,7 @@ angular.module('neonDemo.directives')
             $scope.SELECTION_EVENT_CHANNEL = "QUERY_RESULTS_SELECTION_EVENT";
 
             $scope.options = {
+                baseLayerColor: "light",
                 layers: [],
                 newLayer: {
                     editing: false,
@@ -183,6 +184,7 @@ angular.module('neonDemo.directives')
              */
             var initialize = function() {
                 var datasetOptions = datasetService.getActiveDatasetOptions();
+                $scope.options.baseLayerColor = (datasetOptions && datasetOptions.mapBaseLayer ? datasetOptions.mapBaseLayer.color : undefined) || "light";
                 $scope.map = new coreMap.Map($scope.mapId, {
                     responsive: false,
                     mapBaseLayer: (datasetOptions ? datasetOptions.mapBaseLayer : undefined),
@@ -2047,6 +2049,12 @@ angular.module('neonDemo.directives')
                     }
                 });
                 return name;
+            };
+
+            $scope.updateBaseLayerColor = function() {
+                if($scope.map) {
+                    $scope.map.setBaseLayerColor($scope.options.baseLayerColor);
+                }
             };
 
             /**

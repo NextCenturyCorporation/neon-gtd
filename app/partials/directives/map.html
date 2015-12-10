@@ -5,12 +5,28 @@
         </div>
 
         <div class="form-group button-container">
-            <button type="button" class="btn btn-default" title="Reset Map View" ng-click="setDefaultView()">
-                Reset Map View
-            </button>
-            <button type="button" class="btn btn-primary" title="Add New Layer" ng-click="clickAddNewLayerButton()" ng-show="!(options.newLayer.editing)">
-                Add New Layer
-            </button>
+            <label>Base Layer Options</label>
+            <div class="btn-group">
+              <label class="btn btn-default" ng-class="{true: 'active', false: ''}[options.baseLayerColor === 'light']">
+                <input type="radio" style="display:none" ng-model="options.baseLayerColor" value="light" ng-change="updateBaseLayerColor()">Light
+              </label>
+              <label class="btn btn-default" ng-class="{true: 'active', false: ''}[options.baseLayerColor === 'dark']">
+                <input type="radio" style="display:none" ng-model="options.baseLayerColor" value="dark" ng-change="updateBaseLayerColor()">Dark
+              </label>
+            </div>
+            <div class="clearfix"></div>
+        </div>
+
+        <div class="form-group button-container">
+            <label>Data Layer Options</label>
+            <div>
+                <button type="button" class="btn btn-default" title="Reset Map View" ng-click="setDefaultView()">
+                    Reset Map View
+                </button>
+                <button type="button" class="btn btn-primary" title="Add New Layer" ng-click="clickAddNewLayerButton()" ng-show="!(options.newLayer.editing)">
+                    Add New Layer
+                </button>
+            </div>
         </div>
 
         <div class="all-layer-options">
