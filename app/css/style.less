@@ -17,6 +17,10 @@
     outline: 0 none !important;
 }
 
+a, a:focus, a:hover {
+    color: @accent-bright;
+}
+
 html {
     color: @main-text-color;
     width: 100vw;
@@ -139,9 +143,11 @@ select[multiple] {
         }
 
         &:hover {
-            color: @accent-bright;
-            background-color: transparent;
+            background: transparent;
             border: none;
+            span {
+                color: @accent-bright;
+            }
         }
 
         &:active, &.active {
