@@ -2064,8 +2064,8 @@ angular.module('neonDemo.directives')
             };
 
             var onThemeChanged = function(message) {
-                if(message.base !== $scope.options.baseLayerColor) {
-                    $scope.options.baseLayerColor = message.base;
+                if(message.type !== $scope.options.baseLayerColor) {
+                    $scope.options.baseLayerColor = message.type;
                     $scope.updateBaseLayerColor();
                 }
             };

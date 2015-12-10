@@ -27,7 +27,7 @@
         <![endif]-->
     </head>
     <body class="ng-hide" ng-controller="neonDemoController" ng-show="displayDashboard">
-        <link rel="stylesheet" type="text/css" ng-href="css/{{theme.name}}.css">
+        <link rel="stylesheet" type="text/css" ng-href="css/{{theme.selected.file}}.css">
 
         <!-- Help Video Modal -->
         <div class="modal fade neon-popup" id="videoModal" tabindex="-1" role="dialog" aria-hidden="true">
@@ -92,7 +92,7 @@
                             <li ng-show="showImport"><a href="#" data-toggle="modal" data-target="#removeDatasetModal" ng-show="canImport">Drop Dataset</a></li>
                             <li class="divider" ng-show="showExport || showImport"></li>
                             <li><a href="#" class="unselectable">Theme:</a></li>
-                            <li><select class="form-control navbar-indented" ng-options="item as item for item in theme.themes" ng-model="theme.selected" ng-change="updateTheme()"></select></li>
+                            <li><select class="form-control navbar-indented" ng-options="item.name for item in theme.list" ng-model="theme.selected" ng-change="updateTheme()"></select></li>
                         </ul>
                     </div>
 
