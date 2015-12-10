@@ -138,7 +138,7 @@ function(external, connectionService, datasetService, errorNotificationService, 
                     });
                     linksPopupService.deleteLinks($scope.visualizationId);
                     $element.off("resize", updateSize);
-                    $element.find(".chart-options").off("resize", updateSize);
+                    $element.find(".chart-options a").off("resize", updateSize);
                     $scope.messenger.removeEvents();
                     // Remove our filter if we had an active one.
                     if(0 < $scope.filterTags.length) {
@@ -148,7 +148,7 @@ function(external, connectionService, datasetService, errorNotificationService, 
                 });
 
                 $element.resize(updateSize);
-                $element.find(".chart-options").resize(updateSize);
+                $element.find(".chart-options a").resize(updateSize);
 
                 // setup tag cloud color/size changes
                 $.fn.tagcloud.defaults = {

@@ -155,7 +155,7 @@ function(external, $timeout, connectionService, datasetService, errorNotificatio
 
                 resizeNewsfeed();
                 $element.resize(resizeNewsfeed);
-                $element.find(".chart-options").resize(resizeTitle);
+                $element.find(".chart-options a").resize(resizeTitle);
                 $element.find(".newsfeed").scroll(updateNewsfeedOnScroll);
 
                 $scope.$on('$destroy', function() {
@@ -163,7 +163,7 @@ function(external, $timeout, connectionService, datasetService, errorNotificatio
                     linksPopupService.deleteLinks($scope.visualizationId + "-name");
                     $scope.messenger.removeEvents();
                     $element.off("resize", resizeNewsfeed);
-                    $element.find(".chart-options").off("resize", resizeTitle);
+                    $element.find(".chart-options a").off("resize", resizeTitle);
                     $element.find(".newsfeed").off("scroll", updateNewsfeedOnScroll);
                 });
             };
