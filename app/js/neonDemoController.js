@@ -24,6 +24,8 @@
 angular.module('neonDemo.controllers')
 .controller('neonDemoController', ['$scope', '$timeout', 'config', 'datasets',
 function($scope, $timeout, config, datasets) {
+    $scope.messenger = new neon.eventing.Messenger();
+
     $scope.theme = {
         themes: ['light-green', 'dark-green', 'dark-purple']
     };
@@ -31,6 +33,10 @@ function($scope, $timeout, config, datasets) {
     $scope.theme.selected = $scope.theme.name;
     $scope.updateTheme = function() {
         $scope.theme.name = $scope.theme.selected;
+        $scope.messenger.publish("theme_changed", {
+            name: $scope.theme.name,
+            base: $scope.theme.name.substring(0, $scope.theme.name.indexOf("-"))
+        });
     };
 
     $scope.hideNavbarItems = config.hideNavbarItems;

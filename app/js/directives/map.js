@@ -217,6 +217,8 @@ angular.module('neonDemo.directives')
 
                 $scope.messenger.subscribe('date_selected', onDateSelected);
 
+                $scope.messenger.subscribe("theme_changed", onThemeChanged);
+
                 $('.legend-container .legend').on({
                     "shown.bs.dropdown": function() {
                         this.closable = false;
@@ -2051,9 +2053,20 @@ angular.module('neonDemo.directives')
                 return name;
             };
 
+            /**
+             * Updates the color of the base layer in the map using the base layer color from the global options.
+             * @method updateBaseLayerColor
+             */
             $scope.updateBaseLayerColor = function() {
                 if($scope.map) {
                     $scope.map.setBaseLayerColor($scope.options.baseLayerColor);
+                }
+            };
+
+            var onThemeChanged = function(message) {
+                if(message.base !== $scope.options.baseLayerColor) {
+                    $scope.options.baseLayerColor = message.base;
+                    $scope.updateBaseLayerColor();
                 }
             };
 
