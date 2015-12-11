@@ -70,7 +70,7 @@ select[multiple] {
     border: @button-border;
     border-radius: @border-radius;
 
-    &:hover {
+    &:hover, &:focus, &:active, &.active {
         background-color: @button-hover-background-color;
         color: @button-hover-color;
         border: @button-hover-border;
@@ -109,7 +109,7 @@ select[multiple] {
             border: @button-active-border;
         }
 
-        &:hover {
+        &:hover, &:focus, &:active, &.active {
             background-color: @button-hover-background-color;
             color: @button-hover-color;
             border: @button-hover-border;
