@@ -365,7 +365,7 @@
 </div>
 
 <div class="header-container legend-container">
-    <div class="legend">
+    <div class="legend" ng-class="{true: 'open', false: ''}[legend.display]">
         <div class="legend-details" ng-show="legend.display">
             <div class="legend-layer" ng-repeat="legendLayer in legend.layers">
                 <div class="legend-header" ng-click="toggleLegendLayer($index)">
