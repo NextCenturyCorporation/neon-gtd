@@ -17,7 +17,15 @@
     outline: 0 none !important;
 }
 
-a, a:focus, a:hover {
+a {
+    color: @accent-bright;
+
+    .glyphicon {
+        color: @mid-text-color;
+    }
+}
+
+a:focus, a:hover {
     color: @accent-bright;
 }
 
@@ -233,11 +241,6 @@ select[multiple] {
 
     &:hover, &:focus {
         cursor: default;
-    }
-
-    .glyphicon {
-        color: #999;
-        pointer-events: none;
     }
 }
 
