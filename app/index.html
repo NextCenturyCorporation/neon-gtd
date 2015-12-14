@@ -27,7 +27,7 @@
         <![endif]-->
     </head>
     <body class="ng-hide" ng-controller="neonDemoController" ng-show="displayDashboard">
-        <link rel="stylesheet" type="text/css" ng-href="css/{{theme.name}}.css">
+        <link rel="stylesheet" type="text/css" ng-href="css/{{theme.selected.file}}.css">
 
         <!-- Help Video Modal -->
         <div class="modal fade neon-popup" id="videoModal" tabindex="-1" role="dialog" aria-hidden="true">
@@ -55,6 +55,8 @@
                 </div>
 
                 <div class="container" ng-hide="hideNavbarItems">
+                    <div powered-by-neon class="pull-right"></div>
+
                     <!-- Help Button -->
                     <div class="dropdown pull-right" ng-show="(help.guide || help.webVideo || help.localVideo)">
                         <a class="dropdown-toggle navbar-text" data-toggle="dropdown" href="#" role="button">
@@ -74,64 +76,25 @@
                     </div>
 
                     <!-- Options Button -->
-                    <div class="collapsed pull-right" ng-show="!(hideAdvancedOptions) && (showImport || showExport)">
-                        <a class="collapse-toggle navbar-text options" data-toggle="collapse" data-target="#options-dropdown" role="button">
-                            <i class="glyphicon glyphicon-cog options-gear"></i>
+                    <div class="dropdown pull-right" ng-show="!(hideAdvancedOptions) && (showImport || showExport)">
+                        <a class="dropdown-toggle navbar-text" data-toggle="dropdown" href="#" role="button">
+                            <img class="brand-image" src="img/Options_64x64.png" height="34"></img>Options<span class="caret"></span>
                         </a>
-                        <div id="options-dropdown" class="popover bottom options-dropdown pull-right">
-                            <div class="arrow"></div>
-                            <div class="popover-content">
-                                <div class="container options-container">
-                                    <div ng-show="showExport">
-                                        <div class="row">
-                                            <div class="col-lg-12 format">Export Format:</div>
-                                        </div>
-                                        <div class="row">
-                                            <div class="col-lg-12 export-options text-center">
-                                                <div file-formats gridster-configs="visualizations" ng-show="showExport"></div>
-                                            </div>
-                                        </div>
-                                        <div class="row">
-                                            <div class="col-lg-12 export-button text-center">
-                                                <div export-widgets gridster-configs="visualizations" ng-show="showExport"></div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <div class="divider" ng-show="showExport && showImport"></div>
-                                    <div ng-show="showImport">
-                                        <div class="row">
-                                            <div class="col-lg-12">
-                                                <a href="#" data-toggle="modal" data-target="#importModal" ng-show="canImport">
-                                                    Import File
-                                                </a>
-                                                <a href="#" class="unselectable" ng-show="!canImport">
-                                                    This browser does not support data import
-                                                </a>
-                                            </div>
-                                        </div>
-                                        <div class="row">
-                                            <div class="col-lg-12">
-                                                <a href="#" data-toggle="modal" data-target="#removeDatasetModal" ng-show="canImport">
-                                                    Drop Dataset
-                                                </a>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <div class="divider" ng-show="showExport || showImport"></div>
-                                    <div class="row">
-                                        <div class="col-lg-12 theme-label">Theme:</div>
-                                    </div>
-                                    <div class="row">
-                                        <div class="col-lg-12">
-                                            <select class="form-control" ng-options="item as item for item in theme.themes" ng-model="theme.selected" ng-change="updateTheme()"></select>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
+                        <ul class="dropdown-menu">
+                            <li ng-show="showExport"><a href="#" class="unselectable">Export Format:</a></li>
+                            <li file-formats gridster-configs="visualizations" ng-show="showExport"></li>
+                            <li export-widgets gridster-configs="visualizations" ng-show="showExport"></li>
+                            <li class="divider" ng-show="showExport && showImport"></li>
+                            <li ng-show="showImport">
+                                <a href="#" data-toggle="modal" data-target="#importModal" ng-show="canImport">Import File</a>
+                                <a href="#" class="unselectable" ng-show="!canImport">This browser does not support data import</a>
+                            </li>
+                            <li ng-show="showImport"><a href="#" data-toggle="modal" data-target="#removeDatasetModal" ng-show="canImport">Drop Dataset</a></li>
+                            <li class="divider" ng-show="showExport || showImport"></li>
+                            <li><a href="#" class="unselectable">Theme:</a></li>
+                            <li><select class="form-control navbar-indented" ng-options="item.name for item in theme.list" ng-model="theme.selected" ng-change="updateTheme()"></select></li>
+                        </ul>
                     </div>
-                    <div powered-by-neon class="pull-right"></div>
-
 
                     <!-- Import and Remove Dataset Popups -->
                     <div import-file gridster-configs="visualizations" ng-show="showImport"></div>

@@ -54,6 +54,7 @@ function(external, connectionService, datasetService, errorNotificationService, 
             $scope.errorMessage = undefined;
             $scope.loadingData = false;
             $scope.linksPopupButtonIsDisabled = true;
+            $scope.tagColor = "#111";
             $scope.translationAvailable = false;
             $scope.translationLanguages = {
                 fromLanguageOptions: {},
@@ -76,6 +77,20 @@ function(external, connectionService, datasetService, errorNotificationService, 
             var updateSize = function() {
                 var titleWidth = $element.width() - $element.find(".chart-options").outerWidth(true);
                 $element.find(".title").css("maxWidth", titleWidth - 20);
+            };
+
+            var updateTagcloudPluginSettings = function() {
+                $.fn.tagcloud.defaults = {
+                    size: {
+                        start: 130,
+                        end: 250,
+                        unit: '%'
+                    },
+                    color: {
+                        start: '#aaaaaa',
+                        end: $scope.tagColor
+                    }
+                };
             };
 
             /**
@@ -123,6 +138,8 @@ function(external, connectionService, datasetService, errorNotificationService, 
                     }
                 });
 
+                $scope.messenger.subscribe("theme_changed", onThemeChanged);
+
                 $scope.exportID = exportService.register($scope.makeTagCloudExportObject);
 
                 $scope.$on('$destroy', function() {
@@ -138,7 +155,7 @@ function(external, connectionService, datasetService, errorNotificationService, 
                     });
                     linksPopupService.deleteLinks($scope.visualizationId);
                     $element.off("resize", updateSize);
-                    $element.find(".chart-options").off("resize", updateSize);
+                    $element.find(".chart-options a").off("resize", updateSize);
                     $scope.messenger.removeEvents();
                     // Remove our filter if we had an active one.
                     if(0 < $scope.filterTags.length) {
@@ -148,20 +165,9 @@ function(external, connectionService, datasetService, errorNotificationService, 
                 });
 
                 $element.resize(updateSize);
-                $element.find(".chart-options").resize(updateSize);
+                $element.find(".chart-options a").resize(updateSize);
 
-                // setup tag cloud color/size changes
-                $.fn.tagcloud.defaults = {
-                    size: {
-                        start: 130,
-                        end: 250,
-                        unit: '%'
-                    },
-                    color: {
-                        start: '#aaaaaa',
-                        end: '#2f9f3e'
-                    }
-                };
+                updateTagcloudPluginSettings();
 
                 $scope.$watchCollection('filterTags', function(newValue, oldValue) {
                     if(newValue.length !== oldValue.length || newValue.length > 1) {
@@ -363,6 +369,12 @@ function(external, connectionService, datasetService, errorNotificationService, 
                 );
             };
 
+            var updateTagStyle = function() {
+                $timeout(function() {
+                    $element.find('.tag').tagcloud();
+                });
+            };
+
             /**
              * Updates the the tag cloud visualization.
              * @param {Array} tagCounts An array of objects with "key" and "count" properties for the tag
@@ -389,10 +401,7 @@ function(external, connectionService, datasetService, errorNotificationService, 
                     translate();
                 }
 
-                // style the tags after they are displayed
-                $timeout(function() {
-                    $element.find('.tag').tagcloud();
-                });
+                updateTagStyle();
             };
 
             /**
@@ -680,6 +689,8 @@ function(external, connectionService, datasetService, errorNotificationService, 
                         $scope.filterTags[index - $scope.data.length].nameTranslated = elem.translatedText;
                     }
                 });
+
+                translationService.saveTranslationCache();
             };
 
             /**
@@ -757,6 +768,14 @@ function(external, connectionService, datasetService, errorNotificationService, 
              */
             $scope.generateLinksPopupKey = function(value) {
                 return linksPopupService.generateKey($scope.options.tagField, value);
+            };
+
+            var onThemeChanged = function(message) {
+                if(message.accent !== $scope.tagColor) {
+                    $scope.tagColor = message.accent;
+                    updateTagcloudPluginSettings();
+                    updateTagStyle();
+                }
             };
 
             // Wait for neon to be ready, the create our messenger and intialize the view and data.

@@ -17,6 +17,18 @@
     outline: 0 none !important;
 }
 
+a {
+    color: @accent-bright;
+
+    .glyphicon {
+        color: @mid-text-color;
+    }
+}
+
+a:focus, a:hover {
+    color: @accent-bright;
+}
+
 html {
     color: @main-text-color;
     width: 100vw;
@@ -58,7 +70,7 @@ select[multiple] {
     border: @button-border;
     border-radius: @border-radius;
 
-    &:hover {
+    &:hover, &:focus, &:active, &.active {
         background-color: @button-hover-background-color;
         color: @button-hover-color;
         border: @button-hover-border;
@@ -97,7 +109,7 @@ select[multiple] {
             border: @button-active-border;
         }
 
-        &:hover {
+        &:hover, &:focus, &:active, &.active {
             background-color: @button-hover-background-color;
             color: @button-hover-color;
             border: @button-hover-border;
@@ -139,9 +151,11 @@ select[multiple] {
         }
 
         &:hover {
-            color: @accent-bright;
-            background-color: transparent;
+            background: transparent;
             border: none;
+            span {
+                color: @accent-bright;
+            }
         }
 
         &:active, &.active {
@@ -228,11 +242,6 @@ select[multiple] {
     &:hover, &:focus {
         cursor: default;
     }
-
-    .glyphicon {
-        color: #999;
-        pointer-events: none;
-    }
 }
 
 .gridster {
@@ -285,8 +294,9 @@ select[multiple] {
     }
 
     .filter-reset {
-        padding: 5px;
         border: @main-border;
+        margin-left: 5px;
+        padding: 5px;
 
         .filter-label {
             color: @main-text-color;
@@ -350,4 +360,85 @@ select[multiple] {
     font-style: italic;
     color: @main-text-color;
     opacity: .65;
+}
+
+.neon-datetimepicker {
+    .dropdown-menu {
+        overflow-y: scroll;
+        padding: 10px;
+
+        .table-responsive {
+            display: inline-block;
+            font-size: 12px;
+            padding: 4px 5px;
+            /* Reduce the datetimepicker width because of the reduced font size. */
+            width: 250px;
+            /* Set the datetimepicker height because the year and month views are shorter by default and cause unwanted empty space. */
+            height: 250px;
+
+            .table {
+                th {
+                    padding: 6px;
+                    width: 34px;
+                    height: 30px;
+
+                    &.left, &.right, &.switch {
+                        background-color: transparent;
+
+                        &:hover {
+                            background-color: transparent;
+                            color: @accent-bright;
+                        }
+                    }
+                }
+
+                td {
+                    padding: 6px;
+                    width: 34px;
+                    height: 30px;
+
+                    &.day {
+                        &.active {
+                            color: @light-text-color;
+                            background: @accent-bright;
+
+                            &:hover {
+                                color: @light-text-color;
+                                background: @accent-bright;
+                            }
+                        }
+
+                        &:hover {
+                            color: @accent-bright;
+                            background-color: transparent;
+                        }
+                    }
+
+                    .month, .year {
+                        border-radius: @border-radius;
+                        background-color: transparent;
+
+                        &:hover {
+                            background-color: transparent;
+                            color: @accent-bright;
+                        }
+
+                        &.active {
+                            background-color: @button-active-background-color;
+                            color: @button-active-color;
+                            border: @button-active-border;
+                            background-image: none;
+
+                            &:hover {
+                                background-color: @button-hover-background-color;
+                                color: @button-hover-color;
+                                border: @button-hover-border;
+                                background-image: none;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
 }

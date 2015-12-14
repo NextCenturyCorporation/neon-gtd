@@ -1,4 +1,4 @@
-<div class="btn-group file-format-btn-group">
+<div class="btn-group navbar-indented">
     <label class="btn btn-default" ng-repeat="format in formats" ng-class="{true: 'active', false: ''}[format.selected]">
         <input type="radio" style="display:none" ng-model="format.selected" ng-change="selectFormat(format)"/>
         <span ng-bind="format.name.toUpperCase()"></span>

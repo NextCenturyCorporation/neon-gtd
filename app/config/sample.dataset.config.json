@@ -4,10 +4,23 @@
         "datastore": "mongo",
         "hostname": "localhost",
         "databases": [{
-            "name": "sample",
+            "name": "test",
             "tables": [{
-                "name": "sample"
+                "name": "earthquakes",
+                "mappings": {
+                    "date": "time"
+                }
             }]
+        }],
+
+        "mapLayers": [{
+            "database": "test",
+            "table": "earthquakes",
+            "type": "heatmap",
+            "latitudeMapping": "latitude",
+            "longitudeMapping": "longitude",
+            "limit": 5000,
+            "sizeBy": "mag"
         }]
     }
 }

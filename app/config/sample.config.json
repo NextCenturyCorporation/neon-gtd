@@ -3,6 +3,8 @@
         "name": "Earthquakes",
         "datastore": "mongo",
         "hostname": "localhost",
+        "layout": "earthquakes",
+        "connectOnLoad": true,        
         "databases": [{
             "name": "test",
             "prettyName": "Test",
@@ -138,15 +140,36 @@
     }],
 
     "layouts": {
+
         "default": [{
-            "sizeX": 18,
+            "sizeX": 12,
+            "minSizeX": 8,
+            "sizeY": 7,
+            "minSizeY": 4,
+            "type": "timeline-selector"
+        }, {
+            "sizeX": 12,
+            "sizeY": 7,
+            "type": "map"
+        }, {
+            "sizeX": 12,
+            "sizeY": 6,
+            "type": "query-results-table"
+        }, {
+            "sizeX": 12,
+            "sizeY": 6,
+            "type": "filter-builder"
+        }],
+
+        "earthquakes": [{
+            "sizeX": 24,
             "minSizeX": 12,
             "sizeY": 4,
             "minSizeY": 4,
             "type": "timeline-selector"
         }, {
-            "sizeX": 18,
-            "sizeY": 4,
+            "sizeX": 12,
+            "sizeY": 8,
             "type": "map"
         }, {
             "sizeX": 18,

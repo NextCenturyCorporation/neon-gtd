@@ -155,7 +155,7 @@ function(external, $timeout, connectionService, datasetService, errorNotificatio
 
                 resizeNewsfeed();
                 $element.resize(resizeNewsfeed);
-                $element.find(".chart-options").resize(resizeTitle);
+                $element.find(".chart-options a").resize(resizeTitle);
                 $element.find(".newsfeed").scroll(updateNewsfeedOnScroll);
 
                 $scope.$on('$destroy', function() {
@@ -163,7 +163,7 @@ function(external, $timeout, connectionService, datasetService, errorNotificatio
                     linksPopupService.deleteLinks($scope.visualizationId + "-name");
                     $scope.messenger.removeEvents();
                     $element.off("resize", resizeNewsfeed);
-                    $element.find(".chart-options").off("resize", resizeTitle);
+                    $element.find(".chart-options a").off("resize", resizeTitle);
                     $element.find(".newsfeed").off("scroll", updateNewsfeedOnScroll);
                 });
             };
@@ -684,6 +684,7 @@ function(external, $timeout, connectionService, datasetService, errorNotificatio
                 translateNewsProperty("head", sliceStart, sliceEnd, function() {
                     translateNewsProperty("name", sliceStart, sliceEnd, function() {
                         translateNewsProperty("text", sliceStart, sliceEnd, function() {
+                            translationService.saveTranslationCache();
                             runLinky();
                             $scope.data.translatedRange[0] = $scope.data.translatedRange[0] < 0 ? sliceStart : Math.min($scope.data.translatedRange[0], sliceStart);
                             $scope.data.translatedRange[1] = $scope.data.translatedRange[1] < 0 ? sliceEnd : Math.max($scope.data.translatedRange[1], sliceEnd);
@@ -703,8 +704,8 @@ function(external, $timeout, connectionService, datasetService, errorNotificatio
              * @private
              */
             var translateNewsProperty = function(newsProperty, sliceStart, sliceEnd, successCallback) {
-                var dataText = _.pluck($scope.data.news, newsProperty).filter(function(data) {
-                    return data;
+                var dataText = _.pluck($scope.data.news, newsProperty).map(function(data) {
+                    return $.isNumeric(data) ? "" : data;
                 });
 
                 var translationSuccessCallback = function(response) {

@@ -148,7 +148,7 @@ function(external, connectionService, datasetService, errorNotificationService, 
                     });
                     linksPopupService.deleteLinks($scope.tableId);
                     $element.off("resize", updateSize);
-                    $element.find(".chart-options").off("resize", updateTitleSize);
+                    $element.find(".chart-options a").off("resize", updateTitleSize);
                     $scope.messenger.removeEvents();
                     if($scope.filterSet) {
                         filterService.removeFilters($scope.messenger, $scope.filterKeys);
@@ -157,7 +157,7 @@ function(external, connectionService, datasetService, errorNotificationService, 
                 });
 
                 $element.resize(updateSize);
-                $element.find(".chart-options").resize(updateTitleSize);
+                $element.find(".chart-options a").resize(updateTitleSize);
             };
 
             var logOptionsMenuDropdownChange = function(element, value) {

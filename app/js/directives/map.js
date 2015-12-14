@@ -90,6 +90,7 @@ angular.module('neonDemo.directives')
             $scope.SELECTION_EVENT_CHANNEL = "QUERY_RESULTS_SELECTION_EVENT";
 
             $scope.options = {
+                baseLayerColor: "light",
                 layers: [],
                 newLayer: {
                     editing: false,
@@ -183,6 +184,7 @@ angular.module('neonDemo.directives')
              */
             var initialize = function() {
                 var datasetOptions = datasetService.getActiveDatasetOptions();
+                $scope.options.baseLayerColor = (datasetOptions && datasetOptions.mapBaseLayer ? datasetOptions.mapBaseLayer.color : undefined) || "light";
                 $scope.map = new coreMap.Map($scope.mapId, {
                     responsive: false,
                     mapBaseLayer: (datasetOptions ? datasetOptions.mapBaseLayer : undefined),
@@ -214,6 +216,8 @@ angular.module('neonDemo.directives')
                 $scope.linkyConfig = datasetService.getLinkyConfig();
 
                 $scope.messenger.subscribe('date_selected', onDateSelected);
+
+                $scope.messenger.subscribe("theme_changed", onThemeChanged);
 
                 $('.legend-container .legend').on({
                     "shown.bs.dropdown": function() {
@@ -2047,6 +2051,23 @@ angular.module('neonDemo.directives')
                     }
                 });
                 return name;
+            };
+
+            /**
+             * Updates the color of the base layer in the map using the base layer color from the global options.
+             * @method updateBaseLayerColor
+             */
+            $scope.updateBaseLayerColor = function() {
+                if($scope.map) {
+                    $scope.map.setBaseLayerColor($scope.options.baseLayerColor);
+                }
+            };
+
+            var onThemeChanged = function(message) {
+                if(message.type !== $scope.options.baseLayerColor) {
+                    $scope.options.baseLayerColor = message.type;
+                    $scope.updateBaseLayerColor();
+                }
             };
 
             /**
