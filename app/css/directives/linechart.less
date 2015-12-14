@@ -96,93 +96,87 @@
     height: 100%;
     width: 100%;
 
-    .sidebar {
-        float: left;
+    .legend-container {
+        top: 35px;
+        position: absolute;
 
-        .legend-toggle {
-            padding: 5px;
-            background-color: @button-background-color;
-            border: @button-border;
-            border-top-right-radius: 4px;
-            border-bottom-right-radius: 4px;
-            color: #fff;
-            position: absolute;
-            left: 0px;
-            margin-top: 30px;
-            float: left;
-        }
+        .legend {
+            background-color: @visualization-box-background-transparent;
+            border: @main-border;
+            border-radius: 4px;
 
-        .legend-details {
-            overflow: auto;
-            background-color: @button-background-color;
-            border: @button-border;
-            color: #fff;
-            font-weight: bold;
-            height: 510px;
-            float: left;
-            display: none;
-            width: 0px;
-            margin-top: -10px;
-            margin-bottom: -10px;
-            margin-left: -10px;
+            &.open {
+                background-color: @visualization-box-background;
+            }
 
-            .legend-layer {
-                margin-bottom: 10px;
+            .divider {
+                height: 1px;
+                margin: 0 0 9px 0;
+                overflow: hidden;
+                background-color: @border-color;
+            }
 
-                .legend-header {
-                    cursor: pointer;
-                    position: relative;
-                    padding: 5px;
+            .legend-toggle {
+                padding: 5px;
+            }
 
-                    .legend-title {
-                        margin-right: 25px;
-                    }
+            .legend-details {
+                overflow: auto;
 
-                    .glyphicon {
-                        position: absolute;
-                        right: 5px;
-                        top: 50%;
-                        transform: translate(0, -50%);
-                    }
-                }
+                .legend-layer {
+                    margin-bottom: 10px;
 
-                .legend-item {
-                    border: @main-border;
-                    border-radius: 5px;
-                    font-size: 14px;
-                    margin-top: 0px;
-                    margin-right: 5px;
-                    margin-left: 20px;
-                    padding: 3px;
-                    cursor: pointer;
-                    color: #39B54A;
-                    background-color: #fff;
+                    .legend-header {
+                        cursor: pointer;
+                        position: relative;
+                        padding: 5px;
 
-                    &.legend-hidden{
-                        color: @main-text-color;
+                        .legend-title {
+                            margin-right: 25px;
+                        }
 
-                        .legend-icon{
-                            background: #e1e1e1 !important;
+                        .glyphicon {
+                            color: @main-text-color;
+                            position: absolute;
+                            right: 5px;
+                            top: 50%;
+                            transform: translate(0, -50%);
                         }
                     }
 
-                    .legend-icon {
-                        border-radius: 2px;
-                        display: inline-block;
-                        height: 1em;
-                        vertical-align: middle;
-                        width: 1em;
-                    }
+                    .legend-item {
+                        margin-left: 20px;
+                        cursor: pointer;
 
-                    .legend-text {
-                        color: inherit;
+                        &.legend-hidden{
+                            color: @main-text-color;
+
+                            .legend-icon{
+                                background: #e1e1e1 !important;
+                            }
+                        }
                     }
+                }
+            }
+
+            .header-text {
+                cursor: pointer;
+
+                .glyphicon {
+                    line-height: normal;
                 }
             }
         }
 
-        .header-text {
-            cursor: pointer;
+        .legend-item {
+            border: @main-border;
+            border-radius: 5px;
+            font-size: 14px;
+            margin-top: 0px;
+            margin-right: 5px;
+            opacity: .8;
+            padding: 3px;
+            display: block;
         }
     }
 

@@ -82,7 +82,6 @@ function(external, connectionService, datasetService, errorNotificationService, 
 
             $scope.legend = {
                 display: false,
-                dirty: 0,
                 charts: {}
             };
 
@@ -105,31 +104,19 @@ function(external, connectionService, datasetService, errorNotificationService, 
                 }
             };
 
-            var updateChartSize = function(toggledLegend) {
+            var updateChartSize = function() {
                 var titleWidth = $element.width() - $element.find(".chart-options").outerWidth(true);
                 $element.find(".title").css("maxWidth", titleWidth - 20);
-
-                var sidebarWidth = $element.width() * .2;
-                if($scope.legend.display) {
-                    $(".sidebar .legend-toggle").css("left", sidebarWidth + "px");
-                    $(".sidebar .legend-details").css("display", "block");
-                    $(".sidebar .legend-details").css("width", sidebarWidth + "px");
-                    $(".sidebar .legend-details").css("height", $element.outerHeight() + "px");
-                    $(".main-content").width(($element.width() - sidebarWidth - 2) + "px");
-                    $(".main-content").css("float", "right");
-                } else {
-                    $(".sidebar .legend-toggle").css("left", "0px");
-                    $(".sidebar .legend-details").css("display", "none");
-                    $(".sidebar .legend-details").css("width", "0px");
-                    $(".sidebar .legend-details").css("height", "0px");
-                    $(".main-content").width($element.width() + "px");
-                    $(".main-content").css("float", "none");
-                }
+                resizeLegend();
 
                 if($scope.chart) {
                     var headerHeight = 0;
                     $element.find(".header-container").each(function() {
-                        headerHeight += $(this).outerHeight(true);
+                        if(_.contains($(this).attr("class"), "legend-container")) {
+                            headerHeight += $(this).find(".header-text").outerHeight(true);
+                        } else {
+                            headerHeight += $(this).outerHeight(true);
+                        }
                     });
                     $element.find('.linechart').height($element.height() - headerHeight);
 
@@ -137,6 +124,29 @@ function(external, connectionService, datasetService, errorNotificationService, 
                     $scope.chart.draw();
                     $scope.chart.showTrendlines(($scope.options.trendlines === 'show') ? true : false);
                 }
+            };
+
+            var resizeLegend = function() {
+                var container = $element.find(".legend-container");
+                var containerCss = parseInt(container.css("margin-top").replace("px", "")) +
+                        parseInt(container.css("margin-bottom").replace("px", "")) +
+                        parseInt(container.css("padding-top").replace("px", "")) +
+                        parseInt(container.css("padding-bottom").replace("px", ""));
+
+                var legend = container.find(".legend");
+                var legendCss = parseInt(legend.css("margin-top").replace("px", "")) +
+                        parseInt(legend.css("margin-bottom").replace("px", "")) +
+                        parseInt(legend.css("padding-top").replace("px", "")) +
+                        parseInt(legend.css("padding-bottom").replace("px", ""));
+
+                var divider = container.find(".legend>.divider");
+                var dividerCss = divider.outerHeight(true);
+                var header = container.find(".legend>.header-text");
+                var headerCss = header.outerHeight(true);
+                var height = $element.height() - containerCss - legendCss - dividerCss - headerCss - 10;
+
+                var legendDetails = container.find(".legend-details");
+                legendDetails.css("max-height", height + "px");
             };
 
             var initialize = function() {
@@ -150,12 +160,24 @@ function(external, connectionService, datasetService, errorNotificationService, 
                 $scope.messenger.subscribe("date_selected", onDateSelected);
 
                 $scope.messenger.subscribe(filterService.REQUEST_REMOVE_FILTER, function(ids) {
-                    if(filterService.containsKey($scope.filterKeys, ids)) {
+                    if(containsKey(ids)) {
                         $scope.removeBrush();
                     }
                 });
 
                 $scope.exportID = exportService.register($scope.makeLinechartExportObject);
+
+                $element.find('.legend-container .legend').on({
+                    "shown.bs.dropdown": function() {
+                        this.closable = false;
+                    },
+                    click: function() {
+                        this.closable = true;
+                    },
+                    "hide.bs.dropdown": function() {
+                        return this.closable;
+                    }
+                });
 
                 $scope.$on('$destroy', function() {
                     XDATA.userALE.log({
@@ -173,16 +195,13 @@ function(external, connectionService, datasetService, errorNotificationService, 
                     $scope.messenger.removeEvents();
                     exportService.unregister($scope.exportID);
                     if($scope.brushExtent.length) {
-                        filterService.removeFilters($scope.messenger, $scope.filterKeys);
+                        $scope.removeBrush();
                     }
                 });
 
                 // This resizes the chart when the div changes.  This rely's on jquery's resize plugin to fire
                 // on the associated element and not just the window.
                 $element.resize(updateChartSize);
-
-                // The size of the legend will change whenever the filter notification is added or removed so the chart may need to be resized and redrawn.
-                $element.find(".legend").resize(updateChartSize);
 
                 $scope.$watch('options.granularity', function(newVal, oldVal) {
                     if(!$scope.loadingData && newVal && newVal !== oldVal) {
@@ -299,10 +318,27 @@ function(external, connectionService, datasetService, errorNotificationService, 
                         if($scope.brushExtent.length >= 2) {
                             updateBrushRecursively(chartsToUpdate);
                         } else {
-                            removeBrushRecursively(chartsToUpdate);
+                            removeBrushRecursively(chartsToUpdate, true);
                         }
                     }
                 }
+            };
+
+            /**
+             * Returns whether any of the given ids are in the visualization's filter keys object.
+             * @param {Array} ids
+             * @return {Boolean}
+             * @method containsKey
+             * @private
+             */
+            var containsKey = function(ids) {
+                return _.some($scope.filterKeys, function(tables) {
+                    return _.some(tables, function(dateMappings) {
+                        return _.some(dateMappings, function(filterKeyObj) {
+                            return _.contains(ids, filterKeyObj.filterKey);
+                        });
+                    });
+                });
             };
 
             /**
@@ -333,6 +369,10 @@ function(external, connectionService, datasetService, errorNotificationService, 
                         }
                     }
                 });
+
+                if(!$scope.options.charts.length) {
+                    updateLineChartForBrushExtent();
+                }
             };
 
             /**
@@ -579,7 +619,7 @@ function(external, connectionService, datasetService, errorNotificationService, 
                 $scope.options.charts.splice(index, 1);
 
                 if(!$scope.options.charts.length) {
-                    removeBrushRecursively([chart]);
+                    removeBrushRecursively([chart], true);
                 } else {
                     updateLineChartForBrushExtent();
                 }
@@ -767,8 +807,6 @@ function(external, connectionService, datasetService, errorNotificationService, 
              */
             $scope.toggleLegend = function() {
                 $scope.legend.display = !$scope.legend.display;
-                $scope.legend.dirty = 1;
-                updateChartSize();
             };
 
             /**
@@ -1434,7 +1472,11 @@ function(external, connectionService, datasetService, errorNotificationService, 
                         charts.push(chart);
                     }
                 });
-                updateBrushRecursively(charts, ignoreGlobalBrushExtent);
+                if(charts.length) {
+                    updateBrushRecursively(charts, ignoreGlobalBrushExtent);
+                } else {
+                    updateLineChartForBrushExtent();
+                }
             };
 
             /**
@@ -1684,7 +1726,7 @@ function(external, connectionService, datasetService, errorNotificationService, 
                 });
 
                 renderBrushExtent([]);
-                removeBrushRecursively($scope.options.charts);
+                removeBrushRecursively(angular.copy($scope.options.charts), true);
             };
 
             /**
@@ -1693,7 +1735,7 @@ function(external, connectionService, datasetService, errorNotificationService, 
              * @method removeBrushRecursively
              * @private
              */
-            var removeBrushRecursively = function(charts) {
+            var removeBrushRecursively = function(charts, queryWhenDone) {
                 var chart = charts.shift();
                 var filterKeys = createFilterKeyObj(chart);
                 var relations = datasetService.getRelations(chart.database, chart.table, [chart.attrXMapping]);
@@ -1701,10 +1743,9 @@ function(external, connectionService, datasetService, errorNotificationService, 
                     datasetService.removeDateBrushExtentForRelations(relations);
 
                     if(charts.length) {
-                        removeBrushRecursively(charts);
-                    } else {
+                        removeBrushRecursively(charts, queryWhenDone);
+                    } else if(queryWhenDone) {
                         queryAllData();
-                        updateLineChartForBrushExtent();
                     }
                 });
             };

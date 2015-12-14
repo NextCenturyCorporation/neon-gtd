@@ -1,252 +1,255 @@
-<div class="sidebar" ng-show="options.charts.length">
-    <div class="legend-details" ng-show="legend.display">
-        <div class="legend-layer" ng-repeat="(chartID, chartColorMappings) in colorMappings">
-            <div class="legend-header" ng-click="toggleLegendChart(chartID)">
-                <span class="legend-title header-text" ng-bind="getTitleFromMapping(chartColorMappings[0])"></span>
-                <span class="glyphicon glyphicon-chevron-down pull-right" ng-show="!legend.charts[chartID].display"></span>
-                <span class="glyphicon glyphicon-chevron-up pull-right" ng-show="legend.charts[chartID].display"></span>
-            </div>
-            <div class="legend-item legend-item-clickable" title="getLegendItemAggregationText(colorMapping)}}"
-                ng-repeat="colorMapping in chartColorMappings" ng-show="legend.charts[chartID].display" ng-click="toggleSeries(colorMapping)"
-                ng-class="{true: 'legend-hidden', false: ''}[colorMapping.hidden]">
-                <span class="legend-icon" style="background-color: {{colorMapping.color}}"></span>
-                <span class="legend-text" ng-bind="getLegendItemAggregationText(colorMapping)"></span>
-            </div>
+<div class="header-container" ng-show="!(hideHeader)">
+    <div class="title header-text pull-left">Line Chart</div>
+
+    <options-menu parent-element="element" export-function="makeLinechartExportObject" button-text="optionsMenuButtonText" show-button-text="showOptionsMenuButtonText">
+
+        <div class="form-group button-container">
+            <button type="button" class="btn btn-primary" title="Add New Line Chart" ng-click="clickAddNewChartButton()"
+                ng-show="!(options.newChart.editing)">
+                Add New Line Chart
+            </button>
         </div>
-    </div>
-    <div class="legend-toggle header-text" ng-click="toggleLegend()">
-        <span>Legend</span>
-    </div>
-</div>
 
-<div class="main-content">
-    <div class="header-container" ng-show="!(hideHeader)">
-        <div class="title header-text pull-left">Line Chart</div>
+        <div class="all-chart-options">
+            <!-- Container for a new line chart. -->
+            <div class="form-group chart-options-container" ng-show="(options.newChart.editing)">
+                <div class="form-group chart-options-well neon-well new-chart">
+                    <div class="chart-options-row">
+                        <div class="btn-group chart-options-col chart-options-col-wide">
+                            <label class="btn btn-default" ng-class="{true: 'active', false: ''}[options.newChart.visible === true]" title="Toggle Chart Visibility" ng-show="(options.newChart.editing)">
+                                <input type="checkbox" style="display:none" ng-model="options.newChart.visible">
+                                <span class="glyphicon glyphicon-eye-open"></span>
+                            </label>
+                            <label class="btn btn-default" ng-class="{true: 'active', false: ''}[options.newChart.active === true]" title="Toggle Filtering on Chart" ng-show="(options.newChart.editing)">
+                                <input type="checkbox" style="display:none" ng-model="options.newChart.active">
+                                <span class="glyphicon glyphicon-filter"></span>
+                            </label>
+                            <label class="btn btn-default" ng-class="{true: '', false: 'disabled'}[options.newChart.valid]" title="Save New Chart">
+                                <input type="button" style="display:none" ng-click="addNewChart()">
+                                <span class="glyphicon glyphicon-ok"></span>
+                            </label>
+                            <label class="btn btn-danger" title="Cancel">
+                                <input type="button" style="display:none" ng-click="resetNewChart()">
+                                <span class="glyphicon glyphicon-trash"></span>
+                            </label>
+                        </div>
 
-        <options-menu parent-element="element" export-function="makeLinechartExportObject" button-text="optionsMenuButtonText" show-button-text="showOptionsMenuButtonText">
+                        <div class="form-group chart-options-col chart-options-col-wide">
+                            <label>Chart Name</label>
+                            <input type="text" class="form-control" placeholder="{{options.newChart.table.prettyName.toUpperCase()}}" style="text-transform: uppercase;" ng-model="options.newChart.name" ng-required="false" ng-class="{true: '', false: 'ng-invalid'}[options.newChart.valid]" ng-change="validateChart()"/>
+                        </div>
+                    </div>
 
-            <div class="form-group button-container">
-                <button type="button" class="btn btn-primary" title="Add New Line Chart" ng-click="clickAddNewChartButton()"
-                    ng-show="!(options.newChart.editing)">
-                    Add New Line Chart
-                </button>
+                    <div class="chart-options-row">
+                        <div class="form-group chart-options-col">
+                            <label>Database</label>
+                            <select class="form-control" ng-model="options.newChart.database" ng-options="database.prettyName for database in databases" ng-required="true" ng-disabled="(databases.length < 2)" ng-change="updateTables()"></select>
+                        </div>
+
+                        <div class="form-group chart-options-col">
+                            <label>Table</label>
+                            <select class="form-control" ng-model="options.newChart.table" ng-options="table.prettyName for table in tables" ng-required="true" ng-disabled="(tables.length < 2)" ng-change="updateFields()"></select>
+                        </div>
+
+                        <div class="form-group chart-options-col">
+                            <label>Date Field (X Axis)</label>
+                            <select class="form-control" ng-model="options.newChart.attrX" ng-options="field.prettyName for field in fields" ng-required="true" ng-disabled="!(fields.length > 0)">
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="chart-options-row row-large">
+                        <div class="form-group chart-options-col">
+                            <label>Aggregation</label>
+                            <select class="form-control" ng-model="options.newChart.aggregation" ng-disabled="!(fields.length > 0)" ng-change="validateChart()" ng-required="true">
+                                <option value="count">Count</option>
+                                <option value="sum">Sum</option>
+                                <option value="average">Average</option>
+                                <option value="min">Minimum</option>
+                                <option value="max">Maximum</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group chart-options-col" ng-show="options.newChart.aggregation !== 'count'">
+                            <label>Value Field (Y Axis)</label>
+                            <select class="form-control" ng-model="options.newChart.attrY" ng-options="field.prettyName for field in fields" ng-required="true" ng-disabled="!(fields.length > 0)" ng-change="validateChart()">
+                            </select>
+                        </div>
+
+                        <div class="form-group chart-options-col">
+                            <label>Group Field</label>
+                            <select class="form-control" ng-model="options.newChart.categoryField" ng-options="field.prettyName for field in fields" ng-required="true" ng-disabled="!(fields.length > 0)">
+                                <option value="">None</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
             </div>
 
-            <div class="all-chart-options">
-                <!-- Container for a new line chart. -->
-                <div class="form-group chart-options-container" ng-show="(options.newChart.editing)">
-                    <div class="form-group chart-options-well neon-well new-chart">
+            <!-- Containers for the existing line charts. -->
+            <div class="form-group chart-options-container" ng-repeat="chart in options.charts">
+                <div>
+                    <div class="form-group chart-options-well neon-well neon-well-dark">
                         <div class="chart-options-row">
-                            <div class="btn-group chart-options-col chart-options-col-wide">
-                                <label class="btn btn-default" ng-class="{true: 'active', false: ''}[options.newChart.visible === true]" title="Toggle Chart Visibility" ng-show="(options.newChart.editing)">
-                                    <input type="checkbox" style="display:none" ng-model="options.newChart.visible">
+                            <div class="btn-group chart-options-col chart-options-col-wide" ng-if="!hideAdvancedOptions">
+                                <label class="btn btn-default" ng-class="{true: 'active', false: ''}[chart.visible === true]" title="{{'Chart Visibility ' + (chart.visible ? 'On' : 'Off')}}">
+                                    <input type="checkbox" style="display:none" ng-model="chart.visible" ng-change="updateChartVisibility(chart)">
                                     <span class="glyphicon glyphicon-eye-open"></span>
                                 </label>
-                                <label class="btn btn-default" ng-class="{true: 'active', false: ''}[options.newChart.active === true]" title="Toggle Filtering on Chart" ng-show="(options.newChart.editing)">
-                                    <input type="checkbox" style="display:none" ng-model="options.newChart.active">
+                                <label class="btn btn-default" ng-class="{true: 'active', false: ''}[chart.active === true]" title="{{'Chart Filtering ' + (chart.visible ? 'On' : 'Off')}}">
+                                    <input type="checkbox" style="display:none" ng-model="chart.active" ng-change="updateFilteringOnChart(chart)">
                                     <span class="glyphicon glyphicon-filter"></span>
                                 </label>
-                                <label class="btn btn-default" ng-class="{true: '', false: 'disabled'}[options.newChart.valid]" title="Save New Chart">
-                                    <input type="button" style="display:none" ng-click="addNewChart()">
+                                <label class="btn btn-default" title="Edit Chart" ng-show="!chart.editing">
+                                    <input type="button" style="display:none" ng-click="toggleEditing(chart)">
+                                    <span class="glyphicon glyphicon-edit"></span>
+                                </label>
+                                <label class="btn btn-default" ng-class="{true: '', false: 'disabled'}[chart.valid]" title="Save chart" ng-show="chart.editing">
+                                    <input type="button" style="display:none" ng-click="updateChart(chart)">
                                     <span class="glyphicon glyphicon-ok"></span>
                                 </label>
-                                <label class="btn btn-danger" title="Cancel">
-                                    <input type="button" style="display:none" ng-click="resetNewChart()">
+                                <label class="btn btn-danger" title="Delete Chart">
+                                    <input type="button" style="display:none" ng-click="deleteChart(chart)">
                                     <span class="glyphicon glyphicon-trash"></span>
+                                </label>
+                            </div>
+
+                            <div class="btn-group chart-options-col chart-options-col-wide" ng-if="hideAdvancedOptions">
+                                <label class="btn btn-default" ng-class="{true: 'active', false: ''}[chart.visible === true]" style="width: 50%;" title="{{'Chart Visibility ' + (chart.visible ? 'On' : 'Off')}}">
+                                    <input type="checkbox" style="display:none" ng-model="chart.visible" ng-change="updateChartVisibility(chart)">
+                                    <span class="glyphicon glyphicon-eye-open"></span>
+                                    Visible
+                                </label>
+                                <label class="btn btn-default" ng-class="{true: 'active', false: ''}[chart.active === true]" style="width: 50%;" title="{{'Chart Filtering ' + (chart.active ? 'On' : 'Off')}}">
+                                    <input type="checkbox" style="display:none" ng-model="chart.active" ng-change="updateFilteringOnChart(chart)">
+                                    <span class="glyphicon glyphicon-filter"></span>
+                                    Filter
                                 </label>
                             </div>
 
                             <div class="form-group chart-options-col chart-options-col-wide">
                                 <label>Chart Name</label>
-                                <input type="text" class="form-control" placeholder="{{options.newChart.table.prettyName.toUpperCase()}}" style="text-transform: uppercase;" ng-model="options.newChart.name" ng-required="false" ng-class="{true: '', false: 'ng-invalid'}[options.newChart.valid]" ng-change="validateChart()"/>
+                                <input type="text" class="form-control" placeholder="{{chart.table.toUpperCase()}}" style="text-transform: uppercase;" ng-model="chart.name" ng-required="false" ng-disabled="(!chart.editing)" ng-class="{true: '', false: 'ng-invalid'}[chart.valid]" ng-change="validateChart(chart, $index)"/>
                             </div>
                         </div>
 
-                        <div class="chart-options-row">
-                            <div class="form-group chart-options-col">
-                                <label>Database</label>
-                                <select class="form-control" ng-model="options.newChart.database" ng-options="database.prettyName for database in databases" ng-required="true" ng-disabled="(databases.length < 2)" ng-change="updateTables()"></select>
-                            </div>
-
-                            <div class="form-group chart-options-col">
-                                <label>Table</label>
-                                <select class="form-control" ng-model="options.newChart.table" ng-options="table.prettyName for table in tables" ng-required="true" ng-disabled="(tables.length < 2)" ng-change="updateFields()"></select>
-                            </div>
-
-                            <div class="form-group chart-options-col">
-                                <label>Date Field (X Axis)</label>
-                                <select class="form-control" ng-model="options.newChart.attrX" ng-options="field.prettyName for field in fields" ng-required="true" ng-disabled="!(fields.length > 0)">
-                                </select>
-                            </div>
-                        </div>
-
-                        <div class="chart-options-row row-large">
-                            <div class="form-group chart-options-col">
-                                <label>Aggregation</label>
-                                <select class="form-control" ng-model="options.newChart.aggregation" ng-disabled="!(fields.length > 0)" ng-change="validateChart()" ng-required="true">
-                                    <option value="count">Count</option>
-                                    <option value="sum">Sum</option>
-                                    <option value="average">Average</option>
-                                    <option value="min">Minimum</option>
-                                    <option value="max">Maximum</option>
-                                </select>
-                            </div>
-
-                            <div class="form-group chart-options-col" ng-show="options.newChart.aggregation !== 'count'">
-                                <label>Value Field (Y Axis)</label>
-                                <select class="form-control" ng-model="options.newChart.attrY" ng-options="field.prettyName for field in fields" ng-required="true" ng-disabled="!(fields.length > 0)" ng-change="validateChart()">
-                                </select>
-                            </div>
-
-                            <div class="form-group chart-options-col">
-                                <label>Group Field</label>
-                                <select class="form-control" ng-model="options.newChart.categoryField" ng-options="field.prettyName for field in fields" ng-required="true" ng-disabled="!(fields.length > 0)">
-                                    <option value="">None</option>
-                                </select>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Containers for the existing line charts. -->
-                <div class="form-group chart-options-container" ng-repeat="chart in options.charts">
-                    <div>
-                        <div class="form-group chart-options-well neon-well neon-well-dark">
+                        <div class="chart-options-editing" ng-show="(chart.editing)">
                             <div class="chart-options-row">
-                                <div class="btn-group chart-options-col chart-options-col-wide" ng-if="!hideAdvancedOptions">
-                                    <label class="btn btn-default" ng-class="{true: 'active', false: ''}[chart.visible === true]" title="{{'Chart Visibility ' + (chart.visible ? 'On' : 'Off')}}">
-                                        <input type="checkbox" style="display:none" ng-model="chart.visible" ng-change="updateChartVisibility(chart)">
-                                        <span class="glyphicon glyphicon-eye-open"></span>
-                                    </label>
-                                    <label class="btn btn-default" ng-class="{true: 'active', false: ''}[chart.active === true]" title="{{'Chart Filtering ' + (chart.visible ? 'On' : 'Off')}}">
-                                        <input type="checkbox" style="display:none" ng-model="chart.active" ng-change="updateFilteringOnChart(chart)">
-                                        <span class="glyphicon glyphicon-filter"></span>
-                                    </label>
-                                    <label class="btn btn-default" title="Edit Chart" ng-show="!chart.editing">
-                                        <input type="button" style="display:none" ng-click="toggleEditing(chart)">
-                                        <span class="glyphicon glyphicon-edit"></span>
-                                    </label>
-                                    <label class="btn btn-default" ng-class="{true: '', false: 'disabled'}[chart.valid]" title="Save chart" ng-show="chart.editing">
-                                        <input type="button" style="display:none" ng-click="updateChart(chart)">
-                                        <span class="glyphicon glyphicon-ok"></span>
-                                    </label>
-                                    <label class="btn btn-danger" title="Delete Chart">
-                                        <input type="button" style="display:none" ng-click="deleteChart(chart)">
-                                        <span class="glyphicon glyphicon-trash"></span>
-                                    </label>
+                                <div class="form-group chart-options-col">
+                                    <label>Database</label>
+                                    <input type="text" class="form-control" ng-model="chart.databasePrettyName" ng-disabled="true"/>
                                 </div>
 
-                                <div class="btn-group chart-options-col chart-options-col-wide" ng-if="hideAdvancedOptions">
-                                    <label class="btn btn-default" ng-class="{true: 'active', false: ''}[chart.visible === true]" style="width: 50%;" title="{{'Chart Visibility ' + (chart.visible ? 'On' : 'Off')}}">
-                                        <input type="checkbox" style="display:none" ng-model="chart.visible" ng-change="updateChartVisibility(chart)">
-                                        <span class="glyphicon glyphicon-eye-open"></span>
-                                        Visible
-                                    </label>
-                                    <label class="btn btn-default" ng-class="{true: 'active', false: ''}[chart.active === true]" style="width: 50%;" title="{{'Chart Filtering ' + (chart.active ? 'On' : 'Off')}}">
-                                        <input type="checkbox" style="display:none" ng-model="chart.active" ng-change="updateFilteringOnChart(chart)">
-                                        <span class="glyphicon glyphicon-filter"></span>
-                                        Filter
-                                    </label>
+                                <div class="form-group chart-options-col">
+                                    <label>Table</label>
+                                    <input type="text" class="form-control" ng-model="chart.tablePrettyName" ng-disabled="true"/>
                                 </div>
 
-                                <div class="form-group chart-options-col chart-options-col-wide">
-                                    <label>Chart Name</label>
-                                    <input type="text" class="form-control" placeholder="{{chart.table.toUpperCase()}}" style="text-transform: uppercase;" ng-model="chart.name" ng-required="false" ng-disabled="(!chart.editing)" ng-class="{true: '', false: 'ng-invalid'}[chart.valid]" ng-change="validateChart(chart, $index)"/>
+                                <div class="form-group chart-options-col">
+                                    <label>Date Field (X Axis)</label>
+                                    <select class="form-control" ng-model="chart.attrXField" ng-options="field.prettyName for field in chart.fields" ng-required="true" ng-disabled="!(fields.length > 0)">
+                                    </select>
                                 </div>
                             </div>
 
-                            <div class="chart-options-editing" ng-show="(chart.editing)">
-                                <div class="chart-options-row">
-                                    <div class="form-group chart-options-col">
-                                        <label>Database</label>
-                                        <input type="text" class="form-control" ng-model="chart.databasePrettyName" ng-disabled="true"/>
-                                    </div>
-
-                                    <div class="form-group chart-options-col">
-                                        <label>Table</label>
-                                        <input type="text" class="form-control" ng-model="chart.tablePrettyName" ng-disabled="true"/>
-                                    </div>
-
-                                    <div class="form-group chart-options-col">
-                                        <label>Date Field (X Axis)</label>
-                                        <select class="form-control" ng-model="chart.attrXField" ng-options="field.prettyName for field in chart.fields" ng-required="true" ng-disabled="!(fields.length > 0)">
-                                        </select>
-                                    </div>
+                            <div class="chart-options-row row-large">
+                                <div class="form-group chart-options-col">
+                                    <label>Aggregation</label>
+                                    <select class="form-control" ng-model="chart.aggregation" ng-disabled="!(fields.length > 0)" ng-change="validateChart(chart, $index)" ng-required="true">
+                                        <option value="count">Count</option>
+                                        <option value="sum">Sum</option>
+                                        <option value="average">Average</option>
+                                        <option value="min">Minimum</option>
+                                        <option value="max">Maximum</option>
+                                    </select>
                                 </div>
 
-                                <div class="chart-options-row row-large">
-                                    <div class="form-group chart-options-col">
-                                        <label>Aggregation</label>
-                                        <select class="form-control" ng-model="chart.aggregation" ng-disabled="!(fields.length > 0)" ng-change="validateChart(chart, $index)" ng-required="true">
-                                            <option value="count">Count</option>
-                                            <option value="sum">Sum</option>
-                                            <option value="average">Average</option>
-                                            <option value="min">Minimum</option>
-                                            <option value="max">Maximum</option>
-                                        </select>
-                                    </div>
+                                <div class="form-group chart-options-col" ng-show="chart.aggregation !== 'count'">
+                                    <label>Value Field (Y Axis)</label>
+                                    <select class="form-control" ng-model="chart.attrYField" ng-options="field.prettyName for field in chart.fields" ng-required="true" ng-change="validateChart(chart, $index)" ng-disabled="!(fields.length > 0)">
+                                    </select>
+                                </div>
 
-                                    <div class="form-group chart-options-col" ng-show="chart.aggregation !== 'count'">
-                                        <label>Value Field (Y Axis)</label>
-                                        <select class="form-control" ng-model="chart.attrYField" ng-options="field.prettyName for field in chart.fields" ng-required="true" ng-change="validateChart(chart, $index)" ng-disabled="!(fields.length > 0)">
-                                        </select>
-                                    </div>
-
-                                    <div class="form-group chart-options-col">
-                                        <label>Group Field</label>
-                                        <select class="form-control" ng-model="chart.categoryField" ng-options="field.prettyName for field in chart.fields" ng-required="true" ng-disabled="!(fields.length > 0)">
-                                            <option value="">None</option>
-                                        </select>
-                                    </div>
+                                <div class="form-group chart-options-col">
+                                    <label>Group Field</label>
+                                    <select class="form-control" ng-model="chart.categoryField" ng-options="field.prettyName for field in chart.fields" ng-required="true" ng-disabled="!(fields.length > 0)">
+                                        <option value="">None</option>
+                                    </select>
                                 </div>
                             </div>
                         </div>
                     </div>
                 </div>
             </div>
-
-            <div class="form-group">
-                <label>Date Granularity</label>
-                <div class="btn-group">
-                  <label class="btn btn-default" ng-class="{true: 'active', false: ''}[options.granularity === 'day']">
-                    <input type="radio" style="display:none" ng-model="options.granularity" value="day"> Day
-                  </label>
-                  <label class="btn btn-default" ng-class="{true: 'active', false: ''}[options.granularity === 'hour']">
-                    <input type="radio" style="display:none" ng-model="options.granularity" value="hour"> Hour
-                  </label>
-                </div>
-                <div class="clearfix"></div>
-            </div>
-
-            <div class="form-group">
-                <label>Trendlines</label>
-                <div class="btn-group">
-                  <label class="btn btn-default" ng-class="{true: 'active', false: ''}[options.trendlines === 'show']">
-                    <input type="radio" style="display:none" ng-model="options.trendlines" value="show"> ON
-                  </label>
-                  <label class="btn btn-default" ng-class="{true: 'active', false: ''}[options.trendlines === 'hide']">
-                    <input type="radio" style="display:none" ng-model="options.trendlines" value="hide"> OFF
-                  </label>
-                </div>
-                <div class="clearfix"></div>
-            </div>
-        </options-menu>
-    </div>
-
-    <div class="clearfix"></div>
-
-    <div class="header-container filter-container">
-        <div class="header-item filter-reset pull-right" ng-class="{true: '', false: 'hidden'}[brushExtent.length > 0]"
-            title="Date from {{brushExtent[0].toUTCString()}} to {{brushExtent[1].toUTCString()}}">
-            <links-popup-button key="{{getDateKeyForLinksPopupButton()}}" source="{{visualizationId}}" tooltip="{{brushExtent[0].toUTCString()}} to {{brushExtent[1].toUTCString()}}" is-disabled="{{linksPopupButtonIsDisabled}}"></links-popup-button>
-            <span class="filter-label" ng-class="{true: '', false: 'border-left'}[linksPopupButtonIsDisabled]">Date Filter</span>
-            <span class="border-left glyphicon glyphicon-remove" ng-click="removeBrush()"></span>
         </div>
 
-        <span class="no-data pull-left" ng-show="noData">No data for current filters.</span>
+        <div class="form-group">
+            <label>Date Granularity</label>
+            <div class="btn-group">
+              <label class="btn btn-default" ng-class="{true: 'active', false: ''}[options.granularity === 'day']">
+                <input type="radio" style="display:none" ng-model="options.granularity" value="day"> Day
+              </label>
+              <label class="btn btn-default" ng-class="{true: 'active', false: ''}[options.granularity === 'hour']">
+                <input type="radio" style="display:none" ng-model="options.granularity" value="hour"> Hour
+              </label>
+            </div>
+            <div class="clearfix"></div>
+        </div>
+
+        <div class="form-group">
+            <label>Trendlines</label>
+            <div class="btn-group">
+              <label class="btn btn-default" ng-class="{true: 'active', false: ''}[options.trendlines === 'show']">
+                <input type="radio" style="display:none" ng-model="options.trendlines" value="show"> ON
+              </label>
+              <label class="btn btn-default" ng-class="{true: 'active', false: ''}[options.trendlines === 'hide']">
+                <input type="radio" style="display:none" ng-model="options.trendlines" value="hide"> OFF
+              </label>
+            </div>
+            <div class="clearfix"></div>
+        </div>
+    </options-menu>
+</div>
+
+<div class="clearfix"></div>
+
+<div class="header-container filter-container">
+    <div class="header-item filter-reset pull-right" ng-class="{true: '', false: 'hidden'}[brushExtent.length > 0]"
+        title="Date from {{brushExtent[0].toUTCString()}} to {{brushExtent[1].toUTCString()}}">
+        <links-popup-button key="{{getDateKeyForLinksPopupButton()}}" source="{{visualizationId}}" tooltip="{{brushExtent[0].toUTCString()}} to {{brushExtent[1].toUTCString()}}" is-disabled="{{linksPopupButtonIsDisabled}}"></links-popup-button>
+        <span class="filter-label" ng-class="{true: '', false: 'border-left'}[linksPopupButtonIsDisabled]">Date Filter</span>
+        <span class="border-left glyphicon glyphicon-remove" ng-click="removeBrush()"></span>
     </div>
 
-    <div class="clearfix"></div>
-
-    <div class="linechart"></div>
+    <span class="no-data pull-left" ng-show="noData">No data for current filters.</span>
 </div>
+
+<div class="header-container legend-container">
+    <div class="legend" ng-class="{true: 'open', false: ''}[legend.display]" ng-show="options.charts.length">
+        <div class="legend-toggle header-text" ng-click="toggleLegend()">
+            <span>Legend</span>
+            <span class="glyphicon glyphicon-chevron-down pull-right" ng-show="!legend.display"></span>
+            <span class="glyphicon glyphicon-chevron-up pull-right" ng-show="legend.display"></span>
+        </div>
+        <div class="divider" ng-show="legend.display"></div>
+        <div class="legend-details" ng-show="legend.display">
+            <div class="legend-layer" ng-repeat="(chartID, chartColorMappings) in colorMappings">
+                <div class="legend-header" ng-click="toggleLegendChart(chartID)">
+                    <span class="legend-title header-text" ng-bind="getTitleFromMapping(chartColorMappings[0])"></span>
+                    <span class="glyphicon glyphicon-chevron-down pull-right" ng-show="!legend.charts[chartID].display"></span>
+                    <span class="glyphicon glyphicon-chevron-up pull-right" ng-show="legend.charts[chartID].display"></span>
+                </div>
+                <div class="legend-item legend-item-clickable" title="getLegendItemAggregationText(colorMapping)}}"
+                    ng-repeat="colorMapping in chartColorMappings" ng-show="legend.charts[chartID].display" ng-click="toggleSeries(colorMapping)"
+                    ng-class="{true: 'legend-hidden', false: ''}[colorMapping.hidden]">
+                    <span class="legend-icon" style="background-color: {{colorMapping.color}}"></span>
+                    <span class="legend-text" ng-bind="getLegendItemAggregationText(colorMapping)"></span>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="clearfix"></div>
+
+<div class="linechart"></div>

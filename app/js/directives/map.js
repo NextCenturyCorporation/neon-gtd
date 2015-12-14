@@ -219,7 +219,7 @@ angular.module('neonDemo.directives')
 
                 $scope.messenger.subscribe("theme_changed", onThemeChanged);
 
-                $('.legend-container .legend').on({
+                $element.find('.legend-container .legend').on({
                     "shown.bs.dropdown": function() {
                         this.closable = false;
                     },
