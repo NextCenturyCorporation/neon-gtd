@@ -62,7 +62,7 @@
 
                         <div class="form-group layer-options-col">
                             <label>Data Limit</label>
-                            <input type="number" min="1" class="form-control" ng-model="options.newLayer.limit" ng-model="options.newLayer.limit" ng-required="true"/>
+                            <input type="number" min="1" class="form-control" ng-model="options.newLayer.limit" ng-required="true"/>
                         </div>
                     </div>
 
@@ -344,7 +344,7 @@
 </div>
 
 <div class="header-container legend-container">
-    <div class="legend">
+    <div class="legend" ng-show="options.layers.length">
         <div class="legend-details" ng-show="legend.display">
             <div class="legend-layer" ng-repeat="legendLayer in legend.layers">
                 <div class="legend-header" ng-click="toggleLegendLayer($index)">

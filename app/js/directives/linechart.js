@@ -29,21 +29,14 @@
  */
 angular.module('neonDemo.directives')
 .directive('linechart', ['external', 'ConnectionService', 'DatasetService', 'ErrorNotificationService', 'FilterService',
-    'ExportService', 'LinksPopupService', 'LineChartService', '$timeout', '$filter',
-function(external, connectionService, datasetService, errorNotificationService, filterService, exportService, linksPopupService, lineChartService, $timeout, $filter) {
+    'ExportService', 'LinksPopupService', '$timeout', '$filter',
+function(external, connectionService, datasetService, errorNotificationService, filterService, exportService, linksPopupService, $timeout, $filter) {
     var COUNT_FIELD_NAME = 'value';
 
     return {
         templateUrl: 'partials/directives/linechart.html',
         restrict: 'EA',
         scope: {
-            bindTitle: '=',
-            bindDateField: '=',
-            bindYAxisField: '=',
-            bindCategoryField: '=',
-            bindAggregationField: '=',
-            bindTable: '=',
-            bindDatabase: '=',
             bindGranularity: '=',
             hideHeader: '=?',
             hideAdvancedOptions: '=?'
@@ -61,21 +54,18 @@ function(external, connectionService, datasetService, errorNotificationService, 
                 if($scope.noData) {
                     return "No Data";
                 }
-                if($scope.colorMappings.length >= $scope.seriesLimit) {
-                    return "Top " + $scope.seriesLimit;
-                }
                 return "";
             };
             $scope.showOptionsMenuButtonText = function() {
-                return $scope.noData || $scope.colorMappings.length >= $scope.seriesLimit;
+                return $scope.noData;
             };
 
             $scope.databases = [];
             $scope.tables = [];
-            $scope.totalType = 'count';
             $scope.fields = [];
             $scope.visualizationFilterKeys = {};
             $scope.filterKeys = {};
+            $scope.dateFilterKeys = {};
             $scope.chart = undefined;
             $scope.brushExtent = [];
             $scope.colorMappings = [];
@@ -84,31 +74,57 @@ function(external, connectionService, datasetService, errorNotificationService, 
             $scope.errorMessage = undefined;
             $scope.loadingData = false;
             $scope.noData = true;
-            $scope.data = [];
+            $scope.data = {};
             $scope.queryOnChangeBrush = false;
             $scope.automaticHourSet = false;
-            $scope.outstandingQuery = undefined;
+            $scope.outstandingQuery = {};
             $scope.linksPopupButtonIsDisabled = true;
-            $scope.title = $scope.bindTitle ? $scope.bindTitle : '';
 
-            $scope.options = {
-                database: {},
-                table: {},
-                attrX: {},
-                attrY: {},
-                categoryField: {},
-                aggregation: "count",
-                granularity: $scope.bindGranularity ? $scope.bindGranularity.toLowerCase() : DAY,
-                trendlines: 'hide',
-                overlays: [],
-                selectedChart: {},
-                allCharts: [],
-                chartsAddedTo: []
+            $scope.legend = {
+                display: false,
+                dirty: 0,
+                charts: {}
             };
 
-            var updateChartSize = function() {
+            $scope.options = {
+                granularity: $scope.bindGranularity ? $scope.bindGranularity.toLowerCase() : DAY,
+                trendlines: 'hide',
+                charts: [],
+                newChart: {
+                    editing: false,
+                    valid: false,
+                    active: true,
+                    visible: true,
+                    database: {},
+                    table: {},
+                    name: "",
+                    attrX: {},
+                    aggregation: "count",
+                    attrY: {},
+                    categoryField: {}
+                }
+            };
+
+            var updateChartSize = function(toggledLegend) {
                 var titleWidth = $element.width() - $element.find(".chart-options").outerWidth(true);
                 $element.find(".title").css("maxWidth", titleWidth - 20);
+
+                var sidebarWidth = $element.width() * .2;
+                if($scope.legend.display) {
+                    $(".sidebar .legend-toggle").css("left", sidebarWidth + "px");
+                    $(".sidebar .legend-details").css("display", "block");
+                    $(".sidebar .legend-details").css("width", sidebarWidth + "px");
+                    $(".sidebar .legend-details").css("height", $element.outerHeight() + "px");
+                    $(".main-content").width(($element.width() - sidebarWidth - 2) + "px");
+                    $(".main-content").css("float", "right");
+                } else {
+                    $(".sidebar .legend-toggle").css("left", "0px");
+                    $(".sidebar .legend-details").css("display", "none");
+                    $(".sidebar .legend-details").css("width", "0px");
+                    $(".sidebar .legend-details").css("height", "0px");
+                    $(".main-content").width($element.width() + "px");
+                    $(".main-content").css("float", "none");
+                }
 
                 if($scope.chart) {
                     var headerHeight = 0;
@@ -128,7 +144,7 @@ function(external, connectionService, datasetService, errorNotificationService, 
                     filtersChanged: onFiltersChanged
                 });
                 $scope.messenger.subscribe(datasetService.UPDATE_DATA_CHANNEL, function() {
-                    queryForData();
+                    queryAllData();
                 });
                 $scope.messenger.subscribe(datasetService.DATE_CHANGED_CHANNEL, onDateChanged);
                 $scope.messenger.subscribe("date_selected", onDateSelected);
@@ -138,12 +154,6 @@ function(external, connectionService, datasetService, errorNotificationService, 
                         $scope.removeBrush();
                     }
                 });
-
-                $scope.messenger.subscribe(lineChartService.ADD_OVERLAY_CHANNEL, onAddOverlay);
-
-                $scope.messenger.subscribe(lineChartService.REFRESH_OVERLAYS_CHANNEL, onRefreshOverlays);
-
-                $scope.messenger.subscribe(lineChartService.REMOVE_OVERLAY_CHANNEL, onRemoveOverlay);
 
                 $scope.exportID = exportService.register($scope.makeLinechartExportObject);
 
@@ -159,7 +169,6 @@ function(external, connectionService, datasetService, errorNotificationService, 
                         tags: ["remove", "linechart"]
                     });
                     linksPopupService.deleteLinks($scope.visualizationId);
-                    lineChartService.removeChart($scope.visualizationId);
                     $element.off("resize", updateChartSize);
                     $scope.messenger.removeEvents();
                     exportService.unregister($scope.exportID);
@@ -175,37 +184,6 @@ function(external, connectionService, datasetService, errorNotificationService, 
                 // The size of the legend will change whenever the filter notification is added or removed so the chart may need to be resized and redrawn.
                 $element.find(".legend").resize(updateChartSize);
 
-                $scope.$watch('options.attrX', function(newValue) {
-                    onFieldChange('attrX', newValue);
-                    if(!$scope.loadingData && $scope.options.database.name && $scope.options.table.name) {
-                        resetAndQueryForData();
-                        $scope.queryOnChangeBrush = $scope.queryOnChangeBrush || ($scope.brushExtent.length > 0);
-                    }
-                });
-                $scope.$watch('options.attrY', function(newValue) {
-                    onFieldChange('attrY', newValue);
-                    if(!$scope.loadingData && $scope.options.database.name && $scope.options.table.name) {
-                        resetAndQueryForData();
-                        $scope.queryOnChangeBrush = $scope.queryOnChangeBrush || ($scope.brushExtent.length > 0);
-                        updateTitle();
-                    } else {
-                        updateTitle();
-                    }
-                });
-                $scope.$watch('options.categoryField', function(newValue) {
-                    onFieldChange('categoryField', newValue);
-                    if(!$scope.loadingData && $scope.options.database.name && $scope.options.table.name) {
-                        resetAndQueryForData();
-                        $scope.queryOnChangeBrush = $scope.queryOnChangeBrush || ($scope.brushExtent.length > 0);
-                    }
-                });
-                $scope.$watch('options.aggregation', function(newValue) {
-                    onFieldChange('aggregation', newValue);
-                    if(!$scope.loadingData && $scope.options.database.name && $scope.options.table.name) {
-                        resetAndQueryForData();
-                        $scope.queryOnChangeBrush = $scope.queryOnChangeBrush || ($scope.brushExtent.length > 0);
-                    }
-                });
                 $scope.$watch('options.granularity', function(newVal, oldVal) {
                     if(!$scope.loadingData && newVal && newVal !== oldVal) {
                         XDATA.userALE.log({
@@ -219,7 +197,7 @@ function(external, connectionService, datasetService, errorNotificationService, 
                             tags: ["linechart", "granularity", newVal]
                         });
                         $scope.chart.setGranularity(newVal);
-                        queryForData();
+                        queryAllData();
                         $scope.queryOnChangeBrush = $scope.queryOnChangeBrush || ($scope.brushExtent.length > 0);
                     }
                 });
@@ -244,43 +222,21 @@ function(external, connectionService, datasetService, errorNotificationService, 
                 });
             };
 
-            var onFieldChange = function(field, newValue) {
-                var source = "user";
-                var action = "click";
-
-                // Override the default action if a field changes while loading data during
-                // intialization or a dataset change.
-                if($scope.loadingData) {
-                    source = "system";
-                    action = "reset";
-                }
-
-                XDATA.userALE.log({
-                    activity: "select",
-                    action: action,
-                    elementId: "linechart",
-                    elementType: "combobox",
-                    elementSub: "linechart-" + field,
-                    elementGroup: "chart_group",
-                    source: source,
-                    tags: ["options", "linechart", newValue]
-                });
-            };
-
             /**
-             * Returns whether the added or removed filter in the given message is a date filter on this linechart's x-axis/date field.
+             * Returns whether the added or removed filter in the given message is a date filter on a linechart with the given x-axis/date field.
              * @param {Object} message
+             * @param {Object} attrX
              * @method isDateFiltersChangedMessage
              * @return {Boolean}
              */
-            var isDateFiltersChangedMessage = function(message) {
+            var isDateFiltersChangedMessage = function(message, attrX) {
                 var whereClauses;
                 if(message.addedFilter.whereClause) {
                     whereClauses = message.addedFilter.whereClause.whereClauses;
                 } else if(message.removedFilter.whereClause) {
                     whereClauses = message.removedFilter.whereClause.whereClauses;
                 }
-                if(whereClauses && whereClauses.length === 2 && whereClauses[0].lhs === $scope.options.attrX.columnName && whereClauses[1].lhs === $scope.options.attrX.columnName) {
+                if(whereClauses && whereClauses.length === 2 && whereClauses[0].lhs === attrX && whereClauses[1].lhs === attrX) {
                     return true;
                 }
                 return false;
@@ -293,13 +249,7 @@ function(external, connectionService, datasetService, errorNotificationService, 
              * @private
              */
             var onFiltersChanged = function(message) {
-                if(message.addedFilter && message.addedFilter.databaseName === $scope.options.database.name && message.addedFilter.tableName === $scope.options.table.name) {
-                    // If the filter changed event was triggered by a change in the global date filter, ignore the filter changed event.
-                    // We don't need to re-query and we'll update the brush extent extent in response to the date changed event.
-                    if(isDateFiltersChangedMessage(message)) {
-                        return;
-                    }
-
+                if(message.addedFilter && message.addedFilter.databaseName && message.addedFilter.tableName) {
                     XDATA.userALE.log({
                         activity: "alter",
                         action: "query",
@@ -310,9 +260,18 @@ function(external, connectionService, datasetService, errorNotificationService, 
                         source: "system",
                         tags: ["filter-change", "linechart"]
                     });
+                    var queryData = false;
+                    _.each($scope.options.charts, function(chart) {
+                        if(chart.database === message.addedFilter.databaseName  && chart.table === message.addedFilter.tableName &&
+                            !isDateFiltersChangedMessage(message, chart.attrXMapping) && chart.active) {
+                            queryData = true;
+                        }
+                    });
 
-                    queryForData();
-                    $scope.queryOnChangeBrush = $scope.queryOnChangeBrush || ($scope.brushExtent.length > 0);
+                    if(queryData) {
+                        queryAllData();
+                        $scope.queryOnChangeBrush = $scope.queryOnChangeBrush || $scope.brushExtent.length > 0;
+                    }
                 }
             };
 
@@ -323,12 +282,57 @@ function(external, connectionService, datasetService, errorNotificationService, 
              * @private
              */
             var onDateChanged = function(message) {
-                if($scope.options.database.name === message.databaseName && $scope.options.table.name === message.tableName) {
-                    if(datasetService.isFieldValid($scope.options.attrX) && message.fieldNames.indexOf($scope.options.attrX.columnName) >= 0 && $scope.brushExtent !== message.brushExtent) {
+                if(message.databaseName && message.tableName && message.fieldNames.length) {
+                    var queryData = false;
+                    var chartsToUpdate = [];
+
+                     _.each($scope.options.charts, function(chart) {
+                        if(chart.database === message.databaseName && chart.table === message.tableName &&
+                            datasetService.isFieldValid(chart.attrXField) && message.fieldNames.indexOf(chart.attrXMapping) >= 0 && chart.active) {
+                            queryData = true;
+                            chartsToUpdate.push(chart);
+                        }
+                    });
+
+                    if(queryData && $scope.brushExtent.toString() !== message.brushExtent.toString()) {
                         renderBrushExtent(message.brushExtent);
-                        updateLineChartForBrushExtent();
+                        if($scope.brushExtent.length >= 2) {
+                            updateBrushRecursively(chartsToUpdate);
+                        } else {
+                            removeBrushRecursively(chartsToUpdate);
+                        }
                     }
                 }
+            };
+
+            /**
+             * Queries all active charts and updates the graph.
+             * @method queryAllData
+             * @private
+             */
+            var queryAllData = function() {
+                var queriesCompleted = 0;
+                _.each($scope.options.charts, function(chart) {
+                    if(chart.active) {
+                        if(!$scope.outstandingQuery[chart.id]) {
+                            $scope.outstandingQuery[chart.id] = undefined;
+                        }
+                        queryForData(chart, function(results) {
+                            $scope.data[chart.id] = results.data;
+                            queriesCompleted += 1;
+
+                            if(queriesCompleted === $scope.options.charts.length) {
+                                updateLineChartForBrushExtent();
+                            }
+                        });
+                    } else {
+                        queriesCompleted += 1;
+
+                        if(queriesCompleted === $scope.options.charts.length) {
+                            updateLineChartForBrushExtent();
+                        }
+                    }
+                });
             };
 
             /**
@@ -348,107 +352,11 @@ function(external, connectionService, datasetService, errorNotificationService, 
             };
 
             /**
-             * Event handler for add overlay events issued over Neon's messaging channels.
-             * @param {Object} message A Neon add overlay message.
-             * @method onAddOverlay
+             * Sets the given brush extent, if any, and adds/removes any external services.
+             * @param {Array} brushExtent
+             * @method renderBrushExtent
              * @private
              */
-            var onAddOverlay = function(msg) {
-                if(msg.overlayTargetId === $scope.visualizationId) {
-                    var index = _.findIndex($scope.options.overlays, {
-                        id: msg.overlaySourceId
-                    });
-
-                    if(index === -1) {
-                        var overlayObj = lineChartService.getChart(msg.overlaySourceId);
-                        overlayObj.data = msg.data;
-                        $scope.options.overlays.push(overlayObj);
-                    } else {
-                        $scope.options.overlays[index].data = msg.data;
-                    }
-
-                    var indices = getIndicesForData();
-                    createChart(indices.startIndex, indices.endIndex);
-                }
-            };
-
-            /**
-             * Event handler for refresh overlays events issued over Neon's messaging channels.
-             * @param {Object} message A Neon refresh overlays message.
-             * @method onRefreshOverlays
-             * @private
-             */
-            var onRefreshOverlays = function(msg) {
-                var msgIndex = _.findIndex(msg.overlayTargetsData, {
-                    id: $scope.visualizationId
-                });
-
-                if(msgIndex >= 0) {
-                    var optionsIndex = _.findIndex($scope.options.overlays, {
-                        id: msg.overlaySourceId
-                    });
-
-                    $scope.options.overlays[optionsIndex].data =  msg.overlayTargetsData[msgIndex].data;
-                }
-
-
-                /* Update the chart once all overlays, with the same database/table as the current visualization,
-                   have the same brush extent */
-
-                var allOverlaysUpdated = _.every($scope.options.overlays, {
-                    data: {
-                        brushExtent: $scope.brushExtent
-                    }
-                });
-
-                var filteredOverlays = _.find($scope.options.overlays, {
-                    data: {
-                        database: $scope.options.database.name,
-                        table: $scope.options.table.name
-                    }
-                });
-
-                if(!filteredOverlays) {
-                    allOverlaysUpdated = true;
-                }
-
-                if(allOverlaysUpdated) {
-                    var indices = getIndicesForData();
-                    createChart(indices.startIndex, indices.endIndex);
-                }
-            };
-
-            /**
-             * Event handler for remove overlay events issued over Neon's messaging channels.
-             * @param {Object} message A Neon remove overlay message.
-             * @method onRemoveOverlay
-             * @private
-             */
-            var onRemoveOverlay = function(msg) {
-                if(msg.overlaySourceId === $scope.visualizationId || msg.overlaySourceId === msg.overlayTargetId) {
-                    var index = _.findIndex($scope.options.chartsAddedTo, {
-                        id: msg.overlayTargetId
-                    });
-
-                    if(index >= 0) {
-                        $scope.options.chartsAddedTo.splice(index, 1);
-                    }
-                }
-
-                if(msg.overlayTargetId === $scope.visualizationId || msg.overlaySourceId === msg.overlayTargetId) {
-                    var index = _.findIndex($scope.options.overlays, {
-                        id: msg.overlaySourceId
-                    });
-
-                    if(index >= 0) {
-                        $scope.options.overlays.splice(index, 1);
-
-                        var indices = getIndicesForData();
-                        createChart(indices.startIndex, indices.endIndex);
-                    }
-                }
-            };
-
             var renderBrushExtent = function(brushExtent) {
                 $scope.brushExtent = brushExtent || [];
                 if(!$scope.brushExtent.length) {
@@ -469,11 +377,23 @@ function(external, connectionService, datasetService, errorNotificationService, 
                 }
             };
 
+            /**
+             * Returns the external services date key for the brush extent.
+             * @return {String}
+             * @method getDateKeyForLinksPopupButton
+             */
             $scope.getDateKeyForLinksPopupButton = function() {
                 return $scope.brushExtent.length >= 2 ? linksPopupService.generateDateRangeKey($scope.brushExtent[0].toUTCString(), $scope.brushExtent[1].toUTCString()) : "";
             };
 
-            var queryForData = function() {
+            /**
+             * Queries for data on the given chart and executes any callback given when finished querying.
+             * @param {Object} chart
+             * @param {Function} cb
+             * @method queryForData
+             * @private
+             */
+            var queryForData = function(chart, cb) {
                 XDATA.userALE.log({
                     activity: "alter",
                     action: "query",
@@ -492,70 +412,86 @@ function(external, connectionService, datasetService, errorNotificationService, 
 
                 var connection = connectionService.getActiveConnection();
 
-                if(!connection || !$scope.options.attrX.columnName || (!$scope.options.attrY.columnName && $scope.options.aggregation !== "count")) {
-                    drawLineChart();
+                if(!connection || !chart.attrXMapping || (!chart.attrYMapping && chart.aggregation !== "count")) {
+                    drawLineChart([], {});
                     return;
                 }
 
-                var query = buildQuery();
+                var query = buildQuery(chart);
 
-                if($scope.outstandingQuery) {
-                    $scope.outstandingQuery.abort();
+                if($scope.outstandingQuery[chart.id]) {
+                    $scope.outstandingQuery[chart.id].abort();
                 }
 
-                $scope.outstandingQuery = connection.executeQuery(query);
-                $scope.outstandingQuery.always(function() {
-                    $scope.outstandingQuery = undefined;
+                $scope.outstandingQuery[chart.id] = connection.executeQuery(query);
+                $scope.outstandingQuery[chart.id].always(function() {
+                    $scope.outstandingQuery[chart.id] = undefined;
                 });
-                $scope.outstandingQuery.done(handleQuerySuccess);
-                $scope.outstandingQuery.fail(handleQueryFailure);
+                $scope.outstandingQuery[chart.id].done(function(results) {
+                    if(cb) {
+                        cb(results);
+                    } else {
+                        $scope.data[chart.id] = results.data;
+
+                        updateLineChartForBrushExtent(true);
+                    }
+                });
+                $scope.outstandingQuery[chart.id].fail(handleQueryFailure);
             };
 
             /**
-             * Builds a query for the line chart and returns it.
+             * Builds a query for the given chart and returns it.
+             * @param {Object} chart
              * @method buildQuery
              * @private
              * @return A ready-to-be-sent query for the line chart.
              */
-            var buildQuery = function() {
-                var yearGroupClause = new neon.query.GroupByFunctionClause(neon.query.YEAR, $scope.options.attrX.columnName, 'year');
-                var monthGroupClause = new neon.query.GroupByFunctionClause(neon.query.MONTH, $scope.options.attrX.columnName, 'month');
-                var dayGroupClause = new neon.query.GroupByFunctionClause(neon.query.DAY, $scope.options.attrX.columnName, 'day');
-                var hourGroupClause = new neon.query.GroupByFunctionClause(neon.query.HOUR, $scope.options.attrX.columnName, 'hour');
+            var buildQuery = function(chart) {
+                var yearGroupClause = new neon.query.GroupByFunctionClause(neon.query.YEAR, chart.attrXMapping, 'year');
+                var monthGroupClause = new neon.query.GroupByFunctionClause(neon.query.MONTH, chart.attrXMapping, 'month');
+                var dayGroupClause = new neon.query.GroupByFunctionClause(neon.query.DAY, chart.attrXMapping, 'day');
 
-                var groupByClause = [yearGroupClause, monthGroupClause, dayGroupClause, hourGroupClause];
+                var groupByClause = [yearGroupClause, monthGroupClause, dayGroupClause];
 
-                if(datasetService.isFieldValid($scope.options.categoryField)) {
-                    groupByClause.push($scope.options.categoryField);
+                if($scope.options.granularity === HOUR) {
+                    var hourGroupClause = new neon.query.GroupByFunctionClause(neon.query.HOUR, chart.attrXMapping, 'hour');
+                    groupByClause.push(hourGroupClause);
+                }
+                if(datasetService.isFieldValid(chart.categoryField)) {
+                    groupByClause.push(chart.categoryField);
                 }
 
                 var query = new neon.query.Query()
-                    .selectFrom($scope.options.database.name, $scope.options.table.name)
+                    .selectFrom(chart.database, chart.table)
                     .where(neon.query.and(
-                        neon.query.where($scope.options.attrX.columnName, '>=', new Date("1970-01-01T00:00:00.000Z")),
-                        neon.query.where($scope.options.attrX.columnName, '<=', new Date("2025-01-01T00:00:00.000Z"))
+                        neon.query.where(chart.attrXMapping, '>=', new Date("1970-01-01T00:00:00.000Z")),
+                        neon.query.where(chart.attrXMapping, '<=', new Date("2025-01-01T00:00:00.000Z"))
                     ));
 
                 query.groupBy.apply(query, groupByClause);
 
-                if($scope.options.aggregation === "count") {
+                if(chart.aggregation === "count") {
                     query.aggregate(neon.query.COUNT, '*', COUNT_FIELD_NAME);
                 }
-                if($scope.options.aggregation === "sum") {
-                    query.aggregate(neon.query.SUM, $scope.options.attrY.columnName, COUNT_FIELD_NAME);
+                if(chart.aggregation === "sum") {
+                    query.aggregate(neon.query.SUM, chart.attrYMapping, COUNT_FIELD_NAME);
                 }
-                if($scope.options.aggregation === "average") {
-                    query.aggregate(neon.query.AVG, $scope.options.attrY.columnName, COUNT_FIELD_NAME);
+                if(chart.aggregation === "average") {
+                    query.aggregate(neon.query.AVG, chart.attrYMapping, COUNT_FIELD_NAME);
                 }
-                if($scope.options.aggregation === "min") {
-                    query.aggregate(neon.query.MIN, $scope.options.attrY.columnName, COUNT_FIELD_NAME);
+                if(chart.aggregation === "min") {
+                    query.aggregate(neon.query.MIN, chart.attrYMapping, COUNT_FIELD_NAME);
                 }
-                if($scope.options.aggregation === "max") {
-                    query.aggregate(neon.query.MAX, $scope.options.attrY.columnName, COUNT_FIELD_NAME);
+                if(chart.aggregation === "max") {
+                    query.aggregate(neon.query.MAX, chart.attrYMapping, COUNT_FIELD_NAME);
                 }
 
-                query.aggregate(neon.query.MIN, $scope.options.attrX.columnName, 'date')
+                query.aggregate(neon.query.MIN, chart.attrXMapping, 'date')
                     .sortBy('date', neon.query.ASCENDING);
+
+                if(!chart.active) {
+                    query.ignoreFilters([$scope.filterKeys[chart.database][chart.table][chart.attrXMapping].filterKey])
+                }
 
                 return query;
             };
@@ -571,207 +507,370 @@ function(external, connectionService, datasetService, errorNotificationService, 
                 }
 
                 $scope.databases = datasetService.getDatabases();
-                $scope.options.database = $scope.databases[0];
-                if($scope.bindDatabase) {
-                    for(var i = 0; i < $scope.databases.length; ++i) {
-                        if($scope.bindDatabase === $scope.databases[i].name) {
-                            $scope.options.database = $scope.databases[i];
-                        }
-                    }
-                }
+                $scope.options.newChart.database = $scope.databases[0];
 
-                // Create the filter keys for this visualization for each database/table pair in the dataset.
-                $scope.visualizationFilterKeys = filterService.createFilterKeys("linechart", datasetService.getDatabaseAndTableNames());
-                // The filter keys will be set to the global date filter key for each database/table pair when available and the visualization filter key otherwise.
-                $scope.filterKeys = $scope.visualizationFilterKeys;
                 $scope.updateTables();
             };
 
+            /**
+             * Retrieves the list of tables available and sets a default table for a new chart.
+             * @method updateTables
+             */
             $scope.updateTables = function() {
-                $scope.tables = datasetService.getTables($scope.options.database.name);
-                $scope.options.table = datasetService.getFirstTableWithMappings($scope.options.database.name, [neonMappings.DATE, neonMappings.Y_AXIS]) || $scope.tables[0];
-                if($scope.bindTable) {
-                    for(var i = 0; i < $scope.tables.length; ++i) {
-                        if($scope.bindTable === $scope.tables[i].name) {
-                            $scope.options.table = $scope.tables[i];
-                            break;
-                        }
-                    }
-                }
+                $scope.tables = datasetService.getTables($scope.options.newChart.database.name);
+                $scope.options.newChart.table = datasetService.getFirstTableWithMappings($scope.options.newChart.database.name, [neonMappings.DATE, neonMappings.Y_AXIS]) || $scope.tables[0];
                 $scope.updateFields();
-                updateTitle();
-                $scope.refreshChartOptions();
-            };
-
-            $scope.updateFields = function() {
-                $scope.loadingData = true;
-                $scope.fields = datasetService.getSortedFields($scope.options.database.name, $scope.options.table.name);
-                $scope.options.aggregation = $scope.bindAggregationField || "count";
-
-                var attrX = $scope.bindDateField || datasetService.getMapping($scope.options.database.name, $scope.options.table.name, neonMappings.DATE) || "";
-                $scope.options.attrX = _.find($scope.fields, function(field) {
-                    return field.columnName === attrX;
-                }) || datasetService.createBlankField();
-                var attrY = $scope.bindYAxisField || datasetService.getMapping($scope.options.database.name, $scope.options.table.name, neonMappings.Y_AXIS) || "";
-                $scope.options.attrY = _.find($scope.fields, function(field) {
-                    return field.columnName === attrY;
-                }) || datasetService.createBlankField();
-                var categoryField = $scope.bindCategoryField || datasetService.getMapping($scope.options.database.name, $scope.options.table.name, neonMappings.LINE_GROUP) || "";
-                $scope.options.categoryField = _.find($scope.fields, function(field) {
-                    return field.columnName === categoryField;
-                }) || datasetService.createBlankField();
-
-                $scope.queryOnChangeBrush = false;
-                resetAndQueryForData();
-            };
-
-            /*
-             * Removes an overlay from the chart.
-             * @param {Object} chart The overlay chart to remove
-             * @method removeOverlay
-             */
-            $scope.removeOverlay = function(chart) {
-                var index = _.findIndex($scope.options.overlays, {
-                    id: chart.id
-                });
-                if(index >= 0) {
-                    lineChartService.removeOverlay(chart.id, $scope.visualizationId);
-                }
-            };
-
-            /*
-             * Adds this chart as an overlay to the selected chart.
-             * @method addOverlayTo
-             */
-            $scope.addOverlayTo = function() {
-                if($scope.options.selectedChart && $scope.options.selectedChart.id !== $scope.visualizationId) {
-                    var index = _.findIndex($scope.options.chartsAddedTo, {
-                        id: $scope.options.selectedChart.id
-                    });
-                    if(index === -1) {
-                        var lineData = {
-                            attrX: $scope.options.attrX,
-                            attrY: $scope.options.attrY,
-                            categoryField: $scope.options.categoryField,
-                            aggregation: $scope.options.aggregation,
-                            brushExtent: $scope.brushExtent,
-                            data: $scope.data,
-                            database: $scope.options.database.name,
-                            table: $scope.options.table.name
-                        };
-                        $scope.options.chartsAddedTo.push($scope.options.selectedChart);
-                        lineChartService.addOverlay($scope.visualizationId, $scope.options.selectedChart.id, lineData);
-                    }
-                }
-                $scope.options.selectedChart = {};
-            };
-
-            /*
-             * Retrieves the list of charts available.
-             * @method refreshChartOptions
-             */
-            $scope.refreshChartOptions = function() {
-                $scope.options.allCharts = lineChartService.getAllCharts();
-            };
-
-            /*
-             * Removes this chart from another chart that it has added as an overlay.
-             * @param {Object} chart The chart that has this chart as an overlay.
-             * @method removeOverlayFrom
-             */
-            $scope.removeOverlayFrom = function(chart) {
-                var index = _.findIndex($scope.options.chartsAddedTo, {
-                    id: chart.id
-                });
-                if(index >= 0) {
-                    lineChartService.removeOverlay($scope.visualizationId, chart.id);
-                }
-            };
-
-            /*
-             * Refreshes the overlay data to the given chart.
-             * @param {Object} chart The chart that has this chart as an overlay.
-             * @method refreshOverlay
-             */
-            $scope.refreshOverlay = function(chart) {
-                var lineData = {
-                    attrX: $scope.options.attrX,
-                    attrY: $scope.options.attrY,
-                    categoryField: $scope.options.categoryField,
-                    aggregation: $scope.options.aggregation,
-                    brushExtent: $scope.brushExtent,
-                    data: $scope.data,
-                    database: $scope.options.database.name,
-                    table: $scope.options.table.name
-                };
-                lineChartService.addOverlay($scope.visualizationId, chart.id, lineData);
-            };
-
-            /*
-             * Refresh overlay data to all charts it has been added to.
-             * @method refreshAllOverlays
-             */
-            $scope.refreshAllOverlays = function() {
-                var allChartsData = [];
-                var lineData = {
-                    attrX: $scope.options.attrX,
-                    attrY: $scope.options.attrY,
-                    categoryField: $scope.options.categoryField,
-                    aggregation: $scope.options.aggregation,
-                    brushExtent: $scope.brushExtent,
-                    data: $scope.data,
-                    database: $scope.options.database.name,
-                    table: $scope.options.table.name
-                };
-
-                _.each($scope.options.chartsAddedTo, function(chart) {
-                    allChartsData.push({
-                        id: chart.id,
-                        data: lineData
-                    });
-                });
-
-                lineChartService.refreshOverlays($scope.visualizationId, allChartsData);
-            };
-
-            var updateTitle = function() {
-                if($scope.bindTitle) {
-                    $scope.title = $scope.bindTitle;
-                } else {
-                    $scope.title = $scope.options.table.prettyName +
-                        ($scope.options.attrY.prettyName && $scope.options.aggregation !== "count" ? ' / ' + $scope.options.attrY.prettyName : '');
-                }
-                lineChartService.setChart($scope.visualizationId, $scope.title);
-            };
-
-            var resetAndQueryForData = function() {
-                var globalBrushExtent = datasetService.isFieldValid($scope.options.attrX) ? datasetService.getDateBrushExtent($scope.options.database.name, $scope.options.table.name, $scope.options.attrX.columnName) : [];
-                if($scope.brushExtent !== globalBrushExtent) {
-                    renderBrushExtent(globalBrushExtent);
-                } else if($scope.brushExtent.length) {
-                    $scope.removeBrush();
-                }
-
-                // Get the date filter keys for the current database/table/field and change the current filter keys as appropriate.
-                if(datasetService.isFieldValid($scope.options.attrX)) {
-                    var dateFilterKeys = datasetService.getDateFilterKeys($scope.options.database.name, $scope.options.table.name, $scope.options.attrX.columnName);
-                    $scope.filterKeys = filterService.getFilterKeysFromCollections(datasetService.getDatabaseAndTableNames(), $scope.visualizationFilterKeys, dateFilterKeys);
-                } else {
-                    $scope.filterKeys = $scope.visualizationFilterKeys;
-                }
-
-                queryForData();
             };
 
             /**
-             * Compares the two given data points for a sort function based on the current aggregation type.
+             * Updates the fields for the table set for the new chart.
+             * @method updateFields
+             */
+            $scope.updateFields = function() {
+                $scope.loadingData = true;
+                $scope.fields = datasetService.getSortedFields($scope.options.newChart.database.name, $scope.options.newChart.table.name);
+                $scope.options.newChart.aggregation = $scope.bindAggregationField || "count";
+
+                var attrX = datasetService.getMapping($scope.options.newChart.database.name, $scope.options.newChart.table.name, neonMappings.DATE) || "";
+                $scope.options.newChart.attrX = _.find($scope.fields, function(field) {
+                    return field.columnName === attrX;
+                }) || datasetService.createBlankField();
+                var attrY = datasetService.getMapping($scope.options.newChart.database.name, $scope.options.newChart.table.name, neonMappings.Y_AXIS) || "";
+                $scope.options.newChart.attrY = _.find($scope.fields, function(field) {
+                    return field.columnName === attrY;
+                }) || datasetService.createBlankField();
+                var categoryField = datasetService.getMapping($scope.options.newChart.database.name, $scope.options.newChart.table.name, neonMappings.LINE_GROUP) || "";
+                $scope.options.newChart.categoryField = _.find($scope.fields, function(field) {
+                    return field.columnName === categoryField;
+                }) || datasetService.createBlankField();
+
+                $scope.validateChart();
+            };
+
+            /**
+             * Updates the filter for the given chart, and any chart with the same database, table, and date values.
+             * @param {Object} chart
+             * @method updateFilteringOnChart
+             */
+            $scope.updateFilteringOnChart = function(chart) {
+                XDATA.userALE.log({
+                    activity: "alter",
+                    action: "click",
+                    elementId: "linechart-active-button",
+                    elementType: "button",
+                    elementGroup: "chart_group",
+                    source: "user",
+                    tags: ["options", "linechart", chart.name, "active", chart.active]
+                });
+                setActiveStatusForCharts(chart.database, chart.table, chart.attrXMapping, chart.active);
+                resetAndQueryForData(chart);
+            };
+
+            /**
+             * Deletes the given chart from the visualization.
+             * @param {Object} chart
+             * @method deleteChart
+             */
+            $scope.deleteChart = function(chart) {
+                delete $scope.data[chart.id];
+                var index = _.findIndex($scope.options.charts, function(element) {
+                    return element.id === chart.id;
+                });
+                $scope.options.charts.splice(index, 1);
+
+                if(!$scope.options.charts.length) {
+                    removeBrushRecursively([chart]);
+                } else {
+                    updateLineChartForBrushExtent();
+                }
+            };
+
+            /**
+             * Updates the field mappings in the given chart and returns the chart.
+             * @param {Object} chart
+             * @method updateChartFieldMappings
+             * @return {Object}
+             * @private
+             */
+            var updateChartFieldMappings = function(chart) {
+                chart.attrXMapping = chart.attrXField.columnName;
+                chart.attrYMapping = chart.attrYField.columnName;
+                chart.categoryMapping = (chart.categoryField ? chart.categoryField.columnName : "");
+                return chart;
+            };
+
+            /**
+             * Updates the given chart
+             * @param {Object} chart
+             * @method updateChart
+             */
+            $scope.updateChart = function(chart) {
+                chart.name = (chart.name || createChartTitle(chart)).toUpperCase();
+                chart = updateChartFieldMappings(chart);
+                chart.editing = false;
+                resetAndQueryForData(chart);
+            };
+
+            /**
+             * Adds a new line chart using the properties set in the options menu
+             * @method addNewChart
+             */
+            $scope.addNewChart = function() {
+                var chart = {
+                    name: ($scope.options.newChart.name || createChartTitle($scope.options.newChart)).toUpperCase(),
+                    database: $scope.options.newChart.database.name,
+                    databasePrettyName: $scope.options.newChart.database.prettyName,
+                    table: $scope.options.newChart.table.name,
+                    tablePrettyName: $scope.options.newChart.table.prettyName,
+                    fields: $scope.fields,
+                    attrXField: $scope.options.newChart.attrX,
+                    attrXMapping: $scope.options.newChart.attrX.columnName,
+                    aggregation: $scope.options.newChart.aggregation,
+                    attrYField: $scope.options.newChart.attrY,
+                    attrYMapping: $scope.options.newChart.attrY.columnName,
+                    categoryField: $scope.options.newChart.categoryField,
+                    categoryMapping: $scope.options.newChart.categoryField.columnName,
+                    active: $scope.options.newChart.active,
+                    visible: $scope.options.newChart.visible,
+                    valid: true,
+                    editing: false
+                };
+
+                chart.id = uuid();
+                setActiveStatusForCharts(chart.database, chart.table, chart.attrXMapping, chart.active);
+                $scope.options.charts.push(chart);
+                resetAndQueryForData(chart);
+                $scope.resetNewChart();
+            };
+
+            /**
+             * Updates all charts with the given database, table, and x-attribute with the given active status.
+             * @param {String} database
+             * @param {String} table
+             * @param {String} attrX
+             * @param {Boolean} active
+             * @method setActiveStatusForCharts
+             * @private
+             */
+            var setActiveStatusForCharts = function(database, table, attrX, active) {
+                _.each($scope.options.charts, function(chart) {
+                    if(chart.database === database && chart.table === table && chart.attrXMapping === attrX) {
+                        chart.active = active;
+                    }
+                });
+            };
+
+            /**
+             * Resets the new line chart properties.
+             * @method resetNewChart
+             */
+            $scope.resetNewChart = function() {
+                $scope.databases = datasetService.getDatabases();
+                $scope.options.newChart.editing = false;
+                $scope.options.newChart.database = $scope.databases[0];
+                $scope.options.newChart.name = "";
+                $scope.options.newChart.aggregation = "count";
+                $scope.options.newChart.visible = true;
+                $scope.options.newChart.active = true;
+                $scope.updateTables();
+            };
+
+            /**
+             * Creates and returns a title for the given chart.
+             * @param {Object} chart
+             * @return {String}
+             * @method createChartTitle
+             * @private
+             */
+            var createChartTitle = function(chart) {
+                return chart.table.name +
+                    (chart.attrYMapping && chart.aggregation !== "count" ?
+                        ' / ' + chart.attrYMapping : '');
+            };
+
+            /**
+             * Returns whether the new chart object's name matches the name of any other existing charts.
+             * @return {Boolean}
+             * @method validateNewChartName
+             * @private
+             */
+            var validateNewChartName = function() {
+                return !($scope.options.charts.some(function(element) {
+                    return element.name === ($scope.options.newChart.name || createChartTitle($scope.options.newChart)).toUpperCase();
+                }));
+            };
+
+            /**
+             * Returns whether the given chart's name matches the name of any other existing charts.
+             * @param {Object} chart
+             * @param {Number} index
+             * @return {Boolean}
+             * @method validateChartName
+             * @private
+             */
+            var validateChartName = function(chart, index) {
+                return !($scope.options.charts.some(function(element, elementIndex) {
+                    return element.name === (chart.name || createChartTitle(chart)).toUpperCase() && elementIndex !== index;
+                }));
+            };
+
+            /**
+             * Returns whether the given chart has a y-attribute value when applicable. If no chart is given, the new chart object is used.
+             * @param {Object} [chart]
+             * @return {Boolean}
+             * @method validateAttrY
+             * @private
+             */
+            var validateAttrY = function(chart) {
+                if(chart) {
+                    return (chart.aggregation !== 'count' && !chart.attrYField.columnName) ? false : true;
+                }
+                return ($scope.options.newChart.aggregation !== 'count' && !$scope.options.newChart.attrY.columnName) ? false : true;
+            };
+
+            /**
+             * Sets the validity of the given chart. If no chart is given, the new chart object is used.
+             * @param {Object} [chart]
+             * @param {Number} [index]
+             * @method validateChart
+             */
+
+            $scope.validateChart = function(chart, index) {
+                if(chart) {
+                    chart.valid = (validateAttrY(chart) && validateChartName(chart, index)) ? true : false;
+                } else {
+                    $scope.options.newChart.valid = (validateAttrY() && validateNewChartName()) ? true : false;
+                }
+            };
+
+            /**
+             * Toggles the editing status of the new chart object and validates it.
+             * @method clickAddNewChartButton
+             */
+            $scope.clickAddNewChartButton = function() {
+                $scope.toggleEditing($scope.options.newChart);
+                $scope.validateChart();
+            };
+
+            /**
+             * Toggles editing on the given chart.
+             * @param {Object} chart
+             * @method toggleEditing
+             */
+            $scope.toggleEditing = function(chart) {
+                chart.editing = !chart.editing;
+            };
+
+            /**
+             * Shows/hides the legend
+             * @method toggleLegend
+             */
+            $scope.toggleLegend = function() {
+                $scope.legend.display = !$scope.legend.display;
+                $scope.legend.dirty = 1;
+                updateChartSize();
+            };
+
+            /**
+             * Shows/hides the legend for a single chart
+             * @param {Number} index The index in the legend that contains the chart to show/hide
+             * @method toggleLegendChart
+             */
+            $scope.toggleLegendChart = function(id) {
+                $scope.legend.charts[id].display = !$scope.legend.charts[id].display;
+            };
+
+            /*
+             * Adds a new filter key, if it doesn't exist already, for the given layer.
+             * @method setFilterKey
+             * @private
+             */
+            var setFilterKey = function(chart, filterKeys) {
+                var database = chart.database;
+                var table = chart.table;
+                var attrX = chart.attrXMapping;
+                var relations = datasetService.getRelations(database, table, [attrX]);
+                var relationKeys = {};
+
+                _.each(relations, function(relation) {
+                    var relationDatabase = relation.database;
+                    var relationTable = relation.table;
+
+                    if(relationDatabase !== database || relationTable !== table) {
+                        if(!relationKeys[relationDatabase]) {
+                            relationKeys[relationDatabase] = {};
+                        }
+                        if(!relationKeys[relationDatabase][relationTable]) {
+                            relationKeys[relationDatabase][relationTable] = filterKeys[relationDatabase][relationTable];
+                        }
+                    }
+                });
+
+                if(!$scope.filterKeys[database]) {
+                    $scope.filterKeys[database] = {};
+                }
+                if(!$scope.filterKeys[database][table]) {
+                    $scope.filterKeys[database][table] = {};
+                }
+                if(!$scope.filterKeys[database][table][attrX]) {
+                    $scope.filterKeys[database][table][attrX] = {};
+                    $scope.filterKeys[database][table][attrX].filterKey = filterKeys[database][table];
+                    $scope.filterKeys[database][table][attrX].relations = relationKeys;
+                }
+            };
+
+            /**
+             * Resets the filter keys and requeries for all charts matching the given charts database, table, and date mappoing.
+             * @param {Object} chart
+             * @method resetAndQueryForData
+             * @private
+             */
+            var resetAndQueryForData = function(chart) {
+                var globalFilterKeys = datasetService.getDateFilterKeys(chart.database, chart.table, chart.attrXMapping);
+                setFilterKey(chart, globalFilterKeys);
+
+                var globalBrushExtent = datasetService.getDateBrushExtent(chart.database, chart.table, chart.attrXMapping);
+                if(!$scope.brushExtent.length && globalBrushExtent.length && chart.active) {
+                    $scope.queryOnChangeBrush = true;
+                    updateBrush(globalBrushExtent, true);
+                    return;
+                }
+
+                var queriesCompleted = 0;
+                _.each($scope.options.charts, function(element) {
+                    if(chart.database === element.database && chart.table === element.table && chart.attrXMapping === element.attrXMapping) {
+                        element.active = chart.active;
+
+                        if(!$scope.outstandingQuery[element.id]) {
+                            $scope.outstandingQuery[element.id] = undefined;
+                        }
+                        queryForData(element, function(results) {
+                            $scope.data[element.id] = results.data;
+                            queriesCompleted += 1;
+
+                            if(queriesCompleted === $scope.options.charts.length) {
+                                updateLineChartForBrushExtent(true);
+                            }
+                        });
+                    } else {
+                        queriesCompleted += 1;
+
+                        if(queriesCompleted === $scope.options.charts.length) {
+                            updateLineChartForBrushExtent(true);
+                        }
+                    }
+                });
+            };
+
+            /**
+             * Compares the two given data points for a sort function based on their aggregation type.
              * @param {Array} a
              * @param {Array} b
              * @method compareSeriesData
              * @return {Integer}
              */
             var compareSeriesData = function(a, b) {
-                if($scope.options.aggregation === "count" || $scope.options.aggregation === "sum" || $scope.options.aggregation === "average") {
+                if(a.aggregation === "count" || a.aggregation === "sum" || a.aggregation === "average") {
                     if(a.total < b.total) {
                         return 1;
                     }
@@ -779,7 +878,7 @@ function(external, connectionService, datasetService, errorNotificationService, 
                         return -1;
                     }
                 }
-                if($scope.options.aggregation === "min") {
+                if(a.aggregation === "min") {
                     if(a.min < b.min) {
                         return -1;
                     }
@@ -787,7 +886,7 @@ function(external, connectionService, datasetService, errorNotificationService, 
                         return 1;
                     }
                 }
-                if($scope.options.aggregation === "max") {
+                if(a.aggregation === "max") {
                     if(a.max < b.max) {
                         return 1;
                     }
@@ -861,43 +960,24 @@ function(external, connectionService, datasetService, errorNotificationService, 
             };
 
             /**
-             * Draws a new line chart with the given results from the successful query.
-             * @param {Object} results
-             * @method handleQuerySuccess
-             */
-            var handleQuerySuccess = function(results) {
-                $scope.data = results.data;
-
-                updateChart(true);
-            };
-
-            /**
-             * Creates the line series data using the given data, and the min and max dates.
+             * Creates the line series data for a given chart using the given data, and the min and max dates.
+             * @param {Object} chart
              * @param {Object} data
              * @param {Date} minDate
              * @param {Date} maxDate
              * @method createLineSeriesData
              */
-            var createLineSeriesData = function(data, minDate, maxDate) {
-                var theData = data;
-                var attrX = $scope.options.attrX;
-
-                // If data is from an overlay, use the attributes inside data
-                if(!_.isArray(data)) {
-                    theData = data.data;
-                    attrX = data.attrX;
-                }
-
+            var createLineSeriesData = function(chart, data, minDate, maxDate) {
                 //this prevents an error in older mongo caused when the xAxis value is invalid as it is not
                 //included as a key in the response
-                for(var i = 0; i < $scope.data.length; i++) {
-                    if(typeof($scope.data[i][$scope.options.attrX.columnName]) === 'undefined') {
-                        $scope.data[i][$scope.options.attrX.columnName] = null;
+                for(var i = 0; i < data.length; i++) {
+                    if(typeof(data[i][chart.attrXMapping]) === 'undefined') {
+                        data[i][chart.attrXMapping] = null;
                     }
                 }
 
                 var seriesData = [];
-                var zeroedData = zeroPadData(data, minDate, maxDate);
+                var zeroedData = zeroPadData(chart, data, minDate, maxDate);
 
                 for(var series in zeroedData) {
                     if(Object.prototype.hasOwnProperty.call(zeroedData, series)) {
@@ -914,6 +994,12 @@ function(external, connectionService, datasetService, errorNotificationService, 
 
                 if(otherSeriesData.total > 0) {
                     seriesData.push(otherSeriesData);
+                }
+
+                if(!chart.visible) {
+                    _.each(seriesData, function(series) {
+                        series.hidden = true;
+                    });
                 }
 
                 XDATA.userALE.log({
@@ -934,6 +1020,7 @@ function(external, connectionService, datasetService, errorNotificationService, 
              * Draws a blank line chart and displays the error in the given response from the failed query.
              * @param {Object} response
              * @method handleQueryFailure
+             * @private
              */
             var handleQueryFailure = function(response) {
                 if(response.status === 0) {
@@ -959,7 +1046,7 @@ function(external, connectionService, datasetService, errorNotificationService, 
                         tags: ["failed", "linechart"]
                     });
 
-                    drawLineChart();
+                    drawLineChart([], {});
 
                     if(response.responseJSON) {
                         $scope.errorMessage = errorNotificationService.showErrorMessage($element, response.responseJSON.error, response.responseJSON.stackTrace);
@@ -967,10 +1054,24 @@ function(external, connectionService, datasetService, errorNotificationService, 
                 }
             };
 
+            /**
+             * Shows/hides the line associated with the given color mapping.
+             * @param {Object} colorMapping
+             * @method toggleSeries
+             */
             $scope.toggleSeries = function(colorMapping) {
                 var activity = $scope.chart.toggleSeries(colorMapping.series);
                 colorMapping.hidden = (activity === "show") ? false : true;
                 $scope.chart.showTrendlines(($scope.options.trendlines === 'show') ? true : false);
+
+                var chartId = colorMapping.series.split(":")[0];
+                var allHidden = _.every($scope.colorMappings[chartId], 'hidden');
+
+                var chart = _.find($scope.options.charts, {
+                    id: chartId
+                })
+                chart.visible = !allHidden;
+
                 XDATA.userALE.log({
                     activity: activity,
                     action: "click",
@@ -983,26 +1084,41 @@ function(external, connectionService, datasetService, errorNotificationService, 
                 });
             };
 
-            var zeroPadData = function(data, minDate, maxDate) {
-                var attrX = $scope.options.attrX;
-                var attrY = $scope.options.attrY;
-                var categoryField = $scope.options.categoryField;
-                var aggregation = $scope.options.aggregation;
-                var theData = data;
-                var isOverlay = false;
-                var id = $scope.visualizationId;
+            /**
+             * Shows/hides the given chart.
+             * @param {Object} chart
+             * @method updateChartVisibility
+             */
+            $scope.updateChartVisibility = function(chart) {
+                var activity = $scope.chart.toggleSeriesGroup(chart.id, (chart.visible ? 'show' : 'hide'));
+                $scope.chart.showTrendlines(($scope.options.trendlines === 'show') ? true : false);
+                _.each($scope.colorMappings[chart.id], function(colorMapping) {
+                    colorMapping.hidden = !chart.visible;
+                });
+                XDATA.userALE.log({
+                    activity: activity,
+                    action: "click",
+                    elementId: "linechart",
+                    elementType: "canvas",
+                    elementSub: "linechart",
+                    elementGroup: "chart_group",
+                    source: "system",
+                    tags: ["render", "linechart", chart.name]
+                });
+            };
 
-                // If data is from an overlay, use the attributes inside data
-                if(!_.isArray(data)) {
-                    attrX = data.attrX;
-                    attrY = data.attrY;
-                    categoryField = data.categoryField;
-                    aggregation = data.aggregation;
-                    theData = data.data;
-                    isOverlay = true;
-                    id = data.id;
-                }
-
+            /**
+             * Creates a series object to use when drawing the given chart. Creates dates in the object from minDate
+             * to maxDate and sets all dates not in the given data to zero.
+             * @param {Object} chart
+             * @param {Array} data
+             * @param {Date} minDate
+             * @param {Date} maxDate
+             * @return {Object}
+             * @method zeroPadData
+             * @private
+             */
+            var zeroPadData = function(chart, data, minDate, maxDate) {
                 $scope.dateStringToDataIndex = {};
 
                 var i = 0;
@@ -1024,31 +1140,37 @@ function(external, connectionService, datasetService, errorNotificationService, 
 
                 var resultData = {};
 
-                var series = attrY.prettyName;
-                if(aggregation === 'count') {
+                var series = chart.attrYMapping;
+                var aggType;
+                if(chart.aggregation === 'count') {
                     series = 'Count';
+                    aggType = 'count';
                 }
-                if(aggregation === 'average') {
-                    series = 'Average ' + attrY.prettyName;
+                if(chart.aggregation === 'average') {
+                    series = 'Average ' + chart.attrYMapping;
+                    aggType = 'average';
                 }
-                if(aggregation === 'sum') {
-                    series = 'Sum ' + attrY.prettyName;
+                if(chart.aggregation === 'sum') {
+                    series = 'Sum ' + chart.attrYMapping;
+                    aggType = 'sum';
                 }
-                if(aggregation === 'min') {
-                    series = 'Minimum ' + attrY.prettyName;
+                if(chart.aggregation === 'min') {
+                    series = 'Minimum ' + chart.attrYMapping;
+                    aggType = 'min';
                 }
-                if(aggregation === 'max') {
-                    series = 'Maximum ' + attrY.prettyName;
+                if(chart.aggregation === 'max') {
+                    series = 'Maximum ' + chart.attrYMapping;
+                    aggType = 'max';
                 }
 
                 // Add the visualization id to the beginning of the series name to decipher which chart
                 // the data is coming from
-                series = id + ":" + series;
+                series = chart.id + ":" + series;
 
                 // Scrape data for unique series
-                for(i = 0; i < theData.length; i++) {
-                    if(datasetService.isFieldValid(categoryField)) {
-                        series = id + ":" + (theData[i][categoryField.columnName] !== '' ? theData[i][categoryField.columnName] : 'Unknown');
+                for(i = 0; i < data.length; i++) {
+                    if(datasetService.isFieldValid(chart.categoryField)) {
+                        series = chart.id + ":" + (data[i][chart.categoryMapping] !== '' ? data[i][chart.categoryMapping] : 'Unknown');
                     }
 
                     if(!resultData[series]) {
@@ -1058,9 +1180,8 @@ function(external, connectionService, datasetService, errorNotificationService, 
                             total: 0,
                             min: undefined,
                             max: undefined,
-                            data: [],
-                            overlay: isOverlay,
-                            overlayTitle: (isOverlay ? data.title : undefined)
+                            aggregation: aggType,
+                            data: []
                         };
                     }
                 }
@@ -1080,29 +1201,29 @@ function(external, connectionService, datasetService, errorNotificationService, 
 
                 // Populate series with data
                 var indexDate;
-                for(i = 0; i < theData.length; i++) {
-                    indexDate = new Date(theData[i].date);
+                for(i = 0; i < data.length; i++) {
+                    indexDate = new Date(data[i].date);
                     var dataIndex = Math.floor(Math.abs(indexDate - start) / millis);
 
                     if(dataIndex >= 0 && dataIndex + 1 <= numBuckets) {
-                        if(datasetService.isFieldValid(categoryField)) {
-                            series = theData[i][categoryField.columnName] !== '' ? theData[i][categoryField.columnName] : 'Unknown';
-                            series = id + ":" + series;
+                        if(datasetService.isFieldValid(chart.categoryField)) {
+                            series = data[i][chart.categoryMapping] !== '' ? data[i][chart.categoryMapping] : 'Unknown';
+                            series = chart.id + ":" + series;
                         }
 
-                        theData[i].value = _.isNumber(theData[i].value) ? theData[i].value : undefined;
+                        data[i].value = _.isNumber(data[i].value) ? data[i].value : undefined;
 
                         if(_.isUndefined(resultData[series].data[dataIndex].value)) {
-                            resultData[series].data[dataIndex].value = theData[i].value;
-                        } else if(!_.isUndefined(theData[i].value)) {
-                            resultData[series].data[dataIndex].value += theData[i].value;
+                            resultData[series].data[dataIndex].value = data[i].value;
+                        } else if(!_.isUndefined(data[i].value)) {
+                            resultData[series].data[dataIndex].value += data[i].value;
                         }
 
                         // Only calculate total, min, and max if the value is defined
-                        if(!_.isUndefined(theData[i].value)) {
-                            resultData[series].total += theData[i].value;
-                            resultData[series].min = _.isUndefined(resultData[series].min) ? theData[i].value : Math.min(resultData[series].min, theData[i].value);
-                            resultData[series].max = _.isUndefined(resultData[series].max) ? theData[i].value : Math.max(resultData[series].max, theData[i].value);
+                        if(!_.isUndefined(data[i].value)) {
+                            resultData[series].total += data[i].value;
+                            resultData[series].min = _.isUndefined(resultData[series].min) ? data[i].value : Math.min(resultData[series].min, data[i].value);
+                            resultData[series].max = _.isUndefined(resultData[series].max) ? data[i].value : Math.max(resultData[series].max, data[i].value);
                         }
 
                         // Save the mapping from date string to data index so we can find the data index using the brush extent while calculating aggregations for brushed line charts.
@@ -1113,6 +1234,13 @@ function(external, connectionService, datasetService, errorNotificationService, 
                 return resultData;
             };
 
+            /**
+             * Tells other visualizations the given dates are highlighted.
+             * @param {Date} startDate
+             * @param {Date} endDate
+             * @method onHover
+             * @private
+             */
             var onHover = function(startDate, endDate) {
                 $scope.$apply(function() {
                     $scope.messenger.publish("date_selected", {
@@ -1122,33 +1250,48 @@ function(external, connectionService, datasetService, errorNotificationService, 
                 });
             };
 
+            /**
+             * Returns the chart name associated with the given color mapping.
+             * @param {Object} colorMapping
+             * @return {String}
+             * @method getTitleFromMapping
+             */
             $scope.getTitleFromMapping = function(colorMapping) {
-                return colorMapping.overlayTitle;
+                return _.result(
+                    _.findWhere($scope.options.charts, {
+                        id: colorMapping.series.split(":")[0]
+                    }),
+                    "name"
+                );
             };
 
             /**
-             * Creates and draws a new line chart with the given data, if any.
+             * Creates and draws a new line chart with the given data and color mappings.
              * @param {Array} data
-             * @param {Object} overlayColorMappings Color mappings for any overlays
+             * @param {Object} colorMappings
              * @method drawLineChart
              */
-            var drawLineChart = function(data, overlayColorMappings) {
+            var drawLineChart = function(data, colorMappings) {
                 var opts = {
                     x: "date",
                     y: "value",
                     hoverListener: onHover,
                     responsive: true,
                     granularity: $scope.options.granularity,
-                    seriesToColors: datasetService.isFieldValid($scope.options.categoryField) ? datasetService.getActiveDatasetColorMaps($scope.options.database.name, $scope.options.table.name, $scope.options.categoryField.columnName) : {}
+                    seriesToColors: colorMappings
                 };
-
-                opts.seriesToColors = _.merge(opts.seriesToColors, overlayColorMappings);
 
                 // Destroy the old chart and rebuild it.
                 if($scope.chart) {
                     $scope.chart.destroy();
                 }
                 $scope.chart = new charts.LineChart($element[0], '.linechart', opts);
+                _.each(data, function(datum) {
+                    if(datum.hidden) {
+                        $scope.chart.addHiddenSeries(datum.series);
+                    }
+                    delete datum.hidden;
+                });
                 $scope.chart.setBrushHandler(function(data) {
                     $scope.$apply(function() {
                         updateBrush(data);
@@ -1157,7 +1300,13 @@ function(external, connectionService, datasetService, errorNotificationService, 
                 $scope.chart.draw(data);
                 $scope.chart.showTrendlines(($scope.options.trendlines === 'show') ? true : false);
                 $scope.colorMappings = $scope.chart.getColorMappings();
-                $scope.noData = !data || !data.length || !data[0].data || !data[0].data.length;
+                $scope.legend.charts = {};
+                _.each($scope.colorMappings, function(mappingArray, id) {
+                    $scope.legend.charts[id] = {
+                        display: true
+                    };
+                });
+                $scope.noData = !data || !data.length;
                 $scope.loadingData = false;
 
                 // Use a timeout so we resize the chart after the legend renders (since the legend size affects the chart size).
@@ -1258,9 +1407,11 @@ function(external, connectionService, datasetService, errorNotificationService, 
             /**
              * Updates the brush extent in this visualization's chart and the dataset service.
              * @param {Array} brushExtent
+             * @param {Boolean} ignoreGlobalBrushExtent
              * @method updateBrush
+             * @private
              */
-            var updateBrush = function(brushExtent) {
+            var updateBrush = function(brushExtent, ignoreGlobalBrushExtent) {
                 XDATA.userALE.log({
                     activity: "select",
                     action: "click",
@@ -1276,28 +1427,83 @@ function(external, connectionService, datasetService, errorNotificationService, 
                     $scope.removeBrush();
                     return;
                 }
-
                 renderBrushExtent(brushExtent);
+                var charts = [];
+                _.each($scope.options.charts, function(chart) {
+                    if(chart.active) {
+                        charts.push(chart);
+                    }
+                });
+                updateBrushRecursively(charts, ignoreGlobalBrushExtent);
+            };
 
-                var globalBrushExtent = datasetService.getDateBrushExtent($scope.options.database.name, $scope.options.table.name, $scope.options.attrX.columnName);
+            /**
+             * Recursively replaces the filters associated with the given charts.
+             * @param {Array} charts
+             * @param {Boolean} ignoreGlobalBrushExtent
+             * @method updateBrushRecursively
+             * @private
+             */
+            var updateBrushRecursively = function(charts, ignoreGlobalBrushExtent) {
+                var chart = charts.shift();
+                var origBrushExtent = angular.copy($scope.brushExtent);
+                var globalBrushExtent = datasetService.getDateBrushExtent(chart.database, chart.table, chart.attrXMapping);
                 // We're comparing the date strings here because comparing the date objects doesn't seem to work.
-                if(globalBrushExtent.length && $scope.brushExtent[0].toDateString() === globalBrushExtent[0].toDateString() && $scope.brushExtent[1].toDateString() === globalBrushExtent[1].toDateString()) {
+                if(globalBrushExtent.length && $scope.brushExtent[0].toDateString() === globalBrushExtent[0].toDateString() &&
+                    $scope.brushExtent[1].toDateString() === globalBrushExtent[1].toDateString() && !ignoreGlobalBrushExtent) {
+                    if(charts.length) {
+                        updateBrushRecursively(charts, ignoreGlobalBrushExtent);
+                    } else {
+                        updateLineChartForBrushExtent();
+                    }
                     return;
                 }
 
-                var relations = datasetService.getRelations($scope.options.database.name, $scope.options.table.name, [$scope.options.attrX.columnName]);
+                var filterKeys = createFilterKeyObj(chart);
+                var relations = datasetService.getRelations(chart.database, chart.table, [chart.attrXMapping]);
 
-                var filterNameObj = {
-                    visName: "LineChart",
-                    text: getDateString($scope.brushExtent[0], false) + " to " + getDateString($scope.brushExtent[1], false)
-                };
+                var filterNameObj = "LineChart - " +  getDateString($scope.brushExtent[0], false) + " to " + getDateString($scope.brushExtent[1], false);
 
-                filterService.replaceFilters($scope.messenger, relations, $scope.filterKeys, createFilterClauseForDate, filterNameObj, function() {
-                    updateLineChartForBrushExtent();
+                filterService.replaceFilters($scope.messenger, relations, filterKeys, createFilterClauseForDate, filterNameObj, function() {
                     datasetService.setDateBrushExtentForRelations(relations, $scope.brushExtent);
+                    // Sometimes setDateBrushExtentForRelations() changes the brushExtent so we want to reset it back to
+                    // the original if that happens.
+                    if(origBrushExtent !== $scope.brushExtent) {
+                        $scope.brushExtent = origBrushExtent;
+                    }
+
+                    if(charts.length) {
+                        updateBrushRecursively(charts, ignoreGlobalBrushExtent);
+                    } else {
+                        updateLineChartForBrushExtent();
+                    }
                 });
             };
 
+            /**
+             * Creates a filter key object from the filter keys associated with the given chart.
+             * @param {Object} chart
+             * @return {Object}
+             * @method createFilterKeyObj
+             * @private
+             */
+            var createFilterKeyObj = function(chart) {
+                var filterKey = {};
+                filterKey[chart.database] = {};
+                filterKey[chart.database][chart.table] = $scope.filterKeys[chart.database][chart.table][chart.attrXMapping].filterKey;
+
+                return _.merge(filterKey, $scope.filterKeys[chart.database][chart.table][chart.attrXMapping].relations);
+            }
+
+            /**
+             * Returns the string version of the given date. Set includeTime to true if
+             * the returning string should include the minutes.
+             * @param {Date} date
+             * @param {Boolean} includeTime
+             * @return {String}
+             * @method getDateString
+             * @private
+             */
             var getDateString = function(date, includeTime) {
                 var dateString = (date.getMonth() + 1) + "/" + date.getDate() + "/" + date.getFullYear();
                 if(includeTime) {
@@ -1307,10 +1513,19 @@ function(external, connectionService, datasetService, errorNotificationService, 
             };
 
             /**
-             * Redraws the line chart using the data from the previous query within the current brush extent.
+             * Redraws all visible line charts using the data from the previous queries within the current brush extent.
+             * @param {Boolean} reload
              * @method updateLineChartForBrushExtent
+             * @private
              */
-            var updateLineChartForBrushExtent = function() {
+            var updateLineChartForBrushExtent = function(reload) {
+                var allInactive = _.every($scope.options.charts, {
+                    active: false
+                });
+                if(allInactive && $scope.brushExtent.length >= 2) {
+                    renderBrushExtent([]);
+                }
+
                 if($scope.brushExtent.length >= 2) {
                     var dayMillis = (1000 * 60 * 60 * 24);
                     var diff = $scope.brushExtent[1] - $scope.brushExtent[0];
@@ -1333,131 +1548,79 @@ function(external, connectionService, datasetService, errorNotificationService, 
                 // If the user changed a field or filter while the chart contained data filtered by date then the chart will need to query for new data since the saved data from
                 // the previous query will be stale.  Otherwise use the data from the previous query and the current brush extent to redraw the chart.
                 if($scope.queryOnChangeBrush) {
-                    queryForData();
-                    // We need to query for new data until there is no date filter and we query for the whole dataset.
-                    $scope.queryOnChangeBrush = $scope.brushExtent.length >= 2 ? true : false;
+                    $scope.queryOnChangeBrush = false;
+                    queryAllData();
                     return;
                 }
 
-                var dateRange = getDateRange(true);
+                var dateRange = getDateRange();
+                var fullDateRange = getDateRange(true);
 
                 // If the brush extent does not overlap with the date range of the data, just draw an empty chart.
-                if(!$scope.data.length || $scope.brushExtent[1] < dateRange.minDate || $scope.brushExtent[0] > dateRange.maxDate) {
+                if(!_.keys($scope.data).length || $scope.brushExtent[1] < fullDateRange.minDate ||
+                    $scope.brushExtent[0] > fullDateRange.maxDate) {
+
                     drawLineChart({
                         data: []
-                    });
+                    }, {});
                     return;
                 }
 
-                updateChart();
-            };
-
-            var updateChart = function(newData) {
-                var indices = getIndicesForData();
-
-                if($scope.options.chartsAddedTo.length) {
-                    $scope.refreshAllOverlays();
-                }
-
-
-                /* Update the chart once all overlays, with the same database/table as the current visualization,
-                   have the same brush extent */
-
-                var allOverlaysUpdated = _.every($scope.options.overlays, {
-                    data: {
-                        brushExtent: $scope.brushExtent
-                    }
-                });
-
-                var filteredOverlays = _.find($scope.options.overlays, {
-                    data: {
-                        database: $scope.options.database.name,
-                        table: $scope.options.table.name
-                    }
-                });
-
-                if(!filteredOverlays) {
-                    allOverlaysUpdated = true;
-                }
-
-                if(!$scope.options.overlays.length || allOverlaysUpdated) {
-                    createChart(indices.startIndex, indices.endIndex, newData);
-                }
-            };
-
-            var createChart = function(startIndex, endIndex, newData) {
                 var seriesData = [];
-                var overlayColorMappings = {};
+                var colorMappings = {};
 
-                if($scope.data.length) {
-                    var dateRange = getDateRange();
-                    seriesData = createLineSeriesData($scope.data.slice(startIndex, endIndex), dateRange.minDate, dateRange.maxDate);
+                // Get all series data and color mappings for each chart
+                _.each($scope.options.charts, function(chart) {
+                    var updatedData = $scope.data[chart.id];
 
-                    _.each($scope.options.overlays, function(overlay) {
-                        var indices = getIndicesForData(overlay.data);
-                        var overlayData = overlay.data;
-                        overlayData.data = overlayData.data.slice(indices.startIndex, indices.endIndex);
-                        overlayData.id = overlay.id;
-                        overlayData.title = overlay.name;
-                        var overlaySeriesData = createLineSeriesData(overlayData, dateRange.minDate, dateRange.maxDate);
-                        // Get any color mappings used by the overlay
-                        if(datasetService.isFieldValid(overlay.data.categoryField)) {
-                            var colors = datasetService.getActiveDatasetColorMaps(overlay.data.database, overlay.data.table, overlay.data.categoryField.columnName);
-                            colors = _.transform(colors, function(result, value, key) {
-                                result[overlay.id + ":" + key] = value;
-                            });
-                            overlayColorMappings = _.merge(overlayColorMappings, colors);
-                        }
-                        seriesData = seriesData.concat(overlaySeriesData);
-                    });
-                }
+                    // Get only the data within the brush extent if the chart is active
+                    if(chart.active && $scope.brushExtent.length >= 2) {
+                        var indices = getIndicesForData($scope.data[chart.id], $scope.brushExtent[0], $scope.brushExtent[1]);
+                        updatedData = $scope.data[chart.id].slice(indices.startIndex, indices.endIndex);
+                    }
+                    seriesData = seriesData.concat(createLineSeriesData(chart, updatedData, dateRange.minDate, dateRange.maxDate));
 
-                if(newData) {
+                    // Get any color mappings set in the configuration file
+                    if(datasetService.isFieldValid(chart.categoryField)) {
+                        var colors = datasetService.getActiveDatasetColorMaps(chart.database, chart.table,
+                            chart.categoryMapping);
+                        colors = _.transform(colors, function(result, value, key) {
+                            result[chart.id + ":" + key] = value;
+                        });
+                        colorMappings = _.merge(colorMappings, colors);
+                    }
+                });
+
+                if(reload) {
                     $scope.$apply(function() {
-                        drawLineChart(seriesData, overlayColorMappings);
+                        drawLineChart(seriesData, colorMappings);
                     });
                 } else {
-                    drawLineChart(seriesData, overlayColorMappings);
+                    drawLineChart(seriesData, colorMappings);
                 }
             };
 
             /*
              * Finds the indices in the data that give the first and last data that will be shown
              * on the graph using any brush extents set.
-             * @param {Object} [data] An overlay object to use as the data. Optional.
+             * @param {Object} data
              * @return {Object} Returns an object containing startIndex and endIndex.
              * @method getIndicesForData
              * @private
              */
-            var getIndicesForData = function(data) {
+            var getIndicesForData = function(data, minDate, maxDate) {
                 var startIndex = 0;
-                var endIndex = $scope.data.length;
-                if(data) {
-                    endIndex = data.data.length;
-                    if(data.brushExtent.length >= 2) {
-                        data.data.forEach(function(datum, index) {
-                            var date = zeroOutDate(new Date(datum.date));
-                            if(date < data.brushExtent[0]) {
-                                startIndex = index + 1;
-                            }
-                            if(date < data.brushExtent[1]) {
-                                endIndex = index + 1;
-                            }
-                        });
+                var endIndex = data.length;
+
+                data.forEach(function(datum, index) {
+                    var date = zeroOutDate(new Date(datum.date));
+                    if(date < minDate) {
+                        startIndex = index + 1;
                     }
-                } else {
-                    if($scope.brushExtent.length >= 2) {
-                        $scope.data.forEach(function(datum, index) {
-                            var date = zeroOutDate(new Date(datum.date));
-                            if(date < $scope.brushExtent[0]) {
-                                startIndex = index + 1;
-                            }
-                            if(date < $scope.brushExtent[1]) {
-                                endIndex = index + 1;
-                            }
-                        });
+                    if(date < maxDate) {
+                        endIndex = index + 1;
                     }
-                }
+                });
 
                 return {
                     startIndex: startIndex,
@@ -1466,9 +1629,9 @@ function(external, connectionService, datasetService, errorNotificationService, 
             };
 
             /*
-             * Finds the min and max dates using all data, including overlays, and the brush.
+             * Finds the min and max dates within the brush extent for all charts.
              * @param {Boolean} ignoreBrushExtent Set to true to find the min and max dates disregarding
-             * any brushes set.
+             * any brush extents.
              * @return {Object} Returns an object contain minDate and maxDate.
              * @method getDateRange
              * @private
@@ -1478,44 +1641,20 @@ function(external, connectionService, datasetService, errorNotificationService, 
                 var maxDate;
 
                 if($scope.brushExtent.length < 2 || ignoreBrushExtent) {
-                    //this prevents an error in older mongo caused when the xAxis value is invalid as it is not
-                    //included as a key in the response
-                    for(var i = 0; i < $scope.data.length; i++) {
-                        if(typeof($scope.data[i][$scope.options.attrX.columnName]) === 'undefined') {
-                            $scope.data[i][$scope.options.attrX.columnName] = null;
-                        }
-                    }
+                    _.each($scope.options.charts, function(chart) {
+                        var min, max;
 
-                    if($scope.data.length > 0) {
-                        var range = d3.extent($scope.data, function(d) {
+                        var range = d3.extent($scope.data[chart.id], function(d) {
                             return new Date(d.date);
                         });
-                        minDate = range[0];
-                        maxDate = range[1];
-                    }
+                        min = range[0];
+                        max = range[1];
 
-                    _.each($scope.options.overlays, function(overlay) {
-                        //this prevents an error in older mongo caused when the xAxis value is invalid as it is not
-                        //included as a key in the response
-                        for(var i = 0; i < overlay.data.data.length; i++) {
-                            if(typeof(overlay.data.data[i][overlay.data.attrX.columnName]) === 'undefined') {
-                                overlay.data.data[i][overlay.data.attrX.columnName] = null;
-                            }
+                        if(min < minDate || !minDate) {
+                            minDate = min;
                         }
-
-                        if(overlay.data.data.length > 0) {
-                            var range = d3.extent(overlay.data.data, function(d) {
-                                return new Date(d.date);
-                            });
-                            var min = range[0];
-                            var max = range[1];
-
-                            if(min < minDate) {
-                                minDate = min;
-                            }
-                            if(max > maxDate) {
-                                maxDate = max;
-                            }
+                        if(max > maxDate || !maxDate) {
+                            maxDate = max;
                         }
                     });
                 } else {
@@ -1530,7 +1669,7 @@ function(external, connectionService, datasetService, errorNotificationService, 
             };
 
             /**
-             * Removes the brush extent from this visualization's chart and the dataset service.
+             * Removes the brush extent from this visualization and the dataset service.
              * @method removeBrush
              */
             $scope.removeBrush = function() {
@@ -1545,10 +1684,28 @@ function(external, connectionService, datasetService, errorNotificationService, 
                 });
 
                 renderBrushExtent([]);
-                var relations = datasetService.getRelations($scope.options.database.name, $scope.options.table.name, [$scope.options.attrX.columnName]);
-                filterService.removeFilters($scope.messenger, $scope.filterKeys, function() {
-                    updateLineChartForBrushExtent();
+                removeBrushRecursively($scope.options.charts);
+            };
+
+            /**
+             * Recursively removes the filters associated with the given charts.
+             * @param {Array} charts
+             * @method removeBrushRecursively
+             * @private
+             */
+            var removeBrushRecursively = function(charts) {
+                var chart = charts.shift();
+                var filterKeys = createFilterKeyObj(chart);
+                var relations = datasetService.getRelations(chart.database, chart.table, [chart.attrXMapping]);
+                filterService.removeFilters($scope.messenger, filterKeys, function() {
                     datasetService.removeDateBrushExtentForRelations(relations);
+
+                    if(charts.length) {
+                        removeBrushRecursively(charts);
+                    } else {
+                        queryAllData();
+                        updateLineChartForBrushExtent();
+                    }
                 });
             };
 
@@ -1583,69 +1740,82 @@ function(external, connectionService, datasetService, errorNotificationService, 
                     source: "user",
                     tags: ["options", "linechart", "export"]
                 });
-                var query = buildQuery();
-                query.limitClause = exportService.getLimitClause();
-                query.ignoreFilters_ = exportService.getIgnoreFilters();
-                query.ignoredFilterIds_ = exportService.getIgnoredFilterIds();
+
                 var finalObject = {
                     name: "Line_Chart",
-                    data: [{
-                        query: query,
-                        name: "linechart-" + $scope.exportID,
-                        fields: [],
-                        ignoreFilters: query.ignoreFilters_,
-                        selectionOnly: query.selectionOnly_,
-                        ignoredFilterIds: query.ignoredFilterIds_,
-                        type: "query"
-                    }]
+                    data: []
                 };
-                finalObject.data[0].fields.push({
-                    query: "year",
-                    pretty: "Year"
-                });
-                finalObject.data[0].fields.push({
-                    query: "month",
-                    pretty: "Month"
-                });
-                finalObject.data[0].fields.push({
-                    query: "day",
-                    pretty: "Day"
-                });
-                finalObject.data[0].fields.push({
-                    query: "hour",
-                    pretty: "Hour"
+
+                _.each($scope.options.charts, function(chart) {
+                    if(chart.visible) {
+                        var query = buildQuery(chart);
+                        query.limitClause = exportService.getLimitClause();
+                        query.ignoreFilters_ = exportService.getIgnoreFilters();
+                        query.ignoredFilterIds_ = exportService.getIgnoredFilterIds();
+
+                        var tempObject = {
+                            query: query,
+                            name: "linechart-" + chart.name + "-" + $scope.exportID,
+                            fields: [],
+                            ignoreFilters: query.ignoreFilters_,
+                            selectionOnly: query.selectionOnly_,
+                            ignoredFilterIds: query.ignoredFilterIds_,
+                            type: "query"
+                        };
+                        tempObject.fields.push({
+                            query: "year",
+                            pretty: "Year"
+                        });
+                        tempObject.fields.push({
+                            query: "month",
+                            pretty: "Month"
+                        });
+                        tempObject.fields.push({
+                            query: "day",
+                            pretty: "Day"
+                        });
+                        if($scope.options.granularity === "hour") {
+                            tempObject.fields.push({
+                                query: "hour",
+                                pretty: "Hour"
+                            });
+                        }
+
+                        if(chart.aggregation === "count") {
+                            tempObject.fields.push({
+                                query: "value",
+                                pretty: "Count"
+                            });
+                        } else if(chart.aggregation === "sum") {
+                            tempObject.fields.push({
+                                query: "value",
+                                pretty: "Sum of " + query.aggregates[0].field
+                            });
+                        } else if(chart.aggregation === "average") {
+                            tempObject.fields.push({
+                                query: "value",
+                                pretty: "Average of " + query.aggregates[0].field
+                            });
+                        } else if(chart.aggregation === "min") {
+                            tempObject.fields.push({
+                                query: "value",
+                                pretty: "Min of " + query.aggregates[0].field
+                            });
+                        } else if(chart.aggregation === "max") {
+                            tempObject.fields.push({
+                                query: "value",
+                                pretty: "Max of " + query.aggregates[0].field
+                            });
+                        }
+                        tempObject.fields.push({
+                            query: query.aggregates[1].name,
+                            pretty: query.aggregates[1].field
+                        });
+
+                        finalObject.data.push(tempObject);
+                    }
                 });
 
-                if($scope.options.aggregation === "count") {
-                    finalObject.data[0].fields.push({
-                        query: "value",
-                        pretty: "Count"
-                    });
-                } else if($scope.options.aggregation === "sum") {
-                    finalObject.data[0].fields.push({
-                        query: "value",
-                        pretty: "Sum of " + query.aggregates[0].field
-                    });
-                } else if($scope.options.aggregation === "average") {
-                    finalObject.data[0].fields.push({
-                        query: "value",
-                        pretty: "Average of " + query.aggregates[0].field
-                    });
-                } else if($scope.options.aggregation === "min") {
-                    finalObject.data[0].fields.push({
-                        query: "value",
-                        pretty: "Min of " + query.aggregates[0].field
-                    });
-                } else if($scope.options.aggregation === "max") {
-                    finalObject.data[0].fields.push({
-                        query: "value",
-                        pretty: "Max of " + query.aggregates[0].field
-                    });
-                }
-                finalObject.data[0].fields.push({
-                    query: query.aggregates[1].name,
-                    pretty: query.aggregates[1].field
-                });
                 return finalObject;
             };
 

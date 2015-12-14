@@ -166,11 +166,13 @@ charts.LineChart.prototype.calculateColor = function(seriesObject) {
     var hidden = this.hiddenSeries.indexOf(seriesObject.series) >= 0 ? true : false;
     var index = -1;
     var color;
-    var seriesValueForColors = (seriesObject.overlay) ? seriesObject.series : this.getSeriesValue(seriesObject.series);
+    var hasColorMappingForSeries = _.some(this.seriesToColors, function(value, key) {
+        return key.split(":")[0] === seriesObject.series.split(":")[0];
+    });
 
-    if(this.seriesToColors[seriesValueForColors]) {
-        color = this.seriesToColors[seriesValueForColors];
-    } else if(Object.keys(this.seriesToColors).length) {
+    if(this.seriesToColors[seriesObject.series]) {
+        color = this.seriesToColors[seriesObject.series];
+    } else if(hasColorMappingForSeries) {
         color = this.seriesToColors[""] || neonColors.DEFAULT;
     } else {
         color = this.colorScale(seriesObject.series);
@@ -189,9 +191,7 @@ charts.LineChart.prototype.calculateColor = function(seriesObject) {
         min: seriesObject.min,
         max: seriesObject.max,
         data: seriesObject.data,
-        hidden: hidden,
-        overlay: seriesObject.overlay,
-        overlayTitle: seriesObject.overlayTitle
+        hidden: hidden
     };
 
     // store the color in the registry so we know the color/series mappings
@@ -210,11 +210,6 @@ charts.LineChart.prototype.getColorMappings = function() {
     // Group the color mappings by the line chart they are from
     var colorMappings = _.groupBy(me.colors, function(mapping) {
         return mapping.series.split(":")[0];
-    });
-
-    // Sort so the main chart color mappings are first and all overlays come after
-    colorMappings = _.sortBy(colorMappings, function(values) {
-        return values[0].overlay;
     });
 
     return colorMappings;
@@ -1013,12 +1008,47 @@ charts.LineChart.prototype.toggleSeries = function(series) {
     return activity;
 };
 
+charts.LineChart.prototype.toggleSeriesGroup = function(seriesId, activity) {
+    var me = this;
+
+    var seriesGroup = _.pluck(
+        _.where(me.data, function(datum) {
+            return datum.series.split(":")[0] === seriesId;
+        }),
+        "series"
+    );
+
+    if(activity === 'hide') {
+        me.hiddenSeries = _.union(me.hiddenSeries, seriesGroup);
+    } else {
+        _.each(seriesGroup, function(series) {
+            var index = me.hiddenSeries.indexOf(series);
+
+            if(index >= 0) {
+                me.hiddenSeries.splice(index, 1);
+            }
+        });
+    }
+
+    me.draw();
+
+    return activity;
+};
+
+charts.LineChart.prototype.addHiddenSeries = function(series) {
+    var index = this.hiddenSeries.indexOf(series);
+    if(index === -1) {
+        this.hiddenSeries.push(series);
+    }
+};
+
 /**
  * Draws this line chart.  Sets its data to the new data if given.
  * @param {Array} data (Optional)
  * @method draw
  */
 charts.LineChart.prototype.draw = function(data) {
+    var me = this;
     var extent = this.brush ? this.brush.extent() : undefined;
     this.drawChart();
     if(data) {

@@ -96,42 +96,187 @@
     height: 100%;
     width: 100%;
 
-    .legend {
-        .legend-item {
-            margin-top: 5px;
+    .sidebar {
+        float: left;
 
-            /* Add extra margin to the top of the legend (the first item after the filter-reset) to mimic the styling of the Bar Chart. */
-            &:nth-child(2) {
-                margin-top: 10px;
+        .legend-toggle {
+            padding: 5px;
+            background-color: @button-background-color;
+            border: @button-border;
+            border-top-right-radius: 4px;
+            border-bottom-right-radius: 4px;
+            color: #fff;
+            position: absolute;
+            left: 0px;
+            margin-top: 30px;
+            float: left;
+        }
+
+        .legend-details {
+            overflow: auto;
+            background-color: @button-background-color;
+            border: @button-border;
+            color: #fff;
+            font-weight: bold;
+            height: 510px;
+            float: left;
+            display: none;
+            width: 0px;
+            margin-top: -10px;
+            margin-bottom: -10px;
+            margin-left: -10px;
+
+            .legend-layer {
+                margin-bottom: 10px;
+
+                .legend-header {
+                    cursor: pointer;
+                    position: relative;
+                    padding: 5px;
+
+                    .legend-title {
+                        margin-right: 25px;
+                    }
+
+                    .glyphicon {
+                        position: absolute;
+                        right: 5px;
+                        top: 50%;
+                        transform: translate(0, -50%);
+                    }
+                }
+
+                .legend-item {
+                    border: @main-border;
+                    border-radius: 5px;
+                    font-size: 14px;
+                    margin-top: 0px;
+                    margin-right: 5px;
+                    margin-left: 20px;
+                    padding: 3px;
+                    cursor: pointer;
+                    color: #39B54A;
+                    background-color: #fff;
+
+                    &.legend-hidden{
+                        color: @main-text-color;
+
+                        .legend-icon{
+                            background: #e1e1e1 !important;
+                        }
+                    }
+
+                    .legend-icon {
+                        border-radius: 2px;
+                        display: inline-block;
+                        height: 1em;
+                        vertical-align: middle;
+                        width: 1em;
+                    }
+
+                    .legend-text {
+                        color: inherit;
+                    }
+                }
             }
+        }
 
-
-            .legend-overlay-title {
-                color: @main-text-color;
-                font-weight: bold;
-                line-height: 1.33;
-                text-transform: uppercase;
-                margin-top: 10px;
-                margin-bottom: -5px;
-                max-width: 180px;
-                overflow: hidden;
-                white-space: nowrap;
-                text-overflow: ellipsis;
-            }
+        .header-text {
+            cursor: pointer;
         }
     }
 
     .no-data {
         color: @main-text-color;
         font-weight: bold;
-        margin-top: 10px;
+        margin-top: 40px;
     }
 
-    .form-control {
-        &:read-only {
-            background-color: @light-background;
-            cursor: default;
-            text-overflow: ellipsis;
+    .chart-options {
+        .popover {
+            max-width: none;
+        }
+    }
+
+    .all-chart-options {
+        /* Make the width match the width of the chart-options-well element + border + right padding. */
+        width: 555px;
+
+        .chart-options-container {
+            /* Make the width match the width of the chart-options-well element + border. */
+            width: 540px;
+
+            > label {
+                font-size: 14px;
+            }
+
+            .chart-options-well {
+                /* Make the width match the width of four columns + the columns' margins + this element's padding + this element's borders. */
+                width: 530px;
+
+                .chart-options-row {
+                    height: 75px;
+
+                    &.row-large {
+                        height: auto;
+                        display: flex;
+                    }
+
+                    .chart-options-col {
+                        float: left;
+                        width: 140px;
+                        margin-left: 10px;
+
+                        &:first-child {
+                            margin-left: 0px;
+                        }
+
+                        &.chart-options-col-wide {
+                            width: 250px;
+                        }
+
+                        &.btn-group {
+                            /* Make the chart options buttons vertically align with the dropdowns. */
+                            margin-top: 25px;
+
+                            .btn {
+                                /* Make the combined width of the four chart options buttons match the width of the column. */
+                                padding: 3px 22px 3px 21px;
+
+                                &.btn-default {
+                                    &.active, &.active&:hover, &.active&:focus {
+                                        color: #FFFFFF;
+                                        background-color: @accent-dark;
+                                        border-color: @accent-dark;
+                                    }
+                                }
+
+                                &.active {
+                                    z-index: auto;
+                                }
+                            }
+
+                            .glyphicon {
+                                font-size: 18px;
+                                top: 3px;
+                            }
+                        }
+
+                        select {
+                            cursor: pointer;
+                        }
+                    }
+                }
+
+                .chart-options-error {
+                    color: @error-text-color;
+                    margin: 10px 0px 0px;
+                }
+
+                .chart-options-editing {
+                    margin-top: 10px;
+                }
+            }
         }
     }
 }
@@ -143,8 +288,6 @@
         shape-rendering: crispEdges;
     }
 }
-
-
 
 .visualization-widget {
     .linechartDirective {
