@@ -1048,7 +1048,6 @@ charts.LineChart.prototype.addHiddenSeries = function(series) {
  * @method draw
  */
 charts.LineChart.prototype.draw = function(data) {
-    var me = this;
     var extent = this.brush ? this.brush.extent() : undefined;
     this.drawChart();
     if(data) {

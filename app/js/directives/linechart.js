@@ -305,7 +305,7 @@ function(external, connectionService, datasetService, errorNotificationService, 
                     var queryData = false;
                     var chartsToUpdate = [];
 
-                     _.each($scope.options.charts, function(chart) {
+                    _.each($scope.options.charts, function(chart) {
                         if(chart.database === message.databaseName && chart.table === message.tableName &&
                             datasetService.isFieldValid(chart.attrXField) && message.fieldNames.indexOf(chart.attrXMapping) >= 0 && chart.active) {
                             queryData = true;
@@ -530,7 +530,7 @@ function(external, connectionService, datasetService, errorNotificationService, 
                     .sortBy('date', neon.query.ASCENDING);
 
                 if(!chart.active) {
-                    query.ignoreFilters([$scope.filterKeys[chart.database][chart.table][chart.attrXMapping].filterKey])
+                    query.ignoreFilters([$scope.filterKeys[chart.database][chart.table][chart.attrXMapping].filterKey]);
                 }
 
                 return query;
@@ -1107,7 +1107,7 @@ function(external, connectionService, datasetService, errorNotificationService, 
 
                 var chart = _.find($scope.options.charts, {
                     id: chartId
-                })
+                });
                 chart.visible = !allHidden;
 
                 XDATA.userALE.log({
@@ -1535,7 +1535,7 @@ function(external, connectionService, datasetService, errorNotificationService, 
                 filterKey[chart.database][chart.table] = $scope.filterKeys[chart.database][chart.table][chart.attrXMapping].filterKey;
 
                 return _.merge(filterKey, $scope.filterKeys[chart.database][chart.table][chart.attrXMapping].relations);
-            }
+            };
 
             /**
              * Returns the string version of the given date. Set includeTime to true if
@@ -1601,7 +1601,6 @@ function(external, connectionService, datasetService, errorNotificationService, 
                 // If the brush extent does not overlap with the date range of the data, just draw an empty chart.
                 if(!_.keys($scope.data).length || $scope.brushExtent[1] < fullDateRange.minDate ||
                     $scope.brushExtent[0] > fullDateRange.maxDate) {
-
                     drawLineChart({
                         data: []
                     }, {});
@@ -1684,7 +1683,8 @@ function(external, connectionService, datasetService, errorNotificationService, 
 
                 if($scope.brushExtent.length < 2 || ignoreBrushExtent) {
                     _.each($scope.options.charts, function(chart) {
-                        var min, max;
+                        var min;
+                        var max;
 
                         var range = d3.extent($scope.data[chart.id], function(d) {
                             return new Date(d.date);

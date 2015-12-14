@@ -650,7 +650,7 @@ function(external, connectionService, datasetService, errorNotificationService, 
                     for(var i = 0; i < data.length; i++) {
                         data[i] = escapeDataRecursively(data[i]);
                     }
-                } else if( _.keys(data).length) {
+                } else if(_.keys(data).length) {
                     var keys = _.keys(data);
                     for(var i = 0; i < keys.length; i++) {
                         data[keys[i]] = escapeDataRecursively(data[keys[i]]);
