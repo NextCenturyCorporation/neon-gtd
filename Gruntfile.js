@@ -38,8 +38,10 @@ module.exports = function(grunt) {
                 src: "app/index.html",
                 directory: "app/lib",
                 ignorePath: "app/",
-                // The following libraries are added manually because they are (currently) not configured to work with wiredep.
-                exclude: [/threedubmedia/, /mergesort/, /opencpu/, /openlayers/, /heatmapjs/, /slickgrid/, /user-ale/, /rainbowvis.js/]
+                // Exclude angular-gantt because the main files defined in its bower.json file are incorrect (should be dist/ not assets/).
+                // Exclude the other libraries because they do not have bower.json files.
+                // The dependencies for these libraries are added to index.html manually.
+                exclude: [/threedubmedia/, /mergesort/, /opencpu/, /openlayers/, /heatmapjs/, /slickgrid/, /user-ale/, /rainbowvis.js/, /angular-gantt/]
             }
         },
 
