@@ -187,7 +187,7 @@ angular.module('neonDemo.directives')
                 $scope.options.baseLayerColor = (datasetOptions && datasetOptions.mapBaseLayer ? datasetOptions.mapBaseLayer.color : undefined) || "light";
                 $scope.map = new coreMap.Map($scope.mapId, {
                     responsive: false,
-                    mapBaseLayer: (datasetOptions ? datasetOptions.mapBaseLayer : undefined),
+                    mapBaseLayer: (datasetOptions ? datasetOptions.mapBaseLayer : undefined) || {},
                     getNestedValue: $scope.helpers.getNestedValue,
                     queryForMapPopupDataFunction: queryForMapPopupData
                 });
