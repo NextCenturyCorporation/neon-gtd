@@ -134,7 +134,7 @@ module.exports = function(grunt) {
             options: {
                 module: "neonDemo",
                 // Add the template JS file to the list of JS files that the usemin task configured to concatenate.
-                usemin: "build/js/neon-dashboard.min.js"
+                usemin: "build/js/neon-dashboard-app.min.js"
                 // TODO Use the htmlmin option when the html-minifier task fully supports angular (currently the task just hangs when run).
             },
             app: {
