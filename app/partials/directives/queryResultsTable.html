@@ -4,7 +4,7 @@
         <div class="title header-text pull-left" ng-bind="(bindTitle != undefined) ? bindTitle : active.table.prettyName"></div>
         <div class="pull-left header-text" style="padding-left: 20px;">
             Showing
-            <span class="text-primary" ng-bind="active.count | number"></span> of
+            <span class="text-primary active-count" ng-bind="active.count | number"></span> of
             <span ng-bind="active.totalRows | number"></span>
         </div>
 

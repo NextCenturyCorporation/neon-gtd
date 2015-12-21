@@ -118,12 +118,6 @@
             "js": "*.js"
         },
 
-        "slickgrid": {
-            "js": "**/slick.*.js",
-            "css/images": ["**/*.gif", "**/*.png"],
-            "css": "**/slick*.css"
-        },
-
         "user-ale": {
             "js": "helper-libs/javascript/*.js"
         },
@@ -133,5 +127,4 @@
             "css": "**/*.css"
         }
     }
-
 }

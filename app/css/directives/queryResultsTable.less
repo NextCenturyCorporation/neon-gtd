@@ -28,8 +28,12 @@
 
     .header {
         .header-container {
+            .active-count {
+                color: @accent-bright;
+            }
+
             .edit-table-icon {
-                &.active {
+                &.active, &:hover {
                     i {
                         color: @accent-bright;
                     }

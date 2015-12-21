@@ -196,7 +196,6 @@ function(external, connectionService, datasetService, errorNotificationService, 
             var buildQuery = function() {
                 var query = new neon.query.Query().selectFrom($scope.active.database.name, $scope.active.table.name).groupBy($scope.active.field.columnName).where($scope.active.field.columnName, "!=", null);
 
-                // The widget displays its own ignored rows with 0.5 opacity.
                 query.ignoreFilters([$scope.filterKeys[$scope.active.database.name][$scope.active.table.name]]);
 
                 if($scope.active.aggregation === "count") {

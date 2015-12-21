@@ -67,8 +67,6 @@ MIT/X11 (mit.txt)
   -- heatmap-openlayers.js
 - Respond
   -- respond.min.js  v1.4.2
-- Slickgrid
-  -- slick.grid.js  v2.1
 - Grunt
   -- grunt  0.4.1
   -- grunt-bower-task  0.4.0
