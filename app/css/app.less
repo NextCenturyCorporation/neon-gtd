@@ -13,11 +13,346 @@
 // limitations under the License.
 //
 
-@import 'variables.less';
+.dropdown-menu {
+    background-color: @visualization-box-background;
+    color: @main-text-color;
+    border: @shadow-border;
+    border-radius: @border-radius;
 
-.no-margin {
-    margin-left: 0px !important;
-    margin-right: 0px !important;
+    li {
+        a {
+            color: @main-text-color;
+
+            &:hover {
+                background-color: @mid-background;
+                color: @main-text-color;
+            }
+        }
+    }
+
+    .active {
+        a {
+            background-color: @accent-bright;
+            color: @light-text-color;
+
+            &:hover, &:focus {
+                background-color: @accent-bright;
+            }
+        }
+    }
+
+    .unselectable {
+        color: @main-text-color;
+        cursor: default;
+
+        &:hover {
+            background-color: @visualization-box-background;
+            color: @main-text-color;
+        }
+    }
+}
+
+.legend {
+    .legend-item {
+        display: inline-block;
+        padding-right: 5px;
+
+        .legend-icon {
+            border-radius: 2px;
+            display: inline-block;
+            height: 1em;
+            vertical-align: middle;
+            width: 1em;
+        }
+
+        .legend-text {
+            display: inline-block;
+            max-width: 200px;
+            overflow: hidden;
+            white-space: nowrap;
+            text-overflow: ellipsis;
+            vertical-align: middle;
+            color: @main-text-color;
+        }
+    }
+}
+
+.navbar {
+    margin-bottom: 0;
+
+    .navbar-default{
+        background-color: @visualization-box-background;
+        border: 0;
+        box-shadow: 0 1px 2px @shadow;
+        z-index: auto;
+        top: 0;
+        width: 100%;
+        z-index: 1040;
+        //Disable transform used in Bootstrap 3.2.0 Affix plugin.  This hides any modals that are defined
+        // inside the nav and breaks the database-overlay .
+        transform: none;
+        -webkit-transform: none;
+
+        .navbar-indented {
+            margin: 5px 40px;
+            width: auto;
+        }
+
+        .navbar-nav {
+            float: left;
+            margin: 0;
+
+            > li {
+                float: left;
+
+                > a{
+                    margin-right: 40px;
+                    color: @accent-bright;
+                    border-bottom: 2px solid @accent-bright;
+                    padding: 15px 0 13px;
+
+                    @media (max-width: 767px) {
+                        margin-right: 30px;
+                    }
+
+                    &.collapsed, &.collapsed:focus{
+                        background: none;
+                        color: @main-text-color;
+                        border: 0;
+                        padding-bottom: 15px;
+                    }
+
+                    &:focus, &:hover, &.collapsed:hover{
+                        color: @accent-bright;
+                    }
+                }
+            }
+
+            > .dropdown {
+                > .primary{
+                    border: 0;
+                    background-color: @accent-bright;
+                    color: @light-text-color;
+                    padding: 15px 30px;
+                    font-weight: bold;
+
+                    &:hover, &:focus{
+                        background-color: @accent-dark;
+                        color: @light-text-color;
+                    }
+                }
+            }
+
+            .open {
+                .dropdown-menu {
+                    @media (max-width: 767px) {
+                        position: absolute;
+                        float: left;
+                        width: auto;
+                        margin: 2px 0 0;
+                        background-color: @light-background;
+                        border: @main-border;
+                        border: @shadow-border;
+                        -webkit-box-shadow: 0 6px 12px @shadow;
+                        box-shadow: 0 6px 12px @shadow;
+                    }
+                }
+            }
+        }
+    }
+
+    .navbar-option-menu {
+        .chart-options {
+            .popover {
+                min-width: 200px;
+            }
+        }
+    }
+
+    .navbar-title-text {
+        margin-top: 15px;
+        margin-bottom: 15px;
+        font-weight: bold;
+    }
+
+    .navbar-text{
+        margin: 8px;
+        font-weight: 300;
+        color: @main-text-color;
+
+        @media (max-width: 767px) {
+            display: none;
+        }
+
+        &.options {
+            &:hover {
+                color: @accent-bright;
+            }
+        }
+
+        img{
+            margin-left: 5px;
+            margin-right: 5px;
+        }
+
+        .caret {
+            margin-left: 5px;
+            margin-right: 5px;
+        }
+    }
+
+    .options-dropdown {
+        right: 0px;
+        left: auto;
+        top: 40px;
+        background-color: @visualization-box-background;
+        border: @main-border;
+        border-radius: @border-radius;
+        color: @main-text-color;
+
+        .arrow {
+            left: auto;
+            right: 25px;
+        }
+
+        .options-container {
+            width: 250px;
+
+            .row {
+                .export-options {
+                    .btn-group {
+                        padding: 5px 25px;
+                    }
+                }
+
+                .format {
+                    padding: 3px 20px;
+                }
+
+                .theme-label {
+                    padding: 10px 20px 3px 20px;
+                }
+            }
+
+            .theme-options {
+                .btn {
+                    display: inline-block;
+                }
+            }
+        }
+    }
+
+    .open {
+        .navbar-text {
+            &.options {
+                color: @accent-bright;
+            }
+        }
+    }
+}
+
+.options {
+    .options-gear {
+        vertical-align: middle;
+        font-size: 22px;
+        padding-top: 4px;
+    }
+
+    .options-text {
+        vertical-align: middle;
+    }
+}
+
+.overlay-above {
+    .start-here {
+        background-color: @visualization-box-background;
+        color: @main-text-color;
+        border: @shadow-border;
+        border-radius: @border-radius;
+
+        .popover-title {
+            background-color: @visualization-box-background;
+        }
+    }
+}
+
+#tooltip-container {
+    display: none;
+    position: absolute;
+    padding: 12px 15px;
+    color: @tooltip-text-color;
+    font-size: 12px;
+    background-color: @tooltip-background;
+    border: @shadow-border;
+    border-radius: @border-radius;
+    pointer-events: none;
+    z-index: 10000;
+
+    span{
+        font-weight: bold;
+        color: @accent-bright;
+        display: block;
+        text-shadow: @text-shadow;
+    }
+
+    .tooltip-date {
+        font-weight: bold;
+        text-transform: uppercase;
+        margin-bottom: 5px;
+        font-size: 12px;
+        color: @mid-text-color;
+    }
+
+    &:before {
+        content: '';
+        display: block;
+        width: 0;
+        height: 0;
+        position: absolute;
+        border-top: 8px solid transparent;
+        border-bottom: 8px solid transparent;
+        top: 50%;
+        transform: translateY(-50%);
+    }
+
+    &:after {
+        content: '';
+        display: block;
+        width: 0;
+        height: 0;
+        position: absolute;
+        border-top: 7px solid transparent;
+        border-bottom: 7px solid transparent;
+        top: 49%;
+        transform: translateY(-49%);
+    }
+
+    &.east {
+
+        &:before {
+            border-right: 8px solid @shadow;
+            left:-8px;
+            opacity: .5;
+        }
+
+        &:after {
+            border-right: 7px solid @tooltip-background;
+            left: -6px;
+        }
+    }
+
+    &.west {
+
+        &:before {
+            border-left:8px solid @shadow;
+            left: 100%;
+        }
+
+        &:after {
+            border-left: 7px solid @tooltip-background;
+            left: 100%;
+        }
+    }
 }
 
 @import 'errorStyle.less';
@@ -40,6 +375,7 @@
 @import 'directives/linechart.less';
 @import 'directives/map.less';
 @import 'directives/newsfeed.less';
+@import 'directives/poweredByNeon.less';
 @import 'directives/queryResultsTable.less';
 @import 'directives/sample.less';
 @import 'directives/stackedBarChart.less';

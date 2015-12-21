@@ -110,11 +110,9 @@
     <div class="neon-datetimepicker dropdown pull-left">
         <div class="dropdown-toggle" role="button" data-toggle="dropdown" data-target="#" href="#"
             title="{{'From ' + (startDateForDisplay || '?') + ' to ' + (endDateForDisplay || '?')}}">
-            <button class="btn btn-default header-item">
-                <div class="glyphicon glyphicon-calendar"></div>
-            </button>
             <span ng-hide="(brush.length > 0 && width < 525) || (width < 400)"
                 ng-bind="(startDateForDisplay || '?') + ' - ' + (endDateForDisplay || '?')"></span>
+            <i class="glyphicon glyphicon-calendar"></i>
         </div>
 
         <ul class="dropdown-menu" role="menu">

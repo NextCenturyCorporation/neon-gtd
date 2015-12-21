@@ -59,6 +59,7 @@ function($interval, $filter, external, connectionService, datasetService, errorN
 
             $scope.element = $element;
             $scope.opencpu = opencpu;
+            $scope.helpers = neon.helpers;
 
             // Default our time data to an empty array.
             $scope.data = [];
@@ -642,10 +643,12 @@ function($interval, $filter, external, connectionService, datasetService, errorN
 
                 var relations = datasetService.getRelations($scope.options.database.name, $scope.options.table.name, [$scope.options.dateField.columnName]);
 
-                var filterText = $scope.formatStartDate(getFilterStartDate()) + " to " + $scope.formatEndDate(getFilterEndDate());
+                var filterText;
 
                 if(showInvalidDates) {
                     filterText = "Invalid Dates";
+                } else {
+                    filterText = $scope.formatStartDate(getFilterStartDate()) + " to " + $scope.formatEndDate(getFilterEndDate());
                 }
 
                 var filterNameObj = {
@@ -1191,7 +1194,7 @@ function($interval, $filter, external, connectionService, datasetService, errorN
                                     source: "system",
                                     tags: ["receive", "timeline", "min-date"]
                                 });
-                                $scope.referenceStartDate = new Date(queryResults.data[0][$scope.options.dateField.columnName]);
+                                $scope.referenceStartDate = new Date(getDateField(queryResults.data[0]));
                                 if($scope.referenceEndDate !== undefined) {
                                     $scope.$apply(success);
                                 }
@@ -1257,7 +1260,7 @@ function($interval, $filter, external, connectionService, datasetService, errorN
                                     source: "system",
                                     tags: ["received", "timeline", "max-date"]
                                 });
-                                $scope.referenceEndDate = new Date(queryResults.data[0][$scope.options.dateField.columnName]);
+                                $scope.referenceEndDate = new Date(getDateField(queryResults.data[0]));
                                 if($scope.referenceStartDate !== undefined) {
                                     $scope.$apply(success);
                                 }
@@ -1283,6 +1286,17 @@ function($interval, $filter, external, connectionService, datasetService, errorN
                         });
                     }
                 }
+            };
+
+            /**
+             * Finds and returns the date field in the data. If the date contains '.', representing that the date is in an object
+             * within the data, it will find the nested value.
+             * @param {Object} data
+             * @method getDateField
+             * @private
+             */
+            var getDateField = function(data) {
+                return $scope.helpers.getNestedValue(data, $scope.options.dateField.columnName);
             };
 
             /**

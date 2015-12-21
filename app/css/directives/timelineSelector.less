@@ -80,18 +80,23 @@
     }
 
     .highlight {
-        fill: goldenrod;
+        fill: @callout;
     }
 
     .neon-datetimepicker {
+        top: 5px;
 
         .dropdown-toggle {
+            cursor: pointer;
             font-family: "Open Sans", Helvetica, arial, sans-serif;
             color: @main-text-color;
             font-size: 16px;
 
-            button {
-                cursor: pointer;
+            &:hover {
+                color: @accent-bright;
+            }
+
+            i {
                 margin-left: 5px;
 
                 .glyphicon {
@@ -106,14 +111,18 @@
 
             label {
                 &.start-date {
-                    margin-top: 15px;
+                    margin-top: 5px;
                     width: 250px;
                 }
 
                 &.end-date {
-                    margin-top: 15px;
-                    width: 125px;
+                    margin-top: 5px;
+                    width: 100px;
                 }
+            }
+
+            button {
+                margin-left: 5px;
             }
 
             .datetimepicker {
@@ -143,6 +152,13 @@
         h4 {
             margin-left: 15px;
             margin-top: 0px;
+        }
+
+        .next-to-title {
+            .count {
+                color: @accent-bright;
+                font-weight: bold;
+            }
         }
     }
 }

@@ -138,16 +138,16 @@ function(connectionService, datasetService, errorNotificationService, exportServ
                     count: 0
                 }];
                 $scope.timeofday = [{
-                    name: "mornings",
+                    name: "Mornings",
                     count: 0
                 }, {
-                    name: "afternoons",
+                    name: "Afternoons",
                     count: 0
                 }, {
-                    name: "evenings",
+                    name: "Evenings",
                     count: 0
                 }, {
-                    name: "nights",
+                    name: "Nights",
                     count: 0
                 }];
                 $scope.maxDay = "";

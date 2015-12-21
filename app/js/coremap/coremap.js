@@ -54,6 +54,7 @@ coreMap.Map = function(elementId, opts) {
     this.selector = $("#" + elementId);
     this.onZoomRect = opts.onZoomRect;
     this.responsive = opts.responsive;
+    this.getNestedValue = opts.getNestedValue;
     this.queryForMapPopupDataFunction = opts.queryForMapPopupDataFunction || function(database, table, id, callback) {
         callback({});
     };
@@ -66,10 +67,13 @@ coreMap.Map = function(elementId, opts) {
         this.height = opts.height || coreMap.Map.DEFAULT_HEIGHT;
     }
 
+    this.baseLayerColor = opts.mapBaseLayer.color || "light";
+    this.baseLayerProtocol = opts.mapBaseLayer.protocol || "http";
+
     this.selectableLayers = [];
     this.selectControls = [];
     this.initializeMap();
-    this.setupLayers(opts.mapBaseLayer);
+    this.setupLayers();
     this.setupControls();
     this.resetZoom();
 };
@@ -90,15 +94,17 @@ coreMap.Map.HEATMAP_LAYER = 'heatmap';
 coreMap.Map.CLUSTER_LAYER = 'cluster';
 coreMap.Map.NODE_LAYER = 'node';
 
-coreMap.Map.DARK_MAP_TILES = {
-    http: "http://a.basemaps.cartocdn.com/dark_all/${z}/${x}/${y}.png",
-    https: "https://cartodb-basemaps-a.global.ssl.fastly.net/dark_all/${z}/${x}/${y}.png",
-    backgroundColor: "#242426"
-};
-coreMap.Map.LIGHT_MAP_TILES = {
-    http: "http://a.basemaps.cartocdn.com/light_all/${z}/${x}/${y}.png",
-    https: "https://cartodb-basemaps-a.global.ssl.fastly.net/light_all/${z}/${x}/${y}.png",
-    backgroundColor: "#CDD2D4"
+coreMap.Map.MAP_TILES = {
+    light: {
+        http: "http://a.basemaps.cartocdn.com/light_all/${z}/${x}/${y}.png",
+        https: "https://cartodb-basemaps-a.global.ssl.fastly.net/light_all/${z}/${x}/${y}.png",
+        backgroundColor: "#CDD2D4"
+    },
+    dark: {
+        http: "http://a.basemaps.cartocdn.com/dark_all/${z}/${x}/${y}.png",
+        https: "https://cartodb-basemaps-a.global.ssl.fastly.net/dark_all/${z}/${x}/${y}.png",
+        backgroundColor: "#242426"
+    }
 };
 
 /**
@@ -377,7 +383,6 @@ coreMap.Map.prototype.createSelectControl =  function(layer) {
             source: "user",
             tags: ["map", "tooltip"]
         });
-
         var createAndShowFeaturePopup = function(attributes) {
             var text;
 
@@ -397,8 +402,9 @@ coreMap.Map.prototype.createSelectControl =  function(layer) {
 
                     for(var j = 0; j < feature.layer.clusterPopupFields.length; j++) {
                         var field = feature.layer.clusterPopupFields[j];
-                        if(Object.prototype.hasOwnProperty.call(feature.cluster[i].attributes, field)) {
-                            text += '<td>' + feature.cluster[i].attributes[field] + '</td>';
+                        var fieldValue = me.getNestedValue(feature.cluster[i].attributes, field);
+                        if(fieldValue) {
+                            text += '<td>' + fieldValue + '</td>';
                         } else {
                             text += '<td></td>';
                         }
@@ -408,12 +414,7 @@ coreMap.Map.prototype.createSelectControl =  function(layer) {
                 }
                 text += '</table></div>';
             } else {
-                text = '<div><table class="table table-striped table-condensed">';
-
-                Object.keys(attributes).forEach(function(attribute) {
-                    text += '<tr><th>' + _.escape(attribute) + '</th><td>' + attributes[attribute] + '</td>';
-                });
-                text += '</table></div>';
+                text = '<div><table class="table table-striped table-condensed">' + getNestedFields(attributes) + '</table></div>';
             }
 
             me.featurePopup = new OpenLayers.Popup.FramedCloud("Data",
@@ -430,8 +431,10 @@ coreMap.Map.prototype.createSelectControl =  function(layer) {
             $(".olFramedCloudPopupContent td").linky(feature.layer.linkyConfig);
 
             if(me.linksPopupService && feature.layer.linksSource) {
-                var key = me.linksPopupService.generatePointKey(attributes[feature.layer.latitudeMapping], attributes[feature.layer.longitudeMapping]);
-                var tooltip = "latitude " + attributes[feature.layer.latitudeMapping] + ", longitude " + attributes[feature.layer.longitudeMapping];
+                var latitudeValue = me.getNestedValue(attributes, feature.layer.latitudeMapping);
+                var longitudeValue = me.getNestedValue(attributes, feature.layer.longitudeMapping);
+                var key = me.linksPopupService.generatePointKey(latitudeValue, longitudeValue);
+                var tooltip = "latitude " + longitudeValue + ", longitude " + longitudeValue;
                 var link = me.linksPopupService.createLinkHtml(feature.layer.linksSource, key, tooltip);
 
                 // Position the button below the 'close box' which can have one of a few different 'top' values depending on the location of the point on the layer.
@@ -440,6 +443,22 @@ coreMap.Map.prototype.createSelectControl =  function(layer) {
 
                 $("#" + me.elementId).find(".olPopupCloseBox").after("<div class='btn btn-default links-popup-button' style='top: " + topCss + "px;'>" + link + "</div>");
             }
+        };
+
+        // Creates and returns table rows in data, recursively
+        var getNestedFields = function(data, fieldName) {
+            var text = "";
+            Object.keys(data).forEach(function(datum) {
+                if(datum.indexOf(".") === -1) {
+                    var name = fieldName ? fieldName + "." + datum : datum;
+                    if(typeof data[datum] === "object" && data[datum] && !data[datum].length) {
+                        text += getNestedFields(data[datum], name);
+                    } else {
+                        text += '<tr><th>' + _.escape(name) + '</th><td>' + data[datum] + '</td>';
+                    }
+                }
+            });
+            return text;
         };
 
         var id = feature.cluster && feature.cluster.length === 1 ? feature.cluster[0].attributes._id : feature.attributes._id;
@@ -476,19 +495,8 @@ coreMap.Map.prototype.createSelectControl =  function(layer) {
  * @method setupLayers
  */
 
-coreMap.Map.prototype.setupLayers = function(mapBaseLayer) {
-    var tilesURL = (mapBaseLayer && mapBaseLayer.protocol) ? coreMap.Map.LIGHT_MAP_TILES[mapBaseLayer.protocol] : coreMap.Map.LIGHT_MAP_TILES.http;
-
-    if(mapBaseLayer && mapBaseLayer.color === "dark") {
-        tilesURL = (mapBaseLayer.protocol) ? coreMap.Map.DARK_MAP_TILES[mapBaseLayer.protocol] : coreMap.Map.DARK_MAP_TILES.http;
-        $("#" + this.elementId).css("background-color", coreMap.Map.DARK_MAP_TILES.backgroundColor);
-    }
-
-    var baseLayer = new OpenLayers.Layer.OSM("OSM", tilesURL, {
-        attribution:  "Map tiles by CartoDB, under CC BY 3.0. Data by OpenStreetMap, under ODbL.",
-        wrapDateLine: false
-    });
-    this.map.addLayer(baseLayer);
+coreMap.Map.prototype.setupLayers = function() {
+    this.addBaseLayer();
 
     // lets clients draw boxes on the map
     this.boxLayer = new OpenLayers.Layer.Boxes('Filter Box', {
@@ -496,6 +504,21 @@ coreMap.Map.prototype.setupLayers = function(mapBaseLayer) {
         displayInLayerSwitcher: false
     });
     this.map.addLayer(this.boxLayer);
+};
+
+/**
+ * Adds a base layer to the map using the global base layer color and protocol.
+ * @method addBaseLayer
+ */
+coreMap.Map.prototype.addBaseLayer = function() {
+    var tilesURL = coreMap.Map.MAP_TILES[this.baseLayerColor][this.baseLayerProtocol];
+    $("#" + this.elementId).css("background-color", coreMap.Map.MAP_TILES[this.baseLayerColor].backgroundColor);
+
+    this.baseLayer = new OpenLayers.Layer.OSM("OSM", tilesURL, {
+        attribution:  "Map tiles by CartoDB, under CC BY 3.0. Data by OpenStreetMap, under ODbL.",
+        wrapDateLine: false
+    });
+    this.map.addLayer(this.baseLayer);
 };
 
 coreMap.Map.prototype.setupControls = function() {
@@ -622,11 +645,21 @@ coreMap.Map.prototype.doAttributesExist = function(data, layer) {
     var allExist = true;
 
     _.forEach(data, function(el) {
-        // Check for undefined because a value could exist in the layer and just be false.
-        if(layer.areValuesInDataElement(el) === undefined) {
+        if(!layer.areValuesInDataElement(el)) {
             allExist = false;
         }
     });
 
     return allExist;
+};
+
+/**
+ * Sets the color of the base layer to the given color by removing the base layer with the old color from the map and adding a new base layer.
+ * @param {String} color
+ * @method setBaseLayerColor
+ */
+coreMap.Map.prototype.setBaseLayerColor = function(color) {
+    this.map.removeLayer(this.baseLayer);
+    this.baseLayerColor = color;
+    this.addBaseLayer();
 };
