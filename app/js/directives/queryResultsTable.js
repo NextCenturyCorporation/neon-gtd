@@ -81,6 +81,7 @@ function(external, connectionService, datasetService, errorNotificationService, 
                 });
 
                 initializeDataset();
+                setupAndQuery();
             };
 
             var setupAndQuery = function() {
