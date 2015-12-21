@@ -81,7 +81,9 @@ function(external, connectionService, datasetService, errorNotificationService, 
                 });
 
                 initializeDataset();
+            };
 
+            var setupAndQuery = function() {
                 queryForTotalRows();
                 updateFields();
                 $scope.queryForData();
@@ -97,10 +99,14 @@ function(external, connectionService, datasetService, errorNotificationService, 
                 $scope.active = {
                     database: $scope.databases[0]
                 };
+
+                queryForTables();
+                $scope.active.limit = 5000;
+            };
+
+            var queryForTables = function() {
                 $scope.tables = datasetService.getTables($scope.active.database.name);
                 $scope.active.table = $scope.tables[0];
-
-                $scope.active.limit = 5000;
             };
 
             /**
@@ -458,6 +464,15 @@ function(external, connectionService, datasetService, errorNotificationService, 
                 };
                 datasetService.getFields($scope.active.database.name, $scope.active.table.name).forEach(addField);
                 return finalObject;
+            };
+
+            $scope.handleDatabaseChange = function() {
+                queryForTables();
+                setupAndQuery();
+            };
+
+            $scope.handleTableChange = function() {
+                setupAndQuery();
             };
 
             //FIXME userale
