@@ -38,10 +38,27 @@ module.exports = function(grunt) {
                 src: "app/index.html",
                 directory: "app/lib",
                 ignorePath: "app/",
-                // Exclude angular-gantt because the main files defined in its bower.json file are incorrect (should be dist/ not assets/).
-                // Exclude the other libraries because they do not have bower.json files.
                 // The dependencies for these libraries are added to index.html manually.
-                exclude: [/threedubmedia/, /mergesort/, /opencpu/, /openlayers/, /heatmapjs/, /slickgrid/, /user-ale/, /rainbowvis.js/, /angular-gantt/]
+                exclude: [
+                    // Exclude angular-gantt because it defines incorrect files in the main of its bower.json file (should be dist/ not assets/).
+                    /angular-gantt/,
+                    // Exclude javascript-detect-element-resize because it defines its "pure js" lib in the main of its bower.json file and we use its "jquery plugin" lib.
+                    /javascript-detect-element-resize/,
+                    // Exclude angular-ui-tree.min.js because the non-minified js file is also included.
+                    /angular-ui-tree\.min\.js/,
+                    // Exclude html5shiv and respond because we only include them for old versions of IE.
+                    /html5shiv/,
+                    /respond/,
+                    // Exclude the remaining libraries because they do not have bower.json files.
+                    /threedubmedia/,
+                    /mergesort/,
+                    /opencpu/,
+                    /openlayers/,
+                    /heatmapjs/,
+                    /slickgrid/,
+                    /user-ale/,
+                    /rainbowvis.js/
+                ]
             }
         },
 
