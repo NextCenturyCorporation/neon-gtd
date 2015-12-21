@@ -32,6 +32,8 @@ JQuery Tagcloud (jquery.tagcloud.txt)
   -- jquery.tagcloud.js
 
 MIT/X11 (mit.txt)
+- ag-Grid
+  -- ag-grid.min.js v2.3.5
 - AngularJS
   -- angular-loader.min.js v1.2.26
   -- angular.min.js v1.2.26
