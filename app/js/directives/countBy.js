@@ -89,14 +89,17 @@ function(external, connectionService, datasetService, errorNotificationService, 
                 });
 
                 initializeDataset();
-                updateFields();
 
-                $scope.active.limitCount = ($scope.limitCount ? $scope.limitCount : 5000);
-                $scope.active.aggregation = ($scope.bindAggregation ? $scope.bindAggregation : 'count');
+                if($scope.active.database && $scope.active.table) {
+                    updateFields();
 
-                updateColumns();
+                    $scope.active.limitCount = ($scope.limitCount ? $scope.limitCount : 5000);
+                    $scope.active.aggregation = ($scope.bindAggregation ? $scope.bindAggregation : 'count');
 
-                $scope.queryForData();
+                    updateColumns();
+
+                    $scope.queryForData();
+                }
             };
 
             var initializeDataset = function() {
@@ -104,8 +107,27 @@ function(external, connectionService, datasetService, errorNotificationService, 
                 $scope.active = {
                     database: $scope.databases[0]
                 };
-                $scope.tables = datasetService.getTables($scope.active.database.name);
-                $scope.active.table = $scope.tables[0];
+                var i;
+                if($scope.bindDatabase) {
+                    for(i = 0; i < $scope.databases.length; ++i) {
+                        if($scope.bindDatabase === $scope.databases[i].name) {
+                            $scope.active.database = $scope.databases[i];
+                            break;
+                        }
+                    }
+                }
+
+                if($scope.active.database) {
+                    $scope.tables = datasetService.getTables($scope.active.database.name);
+                    if($scope.bindTable) {
+                        for(i = 0; i < $scope.tables.length; ++i) {
+                            if($scope.bindTable === $scope.tables[i].name) {
+                                $scope.active.table = $scope.tables[i];
+                                break;
+                            }
+                        }
+                    }
+                }
             };
 
             var updateFields = function() {
