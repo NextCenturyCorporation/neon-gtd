@@ -236,9 +236,6 @@ function(external, connectionService, datasetService, errorNotificationService, 
                         onCellClicked: handleRowClick
                     };
 
-                    console.log(field.columnName);
-                    console.log($scope.hiddenColumns[field.columnName]);
-
                     if($scope.hiddenColumns[field.columnName]) {
                         config.hide = true;
                     }
