@@ -45,6 +45,10 @@ function(external, connectionService, datasetService, errorNotificationService, 
 
             $scope.element = $element;
 
+            $scope.tableId = 'query-results-' + uuid();
+            var tableDiv = $element.find('.results-table');
+            tableDiv.attr("id", $scope.tableId);
+
             neon.ready(function() {
                 $scope.init();
             });
@@ -54,10 +58,14 @@ function(external, connectionService, datasetService, errorNotificationService, 
             // This name should be one that is highly unlikely to be a column name in a real database.
             $scope.EXTERNAL_APP_FIELD_NAME = "neonExternalApps";
 
+            $scope.id = uuid();
+
             $scope.ASCENDING = neon.query.ASCENDING;
             $scope.DESCENDING = neon.query.DESCENDING;
 
             $scope.hiddenColumns = [];
+
+
 
             var handleColumnVisibiltyChange = function(event) {
                 if(event.column.visible && $scope.hiddenColumns[event.column.colId]) {
@@ -362,8 +370,9 @@ function(external, connectionService, datasetService, errorNotificationService, 
                 data.forEach(function(row) {
                     var field = $scope.bindIdField || "_id";
                     var id = row[field];
+
                     tableLinks[id] = linksPopupService.createAllServiceLinkObjects(external.services, mappings, field, id);
-                    row[$scope.EXTERNAL_APP_FIELD_NAME] = tableLinks[id].length ? linksPopupService.createLinkHtml($scope.tableId, id, id) : linksPopupService.createDisabledLinkHtml(id);
+                    row[$scope.EXTERNAL_APP_FIELD_NAME] = tableLinks[id].length ? linksPopupService.createLinkHtml($scope.id, id, id) : linksPopupService.createDisabledLinkHtml(id);
                 });
 
                 // Set the link data for the links popup for this visualization.

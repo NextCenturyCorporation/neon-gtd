@@ -38,6 +38,10 @@ function(external, connectionService, datasetService, errorNotificationService, 
 
             $scope.element = $element;
 
+            $scope.tableId = 'countby-' + uuid();
+            var tableDiv = $element.find('.count-by-table');
+            tableDiv.attr("id", $scope.tableId);
+
             //Wait for neon to be ready, the create our messenger and intialize the view and data.
             neon.ready(function() {
                 $scope.init();
