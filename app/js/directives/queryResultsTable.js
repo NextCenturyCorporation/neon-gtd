@@ -68,8 +68,26 @@ function(external, connectionService, datasetService, errorNotificationService, 
             var handleColumnVisibiltyChange = function(event) {
                 if(event.column.visible && $scope.hiddenColumns[event.column.colId]) {
                     delete $scope.hiddenColumns[event.column.colId];
+                    XDATA.userALE.log({
+                        activity: "add",
+                        action: "click",
+                        elementId: "column-" + $scope.options.addField.prettyName,
+                        elementType: "datagrid",
+                        elementGroup: "table_group",
+                        source: "user",
+                        tags: ["options", "datagrid", "column", $scope.options.addField.prettyName]
+                    });
                 } else {
                     $scope.hiddenColumns[event.column.colId] = true;
+                    XDATA.userALE.log({
+                        activity: "remove",
+                        action: "click",
+                        elementId: "column-" + name,
+                        elementType: "datagrid",
+                        elementGroup: "table_group",
+                        source: "user",
+                        tags: ["options", "datagrid", "column", name]
+                    });
                 }
             };
 
@@ -95,6 +113,23 @@ function(external, connectionService, datasetService, errorNotificationService, 
                 $scope.messenger.subscribe(datasetService.UPDATE_DATA_CHANNEL, $scope.queryForData);
                 $scope.messenger.events({
                     filtersChanged: onFiltersChanged
+                });
+
+                $scope.$on('$destroy', function() {
+                    XDATA.userALE.log({
+                        activity: "remove",
+                        action: "remove",
+                        elementId: "datagrid",
+                        elementType: "canvas",
+                        elementSub: "datagrid",
+                        elementGroup: "table_group",
+                        source: "system",
+                        tags: ["remove", "datagrid"]
+                    });
+                    linksPopupService.deleteLinks($scope.tableId);
+                    $element.off("resize", updateSize);
+                    $scope.messenger.removeEvents();
+                    exportService.unregister($scope.exportID);
                 });
 
                 initializeDataset();
@@ -329,6 +364,16 @@ function(external, connectionService, datasetService, errorNotificationService, 
 
                 var query = buildQuery();
 
+                    activity: "alter",
+                    action: "query",
+                    elementId: "datagrid",
+                    elementType: "datagrid",
+                    elementSub: "data",
+                    elementGroup: "chart_group",
+                    source: "system",
+                    tags: ["query", "datagrid"]
+                });
+
                 if($scope.outstandingDataQuery) {
                     $scope.outstandingDataQuery.abort();
                 }
@@ -338,11 +383,60 @@ function(external, connectionService, datasetService, errorNotificationService, 
                     $scope.outstandingDataQuery = undefined;
                 });
                 $scope.outstandingDataQuery.done(function(queryResults) {
+                    XDATA.userALE.log({
+                        activity: "alter",
+                        action: "receive",
+                        elementId: "datagrid",
+                        elementType: "datagrid",
+                        elementSub: "data",
+                        elementGroup: "chart_group",
+                        source: "system",
+                        tags: ["receive", "datagrid"]
+                    });
                     updateData(queryResults.data);
+                    XDATA.userALE.log({
+                            activity: "alter",
+                            action: "render",
+                            elementId: "datagrid",
+                            elementType: "datagrid",
+                            elementSub: "data",
+                            elementGroup: "chart_group",
+                            source: "system",
+                            tags: ["render", "datagrid"]
+                        });
                 });
                 $scope.outstandingDataQuery.fail(function(response) {
-                    //FIXME handle too big for memory limit error response
-                    updateData([]);
+                    if(response.status === 0) {
+                        XDATA.userALE.log({
+                            activity: "alter",
+                            action: "canceled",
+                            elementId: "datagrid",
+                            elementType: "datagrid",
+                            elementSub: "data",
+                            elementGroup: "chart_group",
+                            source: "system",
+                            tags: ["canceled", "datagrid"]
+                        });
+                    } else {
+                        XDATA.userALE.log({
+                            activity: "alter",
+                            action: "failed",
+                            elementId: "datagrid",
+                            elementType: "datagrid",
+                            elementSub: "data",
+                            elementGroup: "chart_group",
+                            source: "system",
+                            tags: ["failed", "datagrid"]
+                        });
+                        updateData({
+                            data: []
+                        }, refreshColumns);
+                        $scope.totalRows = 0;
+                        $scope.loadingData = false;
+                        if(response.responseJSON) {
+                            $scope.errorMessage = errorNotificationService.showErrorMessage($element, response.responseJSON.error, response.responseJSON.stackTrace);
+                        }
+                    }
                 });
             };
 
@@ -518,7 +612,6 @@ function(external, connectionService, datasetService, errorNotificationService, 
                 setupAndQuery();
             };
 
-            //FIXME userale
             //TODO text selection on cells -- https://github.com/ceolter/ag-grid/issues/87
         }
     };
