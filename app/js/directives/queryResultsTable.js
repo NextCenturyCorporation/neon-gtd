@@ -57,6 +57,16 @@ function(external, connectionService, datasetService, errorNotificationService, 
             $scope.ASCENDING = neon.query.ASCENDING;
             $scope.DESCENDING = neon.query.DESCENDING;
 
+            $scope.hiddenColumns = [];
+
+            var handleColumnVisibiltyChange = function(event) {
+                if(event.column.visible && $scope.hiddenColumns[event.column.colId]) {
+                    delete $scope.hiddenColumns[event.column.colId];
+                } else {
+                    $scope.hiddenColumns[event.column.colId] = true;
+                }
+            };
+
             $scope.gridOptions = {
                 columnDefs: [],
                 rowData: [],
@@ -65,7 +75,8 @@ function(external, connectionService, datasetService, errorNotificationService, 
                 showToolPanel: false,
                 toolPanelSuppressPivot: true,
                 toolPanelSuppressValues: true,
-                suppressRowClickSelection: true
+                suppressRowClickSelection: true,
+                onColumnVisible: handleColumnVisibiltyChange
             };
 
             /**
@@ -218,12 +229,21 @@ function(external, connectionService, datasetService, errorNotificationService, 
                 }
 
                 var fieldColumns = _.map($scope.fields, function(field) {
-                    return {
+                    var config = {
                         headerName: field.prettyName,
                         field: field.columnName,
                         suppressSizeToFit: true,
                         onCellClicked: handleRowClick
                     };
+
+                    console.log(field.columnName);
+                    console.log($scope.hiddenColumns[field.columnName]);
+
+                    if($scope.hiddenColumns[field.columnName]) {
+                        config.hide = true;
+                    }
+
+                    return config;
                 });
 
                 columnDefs = columnDefs.concat(fieldColumns);
@@ -248,7 +268,7 @@ function(external, connectionService, datasetService, errorNotificationService, 
                         tags: ["datagrid", "row"]
                     });
 
-                    $scope.gridOptions.api.deselectIndex(cell.rowIndex)
+                    $scope.gridOptions.api.deselectIndex(cell.rowIndex);
                     return;
                 } else {
                     $scope.$apply(function() {
