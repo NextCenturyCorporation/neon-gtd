@@ -88,28 +88,54 @@ function(external, connectionService, datasetService, errorNotificationService, 
                     filtersChanged: onFiltersChanged
                 });
 
+                $scope.exportID = exportService.register($scope.makeCountByExportObject);
+
+                $scope.$on('$destroy', function() {
+                    XDATA.userALE.log({
+                        activity: "remove",
+                        action: "remove",
+                        elementId: "count-by",
+                        elementType: "datagrid",
+                        elementSub: "count-by",
+                        elementGroup: "table_group",
+                        source: "system",
+                        tags: ["remove", "count-by"]
+                    });
+                    linksPopupService.deleteLinks($scope.tableId);
+                    $element.off("resize", updateSize);
+                    $scope.messenger.removeEvents();
+                    if($scope.filterSet) {
+                        filterService.removeFilters($scope.messenger, $scope.filterKeys);
+                    }
+                    exportService.unregister($scope.exportID);
+                });
+
                 initializeDataset();
 
-                if($scope.active.database && $scope.active.table) {
-                    updateFields();
+                $scope.active.limitCount = ($scope.limitCount ? $scope.limitCount : 5000);
+                $scope.active.aggregation = ($scope.bindAggregation ? $scope.bindAggregation : 'count');
 
-                    $scope.active.limitCount = ($scope.limitCount ? $scope.limitCount : 5000);
-                    $scope.active.aggregation = ($scope.bindAggregation ? $scope.bindAggregation : 'count');
-
-                    updateColumns();
-
-                    $scope.queryForData();
-                }
+                updateFields();
+                setupAndQuery();
             };
 
+            var setupAndQuery = function() {
+                updateFields();
+                $scope.queryForData();
+            };
+
+            /**
+             * Gets database and table from dataset service and sets up dataset related scope variables
+             * @method initializeDataset
+             * @private
+             */
             var initializeDataset = function() {
                 $scope.databases = datasetService.getDatabases();
                 $scope.active = {
                     database: $scope.databases[0]
                 };
-                var i;
                 if($scope.bindDatabase) {
-                    for(i = 0; i < $scope.databases.length; ++i) {
+                    for(var i = 0; i < $scope.databases.length; ++i) {
                         if($scope.bindDatabase === $scope.databases[i].name) {
                             $scope.active.database = $scope.databases[i];
                             break;
@@ -117,10 +143,16 @@ function(external, connectionService, datasetService, errorNotificationService, 
                     }
                 }
 
+                queryForTables();
+                $scope.active.limit = 5000;
+            };
+
+            var queryForTables = function() {
                 if($scope.active.database) {
                     $scope.tables = datasetService.getTables($scope.active.database.name);
+                    $scope.active.table = $scope.tables[0];
                     if($scope.bindTable) {
-                        for(i = 0; i < $scope.tables.length; ++i) {
+                        for(var i = 0; i < $scope.tables.length; ++i) {
                             if($scope.bindTable === $scope.tables[i].name) {
                                 $scope.active.table = $scope.tables[i];
                                 break;
@@ -137,6 +169,7 @@ function(external, connectionService, datasetService, errorNotificationService, 
                 $scope.active.sortDirection = neon.query.ASCENDING;
 
                 $scope.active.field = ($scope.bindAggregationField ? $scope.bindAggregationField : $scope.fields[0]);
+                updateColumns();
             };
 
             var updateColumns = function() {
@@ -198,6 +231,17 @@ function(external, connectionService, datasetService, errorNotificationService, 
 
                 var query = buildQuery();
 
+                XDATA.userALE.log({
+                    activity: "alter",
+                    action: "send",
+                    elementId: "count-by",
+                    elementType: "canvas",
+                    elementSub: "count-by",
+                    elementGroup: "table_group",
+                    source: "system",
+                    tags: ["query", "count-by"]
+                });
+
                 if($scope.outstandingDataQuery) {
                     $scope.outstandingDataQuery.abort();
                 }
@@ -207,10 +251,64 @@ function(external, connectionService, datasetService, errorNotificationService, 
                     $scope.outstandingDataQuery = undefined;
                 });
                 $scope.outstandingDataQuery.done(function(queryResults) {
+                    XDATA.userALE.log({
+                        activity: "alter",
+                        action: "receive",
+                        elementId: "count-by",
+                        elementType: "canvas",
+                        elementSub: "count-by",
+                        elementGroup: "table_group",
+                        source: "system",
+                        tags: ["receive", "count-by"]
+                    });
                     updateData(queryResults.data);
+                    XDATA.userALE.log({
+                        activity: "alter",
+                        action: "render",
+                        elementId: "count-by",
+                        elementType: "canvas",
+                        elementSub: "count-by",
+                        elementGroup: "table_group",
+                        source: "system",
+                        tags: ["render", "count-by"]
+                    });
                 });
                 $scope.outstandingDataQuery.fail(function(response) {
-                    updateData([]);
+                    if(response.status === 0) {
+                        XDATA.userALE.log({
+                            activity: "alter",
+                            action: "canceled",
+                            elementId: "count-by",
+                            elementType: "canvas",
+                            elementSub: "count-by",
+                            elementGroup: "table_group",
+                            source: "system",
+                            tags: ["canceled", "count-by"]
+                        });
+                    } else {
+                        XDATA.userALE.log({
+                            activity: "alter",
+                            action: "failed",
+                            elementId: "count-by",
+                            elementType: "canvas",
+                            elementSub: "count-by",
+                            elementGroup: "table_group",
+                            source: "system",
+                            tags: ["failed", "count-by"]
+                        });
+                        updateData({
+                            data: []
+                        });
+                        $scope.loadingData = false;
+                        if(response.responseJSON) {
+                            $scope.errorMessage = errorNotificationService.showErrorMessage($scope.element, response.responseJSON.error, response.responseJSON.stackTrace);
+                            if(response.responseJSON.error === errorNotificationService.TOO_MUCH_DATA_ERROR) {
+                                $scope.$apply(function() {
+                                    $scope.showTooMuchDataError = true;
+                                });
+                            }
+                        }
+                    }
                 });
             };
 
@@ -425,6 +523,15 @@ function(external, connectionService, datasetService, errorNotificationService, 
                 linksPopupService.setLinks($scope.tableId, tableLinks);
 
                 return data;
+            };
+
+            $scope.handleDatabaseChange = function() {
+                queryForTables();
+                setupAndQuery();
+            };
+
+            $scope.handleTableChange = function() {
+                setupAndQuery();
             };
         }
     };

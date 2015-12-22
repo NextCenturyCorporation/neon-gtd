@@ -65,8 +65,6 @@ function(external, connectionService, datasetService, errorNotificationService, 
 
             $scope.hiddenColumns = [];
 
-
-
             var handleColumnVisibiltyChange = function(event) {
                 if(event.column.visible && $scope.hiddenColumns[event.column.colId]) {
                     delete $scope.hiddenColumns[event.column.colId];
@@ -119,14 +117,32 @@ function(external, connectionService, datasetService, errorNotificationService, 
                 $scope.active = {
                     database: $scope.databases[0]
                 };
+                if($scope.bindDatabase) {
+                    for(var i = 0; i < $scope.databases.length; ++i) {
+                        if($scope.bindDatabase === $scope.databases[i].name) {
+                            $scope.active.database = $scope.databases[i];
+                            break;
+                        }
+                    }
+                }
 
                 queryForTables();
                 $scope.active.limit = 5000;
             };
 
             var queryForTables = function() {
-                $scope.tables = datasetService.getTables($scope.active.database.name);
-                $scope.active.table = $scope.tables[0];
+                if($scope.active.database) {
+                    $scope.tables = datasetService.getTables($scope.active.database.name);
+                    $scope.active.table = $scope.tables[0];
+                    if($scope.bindTable) {
+                        for(var i = 0; i < $scope.tables.length; ++i) {
+                            if($scope.bindTable === $scope.tables[i].name) {
+                                $scope.active.table = $scope.tables[i];
+                                break;
+                            }
+                        }
+                    }
+                }
             };
 
             /**
