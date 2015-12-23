@@ -17,8 +17,8 @@
  */
 
 angular.module('neonDemo.directives')
-.directive('ganttChart', ['ConnectionService', 'DatasetService', 'ErrorNotificationService', 'FilterService',
-function(connectionService, datasetService, errorNotificationService, filterService) {
+.directive('ganttChart', ['ConnectionService', 'DatasetService', 'ErrorNotificationService', 'FilterService', 'VisualizationService',
+function(connectionService, datasetService, errorNotificationService, filterService, visualizationService) {
     return {
         templateUrl: 'partials/directives/gantt-chart.html',
         restrict: 'EA',
@@ -28,7 +28,8 @@ function(connectionService, datasetService, errorNotificationService, filterServ
             bindEndField: "=",
             bindColorField: "=",
             bindGroupFields: "=",
-            bindSelectedGroups: "="
+            bindSelectedGroups: "=",
+            bindId: '='
         },
         link: function($scope, $element) {
             $element.addClass('gantt-chart-directive');
@@ -95,6 +96,8 @@ function(connectionService, datasetService, errorNotificationService, filterServ
                     filtersChanged: onFiltersChanged
                 });
 
+                visualizationService.register($scope.bindId, bindFields);
+
                 $scope.$on('$destroy', function() {
                     XDATA.userALE.log({
                         activity: "remove",
@@ -107,6 +110,7 @@ function(connectionService, datasetService, errorNotificationService, filterServ
                         tags: ["remove", "count-by"]
                     });
                     $scope.messenger.removeEvents();
+                    visualizationService.unregister($scope.bindId);
                     if($scope.filterSet) {
                         filterService.removeFilters($scope.messenger, $scope.filterKeys);
                     }
@@ -432,6 +436,37 @@ function(connectionService, datasetService, errorNotificationService, filterServ
             $scope.removeSelectedGroups = function() {
                 $scope.options.selectedGroups = [];
                 $scope.queryForData(true);
+            };
+
+            /**
+             * Creates and returns an object that contains all the binding fields needed to recreate the visualization's state.
+             * @return {Object}
+             * @method bindFields
+             * @private
+             */
+            var bindFields = function() {
+                var bindingFields = {};
+
+                if($scope.options.titleField && $scope.options.titleField.columnName) {
+                    bindingFields["bind-row-title-field"] = "'" + $scope.titleField.columnName + "'";
+                }
+                if($scope.options.startField && $scope.options.startField.columnName) {
+                    bindingFields["bind-start-field"] = "'" + $scope.options.startField.columnName + "'";
+                }
+                if($scope.options.endField && $scope.options.endField.columnName) {
+                    bindingFields["bind-end-field"] = "'" + $scope.options.endField.columnName + "'";
+                }
+                if($scope.options.colorField && $scope.options.colorField.columnName) {
+                    bindingFields["bind-color-field"] = "'" + $scope.options.colorField.columnName + "'";
+                }
+                if($scope.options.groupFields) {
+                    bindingFields["bind-group-fields"] = "'" + $scope.options.groupFields + "'";
+                }
+                if($scope.options.selectedGroups) {
+                    bindingFields["bind-selected-groups"] = "'" + $scope.options.selectedGroups + "'";
+                }
+
+                return bindingFields;
             };
 
             neon.ready(function() {

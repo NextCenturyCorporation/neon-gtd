@@ -22,8 +22,8 @@
  * @constructor
  */
 angular.module('neonDemo.directives')
-.directive('directedGraph', ['$filter', '$timeout', 'ConnectionService', 'DatasetService', 'ErrorNotificationService', 'ExportService', 'FilterService',
-function($filter, $timeout, connectionService, datasetService, errorNotificationService, exportService, filterService) {
+.directive('directedGraph', ['$filter', '$timeout', 'ConnectionService', 'DatasetService', 'ErrorNotificationService', 'ExportService', 'FilterService', 'VisualizationService',
+function($filter, $timeout, connectionService, datasetService, errorNotificationService, exportService, filterService, visualizationService) {
     return {
         templateUrl: 'partials/directives/directedGraph.html',
         restrict: 'EA',
@@ -31,6 +31,7 @@ function($filter, $timeout, connectionService, datasetService, errorNotification
             bindTitle: '=',
             bindFeedName: '=',
             bindFeedType: '=',
+            bindId: '=',
             hideHeader: '=?',
             hideAdvancedOptions: '=?'
         },
@@ -165,6 +166,7 @@ function($filter, $timeout, connectionService, datasetService, errorNotification
                 $scope.messenger.subscribe("date_selected", onDateSelected);
 
                 $scope.exportID = exportService.register($scope.makeDirectedGraphExportObject);
+                visualizationService.register($scope.bindId, bindFields);
 
                 $scope.messenger.subscribe(filterService.REQUEST_REMOVE_FILTER, function(ids) {
                     if(filterService.containsKey($scope.filterKeys, ids)) {
@@ -187,6 +189,7 @@ function($filter, $timeout, connectionService, datasetService, errorNotification
                     $element.find(".legend").off("resize", updateSize);
                     $scope.messenger.removeEvents();
                     exportService.unregister($scope.exportID);
+                    visualizationService.unregister($scope.bindId);
                 });
 
                 $element.resize(updateSize);
@@ -736,6 +739,25 @@ function($filter, $timeout, connectionService, datasetService, errorNotification
                 };
                 return finalObject;
             };
+
+            /**
+             * Creates and returns an object that contains all the binding fields needed to recreate the visualization's state.
+             * @return {Object}
+             * @method bindFields
+             * @private
+             */
+            var bindFields = function() {
+                var bindingFields = {};
+
+                if($scope.bindFeedName) {
+                    bindingFields["bind-feed-name"] = "'" + $scope.bindFeedName + "'";
+                }
+                if($scope.bindFeedType) {
+                    bindingFields["bind-feed-type"] = "'" + $scope.bindFeedType + "'";
+                }
+
+                return bindingFields;
+            }
 
             // Wait for neon to be ready, the create our messenger and intialize the view and data.
             neon.ready(function() {

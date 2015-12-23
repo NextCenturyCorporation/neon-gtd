@@ -17,8 +17,8 @@
  */
 
 angular.module('neonDemo.directives')
-.directive('countBy', ['external', 'ConnectionService', 'DatasetService', 'ErrorNotificationService', 'FilterService', 'ExportService', 'LinksPopupService', '$filter',
-function(external, connectionService, datasetService, errorNotificationService, filterService, exportService, linksPopupService, $filter) {
+.directive('countBy', ['external', 'ConnectionService', 'DatasetService', 'ErrorNotificationService', 'FilterService', 'ExportService', 'LinksPopupService', 'VisualizationService', '$filter',
+function(external, connectionService, datasetService, errorNotificationService, filterService, exportService, linksPopupService, visualizationService, $filter) {
     return {
         templateUrl: 'partials/directives/countby.html',
         restrict: 'EA',
@@ -31,6 +31,7 @@ function(external, connectionService, datasetService, errorNotificationService, 
             bindFilterValue: '=',
             bindTable: '=',
             bindDatabase: '=',
+            bindId: '=',
             hideHeader: '=?',
             hideAdvancedOptions: '=?',
             limitCount: '=?'
@@ -134,6 +135,7 @@ function(external, connectionService, datasetService, errorNotificationService, 
                 });
 
                 $scope.exportID = exportService.register($scope.makeCountByExportObject);
+                visualizationService.register($scope.bindId, bindFields);
 
                 $scope.$on('$destroy', function() {
                     XDATA.userALE.log({
@@ -154,6 +156,7 @@ function(external, connectionService, datasetService, errorNotificationService, 
                         filterService.removeFilters($scope.messenger, $scope.filterKeys);
                     }
                     exportService.unregister($scope.exportID);
+                    visualizationService.unregister($scope.bindId);
                 });
 
                 $element.resize(updateSize);
@@ -789,6 +792,46 @@ function(external, connectionService, datasetService, errorNotificationService, 
                     pretty: op + capitalizeFirstLetter((query.aggregates[0]).name)
                 });
                 return finalObject;
+            };
+
+            /**
+             * Creates and returns an object that contains all the binding fields needed to recreate the visualization's state.
+             * @return {Object}
+             * @method bindFields
+             * @private
+             */
+            var bindFields = function() {
+                var bindingFields = {};
+
+                if($scope.bindTitle) {
+                    bindingFields["bind-title"] = "'" + $scope.bindTitle + "'";
+                }
+                if($scope.options.field && $scope.options.field.columnName) {
+                    bindingFields["bind-count-field"] = "'" + $scope.options.field.columnName + "'";
+                }
+                if($scope.options.aggregation) {
+                    bindingFields["bind-aggregation"] = "'" + $scope.options.aggregation + "'";
+
+                    if($scope.options.aggregation !== 'count' && $scope.options.aggregationField && $scope.options.aggregationField.columnName) {
+                        bindingFields["bind-aggregation-field"] = "'" + $scope.options.aggregationField.columnName + "'";
+                    }
+                }
+                if($scope.options.filterField && $scope.options.filterField.columnName) {
+                    bindingFields["bind-filter-field"] = "'" + $scope.options.filterField.columnName + "'";
+
+                    if($scope.options.filterValue) {
+                        bindingFields["bind-filter-value"] = "'" + $scope.options.filterValue + "'";
+                    }
+                }
+                if($scope.options.table && $scope.options.table.name) {
+                    bindingFields["bind-table"] = "'" + $scope.options.table.name + "'";
+                }
+                if($scope.options.database && $scope.options.database.name) {
+                    bindingFields["bind-database"] = "'" + $scope.options.database.name + "'";
+                }
+                bindingFields["limit-count"] = $scope.options.limitCount;
+
+                return bindingFields;
             };
 
             /**

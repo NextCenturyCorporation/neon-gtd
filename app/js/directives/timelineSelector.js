@@ -32,8 +32,8 @@
  * @constructor
  */
 angular.module('neonDemo.directives')
-.directive('timelineSelector', ['$interval', '$filter', 'external', 'ConnectionService', 'DatasetService', 'ErrorNotificationService', 'FilterService', 'ExportService', 'LinksPopupService', 'opencpu',
-function($interval, $filter, external, connectionService, datasetService, errorNotificationService, filterService, exportService, linksPopupService, opencpu) {
+.directive('timelineSelector', ['$interval', '$filter', 'external', 'ConnectionService', 'DatasetService', 'ErrorNotificationService', 'FilterService', 'ExportService', 'LinksPopupService', 'VisualizationService', 'opencpu',
+function($interval, $filter, external, connectionService, datasetService, errorNotificationService, filterService, exportService, linksPopupService, visualizationService, opencpu) {
     return {
         templateUrl: 'partials/directives/timelineSelector.html',
         restrict: 'EA',
@@ -43,6 +43,7 @@ function($interval, $filter, external, connectionService, datasetService, errorN
             bindTable: '=',
             bindDatabase: '=',
             bindGranularity: '=',
+            bindId: '=',
             hideHeader: '=?',
             hideAdvancedOptions: '=?',
             overrideStartDate: '=?',
@@ -606,6 +607,7 @@ function($interval, $filter, external, connectionService, datasetService, errorN
                 });
 
                 $scope.exportID = exportService.register($scope.makeTimelineSelectorExportObject);
+                visualizationService.register($scope.bindId, bindFields);
 
                 $scope.$on('$destroy', function() {
                     XDATA.userALE.log({
@@ -625,6 +627,7 @@ function($interval, $filter, external, connectionService, datasetService, errorN
                         filterService.removeFilters($scope.messenger, $scope.filterKeys);
                     }
                     exportService.unregister($scope.exportID);
+                    visualizationService.unregister($scope.bindId);
                     $element.off("resize", onResize);
                 });
             };
@@ -732,6 +735,7 @@ function($interval, $filter, external, connectionService, datasetService, errorN
              * @param {Object} message
              * @method isDateFiltersChangedMessage
              * @return {Boolean}
+             * @private
              */
             var isDateFiltersChangedMessage = function(message) {
                 var whereClauses;
@@ -747,6 +751,41 @@ function($interval, $filter, external, connectionService, datasetService, errorN
             };
 
             /**
+             * Returns whether the added or removed filter in the given message is a date filter from the url parameters.
+             * @param {Object} message
+             * @method isDashboardDateFilter
+             * @return {Boolean}
+             * @private
+             */
+            var isDashboardDateFilter = function(message) {
+                var filterName;
+                var databaseName;
+                var tableName;
+                if(message.addedFilter.filterName) {
+                    filterName = message.addedFilter.filterName;
+                    databaseName = message.removedFilter.databaseName;
+                    tableName = message.addedFilter.tableName;
+                } else if(message.removedFilter.filterName) {
+                    filterName = message.removedFilter.filterName;
+                    databaseName = message.removedFilter.databaseName;
+                    tableName = message.removedFilter.tableName;
+                }
+                var relations = datasetService.getRelations(databaseName, tableName, [$scope.options.dateField.columnName]);
+                if(filterName.indexOf(tableName) === 0) {
+                    return true;
+                } else if(relations.length > 1) {
+                    var filterString = datasetService.getTableWithName(relations[0].database, relations[0].table).prettyName;
+                    for(var i = 1; i < relations.length; i++) {
+                        filterString += "/" + datasetService.getTableWithName(relations[i].database, relations[i].table).prettyName;
+                    }
+                    if(filterName.indexOf(filterString) === 0) {
+                        return true;
+                    }
+                }
+                return false;
+            };
+
+            /**
              * Event handler for filter changed events issued over Neon's messaging channels.
              * @param {Object} message A Neon filter changed message.
              * @method onFiltersChanged
@@ -757,7 +796,11 @@ function($interval, $filter, external, connectionService, datasetService, errorN
                     // If the filter changed event was triggered by a change in the global date filter, ignore the filter changed event.
                     // We don't need to re-query and we'll update the brush extent in response to the date changed event.
                     if(isDateFiltersChangedMessage(message)) {
-                        return;
+                        if(!isDashboardDateFilter(message)) {
+                            return;
+                        } else {
+                            $scope.brush = [];
+                        }
                     }
 
                     XDATA.userALE.log({
@@ -1651,6 +1694,34 @@ function($interval, $filter, external, connectionService, datasetService, errorN
                     pretty: "Count"
                 });
                 return finalObject;
+            };
+
+            /**
+             * Creates and returns an object that contains all the binding fields needed to recreate the visualization's state.
+             * @return {Object}
+             * @method bindFields
+             * @private
+             */
+            var bindFields = function() {
+                var bindingFields = {};
+
+                if($scope.bindTitle) {
+                    bindingFields["bind-title"] = "'" + $scope.bindTitle + "'";
+                }
+                if($scope.options.dateField && $scope.options.dateField.columnName) {
+                    bindingFields["bind-date-field"] = "'" + $scope.options.dateField.columnName + "'";
+                }
+                if($scope.options.table && $scope.options.table.name) {
+                    bindingFields["bind-table"] = "'" + $scope.options.table.name + "'";
+                }
+                if($scope.options.database && $scope.options.database.name) {
+                    bindingFields["bind-database"] = "'" + $scope.options.database.name + "'";
+                }
+                if($scope.options.granularity) {
+                    bindingFields["bind-granularity"] = "'" + $scope.options.granularity + "'";
+                }
+
+                return bindingFields;
             };
 
             // Wait for neon to be ready, the create our messenger and intialize the view and data.

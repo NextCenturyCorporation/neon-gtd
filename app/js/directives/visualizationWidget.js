@@ -57,6 +57,7 @@ angular.module('neonDemo.directives').directive('visualizationWidget', ["config"
             // implementated as an attribute directive.
             var widgetElement = document.createElement("div");
             widgetElement.setAttribute($scope.gridsterConfigs[$scope.gridsterConfigIndex].type, "");
+            widgetElement.setAttribute('bind-id', "'" + $scope.gridsterConfigs[$scope.gridsterConfigIndex].id + "'");
 
             if(config.hideAdvancedOptions) {
                 widgetElement.setAttribute("hide-advanced-options", true);

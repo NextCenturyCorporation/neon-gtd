@@ -90,6 +90,15 @@ angular.module("neonDemo.services")
     };
 
     /**
+     * Returns the active dataset object
+     * @method getDataset
+     * @return {Object}
+     */
+    service.getDataset = function() {
+        return service.getDatasetWithName(service.dataset.name) || service.dataset;
+    };
+
+    /**
      * Returns whether a dataset is active.
      * @method hasDataset
      * @return {Boolean}
@@ -141,6 +150,22 @@ angular.module("neonDemo.services")
      */
     service.getDatabases = function() {
         return service.dataset.databases;
+    };
+
+    /**
+     * Returns the dataset with the given name or undefined if no such dataset exists.
+     * @param {String} The dataset name
+     * @method getDatasetWithName
+     * @return {Object} The dataset object if a match exists or undefined otherwise.
+     */
+    service.getDatasetWithName = function(datasetName) {
+        for(var i = 0; i < service.datasets.length; ++i) {
+            if(service.datasets[i].name === datasetName) {
+                return service.datasets[i];
+            }
+        }
+
+        return undefined;
     };
 
     /**
@@ -623,7 +648,12 @@ angular.module("neonDemo.services")
      */
     service.getDateBrushExtent = function(databaseName, tableName, fieldName) {
         var table = service.getTableWithName(databaseName, tableName);
-        return ((table && table.dateBrushExtent) ? table.dateBrushExtent[fieldName] : []) || [];
+        var brushExtent = ((table && table.dateBrushExtent) ? table.dateBrushExtent[fieldName] : []) || [];
+        if(brushExtent.length === 2) {
+            brushExtent[0] = (!_.isDate(brushExtent[0]) ? new Date(brushExtent[0]) : brushExtent[0]);
+            brushExtent[1] = (!_.isDate(brushExtent[1]) ? new Date(brushExtent[1]) : brushExtent[1]);
+        }
+        return brushExtent;
     };
 
     /**

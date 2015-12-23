@@ -91,14 +91,27 @@
                             </li>
                             <li ng-show="showImport"><a href="#" data-toggle="modal" data-target="#removeDatasetModal" ng-show="canImport">Drop Dataset</a></li>
                             <li class="divider" ng-show="showExport || showImport"></li>
-                            <li><a href="#" class="unselectable">Theme:</a></li>
-                            <li><select class="form-control navbar-indented" ng-options="item.name for item in theme.list" ng-model="theme.selected" ng-change="updateTheme()"></select></li>
+                            <li>
+                                <a href="#" class="unselectable">Theme:</a>
+                            </li>
+                            <li>
+                                <select class="form-control navbar-indented" ng-options="item.name for item in theme.list" ng-model="theme.selected" ng-change="updateTheme()"></select>
+                            </li>
+                            <li class="divider"></li>
+                            <li>
+                                <a href="#" ng-click="openStateModal()">Save Current State</a>
+                                <a href="#" data-toggle="modal" data-target="#loadStateModal">Load State</a>
+                                <a href="#" data-toggle="modal" data-target="#deleteStateModal">Delete State</a>
+                            </li>
                         </ul>
                     </div>
 
                     <!-- Import and Remove Dataset Popups -->
                     <div import-file gridster-configs="visualizations" ng-show="showImport"></div>
                     <div remove-dataset gridster-configs="visualizations" ng-show="showImport"></div>
+
+                    <!-- Save and Load States Popups -->
+                    <div saved-states gridster-configs="visualizations" loaded-state-name="loadedStateName"></div>
 
                     <div class="clearfix visible-xs"></div>
 
@@ -217,6 +230,7 @@
         <script src="js/linksPopupService.js"></script>
         <script src="js/parameterService.js"></script>
         <script src="js/translationService.js"></script>
+        <script src="js/visualizationService.js"></script>
         <script src="js/neonDemoController.js"></script>
 
         <script src="js/charts/circularHeatChart.js"></script>
@@ -256,5 +270,6 @@
         <script src="js/directives/sunburst.js"></script>
         <script src="js/directives/arrayTextForm.js"></script>
         <script src="js/directives/translationOptions.js"></script>
+        <script src="js/directives/savedStates.js"></script>
     </body>
 </html>

@@ -48,6 +48,8 @@ function($timeout, external, datasetService, filterService, linksPopupService) {
                     filtersChanged: onFiltersChanged
                 });
 
+                $scope.messenger.subscribe("STATE_CHANGED", onFiltersChanged);
+
                 $scope.$on('$destroy', function() {
                     $scope.messenger.removeEvents();
                 });

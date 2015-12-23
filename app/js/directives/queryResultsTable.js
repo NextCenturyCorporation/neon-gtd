@@ -28,8 +28,8 @@
  * @constructor
  */
 angular.module('neonDemo.directives')
-.directive('queryResultsTable', ['external', 'ConnectionService', 'DatasetService', 'ErrorNotificationService', 'ExportService', 'LinksPopupService', '$compile', '$interval', '$timeout',
-function(external, connectionService, datasetService, errorNotificationService, exportService, linksPopupService, $compile, $interval, $timeout) {
+.directive('queryResultsTable', ['external', 'ConnectionService', 'DatasetService', 'ErrorNotificationService', 'ExportService', 'LinksPopupService', 'VisualizationService', '$compile', '$interval', '$timeout',
+function(external, connectionService, datasetService, errorNotificationService, exportService, linksPopupService, visualizationService, $compile, $interval, $timeout) {
     return {
         templateUrl: 'partials/directives/queryResultsTable.html',
         restrict: 'EA',
@@ -38,6 +38,7 @@ function(external, connectionService, datasetService, errorNotificationService, 
             bindTable: '=',
             bindDatabase: '=',
             bindIdField: '=',
+            bindId: '=',
             hideHeader: '=?',
             hideAdvancedOptions: '=?'
         },
@@ -154,6 +155,7 @@ function(external, connectionService, datasetService, errorNotificationService, 
                 });
 
                 $scope.exportID = exportService.register($scope.makeQueryResultsTableExportObject);
+                visualizationService.register($scope.bindId, bindFields);
 
                 $scope.$on('$destroy', function() {
                     XDATA.userALE.log({
@@ -170,6 +172,7 @@ function(external, connectionService, datasetService, errorNotificationService, 
                     $element.off("resize", updateSize);
                     $scope.messenger.removeEvents();
                     exportService.unregister($scope.exportID);
+                    visualizationService.unregister($scope.bindId);
                 });
             };
 
@@ -650,7 +653,7 @@ function(external, connectionService, datasetService, errorNotificationService, 
                     for(var i = 0; i < data.length; i++) {
                         data[i] = escapeDataRecursively(data[i]);
                     }
-                } else if( _.keys(data).length) {
+                } else if(_.keys(data).length) {
                     var keys = _.keys(data);
                     for(var i = 0; i < keys.length; i++) {
                         data[keys[i]] = escapeDataRecursively(data[keys[i]]);
@@ -855,6 +858,31 @@ function(external, connectionService, datasetService, errorNotificationService, 
                 };
                 datasetService.getFields($scope.options.database.name, $scope.options.table.name).forEach(addField);
                 return finalObject;
+            };
+
+            /**
+             * Creates and returns an object that contains all the binding fields needed to recreate the visualization's state.
+             * @return {Object}
+             * @method bindFields
+             * @private
+             */
+            var bindFields = function() {
+                var bindingFields = {};
+
+                if($scope.bindTitle) {
+                    bindingFields["bind-title"] = "'" + $scope.bindTitle + "'";
+                }
+                if($scope.bindIdField) {
+                    bindingFields["bind-id-field"] = "'" + $scope.bindIdField + "'";
+                }
+                if($scope.options.table && $scope.options.table.name) {
+                    bindingFields["bind-table"] = "'" + $scope.options.table.name + "'";
+                }
+                if($scope.options.database && $scope.options.database.name) {
+                    bindingFields["bind-database"] = "'" + $scope.options.database.name + "'";
+                }
+
+                return bindingFields;
             };
 
             // Wait for neon to be ready, the create our messenger and intialize the view and data.

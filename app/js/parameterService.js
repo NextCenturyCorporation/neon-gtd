@@ -16,7 +16,8 @@
  */
 
 angular.module('neonDemo.services')
-.factory('ParameterService', ['$location', 'DatasetService', 'FilterService', function($location, datasetService, filterService) {
+.factory('ParameterService', ['$location', 'DatasetService', 'FilterService', 'ConnectionService', 'ErrorNotificationService',
+function($location, datasetService, filterService, connectionService, errorNotificationService) {
     var service = {};
 
     service.messenger = new neon.eventing.Messenger();
@@ -33,6 +34,8 @@ angular.module('neonDemo.services')
     var DASHBOARD_FILTER_DATE = DASHBOARD_FILTER_PREFIX + "date";
     var DASHBOARD_FILTER_TAG = DASHBOARD_FILTER_PREFIX + "tag";
     var DASHBOARD_FILTER_URL = DASHBOARD_FILTER_PREFIX + "url";
+    var DASHBOARD_STATE_ID = "dashboard_state_id";
+    var FILTER_STATE_ID = "filter_state_id";
 
     // Array index for the min/max lat/lon in the bounds.
     var BOUNDS_MIN_LAT = 0;
@@ -66,9 +69,10 @@ angular.module('neonDemo.services')
 
     /**
      * Adds the filters specified in the URL parameters to the dashboard.
+     * @param {Boolean} ignoreDashboardState Whether to ignore any saved dashboard states given in the parameters
      * @method addFiltersFromUrl
      */
-    service.addFiltersFromUrl = function() {
+    service.addFiltersFromUrl = function(ignoreDashboardState) {
         if(!datasetService.hasDataset()) {
             return;
         }
@@ -87,6 +91,12 @@ angular.module('neonDemo.services')
         var parameters = $location.search();
 
         var argsList = [{
+            mappings: [],
+            parameterKey: FILTER_STATE_ID,
+            cleanParameter: cleanValue,
+            isParameterValid: doesParameterExist,
+            operator: "contains"
+        }, {
             mappings: [neonMappings.DATE],
             parameterKey: DASHBOARD_FILTER_DATE,
             cleanParameter: splitArray,
@@ -142,17 +152,28 @@ angular.module('neonDemo.services')
             }
         });
 
-        addFiltersForDashboardParameters(parameters, argsList);
+        // Add dashboardStateId parameter last because we want all the filters
+        // to be added before creating the new dashboard layout
+        argsList.push({
+            mappings: [],
+            parameterKey: DASHBOARD_STATE_ID,
+            cleanParameter: cleanValue,
+            isParameterValid: doesParameterExist,
+            operator: "contains"
+        });
+
+        addFiltersForDashboardParameters(parameters, argsList, ignoreDashboardState);
     };
 
     /**
      * Adds a filter to the dashboard for the first item in the given list of arguments using the given parameters.  Then calls itself for the next item in the list of arguments.
      * @param {Object} parameters
      * @param {Array} argsList
+     * @param {Boolean} ignoreDashboardState Whether to ignore any saved dashboard states given in the parameters
      * @method addFiltersForDashboardParameters
      * @private
      */
-    var addFiltersForDashboardParameters = function(parameters, argsList) {
+    var addFiltersForDashboardParameters = function(parameters, argsList, ignoreDashboardState) {
         var args = argsList.shift();
         var parameterValue = args.cleanParameter(parameters[args.parameterKey], args.operator);
         var dataWithMappings = datasetService.getFirstDatabaseAndTableWithMappings(args.mappings);
@@ -162,7 +183,20 @@ angular.module('neonDemo.services')
             }
         };
 
-        if(args.isParameterValid(parameterValue) && isDatasetValid(dataWithMappings, args.mappings)) {
+        if(args.isParameterValid(parameterValue) && args.parameterKey === FILTER_STATE_ID) {
+            if(!ignoreDashboardState) {
+                var dashboardStateIdArgs = argsList[argsList.length - 1];
+                var dashboardStateId = dashboardStateIdArgs.cleanParameter(parameters[dashboardStateIdArgs.parameterKey], dashboardStateIdArgs.operator);
+                if(!args.isParameterValid(dashboardStateId)) {
+                    dashboardStateId = "";
+                }
+                loadState(dashboardStateId, parameterValue);
+            } else {
+                loadState("", parameterValue);
+            }
+        } else if(args.isParameterValid(parameterValue) && args.parameterKey === DASHBOARD_STATE_ID && !ignoreDashboardState) {
+            loadState(parameterValue, "", callNextFunction);
+        } else if(args.isParameterValid(parameterValue) && isDatasetValid(dataWithMappings, args.mappings)) {
             var relations = datasetService.getRelations(dataWithMappings.database, dataWithMappings.table, findFieldsForMappings(dataWithMappings, args.mappings));
             var filterKeys = filterService.createFilterKeys(service.FILTER_KEY_PREFIX + "-" + args.filterName, datasetService.getDatabaseAndTableNames());
             var filterName = {
@@ -171,6 +205,83 @@ angular.module('neonDemo.services')
             filterService.addFilters(service.messenger, relations, filterKeys, args.createFilterClauseCallback(args.operator, parameterValue), filterName, callNextFunction, callNextFunction);
         } else {
             callNextFunction();
+        }
+    };
+
+    /**
+     * Loads the dashboard and/or filter states for the given IDs and calls the given callback, if any, when finished.
+     * @param {String} dashboardStateId
+     * @param {String} filterStateId
+     * @param {Function} callback
+     * @method loadState
+     * @private
+     */
+    var loadState = function(dashboardStateId, filterStateId, callback) {
+        var connection = connectionService.getActiveConnection();
+        if(connection) {
+            var params = {};
+            if(dashboardStateId) {
+                params.dashboardStateId = dashboardStateId;
+            }
+            if(filterStateId) {
+                params.filterStateId = filterStateId;
+            }
+            connection.loadState(params, function(dashboardState) {
+                loadStateSuccess(dashboardState, dashboardStateId, callback);
+            }, function(response) {
+                errorNotificationService.showErrorMessage(null, response.responseJSON.error);
+
+                if(callback) {
+                    callback();
+                }
+            });
+        }
+    };
+
+    /**
+     * Handles changing any datasets and visualizations from the result of loading states.
+     * @param {Object} dashboardState
+     * @param {Array} dashboardState.dashboard
+     * @param {Object} dashboardState.dataset
+     * @param {String} filterStateId
+     * @param {Function} callback
+     * @method loadStateSuccess
+     * @private
+     */
+    var loadStateSuccess = function(dashboardState, dashboardStateId, callback) {
+        if(_.keys(dashboardState).length) {
+            if(dashboardStateId) {
+                var matchingDataset = datasetService.getDatasetWithName(dashboardState.dataset.name);
+                if(!matchingDataset) {
+                    datasetService.addDataset(dashboardState.dataset);
+                    matchingDataset = dashboardState.dataset;
+                }
+
+                var connection = connectionService.createActiveConnection(matchingDataset.datastore, matchingDataset.hostname);
+
+                // Update dataset fields, then set as active and update the dashboard
+                datasetService.updateDatabases(matchingDataset, connection, function(dataset) {
+                    datasetService.setActiveDataset(dataset);
+
+                    service.messenger.publish("STATE_CHANGED", dashboardState.dashboard);
+
+                    if(callback) {
+                        callback();
+                    }
+                });
+            } else {
+                service.messenger.publish("STATE_CHANGED", null);
+
+                if(callback) {
+                    callback();
+                }
+            }
+        } else {
+            errorNotificationService.showErrorMessage(null, "State not found for given IDs.");
+
+            if(callback) {
+                callback();
+            }
         }
     };
 
