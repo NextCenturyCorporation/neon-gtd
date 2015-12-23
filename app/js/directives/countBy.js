@@ -226,7 +226,8 @@ function(external, connectionService, datasetService, errorNotificationService, 
                 columnDefs.push({
                     headerName: columnName,
                     field: $scope.active.aggregation,
-                    suppressSizeToFit: false
+                    suppressSizeToFit: false,
+                    onCellClicked: handleRowClick
                 });
 
                 $scope.gridOptions.api.setColumnDefs(columnDefs);
