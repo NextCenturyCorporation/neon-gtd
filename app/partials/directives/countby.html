@@ -1,4 +1,6 @@
 <div class="header-container" ng-show="!(hideHeader)">
+    <div class="title header-text pull-left" ng-bind="generateTitle()"></div>
+
     <options-menu parent-element="element" export-function="makeCountByExportObject" button-text="optionsMenuButtonText" show-button-text="showOptionsMenuButtonText">
         <label class="limit-warning" ng-show="gridOptions.rowData.length === active.limitCount">Limited to <span ng-bind="active.limitCount"></span> rows</label>
 
@@ -15,15 +17,15 @@
         </div>
 
         <div class="form-group" ng-show="!(hideAdvancedOptions)">
-            <label>Aggregation Field</label>
-            <select class="form-control" ng-model="active.field" ng-required="true" ng-disabled="!(fields.length > 0)" ng-options="field.prettyName for field in fields" ng-change="updateAggregation()">
+            <label>Data Field</label>
+            <select class="form-control" ng-model="active.dataField" ng-required="true" ng-disabled="!(fields.length > 0)" ng-options="field.prettyName for field in fields" ng-change="handleDataFieldChange()">
                 <option disabled selected value="">Please choose a field</option>
             </select>
         </div>
 
         <div class="form-group" ng-show="!(hideAdvancedOptions)">
             <label>Aggregation</label>
-            <select class="form-control" ng-model="active.aggregation" ng-required="true" ng-disabled="!(fields.length > 0)" ng-change="updateAggregation()">
+            <select class="form-control" ng-model="active.aggregation" ng-required="true" ng-disabled="!(fields.length > 0)" ng-change="handleAggregationChange()">
                 <option value="count">Count</option>
                 <option value="min">Minimum</option>
                 <option value="max">Maximum</option>
@@ -31,8 +33,8 @@
         </div>
 
         <div class="form-group" ng-show="!(hideAdvancedOptions) && (active.aggregation !== 'count')">
-            <label>Value Field (Y Axis)</label>
-            <select class="form-control" ng-model="active.aggregationField" ng-required="true" ng-disabled="!(fields.length > 0)" ng-options="field.prettyName for field in fields" ng-change="updateAggregation()">
+            <label>Aggregation Field</label>
+            <select class="form-control" ng-model="active.aggregationField" ng-required="true" ng-disabled="!(fields.length > 0)" ng-options="field.prettyName for field in fields" ng-change="handleAggregationFieldChange()">
             </select>
         </div>
 
@@ -41,7 +43,7 @@
             <div class="input-group">
                 <input type="number" min="1" class="form-control" ng-model="active.limitCount" required>
                 <div class="input-group-btn">
-                    <button type="button" class="btn btn-default refresh" title="Refresh" ng-click="updateAggregation()">
+                    <button type="button" class="btn btn-default refresh" title="Refresh" ng-click="handleLimitChange()">
                         <span class="glyphicon glyphicon-refresh"></span>
                     </button>
                 </div>
@@ -49,23 +51,20 @@
         </div>
     </options-menu>
 
-    <div class="title header-text pull-left" ng-bind="(bindTitle != undefined) ? bindTitle : active.table.prettyName + ' / ' + active.field.prettyName"></div>
     <div class="pull-left header-text record-count" ng-hide="showTooMuchDataError">
         <span class="text-primary ng-binding active-count" ng-bind="active.count | number"></span> values
     </div>
 </div>
 <div class="clearfix"></div>
 
-<div class="filter-container" ng-show="!!filterSet">
+<div class="header-container filter-container" ng-show="!!filterSet">
+    <h4 class="pull-left" ng-show="showTooMuchDataError">The query exceeded the memory limit.  Please add a filter to requery.</h4>
+
     <div class="header-item filter-reset pull-right" ng-class="{true: 'hidden', false: ''}[filterSet === undefined]" title="{{filterSet.key}}={{filterSet.value}}">
         <span class="filter-label" ng-bind="filterSet.value"></span>
         <span class="glyphicon glyphicon-remove" ng-click="clearFilter()"></span>
     </div>
 </div>
 <div class="clearfix"></div>
-
-<div class="header-container" ng-show="showTooMuchDataError">
-    <h4 class="pull-left" >The query exceeded the memory limit.  Please add a filter to requery.</h4>
-</div>
 
 <div ag-grid="gridOptions" class="ag-fresh count-by-table" ng-class="{'filter-set': !!filterSet}" ng-hide="showTooMuchDataError"></div>
