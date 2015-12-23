@@ -364,6 +364,7 @@ function(external, connectionService, datasetService, errorNotificationService, 
 
                 var query = buildQuery();
 
+                XDATA.userALE.log({
                     activity: "alter",
                     action: "query",
                     elementId: "datagrid",
