@@ -79,6 +79,14 @@ function(external, connectionService, datasetService, errorNotificationService, 
                 suppressRowClickSelection: true
             };
 
+            var updateSize = function() {
+                var headerHeight = 0;
+                $scope.element.find(".header-container").each(function() {
+                    headerHeight += $(this).outerHeight(true);
+                });
+                $("#" + $scope.tableId).height($scope.element.height() - headerHeight);
+            };
+
             $scope.init = function() {
                 $scope.messenger = new neon.eventing.Messenger();
                 $scope.messenger.subscribe(datasetService.UPDATE_DATA_CHANNEL, queryForData);
@@ -105,12 +113,18 @@ function(external, connectionService, datasetService, errorNotificationService, 
                         tags: ["remove", "count-by"]
                     });
                     linksPopupService.deleteLinks($scope.tableId);
+                    $scope.element.off("resize", updateSize);
+                    $scope.element.find(".filter-container").off("resize", updateSize);
                     $scope.messenger.removeEvents();
                     if($scope.filterSet) {
                         filterService.removeFilters($scope.messenger, $scope.filterKeys);
                     }
                     exportService.unregister($scope.exportID);
                 });
+
+                $scope.element.resize(updateSize);
+                $scope.element.find(".filter-container").resize(updateSize);
+                updateSize();
 
                 $scope.active = {
                     limitCount: ($scope.limitCount ? $scope.limitCount : 5000),

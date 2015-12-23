@@ -35,36 +35,14 @@
     }
 
     .filter-container {
+        // Shrink the filter container whenever unused to trigger a jquery resize event that will update the size of the table.
+        &.shrink {
+            height: 0px;
+            min-height: 0px;
+        }
+
         .header-item {
             margin-top: 0px;
-        }
-    }
-
-    .count-by-table {
-        height: 100%;
-
-        @media (min-width: 1024px) {
-            padding-top: 45px;
-            margin-top: -45px;
-        }
-
-        @media (min-width: 1500px) {
-            //This makes the autosizing work while taking into account the options menu.
-            padding-top: 25px;
-            margin-top: -25px;
-        }
-
-        &.filter-set {
-            @media (min-width: 1024px) {
-                padding-top: 80px;
-                margin-top: -80px;
-            }
-
-            @media (min-width: 1500px) {
-                //This makes the autosizing work while taking into account the options menu.
-                padding-top: 60px;
-                margin-top: -60px;
-            }
         }
     }
 }

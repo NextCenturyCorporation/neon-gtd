@@ -57,7 +57,7 @@
 </div>
 <div class="clearfix"></div>
 
-<div class="header-container filter-container" ng-show="!!filterSet">
+<div class="header-container filter-container" ng-class="{true: 'shrink', false: ''}[filterSet === undefined && !showTooMuchDataError]">
     <h4 class="pull-left" ng-show="showTooMuchDataError">The query exceeded the memory limit.  Please add a filter to requery.</h4>
 
     <div class="header-item filter-reset pull-right" ng-class="{true: 'hidden', false: ''}[filterSet === undefined]" title="{{filterSet.key}}={{filterSet.value}}">
