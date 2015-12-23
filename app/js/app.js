@@ -67,6 +67,9 @@ var neonDemo = angular.module('neonDemo', [
     'ngDraggable',
     'ngRoute',
     'ui.bootstrap.datetimepicker',
+    'linkify',
+
+    'agGrid',
 
     'gantt',
     'gantt.tooltips',

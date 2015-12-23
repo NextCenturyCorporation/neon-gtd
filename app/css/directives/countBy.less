@@ -13,164 +13,64 @@
 // limitations under the License.
 //
 
-.countByDirective {
+.count-by-directive {
     margin: 0px;
-    padding: 10px;
-    display: block;
-    height: @widget-height;
-    width: @widget-width;
+    height: 100%;
+    width: 100%;
+    overflow: hidden;
 
-    .header-container {
-        .count {
-            color: @accent-bright;
-            font-weight: bold;
+    .active-count {
+        color: @accent-bright;
+    }
+
+    .record-count {
+        @media (min-width: 1024px) {
+            padding-left: 0px;
+        }
+
+        @media (min-width: 1500px) {
+            //This makes the autosizing work while taking into account the options menu.
+            padding-left: 20px;
         }
     }
 
-    .chart-options {
-        /* This is to override 'position: relative' that is being added to the options menu for only this viz -- can't figure out why */
-        position: static !important;
+    .filter-container {
+        .header-item {
+            margin-top: 0px;
+        }
     }
 
-    .count-by-grid {
-        background-color: @main-background;
-        //border: @border;
-        border-radius: 2px;
-        box-shadow: 0 1px 4px @shadow;
+    .count-by-table {
+        height: 100%;
 
-        &:before, &:after {
-            box-sizing: content-box;
-            -webkit-box-sizing: content-box;
-            -moz-box-sizing: content-box;
+        @media (min-width: 1024px) {
+            padding-top: 45px;
+            margin-top: -45px;
         }
 
-        *, *:before, *:after {
-            box-sizing: content-box;
-            -webkit-box-sizing: content-box;
-            -moz-box-sizing: content-box;
+        @media (min-width: 1500px) {
+            //This makes the autosizing work while taking into account the options menu.
+            padding-top: 25px;
+            margin-top: -25px;
         }
 
-        &.row-selected {
-            .slick-row {
-                &.active {
-                    color: @accent-dulled-text-color;
-                    background: @accent-dulled;
-                }
+        &.filter-set {
+            @media (min-width: 1024px) {
+                padding-top: 80px;
+                margin-top: -80px;
+            }
+
+            @media (min-width: 1500px) {
+                //This makes the autosizing work while taking into account the options menu.
+                padding-top: 60px;
+                margin-top: -60px;
             }
         }
-
-        &.filtered {
-            .slick-row {
-                &.active {
-                    color: @accent-dulled-text-color;
-                    background: @accent-dulled;
-                }
-            }
-        }
-
-        span {
-            &.glyphicon {
-                &:focus, &:hover {
-                    color: @accent-bright;
-                }
-            }
-        }
-
-        .slick-cell {
-            cursor: pointer;
-            border: 0px;
-            border-bottom: 1px solid @main-text-color;
-        }
-
-        .slick-header{
-            border: 0px;
-            border-right: 1px solid @main-text-color;
-
-            .slick-header-column{
-                color: @mid-text-color;
-                background: @main-background;
-                cursor: pointer;
-                box-sizing: content-box;
-                -webkit-box-sizing: content-box;
-
-                &.ui-state-hover{
-                    color: @accent-bright;
-                    background: @light-background;
-
-                    .remove-column-button {
-                        color: #999999;
-                        background: #FFFFFF;
-
-                        &:focus, &:hover {
-                            color: #39B54A;
-                            background: #FFFFFF;
-                        }
-                    }
-                }
-
-                .remove-column-button {
-                    color: #999999;
-                    position: absolute;
-                    right: 5px;
-                }
-            }
-
-            .slick-header-column-sorted{
-                color: @accent-bright;
-                font-style: normal;
-            }
-
-            .slick-sortable-placeholder{
-                background: @border-color;
-            }
-        }
-
-        .slick-row {
-            color: @main-text-color;
-            background: @visualization-box-background;
-
-            &:hover when (lightness(@visualization-box-background) < 50%) {
-                color: @light-text-color;
-            }
-
-            &:hover when (lightness(@visualization-box-background) > 50%) {
-                color: @mid-text-color;
-            }
-
-            &.odd {
-                background-color: @main-background;
-            }
-        }
-
     }
-}
-
-.data-tray {
-    .refresh{
-        margin-left: 10px;
-    }
-}
-
-.hidden-button {
-    background-color: inherit;
-    border: 0;
-    padding: 0;
-}
-
-.slick-sort-indicator {
-    float: none;
 }
 
 .visualization-widget {
-    .countByDirective {
-        height: @widget-height;
-        width: @widget-width;
-    }
-}
-
-.visualization-widget-mobile {
-    .countByDirective {
-        height: @mobile-widget-height;
-        width: @mobile-widget-width;
+    .count-by-directive {
+        padding: 10px;
     }
 }
