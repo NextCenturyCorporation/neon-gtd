@@ -141,8 +141,8 @@ function(connectionService, datasetService, errorNotificationService, exportServ
             };
 
             var updateChartSize = function() {
-                var titleWidth = $element.width() - $element.find(".chart-options").outerWidth(true);
-                $element.find(".title").css("maxWidth", titleWidth - 20);
+                // Subtract 80 for the width of the options menu button and padding.
+                $element.find(".title").css("maxWidth", $element.width() - 80);
 
                 if($scope.chart) {
                     var headerHeight = 0;

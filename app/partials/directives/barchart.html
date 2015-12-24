@@ -1,7 +1,7 @@
 <div class="header-container" ng-show="!(hideHeader)">
     <div class="title header-text pull-left" ng-bind="(bindTitle != undefined) ? bindTitle : options.table.prettyName + (options.attrX.prettyName ? ' / ' + options.attrX.prettyName : '')"></div>
 
-    <options-menu parent-element="element" export-function="makeBarchartExportObject" ng-show="!(hideAdvancedOptions)">
+    <options-menu parent-element="element" export-function="makeBarchartExportObject" button-text="optionsMenuButtonText" show-button-text="showOptionsMenuButtonText">
         <div class="form-group" ng-show="!(hideAdvancedOptions)">
             <label>Database</label>
             <select class="form-control" ng-model="options.database" ng-options="database.prettyName for database in databases" ng-required="true" ng-disabled="(databases.length < 2)" ng-change="updateTables()">
@@ -62,11 +62,6 @@
         <div class="legend-item" title="{{getLegendText()}}">
             <span class="legend-icon" style="background-color: #39b54a"></span>
             <span class="legend-text" ng-bind="getLegendText()"></span>
-        </div>
-
-        <div class="legend-item pull-right" ng-show="results.count >= options.limitCount" title="{{'Limited to ' + options.limitCount + ' Bars'}}">
-            <span class="legend-text" ng-show="!showAbbreviatedLimit" ng-bind="'Limited to ' + options.limitCount + ' Bars'"></span>
-            <span class="legend-text glyphicon glyphicon-exclamation-sign" ng-show="showAbbreviatedLimit"></span>
         </div>
     </div>
 </div>

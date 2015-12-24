@@ -68,6 +68,7 @@ function(external, $timeout, connectionService, datasetService, errorNotificatio
             $scope.selectedDate = undefined;
             $scope.errorMessage = undefined;
             $scope.helpers = neon.helpers;
+            $scope.queryTitle = "";
 
             // Prevent extraneous queries from onFieldChanged during updateFields.
             $scope.loadingData = false;
@@ -199,8 +200,8 @@ function(external, $timeout, connectionService, datasetService, errorNotificatio
              * @private
              */
             var resizeTitle = function() {
-                var titleWidth = $element.width() - $element.find(".chart-options").outerWidth(true);
-                $element.find(".title").css("maxWidth", titleWidth - 20);
+                // Subtract 80 for the width of the options menu button and padding.
+                $element.find(".title").css("maxWidth", $element.width() - 80);
             };
 
             /**
@@ -470,6 +471,9 @@ function(external, $timeout, connectionService, datasetService, errorNotificatio
                 }
 
                 $scope.dataFromNewsEvent = false;
+                // Save the title during the query so the title doesn't change immediately if the user changes the unshared filter.
+                $scope.queryTitle = "";
+                $scope.queryTitle = $scope.generateTitle();
 
                 var connection = connectionService.getActiveConnection();
 
@@ -858,6 +862,9 @@ function(external, $timeout, connectionService, datasetService, errorNotificatio
              * @return {String}
              */
             $scope.generateTitle = function() {
+                if($scope.queryTitle) {
+                    return $scope.queryTitle;
+                }
                 var title = $scope.options.filterValue ? $scope.options.filterValue + " " : "";
                 if($scope.bindTitle) {
                     return title + $scope.bindTitle;

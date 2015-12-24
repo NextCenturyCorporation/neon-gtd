@@ -40,6 +40,9 @@ function(external, connectionService, datasetService, errorNotificationService, 
             $scope.element = $element;
             $scope.visualizationId = "text-cloud-" + uuid();
 
+            $scope.optionsMenuButtonText = function() {
+                return $scope.filterTags.length === 0 && $scope.data.length === 0 ? "No Tag Data" : "";
+            }
             $scope.showOptionsMenuButtonText = function() {
                 return $scope.filterTags.length === 0 && $scope.data.length === 0;
             };
@@ -55,6 +58,7 @@ function(external, connectionService, datasetService, errorNotificationService, 
             $scope.loadingData = false;
             $scope.linksPopupButtonIsDisabled = true;
             $scope.tagColor = "#111";
+            $scope.queryTitle = "";
             $scope.translationAvailable = false;
             $scope.translationLanguages = {
                 fromLanguageOptions: {},
@@ -75,8 +79,8 @@ function(external, connectionService, datasetService, errorNotificationService, 
             };
 
             var updateSize = function() {
-                var titleWidth = $element.width() - $element.find(".chart-options").outerWidth(true);
-                $element.find(".title").css("maxWidth", titleWidth - 20);
+                // Subtract 80 for the width of the options menu button and padding.
+                $element.find(".title").css("maxWidth", $element.width() - 80);
             };
 
             var updateTagcloudPluginSettings = function() {
@@ -296,6 +300,10 @@ function(external, connectionService, datasetService, errorNotificationService, 
                     errorNotificationService.hideErrorMessage($scope.errorMessage);
                     $scope.errorMessage = undefined;
                 }
+
+                // Save the title during the query so the title doesn't change immediately if the user changes the unshared filter.
+                $scope.queryTitle = "";
+                $scope.queryTitle = $scope.generateTitle();
 
                 var connection = connectionService.getActiveConnection();
 
@@ -754,6 +762,9 @@ function(external, connectionService, datasetService, errorNotificationService, 
              * @return {String}
              */
             $scope.generateTitle = function() {
+                if($scope.queryTitle) {
+                    return $scope.queryTitle;
+                }
                 var title = $scope.options.filterValue ? $scope.options.filterValue + " " : "";
                 if($scope.bindTitle) {
                     return title + $scope.bindTitle;

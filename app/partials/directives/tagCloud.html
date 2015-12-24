@@ -1,7 +1,7 @@
 <div class="header-container" ng-show="!(hideHeader)">
     <div class="title header-text pull-left" ng-bind="generateTitle()"></div>
 
-    <options-menu parent-element="element" export-function="makeTagCloudExportObject"  button-text="'No tag data'" show-button-text="showOptionsMenuButtonText">
+    <options-menu parent-element="element" export-function="makeTagCloudExportObject"  button-text="optionsMenuButtonText" show-button-text="showOptionsMenuButtonText">
         <translation-options ng-show="translationAvailable" on-translate="updateTranslation" from-language-change="onFromLanguageChange" to-language-change="onToLanguageChange"
             from-language-options="translationLanguages.fromLanguageOptions" to-language-options="translationLanguages.toLanguageOptions">
         </translation-options>
