@@ -140,26 +140,29 @@ select[multiple] {
 
 .chart-options {
     > a {
-        color: @accent-bright;
         background-color: transparent;
+        border: none;
         font-size: 16px;
         padding: 0;
-        border: none;
 
-        &.collapsed {
-            color: @main-text-color;
+        .header-text, .glyphicon, .caret {
+            color: @accent-bright;
         }
 
-        &:hover {
-            background: transparent;
-            border: none;
-            span {
-                color: @accent-bright;
+        &.collapsed {
+            .header-text, .glyphicon, .caret {
+                color: @main-text-color;
             }
         }
 
-        &:active, &.active {
+        &.active, &:active, &:focus, &:hover {
+            background: transparent;
+            border: none;
             box-shadow: none;
+
+            .header-text, .glyphicon, .caret {
+                color: @accent-bright;
+            }
         }
     }
 
@@ -207,7 +210,7 @@ select[multiple] {
                 color: @main-text-color;
             }
 
-            .btn-group {
+            .btn-group, .input-group-btn {
                 label {
                     color: @button-color;
                 }

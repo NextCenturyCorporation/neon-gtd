@@ -82,6 +82,16 @@ function(external, connectionService, datasetService, errorNotificationService, 
                 suppressRowClickSelection: true
             };
 
+            $scope.optionsMenuButtonText = function() {
+                if($scope.showTooMuchDataError) {
+                    return "Error";
+                }
+                return ($scope.active.count >= $scope.active.limitCount ? "Limited to " : "") + ($scope.active.count || "No") + " Values";
+            }
+            $scope.showOptionsMenuButtonText = function() {
+                return true;
+            };
+
             var updateSize = function() {
                 var headerHeight = 0;
                 $scope.element.find(".header-container").each(function() {
