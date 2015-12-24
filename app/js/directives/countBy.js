@@ -193,7 +193,6 @@ function(external, connectionService, datasetService, errorNotificationService, 
                 }
 
                 updateColumns();
-                queryForData();
             };
 
             var updateColumns = function() {
@@ -230,9 +229,10 @@ function(external, connectionService, datasetService, errorNotificationService, 
                     onCellClicked: handleRowClick
                 });
 
+                $scope.gridOptions.api.setRowData([]);
                 $scope.gridOptions.api.setColumnDefs(columnDefs);
-
                 $scope.gridOptions.api.sizeColumnsToFit();
+                queryForData();
             };
 
             var queryForData = function() {
@@ -570,7 +570,6 @@ function(external, connectionService, datasetService, errorNotificationService, 
                 logChange("data-field", $scope.active.dataField.columnName);
                 if(!$scope.loadingData) {
                     updateColumns();
-                    queryForData();
                 }
             };
 
@@ -578,7 +577,6 @@ function(external, connectionService, datasetService, errorNotificationService, 
                 logChange("aggregation", $scope.active.aggregation);
                 if(!$scope.loadingData) {
                     updateColumns();
-                    queryForData();
                 }
             };
 
@@ -586,7 +584,6 @@ function(external, connectionService, datasetService, errorNotificationService, 
                 logChange("aggregation-field", $scope.active.aggregationField.columnName);
                 if(!$scope.loadingData) {
                     updateColumns();
-                    queryForData();
                 }
             };
 
@@ -594,7 +591,6 @@ function(external, connectionService, datasetService, errorNotificationService, 
                 logChange("limit", $scope.active.limitCount);
                 if(!$scope.loadingData) {
                     updateColumns();
-                    queryForData();
                 }
             };
 
