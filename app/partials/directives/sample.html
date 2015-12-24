@@ -42,7 +42,7 @@
     <!-- The filter-reset notification displays the active filter using the Neon-GTD filter styling with an X button to remove the filter. -->
     <div class="header-item filter-reset pull-right" ng-class="{true: 'hidden', false: ''}[filter === undefined]" title="{{filter.field}}={{filter.value}}">
         <span class="filter-label" ng-bind="filter.value"></span>
-        <span class="border-left glyphicon glyphicon-remove" ng-click="removeFilter()"></span>
+        <span class="glyphicon glyphicon-remove" ng-click="removeFilter()"></span>
     </div>
 </div>
 

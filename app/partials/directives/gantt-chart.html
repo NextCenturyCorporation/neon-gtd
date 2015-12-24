@@ -76,12 +76,12 @@
 <div class="header-container filter-container">
     <div class="header-item filter-reset pull-right" ng-show="(filterSet.key && filterSet.value)" title="Filtered on Item">
         <span class="filter-label">Filter</span>
-        <span class="border-left glyphicon glyphicon-remove" ng-click="removeFilter()"></span>
+        <span class="glyphicon glyphicon-remove" ng-click="removeFilter()"></span>
     </div>
 
     <div class="header-item filter-reset pull-right" ng-show="(options.selectedGroups.length > 0)" title="Selected Group(s)">
         <span class="filter-label" ng-bind="options.selectedGroups.length + ' Selected'"></span>
-        <span class="border-left glyphicon glyphicon-remove" ng-click="removeSelectedGroups()"></span>
+        <span class="glyphicon glyphicon-remove" ng-click="removeSelectedGroups()"></span>
     </div>
 
     <div class="legend" ng-show="legend.colors">
