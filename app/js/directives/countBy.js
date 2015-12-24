@@ -28,6 +28,8 @@ function(external, connectionService, datasetService, errorNotificationService, 
             bindDataField: '=',
             bindAggregation: '=',
             bindAggregationField: '=',
+            bindFilterField: '=',
+            bindFilterValue: '=',
             bindTable: '=',
             bindDatabase: '=',
             hideHeader: '=?',
@@ -46,6 +48,7 @@ function(external, connectionService, datasetService, errorNotificationService, 
 
             $scope.active = {};
             $scope.loadingData = false;
+            $scope.queryTitle = "";
 
             //Wait for neon to be ready, the create our messenger and intialize the view and data.
             neon.ready(function() {
@@ -187,6 +190,11 @@ function(external, connectionService, datasetService, errorNotificationService, 
                 $scope.active.aggregationField = _.find($scope.fields, function(field) {
                     return field.columnName === aggregationFieldName;
                 }) || datasetService.createBlankField();
+                var filterFieldName = $scope.bindFilterField || "";
+                $scope.active.filterField = _.find($scope.fields, function(field) {
+                    return field.columnName === filterFieldName;
+                }) || datasetService.createBlankField();
+                $scope.active.filterValue = $scope.bindFilterValue || "";
 
                 if($scope.filterSet) {
                     $scope.clearFilter();
@@ -242,6 +250,9 @@ function(external, connectionService, datasetService, errorNotificationService, 
                 }
 
                 $scope.showTooMuchDataError = false;
+                // Save the title during the query so the title doesn't change immediately if the user changes the unshared filter.
+                $scope.queryTitle = "";
+                $scope.queryTitle = $scope.generateTitle();
 
                 var connection = connectionService.getActiveConnection();
 
@@ -341,7 +352,8 @@ function(external, connectionService, datasetService, errorNotificationService, 
              * @method buildQuery
              */
             var buildQuery = function() {
-                var query = new neon.query.Query().selectFrom($scope.active.database.name, $scope.active.table.name).groupBy($scope.active.dataField.columnName).where($scope.active.dataField.columnName, "!=", null);
+                var whereNotNull = neon.query.where($scope.active.dataField.columnName, "!=", null);
+                var query = new neon.query.Query().selectFrom($scope.active.database.name, $scope.active.table.name).groupBy($scope.active.dataField.columnName).where(whereNotNull);
 
                 query.ignoreFilters([$scope.filterKeys[$scope.active.database.name][$scope.active.table.name]]);
 
@@ -356,6 +368,11 @@ function(external, connectionService, datasetService, errorNotificationService, 
                 if($scope.active.aggregation === "max") {
                     query.aggregate(neon.query.MAX, $scope.active.aggregationField.columnName, $scope.active.aggregation);
                     query.sortBy($scope.active.aggregation, neon.query.DESCENDING);
+                }
+
+                if(datasetService.isFieldValid($scope.active.filterField) && $scope.active.filterValue) {
+                    var operator = $.isNumeric($scope.active.filterValue) ? "=" : "contains";
+                    query.where(neon.query.and(whereNotNull, neon.query.where($scope.active.filterField.columnName, operator, $scope.active.filterValue)));
                 }
 
                 if($scope.active.limitCount) {
@@ -587,6 +604,29 @@ function(external, connectionService, datasetService, errorNotificationService, 
                 }
             };
 
+            $scope.handleUnsharedFilterFieldChange = function() {
+                logChange("unshared-filter-field", $scope.active.filterField.columnName);
+                if(!$scope.loadingData) {
+                    $scope.active.filterValue = "";
+                    queryForData();
+                }
+            };
+
+            $scope.handleUnsharedFilterValueChange = function() {
+                logChange("unshared-filter-value", $scope.active.filterValue);
+                if(!$scope.loadingData) {
+                    queryForData();
+                }
+            };
+
+            $scope.handleUnsharedFilterRemove = function() {
+                logChange("unshared-filter", "");
+                $scope.active.filterValue = "";
+                if(!$scope.loadingData) {
+                    queryForData();
+                }
+            };
+
             $scope.handleLimitChange = function() {
                 logChange("limit", $scope.active.limitCount);
                 if(!$scope.loadingData) {
@@ -595,6 +635,9 @@ function(external, connectionService, datasetService, errorNotificationService, 
             };
 
             $scope.generateTitle = function() {
+                if($scope.queryTitle) {
+                    return $scope.queryTitle;
+                }
                 var title = $scope.active.filterValue ? $scope.active.filterValue + " " : "";
                 if($scope.bindTitle) {
                     return title + $scope.bindTitle;
