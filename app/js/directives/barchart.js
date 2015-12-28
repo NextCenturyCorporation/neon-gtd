@@ -60,7 +60,7 @@ function(external, connectionService, datasetService, errorNotificationService, 
             $scope.loadingData = false;
             $scope.outstandingQuery = undefined;
             $scope.linksPopupButtonIsDisabled = true;
-            $scope.showAbbreviatedLimit = false;
+            $scope.queryLimitCount = 0;
 
             $scope.options = {
                 database: {},
@@ -73,9 +73,20 @@ function(external, connectionService, datasetService, errorNotificationService, 
 
             var COUNT_FIELD_NAME = 'Count';
 
+            // Functions for the options-menu directive.
+            $scope.optionsMenuButtonText = function() {
+                if($scope.queryLimitCount > 0) {
+                    return "Limited to " + $scope.queryLimitCount + " Bars";
+                }
+                return "";
+            };
+            $scope.showOptionsMenuButtonText = function() {
+                return $scope.queryLimitCount > 0;
+            };
+
             var updateChartSize = function() {
-                var titleWidth = $element.width() - $element.find(".chart-options").outerWidth(true);
-                $element.find(".title").css("maxWidth", titleWidth - 20);
+                // Subtract 80 for the width of the options menu button and padding.
+                $element.find(".title").css("maxWidth", $element.width() - 80);
 
                 if($scope.chart) {
                     var headerHeight = 0;
@@ -85,17 +96,6 @@ function(external, connectionService, datasetService, errorNotificationService, 
                     $element.find('.barchart').height($element.height() - headerHeight);
 
                     $scope.chart.draw();
-
-                    updateLegendSize();
-                }
-            };
-
-            var updateLegendSize = function() {
-                // If the container cannot fit the filter-reset element and both legend-item elements then show an icon for the limit instead of text.
-                if($element.find(".filter-container").width() - $element.find(".filter-reset").width() <= 410) {
-                    $scope.showAbbreviatedLimit = true;
-                } else {
-                    $scope.showAbbreviatedLimit = false;
                 }
             };
 
@@ -129,7 +129,6 @@ function(external, connectionService, datasetService, errorNotificationService, 
                     });
                     linksPopupService.deleteLinks($scope.visualizationId);
                     $element.off("resize", updateChartSize);
-                    $element.find(".legend-item").off("resize", updateLegendSize);
                     $scope.messenger.removeEvents();
                     // Remove our filter if we had an active one.
                     if($scope.filterSet) {
@@ -162,8 +161,6 @@ function(external, connectionService, datasetService, errorNotificationService, 
                 // This resizes the chart when the div changes.  This rely's on jquery's resize plugin to fire
                 // on the associated element and not just the window.
                 $element.resize(updateChartSize);
-
-                $element.find(".legend-item").resize(updateLegendSize);
             };
 
             var handleChangedField = function(field, newValue) {
@@ -350,9 +347,6 @@ function(external, connectionService, datasetService, errorNotificationService, 
                             source: "system",
                             tags: ["receive", "barchart"]
                         });
-                        $scope.results = {
-                            count: queryResults.data.length
-                        };
                         doDrawChart(queryResults, rebuildChart);
                         $scope.loadingData = false;
                         XDATA.userALE.log({
@@ -470,8 +464,6 @@ function(external, connectionService, datasetService, errorNotificationService, 
                     value: value
                 };
 
-                updateLegendSize();
-
                 var mappings = datasetService.getMappings($scope.options.database.name, $scope.options.table.name);
                 var chartLinks = {};
 
@@ -529,7 +521,12 @@ function(external, connectionService, datasetService, errorNotificationService, 
                 } else {
                     $scope.chart = new charts.BarChart($element[0], '.barchart', opts);
                 }
+
                 updateChartSize();
+
+                // Save the limit count for the most recent query to show in the options menu button text.
+                // Don't use the current limit count because that may be changed to a different number.
+                $scope.queryLimitCount = data.data.length >= $scope.options.limitCount ? $scope.options.limitCount : 0;
             };
 
             $scope.getLegendText = function() {

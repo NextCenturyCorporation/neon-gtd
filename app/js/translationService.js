@@ -160,7 +160,9 @@ angular.module("neonDemo.services")
                     .then(function(response) {
                         // Cache the translations for later use.
                         response.data.data.translations.forEach(function(item, index) {
-                            translationCache[to][text[index]] = item.translatedText;
+                            if(!cached[index]) {
+                                translationCache[to][text[index]] = item.translatedText;
+                            }
                         });
                         // Add the cached translations in the response data for the callback.
                         cached.forEach(function(item, index) {

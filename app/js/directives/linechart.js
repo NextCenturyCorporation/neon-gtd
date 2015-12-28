@@ -106,7 +106,7 @@ function(external, connectionService, datasetService, errorNotificationService, 
 
             var updateChartSize = function() {
                 var titleWidth = $element.width() - $element.find(".chart-options").outerWidth(true);
-                $element.find(".title").css("maxWidth", titleWidth - 20);
+                $element.find(".title").css("maxWidth", titleWidth - 80);
                 resizeLegend();
 
                 if($scope.chart) {

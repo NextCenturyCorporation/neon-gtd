@@ -461,11 +461,12 @@ function($interval, $filter, external, connectionService, datasetService, errorN
             };
 
             var onResize = function() {
-                var titleWidth = $element.width() - $element.find(".chart-options").outerWidth(true);
+                // Subtract 80 for the width of the options menu button and padding.
+                var titleWidth = $element.width() - 80;
                 $element.find(".next-to-title").each(function() {
-                    titleWidth -= $(this).outerWidth(true);
+                    titleWidth -= ($(this).outerWidth(true) + 10);
                 });
-                $element.find(".title").css("maxWidth", titleWidth - 20);
+                $element.find(".title").css("maxWidth", titleWidth);
 
                 resizeDateTimePickerDropdown();
 

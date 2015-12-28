@@ -1,7 +1,7 @@
 'use strict';
 
 /*
- * Copyright 2014 Next Century Corporation
+ * Copyright 2015 Next Century Corporation
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -15,16 +15,17 @@
  * limitations under the License.
  *
  */
-
 angular.module('neonDemo.directives')
-.directive('countBy', ['external', 'ConnectionService', 'DatasetService', 'ErrorNotificationService', 'FilterService', 'ExportService', 'LinksPopupService', '$filter',
-function(external, connectionService, datasetService, errorNotificationService, filterService, exportService, linksPopupService, $filter) {
+.directive('countBy', ['external', 'ConnectionService', 'DatasetService', 'ErrorNotificationService', 'FilterService',
+'ExportService', '$filter', 'LinksPopupService',
+function(external, connectionService, datasetService, errorNotificationService, filterService, exportService, $filter, linksPopupService) {
     return {
         templateUrl: 'partials/directives/countby.html',
         restrict: 'EA',
         scope: {
             bindTitle: '=',
-            bindCountField: '=',
+            bindCountField: '=', // Deprecated - please use bind-data-field now.
+            bindDataField: '=',
             bindAggregation: '=',
             bindAggregationField: '=',
             bindFilterField: '=',
@@ -35,102 +36,80 @@ function(external, connectionService, datasetService, errorNotificationService, 
             hideAdvancedOptions: '=?',
             limitCount: '=?'
         },
+
         link: function($scope, $element) {
-            $element.addClass('countByDirective');
+            $element.addClass('count-by-directive');
 
             $scope.element = $element;
 
-            $scope.optionsMenuButtonText = function() {
-                if($scope.options.limitCount && $scope.count >= $scope.options.limitCount) {
-                    return $scope.options.limitCount + " limit";
+            $scope.tableId = 'countby-' + uuid();
+            var tableDiv = $element.find('.count-by-table');
+            tableDiv.attr("id", $scope.tableId);
+
+            $scope.active = {};
+            $scope.loadingData = false;
+            $scope.queryTitle = "";
+
+            //Wait for neon to be ready, the create our messenger and intialize the view and data.
+            neon.ready(function() {
+                $scope.init();
+            });
+        },
+
+        controller: function($scope) {
+            var handleRowClick = function(cell) {
+                if($scope.gridOptions.api.getSelectedNodes()[0] && $scope.gridOptions.api.getSelectedNodes()[0].id === cell.rowIndex) {
+                    $scope.gridOptions.api.deselectIndex(cell.rowIndex);
+                } else {
+                    $scope.gridOptions.api.selectIndex(cell.rowIndex, false);
                 }
-                return "";
-            };
-            $scope.showOptionsMenuButtonText = function() {
-                return $scope.count >= $scope.options.limitCount;
+
+                setFilter($scope.active.dataField.columnName, cell.node.data[$scope.active.dataField.columnName]);
             };
 
             // Unique field name used for the SlickGrid column containing the URLs for the external apps.
             // This name should be one that is highly unlikely to be a column name in a real database.
             $scope.EXTERNAL_APP_FIELD_NAME = "neonExternalApps";
 
-            $scope.databases = [];
-            $scope.tables = [];
-            $scope.count = 0;
-            $scope.fields = [];
-            $scope.tableId = 'countby-' + uuid();
-            $scope.filterKeys = {};
-            $scope.filterSet = undefined;
-            $scope.errorMessage = undefined;
-            $scope.loadingData = false;
-            $scope.showTooMuchDataError = false;
-            $scope.outstandingQuery = undefined;
-
-            $scope.options = {
-                database: {},
-                table: {},
-                field: {},
-                aggregation: "",
-                aggregationField: {},
-                filterField: {},
-                filterValue: "",
-                limitCount: $scope.limitCount || 100
+            $scope.gridOptions = {
+                columnDefs: [],
+                rowData: [],
+                enableColResize: true,
+                enableSorting: true,
+                showToolPanel: false,
+                toolPanelSuppressPivot: true,
+                toolPanelSuppressValues: true,
+                suppressRowClickSelection: true
             };
 
-            var $tableDiv = $element.find('.count-by-grid');
-            $tableDiv.attr("id", $scope.tableId);
-
-            /**
-             * Updates the size of the title for this visualization.
-             * @method updateTitleSize
-             * @private
-             */
-            var updateTitleSize = function() {
-                var titleWidth = $element.width() - $element.find(".chart-options").outerWidth(true);
-                $element.find(".title").css("maxWidth", titleWidth - 20);
+            $scope.optionsMenuButtonText = function() {
+                if($scope.showTooMuchDataError) {
+                    return "Error";
+                }
+                return ($scope.active.count >= $scope.active.limitCount ? "Limited to " : "") + ($scope.active.count || "No") + " Values";
+            }
+            $scope.showOptionsMenuButtonText = function() {
+                return true;
             };
 
-            /**
-             * Updates the size of the table to fill the available space in the directive's area.
-             * @method updateSize
-             * @private
-             */
             var updateSize = function() {
                 var headerHeight = 0;
-                $element.find(".header-container").each(function() {
+                $scope.element.find(".header-container").each(function() {
                     headerHeight += $(this).outerHeight(true);
                 });
-                // Subtract an additional 2 pixels from the table height to account for the its border.
-                $('#' + $scope.tableId).height($element.height() - headerHeight - 2);
-
-                updateTitleSize();
-
-                if($scope.table) {
-                    $scope.table.refreshLayout();
-                }
+                $("#" + $scope.tableId).height($scope.element.height() - headerHeight);
             };
 
-            /**
-             * Initializes the name of the directive's scope variables
-             * and the Neon Messenger used to monitor data change events.
-             * @method initialize
-             * @private
-             */
-            var initialize = function() {
-                // Setup our messenger.
+            $scope.init = function() {
                 $scope.messenger = new neon.eventing.Messenger();
-
-                $scope.messenger.events({
-                    filtersChanged: onFiltersChanged
-                });
-                $scope.messenger.subscribe(datasetService.UPDATE_DATA_CHANNEL, function() {
-                    queryForData();
-                });
-
+                $scope.messenger.subscribe(datasetService.UPDATE_DATA_CHANNEL, queryForData);
                 $scope.messenger.subscribe(filterService.REQUEST_REMOVE_FILTER, function(ids) {
                     if(filterService.containsKey($scope.filterKeys, ids)) {
                         $scope.clearFilter();
                     }
+                });
+                $scope.messenger.events({
+                    filtersChanged: onFiltersChanged
                 });
 
                 $scope.exportID = exportService.register($scope.makeCountByExportObject);
@@ -147,8 +126,8 @@ function(external, connectionService, datasetService, errorNotificationService, 
                         tags: ["remove", "count-by"]
                     });
                     linksPopupService.deleteLinks($scope.tableId);
-                    $element.off("resize", updateSize);
-                    $element.find(".chart-options a").off("resize", updateTitleSize);
+                    $scope.element.off("resize", updateSize);
+                    $scope.element.find(".filter-container").off("resize", updateSize);
                     $scope.messenger.removeEvents();
                     if($scope.filterSet) {
                         filterService.removeFilters($scope.messenger, $scope.filterKeys);
@@ -156,252 +135,124 @@ function(external, connectionService, datasetService, errorNotificationService, 
                     exportService.unregister($scope.exportID);
                 });
 
-                $element.resize(updateSize);
-                $element.find(".chart-options a").resize(updateTitleSize);
-            };
+                $scope.element.resize(updateSize);
+                $scope.element.find(".filter-container").resize(updateSize);
+                updateSize();
 
-            var logOptionsMenuDropdownChange = function(element, value) {
-                XDATA.userALE.log({
-                    activity: "select",
-                    action: "click",
-                    elementId: "count-by",
-                    elementType: "combobox",
-                    elementSub: element,
-                    elementGroup: "table_group",
-                    source: "user",
-                    tags: ["options", "count-by", value]
-                });
-            };
-
-            $scope.handleChangedDataField = function() {
-                logOptionsMenuDropdownChange("count-field", $scope.options.field);
-                if(!$scope.loadingData) {
-                    queryForData();
-                }
-            };
-
-            $scope.handleChangedAggregation = function() {
-                logOptionsMenuDropdownChange("aggregation", $scope.options.aggregation);
-                if(!$scope.loadingData) {
-                    queryForData();
-                }
-            };
-
-            $scope.handleChangedAggregationField = function() {
-                logOptionsMenuDropdownChange("aggregation-field", $scope.options.aggregationField);
-                if(!$scope.loadingData) {
-                    queryForData();
-                }
-            };
-
-            $scope.handleChangedUnsharedFilterField = function() {
-                logOptionsMenuDropdownChange("filter-field", $scope.options.filterField);
-                if(!$scope.loadingData && $scope.options.filterValue) {
-                    $scope.options.filterValue = "";
-                    queryForData();
-                }
-            };
-
-            $scope.handleChangedUnsharedFilterValue = function() {
-                logOptionsMenuDropdownChange("filter-value", $scope.options.filterValue);
-                if(!$scope.loadingData) {
-                    queryForData();
-                }
-            };
-
-            $scope.handleRemovedUnsharedFilter = function() {
-                logOptionsMenuDropdownChange("filter-value", $scope.options.filterValue);
-                $scope.options.filterValue = "";
-                if(!$scope.loadingData) {
-                    queryForData();
-                }
-            };
-
-            $scope.handleChangedLimit = function() {
-                logOptionsMenuDropdownChange("limit", $scope.options.limitCount);
-                if(!$scope.loadingData) {
-                    queryForData();
-                }
-            };
-
-            function createOptions(data) {
-                var options = {
-                    data: data.data,
-                    columns: createColumns(data.data),
-                    gridOptions: {
-                        enableTextSelectionOnCells: true,
-                        forceFitColumns: true,
-                        enableColumnReorder: true,
-                        forceSyncScrolling: true
-                    }
+                $scope.active = {
+                    limitCount: ($scope.limitCount ? $scope.limitCount : 5000),
+                    aggregation: ($scope.bindAggregation ? $scope.bindAggregation : 'count')
                 };
 
-                return options;
-            }
-
-            var createAggregationColumnName = function() {
-                if($scope.options.aggregation === "count") {
-                    return "Count";
-                }
-
-                if($scope.options.aggregation === "min") {
-                    return "Min " + $scope.options.aggregationField.prettyName;
-                }
-
-                if($scope.options.aggregation === "max") {
-                    return "Max " + $scope.options.aggregationField.prettyName;
-                }
-
-                return "";
-            };
-
-            var createColumns = function(data) {
-                // Since forceFitColumns is enabled, setting this width will force the columns to use as much
-                // space as possible, which is necessary to keep the first column as small as possible.
-                var tableWidth = $tableDiv.outerWidth();
-
-                var columns = [{
-                    name: $scope.options.field.prettyName,
-                    field: $scope.options.field.columnName,
-                    width: tableWidth
-                }, {
-                    name: createAggregationColumnName(),
-                    field: $scope.options.aggregation === "count" ? "count" : $scope.options.aggregationField.columnName,
-                    formatter: function(row, cell, value) {
-                        return $filter('number')(value);
-                    },
-                    width: tableWidth
-                }];
-
-                if(external.active && data.length) {
-                    var externalAppColumn = {
-                        name: "",
-                        field: $scope.EXTERNAL_APP_FIELD_NAME,
-                        width: "15",
-                        cssClass: "centered",
-                        ignoreClicks: true
-                    };
-                    columns.splice(0, 0, externalAppColumn);
-                }
-
-                return columns;
+                initializeDataset();
             };
 
             /**
-             * Saves the given field and value as the current filter.
-             * @param {String} The filter field
-             * @param {String} The filter value
-             */
-            var handleSetFilter = function(field, value) {
-                $scope.filterSet = {
-                    key: field,
-                    value: value
-                };
-            };
-
-            /**
-             * Clears the current filter.
-             */
-            var clearFilter = function() {
-                $scope.filterSet = undefined;
-            };
-
-            /**
-             * Event handler for filter changed events issued over Neon's messaging channels.
-             * @param {Object} message A Neon filter changed message.
-             * @method onFiltersChanged
+             * Gets database and table from dataset service and sets up dataset related scope variables
+             * @method initializeDataset
              * @private
              */
-            var onFiltersChanged = function(message) {
-                if(message.addedFilter && message.addedFilter.databaseName === $scope.options.database.name && message.addedFilter.tableName === $scope.options.table.name) {
-                    XDATA.userALE.log({
-                        activity: "alter",
-                        action: "query",
-                        elementId: "count-by",
-                        elementType: "canvas",
-                        elementSub: "count-by",
-                        elementGroup: "table_group",
-                        source: "system",
-                        tags: ["filter-change", "count-by"]
-                    });
-                    queryForData();
-                }
-            };
-
-            /**
-             * Displays data for any currently active datasets.
-             * @method displayActiveDataset
-             * @private
-             */
-            var displayActiveDataset = function() {
-                if(!datasetService.hasDataset() || $scope.loadingData) {
-                    return;
-                }
-
+            var initializeDataset = function() {
+                $scope.filterKeys = filterService.createFilterKeys("countby", datasetService.getDatabaseAndTableNames());
                 $scope.databases = datasetService.getDatabases();
-                $scope.options.database = $scope.databases[0];
+
+                $scope.active.database = $scope.databases[0];
                 if($scope.bindDatabase) {
                     for(var i = 0; i < $scope.databases.length; ++i) {
                         if($scope.bindDatabase === $scope.databases[i].name) {
-                            $scope.options.database = $scope.databases[i];
+                            $scope.active.database = $scope.databases[i];
                             break;
                         }
                     }
                 }
-                $scope.filterKeys = filterService.createFilterKeys("countby", datasetService.getDatabaseAndTableNames());
-                $scope.updateTables();
+
+                updateTables();
             };
 
-            $scope.updateTables = function() {
-                $scope.tables = datasetService.getTables($scope.options.database.name);
-                $scope.options.table = datasetService.getFirstTableWithMappings($scope.options.database.name, [neonMappings.AGGREGATE]) || $scope.tables[0];
+            var updateTables = function() {
+                $scope.tables = datasetService.getTables($scope.active.database.name);
+
+                $scope.active.table = $scope.tables[0];
                 if($scope.bindTable) {
                     for(var i = 0; i < $scope.tables.length; ++i) {
                         if($scope.bindTable === $scope.tables[i].name) {
-                            $scope.options.table = $scope.tables[i];
+                            $scope.active.table = $scope.tables[i];
                             break;
                         }
                     }
                 }
-                $scope.updateFields();
+
+                updateFields();
             };
 
-            $scope.updateFields = function() {
+            var updateFields = function() {
                 $scope.loadingData = true;
-                $scope.fields = datasetService.getSortedFields($scope.options.database.name, $scope.options.table.name);
-                $scope.options.aggregation = $scope.bindAggregation || "count";
+                var fields = datasetService.getFields($scope.active.database.name, $scope.active.table.name);
+                $scope.fields = _.filter(fields, function(field) {
+                    return field.columnName !== '_id';
+                });
 
-                var fieldName = $scope.bindCountField || datasetService.getMapping($scope.options.database.name, $scope.options.table.name, neonMappings.AGGREGATE) || "";
-                $scope.options.field = _.find($scope.fields, function(field) {
-                    return field.columnName === fieldName;
+                var dataFieldName = $scope.bindDataField || $scope.bindCountField || datasetService.getMapping($scope.active.database.name, $scope.active.table.name, neonMappings.AGGREGATE) || "";
+                $scope.active.dataField = _.find($scope.fields, function(field) {
+                    return field.columnName === dataFieldName;
                 }) || datasetService.createBlankField();
                 var aggregationFieldName = $scope.bindAggregationField || "";
-                $scope.options.aggregationField = _.find($scope.fields, function(field) {
+                $scope.active.aggregationField = _.find($scope.fields, function(field) {
                     return field.columnName === aggregationFieldName;
                 }) || datasetService.createBlankField();
                 var filterFieldName = $scope.bindFilterField || "";
-                $scope.options.filterField = _.find($scope.fields, function(field) {
+                $scope.active.filterField = _.find($scope.fields, function(field) {
                     return field.columnName === filterFieldName;
                 }) || datasetService.createBlankField();
-                $scope.options.filterValue = $scope.bindFilterValue || "";
+                $scope.active.filterValue = $scope.bindFilterValue || "";
 
                 if($scope.filterSet) {
                     $scope.clearFilter();
                 }
+
+                updateColumns();
+            };
+
+            var updateColumns = function() {
+                var columnDefs = [];
+
+                if(external.active) {
+                    var externalAppColumn = {
+                        headerName: "",
+                        field: $scope.EXTERNAL_APP_FIELD_NAME,
+                        suppressSizeToFit: false,
+                        cellClass: 'centered',
+                        width: 30
+                    };
+
+                    columnDefs.push(externalAppColumn);
+                }
+
+                columnDefs.push({
+                    headerName: $scope.active.dataField.prettyName,
+                    field: $scope.active.dataField.columnName,
+                    suppressSizeToFit: false,
+                    onCellClicked: handleRowClick
+                });
+
+                var columnName = $scope.active.aggregation;
+                if($scope.active.aggregation !== 'count') {
+                    columnName += ' ' + $scope.active.aggregationField.prettyName;
+                }
+
+                columnDefs.push({
+                    headerName: columnName,
+                    field: $scope.active.aggregation,
+                    suppressSizeToFit: false,
+                    onCellClicked: handleRowClick
+                });
+
+                $scope.gridOptions.api.setRowData([]);
+                $scope.gridOptions.api.setColumnDefs(columnDefs);
+                $scope.gridOptions.api.sizeColumnsToFit();
                 queryForData();
             };
 
-            /**
-             * Triggers a Neon query that pull the a number of records that match the current Neon connection
-             * and filter set.  The query will be limited by the record number and sorted by the field
-             * selected in this directive's form.  This directive includes support for a show-data directive attribute
-             * that binds to a scope variable and controls table display.  If the bound variable evaulates to false,
-             * no data table is generated.  queryForData will not issue a query until the directive thinks it needs to
-             * poll for data and should show data.
-             * Resets internal "need to query" state to false.
-             * @method queryForData
-             * @private
-             */
             var queryForData = function() {
                 if($scope.errorMessage) {
                     errorNotificationService.hideErrorMessage($scope.errorMessage);
@@ -409,13 +260,14 @@ function(external, connectionService, datasetService, errorNotificationService, 
                 }
 
                 $scope.showTooMuchDataError = false;
+                // Save the title during the query so the title doesn't change immediately if the user changes the unshared filter.
+                $scope.queryTitle = "";
+                $scope.queryTitle = $scope.generateTitle();
 
                 var connection = connectionService.getActiveConnection();
 
-                if(!connection || !$scope.options.field.columnName || ($scope.options.aggregation !== "count" && !$scope.options.aggregationField.columnName)) {
-                    updateData({
-                        data: []
-                    });
+                if(!connection || !$scope.active.dataField || ($scope.active.aggregation !== "count" && !$scope.active.aggregationField.columnName)) {
+                    updateData([]);
                     $scope.loadingData = false;
                     return;
                 }
@@ -433,41 +285,39 @@ function(external, connectionService, datasetService, errorNotificationService, 
                     tags: ["query", "count-by"]
                 });
 
-                if($scope.outstandingQuery) {
-                    $scope.outstandingQuery.abort();
+                if($scope.outstandingDataQuery) {
+                    $scope.outstandingDataQuery.abort();
                 }
 
-                $scope.outstandingQuery = connection.executeQuery(query);
-                $scope.outstandingQuery.always(function() {
-                    $scope.outstandingQuery = undefined;
+                $scope.outstandingDataQuery = connection.executeQuery(query);
+                $scope.outstandingDataQuery.done(function() {
+                    $scope.outstandingDataQuery = undefined;
                 });
-                $scope.outstandingQuery.done(function(queryResults) {
-                    $scope.$apply(function() {
-                        XDATA.userALE.log({
-                            activity: "alter",
-                            action: "receive",
-                            elementId: "count-by",
-                            elementType: "canvas",
-                            elementSub: "count-by",
-                            elementGroup: "table_group",
-                            source: "system",
-                            tags: ["receive", "count-by"]
-                        });
-                        updateData(queryResults);
-                        $scope.loadingData = false;
-                        XDATA.userALE.log({
-                            activity: "alter",
-                            action: "render",
-                            elementId: "count-by",
-                            elementType: "canvas",
-                            elementSub: "count-by",
-                            elementGroup: "table_group",
-                            source: "system",
-                            tags: ["render", "count-by"]
-                        });
+                $scope.outstandingDataQuery.done(function(queryResults) {
+                    XDATA.userALE.log({
+                        activity: "alter",
+                        action: "receive",
+                        elementId: "count-by",
+                        elementType: "canvas",
+                        elementSub: "count-by",
+                        elementGroup: "table_group",
+                        source: "system",
+                        tags: ["receive", "count-by"]
+                    });
+                    updateData(queryResults.data);
+                    $scope.loadingData = false;
+                    XDATA.userALE.log({
+                        activity: "alter",
+                        action: "render",
+                        elementId: "count-by",
+                        elementType: "canvas",
+                        elementSub: "count-by",
+                        elementGroup: "table_group",
+                        source: "system",
+                        tags: ["render", "count-by"]
                     });
                 });
-                $scope.outstandingQuery.fail(function(response) {
+                $scope.outstandingDataQuery.fail(function(response) {
                     if(response.status === 0) {
                         XDATA.userALE.log({
                             activity: "alter",
@@ -495,7 +345,7 @@ function(external, connectionService, datasetService, errorNotificationService, 
                         });
                         $scope.loadingData = false;
                         if(response.responseJSON) {
-                            $scope.errorMessage = errorNotificationService.showErrorMessage($element, response.responseJSON.error, response.responseJSON.stackTrace);
+                            $scope.errorMessage = errorNotificationService.showErrorMessage($scope.element, response.responseJSON.error, response.responseJSON.stackTrace);
                             if(response.responseJSON.error === errorNotificationService.TOO_MUCH_DATA_ERROR) {
                                 $scope.$apply(function() {
                                     $scope.showTooMuchDataError = true;
@@ -506,237 +356,76 @@ function(external, connectionService, datasetService, errorNotificationService, 
                 });
             };
 
-            var stripIdField = function(dataObject) {
-                var data = dataObject.data;
-
-                var cleanData = [];
-                for(var i = 0; i < data.length; i++) {
-                    var row = {};
-                    row[$scope.options.field.columnName] = data[i][$scope.options.field.columnName];
-                    if($scope.options.aggregation === "count") {
-                        row.count = data[i].count;
-                    } else {
-                        row[$scope.options.aggregationField.columnName] = data[i][$scope.options.aggregationField.columnName];
-                    }
-                    cleanData.push(row);
-                }
-                dataObject.data = cleanData;
-                return dataObject;
-            };
-
-            /**
-             * Creates and adds the external links to the given data and returns the data.
-             * @param {Array} data
-             * @method addExternalLinksToColumnData
-             * @private
-             * @return {Array}
-             */
-            var addExternalLinksToColumnData = function(data) {
-                var tableLinks = {};
-                var mappings = datasetService.getMappings($scope.options.database.name, $scope.options.table.name);
-
-                data.forEach(function(row) {
-                    var value = row[$scope.options.field.columnName];
-                    var key = linksPopupService.generateKey($scope.options.field, value);
-                    tableLinks[key] = linksPopupService.createAllServiceLinkObjects(external.services, mappings, $scope.options.field.columnName, value);
-                    row[$scope.EXTERNAL_APP_FIELD_NAME] = tableLinks[key].length ? linksPopupService.createLinkHtml($scope.tableId, key, value) : linksPopupService.createDisabledLinkHtml(value);
-                });
-
-                // Set the link data for the links popup for this visualization.
-                linksPopupService.setLinks($scope.tableId, tableLinks);
-
-                return data;
-            };
-
-            /**
-             * Saves the given field and value as the current filter for the
-             * dashboard and this widget.
-             * @param {String} The filter field
-             * @param {String} The filter value
-             * @method setFilter
-             * @private
-             */
-            var setFilter = function(field, value) {
-                var filterExists = $scope.filterSet ? true : false;
-                handleSetFilter(field, value);
-
-                // Store the value for the filter to use during filter creation.
-                $scope.filterValue = value;
-
-                var connection = connectionService.getActiveConnection();
-                if($scope.messenger && connection) {
-                    var relations = datasetService.getRelations($scope.options.database.name, $scope.options.table.name, [field]);
-                    if(filterExists) {
-                        XDATA.userALE.log({
-                            activity: "select",
-                            action: "click",
-                            elementId: "count-by",
-                            elementType: "datagrid",
-                            elementSub: "row",
-                            elementGroup: "table_group",
-                            source: "user",
-                            tags: ["filter", "count-by"]
-                        });
-                        filterService.replaceFilters($scope.messenger, relations, $scope.filterKeys, createFilterClauseForCount, {
-                            visName: "Aggregation Table",
-                            text: $scope.options.field.columnName + " = " + $scope.filterSet.value
-                        });
-                    } else {
-                        XDATA.userALE.log({
-                            activity: "select",
-                            action: "click",
-                            elementId: "count-by",
-                            elementType: "datagrid",
-                            elementSub: "row",
-                            elementGroup: "table_group",
-                            source: "user",
-                            tags: ["filter", "count-by"]
-                        });
-                        filterService.addFilters($scope.messenger, relations, $scope.filterKeys, createFilterClauseForCount, {
-                            visName: "Aggregation Table",
-                            text: $scope.options.field.columnName + " = " + $scope.filterSet.value
-                        });
-                    }
-                }
-            };
-
-            /**
-             * Creates and returns a filter on the given field using the value set by this visualization.
-             * @param {Object} databaseAndTableName Contains the database and table name
-             * @param {String} fieldName The name of the field on which to filter
-             * @method createFilterClauseForCount
-             * @private
-             * @return {Object} A neon.query.Filter object
-             */
-            var createFilterClauseForCount = function(databaseAndTableName, fieldName) {
-                return neon.query.where(fieldName, '=', $scope.filterValue);
-            };
-
-            /**
-             * Adds an onClick listener for selecting the rows in the table that
-             * sets a filter on the data in the selected row.
-             */
-            var addOnClickListener = function() {
-                $scope.table.addOnClickListener(function(columns, row) {
-                    var columnIndex = external.active ? 1 : 0;
-                    var field = columns[columnIndex].field;
-
-                    // If the user clicks on the filtered row/cell, clear the filter.
-                    if($scope.filterSet !== undefined) {
-                        if($scope.filterSet.key === field && $scope.filterSet.value === row[field]) {
-                            $scope.clearFilter();
-                            return;
-                        }
-                    }
-
-                    $tableDiv.addClass("filtered");
-                    $scope.$apply(function() {
-                        setFilter(field, row[field]);
-                    });
-                });
-            };
-
-            /**
-             * Updates the data bound to the table managed by this directive.  This will trigger a change in
-             * the chart's visualization.
-             * @param {Object} queryResults Results returned from a Neon query.
-             * @param {Array} queryResults.data The aggregate numbers for the heat chart cells.
-             * @method updateData
-             * @private
-             */
-            var updateData = function(queryResults) {
-                if(!($("#" + $scope.tableId).length)) {
-                    return;
-                }
-
-                var cleanData = stripIdField(queryResults);
-
-                // If the table is recreated while sorting is set, we must redo the sorting on the new table; else, sort the table by the aggregation field.
-                var sortInfo = $scope.table ? $scope.table.sortInfo_ : {
-                    name: createAggregationColumnName(),
-                    field: $scope.options.aggregation === "count" ? "count" : $scope.options.aggregationField.columnName,
-                    sortAsc: false
-                };
-
-                $scope.tableOptions = createOptions(cleanData);
-
-                // Add the URLs for the external applications after the table options have been created because it already includes the column.
-                if(external.active && cleanData.data.length) {
-                    cleanData.data = addExternalLinksToColumnData(cleanData.data);
-                }
-
-                $scope.count = cleanData.data.length;
-                $scope.table = new tables.Table("#" + $scope.tableId, $scope.tableOptions).draw();
-                addOnClickListener();
-                updateSize();
-
-                $scope.table.sortColumnAndChangeGlyph(sortInfo);
-
-                // If the table is recreated while a filter is set, we must re-select the filtered row/cells.
-                if($scope.filterSet !== undefined) {
-                    $scope.table.setActiveCellIfMatchExists($scope.filterSet.key, $scope.filterSet.value);
-                }
-            };
-
             /**
              * Builds a query to pull a limited set of records that match any existing filter sets.
              * @return neon.query.Query
              * @method buildQuery
-             * @private
              */
             var buildQuery = function() {
-                var whereNotNull = neon.query.where($scope.options.field.columnName, "!=", null);
-                var query = new neon.query.Query().selectFrom($scope.options.database.name, $scope.options.table.name)
-                    .groupBy($scope.options.field.columnName)
-                    .where(whereNotNull);
+                var whereNotNull = neon.query.where($scope.active.dataField.columnName, "!=", null);
+                var query = new neon.query.Query().selectFrom($scope.active.database.name, $scope.active.table.name).groupBy($scope.active.dataField.columnName).where(whereNotNull);
 
-                // The widget displays its own ignored rows with 0.5 opacity.
-                query.ignoreFilters([$scope.filterKeys[$scope.options.database.name][$scope.options.table.name]]);
+                query.ignoreFilters([$scope.filterKeys[$scope.active.database.name][$scope.active.table.name]]);
 
-                if($scope.options.aggregation === "count") {
+                if($scope.active.aggregation === "count") {
                     query.aggregate(neon.query.COUNT, '*', 'count');
                     query.sortBy('count', neon.query.DESCENDING);
                 }
-                if($scope.options.aggregation === "min") {
-                    query.aggregate(neon.query.MIN, $scope.options.aggregationField.columnName, $scope.options.aggregationField.columnName);
-                    query.sortBy($scope.options.aggregationField, neon.query.ASCENDING);
+                if($scope.active.aggregation === "min") {
+                    query.aggregate(neon.query.MIN, $scope.active.aggregationField.columnName, $scope.active.aggregation);
+                    query.sortBy($scope.active.aggregation, neon.query.ASCENDING);
                 }
-                if($scope.options.aggregation === "max") {
-                    query.aggregate(neon.query.MAX, $scope.options.aggregationField.columnName, $scope.options.aggregationField.columnName);
-                    query.sortBy($scope.options.aggregationField, neon.query.DESCENDING);
-                }
-
-                if(datasetService.isFieldValid($scope.options.filterField) && $scope.options.filterValue) {
-                    var operator = $.isNumeric($scope.options.filterValue) ? "=" : "contains";
-                    query.where(neon.query.and(whereNotNull, neon.query.where($scope.options.filterField.columnName, operator, $scope.options.filterValue)));
+                if($scope.active.aggregation === "max") {
+                    query.aggregate(neon.query.MAX, $scope.active.aggregationField.columnName, $scope.active.aggregation);
+                    query.sortBy($scope.active.aggregation, neon.query.DESCENDING);
                 }
 
-                if($scope.options.limitCount) {
-                    query.limit($scope.options.limitCount);
+                if(datasetService.isFieldValid($scope.active.filterField) && $scope.active.filterValue) {
+                    var operator = $.isNumeric($scope.active.filterValue) ? "=" : "contains";
+                    query.where(neon.query.and(whereNotNull, neon.query.where($scope.active.filterField.columnName, operator, $scope.active.filterValue)));
+                }
+
+                if($scope.active.limitCount) {
+                    query.limit($scope.active.limitCount);
                 }
 
                 return query;
             };
 
+            var updateData = function(data) {
+                if(external.active) {
+                    data = addExternalLinksToColumnData(data);
+                }
+                $scope.active.count = data.length;
+                $scope.gridOptions.api.setRowData(stripIdField(data));
+            };
+
+            var stripIdField = function(data) {
+                return _.map(data, function(row) {
+                    delete row._id;
+                    return row;
+                });
+            };
+
             /**
-             * Removes the current filter from the dashboard and this widget.
+             * Event handler for filter changed events issued over Neon's messaging channels.
+             * @param {Object} message A Neon filter changed message.
+             * @method onFiltersChanged
+             * @private
              */
-            $scope.clearFilter = function() {
-                if($scope.messenger) {
+            var onFiltersChanged = function(message) {
+                if(message.addedFilter && message.addedFilter.databaseName === $scope.active.database.name && message.addedFilter.tableName === $scope.active.table.name) {
                     XDATA.userALE.log({
-                        activity: "deselect",
-                        action: "click",
-                        elementId: "count-by",
-                        elementType: "button",
-                        elementGroup: "table_group",
-                        source: "user",
-                        tags: ["filter", "count-by"]
+                        activity: "alter",
+                        action: "query",
+                        elementId: "datagrid",
+                        elementType: "datagrid",
+                        elementSub: "datagrid",
+                        elementGroup: "chart_group",
+                        source: "system",
+                        tags: ["filter-change", "datagrid"]
                     });
-                    filterService.removeFilters($scope.messenger, $scope.filterKeys, function() {
-                        $tableDiv.removeClass("filtered");
-                        $scope.table.deselect();
-                        clearFilter();
-                    });
+                    queryForData();
                 }
             };
 
@@ -754,12 +443,6 @@ function(external, connectionService, datasetService, errorNotificationService, 
                     source: "user",
                     tags: ["options", "count-by", "export"]
                 });
-
-                var capitalizeFirstLetter = function(str) {
-                    var first = str[0].toUpperCase();
-                    return first + str.slice(1);
-                };
-
                 var query = buildQuery();
                 query.limitClause = exportService.getLimitClause();
                 var finalObject = {
@@ -779,35 +462,198 @@ function(external, connectionService, datasetService, errorNotificationService, 
                     pretty: (query.groupByClauses[0]).field
                 });
                 var op = '';
-                if($scope.options.aggregation === 'min') {
+                if($scope.active.aggregation === 'min') {
                     op = 'Min of ';
-                } else if($scope.options.aggregation === 'max') {
+                } else if($scope.active.aggregation === 'max') {
                     op = 'Max of ';
                 }
                 finalObject.data[0].fields.push({
                     query: (query.aggregates[0]).name,
-                    pretty: op + capitalizeFirstLetter((query.aggregates[0]).name)
+                    pretty: op + (query.aggregates[0]).name
                 });
                 return finalObject;
             };
 
             /**
-             * Generates and returns the title for this visualization.
-             * @method generateTitle
-             * @return {String}
+             * Saves the given field and value as the current filter for the
+             * dashboard and this widget.
+             * @param {String} The filter field
+             * @param {String} The filter value
+             * @method setFilter
+             * @private
              */
+            var setFilter = function(field, value) {
+                if(!$scope.filterSet || $scope.filterSet.key !== field || $scope.filterSet.value !== value) {
+                    $scope.filterSet = {
+                        key: field,
+                        value: value
+                    };
+
+                    var connection = connectionService.getActiveConnection();
+                    if($scope.messenger && connection) {
+                        var relations = datasetService.getRelations($scope.active.database.name, $scope.active.table.name, [field]);
+                        XDATA.userALE.log({
+                            activity: "select",
+                            action: "click",
+                            elementId: "count-by",
+                            elementType: "datagrid",
+                            elementSub: "row",
+                            elementGroup: "table_group",
+                            source: "user",
+                            tags: ["filter", "count-by"]
+                        });
+                        filterService.replaceFilters($scope.messenger, relations, $scope.filterKeys, createFilterClauseForCount, {
+                            visName: "Aggregation Table",
+                            text: $scope.active.dataField.columnName + " = " + $scope.filterSet.value
+                        });
+                    }
+                } else if($scope.filterSet.key === field && $scope.filterSet.value === value) {
+                    $scope.clearFilter();
+                }
+            };
+
+            /**
+             * Creates and returns a filter on the given field using the value set by this visualization.
+             * @param {Object} databaseAndTableName Contains the database and table name
+             * @param {String} fieldName The name of the field on which to filter
+             * @method createFilterClauseForCount
+             * @private
+             * @return {Object} A neon.query.Filter object
+             */
+            var createFilterClauseForCount = function(databaseAndTableName, fieldName) {
+                return neon.query.where(fieldName, '=', $scope.filterSet.value);
+            };
+
+            /**
+             * Removes the current filter from the dashboard and this widget.
+             */
+            $scope.clearFilter = function() {
+                if($scope.messenger) {
+                    XDATA.userALE.log({
+                        activity: "deselect",
+                        action: "click",
+                        elementId: "count-by",
+                        elementType: "button",
+                        elementGroup: "table_group",
+                        source: "user",
+                        tags: ["filter", "count-by"]
+                    });
+
+                    filterService.removeFilters($scope.messenger, $scope.filterKeys, function() {
+                        $scope.gridOptions.api.deselectAll();
+                        $scope.filterSet = undefined;
+                    });
+                }
+            };
+
+            /**
+             * Creates and adds the external links to the given data and returns the data.
+             * @param {Array} data
+             * @method addExternalLinksToColumnData
+             * @private
+             * @return {Array}
+             */
+            var addExternalLinksToColumnData = function(data) {
+                var tableLinks = {};
+                var mappings = datasetService.getMappings($scope.active.database.name, $scope.active.table.name);
+
+                data.forEach(function(row) {
+                    var value = row[$scope.active.dataField.columnName];
+                    var key = linksPopupService.generateKey($scope.active.dataField, value);
+                    tableLinks[key] = linksPopupService.createAllServiceLinkObjects(external.services, mappings, $scope.active.dataField.columnName, value);
+                    row[$scope.EXTERNAL_APP_FIELD_NAME] = tableLinks[key].length ? linksPopupService.createLinkHtml($scope.tableId, key, value) : linksPopupService.createDisabledLinkHtml(value);
+                });
+
+                // Set the link data for the links popup for this visualization.
+                linksPopupService.setLinks($scope.tableId, tableLinks);
+
+                return data;
+            };
+
+            var logChange = function(element, value) {
+                XDATA.userALE.log({
+                    activity: "select",
+                    action: "click",
+                    elementId: "count-by",
+                    elementType: "combobox",
+                    elementSub: element,
+                    elementGroup: "table_group",
+                    source: "user",
+                    tags: ["options", "count-by", value]
+                });
+            };
+
+            $scope.handleDatabaseChange = function() {
+                logChange("database", $scope.active.database.name);
+                updateTables();
+            };
+
+            $scope.handleTableChange = function() {
+                logChange("table", $scope.active.table.name);
+                updateFields();
+            };
+
+            $scope.handleDataFieldChange = function() {
+                logChange("data-field", $scope.active.dataField.columnName);
+                if(!$scope.loadingData) {
+                    updateColumns();
+                }
+            };
+
+            $scope.handleAggregationChange = function() {
+                logChange("aggregation", $scope.active.aggregation);
+                if(!$scope.loadingData) {
+                    updateColumns();
+                }
+            };
+
+            $scope.handleAggregationFieldChange = function() {
+                logChange("aggregation-field", $scope.active.aggregationField.columnName);
+                if(!$scope.loadingData) {
+                    updateColumns();
+                }
+            };
+
+            $scope.handleUnsharedFilterFieldChange = function() {
+                logChange("unshared-filter-field", $scope.active.filterField.columnName);
+                if(!$scope.loadingData) {
+                    $scope.active.filterValue = "";
+                    queryForData();
+                }
+            };
+
+            $scope.handleUnsharedFilterValueChange = function() {
+                logChange("unshared-filter-value", $scope.active.filterValue);
+                if(!$scope.loadingData) {
+                    queryForData();
+                }
+            };
+
+            $scope.handleUnsharedFilterRemove = function() {
+                logChange("unshared-filter", "");
+                $scope.active.filterValue = "";
+                if(!$scope.loadingData) {
+                    queryForData();
+                }
+            };
+
+            $scope.handleLimitChange = function() {
+                logChange("limit", $scope.active.limitCount);
+                if(!$scope.loadingData) {
+                    updateColumns();
+                }
+            };
+
             $scope.generateTitle = function() {
-                var title = $scope.options.filterValue ? $scope.options.filterValue + " " : "";
+                if($scope.queryTitle) {
+                    return $scope.queryTitle;
+                }
+                var title = $scope.active.filterValue ? $scope.active.filterValue + " " : "";
                 if($scope.bindTitle) {
                     return title + $scope.bindTitle;
                 }
-                return title + $scope.options.table.prettyName + ($scope.options.field.prettyName ? " / " + $scope.options.field.prettyName : "");
+                return title + $scope.active.table.prettyName + ($scope.active.dataField.prettyName ? " / " + $scope.active.dataField.prettyName : "");
             };
-
-            neon.ready(function() {
-                initialize();
-                displayActiveDataset();
-            });
         }
     };
 }]);

@@ -70,8 +70,8 @@ function(connectionService, datasetService, errorNotificationService, exportServ
             var HOURS_IN_DAY = 24;
 
             var updateSize = function() {
-                var titleWidth = $element.width() - $element.find(".chart-options").outerWidth(true);
-                $element.find(".title").css("maxWidth", titleWidth - 20);
+                // Subtract 80 for the width of the options menu button and padding.
+                $element.find(".title").css("maxWidth", $element.width() - 80);
             };
 
             /**

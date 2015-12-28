@@ -217,8 +217,8 @@
     <div class="header-item filter-reset pull-right" ng-class="{true: '', false: 'hidden'}[brushExtent.length > 0]"
         title="Date from {{brushExtent[0].toUTCString()}} to {{brushExtent[1].toUTCString()}}">
         <links-popup-button key="{{getDateKeyForLinksPopupButton()}}" source="{{visualizationId}}" tooltip="{{brushExtent[0].toUTCString()}} to {{brushExtent[1].toUTCString()}}" is-disabled="{{linksPopupButtonIsDisabled}}"></links-popup-button>
-        <span class="filter-label" ng-class="{true: '', false: 'border-left'}[linksPopupButtonIsDisabled]">Date Filter</span>
-        <span class="border-left glyphicon glyphicon-remove" ng-click="removeBrush()"></span>
+        <span class="filter-label">Date Filter</span>
+        <span class="glyphicon glyphicon-remove" ng-click="removeBrush()"></span>
     </div>
 
     <span class="no-data pull-left" ng-show="noData">No data for current filters.</span>
