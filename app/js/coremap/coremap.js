@@ -67,8 +67,8 @@ coreMap.Map = function(elementId, opts) {
         this.height = opts.height || coreMap.Map.DEFAULT_HEIGHT;
     }
 
-    this.baseLayerColor = opts.mapBaseLayer.color || "light";
-    this.baseLayerProtocol = opts.mapBaseLayer.protocol || "http";
+    this.baseLayerColor = (opts.mapBaseLayer ? opts.mapBaseLayer.color : undefined) || "light";
+    this.baseLayerProtocol = (opts.mapBaseLayer ? opts.mapBaseLayer.protocol : undefined) || "http";
 
     this.selectableLayers = [];
     this.selectControls = [];

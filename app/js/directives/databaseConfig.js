@@ -73,10 +73,18 @@ angular.module('neonDemo.directives')
                 var activeDataset = (parameterService.findActiveDatasetInUrl() || "").toLowerCase();
                 $scope.datasets.some(function(dataset, index) {
                     if((activeDataset && activeDataset === dataset.name.toLowerCase()) || (!activeDataset && dataset.connectOnLoad)) {
-                        $scope.connectToPreset(index);
+                        $scope.connectToPreset(index, true);
                         return true;
                     }
                     return false;
+                });
+
+                $scope.messenger.subscribe("STATE_CHANGED", function() {
+                    $scope.activeDataset = {
+                        name: datasetService.getDataset().name,
+                        info: $scope.HIDE_INFO_POPOVER,
+                        data: true
+                    };
                 });
             };
 
@@ -95,9 +103,10 @@ angular.module('neonDemo.directives')
             /**
              * Connects to the preset dataset at the given index.
              * @param {Number} index
+             * @param {Boolean} loadDashboardState Whether to load any saved dashboard states shown upon a dataset change
              * @method connectToPreset
              */
-            $scope.connectToPreset = function(index) {
+            $scope.connectToPreset = function(index, loadDashboardState) {
                 XDATA.userALE.log({
                     activity: "select",
                     action: "click",
@@ -123,14 +132,14 @@ angular.module('neonDemo.directives')
                     return;
                 }
 
-                var finishConnectToPreset = function(dataset) {
+                var finishConnectToPreset = function(dataset, loadDashboardState) {
                     datasetService.setActiveDataset(dataset);
-                    updateLayout();
+                    updateLayout(loadDashboardState);
                 };
 
                 // Don't update the dataset if its fields are already updated.
                 if($scope.datasets[index].hasUpdatedFields) {
-                    finishConnectToPreset($scope.datasets[index]);
+                    finishConnectToPreset($scope.datasets[index], loadDashboardState);
                     return;
                 }
 
@@ -140,17 +149,18 @@ angular.module('neonDemo.directives')
                     // Update the layout inside a $scope.$apply because we're inside a jQuery ajax callback thread.
                     $scope.$apply(function() {
                         // Wait to update the layout until after we finish the dataset updates.
-                        finishConnectToPreset(dataset);
+                        finishConnectToPreset(dataset, loadDashboardState);
                     });
                 });
             };
 
             /**
              * Updates the layout of visualizations in the dashboard for the active dataset.
+             * @param {Boolean} loadDashboardState Whether to load any saved dashboard states shown upon a dataset change
              * @method updateLayout
              * @private
              */
-            var updateLayout = function() {
+            var updateLayout = function(loadDashboardState) {
                 var layoutName = datasetService.getLayout();
 
                 XDATA.userALE.log({
@@ -190,7 +200,7 @@ angular.module('neonDemo.directives')
                     }
                 }
 
-                parameterService.addFiltersFromUrl();
+                parameterService.addFiltersFromUrl(!loadDashboardState);
             };
 
             /**

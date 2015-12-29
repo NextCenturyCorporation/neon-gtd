@@ -19,8 +19,8 @@
  * This directive is for building a tag cloud
  */
 angular.module('neonDemo.directives')
-.directive('tagCloud', ['external', 'ConnectionService', 'DatasetService', 'ErrorNotificationService', 'FilterService', 'ExportService', 'LinksPopupService', 'TranslationService', '$timeout',
-function(external, connectionService, datasetService, errorNotificationService, filterService, exportService, linksPopupService, translationService, $timeout) {
+.directive('tagCloud', ['external', 'ConnectionService', 'DatasetService', 'ErrorNotificationService', 'FilterService', 'ExportService', 'LinksPopupService', 'TranslationService', 'VisualizationService', '$timeout',
+function(external, connectionService, datasetService, errorNotificationService, filterService, exportService, linksPopupService, translationService, visualizationService, $timeout) {
     return {
         templateUrl: 'partials/directives/tagCloud.html',
         restrict: 'EA',
@@ -31,6 +31,7 @@ function(external, connectionService, datasetService, errorNotificationService, 
             bindFilterValue: '=',
             bindTable: '=',
             bindDatabase: '=',
+            bindId: '=',
             hideHeader: '=?',
             hideAdvancedOptions: '=?'
         },
@@ -145,6 +146,7 @@ function(external, connectionService, datasetService, errorNotificationService, 
                 $scope.messenger.subscribe("theme_changed", onThemeChanged);
 
                 $scope.exportID = exportService.register($scope.makeTagCloudExportObject);
+                visualizationService.register($scope.bindId, bindFields);
 
                 $scope.$on('$destroy', function() {
                     XDATA.userALE.log({
@@ -166,6 +168,7 @@ function(external, connectionService, datasetService, errorNotificationService, 
                         filterService.removeFilters($scope.messenger, $scope.filterKeys);
                     }
                     exportService.unregister($scope.exportID);
+                    visualizationService.unregister($scope.bindId);
                 });
 
                 $element.resize(updateSize);
@@ -754,6 +757,38 @@ function(external, connectionService, datasetService, errorNotificationService, 
                     pretty: "Count"
                 });
                 return finalObject;
+            };
+
+            /**
+             * Creates and returns an object that contains all the binding fields needed to recreate the visualization's state.
+             * @return {Object}
+             * @method bindFields
+             * @private
+             */
+            var bindFields = function() {
+                var bindingFields = {};
+
+                if($scope.bindTitle) {
+                    bindingFields["bind-title"] = "'" + $scope.bindTitle + "'";
+                }
+                if($scope.options.tagField && $scope.options.tagField.columnName) {
+                    bindingFields["bind-tag-field"] = "'" + $scope.options.tagField.columnName + "'";
+                }
+                if($scope.options.filterField && $scope.options.filterField.columnName) {
+                    bindingFields["bind-filter-field"] = "'" + $scope.options.filterField.columnName + "'";
+
+                    if($scope.options.filterValue) {
+                        bindingFields["bind-filter-value"] = "'" + $scope.options.filterValue + "'";
+                    }
+                }
+                if($scope.options.table && $scope.options.table.name) {
+                    bindingFields["bind-table"] = "'" + $scope.options.table.name + "'";
+                }
+                if($scope.options.database && $scope.options.database.name) {
+                    bindingFields["bind-database"] = "'" + $scope.options.database.name + "'";
+                }
+
+                return bindingFields;
             };
 
             /**

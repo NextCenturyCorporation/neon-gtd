@@ -31,8 +31,8 @@
  * @constructor
  */
 angular.module('neonDemo.directives')
-.directive('circularHeatForm', ['ConnectionService', 'DatasetService', 'ErrorNotificationService', 'ExportService',
-function(connectionService, datasetService, errorNotificationService, exportService) {
+.directive('circularHeatForm', ['ConnectionService', 'DatasetService', 'ErrorNotificationService', 'ExportService', 'VisualizationService',
+function(connectionService, datasetService, errorNotificationService, exportService, visualizationService) {
     return {
         templateUrl: 'partials/directives/circularHeatForm.html',
         restrict: 'EA',
@@ -41,6 +41,7 @@ function(connectionService, datasetService, errorNotificationService, exportServ
             bindDateField: '=',
             bindTable: '=',
             bindDatabase: '=',
+            bindId: '=',
             hideHeader: '=?',
             hideAdvancedOptions: '=?'
         },
@@ -89,6 +90,7 @@ function(connectionService, datasetService, errorNotificationService, exportServ
                 });
 
                 $scope.exportID = exportService.register($scope.makeCircularHeatFormExportObject);
+                visualizationService.register($scope.bindId, bindFields);
 
                 $scope.$on('$destroy', function() {
                     XDATA.userALE.log({
@@ -104,6 +106,7 @@ function(connectionService, datasetService, errorNotificationService, exportServ
                     $element.off("resize", updateSize);
                     $scope.messenger.removeEvents();
                     exportService.unregister($scope.exportID);
+                    visualizationService.unregister($scope.bindId);
                 });
 
                 $element.resize(updateSize);
@@ -469,6 +472,31 @@ function(connectionService, datasetService, errorNotificationService, exportServ
                     pretty: 'Count'
                 });
                 return finalObject;
+            };
+
+            /**
+             * Creates and returns an object that contains all the binding fields needed to recreate the visualization's state.
+             * @return {Object}
+             * @method bindFields
+             * @private
+             */
+            var bindFields = function() {
+                var bindingFields = {};
+
+                if($scope.bindTitle) {
+                    bindingFields["bind-title"] = "'" + $scope.bindTitle + "'";
+                }
+                if($scope.options.dateField && $scope.options.dateField.columnName) {
+                    bindingFields["bind-date-field"] = "'" + $scope.options.dateField.columnName + "'";
+                }
+                if($scope.options.table && $scope.options.table.name) {
+                    bindingFields["bind-table"] = "'" + $scope.options.table.name + "'";
+                }
+                if($scope.options.database && $scope.options.database.name) {
+                    bindingFields["bind-database"] = "'" + $scope.options.database.name + "'";
+                }
+
+                return bindingFields;
             };
 
             // Wait for neon to be ready, the create our messenger and intialize the view and data.

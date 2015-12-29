@@ -28,8 +28,10 @@
  * @constructor
  */
 angular.module('neonDemo.directives')
-.directive('queryResultsTable', ['external', 'ConnectionService', 'DatasetService', 'ErrorNotificationService', 'ExportService', 'linkify', '$sce', '$timeout', 'LinksPopupService',
-function(external, connectionService, datasetService, errorNotificationService, exportService, linkify, $sce, $timeout, linksPopupService) {
+.directive('queryResultsTable', ['external', 'ConnectionService', 'DatasetService', 'ErrorNotificationService', 'ExportService',
+'linkify', '$sce', '$timeout', 'LinksPopupService', 'VisualizationService',
+function(external, connectionService, datasetService, errorNotificationService, exportService,
+linkify, $sce, $timeout, linksPopupService, visualizationService) {
     return {
         templateUrl: 'partials/directives/queryResultsTable.html',
         restrict: 'EA',
@@ -37,6 +39,8 @@ function(external, connectionService, datasetService, errorNotificationService, 
             bindTitle: '=',
             bindTable: '=',
             bindDatabase: '=',
+            bindIdField: '=',
+            bindId: '=',
             hideHeader: '=?',
             hideAdvancedOptions: '=?'
         },
@@ -115,6 +119,13 @@ function(external, connectionService, datasetService, errorNotificationService, 
                     filtersChanged: onFiltersChanged
                 });
 
+                $scope.messenger.subscribe(datasetService.UPDATE_DATA_CHANNEL, function() {
+                    queryForData(false);
+                });
+
+                $scope.exportID = exportService.register($scope.makeQueryResultsTableExportObject);
+                visualizationService.register($scope.bindId, bindFields);
+
                 $scope.$on('$destroy', function() {
                     XDATA.userALE.log({
                         activity: "remove",
@@ -130,6 +141,7 @@ function(external, connectionService, datasetService, errorNotificationService, 
                     $element.off("resize", updateSize);
                     $scope.messenger.removeEvents();
                     exportService.unregister($scope.exportID);
+                    visualizationService.unregister($scope.bindId);
                 });
 
                 initializeDataset();
@@ -455,7 +467,30 @@ function(external, connectionService, datasetService, errorNotificationService, 
                 return query;
             };
 
+            /**
+             * Escapes all values in the given data, recursively.
+             * @method escapeDataRecursively
+             * @private
+             */
+            var escapeDataRecursively = function(data) {
+                if(_.isArray(data)) {
+                    for(var i = 0; i < data.length; i++) {
+                        data[i] = escapeDataRecursively(data[i]);
+                    }
+                } else if(_.keys(data).length) {
+                    var keys = _.keys(data);
+                    for(var i = 0; i < keys.length; i++) {
+                        data[keys[i]] = escapeDataRecursively(data[keys[i]]);
+                    }
+                } else {
+                    data = _.escape(data);
+                }
+                return data;
+            };
+
             var updateData = function(data) {
+                data = escapeDataRecursively(data);
+
                 if(external.active) {
                     data = addExternalLinksToColumnData(data);
                 }
@@ -613,7 +648,38 @@ function(external, connectionService, datasetService, errorNotificationService, 
                 setupAndQuery();
             };
 
+            /**
+             * Creates and returns an object that contains all the binding fields needed to recreate the visualization's state.
+             * @return {Object}
+             * @method bindFields
+             * @private
+             */
+            var bindFields = function() {
+                var bindingFields = {};
+
+                if($scope.bindTitle) {
+                    bindingFields["bind-title"] = "'" + $scope.bindTitle + "'";
+                }
+                if($scope.bindIdField) {
+                    bindingFields["bind-id-field"] = "'" + $scope.bindIdField + "'";
+                }
+                if($scope.options.table && $scope.options.table.name) {
+                    bindingFields["bind-table"] = "'" + $scope.options.table.name + "'";
+                }
+                if($scope.options.database && $scope.options.database.name) {
+                    bindingFields["bind-database"] = "'" + $scope.options.database.name + "'";
+                }
+
+                return bindingFields;
+            };
+
             //TODO text selection on cells -- https://github.com/ceolter/ag-grid/issues/87
+
+            // Wait for neon to be ready, the create our messenger and intialize the view and data.
+            neon.ready(function() {
+                initialize();
+                displayActiveDataset();
+            });
         }
     };
 }]);

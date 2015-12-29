@@ -408,7 +408,7 @@ angular.module('neonDemo.directives')
                     }
                 });
 
-                if(filterKeysList) {
+                if(filterKeysList && filterKeysList.length) {
                     clearFiltersRecursively(filterKeysList, function() {
                         _.each(databasesAndTables, function(obj) {
                             $scope.queryForMapData(obj.database, obj.table);

@@ -28,8 +28,8 @@
  * @constructor
  */
 angular.module('neonDemo.directives')
-.directive('barchart', ['external', 'ConnectionService', 'DatasetService', 'ErrorNotificationService', 'FilterService', 'ExportService', 'LinksPopupService',
-function(external, connectionService, datasetService, errorNotificationService, filterService, exportService, linksPopupService) {
+.directive('barchart', ['external', 'ConnectionService', 'DatasetService', 'ErrorNotificationService', 'FilterService', 'ExportService', 'LinksPopupService', 'VisualizationService',
+function(external, connectionService, datasetService, errorNotificationService, filterService, exportService, linksPopupService, visualizationService) {
     return {
         templateUrl: 'partials/directives/barchart.html',
         restrict: 'EA',
@@ -40,6 +40,7 @@ function(external, connectionService, datasetService, errorNotificationService, 
             bindAggregationField: '=',
             bindTable: '=',
             bindDatabase: '=',
+            bindId: '=',
             hideHeader: '=?',
             hideAdvancedOptions: '=?',
             limitCount: '=?'
@@ -116,6 +117,7 @@ function(external, connectionService, datasetService, errorNotificationService, 
                 });
 
                 $scope.exportID = exportService.register($scope.makeBarchartExportObject);
+                visualizationService.register($scope.bindId, bindFields);
 
                 $scope.$on('$destroy', function() {
                     XDATA.userALE.log({
@@ -135,6 +137,7 @@ function(external, connectionService, datasetService, errorNotificationService, 
                         filterService.removeFilters($scope.messenger, $scope.filterKeys);
                     }
                     exportService.unregister($scope.exportID);
+                    visualizationService.unregister($scope.bindId);
                 });
 
                 $scope.$watch('options.attrX', function(newValue) {
@@ -601,6 +604,39 @@ function(external, connectionService, datasetService, errorNotificationService, 
                     });
                 }
                 return finalObject;
+            };
+
+            /**
+             * Creates and returns an object that contains all the binding fields needed to recreate the visualization's state.
+             * @return {Object}
+             * @method bindFields
+             * @private
+             */
+            var bindFields = function() {
+                var bindingFields = {};
+
+                if($scope.bindTitle) {
+                    bindingFields["bind-title"] = "'" + $scope.bindTitle + "'";
+                }
+                if($scope.options.attrX && $scope.options.attrX.columnName) {
+                    bindingFields["bind-x-axis-field"] = "'" + $scope.options.attrX.columnName + "'";
+                }
+                if($scope.options.barType) {
+                    bindingFields["bind-aggregation-field"] = "'" + $scope.options.barType + "'";
+
+                    if($scope.options.barType !== 'count' && $scope.options.attrY && $scope.options.attrY.columnName) {
+                        bindingFields["bind-y-axis-field"] = "'" + $scope.options.attrY.columnName + "'";
+                    }
+                }
+                if($scope.options.table && $scope.options.table.name) {
+                    bindingFields["bind-table"] = "'" + $scope.options.table.name + "'";
+                }
+                if($scope.options.database && $scope.options.database.name) {
+                    bindingFields["bind-database"] = "'" + $scope.options.database.name + "'";
+                }
+                bindingFields["limit-count"] = $scope.options.limitCount;
+
+                return bindingFields;
             };
 
             /**
