@@ -102,7 +102,7 @@ function(connectionService, datasetService, errorNotificationService, exportServ
                         tags: ["remove", "circularheatform"]
                     });
                     $element.off("resize", updateSize);
-                    $scope.messenger.removeEvents();
+                    $scope.messenger.unsubscribeAll();
                     exportService.unregister($scope.exportID);
                 });
 

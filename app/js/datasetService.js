@@ -82,6 +82,7 @@ angular.module("neonDemo.services")
         service.dataset.relations = dataset.relations || [];
         service.dataset.linkyConfig = dataset.linkyConfig || {};
         service.dataset.dateFilterKeys = dataset.dateFilterKeys;
+        service.dataset.lineCharts = dataset.lineCharts || [];
 
         if(service.dataset.options.requeryInterval) {
             var delay = Math.max(0.5, service.dataset.options.requeryInterval) * 60000;
@@ -506,6 +507,24 @@ angular.module("neonDemo.services")
     };
 
     /**
+     * Returns the line chart configuration for the active dataset.
+     * @method getLineCharts
+     * @return {Object}
+     */
+    service.getLineCharts = function() {
+        return service.dataset.lineCharts;
+    };
+
+    /**
+     * Sets the line chart configuration for the active dataset.
+     * @param {Object} config A set of line chart configuration objects.
+     * @method setLineCharts
+     */
+    service.setLineCharts = function(config) {
+        service.dataset.lineCharts = config;
+    };
+
+    /**
      * Returns the linky configuration for the active dataset.
      * @method getLinkyConfig
      * @return {Object}
@@ -565,7 +584,6 @@ angular.module("neonDemo.services")
 
         // Save the generated date filter keys for the given database/table/field and each of its relations.
         relations.forEach(function(relation) {
-            var relationField = relation.fields[0];
             // Each relation will only contain a single field corresponding to the date field.
             relation.fields[0].related.forEach(function(relatedFieldName) {
                 service.dataset.dateFilterKeys[relation.database][relation.table][relatedFieldName] = dateFilterKeys;
@@ -792,6 +810,52 @@ angular.module("neonDemo.services")
      */
     service.isFieldValid = function(fieldObject) {
         return fieldObject && fieldObject.columnName;
+    };
+
+    /**
+     * Returns the pretty name for the given database name.
+     * @param {String} databaseName
+     * @method getPrettyNameForDatabase
+     * @return {String}
+     */
+    service.getPrettyNameForDatabase = function(databaseName) {
+        var name = databaseName;
+        service.dataset.databases.forEach(function(database) {
+            if(database.name === databaseName) {
+                name = database.prettyName;
+            }
+        });
+        return name;
+    };
+
+    /**
+     * Returns the pretty name for the given table name in the given database.
+     * @param {String} databaseName
+     * @param {String} tableName
+     * @method getPrettyNameForTable
+     * @return {String}
+     */
+    service.getPrettyNameForTable = function(databaseName, tableName) {
+        var name = tableName;
+        service.getTables(databaseName).forEach(function(table) {
+            if(table.name === tableName) {
+                name = table.prettyName;
+            }
+        });
+        return name;
+    };
+
+    /**
+     * Returns the field object in the given fields with the given field name.
+     * @param {Array} fields
+     * @param {String} fieldName
+     * @method findField
+     * @return {Object}
+     */
+    service.findField = function(fields, fieldName) {
+        return _.find(fields, function(field) {
+            return field.columnName === fieldName;
+        }) || service.createBlankField();
     };
 
     // Validate the datasets from the configuration file on initialization.

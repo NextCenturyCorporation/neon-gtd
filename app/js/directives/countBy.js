@@ -87,7 +87,8 @@ function(external, connectionService, datasetService, errorNotificationService, 
                     return "Error";
                 }
                 return ($scope.active.count >= $scope.active.limitCount ? "Limited to " : "") + ($scope.active.count || "No") + " Values";
-            }
+            };
+
             $scope.showOptionsMenuButtonText = function() {
                 return true;
             };
@@ -128,7 +129,7 @@ function(external, connectionService, datasetService, errorNotificationService, 
                     linksPopupService.deleteLinks($scope.tableId);
                     $scope.element.off("resize", updateSize);
                     $scope.element.find(".filter-container").off("resize", updateSize);
-                    $scope.messenger.removeEvents();
+                    $scope.messenger.unsubscribeAll();
                     if($scope.filterSet) {
                         filterService.removeFilters($scope.messenger, $scope.filterKeys);
                     }
@@ -266,7 +267,7 @@ function(external, connectionService, datasetService, errorNotificationService, 
 
                 var connection = connectionService.getActiveConnection();
 
-                if(!connection || !$scope.active.dataField || ($scope.active.aggregation !== "count" && !$scope.active.aggregationField.columnName)) {
+                if(!connection || !$scope.active.dataField.columnName || ($scope.active.aggregation !== "count" && !$scope.active.aggregationField.columnName)) {
                     updateData([]);
                     $scope.loadingData = false;
                     return;
@@ -652,7 +653,10 @@ function(external, connectionService, datasetService, errorNotificationService, 
                 if($scope.bindTitle) {
                     return title + $scope.bindTitle;
                 }
-                return title + $scope.active.table.prettyName + ($scope.active.dataField.prettyName ? " / " + $scope.active.dataField.prettyName : "");
+                if(_.keys($scope.active).length) {
+                    return title + $scope.active.table.prettyName + ($scope.active.dataField.prettyName ? " / " + $scope.active.dataField.prettyName : "");
+                }
+                return title;
             };
         }
     };

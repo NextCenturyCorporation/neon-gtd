@@ -101,7 +101,7 @@ angular.module('neonDemo.directives')
                         tags: ["remove", "filter-builder"]
                     });
 
-                    $scope.messenger.removeEvents();
+                    $scope.messenger.unsubscribeAll();
                     var databaseAndTableNames = $scope.filterTable.getDatabaseAndTableNames();
                     if(databaseAndTableNames.length) {
                         publishRemoveFilterEvents($scope.filterTable.getDatabaseAndTableNames());

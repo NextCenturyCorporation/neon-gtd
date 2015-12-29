@@ -106,7 +106,7 @@ function(connectionService, datasetService, errorNotificationService, filterServ
                         source: "user",
                         tags: ["remove", "count-by"]
                     });
-                    $scope.messenger.removeEvents();
+                    $scope.messenger.unsubscribeAll();
                     if($scope.filterSet) {
                         filterService.removeFilters($scope.messenger, $scope.filterKeys);
                     }

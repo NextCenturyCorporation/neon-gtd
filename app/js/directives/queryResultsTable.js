@@ -127,8 +127,7 @@ function(external, connectionService, datasetService, errorNotificationService, 
                         tags: ["remove", "datagrid"]
                     });
                     linksPopupService.deleteLinks($scope.tableId);
-                    $element.off("resize", updateSize);
-                    $scope.messenger.removeEvents();
+                    $scope.messenger.unsubscribeAll();
                     exportService.unregister($scope.exportID);
                 });
 
@@ -435,7 +434,7 @@ function(external, connectionService, datasetService, errorNotificationService, 
                         $scope.totalRows = 0;
                         $scope.loadingData = false;
                         if(response.responseJSON) {
-                            $scope.errorMessage = errorNotificationService.showErrorMessage($element, response.responseJSON.error, response.responseJSON.stackTrace);
+                            $scope.errorMessage = errorNotificationService.showErrorMessage($scope.element, response.responseJSON.error, response.responseJSON.stackTrace);
                         }
                     }
                 });

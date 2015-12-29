@@ -37,6 +37,7 @@ function(external, connectionService, datasetService, errorNotificationService, 
         templateUrl: 'partials/directives/linechart.html',
         restrict: 'EA',
         scope: {
+            bindConfig: '=',
             bindGranularity: '=',
             hideHeader: '=?',
             hideAdvancedOptions: '=?'
@@ -91,7 +92,8 @@ function(external, connectionService, datasetService, errorNotificationService, 
                 charts: [],
                 newChart: {
                     editing: false,
-                    valid: false,
+                    validFields: false,
+                    validName: false,
                     active: true,
                     visible: true,
                     database: {},
@@ -128,22 +130,16 @@ function(external, connectionService, datasetService, errorNotificationService, 
 
             var resizeLegend = function() {
                 var container = $element.find(".legend-container");
-                var containerCss = parseInt(container.css("margin-top").replace("px", "")) +
-                        parseInt(container.css("margin-bottom").replace("px", "")) +
-                        parseInt(container.css("padding-top").replace("px", "")) +
-                        parseInt(container.css("padding-bottom").replace("px", ""));
+                var containerCss = container.outerHeight(true) - container.height();
 
                 var legend = container.find(".legend");
-                var legendCss = parseInt(legend.css("margin-top").replace("px", "")) +
-                        parseInt(legend.css("margin-bottom").replace("px", "")) +
-                        parseInt(legend.css("padding-top").replace("px", "")) +
-                        parseInt(legend.css("padding-bottom").replace("px", ""));
+                var legendCss = legend.outerHeight(true) - legend.height();
 
                 var divider = container.find(".legend>.divider");
                 var dividerCss = divider.outerHeight(true);
                 var header = container.find(".legend>.header-text");
                 var headerCss = header.outerHeight(true);
-                var height = $element.height() - containerCss - legendCss - dividerCss - headerCss - 10;
+                var height = $element.height() - containerCss - legendCss - dividerCss - headerCss - 20;
 
                 var legendDetails = container.find(".legend-details");
                 legendDetails.css("max-height", height + "px");
@@ -154,7 +150,7 @@ function(external, connectionService, datasetService, errorNotificationService, 
                     filtersChanged: onFiltersChanged
                 });
                 $scope.messenger.subscribe(datasetService.UPDATE_DATA_CHANNEL, function() {
-                    queryAllData();
+                    refreshCharts();
                 });
                 $scope.messenger.subscribe(datasetService.DATE_CHANGED_CHANNEL, onDateChanged);
                 $scope.messenger.subscribe("date_selected", onDateSelected);
@@ -192,7 +188,7 @@ function(external, connectionService, datasetService, errorNotificationService, 
                     });
                     linksPopupService.deleteLinks($scope.visualizationId);
                     $element.off("resize", updateChartSize);
-                    $scope.messenger.removeEvents();
+                    $scope.messenger.unsubscribeAll();
                     exportService.unregister($scope.exportID);
                     if($scope.brushExtent.length) {
                         $scope.removeBrush();
@@ -216,7 +212,7 @@ function(external, connectionService, datasetService, errorNotificationService, 
                             tags: ["linechart", "granularity", newVal]
                         });
                         $scope.chart.setGranularity(newVal);
-                        queryAllData();
+                        refreshCharts();
                         $scope.queryOnChangeBrush = $scope.queryOnChangeBrush || ($scope.brushExtent.length > 0);
                     }
                 });
@@ -288,7 +284,7 @@ function(external, connectionService, datasetService, errorNotificationService, 
                     });
 
                     if(queryData) {
-                        queryAllData();
+                        refreshCharts();
                         $scope.queryOnChangeBrush = $scope.queryOnChangeBrush || $scope.brushExtent.length > 0;
                     }
                 }
@@ -343,36 +339,61 @@ function(external, connectionService, datasetService, errorNotificationService, 
 
             /**
              * Queries all active charts and updates the graph.
+             * @method refreshCharts
+             * @private
+             */
+            var refreshCharts = function() {
+                var validation = function(chart) {
+                    return chart.active;
+                };
+
+                if($scope.options.charts.length) {
+                    queryAllData(validation);
+                } else {
+                    updateLineChartForBrushExtent();
+                }
+            };
+
+            /**
+             * Queries all charts that pass the given validation function and updates the graph.
+             * @param {Function} validation Validation function to determine if the chart should re-query its data.
              * @method queryAllData
              * @private
              */
-            var queryAllData = function() {
+            var queryAllData = function(validation) {
                 var queriesCompleted = 0;
                 _.each($scope.options.charts, function(chart) {
-                    if(chart.active) {
+                    if(validation(chart)) {
                         if(!$scope.outstandingQuery[chart.id]) {
                             $scope.outstandingQuery[chart.id] = undefined;
                         }
                         queryForData(chart, function(results) {
                             $scope.data[chart.id] = results.data;
-                            queriesCompleted += 1;
+                            queriesCompleted++;
 
                             if(queriesCompleted === $scope.options.charts.length) {
-                                updateLineChartForBrushExtent();
+                                updateLineChartForBrushExtent(true);
+                            }
+                        }, function(response) {
+                            if(response.responseJSON) {
+                                $scope.errorMessage = errorNotificationService.showErrorMessage($element, response.responseJSON.error, response.responseJSON.stackTrace);
+                            }
+
+                            $scope.data[chart.id] = [];
+                            queriesCompleted++;
+
+                            if(queriesCompleted === $scope.options.charts.length) {
+                                updateLineChartForBrushExtent(true);
                             }
                         });
                     } else {
-                        queriesCompleted += 1;
+                        queriesCompleted++;
 
                         if(queriesCompleted === $scope.options.charts.length) {
-                            updateLineChartForBrushExtent();
+                            updateLineChartForBrushExtent(true);
                         }
                     }
                 });
-
-                if(!$scope.options.charts.length) {
-                    updateLineChartForBrushExtent();
-                }
             };
 
             /**
@@ -429,11 +450,12 @@ function(external, connectionService, datasetService, errorNotificationService, 
             /**
              * Queries for data on the given chart and executes any callback given when finished querying.
              * @param {Object} chart
-             * @param {Function} cb
+             * @param {Function} successCallback
+             * @param {Function} failureCallback
              * @method queryForData
              * @private
              */
-            var queryForData = function(chart, cb) {
+            var queryForData = function(chart, successCallback, failureCallback) {
                 XDATA.userALE.log({
                     activity: "alter",
                     action: "query",
@@ -453,7 +475,15 @@ function(external, connectionService, datasetService, errorNotificationService, 
                 var connection = connectionService.getActiveConnection();
 
                 if(!connection || !chart.attrXMapping || (!chart.attrYMapping && chart.aggregation !== "count")) {
-                    drawLineChart([], {});
+                    if(successCallback) {
+                        successCallback({
+                            data: []
+                        });
+                    } else {
+                        $scope.data[chart.id] = [];
+
+                        updateLineChartForBrushExtent(true);
+                    }
                     return;
                 }
 
@@ -468,15 +498,69 @@ function(external, connectionService, datasetService, errorNotificationService, 
                     $scope.outstandingQuery[chart.id] = undefined;
                 });
                 $scope.outstandingQuery[chart.id].done(function(results) {
-                    if(cb) {
-                        cb(results);
+                    XDATA.userALE.log({
+                        activity: "alter",
+                        action: "receive",
+                        elementId: "linechart",
+                        elementType: "canvas",
+                        elementSub: "linechart",
+                        elementGroup: "chart_group",
+                        source: "system",
+                        tags: ["receive", "linechart"]
+                    });
+                    if(successCallback) {
+                        successCallback(results);
                     } else {
                         $scope.data[chart.id] = results.data;
 
                         updateLineChartForBrushExtent(true);
                     }
+
+                    XDATA.userALE.log({
+                        activity: "alter",
+                        action: "render",
+                        elementId: "linechart",
+                        elementType: "canvas",
+                        elementSub: "linechart",
+                        elementGroup: "chart_group",
+                        source: "system",
+                        tags: ["render", "linechart"]
+                    });
                 });
-                $scope.outstandingQuery[chart.id].fail(handleQueryFailure);
+                $scope.outstandingQuery[chart.id].fail(function(response) {
+                    if(response.status === 0) {
+                        XDATA.userALE.log({
+                            activity: "alter",
+                            action: "canceled",
+                            elementId: "linechart",
+                            elementType: "canvas",
+                            elementSub: "linechart",
+                            elementGroup: "chart_group",
+                            source: "system",
+                            tags: ["canceled", "linechart"]
+                        });
+                    } else {
+                        XDATA.userALE.log({
+                            activity: "alter",
+                            action: "failed",
+                            elementId: "linechart",
+                            elementType: "canvas",
+                            elementSub: "linechart",
+                            elementGroup: "chart_group",
+                            source: "system",
+                            tags: ["failed", "linechart"]
+                        });
+
+                        if(failureCallback) {
+                            failureCallback(response);
+                        } else {
+                            if(response.responseJSON) {
+                                $scope.errorMessage = errorNotificationService.showErrorMessage($element, response.responseJSON.error, response.responseJSON.stackTrace);
+                            }
+                            drawLineChart([], {});
+                        }
+                    }
+                });
             };
 
             /**
@@ -501,6 +585,7 @@ function(external, connectionService, datasetService, errorNotificationService, 
                     groupByClause.push(chart.categoryField);
                 }
 
+                // Creating a query with a where clause to exclude bad/null dates
                 var query = new neon.query.Query()
                     .selectFrom(chart.database, chart.table)
                     .where(neon.query.and(
@@ -548,8 +633,36 @@ function(external, connectionService, datasetService, errorNotificationService, 
 
                 $scope.databases = datasetService.getDatabases();
                 $scope.options.newChart.database = $scope.databases[0];
+                $scope.options.charts = [];
 
                 $scope.updateTables();
+
+                cloneDatasetChartsConfig();
+
+                var brushExtentFound = false;
+
+                // Update the brush extent if any global date filters are found
+                for(var i = 0; i < $scope.options.charts.length; i++) {
+                    var globalBrushExtent = datasetService.getDateBrushExtent($scope.options.charts[i].database,
+                        $scope.options.charts[i].table, $scope.options.charts[i].attrXMapping);
+
+                    if(!$scope.brushExtent.length && globalBrushExtent.length && $scope.options.charts[i].active) {
+                        brushExtentFound = true;
+                        $scope.queryOnChangeBrush = true;
+                        updateBrush(globalBrushExtent, true);
+                        return;
+                    }
+                }
+
+                if(!brushExtentFound) {
+                    if($scope.options.charts.length) {
+                        queryAllData(function(chart) {
+                            return true;
+                        });
+                    } else {
+                        updateLineChartForBrushExtent();
+                    }
+                }
             };
 
             /**
@@ -585,6 +698,60 @@ function(external, connectionService, datasetService, errorNotificationService, 
                 }) || datasetService.createBlankField();
 
                 $scope.validateChart();
+            };
+
+            /**
+             * Retreives any line charts specified in the dataset config that match the given bindConfig name.
+             * @method cloneDatasetChartsConfig
+             * @private
+             */
+            var cloneDatasetChartsConfig = function() {
+                var configs = datasetService.getLineCharts() || [];
+                _.each(configs[$scope.bindConfig], function(chart) {
+                    $scope.options.charts.push(setDefaultChartProperties(_.clone(chart)));
+                });
+            };
+
+            /**
+             * Sets all properties needed to create a line chart for the given chart object.
+             * @param {Object} chart
+             * @return {Array}
+             * @method setDefaultChartProperties
+             * @private
+             */
+            var setDefaultChartProperties = function(chart) {
+                chart.name = (chart.name || chart.table).toUpperCase();
+                chart.databasePrettyName = datasetService.getPrettyNameForDatabase(chart.database);
+                chart.tablePrettyName = datasetService.getPrettyNameForTable(chart.database, chart.table);
+                chart.fields = datasetService.getSortedFields(chart.database, chart.table);
+                chart.attrXField = datasetService.findField(chart.fields, chart.xAxis);
+                chart.attrXMapping = chart.xAxis;
+                chart.aggregation = (chart.aggregation).toLowerCase();
+                chart.attrYField = datasetService.findField(chart.fields, chart.yAxis);
+                chart.attrYMapping = chart.yAxis;
+                chart.categoryField = datasetService.findField(chart.fields, chart.category);
+                chart.categoryMapping = chart.category;
+                chart.active = chart.active;
+                chart.visible = true;
+                chart.id = uuid();
+
+                if(chart.aggregation !== "sum" && chart.aggregation !== "average" &&
+                    chart.aggregation !== "min" && chart.aggregation !== "max") {
+                    chart.aggregation = "count";
+                }
+
+                setFilterKey(chart);
+
+                $scope.validateChart(chart, -1);
+
+                if(chart.validName && chart.validFields) {
+                    chart.editing = false;
+                    setActiveStatusForCharts(chart.database, chart.table, chart.attrXMapping, chart.active);
+                } else {
+                    chart.editing = true;
+                }
+
+                return chart;
             };
 
             /**
@@ -633,8 +800,8 @@ function(external, connectionService, datasetService, errorNotificationService, 
              * @private
              */
             var updateChartFieldMappings = function(chart) {
-                chart.attrXMapping = chart.attrXField.columnName;
-                chart.attrYMapping = chart.attrYField.columnName;
+                chart.attrXMapping = (chart.attrXField ? chart.attrXField.columnName : "");
+                chart.attrYMapping = (chart.attrYField ? chart.attrYField.columnName : "");
                 chart.categoryMapping = (chart.categoryField ? chart.categoryField.columnName : "");
                 return chart;
             };
@@ -664,15 +831,16 @@ function(external, connectionService, datasetService, errorNotificationService, 
                     tablePrettyName: $scope.options.newChart.table.prettyName,
                     fields: $scope.fields,
                     attrXField: $scope.options.newChart.attrX,
-                    attrXMapping: $scope.options.newChart.attrX.columnName,
+                    attrXMapping: ($scope.options.newChart.attrX ? $scope.options.newChart.attrX.columnName : ""),
                     aggregation: $scope.options.newChart.aggregation,
                     attrYField: $scope.options.newChart.attrY,
-                    attrYMapping: $scope.options.newChart.attrY.columnName,
+                    attrYMapping: ($scope.options.newChart.attrY ? $scope.options.newChart.attrY.columnName : ""),
                     categoryField: $scope.options.newChart.categoryField,
-                    categoryMapping: $scope.options.newChart.categoryField.columnName,
+                    categoryMapping: ($scope.options.newChart.categoryField ? $scope.options.newChart.categoryField.columnName : ""),
                     active: $scope.options.newChart.active,
                     visible: $scope.options.newChart.visible,
-                    valid: true,
+                    validFields: true,
+                    validName: true,
                     editing: false
                 };
 
@@ -729,28 +897,22 @@ function(external, connectionService, datasetService, errorNotificationService, 
             };
 
             /**
-             * Returns whether the new chart object's name matches the name of any other existing charts.
-             * @return {Boolean}
-             * @method validateNewChartName
-             * @private
-             */
-            var validateNewChartName = function() {
-                return !($scope.options.charts.some(function(element) {
-                    return element.name === ($scope.options.newChart.name || createChartTitle($scope.options.newChart)).toUpperCase();
-                }));
-            };
-
-            /**
-             * Returns whether the given chart's name matches the name of any other existing charts.
-             * @param {Object} chart
-             * @param {Number} index
+             * Returns whether the given chart's name matches the name of any other existing charts. If no chart and index
+             * are given, the new chart object is used.
+             * @param {Object} [chart]
+             * @param {Number} [index]
              * @return {Boolean}
              * @method validateChartName
              * @private
              */
             var validateChartName = function(chart, index) {
-                return !($scope.options.charts.some(function(element, elementIndex) {
-                    return element.name === (chart.name || createChartTitle(chart)).toUpperCase() && elementIndex !== index;
+                if(chart && index) {
+                    return !($scope.options.charts.some(function(element, elementIndex) {
+                        return element.name === (chart.name || createChartTitle(chart)).toUpperCase() && elementIndex !== index;
+                    }));
+                }
+                return !($scope.options.charts.some(function(element) {
+                    return element.name === ($scope.options.newChart.name || createChartTitle($scope.options.newChart)).toUpperCase();
                 }));
             };
 
@@ -769,6 +931,20 @@ function(external, connectionService, datasetService, errorNotificationService, 
             };
 
             /**
+             * Returns whether the given chart has an x-attribute value. If no chart is given, the new chart object is used.
+             * @param {Object} [chart]
+             * @return {Boolean}
+             * @method validateAttrX
+             * @private
+             */
+            var validateAttrX = function(chart) {
+                if(chart) {
+                    return (chart.attrXField.columnName) ? true : false;
+                }
+                return ($scope.options.newChart.attrX.columnName) ? true : false;
+            };
+
+            /**
              * Sets the validity of the given chart. If no chart is given, the new chart object is used.
              * @param {Object} [chart]
              * @param {Number} [index]
@@ -777,9 +953,11 @@ function(external, connectionService, datasetService, errorNotificationService, 
 
             $scope.validateChart = function(chart, index) {
                 if(chart) {
-                    chart.valid = (validateAttrY(chart) && validateChartName(chart, index)) ? true : false;
+                    chart.validFields = (validateAttrY(chart) && validateAttrX(chart) ? true : false);
+                    chart.validName = validateChartName(chart, index);
                 } else {
-                    $scope.options.newChart.valid = (validateAttrY() && validateNewChartName()) ? true : false;
+                    $scope.options.newChart.validFields = (validateAttrY() && validateAttrX() ? true : false);
+                    $scope.options.newChart.validName = validateChartName();
                 }
             };
 
@@ -823,38 +1001,12 @@ function(external, connectionService, datasetService, errorNotificationService, 
              * @method setFilterKey
              * @private
              */
-            var setFilterKey = function(chart, filterKeys) {
-                var database = chart.database;
-                var table = chart.table;
+            var setFilterKey = function(chart) {
+                var filterServiceKeys = datasetService.getDateFilterKeys(chart.database, chart.table, chart.attrXMapping);
                 var attrX = chart.attrXMapping;
-                var relations = datasetService.getRelations(database, table, [attrX]);
-                var relationKeys = {};
+                var relations = datasetService.getRelations(chart.database, chart.table, [attrX]);
 
-                _.each(relations, function(relation) {
-                    var relationDatabase = relation.database;
-                    var relationTable = relation.table;
-
-                    if(relationDatabase !== database || relationTable !== table) {
-                        if(!relationKeys[relationDatabase]) {
-                            relationKeys[relationDatabase] = {};
-                        }
-                        if(!relationKeys[relationDatabase][relationTable]) {
-                            relationKeys[relationDatabase][relationTable] = filterKeys[relationDatabase][relationTable];
-                        }
-                    }
-                });
-
-                if(!$scope.filterKeys[database]) {
-                    $scope.filterKeys[database] = {};
-                }
-                if(!$scope.filterKeys[database][table]) {
-                    $scope.filterKeys[database][table] = {};
-                }
-                if(!$scope.filterKeys[database][table][attrX]) {
-                    $scope.filterKeys[database][table][attrX] = {};
-                    $scope.filterKeys[database][table][attrX].filterKey = filterKeys[database][table];
-                    $scope.filterKeys[database][table][attrX].relations = relationKeys;
-                }
+                $scope.filterKeys = filterService.createFilterKeysForAttribute($scope.filterKeys, chart.database, chart.table, attrX, filterServiceKeys, relations);
             };
 
             /**
@@ -864,8 +1016,7 @@ function(external, connectionService, datasetService, errorNotificationService, 
              * @private
              */
             var resetAndQueryForData = function(chart) {
-                var globalFilterKeys = datasetService.getDateFilterKeys(chart.database, chart.table, chart.attrXMapping);
-                setFilterKey(chart, globalFilterKeys);
+                setFilterKey(chart);
 
                 var globalBrushExtent = datasetService.getDateBrushExtent(chart.database, chart.table, chart.attrXMapping);
                 if(!$scope.brushExtent.length && globalBrushExtent.length && chart.active) {
@@ -874,30 +1025,15 @@ function(external, connectionService, datasetService, errorNotificationService, 
                     return;
                 }
 
-                var queriesCompleted = 0;
-                _.each($scope.options.charts, function(element) {
+                var validation = function(element) {
                     if(chart.database === element.database && chart.table === element.table && chart.attrXMapping === element.attrXMapping) {
                         element.active = chart.active;
-
-                        if(!$scope.outstandingQuery[element.id]) {
-                            $scope.outstandingQuery[element.id] = undefined;
-                        }
-                        queryForData(element, function(results) {
-                            $scope.data[element.id] = results.data;
-                            queriesCompleted += 1;
-
-                            if(queriesCompleted === $scope.options.charts.length) {
-                                updateLineChartForBrushExtent(true);
-                            }
-                        });
-                    } else {
-                        queriesCompleted += 1;
-
-                        if(queriesCompleted === $scope.options.charts.length) {
-                            updateLineChartForBrushExtent(true);
-                        }
+                        return true;
                     }
-                });
+                    return false;
+                };
+
+                queryAllData(validation);
             };
 
             /**
@@ -1052,44 +1188,6 @@ function(external, connectionService, datasetService, errorNotificationService, 
                 });
 
                 return seriesData;
-            };
-
-            /**
-             * Draws a blank line chart and displays the error in the given response from the failed query.
-             * @param {Object} response
-             * @method handleQueryFailure
-             * @private
-             */
-            var handleQueryFailure = function(response) {
-                if(response.status === 0) {
-                    XDATA.userALE.log({
-                        activity: "alter",
-                        action: "canceled",
-                        elementId: "linechart",
-                        elementType: "canvas",
-                        elementSub: "linechart",
-                        elementGroup: "chart_group",
-                        source: "system",
-                        tags: ["canceled", "linechart"]
-                    });
-                } else {
-                    XDATA.userALE.log({
-                        activity: "alter",
-                        action: "failed",
-                        elementId: "linechart",
-                        elementType: "canvas",
-                        elementSub: "linechart",
-                        elementGroup: "chart_group",
-                        source: "system",
-                        tags: ["failed", "linechart"]
-                    });
-
-                    drawLineChart([], {});
-
-                    if(response.responseJSON) {
-                        $scope.errorMessage = errorNotificationService.showErrorMessage($element, response.responseJSON.error, response.responseJSON.stackTrace);
-                    }
-                }
             };
 
             /**
@@ -1411,7 +1509,7 @@ function(external, connectionService, datasetService, errorNotificationService, 
              */
             $scope.getLegendItemAggregationText = function(colorMappingObject) {
                 var total = 0;
-                var text = colorMappingObject.series.split(":")[1];
+                var text = colorMappingObject.series.split(":").slice(1).join(":");
                 if(($scope.options.aggregation === "count" || $scope.options.aggregation === "sum") && !_.isUndefined(colorMappingObject.total)) {
                     total = colorMappingObject.total;
                     if($scope.brushExtent.length >= 2) {
@@ -1591,7 +1689,7 @@ function(external, connectionService, datasetService, errorNotificationService, 
                 // the previous query will be stale.  Otherwise use the data from the previous query and the current brush extent to redraw the chart.
                 if($scope.queryOnChangeBrush) {
                     $scope.queryOnChangeBrush = false;
-                    queryAllData();
+                    refreshCharts();
                     return;
                 }
 
@@ -1745,7 +1843,7 @@ function(external, connectionService, datasetService, errorNotificationService, 
                     if(charts.length) {
                         removeBrushRecursively(charts, queryWhenDone);
                     } else if(queryWhenDone) {
-                        queryAllData();
+                        refreshCharts();
                     }
                 });
             };

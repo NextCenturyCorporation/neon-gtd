@@ -24,7 +24,7 @@
                                 <input type="checkbox" style="display:none" ng-model="options.newChart.active">
                                 <span class="glyphicon glyphicon-filter"></span>
                             </label>
-                            <label class="btn btn-default" ng-class="{true: '', false: 'disabled'}[options.newChart.valid]" title="Save New Chart">
+                            <label class="btn btn-default" ng-class="{true: '', false: 'disabled'}[options.newChart.validFields && options.newChart.validName]" title="Save New Chart">
                                 <input type="button" style="display:none" ng-click="addNewChart()">
                                 <span class="glyphicon glyphicon-ok"></span>
                             </label>
@@ -34,9 +34,9 @@
                             </label>
                         </div>
 
-                        <div class="form-group chart-options-col chart-options-col-wide">
+                        <div class="form-group chart-options-col chart-options-col-wide" ng-class="{true: '', false: 'has-error'}[options.newChart.validName]">
                             <label>Chart Name</label>
-                            <input type="text" class="form-control" placeholder="{{options.newChart.table.prettyName.toUpperCase()}}" style="text-transform: uppercase;" ng-model="options.newChart.name" ng-required="false" ng-class="{true: '', false: 'ng-invalid'}[options.newChart.valid]" ng-change="validateChart()"/>
+                            <input type="text" class="form-control" placeholder="{{options.newChart.table.prettyName.toUpperCase()}}" style="text-transform: uppercase;" ng-model="options.newChart.name" ng-required="true" ng-class="{true: '', false: 'ng-invalid'}[options.newChart.valid]" ng-change="validateChart()"/>
                         </div>
                     </div>
 
@@ -51,9 +51,9 @@
                             <select class="form-control" ng-model="options.newChart.table" ng-options="table.prettyName for table in tables" ng-required="true" ng-disabled="(tables.length < 2)" ng-change="updateFields()"></select>
                         </div>
 
-                        <div class="form-group chart-options-col">
+                        <div class="form-group chart-options-col" ng-class="{true: '', false: 'has-error'}[options.newChart.attrX.columnName !== '']">
                             <label>Date Field (X Axis)</label>
-                            <select class="form-control" ng-model="options.newChart.attrX" ng-options="field.prettyName for field in fields" ng-required="true" ng-disabled="!(fields.length > 0)">
+                            <select class="form-control" ng-model="options.newChart.attrX" ng-options="field.prettyName for field in fields" ng-required="true" ng-disabled="!(fields.length > 0)" ng-change="validateChart()">
                             </select>
                         </div>
                     </div>
@@ -61,7 +61,7 @@
                     <div class="chart-options-row row-large">
                         <div class="form-group chart-options-col">
                             <label>Aggregation</label>
-                            <select class="form-control" ng-model="options.newChart.aggregation" ng-disabled="!(fields.length > 0)" ng-change="validateChart()" ng-required="true">
+                            <select class="form-control" ng-model="options.newChart.aggregation" ng-disabled="!(fields.length > 0)" ng-change="validateChart()" ng-required="true" ng-class="{true: '', false: 'ng-invalid'}[options.newChart.aggregation]">
                                 <option value="count">Count</option>
                                 <option value="sum">Sum</option>
                                 <option value="average">Average</option>
@@ -70,7 +70,7 @@
                             </select>
                         </div>
 
-                        <div class="form-group chart-options-col" ng-show="options.newChart.aggregation !== 'count'">
+                        <div class="form-group chart-options-col" ng-show="options.newChart.aggregation !== 'count'" ng-class="{true: '', false: 'has-error'}[options.newChart.attrY.columnName !== '']">
                             <label>Value Field (Y Axis)</label>
                             <select class="form-control" ng-model="options.newChart.attrY" ng-options="field.prettyName for field in fields" ng-required="true" ng-disabled="!(fields.length > 0)" ng-change="validateChart()">
                             </select>
@@ -83,6 +83,9 @@
                             </select>
                         </div>
                     </div>
+
+                    <label class="chart-options-error" ng-show="!options.newChart.validFields">Please fill in all fields.</label>
+                    <label class="chart-options-error" ng-show="!options.newChart.validName">Please choose a unique layer name.</label>
                 </div>
             </div>
 
@@ -104,7 +107,7 @@
                                     <input type="button" style="display:none" ng-click="toggleEditing(chart)">
                                     <span class="glyphicon glyphicon-edit"></span>
                                 </label>
-                                <label class="btn btn-default" ng-class="{true: '', false: 'disabled'}[chart.valid]" title="Save chart" ng-show="chart.editing">
+                                <label class="btn btn-default" ng-class="{true: '', false: 'disabled'}[chart.validName && chart.validFields]" title="Save chart" ng-show="chart.editing">
                                     <input type="button" style="display:none" ng-click="updateChart(chart)">
                                     <span class="glyphicon glyphicon-ok"></span>
                                 </label>
@@ -127,7 +130,7 @@
                                 </label>
                             </div>
 
-                            <div class="form-group chart-options-col chart-options-col-wide">
+                            <div class="form-group chart-options-col chart-options-col-wide" ng-class="{true: '', false: 'has-error'}[chart.validName]">
                                 <label>Chart Name</label>
                                 <input type="text" class="form-control" placeholder="{{chart.table.toUpperCase()}}" style="text-transform: uppercase;" ng-model="chart.name" ng-required="false" ng-disabled="(!chart.editing)" ng-class="{true: '', false: 'ng-invalid'}[chart.valid]" ng-change="validateChart(chart, $index)"/>
                             </div>
@@ -145,7 +148,7 @@
                                     <input type="text" class="form-control" ng-model="chart.tablePrettyName" ng-disabled="true"/>
                                 </div>
 
-                                <div class="form-group chart-options-col">
+                                <div class="form-group chart-options-col" ng-class="{true: '', false: 'has-error'}[chart.attrXField.columnName !== '']">
                                     <label>Date Field (X Axis)</label>
                                     <select class="form-control" ng-model="chart.attrXField" ng-options="field.prettyName for field in chart.fields" ng-required="true" ng-disabled="!(fields.length > 0)">
                                     </select>
@@ -164,7 +167,7 @@
                                     </select>
                                 </div>
 
-                                <div class="form-group chart-options-col" ng-show="chart.aggregation !== 'count'">
+                                <div class="form-group chart-options-col" ng-show="chart.aggregation !== 'count'" ng-class="{true: '', false: 'has-error'}[chart.attrYField.columnName !== '']">
                                     <label>Value Field (Y Axis)</label>
                                     <select class="form-control" ng-model="chart.attrYField" ng-options="field.prettyName for field in chart.fields" ng-required="true" ng-change="validateChart(chart, $index)" ng-disabled="!(fields.length > 0)">
                                     </select>
@@ -178,6 +181,9 @@
                                 </div>
                             </div>
                         </div>
+
+                        <label class="chart-options-error" ng-show="!chart.validFields">Please fill in all fields.</label>
+                        <label class="chart-options-error" ng-show="!chart.validName">Please choose a unique layer name.</label>
                     </div>
                 </div>
             </div>

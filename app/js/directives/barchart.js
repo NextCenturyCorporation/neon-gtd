@@ -129,7 +129,7 @@ function(external, connectionService, datasetService, errorNotificationService, 
                     });
                     linksPopupService.deleteLinks($scope.visualizationId);
                     $element.off("resize", updateChartSize);
-                    $scope.messenger.removeEvents();
+                    $scope.messenger.unsubscribeAll();
                     // Remove our filter if we had an active one.
                     if($scope.filterSet) {
                         filterService.removeFilters($scope.messenger, $scope.filterKeys);

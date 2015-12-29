@@ -159,7 +159,7 @@ charts.LineChart.prototype.drawChart = function() {
 };
 
 charts.LineChart.prototype.getSeriesValue = function(series) {
-    return (series.split(":").length > 1) ? series.split(":")[1] : series;
+    return (series.split(":").length > 1) ? series.split(":").slice(1).join(":") : series;
 };
 
 charts.LineChart.prototype.calculateColor = function(seriesObject) {

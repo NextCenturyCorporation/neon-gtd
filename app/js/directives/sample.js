@@ -100,7 +100,7 @@ function(connectionService, datasetService, errorNotificationService, filterServ
                 $scope.exportID = exportService.register($scope.makeExportObject);
 
                 $scope.$on('$destroy', function() {
-                    $scope.messenger.removeEvents();
+                    $scope.messenger.unsubscribeAll();
                     // Remove any filters that have been set.
                     if($scope.filter) {
                         filterService.removeFilters($scope.messenger, $scope.filterKeys);

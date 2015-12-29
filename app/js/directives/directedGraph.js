@@ -185,7 +185,7 @@ function($filter, $timeout, connectionService, datasetService, errorNotification
                     });
                     $element.off("resize", updateSize);
                     $element.find(".legend").off("resize", updateSize);
-                    $scope.messenger.removeEvents();
+                    $scope.messenger.unsubscribeAll();
                     exportService.unregister($scope.exportID);
                 });
 

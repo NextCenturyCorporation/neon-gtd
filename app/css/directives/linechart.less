@@ -106,7 +106,7 @@
             border-radius: 4px;
 
             &.open {
-                background-color: @visualization-box-background;
+                background-color: @visualization-box-background-transparent;
             }
 
             .divider {
@@ -133,6 +133,7 @@
 
                         .legend-title {
                             margin-right: 25px;
+                            font-size: 14px;
                         }
 
                         .glyphicon {
@@ -171,7 +172,7 @@
         .legend-item {
             border: @main-border;
             border-radius: 5px;
-            font-size: 14px;
+            font-size: 12px;
             margin-top: 0px;
             margin-right: 5px;
             opacity: .8;
@@ -265,6 +266,7 @@
                 .chart-options-error {
                     color: @error-text-color;
                     margin: 10px 0px 0px;
+                    display: block;
                 }
 
                 .chart-options-editing {
