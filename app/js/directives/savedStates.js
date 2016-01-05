@@ -135,10 +135,10 @@ angular.module('neonDemo.directives')
 
                             // Delete the state parameters if either match the IDs deleted
                             if(dashboardStateId && stateIds.dashboardStateId && dashboardStateId === stateIds.dashboardStateId)  {
-                                $location.search("dashboard_state_id");
+                                $location.search("dashboard_state_id", null);
                             }
                             if(filterStateId && stateIds.filterStateId && filterStateId === stateIds.filterStateId)  {
-                                $location.search("filter_state_id");
+                                $location.search("filter_state_id", null);
                             }
                         });
                     }, handleStateFailure);

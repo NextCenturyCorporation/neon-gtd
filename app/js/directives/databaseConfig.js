@@ -15,8 +15,8 @@
  *
  */
 angular.module('neonDemo.directives')
-.directive('databaseConfig', ['config', 'layouts', 'ConnectionService', 'DatasetService', 'ParameterService',
-    function(config, layouts, connectionService, datasetService, parameterService) {
+.directive('databaseConfig', ['$location', 'config', 'layouts', 'visualizations', 'ConnectionService', 'DatasetService', 'ParameterService', 'ErrorNotificationService',
+    function($location, config, layouts, visualizations, connectionService, datasetService, parameterService, errorNotificationService) {
     return {
         templateUrl: 'partials/directives/databaseConfig.html',
         restrict: 'E',
@@ -30,6 +30,11 @@ angular.module('neonDemo.directives')
             $element.addClass('databaseConfig');
 
             $scope.HIDE_INFO_POPOVER = "sr-only";
+            $scope.DATASTORE = 1;
+            $scope.DATABASE = 2;
+            $scope.FIELDS = 3;
+            $scope.RELATIONS = 4;
+            $scope.LAYOUT = 5;
 
             $scope.datasets = datasetService.getDatasets();
             $scope.activeDataset = {
@@ -44,6 +49,11 @@ angular.module('neonDemo.directives')
             $scope.datastoreHost = $scope.hostName || 'localhost';
             $scope.databases = [];
             $scope.isConnected = false;
+            $scope.isLoading = false;
+            $scope.error = false;
+            $scope.step = 1;
+            $scope.fieldTypes = {};
+            $scope.visualizations = visualizations;
 
             /**
              * This is the array of custom database objects configured by the user through the popup.  Each custom database contains:
@@ -66,6 +76,19 @@ angular.module('neonDemo.directives')
              *             {Object} field The field object
              */
             $scope.customRelations = [];
+
+            /**
+             * This is the array of custom visualization objects configured by the user through the popup.  Each custom visualization contains:
+             *     {String} type The visualization type
+             *     {Number} sizeX The width of the visualization
+             *     {Number} minSizeX The minimum width of the visualization
+             *     {Number} sizeY The height of the visualization
+             *     {Number} minSizeY The minimum height of the visualization
+             *     {String} database The database name to connect to it
+             *     {String} table The table name to connect to it
+             *     {Array} availableTables An array of table names that are available in the database selected
+             */
+            $scope.customVisualizations = [];
 
             var initialize = function() {
                 $scope.messenger = new neon.eventing.Messenger();
@@ -97,6 +120,7 @@ angular.module('neonDemo.directives')
                 $scope.databases = [];
                 $scope.customDatabases = [];
                 $scope.customRelations = [];
+                $scope.customVisualizations = [];
                 $scope.addNewCustomDatabase();
             };
 
@@ -204,6 +228,54 @@ angular.module('neonDemo.directives')
             };
 
             /**
+             * Updates the layout of visualizations in the dashboard for the custom visualizations set.
+             * @method updateCustomLayout
+             * @private
+             */
+            var updateCustomLayout = function() {
+                XDATA.userALE.log({
+                    activity: "select",
+                    action: "show",
+                    elementId: "dataset-selector",
+                    elementType: "workspace",
+                    elementGroup: "top",
+                    source: "system",
+                    tags: ["connect", "dataset"]
+                });
+
+                $scope.gridsterConfigs = [];
+
+                // Clear any old filters prior to loading the new layout and dataset.
+                $scope.messenger.clearFilters();
+
+                _.each($scope.customVisualizations, function(visualization) {
+                    var layout = {
+                        sizeX: visualization.sizeX,
+                        sizeY: visualization.sizeY,
+                        minSizeX: visualization.minSizeX,
+                        minSizeY: visualization.minSizeY,
+                        type: visualization.type,
+                        id: uuid()
+                    };
+
+                    if($scope.showVisualizationDatabaseProperties(visualization)) {
+                        layout.bindings = {
+                            "bind-database": "'" + visualization.database + "'",
+                            "bind-table": "'" + visualization.table + "'"
+                        };
+                    }
+
+                    $scope.gridsterConfigs.push(layout);
+                });
+
+                // Clear any saved states loaded through the parameters
+                $location.search("dashboard_state_id", null);
+                $location.search("filter_state_id", null);
+
+                parameterService.addFiltersFromUrl();
+            };
+
+            /**
              * Connects to the data server with the global datastore type and host.
              * @method connectToServer
              */
@@ -228,10 +300,13 @@ angular.module('neonDemo.directives')
                     return;
                 }
 
-                $scope.isConnected = true;
+                $scope.isLoading = true;
 
                 connection.getDatabaseNames(function(databaseNames) {
                     $scope.$apply(function() {
+                        $scope.isLoading = false;
+                        $scope.isConnected = true;
+                        $scope.error = false;
                         databaseNames.forEach(function(databaseName) {
                             $scope.databases.push({
                                 name: databaseName,
@@ -240,6 +315,12 @@ angular.module('neonDemo.directives')
                             });
                         });
                         updateDatabases(connection);
+                    });
+                }, function(response) {
+                    $scope.$apply(function() {
+                        $scope.isLoading = false;
+                        $scope.isConnected = false;
+                        $scope.error = true;
                     });
                 });
             };
@@ -282,20 +363,6 @@ angular.module('neonDemo.directives')
             };
 
             /**
-             * Resets the latitude, longitude, date and hashtag field mappings in the given custom table object and returns the object.
-             * @param {Object} customTable
-             * @method resetFieldMappings
-             * @private
-             */
-            var resetFieldMappings = function(customTable) {
-                customTable.date = datasetService.createBlankField();
-                customTable.latitude = datasetService.createBlankField();
-                customTable.longitude = datasetService.createBlankField();
-                customTable.tags = datasetService.createBlankField();
-                return customTable;
-            };
-
-            /**
              * Creates and returns a new custom table object.
              * @method createCustomTable
              * @private
@@ -307,7 +374,7 @@ angular.module('neonDemo.directives')
                         prettyName: ""
                     }
                 };
-                return resetFieldMappings(customTable);
+                return customTable;
             };
 
             /**
@@ -342,35 +409,10 @@ angular.module('neonDemo.directives')
                     elementType: "combobox",
                     elementGroup: "top",
                     source: "user",
-                    tags: ["dataset", customTable.table.name, "table"]
+                    tags: ["dataset", (customTable.table ? customTable.table.name : ""), "table"]
                 });
 
-                guessDefaultFieldMappings(customTable);
-            };
-
-            /**
-             * Sets the default latitude, longitude, date, and hashtag field mappings for the given custom table object if possible by guessing.
-             * @param {Object} customTable
-             * @method guessDefaultFieldMappings
-             * @private
-             */
-            var guessDefaultFieldMappings = function(customTable) {
-                customTable = resetFieldMappings(customTable);
-
-                // Iterates through the list of fields and looks for ones that match latitude, longitude, and time.
-                // Backwards instead of forwards because it allows use of one fewer variables and because the final value
-                // winds up with the first match in the list rather than the last.
-                for(var counter = customTable.table.fields.length - 1; counter >= 0; counter--) {
-                    if(customTable.table.fields[counter].columnName.search(/\bdate\b|time|created|\byyyy|yyyy\b|update/i) !== -1) {
-                        customTable.date = customTable.table.fields[counter];
-                    } else if(customTable.table.fields[counter].columnName.search(/latitude|\blat\b/i) !== -1) {
-                        customTable.latitude = customTable.table.fields[counter];
-                    } else if(customTable.table.fields[counter].columnName.search(/longitude|\blong\b|\blon\b/i) !== -1) {
-                        customTable.longitude = customTable.table.fields[counter];
-                    } else if(customTable.table.fields[counter].columnName.search(/hash|tag/i) !== -1) {
-                        customTable.tags = customTable.table.fields[counter];
-                    }
-                }
+                //guessDefaultFieldMappings(customTable);
             };
 
             /**
@@ -379,7 +421,7 @@ angular.module('neonDemo.directives')
              * @param {Object} field
              * @method selectMapping
              */
-            $scope.selectMapping = function(mapping, field) {
+            $scope.selectMapping = function(mapping, field, table) {
                 XDATA.userALE.log({
                     activity: "select",
                     action: "click",
@@ -389,6 +431,8 @@ angular.module('neonDemo.directives')
                     source: "user",
                     tags: ["dataset", mapping, "mapping", field.columnName, "field"]
                 });
+
+                table[mapping] = field;
             };
 
             /**
@@ -433,10 +477,14 @@ angular.module('neonDemo.directives')
 
                     customDatabase.customTables.forEach(function(customTable) {
                         var mappings = {};
-                        mappings[neonMappings.DATE] = customTable.date.columnName;
-                        mappings[neonMappings.TAGS] = customTable.tags.columnName;
-                        mappings[neonMappings.LATITUDE] = customTable.latitude.columnName;
-                        mappings[neonMappings.LONGITUDE] = customTable.longitude.columnName;
+                        mappings[neonMappings.DATE] = customTable.date ? customTable.date.columnName : "";
+                        mappings[neonMappings.TAGS] = customTable.tags ? customTable.tags.columnName : "";
+                        mappings[neonMappings.LATITUDE] = customTable.latitude ? customTable.latitude.columnName : "";
+                        mappings[neonMappings.LONGITUDE] = customTable.longitude ? customTable.longitude.columnName : "";
+                        mappings[neonMappings.BAR_GROUPS] = customTable.bar_x_axis ? customTable.bar_x_axis.columnName : "";
+                        mappings[neonMappings.Y_AXIS] = customTable.y_axis ? customTable.y_axis.columnName : "";
+                        mappings[neonMappings.LINE_GROUPS] = customTable.line_category ? customTable.line_category.columnName : "";
+                        mappings[neonMappings.AGGREGATE] = customTable.count_by ? customTable.count_by.columnName : "";
 
                         var tableObject = {
                             name: customTable.table.name,
@@ -495,10 +543,13 @@ angular.module('neonDemo.directives')
 
                 $scope.datasets = datasetService.addDataset(dataset);
                 datasetService.setActiveDataset(dataset);
-                updateLayout();
+                updateCustomLayout();
 
                 $scope.datasetName = "";
                 $scope.datasetNameIsValid = false;
+                $scope.step = $scope.DATASTORE;
+
+                $scope.resetCustomDataset();
 
                 $element.find(".modal").modal("hide");
             };
@@ -702,11 +753,265 @@ angular.module('neonDemo.directives')
             };
 
             /**
-             * Triggered by connecting to a datastore.
+             * Selection event for the given custom visualization object.
+             * @param {Object} customVisualization
+             * @method selectVisualization
+             */
+            $scope.selectVisualization = function(customVisualization) {
+                var viz = _.find(visualizations, function(visualization) {
+                    return visualization.type === customVisualization.type;
+                });
+
+                if(viz) {
+                    customVisualization.minSizeX = viz.minSizeX;
+                    customVisualization.minSizeY = viz.minSizeY;
+                    customVisualization.sizeX = viz.sizeX;
+                    customVisualization.sizeY = viz.sizeY;
+
+                    if(!customVisualization.database) {
+                        customVisualization.database = $scope.customDatabases[0].database.name;
+
+                        $scope.selectCustomVisualizationDatabase(customVisualization);
+                        customVisualization.table = customVisualization.availableTables[0];
+                    }
+                }
+            };
+
+            /**
+             * Selection event for the given custom visualization object.
+             * @param {Object} customVisualization
+             * @method selectCustomVisualizationDatabase
+             */
+            $scope.selectCustomVisualizationDatabase = function(customVisualization) {
+                _.find($scope.customDatabases, function(db) {
+                    if(db.database.name === customVisualization.database) {
+                        var tables = _.pluck(db.customTables, 'table');
+                        customVisualization.availableTables = _.map(tables, function(table) {
+                            return table.name;
+                        });
+                        customVisualization.table = "";
+                    }
+                });
+            };
+
+            /**
+             * Get the label for the given custom visualization object
+             * @param {Object} customVisualization
+             * @method getWidthLabel
+             */
+            $scope.getWidthLabel = function(customVisualization) {
+                if(customVisualization.minSizeX) {
+                    return "Width (min: " + customVisualization.minSizeX + ")";
+                }
+                return "Width";
+            };
+
+            /**
+             * Get the label for the given custom visualization object
+             * @param {Object} customVisualization
+             * @method getHeightLabel
+             */
+            $scope.getHeightLabel = function(customVisualization) {
+                if(customVisualization.minSizeY) {
+                    return "Height (min: " + customVisualization.minSizeY + ")";
+                }
+                return "Height";
+            };
+
+            /**
+             * Returns whether the database and table inputs should be shown for the given custom visualization object.
+             * @param {Object} customVisualization
+             * @method showVisualizationDatabaseProperties
+             */
+            $scope.showVisualizationDatabaseProperties = function(customVisualization) {
+                if(!customVisualization.type || customVisualization.type === 'filter-builder' || customVisualization.type === 'map' ||
+                    customVisualization.type === 'directed-graph' || customVisualization.type === 'gantt-chart') {
+                    return false;
+                }
+                return true;
+            };
+
+            /**
+             * Adds a new custom visualization element to the global list of custom visualizations.
+             * @method addNewCustomVisualization
+             */
+            $scope.addNewCustomVisualization = function() {
+                $scope.customVisualizations.push({
+                    availableTables: []
+                });
+            };
+
+            /**
+             * Removes the custom visualization element at the given index from the global list of custom visualizations.
+             * @param {Number} index
+             * @method removeCustomVisualization
+             */
+            $scope.removeCustomVisualization = function(index) {
+                $scope.customVisualizations.splice(index, 1);
+            };
+
+            /**
+             * Triggered by selecting a datastore type.
+             * @method changeType
+             */
+            $scope.changeType = function() {
+                $scope.isConnected = false;
+            };
+
+            /**
+             * Triggered by entering a host name.
              * @method changeHost
              */
             $scope.changeHost = function() {
                 $scope.isConnected = false;
+            };
+
+            /**
+             * Returns whether the current step is invalid.
+             * @method isStepInvalid
+             */
+            $scope.isStepInvalid = function() {
+                if($scope.step === $scope.DATASTORE) {
+                    return !($scope.isConnected && $scope.datasetNameIsValid);
+                } else if($scope.step === $scope.DATABASE) {
+                    return !($scope.customDatabases.length > 0 &&
+                        _.every($scope.customDatabases, function(database) {
+                            return database.database && database.database.name && _.every(database.customTables, function(table) {
+                                return table.table && table.table.name;
+                            });
+                        })
+                    );
+                } else if($scope.step === $scope.FIELDS) {
+                    return false;
+                } else if($scope.step === $scope.RELATIONS) {
+                    return !($scope.customRelations.length === 0 ||
+                        _.every($scope.customRelations, function(relation) {
+                            return _.every(relation.customRelationDatabases, function(database) {
+                                return database.database && database.database.name && _.every(database.customRelationTables, function(table) {
+                                    return table.table && table.table.name && table.field && table.field.columnName;
+                                });
+                            });
+                        })
+                    );
+                } else if($scope.step === $scope.LAYOUT) {
+                    return !(_.every($scope.customVisualizations, function(viz) {
+                                return viz.minSizeX <= viz.sizeX && viz.minSizeY <= viz.sizeY &&
+                                viz.database && viz.table;
+                            })
+                        );
+                }
+                return true;
+            };
+
+            /**
+             * Advances to the next step of the pop-up.
+             * @method nextStep
+             */
+            $scope.nextStep = function() {
+                $scope.step++;
+
+                if($scope.step === $scope.FIELDS) {
+                    loadFieldTypes();
+                } else if($scope.step > $scope.LAYOUT) {
+                    $scope.setDataset();
+                }
+            };
+
+            /**
+             * Retrives all field types for all database/table pairs specified in the custom database object.
+             * @method loadFieldTypes
+             * @private
+             */
+            var loadFieldTypes = function() {
+                var connection = connectionService.createActiveConnection($scope.datastoreType, $scope.datastoreHost);
+                if(!connection) {
+                    return;
+                }
+
+                $scope.isLoading = true;
+
+                var databaseToTableNames = {};
+
+                // Create a mapping of all the custom database names to an array of their custom table names
+                _.each($scope.customDatabases, function(database) {
+                    if(!databaseToTableNames[database.database.name]) {
+                        databaseToTableNames[database.database.name] = [];
+                    }
+
+                    _.each(database.customTables, function(table) {
+                        if(databaseToTableNames[database.database.name].indexOf(table.table.name) < 0) {
+                            databaseToTableNames[database.database.name].push(table.table.name);
+                        }
+                    });
+                });
+
+                connection.getFieldTypesForGroup(databaseToTableNames, function(response) {
+                    $scope.$apply(function() {
+                        $scope.isLoading = false;
+                        $scope.fieldTypes = response;
+                    });
+                }, function(response) {
+                    $scope.isLoading = false;
+                    if(response.responseJSON) {
+                        $scope.errorMessage = errorNotificationService.showErrorMessage(null, response.responseJSON.error, response.responseJSON.stackTrace);
+                    }
+                });
+            };
+
+            /**
+             * Gets the field type for the given field name in the given database and table. If not found, returns 'Unknown'.
+             * @param {String} databaseName
+             * @param {String} tableName
+             * @param {String} fieldName
+             * @method getFieldType
+             */
+            $scope.getFieldType = function(databaseName, tableName, fieldName) {
+                if($scope.fieldTypes && $scope.fieldTypes[databaseName] && $scope.fieldTypes[databaseName][tableName] &&
+                    $scope.fieldTypes[databaseName][tableName][fieldName]) {
+                    return $scope.fieldTypes[databaseName][tableName][fieldName];
+                }
+                return "Unknown";
+            };
+
+            /**
+             * Goes back one step, if allowed.
+             * @method previousStep
+             */
+            $scope.previousStep = function() {
+                if($scope.step - 1 > 0) {
+                    $scope.step--;
+                }
+            };
+
+            /**
+             * Toggles the field mappings display for the given custom table.
+             * @param {Object} customTable
+             * @method toggleFieldMappingsDisplay
+             */
+            $scope.toggleFieldMappingsDisplay = function(customTable) {
+                customTable.showFieldMappings = !customTable.showFieldMappings;
+            };
+
+            /**
+             * Returns the title of the current step.
+             * @method getTitle
+             */
+            $scope.getTitle = function() {
+                var stepTitle;
+
+                if($scope.step === $scope.DATASTORE) {
+                    stepTitle = "Connect to Datastore";
+                } else if($scope.step === $scope.DATABASE) {
+                    stepTitle = "Add Databases";
+                } else if($scope.step === $scope.FIELDS) {
+                    stepTitle = "Set Mappings";
+                } else if($scope.step === $scope.RELATIONS) {
+                    stepTitle = "Add Relations";
+                } else if($scope.step === $scope.LAYOUT) {
+                    stepTitle = "Set Layout";
+                }
+
+                return "Custom Dataset - " + stepTitle;
             };
 
             // Wait for neon to be ready, the create our messenger and intialize the view and data.

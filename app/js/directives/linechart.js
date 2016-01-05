@@ -541,7 +541,7 @@ function(external, connectionService, datasetService, errorNotificationService, 
                 $scope.options.attrY = _.find($scope.fields, function(field) {
                     return field.columnName === attrY;
                 }) || datasetService.createBlankField();
-                var categoryField = $scope.bindCategoryField || datasetService.getMapping($scope.options.database.name, $scope.options.table.name, neonMappings.LINE_GROUP) || "";
+                var categoryField = $scope.bindCategoryField || datasetService.getMapping($scope.options.database.name, $scope.options.table.name, neonMappings.LINE_GROUPS) || "";
                 $scope.options.categoryField = _.find($scope.fields, function(field) {
                     return field.columnName === categoryField;
                 }) || datasetService.createBlankField();

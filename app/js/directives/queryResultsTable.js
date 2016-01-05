@@ -138,7 +138,6 @@ linkify, $sce, $timeout, linksPopupService, visualizationService) {
                         tags: ["remove", "datagrid"]
                     });
                     linksPopupService.deleteLinks($scope.tableId);
-                    $element.off("resize", updateSize);
                     $scope.messenger.removeEvents();
                     exportService.unregister($scope.exportID);
                     visualizationService.unregister($scope.bindId);
@@ -447,7 +446,7 @@ linkify, $sce, $timeout, linksPopupService, visualizationService) {
                         $scope.totalRows = 0;
                         $scope.loadingData = false;
                         if(response.responseJSON) {
-                            $scope.errorMessage = errorNotificationService.showErrorMessage($element, response.responseJSON.error, response.responseJSON.stackTrace);
+                            $scope.errorMessage = errorNotificationService.showErrorMessage($scope.element, response.responseJSON.error, response.responseJSON.stackTrace);
                         }
                     }
                 });
@@ -674,12 +673,6 @@ linkify, $sce, $timeout, linksPopupService, visualizationService) {
             };
 
             //TODO text selection on cells -- https://github.com/ceolter/ag-grid/issues/87
-
-            // Wait for neon to be ready, the create our messenger and intialize the view and data.
-            neon.ready(function() {
-                initialize();
-                displayActiveDataset();
-            });
         }
     };
 }]);
