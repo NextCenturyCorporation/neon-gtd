@@ -30,11 +30,11 @@ function(external, connectionService, datasetService, errorNotificationService, 
             bindAggregationField: '=',
             bindFilterField: '=',
             bindFilterValue: '=',
+            bindLimit: '=',
             bindTable: '=',
             bindDatabase: '=',
             hideHeader: '=?',
-            hideAdvancedOptions: '=?',
-            limitCount: '=?'
+            hideAdvancedOptions: '=?'
         },
 
         link: function($scope, $element) {
@@ -86,7 +86,7 @@ function(external, connectionService, datasetService, errorNotificationService, 
                 if($scope.showTooMuchDataError) {
                     return "Error";
                 }
-                return ($scope.active.count >= $scope.active.limitCount ? "Limited to " : "") + ($scope.active.count || "No") + " Values";
+                return ($scope.active.count >= $scope.active.limit ? "Limited to " : "") + ($scope.active.count || "No") + " Values";
             }
             $scope.showOptionsMenuButtonText = function() {
                 return true;
@@ -118,12 +118,12 @@ function(external, connectionService, datasetService, errorNotificationService, 
                     XDATA.userALE.log({
                         activity: "remove",
                         action: "remove",
-                        elementId: "count-by",
+                        elementId: "aggregation-table",
                         elementType: "datagrid",
-                        elementSub: "count-by",
+                        elementSub: "aggregation-table",
                         elementGroup: "table_group",
                         source: "system",
-                        tags: ["remove", "count-by"]
+                        tags: ["remove", "aggregation-table"]
                     });
                     linksPopupService.deleteLinks($scope.tableId);
                     $scope.element.off("resize", updateSize);
@@ -140,8 +140,8 @@ function(external, connectionService, datasetService, errorNotificationService, 
                 updateSize();
 
                 $scope.active = {
-                    limitCount: ($scope.limitCount ? $scope.limitCount : 5000),
-                    aggregation: ($scope.bindAggregation ? $scope.bindAggregation : 'count')
+                    limit: $scope.bindLimit || 5000,
+                    aggregation: $scope.bindAggregation || 'count'
                 };
 
                 initializeDataset();
@@ -277,12 +277,12 @@ function(external, connectionService, datasetService, errorNotificationService, 
                 XDATA.userALE.log({
                     activity: "alter",
                     action: "send",
-                    elementId: "count-by",
+                    elementId: "aggregation-table",
                     elementType: "canvas",
-                    elementSub: "count-by",
+                    elementSub: "aggregation-table",
                     elementGroup: "table_group",
                     source: "system",
-                    tags: ["query", "count-by"]
+                    tags: ["query", "aggregation-table"]
                 });
 
                 if($scope.outstandingDataQuery) {
@@ -297,24 +297,24 @@ function(external, connectionService, datasetService, errorNotificationService, 
                     XDATA.userALE.log({
                         activity: "alter",
                         action: "receive",
-                        elementId: "count-by",
+                        elementId: "aggregation-table",
                         elementType: "canvas",
-                        elementSub: "count-by",
+                        elementSub: "aggregation-table",
                         elementGroup: "table_group",
                         source: "system",
-                        tags: ["receive", "count-by"]
+                        tags: ["receive", "aggregation-table"]
                     });
                     updateData(queryResults.data);
                     $scope.loadingData = false;
                     XDATA.userALE.log({
                         activity: "alter",
                         action: "render",
-                        elementId: "count-by",
+                        elementId: "aggregation-table",
                         elementType: "canvas",
-                        elementSub: "count-by",
+                        elementSub: "aggregation-table",
                         elementGroup: "table_group",
                         source: "system",
-                        tags: ["render", "count-by"]
+                        tags: ["render", "aggregation-table"]
                     });
                 });
                 $scope.outstandingDataQuery.fail(function(response) {
@@ -322,23 +322,23 @@ function(external, connectionService, datasetService, errorNotificationService, 
                         XDATA.userALE.log({
                             activity: "alter",
                             action: "canceled",
-                            elementId: "count-by",
+                            elementId: "aggregation-table",
                             elementType: "canvas",
-                            elementSub: "count-by",
+                            elementSub: "aggregation-table",
                             elementGroup: "table_group",
                             source: "system",
-                            tags: ["canceled", "count-by"]
+                            tags: ["canceled", "aggregation-table"]
                         });
                     } else {
                         XDATA.userALE.log({
                             activity: "alter",
                             action: "failed",
-                            elementId: "count-by",
+                            elementId: "aggregation-table",
                             elementType: "canvas",
-                            elementSub: "count-by",
+                            elementSub: "aggregation-table",
                             elementGroup: "table_group",
                             source: "system",
-                            tags: ["failed", "count-by"]
+                            tags: ["failed", "aggregation-table"]
                         });
                         updateData({
                             data: []
@@ -385,8 +385,8 @@ function(external, connectionService, datasetService, errorNotificationService, 
                     query.where(neon.query.and(whereNotNull, neon.query.where($scope.active.filterField.columnName, operator, $scope.active.filterValue)));
                 }
 
-                if($scope.active.limitCount) {
-                    query.limit($scope.active.limitCount);
+                if($scope.active.limit) {
+                    query.limit($scope.active.limit);
                 }
 
                 return query;
@@ -437,11 +437,11 @@ function(external, connectionService, datasetService, errorNotificationService, 
                 XDATA.userALE.log({
                     activity: "perform",
                     action: "click",
-                    elementId: "count-by-export",
+                    elementId: "aggregation-table-export",
                     elementType: "button",
                     elementGroup: "table_group",
                     source: "user",
-                    tags: ["options", "count-by", "export"]
+                    tags: ["options", "aggregation-table", "export"]
                 });
                 var query = buildQuery();
                 query.limitClause = exportService.getLimitClause();
@@ -495,12 +495,12 @@ function(external, connectionService, datasetService, errorNotificationService, 
                         XDATA.userALE.log({
                             activity: "select",
                             action: "click",
-                            elementId: "count-by",
+                            elementId: "aggregation-table",
                             elementType: "datagrid",
                             elementSub: "row",
                             elementGroup: "table_group",
                             source: "user",
-                            tags: ["filter", "count-by"]
+                            tags: ["filter", "aggregation-table"]
                         });
                         filterService.replaceFilters($scope.messenger, relations, $scope.filterKeys, createFilterClauseForCount, {
                             visName: "Aggregation Table",
@@ -532,11 +532,11 @@ function(external, connectionService, datasetService, errorNotificationService, 
                     XDATA.userALE.log({
                         activity: "deselect",
                         action: "click",
-                        elementId: "count-by",
+                        elementId: "aggregation-table",
                         elementType: "button",
                         elementGroup: "table_group",
                         source: "user",
-                        tags: ["filter", "count-by"]
+                        tags: ["filter", "aggregation-table"]
                     });
 
                     filterService.removeFilters($scope.messenger, $scope.filterKeys, function() {
@@ -570,16 +570,16 @@ function(external, connectionService, datasetService, errorNotificationService, 
                 return data;
             };
 
-            var logChange = function(element, value) {
+            var logChange = function(element, value, type) {
                 XDATA.userALE.log({
                     activity: "select",
                     action: "click",
-                    elementId: "count-by",
-                    elementType: "combobox",
+                    elementId: "aggregation-table",
+                    elementType: type || "combobox",
                     elementSub: element,
                     elementGroup: "table_group",
                     source: "user",
-                    tags: ["options", "count-by", value]
+                    tags: ["options", "aggregation-table", value]
                 });
             };
 
@@ -638,7 +638,7 @@ function(external, connectionService, datasetService, errorNotificationService, 
             };
 
             $scope.handleLimitChange = function() {
-                logChange("limit", $scope.active.limitCount);
+                logChange("limit", $scope.active.limit, "button");
                 if(!$scope.loadingData) {
                     updateColumns();
                 }
