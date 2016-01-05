@@ -196,7 +196,6 @@ function(external, connectionService, datasetService, errorNotificationService, 
 
                 queryForTotalRows();
                 updateColumns();
-                queryForData();
             };
 
             /**
@@ -286,21 +285,7 @@ function(external, connectionService, datasetService, errorNotificationService, 
              * @private
              */
             var updateColumns = function() {
-                var columnDefs =  [];
-
-                if(external.active) {
-                    var externalAppColumn = {
-                        headerName: "",
-                        field: $scope.EXTERNAL_APP_FIELD_NAME,
-                        suppressSizeToFit: true,
-                        cellClass: 'centered',
-                        width: 20
-                    };
-
-                    columnDefs.push(externalAppColumn);
-                }
-
-                var fieldColumns = _.map($scope.fields, function(field) {
+                var columnDefinitions = _.map($scope.fields, function(field) {
                     var config = {
                         headerName: field.prettyName,
                         field: field.columnName,
@@ -315,9 +300,21 @@ function(external, connectionService, datasetService, errorNotificationService, 
                     return config;
                 });
 
-                columnDefs = columnDefs.concat(fieldColumns);
-                $scope.gridOptions.api.setColumnDefs(columnDefs);
+                if(external.active) {
+                    var externalAppColumn = {
+                        headerName: "",
+                        field: $scope.EXTERNAL_APP_FIELD_NAME,
+                        suppressSizeToFit: true,
+                        cellClass: 'centered',
+                        width: 20
+                    };
+
+                    columnDefinitions = [externalAppColumn].concat(columnDefinitions);
+                }
+
+                $scope.gridOptions.api.setColumnDefs(columnDefinitions);
                 $scope.gridOptions.api.sizeColumnsToFit();
+                queryForData();
             };
 
             /**
@@ -369,12 +366,19 @@ function(external, connectionService, datasetService, errorNotificationService, 
              * @private
              */
             var queryForData = function() {
+                if($scope.errorMessage) {
+                    errorNotificationService.hideErrorMessage($scope.errorMessage);
+                    $scope.errorMessage = undefined;
+                }
+
                 var connection = connectionService.getActiveConnection();
 
                 if(!connection) {
                     updateData([]);
                     return;
                 }
+
+                $scope.gridOptions.api.setRowData([]);
 
                 var query = buildQuery();
 

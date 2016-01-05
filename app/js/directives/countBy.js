@@ -214,7 +214,7 @@ function(external, connectionService, datasetService, errorNotificationService, 
             };
 
             var updateColumns = function() {
-                var columnDefs = [];
+                var columnDefinitions = [];
 
                 if(external.active) {
                     var externalAppColumn = {
@@ -225,10 +225,10 @@ function(external, connectionService, datasetService, errorNotificationService, 
                         width: 30
                     };
 
-                    columnDefs.push(externalAppColumn);
+                    columnDefinitions.push(externalAppColumn);
                 }
 
-                columnDefs.push({
+                columnDefinitions.push({
                     headerName: $scope.active.dataField.prettyName,
                     field: $scope.active.dataField.columnName,
                     suppressSizeToFit: false,
@@ -240,15 +240,14 @@ function(external, connectionService, datasetService, errorNotificationService, 
                     columnName += ' ' + $scope.active.aggregationField.prettyName;
                 }
 
-                columnDefs.push({
+                columnDefinitions.push({
                     headerName: columnName,
                     field: $scope.active.aggregation,
                     suppressSizeToFit: false,
                     onCellClicked: handleRowClick
                 });
 
-                $scope.gridOptions.api.setRowData([]);
-                $scope.gridOptions.api.setColumnDefs(columnDefs);
+                $scope.gridOptions.api.setColumnDefs(columnDefinitions);
                 $scope.gridOptions.api.sizeColumnsToFit();
                 queryForData();
             };
@@ -271,6 +270,8 @@ function(external, connectionService, datasetService, errorNotificationService, 
                     $scope.loadingData = false;
                     return;
                 }
+
+                $scope.gridOptions.api.setRowData([]);
 
                 var query = buildQuery();
 
@@ -640,7 +641,7 @@ function(external, connectionService, datasetService, errorNotificationService, 
             $scope.handleLimitChange = function() {
                 logChange("limit", $scope.active.limit, "button");
                 if(!$scope.loadingData) {
-                    updateColumns();
+                    queryForData();
                 }
             };
 
