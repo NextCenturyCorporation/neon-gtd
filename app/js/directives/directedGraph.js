@@ -122,8 +122,9 @@ function($filter, $timeout, connectionService, datasetService, errorNotification
             };
 
             var updateGraphSize = function() {
-                // Subtract 80 for the width of the options menu button and padding.
-                $element.find(".title").css("maxWidth", $element.width() - 80);
+                // Set the width of the title to the width of the visualization minus the width of the chart options button/text and padding.
+                var titleWidth = $element.width() - $element.find(".chart-options").outerWidth(true) - 20;
+                $element.find(".title").css("maxWidth", titleWidth);
 
                 // The D3 graph will resize itself but we need to trigger that resize event by changing the height and widget of the SVG.
                 // Setting the dimensions on the SVG performs better than just setting the dimensions on the directed-graph-container.

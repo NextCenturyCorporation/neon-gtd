@@ -75,22 +75,22 @@ function(external, connectionService, datasetService, errorNotificationService, 
                     XDATA.userALE.log({
                         activity: "add",
                         action: "click",
-                        elementId: "column-" + $scope.options.addField.prettyName,
+                        elementId: "column-" + event.column.colId,
                         elementType: "datagrid",
                         elementGroup: "table_group",
                         source: "user",
-                        tags: ["options", "datagrid", "column", $scope.options.addField.prettyName]
+                        tags: ["options", "datagrid", "column", event.column.colId]
                     });
                 } else {
                     $scope.hiddenColumns[event.column.colId] = true;
                     XDATA.userALE.log({
                         activity: "remove",
                         action: "click",
-                        elementId: "column-" + name,
+                        elementId: "column-" + event.column.colId,
                         elementType: "datagrid",
                         elementGroup: "table_group",
                         source: "user",
-                        tags: ["options", "datagrid", "column", name]
+                        tags: ["options", "datagrid", "column", event.column.colId]
                     });
                 }
             };
@@ -107,6 +107,26 @@ function(external, connectionService, datasetService, errorNotificationService, 
                 onColumnVisible: handleColumnVisibiltyChange
             };
 
+            $scope.optionsMenuButtonText = function() {
+                return $scope.active.count + " of " + $scope.active.total + " records";
+            };
+            $scope.showOptionsMenuButtonText = function() {
+                return true;
+            };
+
+            /**
+             * Resizes the title of the data table.
+             * @method resizeTitle
+             * @private
+             */
+            var resizeTitle = function() {
+                // Set the width of the title to the width of the visualization minus the width of the chart options button/text and padding.
+                var titleWidth = $scope.element.width() - $scope.element.find(".chart-options").outerWidth(true) - 20;
+                // Also subtract the width of the table options button.
+                titleWidth -= ($scope.element.find(".edit-table-icon").outerWidth(true) + 10);
+                $scope.element.find(".title").css("maxWidth", titleWidth);
+            };
+
             /**
              * intitalize all fields and add a messenger then query for data
              * @method init
@@ -118,6 +138,9 @@ function(external, connectionService, datasetService, errorNotificationService, 
                 $scope.messenger.events({
                     filtersChanged: onFiltersChanged
                 });
+
+                $scope.element.resize(resizeTitle);
+                $scope.element.find(".chart-options a").resize(resizeTitle);
 
                 $scope.$on('$destroy', function() {
                     XDATA.userALE.log({
@@ -131,8 +154,9 @@ function(external, connectionService, datasetService, errorNotificationService, 
                         tags: ["remove", "datagrid"]
                     });
                     linksPopupService.deleteLinks($scope.tableId);
-                    $element.off("resize", updateSize);
                     $scope.messenger.removeEvents();
+                    $scope.element.off("resize", resizeTitle);
+                    $scope.element.find(".chart-options a").off("resize", resizeTitle);
                     exportService.unregister($scope.exportID);
                 });
 
