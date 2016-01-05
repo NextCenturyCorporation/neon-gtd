@@ -47,8 +47,6 @@ function(external, connectionService, datasetService, errorNotificationService, 
             tableDiv.attr("id", $scope.tableId);
 
             $scope.active = {};
-            $scope.loadingData = false;
-            $scope.queryTitle = "";
 
             //Wait for neon to be ready, the create our messenger and intialize the view and data.
             neon.ready(function() {
@@ -155,7 +153,6 @@ function(external, connectionService, datasetService, errorNotificationService, 
             var initializeDataset = function() {
                 $scope.filterKeys = filterService.createFilterKeys("countby", datasetService.getDatabaseAndTableNames());
                 $scope.databases = datasetService.getDatabases();
-
                 $scope.active.database = $scope.databases[0];
                 if($scope.bindDatabase) {
                     for(var i = 0; i < $scope.databases.length; ++i) {
@@ -171,7 +168,6 @@ function(external, connectionService, datasetService, errorNotificationService, 
 
             var updateTables = function() {
                 $scope.tables = datasetService.getTables($scope.active.database.name);
-
                 $scope.active.table = $scope.tables[0];
                 if($scope.bindTable) {
                     for(var i = 0; i < $scope.tables.length; ++i) {
@@ -186,8 +182,10 @@ function(external, connectionService, datasetService, errorNotificationService, 
             };
 
             var updateFields = function() {
-                $scope.loadingData = true;
-                var fields = datasetService.getFields($scope.active.database.name, $scope.active.table.name);
+                // Stops extra data queries that may be caused by event handlers triggered by setting the active fields.
+                $scope.initializing = true;
+
+                var fields = datasetService.getSortedFields($scope.active.database.name, $scope.active.table.name);
                 $scope.fields = _.filter(fields, function(field) {
                     return field.columnName !== '_id';
                 });
@@ -267,7 +265,7 @@ function(external, connectionService, datasetService, errorNotificationService, 
 
                 if(!connection || !$scope.active.dataField || ($scope.active.aggregation !== "count" && !$scope.active.aggregationField.columnName)) {
                     updateData([]);
-                    $scope.loadingData = false;
+                    $scope.initializing = false;
                     return;
                 }
 
@@ -306,7 +304,7 @@ function(external, connectionService, datasetService, errorNotificationService, 
                         tags: ["receive", "aggregation-table"]
                     });
                     updateData(queryResults.data);
-                    $scope.loadingData = false;
+                    $scope.initializing = false;
                     XDATA.userALE.log({
                         activity: "alter",
                         action: "render",
@@ -344,7 +342,7 @@ function(external, connectionService, datasetService, errorNotificationService, 
                         updateData({
                             data: []
                         });
-                        $scope.loadingData = false;
+                        $scope.initializing = false;
                         if(response.responseJSON) {
                             $scope.errorMessage = errorNotificationService.showErrorMessage($scope.element, response.responseJSON.error, response.responseJSON.stackTrace);
                             if(response.responseJSON.error === errorNotificationService.TOO_MUCH_DATA_ERROR) {
@@ -596,28 +594,28 @@ function(external, connectionService, datasetService, errorNotificationService, 
 
             $scope.handleDataFieldChange = function() {
                 logChange("data-field", $scope.active.dataField.columnName);
-                if(!$scope.loadingData) {
+                if(!$scope.initializing) {
                     updateColumns();
                 }
             };
 
             $scope.handleAggregationChange = function() {
                 logChange("aggregation", $scope.active.aggregation);
-                if(!$scope.loadingData) {
+                if(!$scope.initializing) {
                     updateColumns();
                 }
             };
 
             $scope.handleAggregationFieldChange = function() {
                 logChange("aggregation-field", $scope.active.aggregationField.columnName);
-                if(!$scope.loadingData) {
+                if(!$scope.initializing) {
                     updateColumns();
                 }
             };
 
             $scope.handleUnsharedFilterFieldChange = function() {
                 logChange("unshared-filter-field", $scope.active.filterField.columnName);
-                if(!$scope.loadingData) {
+                if(!$scope.initializing) {
                     $scope.active.filterValue = "";
                     queryForData();
                 }
@@ -625,7 +623,7 @@ function(external, connectionService, datasetService, errorNotificationService, 
 
             $scope.handleUnsharedFilterValueChange = function() {
                 logChange("unshared-filter-value", $scope.active.filterValue);
-                if(!$scope.loadingData) {
+                if(!$scope.initializing) {
                     queryForData();
                 }
             };
@@ -633,14 +631,14 @@ function(external, connectionService, datasetService, errorNotificationService, 
             $scope.handleUnsharedFilterRemove = function() {
                 logChange("unshared-filter", "");
                 $scope.active.filterValue = "";
-                if(!$scope.loadingData) {
+                if(!$scope.initializing) {
                     queryForData();
                 }
             };
 
             $scope.handleLimitChange = function() {
                 logChange("limit", $scope.active.limit, "button");
-                if(!$scope.loadingData) {
+                if(!$scope.initializing) {
                     queryForData();
                 }
             };

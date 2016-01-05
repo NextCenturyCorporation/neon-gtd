@@ -54,7 +54,6 @@ function(external, connectionService, datasetService, errorNotificationService, 
             tableDiv.attr("id", $scope.tableId);
 
             $scope.active = {};
-            $scope.loadingData = false;
 
             neon.ready(function() {
                 $scope.init();
@@ -154,9 +153,7 @@ function(external, connectionService, datasetService, errorNotificationService, 
              */
             var initializeDataset = function() {
                 $scope.databases = datasetService.getDatabases();
-
                 $scope.active.database = $scope.databases[0];
-
                 if($scope.bindDatabase) {
                     for(var i = 0; i < $scope.databases.length; ++i) {
                         if($scope.bindDatabase === $scope.databases[i].name) {
@@ -171,7 +168,6 @@ function(external, connectionService, datasetService, errorNotificationService, 
 
             var updateTables = function() {
                 $scope.tables = datasetService.getTables($scope.active.database.name);
-
                 $scope.active.table = $scope.tables[0];
                 if($scope.bindTable) {
                     for(var i = 0; i < $scope.tables.length; ++i) {
@@ -186,8 +182,15 @@ function(external, connectionService, datasetService, errorNotificationService, 
             };
 
             var updateFields = function() {
-                $scope.loadingData = true;
-                $scope.fields = datasetService.getFields($scope.active.database.name, $scope.active.table.name);
+                // Stops extra data queries that may be caused by event handlers triggered by setting the active fields.
+                $scope.initializing = true;
+
+                $scope.fields = datasetService.getSortedFields($scope.active.database.name, $scope.active.table.name);
+                $scope.fields.forEach(function(field) {
+                    if(field.hide) {
+                        $scope.hiddenColumns[field.columnName] = true;
+                    }
+                });
 
                 var sortByFieldName = $scope.bindSortField || datasetService.getMapping($scope.active.database.name, $scope.active.table.name, neonMappings.SORT) || "";
                 $scope.active.sortByField = _.find($scope.fields, function(field) {
@@ -285,7 +288,10 @@ function(external, connectionService, datasetService, errorNotificationService, 
              * @private
              */
             var updateColumns = function() {
-                var columnDefinitions = _.map($scope.fields, function(field) {
+                // Use the fields with the order in which they are defined in the Neon configuration file.
+                var fields = datasetService.getFields($scope.active.database.name, $scope.active.table.name);
+
+                var columnDefinitions = _.map(fields, function(field) {
                     var config = {
                         headerName: field.prettyName,
                         field: field.columnName,
@@ -478,7 +484,7 @@ function(external, connectionService, datasetService, errorNotificationService, 
                 }
 
                 $scope.active.count = data.length;
-                $scope.loadingData = false;
+                $scope.initializing = false;
                 $scope.gridOptions.api.setRowData(data);
 
                 $timeout(function() {
@@ -632,7 +638,7 @@ function(external, connectionService, datasetService, errorNotificationService, 
 
                 $scope.gridOptions.api.setSortModel([sort]);
 
-                if(!$scope.loadingData) {
+                if(!$scope.initializing) {
                     queryForData();
                 }
             };
@@ -649,7 +655,7 @@ function(external, connectionService, datasetService, errorNotificationService, 
 
             $scope.handleLimitChange = function() {
                 logChange("limit", $scope.active.limit, "button");
-                if(!$scope.loadingData) {
+                if(!$scope.initializing) {
                     queryForData();
                 }
             };
