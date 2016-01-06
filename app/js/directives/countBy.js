@@ -46,7 +46,13 @@ function(external, connectionService, datasetService, errorNotificationService, 
             var tableDiv = $element.find('.count-by-table');
             tableDiv.attr("id", $scope.tableId);
 
-            $scope.active = {};
+            $scope.active = {
+                database: {},
+                table: {},
+                dataField: {},
+                aggregationField: {},
+                filterField: {}
+            };
 
             //Wait for neon to be ready, the create our messenger and intialize the view and data.
             neon.ready(function() {
@@ -90,12 +96,25 @@ function(external, connectionService, datasetService, errorNotificationService, 
                 return true;
             };
 
-            var updateSize = function() {
+            var resizeTitle = function() {
+                // Set the width of the title to the width of the visualization minus the width of the chart options button/text and padding.
+                var titleWidth = $scope.element.width() - $scope.element.find(".chart-options").outerWidth(true) - 20;
+                // Also subtract the width of the table options button.
+                titleWidth -= ($scope.element.find(".edit-table-icon").outerWidth(true) + 10);
+                $scope.element.find(".title").css("maxWidth", titleWidth);
+            };
+
+            var resizeTable = function() {
                 var headerHeight = 0;
                 $scope.element.find(".header-container").each(function() {
                     headerHeight += $(this).outerHeight(true);
                 });
                 $("#" + $scope.tableId).height($scope.element.height() - headerHeight);
+            };
+
+            var resize = function() {
+                resizeTitle();
+                resizeTable();
             };
 
             $scope.init = function() {
@@ -124,8 +143,8 @@ function(external, connectionService, datasetService, errorNotificationService, 
                         tags: ["remove", "aggregation-table"]
                     });
                     linksPopupService.deleteLinks($scope.tableId);
-                    $scope.element.off("resize", updateSize);
-                    $scope.element.find(".filter-container").off("resize", updateSize);
+                    $scope.element.off("resize", resize);
+                    $scope.element.find(".filter-container").off("resize", resizeTable);
                     $scope.messenger.removeEvents();
                     if($scope.filterSet) {
                         filterService.removeFilters($scope.messenger, $scope.filterKeys);
@@ -133,9 +152,9 @@ function(external, connectionService, datasetService, errorNotificationService, 
                     exportService.unregister($scope.exportID);
                 });
 
-                $scope.element.resize(updateSize);
-                $scope.element.find(".filter-container").resize(updateSize);
-                updateSize();
+                $scope.element.resize(resize);
+                $scope.element.find(".filter-container").resize(resizeTable);
+                resize();
 
                 $scope.active = {
                     limit: $scope.bindLimit || 5000,
@@ -260,10 +279,11 @@ function(external, connectionService, datasetService, errorNotificationService, 
                 // Save the title during the query so the title doesn't change immediately if the user changes the unshared filter.
                 $scope.queryTitle = "";
                 $scope.queryTitle = $scope.generateTitle();
+                resizeTitle();
 
                 var connection = connectionService.getActiveConnection();
 
-                if(!connection || !$scope.active.dataField || ($scope.active.aggregation !== "count" && !$scope.active.aggregationField.columnName)) {
+                if(!connection || !$scope.active.dataField.columnName || ($scope.active.aggregation !== "count" && !$scope.active.aggregationField.columnName)) {
                     updateData([]);
                     $scope.initializing = false;
                     return;
@@ -339,9 +359,7 @@ function(external, connectionService, datasetService, errorNotificationService, 
                             source: "system",
                             tags: ["failed", "aggregation-table"]
                         });
-                        updateData({
-                            data: []
-                        });
+                        updateData([]);
                         $scope.initializing = false;
                         if(response.responseJSON) {
                             $scope.errorMessage = errorNotificationService.showErrorMessage($scope.element, response.responseJSON.error, response.responseJSON.stackTrace);

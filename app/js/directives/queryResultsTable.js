@@ -53,7 +53,11 @@ function(external, connectionService, datasetService, errorNotificationService, 
             var tableDiv = $element.find('.results-table');
             tableDiv.attr("id", $scope.tableId);
 
-            $scope.active = {};
+            $scope.active = {
+                database: {},
+                table: {},
+                sortByField: {}
+            };
 
             neon.ready(function() {
                 $scope.init();
