@@ -750,7 +750,7 @@ charts.TimelineSelectorChart = function(element, configuration) {
 
                     contextContainer.selectAll(".bar")
                         .data(series.data)
-                    .enter().append("rect")
+                        .enter().append("rect")
                         .attr("class", function(d) {
                             return "bar " + d.date;
                         })
@@ -761,7 +761,9 @@ charts.TimelineSelectorChart = function(element, configuration) {
                             return me.xContext(d.date);
                         })
                         .attr("width", function(d) {
-                            return me.xContext(d3.time[me.granularity].utc.offset(d.date, 1)) - me.xContext(d.date);
+                            // Save the width of the bar in the data for use in the calculation of the errorbar attributes.
+                            d.barWidth = me.xContext(d3.time[me.granularity].utc.offset(d.date, 1)) - me.xContext(d.date);
+                            return d.barWidth;
                         })
                         .attr("y", function(d) {
                             return yContext(Math.max(0, d.value));
@@ -772,6 +774,23 @@ charts.TimelineSelectorChart = function(element, configuration) {
                             var calculatedHeight = Math.abs(height) + (offset * barheight);
                             return calculatedHeight;
                         });
+
+                    contextContainer.selectAll(".errorbar")
+                        .data(series.data)
+                        .enter().append("line")
+                        .attr("x1", function(d) {
+                            return me.xContext(d.date) + (d.barWidth / 2);
+                        })
+                        .attr("y1", function(d) {
+                            return yContext(Math.max(0, d.value)) - 5;
+                        })
+                        .attr("x2", function(d) {
+                            return me.xContext(d.date) + (d.barWidth / 2);
+                        })
+                        .attr("y2", function(d) {
+                            return yContext(Math.max(0, d.value)) + 5;
+                        })
+                        .attr("class", "errorbar");
                 } else {
                     // If type is line, render a line plot
                     if(series.type === 'line') {

@@ -958,7 +958,49 @@ function($interval, $filter, external, connectionService, datasetService, errorN
                     $scope.outstandingQuery.abort();
                 }
 
-                $scope.outstandingQuery = connection.executeQueryGroup(queryGroup);
+                var onInitial = function() {
+                    // TODO
+                };
+                var onMessage = function(queryResults) {
+                    $scope.$apply(function() {
+                        if(!queryResults.data) {
+                            // TODO Hide errorbars
+                            return;
+                        }
+
+                        var validQueryResults = {};
+                        if($scope.invalidDatesFilter) {
+                            validQueryResults.data = [];
+                        } else {
+                            validQueryResults.data = _.filter(queryResults.data, function(datum) {
+                                return !datum.invalidCount;
+                            });
+                        }
+
+                        updateChartData(validQueryResults);
+
+                        var invalidQueryResults = _.filter(queryResults.data, function(datum) {
+                            return datum.invalidCount;
+                        });
+
+                        $scope.invalidRecordCount = (invalidQueryResults.length ? invalidQueryResults[0].invalidCount : 0);
+                        $scope.loadingData = false;
+                    });
+                };
+                var onError = function() {
+                    $scope.$apply(function() {
+                        updateChartData({
+                            data: []
+                        });
+                        $scope.invalidRecordCount = 0;
+                        $scope.loadingData = false;
+                    });
+                };
+
+                //$scope.outstandingQuery = connection.executeQueryGroup(queryGroup);
+                connection.executeSseQueryGroup(queryGroup, onInitial, onMessage, onError);
+
+                /*
                 $scope.outstandingQuery.done(function() {
                     $scope.outstandingQuery = undefined;
                 });
@@ -1026,6 +1068,7 @@ function($interval, $filter, external, connectionService, datasetService, errorN
                         }
                     }
                 });
+                */
             };
 
             /**
