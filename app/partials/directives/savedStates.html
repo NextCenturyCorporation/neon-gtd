@@ -35,9 +35,9 @@
                     <label>Name</label>
                     <input type="text" ng-model="stateName" ng-change="validateName()"></input>
                 </div>
-                <div ng-show="stateNameError">
+                <label ng-show="stateNameError" class="error-label">
                     Name already exists in the database.
-                </div>
+                </label>
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-success" data-dismiss="modal" ng-click="saveState(stateName)" ng-disabled="stateNameError">
@@ -61,7 +61,8 @@
             <div class="modal-body">
                 <div class="form-group">
                     <label>State Name</label>
-                    <select class="form-control" ng-model="stateName" ng-options="name for name in stateNames">
+                    <select class="form-control" ng-model="stateName" ng-options="name for name in stateNames" ng-disabled="isLoading">
+                        <option value="" ng-bind="getDefaultOptionTitle()"></option>
                     </select>
                 </div>
             </div>
@@ -83,7 +84,8 @@
             <div class="modal-body">
                 <div class="form-group">
                     <label>State Name</label>
-                    <select class="form-control" ng-model="stateName" ng-options="name for name in stateNames">
+                    <select class="form-control" ng-model="stateName" ng-options="name for name in stateNames" ng-disabled="isLoading">
+                        <option value="" ng-bind="getDefaultOptionTitle()"></option>
                     </select>
                 </div>
             </div>

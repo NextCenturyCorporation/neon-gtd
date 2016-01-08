@@ -93,21 +93,40 @@ angular.module('neonDemo.directives')
             var initialize = function() {
                 $scope.messenger = new neon.eventing.Messenger();
 
-                var activeDataset = (parameterService.findActiveDatasetInUrl() || "").toLowerCase();
-                $scope.datasets.some(function(dataset, index) {
-                    if((activeDataset && activeDataset === dataset.name.toLowerCase()) || (!activeDataset && dataset.connectOnLoad)) {
-                        $scope.connectToPreset(index, true);
-                        return true;
-                    }
-                    return false;
-                });
+                var params = $location.search();
 
-                $scope.messenger.subscribe("STATE_CHANGED", function() {
-                    $scope.activeDataset = {
-                        name: datasetService.getDataset().name,
-                        info: $scope.HIDE_INFO_POPOVER,
-                        data: true
-                    };
+                if(params.dashboard_state_id) {
+                    parameterService.loadState(params.dashboard_state_id, params.filter_state_id);
+                } else {
+                    var activeDataset = (parameterService.findActiveDatasetInUrl() || "").toLowerCase();
+                    $scope.datasets.some(function(dataset, index) {
+                        if((activeDataset && activeDataset === dataset.name.toLowerCase()) || (!activeDataset && dataset.connectOnLoad)) {
+                            $scope.connectToPreset(index, true);
+                            return true;
+                        }
+                        return false;
+                    });
+                }
+
+                $scope.messenger.subscribe("STATE_CHANGED", function(message) {
+                    if(message && message.dataset) {
+                        if(message.dataset) {
+                            datasetService.setActiveDataset(message.dataset);
+
+                            $scope.activeDataset = {
+                                name: message.dataset.name,
+                                info: $scope.HIDE_INFO_POPOVER,
+                                data: true
+                            };
+                        }
+                        if(message.dashboard) {
+                            $scope.gridsterConfigs = message.dashboard;
+
+                            for(var i = 0; i < $scope.gridsterConfigs.length; ++i) {
+                                $scope.gridsterConfigs[i].id = uuid();
+                            }
+                        }
+                    }
                 });
             };
 

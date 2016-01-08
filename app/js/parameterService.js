@@ -91,12 +91,6 @@ function($location, datasetService, filterService, connectionService, errorNotif
         var parameters = $location.search();
 
         var argsList = [{
-            mappings: [],
-            parameterKey: FILTER_STATE_ID,
-            cleanParameter: cleanValue,
-            isParameterValid: doesParameterExist,
-            operator: "contains"
-        }, {
             mappings: [neonMappings.DATE],
             parameterKey: DASHBOARD_FILTER_DATE,
             cleanParameter: splitArray,
@@ -152,51 +146,66 @@ function($location, datasetService, filterService, connectionService, errorNotif
             }
         });
 
-        // Add dashboardStateId parameter last because we want all the filters
-        // to be added before creating the new dashboard layout
-        argsList.push({
-            mappings: [],
-            parameterKey: DASHBOARD_STATE_ID,
-            cleanParameter: cleanValue,
-            isParameterValid: doesParameterExist,
-            operator: "contains"
-        });
+        var filterStateExists = readFilterState(parameters, ignoreDashboardState);
+        if(!filterStateExists) {
+            addFiltersForDashboardParameters(parameters, argsList, function() {
+                var dashboardStateId = cleanValue(parameters[DASHBOARD_STATE_ID], "contains");
 
-        addFiltersForDashboardParameters(parameters, argsList, ignoreDashboardState);
+                if(doesParameterExist(dashboardStateId) && !ignoreDashboardState) {
+                    service.loadState(dashboardStateId, "");
+                }
+            });
+        }
+    };
+
+    /**
+     * Loads the filter state for a filter state ID found in the given list of parameters. If ignoreDashboardState is false,
+     * the dashboard state will be loaded as well.
+     * @param {Object} parameters
+     * @param {Boolean} ignoreDashboardState
+     * @return {Boolean} True if a filter state ID was found in the given list of parameters, false otherwise.
+     * @method readFilterState
+     * @private
+     */
+    var readFilterState = function(parameters, ignoreDashboardState) {
+        var filterStateId = cleanValue(parameters[FILTER_STATE_ID], "contains");
+
+        if(doesParameterExist(filterStateId)) {
+            var dashboardStateId = cleanValue(parameters[DASHBOARD_STATE_ID], "contains");
+
+            if(!doesParameterExist(dashboardStateId) || ignoreDashboardState) {
+                dashboardStateId = "";
+            }
+
+            service.loadState(dashboardStateId, filterStateId);
+
+            return true;
+        }
+
+        return false;
     };
 
     /**
      * Adds a filter to the dashboard for the first item in the given list of arguments using the given parameters.  Then calls itself for the next item in the list of arguments.
      * @param {Object} parameters
      * @param {Array} argsList
-     * @param {Boolean} ignoreDashboardState Whether to ignore any saved dashboard states given in the parameters
+     * @param {Function} endCallback
      * @method addFiltersForDashboardParameters
      * @private
      */
-    var addFiltersForDashboardParameters = function(parameters, argsList, ignoreDashboardState) {
+    var addFiltersForDashboardParameters = function(parameters, argsList, endCallback) {
         var args = argsList.shift();
         var parameterValue = args.cleanParameter(parameters[args.parameterKey], args.operator);
         var dataWithMappings = datasetService.getFirstDatabaseAndTableWithMappings(args.mappings);
         var callNextFunction = function() {
             if(argsList.length) {
-                addFiltersForDashboardParameters(parameters, argsList);
+                addFiltersForDashboardParameters(parameters, argsList, endCallback);
+            } else if(endCallback && _.isFunction(endCallback)) {
+                endCallback();
             }
         };
 
-        if(args.isParameterValid(parameterValue) && args.parameterKey === FILTER_STATE_ID) {
-            if(!ignoreDashboardState) {
-                var dashboardStateIdArgs = argsList[argsList.length - 1];
-                var dashboardStateId = dashboardStateIdArgs.cleanParameter(parameters[dashboardStateIdArgs.parameterKey], dashboardStateIdArgs.operator);
-                if(!args.isParameterValid(dashboardStateId)) {
-                    dashboardStateId = "";
-                }
-                loadState(dashboardStateId, parameterValue);
-            } else {
-                loadState("", parameterValue);
-            }
-        } else if(args.isParameterValid(parameterValue) && args.parameterKey === DASHBOARD_STATE_ID && !ignoreDashboardState) {
-            loadState(parameterValue, "", callNextFunction);
-        } else if(args.isParameterValid(parameterValue) && isDatasetValid(dataWithMappings, args.mappings)) {
+        if(args.isParameterValid(parameterValue) && isDatasetValid(dataWithMappings, args.mappings)) {
             var relations = datasetService.getRelations(dataWithMappings.database, dataWithMappings.table, findFieldsForMappings(dataWithMappings, args.mappings));
             var filterKeys = filterService.createFilterKeys(service.FILTER_KEY_PREFIX + "-" + args.filterName, datasetService.getDatabaseAndTableNames());
             var filterName = {
@@ -212,30 +221,22 @@ function($location, datasetService, filterService, connectionService, errorNotif
      * Loads the dashboard and/or filter states for the given IDs and calls the given callback, if any, when finished.
      * @param {String} dashboardStateId
      * @param {String} filterStateId
-     * @param {Function} callback
      * @method loadState
-     * @private
      */
-    var loadState = function(dashboardStateId, filterStateId, callback) {
-        var connection = connectionService.getActiveConnection();
-        if(connection) {
-            var params = {};
-            if(dashboardStateId) {
-                params.dashboardStateId = dashboardStateId;
-            }
-            if(filterStateId) {
-                params.filterStateId = filterStateId;
-            }
-            connection.loadState(params, function(dashboardState) {
-                loadStateSuccess(dashboardState, dashboardStateId, callback);
-            }, function(response) {
-                errorNotificationService.showErrorMessage(null, response.responseJSON.error);
-
-                if(callback) {
-                    callback();
-                }
-            });
+    service.loadState = function(dashboardStateId, filterStateId) {
+        var connection = connectionService.getActiveConnection() || connectionService.createActiveConnection();
+        var params = {};
+        if(dashboardStateId) {
+            params.dashboardStateId = dashboardStateId;
         }
+        if(filterStateId) {
+            params.filterStateId = filterStateId;
+        }
+        connection.loadState(params, function(dashboardState) {
+            loadStateSuccess(dashboardState, dashboardStateId);
+        }, function(response) {
+            errorNotificationService.showErrorMessage(null, response.responseJSON.error);
+        });
     };
 
     /**
@@ -243,12 +244,11 @@ function($location, datasetService, filterService, connectionService, errorNotif
      * @param {Object} dashboardState
      * @param {Array} dashboardState.dashboard
      * @param {Object} dashboardState.dataset
-     * @param {String} filterStateId
-     * @param {Function} callback
+     * @param {String} dashboardStateId
      * @method loadStateSuccess
      * @private
      */
-    var loadStateSuccess = function(dashboardState, dashboardStateId, callback) {
+    var loadStateSuccess = function(dashboardState, dashboardStateId) {
         if(_.keys(dashboardState).length) {
             if(dashboardStateId) {
                 var matchingDataset = datasetService.getDatasetWithName(dashboardState.dataset.name);
@@ -261,27 +261,16 @@ function($location, datasetService, filterService, connectionService, errorNotif
 
                 // Update dataset fields, then set as active and update the dashboard
                 datasetService.updateDatabases(matchingDataset, connection, function(dataset) {
-                    datasetService.setActiveDataset(dataset);
-
-                    service.messenger.publish("STATE_CHANGED", dashboardState.dashboard);
-
-                    if(callback) {
-                        callback();
-                    }
+                    service.messenger.publish("STATE_CHANGED", {
+                        dashboard: dashboardState.dashboard,
+                        dataset: dataset
+                    });
                 });
             } else {
                 service.messenger.publish("STATE_CHANGED", null);
-
-                if(callback) {
-                    callback();
-                }
             }
         } else {
             errorNotificationService.showErrorMessage(null, "State not found for given IDs.");
-
-            if(callback) {
-                callback();
-            }
         }
     };
 

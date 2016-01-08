@@ -80,20 +80,6 @@ function($scope, $timeout, $location, config, datasets, connectionService, error
         }
     }
 
-    var loadState = function(visualizations) {
-        if(visualizations) {
-            $scope.$apply(function() {
-                $scope.visualizations = visualizations;
-
-                for(var i = 0; i < $scope.visualizations.length; ++i) {
-                    $scope.visualizations[i].id = uuid();
-                }
-            });
-        }
-    };
-
-    $scope.messenger.subscribe("STATE_CHANGED", loadState);
-
     /**
      * Opens either the overwrite state modal or the save new state modal, depending on
      * if there is a state loading already in the dashboard.

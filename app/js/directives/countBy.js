@@ -17,9 +17,9 @@
  */
 angular.module('neonDemo.directives')
 .directive('countBy', ['external', 'ConnectionService', 'DatasetService', 'ErrorNotificationService', 'FilterService',
-'ExportService', 'LinksPopupService', 'VisualizationService', '$filter',
+'ExportService', 'LinksPopupService', 'VisualizationService',
 function(external, connectionService, datasetService, errorNotificationService, filterService,
-exportService, linksPopupService, visualizationService, $filter) {
+exportService, linksPopupService, visualizationService) {
     return {
         templateUrl: 'partials/directives/countby.html',
         restrict: 'EA',
@@ -33,7 +33,7 @@ exportService, linksPopupService, visualizationService, $filter) {
             bindFilterValue: '=',
             bindTable: '=',
             bindDatabase: '=',
-            bindId: '=',
+            bindStateId: '=',
             hideHeader: '=?',
             hideAdvancedOptions: '=?',
             limitCount: '=?'
@@ -89,7 +89,7 @@ exportService, linksPopupService, visualizationService, $filter) {
                     return "Error";
                 }
                 return ($scope.active.count >= $scope.active.limitCount ? "Limited to " : "") + ($scope.active.count || "No") + " Values";
-            }
+            };
             $scope.showOptionsMenuButtonText = function() {
                 return true;
             };
@@ -115,7 +115,7 @@ exportService, linksPopupService, visualizationService, $filter) {
                 });
 
                 $scope.exportID = exportService.register($scope.makeCountByExportObject);
-                visualizationService.register($scope.bindId, bindFields);
+                visualizationService.register($scope.bindStateId, bindFields);
 
                 $scope.$on('$destroy', function() {
                     XDATA.userALE.log({
@@ -136,7 +136,7 @@ exportService, linksPopupService, visualizationService, $filter) {
                         filterService.removeFilters($scope.messenger, $scope.filterKeys);
                     }
                     exportService.unregister($scope.exportID);
-                    visualizationService.unregister($scope.bindId);
+                    visualizationService.unregister($scope.bindStateId);
                 });
 
                 $scope.element.resize(updateSize);
@@ -657,33 +657,36 @@ exportService, linksPopupService, visualizationService, $filter) {
             var bindFields = function() {
                 var bindingFields = {};
 
-                if($scope.bindTitle) {
-                    bindingFields["bind-title"] = "'" + $scope.bindTitle + "'";
-                }
-                if($scope.options.field && $scope.options.field.columnName) {
-                    bindingFields["bind-count-field"] = "'" + $scope.options.field.columnName + "'";
-                }
-                if($scope.options.aggregation) {
-                    bindingFields["bind-aggregation"] = "'" + $scope.options.aggregation + "'";
+                bindingFields["bind-title"] = "'" + $scope.generateTitle() + "'";
+                bindingFields["bind-data-field"] = ($scope.active.dataField && $scope.active.dataField.columnName) ? "'" + $scope.active.dataField.columnName + "'" : undefined;
 
-                    if($scope.options.aggregation !== 'count' && $scope.options.aggregationField && $scope.options.aggregationField.columnName) {
-                        bindingFields["bind-aggregation-field"] = "'" + $scope.options.aggregationField.columnName + "'";
+                var bindAgg;
+                var bindAggField;
+                if($scope.active.aggregation) {
+                    bindAgg = "'" + $scope.active.aggregation + "'";
+
+                    if($scope.active.aggregation !== 'count' && $scope.active.aggregationField && $scope.active.aggregationField.columnName) {
+                        bindAggField = "'" + $scope.active.aggregationField.columnName + "'";
                     }
                 }
-                if($scope.options.filterField && $scope.options.filterField.columnName) {
-                    bindingFields["bind-filter-field"] = "'" + $scope.options.filterField.columnName + "'";
+                bindingFields["bind-aggregation"] = bindAgg;
+                bindingFields["bind-aggregation-field"] = bindAggField;
 
-                    if($scope.options.filterValue) {
-                        bindingFields["bind-filter-value"] = "'" + $scope.options.filterValue + "'";
+                var bindFilterField;
+                var bindFilterValue;
+                if($scope.active.filterField && $scope.active.filterField.columnName) {
+                    bindFilterField = "'" + $scope.active.filterField.columnName + "'";
+
+                    if($scope.active.filterValue) {
+                        bindFilterValue = "'" + $scope.active.filterValue + "'";
                     }
                 }
-                if($scope.options.table && $scope.options.table.name) {
-                    bindingFields["bind-table"] = "'" + $scope.options.table.name + "'";
-                }
-                if($scope.options.database && $scope.options.database.name) {
-                    bindingFields["bind-database"] = "'" + $scope.options.database.name + "'";
-                }
-                bindingFields["limit-count"] = $scope.options.limitCount;
+                bindingFields["bind-filter-field"] = bindFilterField;
+                bindingFields["bind-filter-value"] = bindFilterValue;
+
+                bindingFields["bind-table"] = ($scope.active.table && $scope.active.table.name) ? "'" + $scope.active.table.name + "'" : undefined;
+                bindingFields["bind-database"] = ($scope.active.database && $scope.active.database.name) ? "'" + $scope.active.database.name + "'" : undefined;
+                bindingFields["limit-count"] = $scope.active.limitCount;
 
                 return bindingFields;
             };

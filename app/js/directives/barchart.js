@@ -40,7 +40,7 @@ function(external, connectionService, datasetService, errorNotificationService, 
             bindAggregationField: '=',
             bindTable: '=',
             bindDatabase: '=',
-            bindId: '=',
+            bindStateId: '=',
             hideHeader: '=?',
             hideAdvancedOptions: '=?',
             limitCount: '=?'
@@ -117,7 +117,7 @@ function(external, connectionService, datasetService, errorNotificationService, 
                 });
 
                 $scope.exportID = exportService.register($scope.makeBarchartExportObject);
-                visualizationService.register($scope.bindId, bindFields);
+                visualizationService.register($scope.bindStateId, bindFields);
 
                 $scope.$on('$destroy', function() {
                     XDATA.userALE.log({
@@ -137,7 +137,7 @@ function(external, connectionService, datasetService, errorNotificationService, 
                         filterService.removeFilters($scope.messenger, $scope.filterKeys);
                     }
                     exportService.unregister($scope.exportID);
-                    visualizationService.unregister($scope.bindId);
+                    visualizationService.unregister($scope.bindStateId);
                 });
 
                 $scope.$watch('options.attrX', function(newValue) {
@@ -615,25 +615,23 @@ function(external, connectionService, datasetService, errorNotificationService, 
             var bindFields = function() {
                 var bindingFields = {};
 
-                if($scope.bindTitle) {
-                    bindingFields["bind-title"] = "'" + $scope.bindTitle + "'";
-                }
-                if($scope.options.attrX && $scope.options.attrX.columnName) {
-                    bindingFields["bind-x-axis-field"] = "'" + $scope.options.attrX.columnName + "'";
-                }
+                bindingFields["bind-title"] = $scope.bindTitle ? "'" + $scope.bindTitle + "'" : undefined;
+                bindingFields["bind-x-axis-field"] = ($scope.options.attrX && $scope.options.attrX.columnName) ? "'" + $scope.options.attrX.columnName + "'" : undefined;
+
+                var bindAggField;
+                var bindYAxisField;
                 if($scope.options.barType) {
-                    bindingFields["bind-aggregation-field"] = "'" + $scope.options.barType + "'";
+                    bindAggField = "'" + $scope.options.barType + "'";
 
                     if($scope.options.barType !== 'count' && $scope.options.attrY && $scope.options.attrY.columnName) {
-                        bindingFields["bind-y-axis-field"] = "'" + $scope.options.attrY.columnName + "'";
+                        bindYAxisField = "'" + $scope.options.attrY.columnName + "'";
                     }
                 }
-                if($scope.options.table && $scope.options.table.name) {
-                    bindingFields["bind-table"] = "'" + $scope.options.table.name + "'";
-                }
-                if($scope.options.database && $scope.options.database.name) {
-                    bindingFields["bind-database"] = "'" + $scope.options.database.name + "'";
-                }
+                bindingFields["bind-aggregation-field"] = bindAggField;
+                bindingFields["bind-y-axis-field"] = bindYAxisField;
+
+                bindingFields["bind-table"] = ($scope.options.table && $scope.options.table.name) ? "'" + $scope.options.table.name + "'" : undefined;
+                bindingFields["bind-database"] = ($scope.options.database && $scope.options.database.name) ? "'" + $scope.options.database.name + "'" : undefined;
                 bindingFields["limit-count"] = $scope.options.limitCount;
 
                 return bindingFields;

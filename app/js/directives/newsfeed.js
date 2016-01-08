@@ -34,7 +34,7 @@ function(external, $timeout, connectionService, datasetService, errorNotificatio
             bindFilterValue: '=',
             bindFeedName: '=',
             bindFeedType: '=',
-            bindId: '='
+            bindStateId: '='
         },
         link: function($scope, $element) {
             $element.addClass('newsfeed-directive');
@@ -160,7 +160,7 @@ function(external, $timeout, connectionService, datasetService, errorNotificatio
                 $element.find(".chart-options a").resize(resizeTitle);
                 $element.find(".newsfeed").scroll(updateNewsfeedOnScroll);
 
-                visualizationService.register($scope.bindId, bindFields);
+                visualizationService.register($scope.bindStateId, bindFields);
 
                 $scope.$on('$destroy', function() {
                     linksPopupService.deleteLinks($scope.visualizationId + "-head");
@@ -169,7 +169,7 @@ function(external, $timeout, connectionService, datasetService, errorNotificatio
                     $element.off("resize", resizeNewsfeed);
                     $element.find(".chart-options a").off("resize", resizeTitle);
                     $element.find(".newsfeed").off("scroll", updateNewsfeedOnScroll);
-                    visualizationService.unregister($scope.bindId);
+                    visualizationService.unregister($scope.bindStateId);
                 });
             };
 
@@ -885,40 +885,28 @@ function(external, $timeout, connectionService, datasetService, errorNotificatio
             var bindFields = function() {
                 var bindingFields = {};
 
-                if($scope.bindTitle) {
-                    bindingFields["bind-title"] = "'" + $scope.bindTitle + "'";
-                }
-                if($scope.options.headField && $scope.options.headField.columnName) {
-                    bindingFields["bind-head-field"] = "'" + $scope.options.headField.columnName + "'";
-                }
-                if($scope.options.nameField && $scope.options.nameField.columnName) {
-                    bindingFields["bind-name-field"] = "'" + $scope.options.nameField.columnName + "'";
-                }
-                if($scope.options.dateField && $scope.options.dateField.columnName) {
-                    bindingFields["bind-date-field"] = "'" + $scope.options.dateField.columnName + "'";
-                }
-                if($scope.options.textField && $scope.options.textField.columnName) {
-                    bindingFields["bind-text-field"] = "'" + $scope.options.textField.columnName + "'";
-                }
+                bindingFields["bind-title"] = $scope.bindTitle ? "'" + $scope.bindTitle + "'" : undefined;
+                bindingFields["bind-head-field"] = ($scope.options.headField && $scope.options.headField.columnName) ? "'" + $scope.options.headField.columnName + "'" : undefined;
+                bindingFields["bind-name-field"] = ($scope.options.nameField && $scope.options.nameField.columnName) ? "'" + $scope.options.nameField.columnName + "'" : undefined;
+                bindingFields["bind-date-field"] = ($scope.options.dateField && $scope.options.dateField.columnName) ? "'" + $scope.options.dateField.columnName + "'" : undefined;
+                bindingFields["bind-text-field"] = ($scope.options.textField && $scope.options.textField.columnName) ? "'" + $scope.options.textField.columnName + "'" : undefined;
+
+                var bindFilterField;
+                var bindFilterValue;
                 if($scope.options.bindFilterField && $scope.options.bindFilterField.columnName) {
-                    bindingFields["bind-filter-field"] = "'" + $scope.options.bindFilterField.columnName + "'";
+                    bindFilterField = "'" + $scope.options.bindFilterField.columnName + "'";
 
                     if($scope.options.filterValue) {
-                        bindingFields["bind-filter-value"] = "'" + $scope.options.filterValue + "'";
+                        bindFilterValue = "'" + $scope.options.filterValue + "'";
                     }
                 }
-                if($scope.feedName) {
-                    bindingFields["bind-feed-name"] = "'" + $scope.feedName + "'";
-                }
-                if($scope.feedType) {
-                    bindingFields["bind-feed-type"] = "'" + $scope.feedType + "'";
-                }
-                if($scope.options.table && $scope.options.table.name) {
-                    bindingFields["bind-table"] = "'" + $scope.options.table.name + "'";
-                }
-                if($scope.options.database && $scope.options.database.name) {
-                    bindingFields["bind-database"] = "'" + $scope.options.database.name + "'";
-                }
+                bindingFields["bind-filter-field"] = bindFilterField;
+                bindingFields["bind-filter-value"] = bindFilterValue;
+
+                bindingFields["bind-feed-name"] = $scope.feedName ? "'" + $scope.feedName + "'" : undefined;
+                bindingFields["bind-feed-type"] = $scope.feedType ? "'" + $scope.feedType + "'" : undefined;
+                bindingFields["bind-table"] = ($scope.options.table && $scope.options.table.name) ? "'" + $scope.options.table.name + "'" : undefined;
+                bindingFields["bind-database"] = ($scope.options.database && $scope.options.database.name) ? "'" + $scope.options.database.name + "'" : undefined;
 
                 return bindingFields;
             };

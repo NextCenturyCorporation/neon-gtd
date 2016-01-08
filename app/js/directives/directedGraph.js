@@ -31,7 +31,7 @@ function($filter, $timeout, connectionService, datasetService, errorNotification
             bindTitle: '=',
             bindFeedName: '=',
             bindFeedType: '=',
-            bindId: '=',
+            bindStateId: '=',
             hideHeader: '=?',
             hideAdvancedOptions: '=?'
         },
@@ -166,7 +166,7 @@ function($filter, $timeout, connectionService, datasetService, errorNotification
                 $scope.messenger.subscribe("date_selected", onDateSelected);
 
                 $scope.exportID = exportService.register($scope.makeDirectedGraphExportObject);
-                visualizationService.register($scope.bindId, bindFields);
+                visualizationService.register($scope.bindStateId, bindFields);
 
                 $scope.messenger.subscribe(filterService.REQUEST_REMOVE_FILTER, function(ids) {
                     if(filterService.containsKey($scope.filterKeys, ids)) {
@@ -189,7 +189,7 @@ function($filter, $timeout, connectionService, datasetService, errorNotification
                     $element.find(".legend").off("resize", updateSize);
                     $scope.messenger.removeEvents();
                     exportService.unregister($scope.exportID);
-                    visualizationService.unregister($scope.bindId);
+                    visualizationService.unregister($scope.bindStateId);
                 });
 
                 $element.resize(updateSize);
@@ -748,16 +748,10 @@ function($filter, $timeout, connectionService, datasetService, errorNotification
              */
             var bindFields = function() {
                 var bindingFields = {};
-
-                if($scope.bindFeedName) {
-                    bindingFields["bind-feed-name"] = "'" + $scope.bindFeedName + "'";
-                }
-                if($scope.bindFeedType) {
-                    bindingFields["bind-feed-type"] = "'" + $scope.bindFeedType + "'";
-                }
-
+                bindingFields["bind-feed-name"] = $scope.bindFeedName ? "'" + $scope.bindFeedName + "'" : undefined;
+                bindingFields["bind-feed-type"] = $scope.bindFeedType ? "'" + $scope.bindFeedType + "'" : undefined;
                 return bindingFields;
-            }
+            };
 
             // Wait for neon to be ready, the create our messenger and intialize the view and data.
             neon.ready(function() {

@@ -40,7 +40,7 @@ linkify, $sce, $timeout, linksPopupService, visualizationService) {
             bindTable: '=',
             bindDatabase: '=',
             bindIdField: '=',
-            bindId: '=',
+            bindStateId: '=',
             hideHeader: '=?',
             hideAdvancedOptions: '=?'
         },
@@ -124,7 +124,7 @@ linkify, $sce, $timeout, linksPopupService, visualizationService) {
                 });
 
                 $scope.exportID = exportService.register($scope.makeQueryResultsTableExportObject);
-                visualizationService.register($scope.bindId, bindFields);
+                visualizationService.register($scope.bindStateId, bindFields);
 
                 $scope.$on('$destroy', function() {
                     XDATA.userALE.log({
@@ -140,7 +140,7 @@ linkify, $sce, $timeout, linksPopupService, visualizationService) {
                     linksPopupService.deleteLinks($scope.tableId);
                     $scope.messenger.removeEvents();
                     exportService.unregister($scope.exportID);
-                    visualizationService.unregister($scope.bindId);
+                    visualizationService.unregister($scope.bindStateId);
                 });
 
                 initializeDataset();
@@ -655,20 +655,10 @@ linkify, $sce, $timeout, linksPopupService, visualizationService) {
              */
             var bindFields = function() {
                 var bindingFields = {};
-
-                if($scope.bindTitle) {
-                    bindingFields["bind-title"] = "'" + $scope.bindTitle + "'";
-                }
-                if($scope.bindIdField) {
-                    bindingFields["bind-id-field"] = "'" + $scope.bindIdField + "'";
-                }
-                if($scope.options.table && $scope.options.table.name) {
-                    bindingFields["bind-table"] = "'" + $scope.options.table.name + "'";
-                }
-                if($scope.options.database && $scope.options.database.name) {
-                    bindingFields["bind-database"] = "'" + $scope.options.database.name + "'";
-                }
-
+                bindingFields["bind-title"] = $scope.bindTitle ? "'" + $scope.bindTitle + "'" : undefined;
+                bindingFields["bind-id-field"] = $scope.bindIdField ? "'" + $scope.bindIdField + "'" : undefined;
+                bindingFields["bind-table"] = ($scope.active.table && $scope.active.table.name) ? "'" + $scope.active.table.name + "'" : undefined;
+                bindingFields["bind-database"] = ($scope.active.database && $scope.active.database.name) ? "'" + $scope.active.database.name + "'" : undefined;
                 return bindingFields;
             };
 

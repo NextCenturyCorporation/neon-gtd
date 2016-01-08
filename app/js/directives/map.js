@@ -1755,7 +1755,9 @@ angular.module('neonDemo.directives')
                 layer.editing = false;
                 setFilterKey(layer);
                 layer.olLayer = addLayer(layer);
-                $scope.legend.layers[legendIndex].olLayerId = layer.olLayer.id;
+                if(legendIndex >= 0) {
+                    $scope.legend.layers[legendIndex].olLayerId = layer.olLayer.id;
+                }
                 $scope.map.setLayerVisibility(layer.olLayer.id, layer.visible);
                 refreshFilterKeys(previousLayer, function() {
                     if($scope.zoomRectId) {

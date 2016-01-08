@@ -44,7 +44,7 @@ function(external, connectionService, datasetService, errorNotificationService, 
             bindTable: '=',
             bindDatabase: '=',
             bindGranularity: '=',
-            bindId: '=',
+            bindStateId: '=',
             hideHeader: '=?',
             hideAdvancedOptions: '=?'
         },
@@ -135,7 +135,7 @@ function(external, connectionService, datasetService, errorNotificationService, 
                 });
 
                 $scope.exportID = exportService.register($scope.bindFields);
-                visualizationService.register($scope.bindId, bindFields);
+                visualizationService.register($scope.bindStateId, bindFields);
 
                 $scope.$on('$destroy', function() {
                     XDATA.userALE.log({
@@ -152,7 +152,7 @@ function(external, connectionService, datasetService, errorNotificationService, 
                     $element.off("resize", updateChartSize);
                     $scope.messenger.removeEvents();
                     exportService.unregister($scope.exportID);
-                    visualizationService.unregister($scope.bindId);
+                    visualizationService.unregister($scope.bindStateId);
                     if($scope.brushExtent.length) {
                         filterService.removeFilters($scope.messenger, $scope.filterKeys);
                     }
@@ -1259,32 +1259,25 @@ function(external, connectionService, datasetService, errorNotificationService, 
             var bindFields = function() {
                 var bindingFields = {};
 
-                if($scope.bindTitle) {
-                    bindingFields["bind-title"] = "'" + $scope.bindTitle + "'";
-                }
-                if($scope.options.attrX && $scope.options.attrX.columnName) {
-                    bindingFields["bind-date-field"] = "'" + $scope.options.attrX.columnName + "'";
-                }
+                bindingFields["bind-title"] = $scope.bindTitle ? "'" + $scope.bindTitle + "'" : undefined;
+                bindingFields["bind-date-field"] = ($scope.options.attrX && $scope.options.attrX.columnName) ? "'" + $scope.options.attrX.columnName + "'" : undefined;
+
+                var bindAggField;
+                var bindYAxisField;
                 if($scope.options.aggregation) {
-                    bindingFields["bind-aggregation-field"] = "'" + $scope.options.aggregation + "'";
+                    bindAggField = "'" + $scope.options.aggregation + "'";
 
                     if($scope.options.aggregation !== 'count' && $scope.options.attrY && $scope.options.attrY.columnName) {
-                        bindingFields["bind-y-axis-field"] = "'" + $scope.options.attrY.columnName + "'";
+                        bindYAxisField = "'" + $scope.options.attrY.columnName + "'";
                     }
                 }
-                if($scope.options.categoryField && $scope.options.categoryField.columnName) {
-                    bindingFields["bind-category-field"] = "'" + $scope.options.categoryField.columnName + "'";
-                }
-                if($scope.options.table && $scope.options.table.name) {
-                    bindingFields["bind-table"] = "'" + $scope.options.table.name + "'";
-                }
-                if($scope.options.database && $scope.options.database.name) {
-                    bindingFields["bind-database"] = "'" + $scope.options.database.name + "'";
-                }
-                if($scope.options.granularity) {
-                    bindingFields["bind-granularity"] = "'" + $scope.options.granularity + "'";
-                }
+                bindingFields["bind-aggregation-field"] = bindAggField;
+                bindingFields["bind-y-axis-field"] = bindYAxisField;
 
+                bindingFields["bind-category-field"] = ($scope.options.categoryField && $scope.options.categoryField.columnName) ? "'" + $scope.options.categoryField.columnName + "'" : undefined;
+                bindingFields["bind-table"] = ($scope.options.table && $scope.options.table.name) ? "'" + $scope.options.table.name + "'" : undefined;
+                bindingFields["bind-database"] = ($scope.options.database && $scope.options.database.name) ? "'" + $scope.options.database.name + "'" : undefined;
+                bindingFields["bind-granularity"] = $scope.options.granularity ? "'" + $scope.options.granularity + "'" : undefined;
                 return bindingFields;
             };
 

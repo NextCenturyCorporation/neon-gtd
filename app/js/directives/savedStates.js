@@ -32,6 +32,7 @@ angular.module('neonDemo.directives')
             $scope.stateNames = [];
             $scope.stateName = "";
             $scope.stateNameError = false;
+            $scope.isLoading = false;
             $scope.messenger = new neon.eventing.Messenger();
 
             /*
@@ -109,9 +110,10 @@ angular.module('neonDemo.directives')
 
                             // Update dataset fields, then set as active and update the dashboard
                             datasetService.updateDatabases(matchingDataset, stateConnection, function(dataset) {
-                                datasetService.setActiveDataset(dataset);
-
-                                $scope.messenger.publish("STATE_CHANGED", dashboardState.dashboard);
+                                $scope.messenger.publish("STATE_CHANGED", {
+                                    dashboard: dashboardState.dashboard,
+                                    dataset: dataset
+                                });
                             });
                         } else {
                             errorNotificationService.showErrorMessage(null, "State " + $scope.stateName + " not found.");
@@ -143,6 +145,10 @@ angular.module('neonDemo.directives')
                         });
                     }, handleStateFailure);
                 }
+            };
+
+            $scope.getDefaultOptionTitle = function() {
+                return $scope.isLoading ? 'Loading...' : 'Select a name';
             };
 
             /*
@@ -198,11 +204,14 @@ angular.module('neonDemo.directives')
 
                 var connection = connectionService.getActiveConnection();
                 if(connection) {
-                    connection.getAllStates(function(stateNames) {
+                    $scope.isLoading = true;
+                    connection.getAllStateNames(function(stateNames) {
                         $scope.$apply(function() {
+                            $scope.isLoading = false;
                             $scope.stateNames = stateNames;
                         });
                     }, function(response) {
+                        $scope.isLoading = false;
                         $scope.stateNames = [];
                         errorNotificationService.showErrorMessage(null, response.responseJSON.error);
                     });

@@ -43,7 +43,7 @@ function($interval, $filter, external, connectionService, datasetService, errorN
             bindTable: '=',
             bindDatabase: '=',
             bindGranularity: '=',
-            bindId: '=',
+            bindStateId: '=',
             hideHeader: '=?',
             hideAdvancedOptions: '=?',
             overrideStartDate: '=?',
@@ -608,7 +608,7 @@ function($interval, $filter, external, connectionService, datasetService, errorN
                 });
 
                 $scope.exportID = exportService.register($scope.makeTimelineSelectorExportObject);
-                visualizationService.register($scope.bindId, bindFields);
+                visualizationService.register($scope.bindStateId, bindFields);
 
                 $scope.$on('$destroy', function() {
                     XDATA.userALE.log({
@@ -628,7 +628,7 @@ function($interval, $filter, external, connectionService, datasetService, errorN
                         filterService.removeFilters($scope.messenger, $scope.filterKeys);
                     }
                     exportService.unregister($scope.exportID);
-                    visualizationService.unregister($scope.bindId);
+                    visualizationService.unregister($scope.bindStateId);
                     $element.off("resize", onResize);
                 });
             };
@@ -1705,23 +1705,11 @@ function($interval, $filter, external, connectionService, datasetService, errorN
              */
             var bindFields = function() {
                 var bindingFields = {};
-
-                if($scope.bindTitle) {
-                    bindingFields["bind-title"] = "'" + $scope.bindTitle + "'";
-                }
-                if($scope.options.dateField && $scope.options.dateField.columnName) {
-                    bindingFields["bind-date-field"] = "'" + $scope.options.dateField.columnName + "'";
-                }
-                if($scope.options.table && $scope.options.table.name) {
-                    bindingFields["bind-table"] = "'" + $scope.options.table.name + "'";
-                }
-                if($scope.options.database && $scope.options.database.name) {
-                    bindingFields["bind-database"] = "'" + $scope.options.database.name + "'";
-                }
-                if($scope.options.granularity) {
-                    bindingFields["bind-granularity"] = "'" + $scope.options.granularity + "'";
-                }
-
+                bindingFields["bind-title"] = $scope.bindTitle ? "'" + $scope.bindTitle + "'" : undefined;
+                bindingFields["bind-date-field"] = ($scope.options.dateField && $scope.options.dateField.columnName) ? "'" + $scope.options.dateField.columnName + "'" : undefined;
+                bindingFields["bind-table"] = ($scope.options.table && $scope.options.table.name) ? "'" + $scope.options.table.name + "'" : undefined;
+                bindingFields["bind-database"] = ($scope.options.database && $scope.options.database.name) ? "'" + $scope.options.database.name + "'" : undefined;
+                bindingFields["bind-granularity"] = $scope.options.granularity ? "'" + $scope.options.granularity + "'" : undefined;
                 return bindingFields;
             };
 

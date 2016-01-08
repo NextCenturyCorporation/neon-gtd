@@ -192,7 +192,8 @@ angular.module("neonDemo.services")
      * @return {Array} An array of table Objects containing {String} name, {Array} fields, and {Array} mappings.
      */
     service.getTables = function(databaseName) {
-        return service.getDatabaseWithName(databaseName).tables;
+        var database = service.getDatabaseWithName(databaseName);
+        return database ? database.tables : [];
     };
 
     /**
@@ -590,7 +591,6 @@ angular.module("neonDemo.services")
 
         // Save the generated date filter keys for the given database/table/field and each of its relations.
         relations.forEach(function(relation) {
-            var relationField = relation.fields[0];
             // Each relation will only contain a single field corresponding to the date field.
             relation.fields[0].related.forEach(function(relatedFieldName) {
                 service.dataset.dateFilterKeys[relation.database][relation.table][relatedFieldName] = dateFilterKeys;

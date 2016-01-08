@@ -31,7 +31,7 @@ function(external, connectionService, datasetService, errorNotificationService, 
             bindFilterValue: '=',
             bindTable: '=',
             bindDatabase: '=',
-            bindId: '=',
+            bindStateId: '=',
             hideHeader: '=?',
             hideAdvancedOptions: '=?'
         },
@@ -43,7 +43,7 @@ function(external, connectionService, datasetService, errorNotificationService, 
 
             $scope.optionsMenuButtonText = function() {
                 return $scope.filterTags.length === 0 && $scope.data.length === 0 ? "No Tag Data" : "";
-            }
+            };
             $scope.showOptionsMenuButtonText = function() {
                 return $scope.filterTags.length === 0 && $scope.data.length === 0;
             };
@@ -146,7 +146,7 @@ function(external, connectionService, datasetService, errorNotificationService, 
                 $scope.messenger.subscribe("theme_changed", onThemeChanged);
 
                 $scope.exportID = exportService.register($scope.makeTagCloudExportObject);
-                visualizationService.register($scope.bindId, bindFields);
+                visualizationService.register($scope.bindStateId, bindFields);
 
                 $scope.$on('$destroy', function() {
                     XDATA.userALE.log({
@@ -168,7 +168,7 @@ function(external, connectionService, datasetService, errorNotificationService, 
                         filterService.removeFilters($scope.messenger, $scope.filterKeys);
                     }
                     exportService.unregister($scope.exportID);
-                    visualizationService.unregister($scope.bindId);
+                    visualizationService.unregister($scope.bindStateId);
                 });
 
                 $element.resize(updateSize);
@@ -768,25 +768,23 @@ function(external, connectionService, datasetService, errorNotificationService, 
             var bindFields = function() {
                 var bindingFields = {};
 
-                if($scope.bindTitle) {
-                    bindingFields["bind-title"] = "'" + $scope.bindTitle + "'";
-                }
-                if($scope.options.tagField && $scope.options.tagField.columnName) {
-                    bindingFields["bind-tag-field"] = "'" + $scope.options.tagField.columnName + "'";
-                }
+                bindingFields["bind-title"] = $scope.bindTitle ? "'" + $scope.bindTitle + "'" : undefined;
+                bindingFields["bind-tag-field"] = ($scope.options.tagField && $scope.options.tagField.columnName) ? "'" + $scope.options.tagField.columnName + "'" : undefined;
+
+                var bindFilterField;
+                var bindFilterValue;
                 if($scope.options.filterField && $scope.options.filterField.columnName) {
-                    bindingFields["bind-filter-field"] = "'" + $scope.options.filterField.columnName + "'";
+                    bindFilterField = "'" + $scope.options.filterField.columnName + "'";
 
                     if($scope.options.filterValue) {
-                        bindingFields["bind-filter-value"] = "'" + $scope.options.filterValue + "'";
+                        bindFilterValue = "'" + $scope.options.filterValue + "'";
                     }
                 }
-                if($scope.options.table && $scope.options.table.name) {
-                    bindingFields["bind-table"] = "'" + $scope.options.table.name + "'";
-                }
-                if($scope.options.database && $scope.options.database.name) {
-                    bindingFields["bind-database"] = "'" + $scope.options.database.name + "'";
-                }
+                bindingFields["bind-filter-field"] = bindFilterField;
+                bindingFields["bind-filter-value"] = bindFilterValue;
+
+                bindingFields["bind-table"] = ($scope.options.table && $scope.options.table.name) ? "'" + $scope.options.table.name + "'" : undefined;
+                bindingFields["bind-database"] = ($scope.options.database && $scope.options.database.name) ? "'" + $scope.options.database.name + "'" : undefined;
 
                 return bindingFields;
             };

@@ -29,7 +29,7 @@ function(connectionService, datasetService, errorNotificationService, filterServ
             bindColorField: "=",
             bindGroupFields: "=",
             bindSelectedGroups: "=",
-            bindId: '='
+            bindStateId: '='
         },
         link: function($scope, $element) {
             $element.addClass('gantt-chart-directive');
@@ -96,7 +96,7 @@ function(connectionService, datasetService, errorNotificationService, filterServ
                     filtersChanged: onFiltersChanged
                 });
 
-                visualizationService.register($scope.bindId, bindFields);
+                visualizationService.register($scope.bindStateId, bindFields);
 
                 $scope.$on('$destroy', function() {
                     XDATA.userALE.log({
@@ -110,7 +110,7 @@ function(connectionService, datasetService, errorNotificationService, filterServ
                         tags: ["remove", "count-by"]
                     });
                     $scope.messenger.removeEvents();
-                    visualizationService.unregister($scope.bindId);
+                    visualizationService.unregister($scope.bindStateId);
                     if($scope.filterSet) {
                         filterService.removeFilters($scope.messenger, $scope.filterKeys);
                     }
@@ -446,26 +446,12 @@ function(connectionService, datasetService, errorNotificationService, filterServ
              */
             var bindFields = function() {
                 var bindingFields = {};
-
-                if($scope.options.titleField && $scope.options.titleField.columnName) {
-                    bindingFields["bind-row-title-field"] = "'" + $scope.titleField.columnName + "'";
-                }
-                if($scope.options.startField && $scope.options.startField.columnName) {
-                    bindingFields["bind-start-field"] = "'" + $scope.options.startField.columnName + "'";
-                }
-                if($scope.options.endField && $scope.options.endField.columnName) {
-                    bindingFields["bind-end-field"] = "'" + $scope.options.endField.columnName + "'";
-                }
-                if($scope.options.colorField && $scope.options.colorField.columnName) {
-                    bindingFields["bind-color-field"] = "'" + $scope.options.colorField.columnName + "'";
-                }
-                if($scope.options.groupFields) {
-                    bindingFields["bind-group-fields"] = "'" + $scope.options.groupFields + "'";
-                }
-                if($scope.options.selectedGroups) {
-                    bindingFields["bind-selected-groups"] = "'" + $scope.options.selectedGroups + "'";
-                }
-
+                bindingFields["bind-row-title-field"] = ($scope.options.titleField && $scope.options.titleField.columnName) ? "'" + $scope.titleField.columnName + "'" : undefined;
+                bindingFields["bind-start-field"] = ($scope.options.startField && $scope.options.startField.columnName) ? "'" + $scope.options.startField.columnName + "'" : undefined;
+                bindingFields["bind-end-field"] = ($scope.options.endField && $scope.options.endField.columnName) ? "'" + $scope.options.endField.columnName + "'" : undefined;
+                bindingFields["bind-color-field"] = ($scope.options.colorField && $scope.options.colorField.columnName) ? "'" + $scope.options.colorField.columnName + "'" : undefined;
+                bindingFields["bind-group-fields"] = $scope.options.groupFields ? "'" + $scope.options.groupFields + "'" : undefined;
+                bindingFields["bind-selected-groups"] = $scope.options.selectedGroups ? "'" + $scope.options.selectedGroups + "'" : undefined;
                 return bindingFields;
             };
 

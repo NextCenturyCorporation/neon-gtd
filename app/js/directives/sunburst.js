@@ -37,7 +37,7 @@ function(connectionService, datasetService, errorNotificationService, exportServ
             bindTitle: '=',
             bindTable: '=',
             bindDatabase: '=',
-            bindId: '=',
+            bindStateId: '=',
             hideHeader: '=?',
             hideAdvancedOptions: '=?'
         },
@@ -80,7 +80,7 @@ function(connectionService, datasetService, errorNotificationService, exportServ
                 });
 
                 $scope.exportID = exportService.register($scope.makeSunburstExportObject);
-                visualizationService.register($scope.bindId, bindFields);
+                visualizationService.register($scope.bindStateId, bindFields);
 
                 $scope.$on('$destroy', function() {
                     XDATA.userALE.log({
@@ -96,7 +96,7 @@ function(connectionService, datasetService, errorNotificationService, exportServ
                     $element.off("resize", updateChartSize);
                     $scope.messenger.removeEvents();
                     exportService.unregister($scope.exportID);
-                    visualizationService.unregister($scope.bindId);
+                    visualizationService.unregister($scope.bindStateId);
                 });
 
                 // This resizes the chart when the div changes.  This rely's on jquery's resize plugin to fire
@@ -458,17 +458,9 @@ function(connectionService, datasetService, errorNotificationService, exportServ
              */
             var bindFields = function() {
                 var bindingFields = {};
-
-                if($scope.bindTitle) {
-                    bindingFields["bind-title"] = "'" + $scope.bindTitle + "'";
-                }
-                if($scope.options.table && $scope.options.table.name) {
-                    bindingFields["bind-table"] = "'" + $scope.options.table.name + "'";
-                }
-                if($scope.options.database && $scope.options.database.name) {
-                    bindingFields["bind-database"] = "'" + $scope.options.database.name + "'";
-                }
-
+                bindingFields["bind-title"] = $scope.bindTitle ? "'" + $scope.bindTitle + "'" : undefined;
+                bindingFields["bind-table"] = ($scope.options.table && $scope.options.table.name) ? "'" + $scope.options.table.name + "'" : undefined;
+                bindingFields["bind-database"] = ($scope.options.database && $scope.options.database.name) ? "'" + $scope.options.database.name + "'" : undefined;
                 return bindingFields;
             };
 
