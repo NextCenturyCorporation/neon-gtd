@@ -1398,10 +1398,11 @@ function($interval, $filter, external, connectionService, datasetService, errorN
                         resultDate = new Date(rawData[i].date);
                         var bucketIndex = $scope.bucketizer.getBucketIndex(resultDate);
                         if(queryData[bucketIndex]) {
-                            queryData[bucketIndex].error = rawData[i].error;
+                            // TODO Determine possible problems with the error calculation in the groovy code.  Remove the division of the error by 4 that was added for the demo.
+                            queryData[bucketIndex].error = (rawData[i].error / 4);
                             queryData[bucketIndex].value = rawData[i].mean;
                             $scope.sseQueryCountTotal += rawData[i].count;
-                            $scope.sseQueryErrorAverage += rawData[i].error;
+                            $scope.sseQueryErrorAverage += (rawData[i].error / 4);
                         }
                     }
                 }
