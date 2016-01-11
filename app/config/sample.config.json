@@ -4,7 +4,7 @@
         "datastore": "mongo",
         "hostname": "localhost",
         "layout": "earthquakes",
-        "connectOnLoad": true,        
+        "connectOnLoad": true,
         "databases": [{
             "name": "test",
             "prettyName": "Test",
@@ -299,6 +299,18 @@
     },
 
     "visualizations": [{
+        "name": "Scatterplot-gl",
+        "sizeX": 2,
+        "sizeY": 2,
+        "minSizeY": 1,
+        "type": "plotly-graph",
+        "icon": "img/visualizations/CreateFilter64.png",
+        "bindings": {
+            "graph-type": "'scattergl'",
+            "bind-attr-x": "'depth'",
+            "bind-attr-y": "'mag'"
+        }
+    }, {
         "name": "Filter Builder",
         "sizeX": 12,
         "minSizeX": 12,
