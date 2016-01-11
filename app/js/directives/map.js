@@ -1300,7 +1300,9 @@ angular.module('neonDemo.directives')
 
             var buildPointQuery = function(database, table) {
                 var latitudesAndLongitudes = [];
-                var fields = {};
+                var fields = {
+                    _id: true
+                };
                 var limit;
 
                 var addField = function(field) {
