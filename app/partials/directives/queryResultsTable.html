@@ -1,14 +1,12 @@
 <div class="header">
     <div class="header-container" ng-show="!(hideHeader)">
-
         <div class="title header-text pull-left" ng-bind="(bindTitle != undefined) ? bindTitle : active.table.prettyName"></div>
-        <div class="pull-left header-text" style="padding-left: 20px;">
-            Showing
-            <span class="text-primary active-count" ng-bind="active.count | number"></span> of
-            <span ng-bind="active.totalRows | number"></span>
-        </div>
 
-        <options-menu parent-element="element" export-function="makeQueryResultsTableExportObject">
+        <a class="edit-table" ng-class="{active: gridOptions.showToolPanel}">
+            <i class="header-text glyphicon glyphicon-edit" ng-click="toggleToolbox()" title="Modify Table Rows"></i>
+        </a>
+
+        <options-menu parent-element="element" export-function="makeQueryResultsTableExportObject" button-text="optionsMenuButtonText" show-button-text="showOptionsMenuButtonText">
             <div class="form-group" ng-show="!(hideAdvancedOptions)">
                 <label>Database</label>
                 <select class="form-control" ng-model="active.database" ng-options="database.prettyName for database in databases" ng-required="true" ng-disabled="(databases.length < 2)" ng-change="handleDatabaseChange()">
@@ -21,17 +19,17 @@
             </div>
 
             <div class="form-group">
-                <label>Sort By</label>
+                <label>Sort By Field</label>
                 <div class="input-group">
-                    <select class="form-control" ng-model="active.sortByField" ng-disabled="!(fields.length > 0)" ng-options="field.prettyName for field in fields" ng-change="updateSort()">
+                    <select class="form-control" ng-model="active.sortByField" ng-disabled="!(fields.length > 0)" ng-options="field.prettyName for field in fields" ng-change="handleSortByFieldChange()">
                     </select>
 
                     <div class="input-group-btn">
                         <label class="btn btn-default active" ng-class="{true: 'active', false: ''}[active.sortDirection === ASCENDING]">
-                            <input type="radio" ng-model="active.sortDirection" style="display:none" ng-value="ASCENDING" ng-change="updateSort('asc')">ASC
+                            <input type="radio" ng-model="active.sortDirection" style="display:none" ng-value="ASCENDING" ng-change="handleSortDirectionChange()">ASC
                         </label>
                         <label class="btn btn-default" ng-class="{true: 'active', false: ''}[active.sortDirection === DESCENDING]">
-                            <input type="radio" ng-model="active.sortDirection" style="display:none" ng-value="DESCENDING" ng-change="updateSort('desc')">DESC
+                            <input type="radio" ng-model="active.sortDirection" style="display:none" ng-value="DESCENDING" ng-change="handleSortDirectionChange()">DESC
                         </label>
                     </div>
                 </div>
@@ -42,17 +40,16 @@
                 <div class="input-group">
                     <input type="number" min="1" class="form-control" ng-model="active.limit" required>
                     <div class="input-group-btn">
-                        <button type="button" class="btn btn-default refresh" title="Refresh" ng-click="queryForData()">
+                        <button type="button" class="btn btn-default refresh" title="Refresh" ng-click="handleLimitChange()">
                             <span class="glyphicon glyphicon-refresh"></span>
                         </button>
                     </div>
                 </div>
             </div>
         </options-menu>
-        <a class="edit-table-icon" ng-class="{active: gridOptions.showToolPanel}">
-            <i class="pull-right glyphicon glyphicon-edit" ng-click="toggleToolbox()" title="Modify Table Rows"></i>
-        </a>
     </div>
-    <div class="clearfix"></div>
 </div>
+
+<div class="clearfix"></div>
+
 <div ag-grid="gridOptions" class="ag-fresh results-table"></div>

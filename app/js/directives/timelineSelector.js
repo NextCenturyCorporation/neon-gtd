@@ -461,8 +461,8 @@ function($interval, $filter, external, connectionService, datasetService, errorN
             };
 
             var onResize = function() {
-                // Subtract 80 for the width of the options menu button and padding.
-                var titleWidth = $element.width() - 80;
+                // Set the width of the title to the width of the visualization minus the width of the chart options button/text and padding.
+                var titleWidth = $element.width() - $element.find(".chart-options").outerWidth(true) - 20;
                 $element.find(".next-to-title").each(function() {
                     titleWidth -= ($(this).outerWidth(true) + 10);
                 });

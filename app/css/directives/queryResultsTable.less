@@ -28,22 +28,15 @@
 
     .header {
         .header-container {
-            .active-count {
-                color: @accent-bright;
-            }
+            .edit-table {
+                .glyphicon {
+                    font-size: 14px;
+                    padding-left: 10px;
 
-            .edit-table-icon {
-                &.active, &:hover {
-                    i {
+                    &.active, &:active, &:focus, &:hover {
                         color: @accent-bright;
+                        cursor: pointer;
                     }
-                }
-
-                i {
-                    line-height: 20px;
-                    padding-right: 10px;
-                    font-size: 16px;
-                    font-weight: bold;
                 }
             }
         }

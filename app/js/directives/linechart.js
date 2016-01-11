@@ -111,6 +111,11 @@ function(external, connectionService, datasetService, errorNotificationService, 
                 $element.find(".title").css("maxWidth", titleWidth - 80);
                 resizeLegend();
 
+                // Set the width of the title to the width of the visualization minus the width of the chart options button/text and padding.
+                var titleWidth = $element.width() - $element.find(".chart-options").outerWidth(true) - 20;
+                $element.find(".title").css("maxWidth", titleWidth);
+                resizeLegend();
+
                 if($scope.chart) {
                     var headerHeight = 0;
                     $element.find(".header-container").each(function() {

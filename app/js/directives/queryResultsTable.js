@@ -37,6 +37,10 @@ function(external, connectionService, datasetService, errorNotificationService, 
             bindTitle: '=',
             bindTable: '=',
             bindDatabase: '=',
+            bindIdField: '=',
+            bindSortField: '=',
+            bindSortDirection: '=',
+            bindLimit: '=',
             hideHeader: '=?',
             hideAdvancedOptions: '=?'
         },
@@ -49,6 +53,12 @@ function(external, connectionService, datasetService, errorNotificationService, 
             var tableDiv = $element.find('.results-table');
             tableDiv.attr("id", $scope.tableId);
 
+            $scope.active = {
+                database: {},
+                table: {},
+                sortByField: {}
+            };
+
             neon.ready(function() {
                 $scope.init();
             });
@@ -57,8 +67,6 @@ function(external, connectionService, datasetService, errorNotificationService, 
             // Unique field name used for the SlickGrid column containing the URLs for the external apps.
             // This name should be one that is highly unlikely to be a column name in a real database.
             $scope.EXTERNAL_APP_FIELD_NAME = "neonExternalApps";
-
-            $scope.id = uuid();
 
             $scope.ASCENDING = neon.query.ASCENDING;
             $scope.DESCENDING = neon.query.DESCENDING;
@@ -71,22 +79,22 @@ function(external, connectionService, datasetService, errorNotificationService, 
                     XDATA.userALE.log({
                         activity: "add",
                         action: "click",
-                        elementId: "column-" + $scope.options.addField.prettyName,
+                        elementId: "column-" + event.column.colId,
                         elementType: "datagrid",
                         elementGroup: "table_group",
                         source: "user",
-                        tags: ["options", "datagrid", "column", $scope.options.addField.prettyName]
+                        tags: ["options", "datagrid", "column", event.column.colId]
                     });
                 } else {
                     $scope.hiddenColumns[event.column.colId] = true;
                     XDATA.userALE.log({
                         activity: "remove",
                         action: "click",
-                        elementId: "column-" + name,
+                        elementId: "column-" + event.column.colId,
                         elementType: "datagrid",
                         elementGroup: "table_group",
                         source: "user",
-                        tags: ["options", "datagrid", "column", name]
+                        tags: ["options", "datagrid", "column", event.column.colId]
                     });
                 }
             };
@@ -103,6 +111,26 @@ function(external, connectionService, datasetService, errorNotificationService, 
                 onColumnVisible: handleColumnVisibiltyChange
             };
 
+            $scope.optionsMenuButtonText = function() {
+                return $scope.active.count + " of " + $scope.active.total + " records";
+            };
+            $scope.showOptionsMenuButtonText = function() {
+                return true;
+            };
+
+            /**
+             * Resizes the title of the data table.
+             * @method resizeTitle
+             * @private
+             */
+            var resizeTitle = function() {
+                // Set the width of the title to the width of the visualization minus the width of the chart options button/text and padding.
+                var titleWidth = $scope.element.width() - $scope.element.find(".chart-options").outerWidth(true) - 20;
+                // Also subtract the width of the table options button.
+                titleWidth -= ($scope.element.find(".edit-table-icon").outerWidth(true) + 10);
+                $scope.element.find(".title").css("maxWidth", titleWidth);
+            };
+
             /**
              * intitalize all fields and add a messenger then query for data
              * @method init
@@ -110,10 +138,13 @@ function(external, connectionService, datasetService, errorNotificationService, 
             $scope.init = function() {
                 $scope.messenger = new neon.eventing.Messenger();
 
-                $scope.messenger.subscribe(datasetService.UPDATE_DATA_CHANNEL, $scope.queryForData);
+                $scope.messenger.subscribe(datasetService.UPDATE_DATA_CHANNEL, queryForData);
                 $scope.messenger.events({
                     filtersChanged: onFiltersChanged
                 });
+
+                $scope.element.resize(resizeTitle);
+                $scope.element.find(".chart-options a").resize(resizeTitle);
 
                 $scope.$on('$destroy', function() {
                     XDATA.userALE.log({
@@ -128,17 +159,19 @@ function(external, connectionService, datasetService, errorNotificationService, 
                     });
                     linksPopupService.deleteLinks($scope.tableId);
                     $scope.messenger.unsubscribeAll();
+                    $scope.element.off("resize", resizeTitle);
+                    $scope.element.find(".chart-options a").off("resize", resizeTitle);
                     exportService.unregister($scope.exportID);
                 });
 
-                initializeDataset();
-                setupAndQuery();
-            };
+                $scope.active = {
+                    total: 0,
+                    sortDirection: $scope.bindSortDirection || $scope.ASCENDING,
+                    limit: $scope.bindLimit || 5000,
+                    count: 0
+                };
 
-            var setupAndQuery = function() {
-                queryForTotalRows();
-                updateFields();
-                $scope.queryForData();
+                initializeDataset();
             };
 
             /**
@@ -148,9 +181,7 @@ function(external, connectionService, datasetService, errorNotificationService, 
              */
             var initializeDataset = function() {
                 $scope.databases = datasetService.getDatabases();
-                $scope.active = {
-                    database: $scope.databases[0]
-                };
+                $scope.active.database = $scope.databases[0];
                 if($scope.bindDatabase) {
                     for(var i = 0; i < $scope.databases.length; ++i) {
                         if($scope.bindDatabase === $scope.databases[i].name) {
@@ -160,23 +191,42 @@ function(external, connectionService, datasetService, errorNotificationService, 
                     }
                 }
 
-                queryForTables();
-                $scope.active.limit = 5000;
+                updateTables();
             };
 
-            var queryForTables = function() {
-                if($scope.active.database) {
-                    $scope.tables = datasetService.getTables($scope.active.database.name);
-                    $scope.active.table = $scope.tables[0];
-                    if($scope.bindTable) {
-                        for(var i = 0; i < $scope.tables.length; ++i) {
-                            if($scope.bindTable === $scope.tables[i].name) {
-                                $scope.active.table = $scope.tables[i];
-                                break;
-                            }
+            var updateTables = function() {
+                $scope.tables = datasetService.getTables($scope.active.database.name);
+                $scope.active.table = $scope.tables[0];
+                if($scope.bindTable) {
+                    for(var i = 0; i < $scope.tables.length; ++i) {
+                        if($scope.bindTable === $scope.tables[i].name) {
+                            $scope.active.table = $scope.tables[i];
+                            break;
                         }
                     }
                 }
+
+                updateFields();
+            };
+
+            var updateFields = function() {
+                // Stops extra data queries that may be caused by event handlers triggered by setting the active fields.
+                $scope.initializing = true;
+
+                $scope.fields = datasetService.getSortedFields($scope.active.database.name, $scope.active.table.name);
+                $scope.fields.forEach(function(field) {
+                    if(field.hide) {
+                        $scope.hiddenColumns[field.columnName] = true;
+                    }
+                });
+
+                var sortByFieldName = $scope.bindSortField || datasetService.getMapping($scope.active.database.name, $scope.active.table.name, neonMappings.SORT) || "";
+                $scope.active.sortByField = _.find($scope.fields, function(field) {
+                    return field.columnName === sortByFieldName;
+                }) || ($scope.fields.length ? $scope.fields[0] : datasetService.createBlankField());
+
+                queryForTotalRows();
+                updateColumns();
             };
 
             /**
@@ -192,8 +242,7 @@ function(external, connectionService, datasetService, errorNotificationService, 
                     return;
                 }
 
-                var query = new neon.query.Query().selectFrom($scope.active.database.name, $scope.active.table.name)
-                .aggregate(neon.query.COUNT, '*', 'count');
+                var query = new neon.query.Query().selectFrom($scope.active.database.name, $scope.active.table.name).aggregate(neon.query.COUNT, '*', 'count');
 
                 XDATA.userALE.log({
                     activity: "alter",
@@ -217,9 +266,9 @@ function(external, connectionService, datasetService, errorNotificationService, 
                 $scope.outstandingTotalRowsQuery.done(function(queryResults) {
                     $scope.$apply(function() {
                         if(queryResults.data.length > 0) {
-                            $scope.active.totalRows = queryResults.data[0].count;
+                            $scope.active.total = queryResults.data[0].count;
                         } else {
-                            $scope.active.totalRows = 0;
+                            $scope.active.total = 0;
                         }
                         XDATA.userALE.log({
                             activity: "alter",
@@ -256,37 +305,21 @@ function(external, connectionService, datasetService, errorNotificationService, 
                             source: "system",
                             tags: ["failed", "datagrid"]
                         });
-                        $scope.active.totalRows = 0;
+                        $scope.active.total = 0;
                     }
                 });
             };
 
             /**
              * Queries for field names list and sets up table columns
-             * @method updateFields
+             * @method updateColumns
              * @private
              */
-            var updateFields = function() {
-                $scope.fields = datasetService.getFields($scope.active.database.name, $scope.active.table.name);
+            var updateColumns = function() {
+                // Use the fields with the order in which they are defined in the Neon configuration file.
+                var fields = datasetService.getFields($scope.active.database.name, $scope.active.table.name);
 
-                $scope.active.sortByField = $scope.fields[0];
-                $scope.active.sortDirection = neon.query.ASCENDING;
-
-                var columnDefs =  [];
-
-                if(external.active) {
-                    var externalAppColumn = {
-                        headerName: "",
-                        field: $scope.EXTERNAL_APP_FIELD_NAME,
-                        suppressSizeToFit: true,
-                        cellClass: 'centered',
-                        width: 20
-                    };
-
-                    columnDefs.push(externalAppColumn);
-                }
-
-                var fieldColumns = _.map($scope.fields, function(field) {
+                var columnDefinitions = _.map(fields, function(field) {
                     var config = {
                         headerName: field.prettyName,
                         field: field.columnName,
@@ -301,9 +334,21 @@ function(external, connectionService, datasetService, errorNotificationService, 
                     return config;
                 });
 
-                columnDefs = columnDefs.concat(fieldColumns);
-                $scope.gridOptions.api.setColumnDefs(columnDefs);
+                if(external.active) {
+                    var externalAppColumn = {
+                        headerName: "",
+                        field: $scope.EXTERNAL_APP_FIELD_NAME,
+                        suppressSizeToFit: true,
+                        cellClass: 'centered',
+                        width: 20
+                    };
+
+                    columnDefinitions = [externalAppColumn].concat(columnDefinitions);
+                }
+
+                $scope.gridOptions.api.setColumnDefs(columnDefinitions);
                 $scope.gridOptions.api.sizeColumnsToFit();
+                queryForData();
             };
 
             /**
@@ -352,14 +397,22 @@ function(external, connectionService, datasetService, errorNotificationService, 
             /**
              * Builds a query and calls to execute query if connection is available.
              * @method queryForData
+             * @private
              */
-            $scope.queryForData = function() {
+            var queryForData = function() {
+                if($scope.errorMessage) {
+                    errorNotificationService.hideErrorMessage($scope.errorMessage);
+                    $scope.errorMessage = undefined;
+                }
+
                 var connection = connectionService.getActiveConnection();
 
                 if(!connection) {
                     updateData([]);
                     return;
                 }
+
+                $scope.gridOptions.api.setRowData([]);
 
                 var query = buildQuery();
 
@@ -431,8 +484,7 @@ function(external, connectionService, datasetService, errorNotificationService, 
                         updateData({
                             data: []
                         }, refreshColumns);
-                        $scope.totalRows = 0;
-                        $scope.loadingData = false;
+                        $scope.total = 0;
                         if(response.responseJSON) {
                             $scope.errorMessage = errorNotificationService.showErrorMessage($scope.element, response.responseJSON.error, response.responseJSON.stackTrace);
                         }
@@ -469,7 +521,7 @@ function(external, connectionService, datasetService, errorNotificationService, 
              */
             var buildQuery = function() {
                 var query = new neon.query.Query().selectFrom($scope.active.database.name, $scope.active.table.name).limit($scope.active.limit);
-                if($scope.active.sortByField && $scope.active.sortByField.columnName) {
+                if(datasetService.isFieldValid($scope.active.sortByField)) {
                     query.sortBy($scope.active.sortByField.columnName, $scope.active.sortDirection);
                 }
                 return query;
@@ -483,7 +535,9 @@ function(external, connectionService, datasetService, errorNotificationService, 
                 }
 
                 $scope.active.count = data.length;
+                $scope.initializing = false;
                 $scope.gridOptions.api.setRowData(data);
+
                 $timeout(function() {
                     linkifyRows(data);
                 });
@@ -505,7 +559,7 @@ function(external, connectionService, datasetService, errorNotificationService, 
                     var id = row[field];
 
                     tableLinks[id] = linksPopupService.createAllServiceLinkObjects(external.services, mappings, field, id);
-                    row[$scope.EXTERNAL_APP_FIELD_NAME] = tableLinks[id].length ? linksPopupService.createLinkHtml($scope.id, id, id) : linksPopupService.createDisabledLinkHtml(id);
+                    row[$scope.EXTERNAL_APP_FIELD_NAME] = tableLinks[id].length ? linksPopupService.createLinkHtml($scope.tableId, id, id) : linksPopupService.createDisabledLinkHtml(id);
                 });
 
                 // Set the link data for the links popup for this visualization.
@@ -553,7 +607,7 @@ function(external, connectionService, datasetService, errorNotificationService, 
                         source: "system",
                         tags: ["filter-change", "datagrid"]
                     });
-                    $scope.queryForData();
+                    queryForData();
                 }
             };
 
@@ -564,28 +618,6 @@ function(external, connectionService, datasetService, errorNotificationService, 
             $scope.toggleToolbox = function() {
                 $scope.gridOptions.showToolPanel = !$scope.gridOptions.showToolPanel;
                 $scope.gridOptions.api.showToolPanel($scope.gridOptions.showToolPanel);
-            };
-
-            /**
-             * updates any sort changes and calls for requerying of data
-             * @method updateSort
-             * @param direction {[String]} 'asc' or 'desc'
-             */
-            $scope.updateSort = function(direction) {
-                var sort = {
-                    colId: $scope.active.sortByField.columnName
-                };
-                if(direction && direction === 'asc') {
-                    sort.sort = 'asc';
-                } else if(direction) {
-                    sort.sort = 'desc';
-                } else {
-                    sort.sort = ($scope.active.sortDirection === 1 ? 'asc' : 'desc');
-                }
-
-                $scope.gridOptions.api.setSortModel([sort]);
-
-                $scope.queryForData();
             };
 
             /**
@@ -626,13 +658,57 @@ function(external, connectionService, datasetService, errorNotificationService, 
                 return finalObject;
             };
 
+            var logChange = function(element, value, type) {
+                XDATA.userALE.log({
+                    activity: "select",
+                    action: "click",
+                    elementId: "datagrid",
+                    elementType: type || "combobox",
+                    elementSub: element,
+                    elementGroup: "table_group",
+                    source: "user",
+                    tags: ["options", "datagrid", value]
+                });
+            };
+
             $scope.handleDatabaseChange = function() {
-                queryForTables();
-                setupAndQuery();
+                logChange("database", $scope.active.database.name);
+                updateTables();
             };
 
             $scope.handleTableChange = function() {
-                setupAndQuery();
+                logChange("table", $scope.active.table.name);
+                updateFields();
+            };
+
+            var handleSortChange = function() {
+                var sort = {
+                    colId: $scope.active.sortByField.columnName,
+                    sort: $scope.active.sortDirection === $scope.ASCENDING ? "asc" : "desc"
+                };
+
+                $scope.gridOptions.api.setSortModel([sort]);
+
+                if(!$scope.initializing) {
+                    queryForData();
+                }
+            };
+
+            $scope.handleSortByFieldChange = function() {
+                logChange("sort-field", $scope.active.sortByField.name);
+                handleSortChange();
+            };
+
+            $scope.handleSortDirectionChange = function() {
+                logChange("sort-direction", $scope.active.sortDirection, "button");
+                handleSortChange();
+            };
+
+            $scope.handleLimitChange = function() {
+                logChange("limit", $scope.active.limit, "button");
+                if(!$scope.initializing) {
+                    queryForData();
+                }
             };
 
             //TODO text selection on cells -- https://github.com/ceolter/ag-grid/issues/87
