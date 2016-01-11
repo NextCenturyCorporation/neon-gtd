@@ -37,11 +37,13 @@ function($scope, $timeout, config, datasets) {
             file: "dark-green",
             type: "dark",
             accent: "#39B54A"
+        /*
         }, {
             name: "Dark Purple",
             file: "dark-purple",
             type: "dark",
             accent: "#A654A1"
+        */
         }]
     };
 
