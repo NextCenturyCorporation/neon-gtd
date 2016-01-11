@@ -89,10 +89,12 @@
                             <li export-widgets gridster-configs="visualizations" ng-show="showExport"></li>
                             <li class="divider" ng-show="showExport && showImport"></li>
                             <li ng-show="showImport">
-                                <a href="#" data-toggle="modal" data-target="#importModal" ng-show="canImport">Import File</a>
+                                <button class="btn btn-default" data-toggle="modal" data-target="#importModal" ng-show="canImport">Import File</button>
                                 <a href="#" class="unselectable" ng-show="!canImport">This browser does not support data import</a>
                             </li>
-                            <li ng-show="showImport"><a href="#" data-toggle="modal" data-target="#removeDatasetModal" ng-show="canImport">Drop Dataset</a></li>
+                            <li ng-show="showImport">
+                                <button class="btn btn-default" data-toggle="modal" data-target="#removeDatasetModal" ng-show="canImport">Drop Dataset</button>
+                            </li>
                             <li class="divider" ng-show="showExport || showImport"></li>
                             <li><a href="#" class="unselectable">Theme:</a></li>
                             <li><select class="form-control navbar-indented" ng-options="item.name for item in theme.list" ng-model="theme.selected" ng-change="updateTheme()"></select></li>
