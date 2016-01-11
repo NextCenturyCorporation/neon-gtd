@@ -86,8 +86,9 @@ function(external, connectionService, datasetService, errorNotificationService, 
             };
 
             var updateChartSize = function() {
-                // Subtract 80 for the width of the options menu button and padding.
-                $element.find(".title").css("maxWidth", $element.width() - 80);
+                // Set the width of the title to the width of the visualization minus the width of the chart options button/text and padding.
+                var titleWidth = $element.width() - $element.find(".chart-options").outerWidth(true) - 20;
+                $element.find(".title").css("maxWidth", titleWidth);
 
                 if($scope.chart) {
                     var headerHeight = 0;
@@ -131,7 +132,7 @@ function(external, connectionService, datasetService, errorNotificationService, 
                     });
                     linksPopupService.deleteLinks($scope.visualizationId);
                     $element.off("resize", updateChartSize);
-                    $scope.messenger.removeEvents();
+                    $scope.messenger.unsubscribeAll();
                     // Remove our filter if we had an active one.
                     if($scope.filterSet) {
                         filterService.removeFilters($scope.messenger, $scope.filterKeys);

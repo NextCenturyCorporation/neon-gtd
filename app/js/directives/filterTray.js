@@ -51,7 +51,7 @@ function($timeout, external, datasetService, filterService, linksPopupService) {
                 $scope.messenger.subscribe("STATE_CHANGED", onFiltersChanged);
 
                 $scope.$on('$destroy', function() {
-                    $scope.messenger.removeEvents();
+                    $scope.messenger.unsubscribeAll();
                 });
 
                 //FIXME needs promise with timeout to not fire a bunch of times

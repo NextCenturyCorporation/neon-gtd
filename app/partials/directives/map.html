@@ -1,7 +1,8 @@
 <div class="header-container menu-container">
-    <options-menu parent-element="element" export-function="makeMapExportObject" resize="resizeOptionsMenu" button-text="optionsMenuButtonText" show-button-text="showOptionsMenuButtonText">
-        <div class="form-group info-container">
-            <label><span class="glyphicon glyphicon-info-sign"></span>SHIFT + DRAG on Map to Filter</label>
+    <options-menu parent-element="element" export-function="makeMapExportObject" resize-menu="resizeOptionsMenu" button-text="optionsMenuButtonText" show-button-text="showOptionsMenuButtonText">
+        <div class="form-group">
+            <label class="glyphicon glyphicon-info-sign"></label>
+            <label>SHIFT + DRAG on Map to Filter</label>
         </div>
 
         <div class="form-group button-container">
@@ -83,7 +84,7 @@
 
                         <div class="form-group layer-options-col">
                             <label>Data Limit</label>
-                            <input type="number" min="1" class="form-control" ng-model="options.newLayer.limit" ng-model="options.newLayer.limit" ng-required="true"/>
+                            <input type="number" min="1" class="form-control" ng-model="options.newLayer.limit" ng-required="true"/>
                         </div>
                     </div>
 
@@ -365,7 +366,7 @@
 </div>
 
 <div class="header-container legend-container">
-    <div class="legend" ng-class="{true: 'open', false: ''}[legend.display]">
+    <div class="legend" ng-class="{true: 'open', false: ''}[legend.display]" ng-show="options.layers.length">
         <div class="legend-details" ng-show="legend.display">
             <div class="legend-layer" ng-repeat="legendLayer in legend.layers">
                 <div class="legend-header" ng-click="toggleLegendLayer($index)">
@@ -398,7 +399,6 @@
         </div>
         <div class="divider" ng-show="legend.display"></div>
         <div class="legend-toggle header-text" ng-click="toggleLegend()">
-            <span class="glyphicon glyphicon-map-marker"></span>
             <span>Legend</span>
         </div>
     </div>

@@ -31,12 +31,12 @@ exportService, linksPopupService, visualizationService) {
             bindAggregationField: '=',
             bindFilterField: '=',
             bindFilterValue: '=',
+            bindLimit: '=',
             bindTable: '=',
             bindDatabase: '=',
             bindStateId: '=',
             hideHeader: '=?',
-            hideAdvancedOptions: '=?',
-            limitCount: '=?'
+            hideAdvancedOptions: '=?'
         },
 
         link: function($scope, $element) {
@@ -48,9 +48,13 @@ exportService, linksPopupService, visualizationService) {
             var tableDiv = $element.find('.count-by-table');
             tableDiv.attr("id", $scope.tableId);
 
-            $scope.active = {};
-            $scope.loadingData = false;
-            $scope.queryTitle = "";
+            $scope.active = {
+                database: {},
+                table: {},
+                dataField: {},
+                aggregationField: {},
+                filterField: {}
+            };
 
             //Wait for neon to be ready, the create our messenger and intialize the view and data.
             neon.ready(function() {
@@ -88,18 +92,31 @@ exportService, linksPopupService, visualizationService) {
                 if($scope.showTooMuchDataError) {
                     return "Error";
                 }
-                return ($scope.active.count >= $scope.active.limitCount ? "Limited to " : "") + ($scope.active.count || "No") + " Values";
+                return ($scope.active.count >= $scope.active.limit ? "Limited to " : "") + ($scope.active.count || "No") + " Values";
             };
             $scope.showOptionsMenuButtonText = function() {
                 return true;
             };
 
-            var updateSize = function() {
+            var resizeTitle = function() {
+                // Set the width of the title to the width of the visualization minus the width of the chart options button/text and padding.
+                var titleWidth = $scope.element.width() - $scope.element.find(".chart-options").outerWidth(true) - 20;
+                // Also subtract the width of the table options button.
+                titleWidth -= ($scope.element.find(".edit-table-icon").outerWidth(true) + 10);
+                $scope.element.find(".title").css("maxWidth", titleWidth);
+            };
+
+            var resizeTable = function() {
                 var headerHeight = 0;
                 $scope.element.find(".header-container").each(function() {
                     headerHeight += $(this).outerHeight(true);
                 });
                 $("#" + $scope.tableId).height($scope.element.height() - headerHeight);
+            };
+
+            var resize = function() {
+                resizeTitle();
+                resizeTable();
             };
 
             $scope.init = function() {
@@ -121,17 +138,17 @@ exportService, linksPopupService, visualizationService) {
                     XDATA.userALE.log({
                         activity: "remove",
                         action: "remove",
-                        elementId: "count-by",
+                        elementId: "aggregation-table",
                         elementType: "datagrid",
-                        elementSub: "count-by",
+                        elementSub: "aggregation-table",
                         elementGroup: "table_group",
                         source: "system",
-                        tags: ["remove", "count-by"]
+                        tags: ["remove", "aggregation-table"]
                     });
                     linksPopupService.deleteLinks($scope.tableId);
-                    $scope.element.off("resize", updateSize);
-                    $scope.element.find(".filter-container").off("resize", updateSize);
-                    $scope.messenger.removeEvents();
+                    $scope.element.off("resize", resize);
+                    $scope.element.find(".filter-container").off("resize", resizeTable);
+                    $scope.messenger.unsubscribeAll();
                     if($scope.filterSet) {
                         filterService.removeFilters($scope.messenger, $scope.filterKeys);
                     }
@@ -139,13 +156,13 @@ exportService, linksPopupService, visualizationService) {
                     visualizationService.unregister($scope.bindStateId);
                 });
 
-                $scope.element.resize(updateSize);
-                $scope.element.find(".filter-container").resize(updateSize);
-                updateSize();
+                $scope.element.resize(resize);
+                $scope.element.find(".filter-container").resize(resizeTable);
+                resize();
 
                 $scope.active = {
-                    limitCount: ($scope.limitCount ? $scope.limitCount : 5000),
-                    aggregation: ($scope.bindAggregation ? $scope.bindAggregation : 'count')
+                    limit: $scope.bindLimit || 5000,
+                    aggregation: $scope.bindAggregation || 'count'
                 };
 
                 initializeDataset();
@@ -159,7 +176,6 @@ exportService, linksPopupService, visualizationService) {
             var initializeDataset = function() {
                 $scope.filterKeys = filterService.createFilterKeys("countby", datasetService.getDatabaseAndTableNames());
                 $scope.databases = datasetService.getDatabases();
-
                 $scope.active.database = $scope.databases[0];
                 if($scope.bindDatabase) {
                     for(var i = 0; i < $scope.databases.length; ++i) {
@@ -175,7 +191,6 @@ exportService, linksPopupService, visualizationService) {
 
             var updateTables = function() {
                 $scope.tables = datasetService.getTables($scope.active.database.name);
-
                 $scope.active.table = $scope.tables[0];
                 if($scope.bindTable) {
                     for(var i = 0; i < $scope.tables.length; ++i) {
@@ -190,8 +205,10 @@ exportService, linksPopupService, visualizationService) {
             };
 
             var updateFields = function() {
-                $scope.loadingData = true;
-                var fields = datasetService.getFields($scope.active.database.name, $scope.active.table.name);
+                // Stops extra data queries that may be caused by event handlers triggered by setting the active fields.
+                $scope.initializing = true;
+
+                var fields = datasetService.getSortedFields($scope.active.database.name, $scope.active.table.name);
                 $scope.fields = _.filter(fields, function(field) {
                     return field.columnName !== '_id';
                 });
@@ -218,7 +235,7 @@ exportService, linksPopupService, visualizationService) {
             };
 
             var updateColumns = function() {
-                var columnDefs = [];
+                var columnDefinitions = [];
 
                 if(external.active) {
                     var externalAppColumn = {
@@ -229,10 +246,10 @@ exportService, linksPopupService, visualizationService) {
                         width: 30
                     };
 
-                    columnDefs.push(externalAppColumn);
+                    columnDefinitions.push(externalAppColumn);
                 }
 
-                columnDefs.push({
+                columnDefinitions.push({
                     headerName: $scope.active.dataField.prettyName,
                     field: $scope.active.dataField.columnName,
                     suppressSizeToFit: false,
@@ -244,15 +261,14 @@ exportService, linksPopupService, visualizationService) {
                     columnName += ' ' + $scope.active.aggregationField.prettyName;
                 }
 
-                columnDefs.push({
+                columnDefinitions.push({
                     headerName: columnName,
                     field: $scope.active.aggregation,
                     suppressSizeToFit: false,
                     onCellClicked: handleRowClick
                 });
 
-                $scope.gridOptions.api.setRowData([]);
-                $scope.gridOptions.api.setColumnDefs(columnDefs);
+                $scope.gridOptions.api.setColumnDefs(columnDefinitions);
                 $scope.gridOptions.api.sizeColumnsToFit();
                 queryForData();
             };
@@ -267,26 +283,29 @@ exportService, linksPopupService, visualizationService) {
                 // Save the title during the query so the title doesn't change immediately if the user changes the unshared filter.
                 $scope.queryTitle = "";
                 $scope.queryTitle = $scope.generateTitle();
+                resizeTitle();
 
                 var connection = connectionService.getActiveConnection();
 
-                if(!connection || !$scope.active.dataField || ($scope.active.aggregation !== "count" && !$scope.active.aggregationField.columnName)) {
+                if(!connection || !$scope.active.dataField.columnName || ($scope.active.aggregation !== "count" && !$scope.active.aggregationField.columnName)) {
                     updateData([]);
-                    $scope.loadingData = false;
+                    $scope.initializing = false;
                     return;
                 }
+
+                $scope.gridOptions.api.setRowData([]);
 
                 var query = buildQuery();
 
                 XDATA.userALE.log({
                     activity: "alter",
                     action: "send",
-                    elementId: "count-by",
+                    elementId: "aggregation-table",
                     elementType: "canvas",
-                    elementSub: "count-by",
+                    elementSub: "aggregation-table",
                     elementGroup: "table_group",
                     source: "system",
-                    tags: ["query", "count-by"]
+                    tags: ["query", "aggregation-table"]
                 });
 
                 if($scope.outstandingDataQuery) {
@@ -301,24 +320,24 @@ exportService, linksPopupService, visualizationService) {
                     XDATA.userALE.log({
                         activity: "alter",
                         action: "receive",
-                        elementId: "count-by",
+                        elementId: "aggregation-table",
                         elementType: "canvas",
-                        elementSub: "count-by",
+                        elementSub: "aggregation-table",
                         elementGroup: "table_group",
                         source: "system",
-                        tags: ["receive", "count-by"]
+                        tags: ["receive", "aggregation-table"]
                     });
                     updateData(queryResults.data);
-                    $scope.loadingData = false;
+                    $scope.initializing = false;
                     XDATA.userALE.log({
                         activity: "alter",
                         action: "render",
-                        elementId: "count-by",
+                        elementId: "aggregation-table",
                         elementType: "canvas",
-                        elementSub: "count-by",
+                        elementSub: "aggregation-table",
                         elementGroup: "table_group",
                         source: "system",
-                        tags: ["render", "count-by"]
+                        tags: ["render", "aggregation-table"]
                     });
                 });
                 $scope.outstandingDataQuery.fail(function(response) {
@@ -326,28 +345,26 @@ exportService, linksPopupService, visualizationService) {
                         XDATA.userALE.log({
                             activity: "alter",
                             action: "canceled",
-                            elementId: "count-by",
+                            elementId: "aggregation-table",
                             elementType: "canvas",
-                            elementSub: "count-by",
+                            elementSub: "aggregation-table",
                             elementGroup: "table_group",
                             source: "system",
-                            tags: ["canceled", "count-by"]
+                            tags: ["canceled", "aggregation-table"]
                         });
                     } else {
                         XDATA.userALE.log({
                             activity: "alter",
                             action: "failed",
-                            elementId: "count-by",
+                            elementId: "aggregation-table",
                             elementType: "canvas",
-                            elementSub: "count-by",
+                            elementSub: "aggregation-table",
                             elementGroup: "table_group",
                             source: "system",
-                            tags: ["failed", "count-by"]
+                            tags: ["failed", "aggregation-table"]
                         });
-                        updateData({
-                            data: []
-                        });
-                        $scope.loadingData = false;
+                        updateData([]);
+                        $scope.initializing = false;
                         if(response.responseJSON) {
                             $scope.errorMessage = errorNotificationService.showErrorMessage($scope.element, response.responseJSON.error, response.responseJSON.stackTrace);
                             if(response.responseJSON.error === errorNotificationService.TOO_MUCH_DATA_ERROR) {
@@ -389,8 +406,8 @@ exportService, linksPopupService, visualizationService) {
                     query.where(neon.query.and(whereNotNull, neon.query.where($scope.active.filterField.columnName, operator, $scope.active.filterValue)));
                 }
 
-                if($scope.active.limitCount) {
-                    query.limit($scope.active.limitCount);
+                if($scope.active.limit) {
+                    query.limit($scope.active.limit);
                 }
 
                 return query;
@@ -441,11 +458,11 @@ exportService, linksPopupService, visualizationService) {
                 XDATA.userALE.log({
                     activity: "perform",
                     action: "click",
-                    elementId: "count-by-export",
+                    elementId: "aggregation-table-export",
                     elementType: "button",
                     elementGroup: "table_group",
                     source: "user",
-                    tags: ["options", "count-by", "export"]
+                    tags: ["options", "aggregation-table", "export"]
                 });
                 var query = buildQuery();
                 query.limitClause = exportService.getLimitClause();
@@ -499,12 +516,12 @@ exportService, linksPopupService, visualizationService) {
                         XDATA.userALE.log({
                             activity: "select",
                             action: "click",
-                            elementId: "count-by",
+                            elementId: "aggregation-table",
                             elementType: "datagrid",
                             elementSub: "row",
                             elementGroup: "table_group",
                             source: "user",
-                            tags: ["filter", "count-by"]
+                            tags: ["filter", "aggregation-table"]
                         });
                         filterService.replaceFilters($scope.messenger, relations, $scope.filterKeys, createFilterClauseForCount, {
                             visName: "Aggregation Table",
@@ -536,11 +553,11 @@ exportService, linksPopupService, visualizationService) {
                     XDATA.userALE.log({
                         activity: "deselect",
                         action: "click",
-                        elementId: "count-by",
+                        elementId: "aggregation-table",
                         elementType: "button",
                         elementGroup: "table_group",
                         source: "user",
-                        tags: ["filter", "count-by"]
+                        tags: ["filter", "aggregation-table"]
                     });
 
                     filterService.removeFilters($scope.messenger, $scope.filterKeys, function() {
@@ -574,16 +591,16 @@ exportService, linksPopupService, visualizationService) {
                 return data;
             };
 
-            var logChange = function(element, value) {
+            var logChange = function(element, value, type) {
                 XDATA.userALE.log({
                     activity: "select",
                     action: "click",
-                    elementId: "count-by",
-                    elementType: "combobox",
+                    elementId: "aggregation-table",
+                    elementType: type || "combobox",
                     elementSub: element,
                     elementGroup: "table_group",
                     source: "user",
-                    tags: ["options", "count-by", value]
+                    tags: ["options", "aggregation-table", value]
                 });
             };
 
@@ -599,28 +616,28 @@ exportService, linksPopupService, visualizationService) {
 
             $scope.handleDataFieldChange = function() {
                 logChange("data-field", $scope.active.dataField.columnName);
-                if(!$scope.loadingData) {
+                if(!$scope.initializing) {
                     updateColumns();
                 }
             };
 
             $scope.handleAggregationChange = function() {
                 logChange("aggregation", $scope.active.aggregation);
-                if(!$scope.loadingData) {
+                if(!$scope.initializing) {
                     updateColumns();
                 }
             };
 
             $scope.handleAggregationFieldChange = function() {
                 logChange("aggregation-field", $scope.active.aggregationField.columnName);
-                if(!$scope.loadingData) {
+                if(!$scope.initializing) {
                     updateColumns();
                 }
             };
 
             $scope.handleUnsharedFilterFieldChange = function() {
                 logChange("unshared-filter-field", $scope.active.filterField.columnName);
-                if(!$scope.loadingData) {
+                if(!$scope.initializing) {
                     $scope.active.filterValue = "";
                     queryForData();
                 }
@@ -628,7 +645,7 @@ exportService, linksPopupService, visualizationService) {
 
             $scope.handleUnsharedFilterValueChange = function() {
                 logChange("unshared-filter-value", $scope.active.filterValue);
-                if(!$scope.loadingData) {
+                if(!$scope.initializing) {
                     queryForData();
                 }
             };
@@ -636,15 +653,15 @@ exportService, linksPopupService, visualizationService) {
             $scope.handleUnsharedFilterRemove = function() {
                 logChange("unshared-filter", "");
                 $scope.active.filterValue = "";
-                if(!$scope.loadingData) {
+                if(!$scope.initializing) {
                     queryForData();
                 }
             };
 
             $scope.handleLimitChange = function() {
-                logChange("limit", $scope.active.limitCount);
-                if(!$scope.loadingData) {
-                    updateColumns();
+                logChange("limit", $scope.active.limit, "button");
+                if(!$scope.initializing) {
+                    queryForData();
                 }
             };
 
@@ -704,7 +721,10 @@ exportService, linksPopupService, visualizationService) {
                 if($scope.bindTitle) {
                     return title + $scope.bindTitle;
                 }
-                return title + $scope.active.table.prettyName + ($scope.active.dataField.prettyName ? " / " + $scope.active.dataField.prettyName : "");
+                if(_.keys($scope.active).length) {
+                    return title + $scope.active.table.prettyName + ($scope.active.dataField.prettyName ? " / " + $scope.active.dataField.prettyName : "");
+                }
+                return title;
             };
         }
     };

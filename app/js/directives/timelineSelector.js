@@ -462,8 +462,8 @@ function($interval, $filter, external, connectionService, datasetService, errorN
             };
 
             var onResize = function() {
-                // Subtract 80 for the width of the options menu button and padding.
-                var titleWidth = $element.width() - 80;
+                // Set the width of the title to the width of the visualization minus the width of the chart options button/text and padding.
+                var titleWidth = $element.width() - $element.find(".chart-options").outerWidth(true) - 20;
                 $element.find(".next-to-title").each(function() {
                     titleWidth -= ($(this).outerWidth(true) + 10);
                 });
@@ -622,7 +622,7 @@ function($interval, $filter, external, connectionService, datasetService, errorN
                         tags: ["remove", "timeline"]
                     });
                     linksPopupService.deleteLinks($scope.visualizationId);
-                    $scope.messenger.removeEvents();
+                    $scope.messenger.unsubscribeAll();
                     // Remove our filter if we had an active one.
                     if($scope.brush.length) {
                         filterService.removeFilters($scope.messenger, $scope.filterKeys);
@@ -770,6 +770,9 @@ function($interval, $filter, external, connectionService, datasetService, errorN
                     filterName = message.removedFilter.filterName;
                     databaseName = message.removedFilter.databaseName;
                     tableName = message.removedFilter.tableName;
+                }
+                if(filterName.toLowerCase().indexOf("linechart - ") === 0) {
+                    return true;
                 }
                 var relations = datasetService.getRelations(databaseName, tableName, [$scope.options.dateField.columnName]);
                 if(filterName.indexOf(tableName) === 0) {

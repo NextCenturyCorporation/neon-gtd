@@ -165,7 +165,7 @@ function(external, $timeout, connectionService, datasetService, errorNotificatio
                 $scope.$on('$destroy', function() {
                     linksPopupService.deleteLinks($scope.visualizationId + "-head");
                     linksPopupService.deleteLinks($scope.visualizationId + "-name");
-                    $scope.messenger.removeEvents();
+                    $scope.messenger.unsubscribeAll();
                     $element.off("resize", resizeNewsfeed);
                     $element.find(".chart-options a").off("resize", resizeTitle);
                     $element.find(".newsfeed").off("scroll", updateNewsfeedOnScroll);
@@ -204,8 +204,9 @@ function(external, $timeout, connectionService, datasetService, errorNotificatio
              * @private
              */
             var resizeTitle = function() {
-                // Subtract 80 for the width of the options menu button and padding.
-                $element.find(".title").css("maxWidth", $element.width() - 80);
+                // Set the width of the title to the width of the visualization minus the width of the chart options button/text and padding.
+                var titleWidth = $element.width() - $element.find(".chart-options").outerWidth(true) - 20;
+                $element.find(".title").css("maxWidth", titleWidth);
             };
 
             /**
