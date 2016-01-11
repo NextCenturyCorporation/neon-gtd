@@ -5,6 +5,7 @@
         <span class="count text-primary" ng-bind="recordCount | number"></span>
         <span>valid</span>
         <span ng-hide="(width < 600)">records</span>
+        <span ng-show="sseQueryErrorAverage" ng-bind="' +/- ' + sseQueryErrorAverage + '%'"></span>
     </h4>
 
     <h4 class="invalid-record-count next-to-title pull-left" ng-click="sendInvalidDates()">
@@ -153,11 +154,15 @@
             </span>
         </span>
     </div>
+
+    <div class="pull-left">
+        <h4 ng-show="sseQueryProgress" ng-bind="'Sampling ' + sseQueryProgress + '% Done'" style="margin-top: 5px;"></h4>
+    </div>
 </div>
 
 <div class="collapsed" ng-class="{true: 'collapsed', false: ''}[options.collapsed]" ng-hide="noData">
     <div timeline-selector-chart timeline-element='element' timeline-data='data' timeline-brush='brush' collapsed='options.collapsed' extent-dirty='extentDirty'
-        primary-series='options.primarySeries' granularity='options.granularity' show-focus='options.showFocus'></div>
+        primary-series='options.primarySeries' granularity='options.granularity' query-error="sseQueryErrorAverage" show-focus='options.showFocus'></div>
 </div>
 
 <span class="no-data pull-left" ng-show="noData">No data for current filters.</span>

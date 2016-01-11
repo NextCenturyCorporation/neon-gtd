@@ -39,6 +39,7 @@ angular.module('neonDemo.directives')
             collapsed: '=',
             primarySeries: '=',
             granularity: '=',
+            queryError: '=',
             showFocus: '='
         },
         link: function($scope, $element) {
@@ -130,6 +131,12 @@ angular.module('neonDemo.directives')
                     if($scope.showFocus === "on_filter") {
                         $scope.chart.toggleFocus(true);
                     }
+                }
+            });
+
+            $scope.$watch("queryError", function() {
+                if(!$scope.queryError && $scope.chart) {
+                    $scope.chart.hideErrorbars();
                 }
             });
 

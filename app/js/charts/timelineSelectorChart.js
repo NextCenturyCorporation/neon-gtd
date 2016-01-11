@@ -782,13 +782,17 @@ charts.TimelineSelectorChart = function(element, configuration) {
                             return me.xContext(d.date) + (d.barWidth / 2);
                         })
                         .attr("y1", function(d) {
-                            return yContext(Math.max(0, d.value)) - 5;
+                            var value = Math.max(0, d.value);
+                            var error = Math.min(value, Math.max(1, d.error));
+                            return yContext(value - error);
                         })
                         .attr("x2", function(d) {
                             return me.xContext(d.date) + (d.barWidth / 2);
                         })
                         .attr("y2", function(d) {
-                            return yContext(Math.max(0, d.value)) + 5;
+                            var value = Math.max(0, d.value);
+                            var error = Math.min(value, Math.max(1, d.error));
+                            return yContext(value + error);
                         })
                         .attr("class", "errorbar");
                 } else {
@@ -1307,6 +1311,10 @@ charts.TimelineSelectorChart = function(element, configuration) {
 
     this.setHoverListener = function(hoverListener) {
         this.hoverListener = hoverListener;
+    };
+
+    this.hideErrorbars = function() {
+        this.svg.selectAll(".errorbar").remove();
     };
 
     // initialization

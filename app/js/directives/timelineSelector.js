@@ -83,6 +83,11 @@ function($interval, $filter, external, connectionService, datasetService, errorN
             $scope.invalidDatesFilter = false;
             $scope.width = 0;
 
+            $scope.sseQueryId = undefined;
+            $scope.sseQueryCountTotal = 0;
+            $scope.sseQueryErrorAverage = 0;
+            $scope.sseQueryProgress = 0;
+
             $scope.databases = [];
             $scope.tables = [];
             $scope.fields = [];
@@ -954,17 +959,22 @@ function($interval, $filter, external, connectionService, datasetService, errorN
                     tags: ["query", "timeline", "data"]
                 });
 
-                if($scope.outstandingQuery) {
-                    $scope.outstandingQuery.abort();
-                }
+                if($scope.sseQueryId) {
+                    connection.cancelSseQuery($scope.sseQueryId);
+                    $scope.sseQueryId = undefined;
+                };
 
-                var onInitial = function() {
-                    // TODO
+                var onInitial = function(id) {
+                    $scope.sseQueryId = id;
+                    $scope.sseQueryCountTotal = 0;
+                    $scope.sseQueryProgress = 0;
                 };
                 var onMessage = function(queryResults) {
                     $scope.$apply(function() {
                         if(!queryResults.data) {
-                            // TODO Hide errorbars
+                            $scope.sseQueryId = undefined;
+                            $scope.sseQueryErrorAverage = 0;
+                            $scope.sseQueryProgress = 0;
                             return;
                         }
 
@@ -997,10 +1007,15 @@ function($interval, $filter, external, connectionService, datasetService, errorN
                     });
                 };
 
-                //$scope.outstandingQuery = connection.executeQueryGroup(queryGroup);
                 connection.executeSseQueryGroup(queryGroup, onInitial, onMessage, onError);
 
                 /*
+                if($scope.outstandingQuery) {
+                    $scope.outstandingQuery.abort();
+                }
+
+                $scope.outstandingQuery = connection.executeQueryGroup(queryGroup);
+
                 $scope.outstandingQuery.done(function() {
                     $scope.outstandingQuery = undefined;
                 });
@@ -1145,6 +1160,12 @@ function($interval, $filter, external, connectionService, datasetService, errorN
                 }
 
                 $scope.recordCount = total;
+                $scope.sseQueryErrorAverage = ratioToPercent($scope.sseQueryErrorAverage / $scope.recordCount);
+                $scope.sseQueryProgress = ratioToPercent($scope.sseQueryCountTotal / $scope.recordCount);
+            };
+
+            var ratioToPercent = function(ratio) {
+                return Math.round(ratio * 100000) / 1000;
             };
 
             /**
@@ -1372,11 +1393,15 @@ function($interval, $filter, external, connectionService, datasetService, errorN
 
                     // Fill our rawData into the appropriate interval buckets.
                     var resultDate;
+                    $scope.sseQueryErrorAverage = 0;
                     for(i = 0; i < rawLength; i++) {
                         resultDate = new Date(rawData[i].date);
                         var bucketIndex = $scope.bucketizer.getBucketIndex(resultDate);
                         if(queryData[bucketIndex]) {
-                            queryData[bucketIndex].value = rawData[i].count;
+                            queryData[bucketIndex].error = rawData[i].error;
+                            queryData[bucketIndex].value = rawData[i].mean;
+                            $scope.sseQueryCountTotal += rawData[i].count;
+                            $scope.sseQueryErrorAverage += rawData[i].error;
                         }
                     }
                 }
