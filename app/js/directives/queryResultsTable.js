@@ -324,7 +324,10 @@ function(external, connectionService, datasetService, errorNotificationService, 
                         headerName: field.prettyName,
                         field: field.columnName,
                         suppressSizeToFit: true,
-                        onCellClicked: handleRowClick
+                        onCellClicked: handleRowClick,
+                        cellRenderer: function(params) {
+                            return neon.helpers.getNestedValue(params.data, params.colDef.field);
+                        }
                     };
 
                     if($scope.hiddenColumns[field.columnName]) {
