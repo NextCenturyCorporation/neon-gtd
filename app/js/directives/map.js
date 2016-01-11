@@ -1085,7 +1085,7 @@ angular.module('neonDemo.directives')
                                     $scope.legend.layers.push({
                                         layerName: $scope.options.layers[i].name,
                                         olLayerId: $scope.options.layers[i].olLayer.id,
-                                        display: false,
+                                        display: true,
                                         nodeColorMappings: colorMappings.nodeColors,
                                         lineColorMappings: colorMappings.lineColors
                                     });
@@ -1097,7 +1097,7 @@ angular.module('neonDemo.directives')
                                     $scope.legend.layers.push({
                                         layerName: $scope.options.layers[i].name,
                                         olLayerId: $scope.options.layers[i].olLayer.id,
-                                        display: false,
+                                        display: true,
                                         colorMappings: colorMappings
                                     });
                                 }
@@ -1722,7 +1722,9 @@ angular.module('neonDemo.directives')
                 layer.editing = false;
                 setFilterKey(layer);
                 layer.olLayer = addLayer(layer);
-                $scope.legend.layers[legendIndex].olLayerId = layer.olLayer.id;
+                if(legendIndex >= 0) {
+                    $scope.legend.layers[legendIndex].olLayerId = layer.olLayer.id;
+                }
                 $scope.map.setLayerVisibility(layer.olLayer.id, layer.visible);
                 refreshFilterKeys(previousLayer, function() {
                     if($scope.zoomRectId) {
