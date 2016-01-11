@@ -183,7 +183,7 @@ coreMap.Map.Layer.PointsLayer = OpenLayers.Class(OpenLayers.Layer.Vector, {
         }, {
             context: {
                 fillColor: function(feature) {
-                    return (layer.calculateColor(feature.attributes) || coreMap.Map.Layer.PointsLayer.DEFAULT_COLOR);
+                    return (layer.calculateColor(feature.attributes) || neonColors.DEFAULT);
                 },
                 radius: function(feature) {
                     return (layer.calculateRadius(feature.attributes) || coreMap.Map.Layer.PointsLayer.MIN_RADIUS);
@@ -233,7 +233,7 @@ coreMap.Map.Layer.PointsLayer.prototype.calculateColor = function(element) {
         color = this.colorScale(category);
     } else {
         category = '(Uncategorized)';
-        color = this.defaultColor || coreMap.Map.Layer.PointsLayer.DEFAULT_COLOR;
+        color = this.defaultColor || neonColors.DEFAULT;
     }
 
     // Save the color in the registry so we know the color/category mappings
@@ -444,7 +444,6 @@ coreMap.Map.Layer.PointsLayer.prototype.updateRadii = function() {
 };
 
 coreMap.Map.Layer.PointsLayer.DEFAULT_CLUSTER_DISTANCE = 40;
-coreMap.Map.Layer.PointsLayer.DEFAULT_COLOR = "#00ff00";
 coreMap.Map.Layer.PointsLayer.DEFAULT_LATITUDE_MAPPING = "latitude";
 coreMap.Map.Layer.PointsLayer.DEFAULT_LONGITUDE_MAPPING = "longitude";
 coreMap.Map.Layer.PointsLayer.DEFAULT_DATE_MAPPING = "date";
