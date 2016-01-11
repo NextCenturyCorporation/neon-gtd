@@ -49,7 +49,7 @@ function($timeout, external, datasetService, filterService, linksPopupService) {
                 });
 
                 $scope.$on('$destroy', function() {
-                    $scope.messenger.removeEvents();
+                    $scope.messenger.unsubscribeAll();
                 });
 
                 //FIXME needs promise with timeout to not fire a bunch of times

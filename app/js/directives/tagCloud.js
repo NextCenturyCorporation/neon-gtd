@@ -42,7 +42,8 @@ function(external, connectionService, datasetService, errorNotificationService, 
 
             $scope.optionsMenuButtonText = function() {
                 return $scope.filterTags.length === 0 && $scope.data.length === 0 ? "No Tag Data" : "";
-            }
+            };
+
             $scope.showOptionsMenuButtonText = function() {
                 return $scope.filterTags.length === 0 && $scope.data.length === 0;
             };
@@ -161,7 +162,7 @@ function(external, connectionService, datasetService, errorNotificationService, 
                     linksPopupService.deleteLinks($scope.visualizationId);
                     $element.off("resize", updateSize);
                     $element.find(".chart-options a").off("resize", updateSize);
-                    $scope.messenger.removeEvents();
+                    $scope.messenger.unsubscribeAll();
                     // Remove our filter if we had an active one.
                     if(0 < $scope.filterTags.length) {
                         filterService.removeFilters($scope.messenger, $scope.filterKeys);

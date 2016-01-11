@@ -620,7 +620,7 @@ function($interval, $filter, external, connectionService, datasetService, errorN
                         tags: ["remove", "timeline"]
                     });
                     linksPopupService.deleteLinks($scope.visualizationId);
-                    $scope.messenger.removeEvents();
+                    $scope.messenger.unsubscribeAll();
                     // Remove our filter if we had an active one.
                     if($scope.brush.length) {
                         filterService.removeFilters($scope.messenger, $scope.filterKeys);

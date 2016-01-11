@@ -158,7 +158,7 @@ function(external, connectionService, datasetService, errorNotificationService, 
                         tags: ["remove", "datagrid"]
                     });
                     linksPopupService.deleteLinks($scope.tableId);
-                    $scope.messenger.removeEvents();
+                    $scope.messenger.unsubscribeAll();
                     $scope.element.off("resize", resizeTitle);
                     $scope.element.find(".chart-options a").off("resize", resizeTitle);
                     exportService.unregister($scope.exportID);
@@ -486,10 +486,31 @@ function(external, connectionService, datasetService, errorNotificationService, 
                         }, refreshColumns);
                         $scope.total = 0;
                         if(response.responseJSON) {
-                            $scope.errorMessage = errorNotificationService.showErrorMessage($element, response.responseJSON.error, response.responseJSON.stackTrace);
+                            $scope.errorMessage = errorNotificationService.showErrorMessage($scope.element, response.responseJSON.error, response.responseJSON.stackTrace);
                         }
                     }
                 });
+            };
+
+            /**
+             * Escapes all values in the given data, recursively.
+             * @method escapeDataRecursively
+             * @private
+             */
+            var escapeDataRecursively = function(data) {
+                if(_.isArray(data)) {
+                    for(var i = 0; i < data.length; i++) {
+                        data[i] = escapeDataRecursively(data[i]);
+                    }
+                } else if(_.keys(data).length) {
+                    var keys = _.keys(data);
+                    for(var i = 0; i < keys.length; i++) {
+                        data[keys[i]] = escapeDataRecursively(data[keys[i]]);
+                    }
+                } else {
+                    data = _.escape(data);
+                }
+                return data;
             };
 
             /**
@@ -507,6 +528,8 @@ function(external, connectionService, datasetService, errorNotificationService, 
             };
 
             var updateData = function(data) {
+                data = escapeDataRecursively(data);
+
                 if(external.active) {
                     data = addExternalLinksToColumnData(data);
                 }

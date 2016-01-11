@@ -219,7 +219,7 @@ angular.module('neonDemo.directives')
 
                 $scope.messenger.subscribe("theme_changed", onThemeChanged);
 
-                $('.legend-container .legend').on({
+                $element.find('.legend-container .legend').on({
                     "shown.bs.dropdown": function() {
                         this.closable = false;
                     },
@@ -249,7 +249,7 @@ angular.module('neonDemo.directives')
                     });
 
                     $element.off("resize", updateSize);
-                    $scope.messenger.removeEvents();
+                    $scope.messenger.unsubscribeAll();
                     if($scope.extent) {
                         $scope.clearFilters();
                     }
@@ -704,17 +704,11 @@ angular.module('neonDemo.directives')
                 }
             };
 
-            var findField = function(fields, fieldName) {
-                return _.find(fields, function(field) {
-                    return field.columnName === fieldName;
-                }) || datasetService.createBlankField();
-            };
-
             var setDefaultLayerProperties = function(layer) {
                 layer.name = (layer.name || layer.table).toUpperCase();
                 layer.previousName = layer.name;
-                layer.databasePrettyName = getPrettyNameForDatabase(layer.database);
-                layer.tablePrettyName = getPrettyNameForTable(layer.table);
+                layer.databasePrettyName = datasetService.getPrettyNameForDatabase(layer.database);
+                layer.tablePrettyName = datasetService.getPrettyNameForTable(layer.database, layer.table);
                 layer.limit = layer.limit || $scope.DEFAULT_LIMIT;
                 layer.previousLimit = layer.limit;
                 layer.editing = false;
@@ -722,14 +716,14 @@ angular.module('neonDemo.directives')
                 layer.visible = true;
 
                 layer.fields = datasetService.getSortedFields(layer.database, layer.table);
-                layer.latitudeField = findField(layer.fields, layer.latitudeMapping);
-                layer.longitudeField = findField(layer.fields, layer.longitudeMapping);
-                layer.sizeField = layer.weightMapping ? findField(layer.fields, layer.weightMapping) : findField(layer.fields, layer.sizeBy);
-                layer.colorField = findField(layer.fields, layer.colorBy);
-                layer.sourceField = findField(layer.fields, layer.sourceMapping);
-                layer.targetField = findField(layer.fields, layer.targetMapping);
-                layer.nodeColorField = findField(layer.fields, layer.nodeColorBy);
-                layer.lineColorField = findField(layer.fields, layer.lineColorBy);
+                layer.latitudeField = datasetService.findField(layer.fields, layer.latitudeMapping);
+                layer.longitudeField = datasetService.findField(layer.fields, layer.longitudeMapping);
+                layer.sizeField = layer.weightMapping ? datasetService.findField(layer.fields, layer.weightMapping) : datasetService.findField(layer.fields, layer.sizeBy);
+                layer.colorField = datasetService.findField(layer.fields, layer.colorBy);
+                layer.sourceField = datasetService.findField(layer.fields, layer.sourceMapping);
+                layer.targetField = datasetService.findField(layer.fields, layer.targetMapping);
+                layer.nodeColorField = datasetService.findField(layer.fields, layer.nodeColorBy);
+                layer.lineColorField = datasetService.findField(layer.fields, layer.lineColorBy);
 
                 return layer;
             };
@@ -877,38 +871,11 @@ angular.module('neonDemo.directives')
              * @private
              */
             var setFilterKey = function(layer) {
-                var filterKeys = filterService.createFilterKeys("map", datasetService.getDatabaseAndTableNames());
-                var database = layer.database;
-                var table = layer.table;
+                var filterServiceKeys = filterService.createFilterKeys("map", datasetService.getDatabaseAndTableNames());
                 var latLonKey = getFilterLatLonKey(layer);
-                var relations = datasetService.getRelations(database, table, [layer.latitudeMapping, layer.longitudeMapping]);
-                var relationKeys = {};
+                var relations = datasetService.getRelations(layer.database, layer.table, [layer.latitudeMapping, layer.longitudeMapping]);
 
-                _.each(relations, function(relation) {
-                    var relationDatabase = relation.database;
-                    var relationTable = relation.table;
-
-                    if(relationDatabase !== database || relationTable !== table) {
-                        if(!relationKeys[relationDatabase]) {
-                            relationKeys[relationDatabase] = {};
-                        }
-                        if(!relationKeys[relationDatabase][relationTable]) {
-                            relationKeys[relationDatabase][relationTable] = filterKeys[relationDatabase][relationTable];
-                        }
-                    }
-                });
-
-                if(!$scope.filterKeys[database]) {
-                    $scope.filterKeys[database] = {};
-                }
-                if(!$scope.filterKeys[database][table]) {
-                    $scope.filterKeys[database][table] = {};
-                }
-                if(!$scope.filterKeys[database][table][latLonKey]) {
-                    $scope.filterKeys[database][table][latLonKey] = {};
-                    $scope.filterKeys[database][table][latLonKey].filterKey = filterKeys[database][table];
-                    $scope.filterKeys[database][table][latLonKey].relations = relationKeys;
-                }
+                $scope.filterKeys = filterService.createFilterKeysForAttribute($scope.filterKeys, layer.database, layer.table, latLonKey, filterServiceKeys, relations);
             };
 
             /*
@@ -1118,7 +1085,7 @@ angular.module('neonDemo.directives')
                                     $scope.legend.layers.push({
                                         layerName: $scope.options.layers[i].name,
                                         olLayerId: $scope.options.layers[i].olLayer.id,
-                                        display: false,
+                                        display: true,
                                         nodeColorMappings: colorMappings.nodeColors,
                                         lineColorMappings: colorMappings.lineColors
                                     });
@@ -1130,7 +1097,7 @@ angular.module('neonDemo.directives')
                                     $scope.legend.layers.push({
                                         layerName: $scope.options.layers[i].name,
                                         olLayerId: $scope.options.layers[i].olLayer.id,
-                                        display: false,
+                                        display: true,
                                         colorMappings: colorMappings
                                     });
                                 }
@@ -1757,7 +1724,9 @@ angular.module('neonDemo.directives')
                 layer.editing = false;
                 setFilterKey(layer);
                 layer.olLayer = addLayer(layer);
-                $scope.legend.layers[legendIndex].olLayerId = layer.olLayer.id;
+                if(legendIndex >= 0) {
+                    $scope.legend.layers[legendIndex].olLayerId = layer.olLayer.id;
+                }
                 $scope.map.setLayerVisibility(layer.olLayer.id, layer.visible);
                 refreshFilterKeys(previousLayer, function() {
                     if($scope.zoomRectId) {
@@ -1933,9 +1902,9 @@ angular.module('neonDemo.directives')
                     name: ($scope.options.newLayer.name || $scope.options.newLayer.table.name).toUpperCase(),
                     type: $scope.options.newLayer.type,
                     database: $scope.options.newLayer.database.name,
-                    databasePrettyName: getPrettyNameForDatabase($scope.options.newLayer.database.name),
+                    databasePrettyName: datasetService.getPrettyNameForDatabase($scope.options.newLayer.database.name),
                     table: $scope.options.newLayer.table.name,
-                    tablePrettyName: getPrettyNameForTable($scope.options.newLayer.table.name),
+                    tablePrettyName: datasetService.getPrettyNameForTable($scope.options.newLayer.database.name, $scope.options.newLayer.table.name),
                     fields: $scope.fields,
                     limit: $scope.options.newLayer.limit,
                     latitudeField: $scope.options.newLayer.latitude,
@@ -2033,26 +2002,6 @@ angular.module('neonDemo.directives')
             $scope.clickAddNewLayerButton = function() {
                 $scope.toggleEditing($scope.options.newLayer);
                 $scope.validateNewLayerName();
-            };
-
-            var getPrettyNameForDatabase = function(databaseName) {
-                var name = databaseName;
-                $scope.databases.forEach(function(database) {
-                    if(database.name === databaseName) {
-                        name = database.prettyName;
-                    }
-                });
-                return name;
-            };
-
-            var getPrettyNameForTable = function(tableName) {
-                var name = tableName;
-                $scope.tables.forEach(function(table) {
-                    if(table.name === tableName) {
-                        tableName = table.prettyName;
-                    }
-                });
-                return name;
             };
 
             /**

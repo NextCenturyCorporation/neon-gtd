@@ -4,7 +4,7 @@
         "datastore": "mongo",
         "hostname": "localhost",
         "layout": "earthquakes",
-        "connectOnLoad": true,        
+        "connectOnLoad": true,
         "databases": [{
             "name": "test",
             "prettyName": "Test",
@@ -107,6 +107,38 @@
             "colorBy": "magType",
             "sizeBy": "mag"
         }],
+        "lineCharts": {
+            "lineChart1": [
+                {
+                    "database": "test",
+                    "table": "earthquakes",
+                    "active":  true,
+                    "name": "Quakes",
+                    "xAxis": "time",
+                    "aggregation": "sum",
+                    "yAxis": "mag",
+                    "category": "magType"
+                },{
+                    "database": "test",
+                    "table": "earthquakes",
+                    "active":  true,
+                    "name": "Quakes2",
+                    "xAxis": "time",
+                    "aggregation": "count"
+                }
+            ],
+            "lineChart2": [
+                {
+                    "database": "test",
+                    "table": "earthquakes",
+                    "active":  true,
+                    "name": "Quakes",
+                    "xAxis": "time",
+                    "aggregation": "max",
+                    "yAxis": "mag"
+                }
+            ]
+        },
         "mapConfig": {
             "bounds" : {
                 "top": 90,
@@ -186,7 +218,10 @@
         }, {
             "sizeX": 6,
             "sizeY": 4,
-            "type": "linechart"
+            "type": "linechart",
+            "bindings": {
+                "bind-config": "'lineChart1'"
+            }
         }, {
             "sizeX": 6,
             "sizeY": 4,
@@ -237,13 +272,8 @@
             "sizeY": 4,
             "type": "linechart",
             "bindings": {
-                "bind-title": "'myTitle'",
-                "bind-database": "'myDatabase'",
-                "bind-table": "'myTable'",
-                "bind-date-field": "'date'",
-                "bind-y-axis-field": "'type'",
-                "bind-category-field": "'type'",
-                "bind-aggregation-field": "'count'"
+                "bind-config": "'myLineChart'",
+                "bind-granularity": "'day'"
             }
         }, {
             "sizeX": 6,

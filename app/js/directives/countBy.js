@@ -91,7 +91,8 @@ function(external, connectionService, datasetService, errorNotificationService, 
                     return "Error";
                 }
                 return ($scope.active.count >= $scope.active.limit ? "Limited to " : "") + ($scope.active.count || "No") + " Values";
-            }
+            };
+
             $scope.showOptionsMenuButtonText = function() {
                 return true;
             };
@@ -145,7 +146,7 @@ function(external, connectionService, datasetService, errorNotificationService, 
                     linksPopupService.deleteLinks($scope.tableId);
                     $scope.element.off("resize", resize);
                     $scope.element.find(".filter-container").off("resize", resizeTable);
-                    $scope.messenger.removeEvents();
+                    $scope.messenger.unsubscribeAll();
                     if($scope.filterSet) {
                         filterService.removeFilters($scope.messenger, $scope.filterKeys);
                     }
@@ -669,7 +670,10 @@ function(external, connectionService, datasetService, errorNotificationService, 
                 if($scope.bindTitle) {
                     return title + $scope.bindTitle;
                 }
-                return title + $scope.active.table.prettyName + ($scope.active.dataField.prettyName ? " / " + $scope.active.dataField.prettyName : "");
+                if(_.keys($scope.active).length) {
+                    return title + $scope.active.table.prettyName + ($scope.active.dataField.prettyName ? " / " + $scope.active.dataField.prettyName : "");
+                }
+                return title;
             };
         }
     };

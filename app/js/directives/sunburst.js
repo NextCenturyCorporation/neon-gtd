@@ -92,7 +92,7 @@ function(connectionService, datasetService, errorNotificationService, exportServ
                         tags: ["remove", "sunburst"]
                     });
                     $element.off("resize", updateChartSize);
-                    $scope.messenger.removeEvents();
+                    $scope.messenger.unsubscribeAll();
                     exportService.unregister($scope.exportID);
                 });
 

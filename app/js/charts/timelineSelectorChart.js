@@ -230,7 +230,7 @@ charts.TimelineSelectorChart = function(element, configuration) {
                 }
 
                 if(extent1[0] < extent1[1]) {
-                    d3.select(".brush").call(brush.extent(extent1));
+                    self.svg.select(".brush").call(brush.extent(extent1));
                 }
             }
         }

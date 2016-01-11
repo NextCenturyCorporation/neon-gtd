@@ -162,7 +162,7 @@ function(external, $timeout, connectionService, datasetService, errorNotificatio
                 $scope.$on('$destroy', function() {
                     linksPopupService.deleteLinks($scope.visualizationId + "-head");
                     linksPopupService.deleteLinks($scope.visualizationId + "-name");
-                    $scope.messenger.removeEvents();
+                    $scope.messenger.unsubscribeAll();
                     $element.off("resize", resizeNewsfeed);
                     $element.find(".chart-options a").off("resize", resizeTitle);
                     $element.find(".newsfeed").off("scroll", updateNewsfeedOnScroll);
