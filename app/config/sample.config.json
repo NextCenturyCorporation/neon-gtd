@@ -311,6 +311,30 @@
             "bind-attr-y": "'mag'"
         }
     }, {
+        "name": "hybrid heatmap",
+        "sizeX": 2,
+        "sizeY": 2,
+        "minSizeY": 1,
+        "type": "plotly-graph",
+        "icon": "img/visualizations/CreateFilter64.png",
+        "bindings": {
+            "graph-type": "'heatmapScatter'",
+            "bind-attr-x": "'depth'",
+            "bind-attr-y": "'mag'"
+        }
+    },{
+        "name": "hybrid histogram",
+        "sizeX": 2,
+        "sizeY": 2,
+        "minSizeY": 1,
+        "type": "plotly-graph",
+        "icon": "img/visualizations/CreateFilter64.png",
+        "bindings": {
+            "graph-type": "'histogramScatter'",
+            "bind-attr-x": "'depth'",
+            "bind-attr-y": "'mag'"
+        }
+    } {
         "name": "Filter Builder",
         "sizeX": 12,
         "minSizeX": 12,
