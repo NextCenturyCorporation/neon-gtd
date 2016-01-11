@@ -425,7 +425,11 @@ charts.BarChart.prototype.bindData_ = function(chart) {
         .attr('y', function(d) {
             return me.y(d.values);
         })
-        .attr('width', this.x.rangeBand())
+        .attr('width', function(d) {
+            // Save the width of the bar in the data for use in the calculation of the errorbar attributes.
+            d.barWidth = me.x.rangeBand(d);
+            return d.barWidth;
+        })
         .attr('height', function(d) {
             if(me.yMinAttribute_ && d[me.yMinAttribute_]) {
                 return me.height - me.vMargin_ - me.y(d[me.yMinAttribute_]);
@@ -448,6 +452,27 @@ charts.BarChart.prototype.bindData_ = function(chart) {
         .on('click', function(d) {
             me.setBarSelected(this, d.key);
         });
+
+    chart.selectAll(".errorbar")
+        .data(this.data_)
+        .enter().append("line")
+        .attr("x1", function(d) {
+            return me.x(d.key) + (d.barWidth / 2);
+        })
+        .attr("y1", function(d) {
+            var value = Math.max(0, d.values);
+            var error = Math.min(value, Math.max(1, d.error));
+            return me.y(value - error);
+        })
+        .attr("x2", function(d) {
+            return me.x(d.key) + (d.barWidth / 2);
+        })
+        .attr("y2", function(d) {
+            var value = Math.max(0, d.values);
+            var error = Math.min(value, Math.max(1, d.error));
+            return me.y(value + error);
+        })
+        .attr("class", "errorbar");
 
     // initially all bars active, so just apply the active style
     this.applyStyle_(bars, charts.BarChart.ACTIVE_STYLE_KEY_);
@@ -522,14 +547,20 @@ charts.BarChart.prototype.setInactive = function(predicate) {
 
 charts.BarChart.prototype.showTooltipXaxis_ = function(item, mouseEvent) {
     var yValue = 0;
+    var error = 0;
     this.data_.forEach(function(d) {
         if(item === d.key) {
             yValue = d.values;
+            error = d.error;
         }
     });
 
     var html = '<div><strong>' + this.xLabel_ + ':</strong> ' + item + '</div>' +
                 '<div><strong>' + this.yLabel_ + ':</strong> ' + yValue + '</div>';
+
+    if(error) {
+        html += '<div><strong>Error:</strong> +/-' + error + '</div>';
+    }
 
     $("#tooltip-container").html(html);
     $("#tooltip-container").show();
@@ -555,6 +586,10 @@ charts.BarChart.prototype.showTooltip_ = function(item, mouseEvent) {
 
     var html = '<div><strong>' + this.xLabel_ + ':</strong> ' + _.escape(xValue) + '</div>' +
                 '<div><strong>' + this.yLabel_ + ':</strong> ' + yValue + '</div>';
+
+    if(item.error) {
+        html += '<div><strong>Error:</strong> +/-' + item.error + '</div>';
+    }
 
     $("#tooltip-container").html(html);
     $("#tooltip-container").show();
@@ -701,6 +736,7 @@ charts.BarChart.prototype.rollupDataByCategory_ = function(data) {
 
         return charts.BarChart.transformByKeyTypes_(data, keyTypes);
     } else {
+        /*
         var aggregated = d3.nest().key(function(d) {
                 var category = me.categoryForItem(d);
                 if(keyTypes !== charts.BarChart.STRING_KEY_) {
@@ -725,6 +761,14 @@ charts.BarChart.prototype.rollupDataByCategory_ = function(data) {
             }).entries(data);
 
         return charts.BarChart.transformByKeyTypes_(aggregated, keyTypes);
+        */
+
+        data.forEach(function(item) {
+            item.key = me.categoryForItem(item);
+            item.values = item[me.yAttribute_] || 0;
+        });
+
+        return charts.BarChart.transformByKeyTypes_(data, keyTypes);
     }
 };
 
@@ -859,4 +903,8 @@ charts.BarChart.prototype.redrawOnResize_ = function() {
 charts.BarChart.prototype.destroy = function() {
     $(window).off('resize', this.resizeHandler_);
     $(this.element[0]).empty();
+};
+
+charts.BarChart.prototype.hideErrorbars = function() {
+    this.element.selectAll(".errorbar").remove();
 };

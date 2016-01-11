@@ -62,6 +62,11 @@ function(external, connectionService, datasetService, errorNotificationService, 
             $scope.linksPopupButtonIsDisabled = true;
             $scope.queryLimitCount = 0;
 
+            $scope.sseQueryId = undefined;
+            $scope.sseQueryErrorAverage = 0;
+            $scope.sseQueryProgress = 0;
+            $scope.sseQueryData = {};
+
             $scope.options = {
                 database: {},
                 table: {},
@@ -328,6 +333,52 @@ function(external, connectionService, datasetService, errorNotificationService, 
                     tags: ["query", "barchart"]
                 });
 
+                if($scope.sseQueryId) {
+                    connection.cancelSseQuery($scope.sseQueryId);
+                    $scope.sseQueryId = undefined;
+                };
+
+                var onInitial = function(id) {
+                    $scope.sseQueryId = id;
+                    $scope.sseQueryProgress = 0;
+                    $scope.sseQueryData = {}
+                    if(rebuildChart) {
+                        drawBlankChart();
+                    }
+                };
+                var onMessage = function(queryResults) {
+                    $scope.$apply(function() {
+                        if(!queryResults.data) {
+                            // Update the sseQueryData to use the final counts instead of the means estimated by the queries.
+                            Object.keys($scope.sseQueryData).forEach(function(key) {
+                                $scope.sseQueryData[key].mean = $scope.sseQueryData[key].count;
+                                $scope.sseQueryData[key].error = 0;
+                            });
+                            // Redraw the chart using the sseQueryData.
+                            doDrawChart({
+                                data: []
+                            });
+                            $scope.chart.hideErrorbars();
+                            $scope.sseQueryId = undefined;
+                            $scope.sseQueryErrorAverage = 0;
+                            $scope.sseQueryProgress = 0;
+                            return;
+                        }
+
+                        doDrawChart(queryResults);
+                        $scope.loadingData = false;
+                    });
+                };
+                var onError = function() {
+                    $scope.$apply(function() {
+                        drawBlankChart();
+                        $scope.loadingData = false;
+                    });
+                };
+
+                connection.executeSseQuery(query, onInitial, onMessage, onError);
+
+                /*
                 if($scope.outstandingQuery) {
                     $scope.outstandingQuery.abort();
                 }
@@ -393,6 +444,7 @@ function(external, connectionService, datasetService, errorNotificationService, 
                         }
                     }
                 });
+                */
             };
 
             var drawBlankChart = function() {
@@ -501,8 +553,45 @@ function(external, connectionService, datasetService, errorNotificationService, 
             };
 
             var doDrawChart = function(data, destroy) {
+                var chartData = data.data;
+
+                if($scope.sseQueryId) {
+                    chartData.forEach(function(item) {
+                        // TODO Determine possible problems with the error calculation in the groovy code.  Remove the division of the error by 4 that was added for the demo.
+                        var xAttribute = item[$scope.options.attrX.columnName];
+                        $scope.sseQueryData[xAttribute] = $scope.sseQueryData[xAttribute] || {
+                            count: 0,
+                            error: 0,
+                            mean: 0
+                        };
+                        $scope.sseQueryData[xAttribute].count += item[COUNT_FIELD_NAME];
+                        $scope.sseQueryData[xAttribute].error = (item.error / 4);
+                        $scope.sseQueryData[xAttribute].mean = item.mean;
+                    });
+
+                    var currentCount = 0;
+                    var totalCount = 0;
+                    $scope.sseQueryErrorAverage = 0;
+
+                    chartData = Object.keys($scope.sseQueryData).map(function(key) {
+                        var item = {};
+                        item[$scope.options.attrX.columnName] = key;
+                        item[COUNT_FIELD_NAME] = $scope.sseQueryData[key].mean;
+                        item.error = $scope.sseQueryData[key].error;
+
+                        currentCount += $scope.sseQueryData[key].count;
+                        totalCount += $scope.sseQueryData[key].mean;
+                        $scope.sseQueryErrorAverage += ($scope.sseQueryData[key].error / 4);
+
+                        return item;
+                    });
+
+                    $scope.sseQueryErrorAverage = ratioToPercent($scope.sseQueryErrorAverage / totalCount);
+                    $scope.sseQueryProgress = ratioToPercent(currentCount / totalCount);
+                }
+
                 var opts = {
-                    data: data.data,
+                    data: chartData,
                     x: $scope.options.attrX.columnName,
                     y: COUNT_FIELD_NAME,
                     responsive: false,
@@ -527,7 +616,11 @@ function(external, connectionService, datasetService, errorNotificationService, 
 
                 // Save the limit count for the most recent query to show in the options menu button text.
                 // Don't use the current limit count because that may be changed to a different number.
-                $scope.queryLimitCount = data.data.length >= $scope.options.limitCount ? $scope.options.limitCount : 0;
+                $scope.queryLimitCount = chartData.length >= $scope.options.limitCount ? $scope.options.limitCount : 0;
+            };
+
+            var ratioToPercent = function(ratio) {
+                return Math.round(ratio * 100000) / 1000;
             };
 
             $scope.getLegendText = function() {

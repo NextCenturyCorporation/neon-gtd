@@ -1282,6 +1282,9 @@ charts.TimelineSelectorChart = function(element, configuration) {
         // visualizations)
         var html = '<div><strong>Date:</strong> ' + _.escape(date) + '</div>' +
             '<div><strong>Count:</strong> ' + count + '</div>';
+        if(item.error) {
+            html += '<div><strong>Error:</strong> +/-' + item.error + '</div>';
+        }
         $("#tooltip-container").html(html);
         $("#tooltip-container").show();
         positionTooltip(d3.select('#tooltip-container'), mouseEvent);

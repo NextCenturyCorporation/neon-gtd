@@ -84,9 +84,9 @@ function($interval, $filter, external, connectionService, datasetService, errorN
             $scope.width = 0;
 
             $scope.sseQueryId = undefined;
-            $scope.sseQueryCountTotal = 0;
             $scope.sseQueryErrorAverage = 0;
             $scope.sseQueryProgress = 0;
+            $scope.sseQueryData = {};
 
             $scope.databases = [];
             $scope.tables = [];
@@ -966,12 +966,21 @@ function($interval, $filter, external, connectionService, datasetService, errorN
 
                 var onInitial = function(id) {
                     $scope.sseQueryId = id;
-                    $scope.sseQueryCountTotal = 0;
                     $scope.sseQueryProgress = 0;
+                    $scope.sseQueryData = {};
                 };
                 var onMessage = function(queryResults) {
                     $scope.$apply(function() {
                         if(!queryResults.data) {
+                            // Update the sseQueryData to use the final counts instead of the means estimated by the queries.
+                            Object.keys($scope.sseQueryData).forEach(function(bucketIndex) {
+                                $scope.sseQueryData[bucketIndex].mean = $scope.sseQueryData[bucketIndex].count;
+                                $scope.sseQueryData[bucketIndex].error = 0;
+                            });
+                            // Redraw the chart using the sseQueryData.
+                            updateChartData({
+                                data: []
+                            });
                             $scope.sseQueryId = undefined;
                             $scope.sseQueryErrorAverage = 0;
                             $scope.sseQueryProgress = 0;
@@ -1160,8 +1169,6 @@ function($interval, $filter, external, connectionService, datasetService, errorN
                 }
 
                 $scope.recordCount = total;
-                $scope.sseQueryErrorAverage = ratioToPercent($scope.sseQueryErrorAverage / $scope.recordCount);
-                $scope.sseQueryProgress = ratioToPercent($scope.sseQueryCountTotal / $scope.recordCount);
             };
 
             var ratioToPercent = function(ratio) {
@@ -1185,7 +1192,7 @@ function($interval, $filter, external, connectionService, datasetService, errorN
                         if($scope.bucketizer.getStartDate() === undefined || $scope.bucketizer.getEndDate() === undefined) {
                             $scope.updateDates();
                         }
-                        var data = createTimelineData(queryResults);
+                        var data = createTimelineData(queryResults.data);
                         $scope.data = data;
                         $scope.noData = !$scope.data || !$scope.data.length || !$scope.data[0].data || !$scope.data[0].data.length;
                         updateChartTimesAndTotal();
@@ -1209,7 +1216,7 @@ function($interval, $filter, external, connectionService, datasetService, errorN
                         source: "system",
                         tags: ["timeline", "clear"]
                     });
-                    $scope.data = createTimelineData(queryResults);
+                    $scope.data = createTimelineData(queryResults.data);
                     $scope.noData = !$scope.data || !$scope.data.length || !$scope.data[0].data || !$scope.data[0].data.length;
                     updateChartTimesAndTotal();
                 }
@@ -1367,54 +1374,68 @@ function($interval, $filter, external, connectionService, datasetService, errorN
             /**
              * Creates a new data array used to populate our contained timeline.  This function is used
              * as or by Neon query handlers.
-             * @param {Object} queryResults Results returned from a Neon query.
-             * @param {Array} queryResults.data The aggregate numbers for the heat chart cells.
+             * @param {Array} data
              * @method createTimelineData
              * @private
              */
-            var createTimelineData = function(queryResults) {
-                var rawData = queryResults.data;
-                var data = [];
+            var createTimelineData = function(data) {
                 var queryData = [];
                 var i = 0;
-                var rawLength = rawData.length;
 
-                if(rawLength > 0) {
-                    var numBuckets = $scope.bucketizer.getNumBuckets();
+                // Initialize our time buckets.
+                for(i = 0; i < $scope.bucketizer.getNumBuckets(); i++) {
+                    var bucketGraphDate = $scope.bucketizer.getDateForBucket(i);
+                    queryData[i] = {
+                        date: bucketGraphDate,
+                        value: 0
+                    };
+                }
 
-                    // Initialize our time buckets.
-                    for(i = 0; i < numBuckets; i++) {
-                        var bucketGraphDate = $scope.bucketizer.getDateForBucket(i);
-                        queryData[i] = {
-                            date: bucketGraphDate,
-                            value: 0
-                        };
-                    }
-
-                    // Fill our rawData into the appropriate interval buckets.
+                if(data.length > 0) {
+                    // Fill our raw data into the appropriate interval buckets.
                     var resultDate;
-                    $scope.sseQueryErrorAverage = 0;
-                    for(i = 0; i < rawLength; i++) {
-                        resultDate = new Date(rawData[i].date);
+                    for(i = 0; i < data.length; i++) {
+                        resultDate = new Date(data[i].date);
                         var bucketIndex = $scope.bucketizer.getBucketIndex(resultDate);
                         if(queryData[bucketIndex]) {
                             // TODO Determine possible problems with the error calculation in the groovy code.  Remove the division of the error by 4 that was added for the demo.
-                            queryData[bucketIndex].error = (rawData[i].error / 4);
-                            queryData[bucketIndex].value = rawData[i].mean;
-                            $scope.sseQueryCountTotal += rawData[i].count;
-                            $scope.sseQueryErrorAverage += (rawData[i].error / 4);
+                            queryData[bucketIndex].error = (data[i].error / 4);
+                            queryData[bucketIndex].value = data[i].mean;
+
+                            $scope.sseQueryData[bucketIndex] = $scope.sseQueryData[bucketIndex] || {
+                                count: 0,
+                                error: 0,
+                                mean: 0
+                            };
+                            $scope.sseQueryData[bucketIndex].count += data[i].count;
+                            $scope.sseQueryData[bucketIndex].error = (data[i].error / 4);
+                            $scope.sseQueryData[bucketIndex].mean = data[i].mean;
                         }
                     }
                 }
 
-                data.push({
+                if($scope.sseQueryId) {
+                    var currentCount = 0;
+                    var totalCount = 0;
+                    $scope.sseQueryErrorAverage = 0;
+
+                    Object.keys($scope.sseQueryData).forEach(function(bucketIndex) {
+                        queryData[bucketIndex].value = $scope.sseQueryData[bucketIndex] ? $scope.sseQueryData[bucketIndex].mean : 0;
+                        currentCount += $scope.sseQueryData[bucketIndex].count;
+                        totalCount += $scope.sseQueryData[bucketIndex].mean;
+                        $scope.sseQueryErrorAverage += ($scope.sseQueryData[bucketIndex].error / 4);
+                    });
+
+                    $scope.sseQueryErrorAverage = ratioToPercent($scope.sseQueryErrorAverage / totalCount);
+                    $scope.sseQueryProgress = ratioToPercent(currentCount / totalCount);
+                }
+
+                return [{
                     name: 'Total',
                     type: 'bar',
                     color: '#39b54a',
                     data: queryData
-                });
-
-                return data;
+                }];
             };
 
             /**

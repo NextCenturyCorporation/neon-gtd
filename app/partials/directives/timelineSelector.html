@@ -5,7 +5,6 @@
         <span class="count text-primary" ng-bind="recordCount | number"></span>
         <span>valid</span>
         <span ng-hide="(width < 600)">records</span>
-        <span ng-show="sseQueryErrorAverage" ng-bind="' +/- ' + sseQueryErrorAverage + '%'"></span>
     </h4>
 
     <h4 class="invalid-record-count next-to-title pull-left" ng-click="sendInvalidDates()">
@@ -155,9 +154,10 @@
         </span>
     </div>
 
-    <div class="pull-left">
-        <h4 ng-show="sseQueryProgress" ng-bind="'Sampling ' + sseQueryProgress + '% Done'" style="margin-top: 5px;"></h4>
-    </div>
+    <h4 class="pull-left" style="margin-top: 5px;">
+        <span ng-show="sseQueryErrorAverage" ng-bind="'Error +/- ' + sseQueryErrorAverage + '%'" style="margin-right: 5px;"></span>
+        <span ng-show="sseQueryProgress > 0 && sseQueryProgress <= 100" ng-bind="'Sampling ' + sseQueryProgress + '% Done'" style="margin-right: 5px;"></span>
+    </h4>
 </div>
 
 <div class="collapsed" ng-class="{true: 'collapsed', false: ''}[options.collapsed]" ng-hide="noData">

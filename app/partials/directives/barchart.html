@@ -58,12 +58,17 @@
         <span class="glyphicon glyphicon-remove" ng-click="clearFilterSet()"></span>
     </div>
 
-    <div class="legend">
+    <div class="legend pull-left">
         <div class="legend-item" title="{{getLegendText()}}">
             <span class="legend-icon" style="background-color: #39b54a"></span>
             <span class="legend-text" ng-bind="getLegendText()"></span>
         </div>
     </div>
+
+    <h4 class="pull-left" style="margin-top: 5px; margin-left: 15px;">
+        <span ng-show="sseQueryErrorAverage" ng-bind="'Error +/- ' + sseQueryErrorAverage + '%'" style="margin-right: 5px;"></span>
+        <span ng-show="sseQueryProgress > 0 && sseQueryProgress <= 100" ng-bind="'Sampling ' + sseQueryProgress + '% Done'" style="margin-right: 5px;"></span>
+    </h4>
 </div>
 
 <div class="clearfix"></div>
