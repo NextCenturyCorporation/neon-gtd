@@ -28,8 +28,8 @@
  * @constructor
  */
 angular.module('neonDemo.directives')
-.directive('map', ['external', 'ConnectionService', 'DatasetService', 'ErrorNotificationService', 'FilterService', 'ExportService', 'LinksPopupService', '$timeout', '$filter',
-    function(external, connectionService, datasetService, errorNotificationService, filterService, exportService, linksPopupService, $timeout, $filter) {
+.directive('map', ['external', 'ConnectionService', 'DatasetService', 'ErrorNotificationService', 'FilterService', 'ExportService', 'LinksPopupService', 'ThemeService', '$timeout', '$filter',
+    function(external, connectionService, datasetService, errorNotificationService, filterService, exportService, linksPopupService, themeService, $timeout, $filter) {
     return {
         templateUrl: 'partials/directives/map.html',
         restrict: 'EA',
@@ -217,7 +217,7 @@ angular.module('neonDemo.directives')
 
                 $scope.messenger.subscribe('date_selected', onDateSelected);
 
-                $scope.messenger.subscribe("theme_changed", onThemeChanged);
+                themeService.registerListener($scope.mapId, onThemeChanged);
 
                 $element.find('.legend-container .legend').on({
                     "shown.bs.dropdown": function() {
@@ -254,6 +254,7 @@ angular.module('neonDemo.directives')
                         $scope.clearFilters();
                     }
                     exportService.unregister($scope.exportID);
+                    themeService.unregisterListener($scope.mapId);
                 });
 
                 // Enable the tooltips.
@@ -2014,9 +2015,9 @@ angular.module('neonDemo.directives')
                 }
             };
 
-            var onThemeChanged = function(message) {
-                if(message.type !== $scope.options.baseLayerColor) {
-                    $scope.options.baseLayerColor = message.type;
+            var onThemeChanged = function(theme) {
+                if(theme.type !== $scope.options.baseLayerColor) {
+                    $scope.options.baseLayerColor = theme.type;
                     $scope.updateBaseLayerColor();
                 }
             };
