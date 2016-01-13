@@ -281,7 +281,7 @@ coreMap.Map.Layer.PointsLayer.prototype.calculateRadius = function(element) {
     var percentOfDataRange = (dataVal - this.minRadius) / this._dataRadiusDiff;
     var radius = coreMap.Map.Layer.PointsLayer.MIN_RADIUS + (percentOfDataRange * this._baseRadiusDiff) || coreMap.Map.Layer.PointsLayer.MIN_RADIUS;
 
-    return radius * (zoomLevel / 3);
+    return radius * (zoomLevel / 2);
 };
 
 /**
@@ -453,6 +453,6 @@ coreMap.Map.Layer.PointsLayer.DEFAULT_SELECT_COLOR = "#88d292";
 coreMap.Map.Layer.PointsLayer.DEFAULT_SIZE_MAPPING = "count_";
 coreMap.Map.Layer.PointsLayer.DEFAULT_STROKE_WIDTH = 0;
 coreMap.Map.Layer.PointsLayer.DEFAULT_STROKE_COLOR = "#ffffff";
-coreMap.Map.Layer.PointsLayer.MIN_RADIUS = 4;
-coreMap.Map.Layer.PointsLayer.MAX_RADIUS = 8;
+coreMap.Map.Layer.PointsLayer.MIN_RADIUS = 1;
+coreMap.Map.Layer.PointsLayer.MAX_RADIUS = 5;
 coreMap.Map.Layer.PointsLayer.DEFAULT_CURSOR = "pointer";
