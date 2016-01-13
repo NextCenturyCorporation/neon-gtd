@@ -2,10 +2,6 @@
     <div class="header-container" ng-show="!(hideHeader)">
         <div class="title header-text pull-left" ng-bind="(bindTitle != undefined) ? bindTitle : active.table.prettyName"></div>
 
-        <a class="edit-table" ng-class="{active: gridOptions.showToolPanel}">
-            <i class="header-text glyphicon glyphicon-edit" ng-click="toggleToolbox()" title="Modify Table Rows"></i>
-        </a>
-
         <options-menu parent-element="element" export-function="makeQueryResultsTableExportObject" button-text="optionsMenuButtonText" show-button-text="showOptionsMenuButtonText">
             <div class="form-group" ng-show="!(hideAdvancedOptions)">
                 <label>Database</label>
@@ -47,6 +43,10 @@
                 </div>
             </div>
         </options-menu>
+
+        <a class="edit-table pull-right" ng-class="{active: gridOptions.showToolPanel}">
+            <i class="header-text glyphicon glyphicon-edit" ng-click="toggleToolbox()" title="Open Toolbox to Hide & Reorder Columns"></i>
+        </a>
     </div>
 </div>
 
