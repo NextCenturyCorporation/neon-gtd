@@ -446,6 +446,14 @@ select[multiple] {
     }
 }
 
-.ag-row:hover {
-    cursor: pointer;
+.ag-row {
+    &:hover {
+        cursor: pointer;
+    }
+}
+
+.ag-cell {
+    &.highlight {
+        background-color: @callout;
+    }
 }

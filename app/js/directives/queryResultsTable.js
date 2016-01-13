@@ -330,6 +330,10 @@ function(external, connectionService, datasetService, errorNotificationService, 
                         }
                     };
 
+                    if(field.class) {
+                        config.cellClass = field.class;
+                    }
+
                     if($scope.hiddenColumns[field.columnName]) {
                         config.hide = true;
                     }
