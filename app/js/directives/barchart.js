@@ -557,7 +557,6 @@ function(external, connectionService, datasetService, errorNotificationService, 
 
                 if($scope.sseQueryId) {
                     chartData.forEach(function(item) {
-                        // TODO Determine possible problems with the error calculation in the groovy code.  Remove the division of the error by 4 that was added for the demo.
                         var xAttribute = item[$scope.options.attrX.columnName];
                         $scope.sseQueryData[xAttribute] = $scope.sseQueryData[xAttribute] || {
                             count: 0,
@@ -565,7 +564,7 @@ function(external, connectionService, datasetService, errorNotificationService, 
                             mean: 0
                         };
                         $scope.sseQueryData[xAttribute].count += item[COUNT_FIELD_NAME];
-                        $scope.sseQueryData[xAttribute].error = (item.error / 4);
+                        $scope.sseQueryData[xAttribute].error = item.error;
                         $scope.sseQueryData[xAttribute].mean = item.mean;
                     });
 
@@ -581,7 +580,7 @@ function(external, connectionService, datasetService, errorNotificationService, 
 
                         currentCount += $scope.sseQueryData[key].count;
                         totalCount += $scope.sseQueryData[key].mean;
-                        $scope.sseQueryErrorAverage += ($scope.sseQueryData[key].error / 4);
+                        $scope.sseQueryErrorAverage += $scope.sseQueryData[key].error;
 
                         return item;
                     });

@@ -1387,6 +1387,7 @@ function($interval, $filter, external, connectionService, datasetService, errorN
                     var bucketGraphDate = $scope.bucketizer.getDateForBucket(i);
                     queryData[i] = {
                         date: bucketGraphDate,
+                        error: 0,
                         value: 0
                     };
                 }
@@ -1398,8 +1399,7 @@ function($interval, $filter, external, connectionService, datasetService, errorN
                         resultDate = new Date(data[i].date);
                         var bucketIndex = $scope.bucketizer.getBucketIndex(resultDate);
                         if(queryData[bucketIndex]) {
-                            // TODO Determine possible problems with the error calculation in the groovy code.  Remove the division of the error by 4 that was added for the demo.
-                            queryData[bucketIndex].error = (data[i].error / 4);
+                            queryData[bucketIndex].error = data[i].error;
                             queryData[bucketIndex].value = data[i].mean;
 
                             $scope.sseQueryData[bucketIndex] = $scope.sseQueryData[bucketIndex] || {
@@ -1408,7 +1408,7 @@ function($interval, $filter, external, connectionService, datasetService, errorN
                                 mean: 0
                             };
                             $scope.sseQueryData[bucketIndex].count += data[i].count;
-                            $scope.sseQueryData[bucketIndex].error = (data[i].error / 4);
+                            $scope.sseQueryData[bucketIndex].error = data[i].error;
                             $scope.sseQueryData[bucketIndex].mean = data[i].mean;
                         }
                     }
@@ -1423,7 +1423,7 @@ function($interval, $filter, external, connectionService, datasetService, errorN
                         queryData[bucketIndex].value = $scope.sseQueryData[bucketIndex] ? $scope.sseQueryData[bucketIndex].mean : 0;
                         currentCount += $scope.sseQueryData[bucketIndex].count;
                         totalCount += $scope.sseQueryData[bucketIndex].mean;
-                        $scope.sseQueryErrorAverage += ($scope.sseQueryData[bucketIndex].error / 4);
+                        $scope.sseQueryErrorAverage += $scope.sseQueryData[bucketIndex].error;
                     });
 
                     $scope.sseQueryErrorAverage = ratioToPercent($scope.sseQueryErrorAverage / totalCount);
