@@ -16,9 +16,8 @@
  *
  */
 angular.module('neonDemo.directives')
-.directive('countBy', ['external', 'ConnectionService', 'DatasetService', 'ErrorNotificationService', 'FilterService',
-'ExportService', '$filter', 'LinksPopupService',
-function(external, connectionService, datasetService, errorNotificationService, filterService, exportService, $filter, linksPopupService) {
+.directive('countBy', ['external', 'ConnectionService', 'DatasetService', 'ErrorNotificationService', 'FilterService', 'ExportService', 'LinksPopupService', 'ThemeService', '$filter',
+function(external, connectionService, datasetService, errorNotificationService, filterService, exportService, linksPopupService, themeService, $filter) {
     return {
         templateUrl: 'partials/directives/countby.html',
         restrict: 'EA',
@@ -132,6 +131,8 @@ function(external, connectionService, datasetService, errorNotificationService, 
 
                 $scope.exportID = exportService.register($scope.makeCountByExportObject);
 
+                themeService.registerListener($scope.tableId, onThemeChanged);
+
                 $scope.$on('$destroy', function() {
                     XDATA.userALE.log({
                         activity: "remove",
@@ -151,6 +152,7 @@ function(external, connectionService, datasetService, errorNotificationService, 
                         filterService.removeFilters($scope.messenger, $scope.filterKeys);
                     }
                     exportService.unregister($scope.exportID);
+                    themeService.unregisterListener($scope.tableId);
                 });
 
                 $scope.element.resize(resize);
@@ -445,6 +447,10 @@ function(external, connectionService, datasetService, errorNotificationService, 
                     });
                     queryForData();
                 }
+            };
+
+            var onThemeChanged = function(theme) {
+                $scope.themeType = theme.type;
             };
 
             /**

@@ -319,6 +319,14 @@ select[multiple] {
     }
 }
 
+.highlight {
+    background-color: @callout;
+}
+
+.highlight-red {
+    background-color: rgba(255, 0, 0, 0.5);
+}
+
 .modal-backdrop{
     background: none;
     z-index: auto;
@@ -452,8 +460,8 @@ select[multiple] {
     }
 }
 
-.ag-cell {
-    &.highlight {
-        background-color: @callout;
+.ag-dark {
+    .ag-header-container {
+        background-color: @main-background;
     }
 }

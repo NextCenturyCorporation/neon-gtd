@@ -28,8 +28,8 @@
  * @constructor
  */
 angular.module('neonDemo.directives')
-.directive('queryResultsTable', ['external', 'ConnectionService', 'DatasetService', 'ErrorNotificationService', 'ExportService', 'linkify', '$sce', '$timeout', 'LinksPopupService',
-function(external, connectionService, datasetService, errorNotificationService, exportService, linkify, $sce, $timeout, linksPopupService) {
+.directive('queryResultsTable', ['external', 'ConnectionService', 'DatasetService', 'ErrorNotificationService', 'ExportService', 'LinksPopupService', 'ThemeService', 'linkify', '$sce', '$timeout',
+function(external, connectionService, datasetService, errorNotificationService, exportService, linksPopupService, themeService, linkify, $sce, $timeout) {
     return {
         templateUrl: 'partials/directives/queryResultsTable.html',
         restrict: 'EA',
@@ -146,6 +146,8 @@ function(external, connectionService, datasetService, errorNotificationService, 
                 $scope.element.resize(resizeTitle);
                 $scope.element.find(".chart-options a").resize(resizeTitle);
 
+                themeService.registerListener($scope.tableId, onThemeChanged);
+
                 $scope.$on('$destroy', function() {
                     XDATA.userALE.log({
                         activity: "remove",
@@ -162,6 +164,7 @@ function(external, connectionService, datasetService, errorNotificationService, 
                     $scope.element.off("resize", resizeTitle);
                     $scope.element.find(".chart-options a").off("resize", resizeTitle);
                     exportService.unregister($scope.exportID);
+                    themeService.unregisterListener($scope.tableId);
                 });
 
                 $scope.active = {
@@ -617,6 +620,10 @@ function(external, connectionService, datasetService, errorNotificationService, 
                     queryForTotalRows();
                     queryForData();
                 }
+            };
+
+            var onThemeChanged = function(theme) {
+                $scope.themeType = theme.type;
             };
 
             /**
