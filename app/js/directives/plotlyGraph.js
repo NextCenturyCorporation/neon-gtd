@@ -205,34 +205,28 @@ function(filterService, datasetService, connectionService) {
             $scope.queryForData = function() {
                 var connection = connectionService.getActiveConnection();
 
-                if(!connection) {
-                    //TODO error message
-                    return;
-                }
+                if(connection) {
+                    var query = buildQuery();
 
-                var query = buildQuery();
+                    if(query) {
+                        if($scope.outstandingQuery) {
+                            $scope.outstandingQuery.abort();
+                        }
 
-                if(query) {
-                    if($scope.outstandingQuery) {
-                        $scope.outstandingQuery.abort();
-                    }
-
-                    $scope.outstandingQuery = connection.executeQuery(query);
-                    $scope.outstandingQuery.always(function() {
-                        $scope.outstandingQuery = undefined;
-                    });
-                    $scope.outstandingQuery.done(function(queryResults) {
-                        $scope.$apply(function() {
-                            if(queryResults.data) { //FIXME || ($scope.data.length !== queryResults.data.length )
-                                $scope.data = queryResults.data;
-                                $scope.drawGraph(queryResults.data);
-                            }
-                            $scope.loadingData = false;
+                        $scope.outstandingQuery = connection.executeQuery(query);
+                        $scope.outstandingQuery.always(function() {
+                            $scope.outstandingQuery = undefined;
                         });
-                    });
-                    $scope.outstandingQuery.fail(function() {
-                        //TODO error
-                    });
+                        $scope.outstandingQuery.done(function(queryResults) {
+                            $scope.$apply(function() {
+                                if(queryResults.data) {
+                                    $scope.data = queryResults.data;
+                                    $scope.drawGraph(queryResults.data);
+                                }
+                                $scope.loadingData = false;
+                            });
+                        });
+                    }
                 }
             };
 
