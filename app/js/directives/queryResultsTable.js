@@ -614,6 +614,7 @@ function(external, connectionService, datasetService, errorNotificationService, 
                         source: "system",
                         tags: ["filter-change", "datagrid"]
                     });
+                    queryForTotalRows();
                     queryForData();
                 }
             };
