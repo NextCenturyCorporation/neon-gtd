@@ -69,6 +69,9 @@ function(filterService, datasetService, connectionService) {
             var setHeight = function() {
                 var topHeight = $($scope.el).find('.header-container').outerHeight(true);
                 $($scope.graphDiv).height($($scope.el).height() - topHeight);
+                if($scope.data) {
+                    $scope.drawGraph($scope.data);
+                }
             };
 
             setHeight();
@@ -220,9 +223,9 @@ function(filterService, datasetService, connectionService) {
                     });
                     $scope.outstandingQuery.done(function(queryResults) {
                         $scope.$apply(function() {
-                            if(!$scope.data || $scope.data.length !== queryResults.data.length) {
+                            if(queryResults.data) { //FIXME || ($scope.data.length !== queryResults.data.length )
                                 $scope.data = queryResults.data;
-                                drawGraph(queryResults.data);
+                                $scope.drawGraph(queryResults.data);
                             }
                             $scope.loadingData = false;
                         });
@@ -233,7 +236,7 @@ function(filterService, datasetService, connectionService) {
                 }
             };
 
-            var drawGraph = function(data) {
+            $scope.drawGraph = function(data) {
                 var dataObject = buildDataConfig(data);
                 var layout = buildGraphLayout();
 

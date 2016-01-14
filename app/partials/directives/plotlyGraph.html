@@ -12,13 +12,13 @@
             </select>
         </div>
         <div class="form-group">
-            <label>X Attr (Sentiment)</label>
-            <select class="form-control" ng-model="active.attrX" ng-options="field.prettyName for field in fields track by field.columnName" ng-required="true" ng-disabled="!(fields.length > 0)" ng-change="updateAttrX()">
+            <label>X Attr</label>
+            <select class="form-control" ng-model="active.attrX" ng-options="field.prettyName for field in fields track by field.columnName" ng-required="true" ng-disabled="!(fields.length > 0)" ng-change="queryForData()">
             </select>
         </div>
         <div class="form-group">
-            <label>Y Attr (Arousal)</label>
-            <select class="form-control" ng-model="active.attrY" ng-options="field.prettyName for field in fields" ng-required="true" ng-disabled="!(fields.length > 0)" ng-change="updateAttrY()">
+            <label>Y Attr</label>
+            <select class="form-control" ng-model="active.attrY" ng-options="field.prettyName for field in fields" ng-required="true" ng-disabled="!(fields.length > 0)" ng-change="queryForData()">
             </select>
         </div>
         <div class="form-group limit-count-field">
