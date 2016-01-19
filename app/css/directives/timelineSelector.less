@@ -106,19 +106,16 @@
         }
 
         .dropdown-menu {
-            /* Match the width of two datetimepickers plus margin/padding/scrollbar. */
-            width: 550px;
+            th {
+                padding: 0px 10px;
+            }
+
+            td {
+                padding: 5px;
+            }
 
             label {
-                &.start-date {
-                    margin-top: 5px;
-                    width: 250px;
-                }
-
-                &.end-date {
-                    margin-top: 5px;
-                    width: 100px;
-                }
+                margin-top: 5px;
             }
 
             button {
@@ -126,8 +123,7 @@
             }
 
             .datetimepicker {
-                float: left;
-                margin-right: 5px;
+                background-color: @main-background;
             }
         }
     }

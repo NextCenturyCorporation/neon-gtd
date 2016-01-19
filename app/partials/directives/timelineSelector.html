@@ -116,21 +116,35 @@
         </div>
 
         <ul class="dropdown-menu" role="menu">
-            <div>
-                <label class="start-date pull-left">Start Date</label>
-                <label class="end-date pull-left">End Date</label>
-                <button class="btn btn-default header-item pull-left save-button disabled" ng-click="handleDateTimePickSave()">Save</button>
-                <button class="btn btn-default header-item pull-left" ng-click="handleDateTimePickCancel()">Cancel</button>
-            </div>
-            <!-- Create a datetimepicker for each granularity because you can't change the configuration dynamically. -->
-            <datetimepicker ng-show="(options.granularity === 'hour')" data-ng-model="filter.start" data-datetimepicker-config="{ startView: 'hour', minView: 'hour' }" ng-change="handleDateTimePickChange()"/>
-            <datetimepicker ng-show="(options.granularity === 'day')" data-ng-model="filter.start" data-datetimepicker-config="{ startView: 'day', minView: 'day' }" ng-change="handleDateTimePickChange()"/>
-            <datetimepicker ng-show="(options.granularity === 'month')" data-ng-model="filter.start" data-datetimepicker-config="{ startView: 'month', minView: 'month' }" ng-change="handleDateTimePickChange()"/>
-            <datetimepicker ng-show="(options.granularity === 'year')" data-ng-model="filter.start" data-datetimepicker-config="{ startView: 'year', minView: 'year' }" ng-change="handleDateTimePickChange()"/>
-            <datetimepicker ng-show="(options.granularity === 'hour')" data-ng-model="filter.end" data-datetimepicker-config="{ startView: 'hour', minView: 'hour' }" ng-change="handleDateTimePickChange()"/>
-            <datetimepicker ng-show="(options.granularity === 'day')" data-ng-model="filter.end" data-datetimepicker-config="{ startView: 'day', minView: 'day' }" ng-change="handleDateTimePickChange()"/>
-            <datetimepicker ng-show="(options.granularity === 'month')" data-ng-model="filter.end" data-datetimepicker-config="{ startView: 'month', minView: 'month' }" ng-change="handleDateTimePickChange()"/>
-            <datetimepicker ng-show="(options.granularity === 'year')" data-ng-model="filter.end" data-datetimepicker-config="{ startView: 'year', minView: 'year' }" ng-change="handleDateTimePickChange()"/>
+            <table>
+                <tr>
+                    <th>
+                        <span><label>Start Date</label></span>
+                    </th>
+                    <th>
+                        <span><label>End Date</label></span>
+                        <span class="pull-right">
+                            <button class="btn btn-default header-item save-button disabled" ng-click="handleDateTimePickSave()">Save</button>
+                            <button class="btn btn-default header-item" ng-click="handleDateTimePickCancel()">Cancel</button>
+                        </span>
+                    </th>
+                </tr>
+                <!-- Create a datetimepicker for each granularity because you can't change the configuration dynamically. -->
+                <tr>
+                    <td>
+                        <datetimepicker ng-show="(options.granularity === 'hour')" data-ng-model="filter.start" data-datetimepicker-config="{ startView: 'hour', minView: 'hour' }" ng-change="handleDateTimePickChange()"/>
+                        <datetimepicker ng-show="(options.granularity === 'day')" data-ng-model="filter.start" data-datetimepicker-config="{ startView: 'day', minView: 'day' }" ng-change="handleDateTimePickChange()"/>
+                        <datetimepicker ng-show="(options.granularity === 'month')" data-ng-model="filter.start" data-datetimepicker-config="{ startView: 'month', minView: 'month' }" ng-change="handleDateTimePickChange()"/>
+                        <datetimepicker ng-show="(options.granularity === 'year')" data-ng-model="filter.start" data-datetimepicker-config="{ startView: 'year', minView: 'year' }" ng-change="handleDateTimePickChange()"/>
+                    </td>
+                    <td>
+                        <datetimepicker ng-show="(options.granularity === 'hour')" data-ng-model="filter.end" data-datetimepicker-config="{ startView: 'hour', minView: 'hour' }" ng-change="handleDateTimePickChange()"/>
+                        <datetimepicker ng-show="(options.granularity === 'day')" data-ng-model="filter.end" data-datetimepicker-config="{ startView: 'day', minView: 'day' }" ng-change="handleDateTimePickChange()"/>
+                        <datetimepicker ng-show="(options.granularity === 'month')" data-ng-model="filter.end" data-datetimepicker-config="{ startView: 'month', minView: 'month' }" ng-change="handleDateTimePickChange()"/>
+                        <datetimepicker ng-show="(options.granularity === 'year')" data-ng-model="filter.end" data-datetimepicker-config="{ startView: 'year', minView: 'year' }" ng-change="handleDateTimePickChange()"/>
+                    </td>
+                </tr>
+            </table>
         </ul>
     </div>
 
