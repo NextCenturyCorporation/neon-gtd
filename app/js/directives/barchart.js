@@ -130,6 +130,7 @@ function(external, connectionService, datasetService, errorNotificationService, 
                     });
                     linksPopupService.deleteLinks($scope.visualizationId);
                     $element.off("resize", updateChartSize);
+                    $element.find(".chart-options a").off("resize", updateChartSize);
                     $scope.messenger.unsubscribeAll();
                     // Remove our filter if we had an active one.
                     if($scope.filterSet) {
@@ -162,6 +163,7 @@ function(external, connectionService, datasetService, errorNotificationService, 
                 // This resizes the chart when the div changes.  This rely's on jquery's resize plugin to fire
                 // on the associated element and not just the window.
                 $element.resize(updateChartSize);
+                $element.find(".chart-options a").resize(updateChartSize);
             };
 
             var handleChangedField = function(field, newValue) {

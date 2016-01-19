@@ -127,7 +127,7 @@ function(external, connectionService, datasetService, errorNotificationService, 
                 // Set the width of the title to the width of the visualization minus the width of the chart options button/text and padding.
                 var titleWidth = $scope.element.width() - $scope.element.find(".chart-options").outerWidth(true) - 20;
                 // Also subtract the width of the table options button.
-                titleWidth -= ($scope.element.find(".edit-table-icon").outerWidth(true) + 10);
+                titleWidth -= $scope.element.find(".edit-table").outerWidth(true);
                 $scope.element.find(".title").css("maxWidth", titleWidth);
             };
 

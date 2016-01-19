@@ -499,6 +499,8 @@ function($interval, $filter, external, connectionService, datasetService, errorN
                 });
 
                 $element.resize(onResize);
+                $element.find(".chart-options a").resize(onResize);
+                $element.find(".next-to-title").resize(onResize);
                 onResize();
 
                 // Switch bucketizers when the granularity is changed.
@@ -627,6 +629,8 @@ function($interval, $filter, external, connectionService, datasetService, errorN
                     }
                     exportService.unregister($scope.exportID);
                     $element.off("resize", onResize);
+                    $element.find(".chart-options a").off("resize", onResize);
+                    $element.find(".next-to-title").off("resize", onResize);
                 });
             };
 

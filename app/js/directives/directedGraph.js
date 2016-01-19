@@ -185,12 +185,14 @@ function($filter, $timeout, connectionService, datasetService, errorNotification
                         tags: ["remove", "directed-graph"]
                     });
                     $element.off("resize", updateSize);
+                    $element.find(".chart-options a").off("resize", updateSize);
                     $element.find(".legend").off("resize", updateSize);
                     $scope.messenger.unsubscribeAll();
                     exportService.unregister($scope.exportID);
                 });
 
                 $element.resize(updateSize);
+                $element.find(".chart-options a").resize(updateSize);
                 $element.find(".legend").resize(updateSize);
             };
 
