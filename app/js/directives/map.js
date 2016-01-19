@@ -44,27 +44,19 @@ angular.module('neonDemo.directives')
             $scope.element = $element;
 
             $scope.optionsMenuButtonText = function() {
-                var limits = Object.keys($scope.limitedLayers);
                 var text = "";
-                if(limits.length) {
-                    for(var i = 0; i < limits.length; ++i) {
-                        var limitedLayers = $scope.limitedLayers[limits[i]];
-                        if(limitedLayers.length) {
-                            text += text ? "; " : "";
-                            for(var j = 0; j < limitedLayers.length; ++j) {
-                                text += (j ? ", " + limitedLayers[j] : limitedLayers[j]);
-                            }
-                            text += " limit " + $filter('number')(limits[i]);
-                        }
+                $scope.options.layers.forEach(function(layer, index) {
+                    text += (text ? ", " : "") + layer.name;
+                    if(layer.dataLength && layer.dataLength >= layer.limit) {
+                        text += " (" + $filter('number')(layer.limit) + " limit)";
                     }
-                }
+                });
                 return text;
             };
-            $scope.showOptionsMenuButtonText = function() {
-                return Object.keys($scope.limitedLayers).length > 0;
-            };
 
-            $scope.limitedLayers = {};
+            $scope.showOptionsMenuButtonText = function() {
+                return true;
+            };
 
             // Setup scope variables.
             $scope.cacheMap = false;
@@ -705,11 +697,9 @@ angular.module('neonDemo.directives')
 
             var setDefaultLayerProperties = function(layer) {
                 layer.name = (layer.name || layer.table).toUpperCase();
-                layer.previousName = layer.name;
                 layer.databasePrettyName = datasetService.getPrettyNameForDatabase(layer.database);
                 layer.tablePrettyName = datasetService.getPrettyNameForTable(layer.database, layer.table);
                 layer.limit = layer.limit || $scope.DEFAULT_LIMIT;
-                layer.previousLimit = layer.limit;
                 layer.editing = false;
                 layer.valid = true;
                 layer.visible = true;
@@ -849,7 +839,6 @@ angular.module('neonDemo.directives')
                 var layer = {};
 
                 $scope.options.layers = cloneDatasetLayersConfig();
-                $scope.limitedLayers = {};
 
                 // Setup the base layer objects.
                 for(i = 0; i < $scope.options.layers.length; i++) {
@@ -1064,12 +1053,10 @@ angular.module('neonDemo.directives')
                     $scope.dataBounds = computeDataBounds(queryResults.data);
                 }
 
-                $scope.dataLength = data.length;
                 for(var i = 0; i < $scope.options.layers.length; i++) {
                     if($scope.options.layers[i].database === database && $scope.options.layers[i].table === table && $scope.options.layers[i].olLayer) {
                         // Only use elements up to the limit of this layer; other layers for this database/table may have a higher limit.
-                        var limit = $scope.options.layers[i].limit;
-                        data = queryResults.data.slice(0, limit);
+                        data = queryResults.data.slice(0, $scope.options.layers[i].limit);
 
                         // Only set data and update features if all attributes exist in data
                         if($scope.map.doAttributesExist(data, $scope.options.layers[i].olLayer)) {
@@ -1115,22 +1102,7 @@ angular.module('neonDemo.directives')
                             $scope.options.layers[i].error = "Error - cannot create layer due to missing fields in data";
                         }
 
-                        // Update the message in the visualization containing the list of limited layers.
-                        var index;
-                        if(queryResults.data.length >= limit) {
-                            if(!$scope.limitedLayers[limit]) {
-                                $scope.limitedLayers[limit] = [];
-                            }
-                            index = $scope.limitedLayers[limit].indexOf($scope.options.layers[i].name);
-                            if(index < 0) {
-                                $scope.limitedLayers[limit].push($scope.options.layers[i].name);
-                            }
-                        } else if($scope.limitedLayers[limit]) {
-                            index = $scope.limitedLayers[limit].indexOf($scope.options.layers[i].name);
-                            if(index >= 0) {
-                                $scope.limitedLayers[limit].splice(index, 1);
-                            }
-                        }
+                        $scope.options.layers[i].dataLength = queryResults.data.length;
                     }
                 }
 
@@ -1693,37 +1665,11 @@ angular.module('neonDemo.directives')
                 layer = updateLayerFieldMappings(layer);
 
                 var index;
-                if(layer.previousLimit !== layer.limit) {
-                    if($scope.limitedLayers[layer.previousLimit]) {
-                        // Remove the old limit/name.
-                        index = $scope.limitedLayers[layer.previousLimit].indexOf(layer.previousName);
-                        if(index >= 0) {
-                            $scope.limitedLayers[layer.previousLimit].splice(index, 1);
-                        }
-                    }
-
-                    // Add the new limit/name.
-                    if(!$scope.limitedLayers[layer.limit]) {
-                        $scope.limitedLayers[layer.limit] = [];
-                    }
-                    $scope.limitedLayers[layer.limit].push(layer.name);
-                } else if(layer.previousName !== layer.name) {
-                    if($scope.limitedLayers[layer.limit]) {
-                        // Replace the old name with the new name.
-                        index = $scope.limitedLayers[layer.limit].indexOf(layer.previousName);
-                        if(index >= 0) {
-                            $scope.limitedLayers[layer.limit].splice(index, 1, layer.name);
-                        }
-                    }
-                }
-
                 if(layer.olLayer) {
                     this.map.removeLayer(layer.olLayer);
                     layer.olLayer = undefined;
                 }
 
-                layer.previousName = layer.name;
-                layer.previousLimit = layer.limit;
                 layer.editing = false;
                 setFilterKey(layer);
                 layer.olLayer = addLayer(layer);
@@ -1844,12 +1790,6 @@ angular.module('neonDemo.directives')
              * @method deleteLayer
              */
             $scope.deleteLayer = function(layer) {
-                // Remove layer from the limit text.
-                var index = $scope.limitedLayers[layer.limit] ? $scope.limitedLayers[layer.limit].indexOf(layer.name) : -1;
-                if(index >= 0) {
-                    $scope.limitedLayers[layer.limit].splice(index, 1);
-                }
-
                 // Remove layer from the legend
                 index = _.findIndex($scope.legend.layers, {
                     olLayerId: layer.olLayer.id
@@ -1951,8 +1891,6 @@ angular.module('neonDemo.directives')
                     editing: false
                 };
 
-                layer.previousName = layer.name;
-                layer.previousLimit = layer.limit;
                 layer.olLayer = addLayer(layer);
                 $scope.options.layers.push(layer);
                 setFilterKey(layer);
