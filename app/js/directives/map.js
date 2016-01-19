@@ -788,6 +788,11 @@ angular.module('neonDemo.directives')
                 $scope.options.newLayer.nodeDefaultColor = "";
                 $scope.options.newLayer.lineDefaultColor = "";
                 $scope.options.newLayer.colorCode = "";
+                $scope.options.newLayer.gradient1 = "";
+                $scope.options.newLayer.gradient2 = "";
+                $scope.options.newLayer.gradient3 = "";
+                $scope.options.newLayer.gradient4 = "";
+                $scope.options.newLayer.gradient5 = "";
 
                 var latitude = datasetService.getMapping($scope.options.newLayer.database.name, $scope.options.newLayer.table.name, neonMappings.LATITUDE) || "";
                 $scope.options.newLayer.latitude = _.find($scope.fields, function(field) {
@@ -1793,7 +1798,8 @@ angular.module('neonDemo.directives')
                         $scope.map.map.baseLayer, {
                         latitudeMapping: layer.latitudeMapping,
                         longitudeMapping: layer.longitudeMapping,
-                        sizeMapping: layer.sizeBy
+                        sizeMapping: layer.sizeBy,
+                        gradients: generateGradientList(layer)
                     });
                     $scope.map.addLayer(layer.olLayer);
                 } else if(layer.type === coreMap.Map.NODE_LAYER) {
@@ -1813,6 +1819,14 @@ angular.module('neonDemo.directives')
                 }
 
                 return layer.olLayer;
+            };
+
+            var generateGradientList = function(layer) {
+                return (layer.gradient1 ? [layer.gradient1] : [])
+                    .concat((layer.gradient2 ? [layer.gradient2] : []))
+                    .concat((layer.gradient3 ? [layer.gradient3] : []))
+                    .concat((layer.gradient4 ? [layer.gradient4] : []))
+                    .concat((layer.gradient5 ? [layer.gradient5] : []));
             };
 
             /**
@@ -1925,6 +1939,11 @@ angular.module('neonDemo.directives')
                     lineColorBy: $scope.options.newLayer.lineColorBy.columnName,
                     nodeDefaultColor: $scope.options.newLayer.nodeDefaultColor,
                     lineDefaultColor: $scope.options.newLayer.lineDefaultColor,
+                    gradient1: $scope.options.newLayer.gradient1,
+                    gradient2: $scope.options.newLayer.gradient2,
+                    gradient3: $scope.options.newLayer.gradient3,
+                    gradient4: $scope.options.newLayer.gradient4,
+                    gradient5: $scope.options.newLayer.gradient5,
                     popupFields: $scope.options.newLayer.popupFields,
                     active: $scope.options.newLayer.active,
                     visible: $scope.options.newLayer.visible,
