@@ -711,8 +711,7 @@ function(external, connectionService, datasetService, errorNotificationService, 
              * @private
              */
             var cloneDatasetChartsConfig = function() {
-                var configs = datasetService.getLineCharts() || [];
-                _.each(configs[$scope.bindConfig], function(chart) {
+                datasetService.getLineCharts($scope.bindConfig).forEach(function(chart) {
                     $scope.options.charts.push(setDefaultChartProperties(_.clone(chart)));
                 });
             };

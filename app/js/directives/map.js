@@ -34,6 +34,7 @@ angular.module('neonDemo.directives')
         templateUrl: 'partials/directives/map.html',
         restrict: 'EA',
         scope: {
+            bindConfig: '=?',
             hideHeader: '=?',
             hideAdvancedOptions: '=?'
         },
@@ -726,13 +727,12 @@ angular.module('neonDemo.directives')
                 return layer;
             };
 
-            var cloneDatasetLayerConfig = function() {
-                var configClone = [];
-                var config = datasetService.getMapLayers() || [];
-                for(var i = 0; i < config.length; i++) {
-                    configClone.push(setDefaultLayerProperties(_.clone(config[i])));
-                }
-                return configClone;
+            var cloneDatasetLayersConfig = function() {
+                var mapLayers = [];
+                datasetService.getMapLayers($scope.bindConfig).forEach(function(mapLayer) {
+                    mapLayers.push(setDefaultLayerProperties(_.clone(mapLayer)));
+                });
+                return mapLayers;
             };
 
             var drawZoomRect = function(rect) {
@@ -843,7 +843,7 @@ angular.module('neonDemo.directives')
                 var i = 0;
                 var layer = {};
 
-                $scope.options.layers = cloneDatasetLayerConfig();
+                $scope.options.layers = cloneDatasetLayersConfig();
                 $scope.limitedLayers = {};
 
                 // Setup the base layer objects.
@@ -1604,7 +1604,7 @@ angular.module('neonDemo.directives')
 
                         layer.addFeatures(features);
                     } else {
-                        var pointsLayer = _.find(datasetService.getMapLayers(), {
+                        var pointsLayer = _.find(datasetService.getMapLayers($scope.bindConfig), {
                             type: "points",
                             database: msg.database,
                             table: msg.table
@@ -1638,7 +1638,7 @@ angular.module('neonDemo.directives')
              * @method setDefaultView
              */
             $scope.setDefaultView = function() {
-                var mapConfig = datasetService.getMapConfig();
+                var mapConfig = datasetService.getMapConfig($scope.bindConfig);
                 if(mapConfig && mapConfig.bounds) {
                     $scope.map.zoomToBounds(mapConfig.bounds);
                 } else if($scope.dataBounds) {

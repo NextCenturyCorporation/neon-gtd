@@ -219,40 +219,42 @@ datasets:
               sort_by: time
               count_by: net
     mapConfig:
-      bounds:
-        left: -180
-        bottom: -90
-        right: 180
-        top: 90
+      myMap1:
+        bounds:
+          left: -180
+          bottom: -90
+          right: 180
+          top: 90
     mapLayers:
-      -
-        database: test
-        table: earthquakes
-        type: heatmap
-        latitudeMapping: latitude
-        longitudeMapping: longitude
-        limit: 5000
-        sizeBy: mag
-      -
-        database: test
-        table: earthquakes
-        active: true
-        type: cluster
-        latitudeMapping: latitude
-        longitudeMapping: longitude
-        limit: 5000
-        colorBy: magType
-        sizeBy: mag
-      -
-        database: test
-        table: earthquakes
-        active: true
-        type: points
-        latitudeMapping: latitude
-        longitudeMapping: longitude
-        limit: 5000
-        colorBy: magType
-        sizeBy: mag
+      myMap1:
+        -
+          database: test
+          table: earthquakes
+          type: heatmap
+          latitudeMapping: latitude
+          longitudeMapping: longitude
+          limit: 5000
+          sizeBy: mag
+        -
+          database: test
+          table: earthquakes
+          active: true
+          type: cluster
+          latitudeMapping: latitude
+          longitudeMapping: longitude
+          limit: 5000
+          colorBy: magType
+          sizeBy: mag
+        -
+          database: test
+          table: earthquakes
+          active: true
+          type: points
+          latitudeMapping: latitude
+          longitudeMapping: longitude
+          limit: 5000
+          colorBy: magType
+          sizeBy: mag
     lineCharts:
         lineChart1:
           -
@@ -307,6 +309,8 @@ layouts:
       sizeX: 18
       sizeY: 4
       type: map
+      bindings:
+        bind-config: "'myMap1'"
     -
       sizeX: 18
       sizeY: 4
@@ -350,6 +354,7 @@ layouts:
       sizeY: 4
       type: map
       bindings:
+        bind-config: "'myMap1'"
         bind-title: "'myTitle'"
         bind-database: "'myDatabase'"
         bind-table: "'myTable'"

@@ -471,57 +471,31 @@ angular.module("neonDemo.services")
     };
 
     /**
-     * Returns the initial configuration parameters for any maps in this dataset.
+     * Returns the initial configuration parameters for the map with the given name in the active dataset.
+     * @param {String} name
      * @method getMapConfig
-     * @return {String}
-     */
-    service.getMapConfig = function() {
-        return service.dataset.mapConfig;
-    };
-
-    /**
-     * Sets the map layer configuration for the active dataset.
-     * @param {object} config Initial configuration parameters for any maps in this dataset.
-     * @method setMapConfig
-     */
-    service.setMapConfig = function(config) {
-        service.dataset.mapConfig = config;
-    };
-
-    /**
-     * Returns the map layer configuration for the active dataset.
-     * @method getMapLayers
-     * @return {String}
-     */
-    service.getMapLayers = function() {
-        return service.dataset.mapLayers;
-    };
-
-    /**
-     * Sets the map layer configuration for the active dataset.
-     * @param {object} config A set of layer configuration objects.
-     * @method setMapLayers
-     */
-    service.setMapLayers = function(config) {
-        service.dataset.mapLayers = config;
-    };
-
-    /**
-     * Returns the line chart configuration for the active dataset.
-     * @method getLineCharts
      * @return {Object}
      */
-    service.getLineCharts = function() {
-        return service.dataset.lineCharts;
+    service.getMapConfig = function(name) {
+        return service.dataset.mapConfig[name] || {};
     };
 
     /**
-     * Sets the line chart configuration for the active dataset.
-     * @param {Object} config A set of line chart configuration objects.
-     * @method setLineCharts
+     * Returns the map layer configuration for the map with the given name in the active dataset.
+     * @method getMapLayers
+     * @return {Array}
      */
-    service.setLineCharts = function(config) {
-        service.dataset.lineCharts = config;
+    service.getMapLayers = function(name) {
+        return service.dataset.mapLayers[name] || [];
+    };
+
+    /**
+     * Returns the line chart configuration for the the line chart with the given name in the active dataset.
+     * @method getLineCharts
+     * @return {Array}
+     */
+    service.getLineCharts = function(name) {
+        return service.dataset.lineCharts[name] || [];
     };
 
     /**
