@@ -257,9 +257,6 @@ angular.module('neonDemo.directives')
                     themeService.unregisterListener($scope.mapId);
                 });
 
-                // Enable the tooltips.
-                $($element).find('label.btn-default').tooltip();
-
                 // Handle toggling map caching.
                 $scope.$watch('cacheMap', function(newVal, oldVal) {
                     if(newVal !== oldVal) {
@@ -271,19 +268,6 @@ angular.module('neonDemo.directives')
                         }
                     }
                 });
-
-                // Function on resize given to the options menu directive.
-                $scope.resizeOptionsMenu = function() {
-                    var container = $element.find(".menu-container");
-                    // Make the height of the options menu match the height of the visualization below the header menu container.
-                    var height = $element.height() - container.height() - container.css("top").replace("px", "") - 10;
-                    // Make the width of the options menu match the width of the visualization.
-                    var width = $element.width();
-
-                    var popover = container.find(".popover-content");
-                    popover.css("height", height + "px");
-                    popover.css("width", width + "px");
-                };
 
                 // Setup a basic resize handler to redraw the map and calculate its size if our div changes.
                 // Since the map redraw can take a while and resize events can come in a flood, we attempt to
@@ -367,6 +351,19 @@ angular.module('neonDemo.directives')
 
                     addFilters();
                 };
+            };
+
+            // Function on resize given to the options menu directive.
+            $scope.resizeOptionsMenu = function() {
+                var container = $element.find(".menu-container");
+                // Make the height of the options menu match the height of the visualization below the header menu container.
+                var height = $element.height() - container.height() - container.css("top").replace("px", "") - 10;
+                // Make the width of the options menu match the width of the visualization.
+                var width = $element.width();
+
+                var popover = container.find(".popover-content");
+                popover.css("height", height + "px");
+                popover.css("width", width + "px");
             };
 
             /*
