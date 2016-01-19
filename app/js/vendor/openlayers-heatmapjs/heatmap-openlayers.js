@@ -59,6 +59,7 @@ OpenLayers.Layer.Heatmap = OpenLayers.Class(OpenLayers.Layer, {
         this.setDataSet(this.tmpData);
     },
     getPixelOffset: function () {
+        this.mapLayer.map = this.mapLayer.map || this.map;
         var o = this.mapLayer.map.layerContainerOrigin;
         var o_lonlat = new OpenLayers.LonLat(o.lon, o.lat);
         var o_pixel = this.mapLayer.getViewPortPxFromLonLat(o_lonlat);
