@@ -135,10 +135,9 @@
             <div gridster="gridsterOpts" id="gridster-div">
                 <ul>
                     <li gridster-item="visualization" ng-repeat="visualization in visualizations track by visualization.id">
-                        <div class="well" visualization-widget
+                        <div class="well visualization-widget" visualization-widget
                             gridster-configs="visualizations"
-                            gridster-config-index="$index"
-                            ng-class="(isInMobileMode())? 'visualization-widget-mobile' : 'visualization-widget'"></div>
+                            gridster-config-index="$index"></div>
                     </li>
                 </ul>
             </div>
