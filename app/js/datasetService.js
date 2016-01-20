@@ -530,6 +530,7 @@ angular.module("neonDemo.services")
      */
     service.setMapLayers = function(config) {
         service.dataset.mapLayers = config;
+        updateDataset();
     };
 
     /**
@@ -548,6 +549,18 @@ angular.module("neonDemo.services")
      */
     service.setLineCharts = function(config) {
         service.dataset.lineCharts = config;
+        updateDataset();
+    };
+
+    /**
+     * Adds a line chart configuration for the active dataset.
+     * @param {String} chartName A name to map to the given charts.
+     * @param {Array} charts A list of line chart configuration objects.
+     * @method setLineCharts
+     */
+    service.addLineChart = function(chartName, charts) {
+        service.dataset.lineCharts[chartName] = charts;
+        updateDataset();
     };
 
     /**
@@ -893,6 +906,19 @@ angular.module("neonDemo.services")
     service.datasets.forEach(function(dataset) {
         validateDatabases(dataset);
     });
+
+    /**
+     * Updates the dataset that matches the active dataset.
+     * @method updateDataset
+     * @private
+     */
+    var updateDataset = function() {
+        for(var i = 0; i < service.datasets.length; ++i) {
+            if(service.datasets[i].name === service.dataset.name) {
+                service.datasets[i] = service.dataset;
+            }
+        }
+    };
 
     return service;
 }]);

@@ -15,8 +15,8 @@
  *
  */
 angular.module('neonDemo.directives')
-.directive('filterTray', ['$timeout', 'external', 'DatasetService', 'FilterService', 'LinksPopupService',
-function($timeout, external, datasetService, filterService, linksPopupService) {
+.directive('filterTray', ['$timeout', 'external', 'DatasetService', 'FilterService', 'LinksPopupService', 'ParameterService',
+function($timeout, external, datasetService, filterService, linksPopupService, parameterService) {
     return {
         templateUrl: 'partials/directives/filterTray.html',
         restrict: 'EA',
@@ -44,11 +44,11 @@ function($timeout, external, datasetService, filterService, linksPopupService) {
                 };
 
                 $scope.messenger.events({
-                    activeDatasetChanged: onDatasetChanged,
-                    filtersChanged: onFiltersChanged
+                    activeDatasetChanged: onEventChanged,
+                    filtersChanged: onEventChanged
                 });
 
-                $scope.messenger.subscribe("STATE_CHANGED", onFiltersChanged);
+                $scope.messenger.subscribe(parameterService.STATE_CHANGED_CHANNEL, onEventChanged);
 
                 $scope.$on('$destroy', function() {
                     $scope.messenger.unsubscribeAll();
@@ -58,30 +58,12 @@ function($timeout, external, datasetService, filterService, linksPopupService) {
                 //$(window).resize(updateContainerHeight);
             };
 
-            var onDatasetChanged = function(message) {
-                $scope.databaseName = message.database;
-                $scope.tableName = message.table;
-                $scope.queryForState();
-            };
-
-            var onFiltersChanged = function() {
-                $scope.queryForState();
-            };
-
-            $scope.queryForState = function() {
-                queryForFullState($scope.updateFilterTray, handleFilterStateError);
-            };
-
-            var queryForFullState = function(success, failure) {
-                neon.query.Filter.getFilterState('*', '*', success, failure);
-            };
-
-            var handleFilterStateError = function() {
-                console.error(arguments);
+            var onEventChanged = function(message) {
+                $scope.updateFilterTray(filterService.getAllFilters());
             };
 
             $scope.handleFilterRemove = function(filterIds) {
-                $scope.messenger.publish(filterService.REQUEST_REMOVE_FILTER, filterIds);
+                filterService.removeFiltersForKeys(filterIds);
             };
 
             $scope.updateFilterTray = function(rawState) {

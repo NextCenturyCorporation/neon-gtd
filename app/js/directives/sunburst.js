@@ -37,6 +37,9 @@ function(connectionService, datasetService, errorNotificationService, exportServ
             bindTitle: '=',
             bindTable: '=',
             bindDatabase: '=',
+            bindGroupFields: '=',
+            bindValueField: '=',
+            bindArcValue: '=',
             bindStateId: '=',
             hideHeader: '=?',
             hideAdvancedOptions: '=?'
@@ -106,7 +109,7 @@ function(connectionService, datasetService, errorNotificationService, exportServ
                 $scope.$watch('options.valueField', function(newValue, oldValue) {
                     if(!$scope.loadingData && newValue !== oldValue) {
                         if(newValue) {
-                            $scope.queryForData();
+                            queryForData();
                         } else {
                             $scope.options.valueField = datasetService.createBlankField();
                             $scope.arcValue = charts.SunburstChart.COUNT_PARTITION;
@@ -188,9 +191,6 @@ function(connectionService, datasetService, errorNotificationService, exportServ
                     return;
                 }
 
-                $scope.groupFields = [];
-                $scope.arcValue = charts.SunburstChart.COUNT_PARTITION;
-
                 $scope.databases = datasetService.getDatabases();
                 $scope.options.database = $scope.databases[0];
                 if($scope.bindDatabase) {
@@ -221,7 +221,21 @@ function(connectionService, datasetService, errorNotificationService, exportServ
             $scope.updateFields = function() {
                 $scope.loadingData = true;
                 $scope.fields = datasetService.getSortedFields($scope.options.database.name, $scope.options.table.name);
-                $scope.options.valueField = datasetService.createBlankField();
+                $scope.groupFields = [];
+                if($scope.bindGroupFields) {
+                    _.each($scope.bindGroupFields.split(","), function(groupFieldName) {
+                        var groupFieldObject = _.find($scope.fields, function(field) {
+                            return field.columnName === groupFieldName;
+                        });
+                        if(groupFieldObject) {
+                            $scope.groupFields.push(groupFieldObject);
+                        }
+                    });
+                }
+                $scope.options.valueField = $scope.bindValueField ? _.find($scope.fields, function(field) {
+                    return field.columnName === $scope.bindValueField;
+                }) || datasetService.createBlankField() : datasetService.createBlankField();
+                $scope.arcValue = $scope.bindArcValue ? $scope.bindArcValue : charts.SunburstChart.COUNT_PARTITION;
                 queryForData();
             };
 
@@ -462,6 +476,11 @@ function(connectionService, datasetService, errorNotificationService, exportServ
                 bindingFields["bind-title"] = $scope.bindTitle ? "'" + $scope.bindTitle + "'" : undefined;
                 bindingFields["bind-table"] = ($scope.options.table && $scope.options.table.name) ? "'" + $scope.options.table.name + "'" : undefined;
                 bindingFields["bind-database"] = ($scope.options.database && $scope.options.database.name) ? "'" + $scope.options.database.name + "'" : undefined;
+                bindingFields["bind-group-fields"] = $scope.groupFields.length ? "'" + _.map($scope.groupFields, function(field) {
+                    return field.columnName;
+                }).join(",") + "'" : undefined;
+                bindingFields["bind-value-field"] = ($scope.options.valueField && $scope.options.valueField.columnName) ? "'" + $scope.options.valueField.columnName + "'" : undefined;
+                bindingFields["bind-arc-value"] = ($scope.arcValue) ? "'" + $scope.arcValue + "'" : undefined;
                 return bindingFields;
             };
 

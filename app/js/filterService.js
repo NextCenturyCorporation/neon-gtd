@@ -16,93 +16,422 @@
  */
 
 angular.module("neonDemo.services")
-.factory("FilterService", ["DatasetService", function(datasetService) {
+.factory("FilterService", ["DatasetService", "ErrorNotificationService", function(datasetService, errorNotificationService) {
     var service = {};
 
-    service.REQUEST_REMOVE_FILTER = "filter_service.request_remove_filter";
+    service.filters = [];
 
-    /**
-     * Creates and returns a mapping of names from the given database and table names to unique filter keys for each database and table pair.
-     * @param {String} visualizationName The name of the visualization
-     * @param {Object} databaseNamesToTableNames A map of database names to table names
-     * @method createFilterKeys
-     * @return {Object} The mapping of database names to table names to filter keys
+    // The beginning of a filter name to ignore when searching for filters
+    service.ignoreFilterName = "Filter Builder";
+
+    service.messenger = new neon.eventing.Messenger();
+
+    /*
+     * Gets all the filters from the server.
+     * @param {Function} [successCallback] Optional success callback
+     * @method getFilterState
      */
-    service.createFilterKeys = function(visualizationName, databaseNamesToTableNames) {
-        var filterKeys = {};
-        Object.keys(databaseNamesToTableNames).forEach(function(databaseName) {
-            filterKeys[databaseName] = {};
-            databaseNamesToTableNames[databaseName].forEach(function(tableName) {
-                filterKeys[databaseName][tableName] = visualizationName + "-" + databaseName + "-" + tableName + "-" + uuid();
-            });
-        });
-        return filterKeys;
-    };
-
-    /**
-     * Creates, if not existing already, a new mapping containing a filter key and a filter keys object
-     * (for all the relations given) and adds this mapping to the given localFilterKeys object that contains these
-     * mappings for each database, table, and attrKey pair.
-     * @param {Object} localFilterKeys Mapping of filter keys for each database/table/attrKey pair.
-     * @param {String} database Database name to add a filter key for.
-     * @param {String} table Table name to add a filter key for.
-     * @param {String} attrKey Attribute key to add a filter key for.
-     * @param {Object} filterServiceKeys Mapping of keys for database/table pairs.
-     * @param {Array} relations All relations for the the database/table/attrKey combination.
-     * @method createFilterKeysForAttribute
-     * @return {Object}
-     */
-    service.createFilterKeysForAttribute = function(localFilterKeys, database, table, attrKey, filterServiceKeys, relations) {
-        var relationKeys = {};
-
-        _.each(relations, function(relation) {
-            var relationDatabase = relation.database;
-            var relationTable = relation.table;
-
-            if(relationDatabase !== database || relationTable !== table) {
-                if(!relationKeys[relationDatabase]) {
-                    relationKeys[relationDatabase] = {};
-                }
-                if(!relationKeys[relationDatabase][relationTable]) {
-                    relationKeys[relationDatabase][relationTable] = filterServiceKeys[relationDatabase][relationTable];
-                }
+    service.getFilterState = function(successCallback) {
+        neon.query.Filter.getFilterState('*', '*', function(filters) {
+            service.filters = filters;
+            if(successCallback) {
+                successCallback();
+            }
+        }, function(response) {
+            if(response.responseJSON) {
+                errorNotificationService.showErrorMessage(null, response.responseJSON.error);
             }
         });
+    };
 
-        if(!localFilterKeys[database]) {
-            localFilterKeys[database] = {};
+    /*
+     * Adds a filter with the given database, table, and attributes. If exists, the filter gets replaced.
+     * @param {Object} messenger The messenger object used to add the filters
+     * @param {String} database The name of the database to create a filter on
+     * @param {String} table The name of the table to create a filter on
+     * @param {Array} attributes A list of field names to create a filter on
+     * @param {Function} createFilterClauseFunction The function used to create the filter clause for each field, with arguments:
+     *  <ul>
+     *      <li> {Object} An object containing {String} database (the database name) and {String} table (the table name) </li>
+     *      <li> {String} or {Array} The field name(s) </li>
+     *  </ul>
+     * @param {String} or {Object} filterName The name of the visualization or an object containing {String} visName and {String} text
+     * @param {Function} successCallback The function called once all the filters have been added (optional)
+     * @param {Function} errorCallback The function called if an error is returned for any of the filter calls (optional)
+     * @method addFilter
+     */
+    service.addFilter = function(messenger, database, table, attributes, createFilterClauseFunction, filterName, successCallback, errorCallback) {
+        var filter = service.getFilter(database, table, attributes);
+        var relations = datasetService.getRelations(database, table, attributes);
+
+        if(filter) {
+            replaceFilter(messenger, relations, createFilterClauseFunction, getFilterNameString(filterName, relations), successCallback, errorCallback);
+        } else {
+            addNewFilter(messenger, relations, createFilterClauseFunction, getFilterNameString(filterName, relations), successCallback, errorCallback);
         }
-        if(!localFilterKeys[database][table]) {
-            localFilterKeys[database][table] = {};
+    };
+
+    /*
+     * Removes a filter with the given database, table, and attributes.
+     * @param {String} database The name of the database
+     * @param {String} table The name of the table
+     * @param {Array} attributes A list of field names
+     * @param {Function} successCallback The function called once all the filters have been removed (optional)
+     * @param {Function} errorCallback The function called if an error is returned for any of the filter calls (optional)
+     * @param {Object} messenger The messenger object used to remove the filters (optional)
+     * @method removeFilter
+     */
+    service.removeFilter = function(database, table, attributes, successCallback, errorCallback, messenger) {
+        var relations = datasetService.getRelations(database, table, attributes);
+        var filterKeys = getRelationsFilterKeys(relations);
+        if(filterKeys.length) {
+            if(messenger) {
+                removeFilters(messenger, filterKeys, successCallback, errorCallback);
+            } else {
+                removeFilters(service.messenger, filterKeys, successCallback, errorCallback);
+            }
+        } else if(successCallback) {
+            successCallback();
         }
-        if(!localFilterKeys[database][table][attrKey]) {
-            localFilterKeys[database][table][attrKey] = {};
-            localFilterKeys[database][table][attrKey].filterKey = filterServiceKeys[database][table];
-            localFilterKeys[database][table][attrKey].relations = relationKeys;
+    };
+
+    /*
+     * Replaces a filter with the given filter key.
+     * @param {Object} messenger The messenger object used to replace the filter
+     * @param {String} filterKey A filter key of the filter to replace
+     * @param {Object} filter The filter clause
+     * @param {Function} successCallback The function called once the filter has been replaced (optional)
+     * @param {Function} errorCallback The function called if an error is returned for any of the filter calls (optional)
+     * @method replaceFilterForKey
+     */
+    service.replaceFilterForKey = function(messenger, filterKey, filter, successCallback, errorCallback) {
+        service.messenger.replaceFilter(filterKey, filter, function() {
+            var index = _.findIndex(service.filters, {
+                id: filterKey
+            });
+
+            if(index === -1) {
+                service.filters.push({
+                    id: filterKey,
+                    dataSet: {
+                        databaseName: filter.databaseName,
+                        tableName: filter.tableName
+                    },
+                    filter: filter
+                });
+            } else {
+                service.filters[index] = {
+                    id: filterKey,
+                    dataSet: {
+                        databaseName: filter.databaseName,
+                        tableName: filter.tableName
+                    },
+                    filter: filter
+                };
+            }
+
+            if(successCallback) {
+                successCallback();
+            }
+        }, errorCallback);
+    };
+
+    /*
+     * Removes the filters with the given filter keys.
+     * @param {Array} filterKeys A list of filter keys of the filters to remove
+     * @param {Function} successCallback The function called once all the filters have been removed (optional)
+     * @param {Function} errorCallback The function called if an error is returned for any of the filter calls (optional)
+     * @method removeFiltersForKeys
+     */
+    service.removeFiltersForKeys = function(filterKeys, successCallback, errorCallback) {
+        if(filterKeys.length) {
+            removeFilters(service.messenger, filterKeys, successCallback, errorCallback);
+        } else if(successCallback) {
+            successCallback();
+        }
+    };
+
+    /*
+     * Finds the filter key that matches the given filter.
+     * @param {Object} filter The filter to find in the list of set filters
+     * @param {Boolean} includeAllFilters If false, ignores any filters whose name starts with the
+     * ignoreFilterName variable. Otherwise it searches all filters.
+     * @method getFilterKeyForFilter
+     * @return The filter key matching the given filter, or undefined if no filter was found.
+     */
+    service.getFilterKeyForFilter = function(filter, includeAllFilters) {
+        for(var i = 0; i < service.filters.length; i++) {
+            if(filter.databaseName === service.filters[i].filter.databaseName &&
+                filter.tableName === service.filters[i].filter.tableName &&
+                (includeAllFilters || service.filters[i].filter.filterName.indexOf(service.ignoreFilterName) !== 0) &&
+                service.areClausesEqual(service.filters[i].filter.whereClause, filter.whereClause)) {
+                return service.filters[i].id;
+            }
+        }
+        return undefined;
+    };
+
+    /*
+     * Returns the list of filters.
+     * @method getAllFilters
+     */
+    service.getAllFilters = function() {
+        return service.filters;
+    };
+
+    /*
+     * Returns the filter that matches the given database, table, and attributes.
+     * @param {String} database The database name
+     * @param {String} table The table name
+     * @param {Array} attributes The list of field names
+     * @param {Boolean} includeAllFilters If false, ignores any filters whose name starts with the
+     * ignoreFilterName variable. Otherwise it searches all filters.
+     * @method getFilter
+     * @return The filter that matches the given database, table, and attributes, or undefined if not found.
+     */
+    service.getFilter = function(database, table, attributes, includeAllFilters) {
+        var checkClauses = function(clause) {
+            if(clause.type === "where" && attributes.indexOf(clause.lhs) >= 0) {
+                return true;
+            } else if(clause.type !== "where") {
+                for(var j = 0; j < clause.whereClauses.length; j++) {
+                    if(!checkClauses(clause.whereClauses[j])) {
+                        return false;
+                    }
+                }
+                return true;
+            }
+        };
+
+        for(var i = 0; i < service.filters.length; i++) {
+            if((includeAllFilters || service.filters[i].filter.filterName.indexOf(service.ignoreFilterName) !== 0) &&
+                service.filters[i].dataSet.databaseName === database && service.filters[i].dataSet.tableName === table) {
+                if(checkClauses(service.filters[i].filter.whereClause)) {
+                    return service.filters[i];
+                }
+            }
         }
 
-        return localFilterKeys;
+        return undefined;
+    };
+
+    /*
+     * Checks if the two filter clauses are equal.
+     * @param {Object} firstClause
+     * @param {Object} secondClause
+     * @method areClausesEqual
+     * @return {Boolean}
+     */
+    service.areClausesEqual = function(firstClause, secondClause) {
+        var clausesEqual = function(first, second) {
+            if(first.lhs === second.lhs && first.operator === second.operator && first.rhs === second.rhs) {
+                return true;
+            }
+            return false;
+        };
+
+        if(firstClause.type === secondClause.type) {
+            if(firstClause.type === "where") {
+                return clausesEqual;
+            } else if(firstClause.type !== "where" && firstClause.whereClauses.length === secondClause.whereClauses.length) {
+                for(var i = 0; i < firstClause.whereClauses.length; i++) {
+                    if(!service.areClausesEqual(firstClause.whereClauses[i], secondClause.whereClauses[i])) {
+                        return false;
+                    }
+                }
+                return true;
+            }
+        }
+        return false;
+    };
+
+    /*
+     * Sets the filter name to ignore when retrieving a filter.
+     * @param {String} filterName
+     * @method setIgnoreFilterName
+     */
+    service.setIgnoreFilterName = function(filterName) {
+        service.ignoreFilterName = filterName;
+    };
+
+    /*
+     * Returns the filter name to ignore when retrieving a filter.
+     * @method getIgnoreFilterName
+     * @return {String}
+     */
+    service.getIgnoreFilterName = function() {
+        return service.ignoreFilterName;
+    };
+
+    /*
+     * Replaces the filter for the relations.
+     * @param {Object} messenger The messenger object used to replace the filters
+     * @param {Array} relations The array of relations containing a database name, a table name, and a map of fields
+     * @param {Function} createFilterClauseFunction The function used to create the filter clause for each field, with arguments:
+     *  <ul>
+     *      <li> {Object} An object containing {String} database (the database name) and {String} table (the table name) </li>
+     *      <li> {String} or {Array} The field name(s) </li>
+     *  </ul>
+     * @param {String} or {Object} filterName The name of the visualization or an object containing {String} visName and {String} text
+     * @param {Function} successFunction The function called once all the filters have been replaced (optional)
+     * @param {Function} errorFunction The function called if an error is returned for any of the filter calls (optional)
+     * @method replaceFilter
+     * @private
+     */
+    var replaceFilter = function(messenger, relations, createFilterClauseFunction, filterName, successCallback, errorCallback) {
+        var replaceNextFilter = function() {
+            if(relations.length) {
+                replaceFilter(messenger, relations, createFilterClauseFunction, filterName, successCallback, errorCallback);
+            } else if(successCallback) {
+                successCallback();
+            }
+        };
+
+        var relation = relations.shift();
+        var filter = createFilter(relation, createFilterClauseFunction, filterName);
+        if(!filter) {
+            replaceNextFilter();
+            return;
+        }
+
+        var id = getRelationsFilterKeys([relation])[0];
+        messenger.replaceFilter(id, filter, function() {
+            var index = _.findIndex(service.filters, {
+                id: id
+            });
+            service.filters[index] = {
+                id: id,
+                dataSet: {
+                    databaseName: filter.databaseName,
+                    tableName: filter.tableName
+                },
+                filter: filter
+            };
+            replaceNextFilter();
+        }, errorCallback);
     };
 
     /**
-     * Creates and returns a mapping of names from the given database and table names to filter keys for each database and table pair using filter keys from the given mappings.
-     * The filter key for each database and table pair is the global filter key for that pair, if one exists, or the visualization filter key otherwise.
-     * @param {Object} databaseNamesToTableNames A map of database names to table names
-     * @param {Object} visualizationFilterKeys A map of database names to table names to filter keys
-     * @param {Object} globalFilterKeys A map of database names to table names to filter keys
-     * @method getFilterKeysFromCollections
-     * @return {Object} The mapping of database names to table names to filter keys
+     * Adds filters for the given relations.
+     * @param {Object} messenger The messenger object used to add the filters
+     * @param {Array} relations The array of relations containing a database name, a table name, and a map of fields
+     * @param {Function} createFilterClauseFunction The function used to create the filter clause for each field, with arguments:
+     *  <ul>
+     *      <li> {Object} An object containing {String} database (the database name) and {String} table (the table name) </li>
+     *      <li> {String} or {Array} The field name(s) </li>
+     *  </ul>
+     * @param {String} or {Object} filterName The name of the visualization or an object containing {String} visName and {String} text
+     * @param {Function} successCallback The function called once all the filters have been added (optional)
+     * @param {Function} errorCallback The function called if an error is returned for any of the filter calls (optional)
+     * @method addNewFilter
+     * @private
      */
-    service.getFilterKeysFromCollections = function(databaseNamesToTableNames, visualizationFilterKeys, globalFilterKeys) {
-        var filterKeys = {};
-        Object.keys(databaseNamesToTableNames).forEach(function(databaseName) {
-            filterKeys[databaseName] = {};
-            databaseNamesToTableNames[databaseName].forEach(function(tableName) {
-                // Use the global filter key for the database/table if one exists; else use the visualization filter key for the database/table.
-                filterKeys[databaseName][tableName] = (globalFilterKeys[databaseName] ? globalFilterKeys[databaseName][tableName] : null) || visualizationFilterKeys[databaseName][tableName];
+    var addNewFilter = function(messenger, relations, createFilterClauseFunction, filterName, successCallback, errorCallback) {
+        var addNextFilter = function() {
+            if(relations.length) {
+                addNewFilter(messenger, relations, createFilterClauseFunction, filterName, successCallback, errorCallback);
+            } else if(successCallback) {
+                successCallback();
+            }
+        };
+
+        var relation = relations.shift();
+        var filter = createFilter(relation, createFilterClauseFunction, filterName);
+        if(!filter) {
+            addNextFilter();
+            return;
+        }
+
+        var id = relation.database + "-" + relation.table + "-" + uuid();
+        messenger.addFilter(id, filter, function() {
+            service.filters.push({
+                id: id,
+                dataSet: {
+                    databaseName: filter.databaseName,
+                    tableName: filter.tableName
+                },
+                filter: filter
             });
-        });
-        return filterKeys;
+            addNextFilter();
+        }, errorCallback);
+    };
+
+    /**
+     * Removes filters for all the given filter keys.
+     * @param {Object} messenger The messenger object used to remove the filters
+     * @param {Array} or {Object} filterKeys The array of filter keys or the map of database and table names to filter keys used by the messenger
+     * @param {Function} successCallback The function called once all the filters have been removed (optional)
+     * @param {Function} errorCallback The function called if an error is returned for any of the filter calls (optional)
+     * @method removeFilters
+     * @private
+     */
+    var removeFilters = function(messenger, filterKeys, successCallback, errorCallback) {
+        var filterKey = filterKeys.shift();
+        messenger.removeFilter(filterKey, function() {
+            var index = _.findIndex(service.filters, {
+                id: filterKey
+            });
+            service.filters.splice(index, 1);
+            if(filterKeys.length) {
+                removeFilters(messenger, filterKeys, successCallback, errorCallback);
+            } else if(successCallback) {
+                successCallback();
+            }
+        }, errorCallback);
+    };
+
+    /**
+     * Creates and returns a filter on the given table and field(s) using the given callback.
+     * @param {Object} relation A relation object containing:
+     * <ul>
+     *      <li> {String} database The database name </li>
+     *      <li> {Stirng} table The table name </li>
+     *      <li> {Object} fields The map of field names to arrays of related field names </li>
+     * </ul>
+     * @param {Function} createFilterClauseFunction The function used to create the filter clause for each field, with arguments:
+     *  <ul>
+     *      <li> {Object} An object containing {String} database (the database name) and {String} table (the table name) </li>
+     *      <li> {String} or {Array} The field name(s) </li>
+     *  </ul>
+     * @param {String} or {Object} filterName The name of the visualization or an object containing {String} visName and {String} text
+     * @method createFilter
+     * @return {Object} A neon.query.Filter object or undefined if no filter clause could be created
+     * @private
+     */
+    var createFilter = function(relation, createFilterClauseFunction, filterName) {
+        // Creates a list of arguments for the filter clause creation function.  Each element is either a {String} or an {Array} depending on the number
+        // of field keys in relation.fields.
+        var argumentFieldsList = getArgumentFieldsList(relation);
+        var relationDatabaseAndTableName = {
+            database: relation.database,
+            table: relation.table
+        };
+
+        var filterClause;
+        if(argumentFieldsList.length === 1) {
+            filterClause = createFilterClauseFunction(relationDatabaseAndTableName, argumentFieldsList[0]);
+        } else {
+            var filterClauses = [];
+            for(var i = 0; i < argumentFieldsList.length; ++i) {
+                var result = createFilterClauseFunction(relationDatabaseAndTableName, argumentFieldsList[i]);
+                if(result) {
+                    filterClauses.push(result);
+                }
+            }
+            if(filterClauses.length) {
+                filterClause = neon.query.or.apply(neon.query, filterClauses);
+            }
+        }
+
+        if(filterClause) {
+            var query = new neon.query.Filter().selectFrom(relation.database, relation.table).where(filterClause);
+            if(filterName) {
+                query = query.name(filterName);
+            }
+            return query;
+        }
+
+        return undefined;
     };
 
     /**
@@ -112,8 +441,9 @@ angular.module("neonDemo.services")
      * @return {Array} A list of {String} related field names if the map of field names in the given relation object only contains one field name key;
      * otherwise, a list of {Array} lists of {String} related field names representing each combination of the different field name keys.  Either way, the
      * elements of this list will be used to call the filter clause creation functions in filterService.createFilter() below.
+     * @private
      */
-    service.getArgumentFieldsList = function(relation) {
+    var getArgumentFieldsList = function(relation) {
         // The relation contains an object with the name of each initial field and the array of related fields for each initial field.
         // Keep the same order of the fields array.  This order may be used in the filter clause creation function.
         var fieldNames = relation.fields.map(function(field) {
@@ -154,177 +484,14 @@ angular.module("neonDemo.services")
         return getArgumentFieldsListHelper([], relationFieldsList);
     };
 
-    /**
-     * Creates and returns a filter on the given table and field(s) using the given callback.
-     * @param {Object} relation A relation object containing:
-     * <ul>
-     *      <li> {String} database The database name </li>
-     *      <li> {Stirng} table The table name </li>
-     *      <li> {Object} fields The map of field names to arrays of related field names </li>
-     * </ul>
-     * @param {Function} createFilterClauseFunction The function used to create the filter clause for each field, with arguments:
-     *  <ul>
-     *      <li> {Object} An object containing {String} database (the database name) and {String} table (the table name) </li>
-     *      <li> {String} or {Array} The field name(s) </li>
-     *  </ul>
-     * @param {String} or {Object} filterName The name of the visualization or an object containing {String} visName and {String} text
-     * @method createFilter
-     * @return {Object} A neon.query.Filter object or undefined if no filter clause could be created
+    /*
+     * Returns a filter name based on the given name and relations.
+     * @param {String} or {Object} name The name of the visualization or an object containing {String} visName and {String} text
+     * @param {Object} relations
+     * @method getFilterNameString
+     * @return {String}
+     * @private
      */
-    service.createFilter = function(relation, createFilterClauseFunction, filterName) {
-        // Creates a list of arguments for the filter clause creation function.  Each element is either a {String} or an {Array} depending on the number
-        // of field keys in relation.fields.
-        var argumentFieldsList = service.getArgumentFieldsList(relation);
-        var relationDatabaseAndTableName = {
-            database: relation.database,
-            table: relation.table
-        };
-
-        var filterClause;
-        if(argumentFieldsList.length === 1) {
-            filterClause = createFilterClauseFunction(relationDatabaseAndTableName, argumentFieldsList[0]);
-        } else {
-            var filterClauses = [];
-            for(var i = 0; i < argumentFieldsList.length; ++i) {
-                var result = createFilterClauseFunction(relationDatabaseAndTableName, argumentFieldsList[i]);
-                if(result) {
-                    filterClauses.push(result);
-                }
-            }
-            if(filterClauses.length) {
-                filterClause = neon.query.or.apply(neon.query, filterClauses);
-            }
-        }
-
-        if(filterClause) {
-            var query = new neon.query.Filter().selectFrom(relation.database, relation.table).where(filterClause);
-            if(filterName) {
-                query = query.name(filterName);
-            }
-            return query;
-        }
-
-        return undefined;
-    };
-
-    /**
-     * Adds filters for the given relations using the given filter keys.
-     * @param {Object} messenger The messenger object used to add the filters
-     * @param {Array} relations The array of relations containing a database name, a table name, and a map of fields
-     * @param {Object} filterKeys The map of database and table names to filter keys used by the messenger
-     * @param {Function} createFilterClauseFunction The function used to create the filter clause for each field, with arguments:
-     *  <ul>
-     *      <li> {Object} An object containing {String} database (the database name) and {String} table (the table name) </li>
-     *      <li> {String} or {Array} The field name(s) </li>
-     *  </ul>
-     * @param {String} or {Object} filterName The name of the visualization or an object containing {String} visName and {String} text
-     * @param {Function} successCallback The function called once all the filters have been added (optional)
-     * @param {Function} errorCallback The function called if an error is returned for any of the filter calls (optional)
-     * @method addFilters
-     */
-    service.addFilters = function(messenger, relations, filterKeys, createFilterClauseFunction, filterName, successCallback, errorCallback) {
-        var addFilter = function(relationsToAdd) {
-            var addNextFilter = function() {
-                if(relationsToAdd.length) {
-                    addFilter(relationsToAdd);
-                } else if(successCallback) {
-                    successCallback();
-                }
-            };
-
-            var relation = relationsToAdd.shift();
-            var filter = service.createFilter(relation, createFilterClauseFunction, filterNameString);
-            if(!filter) {
-                addNextFilter();
-                return;
-            }
-
-            messenger.addFilter(filterKeys[relation.database][relation.table], filter, function() {
-                addNextFilter();
-            }, errorCallback);
-        };
-
-        var filterNameString = getFilterNameString(filterName, relations);
-        addFilter(angular.copy(relations));
-    };
-
-    /**
-     * Replaces filters for the given relations using the given filter keys.
-     * @param {Object} messenger The messenger object used to replace the filters
-     * @param {Array} relations The array of relations containing a database name, a table name, and a map of fields
-     * @param {Object} filterKeys The map of database and table names to filter keys used by the messenger
-     * @param {Function} createFilterClauseFunction The function used to create the filter clause for each field, with arguments:
-     *  <ul>
-     *      <li> {Object} An object containing {String} database (the database name) and {String} table (the table name) </li>
-     *      <li> {String} or {Array} The field name(s) </li>
-     *  </ul>
-     * @param {String} or {Object} filterName The name of the visualization or an object containing {String} visName and {String} text
-     * @param {Function} successFunction The function called once all the filters have been replaced (optional)
-     * @param {Function} errorFunction The function called if an error is returned for any of the filter calls (optional)
-     * @method replaceFilters
-     */
-    service.replaceFilters = function(messenger, relations, filterKeys, createFilterClauseFunction, filterName, successCallback, errorCallback) {
-        var replaceFilter = function(relationsToReplace) {
-            var replaceNextFilter = function() {
-                if(relationsToReplace.length) {
-                    replaceFilter(relationsToReplace);
-                } else if(successCallback) {
-                    successCallback();
-                }
-            };
-
-            var relation = relationsToReplace.shift();
-            var filter = service.createFilter(relation, createFilterClauseFunction, filterNameString);
-            if(!filter) {
-                replaceNextFilter();
-                return;
-            }
-
-            messenger.replaceFilter(filterKeys[relation.database][relation.table], filter, function() {
-                replaceNextFilter();
-            }, errorCallback);
-        };
-
-        var filterNameString = getFilterNameString(filterName, relations);
-        replaceFilter(angular.copy(relations));
-    };
-
-    /**
-     * Removes filters for all the given filter keys.
-     * @param {Object} messenger The messenger object used to remove the filters
-     * @param {Array} or {Object} filterKeys The array of filter keys or the map of database and table names to filter keys used by the messenger
-     * @param {Function} successCallback The function called once all the filters have been removed (optional)
-     * @param {Function} errorCallback The function called if an error is returned for any of the filter calls (optional)
-     * @method removeFilters
-     */
-    service.removeFilters = function(messenger, filterKeys, successCallback, errorCallback) {
-        var removeFilter = function(filterKeysToRemove) {
-            var filterKey = filterKeysToRemove.shift();
-            messenger.removeFilter(filterKey, function() {
-                if(filterKeysToRemove.length) {
-                    removeFilter(filterKeysToRemove);
-                } else if(successCallback) {
-                    successCallback();
-                }
-            }, errorCallback);
-        };
-
-        var filterKeysToRemove = [];
-        if(filterKeys.constructor === Array) {
-            filterKeysToRemove = filterKeys;
-        } else {
-            var databaseNames = Object.keys(filterKeys);
-            for(var i = 0; i < databaseNames.length; ++i) {
-                var tableNames = Object.keys(filterKeys[databaseNames[i]]);
-                for(var j = 0; j < tableNames.length; ++j) {
-                    filterKeysToRemove.push(filterKeys[databaseNames[i]][tableNames[j]]);
-                }
-            }
-        }
-
-        removeFilter(filterKeysToRemove);
-    };
-
     var getFilterNameString = function(name, relations) {
         if(typeof name === 'object') {
             var string = "";
@@ -348,23 +515,26 @@ angular.module("neonDemo.services")
         }
     };
 
-    service.containsKey = function(visFilterKeys, toMatchArray) {
-        if(!_.isArray(visFilterKeys)) {
-            visFilterKeys = [visFilterKeys];
-        }
-        if(!_.isArray(toMatchArray)) {
-            toMatchArray = [toMatchArray];
-        }
-
-        //For each visualization filter key, check for any db/table key to be contained in the toMatchArray
-        //underscore some stops as soon as it hits a truthy result
-        return _.some(visFilterKeys, function(visFilterKey) {
-            return _.some(_.values(visFilterKey), function(tableObj) {
-                return _.some(_.values(tableObj), function(key) {
-                    return _.contains(toMatchArray, key);
-                });
+    /*
+     * Returns a list of filter keys that belong to the given relations.
+     * @param {Object} relations
+     * @method getRelationsFilterKeys
+     * @return {Array}
+     * @private
+     */
+    var getRelationsFilterKeys = function(relations) {
+        var keys = [];
+        _.each(relations, function(relation) {
+            var attrs = [];
+            _.each(relation.fields, function(field) {
+                attrs.push(field.related[0]);
             });
+            var filter = service.getFilter(relation.database, relation.table, attrs);
+            if(filter) {
+                keys.push(filter.id);
+            }
         });
+        return keys;
     };
 
     return service;

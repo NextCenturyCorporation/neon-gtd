@@ -22,6 +22,8 @@ function($location, datasetService, filterService, connectionService, errorNotif
 
     service.messenger = new neon.eventing.Messenger();
 
+    service.STATE_CHANGED_CHANNEL = "STATE_CHANGED";
+
     service.FILTER_KEY_PREFIX = "dashboard";
 
     var CUSTOM_NUMBER_MAPPING_PREFIX = "custom_number_";
@@ -42,20 +44,6 @@ function($location, datasetService, filterService, connectionService, errorNotif
     var BOUNDS_MIN_LON = 1;
     var BOUNDS_MAX_LAT = 2;
     var BOUNDS_MAX_LON = 3;
-
-    /**
-     * Removes the filters with the given keys if they were added by the parameter service.
-     * @param {Array} filterKeys
-     * @method onRequestRemoveFilter
-     * @private
-     */
-    var onRequestRemoveFilter = function(filterKeys) {
-        if(filterKeys.length && filterKeys[0].indexOf(service.FILTER_KEY_PREFIX) === 0) {
-            filterService.removeFilters(service.messenger, filterKeys);
-        }
-    };
-
-    service.messenger.subscribe(filterService.REQUEST_REMOVE_FILTER, onRequestRemoveFilter);
 
     /**
      * Returns the name of the dataset specified in the URL parameters to set as the active dataset on initial load of the dashboard.
@@ -206,12 +194,11 @@ function($location, datasetService, filterService, connectionService, errorNotif
         };
 
         if(args.isParameterValid(parameterValue) && isDatasetValid(dataWithMappings, args.mappings)) {
-            var relations = datasetService.getRelations(dataWithMappings.database, dataWithMappings.table, findFieldsForMappings(dataWithMappings, args.mappings));
-            var filterKeys = filterService.createFilterKeys(service.FILTER_KEY_PREFIX + "-" + args.filterName, datasetService.getDatabaseAndTableNames());
             var filterName = {
                 text: (args.mappings.length > 1 ? args.filterName : dataWithMappings.fields[args.mappings[0]]) + " " + (args.operator || "=") + " " + parameterValue
             };
-            filterService.addFilters(service.messenger, relations, filterKeys, args.createFilterClauseCallback(args.operator, parameterValue), filterName, callNextFunction, callNextFunction);
+            filterService.addFilter(service.messenger, dataWithMappings.database, dataWithMappings.table, findFieldsForMappings(dataWithMappings, args.mappings),
+                args.createFilterClauseCallback(args.operator, parameterValue), filterName, callNextFunction, callNextFunction);
         } else {
             callNextFunction();
         }
@@ -233,7 +220,7 @@ function($location, datasetService, filterService, connectionService, errorNotif
             params.filterStateId = filterStateId;
         }
         connection.loadState(params, function(dashboardState) {
-            loadStateSuccess(dashboardState, dashboardStateId);
+            service.loadStateSuccess(dashboardState, dashboardStateId);
         }, function(response) {
             errorNotificationService.showErrorMessage(null, response.responseJSON.error);
         });
@@ -246,9 +233,8 @@ function($location, datasetService, filterService, connectionService, errorNotif
      * @param {Object} dashboardState.dataset
      * @param {String} dashboardStateId
      * @method loadStateSuccess
-     * @private
      */
-    var loadStateSuccess = function(dashboardState, dashboardStateId) {
+    service.loadStateSuccess = function(dashboardState, dashboardStateId) {
         if(_.keys(dashboardState).length) {
             if(dashboardStateId) {
                 var matchingDataset = datasetService.getDatasetWithName(dashboardState.dataset.name);
@@ -261,13 +247,26 @@ function($location, datasetService, filterService, connectionService, errorNotif
 
                 // Update dataset fields, then set as active and update the dashboard
                 datasetService.updateDatabases(matchingDataset, connection, function(dataset) {
-                    service.messenger.publish("STATE_CHANGED", {
-                        dashboard: dashboardState.dashboard,
-                        dataset: dataset
+                    filterService.getFilterState(function() {
+                        dataset.mapLayers = dashboardState.dataset.mapLayers;
+                        dataset.lineCharts = dashboardState.dataset.lineCharts;
+
+                        for(var i = 0; i < dataset.databases.length; i++) {
+                            for(var j = 0; j < dataset.databases[i].tables.length; j++) {
+                                dataset.databases[i].tables[j].mappings = dashboardState.dataset.databases[i].tables[j].mappings;
+                            }
+                        }
+
+                        service.messenger.publish(service.STATE_CHANGED_CHANNEL, {
+                            dashboard: dashboardState.dashboard,
+                            dataset: dataset
+                        });
+                    }, function(response) {
+                        errorNotificationService.showErrorMessage(null, response.responseJSON.error);
                     });
                 });
             } else {
-                service.messenger.publish("STATE_CHANGED", null);
+                service.messenger.publish(service.STATE_CHANGED_CHANNEL, null);
             }
         } else {
             errorNotificationService.showErrorMessage(null, "State not found for given IDs.");

@@ -17,8 +17,8 @@
  */
 
 angular.module('neonDemo.directives')
-.directive('sample', ['ConnectionService', 'DatasetService', 'ErrorNotificationService', 'FilterService', 'ExportService',
-function(connectionService, datasetService, errorNotificationService, filterService, exportService) {
+.directive('sample', ['ConnectionService', 'DatasetService', 'ErrorNotificationService', 'FilterService', 'ExportService', 'VisualizationService',
+function(connectionService, datasetService, errorNotificationService, filterService, exportService, visualizationService) {
     return {
         templateUrl: 'partials/directives/sample.html',
         restrict: 'EA',
@@ -27,7 +27,8 @@ function(connectionService, datasetService, errorNotificationService, filterServ
         scope: {
             bindDatabase: '=',
             bindTable: '=',
-            bindField: '='
+            bindField: '=',
+            bindStateId: '='
         },
         link: function($scope, $element) {
             // Class used for styling (see sample.less).
@@ -48,9 +49,6 @@ function(connectionService, datasetService, errorNotificationService, filterServ
             $scope.databases = [];
             $scope.tables = [];
             $scope.fields = [];
-
-            // Filter keys are unique IDs used to set filters through the Neon Messenger.
-            $scope.filterKeys = {};
 
             // The current filter for this visualization.  Some visualizations may not use a filter and others may use multiple (this example only uses one).
             $scope.filter = undefined;
@@ -99,13 +97,17 @@ function(connectionService, datasetService, errorNotificationService, filterServ
                 // Register this visualization with the Export Service so its data can be exported to file.
                 $scope.exportID = exportService.register($scope.makeExportObject);
 
+                // Register this visualization with the Visualization Service so its mappings can be saved to be loaded later.
+                visualizationService.register($scope.bindStateId, bindFields);
+
                 $scope.$on('$destroy', function() {
                     $scope.messenger.unsubscribeAll();
                     // Remove any filters that have been set.
                     if($scope.filter) {
-                        filterService.removeFilters($scope.messenger, $scope.filterKeys);
+                        filterService.removeFilter($scope.options.database.name, $scope.options.table.name, [$scope.options.field.columnName]);
                     }
                     exportService.unregister($scope.exportID);
+                    visualizationService.unregister($scope.bindStateId);
                 });
             };
 
@@ -119,6 +121,15 @@ function(connectionService, datasetService, errorNotificationService, filterServ
                 // Check if the event affects the database/table that this visualization is using; if so, requery for the filtered data.
                 // Please note that all "filters changed" events (add, replace, or remove) will contain an addedFilter object with databaseName and tableName properties.
                 if(message.addedFilter && message.addedFilter.databaseName === $scope.options.database.name && message.addedFilter.tableName === $scope.options.table.name) {
+                    if(message.type === "REMOVE") {
+                        var filter = createFilterClause({
+                            databaseName: $scope.options.database.name,
+                            tableName: $scope.options.table.name
+                        }, $scope.options.field.columnName);
+                        if(filterService.areClausesEqual(message.removedFilter.whereClause, filter)) {
+                            $scope.filter = undefined;
+                        }
+                    }
                     queryForData();
                 }
             };
@@ -146,17 +157,32 @@ function(connectionService, datasetService, errorNotificationService, filterServ
                     }
                 }
 
-                // Create a map of filter keys for each database/table pair available to this visualization.
-                $scope.filterKeys = filterService.createFilterKeys("sample", datasetService.getDatabaseAndTableNames());
-
-                $scope.updateTables();
+                $scope.updateTables(function() {
+                    if($scope.options.database && $scope.options.database.name && $scope.options.table && $scope.options.table.name &&
+                        datasetService.isFieldValid($scope.options.field)) {
+                        var filter = filterService.getFilter($scope.options.database.name, $scope.options.table.name,
+                            [$scope.options.field.columnName]);
+                        if(filter) {
+                            if(filter.filter.whereClause.type === "where") {
+                                $scope.filter = {
+                                    field: filter.filter.whereClause.lhs,
+                                    value: filter.filter.whereClause.rhs,
+                                    database: $scope.options.database.name,
+                                    table: $scope.options.table.name
+                                };
+                            }
+                        }
+                    }
+                    queryForData();
+                });
             };
 
             /**
              * Updates the list of available tables and the default table to use in this visualization from the tables in the active dataset.
+             * @param {Function} [callback] Optional callback
              * @method updateTables
              */
-            $scope.updateTables = function() {
+            $scope.updateTables = function(callback) {
                 $scope.tables = datasetService.getTables($scope.options.database.name);
 
                 // Set the default table to use in this visualization.  Check if a binding was set in the config.json file.
@@ -170,14 +196,15 @@ function(connectionService, datasetService, errorNotificationService, filterServ
                     }
                 }
 
-                $scope.updateFields();
+                $scope.updateFields(callback);
             };
 
             /**
              * Updates the list of available fields and the default fields to use in this visualization from the fields in the active dataset.
+             * @param {Function} [callback] Optional callback
              * @method updateFields
              */
-            $scope.updateFields = function() {
+            $scope.updateFields = function(callback) {
                 // Prevent extraneous queries from onFieldChanged.
                 $scope.initializing = true;
 
@@ -194,7 +221,11 @@ function(connectionService, datasetService, errorNotificationService, filterServ
                     $scope.removeFilter();
                 }
 
-                queryForData();
+                if(callback) {
+                    callback();
+                } else {
+                    queryForData();
+                }
             };
 
             /**
@@ -258,8 +289,20 @@ function(connectionService, datasetService, errorNotificationService, filterServ
                 query.sortBy('count', neon.query.DESCENDING);
                 query.where($scope.options.field.columnName, "!=", null);
 
-                // Some visualizations will ignore their own filters and display unfiltered values differently than filtered values (like changing their color or font).
-                query.ignoreFilters([$scope.filterKeys[$scope.options.database.name][$scope.options.table.name]]);
+                if($scope.filter) {
+                    var filter = {
+                        databaseName: $scope.options.database.name,
+                        tableName: $scope.options.table.name,
+                        whereClause: createFilterClause({
+                                database: $scope.options.database.name,
+                                table: $scope.options.table.name
+                            }, $scope.options.field.columnName
+                        )
+                    };
+
+                    // Some visualizations will ignore their own filters and display unfiltered values differently than filtered values (like changing their color or font).
+                    query.ignoreFilters([filterService.getFilterKeyForFilter(filter)]);
+                }
 
                 return query;
             };
@@ -282,38 +325,24 @@ function(connectionService, datasetService, errorNotificationService, filterServ
              * @method setFilter
              */
             $scope.setFilter = function(field, value) {
-                var filterExists = $scope.filter ? true : false;
-
                 // Save the filter to display in the visualization and use in createFilterClause.
                 $scope.filter = {
                     field: field,
-                    value: value
+                    value: value,
+                    database: $scope.options.database.name,
+                    table: $scope.options.table.name
                 };
 
-                // Get the dashboard's active connection to the Neon server.
-                var connection = connectionService.getActiveConnection();
-
-                if($scope.messenger && connection) {
-                    // Get the relations for the filter's database/table/field.  This will include an element for the arguments.  Please see the User Guide for more information on relations.
-                    // Please note that the size of the array of fields determines the second argument for the createFilterClause function:
-                    //      If the array of fields contains a single field (like this case), the second argument for the createFilterClause function is a String.
-                    //      Otherwise, the second argument for the createFilterClause function is an array whose elements are in the same order as the array of fields.
-                    var relations = datasetService.getRelations($scope.options.database.name, $scope.options.table.name, [field]);
-
+                if($scope.messenger) {
                     // Create an object containing the name of the filter to display in the filter tray (if enabled).
                     var filterName = {
                         visName: "Sample",
                         text: field + " = " + value
                     };
 
-                    // For this example visualization we only want to set one filter at a time so call replaceFilters to replace the existing filter if one exists or addFilter to add a filter otherwise.
-                    // The Filter Service will add/replace filters for all relations using one or more of the filter keys.  Once done, it will query for data.
+                    // The Filter Service will add/replace filters for the database, table, and field combination. Once done, it will query for data.
                     // Filters are created using the createFilterClause function.
-                    if(filterExists) {
-                        filterService.replaceFilters($scope.messenger, relations, $scope.filterKeys, createFilterClause, filterName, queryForData, queryForData);
-                    } else {
-                        filterService.addFilters($scope.messenger, relations, $scope.filterKeys, createFilterClause, filterName, queryForData, queryForData);
-                    }
+                    filterService.addFilter($scope.messenger, $scope.options.database.name, $scope.options.table.name, [field], createFilterClause, filterName, queryForData, queryForData);
                 }
             };
 
@@ -335,11 +364,14 @@ function(connectionService, datasetService, errorNotificationService, filterServ
              * @method removeFilter
              */
             $scope.removeFilter = function() {
+                var database = $scope.filter.database;
+                var table = $scope.filter.table;
+                var field = $scope.filter.field;
                 $scope.filter = undefined;
 
                 if($scope.messenger) {
-                    // The Filter Service will remove filters for all filter keys.  Once done, it will query for data.
-                    filterService.removeFilters($scope.messenger, $scope.filterKeys, queryForData, queryForData);
+                    // The Filter Service will remove filters for database, table, and field combination.  Once done, it will query for data.
+                    filterService.removeFilter(database, table, [field], queryForData, queryForData, $scope.messenger);
                 }
             };
 
@@ -349,8 +381,13 @@ function(connectionService, datasetService, errorNotificationService, filterServ
             $scope.onFieldChanged = function() {
                 // This function is triggered by updateFields which already start a query so check initializing to prevent extraneous queries.
                 if(!$scope.initializing) {
-                    // Query for data using the new field.
-                    queryForData();
+                    if($scope.filter) {
+                        // Remove any existing filters before querying for data
+                        $scope.removeFilter();
+                    } else {
+                        // Query for data using the new field.
+                        queryForData();
+                    }
                 }
             };
 
@@ -385,6 +422,22 @@ function(connectionService, datasetService, errorNotificationService, filterServ
                 };
 
                 return finalObject;
+            };
+
+            /**
+             * Creates and returns an object that contains all the binding fields needed to recreate the visualization's state.
+             * @return {Object}
+             * @method bindFields
+             * @private
+             */
+            var bindFields = function() {
+                var bindingFields = {};
+
+                bindingFields["bind-field"] = ($scope.options.field && $scope.options.field.columnName) ? "'" + $scope.options.field.columnName + "'" : undefined;
+                bindingFields["bind-table"] = ($scope.options.table && $scope.options.table.name) ? "'" + $scope.options.table.name + "'" : undefined;
+                bindingFields["bind-database"] = ($scope.options.database && $scope.options.database.name) ? "'" + $scope.options.database.name + "'" : undefined;
+
+                return bindingFields;
             };
 
             // Initialize the visualization once Neon is ready.  Display the active dataset if any.

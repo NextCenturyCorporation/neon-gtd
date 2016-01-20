@@ -66,7 +66,6 @@ function(external, connectionService, datasetService, errorNotificationService, 
             $scope.tables = [];
             $scope.fields = [];
             $scope.visualizationFilterKeys = {};
-            $scope.filterKeys = {};
             $scope.dateFilterKeys = {};
             $scope.chart = undefined;
             $scope.brushExtent = [];
@@ -161,13 +160,7 @@ function(external, connectionService, datasetService, errorNotificationService, 
                 $scope.messenger.subscribe(datasetService.DATE_CHANGED_CHANNEL, onDateChanged);
                 $scope.messenger.subscribe("date_selected", onDateSelected);
 
-                $scope.messenger.subscribe(filterService.REQUEST_REMOVE_FILTER, function(ids) {
-                    if(containsKey(ids)) {
-                        $scope.removeBrush();
-                    }
-                });
-
-                $scope.exportID = exportService.register($scope.bindFields);
+                $scope.exportID = exportService.register($scope.makeLinechartExportObject);
                 visualizationService.register($scope.bindStateId, bindFields);
 
                 $element.find('.legend-container .legend').on({
@@ -326,10 +319,26 @@ function(external, connectionService, datasetService, errorNotificationService, 
                     var queryData = false;
                     _.each($scope.options.charts, function(chart) {
                         if(chart.database === message.addedFilter.databaseName  && chart.table === message.addedFilter.tableName && chart.active) {
-                            var dateFilterChanged = isDateFiltersChangedMessage(message, chart.attrXMapping);
-                            var dashboardDateFilter = isDashboardDateFilter(message, chart.attrXMapping);
-                            if((dateFilterChanged && dashboardDateFilter) || !dateFilterChanged) {
-                                queryData = true;
+                            if(chart.attrXMapping && $scope.brushExtent.length >= 2 && message.type === "REMOVE") {
+                                var filter = {
+                                    databaseName: chart.database,
+                                    tableName: chart.table,
+                                    whereClause: createFilterClauseForDate({
+                                                database: chart.database,
+                                                table: chart.table
+                                            }, chart.attrXMapping)
+                                };
+                                if(!filterService.getFilterKeyForFilter(filter)) {
+                                    var relations = datasetService.getRelations(chart.database, chart.table, [chart.attrXMapping]);
+                                    datasetService.removeDateBrushExtentForRelations(relations);
+                                    $scope.brushExtent = [];
+                                }
+                            } else {
+                                var dateFilterChanged = isDateFiltersChangedMessage(message, chart.attrXMapping);
+                                var dashboardDateFilter = isDashboardDateFilter(message, chart.attrXMapping);
+                                if((dateFilterChanged && dashboardDateFilter) || !dateFilterChanged) {
+                                    queryData = true;
+                                }
                             }
                         }
                     });
@@ -369,23 +378,6 @@ function(external, connectionService, datasetService, errorNotificationService, 
                         }
                     }
                 }
-            };
-
-            /**
-             * Returns whether any of the given ids are in the visualization's filter keys object.
-             * @param {Array} ids
-             * @return {Boolean}
-             * @method containsKey
-             * @private
-             */
-            var containsKey = function(ids) {
-                return _.some($scope.filterKeys, function(tables) {
-                    return _.some(tables, function(dateMappings) {
-                        return _.some(dateMappings, function(filterKeyObj) {
-                            return _.contains(ids, filterKeyObj.filterKey);
-                        });
-                    });
-                });
             };
 
             /**
@@ -666,7 +658,20 @@ function(external, connectionService, datasetService, errorNotificationService, 
                     .sortBy('date', neon.query.ASCENDING);
 
                 if(!chart.active) {
-                    query.ignoreFilters([$scope.filterKeys[chart.database][chart.table][chart.attrXMapping].filterKey]);
+                    var filter = {
+                        databaseName: chart.database,
+                        tableName: chart.table,
+                        whereClause: createFilterClauseForDate({
+                                    database: chart.database,
+                                    table: chart.table
+                                }, chart.attrXMapping)
+                    };
+
+                    query.ignoreFilters([filterService.getFilterKeyForFilter({
+                        databaseName: chart.database,
+                        tableName: chart.table,
+                        whereClause: filter
+                    })]);
                 }
 
                 return query;
@@ -697,11 +702,23 @@ function(external, connectionService, datasetService, errorNotificationService, 
                     var globalBrushExtent = datasetService.getDateBrushExtent($scope.options.charts[i].database,
                         $scope.options.charts[i].table, $scope.options.charts[i].attrXMapping);
 
+                    var filter = filterService.getFilter($scope.options.charts[i].database, $scope.options.charts[i].table,
+                        [$scope.options.charts[i].attrXMapping]);
+
                     if(!$scope.brushExtent.length && globalBrushExtent.length && $scope.options.charts[i].active) {
                         brushExtentFound = true;
                         $scope.queryOnChangeBrush = true;
                         updateBrush(globalBrushExtent, true);
                         return;
+                    } else if(filter && filter.filter.whereClause.type === "and" && filter.filter.whereClause.whereClauses.length === 2) {
+                        var startDate = new Date(filter.filter.whereClause.whereClauses[0].rhs);
+                        var endDate = new Date(filter.filter.whereClause.whereClauses[1].rhs);
+
+                        if(!$scope.brushExtent.length || ($scope.brushExtent[0] > startDate &&
+                            $scope.brushExtent[1] < endDate)) {
+                            $scope.brushExtent[0] = startDate;
+                            $scope.brushExtent[1] = endDate;
+                        }
                     }
                 }
 
@@ -790,8 +807,6 @@ function(external, connectionService, datasetService, errorNotificationService, 
                     chart.aggregation !== "min" && chart.aggregation !== "max") {
                     chart.aggregation = "count";
                 }
-
-                setFilterKey(chart);
 
                 $scope.validateChart(chart, -1);
 
@@ -1047,19 +1062,6 @@ function(external, connectionService, datasetService, errorNotificationService, 
                 $scope.legend.charts[id].display = !$scope.legend.charts[id].display;
             };
 
-            /*
-             * Adds a new filter key, if it doesn't exist already, for the given layer.
-             * @method setFilterKey
-             * @private
-             */
-            var setFilterKey = function(chart) {
-                var filterServiceKeys = datasetService.getDateFilterKeys(chart.database, chart.table, chart.attrXMapping);
-                var attrX = chart.attrXMapping;
-                var relations = datasetService.getRelations(chart.database, chart.table, [attrX]);
-
-                $scope.filterKeys = filterService.createFilterKeysForAttribute($scope.filterKeys, chart.database, chart.table, attrX, filterServiceKeys, relations);
-            };
-
             /**
              * Resets the filter keys and requeries for all charts matching the given charts database, table, and date mappoing.
              * @param {Object} chart
@@ -1067,8 +1069,6 @@ function(external, connectionService, datasetService, errorNotificationService, 
              * @private
              */
             var resetAndQueryForData = function(chart) {
-                setFilterKey(chart);
-
                 var globalBrushExtent = datasetService.getDateBrushExtent(chart.database, chart.table, chart.attrXMapping);
                 if(!$scope.brushExtent.length && globalBrushExtent.length && chart.active) {
                     $scope.queryOnChangeBrush = true;
@@ -1639,6 +1639,7 @@ function(external, connectionService, datasetService, errorNotificationService, 
                 var chart = charts.shift();
                 var origBrushExtent = angular.copy($scope.brushExtent);
                 var globalBrushExtent = datasetService.getDateBrushExtent(chart.database, chart.table, chart.attrXMapping);
+
                 // We're comparing the date strings here because comparing the date objects doesn't seem to work.
                 if(globalBrushExtent.length && $scope.brushExtent[0].toDateString() === globalBrushExtent[0].toDateString() &&
                     $scope.brushExtent[1].toDateString() === globalBrushExtent[1].toDateString() && !ignoreGlobalBrushExtent) {
@@ -1650,40 +1651,25 @@ function(external, connectionService, datasetService, errorNotificationService, 
                     return;
                 }
 
-                var filterKeys = createFilterKeyObj(chart);
-                var relations = datasetService.getRelations(chart.database, chart.table, [chart.attrXMapping]);
-
                 var filterNameObj = "LineChart - " +  getDateString($scope.brushExtent[0], false) + " to " + getDateString($scope.brushExtent[1], false);
 
-                filterService.replaceFilters($scope.messenger, relations, filterKeys, createFilterClauseForDate, filterNameObj, function() {
-                    datasetService.setDateBrushExtentForRelations(relations, $scope.brushExtent);
-                    // Sometimes setDateBrushExtentForRelations() changes the brushExtent so we want to reset it back to
-                    // the original if that happens.
-                    if(origBrushExtent !== $scope.brushExtent) {
-                        $scope.brushExtent = origBrushExtent;
+                filterService.addFilter($scope.messenger, chart.database, chart.table, [chart.attrXMapping], createFilterClauseForDate,
+                    filterNameObj, function() {
+                        var relations = datasetService.getRelations(chart.database, chart.table, [chart.attrXMapping]);
+                        datasetService.setDateBrushExtentForRelations(relations, $scope.brushExtent);
+                        // Sometimes setDateBrushExtentForRelations() changes the brushExtent so we want to reset it back to
+                        // the original if that happens.
+                        if(origBrushExtent !== $scope.brushExtent) {
+                            $scope.brushExtent = origBrushExtent;
+                        }
+
+                        if(charts.length) {
+                            updateBrushRecursively(charts, ignoreGlobalBrushExtent);
+                        } else {
+                            updateLineChartForBrushExtent();
+                        }
                     }
-
-                    if(charts.length) {
-                        updateBrushRecursively(charts, ignoreGlobalBrushExtent);
-                    } else {
-                        updateLineChartForBrushExtent();
-                    }
-                });
-            };
-
-            /**
-             * Creates a filter key object from the filter keys associated with the given chart.
-             * @param {Object} chart
-             * @return {Object}
-             * @method createFilterKeyObj
-             * @private
-             */
-            var createFilterKeyObj = function(chart) {
-                var filterKey = {};
-                filterKey[chart.database] = {};
-                filterKey[chart.database][chart.table] = $scope.filterKeys[chart.database][chart.table][chart.attrXMapping].filterKey;
-
-                return _.merge(filterKey, $scope.filterKeys[chart.database][chart.table][chart.attrXMapping].relations);
+                );
             };
 
             /**
@@ -1886,9 +1872,8 @@ function(external, connectionService, datasetService, errorNotificationService, 
              */
             var removeBrushRecursively = function(charts, queryWhenDone) {
                 var chart = charts.shift();
-                var filterKeys = createFilterKeyObj(chart);
                 var relations = datasetService.getRelations(chart.database, chart.table, [chart.attrXMapping]);
-                filterService.removeFilters($scope.messenger, filterKeys, function() {
+                filterService.removeFilter(chart.database, chart.table, [chart.attrXMapping], function() {
                     datasetService.removeDateBrushExtentForRelations(relations);
 
                     if(charts.length) {
@@ -2017,26 +2002,28 @@ function(external, connectionService, datasetService, errorNotificationService, 
              */
             var bindFields = function() {
                 var bindingFields = {};
+                var charts = [];
 
-                bindingFields["bind-title"] = $scope.bindTitle ? "'" + $scope.bindTitle + "'" : undefined;
-                bindingFields["bind-date-field"] = ($scope.options.attrX && $scope.options.attrX.columnName) ? "'" + $scope.options.attrX.columnName + "'" : undefined;
-
-                var bindAggField;
-                var bindYAxisField;
-                if($scope.options.aggregation) {
-                    bindAggField = "'" + $scope.options.aggregation + "'";
-
-                    if($scope.options.aggregation !== 'count' && $scope.options.attrY && $scope.options.attrY.columnName) {
-                        bindYAxisField = "'" + $scope.options.attrY.columnName + "'";
-                    }
-                }
-                bindingFields["bind-aggregation-field"] = bindAggField;
-                bindingFields["bind-y-axis-field"] = bindYAxisField;
-
-                bindingFields["bind-category-field"] = ($scope.options.categoryField && $scope.options.categoryField.columnName) ? "'" + $scope.options.categoryField.columnName + "'" : undefined;
-                bindingFields["bind-table"] = ($scope.options.table && $scope.options.table.name) ? "'" + $scope.options.table.name + "'" : undefined;
-                bindingFields["bind-database"] = ($scope.options.database && $scope.options.database.name) ? "'" + $scope.options.database.name + "'" : undefined;
+                var bindConfig = "linechart-" + $scope.bindStateId;
+                bindingFields["bind-config"] = "'" + bindConfig + "'";
                 bindingFields["bind-granularity"] = $scope.options.granularity ? "'" + $scope.options.granularity + "'" : undefined;
+
+                _.each($scope.options.charts, function(chart) {
+                    charts.push({
+                        database: chart.database,
+                        table: chart.table,
+                        active: chart.active,
+                        name: chart.name,
+                        xAxis: chart.attrXMapping,
+                        aggregation: chart.aggregation,
+                        yAxis: chart.attrYMapping,
+                        category: chart.categoryMapping
+
+                    });
+                });
+
+                datasetService.addLineChart(bindConfig, charts);
+
                 return bindingFields;
             };
 

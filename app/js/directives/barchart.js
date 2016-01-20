@@ -111,12 +111,6 @@ function(external, connectionService, datasetService, errorNotificationService, 
                     queryForData(false);
                 });
 
-                $scope.messenger.subscribe(filterService.REQUEST_REMOVE_FILTER, function(ids) {
-                    if(filterService.containsKey($scope.filterKeys, ids)) {
-                        $scope.clearFilterSet();
-                    }
-                });
-
                 $scope.exportID = exportService.register($scope.makeBarchartExportObject);
                 visualizationService.register($scope.bindStateId, bindFields);
 
@@ -135,7 +129,7 @@ function(external, connectionService, datasetService, errorNotificationService, 
                     $scope.messenger.unsubscribeAll();
                     // Remove our filter if we had an active one.
                     if($scope.filterSet) {
-                        filterService.removeFilters($scope.messenger, $scope.filterKeys);
+                        filterService.removeFilter($scope.options.database.name, $scope.options.table.name, [$scope.options.attrX.columnName]);
                     }
                     exportService.unregister($scope.exportID);
                     visualizationService.unregister($scope.bindStateId);
@@ -215,6 +209,22 @@ function(external, connectionService, datasetService, errorNotificationService, 
                         source: "system",
                         tags: ["filter-change", "barchart"]
                     });
+
+                    if($scope.options.attrX && $scope.options.attrX.columnName && $scope.filterSet) {
+                        var filter = {
+                            databaseName: $scope.options.database.name,
+                            tableName: $scope.options.table.name,
+                            whereClause: createFilterClauseForXAxis({
+                                        database: $scope.options.database.name,
+                                        table: $scope.options.table.name
+                                    }, $scope.options.attrX.columnName)
+                        };
+                        if(!filterService.getFilterKeyForFilter(filter)) {
+                            $scope.chart.clearSelectedBar();
+                            clearFilterSet();
+                        }
+                    }
+
                     queryForData(false);
                 }
             };
@@ -239,11 +249,27 @@ function(external, connectionService, datasetService, errorNotificationService, 
                         }
                     }
                 }
-                $scope.filterKeys = filterService.createFilterKeys("barchart", datasetService.getDatabaseAndTableNames());
-                $scope.updateTables();
+                $scope.updateTables(function() {
+                    if($scope.options.database && $scope.options.database.name && $scope.options.table && $scope.options.table.name &&
+                        datasetService.isFieldValid($scope.options.attrX)) {
+                        var filter = filterService.getFilter($scope.options.database.name, $scope.options.table.name,
+                            [$scope.options.attrX.columnName]);
+                        if(filter) {
+                            if(filter.filter.whereClause.type === "where") {
+                                $scope.filterSet = {
+                                    key: filter.filter.whereClause.lhs,
+                                    value: filter.filter.whereClause.rhs,
+                                    database: $scope.options.database.name,
+                                    table: $scope.options.table.name
+                                };
+                            }
+                        }
+                    }
+                    queryForData(true);
+                });
             };
 
-            $scope.updateTables = function() {
+            $scope.updateTables = function(callback) {
                 $scope.tables = datasetService.getTables($scope.options.database.name);
                 $scope.options.table = datasetService.getFirstTableWithMappings($scope.options.database.name, [neonMappings.BAR_GROUPS, neonMappings.Y_AXIS]) || $scope.tables[0];
                 if($scope.bindTable) {
@@ -254,10 +280,10 @@ function(external, connectionService, datasetService, errorNotificationService, 
                         }
                     }
                 }
-                $scope.updateFields();
+                $scope.updateFields(callback);
             };
 
-            $scope.updateFields = function() {
+            $scope.updateFields = function(callback) {
                 $scope.loadingData = true;
                 $scope.fields = datasetService.getSortedFields($scope.options.database.name, $scope.options.table.name);
 
@@ -272,6 +298,9 @@ function(external, connectionService, datasetService, errorNotificationService, 
 
                 if($scope.filterSet) {
                     $scope.clearFilterSet();
+                } else if(callback) {
+                    callback();
+                    return;
                 }
                 queryForData(true);
             };
@@ -282,7 +311,18 @@ function(external, connectionService, datasetService, errorNotificationService, 
                     .where($scope.options.attrX.columnName, '!=', null)
                     .groupBy($scope.options.attrX);
 
-                query.ignoreFilters([$scope.filterKeys[$scope.options.database.name][$scope.options.table.name]]);
+                if($scope.filterSet && $scope.filterSet.key && $scope.filterSet.value) {
+                    var filter = {
+                        databaseName: $scope.options.database.name,
+                        tableName: $scope.options.table.name,
+                        whereClause: createFilterClauseForXAxis({
+                                    database: $scope.options.database.name,
+                                    table: $scope.options.table.name
+                                }, $scope.options.attrX.columnName)
+                    };
+
+                    query.ignoreFilters([filterService.getFilterKeyForFilter(filter)]);
+                }
 
                 var queryType;
                 if($scope.options.barType === 'count') {
@@ -409,44 +449,19 @@ function(external, connectionService, datasetService, errorNotificationService, 
                     return;
                 }
 
-                var filterExists = $scope.filterSet ? true : false;
-                handleFilterSet($scope.options.attrX, value);
+                handleFilterSet($scope.options.attrX.columnName, value);
 
                 // Store the value for the filter to use during filter creation.
                 $scope.filterValue = value;
 
                 var connection = connectionService.getActiveConnection();
                 if($scope.messenger && connection) {
-                    var relations = datasetService.getRelations($scope.options.database.name, $scope.options.table.name, [$scope.options.attrX.columnName]);
                     var filterNameObj = {
                         visName: "BarChart",
                         text: $scope.filterSet.key + " = " + $scope.filterSet.value
                     };
-                    if(filterExists) {
-                        XDATA.userALE.log({
-                            activity: "select",
-                            action: "click",
-                            elementId: "barchart",
-                            elementType: "canvas",
-                            elementSub: "barchart-bar",
-                            elementGroup: "chart_group",
-                            source: "user",
-                            tags: ["filter", "barchart"]
-                        });
-                        filterService.replaceFilters($scope.messenger, relations, $scope.filterKeys, createFilterClauseForXAxis, filterNameObj);
-                    } else {
-                        XDATA.userALE.log({
-                            activity: "select",
-                            action: "click",
-                            elementId: "barchart",
-                            elementType: "canvas",
-                            elementSub: "barchart-bar",
-                            elementGroup: "chart_group",
-                            source: "user",
-                            tags: ["filter", "barchart"]
-                        });
-                        filterService.addFilters($scope.messenger, relations, $scope.filterKeys, createFilterClauseForXAxis, filterNameObj);
-                    }
+                    filterService.addFilter($scope.messenger, $scope.options.database.name, $scope.options.table.name,
+                        [$scope.options.attrX.columnName], createFilterClauseForXAxis, filterNameObj);
                 }
             };
 
@@ -465,7 +480,9 @@ function(external, connectionService, datasetService, errorNotificationService, 
             var handleFilterSet = function(field, value) {
                 $scope.filterSet = {
                     key: field,
-                    value: value
+                    value: value,
+                    database: $scope.options.database.name,
+                    table: $scope.options.table.name
                 };
 
                 var mappings = datasetService.getMappings($scope.options.database.name, $scope.options.table.name);
@@ -486,7 +503,7 @@ function(external, connectionService, datasetService, errorNotificationService, 
             };
 
             $scope.clearFilterSet = function() {
-                if($scope.messenger) {
+                if($scope.filterSet) {
                     XDATA.userALE.log({
                         activity: "deselect",
                         action: "click",
@@ -496,7 +513,7 @@ function(external, connectionService, datasetService, errorNotificationService, 
                         source: "user",
                         tags: ["filter", "barchart"]
                     });
-                    filterService.removeFilters($scope.messenger, $scope.filterKeys, function() {
+                    filterService.removeFilter($scope.filterSet.database, $scope.filterSet.table, [$scope.filterSet.key], function() {
                         $scope.chart.clearSelectedBar();
                         clearFilterSet();
                     });

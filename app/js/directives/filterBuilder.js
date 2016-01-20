@@ -80,13 +80,8 @@ angular.module('neonDemo.directives')
                 $scope.selectedOperator = findDefaultOperator($scope.filterTable.operatorOptions);
 
                 $scope.messenger.events({
-                    connectToHost: onConnectToHost
-                });
-
-                $scope.messenger.subscribe(filterService.REQUEST_REMOVE_FILTER, function(ids) {
-                    if($scope.filterTable.containsFilterKey(ids)) {
-                        $scope.resetFilters(ids);
-                    }
+                    connectToHost: onConnectToHost,
+                    filtersChanged: onFiltersChanged
                 });
 
                 $scope.$on('$destroy', function() {
@@ -104,7 +99,7 @@ angular.module('neonDemo.directives')
                     $scope.messenger.unsubscribeAll();
                     var databaseAndTableNames = $scope.filterTable.getDatabaseAndTableNames();
                     if(databaseAndTableNames.length) {
-                        publishRemoveFilterEvents($scope.filterTable.getDatabaseAndTableNames());
+                        publishRemoveFilterEvents(databaseAndTableNames);
                     }
                     $element.off("resize", resizeDateTimePickerDropdowns);
                 });
@@ -138,6 +133,63 @@ angular.module('neonDemo.directives')
             };
 
             /**
+             * Event handler for filter changed events issued over Neon's messaging channels.
+             * @param {Object} message A Neon filter changed message.
+             * @method onFiltersChanged
+             * @private
+             */
+            var onFiltersChanged = function(message) {
+                if(message && message.type === "REMOVE") {
+                    var filters = $scope.filterTable.buildFiltersFromData($scope.andClauses);
+
+                    _.each(filters, function(filter) {
+                        var databaseName = filter.filter.databaseName;
+                        var tableName = filter.filter.tableName;
+
+                        if(message.removedFilter.databaseName === databaseName && message.removedFilter.tableName === tableName &&
+                            filterService.areClausesEqual(message.removedFilter.whereClause, filter.filter.whereClause)) {
+                            $scope.filterTable.clearFilterState(databaseName, tableName);
+                        }
+                    });
+                }
+            };
+
+            /*
+             * Finds, parses, and adds any filters that belong to the filter builder.
+             * @method displaySavedFilters
+             * @private
+             */
+            var displaySavedFilters = function() {
+                _.each(filterService.getAllFilters(), function(filter) {
+                    if(filter.filter.filterName.indexOf("Filter Builder") === 0) {
+                        $scope.instanceId = filter.id;
+                        $scope.filterTable.setFilterKey(filter.filter.databaseName, filter.filter.tableName, $scope.instanceId);
+
+                        $scope.selectedDatabase = datasetService.getDatabaseWithName(filter.filter.databaseName);
+                        $scope.selectedTable = datasetService.getTableWithName(filter.filter.databaseName, filter.filter.tableName);
+                        $scope.tables = datasetService.getTables(filter.filter.databaseName);
+                        $scope.fields = datasetService.getFields(filter.filter.databaseName, filter.filter.tableName);
+                        $scope.selectedFieldIsDate = false;
+
+                        if(filter.filter.whereClause.type === "where") {
+                            $scope.selectedField = datasetService.findField($scope.fields, filter.filter.whereClause.lhs);
+                            $scope.selectedOperator = filter.filter.whereClause.operator;
+                            $scope.selectedValue = filter.filter.whereClause.rhs;
+                            $scope.addFilterRow($scope.instanceId);
+                        } else {
+                            $scope.andClauses = (filter.filter.whereClause.type === "and") ? true : false;
+                            _.each(filter.filter.whereClause.whereClauses, function(clause) {
+                                $scope.selectedField = datasetService.findField($scope.fields, clause.lhs);
+                                $scope.selectedOperator = clause.operator;
+                                $scope.selectedValue = clause.rhs;
+                                $scope.addFilterRow($scope.instanceId);
+                            });
+                        }
+                    }
+                });
+            };
+
+            /**
              * Displays data for any currently active datasets.
              * @method displayActiveDataset
              * @private
@@ -153,6 +205,7 @@ angular.module('neonDemo.directives')
                 $scope.databases = datasetService.getDatabases();
                 $scope.selectedDatabase = $scope.databases[0];
                 $scope.updateTables();
+                displaySavedFilters();
             };
 
             $scope.updateTables = function() {
@@ -474,7 +527,7 @@ angular.module('neonDemo.directives')
                     source: "system",
                     tags: ["filter", "filter-builder"]
                 });
-                $scope.messenger.replaceFilter(filterKey, filter, function() {
+                filterService.replaceFilterForKey($scope.messenger, filterKey, filter, function() {
                     XDATA.userALE.log({
                         activity: "alter",
                         action: "receive",
@@ -523,7 +576,7 @@ angular.module('neonDemo.directives')
                     source: "system",
                     tags: ["filter", "filter-builder"]
                 });
-                $scope.messenger.removeFilter(filterKey, function() {
+                filterService.removeFiltersForKeys([filterKey], function() {
                     if(successCallback) {
                         successCallback(databaseAndTableName.database, databaseAndTableName.table);
                     }

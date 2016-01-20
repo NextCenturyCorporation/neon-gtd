@@ -40,8 +40,7 @@ function(connectionService, datasetService, errorNotificationService, filterServ
             $scope.tables = [];
             $scope.fields = [];
             $scope.legend = {};
-            $scope.filterKeys = filterService.createFilterKeys("gantt-chart", datasetService.getDatabaseAndTableNames());
-            $scope.filterSet = {};
+            $scope.filterSet = undefined;
             $scope.helpers = neon.helpers;
 
             $scope.options = {
@@ -71,24 +70,30 @@ function(connectionService, datasetService, errorNotificationService, filterServ
             };
 
             $scope.filterById = function(id) {
-                var connection = connectionService.getActiveConnection();
-                if($scope.messenger && connection) {
-                    var relations = datasetService.getRelations($scope.options.database.name, $scope.options.table.name, ['_id']);
-                    filterService.addFilters($scope.messenger, relations, $scope.filterKeys, function() {
-                        return neon.query.where('_id', '=', id);
-                    }, "Gantt Chart", function() {
-                        $scope.filterSet.key = "_id";
-                        $scope.filterSet.value = id;
-                        $scope.queryForData(true);
-                    });
+                if($scope.messenger) {
+                    $scope.filterSet = {
+                        key: "_id",
+                        value: id,
+                        database: $scope.options.database.name,
+                        table: $scope.options.table.name
+                    };
+                    filterService.addFilter($scope.messenger, $scope.options.database.name, $scope.options.table.name, ['_id'],
+                        createFilterClauseForId, "Gantt Chart", function() {
+                            $scope.queryForData(true);
+                        }, function() {
+                            $scope.filterSet = undefined;
+                        }
+                    );
                 }
             };
 
-            $scope.removeFilter = function() {
-                filterService.removeFilters($scope.messenger, $scope.filterKeys, function() {
-                    $scope.filterSet = {};
-                    $scope.queryForData(true);
-                });
+            $scope.removeFilter = function(database, table) {
+                filterService.removeFilter((database ? database : $scope.options.database.name), (table ? table : $scope.options.table.name),
+                    ['_id'], function() {
+                        $scope.filterSet = undefined;
+                        $scope.queryForData();
+                    }
+                );
             };
 
             var initialize = function() {
@@ -112,12 +117,18 @@ function(connectionService, datasetService, errorNotificationService, filterServ
                     $scope.messenger.unsubscribeAll();
                     visualizationService.unregister($scope.bindStateId);
                     if($scope.filterSet) {
-                        filterService.removeFilters($scope.messenger, $scope.filterKeys);
+                        filterService.removeFilter($scope.options.database.name, $scope.options.table.name, ['_id']);
                     }
                 });
             };
 
-            var onFiltersChanged = function() {
+            var onFiltersChanged = function(message) {
+                if(message.type === "REMOVE" && $scope.filterSet) {
+                    var filter = createFilterClauseForId();
+                    if(filterService.areClausesEqual(message.removedFilter.whereClause, filter)) {
+                        $scope.filterSet = undefined;
+                    }
+                }
                 $scope.queryForData();
             };
 
@@ -138,7 +149,7 @@ function(connectionService, datasetService, errorNotificationService, filterServ
                 }
 
                 if(initializing) {
-                    $scope.updateTables();
+                    $scope.queryForData();
                 } else {
                     $scope.$apply(function() {
                         $scope.updateTables();
@@ -197,6 +208,11 @@ function(connectionService, datasetService, errorNotificationService, filterServ
                 $scope.options.selectableGroups = [];
                 $scope.options.selectedGroups = $scope.bindSelectedGroups ? $scope.bindSelectedGroups.split(",") : [];
 
+                if($scope.filterSet) {
+                    $scope.removeFilter($scope.filterSet.database, $scope.filterSet.table);
+                    return;
+                }
+
                 $scope.queryForData();
             };
 
@@ -220,8 +236,17 @@ function(connectionService, datasetService, errorNotificationService, filterServ
                     var query = new neon.query.Query().selectFrom($scope.options.database.name, $scope.options.table.name)
                         .groupBy($scope.options.groupFields[0])
                         .aggregate(neon.query.COUNT, "*", "count")
-                        .sortBy("count", neon.query.DESCENDING)
-                        .ignoreFilters([$scope.filterKeys[$scope.options.database.name][$scope.options.table.name]]);
+                        .sortBy("count", neon.query.DESCENDING);
+
+                    if($scope.filterSet) {
+                        var filter = {
+                            databaseName: $scope.options.database.name,
+                            tableName: $scope.options.table.name,
+                            whereClause: createFilterClauseForId()
+                        };
+
+                        query.ignoreFilters([filterService.getFilterKeyForFilter(filter)]);
+                    }
 
                     connection.executeQuery(query, function(queryResults) {
                         $scope.$apply(function() {
@@ -239,6 +264,10 @@ function(connectionService, datasetService, errorNotificationService, filterServ
                 } else {
                     queryForGanttChartData(connection);
                 }
+            };
+
+            var createFilterClauseForId = function() {
+                return neon.query.where('_id', '=', $scope.filterSet.value);
             };
 
             var queryForGanttChartData = function(connection) {

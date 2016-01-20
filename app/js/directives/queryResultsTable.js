@@ -493,34 +493,13 @@ linkify, $sce, $timeout, linksPopupService, visualizationService) {
                         });
                         updateData({
                             data: []
-                        }, refreshColumns);
+                        });
                         $scope.total = 0;
                         if(response.responseJSON) {
                             $scope.errorMessage = errorNotificationService.showErrorMessage($scope.element, response.responseJSON.error, response.responseJSON.stackTrace);
                         }
                     }
                 });
-            };
-
-            /**
-             * Escapes all values in the given data, recursively.
-             * @method escapeDataRecursively
-             * @private
-             */
-            var escapeDataRecursively = function(data) {
-                if(_.isArray(data)) {
-                    for(var i = 0; i < data.length; i++) {
-                        data[i] = escapeDataRecursively(data[i]);
-                    }
-                } else if(_.keys(data).length) {
-                    var keys = _.keys(data);
-                    for(var i = 0; i < keys.length; i++) {
-                        data[keys[i]] = escapeDataRecursively(data[keys[i]]);
-                    }
-                } else {
-                    data = _.escape(data);
-                }
-                return data;
             };
 
             /**
@@ -754,6 +733,9 @@ linkify, $sce, $timeout, linksPopupService, visualizationService) {
                 bindingFields["bind-id-field"] = $scope.bindIdField ? "'" + $scope.bindIdField + "'" : undefined;
                 bindingFields["bind-table"] = ($scope.active.table && $scope.active.table.name) ? "'" + $scope.active.table.name + "'" : undefined;
                 bindingFields["bind-database"] = ($scope.active.database && $scope.active.database.name) ? "'" + $scope.active.database.name + "'" : undefined;
+                bindingFields["bind-sort-field"] = ($scope.active.sortByField && $scope.active.sortByField.columnName) ? "'" + $scope.active.sortByField.columnName + "'" : undefined;
+                bindingFields["bind-sort-direction"] = $scope.active.sortDirection;
+                bindingFields["bind-limit"] = $scope.active.limit;
                 return bindingFields;
             };
 

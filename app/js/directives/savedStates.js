@@ -23,8 +23,8 @@
  * @constructor
  */
 angular.module('neonDemo.directives')
-.directive('savedStates', ['$location', 'ConnectionService', 'ErrorNotificationService', 'DatasetService','VisualizationService',
-    function($location, connectionService, errorNotificationService, datasetService, visualizationService) {
+.directive('savedStates', ['$location', 'ConnectionService', 'ErrorNotificationService', 'DatasetService','VisualizationService', 'ParameterService',
+    function($location, connectionService, errorNotificationService, datasetService, visualizationService, parameterService) {
     return {
         templateUrl: 'partials/directives/savedStates.html',
         restrict: 'EA',
@@ -42,8 +42,7 @@ angular.module('neonDemo.directives')
              */
             $scope.saveState = function(name) {
                 var stateParams = {
-                    dashboard: $scope.visualizations,
-                    dataset: cleanDataset(datasetService.getDataset())
+                    dashboard: $scope.visualizations
                 };
 
                 if(name) {
@@ -52,6 +51,8 @@ angular.module('neonDemo.directives')
 
                 var connection = connectionService.getActiveConnection();
                 if(connection) {
+                    datasetService.setLineCharts({});
+
                     // Get each visualization's bindings and save them to our dashboard state parameter
                     visualizationService.getWidgets().forEach(function(widget) {
                         var bindings = widget.callback();
@@ -62,6 +63,8 @@ angular.module('neonDemo.directives')
                             visualization[0].bindings = angular.copy(bindings);
                         }
                     });
+
+                    stateParams.dataset = cleanDataset(datasetService.getDataset());
 
                     connection.saveState(stateParams, handleSaveStateSuccess, handleStateFailure);
                 }
@@ -100,21 +103,7 @@ angular.module('neonDemo.directives')
                             $location.search("dashboard_state_id", dashboardState.dashboardStateId);
                             $location.search("filter_state_id", dashboardState.filterStateId);
 
-                            var matchingDataset = datasetService.getDatasetWithName(dashboardState.dataset.name);
-                            if(!matchingDataset) {
-                                datasetService.addDataset(dashboardState.dataset);
-                                matchingDataset = dashboardState.dataset;
-                            }
-
-                            var stateConnection = connectionService.createActiveConnection(matchingDataset.datastore, matchingDataset.hostname);
-
-                            // Update dataset fields, then set as active and update the dashboard
-                            datasetService.updateDatabases(matchingDataset, stateConnection, function(dataset) {
-                                $scope.messenger.publish("STATE_CHANGED", {
-                                    dashboard: dashboardState.dashboard,
-                                    dataset: dataset
-                                });
-                            });
+                            parameterService.loadStateSuccess(dashboardState, dashboardState.dashboardStateId);
                         } else {
                             errorNotificationService.showErrorMessage(null, "State " + $scope.stateName + " not found.");
                         }

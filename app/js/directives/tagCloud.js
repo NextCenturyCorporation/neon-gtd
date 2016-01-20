@@ -55,7 +55,6 @@ function(external, connectionService, datasetService, errorNotificationService, 
             $scope.data = [];
             $scope.filterTags = [];
             $scope.showFilter = false;
-            $scope.filterKeys = {};
             $scope.errorMessage = undefined;
             $scope.loadingData = false;
             $scope.linksPopupButtonIsDisabled = true;
@@ -139,12 +138,6 @@ function(external, connectionService, datasetService, errorNotificationService, 
                     queryForTags();
                 });
 
-                $scope.messenger.subscribe(filterService.REQUEST_REMOVE_FILTER, function(ids) {
-                    if(filterService.containsKey($scope.filterKeys, ids)) {
-                        clearTagFilters();
-                    }
-                });
-
                 $scope.messenger.subscribe("theme_changed", onThemeChanged);
 
                 $scope.exportID = exportService.register($scope.makeTagCloudExportObject);
@@ -166,8 +159,8 @@ function(external, connectionService, datasetService, errorNotificationService, 
                     $element.find(".chart-options a").off("resize", updateSize);
                     $scope.messenger.unsubscribeAll();
                     // Remove our filter if we had an active one.
-                    if(0 < $scope.filterTags.length) {
-                        filterService.removeFilters($scope.messenger, $scope.filterKeys);
+                    if($scope.filterTags.length) {
+                        filterService.removeFilter($scope.options.database.name, $scope.options.table.name, [$scope.options.tagField.columnName]);
                     }
                     exportService.unregister($scope.exportID);
                     visualizationService.unregister($scope.bindStateId);
@@ -177,12 +170,6 @@ function(external, connectionService, datasetService, errorNotificationService, 
                 $element.find(".chart-options a").resize(updateSize);
 
                 updateTagcloudPluginSettings();
-
-                $scope.$watchCollection('filterTags', function(newValue, oldValue) {
-                    if(newValue.length !== oldValue.length || newValue.length > 1) {
-                        setTagFilter();
-                    }
-                });
             };
 
             /**
@@ -232,6 +219,23 @@ function(external, connectionService, datasetService, errorNotificationService, 
                         source: "system",
                         tags: ["filter-change", "tag-cloud"]
                     });
+
+                    if($scope.options.tagField && $scope.options.tagField.columnName && $scope.filterTags.length) {
+                        var filter = {
+                            databaseName: $scope.options.database.name,
+                            tableName: $scope.options.table.name,
+                            whereClause: createFilterClauseForTags({
+                                        database: $scope.options.database.name,
+                                        table: $scope.options.table.name
+                                    }, $scope.options.tagField.columnName)
+                        };
+                        if(!filterService.getFilterKeyForFilter(filter)) {
+                            linksPopupService.deleteLinks($scope.visualizationId);
+                            $scope.showFilter = false;
+                            $scope.filterTags = [];
+                        }
+                    }
+
                     queryForTags();
                 }
             };
@@ -256,11 +260,25 @@ function(external, connectionService, datasetService, errorNotificationService, 
                         }
                     }
                 }
-                $scope.filterKeys = filterService.createFilterKeys("tagcloud", datasetService.getDatabaseAndTableNames());
-                $scope.updateTables();
+                $scope.updateTables(function() {
+                    if($scope.options.database && $scope.options.database.name && $scope.options.table && $scope.options.table.name &&
+                        datasetService.isFieldValid($scope.options.tagField)) {
+                        var filter = filterService.getFilter($scope.options.database.name, $scope.options.table.name, [$scope.options.tagField.columnName]);
+                        if(filter) {
+                            if(filter.filter.whereClause.type === "where") {
+                                $scope.addTagFilter(filter.filter.whereClause.rhs, filter.filter.whereClause.rhs);
+                            } else {
+                                _.each(filter.filter.whereClause.whereClauses, function(clause) {
+                                    $scope.addTagFilter(clause.rhs, clause.rhs);
+                                });
+                            }
+                        }
+                    }
+                    queryForTags();
+                });
             };
 
-            $scope.updateTables = function() {
+            $scope.updateTables = function(callback) {
                 $scope.tables = datasetService.getTables($scope.options.database.name);
                 $scope.options.table = datasetService.getFirstTableWithMappings($scope.options.database.name, [neonMappings.TAGS]) || $scope.tables[0];
                 if($scope.bindTable) {
@@ -271,10 +289,10 @@ function(external, connectionService, datasetService, errorNotificationService, 
                         }
                     }
                 }
-                $scope.updateFields();
+                $scope.updateFields(callback);
             };
 
-            $scope.updateFields = function() {
+            $scope.updateFields = function(callback) {
                 $scope.loadingData = true;
                 $scope.fields = datasetService.getSortedFields($scope.options.database.name, $scope.options.table.name);
 
@@ -288,8 +306,18 @@ function(external, connectionService, datasetService, errorNotificationService, 
                 }) || datasetService.createBlankField();
                 $scope.options.filterValue = $scope.bindFilterValue || "";
 
-                if($scope.showFilter) {
-                    clearTagFilters();
+                var database = $scope.options.previousDatabase ? $scope.options.previousDatabase.name : $scope.options.database.name;
+                var table = $scope.options.previousTable ? $scope.options.previousTable.name : $scope.options.table.name;
+                var field = $scope.options.previousTagField ? $scope.options.previousTagField.columnName : $scope.options.tagField.columnName;
+
+                $scope.options.previousDatabase = $scope.options.database;
+                $scope.options.previousTable = $scope.options.table;
+                $scope.options.previousTagField = $scope.options.tagField;
+
+                if(callback) {
+                    callback();
+                } else if($scope.showFilter) {
+                    clearTagFilters(database, table, field);
                 } else {
                     queryForTags();
                 }
@@ -447,6 +475,7 @@ function(external, connectionService, datasetService, errorNotificationService, 
                     linksPopupService.addLinks($scope.visualizationId, linksPopupService.generateKey($scope.options.tagField, tagName), cloudLinks);
                     $scope.linksPopupButtonIsDisabled = !cloudLinks.length;
                     $scope.filterTags.push(filterTag);
+                    setTagFilter();
                 }
             };
 
@@ -490,41 +519,47 @@ function(external, connectionService, datasetService, errorNotificationService, 
              * @private
              */
             var applyFilter = function() {
-                var relations = datasetService.getRelations($scope.options.database.name, $scope.options.table.name, [$scope.options.tagField.columnName]);
-                filterService.replaceFilters($scope.messenger, relations, $scope.filterKeys, createFilterClauseForTags, {
-                    visName: "Tag Cloud",
-                    text: (_.pluck($scope.filterTags, ($scope.options.showTranslation ? 'nameTranslated' : 'name'))).join(', ')
-                },function() {
-                    $scope.$apply(function() {
-                        queryForTags();
-                        // Show the Clear Filter button.
-                        $scope.showFilter = true;
-                        $scope.error = "";
-                    });
-                }, function() {
-                    // Notify the user of the error.
-                    $scope.error = "Error: Failed to apply the filter.";
-                });
+                filterService.addFilter($scope.messenger, $scope.options.database.name, $scope.options.table.name, [$scope.options.tagField.columnName],
+                    createFilterClauseForTags, {
+                        visName: "Tag Cloud",
+                        text: (_.pluck($scope.filterTags, ($scope.options.showTranslation ? 'nameTranslated' : 'name'))).join(', ')
+                    }, function() {
+                        $scope.$apply(function() {
+                            queryForTags();
+                            // Show the Clear Filter button.
+                            $scope.showFilter = true;
+                            $scope.error = "";
+                        });
+                    }, function() {
+                        // Notify the user of the error.
+                        $scope.error = "Error: Failed to apply the filter.";
+                    }
+                );
             };
 
             /**
              * Removes the filter and updates.
+             * @param {String} [database] Optional database name to filter on
+             * @param {String} [table] Optional table name to filter on
+             * @param {String} [tagField] Optional tag field name to filter on
              * @method clearTagFilters
              * @private
              */
-            var clearTagFilters = function() {
-                filterService.removeFilters($scope.messenger, $scope.filterKeys, function() {
-                    $scope.$apply(function() {
-                        linksPopupService.deleteLinks($scope.visualizationId);
-                        $scope.showFilter = false;
-                        $scope.filterTags = [];
-                        $scope.error = "";
-                        queryForTags();
-                    });
-                }, function() {
-                    // Notify the user of the error.
-                    $scope.error = "Error: Failed to clear filter.";
-                });
+            var clearTagFilters = function(database, table, tagField) {
+                filterService.removeFilter((database ? database : $scope.options.database.name), (table ? table : $scope.options.table.name),
+                    [(tagField ? tagField : $scope.options.tagField.columnName)], function() {
+                        $scope.$apply(function() {
+                            linksPopupService.deleteLinks($scope.visualizationId);
+                            $scope.showFilter = false;
+                            $scope.filterTags = [];
+                            $scope.error = "";
+                            queryForTags();
+                        });
+                    }, function() {
+                        // Notify the user of the error.
+                        $scope.error = "Error: Failed to clear filter.";
+                    }
+                );
             };
 
             /**
@@ -547,11 +582,17 @@ function(external, connectionService, datasetService, errorNotificationService, 
                 });
                 linksPopupService.removeLinksForKey($scope.visualizationId, linksPopupService.generateKey($scope.options.tagField, tagName));
                 $scope.filterTags.splice(index, 1);
+                setTagFilter();
             };
 
             $scope.handleChangedTagField = function() {
                 // TODO Logging
+                var tagField = $scope.options.previousTagField ? $scope.options.previousTagField.columnName : $scope.options.tagField.columnName;
+                $scope.options.previousTagField = $scope.options.tagField;
                 if(!$scope.loadingData) {
+                    if($scope.filterTags.length) {
+                        clearTagFilters($scope.options.database.name, $scope.options.table.name, tagField);
+                    }
                     queryForTags();
                 }
             };

@@ -108,7 +108,7 @@ angular.module('neonDemo.directives')
                     });
                 }
 
-                $scope.messenger.subscribe("STATE_CHANGED", function(message) {
+                $scope.messenger.subscribe(parameterService.STATE_CHANGED_CHANNEL, function(message) {
                     if(message && message.dataset) {
                         if(message.dataset) {
                             datasetService.setActiveDataset(message.dataset);
@@ -120,11 +120,13 @@ angular.module('neonDemo.directives')
                             };
                         }
                         if(message.dashboard) {
-                            $scope.gridsterConfigs = message.dashboard;
+                            $scope.$apply(function() {
+                                $scope.gridsterConfigs = message.dashboard;
 
-                            for(var i = 0; i < $scope.gridsterConfigs.length; ++i) {
-                                $scope.gridsterConfigs[i].id = uuid();
-                            }
+                                for(var i = 0; i < $scope.gridsterConfigs.length; ++i) {
+                                    $scope.gridsterConfigs[i].id = uuid();
+                                }
+                            });
                         }
                     }
                 });

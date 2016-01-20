@@ -22,8 +22,8 @@
  * @constructor
  */
 angular.module('neonDemo.directives')
-.directive('directedGraph', ['$filter', '$timeout', 'ConnectionService', 'DatasetService', 'ErrorNotificationService', 'ExportService', 'FilterService', 'VisualizationService',
-function($filter, $timeout, connectionService, datasetService, errorNotificationService, exportService, filterService, visualizationService) {
+.directive('directedGraph', ['$filter', '$timeout', 'ConnectionService', 'DatasetService', 'ErrorNotificationService', 'ExportService', 'VisualizationService',
+function($filter, $timeout, connectionService, datasetService, errorNotificationService, exportService, visualizationService) {
     return {
         templateUrl: 'partials/directives/directedGraph.html',
         restrict: 'EA',
@@ -168,12 +168,6 @@ function($filter, $timeout, connectionService, datasetService, errorNotification
 
                 $scope.exportID = exportService.register($scope.makeDirectedGraphExportObject);
                 visualizationService.register($scope.bindStateId, bindFields);
-
-                $scope.messenger.subscribe(filterService.REQUEST_REMOVE_FILTER, function(ids) {
-                    if(filterService.containsKey($scope.filterKeys, ids)) {
-                        $scope.clearFilters();
-                    }
-                });
 
                 $scope.$on('$destroy', function() {
                     XDATA.userALE.log({
@@ -751,6 +745,68 @@ function($filter, $timeout, connectionService, datasetService, errorNotification
                 var bindingFields = {};
                 bindingFields["bind-feed-name"] = $scope.bindFeedName ? "'" + $scope.bindFeedName + "'" : undefined;
                 bindingFields["bind-feed-type"] = $scope.bindFeedType ? "'" + $scope.bindFeedType + "'" : undefined;
+
+                /* Set mappings for each field, if set */
+
+                if($scope.options.selectedNodeField && $scope.options.selectedNodeField.columnName) {
+                    datasetService.setMapping($scope.options.database.name, $scope.options.table.name, neonMappings.GRAPH_NODE, $scope.options.selectedNodeField.columnName);
+                }
+                if($scope.options.selectedNameField && $scope.options.selectedNameField.columnName) {
+                    datasetService.setMapping($scope.options.database.name, $scope.options.table.name, neonMappings.GRAPH_NODE_NAME, $scope.options.selectedNameField.columnName);
+                }
+                if($scope.options.selectedSizeField && $scope.options.selectedSizeField.columnName) {
+                    datasetService.setMapping($scope.options.database.name, $scope.options.table.name, neonMappings.GRAPH_NODE_SIZE, $scope.options.selectedSizeField.columnName);
+                }
+                if($scope.options.selectedLinkedNodeField && $scope.options.selectedLinkedNodeField.columnName) {
+                    datasetService.setMapping($scope.options.database.name, $scope.options.table.name, neonMappings.GRAPH_LINKED_NODE, $scope.options.selectedLinkedNodeField.columnName);
+                }
+                if($scope.options.selectedLinkedNameField && $scope.options.selectedLinkedNameField.columnName) {
+                    datasetService.setMapping($scope.options.database.name, $scope.options.table.name, neonMappings.GRAPH_LINKED_NODE_NAME, $scope.options.selectedLinkedNameField.columnName);
+                }
+                if($scope.options.selectedLinkedSizeField && $scope.options.selectedLinkedSizeField.columnName) {
+                    datasetService.setMapping($scope.options.database.name, $scope.options.table.name, neonMappings.GRAPH_LINKED_NODE_SIZE, $scope.options.selectedLinkedSizeField.columnName);
+                }
+                if($scope.options.selectedFlagField && $scope.options.selectedFlagField.columnName) {
+                    datasetService.setMapping($scope.options.database.name, $scope.options.table.name, neonMappings.GRAPH_FLAG, $scope.options.selectedFlagField.columnName);
+                }
+                if($scope.options.selectedDateField && $scope.options.selectedDateField.columnName) {
+                    datasetService.setMapping($scope.options.database.name, $scope.options.table.name, neonMappings.DATE, $scope.options.selectedDateField.columnName);
+                }
+                if($scope.options.selectedTextField && $scope.options.selectedTextField.columnName) {
+                    datasetService.setMapping($scope.options.database.name, $scope.options.table.name, neonMappings.NEWSFEED_TEXT, $scope.options.selectedTextField.columnName);
+                }
+
+                if($scope.options.flagMode && $scope.options.flagMode.columnName) {
+                    datasetService.setMapping($scope.options.database.name, $scope.options.table.name, neonMappings.GRAPH_FLAG_MODE, $scope.options.flagMode.columnName);
+                }
+                if($scope.tooltip.idLabel && $scope.tooltip.idLabel.columnName) {
+                    datasetService.setMapping($scope.options.database.name, $scope.options.table.name, neonMappings.GRAPH_TOOLTIP_ID_LABEL, $scope.tooltip.idLabel.columnName);
+                }
+                if($scope.tooltip.dataLabel && $scope.tooltip.dataLabel.columnName) {
+                    datasetService.setMapping($scope.options.database.name, $scope.options.table.name, neonMappings.GRAPH_TOOLTIP_DATA_LABEL, $scope.tooltip.dataLabel.columnName);
+                }
+                if($scope.tooltip.nameLabel && $scope.tooltip.nameLabel.columnName) {
+                    datasetService.setMapping($scope.options.database.name, $scope.options.table.name, neonMappings.GRAPH_TOOLTIP_NAME_LABEL, $scope.tooltip.nameLabel.columnName);
+                }
+                if($scope.tooltip.sizeLabel && $scope.tooltip.sizeLabel.columnName) {
+                    datasetService.setMapping($scope.options.database.name, $scope.options.table.name, neonMappings.GRAPH_TOOLTIP_SIZE_LABEL, $scope.tooltip.sizeLabel.columnName);
+                }
+                if($scope.tooltip.flagLabel && $scope.tooltip.flagLabel.columnName) {
+                    datasetService.setMapping($scope.options.database.name, $scope.options.table.name, neonMappings.GRAPH_TOOLTIP_FLAG_LABEL, $scope.tooltip.flagLabel.columnName);
+                }
+                if($scope.tooltip.sourceNameLabel && $scope.tooltip.sourceNameLabel.columnName) {
+                    datasetService.setMapping($scope.options.database.name, $scope.options.table.name, neonMappings.GRAPH_TOOLTIP_SOURCE_NAME_LABEL, $scope.tooltip.sourceNameLabel.columnName);
+                }
+                if($scope.tooltip.targetNameLabel && $scope.tooltip.targetNameLabel.columnName) {
+                    datasetService.setMapping($scope.options.database.name, $scope.options.table.name, neonMappings.GRAPH_TOOLTIP_TARGET_NAME_LABEL, $scope.tooltip.targetNameLabel.columnName);
+                }
+                if($scope.tooltip.sourceSizeLabel && $scope.tooltip.sourceSizeLabel.columnName) {
+                    datasetService.setMapping($scope.options.database.name, $scope.options.table.name, neonMappings.GRAPH_TOOLTIP_SOURCE_SIZE_LABEL, $scope.tooltip.sourceSizeLabel.columnName);
+                }
+                if($scope.tooltip.targetSizeLabel && $scope.tooltip.targetSizeLabel.columnName) {
+                    datasetService.setMapping($scope.options.database.name, $scope.options.table.name, neonMappings.GRAPH_TOOLTIP_TARGET_SIZE_LABEL, $scope.tooltip.targetSizeLabel.columnName);
+                }
+
                 return bindingFields;
             };
 
