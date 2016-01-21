@@ -410,6 +410,9 @@ layouts:
         bind-title: "'myTitle'"
         bind-database: "'myDatabase'"
         bind-table: "'myTable'"
+        bind-group-fields: "'type1,type2,type3'"
+        bind-value-field: "'type'"
+        bind-arc-value: "'count'"
     -
       sizeX: 12
       sizeY: 4

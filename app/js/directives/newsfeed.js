@@ -891,19 +891,9 @@ function(external, $timeout, connectionService, datasetService, errorNotificatio
                 bindingFields["bind-name-field"] = ($scope.options.nameField && $scope.options.nameField.columnName) ? "'" + $scope.options.nameField.columnName + "'" : undefined;
                 bindingFields["bind-date-field"] = ($scope.options.dateField && $scope.options.dateField.columnName) ? "'" + $scope.options.dateField.columnName + "'" : undefined;
                 bindingFields["bind-text-field"] = ($scope.options.textField && $scope.options.textField.columnName) ? "'" + $scope.options.textField.columnName + "'" : undefined;
-
-                var bindFilterField;
-                var bindFilterValue;
-                if($scope.options.bindFilterField && $scope.options.bindFilterField.columnName) {
-                    bindFilterField = "'" + $scope.options.bindFilterField.columnName + "'";
-
-                    if($scope.options.filterValue) {
-                        bindFilterValue = "'" + $scope.options.filterValue + "'";
-                    }
-                }
-                bindingFields["bind-filter-field"] = bindFilterField;
-                bindingFields["bind-filter-value"] = bindFilterValue;
-
+                bindingFields["bind-filter-field"] = ($scope.options.bindFilterField && $scope.options.bindFilterField.columnName) ? "'" + $scope.options.bindFilterField.columnName + "'" : undefined;
+                var hasFilterValue = $scope.options.bindFilterField && $scope.options.bindFilterField.columnName && $scope.options.filterValue;
+                bindingFields["bind-filter-value"] = hasFilterValue ? "'" + $scope.options.filterValue + "'" : undefined;
                 bindingFields["bind-feed-name"] = $scope.feedName ? "'" + $scope.feedName + "'" : undefined;
                 bindingFields["bind-feed-type"] = $scope.feedType ? "'" + $scope.feedType + "'" : undefined;
                 bindingFields["bind-table"] = ($scope.options.table && $scope.options.table.name) ? "'" + $scope.options.table.name + "'" : undefined;

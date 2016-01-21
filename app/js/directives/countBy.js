@@ -730,31 +730,12 @@ exportService, linksPopupService, visualizationService) {
 
                 bindingFields["bind-title"] = "'" + $scope.generateTitle() + "'";
                 bindingFields["bind-data-field"] = ($scope.active.dataField && $scope.active.dataField.columnName) ? "'" + $scope.active.dataField.columnName + "'" : undefined;
-
-                var bindAgg;
-                var bindAggField;
-                if($scope.active.aggregation) {
-                    bindAgg = "'" + $scope.active.aggregation + "'";
-
-                    if($scope.active.aggregation !== 'count' && $scope.active.aggregationField && $scope.active.aggregationField.columnName) {
-                        bindAggField = "'" + $scope.active.aggregationField.columnName + "'";
-                    }
-                }
-                bindingFields["bind-aggregation"] = bindAgg;
-                bindingFields["bind-aggregation-field"] = bindAggField;
-
-                var bindFilterField;
-                var bindFilterValue;
-                if($scope.active.filterField && $scope.active.filterField.columnName) {
-                    bindFilterField = "'" + $scope.active.filterField.columnName + "'";
-
-                    if($scope.active.filterValue) {
-                        bindFilterValue = "'" + $scope.active.filterValue + "'";
-                    }
-                }
-                bindingFields["bind-filter-field"] = bindFilterField;
-                bindingFields["bind-filter-value"] = bindFilterValue;
-
+                bindingFields["bind-aggregation"] = $scope.active.aggregation ? "'" + $scope.active.aggregation + "'" : undefined;
+                var hasAggField = $scope.active.aggregation && $scope.active.aggregation !== 'count' && $scope.active.aggregationField && $scope.active.aggregationField.columnName;
+                bindingFields["bind-aggregation-field"] = hasAggField ? "'" + $scope.active.aggregationField.columnName + "'" : undefined;
+                bindingFields["bind-filter-field"] = ($scope.active.filterField && $scope.active.filterField.columnName) ? "'" + $scope.active.filterField.columnName + "'" : undefined;
+                var hasFilterValue = $scope.active.filterField && $scope.active.filterField.columnName && $scope.active.filterValue;
+                bindingFields["bind-filter-value"] = hasFilterValue ? "'" + $scope.active.filterValue + "'" : undefined;
                 bindingFields["bind-table"] = ($scope.active.table && $scope.active.table.name) ? "'" + $scope.active.table.name + "'" : undefined;
                 bindingFields["bind-database"] = ($scope.active.database && $scope.active.database.name) ? "'" + $scope.active.database.name + "'" : undefined;
                 bindingFields["limit-count"] = $scope.active.limitCount;

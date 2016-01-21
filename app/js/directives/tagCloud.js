@@ -813,19 +813,9 @@ function(external, connectionService, datasetService, errorNotificationService, 
 
                 bindingFields["bind-title"] = $scope.bindTitle ? "'" + $scope.bindTitle + "'" : undefined;
                 bindingFields["bind-tag-field"] = ($scope.options.tagField && $scope.options.tagField.columnName) ? "'" + $scope.options.tagField.columnName + "'" : undefined;
-
-                var bindFilterField;
-                var bindFilterValue;
-                if($scope.options.filterField && $scope.options.filterField.columnName) {
-                    bindFilterField = "'" + $scope.options.filterField.columnName + "'";
-
-                    if($scope.options.filterValue) {
-                        bindFilterValue = "'" + $scope.options.filterValue + "'";
-                    }
-                }
-                bindingFields["bind-filter-field"] = bindFilterField;
-                bindingFields["bind-filter-value"] = bindFilterValue;
-
+                bindingFields["bind-filter-field"] = ($scope.options.filterField && $scope.options.filterField.columnName) ? "'" + $scope.options.filterField.columnName + "'" : undefined;
+                var hasFilterValue = $scope.options.filterField && $scope.options.filterField.columnName && $scope.options.filterValue;
+                bindingFields["bind-filter-value"] = hasFilterValue ? "'" + $scope.options.filterValue + "'" : undefined;
                 bindingFields["bind-table"] = ($scope.options.table && $scope.options.table.name) ? "'" + $scope.options.table.name + "'" : undefined;
                 bindingFields["bind-database"] = ($scope.options.database && $scope.options.database.name) ? "'" + $scope.options.database.name + "'" : undefined;
 
