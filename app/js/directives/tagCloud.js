@@ -19,8 +19,10 @@
  * This directive is for building a tag cloud
  */
 angular.module('neonDemo.directives')
-.directive('tagCloud', ['external', 'ConnectionService', 'DatasetService', 'ErrorNotificationService', 'FilterService', 'ExportService', 'LinksPopupService', 'TranslationService', 'VisualizationService', '$timeout',
-function(external, connectionService, datasetService, errorNotificationService, filterService, exportService, linksPopupService, translationService, visualizationService, $timeout) {
+.directive('tagCloud', ['external', 'ConnectionService', 'DatasetService', 'ErrorNotificationService', 'FilterService', 'ExportService',
+'LinksPopupService', 'ThemeService', 'TranslationService', 'VisualizationService', '$timeout',
+function(external, connectionService, datasetService, errorNotificationService, filterService, exportService,
+linksPopupService, themeService, translationService, visualizationService, $timeout) {
     return {
         templateUrl: 'partials/directives/tagCloud.html',
         restrict: 'EA',
@@ -140,6 +142,8 @@ function(external, connectionService, datasetService, errorNotificationService, 
 
                 $scope.messenger.subscribe("theme_changed", onThemeChanged);
 
+                themeService.registerListener($scope.visualizationId, onThemeChanged);
+
                 $scope.exportID = exportService.register($scope.makeTagCloudExportObject);
                 visualizationService.register($scope.bindStateId, bindFields);
 
@@ -164,6 +168,7 @@ function(external, connectionService, datasetService, errorNotificationService, 
                     }
                     exportService.unregister($scope.exportID);
                     visualizationService.unregister($scope.bindStateId);
+                    themeService.unregisterListener($scope.visualizationId);
                 });
 
                 $element.resize(updateSize);
@@ -847,9 +852,9 @@ function(external, connectionService, datasetService, errorNotificationService, 
                 return linksPopupService.generateKey($scope.options.tagField, value);
             };
 
-            var onThemeChanged = function(message) {
-                if(message.accent !== $scope.tagColor) {
-                    $scope.tagColor = message.accent;
+            var onThemeChanged = function(theme) {
+                if(theme.accent !== $scope.tagColor) {
+                    $scope.tagColor = theme.accent;
                     updateTagcloudPluginSettings();
                     updateTagStyle();
                 }

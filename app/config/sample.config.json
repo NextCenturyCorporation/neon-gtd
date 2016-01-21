@@ -78,35 +78,37 @@
                 }
             }]
         }],
-        "mapLayers": [{
-            "database": "test",
-            "table": "earthquakes",
-            "type": "heatmap",
-            "latitudeMapping": "latitude",
-            "longitudeMapping": "longitude",
-            "limit": 5000,
-            "sizeBy": "mag"
-        }, {
-            "database": "test",
-            "table": "earthquakes",
-            "active":  true,
-            "type": "cluster",
-            "latitudeMapping": "latitude",
-            "longitudeMapping": "longitude",
-            "limit": 5000,
-            "colorBy": "magType",
-            "sizeBy": "mag"
-        }, {
-            "database": "test",
-            "table": "earthquakes",
-            "active":  true,
-            "type": "points",
-            "latitudeMapping": "latitude",
-            "longitudeMapping": "longitude",
-            "limit": 5000,
-            "colorBy": "magType",
-            "sizeBy": "mag"
-        }],
+        "mapLayers": {
+            "myMap1": [{
+                "database": "test",
+                "table": "earthquakes",
+                "type": "heatmap",
+                "latitudeMapping": "latitude",
+                "longitudeMapping": "longitude",
+                "limit": 5000,
+                "sizeBy": "mag"
+            }, {
+                "database": "test",
+                "table": "earthquakes",
+                "active":  true,
+                "type": "cluster",
+                "latitudeMapping": "latitude",
+                "longitudeMapping": "longitude",
+                "limit": 5000,
+                "colorBy": "magType",
+                "sizeBy": "mag"
+            }, {
+                "database": "test",
+                "table": "earthquakes",
+                "active":  true,
+                "type": "points",
+                "latitudeMapping": "latitude",
+                "longitudeMapping": "longitude",
+                "limit": 5000,
+                "colorBy": "magType",
+                "sizeBy": "mag"
+            }]
+        }
         "lineCharts": {
             "lineChart1": [
                 {
@@ -140,11 +142,13 @@
             ]
         },
         "mapConfig": {
-            "bounds" : {
-                "top": 90,
-                "bottom": -90,
-                "left": -180,
-                "right": 180
+            "myMap1": {
+                "bounds" : {
+                    "top": 90,
+                    "bottom": -90,
+                    "left": -180,
+                    "right": 180
+                }
             }
         },
         "linkyConfig": {
@@ -182,7 +186,10 @@
         }, {
             "sizeX": 12,
             "sizeY": 7,
-            "type": "map"
+            "type": "map",
+            "bindings": {
+                "bind-config": "'myMap1'"
+            }
         }, {
             "sizeX": 12,
             "sizeY": 6,
@@ -249,6 +256,7 @@
             "sizeY": 4,
             "type": "map",
             "bindings": {
+                "bind-config": "'myMap1'",
                 "bind-title": "'myTitle'",
                 "bind-database": "'myDatabase'",
                 "bind-table": "'myTable'",

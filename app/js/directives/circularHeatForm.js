@@ -105,12 +105,14 @@ function(connectionService, datasetService, errorNotificationService, exportServ
                         tags: ["remove", "circularheatform"]
                     });
                     $element.off("resize", updateSize);
+                    $element.find(".chart-options a").off("resize", updateSize);
                     $scope.messenger.unsubscribeAll();
                     exportService.unregister($scope.exportID);
                     visualizationService.unregister($scope.bindStateId);
                 });
 
                 $element.resize(updateSize);
+                $element.find(".chart-options a").resize(updateSize);
             };
 
             /**

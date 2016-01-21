@@ -22,37 +22,17 @@
  * @constructor
  */
 angular.module('neonDemo.controllers')
-.controller('neonDemoController', ['$scope', '$timeout', '$location', 'config', 'datasets', 'ConnectionService', 'ErrorNotificationService',
-function($scope, $timeout, $location, config, datasets, connectionService, errorNotificationService) {
+.controller('neonDemoController', ['$scope', '$timeout', '$location', 'config', 'datasets', 'ThemeService', 'ConnectionService', 'ErrorNotificationService',
+function($scope, $timeout, $location, config, datasets, themeService, connectionService, errorNotificationService) {
     $scope.messenger = new neon.eventing.Messenger();
 
     $scope.theme = {
-        list: [{
-            name: "Light Green",
-            file: "light-green",
-            type: "light",
-            accent: "#39B54A"
-        }, {
-            name: "Dark Green",
-            file: "dark-green",
-            type: "dark",
-            accent: "#39B54A"
-        /*
-        }, {
-            name: "Dark Purple",
-            file: "dark-purple",
-            type: "dark",
-            accent: "#A654A1"
-        */
-        }]
+        list: themeService.getThemes(),
+        selected: themeService.getTheme()
     };
 
-    $scope.theme.selected = _.find($scope.theme.list, function(theme) {
-        return theme.name === config.theme;
-    }) || $scope.theme.list[0];
-
     $scope.updateTheme = function() {
-        $scope.messenger.publish("theme_changed", $scope.theme.selected);
+        themeService.setTheme($scope.theme.selected.name);
     };
 
     $scope.hideNavbarItems = config.hideNavbarItems;
@@ -305,10 +285,5 @@ function($scope, $timeout, $location, config, datasets, connectionService, error
     // Pause the video if the modal is closed.
     $("#videoModal").on("hidden.bs.modal", function() {
         $("#helpVideo")[0].pause();
-    });
-
-    neon.ready(function() {
-        // Publish a theme changed event to the visualizations on load so they know the initial theme (which may be set in the configuration file).
-        $scope.updateTheme();
     });
 }]);

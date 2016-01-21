@@ -29,9 +29,9 @@
  */
 angular.module('neonDemo.directives')
 .directive('queryResultsTable', ['external', 'ConnectionService', 'DatasetService', 'ErrorNotificationService', 'ExportService',
-'linkify', '$sce', '$timeout', 'LinksPopupService', 'VisualizationService',
+'LinksPopupService', 'ThemeService', 'VisualizationService', 'linkify', '$sce', '$timeout',
 function(external, connectionService, datasetService, errorNotificationService, exportService,
-linkify, $sce, $timeout, linksPopupService, visualizationService) {
+linksPopupService, themeService, visualizationService, linkify, $sce, $timeout) {
     return {
         templateUrl: 'partials/directives/queryResultsTable.html',
         restrict: 'EA',
@@ -130,7 +130,7 @@ linkify, $sce, $timeout, linksPopupService, visualizationService) {
                 // Set the width of the title to the width of the visualization minus the width of the chart options button/text and padding.
                 var titleWidth = $scope.element.width() - $scope.element.find(".chart-options").outerWidth(true) - 20;
                 // Also subtract the width of the table options button.
-                titleWidth -= ($scope.element.find(".edit-table-icon").outerWidth(true) + 10);
+                titleWidth -= $scope.element.find(".edit-table").outerWidth(true);
                 $scope.element.find(".title").css("maxWidth", titleWidth);
             };
 
@@ -152,6 +152,8 @@ linkify, $sce, $timeout, linksPopupService, visualizationService) {
                 $scope.element.resize(resizeTitle);
                 $scope.element.find(".chart-options a").resize(resizeTitle);
 
+                themeService.registerListener($scope.tableId, onThemeChanged);
+
                 $scope.$on('$destroy', function() {
                     XDATA.userALE.log({
                         activity: "remove",
@@ -169,6 +171,7 @@ linkify, $sce, $timeout, linksPopupService, visualizationService) {
                     $scope.element.find(".chart-options a").off("resize", resizeTitle);
                     exportService.unregister($scope.exportID);
                     visualizationService.unregister($scope.bindStateId);
+                    themeService.unregisterListener($scope.tableId);
                 });
 
                 $scope.active = {
@@ -336,6 +339,10 @@ linkify, $sce, $timeout, linksPopupService, visualizationService) {
                             return neon.helpers.getNestedValue(params.data, params.colDef.field);
                         }
                     };
+
+                    if(field.class) {
+                        config.cellClass = field.class;
+                    }
 
                     if($scope.hiddenColumns[field.columnName]) {
                         config.hide = true;
@@ -617,8 +624,13 @@ linkify, $sce, $timeout, linksPopupService, visualizationService) {
                         source: "system",
                         tags: ["filter-change", "datagrid"]
                     });
+                    queryForTotalRows();
                     queryForData();
                 }
+            };
+
+            var onThemeChanged = function(theme) {
+                $scope.themeType = theme.type;
             };
 
             /**

@@ -17,9 +17,9 @@
  */
 angular.module('neonDemo.directives')
 .directive('countBy', ['external', 'ConnectionService', 'DatasetService', 'ErrorNotificationService', 'FilterService',
-'ExportService', 'LinksPopupService', 'VisualizationService',
+'ExportService', 'LinksPopupService', 'ThemeService', 'VisualizationService',
 function(external, connectionService, datasetService, errorNotificationService, filterService,
-exportService, linksPopupService, visualizationService) {
+exportService, linksPopupService, themeService, visualizationService) {
     return {
         templateUrl: 'partials/directives/countby.html',
         restrict: 'EA',
@@ -129,6 +129,8 @@ exportService, linksPopupService, visualizationService) {
                 $scope.exportID = exportService.register($scope.makeCountByExportObject);
                 visualizationService.register($scope.bindStateId, bindFields);
 
+                themeService.registerListener($scope.tableId, onThemeChanged);
+
                 $scope.$on('$destroy', function() {
                     XDATA.userALE.log({
                         activity: "remove",
@@ -149,6 +151,7 @@ exportService, linksPopupService, visualizationService) {
                     }
                     exportService.unregister($scope.exportID);
                     visualizationService.unregister($scope.bindStateId);
+                    themeService.unregisterListener($scope.tableId);
                 });
 
                 $scope.element.resize(resize);
@@ -497,6 +500,10 @@ exportService, linksPopupService, visualizationService) {
 
                     queryForData();
                 }
+            };
+
+            var onThemeChanged = function(theme) {
+                $scope.themeType = theme.type;
             };
 
             /**

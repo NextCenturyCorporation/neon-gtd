@@ -80,4 +80,4 @@
 </div>
 <div class="clearfix"></div>
 
-<div ag-grid="gridOptions" class="ag-fresh count-by-table" ng-class="{'filter-set': !!filterSet}" ng-hide="showTooMuchDataError"></div>
+<div ag-grid="gridOptions" class="count-by-table" ng-class="{true: 'ag-dark', false: 'ag-fresh'}[themeType === 'dark']" ng-hide="showTooMuchDataError"></div>

@@ -497,30 +497,13 @@ angular.module("neonDemo.services")
     };
 
     /**
-     * Returns the initial configuration parameters for any maps in this dataset.
+     * Returns the initial configuration parameters for the map with the given name in the active dataset.
+     * @param {String} name
      * @method getMapConfig
-     * @return {String}
+     * @return {Object}
      */
-    service.getMapConfig = function() {
-        return service.dataset.mapConfig;
-    };
-
-    /**
-     * Sets the map layer configuration for the active dataset.
-     * @param {object} config Initial configuration parameters for any maps in this dataset.
-     * @method setMapConfig
-     */
-    service.setMapConfig = function(config) {
-        service.dataset.mapConfig = config;
-    };
-
-    /**
-     * Returns the map layer configuration for the active dataset.
-     * @method getMapLayers
-     * @return {String}
-     */
-    service.getMapLayers = function() {
-        return service.dataset.mapLayers;
+    service.getMapConfig = function(name) {
+        return service.dataset.mapConfig[name] || {};
     };
 
     /**
@@ -534,12 +517,12 @@ angular.module("neonDemo.services")
     };
 
     /**
-     * Returns the line chart configuration for the active dataset.
-     * @method getLineCharts
-     * @return {Object}
+     * Returns the map layer configuration for the map with the given name in the active dataset.
+     * @method getMapLayers
+     * @return {Array}
      */
-    service.getLineCharts = function() {
-        return service.dataset.lineCharts;
+    service.getMapLayers = function(name) {
+        return service.dataset.mapLayers[name] || [];
     };
 
     /**
@@ -561,6 +544,15 @@ angular.module("neonDemo.services")
     service.addLineChart = function(chartName, charts) {
         service.dataset.lineCharts[chartName] = charts;
         updateDataset();
+    };
+
+    /**
+     * Returns the line chart configuration for the the line chart with the given name in the active dataset.
+     * @method getLineCharts
+     * @return {Array}
+     */
+    service.getLineCharts = function(name) {
+        return service.dataset.lineCharts[name] || [];
     };
 
     /**
