@@ -209,7 +209,10 @@
         }, {
             "sizeX": 12,
             "sizeY": 8,
-            "type": "map"
+            "type": "map",
+            "bindings": {
+                "bind-config": "'myMap1'"
+            }
         }, {
             "sizeX": 18,
             "sizeY": 4,
