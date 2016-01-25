@@ -60,10 +60,6 @@ function(filterService, datasetService, connectionService) {
 
             graphDivSelector.bind('plotly_filter_box', $scope.updateFilter);
 
-            graphDivSelector.bind('plotly_click', function() {
-                console.log(arguments);
-            });
-
             $scope.graphDiv = graphDivSelector[0];
 
             var setHeight = function() {
@@ -115,7 +111,7 @@ function(filterService, datasetService, connectionService) {
 
                 $scope.filterKeys = filterService.createFilterKeys("plotly", datasetService.getDatabaseAndTableNames());
 
-                initFields();
+                updateFields();
                 $scope.active.limitCount = $scope.bindLimit;
 
                 $scope.queryForData();
@@ -139,7 +135,7 @@ function(filterService, datasetService, connectionService) {
                 $scope.filterKeys = filterService.createFilterKeys("plotlyGraph", datasetService.getDatabaseAndTableNames());
             };
 
-            var initTables = function() {
+            $scope.updateTables = function() {
                 $scope.tables = datasetService.getTables($scope.active.database.name);
                 $scope.active.table = $scope.tables[0];
                 if($scope.bindTable) {
@@ -152,7 +148,7 @@ function(filterService, datasetService, connectionService) {
                 }
             };
 
-            var initFields = function() {
+            $scope.updateFields = function() {
                 $scope.fields = datasetService.getSortedFields($scope.active.database.name, $scope.active.table.name);
 
                 var xFieldName = $scope.bindAttrX ||

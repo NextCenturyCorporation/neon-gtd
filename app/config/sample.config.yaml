@@ -140,6 +140,36 @@ visualizations:
     type: gantt-chart
     icon: img/visualizations/Gantt64.png
   -
+    name: Scatterplot-gl
+    sizeX: 2
+    sizeY: 2
+    type: plotly-graph
+    icon: img/Neon_60x34.png
+    bindings:
+      graph-type: "'scattergl'"
+      bind-attr-x: "'depth'"
+      bind-attr-y: "'mag'"
+  -
+    name: Hybrid Heatmap
+    sizeX: 2
+    sizeY: 2
+    type: plotly-graph
+    icon: img/Neon_60x34.png
+    bindings:
+      graph-type: "'heatmapScatter'"
+      bind-attr-x: "'depth'"
+      bind-attr-y: "'mag'"
+  -
+    name: Hybrid Histogram
+    sizeX: 2
+    sizeY: 2
+    type: plotly-graph
+    icon: img/Neon_60x34.png
+    bindings:
+      graph-type: "'histogramScatter'"
+      bind-attr-x: "'depth'"
+      bind-attr-y: "'mag'"
+  -
     name: Sample
     sizeX: 6
     sizeY: 4

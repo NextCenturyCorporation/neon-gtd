@@ -375,7 +375,7 @@
             "bind-attr-x": "'depth'",
             "bind-attr-y": "'mag'"
         }
-    } {
+    }, {
         "name": "Filter Builder",
         "sizeX": 12,
         "minSizeX": 12,
