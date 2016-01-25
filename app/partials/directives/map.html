@@ -1,38 +1,20 @@
 <div class="header-container menu-container">
     <options-menu parent-element="element" export-function="makeMapExportObject" resize-menu="resizeOptionsMenu" button-text="optionsMenuButtonText" show-button-text="showOptionsMenuButtonText">
-        <div class="form-group">
+        <div style="margin-bottom: 5px;">
             <label class="glyphicon glyphicon-info-sign"></label>
             <label>SHIFT + DRAG on Map to Filter</label>
         </div>
 
-        <div class="form-group button-container">
-            <div>
-                <button type="button" class="btn btn-default" title="Reset Map View" ng-click="setDefaultView()">
-                    Reset Map View
-                </button>
-            </div>
+        <div class="form-group">
+            <button type="button" class="btn btn-default" title="Reset Map View" ng-click="setDefaultView()">
+                Reset Map View
+            </button>
         </div>
 
-        <div class="form-group button-container">
-            <label>Base Layer Options</label>
-            <div class="btn-group">
-              <label class="btn btn-default" ng-class="{true: 'active', false: ''}[options.baseLayerColor === 'light']">
-                <input type="radio" style="display:none" ng-model="options.baseLayerColor" value="light" ng-change="updateBaseLayerColor()">Light
-              </label>
-              <label class="btn btn-default" ng-class="{true: 'active', false: ''}[options.baseLayerColor === 'dark']">
-                <input type="radio" style="display:none" ng-model="options.baseLayerColor" value="dark" ng-change="updateBaseLayerColor()">Dark
-              </label>
-            </div>
-            <div class="clearfix"></div>
-        </div>
-
-        <div class="form-group button-container">
-            <label>Data Layer Options</label>
-            <div>
-                <button type="button" class="btn btn-primary" title="Add New Layer" ng-click="clickAddNewLayerButton()" ng-show="!(options.newLayer.editing)">
-                    Add New Layer
-                </button>
-            </div>
+        <div class="form-group">
+            <button type="button" class="btn btn-primary" title="Add New Layer" ng-click="clickAddNewLayerButton()" ng-show="!(options.newLayer.editing)">
+                Add New Layer
+            </button>
         </div>
 
         <div class="all-layer-options">
@@ -55,7 +37,7 @@
                             </label>
                             <label class="btn btn-danger" ng-cancel-drag title="Cancel">
                                 <input type="button" style="display:none" ng-click="resetNewLayer()">
-                                <span class="glyphicon glyphicon-trash"></span>
+                                <span class="glyphicon glyphicon-remove"></span>
                             </label>
                         </div>
 
@@ -407,6 +389,19 @@
                     </div>
                 </div>
             </div>
+        </div>
+
+        <div class="form-group">
+            <label>Base Layer Options</label>
+            <div class="btn-group">
+              <label class="btn btn-default" ng-class="{true: 'active', false: ''}[options.baseLayerColor === 'light']">
+                <input type="radio" style="display:none" ng-model="options.baseLayerColor" value="light" ng-change="updateBaseLayerColor()">Light
+              </label>
+              <label class="btn btn-default" ng-class="{true: 'active', false: ''}[options.baseLayerColor === 'dark']">
+                <input type="radio" style="display:none" ng-model="options.baseLayerColor" value="dark" ng-change="updateBaseLayerColor()">Dark
+              </label>
+            </div>
+            <div class="clearfix"></div>
         </div>
     </options-menu>
 </div>

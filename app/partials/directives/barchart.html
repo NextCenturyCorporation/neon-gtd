@@ -30,13 +30,13 @@
         </div>
 
         <div class="form-group" ng-show="!(hideAdvancedOptions) && (options.barType !== 'count')">
-            <label>Value Field (Y Axis)</label>
+            <label>Aggregation Field (Y Axis)</label>
             <select class="form-control" ng-model="options.attrY" ng-options="field.prettyName for field in fields" ng-required="true" ng-disabled="!(fields.length > 0)">
             </select>
         </div>
 
         <div class="form-group">
-            <label>Bar Limit</label>
+            <label>Group (Bar) Limit</label>
             <div class="input-group">
                 <input type="number" min="1" class="form-control" ng-model="options.limitCount" required>
                 <div class="input-group-btn">

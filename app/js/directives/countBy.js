@@ -23,8 +23,8 @@ function(external, connectionService, datasetService, errorNotificationService, 
         restrict: 'EA',
         scope: {
             bindTitle: '=',
-            bindCountField: '=', // Deprecated - please use bind-data-field now.
-            bindDataField: '=',
+            bindCountField: '=', // Deprecated
+            bindGroupField: '=',
             bindAggregation: '=',
             bindAggregationField: '=',
             bindFilterField: '=',

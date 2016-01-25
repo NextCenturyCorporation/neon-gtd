@@ -877,7 +877,7 @@ angular.module('neonDemo.directives')
              * @private
              */
             var getFilterLatLonKey = function(layer) {
-                if(layer.type === "node") {
+                if(layer.type === coreMap.Map.NODE_LAYER) {
                     var sourceMapping = layer.sourceMapping + "." + layer.latitudeMapping + "," + layer.sourceMapping + "." + layer.longitudeMapping;
                     var targetMapping = layer.targetMapping + "." + layer.latitudeMapping + "," + layer.targetMapping + "." + layer.longitudeMapping;
                     return sourceMapping + "," + targetMapping;
@@ -1067,7 +1067,7 @@ angular.module('neonDemo.directives')
                             var index = _.findIndex($scope.legend.layers, {
                                 olLayerId: $scope.options.layers[i].olLayer.id
                             });
-                            if($scope.options.layers[i].type === "node" && _.keys(colorMappings).length) {
+                            if($scope.options.layers[i].type === coreMap.Map.NODE_LAYER && _.keys(colorMappings).length) {
                                 if(index >= 0) {
                                     $scope.legend.layers[index].nodeColorMappings = colorMappings.nodeColors;
                                     $scope.legend.layers[index].lineColorMappings = colorMappings.lineColors;
@@ -1144,7 +1144,7 @@ angular.module('neonDemo.directives')
                         var latMapping = layer.latitudeMapping ? layer.latitudeMapping : coreMap.Map.Layer.HeatmapLayer.DEFAULT_LATITUDE_MAPPING;
                         var lonMapping = layer.longitudeMapping ? layer.longitudeMapping : coreMap.Map.Layer.HeatmapLayer.DEFAULT_LONGITUDE_MAPPING;
 
-                        if(layer.type === "node") {
+                        if(layer.type === coreMap.Map.NODE_LAYER) {
                             var sourceMapping = layer.sourceMapping ? layer.sourceMapping : coreMap.Map.Layer.NodeLayer.DEFAULT_SOURCE;
                             var targetMapping = layer.targetMapping ? layer.targetMapping : coreMap.Map.Layer.NodeLayer.DEFAULT_TARGET;
 
@@ -1582,7 +1582,7 @@ angular.module('neonDemo.directives')
                         layer.addFeatures(features);
                     } else {
                         var pointsLayer = _.find(datasetService.getMapLayers($scope.bindConfig), {
-                            type: "points",
+                            type: coreMap.Map.POINTS_LAYER,
                             database: msg.database,
                             table: msg.table
                         });
