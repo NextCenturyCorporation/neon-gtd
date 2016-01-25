@@ -354,21 +354,21 @@
         "sizeY": 2,
         "minSizeY": 1,
         "type": "plotly-graph",
-        "icon": "img/visualizations/CreateFilter64.png"
+        "iconClass": "scatter-plot"
     }, {
         "name": "hybrid heatmap",
         "sizeX": 2,
         "sizeY": 2,
         "minSizeY": 1,
         "type": "plotly-graph",
-        "icon": "img/visualizations/CreateFilter64.png"
+        "iconClass": "scatter-plot"
     },{
         "name": "hybrid histogram",
         "sizeX": 2,
         "sizeY": 2,
         "minSizeY": 1,
         "type": "plotly-graph",
-        "icon": "img/visualizations/CreateFilter64.png"
+        "iconClass": "scatter-plot"
     }, {
         "name": "Filter Builder",
         "sizeX": 12,
