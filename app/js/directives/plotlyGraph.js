@@ -66,7 +66,7 @@ function(filterService, datasetService, connectionService) {
                 var topHeight = $($scope.el).find('.header-container').outerHeight(true);
                 $($scope.graphDiv).height($($scope.el).height() - topHeight);
                 if($scope.data) {
-                    $scope.drawGraph($scope.data);
+                    $scope.drawGraph();
                 }
             };
 
@@ -77,7 +77,10 @@ function(filterService, datasetService, connectionService) {
             $scope.init();
         },
         controller: function($scope) {
-            $scope.active = {};
+            $scope.active = {
+                type: $scope.graphType || 'scatter',
+                limitCount: $scope.bindLimit
+            };
 
             $scope.init = function() {
                 $scope.messenger = new neon.eventing.Messenger();
@@ -112,7 +115,6 @@ function(filterService, datasetService, connectionService) {
                 $scope.filterKeys = filterService.createFilterKeys("plotly", datasetService.getDatabaseAndTableNames());
 
                 $scope.updateFields();
-                $scope.active.limitCount = $scope.bindLimit;
 
                 $scope.queryForData();
             };
@@ -189,7 +191,7 @@ function(filterService, datasetService, connectionService) {
                         query.limit($scope.active.limitCount);
                     }
 
-                    if($scope.graphType === 'scattergl') {
+                    if($scope.active.type === 'scattergl') {
                         query.ignoreFilters([$scope.filterKeys[$scope.active.database.name][$scope.active.table.name]]);
                     }
 
@@ -217,7 +219,7 @@ function(filterService, datasetService, connectionService) {
                             $scope.$apply(function() {
                                 if(queryResults.data) {
                                     $scope.data = queryResults.data;
-                                    $scope.drawGraph(queryResults.data);
+                                    $scope.drawGraph();
                                 }
                                 $scope.loadingData = false;
                             });
@@ -226,32 +228,28 @@ function(filterService, datasetService, connectionService) {
                 }
             };
 
-            $scope.drawGraph = function(data) {
-                var dataObject = buildDataConfig(data);
+            $scope.drawGraph = function() {
+                var dataObject = buildDataConfig($scope.data);
                 var layout = buildGraphLayout();
 
                 //This can be swapped out with Plotly.deleteTrace and Plotly.plot if we add a way to track traces.
                 $($scope.graphDiv).empty();
-                Plotly.newPlot($scope.graphDiv, dataObject, layout);
+                Plotly.newPlot($scope.graphDiv, [dataObject], layout);
             };
 
             var buildDataConfig = function(data) {
-                var dataConfig = [];
-
-                if($scope.graphType === 'scattergl') {
-                    dataConfig = buildScatterGLConfig(data, $scope.subType);
-                } else if($scope.graphType === 'scatter') {
-                    dataConfig = buildScatterConfig(data);
-                } else if($scope.graphType === 'histogramScatter') {
-                    dataConfig = buildHistogramHybridConfig(data);
-                } else if($scope.graphType === 'heatmapScatter') {
-                    dataConfig = buildHeatmapHybridConfig(data);
+                if($scope.active.type === 'histogramScatter') {
+                    return buildHistogramHybridConfig(data);
                 }
 
-                return dataConfig;
+                if($scope.active.type === 'heatmapScatter') {
+                    return buildHeatmapHybridConfig(data);
+                }
+
+                return buildScatterConfig(data);
             };
 
-            var buildScatterGLConfig = function(data, markerType) {
+            var buildScatterConfig = function(data, markerType) {
                 var x = [];
                 var y = [];
                 var text = [];
@@ -292,206 +290,117 @@ function(filterService, datasetService, connectionService) {
                     }
                 });
 
-                var dataConfig = [{
+                var dataConfig = {
                     x: x,
                     y: y,
-                    mode: (markerType || 'markers'),
-                    type: 'scattergl',
+                    mode: ($scope.subType || 'markers'),
+                    type: $scope.active.type,
                     hoverinfo: 'text'
-                }];
+                };
 
                 if(text.length > 0) {
-                    dataConfig[0].text = text;
+                    dataConfig.text = text;
                 }
 
                 return dataConfig;
             };
 
-            var buildScatterConfig = function(data) {
+            var buildHybridConfig = function(data) {
                 var x = [];
                 var y = [];
-                var text = [];
-
-                var minx;
-                var maxx;
-                var miny;
-                var maxy;
 
                 _.each(data, function(row) {
                     x.push(row[$scope.active.attrX.columnName]);
-
-                    if(row[$scope.active.attrX.columnName] < minx) {
-                        minx = row[$scope.active.attrX.columnName];
-                    }
-
-                    if(row[$scope.active.attrX.columnName] > maxx) {
-                        maxx = row[$scope.active.attrX.columnName];
-                    }
-
                     y.push(row[$scope.active.attrY.columnName]);
-
-                    if(row[$scope.active.attrY.columnName] < miny) {
-                        miny = row[$scope.active.attrY.columnName];
-                    }
-
-                    if(row[$scope.active.attrY.columnName] > maxy) {
-                        maxy = row[$scope.active.attrY.columnName];
-                    }
-
-                    if($scope.filterField) {
-                        var textVal = row[$scope.filterField.columnName];
-                        if(textVal.length > 50) {
-                            textVal = textVal.substring(0, 51) + '...';
-                        }
-
-                        text.push(textVal);
-                    }
                 });
 
-                var dataConfig = [{
+                return {
                     x: x,
                     y: y,
-                    mode: 'markers',
-                    type: 'scatter',
-                    hoverinfo: 'text'
-                }];
-
-                if(text.length > 0) {
-                    dataConfig[0].text = text;
-                }
-
-                return dataConfig;
+                    showscale: true,
+                    hoverinfo: 'z'
+                };
             };
 
             var buildHistogramHybridConfig = function(data) {
-                var config = [];
-                var x = [];
-                var y = [];
-
                 if(data.length > 20000) {
-                    _.each(data, function(row) {
-                        x.push(row[$scope.active.attrX.columnName]);
-                        y.push(row[$scope.active.attrY.columnName]);
-                    });
-
-                    var dataConfig = {
-                        x: x,
-                        y: y,
-                        colorscale: [
-                            [0, 'rgb(255,255,255)'],
-                            [0.0001, 'rgb(0, 255, 0)'],
-                            [0.33, 'rgb(255, 255, 0)'],
-                            [1, 'rgb(255,0,0)']
-                        ],
-                        showscale: true,
-                        type: 'histogram2d',
-                        hoverinfo: 'z'
-                    };
-                    config.push(dataConfig);
-                } else {
-                    config = buildScatterConfig(data);
+                    var config = buildHybridConfig(data);
+                    config.colorscale = [
+                        [0, 'rgb(255,255,255)'],
+                        [0.0001, 'rgb(0, 255, 0)'],
+                        [0.33, 'rgb(255, 255, 0)'],
+                        [1, 'rgb(255,0,0)']
+                    ];
+                    config.type = 'histogram2d';
+                    return config;
                 }
-                return config;
+
+                return buildScatterConfig(data);
             };
 
             var buildHeatmapHybridConfig = function(data) {
-                var config = [];
-                var x = [];
-                var y = [];
-
                 if(data.length > 20000) {
-                    _.each(data, function(row) {
-                        x.push(row[$scope.active.attrX.columnName]);
-                        y.push(row[$scope.active.attrY.columnName]);
-                    });
-
-                    var dataConfig = {
-                        x: x,
-                        y: y,
-                        colorscale: [
-                            [0, 'rgb(255,255,255)'],
-                            [0.0001, 'rgb(0, 255, 0)'],
-                            [0.2, 'rgb(255, 255, 0)'],
-                            [1, 'rgb(255,0,0)']
-                        ],
-                        showscale: true,
-                        type: 'histogram2dcontour',
-                        hoverinfo: 'z',
-                        contours: {
-                            coloring: 'heatmap',
-                            showlines: false
-                        },
-                        line: {
-                            width: 0
-                        },
-                        ncontours: 0
+                    var config = buildHybridConfig(data);
+                    config.colorscale = [
+                        [0, 'rgb(255,255,255)'],
+                        [0.0001, 'rgb(0, 255, 0)'],
+                        [0.2, 'rgb(255, 255, 0)'],
+                        [1, 'rgb(255,0,0)']
+                    ];
+                    config.type = 'histogram2dcontour';
+                    config.contours = {
+                        coloring: 'heatmap',
+                        showlines: false
                     };
-                    config.push(dataConfig);
-                } else {
-                    config = buildScatterConfig(data);
+                    config.line = {
+                        width: 0
+                    };
+                    config.ncontours = 0;
+                    return config;
                 }
-                return config;
+
+                return buildScatterConfig(data);
             };
 
             var buildGraphLayout = function() {
-                var layout = {};
+                var layout = {
+                    margin: {
+                        l: 70,
+                        r: 10,
+                        t: 20,
+                        b: 60
+                    },
+                    showlegend: false,
+                    xaxis: {
+                        title: $scope.active.attrX.prettyName,
+                        showgrid: false,
+                        zeroline: false
+                    },
+                    yaxis: {
+                        title: $scope.active.attrY.prettyName,
+                        showgrid: false,
+                        zeroline: false
+                    },
+                };
 
-                if($scope.graphType === 'scattergl') {
-                    layout = buildScatterGLLayout();
-                } else if($scope.graphType === 'scatter') {
-                    layout = buildScatterLayout();
-                } else if($scope.graphType === 'histogramScatter' || $scope.graphType === 'heatmapScatter') {
-                    layout = buildHybridLayout();
+                if($scope.active.type === 'scatter' || $scope.active.type === 'scattergl') {
+                    layout = buildScatterLayout(layout);
+                } else if($scope.active.type === 'histogramScatter' || $scope.active.type === 'heatmapScatter') {
+                    layout = buildHybridLayout(layout);
                 }
 
                 return layout;
             };
 
-            var buildScatterGLLayout = function() {
-                return {
-                    showlegend: false,
-                    yaxis: {
-                        side: 'left',
-                        showgrid: false,
-                        zeroline: false
-                    },
-                    xaxis: {
-                        showgrid: false,
-                        zeroline: false,
-                        side: 'bottom'
-                    }
-                };
+            var buildScatterLayout = function(layout) {
+                layout.xaxis.side = "bottom";
+                layout.yaxis.side = "left";
+                return layout;
             };
 
-            var buildScatterLayout = function() {
-                return {
-                    showlegend: false,
-                    yaxis: {
-                        side: 'left',
-                        showgrid: false,
-                        zeroline: false
-                    },
-                    xaxis: {
-                        showgrid: false,
-                        zeroline: false,
-                        side: 'bottom'
-                    }
-                };
-            };
-
-            var buildHybridLayout = function() {
-                return {
-                    showlegend: false,
-                    xaxis: {
-                        showgrid: false,
-                        zeroline: false
-                    },
-                    yaxis: {
-                        showgrid: false,
-                        zeroline: false
-                    },
-                    hovermode: 'closest'
-                };
+            var buildHybridLayout = function(layout) {
+                layout.hovermode = "closest";
+                return layout;
             };
 
             $scope.updateFilter = function(event, focus) {
