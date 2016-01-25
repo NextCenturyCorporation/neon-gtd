@@ -1,0 +1,40 @@
+<div class="header-container" ng-show="!(hideHeader)">
+    <span class="header-text pull-left">{{options.table.prettyName}}</span>
+    <options-menu parent-element="el" export-function="" ng-show="!(hideAdvancedOptions)">
+        <div class="form-group">
+            <label>Database</label>
+            <select class="form-control" ng-model="active.database" ng-options="database.prettyName for database in databases" ng-required="true" ng-disabled="(databases.length < 2)" ng-change="updateTables()">
+            </select>
+        </div>
+        <div class="form-group">
+            <label>Table</label>
+            <select class="form-control" ng-model="active.table" ng-options="table.prettyName for table in tables" ng-required="true" ng-disabled="(tables.length < 2)" ng-change="updateFields()">
+            </select>
+        </div>
+        <div class="form-group">
+            <label>X Attr</label>
+            <select class="form-control" ng-model="active.attrX" ng-options="field.prettyName for field in fields track by field.columnName" ng-required="true" ng-disabled="!(fields.length > 0)" ng-change="queryForData()">
+            </select>
+        </div>
+        <div class="form-group">
+            <label>Y Attr</label>
+            <select class="form-control" ng-model="active.attrY" ng-options="field.prettyName for field in fields" ng-required="true" ng-disabled="!(fields.length > 0)" ng-change="queryForData()">
+            </select>
+        </div>
+        <div class="form-group limit-count-field">
+            <label>Point Limit</label>
+            <div class="input-group">
+                <input type="number" min="1" class="form-control" ng-model="active.limitCount" required>
+                <div class="input-group-btn">
+                    <button type="button" class="btn btn-default refresh" title="Refresh" ng-click="queryForData()">
+                        <span class="glyphicon glyphicon-refresh"></span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </options-menu>
+    <span class="header-text pull-right limit-text" ng-show="data.length >= active.limitCount" ng-bind="active.limitCount + ' point limit'"></span>
+</div>
+
+<div class="graph-div" style="width: 100%;">
+</div>
