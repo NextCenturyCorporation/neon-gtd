@@ -107,7 +107,7 @@ function(filterService, datasetService, connectionService) {
                 });
 
                 initDataset();
-                initTables();
+                $scope.updateTables();
 
                 $scope.filterKeys = filterService.createFilterKeys("plotly", datasetService.getDatabaseAndTableNames());
 
