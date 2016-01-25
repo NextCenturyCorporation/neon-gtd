@@ -437,7 +437,7 @@
         "hideAddVisualizationsButton": false,
         "hideErrorNotifications": false,
         "hideHeaders": false,
-        "showFilterStatusTray": false,
+        "hideFilterStatusTray": false,
         "hideCloseButton": false,
         "showVideoOnLoad": false,
         "showImport": false,
