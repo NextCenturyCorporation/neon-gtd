@@ -19,8 +19,8 @@
  * This directive is for building a tag cloud
  */
 angular.module('neonDemo.directives')
-.directive('tagCloud', ['external', 'ConnectionService', 'DatasetService', 'ErrorNotificationService', 'FilterService', 'ExportService', 'LinksPopupService', 'TranslationService', '$timeout',
-function(external, connectionService, datasetService, errorNotificationService, filterService, exportService, linksPopupService, translationService, $timeout) {
+.directive('tagCloud', ['external', 'ConnectionService', 'DatasetService', 'ErrorNotificationService', 'FilterService', 'ExportService', 'LinksPopupService', 'ThemeService', 'TranslationService', '$timeout',
+function(external, connectionService, datasetService, errorNotificationService, filterService, exportService, linksPopupService, themeService, translationService, $timeout) {
     return {
         templateUrl: 'partials/directives/tagCloud.html',
         restrict: 'EA',
@@ -42,7 +42,8 @@ function(external, connectionService, datasetService, errorNotificationService, 
 
             $scope.optionsMenuButtonText = function() {
                 return $scope.filterTags.length === 0 && $scope.data.length === 0 ? "No Tag Data" : "";
-            }
+            };
+
             $scope.showOptionsMenuButtonText = function() {
                 return $scope.filterTags.length === 0 && $scope.data.length === 0;
             };
@@ -143,7 +144,7 @@ function(external, connectionService, datasetService, errorNotificationService, 
                     }
                 });
 
-                $scope.messenger.subscribe("theme_changed", onThemeChanged);
+                themeService.registerListener($scope.visualizationId, onThemeChanged);
 
                 $scope.exportID = exportService.register($scope.makeTagCloudExportObject);
 
@@ -161,12 +162,13 @@ function(external, connectionService, datasetService, errorNotificationService, 
                     linksPopupService.deleteLinks($scope.visualizationId);
                     $element.off("resize", updateSize);
                     $element.find(".chart-options a").off("resize", updateSize);
-                    $scope.messenger.removeEvents();
+                    $scope.messenger.unsubscribeAll();
                     // Remove our filter if we had an active one.
                     if(0 < $scope.filterTags.length) {
                         filterService.removeFilters($scope.messenger, $scope.filterKeys);
                     }
                     exportService.unregister($scope.exportID);
+                    themeService.unregisterListener($scope.visualizationId);
                 });
 
                 $element.resize(updateSize);
@@ -782,9 +784,9 @@ function(external, connectionService, datasetService, errorNotificationService, 
                 return linksPopupService.generateKey($scope.options.tagField, value);
             };
 
-            var onThemeChanged = function(message) {
-                if(message.accent !== $scope.tagColor) {
-                    $scope.tagColor = message.accent;
+            var onThemeChanged = function(theme) {
+                if(theme.accent !== $scope.tagColor) {
+                    $scope.tagColor = theme.accent;
                     updateTagcloudPluginSettings();
                     updateTagStyle();
                 }

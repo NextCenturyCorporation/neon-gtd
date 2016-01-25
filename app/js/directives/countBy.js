@@ -16,9 +16,8 @@
  *
  */
 angular.module('neonDemo.directives')
-.directive('countBy', ['external', 'ConnectionService', 'DatasetService', 'ErrorNotificationService', 'FilterService',
-'ExportService', '$filter', 'LinksPopupService',
-function(external, connectionService, datasetService, errorNotificationService, filterService, exportService, $filter, linksPopupService) {
+.directive('countBy', ['external', 'ConnectionService', 'DatasetService', 'ErrorNotificationService', 'FilterService', 'ExportService', 'LinksPopupService', 'ThemeService', '$filter',
+function(external, connectionService, datasetService, errorNotificationService, filterService, exportService, linksPopupService, themeService, $filter) {
     return {
         templateUrl: 'partials/directives/countby.html',
         restrict: 'EA',
@@ -91,7 +90,8 @@ function(external, connectionService, datasetService, errorNotificationService, 
                     return "Error";
                 }
                 return ($scope.active.count >= $scope.active.limit ? "Limited to " : "") + ($scope.active.count || "No") + " Values";
-            }
+            };
+
             $scope.showOptionsMenuButtonText = function() {
                 return true;
             };
@@ -131,6 +131,8 @@ function(external, connectionService, datasetService, errorNotificationService, 
 
                 $scope.exportID = exportService.register($scope.makeCountByExportObject);
 
+                themeService.registerListener($scope.tableId, onThemeChanged);
+
                 $scope.$on('$destroy', function() {
                     XDATA.userALE.log({
                         activity: "remove",
@@ -145,11 +147,12 @@ function(external, connectionService, datasetService, errorNotificationService, 
                     linksPopupService.deleteLinks($scope.tableId);
                     $scope.element.off("resize", resize);
                     $scope.element.find(".filter-container").off("resize", resizeTable);
-                    $scope.messenger.removeEvents();
+                    $scope.messenger.unsubscribeAll();
                     if($scope.filterSet) {
                         filterService.removeFilters($scope.messenger, $scope.filterKeys);
                     }
                     exportService.unregister($scope.exportID);
+                    themeService.unregisterListener($scope.tableId);
                 });
 
                 $scope.element.resize(resize);
@@ -446,6 +449,10 @@ function(external, connectionService, datasetService, errorNotificationService, 
                 }
             };
 
+            var onThemeChanged = function(theme) {
+                $scope.themeType = theme.type;
+            };
+
             /**
              * Creates and returns an object that contains information needed to export the data in this widget.
              * @return {Object} An object containing all the information needed to export the data in this widget.
@@ -669,7 +676,10 @@ function(external, connectionService, datasetService, errorNotificationService, 
                 if($scope.bindTitle) {
                     return title + $scope.bindTitle;
                 }
-                return title + $scope.active.table.prettyName + ($scope.active.dataField.prettyName ? " / " + $scope.active.dataField.prettyName : "");
+                if(_.keys($scope.active).length) {
+                    return title + $scope.active.table.prettyName + ($scope.active.dataField.prettyName ? " / " + $scope.active.dataField.prettyName : "");
+                }
+                return title;
             };
         }
     };

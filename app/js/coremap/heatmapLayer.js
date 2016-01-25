@@ -30,24 +30,56 @@ coreMap.Map.Layer.HeatmapLayer = OpenLayers.Class(OpenLayers.Layer.Heatmap, {
     latitudeMapping: '',
     longitudeMapping: '',
     sizeMapping: '',
+    gradients: [],
 
     /**
      * Override the OpenLayers Contructor
      */
     initialize: function(name, map, baseLayer, options) {
-        // Override the style for our specialization.
-        var blur = (options && options.blur) ? options.blur : coreMap.Map.Layer.HeatmapLayer.DEFAULT_BLUR;
-        var minOpacity = (options && options.minOpacity) ? options.minOpacity : coreMap.Map.Layer.HeatmapLayer.DEFAULT_MIN_OPACITY;
-        var maxOpacity = (options && options.maxOpacity) ? options.maxOpacity : coreMap.Map.Layer.HeatmapLayer.DEFAULT_MAX_OPACITY;
-        maxOpacity = Math.max(minOpacity, maxOpacity);
+        var gradient = coreMap.Map.Layer.HeatmapLayer.DEFAULT_GRADIENT;
+        if(options && options.gradients) {
+            if(options.gradients.length === 2) {
+                gradient = {
+                    0: options.gradients[0],
+                    1: options.gradients[1]
+                };
+            }
+            if(options.gradients.length === 3) {
+                gradient = {
+                    0.33: options.gradients[0],
+                    0.66: options.gradients[1],
+                    1: options.gradients[2]
+                };
+            }
+            if(options.gradients.length === 4) {
+                gradient = {
+                    0.25: options.gradients[0],
+                    0.50: options.gradients[1],
+                    0.75: options.gradients[2],
+                    1: options.gradients[3]
+                };
+            }
+            if(options.gradients.length === 5) {
+                gradient = {
+                    0.2: options.gradients[0],
+                    0.4: options.gradients[1],
+                    0.6: options.gradients[2],
+                    0.8: options.gradients[3],
+                    1: options.gradients[4]
+                };
+            }
+        }
+
         var heatmapOptions = {
             visible: true,
             radius: coreMap.Map.Layer.HeatmapLayer.DEFAULT_RADIUS,
-            minOpacity: minOpacity,
-            maxOpacity: maxOpacity,
-            blur: blur,
-            valueField: coreMap.Map.Layer.HeatmapLayer.DEFAULT_INTENSITY_MAPPING
+            minOpacity: (options && options.minOpacity) ? options.minOpacity : coreMap.Map.Layer.HeatmapLayer.DEFAULT_MIN_OPACITY,
+            maxOpacity: (options && options.maxOpacity) ? options.maxOpacity : coreMap.Map.Layer.HeatmapLayer.DEFAULT_MAX_OPACITY,
+            blur: (options && options.blur) ? options.blur : coreMap.Map.Layer.HeatmapLayer.DEFAULT_BLUR,
+            gradient: gradient
         };
+        heatmapOptions.maxOpacity = Math.max(heatmapOptions.minOpacity, heatmapOptions.maxOpacity);
+
         var extendOptions = options || {};
         extendOptions.baseLayer = false;
         extendOptions.projection = new OpenLayers.Projection("EPSG:4326");
@@ -125,16 +157,16 @@ coreMap.Map.Layer.HeatmapLayer.prototype.setData = function(data) {
  * @param {Object} element One data element of the map's data array.
  * @param {number} longitude The longitude value of the data element
  * @param {number} latitude The latitude value of the data element.
- * @return {Object} an object containing the location and count for the heatmap.
+ * @return {Object} an object containing the location and value for the heatmap.
  * @method createHeatmapDataPoint
  */
 coreMap.Map.Layer.HeatmapLayer.prototype.createHeatmapDataPoint = function(element, longitude, latitude) {
-    var count = this.getValueFromDataElement(this.sizeMapping, element);
+    var value = this.getValueFromDataElement(this.sizeMapping, element);
     var point = new OpenLayers.LonLat(longitude, latitude);
 
     return {
         lonlat: point,
-        count: count
+        value: value
     };
 };
 
@@ -161,4 +193,11 @@ coreMap.Map.Layer.HeatmapLayer.DEFAULT_LONGITUDE_MAPPING = "longitude";
 coreMap.Map.Layer.HeatmapLayer.DEFAULT_MAX_OPACITY = 0.8;
 coreMap.Map.Layer.HeatmapLayer.DEFAULT_MIN_OPACITY = 0.3;
 coreMap.Map.Layer.HeatmapLayer.DEFAULT_RADIUS = 10;
-coreMap.Map.Layer.HeatmapLayer.DEFAULT_INTENSITY_MAPPING = "count";
+
+coreMap.Map.Layer.HeatmapLayer.DEFAULT_GRADIENT = {
+    0.2: "blue",
+    0.4: "green",
+    0.6: "yellow",
+    0.8: "orange",
+    1.0: "red"
+};

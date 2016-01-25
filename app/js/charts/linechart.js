@@ -41,6 +41,8 @@ charts.LineChart = function(rootElement, selector, opts) {
     this.hoverCircles = {};
     this.hoverListener = opts.hoverListener;
 
+    this.trendlinesShown = false;
+
     this.x = [];
     this.y = [];
     this.xDomain = [];
@@ -94,6 +96,7 @@ charts.LineChart.prototype.setGranularity = function(granularity) {
 };
 
 charts.LineChart.prototype.showTrendlines = function(display) {
+    this.trendlinesShown = display;
     if(display) {
         $(this.element[0]).find("[class*='trendline']").show();
     } else {
@@ -155,14 +158,21 @@ charts.LineChart.prototype.drawChart = function() {
         .attr("transform", "translate(" + me.margin.left + "," + me.margin.top + ")");
 };
 
+charts.LineChart.prototype.getSeriesValue = function(series) {
+    return (series.split(":").length > 1) ? series.split(":").slice(1).join(":") : series;
+};
+
 charts.LineChart.prototype.calculateColor = function(seriesObject) {
     var hidden = this.hiddenSeries.indexOf(seriesObject.series) >= 0 ? true : false;
     var index = -1;
     var color;
+    var hasColorMappingForSeries = _.some(this.seriesToColors, function(value, key) {
+        return key.split(":")[0] === seriesObject.series.split(":")[0];
+    });
 
     if(this.seriesToColors[seriesObject.series]) {
         color = this.seriesToColors[seriesObject.series];
-    } else if(Object.keys(this.seriesToColors).length) {
+    } else if(hasColorMappingForSeries) {
         color = this.seriesToColors[""] || neonColors.DEFAULT;
     } else {
         color = this.colorScale(seriesObject.series);
@@ -197,14 +207,12 @@ charts.LineChart.prototype.calculateColor = function(seriesObject) {
 charts.LineChart.prototype.getColorMappings = function() {
     var me = this;
 
-    // convert to an array that is in alphabetical order for consistent iteration order
-    // var sortedColors = [];
-    // for (key in this.colors) {
-    //     var color = me.colors[key];
-    //     sortedColors.push({ 'color': color, 'series': key});
-    // }
+    // Group the color mappings by the line chart they are from
+    var colorMappings = _.groupBy(me.colors, function(mapping) {
+        return mapping.series.split(":")[0];
+    });
 
-    return me.colors;
+    return colorMappings;
 };
 
 /**
@@ -331,8 +339,9 @@ charts.LineChart.prototype.showTooltip = function(index, date) {
 
         if(!_.isUndefined(this.data[i].data[index].value)) {
             var color = this.calculateColor(this.data[i]);
+            var seriesText = this.getSeriesValue(this.data[i].series);
 
-            html += ('<span style="color: ' + color + '">' + this.data[i].series + ": " +
+            html += ('<span style="color: ' + color + '">' + seriesText + ": " +
                 numFormat(Math.round(this.data[i].data[index].value * 100) / 100) + '</span>');
         }
     }
@@ -618,7 +627,10 @@ charts.LineChart.prototype.drawLines = function(opts) {
                     return d[3];
                 })
                 .attr("stroke", color)
-                .attr("stroke-width", 4);
+                .attr("stroke-width", 4)
+                .attr({
+                    display: (me.trendlinesShown ? "inline" : "none")
+                });
         }
     }
 
@@ -991,13 +1003,43 @@ charts.LineChart.prototype.toggleSeries = function(series) {
         activity = 'hide';
     }
 
-    if(this.data && this.hiddenSeries.length >= this.data.length) {
-        this.hiddenSeries.splice(0);
-    }
-
     this.draw();
 
     return activity;
+};
+
+charts.LineChart.prototype.toggleSeriesGroup = function(seriesId, activity) {
+    var me = this;
+
+    var seriesGroup = _.pluck(
+        _.where(me.data, function(datum) {
+            return datum.series.split(":")[0] === seriesId;
+        }),
+        "series"
+    );
+
+    if(activity === 'hide') {
+        me.hiddenSeries = _.union(me.hiddenSeries, seriesGroup);
+    } else {
+        _.each(seriesGroup, function(series) {
+            var index = me.hiddenSeries.indexOf(series);
+
+            if(index >= 0) {
+                me.hiddenSeries.splice(index, 1);
+            }
+        });
+    }
+
+    me.draw();
+
+    return activity;
+};
+
+charts.LineChart.prototype.addHiddenSeries = function(series) {
+    var index = this.hiddenSeries.indexOf(series);
+    if(index === -1) {
+        this.hiddenSeries.push(series);
+    }
 };
 
 /**

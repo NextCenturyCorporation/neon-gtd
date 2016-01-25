@@ -84,7 +84,7 @@ function(connectionService, datasetService, errorNotificationService) {
                         source: "user",
                         tags: ["remove", "stacked-barchart"]
                     });
-                    $scope.messenger.removeEvents();
+                    $scope.messenger.unsubscribeAll();
                 });
 
                 $scope.$watch('options.attrX', function() {

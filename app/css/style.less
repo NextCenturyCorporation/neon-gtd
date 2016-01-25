@@ -319,6 +319,14 @@ select[multiple] {
     }
 }
 
+.highlight {
+    background-color: @callout;
+}
+
+.highlight-red {
+    background-color: rgba(255, 0, 0, 0.5);
+}
+
 .modal-backdrop{
     background: none;
     z-index: auto;
@@ -357,6 +365,12 @@ select[multiple] {
         margin-top: 0;
         margin-bottom: 30px;
     }
+}
+
+.input-group-none {
+    font-style: italic;
+    color: @main-text-color;
+    opacity: .65;
 }
 
 .neon-datetimepicker {
@@ -440,6 +454,14 @@ select[multiple] {
     }
 }
 
-.ag-row:hover {
-    cursor: pointer;
+.ag-row {
+    &:hover {
+        cursor: pointer;
+    }
+}
+
+.ag-dark {
+    .ag-header-container {
+        background-color: @main-background;
+    }
 }

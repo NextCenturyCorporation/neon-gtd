@@ -28,12 +28,13 @@
  * @constructor
  */
 angular.module('neonDemo.directives')
-.directive('map', ['external', 'ConnectionService', 'DatasetService', 'ErrorNotificationService', 'FilterService', 'ExportService', 'LinksPopupService', '$timeout', '$filter',
-    function(external, connectionService, datasetService, errorNotificationService, filterService, exportService, linksPopupService, $timeout, $filter) {
+.directive('map', ['external', 'ConnectionService', 'DatasetService', 'ErrorNotificationService', 'FilterService', 'ExportService', 'LinksPopupService', 'ThemeService', '$timeout', '$filter',
+    function(external, connectionService, datasetService, errorNotificationService, filterService, exportService, linksPopupService, themeService, $timeout, $filter) {
     return {
         templateUrl: 'partials/directives/map.html',
         restrict: 'EA',
         scope: {
+            bindConfig: '=?',
             hideHeader: '=?',
             hideAdvancedOptions: '=?'
         },
@@ -43,27 +44,19 @@ angular.module('neonDemo.directives')
             $scope.element = $element;
 
             $scope.optionsMenuButtonText = function() {
-                var limits = Object.keys($scope.limitedLayers);
                 var text = "";
-                if(limits.length) {
-                    for(var i = 0; i < limits.length; ++i) {
-                        var limitedLayers = $scope.limitedLayers[limits[i]];
-                        if(limitedLayers.length) {
-                            text += text ? "; " : "";
-                            for(var j = 0; j < limitedLayers.length; ++j) {
-                                text += (j ? ", " + limitedLayers[j] : limitedLayers[j]);
-                            }
-                            text += " limit " + $filter('number')(limits[i]);
-                        }
+                $scope.options.layers.forEach(function(layer, index) {
+                    text += (text ? ", " : "") + layer.name;
+                    if(layer.dataLength && layer.dataLength >= layer.limit) {
+                        text += " (" + $filter('number')(layer.limit) + " limit)";
                     }
-                }
+                });
                 return text;
             };
-            $scope.showOptionsMenuButtonText = function() {
-                return Object.keys($scope.limitedLayers).length > 0;
-            };
 
-            $scope.limitedLayers = {};
+            $scope.showOptionsMenuButtonText = function() {
+                return true;
+            };
 
             // Setup scope variables.
             $scope.cacheMap = false;
@@ -217,9 +210,9 @@ angular.module('neonDemo.directives')
 
                 $scope.messenger.subscribe('date_selected', onDateSelected);
 
-                $scope.messenger.subscribe("theme_changed", onThemeChanged);
+                themeService.registerListener($scope.mapId, onThemeChanged);
 
-                $('.legend-container .legend').on({
+                $element.find('.legend-container .legend').on({
                     "shown.bs.dropdown": function() {
                         this.closable = false;
                     },
@@ -249,15 +242,13 @@ angular.module('neonDemo.directives')
                     });
 
                     $element.off("resize", updateSize);
-                    $scope.messenger.removeEvents();
+                    $scope.messenger.unsubscribeAll();
                     if($scope.extent) {
                         $scope.clearFilters();
                     }
                     exportService.unregister($scope.exportID);
+                    themeService.unregisterListener($scope.mapId);
                 });
-
-                // Enable the tooltips.
-                $($element).find('label.btn-default').tooltip();
 
                 // Handle toggling map caching.
                 $scope.$watch('cacheMap', function(newVal, oldVal) {
@@ -270,19 +261,6 @@ angular.module('neonDemo.directives')
                         }
                     }
                 });
-
-                // Function on resize given to the options menu directive.
-                $scope.resizeOptionsMenu = function() {
-                    var container = $element.find(".menu-container");
-                    // Make the height of the options menu match the height of the visualization below the header menu container.
-                    var height = $element.height() - container.height() - container.css("top").replace("px", "") - 10;
-                    // Make the width of the options menu match the width of the visualization.
-                    var width = $element.width();
-
-                    var popover = container.find(".popover-content");
-                    popover.css("height", height + "px");
-                    popover.css("width", width + "px");
-                };
 
                 // Setup a basic resize handler to redraw the map and calculate its size if our div changes.
                 // Since the map redraw can take a while and resize events can come in a flood, we attempt to
@@ -368,6 +346,19 @@ angular.module('neonDemo.directives')
                 };
             };
 
+            // Function on resize given to the options menu directive.
+            $scope.resizeOptionsMenu = function() {
+                var container = $element.find(".menu-container");
+                // Make the height of the options menu match the height of the visualization below the header menu container.
+                var height = $element.height() - container.height() - container.css("top").replace("px", "") - 10;
+                // Make the width of the options menu match the width of the visualization.
+                var width = $element.width();
+
+                var popover = container.find(".popover-content");
+                popover.css("height", height + "px");
+                popover.css("width", width + "px");
+            };
+
             /*
              * Given a list of keys, finds all that are used by the map and removes them.
              * @param {Array} keys A list of filter keys
@@ -408,7 +399,7 @@ angular.module('neonDemo.directives')
                     }
                 });
 
-                if(filterKeysList) {
+                if(filterKeysList.length) {
                     clearFiltersRecursively(filterKeysList, function() {
                         _.each(databasesAndTables, function(obj) {
                             $scope.queryForMapData(obj.database, obj.table);
@@ -704,43 +695,34 @@ angular.module('neonDemo.directives')
                 }
             };
 
-            var findField = function(fields, fieldName) {
-                return _.find(fields, function(field) {
-                    return field.columnName === fieldName;
-                }) || datasetService.createBlankField();
-            };
-
             var setDefaultLayerProperties = function(layer) {
                 layer.name = (layer.name || layer.table).toUpperCase();
-                layer.previousName = layer.name;
-                layer.databasePrettyName = getPrettyNameForDatabase(layer.database);
-                layer.tablePrettyName = getPrettyNameForTable(layer.table);
+                layer.databasePrettyName = datasetService.getPrettyNameForDatabase(layer.database);
+                layer.tablePrettyName = datasetService.getPrettyNameForTable(layer.database, layer.table);
                 layer.limit = layer.limit || $scope.DEFAULT_LIMIT;
-                layer.previousLimit = layer.limit;
                 layer.editing = false;
                 layer.valid = true;
                 layer.visible = true;
 
                 layer.fields = datasetService.getSortedFields(layer.database, layer.table);
-                layer.latitudeField = findField(layer.fields, layer.latitudeMapping);
-                layer.longitudeField = findField(layer.fields, layer.longitudeMapping);
-                layer.sizeField = layer.weightMapping ? findField(layer.fields, layer.weightMapping) : findField(layer.fields, layer.sizeBy);
-                layer.colorField = findField(layer.fields, layer.colorBy);
-                layer.sourceField = findField(layer.fields, layer.sourceMapping);
-                layer.targetField = findField(layer.fields, layer.targetMapping);
-                layer.nodeColorField = findField(layer.fields, layer.nodeColorBy);
-                layer.lineColorField = findField(layer.fields, layer.lineColorBy);
+                layer.latitudeField = datasetService.findField(layer.fields, layer.latitudeMapping);
+                layer.longitudeField = datasetService.findField(layer.fields, layer.longitudeMapping);
+                layer.sizeField = layer.weightMapping ? datasetService.findField(layer.fields, layer.weightMapping) : datasetService.findField(layer.fields, layer.sizeBy);
+                layer.colorField = datasetService.findField(layer.fields, layer.colorBy);
+                layer.sourceField = datasetService.findField(layer.fields, layer.sourceMapping);
+                layer.targetField = datasetService.findField(layer.fields, layer.targetMapping);
+                layer.nodeColorField = datasetService.findField(layer.fields, layer.nodeColorBy);
+                layer.lineColorField = datasetService.findField(layer.fields, layer.lineColorBy);
 
                 return layer;
             };
 
-            var cloneDatasetLayerConfig = function() {
-                var configClone = [];
-                var config = datasetService.getMapLayers() || [];
-                for(var i = 0; i < config.length; i++) {
-                    configClone.push(setDefaultLayerProperties(_.clone(config[i])));
-                }
-                return configClone;
+            var cloneDatasetLayersConfig = function() {
+                var mapLayers = [];
+                datasetService.getMapLayers($scope.bindConfig).forEach(function(mapLayer) {
+                    mapLayers.push(setDefaultLayerProperties(_.clone(mapLayer)));
+                });
+                return mapLayers;
             };
 
             var drawZoomRect = function(rect) {
@@ -796,6 +778,11 @@ angular.module('neonDemo.directives')
                 $scope.options.newLayer.nodeDefaultColor = "";
                 $scope.options.newLayer.lineDefaultColor = "";
                 $scope.options.newLayer.colorCode = "";
+                $scope.options.newLayer.gradient1 = "";
+                $scope.options.newLayer.gradient2 = "";
+                $scope.options.newLayer.gradient3 = "";
+                $scope.options.newLayer.gradient4 = "";
+                $scope.options.newLayer.gradient5 = "";
 
                 var latitude = datasetService.getMapping($scope.options.newLayer.database.name, $scope.options.newLayer.table.name, neonMappings.LATITUDE) || "";
                 $scope.options.newLayer.latitude = _.find($scope.fields, function(field) {
@@ -851,8 +838,7 @@ angular.module('neonDemo.directives')
                 var i = 0;
                 var layer = {};
 
-                $scope.options.layers = cloneDatasetLayerConfig();
-                $scope.limitedLayers = {};
+                $scope.options.layers = cloneDatasetLayersConfig();
 
                 // Setup the base layer objects.
                 for(i = 0; i < $scope.options.layers.length; i++) {
@@ -877,38 +863,11 @@ angular.module('neonDemo.directives')
              * @private
              */
             var setFilterKey = function(layer) {
-                var filterKeys = filterService.createFilterKeys("map", datasetService.getDatabaseAndTableNames());
-                var database = layer.database;
-                var table = layer.table;
+                var filterServiceKeys = filterService.createFilterKeys("map", datasetService.getDatabaseAndTableNames());
                 var latLonKey = getFilterLatLonKey(layer);
-                var relations = datasetService.getRelations(database, table, [layer.latitudeMapping, layer.longitudeMapping]);
-                var relationKeys = {};
+                var relations = datasetService.getRelations(layer.database, layer.table, [layer.latitudeMapping, layer.longitudeMapping]);
 
-                _.each(relations, function(relation) {
-                    var relationDatabase = relation.database;
-                    var relationTable = relation.table;
-
-                    if(relationDatabase !== database || relationTable !== table) {
-                        if(!relationKeys[relationDatabase]) {
-                            relationKeys[relationDatabase] = {};
-                        }
-                        if(!relationKeys[relationDatabase][relationTable]) {
-                            relationKeys[relationDatabase][relationTable] = filterKeys[relationDatabase][relationTable];
-                        }
-                    }
-                });
-
-                if(!$scope.filterKeys[database]) {
-                    $scope.filterKeys[database] = {};
-                }
-                if(!$scope.filterKeys[database][table]) {
-                    $scope.filterKeys[database][table] = {};
-                }
-                if(!$scope.filterKeys[database][table][latLonKey]) {
-                    $scope.filterKeys[database][table][latLonKey] = {};
-                    $scope.filterKeys[database][table][latLonKey].filterKey = filterKeys[database][table];
-                    $scope.filterKeys[database][table][latLonKey].relations = relationKeys;
-                }
+                $scope.filterKeys = filterService.createFilterKeysForAttribute($scope.filterKeys, layer.database, layer.table, latLonKey, filterServiceKeys, relations);
             };
 
             /*
@@ -1094,12 +1053,10 @@ angular.module('neonDemo.directives')
                     $scope.dataBounds = computeDataBounds(queryResults.data);
                 }
 
-                $scope.dataLength = data.length;
                 for(var i = 0; i < $scope.options.layers.length; i++) {
                     if($scope.options.layers[i].database === database && $scope.options.layers[i].table === table && $scope.options.layers[i].olLayer) {
                         // Only use elements up to the limit of this layer; other layers for this database/table may have a higher limit.
-                        var limit = $scope.options.layers[i].limit;
-                        data = queryResults.data.slice(0, limit);
+                        data = queryResults.data.slice(0, $scope.options.layers[i].limit);
 
                         // Only set data and update features if all attributes exist in data
                         if($scope.map.doAttributesExist(data, $scope.options.layers[i].olLayer)) {
@@ -1118,7 +1075,7 @@ angular.module('neonDemo.directives')
                                     $scope.legend.layers.push({
                                         layerName: $scope.options.layers[i].name,
                                         olLayerId: $scope.options.layers[i].olLayer.id,
-                                        display: false,
+                                        display: true,
                                         nodeColorMappings: colorMappings.nodeColors,
                                         lineColorMappings: colorMappings.lineColors
                                     });
@@ -1130,7 +1087,7 @@ angular.module('neonDemo.directives')
                                     $scope.legend.layers.push({
                                         layerName: $scope.options.layers[i].name,
                                         olLayerId: $scope.options.layers[i].olLayer.id,
-                                        display: false,
+                                        display: true,
                                         colorMappings: colorMappings
                                     });
                                 }
@@ -1145,22 +1102,7 @@ angular.module('neonDemo.directives')
                             $scope.options.layers[i].error = "Error - cannot create layer due to missing fields in data";
                         }
 
-                        // Update the message in the visualization containing the list of limited layers.
-                        var index;
-                        if(queryResults.data.length >= limit) {
-                            if(!$scope.limitedLayers[limit]) {
-                                $scope.limitedLayers[limit] = [];
-                            }
-                            index = $scope.limitedLayers[limit].indexOf($scope.options.layers[i].name);
-                            if(index < 0) {
-                                $scope.limitedLayers[limit].push($scope.options.layers[i].name);
-                            }
-                        } else if($scope.limitedLayers[limit]) {
-                            index = $scope.limitedLayers[limit].indexOf($scope.options.layers[i].name);
-                            if(index >= 0) {
-                                $scope.limitedLayers[limit].splice(index, 1);
-                            }
-                        }
+                        $scope.options.layers[i].dataLength = queryResults.data.length;
                     }
                 }
 
@@ -1300,7 +1242,9 @@ angular.module('neonDemo.directives')
 
             var buildPointQuery = function(database, table) {
                 var latitudesAndLongitudes = [];
-                var fields = {};
+                var fields = {
+                    _id: true
+                };
                 var limit;
 
                 var addField = function(field) {
@@ -1637,7 +1581,7 @@ angular.module('neonDemo.directives')
 
                         layer.addFeatures(features);
                     } else {
-                        var pointsLayer = _.find(datasetService.getMapLayers(), {
+                        var pointsLayer = _.find(datasetService.getMapLayers($scope.bindConfig), {
                             type: "points",
                             database: msg.database,
                             table: msg.table
@@ -1671,7 +1615,7 @@ angular.module('neonDemo.directives')
              * @method setDefaultView
              */
             $scope.setDefaultView = function() {
-                var mapConfig = datasetService.getMapConfig();
+                var mapConfig = datasetService.getMapConfig($scope.bindConfig);
                 if(mapConfig && mapConfig.bounds) {
                     $scope.map.zoomToBounds(mapConfig.bounds);
                 } else if($scope.dataBounds) {
@@ -1721,41 +1665,17 @@ angular.module('neonDemo.directives')
                 layer = updateLayerFieldMappings(layer);
 
                 var index;
-                if(layer.previousLimit !== layer.limit) {
-                    if($scope.limitedLayers[layer.previousLimit]) {
-                        // Remove the old limit/name.
-                        index = $scope.limitedLayers[layer.previousLimit].indexOf(layer.previousName);
-                        if(index >= 0) {
-                            $scope.limitedLayers[layer.previousLimit].splice(index, 1);
-                        }
-                    }
-
-                    // Add the new limit/name.
-                    if(!$scope.limitedLayers[layer.limit]) {
-                        $scope.limitedLayers[layer.limit] = [];
-                    }
-                    $scope.limitedLayers[layer.limit].push(layer.name);
-                } else if(layer.previousName !== layer.name) {
-                    if($scope.limitedLayers[layer.limit]) {
-                        // Replace the old name with the new name.
-                        index = $scope.limitedLayers[layer.limit].indexOf(layer.previousName);
-                        if(index >= 0) {
-                            $scope.limitedLayers[layer.limit].splice(index, 1, layer.name);
-                        }
-                    }
-                }
-
                 if(layer.olLayer) {
                     this.map.removeLayer(layer.olLayer);
                     layer.olLayer = undefined;
                 }
 
-                layer.previousName = layer.name;
-                layer.previousLimit = layer.limit;
                 layer.editing = false;
                 setFilterKey(layer);
                 layer.olLayer = addLayer(layer);
-                $scope.legend.layers[legendIndex].olLayerId = layer.olLayer.id;
+                if(legendIndex >= 0) {
+                    $scope.legend.layers[legendIndex].olLayerId = layer.olLayer.id;
+                }
                 $scope.map.setLayerVisibility(layer.olLayer.id, layer.visible);
                 refreshFilterKeys(previousLayer, function() {
                     if($scope.zoomRectId) {
@@ -1824,7 +1744,8 @@ angular.module('neonDemo.directives')
                         $scope.map.map.baseLayer, {
                         latitudeMapping: layer.latitudeMapping,
                         longitudeMapping: layer.longitudeMapping,
-                        sizeMapping: layer.sizeBy
+                        sizeMapping: layer.sizeBy,
+                        gradients: generateGradientList(layer)
                     });
                     $scope.map.addLayer(layer.olLayer);
                 } else if(layer.type === coreMap.Map.NODE_LAYER) {
@@ -1846,6 +1767,14 @@ angular.module('neonDemo.directives')
                 return layer.olLayer;
             };
 
+            var generateGradientList = function(layer) {
+                return (layer.gradient1 ? [layer.gradient1] : [])
+                    .concat((layer.gradient2 ? [layer.gradient2] : []))
+                    .concat((layer.gradient3 ? [layer.gradient3] : []))
+                    .concat((layer.gradient4 ? [layer.gradient4] : []))
+                    .concat((layer.gradient5 ? [layer.gradient5] : []));
+            };
+
             /**
              * Toggles editing on the given layer.
              * @param {Object} layer
@@ -1861,12 +1790,6 @@ angular.module('neonDemo.directives')
              * @method deleteLayer
              */
             $scope.deleteLayer = function(layer) {
-                // Remove layer from the limit text.
-                var index = $scope.limitedLayers[layer.limit] ? $scope.limitedLayers[layer.limit].indexOf(layer.name) : -1;
-                if(index >= 0) {
-                    $scope.limitedLayers[layer.limit].splice(index, 1);
-                }
-
                 // Remove layer from the legend
                 index = _.findIndex($scope.legend.layers, {
                     olLayerId: layer.olLayer.id
@@ -1931,9 +1854,9 @@ angular.module('neonDemo.directives')
                     name: ($scope.options.newLayer.name || $scope.options.newLayer.table.name).toUpperCase(),
                     type: $scope.options.newLayer.type,
                     database: $scope.options.newLayer.database.name,
-                    databasePrettyName: getPrettyNameForDatabase($scope.options.newLayer.database.name),
+                    databasePrettyName: datasetService.getPrettyNameForDatabase($scope.options.newLayer.database.name),
                     table: $scope.options.newLayer.table.name,
-                    tablePrettyName: getPrettyNameForTable($scope.options.newLayer.table.name),
+                    tablePrettyName: datasetService.getPrettyNameForTable($scope.options.newLayer.database.name, $scope.options.newLayer.table.name),
                     fields: $scope.fields,
                     limit: $scope.options.newLayer.limit,
                     latitudeField: $scope.options.newLayer.latitude,
@@ -1956,6 +1879,11 @@ angular.module('neonDemo.directives')
                     lineColorBy: $scope.options.newLayer.lineColorBy.columnName,
                     nodeDefaultColor: $scope.options.newLayer.nodeDefaultColor,
                     lineDefaultColor: $scope.options.newLayer.lineDefaultColor,
+                    gradient1: $scope.options.newLayer.gradient1,
+                    gradient2: $scope.options.newLayer.gradient2,
+                    gradient3: $scope.options.newLayer.gradient3,
+                    gradient4: $scope.options.newLayer.gradient4,
+                    gradient5: $scope.options.newLayer.gradient5,
                     popupFields: $scope.options.newLayer.popupFields,
                     active: $scope.options.newLayer.active,
                     visible: $scope.options.newLayer.visible,
@@ -1963,8 +1891,6 @@ angular.module('neonDemo.directives')
                     editing: false
                 };
 
-                layer.previousName = layer.name;
-                layer.previousLimit = layer.limit;
                 layer.olLayer = addLayer(layer);
                 $scope.options.layers.push(layer);
                 setFilterKey(layer);
@@ -2033,26 +1959,6 @@ angular.module('neonDemo.directives')
                 $scope.validateNewLayerName();
             };
 
-            var getPrettyNameForDatabase = function(databaseName) {
-                var name = databaseName;
-                $scope.databases.forEach(function(database) {
-                    if(database.name === databaseName) {
-                        name = database.prettyName;
-                    }
-                });
-                return name;
-            };
-
-            var getPrettyNameForTable = function(tableName) {
-                var name = tableName;
-                $scope.tables.forEach(function(table) {
-                    if(table.name === tableName) {
-                        tableName = table.prettyName;
-                    }
-                });
-                return name;
-            };
-
             /**
              * Updates the color of the base layer in the map using the base layer color from the global options.
              * @method updateBaseLayerColor
@@ -2063,9 +1969,9 @@ angular.module('neonDemo.directives')
                 }
             };
 
-            var onThemeChanged = function(message) {
-                if(message.type !== $scope.options.baseLayerColor) {
-                    $scope.options.baseLayerColor = message.type;
+            var onThemeChanged = function(theme) {
+                if(theme.type !== $scope.options.baseLayerColor) {
+                    $scope.options.baseLayerColor = theme.type;
                     $scope.updateBaseLayerColor();
                 }
             };

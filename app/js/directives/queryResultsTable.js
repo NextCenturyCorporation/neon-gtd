@@ -28,8 +28,8 @@
  * @constructor
  */
 angular.module('neonDemo.directives')
-.directive('queryResultsTable', ['external', 'ConnectionService', 'DatasetService', 'ErrorNotificationService', 'ExportService', 'linkify', '$sce', '$timeout', 'LinksPopupService',
-function(external, connectionService, datasetService, errorNotificationService, exportService, linkify, $sce, $timeout, linksPopupService) {
+.directive('queryResultsTable', ['external', 'ConnectionService', 'DatasetService', 'ErrorNotificationService', 'ExportService', 'LinksPopupService', 'ThemeService', 'linkify', '$sce', '$timeout',
+function(external, connectionService, datasetService, errorNotificationService, exportService, linksPopupService, themeService, linkify, $sce, $timeout) {
     return {
         templateUrl: 'partials/directives/queryResultsTable.html',
         restrict: 'EA',
@@ -127,7 +127,7 @@ function(external, connectionService, datasetService, errorNotificationService, 
                 // Set the width of the title to the width of the visualization minus the width of the chart options button/text and padding.
                 var titleWidth = $scope.element.width() - $scope.element.find(".chart-options").outerWidth(true) - 20;
                 // Also subtract the width of the table options button.
-                titleWidth -= ($scope.element.find(".edit-table-icon").outerWidth(true) + 10);
+                titleWidth -= $scope.element.find(".edit-table").outerWidth(true);
                 $scope.element.find(".title").css("maxWidth", titleWidth);
             };
 
@@ -146,6 +146,8 @@ function(external, connectionService, datasetService, errorNotificationService, 
                 $scope.element.resize(resizeTitle);
                 $scope.element.find(".chart-options a").resize(resizeTitle);
 
+                themeService.registerListener($scope.tableId, onThemeChanged);
+
                 $scope.$on('$destroy', function() {
                     XDATA.userALE.log({
                         activity: "remove",
@@ -158,10 +160,11 @@ function(external, connectionService, datasetService, errorNotificationService, 
                         tags: ["remove", "datagrid"]
                     });
                     linksPopupService.deleteLinks($scope.tableId);
-                    $scope.messenger.removeEvents();
+                    $scope.messenger.unsubscribeAll();
                     $scope.element.off("resize", resizeTitle);
                     $scope.element.find(".chart-options a").off("resize", resizeTitle);
                     exportService.unregister($scope.exportID);
+                    themeService.unregisterListener($scope.tableId);
                 });
 
                 $scope.active = {
@@ -324,8 +327,15 @@ function(external, connectionService, datasetService, errorNotificationService, 
                         headerName: field.prettyName,
                         field: field.columnName,
                         suppressSizeToFit: true,
-                        onCellClicked: handleRowClick
+                        onCellClicked: handleRowClick,
+                        cellRenderer: function(params) {
+                            return neon.helpers.getNestedValue(params.data, params.colDef.field);
+                        }
                     };
+
+                    if(field.class) {
+                        config.cellClass = field.class;
+                    }
 
                     if($scope.hiddenColumns[field.columnName]) {
                         config.hide = true;
@@ -486,10 +496,31 @@ function(external, connectionService, datasetService, errorNotificationService, 
                         }, refreshColumns);
                         $scope.total = 0;
                         if(response.responseJSON) {
-                            $scope.errorMessage = errorNotificationService.showErrorMessage($element, response.responseJSON.error, response.responseJSON.stackTrace);
+                            $scope.errorMessage = errorNotificationService.showErrorMessage($scope.element, response.responseJSON.error, response.responseJSON.stackTrace);
                         }
                     }
                 });
+            };
+
+            /**
+             * Escapes all values in the given data, recursively.
+             * @method escapeDataRecursively
+             * @private
+             */
+            var escapeDataRecursively = function(data) {
+                if(_.isArray(data)) {
+                    for(var i = 0; i < data.length; i++) {
+                        data[i] = escapeDataRecursively(data[i]);
+                    }
+                } else if(_.keys(data).length) {
+                    var keys = _.keys(data);
+                    for(var i = 0; i < keys.length; i++) {
+                        data[keys[i]] = escapeDataRecursively(data[keys[i]]);
+                    }
+                } else {
+                    data = _.escape(data);
+                }
+                return data;
             };
 
             /**
@@ -507,6 +538,8 @@ function(external, connectionService, datasetService, errorNotificationService, 
             };
 
             var updateData = function(data) {
+                data = escapeDataRecursively(data);
+
                 if(external.active) {
                     data = addExternalLinksToColumnData(data);
                 }
@@ -584,8 +617,13 @@ function(external, connectionService, datasetService, errorNotificationService, 
                         source: "system",
                         tags: ["filter-change", "datagrid"]
                     });
+                    queryForTotalRows();
                     queryForData();
                 }
+            };
+
+            var onThemeChanged = function(theme) {
+                $scope.themeType = theme.type;
             };
 
             /**

@@ -37,7 +37,7 @@ angular.module('neonDemo.directives')
                 });
 
                 $scope.$on('$destroy', function() {
-                    $scope.messenger.removeEvents();
+                    $scope.messenger.unsubscribeAll();
                 });
 
                 $scope.queryForState();
