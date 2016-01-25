@@ -1,8 +1,7 @@
-<div class="header-container" ng-show="!(hideHeader)">
+<div class="header-container menu-container" ng-show="!(hideHeader)">
     <div class="title header-text pull-left">Line Chart</div>
 
-    <options-menu parent-element="element" export-function="makeLinechartExportObject" button-text="optionsMenuButtonText" show-button-text="showOptionsMenuButtonText">
-
+    <options-menu parent-element="element" export-function="makeLinechartExportObject" resize-menu="resizeOptionsMenu" button-text="optionsMenuButtonText" show-button-text="showOptionsMenuButtonText">
         <div class="form-group button-container">
             <button type="button" class="btn btn-primary" title="Add New Line Chart" ng-click="clickAddNewChartButton()"
                 ng-show="!(options.newChart.editing)">
