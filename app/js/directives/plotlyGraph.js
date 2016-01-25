@@ -38,8 +38,8 @@
  * @constructor
  */
 angular.module('neonDemo.directives')
-.directive('plotlyGraph', ['FilterService', 'DatasetService', 'ConnectionService',
-function(filterService, datasetService, connectionService) {
+.directive('plotlyGraph', ['ConnectionService', 'DatasetService', 'FilterService', 'ThemeService',
+function(connectionService, datasetService, filterService, themeService) {
     return {
         templateUrl: 'partials/directives/plotlyGraph.html',
         restrict: 'EA',
@@ -51,28 +51,32 @@ function(filterService, datasetService, connectionService) {
             bindAttrX: "=?",
             bindAttrY: "=?"
         },
-        link: function($scope, el) {
-            $scope.el = el;
-            var graphDivSelector = $(el).find('.graph-div');
-            el.addClass("plotly-graph-directive");
+        link: function($scope, $element) {
+            $scope.element = $element;
+            var graphDivSelector = $element.find('.graph-div');
+            $element.addClass("plotly-graph-directive");
 
             graphDivSelector.bind('plotly_relayout', $scope.updateFilter);
 
             graphDivSelector.bind('plotly_filter_box', $scope.updateFilter);
 
             $scope.graphDiv = graphDivSelector[0];
+            $scope.graphId = "plotly-" + uuid();
+            $scope.backgroundColor = "#fff";
+            $scope.textColor = "#777";
 
             var setHeight = function() {
-                var topHeight = $($scope.el).find('.header-container').outerHeight(true);
-                $($scope.graphDiv).height($($scope.el).height() - topHeight);
-                if($scope.data) {
-                    $scope.drawGraph();
-                }
+                var headerHeight = 0;
+                $scope.element.find(".header-container").each(function() {
+                    headerHeight += $(this).outerHeight(true);
+                });
+                $($scope.graphDiv).height($scope.element.height() - headerHeight);
+                $scope.drawGraph();
             };
 
             setHeight();
 
-            $scope.el.resize(setHeight);
+            $element.resize(setHeight);
 
             $scope.init();
         },
@@ -96,17 +100,20 @@ function(filterService, datasetService, connectionService) {
                     }
                 });
 
+                themeService.registerListener($scope.graphId, onThemeChanged);
+
                 $scope.$on('$destroy', function() {
                     $scope.messenger.removeEvents();
                     // Remove our filter if we had an active one.
                     if($scope.filterSet) {
                         filterService.removeFilters($scope.messenger, $scope.filterKeys);
                     }
-                    $scope.el.off('resize');
+                    $scope.element.off('resize');
 
                     if($scope.outstandingQuery) {
                         $scope.outstandingQuery.abort();
                     }
+                    themeService.unregisterListener($scope.graphId);
                 });
 
                 initDataset();
@@ -183,9 +190,9 @@ function(filterService, datasetService, connectionService) {
                     }
 
                     var query = new neon.query.Query()
-                    .selectFrom($scope.active.database.name, $scope.active.table.name)
-                    .withFields(fields)
-                    .where($scope.active.attrX.columnName, '!=', null);
+                        .selectFrom($scope.active.database.name, $scope.active.table.name)
+                        .withFields(fields)
+                        .where($scope.active.attrX.columnName, '!=', null);
 
                     if($scope.active.limitCount) {
                         query.limit($scope.active.limitCount);
@@ -229,6 +236,10 @@ function(filterService, datasetService, connectionService) {
             };
 
             $scope.drawGraph = function() {
+                if(!$scope.data) {
+                    return;
+                }
+
                 var dataObject = buildDataConfig($scope.data);
                 var layout = buildGraphLayout();
 
@@ -326,7 +337,7 @@ function(filterService, datasetService, connectionService) {
                 if(data.length > 20000) {
                     var config = buildHybridConfig(data);
                     config.colorscale = [
-                        [0, 'rgb(255,255,255)'],
+                        [0, $scope.backgroundColor],
                         [0.0001, 'rgb(0, 255, 0)'],
                         [0.33, 'rgb(255, 255, 0)'],
                         [1, 'rgb(255,0,0)']
@@ -342,7 +353,7 @@ function(filterService, datasetService, connectionService) {
                 if(data.length > 20000) {
                     var config = buildHybridConfig(data);
                     config.colorscale = [
-                        [0, 'rgb(255,255,255)'],
+                        [0, $scope.backgroundColor],
                         [0.0001, 'rgb(0, 255, 0)'],
                         [0.2, 'rgb(255, 255, 0)'],
                         [1, 'rgb(255,0,0)']
@@ -364,12 +375,17 @@ function(filterService, datasetService, connectionService) {
 
             var buildGraphLayout = function() {
                 var layout = {
+                    font: {
+                        color: $scope.textColor
+                    },
                     margin: {
                         l: 70,
                         r: 10,
                         t: 20,
                         b: 60
                     },
+                    paper_bgcolor: $scope.backgroundColor,
+                    plot_bgcolor: $scope.backgroundColor,
                     showlegend: false,
                     xaxis: {
                         title: $scope.active.attrX.prettyName,
@@ -451,6 +467,14 @@ function(filterService, datasetService, connectionService) {
 
                     relations = datasetService.getRelations($scope.active.database.name, $scope.active.table.name, [$scope.active.attrX, $scope.active.attrY]);
                     filterService.replaceFilters($scope.messenger, relations, $scope.filterKeys, createFilterClause, "PlotlyGraph", $scope.queryForData);
+                }
+            };
+
+            var onThemeChanged = function(theme) {
+                if(theme.backgroundColor !== $scope.backgroundColor || theme.textColor !== $scope.textColor) {
+                    $scope.backgroundColor = theme.backgroundColor;
+                    $scope.textColor = theme.textColor;
+                    $scope.drawGraph();
                 }
             };
         }

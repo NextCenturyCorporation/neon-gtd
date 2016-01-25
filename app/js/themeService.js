@@ -25,18 +25,23 @@ angular.module("neonDemo.services")
         name: "Light Green",
         file: "light-green",
         type: "light",
-        accent: "#39B54A"
+        accentColor: "#39B54A",
+        backgroundColor: "#FFFFFF",
+        textColor: "#777777"
     }, {
         name: "Dark Green",
         file: "dark-green",
         type: "dark",
-        accent: "#39B54A"
+        accentColor: "#39B54A",
+        backgroundColor: "#1B313D",
+        textColor: "#85949C"
     /*
     }, {
         name: "Dark Purple",
         file: "dark-purple",
         type: "dark",
-        accent: "#A654A1"
+        accentColor: "#A654A1",
+        backgroundColor: "#1B313D"
     */
     }]
 

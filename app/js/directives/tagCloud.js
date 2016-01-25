@@ -785,8 +785,8 @@ function(external, connectionService, datasetService, errorNotificationService, 
             };
 
             var onThemeChanged = function(theme) {
-                if(theme.accent !== $scope.tagColor) {
-                    $scope.tagColor = theme.accent;
+                if(theme.accentColor !== $scope.tagColor) {
+                    $scope.tagColor = theme.accentColor;
                     updateTagcloudPluginSettings();
                     updateTagStyle();
                 }
