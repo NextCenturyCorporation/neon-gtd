@@ -111,7 +111,7 @@ function(filterService, datasetService, connectionService) {
 
                 $scope.filterKeys = filterService.createFilterKeys("plotly", datasetService.getDatabaseAndTableNames());
 
-                updateFields();
+                $scope.updateFields();
                 $scope.active.limitCount = $scope.bindLimit;
 
                 $scope.queryForData();
