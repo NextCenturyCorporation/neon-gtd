@@ -238,9 +238,14 @@ charts.TimelineSelectorChart = function(element, configuration) {
         // Update mask
         var brushElement = $(this);
         var xPos = brushElement.find('.extent').attr('x');
-
         var extentWidth = brushElement.find('.extent').attr('width');
         var width = parseInt(brushElement.find('.mask-west').attr('width').replace('px', ''), 10);
+
+        if(parseFloat(xPos) + parseFloat(extentWidth) < 0 || parseFloat(xPos) > 0) {
+            xPos = 0;
+            extentWidth = 0;
+            width = 0;
+        }
 
         if((extentWidth === "0" || extentWidth === 0) &&
             (brush.extent() && brush.extent().length >= 2 && (brush.extent()[1] - brush.extent()[0]) > 0)) {
