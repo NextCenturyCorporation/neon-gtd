@@ -1,0 +1,100 @@
+<div ng-show="isSelected">
+    <div class="row">
+        <div class="col-md-6">
+            <div class="form-group">
+                <span class="no-data" ng-hide="customVisualizations.length">No Visualizations Added</label>
+            </div>
+        </div>
+    </div>
+
+    <div class="neon-well" ng-repeat="customVisualization in customVisualizations">
+        <div class="row">
+            <div class="col-md-6">
+                <div class="form-group">
+                    <label>Visualization</label>
+                    <select class="form-control" ng-change="selectVisualization(customVisualization)" ng-model="customVisualization.type" ng-options="visualization.type as visualization.name for visualization in visualizations">
+                        <option value="">Select Visualization</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="col-md-6">
+                <div class="form-group no-margin">
+                    <label>&nbsp;</label>
+                    <button class="btn-medium btn btn-default form-control" ng-click="removeCustomVisualization($index)">
+                        Remove Visualization
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <div class="row" ng-show="showVisualizationDatabaseProperties(customVisualization)">
+            <div class="col-md-6">
+                <div class="form-group">
+                    <label>Database</label>
+                    <select class="form-control" ng-model="customVisualization.database" ng-change="selectCustomVisualizationDatabase(customVisualization)" ng-options="customDatabase.database.name as customDatabase.database.name for customDatabase in customDatabases">
+                        <option value="">Select Database</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="col-md-6">
+                <div class="form-group">
+                    <label>Table</label>
+                    <select class="form-control" ng-model="customVisualization.table" ng-change="selectCustomVisualizationTable(customVisualization)" ng-options="table for table in customVisualization.availableTables">
+                        <option value="">Select Table</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+
+        <div class="row" ng-show="customVisualization.type">
+            <div class="col-md-6">
+                <div class="form-group" ng-class="{true: 'has-error', false: ''}[customVisualization.sizeX < customVisualization.minSizeX]">
+                    <label>
+                        Width
+                        <i class="glyphicon glyphicon-question-sign" data-placement="bottom" data-toggle="tooltip" title="{{widthTooltip}}"></i>
+                        {{getMinWidthLabel(customVisualization)}}
+                    </label>
+                    <input class="form-control" type="number" ng-model="customVisualization.sizeX"/>
+                </div>
+            </div>
+
+            <div class="col-md-6">
+                <div class="form-group" ng-class="{true: 'has-error', false: ''}[customVisualization.sizeY < customVisualization.minSizeY]">
+                    <label>
+                        Height
+                        <i class="glyphicon glyphicon-question-sign" data-placement="bottom" data-toggle="tooltip" title="{{heightTooltip}}"></i>
+                        {{getMinHeightLabel(customVisualization)}}
+
+                    </label>
+                    <input class="form-control" type="number" ng-model="customVisualization.sizeY"/>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-md-6">
+            <div class="form-group">
+                <button class="btn-medium btn btn-default form-control" ng-click="addNewCustomVisualization()">Add Visualization</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-md-12">
+            <div class="form-group">
+                <span>Click 'Next' to go to the dashboard to further setup your layout.</span>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-md-12">
+            <div class="form-group">
+                <span>Once finished, save your changes by going to 'Options' then 'Save Current State'.</span>
+            </div>
+        </div>
+    </div>
+</div>

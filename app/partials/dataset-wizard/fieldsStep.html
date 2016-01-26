@@ -1,0 +1,73 @@
+<div ng-repeat="customDatabase in customDatabases" ng-show="isSelected">
+    <div class="neon-well neon-well-dark" ng-repeat="customTable in customDatabase.customTables">
+        <div class="row" ng-click="toggleFieldMappingsDisplay(customTable)" style="cursor:pointer;">
+            <div class="col-md-1">
+                <div class="no-margin">
+                    <span class="glyphicon glyphicon-chevron-down" ng-show="!customTable.showFieldMappings"></span>
+                    <span class="glyphicon glyphicon-chevron-up" ng-show="customTable.showFieldMappings"></span>
+                </div>
+            </div>
+
+            <div class="col-md-5">
+                <div class="no-margin">
+                    <label>Database:</label>
+                    <span ng-bind="customDatabase.database.prettyName"></span>
+                </div>
+            </div>
+
+            <div class="col-md-6">
+                <div class="no-margin">
+                    <label>Table:</label>
+                    <span ng-bind="customTable.table.prettyName"></span>
+                </div>
+            </div>
+        </div>
+
+        <div class="neon-well toggled-group" ng-show="customTable.showFieldMappings">
+            <div class="row">
+                <div class="col-md-4">
+                    <div class="form-group">
+                        <label>Field</label>
+                    </div>
+                </div>
+
+                <div class="col-md-3">
+                    <div class="form-group">
+                        <label>Type</label>
+                    </div>
+                </div>
+
+                <div class="col-md-5">
+                    <div class="form-group">
+                        <label>Mapping</label>
+                    </div>
+                </div>
+            </div>
+
+            <div class="row" ng-repeat="field in customTable.table.fields">
+                <div class="col-md-4">
+                    <div class="form-group inner-group truncate">
+                        <span ng-bind="field.columnName" title="{{ field.columnName }}"></span>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="col-md-3">
+                    <div class="form-group inner-group">
+                        <span ng-bind="getFieldType(customDatabase.database.name, customTable.table.name, field.columnName) | uppercase" ng-hide="isLoading"></span>
+                        <span ng-hide="!isLoading">Loading....</span>
+                    </div>
+                </div>
+
+                <div class="col-md-5">
+                    <div class="form-group inner-group">
+                        <select class="form-control" ng-change="selectMapping(tempMappingIndex, field, customTable, customDatabase.database)" ng-model="tempMappingIndex">
+                            <option value="">None</option>
+                            <option value="{{$index}}" ng-repeat="mapping in mappingOptions" ng-disabled="isMappingDisabled(customDatabase.database, customTable, mapping)">{{mapping.prettyName}}</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
