@@ -241,7 +241,6 @@
             "sizeY": 6,
             "type": "plotly-graph",
             "bindings": {
-                "graph-type": "'scattergl'",
                 "bind-attr-x": "'depth'",
                 "bind-attr-y": "'mag'"
             }
@@ -349,26 +348,23 @@
     },
 
     "visualizations": [{
-        "name": "Scatterplot-gl",
-        "sizeX": 2,
-        "sizeY": 2,
-        "minSizeY": 1,
-        "type": "plotly-graph",
-        "iconClass": "scatter-plot"
+        "name": "Aggregation Table",
+        "sizeX": 6,
+        "sizeY": 4,
+        "type": "count-by",
+        "iconClass": "count"
     }, {
-        "name": "hybrid heatmap",
-        "sizeX": 2,
-        "sizeY": 2,
-        "minSizeY": 1,
-        "type": "plotly-graph",
-        "iconClass": "scatter-plot"
-    },{
-        "name": "hybrid histogram",
-        "sizeX": 2,
-        "sizeY": 2,
-        "minSizeY": 1,
-        "type": "plotly-graph",
-        "iconClass": "scatter-plot"
+        "name": "Bar Chart",
+        "sizeX": 6,
+        "sizeY": 4,
+        "type": "barchart",
+        "iconClass": "bar-chart"
+    }, {
+        "name": "Data Table",
+        "sizeX": 6,
+        "sizeY": 4,
+        "type": "query-results-table",
+        "iconClass": "view-data"
     }, {
         "name": "Filter Builder",
         "sizeX": 12,
@@ -378,31 +374,17 @@
         "type": "filter-builder",
         "iconClass": "create-filter"
     }, {
-        "name": "Data Table",
-        "sizeX": 6,
-        "sizeY": 4,
-        "type": "query-results-table",
-        "iconClass": "view-data"
-    }, {
-        "name": "Timeline",
-        "sizeX": 12,
-        "minSizeX": 12,
-        "sizeY": 4,
-        "minSizeY": 4,
-        "type": "timeline-selector",
-        "iconClass": "timeline"
-    }, {
-        "name": "Map",
+        "name": "Gantt Chart",
         "sizeX": 12,
         "sizeY": 6,
-        "type": "map",
-        "iconClass": "map"
+        "type": "gantt-chart",
+        "iconClass": "gantt"
     }, {
-        "name": "Ops Clock",
-        "sizeX": 6,
-        "sizeY": 4,
-        "type": "circular-heat-form",
-        "iconClass": "ops-clock"
+        "name": "Graph",
+        "sizeX": 12,
+        "sizeY": 6,
+        "type": "directed-graph",
+        "iconClass": "graph"
     }, {
         "name": "Line Chart",
         "sizeX": 6,
@@ -410,11 +392,30 @@
         "type": "linechart",
         "iconClass": "line-chart"
     }, {
-        "name": "Bar Chart",
+        "name": "Map",
+        "sizeX": 12,
+        "sizeY": 6,
+        "type": "map",
+        "iconClass": "map"
+    }, {
+        "name": "News Feed",
         "sizeX": 6,
         "sizeY": 4,
-        "type": "barchart",
-        "iconClass": "bar-chart"
+        "type": "newsfeed",
+        "iconClass": "news"
+    }, {
+        "name": "Ops Clock",
+        "sizeX": 6,
+        "sizeY": 4,
+        "type": "circular-heat-form",
+        "iconClass": "ops-clock"
+    }, {
+        "name": "Scatter Plot",
+        "sizeX": 6,
+        "sizeY": 4,
+        "minSizeY": 1,
+        "type": "plotly-graph",
+        "iconClass": "scatter-plot"
     }, {
         "name": "Sunburst Chart",
         "sizeX": 6,
@@ -428,29 +429,13 @@
         "type": "tag-cloud",
         "iconClass": "tag-cloud"
     }, {
-        "name": "Aggregation Table",
-        "sizeX": 6,
-        "sizeY": 4,
-        "type": "count-by",
-        "iconClass": "count"
-    }, {
-        "name": "Graph",
+        "name": "Timeline",
         "sizeX": 12,
-        "sizeY": 6,
-        "type": "directed-graph",
-        "iconClass": "graph"
-    }, {
-        "name": "News Feed",
-        "sizeX": 6,
+        "minSizeX": 12,
         "sizeY": 4,
-        "type": "newsfeed",
-        "iconClass": "news"
-    }, {
-        "name": "Gantt Chart",
-        "sizeX": 12,
-        "sizeY": 6,
-        "type": "gantt-chart",
-        "iconClass": "gantt"
+        "minSizeY": 4,
+        "type": "timeline-selector",
+        "iconClass": "timeline"
     }, {
         "name": "Sample",
         "sizeX": 6,
@@ -524,5 +509,5 @@
         ]
     },
 
-    "theme": "dark-purple"
+    "theme": "light-green"
 }
