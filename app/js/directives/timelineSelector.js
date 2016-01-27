@@ -548,13 +548,6 @@ function($interval, $filter, external, connectionService, datasetService, errorN
                             return;
                         }
 
-                        if($scope.brush[0] < $scope.bucketizer.getStartDate()) {
-                            $scope.brush[0] = $scope.bucketizer.getStartDate();
-                        }
-                        if($scope.brush[1] > $scope.bucketizer.getEndDate()) {
-                            $scope.brush[1] = $scope.bucketizer.getEndDate();
-                        }
-
                         if(datesEqual($scope.brush[0], $scope.bucketizer.getStartDate()) && datesEqual($scope.brush[1], $scope.bucketizer.getEndDate())) {
                             removeBrushFromTimelineAndDatasetService();
                             return;
@@ -1045,15 +1038,6 @@ function($interval, $filter, external, connectionService, datasetService, errorN
                 var total = 0;
 
                 if(extentStartDate && extentEndDate) {
-                    // can happen when switching between granularities on edge cases
-                    if(extentStartDate < $scope.bucketizer.getStartDate()) {
-                        extentStartDate = $scope.bucketizer.getStartDate();
-                    }
-
-                    if(extentEndDate > $scope.bucketizer.getEndDate()) {
-                        extentEndDate = $scope.bucketizer.getEndDate();
-                    }
-
                     extentStartDate = $scope.bucketizer.zeroOutDate(extentStartDate);
                     extentEndDate = $scope.bucketizer.roundUpBucket(extentEndDate);
 

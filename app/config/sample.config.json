@@ -108,7 +108,7 @@
                 "colorBy": "magType",
                 "sizeBy": "mag"
             }]
-        }
+        },
         "lineCharts": {
             "lineChart1": [
                 {
@@ -209,15 +209,10 @@
         }, {
             "sizeX": 12,
             "sizeY": 8,
-            "type": "map"
-        }, {
-            "sizeX": 18,
-            "sizeY": 4,
-            "type": "query-results-table"
-        }, {
-            "sizeX": 18,
-            "sizeY": 4,
-            "type": "filter-builder"
+            "type": "map",
+            "bindings": {
+                "bind-config": "'myMap1'"
+            }
         }, {
             "sizeX": 6,
             "sizeY": 4,
@@ -237,6 +232,23 @@
             "sizeX": 6,
             "sizeY": 4,
             "type": "count-by"
+        }, {
+            "sizeX": 18,
+            "sizeY": 4,
+            "type": "query-results-table"
+        }, {
+            "sizeX": 6,
+            "sizeY": 6,
+            "type": "plotly-graph",
+            "bindings": {
+                "graph-type": "'scattergl'",
+                "bind-attr-x": "'depth'",
+                "bind-attr-y": "'mag'"
+            }
+        }, {
+            "sizeX": 18,
+            "sizeY": 4,
+            "type": "filter-builder"
         }],
 
         "example-with-bindings": [{
@@ -340,6 +352,27 @@
     },
 
     "visualizations": [{
+        "name": "Scatterplot-gl",
+        "sizeX": 2,
+        "sizeY": 2,
+        "minSizeY": 1,
+        "type": "plotly-graph",
+        "iconClass": "scatter-plot"
+    }, {
+        "name": "hybrid heatmap",
+        "sizeX": 2,
+        "sizeY": 2,
+        "minSizeY": 1,
+        "type": "plotly-graph",
+        "iconClass": "scatter-plot"
+    },{
+        "name": "hybrid histogram",
+        "sizeX": 2,
+        "sizeY": 2,
+        "minSizeY": 1,
+        "type": "plotly-graph",
+        "iconClass": "scatter-plot"
+    }, {
         "name": "Filter Builder",
         "sizeX": 12,
         "minSizeX": 12,
@@ -437,7 +470,7 @@
         "hideAddVisualizationsButton": false,
         "hideErrorNotifications": false,
         "hideHeaders": false,
-        "showFilterStatusTray": false,
+        "hideFilterStatusTray": false,
         "hideCloseButton": false,
         "showVideoOnLoad": false,
         "showImport": false,

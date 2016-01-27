@@ -25,8 +25,8 @@ exportService, linksPopupService, themeService, visualizationService) {
         restrict: 'EA',
         scope: {
             bindTitle: '=',
-            bindCountField: '=', // Deprecated - please use bind-data-field now.
-            bindDataField: '=',
+            bindCountField: '=', // Deprecated
+            bindGroupField: '=',
             bindAggregation: '=',
             bindAggregationField: '=',
             bindFilterField: '=',

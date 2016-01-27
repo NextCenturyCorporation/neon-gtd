@@ -275,16 +275,10 @@ angular.module('neonDemo.directives')
 
                 var resizeLegend = function() {
                     var container = $element.find(".legend-container");
-                    var containerCss = parseInt(container.css("margin-top").replace("px", "")) +
-                            parseInt(container.css("margin-bottom").replace("px", "")) +
-                            parseInt(container.css("padding-top").replace("px", "")) +
-                            parseInt(container.css("padding-bottom").replace("px", ""));
+                    var containerCss = container.outerHeight(true) - container.height();
 
                     var legend = container.find(".legend");
-                    var legendCss = parseInt(legend.css("margin-top").replace("px", "")) +
-                            parseInt(legend.css("margin-bottom").replace("px", "")) +
-                            parseInt(legend.css("padding-top").replace("px", "")) +
-                            parseInt(legend.css("padding-bottom").replace("px", ""));
+                    var legendCss = legend.outerHeight(true) - legend.height();
 
                     var divider = container.find(".legend>.divider");
                     var dividerCss = divider.outerHeight(true);

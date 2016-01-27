@@ -92,7 +92,7 @@ coreMap.Map.DESTINATION_PROJECTION = new OpenLayers.Projection("EPSG:900913");
 coreMap.Map.POINTS_LAYER = 'points';
 coreMap.Map.HEATMAP_LAYER = 'heatmap';
 coreMap.Map.CLUSTER_LAYER = 'cluster';
-coreMap.Map.NODE_LAYER = 'node';
+coreMap.Map.NODE_LAYER = 'nodes and arrows';
 
 coreMap.Map.MAP_TILES = {
     light: {

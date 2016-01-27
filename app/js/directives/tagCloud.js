@@ -853,8 +853,8 @@ linksPopupService, themeService, translationService, visualizationService, $time
             };
 
             var onThemeChanged = function(theme) {
-                if(theme.accent !== $scope.tagColor) {
-                    $scope.tagColor = theme.accent;
+                if(theme.accentColor !== $scope.tagColor) {
+                    $scope.tagColor = theme.accentColor;
                     updateTagcloudPluginSettings();
                     updateTagStyle();
                 }

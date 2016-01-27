@@ -69,7 +69,7 @@ function(external, connectionService, datasetService, errorNotificationService, 
                 attrX: "",
                 attrY: "",
                 barType: "count",
-                limitCount: $scope.limitCount || 150
+                limitCount: $scope.limitCount || 100
             };
 
             var COUNT_FIELD_NAME = 'Count';

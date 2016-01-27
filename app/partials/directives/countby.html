@@ -15,7 +15,7 @@
         </div>
 
         <div class="form-group" ng-show="!(hideAdvancedOptions)">
-            <label>Data Field</label>
+            <label>Group Field</label>
             <select class="form-control" ng-model="active.dataField" ng-required="true" ng-disabled="!(fields.length > 0)" ng-options="field.prettyName for field in fields" ng-change="handleDataFieldChange()">
                 <option disabled selected value="">Please choose a field</option>
             </select>
@@ -56,7 +56,7 @@
         </div>
 
         <div class="form-group">
-            <label>Value Limit</label>
+            <label>Group (Row) Limit</label>
             <div class="input-group">
                 <input type="number" min="1" class="form-control" ng-model="active.limit" required>
                 <div class="input-group-btn">

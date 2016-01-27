@@ -67,6 +67,8 @@ MIT/X11 (mit.txt)
 - Openlayers Heatmap
   -- heatmap.js  1.0
   -- heatmap-openlayers.js
+- Plotly.js
+  -- plotly.js 1.4.1
 - Respond
   -- respond.min.js  v1.4.2
 - Grunt

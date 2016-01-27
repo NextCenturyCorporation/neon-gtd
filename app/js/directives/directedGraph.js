@@ -435,16 +435,16 @@ function($filter, $timeout, connectionService, datasetService, errorNotification
                 var news = [];
                 data.forEach(function(item) {
                     var newsItem = {
-                        head: $scope.helpers.getNestedValue(item, $scope.options.selectedNodeField.columnName)
+                        primaryTitle: $scope.helpers.getNestedValue(item, $scope.options.selectedNodeField.columnName)
                     };
                     if(datasetService.isFieldValid($scope.options.selectedDateField)) {
                         newsItem.date = new Date($scope.helpers.getNestedValue(item, $scope.options.selectedDateField.columnName));
                     }
                     if(datasetService.isFieldValid($scope.options.selectedNameField)) {
-                        newsItem.name = $scope.helpers.getNestedValue(item, $scope.options.selectedNameField.columnName);
+                        newsItem.secondaryTitle = $scope.helpers.getNestedValue(item, $scope.options.selectedNameField.columnName);
                     }
                     if(datasetService.isFieldValid($scope.options.selectedTextField)) {
-                        newsItem.text = $scope.helpers.getNestedValue(item, $scope.options.selectedTextField.columnName);
+                        newsItem.content = $scope.helpers.getNestedValue(item, $scope.options.selectedTextField.columnName);
                         // Delete the text from the data to improve our memory preformance because we don't need it any longer.
                         delete item[$scope.options.selectedTextField.columnName];
                     }
@@ -467,10 +467,10 @@ function($filter, $timeout, connectionService, datasetService, errorNotification
                 $scope.messenger.publish("news_highlights", {
                     name: $scope.bindFeedName || datasetService.getMapping($scope.options.database.name, $scope.options.table.name, neonMappings.NEWSFEED_NAME) || "graph",
                     show: {
-                        heads: $scope.mediator ? $scope.mediator.getNodeIdsInSelectedNetwork() : []
+                        primaryTitles: $scope.mediator ? $scope.mediator.getNodeIdsInSelectedNetwork() : []
                     },
                     highlights: {
-                        heads: $scope.selectedNodeIds
+                        primaryTitles: $scope.selectedNodeIds
                     }
                 });
             };

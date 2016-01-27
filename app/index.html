@@ -127,7 +127,7 @@
                     <div add-visualization gridster-configs="visualizations" ng-show="!hideNavbarItems && !hideAddVisualizationsButton"></div>
 
                     <!-- FILTER STATUS TRAY -->
-                    <div filter-tray bound-parent="'nav.navbar'" include-parent-height="!hideNavbarItems" ng-show="showFilterStatusTray" class="pull-right"></div>
+                    <div filter-tray bound-parent="'nav.navbar'" include-parent-height="!hideNavbarItems" ng-show="!hideFilterStatusTray" class="pull-right"></div>
                 </div>
             </div>
         </nav>
@@ -172,6 +172,9 @@
         <!--
         <script src="js/vendor/angular.js"></script>
         -->
+
+        <script src="js/vendor/plotly.js"></script>
+
         <script src="lib/angular/js/angular.min.js"></script>
         <script src="lib/angular-gridster/js/angular-gridster.min.js"></script>
         <script src="lib/moment/js/moment.min.js"></script>
@@ -257,6 +260,7 @@
         <script src="js/directives/map.js"></script>
         <script src="js/directives/newsfeed.js"></script>
         <script src="js/directives/optionsMenu.js"></script>
+        <script src="js/directives/plotlyGraph.js"></script>
         <script src="js/directives/poweredByNeon.js"></script>
         <script src="js/directives/queryResultsTable.js"></script>
         <script src="js/directives/removeDataset.js"></script>

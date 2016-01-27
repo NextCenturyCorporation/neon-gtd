@@ -36,7 +36,7 @@ function($scope, $timeout, $location, config, datasets, themeService, connection
     };
 
     $scope.hideNavbarItems = config.hideNavbarItems;
-    $scope.showFilterStatusTray = config.showFilterStatusTray;
+    $scope.hideFilterStatusTray = config.hideFilterStatusTray;
 
     $scope.hideAddVisualizationsButton = config.hideAddVisualizationsButton;
     $scope.hideAdvancedOptions = config.hideAdvancedOptions;
