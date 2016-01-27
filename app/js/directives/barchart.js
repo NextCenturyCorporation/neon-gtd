@@ -212,22 +212,31 @@ function(external, connectionService, datasetService, errorNotificationService, 
                         tags: ["filter-change", "barchart"]
                     });
 
-                    if($scope.options.attrX && $scope.options.attrX.columnName && $scope.filterSet) {
-                        var filter = {
-                            databaseName: $scope.options.database.name,
-                            tableName: $scope.options.table.name,
-                            whereClause: createFilterClauseForXAxis({
-                                        database: $scope.options.database.name,
-                                        table: $scope.options.table.name
-                                    }, $scope.options.attrX.columnName)
-                        };
-                        if(!filterService.getFilterKeyForFilter(filter)) {
-                            $scope.chart.clearSelectedBar();
-                            clearFilterSet();
-                        }
-                    }
-
+                    updateFilterSet();
                     queryForData(false);
+                }
+            };
+
+            /*
+             * Updates the filter set with any matching filters found.
+             * @method updateFilterSet
+             * @private
+             */
+            var updateFilterSet = function() {
+                if(datasetService.isFieldValid($scope.options.attrX)) {
+                    var filter = filterService.getFilter($scope.options.database.name, $scope.options.table.name, [$scope.options.attrX.columnName]);
+
+                    if(filter && filterService.hasSingleClause(filter)) {
+                        $scope.filterSet = {
+                            key: filter.filter.whereClause.lhs,
+                            value: filter.filter.whereClause.rhs,
+                            database: $scope.options.database.name,
+                            table: $scope.options.table.name
+                        };
+                    } else if(!filter && $scope.filterSet) {
+                        $scope.chart.clearSelectedBar();
+                        clearFilterSet();
+                    }
                 }
             };
 
@@ -252,20 +261,8 @@ function(external, connectionService, datasetService, errorNotificationService, 
                     }
                 }
                 $scope.updateTables(function() {
-                    if($scope.options.database && $scope.options.database.name && $scope.options.table && $scope.options.table.name &&
-                        datasetService.isFieldValid($scope.options.attrX)) {
-                        var filter = filterService.getFilter($scope.options.database.name, $scope.options.table.name,
-                            [$scope.options.attrX.columnName]);
-                        if(filter) {
-                            if(filter.filter.whereClause.type === "where") {
-                                $scope.filterSet = {
-                                    key: filter.filter.whereClause.lhs,
-                                    value: filter.filter.whereClause.rhs,
-                                    database: $scope.options.database.name,
-                                    table: $scope.options.table.name
-                                };
-                            }
-                        }
+                    if($scope.options.database && $scope.options.database.name && $scope.options.table && $scope.options.table.name) {
+                        updateFilterSet();
                     }
                     queryForData(true);
                 });
@@ -314,16 +311,11 @@ function(external, connectionService, datasetService, errorNotificationService, 
                     .groupBy($scope.options.attrX);
 
                 if($scope.filterSet && $scope.filterSet.key && $scope.filterSet.value) {
-                    var filter = {
-                        databaseName: $scope.options.database.name,
-                        tableName: $scope.options.table.name,
-                        whereClause: createFilterClauseForXAxis({
-                                    database: $scope.options.database.name,
-                                    table: $scope.options.table.name
-                                }, $scope.options.attrX.columnName)
-                    };
-
-                    query.ignoreFilters([filterService.getFilterKeyForFilter(filter)]);
+                    var filterClause = createFilterClauseForXAxis({
+                                database: $scope.options.database.name,
+                                table: $scope.options.table.name
+                            }, $scope.options.attrX.columnName);
+                    query.ignoreFilters([filterService.getFilterKey($scope.options.database.name, $scope.options.table.name, filterClause)]);
                 }
 
                 var queryType;

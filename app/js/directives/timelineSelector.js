@@ -603,7 +603,6 @@ function($interval, $filter, external, connectionService, datasetService, errorN
                 $scope.messenger.subscribe(datasetService.UPDATE_DATA_CHANNEL, function() {
                     queryForChartData();
                 });
-                $scope.messenger.subscribe(datasetService.DATE_CHANGED_CHANNEL, onDateChanged);
 
                 $scope.exportID = exportService.register($scope.makeTimelineSelectorExportObject);
                 visualizationService.register($scope.bindStateId, bindFields);
@@ -641,10 +640,6 @@ function($interval, $filter, external, connectionService, datasetService, errorN
              * @methd replaceDateFilters
              */
             var replaceDateFilters = function(showInvalidDates, callback) {
-                if(($scope.brush === datasetService.getDateBrushExtent($scope.options.database.name, $scope.options.table.name, $scope.options.dateField.columnName)) && !showInvalidDates) {
-                    return;
-                }
-
                 var filterText = (showInvalidDates ? "Invalid Dates" :
                     $scope.formatStartDate(getFilterStartDate()) + " to " + $scope.formatEndDate(getFilterEndDate()));
 
@@ -659,8 +654,6 @@ function($interval, $filter, external, connectionService, datasetService, errorN
                         if(callback) {
                             callback();
                         }
-                        var relations = datasetService.getRelations($scope.options.database.name, $scope.options.table.name, [$scope.options.dateField.columnName]);
-                        datasetService.setDateBrushExtentForRelations(relations, $scope.brush);
                     }
                 );
             };
@@ -729,26 +722,6 @@ function($interval, $filter, external, connectionService, datasetService, errorN
             };
 
             /**
-             * Returns whether the added or removed filter in the given message is a date filter on this timeline's date field.
-             * @param {Object} message
-             * @method isDateFiltersChangedMessage
-             * @return {Boolean}
-             * @private
-             */
-            var isDateFiltersChangedMessage = function(message) {
-                var whereClauses;
-                if(message.addedFilter.whereClause) {
-                    whereClauses = message.addedFilter.whereClause.whereClauses;
-                } else if(message.removedFilter.whereClause) {
-                    whereClauses = message.removedFilter.whereClause.whereClauses;
-                }
-                if(whereClauses && whereClauses.length === 2 && whereClauses[0].lhs === $scope.options.dateField.columnName && whereClauses[1].lhs === $scope.options.dateField.columnName) {
-                    return true;
-                }
-                return false;
-            };
-
-            /**
              * Event handler for filter changed events issued over Neon's messaging channels.
              * @param {Object} message A Neon filter changed message.
              * @method onFiltersChanged
@@ -756,35 +729,6 @@ function($interval, $filter, external, connectionService, datasetService, errorN
              */
             var onFiltersChanged = function(message) {
                 if(message.addedFilter && message.addedFilter.databaseName === $scope.options.database.name && message.addedFilter.tableName === $scope.options.table.name) {
-                    // If the filter changed event was triggered by a change in the global date filter, ignore the filter changed event.
-                    // We don't need to re-query and we'll update the brush extent in response to the date changed event.
-                    if($scope.options.dateField.columnName && $scope.brush.length >= 2 && message.type === "REMOVE") {
-                        var filter = {
-                            databaseName: $scope.options.database.name,
-                            tableName: $scope.options.table.name
-                        };
-                        if($scope.showInvalidDates) {
-                            filter.whereClause = createFilterClauseForInvalidDates({
-                                    database: $scope.options.database.name,
-                                    table: $scope.options.table.name
-                                }, $scope.options.dateField.columnName
-                            );
-                        } else {
-                            filter.whereClause = createFilterClauseForDate({
-                                    database: $scope.options.database.name,
-                                    table: $scope.options.table.name
-                                }, $scope.options.dateField.columnName
-                            );
-                        }
-                        if(!filterService.getFilterKeyForFilter(filter)) {
-                            var relations = datasetService.getRelations($scope.options.database.name, $scope.options.table.name, [$scope.options.dateField.columnName]);
-                            datasetService.removeDateBrushExtentForRelations(relations);
-                            $scope.brush = [];
-                        }
-                    } else if(isDateFiltersChangedMessage(message)) {
-                        return;
-                    }
-
                     XDATA.userALE.log({
                         activity: "alter",
                         action: "query",
@@ -795,23 +739,30 @@ function($interval, $filter, external, connectionService, datasetService, errorN
                         source: "system",
                         tags: ["filter-change", "timeline"]
                     });
-
+                    updateBrush();
                     queryForChartData();
                 }
             };
 
-            /**
-             * Event handler for date changed events issued over Neon's messaging channels.
-             * @param {Object} message A Neon date changed message.
-             * @method onDateChanged
+            /*
+             * Updates the brush with any matching filters found.
+             * @method updateBrush
              * @private
              */
-            var onDateChanged = function(message) {
-                if($scope.options.database.name === message.databaseName && $scope.options.table.name === message.tableName) {
-                    if(datasetService.isFieldValid($scope.options.dateField) && message.fieldNames.indexOf($scope.options.dateField.columnName) >= 0 && $scope.brush !== message.brushExtent) {
-                        $scope.brush = message.brushExtent;
-                        $scope.extentDirty = true;
-                        updateChartTimesAndTotal();
+            var updateBrush = function() {
+                if(datasetService.isFieldValid($scope.options.dateField)) {
+                    var filter = filterService.getFilter($scope.options.database.name, $scope.options.table.name, [$scope.options.dateField.columnName]);
+
+                    if(filter && filterService.hasMultipleClauses(filter) && filterService.getMultipleClausesLength(filter) === 2) {
+                        $scope.loadingSavedFilter = true;
+                        $scope.brush = [
+                            new Date(filter.filter.whereClause.whereClauses[0].rhs),
+                            new Date(filter.filter.whereClause.whereClauses[1].rhs)
+                        ];
+                        setDateTimePickerStart($scope.brush[0]);
+                        setDateTimePickerEnd($scope.brush[1]);
+                    } else if(!filter && $scope.brush && $scope.brush.length) {
+                        $scope.brush = [];
                     }
                 }
             };
@@ -838,20 +789,8 @@ function($interval, $filter, external, connectionService, datasetService, errorN
                 }
 
                 $scope.updateTables(function() {
-                    if($scope.options.database && $scope.options.database.name && $scope.options.table && $scope.options.table.name &&
-                        datasetService.isFieldValid($scope.options.dateField)) {
-                        var filter = filterService.getFilter($scope.options.database.name, $scope.options.table.name, [$scope.options.dateField.columnName]);
-                        if(filter) {
-                            if(filter.filter.whereClause.type === "and" && filter.filter.whereClause.whereClauses.length === 2) {
-                                $scope.loadingSavedFilter = true;
-                                $scope.brush = [
-                                    new Date(filter.filter.whereClause.whereClauses[0].rhs),
-                                    new Date(filter.filter.whereClause.whereClauses[1].rhs)
-                                ];
-                                setDateTimePickerStart($scope.brush[0]);
-                                setDateTimePickerEnd($scope.brush[1]);
-                            }
-                        }
+                    if($scope.options.database && $scope.options.database.name && $scope.options.table && $scope.options.table.name) {
+                        updateBrush();
                     }
                     queryForChartData();
                 });
@@ -895,13 +834,6 @@ function($interval, $filter, external, connectionService, datasetService, errorN
                 $scope.referenceEndDate = undefined;
                 $scope.data = [];
                 $scope.noData = true;
-
-                var globalBrushExtent = datasetService.isFieldValid($scope.options.dateField) ? datasetService.getDateBrushExtent($scope.options.database.name, $scope.options.table.name, $scope.options.dateField.columnName) : [];
-                if(globalBrushExtent.length && $scope.brush !== globalBrushExtent) {
-                    $scope.brush = globalBrushExtent;
-                    $scope.extentDirty = true;
-                }
-
                 queryForChartData();
             };
 
@@ -977,22 +909,19 @@ function($interval, $filter, external, connectionService, datasetService, errorN
                 queryGroup.addQuery(queryInvalidDates);
 
                 if($scope.brush.length >= 2) {
-                    var filter = {
-                        databaseName: $scope.options.database.name,
-                        tableName: $scope.options.table.name
-                    };
+                    var filterClause;
                     if($scope.invalidDatesFilter) {
-                        filter.whereClause = createFilterClauseForInvalidDates({
+                        filterClause = createFilterClauseForInvalidDates({
                             database: $scope.options.database.name,
                             table: $scope.options.table.name
                         }, $scope.options.dateField.columnName);
                     } else {
-                        filter.whereClause = createFilterClauseForDate({
+                        filterClause = createFilterClauseForDate({
                             database: $scope.options.database.name,
                             table: $scope.options.table.name
                         }, $scope.options.dateField.columnName);
                     }
-                    queryGroup.ignoreFilters([filterService.getFilterKeyForFilter(filter)]);
+                    queryGroup.ignoreFilters([filterService.getFilterKey($scope.options.database.name, $scope.options.table.name, filterClause)]);
                 }
 
                 XDATA.userALE.log({
@@ -1625,10 +1554,7 @@ function($interval, $filter, external, connectionService, datasetService, errorN
                     setDateTimePickerStart($scope.bucketizer.getStartDate());
                     setDateTimePickerEnd($scope.bucketizer.getEndDate());
                 }
-                var relations = datasetService.getRelations($scope.options.database.name, $scope.options.table.name, [$scope.options.dateField.columnName]);
-                filterService.removeFilter($scope.options.database.name, $scope.options.table.name, [$scope.options.dateField.columnName], function() {
-                    datasetService.removeDateBrushExtentForRelations(relations);
-                });
+                filterService.removeFilter($scope.options.database.name, $scope.options.table.name, [$scope.options.dateField.columnName]);
             };
 
             /**

@@ -225,23 +225,33 @@ linksPopupService, themeService, translationService, visualizationService, $time
                         tags: ["filter-change", "tag-cloud"]
                     });
 
-                    if($scope.options.tagField && $scope.options.tagField.columnName && $scope.filterTags.length) {
-                        var filter = {
-                            databaseName: $scope.options.database.name,
-                            tableName: $scope.options.table.name,
-                            whereClause: createFilterClauseForTags({
-                                        database: $scope.options.database.name,
-                                        table: $scope.options.table.name
-                                    }, $scope.options.tagField.columnName)
-                        };
-                        if(!filterService.getFilterKeyForFilter(filter)) {
-                            linksPopupService.deleteLinks($scope.visualizationId);
-                            $scope.showFilter = false;
-                            $scope.filterTags = [];
-                        }
-                    }
-
+                    updateFilterTags();
                     queryForTags();
+                }
+            };
+
+            /*
+             * Updates the filter tags with any matching filters found.
+             * @method updateFilterTags
+             * @private
+             */
+            var updateFilterTags = function() {
+                if(datasetService.isFieldValid($scope.options.tagField)) {
+                    var filter = filterService.getFilter($scope.options.database.name, $scope.options.table.name, [$scope.options.tagField.columnName]);
+
+                    if(filter) {
+                        if(filterService.hasSingleClause(filter)) {
+                            $scope.addTagFilter(filter.filter.whereClause.rhs, filter.filter.whereClause.rhs);
+                        } else {
+                            _.each(filter.filter.whereClause.whereClauses, function(clause) {
+                                $scope.addTagFilter(clause.rhs, clause.rhs);
+                            });
+                        }
+                    } else if(!filter && !$scope.filterTags.length) {
+                        linksPopupService.deleteLinks($scope.visualizationId);
+                        $scope.showFilter = false;
+                        $scope.filterTags = [];
+                    }
                 }
             };
 
@@ -266,18 +276,8 @@ linksPopupService, themeService, translationService, visualizationService, $time
                     }
                 }
                 $scope.updateTables(function() {
-                    if($scope.options.database && $scope.options.database.name && $scope.options.table && $scope.options.table.name &&
-                        datasetService.isFieldValid($scope.options.tagField)) {
-                        var filter = filterService.getFilter($scope.options.database.name, $scope.options.table.name, [$scope.options.tagField.columnName]);
-                        if(filter) {
-                            if(filter.filter.whereClause.type === "where") {
-                                $scope.addTagFilter(filter.filter.whereClause.rhs, filter.filter.whereClause.rhs);
-                            } else {
-                                _.each(filter.filter.whereClause.whereClauses, function(clause) {
-                                    $scope.addTagFilter(clause.rhs, clause.rhs);
-                                });
-                            }
-                        }
+                    if($scope.options.database && $scope.options.database.name && $scope.options.table && $scope.options.table.name) {
+                        updateFilterTags();
                     }
                     queryForTags();
                 });

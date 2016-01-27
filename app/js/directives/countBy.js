@@ -184,19 +184,8 @@ exportService, linksPopupService, themeService, visualizationService) {
                 }
 
                 updateTables(function() {
-                    if($scope.active.database && $scope.active.database.name && $scope.active.table && $scope.active.table.name &&
-                        datasetService.isFieldValid($scope.active.dataField)) {
-                        var filter = filterService.getFilter($scope.active.database.name, $scope.active.table.name, [$scope.active.dataField.columnName]);
-                        if(filter) {
-                            if(filter.filter.whereClause.type === "where") {
-                                $scope.filterSet = {
-                                    key: filter.filter.whereClause.lhs,
-                                    value: filter.filter.whereClause.rhs,
-                                    database: filter.filter.databaseName,
-                                    table: filter.filter.tableName
-                                };
-                            }
-                        }
+                    if($scope.active.database && $scope.active.database.name && $scope.active.table && $scope.active.table.name) {
+                        updateFilterSet();
                     }
                     queryForData();
                 });
@@ -406,15 +395,11 @@ exportService, linksPopupService, themeService, visualizationService) {
                 var query = new neon.query.Query().selectFrom($scope.active.database.name, $scope.active.table.name).groupBy($scope.active.dataField.columnName).where(whereNotNull);
 
                 if($scope.filterSet && $scope.filterSet.key && $scope.filterSet.value) {
-                    var filter = {
-                        databaseName: $scope.active.database.name,
-                        tableName: $scope.active.table.name,
-                        whereClause: createFilterClauseForCount({
-                                    database: $scope.active.database.name,
-                                    table: $scope.active.table.name
-                                }, $scope.active.dataField.columnName)
-                    };
-                    query.ignoreFilters([filterService.getFilterKeyForFilter(filter)]);
+                    var filterClause = createFilterClauseForCount({
+                                database: $scope.active.database.name,
+                                table: $scope.active.table.name
+                            }, $scope.active.dataField.columnName);
+                    query.ignoreFilters([filterService.getFilterKey($scope.active.database.name, $scope.active.table.name, filterClause)]);
                 }
 
                 if($scope.active.aggregation === "count") {
@@ -464,6 +449,29 @@ exportService, linksPopupService, themeService, visualizationService) {
                 });
             };
 
+            /*
+             * Updates the filter set with any matching filters found.
+             * @method updateFilterSet
+             * @private
+             */
+            var updateFilterSet = function() {
+                if(datasetService.isFieldValid($scope.active.dataField)) {
+                    var filter = filterService.getFilter($scope.active.database.name, $scope.active.table.name, [$scope.active.dataField.columnName]);
+
+                    if(filter && filterService.hasSingleClause(filter)) {
+                        $scope.filterSet = {
+                            key: filter.filter.whereClause.lhs,
+                            value: filter.filter.whereClause.rhs,
+                            database: filter.filter.databaseName,
+                            table: filter.filter.tableName
+                        };
+                    } else if(!filter && $scope.filterSet) {
+                        $scope.gridOptions.api.deselectAll();
+                        $scope.filterSet = undefined;
+                    }
+                }
+            };
+
             /**
              * Event handler for filter changed events issued over Neon's messaging channels.
              * @param {Object} message A Neon filter changed message.
@@ -483,21 +491,7 @@ exportService, linksPopupService, themeService, visualizationService) {
                         tags: ["filter-change", "datagrid"]
                     });
 
-                    if($scope.active.dataField && $scope.active.dataField.columnName && $scope.filterSet) {
-                        var filter = {
-                            databaseName: $scope.active.database.name,
-                            tableName: $scope.active.table.name,
-                            whereClause: createFilterClauseForCount({
-                                        database: $scope.active.database.name,
-                                        table: $scope.active.table.name
-                                    }, $scope.active.dataField.columnName)
-                        };
-                        if(!filterService.getFilterKeyForFilter(filter)) {
-                            $scope.gridOptions.api.deselectAll();
-                            $scope.filterSet = undefined;
-                        }
-                    }
-
+                    updateFilterSet();
                     queryForData();
                 }
             };

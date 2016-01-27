@@ -121,16 +121,30 @@ function(connectionService, datasetService, errorNotificationService, filterServ
                 // Check if the event affects the database/table that this visualization is using; if so, requery for the filtered data.
                 // Please note that all "filters changed" events (add, replace, or remove) will contain an addedFilter object with databaseName and tableName properties.
                 if(message.addedFilter && message.addedFilter.databaseName === $scope.options.database.name && message.addedFilter.tableName === $scope.options.table.name) {
-                    if(message.type === "REMOVE") {
-                        var filter = createFilterClause({
-                            databaseName: $scope.options.database.name,
-                            tableName: $scope.options.table.name
-                        }, $scope.options.field.columnName);
-                        if(filterService.areClausesEqual(message.removedFilter.whereClause, filter)) {
-                            $scope.filter = undefined;
-                        }
-                    }
+                    updateFilterSet();
                     queryForData();
+                }
+            };
+
+            /*
+             * Updates the filter set with any matching filters found.
+             * @method updateFilterSet
+             * @private
+             */
+            var updateFilterSet = function() {
+                if(datasetService.isFieldValid($scope.options.field)) {
+                    var filter = filterService.getFilter($scope.options.database.name, $scope.options.table.name, [$scope.options.field.columnName]);
+
+                    if(filter && filterService.hasSingleClause(filter)) {
+                        $scope.filter = {
+                            field: filter.filter.whereClause.lhs,
+                            value: filter.filter.whereClause.rhs,
+                            database: $scope.options.database.name,
+                            table: $scope.options.table.name
+                        };
+                    } else if(!filter && $scope.filter) {
+                        $scope.filter = undefined;
+                    }
                 }
             };
 
@@ -158,20 +172,8 @@ function(connectionService, datasetService, errorNotificationService, filterServ
                 }
 
                 $scope.updateTables(function() {
-                    if($scope.options.database && $scope.options.database.name && $scope.options.table && $scope.options.table.name &&
-                        datasetService.isFieldValid($scope.options.field)) {
-                        var filter = filterService.getFilter($scope.options.database.name, $scope.options.table.name,
-                            [$scope.options.field.columnName]);
-                        if(filter) {
-                            if(filter.filter.whereClause.type === "where") {
-                                $scope.filter = {
-                                    field: filter.filter.whereClause.lhs,
-                                    value: filter.filter.whereClause.rhs,
-                                    database: $scope.options.database.name,
-                                    table: $scope.options.table.name
-                                };
-                            }
-                        }
+                    if($scope.options.database && $scope.options.database.name && $scope.options.table && $scope.options.table.name) {
+                        updateFilterSet();
                     }
                     queryForData();
                 });
@@ -290,18 +292,13 @@ function(connectionService, datasetService, errorNotificationService, filterServ
                 query.where($scope.options.field.columnName, "!=", null);
 
                 if($scope.filter) {
-                    var filter = {
-                        databaseName: $scope.options.database.name,
-                        tableName: $scope.options.table.name,
-                        whereClause: createFilterClause({
-                                database: $scope.options.database.name,
-                                table: $scope.options.table.name
-                            }, $scope.options.field.columnName
-                        )
-                    };
+                    var filterClause = createFilterClause({
+                            database: $scope.options.database.name,
+                            table: $scope.options.table.name
+                        }, $scope.options.field.columnName);
 
                     // Some visualizations will ignore their own filters and display unfiltered values differently than filtered values (like changing their color or font).
-                    query.ignoreFilters([filterService.getFilterKeyForFilter(filter)]);
+                    query.ignoreFilters([filterService.getFilterKey($scope.options.database.name, $scope.options.table.name, filterClause)]);
                 }
 
                 return query;

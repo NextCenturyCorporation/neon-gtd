@@ -161,7 +161,7 @@ angular.module('neonDemo.directives')
              */
             var displaySavedFilters = function() {
                 _.each(filterService.getAllFilters(), function(filter) {
-                    if(filter.filter.filterName.indexOf("Filter Builder") === 0) {
+                    if(filter.filter.filterName.indexOf(filterService.filterBuildPrefix) === 0) {
                         $scope.instanceId = filter.id;
                         $scope.filterTable.setFilterKey(filter.filter.databaseName, filter.filter.tableName, $scope.instanceId);
 
@@ -171,13 +171,13 @@ angular.module('neonDemo.directives')
                         $scope.fields = datasetService.getFields(filter.filter.databaseName, filter.filter.tableName);
                         $scope.selectedFieldIsDate = false;
 
-                        if(filter.filter.whereClause.type === "where") {
+                        if(filterService.hasSingleClause(filter)) {
                             $scope.selectedField = datasetService.findField($scope.fields, filter.filter.whereClause.lhs);
                             $scope.selectedOperator = filter.filter.whereClause.operator;
                             $scope.selectedValue = filter.filter.whereClause.rhs;
                             $scope.addFilterRow($scope.instanceId);
                         } else {
-                            $scope.andClauses = (filter.filter.whereClause.type === "and") ? true : false;
+                            $scope.andClauses = (filterService.hasMultipleClauses(filter) ? true : false);
                             _.each(filter.filter.whereClause.whereClauses, function(clause) {
                                 $scope.selectedField = datasetService.findField($scope.fields, clause.lhs);
                                 $scope.selectedOperator = clause.operator;
@@ -501,9 +501,9 @@ angular.module('neonDemo.directives')
                 var filter = filterObject.filter;
 
                 if(filter.whereClause && filter.whereClause.lhs) {
-                    filter.name("Filter Builder: " + filter.whereClause.lhs + " " + filter.whereClause.operator + " " + filter.whereClause.rhs);
+                    filter.name(filterService.filterBuildPrefix + ": " + filter.whereClause.lhs + " " + filter.whereClause.operator + " " + filter.whereClause.rhs);
                 } else if(filter.whereClause && filter.whereClause.whereClauses) {
-                    filter.name("Filter Builder: " + filter.tableName + " - " + filter.whereClause.whereClauses.length + " filters");
+                    filter.name(filterService.filterBuildPrefix + ": " + filter.tableName + " - " + filter.whereClause.whereClauses.length + " filters");
                 }
 
                 var databaseName = filterObject.databaseName;

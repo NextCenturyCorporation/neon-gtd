@@ -34,9 +34,6 @@ angular.module("neonDemo.services")
     // Use the Dataset Service to save settings for specific databases/tables and publish messages to all visualizations if those settings change.
     service.messenger = new neon.eventing.Messenger();
 
-    // The Dataset Service saves the brush extent used to filter the date for each database/table.
-    service.DATE_CHANGED_CHANNEL = "date_changed";
-
     // The Dataset Service may ask the visualizations to update their data.
     service.UPDATE_DATA_CHANNEL = "update_data";
 
@@ -576,127 +573,6 @@ angular.module("neonDemo.services")
      */
     service.setLinkyConfig = function(config) {
         service.dataset.linkyConfig = config;
-    };
-
-    /**
-     * Generates and returns a date filter key for the database and table with the given names.
-     * @param {String} databaseName
-     * @param {String} tableName
-     * @method generateDateFilterKey
-     * @private
-     * @return {String}
-     */
-    var generateDateFilterKey = function(databaseName, tableName) {
-        return "date-" + databaseName + "-" + tableName + "-" + uuid();
-    };
-
-    /**
-     * Returns the map of date filter keys for the database, table, and field in the active dataset with the given names.
-     * @param {String} databaseName
-     * @param {String} tableName
-     * @param {String} fieldName
-     * @method getDateFilterKeys
-     * @return {Object}
-     */
-    service.getDateFilterKeys = function(databaseName, tableName, fieldName) {
-        // If the date filter keys for the given database/table/field have already been generated, return the saved object.
-        if(service.dataset.dateFilterKeys[databaseName][tableName][fieldName]) {
-            return service.dataset.dateFilterKeys[databaseName][tableName][fieldName];
-        }
-
-        var dateFilterKeys = {};
-        var relations = service.getRelations(databaseName, tableName, [fieldName]);
-
-        // Generate the date filter keys for the given database/table/field and each of its relations.
-        relations.forEach(function(relation) {
-            dateFilterKeys[relation.database] = dateFilterKeys[relation.database] || {};
-            dateFilterKeys[relation.database][relation.table] = dateFilterKeys[relation.database][relation.table] || generateDateFilterKey(relation.database, relation.table);
-        });
-
-        // Save the generated date filter keys for the given database/table/field and each of its relations.
-        relations.forEach(function(relation) {
-            // Each relation will only contain a single field corresponding to the date field.
-            relation.fields[0].related.forEach(function(relatedFieldName) {
-                service.dataset.dateFilterKeys[relation.database][relation.table][relatedFieldName] = dateFilterKeys;
-            });
-        });
-
-        return dateFilterKeys;
-    };
-
-    /**
-     * Publishes a date changed message with the given database name, table name, field names, and brush extent.
-     * @param {String} databaseName
-     * @param {String} tableName
-     * @param {Array} fieldNames
-     * @param {Array} brushExtent
-     * @method publishDateChanged
-     * @private
-     */
-    var publishDateChanged = function(databaseName, tableName, fieldNames, brushExtent) {
-        service.messenger.publish(service.DATE_CHANGED_CHANNEL, {
-            databaseName: databaseName,
-            tableName: tableName,
-            fieldNames: fieldNames,
-            brushExtent: brushExtent
-        });
-    };
-
-    /**
-     * Sets the date brush extent for the databases and tables in the given relations to the given brush extent and publishes a date changed message for each.
-     * @param {Array} relations
-     * @param {Array} brushExtent
-     * @method setDateBrushExtentForRelations
-     */
-    service.setDateBrushExtentForRelations = function(relations, brushExtent) {
-        relations.forEach(function(relation) {
-            var table = service.getTableWithName(relation.database, relation.table);
-            if(table) {
-                table.dateBrushExtent = table.dateBrushExtent || {};
-                // Each relation will only contain a single field corresponding to the date field.
-                relation.fields[0].related.forEach(function(relatedFieldName) {
-                    table.dateBrushExtent[relatedFieldName] = brushExtent;
-                });
-                publishDateChanged(relation.database, relation.table, relation.fields[0].related, brushExtent);
-            }
-        });
-    };
-
-    /**
-     * Returns the date brush extent for the database, table, and fields with the given names or an empty array if no brush extent has been set.
-     * @param {String} databaseName
-     * @param {String} tableName
-     * @param {String} fieldName
-     * @method getDateBrushExtent
-     * @return {Array}
-     */
-    service.getDateBrushExtent = function(databaseName, tableName, fieldName) {
-        var table = service.getTableWithName(databaseName, tableName);
-        var brushExtent = ((table && table.dateBrushExtent) ? table.dateBrushExtent[fieldName] : []) || [];
-        if(brushExtent.length === 2) {
-            brushExtent[0] = (!_.isDate(brushExtent[0]) ? new Date(brushExtent[0]) : brushExtent[0]);
-            brushExtent[1] = (!_.isDate(brushExtent[1]) ? new Date(brushExtent[1]) : brushExtent[1]);
-        }
-        return brushExtent;
-    };
-
-    /**
-     * Removes the date brush extent for the databases and tables in the given relations and publishes a date changed message for each.
-     * @param {Array} relations
-     * @method removeDateBrushExtentForRelations
-     */
-    service.removeDateBrushExtentForRelations = function(relations) {
-        relations.forEach(function(relation) {
-            var table = service.getTableWithName(relation.database, relation.table);
-            if(table) {
-                table.dateBrushExtent = table.dateBrushExtent || {};
-                // Each relation will only contain a single field corresponding to the date field.
-                relation.fields[0].related.forEach(function(relatedFieldName) {
-                    table.dateBrushExtent[relatedFieldName] = [];
-                });
-                publishDateChanged(relation.database, relation.table, relation.fields[0].related, []);
-            }
-        });
     };
 
     /**

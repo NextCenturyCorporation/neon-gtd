@@ -512,7 +512,7 @@ angular.module('neonDemo.directives')
                         tags: ["filter-change", "map"]
                     });
 
-                    if(message.type === "REMOVE") {
+                    if(message.type === "REMOVE" && $scope.extent && _.keys($scope.extent).length) {
                         var layersToRemove = [];
                         _.each($scope.options.layers, function(layer) {
                             if(layer.database === message.removedFilter.databaseName && layer.table === message.removedFilter.tableName) {

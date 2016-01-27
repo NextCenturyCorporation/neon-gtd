@@ -262,7 +262,9 @@ function($location, datasetService, filterService, connectionService, errorNotif
                             dataset: dataset
                         });
                     }, function(response) {
-                        errorNotificationService.showErrorMessage(null, response.responseJSON.error);
+                        if(response.responseJSON) {
+                            errorNotificationService.showErrorMessage(null, response.responseJSON.error);
+                        }
                     });
                 });
             } else {

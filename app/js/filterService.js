@@ -21,8 +21,8 @@ angular.module("neonDemo.services")
 
     service.filters = [];
 
-    // The beginning of a filter name to ignore when searching for filters
-    service.ignoreFilterName = "Filter Builder";
+    // The beginning of the filter builder filter name to ignore when searching for filters
+    service.filterBuildPrefix = "Filter Builder";
 
     service.messenger = new neon.eventing.Messenger();
 
@@ -31,14 +31,16 @@ angular.module("neonDemo.services")
      * @param {Function} [successCallback] Optional success callback
      * @method getFilterState
      */
-    service.getFilterState = function(successCallback) {
+    service.getFilterState = function(successCallback, errorCallback) {
         neon.query.Filter.getFilterState('*', '*', function(filters) {
             service.filters = filters;
             if(successCallback) {
                 successCallback();
             }
         }, function(response) {
-            if(response.responseJSON) {
+            if(errorCallback) {
+                errorCallback(response);
+            } else if(response.responseJSON) {
                 errorNotificationService.showErrorMessage(null, response.responseJSON.error);
             }
         });
@@ -152,19 +154,21 @@ angular.module("neonDemo.services")
     };
 
     /*
-     * Finds the filter key that matches the given filter.
-     * @param {Object} filter The filter to find in the list of set filters
+     * Finds the filter key that matches the given database, table, and filter clause.
+     * @param {String} databaseName The name of the database
+     * @param {String} tableName The name of the table
+     * @param {Object} filterClause The filter clause
      * @param {Boolean} includeAllFilters If false, ignores any filters whose name starts with the
-     * ignoreFilterName variable. Otherwise it searches all filters.
-     * @method getFilterKeyForFilter
+     * filterBuildPrefix variable. Otherwise it searches all filters.
+     * @method getFilterKey
      * @return The filter key matching the given filter, or undefined if no filter was found.
      */
-    service.getFilterKeyForFilter = function(filter, includeAllFilters) {
+    service.getFilterKey = function(databaseName, tableName, filterClause, includeAllFilters) {
         for(var i = 0; i < service.filters.length; i++) {
-            if(filter.databaseName === service.filters[i].filter.databaseName &&
-                filter.tableName === service.filters[i].filter.tableName &&
-                (includeAllFilters || service.filters[i].filter.filterName.indexOf(service.ignoreFilterName) !== 0) &&
-                service.areClausesEqual(service.filters[i].filter.whereClause, filter.whereClause)) {
+            if(databaseName === service.filters[i].filter.databaseName &&
+                tableName === service.filters[i].filter.tableName &&
+                (includeAllFilters || service.filters[i].filter.filterName.indexOf(service.filterBuildPrefix) !== 0) &&
+                service.areClausesEqual(service.filters[i].filter.whereClause, filterClause)) {
                 return service.filters[i].id;
             }
         }
@@ -185,7 +189,7 @@ angular.module("neonDemo.services")
      * @param {String} table The table name
      * @param {Array} attributes The list of field names
      * @param {Boolean} includeAllFilters If false, ignores any filters whose name starts with the
-     * ignoreFilterName variable. Otherwise it searches all filters.
+     * filterBuildPrefix variable. Otherwise it searches all filters.
      * @method getFilter
      * @return The filter that matches the given database, table, and attributes, or undefined if not found.
      */
@@ -204,7 +208,7 @@ angular.module("neonDemo.services")
         };
 
         for(var i = 0; i < service.filters.length; i++) {
-            if((includeAllFilters || service.filters[i].filter.filterName.indexOf(service.ignoreFilterName) !== 0) &&
+            if((includeAllFilters || service.filters[i].filter.filterName.indexOf(service.filterBuildPrefix) !== 0) &&
                 service.filters[i].dataSet.databaseName === database && service.filters[i].dataSet.tableName === table) {
                 if(checkClauses(service.filters[i].filter.whereClause)) {
                     return service.filters[i];
@@ -246,21 +250,33 @@ angular.module("neonDemo.services")
     };
 
     /*
-     * Sets the filter name to ignore when retrieving a filter.
-     * @param {String} filterName
-     * @method setIgnoreFilterName
+     * Returns whether the given filter has a single where clause.
+     * @param {Object} filter The filter clause
+     * @method hasSingleClause
+     * @return {Boolean}
      */
-    service.setIgnoreFilterName = function(filterName) {
-        service.ignoreFilterName = filterName;
+    service.hasSingleClause = function(filter) {
+        return filter.filter.whereClause.type === "where";
     };
 
     /*
-     * Returns the filter name to ignore when retrieving a filter.
-     * @method getIgnoreFilterName
-     * @return {String}
+     * Returns whether the given filter has a multiple where clauses.
+     * @param {Object} filter The filter clause
+     * @method hasMultipleClauses
+     * @return {Boolean}
      */
-    service.getIgnoreFilterName = function() {
-        return service.ignoreFilterName;
+    service.hasMultipleClauses = function(filter) {
+        return filter.filter.whereClause.type === "and" || filter.filter.whereClause.type === "or";
+    };
+
+    /*
+     * If the given filter has multiple clauses, it returns the number of clauses it has. Otherwise, returns 0.
+     * @param {Object} filter The filter clause
+     * @method getMultipleClausesLength
+     * @return {Boolean}
+     */
+    service.getMultipleClausesLength = function(filter) {
+        return (service.hasMultipleClauses(filter) ? filter.filter.whereClause.whereClauses.length : 0);
     };
 
     /*

@@ -239,13 +239,7 @@ function(connectionService, datasetService, errorNotificationService, filterServ
                         .sortBy("count", neon.query.DESCENDING);
 
                     if($scope.filterSet) {
-                        var filter = {
-                            databaseName: $scope.options.database.name,
-                            tableName: $scope.options.table.name,
-                            whereClause: createFilterClauseForId()
-                        };
-
-                        query.ignoreFilters([filterService.getFilterKeyForFilter(filter)]);
+                        query.ignoreFilters([filterService.getFilterKey($scope.options.database.name, $scope.options.table.name, createFilterClauseForId())]);
                     }
 
                     connection.executeQuery(query, function(queryResults) {
