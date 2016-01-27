@@ -3,6 +3,8 @@
         "name": "Earthquakes",
         "datastore": "mongo",
         "hostname": "localhost",
+        "layout": "earthquakes",
+        "connectOnLoad": true,
         "databases": [{
             "name": "test",
             "prettyName": "Test",
@@ -76,41 +78,77 @@
                 }
             }]
         }],
-        "mapLayers": [{
-            "database": "test",
-            "table": "earthquakes",
-            "type": "heatmap",
-            "latitudeMapping": "latitude",
-            "longitudeMapping": "longitude",
-            "limit": 5000,
-            "sizeBy": "mag"
-        }, {
-            "database": "test",
-            "table": "earthquakes",
-            "active":  true,
-            "type": "cluster",
-            "latitudeMapping": "latitude",
-            "longitudeMapping": "longitude",
-            "limit": 5000,
-            "colorBy": "magType",
-            "sizeBy": "mag"
-        }, {
-            "database": "test",
-            "table": "earthquakes",
-            "active":  true,
-            "type": "points",
-            "latitudeMapping": "latitude",
-            "longitudeMapping": "longitude",
-            "limit": 5000,
-            "colorBy": "magType",
-            "sizeBy": "mag"
-        }],
+        "mapLayers": {
+            "myMap1": [{
+                "database": "test",
+                "table": "earthquakes",
+                "type": "heatmap",
+                "latitudeMapping": "latitude",
+                "longitudeMapping": "longitude",
+                "limit": 5000,
+                "sizeBy": "mag"
+            }, {
+                "database": "test",
+                "table": "earthquakes",
+                "active":  true,
+                "type": "cluster",
+                "latitudeMapping": "latitude",
+                "longitudeMapping": "longitude",
+                "limit": 5000,
+                "colorBy": "magType",
+                "sizeBy": "mag"
+            }, {
+                "database": "test",
+                "table": "earthquakes",
+                "active":  true,
+                "type": "points",
+                "latitudeMapping": "latitude",
+                "longitudeMapping": "longitude",
+                "limit": 5000,
+                "colorBy": "magType",
+                "sizeBy": "mag"
+            }]
+        },
+        "lineCharts": {
+            "lineChart1": [
+                {
+                    "database": "test",
+                    "table": "earthquakes",
+                    "active":  true,
+                    "name": "Quakes",
+                    "xAxis": "time",
+                    "aggregation": "sum",
+                    "yAxis": "mag",
+                    "category": "magType"
+                },{
+                    "database": "test",
+                    "table": "earthquakes",
+                    "active":  true,
+                    "name": "Quakes2",
+                    "xAxis": "time",
+                    "aggregation": "count"
+                }
+            ],
+            "lineChart2": [
+                {
+                    "database": "test",
+                    "table": "earthquakes",
+                    "active":  true,
+                    "name": "Quakes",
+                    "xAxis": "time",
+                    "aggregation": "max",
+                    "yAxis": "mag"
+                }
+            ]
+        },
         "mapConfig": {
-            "bounds" : {
-                "top": 90,
-                "bottom": -90,
-                "left": -180,
-                "right": 180
+            "myMap1": {
+                "bounds" : {
+                    "top": 90,
+                    "bottom": -90,
+                    "left": -180,
+                    "right": 180
+                }
             }
         },
         "linkyConfig": {
@@ -138,24 +176,43 @@
     }],
 
     "layouts": {
+
         "default": [{
-            "sizeX": 18,
+            "sizeX": 12,
+            "minSizeX": 8,
+            "sizeY": 7,
+            "minSizeY": 4,
+            "type": "timeline-selector"
+        }, {
+            "sizeX": 12,
+            "sizeY": 7,
+            "type": "map",
+            "bindings": {
+                "bind-config": "'myMap1'"
+            }
+        }, {
+            "sizeX": 12,
+            "sizeY": 6,
+            "type": "query-results-table"
+        }, {
+            "sizeX": 12,
+            "sizeY": 6,
+            "type": "filter-builder"
+        }],
+
+        "earthquakes": [{
+            "sizeX": 24,
             "minSizeX": 12,
             "sizeY": 4,
             "minSizeY": 4,
             "type": "timeline-selector"
         }, {
-            "sizeX": 18,
-            "sizeY": 4,
-            "type": "map"
-        }, {
-            "sizeX": 18,
-            "sizeY": 4,
-            "type": "query-results-table"
-        }, {
-            "sizeX": 18,
-            "sizeY": 4,
-            "type": "filter-builder"
+            "sizeX": 12,
+            "sizeY": 8,
+            "type": "map",
+            "bindings": {
+                "bind-config": "'myMap1'"
+            }
         }, {
             "sizeX": 6,
             "sizeY": 4,
@@ -163,7 +220,10 @@
         }, {
             "sizeX": 6,
             "sizeY": 4,
-            "type": "linechart"
+            "type": "linechart",
+            "bindings": {
+                "bind-config": "'lineChart1'"
+            }
         }, {
             "sizeX": 6,
             "sizeY": 4,
@@ -172,6 +232,23 @@
             "sizeX": 6,
             "sizeY": 4,
             "type": "count-by"
+        }, {
+            "sizeX": 18,
+            "sizeY": 4,
+            "type": "query-results-table"
+        }, {
+            "sizeX": 6,
+            "sizeY": 6,
+            "type": "plotly-graph",
+            "bindings": {
+                "graph-type": "'scattergl'",
+                "bind-attr-x": "'depth'",
+                "bind-attr-y": "'mag'"
+            }
+        }, {
+            "sizeX": 18,
+            "sizeY": 4,
+            "type": "filter-builder"
         }],
 
         "example-with-bindings": [{
@@ -191,6 +268,7 @@
             "sizeY": 4,
             "type": "map",
             "bindings": {
+                "bind-config": "'myMap1'",
                 "bind-title": "'myTitle'",
                 "bind-database": "'myDatabase'",
                 "bind-table": "'myTable'",
@@ -214,13 +292,8 @@
             "sizeY": 4,
             "type": "linechart",
             "bindings": {
-                "bind-title": "'myTitle'",
-                "bind-database": "'myDatabase'",
-                "bind-table": "'myTable'",
-                "bind-date-field": "'date'",
-                "bind-y-axis-field": "'type'",
-                "bind-category-field": "'type'",
-                "bind-aggregation-field": "'count'"
+                "bind-config": "'myLineChart'",
+                "bind-granularity": "'day'"
             }
         }, {
             "sizeX": 6,
@@ -358,6 +431,13 @@
         "type": "gantt-chart",
         "icon": "Gantt64"
     }, {
+        "name": "Scatter Plot",
+        "sizeX": 2,
+        "sizeY": 2,
+        "minSizeY": 1,
+        "type": "plotly-graph",
+        "icon": "ScatterPlot64"
+    }, {
         "name": "Sample",
         "sizeX": 6,
         "sizeY": 4,
@@ -373,7 +453,7 @@
         "hideAddVisualizationsButton": false,
         "hideErrorNotifications": false,
         "hideHeaders": false,
-        "showFilterStatusTray": false,
+        "hideFilterStatusTray": false,
         "hideCloseButton": false,
         "showVideoOnLoad": false,
         "showImport": false,
@@ -418,7 +498,7 @@
     "help": {
         "guide": "",
         "webVideo": "",
-        "localVideo": "",
+        "localVideo": ""
     },
 
     "files": {
@@ -428,5 +508,7 @@
         "layouts": [
             "./config/sample.layout.config.json"
         ]
-    }
+    },
+
+    "theme": "dark-purple"
 }

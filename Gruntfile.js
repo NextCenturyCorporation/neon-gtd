@@ -1,4 +1,18 @@
 'use strict';
+//
+// Copyright 2016 Next Century Corporation
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+//
 
 module.exports = function(grunt) {
     var packageJSON = require('./package.json');
@@ -40,6 +54,8 @@ module.exports = function(grunt) {
                 ignorePath: "app/",
                 // The dependencies for these libraries are added to index.html manually.
                 exclude: [
+                    // Exclude ag-grid.js because it must be included after angular.js and wiredep may not order them correctly.
+                    /ag-grid\.js/,
                     // Exclude angular-gantt because it defines incorrect files in the main of its bower.json file (should be dist/ not assets/).
                     /angular-gantt/,
                     // Exclude javascript-detect-element-resize because it defines its "pure js" lib in the main of its bower.json file and we use its "jquery plugin" lib.
@@ -55,7 +71,6 @@ module.exports = function(grunt) {
                     /opencpu/,
                     /openlayers/,
                     /heatmapjs/,
-                    /slickgrid/,
                     /user-ale/,
                     /rainbowvis.js/
                 ]
@@ -101,7 +116,8 @@ module.exports = function(grunt) {
                         "app/css/*.less",
                         "app/css/directives/*.less",
                         "!app/css/app.less",
-                        "!app/css/variables.less",
+                        "!app/css/theme*.less",
+                        "!app/css/variables*.less",
                         "!app/css/widgetStyle.less"
                     ]
                 }
@@ -111,11 +127,23 @@ module.exports = function(grunt) {
         less: {
             options: {
                 dumpLineNumbers: 'comments',
-                paths: ['app/components']
+                paths: [
+                    'app/components'
+                ]
             },
-            app: {
+            themeDarkGreen: {
                 files: {
-                    'app/css/app.css': 'app/css/app.less'
+                    'app/css/dark-green.css': 'app/css/theme-green-on-dark.less'
+                }
+            },
+            themeLightGreen: {
+                files: {
+                    'app/css/light-green.css': 'app/css/theme-green-on-light.less'
+                }
+            },
+            themeDarkPurple: {
+                files: {
+                    'app/css/dark-purple.css': 'app/css/theme-purple-on-dark.less'
                 }
             }
         },
@@ -123,7 +151,7 @@ module.exports = function(grunt) {
         // Packages all the images into a spritesheet and creates a CSS file for using the sprites.
         sprite: {
             app: {
-                src: ["app/img/*.png", "app/img/visualizations/*.png", "!app/img/neon-dashboard-spritesheet.png"],
+                src: ["app/img/*.png", "app/img/visualizations/*.png", "app/img/visualizations/gray/*.png", "!app/img/neon-dashboard-spritesheet.png"],
                 dest: "app/img/neon-dashboard-spritesheet.png",
                 destCss: "app/css/neon-dashboard-sprites.css"
             }
@@ -194,12 +222,6 @@ module.exports = function(grunt) {
                 src: ["lib/openlayers/OpenLayers.js", "lib/openlayers/theme/default/style.css"],
                 dest: "build/"
             },
-            slickgrid: {
-                expand: true,
-                cwd: "app/lib/slickgrid/",
-                src: ["images/**"],
-                dest: "build/css/"
-            },
             userale: {
                 expand: true,
                 cwd: "app/",
@@ -209,7 +231,7 @@ module.exports = function(grunt) {
             app: {
                 expand: true,
                 cwd: "app/",
-                src: ["index.html", "config/**", "fonts/**", "help/**", "img/Neon_16x16.png", "img/neon-dashboard-spritesheet.png"],
+                src: ["index.html", "config/**", "css/light-*.css", "css/dark-*.css", "fonts/**", "help/**", "img/Neon_16x16.png", "img/neon-dashboard-spritesheet.png"],
                 dest: "build/"
             }
         },
@@ -356,7 +378,7 @@ module.exports = function(grunt) {
     grunt.loadNpmTasks('grunt-wiredep');
 
     grunt.registerTask("bower_install", ["clean:lib", "exec:bower_install", "wiredep"]);
-    grunt.registerTask('compile-less', ['clean:less', 'injector:less', 'less', 'sprite']);
+    grunt.registerTask('compile-less', ['clean:less', 'injector:less', 'less:themeLightGreen', 'less:themeDarkGreen', 'less:themeDarkPurple', 'sprite']);
     grunt.registerTask('saveRevision', function() {
         grunt.event.once('git-describe', function(rev) {
             var date = new Date(Date.now()).toISOString();
@@ -376,7 +398,9 @@ module.exports = function(grunt) {
         'saveRevision',
         'wiredep',
         'injector',
-        'less',
+        'less:themeLightGreen',
+        'less:themeDarkGreen',
+        'less:themeDarkPurple',
         'sprite',
         'useminPrepare',
         'ngtemplates',

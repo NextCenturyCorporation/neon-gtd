@@ -66,8 +66,8 @@ coreMap.Map.Layer.PointsLayer = OpenLayers.Class(OpenLayers.Layer.Vector, {
             this.ClusterClass = new OpenLayers.Class(OpenLayers.Strategy.Cluster, {
                 attribute: null,
                 shouldCluster: function(cluster, feature) {
-                    var clusterVal = cluster.cluster[0].attributes[me.categoryMapping];
-                    var featureVal = feature.attributes[me.categoryMapping];
+                    var clusterVal = me.getValueFromDataElement(me.categoryMapping, cluster.cluster[0].attributes);
+                    var featureVal = me.getValueFromDataElement(me.categoryMapping, feature.attributes);
                     var superProto = OpenLayers.Strategy.Cluster.prototype;
                     return (clusterVal === featureVal && superProto.shouldCluster.apply(this, arguments));
                 },
@@ -103,6 +103,7 @@ coreMap.Map.Layer.PointsLayer = OpenLayers.Class(OpenLayers.Layer.Vector, {
 
         this.visibility = true;
         this.colorScale = d3.scale.ordinal().range(neonColors.LIST);
+        this.getNestedValue = neon.helpers.getNestedValue;
     },
 
     createClusterStyle: function() {
@@ -182,7 +183,7 @@ coreMap.Map.Layer.PointsLayer = OpenLayers.Class(OpenLayers.Layer.Vector, {
         }, {
             context: {
                 fillColor: function(feature) {
-                    return (layer.calculateColor(feature.attributes) || coreMap.Map.Layer.PointsLayer.DEFAULT_COLOR);
+                    return (layer.calculateColor(feature.attributes) || neonColors.DEFAULT);
                 },
                 radius: function(feature) {
                     return (layer.calculateRadius(feature.attributes) || coreMap.Map.Layer.PointsLayer.MIN_RADIUS);
@@ -232,7 +233,7 @@ coreMap.Map.Layer.PointsLayer.prototype.calculateColor = function(element) {
         color = this.colorScale(category);
     } else {
         category = '(Uncategorized)';
-        color = this.defaultColor || coreMap.Map.Layer.PointsLayer.DEFAULT_COLOR;
+        color = this.defaultColor || neonColors.DEFAULT;
     }
 
     // Save the color in the registry so we know the color/category mappings
@@ -280,7 +281,7 @@ coreMap.Map.Layer.PointsLayer.prototype.calculateRadius = function(element) {
     var percentOfDataRange = (dataVal - this.minRadius) / this._dataRadiusDiff;
     var radius = coreMap.Map.Layer.PointsLayer.MIN_RADIUS + (percentOfDataRange * this._baseRadiusDiff) || coreMap.Map.Layer.PointsLayer.MIN_RADIUS;
 
-    return radius * (zoomLevel / 3);
+    return radius * (zoomLevel / 2);
 };
 
 /**
@@ -317,7 +318,7 @@ coreMap.Map.Layer.PointsLayer.prototype.getValueFromDataElement = function(mappi
     if(typeof mapping === 'function') {
         return mapping.call(this, element);
     }
-    return element[mapping];
+    return this.getNestedValue(element, mapping);
 };
 
 /**
@@ -327,7 +328,8 @@ coreMap.Map.Layer.PointsLayer.prototype.getValueFromDataElement = function(mappi
  * @method areValuesInDataElement
  */
 coreMap.Map.Layer.PointsLayer.prototype.areValuesInDataElement = function(element) {
-    if(element[this.latitudeMapping] && element[this.longitudeMapping]) {
+    if(this.getValueFromDataElement(this.latitudeMapping, element) !== undefined &&
+        this.getValueFromDataElement(this.longitudeMapping, element) !== undefined) {
         return true;
     }
 
@@ -344,6 +346,7 @@ coreMap.Map.Layer.PointsLayer.prototype.setData = function(data) {
     if(this.dateFilterStrategy) {
         this.dateFilterStrategy.setFilter();
     }
+    return this.colors;
 };
 
 coreMap.Map.Layer.PointsLayer.prototype.setDateFilter = function(filterBounds) {
@@ -399,6 +402,7 @@ coreMap.Map.Layer.PointsLayer.prototype.updateGradient = function() {
 coreMap.Map.Layer.PointsLayer.prototype.updateFeatures = function() {
     var mapData = [];
     var me = this;
+
     _.each(this.data, function(element, index) {
         var longitude = me.getValueFromDataElement(me.longitudeMapping, element);
         var latitude = me.getValueFromDataElement(me.latitudeMapping, element);
@@ -408,9 +412,13 @@ coreMap.Map.Layer.PointsLayer.prototype.updateFeatures = function() {
 
             var date = 'none';
             var dateMapping = me.dateMapping || coreMap.Map.Layer.PointsLayer.DEFAULT_DATE_MAPPING;
-            if(element[dateMapping]) {
-                date = new Date(element[dateMapping]);
+            if(me.getValueFromDataElement(dateMapping, element)) {
+                date = new Date(me.getValueFromDataElement(dateMapping, element));
             }
+
+            // Note: The date mapping must be on the top level of attributes in order for filtering to work.
+            // This means even if the date is in to.date, keep the date at the top level with key "to.date" instead
+            // of in the object "to".
             pointFeature.attributes[dateMapping] = date;
 
             mapData.push(pointFeature);
@@ -436,7 +444,6 @@ coreMap.Map.Layer.PointsLayer.prototype.updateRadii = function() {
 };
 
 coreMap.Map.Layer.PointsLayer.DEFAULT_CLUSTER_DISTANCE = 40;
-coreMap.Map.Layer.PointsLayer.DEFAULT_COLOR = "#00ff00";
 coreMap.Map.Layer.PointsLayer.DEFAULT_LATITUDE_MAPPING = "latitude";
 coreMap.Map.Layer.PointsLayer.DEFAULT_LONGITUDE_MAPPING = "longitude";
 coreMap.Map.Layer.PointsLayer.DEFAULT_DATE_MAPPING = "date";
@@ -446,6 +453,6 @@ coreMap.Map.Layer.PointsLayer.DEFAULT_SELECT_COLOR = "#88d292";
 coreMap.Map.Layer.PointsLayer.DEFAULT_SIZE_MAPPING = "count_";
 coreMap.Map.Layer.PointsLayer.DEFAULT_STROKE_WIDTH = 0;
 coreMap.Map.Layer.PointsLayer.DEFAULT_STROKE_COLOR = "#ffffff";
-coreMap.Map.Layer.PointsLayer.MIN_RADIUS = 4;
-coreMap.Map.Layer.PointsLayer.MAX_RADIUS = 8;
+coreMap.Map.Layer.PointsLayer.MIN_RADIUS = 1;
+coreMap.Map.Layer.PointsLayer.MAX_RADIUS = 5;
 coreMap.Map.Layer.PointsLayer.DEFAULT_CURSOR = "pointer";

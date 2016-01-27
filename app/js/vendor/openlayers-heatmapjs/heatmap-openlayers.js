@@ -59,6 +59,7 @@ OpenLayers.Layer.Heatmap = OpenLayers.Class(OpenLayers.Layer, {
         this.setDataSet(this.tmpData);
     },
     getPixelOffset: function () {
+        this.mapLayer.map = this.mapLayer.map || this.map;
         var o = this.mapLayer.map.layerContainerOrigin;
         var o_lonlat = new OpenLayers.LonLat(o.lon, o.lat);
         var o_pixel = this.mapLayer.getViewPortPxFromLonLat(o_lonlat);
@@ -87,7 +88,7 @@ OpenLayers.Layer.Heatmap = OpenLayers.Class(OpenLayers.Layer, {
             pixel = this.roundPixels(this.getViewPortPxFromLonLat(lonlat));
 
             if(pixel){
-                set.data.push({x: pixel.x, y: pixel.y, count: entry.count});
+                set.data.push({x: pixel.x, y: pixel.y, value: entry.value});
             }
         }
         this.tmpData = obj;
@@ -111,7 +112,7 @@ OpenLayers.Layer.Heatmap = OpenLayers.Class(OpenLayers.Layer, {
         var args;
 
         if(arguments.length == 2){
-            entry.count = arguments[1];
+            entry.value = arguments[1];
         }
 
         this.tmpData.data.push(entry);

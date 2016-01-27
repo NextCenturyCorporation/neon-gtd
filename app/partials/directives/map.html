@@ -1,13 +1,17 @@
 <div class="header-container menu-container">
-    <options-menu parent-element="element" export-function="makeMapExportObject" resize="resizeOptionsMenu" button-text="optionsMenuButtonText" show-button-text="showOptionsMenuButtonText">
-        <div class="form-group info-container">
-            <label><span class="glyphicon glyphicon-info-sign margin-right"></span>SHIFT + DRAG on Map to Filter</label>
+    <options-menu parent-element="element" export-function="makeMapExportObject" resize-menu="resizeOptionsMenu" button-text="optionsMenuButtonText" show-button-text="showOptionsMenuButtonText">
+        <div style="margin-bottom: 5px;">
+            <label class="glyphicon glyphicon-info-sign"></label>
+            <label>SHIFT + DRAG on Map to Filter</label>
         </div>
 
-        <div class="form-group button-container">
+        <div class="form-group">
             <button type="button" class="btn btn-default" title="Reset Map View" ng-click="setDefaultView()">
                 Reset Map View
             </button>
+        </div>
+
+        <div class="form-group">
             <button type="button" class="btn btn-primary" title="Add New Layer" ng-click="clickAddNewLayerButton()" ng-show="!(options.newLayer.editing)">
                 Add New Layer
             </button>
@@ -33,7 +37,7 @@
                             </label>
                             <label class="btn btn-danger" ng-cancel-drag title="Cancel">
                                 <input type="button" style="display:none" ng-click="resetNewLayer()">
-                                <span class="glyphicon glyphicon-trash"></span>
+                                <span class="glyphicon glyphicon-remove"></span>
                             </label>
                         </div>
 
@@ -62,7 +66,7 @@
 
                         <div class="form-group layer-options-col">
                             <label>Data Limit</label>
-                            <input type="number" min="1" class="form-control" ng-model="options.newLayer.limit" ng-model="options.newLayer.limit" ng-required="true"/>
+                            <input type="number" min="1" class="form-control" ng-model="options.newLayer.limit" ng-required="true"/>
                         </div>
                     </div>
 
@@ -91,6 +95,11 @@
                             </select>
                         </div>
 
+                        <div class="form-group layer-options-col" ng-show="(options.newLayer.type == 'heatmap')">
+                            <label>Color Code 1</label>
+                            <input type="text" class="form-control" placeholder="None" ng-cancel-drag ng-model="options.newLayer.gradient1" ng-required="false"/>
+                        </div>
+
                         <div class="form-group layer-options-col" ng-show="(options.newLayer.type == 'node')">
                             <label>Source Field</label>
                             <select class="form-control" ng-model="options.newLayer.source" ng-options="field.prettyName for field in fields" ng-required="(options.newLayer.type == 'node')" ng-disabled="!(fields.length > 0)"></select>
@@ -116,6 +125,28 @@
                                     {{ field.prettyName }}
                                 </option>
                             </select>
+                        </div>
+                    </div>
+
+                    <div class="layer-options-row row-large" ng-show="(options.newLayer.type == 'heatmap')">
+                        <div class="form-group layer-options-col">
+                            <label>Color Code 2</label>
+                            <input type="text" class="form-control" placeholder="None" ng-cancel-drag ng-model="options.newLayer.gradient2" ng-required="false"/>
+                        </div>
+
+                        <div class="form-group layer-options-col">
+                            <label>Color Code 3</label>
+                            <input type="text" class="form-control" placeholder="None" ng-cancel-drag ng-model="options.newLayer.gradient3" ng-required="false"/>
+                        </div>
+
+                        <div class="form-group layer-options-col">
+                            <label>Color Code 4</label>
+                            <input type="text" class="form-control" placeholder="None" ng-cancel-drag ng-model="options.newLayer.gradient4" ng-required="false"/>
+                        </div>
+
+                        <div class="form-group layer-options-col">
+                            <label>Color Code 5</label>
+                            <input type="text" class="form-control" placeholder="None" ng-cancel-drag ng-model="options.newLayer.gradient5" ng-required="false"/>
                         </div>
                     </div>
 
@@ -257,6 +288,11 @@
                                     </select>
                                 </div>
 
+                                <div class="form-group layer-options-col" ng-show="layer.type == 'heatmap'">
+                                    <label>Color Code 1</label>
+                                    <input type="text" class="form-control" placeholder="{{layer.gradient1 || 'None'}}" ng-cancel-drag ng-model="layer.gradient1" ng-required="false"/>
+                                </div>
+
                                 <div class="form-group layer-options-col" ng-show="layer.type == 'node'">
                                     <label>Source Field</label>
                                     <select class="form-control" ng-cancel-drag ng-model="layer.sourceField" ng-options="field.prettyName for field in layer.fields" ng-required="(layer.type == 'node')" ng-disabled="!(layer.fields.length > 0)">
@@ -285,6 +321,28 @@
                                             {{field.prettyName}}
                                         </option>
                                     </select>
+                                </div>
+                            </div>
+
+                            <div class="layer-options-row row-large" ng-show="layer.type == 'heatmap'">
+                                <div class="form-group layer-options-col">
+                                    <label>Color Code 2</label>
+                                    <input type="text" class="form-control" placeholder="{{layer.gradient2 || 'None'}}" ng-cancel-drag ng-model="layer.gradient2" ng-required="false"/>
+                                </div>
+
+                                <div class="form-group layer-options-col">
+                                    <label>Color Code 3</label>
+                                    <input type="text" class="form-control" placeholder="{{layer.gradient3 || 'None'}}" ng-cancel-drag ng-model="layer.gradient3" ng-required="false"/>
+                                </div>
+
+                                <div class="form-group layer-options-col">
+                                    <label>Color Code 4</label>
+                                    <input type="text" class="form-control" placeholder="{{layer.gradient4 || 'None'}}" ng-cancel-drag ng-model="layer.gradient4" ng-required="false"/>
+                                </div>
+
+                                <div class="form-group layer-options-col">
+                                    <label>Color Code 5</label>
+                                    <input type="text" class="form-control" placeholder="{{layer.gradient5 || 'None'}}" ng-cancel-drag ng-model="layer.gradient5" ng-required="false"/>
                                 </div>
                             </div>
 
@@ -332,13 +390,65 @@
                 </div>
             </div>
         </div>
+
+        <div class="form-group">
+            <label>Base Layer Options</label>
+            <div class="btn-group">
+              <label class="btn btn-default" ng-class="{true: 'active', false: ''}[options.baseLayerColor === 'light']">
+                <input type="radio" style="display:none" ng-model="options.baseLayerColor" value="light" ng-change="updateBaseLayerColor()">Light
+              </label>
+              <label class="btn btn-default" ng-class="{true: 'active', false: ''}[options.baseLayerColor === 'dark']">
+                <input type="radio" style="display:none" ng-model="options.baseLayerColor" value="dark" ng-change="updateBaseLayerColor()">Dark
+              </label>
+            </div>
+            <div class="clearfix"></div>
+        </div>
     </options-menu>
 </div>
 
 <div class="header-container filter-container">
     <div class="header-item filter-reset pull-right" ng-class="{true: '', false: 'hidden'}[extent != undefined]" title="Latitude from {{extent.minimumLatitude}} to {{extent.maximumLatitude}}, Longitude from {{extent.minimumLongitude}} to {{extent.maximumLongitude}}">
         <links-popup-button key="{{getBoundsKeyForLinksPopupButton()}}" source="{{mapId}}" tooltip="latitude {{extent.minimumLatitude}} to {{extent.maximumLatitude}}, longitude {{extent.minimumLongitude}} to {{extent.maximumLongitude}}" is-disabled="{{linksPopupButtonIsDisabled}}"></links-popup-button>
-        <span class="filter-label" ng-class="{true: '', false: 'border-left'}[linksPopupButtonIsDisabled]">Map Filter</span>
-        <span class="border-left glyphicon glyphicon-remove" ng-click="clearFilters(true)"></span>
+        <span class="filter-label">Map Filter</span>
+        <span class="glyphicon glyphicon-remove" ng-click="clearFilters(true)"></span>
+    </div>
+</div>
+
+<div class="header-container legend-container">
+    <div class="legend" ng-class="{true: 'open', false: ''}[legend.display]" ng-show="options.layers.length">
+        <div class="legend-details" ng-show="legend.display">
+            <div class="legend-layer" ng-repeat="legendLayer in legend.layers">
+                <div class="legend-header" ng-click="toggleLegendLayer($index)">
+                    <span class="legend-title header-text" ng-bind="legendLayer.layerName"></span>
+                    <span class="glyphicon glyphicon-chevron-down pull-right" ng-show="!legendLayer.display"></span>
+                    <span class="glyphicon glyphicon-chevron-up pull-right" ng-show="legendLayer.display"></span>
+                </div>
+                <div class="node-title" ng-show="legendLayer.display && legendLayer.nodeColorMappings">
+                    <span>Nodes</span>
+                </div>
+                <div class="legend-item" title="{{category}}" ng-repeat="(category, color) in legendLayer.nodeColorMappings"
+                    ng-show="legendLayer.display && legendLayer.nodeColorMappings">
+                    <span class="legend-icon" style="background-color: {{color}}"></span>
+                    <span class="legend-text">{{category}}</span>
+                </div>
+                <div class="node-title" ng-show="legendLayer.display && legendLayer.lineColorMappings">
+                    <span>Lines</span>
+                </div>
+                <div class="legend-item" title="{{category}}" ng-repeat="(category, color) in legendLayer.lineColorMappings"
+                    ng-show="legendLayer.display && legendLayer.lineColorMappings">
+                    <span class="legend-icon" style="background-color: {{color}}"></span>
+                    <span class="legend-text">{{category}}</span>
+                </div>
+                <div class="legend-item" title="{{category}}" ng-repeat="(category, color) in legendLayer.colorMappings"
+                    ng-show="legendLayer.display && legendLayer.colorMappings">
+                    <span class="legend-icon" style="background-color: {{color}}"></span>
+                    <span class="legend-text">{{category}}</span>
+                </div>
+            </div>
+        </div>
+        <div class="divider" ng-show="legend.display"></div>
+        <div class="legend-toggle header-text" ng-click="toggleLegend()">
+            <span>Legend</span>
+        </div>
     </div>
 </div>

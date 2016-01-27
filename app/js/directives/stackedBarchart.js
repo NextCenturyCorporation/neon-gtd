@@ -70,7 +70,7 @@ function(connectionService, datasetService, errorNotificationService) {
                     filtersChanged: onFiltersChanged
                 });
                 $scope.messenger.subscribe(datasetService.UPDATE_DATA_CHANNEL, function() {
-                    $scope.queryForData();
+                    queryForData();
                 });
 
                 $scope.$on('$destroy', function() {
@@ -84,22 +84,22 @@ function(connectionService, datasetService, errorNotificationService) {
                         source: "user",
                         tags: ["remove", "stacked-barchart"]
                     });
-                    $scope.messenger.removeEvents();
+                    $scope.messenger.unsubscribeAll();
                 });
 
                 $scope.$watch('options.attrX', function() {
                     if($scope.options.database.name && $scope.options.table.name) {
-                        $scope.queryForData();
+                        queryForData();
                     }
                 });
                 $scope.$watch('options.attrY', function() {
                     if($scope.options.database.name && $scope.options.table.name) {
-                        $scope.queryForData();
+                        queryForData();
                     }
                 });
                 $scope.$watch('options.barType', function() {
                     if($scope.options.database.name && $scope.options.table.name) {
-                        $scope.queryForData();
+                        queryForData();
                     }
                 });
             };
@@ -112,30 +112,23 @@ function(connectionService, datasetService, errorNotificationService) {
              */
             var onFiltersChanged = function(message) {
                 if(message.addedFilter && message.addedFilter.databaseName === $scope.options.database.name && message.addedFilter.tableName === $scope.options.table.name) {
-                    $scope.queryForData();
+                    queryForData();
                 }
             };
 
             /**
              * Displays data for any currently active datasets.
-             * @param {Boolean} Whether this function was called during visualization initialization.
              * @method displayActiveDataset
+             * @private
              */
-            var displayActiveDataset = function(initializing) {
+            var displayActiveDataset = function() {
                 if(!datasetService.hasDataset()) {
                     return;
                 }
 
                 $scope.databases = datasetService.getDatabases();
                 $scope.options.database = $scope.databases[0];
-
-                if(initializing) {
-                    $scope.updateTables();
-                } else {
-                    $scope.$apply(function() {
-                        $scope.updateTables();
-                    });
-                }
+                $scope.updateTables();
             };
 
             $scope.updateTables = function() {
@@ -156,7 +149,7 @@ function(connectionService, datasetService, errorNotificationService) {
                     return field.columnName === attrY;
                 }) || datasetService.createBlankField();
 
-                $scope.queryForData(true);
+                queryForData();
             };
 
             var queryData = function(yRuleComparator, yRuleVal, next) {
@@ -217,7 +210,7 @@ function(connectionService, datasetService, errorNotificationService) {
                 }
             };
 
-            $scope.queryForData = function() {
+            var queryForData = function() {
                 var xAxis = $scope.options.attrX.columnName || datasetService.getMapping($scope.options.database.name, $scope.options.table.name, neonMappings.BAR_GROUPS);
                 var yAxis = $scope.options.attrY.columnName || datasetService.getMapping($scope.options.database.name, $scope.options.table.name, neonMappings.Y_AXIS);
                 if(!yAxis) {
@@ -330,7 +323,7 @@ function(connectionService, datasetService, errorNotificationService) {
             neon.ready(function() {
                 $scope.messenger = new neon.eventing.Messenger();
                 initialize();
-                displayActiveDataset(true);
+                displayActiveDataset();
             });
         }
     };

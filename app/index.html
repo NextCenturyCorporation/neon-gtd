@@ -13,6 +13,10 @@
 
         <!-- build:css css/neon-dashboard.min.css -->
         <!-- bower:css -->
+        <link rel="stylesheet" href="lib/ag-grid/dist/ag-grid.css" />
+        <link rel="stylesheet" href="lib/ag-grid/dist/theme-fresh.css" />
+        <link rel="stylesheet" href="lib/ag-grid/dist/theme-blue.css" />
+        <link rel="stylesheet" href="lib/ag-grid/dist/theme-dark.css" />
         <link rel="stylesheet" href="lib/angular-bootstrap-datetimepicker/src/css/datetimepicker.css" />
         <link rel="stylesheet" href="lib/angular-gridster/dist/angular-gridster.min.css" />
         <link rel="stylesheet" href="lib/angular-ui-tree/dist/angular-ui-tree.min.css" />
@@ -23,9 +27,7 @@
         <link rel="stylesheet" href="lib/angular-gantt/assets/angular-gantt-plugins.css" />
         <link rel="stylesheet" href="lib/jquery-ui/themes/ui-lightness/jquery-ui.css" />
         <link rel="stylesheet" href="lib/jquery-ui/themes/ui-lightness/jquery.ui.theme.css" />
-        <link rel="stylesheet" href="js/vendor/slick-grid/css/slick.grid.css" />
 
-        <link rel="stylesheet" type="text/css" href="css/app.css">
         <link rel="stylesheet" type="text/css" href="css/neon-dashboard-sprites.css">
         <!-- endbuild -->
 
@@ -37,6 +39,7 @@
         <![endif]-->
     </head>
     <body class="ng-hide" ng-controller="neonDemoController" ng-show="displayDashboard">
+        <link rel="stylesheet" type="text/css" ng-href="css/{{theme.selected.file}}.css">
 
         <!-- Help Video Modal -->
         <div class="modal fade neon-popup" id="videoModal" tabindex="-1" role="dialog" aria-hidden="true">
@@ -98,15 +101,16 @@
                             <li file-formats gridster-configs="visualizations" ng-show="showExport"></li>
                             <li export-widgets gridster-configs="visualizations" ng-show="showExport"></li>
                             <li class="divider" ng-show="showExport && showImport"></li>
-                            <li ng-show="showImport"><a href="#" data-toggle="modal" data-target="#importModal" ng-show="canImport">
-                                Import File
-                            </a>
-                            <a href="#" class="unselectable" ng-show="!canImport">
-                                This browser does not support data import
-                            </a></li>
-                            <li ng-show="showImport"><a href="#" data-toggle="modal" data-target="#removeDatasetModal" ng-show="canImport">
-                                Drop Dataset
-                            </a>
+                            <li ng-show="showImport">
+                                <button class="btn btn-default" data-toggle="modal" data-target="#importModal" ng-show="canImport">Import File</button>
+                                <a href="#" class="unselectable" ng-show="!canImport">This browser does not support data import</a>
+                            </li>
+                            <li ng-show="showImport">
+                                <button class="btn btn-default" data-toggle="modal" data-target="#removeDatasetModal" ng-show="canImport">Drop Dataset</button>
+                            </li>
+                            <li class="divider" ng-show="showExport || showImport"></li>
+                            <li><a href="#" class="unselectable">Theme:</a></li>
+                            <li><select class="form-control navbar-indented" ng-options="item.name for item in theme.list" ng-model="theme.selected" ng-change="updateTheme()"></select></li>
                         </ul>
                     </div>
 
@@ -123,7 +127,7 @@
                     <div add-visualization gridster-configs="visualizations" ng-show="!hideNavbarItems && !hideAddVisualizationsButton"></div>
 
                     <!-- FILTER STATUS TRAY -->
-                    <div filter-tray bound-parent="'nav.navbar'" include-parent-height="!hideNavbarItems" ng-show="showFilterStatusTray" class="pull-right"></div>
+                    <div filter-tray bound-parent="'nav.navbar'" include-parent-height="!hideNavbarItems" ng-show="!hideFilterStatusTray" class="pull-right"></div>
                 </div>
             </div>
         </nav>
@@ -135,7 +139,7 @@
             <div gridster="gridsterOpts" id="gridster-div">
                 <ul>
                     <li gridster-item="visualization" ng-repeat="visualization in visualizations track by visualization.id">
-                        <div class="well visualization-widget" visualization-widget
+                        <div class="visualization-well visualization-widget" visualization-widget
                             gridster-configs="visualizations"
                             gridster-config-index="$index"></div>
                     </li>
@@ -156,6 +160,8 @@
         <script src="lib/openlayers/OpenLayers.js"></script>
 
         <!-- build:js(app) js/neon-dashboard-lib.min.js -->
+        <script src="js/vendor/plotly.js"></script>
+
         <!-- bower:js -->
         <script src="lib/jquery/dist/jquery.js"></script>
         <script src="lib/angular/angular.js"></script>
@@ -163,6 +169,7 @@
         <script src="lib/angular-bootstrap-datetimepicker/src/js/datetimepicker.js"></script>
         <script src="lib/angular-moment/angular-moment.js"></script>
         <script src="lib/angular-gridster/src/angular-gridster.js"></script>
+        <script src="lib/angular-linkify/angular-linkify.js"></script>
         <script src="lib/angular-loader/angular-loader.js"></script>
         <script src="lib/angular-mocks/angular-mocks.js"></script>
         <script src="lib/angular-route/angular-route.js"></script>
@@ -186,6 +193,9 @@
         <!-- Include the opencpu library. OpenCPU needs to be included after JQuery and before the app config. -->
         <script src="lib/opencpu/opencpu-0.5.js"></script>
 
+        <!-- Include the ag-grid library after the angular library. -->
+        <script src="lib/ag-grid/dist/ag-grid.js"></script>
+
         <!-- Include third party libs -->
         <script src="lib/javascript-detect-element-resize/jquery.resize.js"></script>
         <script src="lib/heatmapjs/build/heatmap.js"></script>
@@ -193,11 +203,6 @@
         <script src="lib/threedubmedia.jquery.event/event.drag/jquery.event.drag.js"></script>
         <script src="lib/threedubmedia.jquery.event/event.drop/jquery.event.drop.js"></script>
         <script src="lib/jquery.linky/jquery.linky.js"></script>
-        <script src="js/vendor/slick-grid/js/slick.core.js"></script>
-        <script src="js/vendor/slick-grid/js/slick.grid.js"></script>
-        <script src="js/vendor/slick-grid/js/slick.dataview.js"></script>
-        <script src="js/vendor/slick-grid/js/slick.autotooltips.js"></script>
-        <script src="js/vendor/slick-grid/js/slick.rowselectionmodel.js"></script>
         <script src="lib/mergesort/merge-sort.js"></script>
         <script src="lib/rainbowvis.js/rainbowvis.js"></script>
         <!-- endbuild -->
@@ -218,7 +223,6 @@
         <script src="js/coremap/pointsLayer.js"></script>
         <script src="js/coremap/selectedPointsLayer.js"></script>
         <script src="js/mediators/directedGraphMediator.js"></script>
-        <script src="js/tables/table.js"></script>
         <script src="js/time/dateBucketizer.js"></script>
         <script src="js/time/monthBucketizer.js"></script>
         <script src="js/time/yearBucketizer.js"></script>
@@ -231,6 +235,7 @@
         <script src="js/importService.js"></script>
         <script src="js/linksPopupService.js"></script>
         <script src="js/parameterService.js"></script>
+        <script src="js/themeService.js"></script>
         <script src="js/translationService.js"></script>
         <script src="js/neonDemoController.js"></script>
         <script src="js/directives/addVisualization.js"></script>
@@ -254,6 +259,7 @@
         <script src="js/directives/map.js"></script>
         <script src="js/directives/newsfeed.js"></script>
         <script src="js/directives/optionsMenu.js"></script>
+        <script src="js/directives/plotlyGraph.js"></script>
         <script src="js/directives/poweredByNeon.js"></script>
         <script src="js/directives/queryResultsTable.js"></script>
         <script src="js/directives/removeDataset.js"></script>

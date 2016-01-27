@@ -479,8 +479,7 @@ angular.module('neonDemo.services')
     /**
      * The template for a disabled link element used in the linksPopup and linksPopupButton directives.
      */
-    service.DISABLED_TEMPLATE = "<a class='disabled' title='No other applications available for {{tooltip}}' disabled>" +
-        "<span class='glyphicon glyphicon-link'></span></a>";
+    service.DISABLED_TEMPLATE = "";
 
     return service;
 }]);

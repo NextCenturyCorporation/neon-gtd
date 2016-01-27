@@ -1,5 +1,5 @@
 //
-// Copyright 2014 Next Century Corporation
+// Copyright 2015 Next Century Corporation
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
 // You may obtain a copy of the License at
@@ -17,141 +17,30 @@
     margin: 0px;
     height: 100%;
     width: 100%;
-}
 
-.query-results-grid {
-    background-color: @main-background;
-    border: @border;
-    border-radius: 2px;
-    box-shadow: 0 1px 4px @shadow;
-    box-sizing: content-box;
-    -webkit-box-sizing: content-box;
-    -moz-box-sizing: content-box;
+    .results-table {
+        height: 100%;
 
-    &:before, &:after {
-        box-sizing: content-box;
-        -webkit-box-sizing: content-box;
-        -moz-box-sizing: content-box;
+        //This makes the autosizing work while taking into account the options menu.
+        padding-top: 25px;
+        margin-top: -25px;
     }
 
-    *, *:before, *:after {
-        box-sizing: content-box;
-        -webkit-box-sizing: content-box;
-        -moz-box-sizing: content-box;
-    }
+    .header {
+        .header-container {
+            .edit-table {
+                .glyphicon {
+                    font-size: 14px;
+                    padding: 0px 10px;
 
-    .form-inline {
-        .form-group {
-            &:first-child {
-                > label {
-                    margin-left: 0px;
-                }
-            }
-
-            > label {
-                margin-left: 10px;
-                margin-right: 5px;
-            }
-
-            input[type="number"] {
-                width: 100px;
-            }
-
-            .btn-group {
-                label {
-                    &.btn {
-                        margin-right: 0px;
+                    &.active, &:active, &:focus, &:hover {
+                        color: @accent-bright;
+                        cursor: pointer;
                     }
                 }
             }
         }
-
-        .form-input-group {
-            display: inline-block;
-            margin-bottom: 0;
-            vertical-align: middle;
-
-            &:first-child {
-                > label {
-                    margin-left: 0px;
-                }
-            }
-
-            > label {
-                margin-left: 10px;
-                margin-right: 5px;
-                float: left;
-                margin-top: 9px;
-                margin-right: 10px;
-            }
-        }
     }
-
-    .slick-row{
-        background: @main-background-lighten;
-
-        &.odd {
-            background: @main-background;
-        }
-
-        &.selectable {
-            .slick-cell {
-                cursor: pointer;
-            }
-        }
-    }
-
-    .slick-header{
-        border-top: 0;
-
-        .slick-header-column{
-            color: @mid-text-color;
-            background: @main-background-darken;
-            cursor: pointer;
-
-            &.ui-state-hover{
-                color: @accent-bright;
-                background: @light-background;
-
-                .remove-column-button {
-                    color: #999999;
-                    background: #FFFFFF;
-
-                    &:focus, &:hover {
-                        color: #39B54A;
-                        background: #FFFFFF;
-                    }
-                }
-            }
-
-            .remove-column-button {
-                color: #999999;
-                position: absolute;
-                right: 5px;
-            }
-        }
-
-        .slick-header-column-sorted{
-            color: @accent-bright;
-            font-style: normal;
-        }
-
-        .slick-sortable-placeholder{
-            background: @border-color;
-        }
-    }
-}
-
-.query-results-grid.row-selected {
-    .slick-row{
-        &.active {
-            background: @accent-dulled;
-        }
-    }
-}
-
-.slick-sort-indicator {
-    float: none;
 }
 
 .visualization-widget {

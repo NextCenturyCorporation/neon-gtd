@@ -55,6 +55,7 @@ function($filter, $timeout, connectionService, datasetService, errorNotification
             $scope.existingNodeIds = [];
             $scope.selectedNodeIds = [];
             $scope.legend = [];
+            $scope.helpers = neon.helpers;
 
             $scope.tooltip = {
                 idLabel: "",
@@ -121,8 +122,9 @@ function($filter, $timeout, connectionService, datasetService, errorNotification
             };
 
             var updateGraphSize = function() {
-                var titleWidth = $element.width() - $element.find(".chart-options").outerWidth(true);
-                $element.find(".title").css("maxWidth", titleWidth - 20);
+                // Set the width of the title to the width of the visualization minus the width of the chart options button/text and padding.
+                var titleWidth = $element.width() - $element.find(".chart-options").outerWidth(true) - 20;
+                $element.find(".title").css("maxWidth", titleWidth);
 
                 // The D3 graph will resize itself but we need to trigger that resize event by changing the height and widget of the SVG.
                 // Setting the dimensions on the SVG performs better than just setting the dimensions on the directed-graph-container.
@@ -183,12 +185,14 @@ function($filter, $timeout, connectionService, datasetService, errorNotification
                         tags: ["remove", "directed-graph"]
                     });
                     $element.off("resize", updateSize);
+                    $element.find(".chart-options a").off("resize", updateSize);
                     $element.find(".legend").off("resize", updateSize);
-                    $scope.messenger.removeEvents();
+                    $scope.messenger.unsubscribeAll();
                     exportService.unregister($scope.exportID);
                 });
 
                 $element.resize(updateSize);
+                $element.find(".chart-options a").resize(updateSize);
                 $element.find(".legend").resize(updateSize);
             };
 
@@ -405,7 +409,8 @@ function($filter, $timeout, connectionService, datasetService, errorNotification
                     calculateGraphHeight: calculateGraphHeight,
                     calculateGraphWidth: calculateGraphWidth,
                     redrawGraph: redrawGraphInAngularDigest,
-                    updateSelectedNodeIds: updateSelectedNodeIdsInAngularDigest
+                    updateSelectedNodeIds: updateSelectedNodeIdsInAngularDigest,
+                    getNestedValue: $scope.helpers.getNestedValue
                 });
 
                 $scope.mediator.setBucketizer($scope.bucketizer);
@@ -433,16 +438,16 @@ function($filter, $timeout, connectionService, datasetService, errorNotification
                 var news = [];
                 data.forEach(function(item) {
                     var newsItem = {
-                        head: item[$scope.options.selectedNodeField.columnName]
+                        primaryTitle: $scope.helpers.getNestedValue(item, $scope.options.selectedNodeField.columnName)
                     };
                     if(datasetService.isFieldValid($scope.options.selectedDateField)) {
-                        newsItem.date = new Date(item[$scope.options.selectedDateField.columnName]);
+                        newsItem.date = new Date($scope.helpers.getNestedValue(item, $scope.options.selectedDateField.columnName));
                     }
                     if(datasetService.isFieldValid($scope.options.selectedNameField)) {
-                        newsItem.name = item[$scope.options.selectedNameField.columnName];
+                        newsItem.secondaryTitle = $scope.helpers.getNestedValue(item, $scope.options.selectedNameField.columnName);
                     }
                     if(datasetService.isFieldValid($scope.options.selectedTextField)) {
-                        newsItem.text = item[$scope.options.selectedTextField.columnName];
+                        newsItem.content = $scope.helpers.getNestedValue(item, $scope.options.selectedTextField.columnName);
                         // Delete the text from the data to improve our memory preformance because we don't need it any longer.
                         delete item[$scope.options.selectedTextField.columnName];
                     }
@@ -465,10 +470,10 @@ function($filter, $timeout, connectionService, datasetService, errorNotification
                 $scope.messenger.publish("news_highlights", {
                     name: $scope.bindFeedName || datasetService.getMapping($scope.options.database.name, $scope.options.table.name, neonMappings.NEWSFEED_NAME) || "graph",
                     show: {
-                        heads: $scope.mediator ? $scope.mediator.getNodeIdsInSelectedNetwork() : []
+                        primaryTitles: $scope.mediator ? $scope.mediator.getNodeIdsInSelectedNetwork() : []
                     },
                     highlights: {
-                        heads: $scope.selectedNodeIds
+                        primaryTitles: $scope.selectedNodeIds
                     }
                 });
             };
@@ -529,7 +534,7 @@ function($filter, $timeout, connectionService, datasetService, errorNotification
                 var query = new neon.query.Query()
                     .selectFrom($scope.options.database.name, $scope.options.table.name)
                     .withFields([$scope.options.selectedNodeField.columnName])
-                    .groupBy($scope.options.selectedNodeField.columnName)
+                    .groupBy($scope.options.selectedNodeField)
                     .aggregate(neon.query.COUNT, '*', 'count');
 
                 return query;
@@ -705,19 +710,19 @@ function($filter, $timeout, connectionService, datasetService, errorNotification
                         query: $scope.options.selectedLinkedNodeField.columnName,
                         pretty: $scope.options.selectedLinkedNodeField.prettyName
                     }];
-                    query.groupBy($scope.options.selectedNodeField.columnName, $scope.options.selectedLinkedNodeField.columnName);
+                    query.groupBy($scope.options.selectedNodeField, $scope.options.selectedLinkedNodeField);
                 } else if(datasetService.isFieldValid($scope.options.selectedNodeField)) {
                     fields = [{
                         query: $scope.options.selectedNodeField.columnName,
                         pretty: $scope.options.selectedNodeField.prettyName
                     }];
-                    query.groupBy($scope.options.selectedNodeField.columnName);
+                    query.groupBy($scope.options.selectedNodeField);
                 } else if(datasetService.isFieldValid($scope.options.selectedLinkedNodeField)) {
                     fields = [{
                         query: $scope.options.selectedLinkedNodeField.columnName,
                         pretty: $scope.options.selectedLinkedNodeField.prettyName
                     }];
-                    query.groupBy($scope.options.selectedLinkedNodeField.columnName);
+                    query.groupBy($scope.options.selectedLinkedNodeField);
                 }
 
                 var finalObject = {

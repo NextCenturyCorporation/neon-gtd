@@ -13,109 +13,43 @@
 // limitations under the License.
 //
 
-.count-by-grid {
-    background-color: @main-background;
-    border: @border;
-    border-radius: 2px;
-    box-shadow: 0 1px 4px @shadow;
-    box-sizing: content-box;
-    -webkit-box-sizing: content-box;
-    -moz-box-sizing: content-box;
-
-
-    * {
-        box-sizing: content-box;
-        -webkit-box-sizing: content-box;
-        -moz-box-sizing: content-box;
-
-        &:before, &:after {
-            box-sizing: content-box;
-            -webkit-box-sizing: content-box;
-            -moz-box-sizing: content-box;
-        }
-    }
-
-    &.filtered {
-        .slick-row {
-            opacity: 0.5;
-
-            &.active {
-                background: @accent-dulled;
-                opacity: 1.0;
-            }
-        }
-    }
-
-    .slick-cell {
-        cursor: pointer;
-    }
-
-    .slick-header{
-        border-top: 0;
-
-        .slick-header-column{
-            color: @light-text-color;
-            background: @accent-bright;
-
-            &.ui-state-hover{
-                color: @accent-bright;
-                background: @light-background;
-            }
-        }
-
-        .slick-header-column-sorted{
-            color: @accent-bright;
-            background: @light-background;
-            font-style: normal;
-        }
-
-        .slick-sortable-placeholder{
-            background: @border-color;
-        }
-
-        .slick-header-sortable {
-            cursor: pointer;
-        }
-    }
-
-    .slick-row {
-        background: @main-background-lighten;
-
-        &.odd {
-            background: @main-background;
-        }
-    }
-}
-
-.count-by-header {
-    margin-bottom: 5px;
-}
-
-.countByDirective {
+.count-by-directive {
     margin: 0px;
-    padding: 10px;
-    height: @widget-height;
-    width: @widget-width;
-}
+    height: 100%;
+    width: 100%;
+    overflow: hidden;
 
-.data-tray {
-    .refresh{
-        margin-left: 10px;
+    .active-count {
+        color: @accent-bright;
     }
-}
 
-.hidden-button {
-    background-color: inherit;
-    border: 0;
-    padding: 0;
-}
+    .record-count {
+        @media (min-width: 1024px) {
+            padding-left: 0px;
+        }
 
-.slick-sort-indicator {
-    float: none;
+        @media (min-width: 1500px) {
+            //This makes the autosizing work while taking into account the options menu.
+            padding-left: 20px;
+        }
+    }
+
+    .filter-container {
+        // Shrink the filter container whenever unused to trigger a jquery resize event that will update the size of the table.
+        &.shrink {
+            height: 0px;
+            min-height: 0px;
+        }
+
+        .header-item {
+            margin-top: 0px;
+        }
+    }
 }
 
 .visualization-widget {
-    .countByDirective {
+    .count-by-directive {
+        padding: 10px;
         height: @widget-height;
         width: @widget-width;
     }
@@ -123,10 +57,9 @@
 
 .gridster-mobile {
     .visualization-widget {
-        .countByDirective {
+        .count-by-directive {
             height: @mobile-widget-height;
             width: @widget-width;
         }
     }
 }
-

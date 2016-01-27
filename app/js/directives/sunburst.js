@@ -75,7 +75,7 @@ function(connectionService, datasetService, errorNotificationService, exportServ
                     filtersChanged: onFiltersChanged
                 });
                 $scope.messenger.subscribe(datasetService.UPDATE_DATA_CHANNEL, function() {
-                    $scope.queryForData();
+                    queryForData();
                 });
 
                 $scope.exportID = exportService.register($scope.makeSunburstExportObject);
@@ -92,7 +92,7 @@ function(connectionService, datasetService, errorNotificationService, exportServ
                         tags: ["remove", "sunburst"]
                     });
                     $element.off("resize", updateChartSize);
-                    $scope.messenger.removeEvents();
+                    $scope.messenger.unsubscribeAll();
                     exportService.unregister($scope.exportID);
                 });
 
@@ -102,7 +102,12 @@ function(connectionService, datasetService, errorNotificationService, exportServ
 
                 $scope.$watch('options.valueField', function(newValue, oldValue) {
                     if(!$scope.loadingData && newValue !== oldValue) {
-                        $scope.queryForData();
+                        if(newValue) {
+                            $scope.queryForData();
+                        } else {
+                            $scope.options.valueField = datasetService.createBlankField();
+                            $scope.arcValue = charts.SunburstChart.COUNT_PARTITION;
+                        }
                     }
                 }, true);
 
@@ -131,13 +136,14 @@ function(connectionService, datasetService, errorNotificationService, exportServ
                         source: "system",
                         tags: ["filter-change", "sunburst"]
                     });
-                    $scope.queryForData();
+                    queryForData();
                 }
             };
 
             var updateChartSize = function() {
-                var titleWidth = $element.width() - $element.find(".chart-options").outerWidth(true);
-                $element.find(".title").css("maxWidth", titleWidth - 20);
+                // Set the width of the title to the width of the visualization minus the width of the chart options button/text and padding.
+                var titleWidth = $element.width() - $element.find(".chart-options").outerWidth(true) - 20;
+                $element.find(".title").css("maxWidth", titleWidth);
 
                 if($scope.chart) {
                     var headerHeight = 0;
@@ -152,8 +158,9 @@ function(connectionService, datasetService, errorNotificationService, exportServ
              * Builds a query to pull a limited set of records that match any existing filter sets.
              * @return neon.query.Query
              * @method buildQuery
+             * @private
              */
-            $scope.buildQuery = function() {
+            var buildQuery = function() {
                 var query = new neon.query.Query().selectFrom($scope.options.database.name, $scope.options.table.name);
                 if($scope.groupFields.length > 0) {
                     query.groupBy.apply(query, $scope.groupFields);
@@ -162,7 +169,7 @@ function(connectionService, datasetService, errorNotificationService, exportServ
                 //take based on selected count or total
                 query.aggregate(neon.query.COUNT, '*', 'count');
                 if(datasetService.isFieldValid($scope.options.valueField)) {
-                    query.aggregate(neon.query.SUM, $scope.options.valueField.columnName, $scope.options.valueField.columnName);
+                    query.aggregate(neon.query.SUM, $scope.options.valueField.columnName, $scope.options.valueField.prettyName);
                 }
 
                 return query;
@@ -170,10 +177,10 @@ function(connectionService, datasetService, errorNotificationService, exportServ
 
             /**
              * Displays data for any currently active datasets.
-             * @param {Boolean} Whether this function was called during visualization initialization.
              * @method displayActiveDataset
+             * @private
              */
-            $scope.displayActiveDataset = function(initializing) {
+            var displayActiveDataset = function() {
                 if(!datasetService.hasDataset() || $scope.loadingData) {
                     return;
                 }
@@ -191,14 +198,7 @@ function(connectionService, datasetService, errorNotificationService, exportServ
                         }
                     }
                 }
-
-                if(initializing) {
-                    $scope.updateTables();
-                } else {
-                    $scope.$apply(function() {
-                        $scope.updateTables();
-                    });
-                }
+                $scope.updateTables();
             };
 
             $scope.updateTables = function() {
@@ -219,10 +219,10 @@ function(connectionService, datasetService, errorNotificationService, exportServ
                 $scope.loadingData = true;
                 $scope.fields = datasetService.getSortedFields($scope.options.database.name, $scope.options.table.name);
                 $scope.options.valueField = datasetService.createBlankField();
-                $scope.queryForData();
+                queryForData();
             };
 
-            $scope.queryForData = function() {
+            var queryForData = function() {
                 if($scope.errorMessage) {
                     errorNotificationService.hideErrorMessage($scope.errorMessage);
                     $scope.errorMessage = undefined;
@@ -238,7 +238,7 @@ function(connectionService, datasetService, errorNotificationService, exportServ
                     return;
                 }
 
-                var query = $scope.buildQuery();
+                var query = buildQuery();
 
                 XDATA.userALE.log({
                     activity: "alter",
@@ -324,6 +324,7 @@ function(connectionService, datasetService, errorNotificationService, exportServ
                 var nodes = {};
                 var tree = {
                     name: $scope.options.table.name,
+                    prettyName: $scope.options.table.name,
                     key: $scope.options.table.name,
                     children: []
                 };
@@ -333,6 +334,7 @@ function(connectionService, datasetService, errorNotificationService, exportServ
                 var nodeKeyString;
 
                 var field;
+                var prettyField;
 
                 var i;
                 data.data.forEach(function(doc) {
@@ -340,17 +342,20 @@ function(connectionService, datasetService, errorNotificationService, exportServ
                     leafObject = {};
                     nodeKey = {};
                     for(i = 0; i < $scope.groupFields.length; i++) {
-                        field = $scope.groupFields[i];
+                        field = $scope.groupFields[i].columnName;
+                        prettyField = $scope.groupFields[i].prettyName;
 
                         leafObject[field] = doc[field];
                         nodeKey[field] = doc[field];
                         nodeKey.name = field + ": " + doc[field];
+                        nodeKey.prettyName = (prettyField ? prettyField : field) + ": " + doc[field];
                         nodeKeyString = JSON.stringify(nodeKey);
 
                         if(!nodes[nodeKeyString]) {
                             if(i !== $scope.groupFields.length - 1) {
                                 nodeObject = {};
                                 nodeObject.name = field + ": " + doc[field];
+                                nodeObject.prettyName = prettyField + ": " + doc[field];
                                 nodeObject.key = nodeKeyString;
                                 nodeObject.children = [];
                                 parent.children.push(nodeObject);
@@ -358,8 +363,9 @@ function(connectionService, datasetService, errorNotificationService, exportServ
                                 nodes[nodeKeyString] = nodeObject;
                             } else {
                                 leafObject.name = field + ": " + doc[field];
+                                leafObject.prettyName = prettyField + ": " + doc[field];
                                 leafObject.count = doc.count;
-                                leafObject.total = doc[$scope.options.valueField.columnName];
+                                leafObject.total = doc[$scope.options.valueField.prettyName];
                                 leafObject.key = nodeKeyString;
                                 parent.children.push(leafObject);
                             }
@@ -382,11 +388,11 @@ function(connectionService, datasetService, errorNotificationService, exportServ
             };
 
             $scope.addGroup = function() {
-                if($scope.groupFields.indexOf($scope.options.selectedItem.columnName) === -1 && $scope.options.selectedItem.columnName !== "") {
-                    $scope.groupFields.push($scope.options.selectedItem.columnName);
+                if($scope.groupFields.indexOf($scope.options.selectedItem) === -1 && $scope.options.selectedItem.columnName !== "") {
+                    $scope.groupFields.push($scope.options.selectedItem);
                 }
                 $scope.options.selectedItem = {};
-                $scope.queryForData();
+                queryForData();
             };
 
             $scope.dropGroup = function(groupField) {
@@ -394,7 +400,7 @@ function(connectionService, datasetService, errorNotificationService, exportServ
                 if(index !== -1) {
                     $scope.groupFields.splice(index, 1);
                 }
-                $scope.queryForData();
+                queryForData();
             };
 
             /**
@@ -411,12 +417,12 @@ function(connectionService, datasetService, errorNotificationService, exportServ
                     source: "user",
                     tags: ["options", "sunburst", "export"]
                 });
-                var query = $scope.buildQuery();
+                var query = buildQuery();
                 query.limitClause = exportService.getLimitClause();
                 // Sort results by each group field so the resulting file won't be ugly.
                 var sortByArgs = [];
                 $scope.groupFields.forEach(function(field) {
-                    sortByArgs.push(field);
+                    sortByArgs.push(field.prettyName);
                     sortByArgs.push(neon.query.ASCENDING);
                 });
                 query.sortBy(sortByArgs);
@@ -435,27 +441,17 @@ function(connectionService, datasetService, errorNotificationService, exportServ
                 };
                 $scope.groupFields.forEach(function(field) {
                     finalObject.data[0].fields.push({
-                        query: field,
-                        pretty: capitalizeFirstLetter(field)
+                        query: field.columnName,
+                        pretty: field.prettyName
                     });
                 });
                 return finalObject;
             };
 
-            /**
-             * Helper function for makeBarchartExportObject that capitalizes the first letter of a string.
-             * @param str {String} The string to capitalize the first letter of.
-             * @return {String} The string given, but with its first letter capitalized.
-             */
-            var capitalizeFirstLetter = function(str) {
-                var first = str[0].toUpperCase();
-                return first + str.slice(1);
-            };
-
             neon.ready(function() {
                 $scope.messenger = new neon.eventing.Messenger();
                 initialize();
-                $scope.displayActiveDataset(true);
+                displayActiveDataset();
             });
         }
     };

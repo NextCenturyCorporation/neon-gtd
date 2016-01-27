@@ -22,10 +22,21 @@
  * @constructor
  */
 angular.module('neonDemo.controllers')
-.controller('neonDemoController', ['$scope', '$timeout', 'config', 'datasets',
-function($scope, $timeout, config, datasets) {
+.controller('neonDemoController', ['$scope', '$timeout', 'config', 'datasets', 'ThemeService',
+function($scope, $timeout, config, datasets, themeService) {
+    $scope.messenger = new neon.eventing.Messenger();
+
+    $scope.theme = {
+        list: themeService.getThemes(),
+        selected: themeService.getTheme()
+    };
+
+    $scope.updateTheme = function() {
+        themeService.setTheme($scope.theme.selected.name);
+    };
+
     $scope.hideNavbarItems = config.hideNavbarItems;
-    $scope.showFilterStatusTray = config.showFilterStatusTray;
+    $scope.hideFilterStatusTray = config.hideFilterStatusTray;
 
     $scope.hideAddVisualizationsButton = config.hideAddVisualizationsButton;
     $scope.hideAdvancedOptions = config.hideAdvancedOptions;

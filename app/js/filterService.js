@@ -40,6 +40,51 @@ angular.module("neonDemo.services")
     };
 
     /**
+     * Creates, if not existing already, a new mapping containing a filter key and a filter keys object
+     * (for all the relations given) and adds this mapping to the given localFilterKeys object that contains these
+     * mappings for each database, table, and attrKey pair.
+     * @param {Object} localFilterKeys Mapping of filter keys for each database/table/attrKey pair.
+     * @param {String} database Database name to add a filter key for.
+     * @param {String} table Table name to add a filter key for.
+     * @param {String} attrKey Attribute key to add a filter key for.
+     * @param {Object} filterServiceKeys Mapping of keys for database/table pairs.
+     * @param {Array} relations All relations for the the database/table/attrKey combination.
+     * @method createFilterKeysForAttribute
+     * @return {Object}
+     */
+    service.createFilterKeysForAttribute = function(localFilterKeys, database, table, attrKey, filterServiceKeys, relations) {
+        var relationKeys = {};
+
+        _.each(relations, function(relation) {
+            var relationDatabase = relation.database;
+            var relationTable = relation.table;
+
+            if(relationDatabase !== database || relationTable !== table) {
+                if(!relationKeys[relationDatabase]) {
+                    relationKeys[relationDatabase] = {};
+                }
+                if(!relationKeys[relationDatabase][relationTable]) {
+                    relationKeys[relationDatabase][relationTable] = filterServiceKeys[relationDatabase][relationTable];
+                }
+            }
+        });
+
+        if(!localFilterKeys[database]) {
+            localFilterKeys[database] = {};
+        }
+        if(!localFilterKeys[database][table]) {
+            localFilterKeys[database][table] = {};
+        }
+        if(!localFilterKeys[database][table][attrKey]) {
+            localFilterKeys[database][table][attrKey] = {};
+            localFilterKeys[database][table][attrKey].filterKey = filterServiceKeys[database][table];
+            localFilterKeys[database][table][attrKey].relations = relationKeys;
+        }
+
+        return localFilterKeys;
+    };
+
+    /**
      * Creates and returns a mapping of names from the given database and table names to filter keys for each database and table pair using filter keys from the given mappings.
      * The filter key for each database and table pair is the global filter key for that pair, if one exists, or the visualization filter key otherwise.
      * @param {Object} databaseNamesToTableNames A map of database names to table names

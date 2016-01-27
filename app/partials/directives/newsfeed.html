@@ -19,15 +19,15 @@
         </div>
 
         <div class="form-group" ng-show="!(hideAdvancedOptions)">
-            <label>Head Field</label>
-            <select class="form-control" ng-model="options.headField" ng-required="false" ng-disabled="!(fields.length > 0)" ng-options="field.prettyName for field in fields" ng-change="handleChangedField()">
+            <label>Primary Title Field</label>
+            <select class="form-control" ng-model="options.primaryTitleField" ng-required="false" ng-disabled="!(fields.length > 0)" ng-options="field.prettyName for field in fields" ng-change="handleChangedField()">
                 <option value="">None</option>
             </select>
         </div>
 
         <div class="form-group" ng-show="!(hideAdvancedOptions)">
-            <label>Name Field</label>
-            <select class="form-control" ng-model="options.nameField" ng-required="false" ng-disabled="!(fields.length > 0)" ng-options="field.prettyName for field in fields" ng-change="handleChangedField()">
+            <label>Secondary Title Field</label>
+            <select class="form-control" ng-model="options.secondaryTitleField" ng-required="false" ng-disabled="!(fields.length > 0)" ng-options="field.prettyName for field in fields" ng-change="handleChangedField()">
                 <option value="">None</option>
             </select>
         </div>
@@ -40,8 +40,8 @@
         </div>
 
         <div class="form-group" ng-show="!(hideAdvancedOptions)">
-            <label>Text Field</label>
-            <select class="form-control" ng-model="options.textField" ng-required="true" ng-disabled="!(fields.length > 0)" ng-options="field.prettyName for field in fields" ng-change="handleChangedField()">
+            <label>Content Field</label>
+            <select class="form-control" ng-model="options.contentField" ng-required="true" ng-disabled="!(fields.length > 0)" ng-options="field.prettyName for field in fields" ng-change="handleChangedField()">
                 <option disabled selected value="">Please choose a field</option>
             </select>
         </div>
@@ -99,20 +99,20 @@
         <div>
             <span ng-if="feedType == 'TWITTER'" class="icon-Twitter_32x32 neon-sprite" title="Tweet"></span>
             <span ng-show="options.showTranslation && item.isTranslated" class="icon-Translated_20x20 neon-sprite" title="Showing Translation"></span>
-            <span ng-class="{true: 'vertical-align', false: ''}[feedType == 'TWITTER']">
-                <span class="head" ng-if="item.head != undefined" ng-show="!options.showTranslation" ng-bind="item.head"></span>
-                <span class="head" ng-if="item.headTranslated != undefined" ng-show="options.showTranslation" ng-bind="item.headTranslated" title="{{item.head}}"></span>
-                <span class="name" ng-if="item.name != undefined" ng-show="!options.showTranslation" ng-bind="item.name"></span>
-                <span class="name" ng-if="item.nameTranslated != undefined" ng-show="options.showTranslation" ng-bind="item.nameTranslated" title="{{item.name}}"></span>
-                <links-popup-button key="" source="" tooltip="{{item.head}} or {{item.name}}" json="{{item.linksPopupButtonJson}}" is-disabled="{{item.linksPopupButtonIsDisabled}}" show-if-disabled="'true'"></links-popup-button>
+            <span ng-class="{true: 'vertical-align', false: ''}[feedType == TWITTER]">
+                <span class="primary-title" ng-if="item.primaryTitle != undefined" ng-show="!options.showTranslation" ng-bind="item.primaryTitle"></span>
+                <span class="primary-title" ng-if="item.primaryTitleTranslated != undefined" ng-show="options.showTranslation" ng-bind="item.primaryTitleTranslated" title="{{item.primaryTitle}}"></span>
+                <span class="secondary-title" ng-if="item.secondaryTitle != undefined" ng-show="!options.showTranslation" ng-bind="item.secondaryTitle"></span>
+                <span class="secondary-title" ng-if="item.secondaryTitleTranslated != undefined" ng-show="options.showTranslation" ng-bind="item.secondaryTitleTranslated" title="{{item.secondaryTitle}}"></span>
+                <links-popup-button key="" source="" tooltip="{{item.primaryTitle}} or {{item.secondaryTitle}}" json="{{item.linksPopupButtonJson}}" is-disabled="{{item.linksPopupButtonIsDisabled}}"></links-popup-button>
             </span>
         </div>
         <div>
             <span class="date" ng-bind="item.date.toUTCString()"></span>
         </div>
         <div>
-            <span class="text" ng-show="!options.showTranslation" ng-bind="item.text"></span>
-            <span class="text" ng-show="options.showTranslation" ng-bind="item.textTranslated" title="{{item.text}}"></span>
+            <span class="content" ng-show="!options.showTranslation" ng-bind="item.content"></span>
+            <span class="content" ng-show="options.showTranslation" ng-bind="item.contentTranslated" title="{{item.content}}"></span>
         </div>
 	</div>
 </div>

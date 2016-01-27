@@ -1,7 +1,7 @@
 <div class="header-container" ng-show="!(hideHeader)">
     <div class="title header-text pull-left" ng-bind="generateTitle()"></div>
 
-    <options-menu parent-element="element" export-function="makeTagCloudExportObject"  button-text="'No tag data'" show-button-text="showOptionsMenuButtonText">
+    <options-menu parent-element="element" export-function="makeTagCloudExportObject"  button-text="optionsMenuButtonText" show-button-text="showOptionsMenuButtonText">
         <translation-options ng-show="translationAvailable" on-translate="updateTranslation" from-language-change="onFromLanguageChange" to-language-change="onToLanguageChange"
             from-language-options="translationLanguages.fromLanguageOptions" to-language-options="translationLanguages.toLanguageOptions">
         </translation-options>
@@ -44,15 +44,15 @@
         </div>
 
         <div class="form-group">
-            <label>Show Records with</label>
+            <label>Show Records With</label>
             <div class="btn-group">
                 <label class="btn btn-default" ng-class="{true: 'active', false: ''}[options.andTags]" ng-disabled="(filterTags.length <= 1)">
                     <input type="radio" ng-model="options.andTags" style="display:none" ng-value="true">
-                    All filters
+                    All Filters
                 </label>
                 <label class="btn btn-default" ng-class="{true: '', false: 'active'}[options.andTags]" ng-disabled="(filterTags.length <= 1)">
                     <input type="radio" ng-model="options.andTags" style="display:none" ng-value="false">
-                    Any filters
+                    Any Filters
                 </label>
             </div>
             <div class="clearfix"></div>
@@ -66,9 +66,9 @@
     <div class="header-item filter-reset pull-right" ng-repeat="tag in filterTags"
         title="{{options.tagField.prettyName}}={{options.showTranslation ? tag.nameTranslated : tag.name}}">
         <links-popup-button key="{{generateLinksPopupKey(tag.name)}}" source="{{visualizationId}}" tooltip="{{tag.name}}" is-disabled="{{linksPopupButtonIsDisabled}}"></links-popup-button>
-        <span class="filter-label" ng-class="{true: '', false: 'border-left'}[linksPopupButtonIsDisabled]" ng-bind="tag.name" ng-show="!options.showTranslation"></span>
-        <span class="filter-label" ng-class="{true: '', false: 'border-left'}[linksPopupButtonIsDisabled]" ng-bind="tag.nameTranslated" ng-show="options.showTranslation"></span>
-        <span class="border-left glyphicon glyphicon-remove" ng-click="removeFilter(tag.name)"></span>
+        <span class="filter-label" ng-bind="tag.name" ng-show="!options.showTranslation"></span>
+        <span class="filter-label" ng-bind="tag.nameTranslated" ng-show="options.showTranslation"></span>
+        <span class="glyphicon glyphicon-remove" ng-click="removeFilter(tag.name)"></span>
     </div>
 </div>
 

@@ -25,15 +25,14 @@
     .item {
         color: @mid-text-color;
         font-size: 13px;
-        background-color: @light-background;
-        border: @border;
+        border: @main-border;
         border-top: 0px;
         -moz-box-sizing: border-box;
         box-sizing: border-box;
         padding: 10px;
 
         &:first-child {
-            border: @border;
+            border: @main-border;
         }
 
         &.future {
@@ -42,7 +41,7 @@
         }
 
         &.highlight {
-            background-color: #ffff66;
+            background-color: @callout;
         }
 
         .neon-sprite {
@@ -54,12 +53,13 @@
             top: 2px;
         }
 
-        .head {
+        .primary-title {
             font-size: 15px;
             font-weight: bold;
+            color: @main-text-color;
         }
 
-        .name {
+        .secondary-title {
             color: @main-text-color;
             font-size: 15px;
         }
@@ -68,13 +68,16 @@
             color: @main-text-color;
         }
 
-        .text {
+        .content {
             word-wrap: break-word;
         }
 
         .glyphicon {
-            color: #333;
             font-size: 12px;
+
+            &:focus, &:hover {
+                color: @accent-bright;
+            }
         }
     }
 

@@ -17,43 +17,43 @@ Icon classes can be used entirely standalone. They are named after their origina
 }
 .icon-FilterTray_34x34 {
   background-image: url(../img/neon-dashboard-spritesheet.png);
-  background-position: -256px -34px;
+  background-position: -188px -256px;
   width: 34px;
   height: 34px;
 }
 .icon-Help_34x34 {
   background-image: url(../img/neon-dashboard-spritesheet.png);
-  background-position: -256px -102px;
+  background-position: -256px -256px;
   width: 34px;
   height: 34px;
 }
 .icon-Neon_16x16 {
   background-image: url(../img/neon-dashboard-spritesheet.png);
-  background-position: -290px -68px;
+  background-position: -320px -52px;
   width: 16px;
   height: 16px;
 }
 .icon-Neon_60x34 {
   background-image: url(../img/neon-dashboard-spritesheet.png);
-  background-position: -256px 0px;
+  background-position: -128px -256px;
   width: 60px;
   height: 34px;
 }
 .icon-Options_34x34 {
   background-image: url(../img/neon-dashboard-spritesheet.png);
-  background-position: -256px -68px;
+  background-position: -222px -256px;
   width: 34px;
   height: 34px;
 }
 .icon-Translated_20x20 {
   background-image: url(../img/neon-dashboard-spritesheet.png);
-  background-position: -290px -34px;
+  background-position: -320px -32px;
   width: 20px;
   height: 20px;
 }
 .icon-Twitter_32x32 {
   background-image: url(../img/neon-dashboard-spritesheet.png);
-  background-position: -256px -136px;
+  background-position: -320px 0px;
   width: 32px;
   height: 32px;
 }
@@ -77,7 +77,7 @@ Icon classes can be used entirely standalone. They are named after their origina
 }
 .icon-Gantt64 {
   background-image: url(../img/neon-dashboard-spritesheet.png);
-  background-position: 0px 0px;
+  background-position: -192px -128px;
   width: 64px;
   height: 64px;
 }
@@ -95,55 +95,91 @@ Icon classes can be used entirely standalone. They are named after their origina
 }
 .icon-Map64 {
   background-image: url(../img/neon-dashboard-spritesheet.png);
-  background-position: -128px -192px;
+  background-position: 0px 0px;
   width: 64px;
   height: 64px;
 }
 .icon-News64 {
   background-image: url(../img/neon-dashboard-spritesheet.png);
-  background-position: -192px -128px;
+  background-position: -192px -192px;
   width: 64px;
   height: 64px;
 }
 .icon-OPS64 {
   background-image: url(../img/neon-dashboard-spritesheet.png);
-  background-position: -64px -128px;
+  background-position: -256px 0px;
   width: 64px;
   height: 64px;
 }
 .icon-OpsClock64 {
   background-image: url(../img/neon-dashboard-spritesheet.png);
-  background-position: 0px -128px;
+  background-position: -256px -64px;
   width: 64px;
   height: 64px;
 }
 .icon-PieChart64 {
   background-image: url(../img/neon-dashboard-spritesheet.png);
-  background-position: -128px -64px;
+  background-position: -256px -128px;
+  width: 64px;
+  height: 64px;
+}
+.icon-ScatterPlot64 {
+  background-image: url(../img/neon-dashboard-spritesheet.png);
+  background-position: -256px -192px;
   width: 64px;
   height: 64px;
 }
 .icon-Sunburst64 {
   background-image: url(../img/neon-dashboard-spritesheet.png);
-  background-position: -128px 0px;
+  background-position: 0px -256px;
   width: 64px;
   height: 64px;
 }
 .icon-TagCloud64 {
   background-image: url(../img/neon-dashboard-spritesheet.png);
-  background-position: -64px -64px;
+  background-position: -128px -192px;
   width: 64px;
   height: 64px;
 }
 .icon-Timeline64 {
   background-image: url(../img/neon-dashboard-spritesheet.png);
-  background-position: 0px -64px;
+  background-position: -64px -128px;
   width: 64px;
   height: 64px;
 }
 .icon-ViewData64 {
   background-image: url(../img/neon-dashboard-spritesheet.png);
-  background-position: -192px -192px;
+  background-position: 0px -128px;
+  width: 64px;
+  height: 64px;
+}
+.icon-Bar-Chart {
+  background-image: url(../img/neon-dashboard-spritesheet.png);
+  background-position: -128px -64px;
+  width: 64px;
+  height: 64px;
+}
+.icon-Create-Filter {
+  background-image: url(../img/neon-dashboard-spritesheet.png);
+  background-position: -128px 0px;
+  width: 64px;
+  height: 64px;
+}
+.icon-Graph {
+  background-image: url(../img/neon-dashboard-spritesheet.png);
+  background-position: -64px -64px;
+  width: 64px;
+  height: 64px;
+}
+.icon-LineChart {
+  background-image: url(../img/neon-dashboard-spritesheet.png);
+  background-position: 0px -64px;
+  width: 64px;
+  height: 64px;
+}
+.icon-PieChart {
+  background-image: url(../img/neon-dashboard-spritesheet.png);
+  background-position: -64px -256px;
   width: 64px;
   height: 64px;
 }

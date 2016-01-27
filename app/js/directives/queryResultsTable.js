@@ -1,6 +1,6 @@
 'use strict';
 /*
- * Copyright 2014 Next Century Corporation
+ * Copyright 2015 Next Century Corporation
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -28,8 +28,8 @@
  * @constructor
  */
 angular.module('neonDemo.directives')
-.directive('queryResultsTable', ['external', 'ConnectionService', 'DatasetService', 'ErrorNotificationService', 'ExportService', 'LinksPopupService', '$compile', '$interval', '$timeout',
-function(external, connectionService, datasetService, errorNotificationService, exportService, linksPopupService, $compile, $interval, $timeout) {
+.directive('queryResultsTable', ['external', 'ConnectionService', 'DatasetService', 'ErrorNotificationService', 'ExportService', 'LinksPopupService', 'ThemeService', 'linkify', '$sce', '$timeout',
+function(external, connectionService, datasetService, errorNotificationService, exportService, linksPopupService, themeService, linkify, $sce, $timeout) {
     return {
         templateUrl: 'partials/directives/queryResultsTable.html',
         restrict: 'EA',
@@ -38,6 +38,9 @@ function(external, connectionService, datasetService, errorNotificationService, 
             bindTable: '=',
             bindDatabase: '=',
             bindIdField: '=',
+            bindSortField: '=',
+            bindSortDirection: '=',
+            bindLimit: '=',
             hideHeader: '=?',
             hideAdvancedOptions: '=?'
         },
@@ -46,112 +49,104 @@ function(external, connectionService, datasetService, errorNotificationService, 
 
             $scope.element = $element;
 
+            $scope.tableId = 'query-results-' + uuid();
+            var tableDiv = $element.find('.results-table');
+            tableDiv.attr("id", $scope.tableId);
+
+            $scope.active = {
+                database: {},
+                table: {},
+                sortByField: {}
+            };
+
+            neon.ready(function() {
+                $scope.init();
+            });
+        },
+        controller: ["$scope", function($scope) {
             // Unique field name used for the SlickGrid column containing the URLs for the external apps.
             // This name should be one that is highly unlikely to be a column name in a real database.
             $scope.EXTERNAL_APP_FIELD_NAME = "neonExternalApps";
 
-            var updateSize = function() {
-                var headerHeight = 0;
-                $element.find(".header-container").each(function() {
-                    headerHeight += $(this).outerHeight(true);
-                });
-                var tableBufferY = $tableDiv.outerHeight(true) - $tableDiv.height();
-                $tableDiv.height($element.height() - headerHeight - tableBufferY);
-
-                var titleWidth = $element.width() - $element.find(".chart-options").outerWidth(true);
-                $element.find(".title").css("maxWidth", titleWidth - 20);
-
-                if($scope.table) {
-                    $scope.table.refreshLayout();
-                }
-            };
-
-            $element.resize(updateSize);
-
             $scope.ASCENDING = neon.query.ASCENDING;
             $scope.DESCENDING = neon.query.DESCENDING;
 
-            $scope.selectionEvent = "QUERY_RESULTS_SELECTION_EVENT";
+            $scope.hiddenColumns = [];
 
-            $scope.databases = [];
-            $scope.tables = [];
-            $scope.fields = [];
-            $scope.deletedFieldsMap = {};
-            $scope.totalRows = 0;
-            $scope.errorMessage = undefined;
-            $scope.loadingData = false;
-            $scope.outstandingDataQuery = undefined;
-            $scope.outstandingTotalRowsQuery = undefined;
-
-            $scope.options = {
-                database: {},
-                table: {},
-                addField: {},
-                sortByField: {},
-                sortDirection: neon.query.ASCENDING,
-                limit: 500
+            var handleColumnVisibiltyChange = function(event) {
+                if(event.column.visible && $scope.hiddenColumns[event.column.colId]) {
+                    delete $scope.hiddenColumns[event.column.colId];
+                    XDATA.userALE.log({
+                        activity: "add",
+                        action: "click",
+                        elementId: "column-" + event.column.colId,
+                        elementType: "datagrid",
+                        elementGroup: "table_group",
+                        source: "user",
+                        tags: ["options", "datagrid", "column", event.column.colId]
+                    });
+                } else {
+                    $scope.hiddenColumns[event.column.colId] = true;
+                    XDATA.userALE.log({
+                        activity: "remove",
+                        action: "click",
+                        elementId: "column-" + event.column.colId,
+                        elementType: "datagrid",
+                        elementGroup: "table_group",
+                        source: "user",
+                        tags: ["options", "datagrid", "column", event.column.colId]
+                    });
+                }
             };
 
-            // Default our data table to be empty.  Generate a unique ID for it
-            // and pass that to the tables.Table object.
-            $scope.data = [];
-            $scope.tableId = 'query-results-' + uuid();
-            var $tableDiv = $element.find('.query-results-grid');
-            $tableDiv.attr("id", $scope.tableId);
+            $scope.gridOptions = {
+                columnDefs: [],
+                rowData: [],
+                enableColResize: true,
+                enableSorting: true,
+                showToolPanel: false,
+                toolPanelSuppressPivot: true,
+                toolPanelSuppressValues: true,
+                suppressRowClickSelection: true,
+                onColumnVisible: handleColumnVisibiltyChange
+            };
+
+            $scope.optionsMenuButtonText = function() {
+                return $scope.active.count + " of " + $scope.active.total + " records";
+            };
+            $scope.showOptionsMenuButtonText = function() {
+                return true;
+            };
 
             /**
-             * Initializes the name of the directive's scope variables
-             * and the Neon Messenger used to monitor data change events.
-             * @method initialize
+             * Resizes the title of the data table.
+             * @method resizeTitle
+             * @private
              */
-            $scope.initialize = function() {
-                $scope.$watch('options.sortByField', function(newVal) {
-                    XDATA.userALE.log({
-                        activity: "select",
-                        action: ($scope.loadingData) ? "reset" : "click",
-                        elementId: "datagrid-sort-by",
-                        elementType: "combobox",
-                        elementGroup: "table_group",
-                        source: ($scope.loadingData) ? "system" : "user",
-                        tags: ["options", "datagrid", "sort-by", newVal]
-                    });
-                });
+            var resizeTitle = function() {
+                // Set the width of the title to the width of the visualization minus the width of the chart options button/text and padding.
+                var titleWidth = $scope.element.width() - $scope.element.find(".chart-options").outerWidth(true) - 20;
+                // Also subtract the width of the table options button.
+                titleWidth -= $scope.element.find(".edit-table").outerWidth(true);
+                $scope.element.find(".title").css("maxWidth", titleWidth);
+            };
 
-                $scope.$watch('options.sortDirection', function(newVal) {
-                    XDATA.userALE.log({
-                        activity: "select",
-                        action: ($scope.loadingData) ? "reset" : "click",
-                        elementId: "datagrid-sort-direction",
-                        elementType: "radiobutton",
-                        elementGroup: "table_group",
-                        source: ($scope.loadingData) ? "system" : "user",
-                        tags: ["options", "datagrid", "sort-direction", newVal]
-                    });
-                });
-
-                $scope.$watch('options.limit', function(newVal) {
-                    XDATA.userALE.log({
-                        activity: "alter",
-                        action: ($scope.loadingData) ? "reset" : "keydown",
-                        elementId: "datagrid-limit",
-                        elementType: "textbox",
-                        elementGroup: "table_group",
-                        source: ($scope.loadingData) ? "system" : "user",
-                        tags: ["options", "datagrid", "limit", newVal]
-                    });
-                });
-
-                // Setup our messenger.
+            /**
+             * intitalize all fields and add a messenger then query for data
+             * @method init
+             */
+            $scope.init = function() {
                 $scope.messenger = new neon.eventing.Messenger();
 
+                $scope.messenger.subscribe(datasetService.UPDATE_DATA_CHANNEL, queryForData);
                 $scope.messenger.events({
                     filtersChanged: onFiltersChanged
                 });
-                $scope.messenger.subscribe(datasetService.UPDATE_DATA_CHANNEL, function() {
-                    queryForData(false);
-                });
 
-                $scope.exportID = exportService.register($scope.makeQueryResultsTableExportObject);
+                $scope.element.resize(resizeTitle);
+                $scope.element.find(".chart-options a").resize(resizeTitle);
+
+                themeService.registerListener($scope.tableId, onThemeChanged);
 
                 $scope.$on('$destroy', function() {
                     XDATA.userALE.log({
@@ -165,328 +160,92 @@ function(external, connectionService, datasetService, errorNotificationService, 
                         tags: ["remove", "datagrid"]
                     });
                     linksPopupService.deleteLinks($scope.tableId);
-                    $element.off("resize", updateSize);
-                    $scope.messenger.removeEvents();
+                    $scope.messenger.unsubscribeAll();
+                    $scope.element.off("resize", resizeTitle);
+                    $scope.element.find(".chart-options a").off("resize", resizeTitle);
                     exportService.unregister($scope.exportID);
-                });
-            };
-
-            $scope.createOptions = function(data, refreshColumns) {
-                var _id = "_id";
-                var has_id = true;
-
-                _.each(data.data, function(element) {
-                    if(!(_.has(element, _id))) {
-                        has_id = false;
-                    }
+                    themeService.unregisterListener($scope.tableId);
                 });
 
-                var options = {
-                    data: data.data,
-                    columns: createColumns(data.data, refreshColumns),
-                    gridOptions: {
-                        enableTextSelectionOnCells: true,
-                        forceFitColumns: false,
-                        enableColumnReorder: true,
-                        forceSyncScrolling: true
-                    }
+                $scope.active = {
+                    total: 0,
+                    sortDirection: $scope.bindSortDirection || $scope.ASCENDING,
+                    limit: $scope.bindLimit || 5000,
+                    count: 0
                 };
 
-                var linkyConfig = datasetService.getLinkyConfig();
-
-                if(linkyConfig.linkTo) {
-                    options.linkyConfig = linkyConfig;
-                }
-
-                if(has_id) {
-                    options.id = _id;
-                }
-                return options;
-            };
-
-            var createColumns = function(data, refreshColumns) {
-                var knownColumns = [];
-
-                if(refreshColumns || !$scope.table) {
-                    // Add the fields in the order they are listed in the configuration file.
-                    datasetService.getFields($scope.options.database.name, $scope.options.table.name).forEach(function(field) {
-                        knownColumns.push({
-                            columnName: field.columnName,
-                            prettyName: field.prettyName
-                        });
-                    });
-                } else {
-                    // Add the fields in the order they are set in the existing data table.
-                    $scope.table.getColumns().forEach(function(column) {
-                        if(column.name) {
-                            knownColumns.push({
-                                columnName: column.field,
-                                prettyName: column.name
-                            });
-                        }
-                    });
-                }
-
-                var hiddenColumnNames = $scope.deletedFieldsMap[$scope.options.database.name][$scope.options.table.name].map(function(deletedField) {
-                    return deletedField.columnName;
-                });
-                var columns = tables.createColumns(knownColumns, data, hiddenColumnNames, [$scope.createDeleteColumnButton("")]);
-                columns = tables.addLinkabilityToColumns(columns);
-
-                if(external.active) {
-                    var externalAppColumn = {
-                        name: "",
-                        field: $scope.EXTERNAL_APP_FIELD_NAME,
-                        width: "15",
-                        cssClass: "centered",
-                        ignoreClicks: true
-                    };
-                    columns.splice(0, 0, externalAppColumn);
-                }
-
-                return columns;
+                initializeDataset();
             };
 
             /**
-             * Event handler for filter changed events issued over Neon's messaging channels.
-             * @param {Object} message A Neon filter changed message.
-             * @method onFiltersChanged
+             * Gets database and table from dataset service and sets up dataset related scope variables
+             * @method initializeDataset
              * @private
              */
-            var onFiltersChanged = function(message) {
-                if(message.addedFilter && message.addedFilter.databaseName === $scope.options.database.name && message.addedFilter.tableName === $scope.options.table.name) {
-                    XDATA.userALE.log({
-                        activity: "alter",
-                        action: "query",
-                        elementId: "datagrid",
-                        elementType: "datagrid",
-                        elementSub: "datagrid",
-                        elementGroup: "chart_group",
-                        source: "system",
-                        tags: ["filter-change", "datagrid"]
-                    });
-                    queryForData(false);
-                }
-            };
-
-            /**
-             * Displays data for any currently active datasets.
-             * @param {Boolean} Whether this function was called during visualization initialization.
-             * @method displayActiveDataset
-             */
-            $scope.displayActiveDataset = function(initializing) {
-                if(!datasetService.hasDataset() || $scope.loadingData) {
-                    return;
-                }
-
+            var initializeDataset = function() {
                 $scope.databases = datasetService.getDatabases();
-                $scope.options.database = $scope.databases[0];
+                $scope.active.database = $scope.databases[0];
                 if($scope.bindDatabase) {
                     for(var i = 0; i < $scope.databases.length; ++i) {
                         if($scope.bindDatabase === $scope.databases[i].name) {
-                            $scope.options.database = $scope.databases[i];
+                            $scope.active.database = $scope.databases[i];
+                            break;
                         }
                     }
                 }
 
-                if(initializing) {
-                    $scope.updateTables();
-                } else {
-                    $scope.$apply(function() {
-                        $scope.updateTables();
-                    });
-                }
+                updateTables();
             };
 
-            $scope.updateTables = function() {
-                $scope.tables = datasetService.getTables($scope.options.database.name);
-                $scope.options.table = $scope.tables[0];
+            var updateTables = function() {
+                $scope.tables = datasetService.getTables($scope.active.database.name);
+                $scope.active.table = $scope.tables[0];
                 if($scope.bindTable) {
                     for(var i = 0; i < $scope.tables.length; ++i) {
                         if($scope.bindTable === $scope.tables[i].name) {
-                            $scope.options.table = $scope.tables[i];
+                            $scope.active.table = $scope.tables[i];
+                            break;
                         }
                     }
                 }
 
-                if(!($scope.deletedFieldsMap[$scope.options.database.name])) {
-                    $scope.deletedFieldsMap[$scope.options.database.name] = {};
-                }
-
-                $scope.updateFields();
+                updateFields();
             };
 
-            $scope.updateFields = function() {
-                $scope.loadingData = true;
-                $scope.fields = datasetService.getSortedFields($scope.options.database.name, $scope.options.table.name);
-                $scope.options.addField = datasetService.createBlankField();
+            var updateFields = function() {
+                // Stops extra data queries that may be caused by event handlers triggered by setting the active fields.
+                $scope.initializing = true;
 
-                if(!($scope.deletedFieldsMap[$scope.options.database.name][$scope.options.table.name])) {
-                    $scope.deletedFieldsMap[$scope.options.database.name][$scope.options.table.name] = [];
-                    // The first time the data for a table is displayed, add the fields hidden in the configuration to the list of deleted fields for the table.
-                    datasetService.getFields($scope.options.database.name, $scope.options.table.name).forEach(function(field) {
-                        if(field.hide) {
-                            $scope.deletedFieldsMap[$scope.options.database.name][$scope.options.table.name].push({
-                                columnName: field.columnName,
-                                prettyName: field.prettyName
-                            });
-                        }
-                    });
-                }
-
-                if($scope.deletedFieldsMap[$scope.options.database.name][$scope.options.table.name].length) {
-                    // Remove previously deleted fields from the list of fields.
-                    $scope.fields = $scope.fields.filter(function(field) {
-                        return -1 === _.findIndex($scope.deletedFieldsMap[$scope.options.database.name][$scope.options.table.name], function(deletedField) {
-                            return deletedField.columnName === field.columnName;
-                        });
-                    });
-                    $scope.options.addField = $scope.deletedFieldsMap[$scope.options.database.name][$scope.options.table.name][0];
-                }
-
-                var sortByField = datasetService.getMapping($scope.options.database.name, $scope.options.table.name, neonMappings.SORT) || "";
-                $scope.options.sortByField = _.find($scope.fields, function(field) {
-                    return field.columnName === sortByField;
-                }) || datasetService.createBlankField();
-
-                queryForData(true);
-            };
-
-            /**
-             * Forces a data query regardless of the current need to query for data.
-             * @method refreshData
-             */
-            $scope.refreshData = function() {
-                XDATA.userALE.log({
-                    activity: "perform",
-                    action: "click",
-                    elementId: "datagrid-refresh",
-                    elementType: "button",
-                    elementGroup: "table_group",
-                    source: "user",
-                    tags: ["options", "datagrid", "refresh"]
+                $scope.fields = datasetService.getSortedFields($scope.active.database.name, $scope.active.table.name);
+                $scope.fields.forEach(function(field) {
+                    if(field.hide) {
+                        $scope.hiddenColumns[field.columnName] = true;
+                    }
                 });
-                queryForData(false);
+
+                var sortByFieldName = $scope.bindSortField || datasetService.getMapping($scope.active.database.name, $scope.active.table.name, neonMappings.SORT) || "";
+                $scope.active.sortByField = _.find($scope.fields, function(field) {
+                    return field.columnName === sortByFieldName;
+                }) || ($scope.fields.length ? $scope.fields[0] : datasetService.createBlankField());
+
+                queryForTotalRows();
+                updateColumns();
             };
 
             /**
-             * Triggers a Neon query that pull the a number of records that match the current Neon connection
-             * and filter set.  The query will be limited by the record number and sorted by the field
-             * selected in this directive's form.  This directive includes support for a show-data directive attribute
-             * that binds to a scope variable and controls table display.  If the bound variable evaulates to false,
-             * no data table is generated.  queryForData will not issue a query until the directive thinks it needs to
-             * poll for data and should show data.
-             * Resets internal "need to query" state to false.
-             * @param {Boolean} refreshColumns Whether the columns should be refreshed and thus the
-             * column ordering reverted back to the original
-             * @method queryForData
+             * Triggers a Neon query that will fetch the total number of rows of data for display
+             * @method queryForTotalRows
+             * @private
              */
-            var queryForData = function(refreshColumns) {
-                if($scope.errorMessage) {
-                    errorNotificationService.hideErrorMessage($scope.errorMessage);
-                    $scope.errorMessage = undefined;
-                }
-
+            var queryForTotalRows = function() {
                 var connection = connectionService.getActiveConnection();
 
                 if(!connection) {
-                    $scope.updateData({
-                        data: []
-                    }, refreshColumns);
-                    $scope.totalRows = 0;
-                    $scope.loadingData = false;
+                    updateData([]);
                     return;
                 }
 
-                var query = $scope.buildQuery();
-
-                XDATA.userALE.log({
-                    activity: "alter",
-                    action: "query",
-                    elementId: "datagrid",
-                    elementType: "datagrid",
-                    elementSub: "data",
-                    elementGroup: "chart_group",
-                    source: "system",
-                    tags: ["query", "datagrid"]
-                });
-
-                if($scope.outstandingDataQuery) {
-                    $scope.outstandingDataQuery.abort();
-                }
-
-                $scope.outstandingDataQuery = connection.executeQuery(query);
-                $scope.outstandingDataQuery.done(function() {
-                    $scope.outstandingDataQuery = undefined;
-                });
-                $scope.outstandingDataQuery.done(function(queryResults) {
-                    XDATA.userALE.log({
-                        activity: "alter",
-                        action: "receive",
-                        elementId: "datagrid",
-                        elementType: "datagrid",
-                        elementSub: "data",
-                        elementGroup: "chart_group",
-                        source: "system",
-                        tags: ["receive", "datagrid"]
-                    });
-                    $scope.$apply(function() {
-                        $scope.updateData(queryResults, refreshColumns);
-                        queryForTotalRows(connection);
-                        XDATA.userALE.log({
-                            activity: "alter",
-                            action: "render",
-                            elementId: "datagrid",
-                            elementType: "datagrid",
-                            elementSub: "data",
-                            elementGroup: "chart_group",
-                            source: "system",
-                            tags: ["render", "datagrid"]
-                        });
-                    });
-                });
-                $scope.outstandingDataQuery.fail(function(response) {
-                    if(response.status === 0) {
-                        XDATA.userALE.log({
-                            activity: "alter",
-                            action: "canceled",
-                            elementId: "datagrid",
-                            elementType: "datagrid",
-                            elementSub: "data",
-                            elementGroup: "chart_group",
-                            source: "system",
-                            tags: ["canceled", "datagrid"]
-                        });
-                    } else {
-                        XDATA.userALE.log({
-                            activity: "alter",
-                            action: "failed",
-                            elementId: "datagrid",
-                            elementType: "datagrid",
-                            elementSub: "data",
-                            elementGroup: "chart_group",
-                            source: "system",
-                            tags: ["failed", "datagrid"]
-                        });
-                        $scope.updateData({
-                            data: []
-                        }, refreshColumns);
-                        $scope.totalRows = 0;
-                        $scope.loadingData = false;
-                        if(response.responseJSON) {
-                            $scope.errorMessage = errorNotificationService.showErrorMessage($element, response.responseJSON.error, response.responseJSON.stackTrace);
-                        }
-                    }
-                });
-            };
-
-            /**
-             * Triggers a Neon query that will aggregate the time data for the currently selected dataset.
-             * @method queryForTotalRows
-             */
-            var queryForTotalRows = function(connection) {
-                var query = new neon.query.Query().selectFrom($scope.options.database.name, $scope.options.table.name)
-                    .aggregate(neon.query.COUNT, '*', 'count');
+                var query = new neon.query.Query().selectFrom($scope.active.database.name, $scope.active.table.name).aggregate(neon.query.COUNT, '*', 'count');
 
                 XDATA.userALE.log({
                     activity: "alter",
@@ -510,11 +269,10 @@ function(external, connectionService, datasetService, errorNotificationService, 
                 $scope.outstandingTotalRowsQuery.done(function(queryResults) {
                     $scope.$apply(function() {
                         if(queryResults.data.length > 0) {
-                            $scope.totalRows = queryResults.data[0].count;
+                            $scope.active.total = queryResults.data[0].count;
                         } else {
-                            $scope.totalRows = 0;
+                            $scope.active.total = 0;
                         }
-                        $scope.loadingData = false;
                         XDATA.userALE.log({
                             activity: "alter",
                             action: "receive",
@@ -550,34 +308,79 @@ function(external, connectionService, datasetService, errorNotificationService, 
                             source: "system",
                             tags: ["failed", "datagrid"]
                         });
-                        $scope.totalRows = 0;
-                        $scope.loadingData = false;
+                        $scope.active.total = 0;
                     }
                 });
             };
 
             /**
-             * Adds an onClick listener for selecting a row in the table that
-             * publishes the row to a channel
+             * Queries for field names list and sets up table columns
+             * @method updateColumns
+             * @private
              */
-            $scope.addOnClickListener = function() {
-                $scope.table.addOnClickListener(function(columns, row) {
-                    // Deselect the row if already selected
-                    if($scope.selectedRowId !== undefined && $scope.selectedRowId === row._id) {
-                        XDATA.userALE.log({
-                            activity: "deselect",
-                            action: "click",
-                            elementId: "row",
-                            elementType: "datagrid",
-                            elementGroup: "table_group",
-                            source: "user",
-                            tags: ["datagrid", "row"]
-                        });
+            var updateColumns = function() {
+                // Use the fields with the order in which they are defined in the Neon configuration file.
+                var fields = datasetService.getFields($scope.active.database.name, $scope.active.table.name);
 
-                        $scope.clearSelection();
-                        return;
+                var columnDefinitions = _.map(fields, function(field) {
+                    var config = {
+                        headerName: field.prettyName,
+                        field: field.columnName,
+                        suppressSizeToFit: true,
+                        onCellClicked: handleRowClick,
+                        cellRenderer: function(params) {
+                            return neon.helpers.getNestedValue(params.data, params.colDef.field);
+                        }
+                    };
+
+                    if(field.class) {
+                        config.cellClass = field.class;
                     }
 
+                    if($scope.hiddenColumns[field.columnName]) {
+                        config.hide = true;
+                    }
+
+                    return config;
+                });
+
+                if(external.active) {
+                    var externalAppColumn = {
+                        headerName: "",
+                        field: $scope.EXTERNAL_APP_FIELD_NAME,
+                        suppressSizeToFit: true,
+                        cellClass: 'centered',
+                        width: 20
+                    };
+
+                    columnDefinitions = [externalAppColumn].concat(columnDefinitions);
+                }
+
+                $scope.gridOptions.api.setColumnDefs(columnDefinitions);
+                $scope.gridOptions.api.sizeColumnsToFit();
+                queryForData();
+            };
+
+            /**
+             * onClick listener for selecting a cell in the table that publishes the row to a channel
+             * @method handleRowClick
+             * @private
+             */
+            var handleRowClick = function(cell) {
+                if($scope.selectedRowId !== undefined && $scope.selectedRowId === cell.rowIndex) {
+                    XDATA.userALE.log({
+                        activity: "deselect",
+                        action: "click",
+                        elementId: "row",
+                        elementType: "datagrid",
+                        elementGroup: "table_group",
+                        source: "user",
+                        tags: ["datagrid", "row"]
+                    });
+
+                    $scope.gridOptions.api.deselectIndex(cell.rowIndex);
+                    return;
+                } else {
                     $scope.$apply(function() {
                         XDATA.userALE.log({
                             activity: "select",
@@ -590,82 +393,164 @@ function(external, connectionService, datasetService, errorNotificationService, 
                         });
 
                         $scope.messenger.publish($scope.selectionEvent, {
-                            data: row,
-                            database: $scope.options.database.name,
-                            table: $scope.options.table.name
+                            data: $scope.gridOptions.rowData[cell.rowIndex],
+                            database: $scope.active.database.name,
+                            table: $scope.active.table.name
                         });
-                        $tableDiv.addClass("row-selected");
-                        $scope.selectedRowId = row._id;
+
+                        $scope.gridOptions.api.selectIndex(cell.rowIndex, false);
+                        $scope.selectedRowId = cell.rowIndex;
                     });
-                });
+                }
             };
 
             /**
-             * Adds a sort listener in order to clear any row selection on column reorders
+             * Builds a query and calls to execute query if connection is available.
+             * @method queryForData
+             * @private
              */
-            $scope.addSortListener = function() {
-                $scope.table.registerSortListener(function() {
-                    XDATA.userALE.log({
-                        activity: "deselect",
-                        action: "click",
-                        elementId: "row",
-                        elementType: "datagrid",
-                        elementGroup: "table_group",
-                        source: "system",
-                        tags: ["datagrid", "row"]
-                    });
+            var queryForData = function() {
+                if($scope.errorMessage) {
+                    errorNotificationService.hideErrorMessage($scope.errorMessage);
+                    $scope.errorMessage = undefined;
+                }
 
-                    $scope.clearSelection();
-                });
-            };
+                var connection = connectionService.getActiveConnection();
 
-            $scope.clearSelection = function() {
-                $scope.messenger.publish($scope.selectionEvent, {});
-                $scope.selectedRowId = undefined;
-                $tableDiv.removeClass("row-selected");
-
-                // Delay deselection or the row won't deselect
-                $timeout(function() {
-                    $scope.table.deselect();
-                }, 100);
-            };
-
-            /**
-             * Updates the data bound to the table managed by this directive.  This will trigger a change in
-             * the chart's visualization.
-             * @param {Object} queryResults Results returned from a Neon query.
-             * @param {Array} queryResults.data The aggregate numbers for the heat chart cells.
-             * @param {Boolean} refreshColumns Whether the columns should be refreshed and thus the
-             * column ordering reverted back to the original
-             * @method updateData
-             */
-            $scope.updateData = function(queryResults, refreshColumns) {
-                if(!($("#" + $scope.tableId).length)) {
+                if(!connection) {
+                    updateData([]);
                     return;
                 }
 
-                $scope.tableOptions = $scope.createOptions(queryResults, refreshColumns);
+                $scope.gridOptions.api.setRowData([]);
+
+                var query = buildQuery();
+
+                XDATA.userALE.log({
+                    activity: "alter",
+                    action: "query",
+                    elementId: "datagrid",
+                    elementType: "datagrid",
+                    elementSub: "data",
+                    elementGroup: "chart_group",
+                    source: "system",
+                    tags: ["query", "datagrid"]
+                });
+
+                if($scope.outstandingDataQuery) {
+                    $scope.outstandingDataQuery.abort();
+                }
+
+                $scope.outstandingDataQuery = connection.executeQuery(query);
+                $scope.outstandingDataQuery.done(function() {
+                    $scope.outstandingDataQuery = undefined;
+                });
+                $scope.outstandingDataQuery.done(function(queryResults) {
+                    XDATA.userALE.log({
+                        activity: "alter",
+                        action: "receive",
+                        elementId: "datagrid",
+                        elementType: "datagrid",
+                        elementSub: "data",
+                        elementGroup: "chart_group",
+                        source: "system",
+                        tags: ["receive", "datagrid"]
+                    });
+                    updateData(queryResults.data);
+                    XDATA.userALE.log({
+                            activity: "alter",
+                            action: "render",
+                            elementId: "datagrid",
+                            elementType: "datagrid",
+                            elementSub: "data",
+                            elementGroup: "chart_group",
+                            source: "system",
+                            tags: ["render", "datagrid"]
+                        });
+                });
+                $scope.outstandingDataQuery.fail(function(response) {
+                    if(response.status === 0) {
+                        XDATA.userALE.log({
+                            activity: "alter",
+                            action: "canceled",
+                            elementId: "datagrid",
+                            elementType: "datagrid",
+                            elementSub: "data",
+                            elementGroup: "chart_group",
+                            source: "system",
+                            tags: ["canceled", "datagrid"]
+                        });
+                    } else {
+                        XDATA.userALE.log({
+                            activity: "alter",
+                            action: "failed",
+                            elementId: "datagrid",
+                            elementType: "datagrid",
+                            elementSub: "data",
+                            elementGroup: "chart_group",
+                            source: "system",
+                            tags: ["failed", "datagrid"]
+                        });
+                        updateData({
+                            data: []
+                        }, refreshColumns);
+                        $scope.total = 0;
+                        if(response.responseJSON) {
+                            $scope.errorMessage = errorNotificationService.showErrorMessage($scope.element, response.responseJSON.error, response.responseJSON.stackTrace);
+                        }
+                    }
+                });
+            };
+
+            /**
+             * Escapes all values in the given data, recursively.
+             * @method escapeDataRecursively
+             * @private
+             */
+            var escapeDataRecursively = function(data) {
+                if(_.isArray(data)) {
+                    for(var i = 0; i < data.length; i++) {
+                        data[i] = escapeDataRecursively(data[i]);
+                    }
+                } else if(_.keys(data).length) {
+                    var keys = _.keys(data);
+                    for(var i = 0; i < keys.length; i++) {
+                        data[keys[i]] = escapeDataRecursively(data[keys[i]]);
+                    }
+                } else {
+                    data = _.escape(data);
+                }
+                return data;
+            };
+
+            /**
+             * Builds a query to pull a limited set of records that match any existing filter sets.
+             * @return neon.query.Query
+             * @method buildQuery
+             * @private
+             */
+            var buildQuery = function() {
+                var query = new neon.query.Query().selectFrom($scope.active.database.name, $scope.active.table.name).limit($scope.active.limit);
+                if(datasetService.isFieldValid($scope.active.sortByField)) {
+                    query.sortBy($scope.active.sortByField.columnName, $scope.active.sortDirection);
+                }
+                return query;
+            };
+
+            var updateData = function(data) {
+                data = escapeDataRecursively(data);
 
                 if(external.active) {
-                    queryResults.data = addExternalLinksToColumnData(queryResults.data);
+                    data = addExternalLinksToColumnData(data);
                 }
 
-                $scope.table = new tables.Table("#" + $scope.tableId, $scope.tableOptions).draw();
+                $scope.active.count = data.length;
+                $scope.initializing = false;
+                $scope.gridOptions.api.setRowData(data);
 
-                /* Enable row selection
-                 * Limitations:
-                 *  - It is only guaranteed to work correctly if there is only one data table showing this collection
-                 */
-                if($scope.options.table.enableRowSelection) {
-                    $(".query-results-grid .slick-row").addClass("selectable");
-                    $scope.addOnClickListener();
-                    $scope.clearSelection();
-                    $scope.addSortListener();
-                }
-
-                $scope.table.refreshLayout();
-                $scope.table.addOnColumnsReorderedListener($scope.createDeleteColumnButtons);
-                $scope.createDeleteColumnButtons();
+                $timeout(function() {
+                    linkifyRows(data);
+                });
             };
 
             /**
@@ -677,11 +562,12 @@ function(external, connectionService, datasetService, errorNotificationService, 
              */
             var addExternalLinksToColumnData = function(data) {
                 var tableLinks = {};
-                var mappings = datasetService.getMappings($scope.options.database.name, $scope.options.table.name);
+                var mappings = datasetService.getMappings($scope.active.database.name, $scope.active.table.name);
 
                 data.forEach(function(row) {
                     var field = $scope.bindIdField || "_id";
                     var id = row[field];
+
                     tableLinks[id] = linksPopupService.createAllServiceLinkObjects(external.services, mappings, field, id);
                     row[$scope.EXTERNAL_APP_FIELD_NAME] = tableLinks[id].length ? linksPopupService.createLinkHtml($scope.tableId, id, id) : linksPopupService.createDisabledLinkHtml(id);
                 });
@@ -692,88 +578,61 @@ function(external, connectionService, datasetService, errorNotificationService, 
                 return data;
             };
 
-            $scope.createDeleteColumnButtons = function() {
-                $element.find(".slick-header-column").each(function() {
-                    var name = $(this).find(".slick-column-name").html();
-                    // Check if the name is empty to ignore the external application link column.
-                    if(name) {
-                        $(this).append($compile($scope.createDeleteColumnButton(name))($scope));
-                    }
+            /**
+             * Modifies string data values to include actual links for any portions resembling a twitter link using the linkify dependency
+             * @method linkifyRows
+             * @param data {Object Array} the array of data row objects
+             * @return the modified data array
+             * @private
+             */
+            var linkifyRows = function(data) {
+                var linkedData = _.map(data, function(row) {
+                    _.each(row, function(value, key) {
+                        if(value && typeof value === 'string') {
+                            row[key] = $sce.trustAsHtml(linkify.twitter(value));
+                        }
+                    });
+
+                    return row;
                 });
-            };
 
-            $scope.createDeleteColumnButton = function(name) {
-                return "<span class=\"remove-column-button\" ng-click=\"deleteColumn('" + name + "'); $event.stopPropagation();\">&times;</span>";
-            };
-
-            $scope.deleteColumn = function(name) {
-                if($scope.table.deleteColumn(name)) {
-                    var indexToSplice = _.findIndex($scope.fields, function(field) {
-                        return name === field.prettyName;
-                    });
-                    var deletedField = $scope.fields.splice(indexToSplice, 1)[0];
-                    $scope.options.sortByField = $scope.options.sortByField === name ? $scope.fields[0] : $scope.options.sortByField;
-                    $scope.deletedFieldsMap[$scope.options.database.name][$scope.options.table.name].push(deletedField);
-                    $scope.options.addField = deletedField;
-                    $scope.createDeleteColumnButtons();
-
-                    XDATA.userALE.log({
-                        activity: "remove",
-                        action: "click",
-                        elementId: "column-" + name,
-                        elementType: "datagrid",
-                        elementGroup: "table_group",
-                        source: "user",
-                        tags: ["options", "datagrid", "column", name]
-                    });
-                }
-            };
-
-            $scope.addColumn = function() {
-                if($scope.table.addColumn($scope.options.addField.prettyName)) {
-                    var indexToSplice = _.findIndex($scope.deletedFieldsMap[$scope.options.database.name][$scope.options.table.name], function(deletedField) {
-                        return deletedField.columnName === $scope.options.addField.columnName;
-                    });
-                    $scope.deletedFieldsMap[$scope.options.database.name][$scope.options.table.name].splice(indexToSplice, 1);
-                    $scope.fields.push($scope.options.addField);
-                    $scope.options.addField = $scope.deletedFieldsMap[$scope.options.database.name][$scope.options.table.name].length > 0 ? $scope.deletedFieldsMap[$scope.options.database.name][$scope.options.table.name][0] : datasetService.createBlankField();
-                    $scope.createDeleteColumnButtons();
-
-                    XDATA.userALE.log({
-                        activity: "add",
-                        action: "click",
-                        elementId: "column-" + $scope.options.addField.prettyName,
-                        elementType: "datagrid",
-                        elementGroup: "table_group",
-                        source: "user",
-                        tags: ["options", "datagrid", "column", $scope.options.addField.prettyName]
-                    });
-                }
+                $scope.gridOptions.api.setRowData(linkedData);
             };
 
             /**
-             * Builds a query to pull a limited set of records that match any existing filter sets.
-             * @return neon.query.Query
-             * @method buildQuery
+             * Event handler for filter changed events issued over Neon's messaging channels.
+             * @param {Object} message A Neon filter changed message.
+             * @method onFiltersChanged
+             * @private
              */
-            $scope.buildQuery = function() {
-                var query = new neon.query.Query().selectFrom($scope.options.database.name, $scope.options.table.name).limit($scope.options.limit);
-                if(datasetService.isFieldValid($scope.options.sortByField)) {
-                    query.sortBy($scope.options.sortByField.columnName, $scope.options.sortDirection);
+            var onFiltersChanged = function(message) {
+                if(message.addedFilter && message.addedFilter.databaseName === $scope.active.database.name && message.addedFilter.tableName === $scope.active.table.name) {
+                    XDATA.userALE.log({
+                        activity: "alter",
+                        action: "query",
+                        elementId: "datagrid",
+                        elementType: "datagrid",
+                        elementSub: "datagrid",
+                        elementGroup: "chart_group",
+                        source: "system",
+                        tags: ["filter-change", "datagrid"]
+                    });
+                    queryForTotalRows();
+                    queryForData();
                 }
-                return query;
             };
 
-            $scope.handleAscButtonClick = function() {
-                if($scope.options.sortDirection === $scope.ASCENDING) {
-                    $scope.refreshData();
-                }
+            var onThemeChanged = function(theme) {
+                $scope.themeType = theme.type;
             };
 
-            $scope.handleDescButtonClick = function() {
-                if($scope.options.sortDirection === $scope.DESCENDING) {
-                    $scope.refreshData();
-                }
+            /**
+             * Opens or closes the ag-grid toolbox to allow for modifying table columns
+             * @method toggleToolbox
+             */
+            $scope.toggleToolbox = function() {
+                $scope.gridOptions.showToolPanel = !$scope.gridOptions.showToolPanel;
+                $scope.gridOptions.api.showToolPanel($scope.gridOptions.showToolPanel);
             };
 
             /**
@@ -790,7 +649,7 @@ function(external, connectionService, datasetService, errorNotificationService, 
                     source: "user",
                     tags: ["options", "datagrid", "export"]
                 });
-                var query = $scope.buildQuery();
+                var query = buildQuery();
                 query.limitClause = exportService.getLimitClause();
                 var finalObject = {
                     name: "Query_Results_Table",
@@ -810,15 +669,64 @@ function(external, connectionService, datasetService, errorNotificationService, 
                         pretty: field.prettyName || field.columnName
                     });
                 };
-                datasetService.getFields($scope.options.database.name, $scope.options.table.name).forEach(addField);
+                datasetService.getFields($scope.active.database.name, $scope.active.table.name).forEach(addField);
                 return finalObject;
             };
 
-            // Wait for neon to be ready, the create our messenger and intialize the view and data.
-            neon.ready(function() {
-                $scope.initialize();
-                $scope.displayActiveDataset(true);
-            });
-        }
+            var logChange = function(element, value, type) {
+                XDATA.userALE.log({
+                    activity: "select",
+                    action: "click",
+                    elementId: "datagrid",
+                    elementType: type || "combobox",
+                    elementSub: element,
+                    elementGroup: "table_group",
+                    source: "user",
+                    tags: ["options", "datagrid", value]
+                });
+            };
+
+            $scope.handleDatabaseChange = function() {
+                logChange("database", $scope.active.database.name);
+                updateTables();
+            };
+
+            $scope.handleTableChange = function() {
+                logChange("table", $scope.active.table.name);
+                updateFields();
+            };
+
+            var handleSortChange = function() {
+                var sort = {
+                    colId: $scope.active.sortByField.columnName,
+                    sort: $scope.active.sortDirection === $scope.ASCENDING ? "asc" : "desc"
+                };
+
+                $scope.gridOptions.api.setSortModel([sort]);
+
+                if(!$scope.initializing) {
+                    queryForData();
+                }
+            };
+
+            $scope.handleSortByFieldChange = function() {
+                logChange("sort-field", $scope.active.sortByField.name);
+                handleSortChange();
+            };
+
+            $scope.handleSortDirectionChange = function() {
+                logChange("sort-direction", $scope.active.sortDirection, "button");
+                handleSortChange();
+            };
+
+            $scope.handleLimitChange = function() {
+                logChange("limit", $scope.active.limit, "button");
+                if(!$scope.initializing) {
+                    queryForData();
+                }
+            };
+
+            //TODO text selection on cells -- https://github.com/ceolter/ag-grid/issues/87
+        }]
     };
 }]);

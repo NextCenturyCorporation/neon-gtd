@@ -58,8 +58,8 @@ function(connectionService, datasetService, errorNotificationService, filterServ
             // The error message from the Neon server currently displayed in this visualization through the Error Notification Service.
             $scope.errorMessage = undefined;
 
-            // Whether this visualization is currently loading data due to a query.
-            $scope.loadingData = false;
+            // Whether this visualization is currently initializing to stop extra queries.
+            $scope.initializing = false;
 
             // Often the visualization will want to save the data from its most recent query for ongoing interaction through its display.
             $scope.data = [];
@@ -100,7 +100,7 @@ function(connectionService, datasetService, errorNotificationService, filterServ
                 $scope.exportID = exportService.register($scope.makeExportObject);
 
                 $scope.$on('$destroy', function() {
-                    $scope.messenger.removeEvents();
+                    $scope.messenger.unsubscribeAll();
                     // Remove any filters that have been set.
                     if($scope.filter) {
                         filterService.removeFilters($scope.messenger, $scope.filterKeys);
@@ -125,12 +125,11 @@ function(connectionService, datasetService, errorNotificationService, filterServ
 
             /**
              * Displays data for any currently active datasets.
-             * @param {Boolean} Whether this function was called during visualization initialization.
              * @method displayActiveDataset
              * @private
              */
-            var displayActiveDataset = function(initializing) {
-                if(!datasetService.hasDataset() || $scope.loadingData) {
+            var displayActiveDataset = function() {
+                if(!datasetService.hasDataset()) {
                     return;
                 }
 
@@ -150,15 +149,7 @@ function(connectionService, datasetService, errorNotificationService, filterServ
                 // Create a map of filter keys for each database/table pair available to this visualization.
                 $scope.filterKeys = filterService.createFilterKeys("sample", datasetService.getDatabaseAndTableNames());
 
-                // If initializing, this function was called inside neon.ready which is already in an angular apply.
-                // If not, this function was called by a non-angular event, so wrap the update in an angular apply so the HTML is updated.
-                if(initializing) {
-                    $scope.updateTables();
-                } else {
-                    $scope.$apply(function() {
-                        $scope.updateTables();
-                    });
-                }
+                $scope.updateTables();
             };
 
             /**
@@ -188,7 +179,7 @@ function(connectionService, datasetService, errorNotificationService, filterServ
              */
             $scope.updateFields = function() {
                 // Prevent extraneous queries from onFieldChanged.
-                $scope.loadingData = true;
+                $scope.initializing = true;
 
                 $scope.fields = datasetService.getSortedFields($scope.options.database.name, $scope.options.table.name);
 
@@ -226,7 +217,7 @@ function(connectionService, datasetService, errorNotificationService, filterServ
                     updateData({
                         data: []
                     });
-                    $scope.loadingData = false;
+                    $scope.initializing = false;
                     return;
                 }
 
@@ -237,14 +228,14 @@ function(connectionService, datasetService, errorNotificationService, filterServ
                     $scope.$apply(function() {
                         // Update the data for this visualization with the query results.
                         updateData(results);
-                        $scope.loadingData = false;
+                        $scope.initializing = false;
                     });
                 }, function(response) {
                     // If the query returned an error, reset the visualization.
                     updateData({
                         data: []
                     });
-                    $scope.loadingData = false;
+                    $scope.initializing = false;
                     // If the error response contains an error message, use the Error Notification Service to display that message.
                     if(response.responseJSON) {
                         $scope.errorMessage = errorNotificationService.showErrorMessage($element, response.responseJSON.error, response.responseJSON.stackTrace);
@@ -262,7 +253,7 @@ function(connectionService, datasetService, errorNotificationService, filterServ
                 var query = new neon.query.Query().selectFrom($scope.options.database.name, $scope.options.table.name);
 
                 // TODO Replace the follwing code with your own query properties.
-                query.groupBy($scope.options.field.columnName);
+                query.groupBy($scope.options.field);
                 query.aggregate(neon.query.COUNT, '*', 'count');
                 query.sortBy('count', neon.query.DESCENDING);
                 query.where($scope.options.field.columnName, "!=", null);
@@ -356,8 +347,8 @@ function(connectionService, datasetService, errorNotificationService, filterServ
              * Triggered by changing $scope.options.field.
              */
             $scope.onFieldChanged = function() {
-                // This function is triggered by updateFields which already start a query so check loadingData to prevent extraneous queries.
-                if(!$scope.loadingData) {
+                // This function is triggered by updateFields which already start a query so check initializing to prevent extraneous queries.
+                if(!$scope.initializing) {
                     // Query for data using the new field.
                     queryForData();
                 }
@@ -402,7 +393,7 @@ function(connectionService, datasetService, errorNotificationService, filterServ
             // 2) Adding a new visualization through the Add Visualization navbar item.
             neon.ready(function() {
                 initialize();
-                displayActiveDataset(true);
+                displayActiveDataset();
             });
         }
     };

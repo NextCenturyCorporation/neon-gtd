@@ -16,7 +16,7 @@
  */
 
 angular.module("neonDemo.services")
-.factory("TranslationService", ["config", "$http", "$q", function(config, $http, $q) {
+.factory("TranslationService", ["config", "$http", "$q", "ConnectionService", function(config, $http, $q, connectionService) {
     var service = {};
 
     var apis = {
@@ -40,6 +40,7 @@ angular.module("neonDemo.services")
     };
 
     var chosenApi;
+    var translationCache = {};
 
     /**
      * Sets the default translation service.
@@ -108,6 +109,8 @@ angular.module("neonDemo.services")
                 reason: "No text provided"
             });
         } else {
+            translationCache[to] = translationCache[to] || {};
+
             var translateCallback = function() {
                 var deferred = $q.defer();
 
@@ -117,8 +120,18 @@ angular.module("neonDemo.services")
                     params += "&" + param;
                 });
 
+                var cached = [];
+
                 text.forEach(function(elem) {
-                    params += "&" + apis[chosenApi].params.text + "=" + encodeURIComponent(elem);
+                    if(translationCache[to][elem]) {
+                        // Add a blank parameter so their indices match the indices of the list of cached translations.
+                        params += "&" + apis[chosenApi].params.text + "=";
+                        cached.push(translationCache[to][elem]);
+                    } else {
+                        params += "&" + apis[chosenApi].params.text + "=" + encodeURIComponent(elem);
+                        // Add a blank element to the list of cached translations so its indices match the indices of the parameters.
+                        cached.push("");
+                    }
                 });
 
                 if(!to || !apis[chosenApi].languages[to]) {
@@ -145,6 +158,18 @@ angular.module("neonDemo.services")
 
                 $http.get(apis[chosenApi].base + apis[chosenApi].methods.translate + "?" + params)
                     .then(function(response) {
+                        // Cache the translations for later use.
+                        response.data.data.translations.forEach(function(item, index) {
+                            if(!cached[index]) {
+                                translationCache[to][text[index]] = item.translatedText;
+                            }
+                        });
+                        // Add the cached translations in the response data for the callback.
+                        cached.forEach(function(item, index) {
+                            if(item) {
+                                response.data.data.translations[index].translatedText = item;
+                            }
+                        });
                         deferred.resolve(response);
                     }, function(response) {
                         deferred.reject({
@@ -222,7 +247,34 @@ angular.module("neonDemo.services")
         return reasons;
     };
 
+    /**
+     * Loads the translation cache by asking the Neon server.
+     * @method loadTranslationCache
+     * @private
+     */
+    var loadTranslationCache = function() {
+        var connection = connectionService.getActiveConnection();
+        if(connection) {
+            connection.getTranslationCache(function(response) {
+                translationCache = JSON.parse(response);
+            });
+        }
+    };
+
+    /**
+     * Saves the translation cache by sending it to the Neon server.
+     * @method saveTranslationCache
+     */
+    service.saveTranslationCache = function() {
+        var connection = connectionService.getActiveConnection();
+        if(connection) {
+            connection.setTranslationCache(translationCache);
+        }
+    };
+
     service.setService("google");
+
+    loadTranslationCache();
 
     return service;
 }]);

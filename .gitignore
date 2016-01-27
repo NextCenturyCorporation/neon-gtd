@@ -2,9 +2,14 @@
 .idea
 .orig
 .swp
+.tmp
 !.gitkeep
 app/lib
 app/css/app.css
+app/css/dark-green.css
+app/css/dark-purple.css
+app/css/light-green.css
+build
 bower_components/
 config.json
 *.config.json
@@ -17,5 +22,3 @@ reports
 target/
 tmp
 version.json
-build
-.tmp

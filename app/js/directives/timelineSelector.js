@@ -59,6 +59,7 @@ function($interval, $filter, external, connectionService, datasetService, errorN
 
             $scope.element = $element;
             $scope.opencpu = opencpu;
+            $scope.helpers = neon.helpers;
 
             // Default our time data to an empty array.
             $scope.data = [];
@@ -460,11 +461,12 @@ function($interval, $filter, external, connectionService, datasetService, errorN
             };
 
             var onResize = function() {
-                var titleWidth = $element.width() - $element.find(".chart-options").outerWidth(true);
+                // Set the width of the title to the width of the visualization minus the width of the chart options button/text and padding.
+                var titleWidth = $element.width() - $element.find(".chart-options").outerWidth(true) - 20;
                 $element.find(".next-to-title").each(function() {
-                    titleWidth -= $(this).outerWidth(true);
+                    titleWidth -= ($(this).outerWidth(true) + 10);
                 });
-                $element.find(".title").css("maxWidth", titleWidth - 20);
+                $element.find(".title").css("maxWidth", titleWidth);
 
                 resizeDateTimePickerDropdown();
 
@@ -484,8 +486,9 @@ function($interval, $filter, external, connectionService, datasetService, errorN
              * Initializes the name of the date field used to query the current dataset
              * and the Neon Messenger used to monitor data change events.
              * @method initialize
+             * @private
              */
-            $scope.initialize = function() {
+            var initialize = function() {
                 if($scope.bindGranularity) {
                     $scope.options.granularity = $scope.bindGranularity.toLowerCase();
                     $scope.updateBucketizer();
@@ -496,6 +499,8 @@ function($interval, $filter, external, connectionService, datasetService, errorN
                 });
 
                 $element.resize(onResize);
+                $element.find(".chart-options a").resize(onResize);
+                $element.find(".next-to-title").resize(onResize);
                 onResize();
 
                 // Switch bucketizers when the granularity is changed.
@@ -541,13 +546,6 @@ function($interval, $filter, external, connectionService, datasetService, errorN
                             return;
                         }
 
-                        if($scope.brush[0] < $scope.bucketizer.getStartDate()) {
-                            $scope.brush[0] = $scope.bucketizer.getStartDate();
-                        }
-                        if($scope.brush[1] > $scope.bucketizer.getEndDate()) {
-                            $scope.brush[1] = $scope.bucketizer.getEndDate();
-                        }
-
                         if(datesEqual($scope.brush[0], $scope.bucketizer.getStartDate()) && datesEqual($scope.brush[1], $scope.bucketizer.getEndDate())) {
                             removeBrushFromTimelineAndDatasetService();
                             return;
@@ -567,7 +565,7 @@ function($interval, $filter, external, connectionService, datasetService, errorN
                         } else {
                             // Because the timeline ignores its own filter, we just need to update the
                             // chart times and total when this filter is applied
-                            replaceDateFilters(false, $scope.updateChartTimesAndTotal);
+                            replaceDateFilters(false, updateChartTimesAndTotal);
                         }
                     }
                 }, true);
@@ -617,13 +615,15 @@ function($interval, $filter, external, connectionService, datasetService, errorN
                         tags: ["remove", "timeline"]
                     });
                     linksPopupService.deleteLinks($scope.visualizationId);
-                    $scope.messenger.removeEvents();
+                    $scope.messenger.unsubscribeAll();
                     // Remove our filter if we had an active one.
                     if($scope.brush.length) {
                         filterService.removeFilters($scope.messenger, $scope.filterKeys);
                     }
                     exportService.unregister($scope.exportID);
                     $element.off("resize", onResize);
+                    $element.find(".chart-options a").off("resize", onResize);
+                    $element.find(".next-to-title").off("resize", onResize);
                 });
             };
 
@@ -641,10 +641,12 @@ function($interval, $filter, external, connectionService, datasetService, errorN
 
                 var relations = datasetService.getRelations($scope.options.database.name, $scope.options.table.name, [$scope.options.dateField.columnName]);
 
-                var filterText = $scope.formatStartDate(getFilterStartDate()) + " to " + $scope.formatEndDate(getFilterEndDate());
+                var filterText;
 
                 if(showInvalidDates) {
                     filterText = "Invalid Dates";
+                } else {
+                    filterText = $scope.formatStartDate(getFilterStartDate()) + " to " + $scope.formatEndDate(getFilterEndDate());
                 }
 
                 var filterNameObj = {
@@ -652,7 +654,7 @@ function($interval, $filter, external, connectionService, datasetService, errorN
                     text: filterText
                 };
 
-                filterService.replaceFilters($scope.messenger, relations, $scope.filterKeys, (showInvalidDates ? $scope.createFilterClauseForInvalidDates : $scope.createFilterClauseForDate), filterNameObj, function() {
+                filterService.replaceFilters($scope.messenger, relations, $scope.filterKeys, (showInvalidDates ? createFilterClauseForInvalidDates : createFilterClauseForDate), filterNameObj, function() {
                     if(callback) {
                         callback();
                     }
@@ -685,9 +687,10 @@ function($interval, $filter, external, connectionService, datasetService, errorN
              * @param {Object} databaseAndTableName Contains the database and table name
              * @param {String} dateFieldName The name of the date field on which to filter
              * @method createFilterClauseForInvalidDates
+             * @private
              * @return {Object} A neon.query.Filter object
              */
-            $scope.createFilterClauseForInvalidDates = function(databaseAndTableName, dateFieldName) {
+            var createFilterClauseForInvalidDates = function(databaseAndTableName, dateFieldName) {
                 var lowerBoundFilterClause = neon.query.where(dateFieldName, '<', new Date("1970-01-01T00:00:00.000Z"));
                 var upperBoundFilterClause = neon.query.where(dateFieldName, '>', new Date("2025-01-01T00:00:00.000Z"));
                 var nullFilterClause = neon.query.where(dateFieldName, '=', null);
@@ -700,9 +703,10 @@ function($interval, $filter, external, connectionService, datasetService, errorN
              * @param {Object} databaseAndTableName Contains the database and table name
              * @param {String} dateFieldName The name of the date field on which to filter
              * @method createFilterClauseForDate
+             * @private
              * @return {Object} A neon.query.Filter object
              */
-            $scope.createFilterClauseForDate = function(databaseAndTableName, dateFieldName) {
+            var createFilterClauseForDate = function(databaseAndTableName, dateFieldName) {
                 var startDate = getFilterStartDate();
                 var endDate = getFilterEndDate();
                 var startFilterClause = neon.query.where(dateFieldName, '>=', startDate);
@@ -780,17 +784,17 @@ function($interval, $filter, external, connectionService, datasetService, errorN
                     if(datasetService.isFieldValid($scope.options.dateField) && message.fieldNames.indexOf($scope.options.dateField.columnName) >= 0 && $scope.brush !== message.brushExtent) {
                         $scope.brush = message.brushExtent;
                         $scope.extentDirty = true;
-                        $scope.updateChartTimesAndTotal();
+                        updateChartTimesAndTotal();
                     }
                 }
             };
 
             /**
              * Displays data for any currently active datasets.
-             * @param {Boolean} Whether this function was called during visualization initialization.
              * @method displayActiveDataset
+             * @private
              */
-            $scope.displayActiveDataset = function(initializing) {
+            var displayActiveDataset = function() {
                 if(!datasetService.hasDataset() || $scope.loadingData) {
                     return;
                 }
@@ -810,14 +814,7 @@ function($interval, $filter, external, connectionService, datasetService, errorN
                 $scope.visualizationFilterKeys = filterService.createFilterKeys("timeline", datasetService.getDatabaseAndTableNames());
                 // The filter keys will be set to the global date filter key for each database/table pair when available and the visualization filter key otherwise.
                 $scope.filterKeys = $scope.visualizationFilterKeys;
-
-                if(initializing) {
-                    $scope.updateTables();
-                } else {
-                    $scope.$apply(function() {
-                        $scope.updateTables();
-                    });
-                }
+                $scope.updateTables();
             };
 
             $scope.updateTables = function() {
@@ -874,9 +871,10 @@ function($interval, $filter, external, connectionService, datasetService, errorN
             /**
              * Helper method for queryForChartData() and requestExport(). Creates the Query object to be used by those moethods.
              * @method createChartDataQuery
+             * @private
              * @return {neon.query.Query} query The Query object to be used by queryForChartData() and requestExport()
              */
-            $scope.createChartDataQuery = function() {
+            var createChartDataQuery = function() {
                 var query = new neon.query.Query()
                     .selectFrom($scope.options.database.name, $scope.options.table.name)
                     .where(neon.query.and(
@@ -897,9 +895,10 @@ function($interval, $filter, external, connectionService, datasetService, errorN
             /**
              * Helper method for queryForChartData(). Creates the Query object for invalid dates to be used by this moethod.
              * @method createInvalidDatesQuery
+             * @private
              * @return {neon.query.Query} query The Query object to be used by queryForChartData()
              */
-            $scope.createInvalidDatesQuery = function() {
+            var createInvalidDatesQuery = function() {
                 var query = new neon.query.Query()
                     .selectFrom($scope.options.database.name, $scope.options.table.name)
                     .where(neon.query.or(
@@ -916,6 +915,7 @@ function($interval, $filter, external, connectionService, datasetService, errorN
             /**
              * Triggers a Neon query that will aggregate the time data for the currently selected dataset.
              * @method queryForChartData
+             * @private
              */
             var queryForChartData = function() {
                 if($scope.errorMessage) {
@@ -926,7 +926,7 @@ function($interval, $filter, external, connectionService, datasetService, errorN
                 var connection = connectionService.getActiveConnection();
 
                 if(!connection || !datasetService.isFieldValid($scope.options.dateField)) {
-                    $scope.updateChartData({
+                    updateChartData({
                         data: []
                     });
                     $scope.loadingData = false;
@@ -934,8 +934,8 @@ function($interval, $filter, external, connectionService, datasetService, errorN
                 }
 
                 var queryGroup = new neon.query.QueryGroup();
-                var queryValidDates = $scope.createChartDataQuery();
-                var queryInvalidDates = $scope.createInvalidDatesQuery();
+                var queryValidDates = createChartDataQuery();
+                var queryInvalidDates = createInvalidDatesQuery();
                 queryGroup.addQuery(queryValidDates);
                 queryGroup.addQuery(queryInvalidDates);
                 queryGroup.ignoreFilters([$scope.filterKeys[$scope.options.database.name][$scope.options.table.name]]);
@@ -976,7 +976,7 @@ function($interval, $filter, external, connectionService, datasetService, errorN
                                 return !datum.invalidCount;
                             });
                         }
-                        $scope.updateChartData(validQueryResults);
+                        updateChartData(validQueryResults);
                         $scope.loadingData = false;
                         XDATA.userALE.log({
                             activity: "alter",
@@ -1013,7 +1013,7 @@ function($interval, $filter, external, connectionService, datasetService, errorN
                             source: "system",
                             tags: ["failed", "timeline", "data"]
                         });
-                        $scope.updateChartData({
+                        updateChartData({
                             data: []
                         });
                         $scope.invalidRecordCount = 0;
@@ -1030,8 +1030,9 @@ function($interval, $filter, external, connectionService, datasetService, errorN
              * UTC. The display value for the total records is updates as well.
              * of the data array.
              * @method updateChartTimesAndTotal
+             * @private
              */
-            $scope.updateChartTimesAndTotal = function() {
+            var updateChartTimesAndTotal = function() {
                 // Try to find primary series in new data
                 var i = 0;
                 var primaryIndex = 0;
@@ -1060,15 +1061,6 @@ function($interval, $filter, external, connectionService, datasetService, errorN
                 var total = 0;
 
                 if(extentStartDate && extentEndDate) {
-                    // can happen when switching between granularities on edge cases
-                    if(extentStartDate < $scope.bucketizer.getStartDate()) {
-                        extentStartDate = $scope.bucketizer.getStartDate();
-                    }
-
-                    if(extentEndDate > $scope.bucketizer.getEndDate()) {
-                        extentEndDate = $scope.bucketizer.getEndDate();
-                    }
-
                     extentStartDate = $scope.bucketizer.zeroOutDate(extentStartDate);
                     extentEndDate = $scope.bucketizer.roundUpBucket(extentEndDate);
 
@@ -1106,8 +1098,9 @@ function($interval, $filter, external, connectionService, datasetService, errorN
              * @param {Object} queryResults Results returned from a Neon query.
              * @param {Array} queryResults.data The aggregate numbers for the heat chart cells.
              * @method updateChartData
+             * @private
              */
-            $scope.updateChartData = function(queryResults) {
+            var updateChartData = function(queryResults) {
                 // Any time new data is fetched, the old MMPP analysis is invalidated.
                 $scope.eventProbabilitiesDisplayed = false;
 
@@ -1116,16 +1109,16 @@ function($interval, $filter, external, connectionService, datasetService, errorN
                         if($scope.bucketizer.getStartDate() === undefined || $scope.bucketizer.getEndDate() === undefined) {
                             $scope.updateDates();
                         }
-                        var data = $scope.createTimelineData(queryResults);
+                        var data = createTimelineData(queryResults);
                         $scope.data = data;
                         $scope.noData = !$scope.data || !$scope.data.length || !$scope.data[0].data || !$scope.data[0].data.length;
-                        $scope.updateChartTimesAndTotal();
-                        $scope.addTimeSeriesAnalysis(data[0].data, data);
+                        updateChartTimesAndTotal();
+                        addTimeSeriesAnalysis(data[0].data, data);
                     };
 
                     // on the initial query, setup the start/end bounds
                     if($scope.referenceStartDate === undefined || $scope.referenceEndDate === undefined) {
-                        $scope.getMinMaxDates(updateDatesCallback);
+                        getMinMaxDates(updateDatesCallback);
                     } else {
                         updateDatesCallback();
                     }
@@ -1140,13 +1133,13 @@ function($interval, $filter, external, connectionService, datasetService, errorN
                         source: "system",
                         tags: ["timeline", "clear"]
                     });
-                    $scope.data = $scope.createTimelineData(queryResults);
+                    $scope.data = createTimelineData(queryResults);
                     $scope.noData = !$scope.data || !$scope.data.length || !$scope.data[0].data || !$scope.data[0].data.length;
-                    $scope.updateChartTimesAndTotal();
+                    updateChartTimesAndTotal();
                 }
             };
 
-            $scope.getMinMaxDates = function(success) {
+            var getMinMaxDates = function(success) {
                 if($scope.errorMessage) {
                     errorNotificationService.hideErrorMessage($scope.errorMessage);
                     $scope.errorMessage = undefined;
@@ -1190,7 +1183,7 @@ function($interval, $filter, external, connectionService, datasetService, errorN
                                     source: "system",
                                     tags: ["receive", "timeline", "min-date"]
                                 });
-                                $scope.referenceStartDate = new Date(queryResults.data[0][$scope.options.dateField.columnName]);
+                                $scope.referenceStartDate = new Date(getDateField(queryResults.data[0]));
                                 if($scope.referenceEndDate !== undefined) {
                                     $scope.$apply(success);
                                 }
@@ -1207,7 +1200,7 @@ function($interval, $filter, external, connectionService, datasetService, errorN
                                 tags: ["failed", "timeline", "min-date"]
                             });
                             $scope.referenceStartDate = undefined;
-                            $scope.updateChartData({
+                            updateChartData({
                                 data: []
                             });
                             if(response.responseJSON) {
@@ -1256,7 +1249,7 @@ function($interval, $filter, external, connectionService, datasetService, errorN
                                     source: "system",
                                     tags: ["received", "timeline", "max-date"]
                                 });
-                                $scope.referenceEndDate = new Date(queryResults.data[0][$scope.options.dateField.columnName]);
+                                $scope.referenceEndDate = new Date(getDateField(queryResults.data[0]));
                                 if($scope.referenceStartDate !== undefined) {
                                     $scope.$apply(success);
                                 }
@@ -1273,7 +1266,7 @@ function($interval, $filter, external, connectionService, datasetService, errorN
                                 tags: ["failed", "timeline", "max-date"]
                             });
                             $scope.referenceEndDate = undefined;
-                            $scope.updateChartData({
+                            updateChartData({
                                 data: []
                             });
                             if(response.responseJSON) {
@@ -1285,13 +1278,25 @@ function($interval, $filter, external, connectionService, datasetService, errorN
             };
 
             /**
+             * Finds and returns the date field in the data. If the date contains '.', representing that the date is in an object
+             * within the data, it will find the nested value.
+             * @param {Object} data
+             * @method getDateField
+             * @private
+             */
+            var getDateField = function(data) {
+                return $scope.helpers.getNestedValue(data, $scope.options.dateField.columnName);
+            };
+
+            /**
              * Creates a new data array used to populate our contained timeline.  This function is used
              * as or by Neon query handlers.
              * @param {Object} queryResults Results returned from a Neon query.
              * @param {Array} queryResults.data The aggregate numbers for the heat chart cells.
              * @method createTimelineData
+             * @private
              */
-            $scope.createTimelineData = function(queryResults) {
+            var createTimelineData = function(queryResults) {
                 var rawData = queryResults.data;
                 var data = [];
                 var queryData = [];
@@ -1336,17 +1341,17 @@ function($interval, $filter, external, connectionService, datasetService, errorN
              * @param timelineData an array of {date: Date(...), value: n} objects, one for each day
              * @param graphData the array of objects that will be graphed
              */
-            $scope.addTimeSeriesAnalysis = function(timelineData, graphData) {
+            var addTimeSeriesAnalysis = function(timelineData, graphData) {
                 // If OpenCPU isn't available, then just return without doing anything.
                 if(!ocpu.connected) {
                     return;
                 }
 
                 if($scope.opencpu.enableStl2) {
-                    $scope.addStl2TimeSeriesAnalysis(timelineData, graphData);
+                    addStl2TimeSeriesAnalysis(timelineData, graphData);
                 }
                 if($scope.opencpu.enableAnomalyDetection) {
-                    $scope.addAnomalyDetectionAnalysis(timelineData, graphData);
+                    addAnomalyDetectionAnalysis(timelineData, graphData);
                 }
             };
 
@@ -1354,10 +1359,10 @@ function($interval, $filter, external, connectionService, datasetService, errorN
                 if(!ocpu.connected) {
                     return;
                 }
-                $scope.addMmppTimeSeriesAnalysis($scope.options.primarySeries.data, $scope.data);
+                addMmppTimeSeriesAnalysis($scope.options.primarySeries.data, $scope.data);
             };
 
-            $scope.addMmppTimeSeriesAnalysis = function(timelineData, graphData) {
+            var addMmppTimeSeriesAnalysis = function(timelineData, graphData) {
                 // The MMPP analysis needs hourly data
                 if($scope.options.granularity !== HOUR) {
                     return;
@@ -1406,7 +1411,7 @@ function($interval, $filter, external, connectionService, datasetService, errorN
                 });
             };
 
-            $scope.addStl2TimeSeriesAnalysis = function(timelineData, graphData) {
+            var addStl2TimeSeriesAnalysis = function(timelineData, graphData) {
                 // The analysis code just wants an array of the counts
                 var timelineVector = _.map(timelineData, function(it) {
                     return it.value;
@@ -1477,7 +1482,7 @@ function($interval, $filter, external, connectionService, datasetService, errorN
                 });
             };
 
-            $scope.addAnomalyDetectionAnalysis = function(timelineData, graphData) {
+            var addAnomalyDetectionAnalysis = function(timelineData, graphData) {
                 var timelineDataFrame = _.map(timelineData, function(it) {
                     var dateString = it.date.getUTCFullYear() + "-" +
                         (it.date.getUTCMonth() + 1) + "-" +
@@ -1601,7 +1606,7 @@ function($interval, $filter, external, connectionService, datasetService, errorN
                     source: "user",
                     tags: ["options", "timeline", "export"]
                 });
-                var query = $scope.createChartDataQuery();
+                var query = createChartDataQuery();
                 query.limitClause = exportService.getLimitClause();
                 query.ignoreFilters_ = exportService.getIgnoreFilters();
                 query.ignoredFilterIds_ = exportService.getIgnoredFilterIds();
@@ -1639,8 +1644,8 @@ function($interval, $filter, external, connectionService, datasetService, errorN
 
             // Wait for neon to be ready, the create our messenger and intialize the view and data.
             neon.ready(function() {
-                $scope.initialize();
-                $scope.displayActiveDataset(true);
+                initialize();
+                displayActiveDataset();
             });
         }
     };

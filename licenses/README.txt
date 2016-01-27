@@ -32,6 +32,8 @@ JQuery Tagcloud (jquery.tagcloud.txt)
   -- jquery.tagcloud.js
 
 MIT/X11 (mit.txt)
+- ag-Grid
+  -- ag-grid.min.js v2.3.5
 - AngularJS
   -- angular-loader.min.js v1.2.26
   -- angular.min.js v1.2.26
@@ -65,10 +67,10 @@ MIT/X11 (mit.txt)
 - Openlayers Heatmap
   -- heatmap.js  1.0
   -- heatmap-openlayers.js
+- Plotly.js
+  -- plotly.js 1.4.1
 - Respond
   -- respond.min.js  v1.4.2
-- Slickgrid
-  -- slick.grid.js  v2.1
 - Grunt
   -- grunt  0.4.1
   -- grunt-bower-task  0.4.0

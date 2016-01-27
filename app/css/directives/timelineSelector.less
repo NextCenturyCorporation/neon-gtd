@@ -25,7 +25,7 @@
     .chart-options {
         .popover {
             /* Set the width so that the date granularity buttons fit on one row. */
-            min-width: 306px;
+            min-width: 325px;
         }
     }
 
@@ -80,18 +80,23 @@
     }
 
     .highlight {
-        fill: goldenrod;
+        fill: @callout;
     }
 
     .neon-datetimepicker {
+        top: 5px;
 
         .dropdown-toggle {
+            cursor: pointer;
             font-family: "Open Sans", Helvetica, arial, sans-serif;
             color: @main-text-color;
             font-size: 16px;
 
-            button {
-                cursor: pointer;
+            &:hover {
+                color: @accent-bright;
+            }
+
+            i {
                 margin-left: 5px;
 
                 .glyphicon {
@@ -101,24 +106,24 @@
         }
 
         .dropdown-menu {
-            /* Match the width of two datetimepickers plus margin/padding/scrollbar. */
-            width: 550px;
+            th {
+                padding: 0px 10px;
+            }
+
+            td {
+                padding: 5px;
+            }
 
             label {
-                &.start-date {
-                    margin-top: 15px;
-                    width: 250px;
-                }
+                margin-top: 5px;
+            }
 
-                &.end-date {
-                    margin-top: 15px;
-                    width: 125px;
-                }
+            button {
+                margin-left: 5px;
             }
 
             .datetimepicker {
-                float: left;
-                margin-right: 5px;
+                background-color: @main-background;
             }
         }
     }
@@ -144,6 +149,17 @@
             margin-left: 15px;
             margin-top: 0px;
         }
+
+        .next-to-title {
+            .count {
+                color: @accent-bright;
+                font-weight: bold;
+            }
+        }
+    }
+
+    .animation-controls {
+        margin: 0px 10px;
     }
 }
 

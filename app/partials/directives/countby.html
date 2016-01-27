@@ -4,51 +4,51 @@
     <options-menu parent-element="element" export-function="makeCountByExportObject" button-text="optionsMenuButtonText" show-button-text="showOptionsMenuButtonText">
         <div class="form-group" ng-show="!(hideAdvancedOptions)">
             <label>Database</label>
-            <select class="form-control" ng-model="options.database" ng-options="database.prettyName for database in databases" ng-required="true" ng-disabled="(databases.length < 2)" ng-change="updateTables()">
+            <select class="form-control" ng-model="active.database" ng-options="database.prettyName for database in databases" ng-required="true" ng-disabled="(databases.length < 2)" ng-change="handleDatabaseChange()">
             </select>
         </div>
 
         <div class="form-group" ng-show="!(hideAdvancedOptions)">
             <label>Table</label>
-            <select class="form-control" ng-model="options.table" ng-options="table.prettyName for table in tables" ng-required="true" ng-disabled="(tables.length < 2)" ng-change="updateFields()">
+            <select class="form-control" ng-model="active.table" ng-options="table.prettyName for table in tables" ng-required="true" ng-disabled="(tables.length < 2)" ng-change="handleTableChange()">
             </select>
         </div>
 
         <div class="form-group" ng-show="!(hideAdvancedOptions)">
-            <label>Data Field</label>
-            <select class="form-control" ng-model="options.field" ng-required="true" ng-disabled="!(fields.length > 0)" ng-options="field.prettyName for field in fields" ng-change="handleChangedDataField()">
+            <label>Group Field</label>
+            <select class="form-control" ng-model="active.dataField" ng-required="true" ng-disabled="!(fields.length > 0)" ng-options="field.prettyName for field in fields" ng-change="handleDataFieldChange()">
                 <option disabled selected value="">Please choose a field</option>
             </select>
         </div>
 
         <div class="form-group" ng-show="!(hideAdvancedOptions)">
             <label>Aggregation</label>
-            <select class="form-control" ng-model="options.aggregation" ng-required="true" ng-disabled="!(fields.length > 0)" ng-change="handleChangedAggregation()">
+            <select class="form-control" ng-model="active.aggregation" ng-required="true" ng-disabled="!(fields.length > 0)" ng-change="handleAggregationChange()">
                 <option value="count">Count</option>
                 <option value="min">Minimum</option>
                 <option value="max">Maximum</option>
             </select>
         </div>
 
-        <div class="form-group" ng-show="!(hideAdvancedOptions) && (options.aggregation !== 'count')">
+        <div class="form-group" ng-show="!(hideAdvancedOptions) && (active.aggregation !== 'count')">
             <label>Aggregation Field</label>
-            <select class="form-control" ng-model="options.aggregationField" ng-required="true" ng-disabled="!(fields.length > 0)" ng-options="field.prettyName for field in fields" ng-change="handleChangedAggregationField()">
+            <select class="form-control" ng-model="active.aggregationField" ng-required="true" ng-disabled="!(fields.length > 0)" ng-options="field.prettyName for field in fields" ng-change="handleAggregationFieldChange()">
             </select>
         </div>
 
         <div class="form-group" ng-show="!(hideAdvancedOptions)">
             <label>Unshared Filter</label>
-            <select class="form-control" ng-model="options.filterField" ng-required="false" ng-disabled="!(fields.length > 0)" ng-options="field.prettyName for field in fields" ng-change="handleChangedUnsharedFilterField()">
+            <select class="form-control" ng-model="active.filterField" ng-required="false" ng-disabled="!(fields.length > 0)" ng-options="field.prettyName for field in fields" ng-change="handleUnsharedFilterFieldChange()">
                 <option selected value="">None</option>
             </select>
 
             <div class="input-group">
-                <input type="text" class="form-control" placeholder="{{'Filter for ' + options.filterField.prettyName + '...'}}" ng-model="options.filterValue" ng-disabled="!(options.filterField.columnName)">
+                <input type="text" class="form-control" placeholder="{{'Filter for ' + active.filterField.prettyName + '...'}}" ng-model="active.filterValue" ng-disabled="!(active.filterField.columnName)">
                 <div class="input-group-btn">
-                    <button type="button" class="btn btn-default refresh" title="Remove Unshared Filter" ng-click="handleRemovedUnsharedFilter()">
+                    <button type="button" class="btn btn-default refresh" title="Remove Unshared Filter" ng-click="handleUnsharedFilterRemove()">
                         <span class="glyphicon glyphicon-remove"></span>
                     </button>
-                    <button type="button" class="btn btn-default refresh" title="Set Unshared Filter" ng-click="handleChangedUnsharedFilterValue()">
+                    <button type="button" class="btn btn-default refresh" title="Set Unshared Filter" ng-click="handleUnsharedFilterValueChange()">
                         <span class="glyphicon glyphicon-refresh"></span>
                     </button>
                 </div>
@@ -56,11 +56,11 @@
         </div>
 
         <div class="form-group">
-            <label>Value Limit</label>
+            <label>Group (Row) Limit</label>
             <div class="input-group">
-                <input type="number" min="1" class="form-control" ng-model="options.limitCount" required>
+                <input type="number" min="1" class="form-control" ng-model="active.limit" required>
                 <div class="input-group-btn">
-                    <button type="button" class="btn btn-default refresh" title="Refresh" ng-click="handleChangedLimit()">
+                    <button type="button" class="btn btn-default refresh" title="Refresh" ng-click="handleLimitChange()">
                         <span class="glyphicon glyphicon-refresh"></span>
                     </button>
                 </div>
@@ -68,20 +68,16 @@
         </div>
     </options-menu>
 </div>
-
 <div class="clearfix"></div>
 
-<div class="header-container filter-container">
-    <h4 class="pull-left" ng-if="showTooMuchDataError">The query exceeded the memory limit.  Please add a filter to requery.</h4>
-
-    <h4 class="pull-left" ng-hide="showTooMuchDataError"><span class="count text-primary ng-binding" ng-bind="count | number"></span> values</h4>
+<div class="header-container filter-container" ng-class="{true: 'shrink', false: ''}[filterSet === undefined && !showTooMuchDataError]">
+    <h4 class="pull-left" ng-show="showTooMuchDataError">The query exceeded the memory limit.  Please add a filter to requery.</h4>
 
     <div class="header-item filter-reset pull-right" ng-class="{true: 'hidden', false: ''}[filterSet === undefined]" title="{{filterSet.key}}={{filterSet.value}}">
         <span class="filter-label" ng-bind="filterSet.value"></span>
-        <span class="border-left glyphicon glyphicon-remove" ng-click="clearFilter()"></span>
+        <span class="glyphicon glyphicon-remove" ng-click="clearFilter()"></span>
     </div>
 </div>
-
 <div class="clearfix"></div>
 
-<div class="count-by-grid" ng-hide="showTooMuchDataError"></div>
+<div ag-grid="gridOptions" class="count-by-table" ng-class="{true: 'ag-dark', false: 'ag-fresh'}[themeType === 'dark']" ng-hide="showTooMuchDataError"></div>

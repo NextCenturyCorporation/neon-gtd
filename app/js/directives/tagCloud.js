@@ -19,8 +19,8 @@
  * This directive is for building a tag cloud
  */
 angular.module('neonDemo.directives')
-.directive('tagCloud', ['external', 'ConnectionService', 'DatasetService', 'ErrorNotificationService', 'FilterService', 'ExportService', 'LinksPopupService', 'TranslationService', '$timeout',
-function(external, connectionService, datasetService, errorNotificationService, filterService, exportService, linksPopupService, translationService, $timeout) {
+.directive('tagCloud', ['external', 'ConnectionService', 'DatasetService', 'ErrorNotificationService', 'FilterService', 'ExportService', 'LinksPopupService', 'ThemeService', 'TranslationService', '$timeout',
+function(external, connectionService, datasetService, errorNotificationService, filterService, exportService, linksPopupService, themeService, translationService, $timeout) {
     return {
         templateUrl: 'partials/directives/tagCloud.html',
         restrict: 'EA',
@@ -40,6 +40,10 @@ function(external, connectionService, datasetService, errorNotificationService, 
             $scope.element = $element;
             $scope.visualizationId = "text-cloud-" + uuid();
 
+            $scope.optionsMenuButtonText = function() {
+                return $scope.filterTags.length === 0 && $scope.data.length === 0 ? "No Tag Data" : "";
+            };
+
             $scope.showOptionsMenuButtonText = function() {
                 return $scope.filterTags.length === 0 && $scope.data.length === 0;
             };
@@ -47,15 +51,15 @@ function(external, connectionService, datasetService, errorNotificationService, 
             $scope.databases = [];
             $scope.tables = [];
             $scope.fields = [];
-            $scope.fieldTypes = {};
             $scope.data = [];
             $scope.filterTags = [];
             $scope.showFilter = false;
             $scope.filterKeys = {};
             $scope.errorMessage = undefined;
             $scope.loadingData = false;
-            $scope.outstandingQuery = undefined;
             $scope.linksPopupButtonIsDisabled = true;
+            $scope.tagColor = "#111";
+            $scope.queryTitle = "";
             $scope.translationAvailable = false;
             $scope.translationLanguages = {
                 fromLanguageOptions: {},
@@ -76,16 +80,32 @@ function(external, connectionService, datasetService, errorNotificationService, 
             };
 
             var updateSize = function() {
-                var titleWidth = $element.width() - $element.find(".chart-options").outerWidth(true);
-                $element.find(".title").css("maxWidth", titleWidth - 20);
+                // Set the width of the title to the width of the visualization minus the width of the chart options button/text and padding.
+                var titleWidth = $element.width() - $element.find(".chart-options").outerWidth(true) - 20;
+                $element.find(".title").css("maxWidth", titleWidth);
+            };
+
+            var updateTagcloudPluginSettings = function() {
+                $.fn.tagcloud.defaults = {
+                    size: {
+                        start: 130,
+                        end: 250,
+                        unit: '%'
+                    },
+                    color: {
+                        start: '#aaaaaa',
+                        end: $scope.tagColor
+                    }
+                };
             };
 
             /**
              * Initializes the name of the directive's scope variables
              * and the Neon Messenger used to monitor data change events.
              * @method initialize
+             * @private
              */
-            $scope.initialize = function() {
+            var initialize = function() {
                 // Toggle the points and clusters view when the user toggles between them.
                 $scope.$watch('options.andTags', function(newVal, oldVal) {
                     XDATA.userALE.log({
@@ -99,7 +119,7 @@ function(external, connectionService, datasetService, errorNotificationService, 
                         tags: ["options", "tag-cloud"]
                     });
                     if(newVal !== oldVal) {
-                        $scope.setTagFilter();
+                        setTagFilter();
                     }
                 });
 
@@ -120,9 +140,11 @@ function(external, connectionService, datasetService, errorNotificationService, 
 
                 $scope.messenger.subscribe(filterService.REQUEST_REMOVE_FILTER, function(ids) {
                     if(filterService.containsKey($scope.filterKeys, ids)) {
-                        $scope.clearTagFilters();
+                        clearTagFilters();
                     }
                 });
+
+                themeService.registerListener($scope.visualizationId, onThemeChanged);
 
                 $scope.exportID = exportService.register($scope.makeTagCloudExportObject);
 
@@ -139,34 +161,24 @@ function(external, connectionService, datasetService, errorNotificationService, 
                     });
                     linksPopupService.deleteLinks($scope.visualizationId);
                     $element.off("resize", updateSize);
-                    $element.find(".chart-options").off("resize", updateSize);
-                    $scope.messenger.removeEvents();
+                    $element.find(".chart-options a").off("resize", updateSize);
+                    $scope.messenger.unsubscribeAll();
                     // Remove our filter if we had an active one.
                     if(0 < $scope.filterTags.length) {
                         filterService.removeFilters($scope.messenger, $scope.filterKeys);
                     }
                     exportService.unregister($scope.exportID);
+                    themeService.unregisterListener($scope.visualizationId);
                 });
 
                 $element.resize(updateSize);
-                $element.find(".chart-options").resize(updateSize);
+                $element.find(".chart-options a").resize(updateSize);
 
-                // setup tag cloud color/size changes
-                $.fn.tagcloud.defaults = {
-                    size: {
-                        start: 130,
-                        end: 250,
-                        unit: '%'
-                    },
-                    color: {
-                        start: '#aaaaaa',
-                        end: '#2f9f3e'
-                    }
-                };
+                updateTagcloudPluginSettings();
 
                 $scope.$watchCollection('filterTags', function(newValue, oldValue) {
                     if(newValue.length !== oldValue.length || newValue.length > 1) {
-                        $scope.setTagFilter();
+                        setTagFilter();
                     }
                 });
             };
@@ -224,10 +236,10 @@ function(external, connectionService, datasetService, errorNotificationService, 
 
             /**
              * Displays data for any currently active datasets.
-             * @param {Boolean} Whether this function was called during visualization initialization.
              * @method displayActiveDataset
+             * @private
              */
-            $scope.displayActiveDataset = function(initializing) {
+            var displayActiveDataset = function() {
                 if(!datasetService.hasDataset() || $scope.loadingData) {
                     return;
                 }
@@ -243,14 +255,7 @@ function(external, connectionService, datasetService, errorNotificationService, 
                     }
                 }
                 $scope.filterKeys = filterService.createFilterKeys("tagcloud", datasetService.getDatabaseAndTableNames());
-
-                if(initializing) {
-                    $scope.updateTables();
-                } else {
-                    $scope.$apply(function() {
-                        $scope.updateTables();
-                    });
-                }
+                $scope.updateTables();
             };
 
             $scope.updateTables = function() {
@@ -271,70 +276,20 @@ function(external, connectionService, datasetService, errorNotificationService, 
                 $scope.loadingData = true;
                 $scope.fields = datasetService.getSortedFields($scope.options.database.name, $scope.options.table.name);
 
-                var connection = connectionService.getActiveConnection();
+                var tagField = $scope.bindTagField || datasetService.getMapping($scope.options.database.name, $scope.options.table.name, neonMappings.TAGS) || "";
+                $scope.options.tagField = _.find($scope.fields, function(field) {
+                    return field.columnName === tagField;
+                }) || datasetService.createBlankField();
+                var filterField = $scope.bindFilterField || "";
+                $scope.options.filterField = _.find($scope.fields, function(field) {
+                    return field.columnName === filterField;
+                }) || datasetService.createBlankField();
+                $scope.options.filterValue = $scope.bindFilterValue || "";
 
-                if(connection) {
-                    var query = connection.getFieldTypes($scope.options.database.name, $scope.options.table.name);
-                    query.done(function(results) {
-                        XDATA.userALE.log({
-                            activity: "alter",
-                            action: "query",
-                            elementId: "tag-cloud",
-                            elementType: "tag",
-                            elementSub: "tag-cloud",
-                            elementGroup: "chart_group",
-                            source: "system",
-                            tags: ["receive", "tag-cloud"]
-                        });
-                        $scope.$apply(function() {
-                            $scope.fieldTypes = results;
-                            var tagField = $scope.bindTagField || datasetService.getMapping($scope.options.database.name, $scope.options.table.name, neonMappings.TAGS) || "";
-                            $scope.options.tagField = _.find($scope.fields, function(field) {
-                                return field.columnName === tagField;
-                            }) || datasetService.createBlankField();
-                            var filterField = $scope.bindFilterField || "";
-                            $scope.options.filterField = _.find($scope.fields, function(field) {
-                                return field.columnName === filterField;
-                            }) || datasetService.createBlankField();
-                            $scope.options.filterValue = $scope.bindFilterValue || "";
-
-                            if($scope.showFilter) {
-                                $scope.clearTagFilters();
-                            } else {
-                                queryForTags();
-                            }
-                        });
-                    });
-                    query.fail(function(response) {
-                        if(response.status === 0) {
-                            XDATA.userALE.log({
-                                activity: "alter",
-                                action: "canceled",
-                                elementId: "tag-cloud",
-                                elementType: "tag",
-                                elementSub: "tag-cloud",
-                                elementGroup: "chart_group",
-                                source: "system",
-                                tags: ["canceled", "tag-cloud"]
-                            });
-                        } else {
-                            XDATA.userALE.log({
-                                activity: "alter",
-                                action: "query",
-                                elementId: "tag-cloud",
-                                elementType: "tag",
-                                elementSub: "tag-cloud",
-                                elementGroup: "chart_group",
-                                source: "system",
-                                tags: ["failed", "tag-cloud"]
-                            });
-                            $scope.fieldTypes = {};
-                            $scope.loadingData = false;
-                            if(response.responseJSON) {
-                                $scope.errorMessage = errorNotificationService.showErrorMessage($element, response.responseJSON.error, response.responseJSON.stackTrace);
-                            }
-                        }
-                    });
+                if($scope.showFilter) {
+                    clearTagFilters();
+                } else {
+                    queryForTags();
                 }
             };
 
@@ -349,10 +304,14 @@ function(external, connectionService, datasetService, errorNotificationService, 
                     $scope.errorMessage = undefined;
                 }
 
+                // Save the title during the query so the title doesn't change immediately if the user changes the unshared filter.
+                $scope.queryTitle = "";
+                $scope.queryTitle = $scope.generateTitle();
+
                 var connection = connectionService.getActiveConnection();
 
                 if(!connection || !datasetService.isFieldValid($scope.options.tagField)) {
-                    $scope.updateTagData([]);
+                    updateTagData([]);
                     $scope.loadingData = false;
                     return;
                 }
@@ -368,24 +327,15 @@ function(external, connectionService, datasetService, errorNotificationService, 
                     tags: ["query", "tag-cloud"]
                 });
 
-                if(datasetService.getDatastore() != "elasticsearch" && $scope.fieldTypes[$scope.options.tagField.columnName] !== "array") {
-                    var query = new neon.query.Query().selectFrom($scope.options.database.name, $scope.options.table.name)
-                        .groupBy($scope.options.tagField.columnName)
-                        .where($scope.options.tagField.columnName, "!=", null);
+                var whereClause = null;
+                if(datasetService.isFieldValid($scope.options.filterField) && $scope.options.filterValue) {
+                    var operator = $.isNumeric($scope.options.filterValue) ? "=" : "contains";
+                    whereClause = neon.query.where($scope.options.filterField.columnName, operator, $scope.options.filterValue);
+                }
 
-                    query.aggregate(neon.query.COUNT, '*', 'count');
-                    query.sortBy('count', neon.query.DESCENDING);
-                    query.limit($scope.options.tagLimit);
-
-                    if($scope.outstandingQuery) {
-                        $scope.outstandingQuery.abort();
-                    }
-
-                    $scope.outstandingQuery = connection.executeQuery(query);
-                    $scope.outstandingQuery.always(function() {
-                        $scope.outstandingQuery = undefined;
-                    });
-                    $scope.outstandingQuery.done(function(queryResults) {
+                connection.executeArrayCountQuery($scope.options.database.name, $scope.options.table.name,
+                    $scope.options.tagField.columnName, $scope.options.tagLimit, whereClause,
+                    function(tagCounts) {
                         XDATA.userALE.log({
                             activity: "alter",
                             action: "query",
@@ -397,74 +347,7 @@ function(external, connectionService, datasetService, errorNotificationService, 
                             tags: ["receive", "tag-cloud"]
                         });
                         $scope.$apply(function() {
-                            var tagCounts = _.map(queryResults.data, function(datum) {
-                                datum.key = datum[$scope.options.tagField.columnName];
-                                return datum;
-                            });
-                            $scope.updateTagData(tagCounts);
-                            $scope.loadingData = false;
-                            XDATA.userALE.log({
-                                activity: "alter",
-                                action: "query",
-                                elementId: "tag-cloud",
-                                elementType: "tag",
-                                elementSub: "tag-cloud",
-                                elementGroup: "chart_group",
-                                source: "system",
-                                tags: ["render", "tag-cloud"]
-                            });
-                        });
-                    });
-                    $scope.outstandingQuery.fail(function(response) {
-                        if(response.status === 0) {
-                            XDATA.userALE.log({
-                                activity: "alter",
-                                action: "canceled",
-                                elementId: "tag-cloud",
-                                elementType: "tag",
-                                elementSub: "tag-cloud",
-                                elementGroup: "chart_group",
-                                source: "system",
-                                tags: ["canceled", "tag-cloud"]
-                            });
-                        } else {
-                            XDATA.userALE.log({
-                                activity: "alter",
-                                action: "query",
-                                elementId: "tag-cloud",
-                                elementType: "tag",
-                                elementSub: "tag-cloud",
-                                elementGroup: "chart_group",
-                                source: "system",
-                                tags: ["failed", "tag-cloud"]
-                            });
-                            $scope.updateTagData([]);
-                            $scope.loadingData = false;
-                            if(response.responseJSON) {
-                                $scope.errorMessage = errorNotificationService.showErrorMessage($element, response.responseJSON.error, response.responseJSON.stackTrace);
-                            }
-                        }
-                    });
-                } else {
-                    var whereClause = null;
-                    if(datasetService.isFieldValid($scope.options.filterField) && $scope.options.filterValue) {
-                        var operator = $.isNumeric($scope.options.filterValue) ? "=" : "contains";
-                        whereClause = neon.query.where($scope.options.filterField.columnName, operator, $scope.options.filterValue);
-                    }
-
-                    connection.executeArrayCountQuery($scope.options.database.name, $scope.options.table.name, $scope.options.tagField.columnName, $scope.options.tagLimit, whereClause, function(tagCounts) {
-                        XDATA.userALE.log({
-                            activity: "alter",
-                            action: "query",
-                            elementId: "tag-cloud",
-                            elementType: "tag",
-                            elementSub: "tag-cloud",
-                            elementGroup: "chart_group",
-                            source: "system",
-                            tags: ["receive", "tag-cloud"]
-                        });
-                        $scope.$apply(function() {
-                            $scope.updateTagData(tagCounts);
+                            updateTagData(tagCounts);
                             $scope.loadingData = false;
                             XDATA.userALE.log({
                                 activity: "alter",
@@ -488,13 +371,19 @@ function(external, connectionService, datasetService, errorNotificationService, 
                             source: "system",
                             tags: ["failed", "tag-cloud"]
                         });
-                        $scope.updateTagData([]);
+                        updateTagData([]);
                         $scope.loadingData = false;
                         if(response.responseJSON) {
                             $scope.errorMessage = errorNotificationService.showErrorMessage($element, response.responseJSON.error, response.responseJSON.stackTrace);
                         }
-                    });
-                }
+                    }
+                );
+            };
+
+            var updateTagStyle = function() {
+                $timeout(function() {
+                    $element.find('.tag').tagcloud();
+                });
             };
 
             /**
@@ -502,8 +391,9 @@ function(external, connectionService, datasetService, errorNotificationService, 
              * @param {Array} tagCounts An array of objects with "key" and "count" properties for the tag
              * name and number of occurrences.
              * @method updateTagData
+             * @private
              */
-            $scope.updateTagData = function(tagCounts) {
+            var updateTagData = function(tagCounts) {
                 if($scope.options.andTags) {
                     tagCounts = tagCounts.filter(function(elem) {
                         var index = _.findIndex($scope.filterTags, {
@@ -522,10 +412,7 @@ function(external, connectionService, datasetService, errorNotificationService, 
                     translate();
                 }
 
-                // style the tags after they are displayed
-                $timeout(function() {
-                    $element.find('.tag').tagcloud();
-                });
+                updateTagStyle();
             };
 
             /**
@@ -564,12 +451,13 @@ function(external, connectionService, datasetService, errorNotificationService, 
             /**
              * Changes the filter to use the ones provided in the first argument.
              * @method setTagFilter
+             * @private
              */
-            $scope.setTagFilter = function() {
+            var setTagFilter = function() {
                 if($scope.filterTags.length > 0) {
-                    $scope.applyFilter();
+                    applyFilter();
                 } else {
-                    $scope.clearTagFilters();
+                    clearTagFilters();
                 }
             };
 
@@ -578,9 +466,10 @@ function(external, connectionService, datasetService, errorNotificationService, 
              * @param {Object} databaseAndTableName Contains the database and table name
              * @param {String} tagFieldName The name of the tag field on which to filter
              * @method createFilterClauseForTags
+             * @private
              * @return {Object} A neon.query.Filter object
              */
-            $scope.createFilterClauseForTags = function(databaseAndTableName, tagFieldName) {
+            var createFilterClauseForTags = function(databaseAndTableName, tagFieldName) {
                 var filterClauses = $scope.filterTags.map(function(tag) {
                     return neon.query.where(tagFieldName, "=", tag.name);
                 });
@@ -596,10 +485,11 @@ function(external, connectionService, datasetService, errorNotificationService, 
             /**
              * Applies the specified filter and updates the visualization on success
              * @method applyFilter
+             * @private
              */
-            $scope.applyFilter = function() {
+            var applyFilter = function() {
                 var relations = datasetService.getRelations($scope.options.database.name, $scope.options.table.name, [$scope.options.tagField.columnName]);
-                filterService.replaceFilters($scope.messenger, relations, $scope.filterKeys, $scope.createFilterClauseForTags, {
+                filterService.replaceFilters($scope.messenger, relations, $scope.filterKeys, createFilterClauseForTags, {
                     visName: "Tag Cloud",
                     text: (_.pluck($scope.filterTags, ($scope.options.showTranslation ? 'nameTranslated' : 'name'))).join(', ')
                 },function() {
@@ -618,8 +508,9 @@ function(external, connectionService, datasetService, errorNotificationService, 
             /**
              * Removes the filter and updates.
              * @method clearTagFilters
+             * @private
              */
-            $scope.clearTagFilters = function() {
+            var clearTagFilters = function() {
                 filterService.removeFilters($scope.messenger, $scope.filterKeys, function() {
                     $scope.$apply(function() {
                         linksPopupService.deleteLinks($scope.visualizationId);
@@ -777,11 +668,11 @@ function(external, connectionService, datasetService, errorNotificationService, 
                 }
 
                 var dataKeys = $scope.data.map(function(elem) {
-                    return elem.key.substring(1);
+                    return elem.key;
                 });
 
                 $scope.filterTags.forEach(function(tag) {
-                    dataKeys.push(tag.name.substring(1));
+                    dataKeys.push(tag.name);
                 });
 
                 translationService.translate(dataKeys, $scope.translationLanguages.chosenToLanguage,
@@ -804,11 +695,13 @@ function(external, connectionService, datasetService, errorNotificationService, 
 
                 response.data.data.translations.forEach(function(elem, index) {
                     if(index < $scope.data.length) {
-                        $scope.data[index].keyTranslated = "#" + elem.translatedText;
+                        $scope.data[index].keyTranslated = elem.translatedText;
                     } else {
-                        $scope.filterTags[index - $scope.data.length].nameTranslated = "#" + elem.translatedText;
+                        $scope.filterTags[index - $scope.data.length].nameTranslated = elem.translatedText;
                     }
                 });
+
+                translationService.saveTranslationCache();
             };
 
             /**
@@ -872,6 +765,9 @@ function(external, connectionService, datasetService, errorNotificationService, 
              * @return {String}
              */
             $scope.generateTitle = function() {
+                if($scope.queryTitle) {
+                    return $scope.queryTitle;
+                }
                 var title = $scope.options.filterValue ? $scope.options.filterValue + " " : "";
                 if($scope.bindTitle) {
                     return title + $scope.bindTitle;
@@ -888,10 +784,18 @@ function(external, connectionService, datasetService, errorNotificationService, 
                 return linksPopupService.generateKey($scope.options.tagField, value);
             };
 
+            var onThemeChanged = function(theme) {
+                if(theme.accentColor !== $scope.tagColor) {
+                    $scope.tagColor = theme.accentColor;
+                    updateTagcloudPluginSettings();
+                    updateTagStyle();
+                }
+            };
+
             // Wait for neon to be ready, the create our messenger and intialize the view and data.
             neon.ready(function() {
-                $scope.initialize();
-                $scope.displayActiveDataset(true);
+                initialize();
+                displayActiveDataset();
             });
         }
     };

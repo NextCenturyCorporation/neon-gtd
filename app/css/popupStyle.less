@@ -46,19 +46,19 @@
         margin-left: 10px;
         padding: 0px;
 
-        a, button {
+        button, a {
             float: left;
-            background: @light-background;
-            border: 1px solid @light-background;
-            border-radius: 10px;
+            background: @visualization-box-background;
+            border: 1px solid @visualization-box-background;
+            border-radius: @border-radius;
             height: 100%;
             padding: 4px;
 
             &:focus, &:hover {
-                border: 1px solid @accent-light;
+                border: 1px solid @accent-bright;
 
                 span {
-                    color: @accent-light;
+                    color: @accent-bright;
                 }
             }
         }
@@ -101,7 +101,7 @@
             float:left;
             margin: 5px;
             height: 130px;
-            width: 130px;
+            width: 120px;
 
             img {
                height: 56px;
@@ -135,21 +135,43 @@
     }
 
     .btn-default {
-        color: @main-text-color;
+        color: @light-text-color;
+        background-color: @accent-bright;
+        border-color: @accent-bright;
+        border-radius: @border-radius;
 
         &:hover, &:focus, &:active {
-            color: @mid-text-color;
+            color: @light-text-color;
+            background-color: @accent-dark;
+            border-color: @accent-dark;
         }
     }
 
     .modal-dialog {
         margin: 70px auto;
         width: 700px;
-    }
+        border: @shadow-border;
+        border-radius: @border-radius;
 
-    .modal-body {
-        max-height: 580px;
-        overflow-y: auto;
+        .modal-content {
+            background-color: @visualization-box-background;
+            color: @main-text-color;
+
+            .modal-header {
+                .close when (lightness(@visualization-box-background) < 50%) {
+                    color: @light-text-color;
+                }
+
+                .close when (lightness(@visualization-box-background) > 50%) {
+                    color: @mid-text-color;
+                }
+            }
+
+            .modal-body {
+                max-height: 580px;
+                overflow-y: auto;
+            }
+        }
     }
 }
 
