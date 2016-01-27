@@ -82,9 +82,14 @@ function(connectionService, datasetService, filterService, themeService) {
         },
         controller: function($scope) {
             $scope.active = {
-                type: $scope.graphType || 'scatter',
+                type: $scope.graphType,
                 limitCount: $scope.bindLimit
             };
+
+            // TODO Add scattergl once bugs are fixed in the plotly library.
+            if($scope.active.type !== "scatter" && $scope.active.type !== "heatmapScatter" && $scope.active.type !== "histogramScatter") {
+                $scope.active.type = "scatter";
+            }
 
             $scope.init = function() {
                 $scope.messenger = new neon.eventing.Messenger();
@@ -196,10 +201,6 @@ function(connectionService, datasetService, filterService, themeService) {
 
                     if($scope.active.limitCount) {
                         query.limit($scope.active.limitCount);
-                    }
-
-                    if($scope.active.type === 'scattergl') {
-                        query.ignoreFilters([$scope.filterKeys[$scope.active.database.name][$scope.active.table.name]]);
                     }
 
                     return query;
