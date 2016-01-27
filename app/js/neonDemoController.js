@@ -140,7 +140,7 @@ function($scope, $timeout, config, datasets) {
         outerMargin: false, // whether margins apply to outer edges of the grid
         isMobile: false, // stacks the grid items if true
         mobileBreakPoint: 800, // if the screen is not wider that this, remove the grid layout and stack the items
-        mobileModeEnabled: true, // whether or not to toggle mobile mode when screen width is less than mobileBreakPoint
+        mobileModeEnabled: false, // whether or not to toggle mobile mode when screen width is less than mobileBreakPoint
         minColumns: 1, // the minimum columns the grid must have
         minRows: 1, // the minimum height of the grid, in rows
         maxRows: 100,
