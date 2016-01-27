@@ -94,16 +94,10 @@ function(connectionService, datasetService, filterService, themeService) {
             $scope.init = function() {
                 $scope.messenger = new neon.eventing.Messenger();
                 $scope.messenger.events({
-                    filtersChanged: $scope.queryForData
+                    filtersChanged: onFiltersChanged
                 });
 
                 $scope.messenger.subscribe(datasetService.UPDATE_DATA_CHANNEL, $scope.queryForData);
-
-                $scope.messenger.subscribe(filterService.REQUEST_REMOVE_FILTER, function(ids) {
-                    if(filterService.containsKey($scope.filterKeys, ids)) {
-                        $scope.clearFilterSet();
-                    }
-                });
 
                 themeService.registerListener($scope.graphId, onThemeChanged);
 
@@ -111,7 +105,7 @@ function(connectionService, datasetService, filterService, themeService) {
                     $scope.messenger.removeEvents();
                     // Remove our filter if we had an active one.
                     if($scope.filterSet) {
-                        filterService.removeFilters($scope.messenger, $scope.filterKeys);
+                        filterService.removeFilter($scope.active.database.name, $scope.active.table.name, [$scope.active.attrX.columnName, $scope.active.attrY.columnName]);
                     }
                     $scope.element.off('resize');
 
@@ -123,8 +117,6 @@ function(connectionService, datasetService, filterService, themeService) {
 
                 initDataset();
                 $scope.updateTables();
-
-                $scope.filterKeys = filterService.createFilterKeys("plotly", datasetService.getDatabaseAndTableNames());
 
                 $scope.updateFields();
 
@@ -146,7 +138,6 @@ function(connectionService, datasetService, filterService, themeService) {
                         }
                     }
                 }
-                $scope.filterKeys = filterService.createFilterKeys("plotlyGraph", datasetService.getDatabaseAndTableNames());
             };
 
             $scope.updateTables = function() {
@@ -233,6 +224,12 @@ function(connectionService, datasetService, filterService, themeService) {
                             });
                         });
                     }
+                }
+            };
+
+            var onFiltersChanged = function(message) {
+                if(message.addedFilter && message.addedFilter.databaseName === $scope.active.database.name && message.addedFilter.tableName === $scope.active.table.name) {
+                    $scope.queryForData();
                 }
             };
 
@@ -421,7 +418,6 @@ function(connectionService, datasetService, filterService, themeService) {
             };
 
             $scope.updateFilter = function(event, focus) {
-                var relations;
                 var createFilterClause;
 
                 if(focus.x && focus.y) {
@@ -435,10 +431,10 @@ function(connectionService, datasetService, filterService, themeService) {
                         return filterClause;
                     };
 
-                    relations = datasetService.getRelations($scope.active.database.name, $scope.active.table.name, [$scope.active.attrX, $scope.active.attrY]);
-                    filterService.replaceFilters($scope.messenger, relations, $scope.filterKeys, createFilterClause, "PlotlyGraph");
+                    filterService.addFilter($scope.messenger, $scope.active.database.name, $scope.active.table.name, [$scope.active.attrX.columnName, $scope.active.attrY.columnName],
+                        createFilterClause, "PlotlyGraph");
                 } else if(focus['xaxis.autorange'] && focus['yaxis.autorange']) {
-                    filterService.removeFilters($scope.messenger, $scope.filterKeys, $scope.queryForData);
+                    filterService.removeFilter($scope.active.database.name, $scope.active.table.name, [$scope.active.attrX.columnName, $scope.active.attrY.columnName], $scope.queryForData);
                 } else {
                     createFilterClause = function() {
                         var filterClause = neon.query.where($scope.active.attrX.columnName, '!=', null);
@@ -466,8 +462,8 @@ function(connectionService, datasetService, filterService, themeService) {
                         return filterClause;
                     };
 
-                    relations = datasetService.getRelations($scope.active.database.name, $scope.active.table.name, [$scope.active.attrX, $scope.active.attrY]);
-                    filterService.replaceFilters($scope.messenger, relations, $scope.filterKeys, createFilterClause, "PlotlyGraph", $scope.queryForData);
+                    filterService.addFilter($scope.messenger, $scope.active.database.name, $scope.active.table.name, [$scope.active.attrX.columnName, $scope.active.attrY.columnName],
+                        createFilterClause, "PlotlyGraph", $scope.queryForData);
                 }
             };
 
