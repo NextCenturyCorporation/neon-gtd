@@ -1,10 +1,10 @@
-/* 
+/*
  * heatmap.js OpenLayers Heatmap Class
  *
  * Copyright (c) 2011, Patrick Wied (http://www.patrick-wied.at)
  * Dual-licensed under the MIT (http://www.opensource.org/licenses/mit-license.php)
  * and the Beerware (http://en.wikipedia.org/wiki/Beerware) license.
- * 
+ *
  * Modified on Jun,06 2011 by Antonio Santiago (http://www.acuriousanimal.com)
  * - Heatmaps as independent map layer.
  * - Points based on OpenLayers.LonLat.
@@ -12,7 +12,7 @@
  * - Improved 'addDataPoint' to add new lonlat based points.
  *
  * Modified on Jun,09 2015 by Lawerence Mize (https://github.com/NextCenturyCorporation/neon-gtd)
- */ 
+ */
 OpenLayers.Layer.Heatmap = OpenLayers.Class(OpenLayers.Layer, {
     // the heatmap isn't a basic layer by default - you usually want to display the heatmap over another map ;)
     isBaseLayer: false,
@@ -34,24 +34,27 @@ OpenLayers.Layer.Heatmap = OpenLayers.Class(OpenLayers.Layer, {
         hmoptions.container = heatdiv;
         this.mapLayer = mLayer;
         this.map = map;
-        
+
         // create the heatmap with passed heatmap-options
         this.heatmap = h337.create(hmoptions);
         this.heatmap._renderer.setDimensions(map.size.w, map.size.h);
 
-        handler = function(){ 
-            if(this.tmpData.max){
-                this.updateLayer(); 
+        handler = function(){
+            if(this.tmpData.max && this.mapLayer.map){
+                this.updateLayer();
             }
         };
         // on zoomend and moveend we have to move the canvas element and redraw the datapoints with new positions
         map.events.register("zoomend", this, handler);
         map.events.register("moveend", this, handler);
+        map.events.register("changebaselayer", this, function(data) {
+            this.mapLayer = data.layer;
+        });
     },
     updateLayer: function(){
         var pixelOffset = this.getPixelOffset();
         var el = this.heatmap._config.container;
-        // if the pixeloffset e.g. for x was positive move the canvas element to the left by setting left:-offset.y px 
+        // if the pixeloffset e.g. for x was positive move the canvas element to the left by setting left:-offset.y px
         // otherwise move it the right by setting it a positive value. same for top
         el.style.top = ((pixelOffset.y > 0)?('-'+pixelOffset.y):(Math.abs(pixelOffset.y)))+'px';
         el.style.left = ((pixelOffset.x > 0)?('-'+pixelOffset.x):(Math.abs(pixelOffset.x)))+'px';
@@ -67,9 +70,9 @@ OpenLayers.Layer.Heatmap = OpenLayers.Class(OpenLayers.Layer, {
         var c_lonlat = new OpenLayers.LonLat(c.lon, c.lat);
         var c_pixel = this.mapLayer.getViewPortPxFromLonLat(c_lonlat);
 
-        return { 
+        return {
             x: o_pixel.x - c_pixel.x,
-            y: o_pixel.y - c_pixel.y 
+            y: o_pixel.y - c_pixel.y
         };
 
     },
@@ -99,10 +102,10 @@ OpenLayers.Layer.Heatmap = OpenLayers.Class(OpenLayers.Layer, {
         if(p.x < 0 || p.y < 0){
             return false;
         }
-        
+
         p.x = (p.x >> 0);
         p.y = (p.y >> 0);
-    
+
             return p;
     },
     // same procedure as setDataSet
@@ -116,7 +119,7 @@ OpenLayers.Layer.Heatmap = OpenLayers.Class(OpenLayers.Layer, {
         }
 
         this.tmpData.data.push(entry);
-        
+
         if(pixel){
             args = [pixel.x, pixel.y];
 
@@ -131,8 +134,8 @@ OpenLayers.Layer.Heatmap = OpenLayers.Class(OpenLayers.Layer, {
         this.heatmap.toggleDisplay();
     },
     destroy: function() {
-        // for now, nothing special to do here. 
-        OpenLayers.Layer.Grid.prototype.destroy.apply(this, arguments);  
+        // for now, nothing special to do here.
+        OpenLayers.Layer.Grid.prototype.destroy.apply(this, arguments);
     },
     CLASS_NAME: "OpenLayers.Layer.Heatmap"
 });

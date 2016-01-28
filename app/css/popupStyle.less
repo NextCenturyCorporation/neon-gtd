@@ -147,6 +147,16 @@
         }
     }
 
+    .btn-small {
+        width: 50%;
+        margin-top: 10px;
+    }
+
+    .btn-medium {
+        width: 75%;
+        margin-top: 10px;
+    }
+
     .modal-dialog {
         margin: 70px auto;
         width: 700px;
@@ -172,6 +182,27 @@
                 overflow-y: auto;
             }
         }
+    }
+
+    .no-data {
+        font-style: italic;
+        font-size: 16px;
+    }
+
+    .glyphicon-chevron-up, .glyphicon-chevron-down {
+        cursor: pointer;
+    }
+
+    .glyphicon-question-sign + .tooltip {
+
+        > .tooltip-inner {
+            background-color: @main-text-color;
+        }
+
+        > .tooltip-arrow {
+            border-bottom-color: @main-text-color;
+        }
+
     }
 }
 

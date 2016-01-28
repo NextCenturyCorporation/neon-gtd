@@ -17,8 +17,8 @@
  */
 
 angular.module('neonDemo.directives')
-.directive('ganttChart', ['ConnectionService', 'DatasetService', 'ErrorNotificationService', 'FilterService',
-function(connectionService, datasetService, errorNotificationService, filterService) {
+.directive('ganttChart', ['ConnectionService', 'DatasetService', 'ErrorNotificationService', 'FilterService', 'VisualizationService',
+function(connectionService, datasetService, errorNotificationService, filterService, visualizationService) {
     return {
         templateUrl: 'partials/directives/gantt-chart.html',
         restrict: 'EA',
@@ -28,7 +28,8 @@ function(connectionService, datasetService, errorNotificationService, filterServ
             bindEndField: "=",
             bindColorField: "=",
             bindGroupFields: "=",
-            bindSelectedGroups: "="
+            bindSelectedGroups: "=",
+            bindStateId: '='
         },
         link: function($scope, $element) {
             $element.addClass('gantt-chart-directive');
@@ -39,8 +40,7 @@ function(connectionService, datasetService, errorNotificationService, filterServ
             $scope.tables = [];
             $scope.fields = [];
             $scope.legend = {};
-            $scope.filterKeys = filterService.createFilterKeys("gantt-chart", datasetService.getDatabaseAndTableNames());
-            $scope.filterSet = {};
+            $scope.filterSet = undefined;
             $scope.helpers = neon.helpers;
 
             $scope.options = {
@@ -70,30 +70,38 @@ function(connectionService, datasetService, errorNotificationService, filterServ
             };
 
             $scope.filterById = function(id) {
-                var connection = connectionService.getActiveConnection();
-                if($scope.messenger && connection) {
-                    var relations = datasetService.getRelations($scope.options.database.name, $scope.options.table.name, ['_id']);
-                    filterService.addFilters($scope.messenger, relations, $scope.filterKeys, function() {
-                        return neon.query.where('_id', '=', id);
-                    }, "Gantt Chart", function() {
-                        $scope.filterSet.key = "_id";
-                        $scope.filterSet.value = id;
-                        $scope.queryForData(true);
-                    });
+                if($scope.messenger) {
+                    $scope.filterSet = {
+                        key: "_id",
+                        value: id,
+                        database: $scope.options.database.name,
+                        table: $scope.options.table.name
+                    };
+                    filterService.addFilter($scope.messenger, $scope.options.database.name, $scope.options.table.name, ['_id'],
+                        createFilterClauseForId, "Gantt Chart", function() {
+                            $scope.queryForData(true);
+                        }, function() {
+                            $scope.filterSet = undefined;
+                        }
+                    );
                 }
             };
 
-            $scope.removeFilter = function() {
-                filterService.removeFilters($scope.messenger, $scope.filterKeys, function() {
-                    $scope.filterSet = {};
-                    $scope.queryForData(true);
-                });
+            $scope.removeFilter = function(database, table) {
+                filterService.removeFilter((database ? database : $scope.options.database.name), (table ? table : $scope.options.table.name),
+                    ['_id'], function() {
+                        $scope.filterSet = undefined;
+                        $scope.queryForData();
+                    }
+                );
             };
 
             var initialize = function() {
                 $scope.messenger.events({
                     filtersChanged: onFiltersChanged
                 });
+
+                visualizationService.register($scope.bindStateId, bindFields);
 
                 $scope.$on('$destroy', function() {
                     XDATA.userALE.log({
@@ -107,13 +115,20 @@ function(connectionService, datasetService, errorNotificationService, filterServ
                         tags: ["remove", "count-by"]
                     });
                     $scope.messenger.unsubscribeAll();
+                    visualizationService.unregister($scope.bindStateId);
                     if($scope.filterSet) {
-                        filterService.removeFilters($scope.messenger, $scope.filterKeys);
+                        filterService.removeFilter($scope.options.database.name, $scope.options.table.name, ['_id']);
                     }
                 });
             };
 
-            var onFiltersChanged = function() {
+            var onFiltersChanged = function(message) {
+                if(message.type === "REMOVE" && $scope.filterSet) {
+                    var filter = createFilterClauseForId();
+                    if(filterService.areClausesEqual(message.removedFilter.whereClause, filter)) {
+                        $scope.filterSet = undefined;
+                    }
+                }
                 $scope.queryForData();
             };
 
@@ -134,7 +149,7 @@ function(connectionService, datasetService, errorNotificationService, filterServ
                 }
 
                 if(initializing) {
-                    $scope.updateTables();
+                    $scope.queryForData();
                 } else {
                     $scope.$apply(function() {
                         $scope.updateTables();
@@ -193,6 +208,11 @@ function(connectionService, datasetService, errorNotificationService, filterServ
                 $scope.options.selectableGroups = [];
                 $scope.options.selectedGroups = $scope.bindSelectedGroups ? $scope.bindSelectedGroups.split(",") : [];
 
+                if($scope.filterSet) {
+                    $scope.removeFilter($scope.filterSet.database, $scope.filterSet.table);
+                    return;
+                }
+
                 $scope.queryForData();
             };
 
@@ -216,8 +236,11 @@ function(connectionService, datasetService, errorNotificationService, filterServ
                     var query = new neon.query.Query().selectFrom($scope.options.database.name, $scope.options.table.name)
                         .groupBy($scope.options.groupFields[0])
                         .aggregate(neon.query.COUNT, "*", "count")
-                        .sortBy("count", neon.query.DESCENDING)
-                        .ignoreFilters([$scope.filterKeys[$scope.options.database.name][$scope.options.table.name]]);
+                        .sortBy("count", neon.query.DESCENDING);
+
+                    if($scope.filterSet) {
+                        query.ignoreFilters([filterService.getFilterKey($scope.options.database.name, $scope.options.table.name, createFilterClauseForId())]);
+                    }
 
                     connection.executeQuery(query, function(queryResults) {
                         $scope.$apply(function() {
@@ -235,6 +258,10 @@ function(connectionService, datasetService, errorNotificationService, filterServ
                 } else {
                     queryForGanttChartData(connection);
                 }
+            };
+
+            var createFilterClauseForId = function() {
+                return neon.query.where('_id', '=', $scope.filterSet.value);
             };
 
             var queryForGanttChartData = function(connection) {
@@ -432,6 +459,23 @@ function(connectionService, datasetService, errorNotificationService, filterServ
             $scope.removeSelectedGroups = function() {
                 $scope.options.selectedGroups = [];
                 $scope.queryForData(true);
+            };
+
+            /**
+             * Creates and returns an object that contains all the binding fields needed to recreate the visualization's state.
+             * @return {Object}
+             * @method bindFields
+             * @private
+             */
+            var bindFields = function() {
+                var bindingFields = {};
+                bindingFields["bind-row-title-field"] = ($scope.options.titleField && $scope.options.titleField.columnName) ? "'" + $scope.titleField.columnName + "'" : undefined;
+                bindingFields["bind-start-field"] = ($scope.options.startField && $scope.options.startField.columnName) ? "'" + $scope.options.startField.columnName + "'" : undefined;
+                bindingFields["bind-end-field"] = ($scope.options.endField && $scope.options.endField.columnName) ? "'" + $scope.options.endField.columnName + "'" : undefined;
+                bindingFields["bind-color-field"] = ($scope.options.colorField && $scope.options.colorField.columnName) ? "'" + $scope.options.colorField.columnName + "'" : undefined;
+                bindingFields["bind-group-fields"] = $scope.options.groupFields ? "'" + $scope.options.groupFields + "'" : undefined;
+                bindingFields["bind-selected-groups"] = $scope.options.selectedGroups ? "'" + $scope.options.selectedGroups + "'" : undefined;
+                return bindingFields;
             };
 
             neon.ready(function() {

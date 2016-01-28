@@ -17,8 +17,8 @@
  */
 
 angular.module('neonDemo.directives')
-.directive('newsfeed', ['external', '$timeout', 'ConnectionService', 'DatasetService', 'ErrorNotificationService', 'LinksPopupService', 'TranslationService',
-function(external, $timeout, connectionService, datasetService, errorNotificationService, linksPopupService, translationService) {
+.directive('newsfeed', ['external', '$timeout', 'ConnectionService', 'DatasetService', 'ErrorNotificationService', 'LinksPopupService', 'TranslationService', 'VisualizationService',
+function(external, $timeout, connectionService, datasetService, errorNotificationService, linksPopupService, translationService, visualizationService) {
     return {
         templateUrl: 'partials/directives/newsfeed.html',
         restrict: 'EA',
@@ -36,7 +36,8 @@ function(external, $timeout, connectionService, datasetService, errorNotificatio
             bindFilterField: '=',
             bindFilterValue: '=',
             bindFeedName: '=',
-            bindFeedType: '='
+            bindFeedType: '=',
+            bindStateId: '='
         },
         link: function($scope, $element) {
             $element.addClass('newsfeed-directive');
@@ -163,6 +164,8 @@ function(external, $timeout, connectionService, datasetService, errorNotificatio
                 $element.find(".chart-options a").resize(resizeTitle);
                 $element.find(".newsfeed").scroll(updateNewsfeedOnScroll);
 
+                visualizationService.register($scope.bindStateId, bindFields);
+
                 $scope.$on('$destroy', function() {
                     linksPopupService.deleteLinks($scope.visualizationId + "-primary");
                     linksPopupService.deleteLinks($scope.visualizationId + "-secondary");
@@ -170,6 +173,7 @@ function(external, $timeout, connectionService, datasetService, errorNotificatio
                     $element.off("resize", resizeNewsfeed);
                     $element.find(".chart-options a").off("resize", resizeTitle);
                     $element.find(".newsfeed").off("scroll", updateNewsfeedOnScroll);
+                    visualizationService.unregister($scope.bindStateId);
                 });
             };
 
@@ -875,6 +879,31 @@ function(external, $timeout, connectionService, datasetService, errorNotificatio
                     return title + $scope.bindTitle;
                 }
                 return title + $scope.options.table.prettyName;
+            };
+
+            /**
+             * Creates and returns an object that contains all the binding fields needed to recreate the visualization's state.
+             * @return {Object}
+             * @method bindFields
+             * @private
+             */
+            var bindFields = function() {
+                var bindingFields = {};
+
+                bindingFields["bind-title"] = $scope.bindTitle ? "'" + $scope.bindTitle + "'" : undefined;
+                bindingFields["bind-head-field"] = ($scope.options.headField && $scope.options.headField.columnName) ? "'" + $scope.options.headField.columnName + "'" : undefined;
+                bindingFields["bind-name-field"] = ($scope.options.nameField && $scope.options.nameField.columnName) ? "'" + $scope.options.nameField.columnName + "'" : undefined;
+                bindingFields["bind-date-field"] = ($scope.options.dateField && $scope.options.dateField.columnName) ? "'" + $scope.options.dateField.columnName + "'" : undefined;
+                bindingFields["bind-text-field"] = ($scope.options.textField && $scope.options.textField.columnName) ? "'" + $scope.options.textField.columnName + "'" : undefined;
+                bindingFields["bind-filter-field"] = ($scope.options.bindFilterField && $scope.options.bindFilterField.columnName) ? "'" + $scope.options.bindFilterField.columnName + "'" : undefined;
+                var hasFilterValue = $scope.options.bindFilterField && $scope.options.bindFilterField.columnName && $scope.options.filterValue;
+                bindingFields["bind-filter-value"] = hasFilterValue ? "'" + $scope.options.filterValue + "'" : undefined;
+                bindingFields["bind-feed-name"] = $scope.feedName ? "'" + $scope.feedName + "'" : undefined;
+                bindingFields["bind-feed-type"] = $scope.feedType ? "'" + $scope.feedType + "'" : undefined;
+                bindingFields["bind-table"] = ($scope.options.table && $scope.options.table.name) ? "'" + $scope.options.table.name + "'" : undefined;
+                bindingFields["bind-database"] = ($scope.options.database && $scope.options.database.name) ? "'" + $scope.options.database.name + "'" : undefined;
+
+                return bindingFields;
             };
 
             neon.ready(function() {

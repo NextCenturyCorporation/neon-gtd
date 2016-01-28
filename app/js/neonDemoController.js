@@ -22,8 +22,8 @@
  * @constructor
  */
 angular.module('neonDemo.controllers')
-.controller('neonDemoController', ['$scope', '$timeout', 'config', 'datasets', 'ThemeService',
-function($scope, $timeout, config, datasets, themeService) {
+.controller('neonDemoController', ['$scope', '$timeout', '$location', 'config', 'datasets', 'ThemeService', 'ConnectionService', 'ErrorNotificationService',
+function($scope, $timeout, $location, config, datasets, themeService, connectionService, errorNotificationService) {
     $scope.messenger = new neon.eventing.Messenger();
 
     $scope.theme = {
@@ -49,6 +49,7 @@ function($scope, $timeout, config, datasets, themeService) {
     $scope.filterCount = 0;
     $scope.element = $("body");
     $scope.help = config.help;
+    $scope.loadedStateName = "";
 
     $scope.element = $(window);
 
@@ -60,6 +61,41 @@ function($scope, $timeout, config, datasets, themeService) {
             }
         }
     }
+
+    /**
+     * Opens either the overwrite state modal or the save new state modal, depending on
+     * if there is a state loading already in the dashboard.
+     * @method openStateModal
+     */
+    $scope.openStateModal = function() {
+        var params = $location.search();
+        var dashboardStateId = params.dashboard_state_id;
+        var filterStateId = params.filter_state_id;
+
+        if(dashboardStateId && filterStateId) {
+            var connection = connectionService.getActiveConnection();
+            if(connection) {
+                var stateParams = {
+                    dashboardStateId: dashboardStateId,
+                    filterStateId: filterStateId
+                };
+                connection.getStateName(stateParams, function(response) {
+                    // Only open the overwrite state modal if the dashboard and filter state
+                    // IDs both come from the same state name
+                    if(response.stateName) {
+                        $scope.loadedStateName = response.stateName;
+                        $('#overwriteStateModal').modal('show');
+                    } else {
+                        $('#saveNewStateModal').modal('show');
+                    }
+                }, function(response) {
+                    errorNotificationService.showErrorMessage(null, response.responseJSON.error);
+                });
+            }
+        } else {
+            $('#saveNewStateModal').modal('show');
+        }
+    };
 
     /**
      * Basic gridster layout hander that will disable mouse events on gridster items via CSS so mouse handlers

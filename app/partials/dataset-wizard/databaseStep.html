@@ -1,0 +1,49 @@
+<div class="row" ng-show="isSelected">
+    <div class="col-md-5">
+        <div class="form-group">
+            <label>Database</label>
+            <select class="form-control" ng-change="selectDatabase()" ng-model="selectedDatabase.database" ng-disabled="(databases.length == 0)" ng-options="database.name for database in databases">
+                <option value="">Select Database</option>
+            </select>
+        </div>
+
+        <div class="form-group">
+            <label>Table</label>
+            <select class="form-control" ng-change="selectTable()"
+                ng-model="selectedDatabase.selectedTable.table"
+                ng-disabled="(!selectedDatabase.database.name || selectedDatabase.database.tables.length == 0)"
+                ng-options="table.name for table in selectedDatabase.database.tables">
+                <option value="">Select Table</option>
+            </select>
+        </div>
+
+        <div class="form-group no-margin">
+            <button class="btn-small btn btn-default form-control" ng-click="addNewCustomDatabase()" ng-disabled="(!selectedDatabase.database.name || !selectedDatabase.selectedTable.table.name)">Add</button>
+        </div>
+    </div>
+
+    <div class="col-md-7 checkbox-group">
+        <label>
+            Databases Added
+            <i class="glyphicon glyphicon-question-sign" data-placement="bottom" data-toggle="tooltip" title="{{tooltip}}"></i>
+        </label>
+        <div class="neon-well neon-well-dark">
+            <div ng-repeat="customDatabase in customDatabases">
+                <div ng-repeat="customTable in customDatabase.customTables">
+                    <input type="checkbox" ng-model="customTable.selected">
+                    <label class="checkbox-group-label">{{customDatabase.database.name}} : {{customTable.table.name}}</label>
+                </div>
+            </div>
+
+            <div class="form-group" ng-show="!customDatabases.length">
+                <span class="no-data">No Databases Set</label>
+            </div>
+        </div>
+
+        <div class="form-group no-margin">
+            <button class="btn-small btn btn-default form-control" ng-click="removeCustomDatabases()" ng-disabled="removeButtonDisabled()">
+                Remove Selected
+            </button>
+        </div>
+    </div>
+</div>

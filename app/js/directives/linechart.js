@@ -29,8 +29,8 @@
  */
 angular.module('neonDemo.directives')
 .directive('linechart', ['external', 'ConnectionService', 'DatasetService', 'ErrorNotificationService', 'FilterService',
-    'ExportService', 'LinksPopupService', '$timeout', '$filter',
-function(external, connectionService, datasetService, errorNotificationService, filterService, exportService, linksPopupService, $timeout, $filter) {
+    'ExportService', 'LinksPopupService', 'VisualizationService', '$timeout', '$filter',
+function(external, connectionService, datasetService, errorNotificationService, filterService, exportService, linksPopupService, visualizationService, $timeout, $filter) {
     var COUNT_FIELD_NAME = 'value';
 
     return {
@@ -39,6 +39,7 @@ function(external, connectionService, datasetService, errorNotificationService, 
         scope: {
             bindConfig: '=',
             bindGranularity: '=',
+            bindStateId: '=',
             hideHeader: '=?',
             hideAdvancedOptions: '=?'
         },
@@ -79,7 +80,6 @@ function(external, connectionService, datasetService, errorNotificationService, 
             $scope.tables = [];
             $scope.fields = [];
             $scope.visualizationFilterKeys = {};
-            $scope.filterKeys = {};
             $scope.dateFilterKeys = {};
             $scope.chart = undefined;
             $scope.brushExtent = [];
@@ -171,16 +171,10 @@ function(external, connectionService, datasetService, errorNotificationService, 
                 $scope.messenger.subscribe(datasetService.UPDATE_DATA_CHANNEL, function() {
                     refreshCharts();
                 });
-                $scope.messenger.subscribe(datasetService.DATE_CHANGED_CHANNEL, onDateChanged);
                 $scope.messenger.subscribe("date_selected", onDateSelected);
 
-                $scope.messenger.subscribe(filterService.REQUEST_REMOVE_FILTER, function(ids) {
-                    if(containsKey(ids)) {
-                        $scope.removeBrush();
-                    }
-                });
-
                 $scope.exportID = exportService.register($scope.makeLinechartExportObject);
+                visualizationService.register($scope.bindStateId, bindFields);
 
                 $element.find('.legend-container .legend').on({
                     "shown.bs.dropdown": function() {
@@ -210,6 +204,7 @@ function(external, connectionService, datasetService, errorNotificationService, 
                     $element.find(".chart-options a").off("resize", updateChartSize);
                     $scope.messenger.unsubscribeAll();
                     exportService.unregister($scope.exportID);
+                    visualizationService.unregister($scope.bindStateId);
                     if($scope.brushExtent.length) {
                         $scope.removeBrush();
                     }
@@ -259,26 +254,6 @@ function(external, connectionService, datasetService, errorNotificationService, 
             };
 
             /**
-             * Returns whether the added or removed filter in the given message is a date filter on a linechart with the given x-axis/date field.
-             * @param {Object} message
-             * @param {Object} attrX
-             * @method isDateFiltersChangedMessage
-             * @return {Boolean}
-             */
-            var isDateFiltersChangedMessage = function(message, attrX) {
-                var whereClauses;
-                if(message.addedFilter.whereClause) {
-                    whereClauses = message.addedFilter.whereClause.whereClauses;
-                } else if(message.removedFilter.whereClause) {
-                    whereClauses = message.removedFilter.whereClause.whereClauses;
-                }
-                if(whereClauses && whereClauses.length === 2 && whereClauses[0].lhs === attrX && whereClauses[1].lhs === attrX) {
-                    return true;
-                }
-                return false;
-            };
-
-            /**
              * Event handler for filter changed events issued over Neon's messaging channels.
              * @param {Object} message A Neon filter changed message.
              * @method onFiltersChanged
@@ -296,12 +271,15 @@ function(external, connectionService, datasetService, errorNotificationService, 
                         source: "system",
                         tags: ["filter-change", "linechart"]
                     });
-                    var queryData = false;
-                    _.each($scope.options.charts, function(chart) {
-                        if(chart.database === message.addedFilter.databaseName  && chart.table === message.addedFilter.tableName &&
-                            !isDateFiltersChangedMessage(message, chart.attrXMapping) && chart.active) {
-                            queryData = true;
-                        }
+
+                    var filteredCharts = _.filter($scope.options.charts, {
+                        database: message.addedFilter.databaseName,
+                        table: message.addedFilter.tableName,
+                        active: true
+                    });
+
+                    var queryData = updateBrushExtent(filteredCharts, function(chart) {
+                        return chart.attrXMapping;
                     });
 
                     if(queryData) {
@@ -309,53 +287,6 @@ function(external, connectionService, datasetService, errorNotificationService, 
                         $scope.queryOnChangeBrush = $scope.queryOnChangeBrush || $scope.brushExtent.length > 0;
                     }
                 }
-            };
-
-            /**
-             * Event handler for date changed events issued over Neon's messaging channels.
-             * @param {Object} message A Neon date changed message.
-             * @method onDateChanged
-             * @private
-             */
-            var onDateChanged = function(message) {
-                if(message.databaseName && message.tableName && message.fieldNames.length) {
-                    var queryData = false;
-                    var chartsToUpdate = [];
-
-                    _.each($scope.options.charts, function(chart) {
-                        if(chart.database === message.databaseName && chart.table === message.tableName &&
-                            datasetService.isFieldValid(chart.attrXField) && message.fieldNames.indexOf(chart.attrXMapping) >= 0 && chart.active) {
-                            queryData = true;
-                            chartsToUpdate.push(chart);
-                        }
-                    });
-
-                    if(queryData && $scope.brushExtent.toString() !== message.brushExtent.toString()) {
-                        renderBrushExtent(message.brushExtent);
-                        if($scope.brushExtent.length >= 2) {
-                            updateBrushRecursively(chartsToUpdate);
-                        } else {
-                            removeBrushRecursively(chartsToUpdate, true);
-                        }
-                    }
-                }
-            };
-
-            /**
-             * Returns whether any of the given ids are in the visualization's filter keys object.
-             * @param {Array} ids
-             * @return {Boolean}
-             * @method containsKey
-             * @private
-             */
-            var containsKey = function(ids) {
-                return _.some($scope.filterKeys, function(tables) {
-                    return _.some(tables, function(dateMappings) {
-                        return _.some(dateMappings, function(filterKeyObj) {
-                            return _.contains(ids, filterKeyObj.filterKey);
-                        });
-                    });
-                });
             };
 
             /**
@@ -636,10 +567,52 @@ function(external, connectionService, datasetService, errorNotificationService, 
                     .sortBy('date', neon.query.ASCENDING);
 
                 if(!chart.active) {
-                    query.ignoreFilters([$scope.filterKeys[chart.database][chart.table][chart.attrXMapping].filterKey]);
+                    var filterClause = createFilterClauseForDate({
+                            database: chart.database,
+                            table: chart.table
+                        }, chart.attrXMapping);
+
+                    query.ignoreFilters([filterService.getFilterKey(chart.database, chart.table, filterClause)]);
                 }
 
                 return query;
+            };
+
+            /*
+             * Updates the brush extent with any filters found for the given charts.
+             * @param {Array} charts The list of charts to go through.
+             * @param {Function} doesChartMatch Function to evaluate to see if a chart should be checked for a matching filter.
+             * @return {Boolean} Returns true tf a matching chart was found or there are no charts in the charts array.
+             * @method updateBrushExtent
+             * @private
+             */
+            var updateBrushExtent = function(charts, doesChartMatch) {
+                if(charts.length) {
+                    var matchingChart = false;
+                    $scope.brushExtent = [];
+
+                    _.each(charts, function(chart) {
+                        if(doesChartMatch(chart)) {
+                            matchingChart = true;
+
+                            var filter = filterService.getFilter(chart.database, chart.table, [chart.attrXMapping]);
+
+                            if(filter && filterService.hasMultipleClauses(filter) && filterService.getMultipleClausesLength(filter) === 2) {
+                                var startDate = new Date(filter.filter.whereClause.whereClauses[0].rhs);
+                                var endDate = new Date(filter.filter.whereClause.whereClauses[1].rhs);
+
+                                if(!$scope.brushExtent.length || ($scope.brushExtent[0] > startDate && $scope.brushExtent[1] < endDate)) {
+                                    $scope.brushExtent[0] = startDate;
+                                    $scope.brushExtent[1] = endDate;
+                                }
+                            }
+                        }
+                    });
+
+                    return matchingChart;
+                }
+
+                return true;
             };
 
             /**
@@ -660,29 +633,16 @@ function(external, connectionService, datasetService, errorNotificationService, 
 
                 cloneDatasetChartsConfig();
 
-                var brushExtentFound = false;
+                updateBrushExtent($scope.options.charts, function(chart) {
+                    return chart.active && chart.database && chart.table && chart.attrXMapping;
+                });
 
-                // Update the brush extent if any global date filters are found
-                for(var i = 0; i < $scope.options.charts.length; i++) {
-                    var globalBrushExtent = datasetService.getDateBrushExtent($scope.options.charts[i].database,
-                        $scope.options.charts[i].table, $scope.options.charts[i].attrXMapping);
-
-                    if(!$scope.brushExtent.length && globalBrushExtent.length && $scope.options.charts[i].active) {
-                        brushExtentFound = true;
-                        $scope.queryOnChangeBrush = true;
-                        updateBrush(globalBrushExtent, true);
-                        return;
-                    }
-                }
-
-                if(!brushExtentFound) {
-                    if($scope.options.charts.length) {
-                        queryAllData(function(chart) {
-                            return true;
-                        });
-                    } else {
-                        updateLineChartForBrushExtent();
-                    }
+                if($scope.options.charts.length) {
+                    queryAllData(function(chart) {
+                        return true;
+                    });
+                } else {
+                    updateLineChartForBrushExtent();
                 }
             };
 
@@ -713,7 +673,7 @@ function(external, connectionService, datasetService, errorNotificationService, 
                 $scope.options.newChart.attrY = _.find($scope.fields, function(field) {
                     return field.columnName === attrY;
                 }) || datasetService.createBlankField();
-                var categoryField = datasetService.getMapping($scope.options.newChart.database.name, $scope.options.newChart.table.name, neonMappings.LINE_GROUP) || "";
+                var categoryField = datasetService.getMapping($scope.options.newChart.database.name, $scope.options.newChart.table.name, neonMappings.LINE_GROUPS) || "";
                 $scope.options.newChart.categoryField = _.find($scope.fields, function(field) {
                     return field.columnName === categoryField;
                 }) || datasetService.createBlankField();
@@ -759,8 +719,6 @@ function(external, connectionService, datasetService, errorNotificationService, 
                     chart.aggregation !== "min" && chart.aggregation !== "max") {
                     chart.aggregation = "count";
                 }
-
-                setFilterKey(chart);
 
                 $scope.validateChart(chart, -1);
 
@@ -1016,19 +974,6 @@ function(external, connectionService, datasetService, errorNotificationService, 
                 $scope.legend.charts[id].display = !$scope.legend.charts[id].display;
             };
 
-            /*
-             * Adds a new filter key, if it doesn't exist already, for the given layer.
-             * @method setFilterKey
-             * @private
-             */
-            var setFilterKey = function(chart) {
-                var filterServiceKeys = datasetService.getDateFilterKeys(chart.database, chart.table, chart.attrXMapping);
-                var attrX = chart.attrXMapping;
-                var relations = datasetService.getRelations(chart.database, chart.table, [attrX]);
-
-                $scope.filterKeys = filterService.createFilterKeysForAttribute($scope.filterKeys, chart.database, chart.table, attrX, filterServiceKeys, relations);
-            };
-
             /**
              * Resets the filter keys and requeries for all charts matching the given charts database, table, and date mappoing.
              * @param {Object} chart
@@ -1036,15 +981,6 @@ function(external, connectionService, datasetService, errorNotificationService, 
              * @private
              */
             var resetAndQueryForData = function(chart) {
-                setFilterKey(chart);
-
-                var globalBrushExtent = datasetService.getDateBrushExtent(chart.database, chart.table, chart.attrXMapping);
-                if(!$scope.brushExtent.length && globalBrushExtent.length && chart.active) {
-                    $scope.queryOnChangeBrush = true;
-                    updateBrush(globalBrushExtent, true);
-                    return;
-                }
-
                 var validation = function(element) {
                     if(chart.database === element.database && chart.table === element.table && chart.attrXMapping === element.attrXMapping) {
                         element.active = chart.active;
@@ -1563,11 +1499,10 @@ function(external, connectionService, datasetService, errorNotificationService, 
             /**
              * Updates the brush extent in this visualization's chart and the dataset service.
              * @param {Array} brushExtent
-             * @param {Boolean} ignoreGlobalBrushExtent
              * @method updateBrush
              * @private
              */
-            var updateBrush = function(brushExtent, ignoreGlobalBrushExtent) {
+            var updateBrush = function(brushExtent) {
                 XDATA.userALE.log({
                     activity: "select",
                     action: "click",
@@ -1591,7 +1526,7 @@ function(external, connectionService, datasetService, errorNotificationService, 
                     }
                 });
                 if(charts.length) {
-                    updateBrushRecursively(charts, ignoreGlobalBrushExtent);
+                    updateBrushRecursively(charts);
                 } else {
                     updateLineChartForBrushExtent();
                 }
@@ -1600,59 +1535,23 @@ function(external, connectionService, datasetService, errorNotificationService, 
             /**
              * Recursively replaces the filters associated with the given charts.
              * @param {Array} charts
-             * @param {Boolean} ignoreGlobalBrushExtent
              * @method updateBrushRecursively
              * @private
              */
-            var updateBrushRecursively = function(charts, ignoreGlobalBrushExtent) {
+            var updateBrushRecursively = function(charts) {
                 var chart = charts.shift();
-                var origBrushExtent = angular.copy($scope.brushExtent);
-                var globalBrushExtent = datasetService.getDateBrushExtent(chart.database, chart.table, chart.attrXMapping);
-                // We're comparing the date strings here because comparing the date objects doesn't seem to work.
-                if(globalBrushExtent.length && $scope.brushExtent[0].toDateString() === globalBrushExtent[0].toDateString() &&
-                    $scope.brushExtent[1].toDateString() === globalBrushExtent[1].toDateString() && !ignoreGlobalBrushExtent) {
-                    if(charts.length) {
-                        updateBrushRecursively(charts, ignoreGlobalBrushExtent);
-                    } else {
-                        updateLineChartForBrushExtent();
-                    }
-                    return;
-                }
-
-                var filterKeys = createFilterKeyObj(chart);
-                var relations = datasetService.getRelations(chart.database, chart.table, [chart.attrXMapping]);
 
                 var filterNameObj = "LineChart - " +  getDateString($scope.brushExtent[0], false) + " to " + getDateString($scope.brushExtent[1], false);
 
-                filterService.replaceFilters($scope.messenger, relations, filterKeys, createFilterClauseForDate, filterNameObj, function() {
-                    datasetService.setDateBrushExtentForRelations(relations, $scope.brushExtent);
-                    // Sometimes setDateBrushExtentForRelations() changes the brushExtent so we want to reset it back to
-                    // the original if that happens.
-                    if(origBrushExtent !== $scope.brushExtent) {
-                        $scope.brushExtent = origBrushExtent;
+                filterService.addFilter($scope.messenger, chart.database, chart.table, [chart.attrXMapping], createFilterClauseForDate,
+                    filterNameObj, function() {
+                        if(charts.length) {
+                            updateBrushRecursively(charts);
+                        } else {
+                            updateLineChartForBrushExtent();
+                        }
                     }
-
-                    if(charts.length) {
-                        updateBrushRecursively(charts, ignoreGlobalBrushExtent);
-                    } else {
-                        updateLineChartForBrushExtent();
-                    }
-                });
-            };
-
-            /**
-             * Creates a filter key object from the filter keys associated with the given chart.
-             * @param {Object} chart
-             * @return {Object}
-             * @method createFilterKeyObj
-             * @private
-             */
-            var createFilterKeyObj = function(chart) {
-                var filterKey = {};
-                filterKey[chart.database] = {};
-                filterKey[chart.database][chart.table] = $scope.filterKeys[chart.database][chart.table][chart.attrXMapping].filterKey;
-
-                return _.merge(filterKey, $scope.filterKeys[chart.database][chart.table][chart.attrXMapping].relations);
+                );
             };
 
             /**
@@ -1855,11 +1754,8 @@ function(external, connectionService, datasetService, errorNotificationService, 
              */
             var removeBrushRecursively = function(charts, queryWhenDone) {
                 var chart = charts.shift();
-                var filterKeys = createFilterKeyObj(chart);
-                var relations = datasetService.getRelations(chart.database, chart.table, [chart.attrXMapping]);
-                filterService.removeFilters($scope.messenger, filterKeys, function() {
-                    datasetService.removeDateBrushExtentForRelations(relations);
 
+                filterService.removeFilter(chart.database, chart.table, [chart.attrXMapping], function() {
                     if(charts.length) {
                         removeBrushRecursively(charts, queryWhenDone);
                     } else if(queryWhenDone) {
@@ -1976,6 +1872,39 @@ function(external, connectionService, datasetService, errorNotificationService, 
                 });
 
                 return finalObject;
+            };
+
+            /**
+             * Creates and returns an object that contains all the binding fields needed to recreate the visualization's state.
+             * @return {Object}
+             * @method bindFields
+             * @private
+             */
+            var bindFields = function() {
+                var bindingFields = {};
+                var charts = [];
+
+                var bindConfig = "linechart-" + $scope.bindStateId;
+                bindingFields["bind-config"] = "'" + bindConfig + "'";
+                bindingFields["bind-granularity"] = $scope.options.granularity ? "'" + $scope.options.granularity + "'" : undefined;
+
+                _.each($scope.options.charts, function(chart) {
+                    charts.push({
+                        database: chart.database,
+                        table: chart.table,
+                        active: chart.active,
+                        name: chart.name,
+                        xAxis: chart.attrXMapping,
+                        aggregation: chart.aggregation,
+                        yAxis: chart.attrYMapping,
+                        category: chart.categoryMapping
+
+                    });
+                });
+
+                datasetService.addLineChart(bindConfig, charts);
+
+                return bindingFields;
             };
 
             neon.ready(function() {

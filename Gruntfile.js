@@ -97,6 +97,7 @@ module.exports = function(grunt) {
                         "app/js/app.js",
                         "app/js/*Service.js",
                         "app/js/*Controller.js",
+                        "app/js/dataset-wizard/*.js",
                         "app/js/directives/*.js"
                     ]
                 }
@@ -355,6 +356,16 @@ module.exports = function(grunt) {
                     outdir: 'docs'
                 }
             }
+        },
+
+        watch: {
+            less: {
+                files: ['app/css/**/*.less'],
+                tasks: ['compile-less'],
+                options: {
+                    spawn: false
+                }
+            }
         }
     });
 
@@ -366,6 +377,7 @@ module.exports = function(grunt) {
     grunt.loadNpmTasks('grunt-contrib-jshint');
     grunt.loadNpmTasks('grunt-contrib-less');
     grunt.loadNpmTasks('grunt-contrib-uglify');
+    grunt.loadNpmTasks('grunt-contrib-watch');
     grunt.loadNpmTasks('grunt-contrib-yuidoc');
     grunt.loadNpmTasks('grunt-exec');
     grunt.loadNpmTasks('grunt-git-describe');

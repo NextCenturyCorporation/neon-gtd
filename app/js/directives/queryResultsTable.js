@@ -28,8 +28,10 @@
  * @constructor
  */
 angular.module('neonDemo.directives')
-.directive('queryResultsTable', ['external', 'ConnectionService', 'DatasetService', 'ErrorNotificationService', 'ExportService', 'LinksPopupService', 'ThemeService', 'linkify', '$sce', '$timeout',
-function(external, connectionService, datasetService, errorNotificationService, exportService, linksPopupService, themeService, linkify, $sce, $timeout) {
+.directive('queryResultsTable', ['external', 'ConnectionService', 'DatasetService', 'ErrorNotificationService', 'ExportService',
+'LinksPopupService', 'ThemeService', 'VisualizationService', 'linkify', '$sce', '$timeout',
+function(external, connectionService, datasetService, errorNotificationService, exportService,
+linksPopupService, themeService, visualizationService, linkify, $sce, $timeout) {
     return {
         templateUrl: 'partials/directives/queryResultsTable.html',
         restrict: 'EA',
@@ -38,6 +40,7 @@ function(external, connectionService, datasetService, errorNotificationService, 
             bindTable: '=',
             bindDatabase: '=',
             bindIdField: '=',
+            bindStateId: '=',
             bindSortField: '=',
             bindSortDirection: '=',
             bindLimit: '=',
@@ -143,6 +146,9 @@ function(external, connectionService, datasetService, errorNotificationService, 
                     filtersChanged: onFiltersChanged
                 });
 
+                $scope.exportID = exportService.register($scope.makeQueryResultsTableExportObject);
+                visualizationService.register($scope.bindStateId, bindFields);
+
                 $scope.element.resize(resizeTitle);
                 $scope.element.find(".chart-options a").resize(resizeTitle);
 
@@ -164,6 +170,7 @@ function(external, connectionService, datasetService, errorNotificationService, 
                     $scope.element.off("resize", resizeTitle);
                     $scope.element.find(".chart-options a").off("resize", resizeTitle);
                     exportService.unregister($scope.exportID);
+                    visualizationService.unregister($scope.bindStateId);
                     themeService.unregisterListener($scope.tableId);
                 });
 
@@ -493,13 +500,27 @@ function(external, connectionService, datasetService, errorNotificationService, 
                         });
                         updateData({
                             data: []
-                        }, refreshColumns);
+                        });
                         $scope.total = 0;
                         if(response.responseJSON) {
                             $scope.errorMessage = errorNotificationService.showErrorMessage($scope.element, response.responseJSON.error, response.responseJSON.stackTrace);
                         }
                     }
                 });
+            };
+
+            /**
+             * Builds a query to pull a limited set of records that match any existing filter sets.
+             * @return neon.query.Query
+             * @method buildQuery
+             * @private
+             */
+            var buildQuery = function() {
+                var query = new neon.query.Query().selectFrom($scope.active.database.name, $scope.active.table.name).limit($scope.active.limit);
+                if(datasetService.isFieldValid($scope.active.sortByField)) {
+                    query.sortBy($scope.active.sortByField.columnName, $scope.active.sortDirection);
+                }
+                return query;
             };
 
             /**
@@ -521,20 +542,6 @@ function(external, connectionService, datasetService, errorNotificationService, 
                     data = _.escape(data);
                 }
                 return data;
-            };
-
-            /**
-             * Builds a query to pull a limited set of records that match any existing filter sets.
-             * @return neon.query.Query
-             * @method buildQuery
-             * @private
-             */
-            var buildQuery = function() {
-                var query = new neon.query.Query().selectFrom($scope.active.database.name, $scope.active.table.name).limit($scope.active.limit);
-                if(datasetService.isFieldValid($scope.active.sortByField)) {
-                    query.sortBy($scope.active.sortByField.columnName, $scope.active.sortDirection);
-                }
-                return query;
             };
 
             var updateData = function(data) {
@@ -724,6 +731,24 @@ function(external, connectionService, datasetService, errorNotificationService, 
                 if(!$scope.initializing) {
                     queryForData();
                 }
+            };
+
+            /**
+             * Creates and returns an object that contains all the binding fields needed to recreate the visualization's state.
+             * @return {Object}
+             * @method bindFields
+             * @private
+             */
+            var bindFields = function() {
+                var bindingFields = {};
+                bindingFields["bind-title"] = $scope.bindTitle ? "'" + $scope.bindTitle + "'" : undefined;
+                bindingFields["bind-id-field"] = $scope.bindIdField ? "'" + $scope.bindIdField + "'" : undefined;
+                bindingFields["bind-table"] = ($scope.active.table && $scope.active.table.name) ? "'" + $scope.active.table.name + "'" : undefined;
+                bindingFields["bind-database"] = ($scope.active.database && $scope.active.database.name) ? "'" + $scope.active.database.name + "'" : undefined;
+                bindingFields["bind-sort-field"] = ($scope.active.sortByField && $scope.active.sortByField.columnName) ? "'" + $scope.active.sortByField.columnName + "'" : undefined;
+                bindingFields["bind-sort-direction"] = $scope.active.sortDirection;
+                bindingFields["bind-limit"] = $scope.active.limit;
+                return bindingFields;
             };
 
             //TODO text selection on cells -- https://github.com/ceolter/ag-grid/issues/87

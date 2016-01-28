@@ -16,8 +16,10 @@
  *
  */
 angular.module('neonDemo.directives')
-.directive('countBy', ['external', 'ConnectionService', 'DatasetService', 'ErrorNotificationService', 'FilterService', 'ExportService', 'LinksPopupService', 'ThemeService', '$filter',
-function(external, connectionService, datasetService, errorNotificationService, filterService, exportService, linksPopupService, themeService, $filter) {
+.directive('countBy', ['external', 'ConnectionService', 'DatasetService', 'ErrorNotificationService', 'FilterService',
+'ExportService', 'LinksPopupService', 'ThemeService', 'VisualizationService',
+function(external, connectionService, datasetService, errorNotificationService, filterService,
+exportService, linksPopupService, themeService, visualizationService) {
     return {
         templateUrl: 'partials/directives/countby.html',
         restrict: 'EA',
@@ -32,6 +34,7 @@ function(external, connectionService, datasetService, errorNotificationService, 
             bindLimit: '=',
             bindTable: '=',
             bindDatabase: '=',
+            bindStateId: '=',
             hideHeader: '=?',
             hideAdvancedOptions: '=?'
         },
@@ -91,7 +94,6 @@ function(external, connectionService, datasetService, errorNotificationService, 
                 }
                 return ($scope.active.count >= $scope.active.limit ? "Limited to " : "") + ($scope.active.count || "No") + " Values";
             };
-
             $scope.showOptionsMenuButtonText = function() {
                 return true;
             };
@@ -120,16 +122,12 @@ function(external, connectionService, datasetService, errorNotificationService, 
             $scope.init = function() {
                 $scope.messenger = new neon.eventing.Messenger();
                 $scope.messenger.subscribe(datasetService.UPDATE_DATA_CHANNEL, queryForData);
-                $scope.messenger.subscribe(filterService.REQUEST_REMOVE_FILTER, function(ids) {
-                    if(filterService.containsKey($scope.filterKeys, ids)) {
-                        $scope.clearFilter();
-                    }
-                });
                 $scope.messenger.events({
                     filtersChanged: onFiltersChanged
                 });
 
                 $scope.exportID = exportService.register($scope.makeCountByExportObject);
+                visualizationService.register($scope.bindStateId, bindFields);
 
                 themeService.registerListener($scope.tableId, onThemeChanged);
 
@@ -149,9 +147,10 @@ function(external, connectionService, datasetService, errorNotificationService, 
                     $scope.element.find(".filter-container").off("resize", resizeTable);
                     $scope.messenger.unsubscribeAll();
                     if($scope.filterSet) {
-                        filterService.removeFilters($scope.messenger, $scope.filterKeys);
+                        filterService.removeFilter($scope.active.database.name, $scope.active.table.name, [$scope.active.dataField.columnName]);
                     }
                     exportService.unregister($scope.exportID);
+                    visualizationService.unregister($scope.bindStateId);
                     themeService.unregisterListener($scope.tableId);
                 });
 
@@ -173,7 +172,6 @@ function(external, connectionService, datasetService, errorNotificationService, 
              * @private
              */
             var initializeDataset = function() {
-                $scope.filterKeys = filterService.createFilterKeys("countby", datasetService.getDatabaseAndTableNames());
                 $scope.databases = datasetService.getDatabases();
                 $scope.active.database = $scope.databases[0];
                 if($scope.bindDatabase) {
@@ -185,10 +183,15 @@ function(external, connectionService, datasetService, errorNotificationService, 
                     }
                 }
 
-                updateTables();
+                updateTables(function() {
+                    if($scope.active.database && $scope.active.database.name && $scope.active.table && $scope.active.table.name) {
+                        updateFilterSet();
+                    }
+                    queryForData();
+                });
             };
 
-            var updateTables = function() {
+            var updateTables = function(callback) {
                 $scope.tables = datasetService.getTables($scope.active.database.name);
                 $scope.active.table = $scope.tables[0];
                 if($scope.bindTable) {
@@ -200,10 +203,10 @@ function(external, connectionService, datasetService, errorNotificationService, 
                     }
                 }
 
-                updateFields();
+                updateFields(callback);
             };
 
-            var updateFields = function() {
+            var updateFields = function(callback) {
                 // Stops extra data queries that may be caused by event handlers triggered by setting the active fields.
                 $scope.initializing = true;
 
@@ -230,10 +233,10 @@ function(external, connectionService, datasetService, errorNotificationService, 
                     $scope.clearFilter();
                 }
 
-                updateColumns();
+                updateColumns(callback);
             };
 
-            var updateColumns = function() {
+            var updateColumns = function(callback) {
                 var columnDefinitions = [];
 
                 if(external.active) {
@@ -269,6 +272,12 @@ function(external, connectionService, datasetService, errorNotificationService, 
 
                 $scope.gridOptions.api.setColumnDefs(columnDefinitions);
                 $scope.gridOptions.api.sizeColumnsToFit();
+
+                if(callback) {
+                    callback();
+                    return;
+                }
+
                 queryForData();
             };
 
@@ -385,7 +394,13 @@ function(external, connectionService, datasetService, errorNotificationService, 
                 var whereNotNull = neon.query.where($scope.active.dataField.columnName, "!=", null);
                 var query = new neon.query.Query().selectFrom($scope.active.database.name, $scope.active.table.name).groupBy($scope.active.dataField.columnName).where(whereNotNull);
 
-                query.ignoreFilters([$scope.filterKeys[$scope.active.database.name][$scope.active.table.name]]);
+                if($scope.filterSet && $scope.filterSet.key && $scope.filterSet.value) {
+                    var filterClause = createFilterClauseForCount({
+                                database: $scope.active.database.name,
+                                table: $scope.active.table.name
+                            }, $scope.active.dataField.columnName);
+                    query.ignoreFilters([filterService.getFilterKey($scope.active.database.name, $scope.active.table.name, filterClause)]);
+                }
 
                 if($scope.active.aggregation === "count") {
                     query.aggregate(neon.query.COUNT, '*', 'count');
@@ -418,6 +433,13 @@ function(external, connectionService, datasetService, errorNotificationService, 
                 }
                 $scope.active.count = data.length;
                 $scope.gridOptions.api.setRowData(stripIdField(data));
+
+                if($scope.filterSet && $scope.filterSet.key && $scope.filterSet.value) {
+                    var selectedNode = _.findWhere($scope.gridOptions.api.getRenderedNodes(), function(node) {
+                        return node.data[$scope.filterSet.key] === $scope.filterSet.value;
+                    });
+                    $scope.gridOptions.api.selectNode(selectedNode);
+                }
             };
 
             var stripIdField = function(data) {
@@ -425,6 +447,29 @@ function(external, connectionService, datasetService, errorNotificationService, 
                     delete row._id;
                     return row;
                 });
+            };
+
+            /*
+             * Updates the filter set with any matching filters found.
+             * @method updateFilterSet
+             * @private
+             */
+            var updateFilterSet = function() {
+                if(datasetService.isFieldValid($scope.active.dataField)) {
+                    var filter = filterService.getFilter($scope.active.database.name, $scope.active.table.name, [$scope.active.dataField.columnName]);
+
+                    if(filter && filterService.hasSingleClause(filter)) {
+                        $scope.filterSet = {
+                            key: filter.filter.whereClause.lhs,
+                            value: filter.filter.whereClause.rhs,
+                            database: filter.filter.databaseName,
+                            table: filter.filter.tableName
+                        };
+                    } else if(!filter && $scope.filterSet) {
+                        $scope.gridOptions.api.deselectAll();
+                        $scope.filterSet = undefined;
+                    }
+                }
             };
 
             /**
@@ -445,6 +490,8 @@ function(external, connectionService, datasetService, errorNotificationService, 
                         source: "system",
                         tags: ["filter-change", "datagrid"]
                     });
+
+                    updateFilterSet();
                     queryForData();
                 }
             };
@@ -510,12 +557,13 @@ function(external, connectionService, datasetService, errorNotificationService, 
                 if(!$scope.filterSet || $scope.filterSet.key !== field || $scope.filterSet.value !== value) {
                     $scope.filterSet = {
                         key: field,
-                        value: value
+                        value: value,
+                        database: $scope.active.database.name,
+                        table: $scope.active.table.name
                     };
 
                     var connection = connectionService.getActiveConnection();
                     if($scope.messenger && connection) {
-                        var relations = datasetService.getRelations($scope.active.database.name, $scope.active.table.name, [field]);
                         XDATA.userALE.log({
                             activity: "select",
                             action: "click",
@@ -526,10 +574,12 @@ function(external, connectionService, datasetService, errorNotificationService, 
                             source: "user",
                             tags: ["filter", "aggregation-table"]
                         });
-                        filterService.replaceFilters($scope.messenger, relations, $scope.filterKeys, createFilterClauseForCount, {
-                            visName: "Aggregation Table",
-                            text: $scope.active.dataField.columnName + " = " + $scope.filterSet.value
-                        });
+                        filterService.addFilter($scope.messenger, $scope.active.database.name, $scope.active.table.name, [field],
+                            createFilterClauseForCount, {
+                                visName: "Aggregation Table",
+                                text: $scope.active.dataField.columnName + " = " + $scope.filterSet.value
+                            }
+                        );
                     }
                 } else if($scope.filterSet.key === field && $scope.filterSet.value === value) {
                     $scope.clearFilter();
@@ -552,7 +602,7 @@ function(external, connectionService, datasetService, errorNotificationService, 
              * Removes the current filter from the dashboard and this widget.
              */
             $scope.clearFilter = function() {
-                if($scope.messenger) {
+                if($scope.filterSet && $scope.filterSet.key && $scope.filterSet.value) {
                     XDATA.userALE.log({
                         activity: "deselect",
                         action: "click",
@@ -563,10 +613,12 @@ function(external, connectionService, datasetService, errorNotificationService, 
                         tags: ["filter", "aggregation-table"]
                     });
 
-                    filterService.removeFilters($scope.messenger, $scope.filterKeys, function() {
-                        $scope.gridOptions.api.deselectAll();
-                        $scope.filterSet = undefined;
-                    });
+                    filterService.removeFilter($scope.filterSet.database, $scope.filterSet.table,
+                        [$scope.filterSet.key], function() {
+                            $scope.gridOptions.api.deselectAll();
+                            $scope.filterSet = undefined;
+                        }
+                    );
                 }
             };
 
@@ -668,6 +720,35 @@ function(external, connectionService, datasetService, errorNotificationService, 
                 }
             };
 
+            /**
+             * Creates and returns an object that contains all the binding fields needed to recreate the visualization's state.
+             * @return {Object}
+             * @method bindFields
+             * @private
+             */
+            var bindFields = function() {
+                var bindingFields = {};
+
+                bindingFields["bind-title"] = "'" + $scope.generateTitle() + "'";
+                bindingFields["bind-data-field"] = ($scope.active.dataField && $scope.active.dataField.columnName) ? "'" + $scope.active.dataField.columnName + "'" : undefined;
+                bindingFields["bind-aggregation"] = $scope.active.aggregation ? "'" + $scope.active.aggregation + "'" : undefined;
+                var hasAggField = $scope.active.aggregation && $scope.active.aggregation !== 'count' && $scope.active.aggregationField && $scope.active.aggregationField.columnName;
+                bindingFields["bind-aggregation-field"] = hasAggField ? "'" + $scope.active.aggregationField.columnName + "'" : undefined;
+                bindingFields["bind-filter-field"] = ($scope.active.filterField && $scope.active.filterField.columnName) ? "'" + $scope.active.filterField.columnName + "'" : undefined;
+                var hasFilterValue = $scope.active.filterField && $scope.active.filterField.columnName && $scope.active.filterValue;
+                bindingFields["bind-filter-value"] = hasFilterValue ? "'" + $scope.active.filterValue + "'" : undefined;
+                bindingFields["bind-table"] = ($scope.active.table && $scope.active.table.name) ? "'" + $scope.active.table.name + "'" : undefined;
+                bindingFields["bind-database"] = ($scope.active.database && $scope.active.database.name) ? "'" + $scope.active.database.name + "'" : undefined;
+                bindingFields["limit-count"] = $scope.active.limitCount;
+
+                return bindingFields;
+            };
+
+            /**
+             * Generates and returns the title for this visualization.
+             * @method generateTitle
+             * @return {String}
+             */
             $scope.generateTitle = function() {
                 if($scope.queryTitle) {
                     return $scope.queryTitle;
