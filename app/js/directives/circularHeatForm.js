@@ -31,8 +31,8 @@
  * @constructor
  */
 angular.module('neonDemo.directives')
-.directive('circularHeatForm', ['ConnectionService', 'DatasetService', 'ErrorNotificationService', 'ExportService',
-function(connectionService, datasetService, errorNotificationService, exportService) {
+.directive('circularHeatForm', ['ConnectionService', 'DatasetService', 'ErrorNotificationService', 'ExportService', 'VisualizationService',
+function(connectionService, datasetService, errorNotificationService, exportService, visualizationService) {
     return {
         templateUrl: 'partials/directives/circularHeatForm.html',
         restrict: 'EA',
@@ -41,6 +41,7 @@ function(connectionService, datasetService, errorNotificationService, exportServ
             bindDateField: '=',
             bindTable: '=',
             bindDatabase: '=',
+            bindStateId: '=',
             hideHeader: '=?',
             hideAdvancedOptions: '=?'
         },
@@ -90,6 +91,7 @@ function(connectionService, datasetService, errorNotificationService, exportServ
                 });
 
                 $scope.exportID = exportService.register($scope.makeCircularHeatFormExportObject);
+                visualizationService.register($scope.bindStateId, bindFields);
 
                 $scope.$on('$destroy', function() {
                     XDATA.userALE.log({
@@ -106,6 +108,7 @@ function(connectionService, datasetService, errorNotificationService, exportServ
                     $element.find(".chart-options a").off("resize", updateSize);
                     $scope.messenger.unsubscribeAll();
                     exportService.unregister($scope.exportID);
+                    visualizationService.unregister($scope.bindStateId);
                 });
 
                 $element.resize(updateSize);
@@ -472,6 +475,21 @@ function(connectionService, datasetService, errorNotificationService, exportServ
                     pretty: 'Count'
                 });
                 return finalObject;
+            };
+
+            /**
+             * Creates and returns an object that contains all the binding fields needed to recreate the visualization's state.
+             * @return {Object}
+             * @method bindFields
+             * @private
+             */
+            var bindFields = function() {
+                var bindingFields = {};
+                bindingFields["bind-title"] = $scope.bindTitle ? "'" + $scope.bindTitle + "'" : undefined;
+                bindingFields["bind-date-field"] = ($scope.options.dateField && $scope.options.dateField.columnName) ? "'" + $scope.options.dateField.columnName + "'" : undefined;
+                bindingFields["bind-table"] = ($scope.options.table && $scope.options.table.name) ? "'" + $scope.options.table.name + "'" : undefined;
+                bindingFields["bind-database"] = ($scope.options.database && $scope.options.database.name) ? "'" + $scope.options.database.name + "'" : undefined;
+                return bindingFields;
             };
 
             // Wait for neon to be ready, the create our messenger and intialize the view and data.

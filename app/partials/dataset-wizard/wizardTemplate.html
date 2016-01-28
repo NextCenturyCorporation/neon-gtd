@@ -1,0 +1,20 @@
+<div class="modal fade neon-popup" id="customConnectionModal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+                <h4 class="modal-title" id="customConnectionModalLabel" ng-bind="'Custom Dataset - ' + currentStep.title"></h4>
+            </div>
+
+            <div class="modal-body" ng-transclude>
+            </div>
+
+            <div class="modal-footer">
+                <h4 class="pull-left" ng-bind="'Step ' + currentStepNumber + ' of 5'"></h4>
+                <button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-default" ng-click="previousStep()" ng-show="currentStepNumber > 1">Back</button>
+                <button type="button" class="btn btn-default" ng-click="nextStep()" ng-disabled="!currentStep.validateStep()">Next</button>
+            </div>
+        </div>
+    </div>
+</div>

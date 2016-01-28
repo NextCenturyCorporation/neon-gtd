@@ -518,6 +518,7 @@ coreMap.Map.prototype.addBaseLayer = function() {
         attribution:  "Map tiles by CartoDB, under CC BY 3.0. Data by OpenStreetMap, under ODbL.",
         wrapDateLine: false
     });
+
     this.map.addLayer(this.baseLayer);
 };
 

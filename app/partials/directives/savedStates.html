@@ -1,0 +1,98 @@
+<div class="overwrite-state modal fade" id="overwriteStateModal" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+                <h4 class="modal-title">Save State</h4>
+            </div>
+            <div class="modal-body">
+                State "{{loadedStateName}}" has already been loaded. Would you like to overwrite it or create a new one?
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-success" data-dismiss="modal" ng-click="newState()">
+                    New
+                </button>
+                <button type="button" class="btn btn-alert" data-dismiss="modal" ng-click="saveState(loadedStateName)">
+                    Overwrite
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="save-new-state modal fade" id="saveNewStateModal" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+                <h4 class="modal-title">State Name</h4>
+            </div>
+            <div class="modal-body">
+                <div>
+                    (Optional) Enter a name for the new state:
+                </div>
+                <div class="form-group">
+                    <label>Name</label>
+                    <input type="text" ng-model="stateName" ng-change="validateName()"></input>
+                </div>
+                <label ng-show="stateNameError" class="error-label">
+                    Name already exists in the database.
+                </label>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-success" data-dismiss="modal" ng-click="saveState(stateName)" ng-disabled="stateNameError">
+                    Create
+                </button>
+                <button type="button" class="btn btn-alert" data-dismiss="modal">
+                    Cancel
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="load-state modal fade" id="loadStateModal" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+                <h4 class="modal-title">Load State</h4>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label>State Name</label>
+                    <select class="form-control" ng-model="stateName" ng-options="name for name in stateNames" ng-disabled="isLoading">
+                        <option value="" ng-bind="getDefaultOptionTitle()"></option>
+                    </select>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-success" data-dismiss="modal" ng-disabled="!stateName" ng-click="loadState()">Load</button>
+                <button type="button" class="btn btn-alert" data-dismiss="modal">Cancel</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="delete-state modal fade" id="deleteStateModal" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+                <h4 class="modal-title">Delete State</h4>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label>State Name</label>
+                    <select class="form-control" ng-model="stateName" ng-options="name for name in stateNames" ng-disabled="isLoading">
+                        <option value="" ng-bind="getDefaultOptionTitle()"></option>
+                    </select>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-success" data-dismiss="modal" ng-disabled="!stateName" ng-click="deleteState()">Delete</button>
+                <button type="button" class="btn btn-alert" data-dismiss="modal">Cancel</button>
+            </div>
+        </div>
+    </div>
+</div>

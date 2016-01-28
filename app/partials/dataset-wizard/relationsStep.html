@@ -1,0 +1,112 @@
+<div class="row" ng-show="isSelected">
+    <div class="col-md-7">
+        <div class="neon-well neon-well-dark">
+            <div class="form-group" ng-repeat="selectedRelation in selectedRelations">
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label>Database</label>
+                            <select class="form-control" ng-change="selectRelationDatabase(selectedRelation)" ng-model="selectedRelation.database" ng-disabled="(databases.length == 0)" ng-options="database.name for database in databases">
+                                <option value="">Select Database</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label>&nbsp;</label>
+                            <button class="btn btn-default form-control" ng-click="removeRelationDatabase($index)" ng-show="selectedRelations.length > 1">
+                                Remove Database
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="row" ng-repeat="selectedTable in selectedRelation.customRelationTables">
+                    <div class="col-md-5">
+                        <div class="form-group">
+                            <label ng-show="$index == 0">Tables</label>
+                            <select class="form-control" ng-change="selectRelationTable(selectedTable)"
+                                ng-model="selectedTable.table"
+                                ng-disabled="(!selectedRelation.database.name || !selectedRelation.database.tables.length)" ng-options="table.name for table in selectedRelation.database.tables">
+                                <option value="">Select Table</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="col-md-5">
+                        <div class="form-group">
+                            <label ng-show="$index == 0">Fields</label>
+                            <select class="form-control" ng-change="selectRelationField(selectedTable)" ng-model="selectedTable.field" ng-disabled="(!selectedRelation.database.name || !selectedTable.table.name || !selectedTable.table.fields.length)" ng-options="field.prettyName for field in selectedTable.table.fields">
+                                <option value="">Select Field</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="col-md-1">
+                        <div class="form-group">
+                            <label ng-if="$index == 0">&nbsp;</label>
+                            <span class="glyphicon glyphicon-trash"
+                                ng-click="removeRelationTable(selectedRelation, $index)"
+                                ng-class="{disabled: selectedRelation.customRelationTables.length <= 1}">
+                            </span>
+                        </div>
+                    </div>
+
+                    <div class="col-md-1">
+                        <div class="form-group">
+                            <label ng-if="$index == 0">&nbsp;</label>
+                            <span class="glyphicon glyphicon-plus"
+                                ng-click="addRelationTable(selectedRelation)"
+                                ng-if="$index == 0">
+                            </span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="form-group no-margin">
+                <button class="btn-small btn btn-default form-control" ng-click="addRelationDatabase()" ng-disabled="!databases.length">Add Database</button>
+            </div>
+        </div>
+
+        <div class="form-group no-margin">
+            <button class="btn-small btn btn-default form-control" ng-click="addNewCustomRelation()" ng-disabled="addRelationButtonDisabled()">Add Relation</button>
+        </div>
+    </div>
+
+    <div class="col-md-5 checkbox-group checkbox-group-large">
+        <label>
+            Relations Added
+            <i class="glyphicon glyphicon-question-sign" data-placement="bottom" data-toggle="tooltip" title="{{tooltip}}"></i>
+        </label>
+        <div class="neon-well neon-well-dark">
+            <div ng-repeat="customRelation in customRelations">
+                <table class="custom-relation">
+                    <tr>
+                        <td class="custom-relation-input">
+                            <input type="checkbox" ng-model="customRelation.selected">
+                        </td>
+                        <td>
+                            <div class="custom-relation-database" ng-repeat="relation in customRelation.customRelationDatabases">
+                                <div ng-repeat="relationTable in relation.customRelationTables">
+                                    {{relation.database.name}} : {{relationTable.table.name}} : {{relationTable.field.columnName}}
+                                </div>
+                            </div>
+                        </td>
+                    </tr>
+                </table>
+            </div>
+
+            <div class="form-group" ng-show="!customRelations.length">
+                <span class="no-data">No Relations Set</span>
+            </div>
+        </div>
+
+        <div class="form-group no-margin">
+            <button class="btn-medium btn btn-default form-control" ng-click="removeCustomRelations()" ng-disabled="removeButtonDisabled()">
+                Remove Selected
+            </button>
+        </div>
+    </div>
+</div>

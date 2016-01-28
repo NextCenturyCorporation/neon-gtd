@@ -32,8 +32,8 @@
  * @constructor
  */
 angular.module('neonDemo.directives')
-.directive('timelineSelector', ['$interval', '$filter', 'external', 'ConnectionService', 'DatasetService', 'ErrorNotificationService', 'FilterService', 'ExportService', 'LinksPopupService', 'opencpu',
-function($interval, $filter, external, connectionService, datasetService, errorNotificationService, filterService, exportService, linksPopupService, opencpu) {
+.directive('timelineSelector', ['$interval', '$filter', 'external', 'ConnectionService', 'DatasetService', 'ErrorNotificationService', 'FilterService', 'ExportService', 'LinksPopupService', 'VisualizationService', 'opencpu',
+function($interval, $filter, external, connectionService, datasetService, errorNotificationService, filterService, exportService, linksPopupService, visualizationService, opencpu) {
     return {
         templateUrl: 'partials/directives/timelineSelector.html',
         restrict: 'EA',
@@ -43,6 +43,7 @@ function($interval, $filter, external, connectionService, datasetService, errorN
             bindTable: '=',
             bindDatabase: '=',
             bindGranularity: '=',
+            bindStateId: '=',
             hideHeader: '=?',
             hideAdvancedOptions: '=?',
             overrideStartDate: '=?',
@@ -79,6 +80,7 @@ function($interval, $filter, external, connectionService, datasetService, errorN
             $scope.eventProbabilitiesDisplayed = false;
             $scope.errorMessage = undefined;
             $scope.loadingData = false;
+            $scope.loadingSavedFilter = false;
             $scope.noData = true;
             $scope.invalidDatesFilter = false;
             $scope.width = 0;
@@ -537,7 +539,7 @@ function($interval, $filter, external, connectionService, datasetService, errorN
 
                 // Watch for brush changes and set the appropriate neon filter.
                 $scope.$watch('brush', function(newVal) {
-                    if(newVal.length && $scope.messenger && connectionService.getActiveConnection()) {
+                    if(newVal.length && $scope.messenger && connectionService.getActiveConnection() && !$scope.loadingSavedFilter) {
                         if(2 > newVal.length || newVal[0].getTime() === newVal[1].getTime()) {
                             // may be undefined when a new dataset is being loaded
                             if($scope.bucketizer.getStartDate() !== undefined && $scope.bucketizer.getEndDate() !== undefined && $scope.brush.length) {
@@ -568,6 +570,7 @@ function($interval, $filter, external, connectionService, datasetService, errorN
                             replaceDateFilters(false, updateChartTimesAndTotal);
                         }
                     }
+                    $scope.loadingSavedFilter = false;
                 }, true);
 
                 $scope.$watch('options.showFocus', function(newVal, oldVal) {
@@ -593,15 +596,9 @@ function($interval, $filter, external, connectionService, datasetService, errorN
                 $scope.messenger.subscribe(datasetService.UPDATE_DATA_CHANNEL, function() {
                     queryForChartData();
                 });
-                $scope.messenger.subscribe(datasetService.DATE_CHANGED_CHANNEL, onDateChanged);
-
-                $scope.messenger.subscribe(filterService.REQUEST_REMOVE_FILTER, function(ids) {
-                    if(filterService.containsKey($scope.filterKeys, ids)) {
-                        removeBrushFromTimelineAndDatasetService();
-                    }
-                });
 
                 $scope.exportID = exportService.register($scope.makeTimelineSelectorExportObject);
+                visualizationService.register($scope.bindStateId, bindFields);
 
                 $scope.$on('$destroy', function() {
                     XDATA.userALE.log({
@@ -618,9 +615,10 @@ function($interval, $filter, external, connectionService, datasetService, errorN
                     $scope.messenger.unsubscribeAll();
                     // Remove our filter if we had an active one.
                     if($scope.brush.length) {
-                        filterService.removeFilters($scope.messenger, $scope.filterKeys);
+                        filterService.removeFilter($scope.options.database.name, $scope.options.table.name, [$scope.options.dateField.columnName]);
                     }
                     exportService.unregister($scope.exportID);
+                    visualizationService.unregister($scope.bindStateId);
                     $element.off("resize", onResize);
                     $element.find(".chart-options a").off("resize", onResize);
                     $element.find(".next-to-title").off("resize", onResize);
@@ -635,31 +633,22 @@ function($interval, $filter, external, connectionService, datasetService, errorN
              * @methd replaceDateFilters
              */
             var replaceDateFilters = function(showInvalidDates, callback) {
-                if(($scope.brush === datasetService.getDateBrushExtent($scope.options.database.name, $scope.options.table.name, $scope.options.dateField.columnName)) && !showInvalidDates) {
-                    return;
-                }
-
-                var relations = datasetService.getRelations($scope.options.database.name, $scope.options.table.name, [$scope.options.dateField.columnName]);
-
-                var filterText;
-
-                if(showInvalidDates) {
-                    filterText = "Invalid Dates";
-                } else {
-                    filterText = $scope.formatStartDate(getFilterStartDate()) + " to " + $scope.formatEndDate(getFilterEndDate());
-                }
+                var filterText = (showInvalidDates ? "Invalid Dates" :
+                    $scope.formatStartDate(getFilterStartDate()) + " to " + $scope.formatEndDate(getFilterEndDate()));
 
                 var filterNameObj = {
                     visName: "Timeline",
                     text: filterText
                 };
 
-                filterService.replaceFilters($scope.messenger, relations, $scope.filterKeys, (showInvalidDates ? createFilterClauseForInvalidDates : createFilterClauseForDate), filterNameObj, function() {
-                    if(callback) {
-                        callback();
+                filterService.addFilter($scope.messenger, $scope.options.database.name, $scope.options.table.name,
+                    [$scope.options.dateField.columnName], (showInvalidDates ? createFilterClauseForInvalidDates : createFilterClauseForDate),
+                    filterNameObj, function() {
+                        if(callback) {
+                            callback();
+                        }
                     }
-                    datasetService.setDateBrushExtentForRelations(relations, $scope.brush);
-                });
+                );
             };
 
             /**
@@ -678,7 +667,7 @@ function($interval, $filter, external, connectionService, datasetService, errorN
              */
             $scope.clearInvalidDatesFilter = function() {
                 $scope.invalidDatesFilter = false;
-                filterService.removeFilters($scope.messenger, $scope.filterKeys, queryForChartData);
+                filterService.removeFilter($scope.options.database.name, $scope.options.table.name, [$scope.options.dateField.columnName], queryForChartData);
             };
 
             /**
@@ -726,25 +715,6 @@ function($interval, $filter, external, connectionService, datasetService, errorN
             };
 
             /**
-             * Returns whether the added or removed filter in the given message is a date filter on this timeline's date field.
-             * @param {Object} message
-             * @method isDateFiltersChangedMessage
-             * @return {Boolean}
-             */
-            var isDateFiltersChangedMessage = function(message) {
-                var whereClauses;
-                if(message.addedFilter.whereClause) {
-                    whereClauses = message.addedFilter.whereClause.whereClauses;
-                } else if(message.removedFilter.whereClause) {
-                    whereClauses = message.removedFilter.whereClause.whereClauses;
-                }
-                if(whereClauses && whereClauses.length === 2 && whereClauses[0].lhs === $scope.options.dateField.columnName && whereClauses[1].lhs === $scope.options.dateField.columnName) {
-                    return true;
-                }
-                return false;
-            };
-
-            /**
              * Event handler for filter changed events issued over Neon's messaging channels.
              * @param {Object} message A Neon filter changed message.
              * @method onFiltersChanged
@@ -752,12 +722,6 @@ function($interval, $filter, external, connectionService, datasetService, errorN
              */
             var onFiltersChanged = function(message) {
                 if(message.addedFilter && message.addedFilter.databaseName === $scope.options.database.name && message.addedFilter.tableName === $scope.options.table.name) {
-                    // If the filter changed event was triggered by a change in the global date filter, ignore the filter changed event.
-                    // We don't need to re-query and we'll update the brush extent in response to the date changed event.
-                    if(isDateFiltersChangedMessage(message)) {
-                        return;
-                    }
-
                     XDATA.userALE.log({
                         activity: "alter",
                         action: "query",
@@ -768,23 +732,30 @@ function($interval, $filter, external, connectionService, datasetService, errorN
                         source: "system",
                         tags: ["filter-change", "timeline"]
                     });
-
+                    updateBrush();
                     queryForChartData();
                 }
             };
 
-            /**
-             * Event handler for date changed events issued over Neon's messaging channels.
-             * @param {Object} message A Neon date changed message.
-             * @method onDateChanged
+            /*
+             * Updates the brush with any matching filters found.
+             * @method updateBrush
              * @private
              */
-            var onDateChanged = function(message) {
-                if($scope.options.database.name === message.databaseName && $scope.options.table.name === message.tableName) {
-                    if(datasetService.isFieldValid($scope.options.dateField) && message.fieldNames.indexOf($scope.options.dateField.columnName) >= 0 && $scope.brush !== message.brushExtent) {
-                        $scope.brush = message.brushExtent;
-                        $scope.extentDirty = true;
-                        updateChartTimesAndTotal();
+            var updateBrush = function() {
+                if(datasetService.isFieldValid($scope.options.dateField)) {
+                    var filter = filterService.getFilter($scope.options.database.name, $scope.options.table.name, [$scope.options.dateField.columnName]);
+
+                    if(filter && filterService.hasMultipleClauses(filter) && filterService.getMultipleClausesLength(filter) === 2) {
+                        $scope.loadingSavedFilter = true;
+                        $scope.brush = [
+                            new Date(filter.filter.whereClause.whereClauses[0].rhs),
+                            new Date(filter.filter.whereClause.whereClauses[1].rhs)
+                        ];
+                        setDateTimePickerStart($scope.brush[0]);
+                        setDateTimePickerEnd($scope.brush[1]);
+                    } else if(!filter && $scope.brush && $scope.brush.length) {
+                        $scope.brush = [];
                     }
                 }
             };
@@ -810,14 +781,15 @@ function($interval, $filter, external, connectionService, datasetService, errorN
                     }
                 }
 
-                // Create the filter keys for this visualization for each database/table pair in the dataset.
-                $scope.visualizationFilterKeys = filterService.createFilterKeys("timeline", datasetService.getDatabaseAndTableNames());
-                // The filter keys will be set to the global date filter key for each database/table pair when available and the visualization filter key otherwise.
-                $scope.filterKeys = $scope.visualizationFilterKeys;
-                $scope.updateTables();
+                $scope.updateTables(function() {
+                    if($scope.options.database && $scope.options.database.name && $scope.options.table && $scope.options.table.name) {
+                        updateBrush();
+                    }
+                    queryForChartData();
+                });
             };
 
-            $scope.updateTables = function() {
+            $scope.updateTables = function(callback) {
                 $scope.tables = datasetService.getTables($scope.options.database.name);
                 $scope.options.table = datasetService.getFirstTableWithMappings($scope.options.database.name, [neonMappings.DATE]) || $scope.tables[0];
                 if($scope.bindTable) {
@@ -828,10 +800,10 @@ function($interval, $filter, external, connectionService, datasetService, errorN
                         }
                     }
                 }
-                $scope.updateFields();
+                $scope.updateFields(callback);
             };
 
-            $scope.updateFields = function() {
+            $scope.updateFields = function(callback) {
                 $scope.loadingData = true;
                 $scope.fields = datasetService.getSortedFields($scope.options.database.name, $scope.options.table.name);
 
@@ -839,6 +811,11 @@ function($interval, $filter, external, connectionService, datasetService, errorN
                 $scope.options.dateField = _.find($scope.fields, function(field) {
                     return field.columnName === dateField;
                 }) || datasetService.createBlankField();
+
+                if(callback) {
+                    callback();
+                    return;
+                }
 
                 resetAndQueryForChartData();
             };
@@ -850,21 +827,6 @@ function($interval, $filter, external, connectionService, datasetService, errorN
                 $scope.referenceEndDate = undefined;
                 $scope.data = [];
                 $scope.noData = true;
-
-                var globalBrushExtent = datasetService.isFieldValid($scope.options.dateField) ? datasetService.getDateBrushExtent($scope.options.database.name, $scope.options.table.name, $scope.options.dateField.columnName) : [];
-                if($scope.brush !== globalBrushExtent) {
-                    $scope.brush = globalBrushExtent;
-                    $scope.extentDirty = true;
-                }
-
-                // Get the date filter keys for the current database/table/field and change the current filter keys as appropriate.
-                if(datasetService.isFieldValid($scope.options.dateField)) {
-                    var dateFilterKeys = datasetService.getDateFilterKeys($scope.options.database.name, $scope.options.table.name, $scope.options.dateField.columnName);
-                    $scope.filterKeys = filterService.getFilterKeysFromCollections(datasetService.getDatabaseAndTableNames(), $scope.visualizationFilterKeys, dateFilterKeys);
-                } else {
-                    $scope.filterKeys = $scope.visualizationFilterKeys;
-                }
-
                 queryForChartData();
             };
 
@@ -938,7 +900,22 @@ function($interval, $filter, external, connectionService, datasetService, errorN
                 var queryInvalidDates = createInvalidDatesQuery();
                 queryGroup.addQuery(queryValidDates);
                 queryGroup.addQuery(queryInvalidDates);
-                queryGroup.ignoreFilters([$scope.filterKeys[$scope.options.database.name][$scope.options.table.name]]);
+
+                if($scope.brush.length >= 2) {
+                    var filterClause;
+                    if($scope.invalidDatesFilter) {
+                        filterClause = createFilterClauseForInvalidDates({
+                            database: $scope.options.database.name,
+                            table: $scope.options.table.name
+                        }, $scope.options.dateField.columnName);
+                    } else {
+                        filterClause = createFilterClauseForDate({
+                            database: $scope.options.database.name,
+                            table: $scope.options.table.name
+                        }, $scope.options.dateField.columnName);
+                    }
+                    queryGroup.ignoreFilters([filterService.getFilterKey($scope.options.database.name, $scope.options.table.name, filterClause)]);
+                }
 
                 XDATA.userALE.log({
                     activity: "alter",
@@ -1561,10 +1538,7 @@ function($interval, $filter, external, connectionService, datasetService, errorN
                     setDateTimePickerStart($scope.bucketizer.getStartDate());
                     setDateTimePickerEnd($scope.bucketizer.getEndDate());
                 }
-                var relations = datasetService.getRelations($scope.options.database.name, $scope.options.table.name, [$scope.options.dateField.columnName]);
-                filterService.removeFilters($scope.messenger, $scope.filterKeys, function() {
-                    datasetService.removeDateBrushExtentForRelations(relations);
-                });
+                filterService.removeFilter($scope.options.database.name, $scope.options.table.name, [$scope.options.dateField.columnName]);
             };
 
             /**
@@ -1640,6 +1614,22 @@ function($interval, $filter, external, connectionService, datasetService, errorN
                     pretty: "Count"
                 });
                 return finalObject;
+            };
+
+            /**
+             * Creates and returns an object that contains all the binding fields needed to recreate the visualization's state.
+             * @return {Object}
+             * @method bindFields
+             * @private
+             */
+            var bindFields = function() {
+                var bindingFields = {};
+                bindingFields["bind-title"] = $scope.bindTitle ? "'" + $scope.bindTitle + "'" : undefined;
+                bindingFields["bind-date-field"] = ($scope.options.dateField && $scope.options.dateField.columnName) ? "'" + $scope.options.dateField.columnName + "'" : undefined;
+                bindingFields["bind-table"] = ($scope.options.table && $scope.options.table.name) ? "'" + $scope.options.table.name + "'" : undefined;
+                bindingFields["bind-database"] = ($scope.options.database && $scope.options.database.name) ? "'" + $scope.options.database.name + "'" : undefined;
+                bindingFields["bind-granularity"] = $scope.options.granularity ? "'" + $scope.options.granularity + "'" : undefined;
+                return bindingFields;
             };
 
             // Wait for neon to be ready, the create our messenger and intialize the view and data.

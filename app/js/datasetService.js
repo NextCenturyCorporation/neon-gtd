@@ -34,9 +34,6 @@ angular.module("neonDemo.services")
     // Use the Dataset Service to save settings for specific databases/tables and publish messages to all visualizations if those settings change.
     service.messenger = new neon.eventing.Messenger();
 
-    // The Dataset Service saves the brush extent used to filter the date for each database/table.
-    service.DATE_CHANGED_CHANNEL = "date_changed";
-
     // The Dataset Service may ask the visualizations to update their data.
     service.UPDATE_DATA_CHANNEL = "update_data";
 
@@ -88,6 +85,15 @@ angular.module("neonDemo.services")
             var delay = Math.max(0.5, service.dataset.options.requeryInterval) * 60000;
             $interval(publishUpdateData, delay);
         }
+    };
+
+    /**
+     * Returns the active dataset object
+     * @method getDataset
+     * @return {Object}
+     */
+    service.getDataset = function() {
+        return service.getDatasetWithName(service.dataset.name) || service.dataset;
     };
 
     /**
@@ -145,6 +151,22 @@ angular.module("neonDemo.services")
     };
 
     /**
+     * Returns the dataset with the given name or undefined if no such dataset exists.
+     * @param {String} The dataset name
+     * @method getDatasetWithName
+     * @return {Object} The dataset object if a match exists or undefined otherwise.
+     */
+    service.getDatasetWithName = function(datasetName) {
+        for(var i = 0; i < service.datasets.length; ++i) {
+            if(service.datasets[i].name === datasetName) {
+                return service.datasets[i];
+            }
+        }
+
+        return undefined;
+    };
+
+    /**
      * Returns the database with the given name or an Object with an empty name if no such database exists in the dataset.
      * @param {String} The database name
      * @method getDatabaseWithName
@@ -168,7 +190,8 @@ angular.module("neonDemo.services")
      * @return {Array} An array of table Objects containing {String} name, {Array} fields, and {Array} mappings.
      */
     service.getTables = function(databaseName) {
-        return service.getDatabaseWithName(databaseName).tables;
+        var database = service.getDatabaseWithName(databaseName);
+        return database ? database.tables : [];
     };
 
     /**
@@ -481,12 +504,43 @@ angular.module("neonDemo.services")
     };
 
     /**
+     * Sets the map layer configuration for the active dataset.
+     * @param {object} config A set of layer configuration objects.
+     * @method setMapLayers
+     */
+    service.setMapLayers = function(config) {
+        service.dataset.mapLayers = config;
+        updateDataset();
+    };
+
+    /**
      * Returns the map layer configuration for the map with the given name in the active dataset.
      * @method getMapLayers
      * @return {Array}
      */
     service.getMapLayers = function(name) {
         return service.dataset.mapLayers[name] || [];
+    };
+
+    /**
+     * Sets the line chart configuration for the active dataset.
+     * @param {Object} config A set of line chart configuration objects.
+     * @method setLineCharts
+     */
+    service.setLineCharts = function(config) {
+        service.dataset.lineCharts = config;
+        updateDataset();
+    };
+
+    /**
+     * Adds a line chart configuration for the active dataset.
+     * @param {String} chartName A name to map to the given charts.
+     * @param {Array} charts A list of line chart configuration objects.
+     * @method setLineCharts
+     */
+    service.addLineChart = function(chartName, charts) {
+        service.dataset.lineCharts[chartName] = charts;
+        updateDataset();
     };
 
     /**
@@ -519,122 +573,6 @@ angular.module("neonDemo.services")
      */
     service.setLinkyConfig = function(config) {
         service.dataset.linkyConfig = config;
-    };
-
-    /**
-     * Generates and returns a date filter key for the database and table with the given names.
-     * @param {String} databaseName
-     * @param {String} tableName
-     * @method generateDateFilterKey
-     * @private
-     * @return {String}
-     */
-    var generateDateFilterKey = function(databaseName, tableName) {
-        return "date-" + databaseName + "-" + tableName + "-" + uuid();
-    };
-
-    /**
-     * Returns the map of date filter keys for the database, table, and field in the active dataset with the given names.
-     * @param {String} databaseName
-     * @param {String} tableName
-     * @param {String} fieldName
-     * @method getDateFilterKeys
-     * @return {Object}
-     */
-    service.getDateFilterKeys = function(databaseName, tableName, fieldName) {
-        // If the date filter keys for the given database/table/field have already been generated, return the saved object.
-        if(service.dataset.dateFilterKeys[databaseName][tableName][fieldName]) {
-            return service.dataset.dateFilterKeys[databaseName][tableName][fieldName];
-        }
-
-        var dateFilterKeys = {};
-        var relations = service.getRelations(databaseName, tableName, [fieldName]);
-
-        // Generate the date filter keys for the given database/table/field and each of its relations.
-        relations.forEach(function(relation) {
-            dateFilterKeys[relation.database] = dateFilterKeys[relation.database] || {};
-            dateFilterKeys[relation.database][relation.table] = dateFilterKeys[relation.database][relation.table] || generateDateFilterKey(relation.database, relation.table);
-        });
-
-        // Save the generated date filter keys for the given database/table/field and each of its relations.
-        relations.forEach(function(relation) {
-            // Each relation will only contain a single field corresponding to the date field.
-            relation.fields[0].related.forEach(function(relatedFieldName) {
-                service.dataset.dateFilterKeys[relation.database][relation.table][relatedFieldName] = dateFilterKeys;
-            });
-        });
-
-        return dateFilterKeys;
-    };
-
-    /**
-     * Publishes a date changed message with the given database name, table name, field names, and brush extent.
-     * @param {String} databaseName
-     * @param {String} tableName
-     * @param {Array} fieldNames
-     * @param {Array} brushExtent
-     * @method publishDateChanged
-     * @private
-     */
-    var publishDateChanged = function(databaseName, tableName, fieldNames, brushExtent) {
-        service.messenger.publish(service.DATE_CHANGED_CHANNEL, {
-            databaseName: databaseName,
-            tableName: tableName,
-            fieldNames: fieldNames,
-            brushExtent: brushExtent
-        });
-    };
-
-    /**
-     * Sets the date brush extent for the databases and tables in the given relations to the given brush extent and publishes a date changed message for each.
-     * @param {Array} relations
-     * @param {Array} brushExtent
-     * @method setDateBrushExtentForRelations
-     */
-    service.setDateBrushExtentForRelations = function(relations, brushExtent) {
-        relations.forEach(function(relation) {
-            var table = service.getTableWithName(relation.database, relation.table);
-            if(table) {
-                table.dateBrushExtent = table.dateBrushExtent || {};
-                // Each relation will only contain a single field corresponding to the date field.
-                relation.fields[0].related.forEach(function(relatedFieldName) {
-                    table.dateBrushExtent[relatedFieldName] = brushExtent;
-                });
-                publishDateChanged(relation.database, relation.table, relation.fields[0].related, brushExtent);
-            }
-        });
-    };
-
-    /**
-     * Returns the date brush extent for the database, table, and fields with the given names or an empty array if no brush extent has been set.
-     * @param {String} databaseName
-     * @param {String} tableName
-     * @param {String} fieldName
-     * @method getDateBrushExtent
-     * @return {Array}
-     */
-    service.getDateBrushExtent = function(databaseName, tableName, fieldName) {
-        var table = service.getTableWithName(databaseName, tableName);
-        return ((table && table.dateBrushExtent) ? table.dateBrushExtent[fieldName] : []) || [];
-    };
-
-    /**
-     * Removes the date brush extent for the databases and tables in the given relations and publishes a date changed message for each.
-     * @param {Array} relations
-     * @method removeDateBrushExtentForRelations
-     */
-    service.removeDateBrushExtentForRelations = function(relations) {
-        relations.forEach(function(relation) {
-            var table = service.getTableWithName(relation.database, relation.table);
-            if(table) {
-                table.dateBrushExtent = table.dateBrushExtent || {};
-                // Each relation will only contain a single field corresponding to the date field.
-                relation.fields[0].related.forEach(function(relatedFieldName) {
-                    table.dateBrushExtent[relatedFieldName] = [];
-                });
-                publishDateChanged(relation.database, relation.table, relation.fields[0].related, []);
-            }
-        });
     };
 
     /**
@@ -836,6 +774,19 @@ angular.module("neonDemo.services")
     service.datasets.forEach(function(dataset) {
         validateDatabases(dataset);
     });
+
+    /**
+     * Updates the dataset that matches the active dataset.
+     * @method updateDataset
+     * @private
+     */
+    var updateDataset = function() {
+        for(var i = 0; i < service.datasets.length; ++i) {
+            if(service.datasets[i].name === service.dataset.name) {
+                service.datasets[i] = service.dataset;
+            }
+        }
+    };
 
     return service;
 }]);
