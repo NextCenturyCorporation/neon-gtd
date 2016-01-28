@@ -58,6 +58,24 @@ externalServices:
         propertyName2: neonMapping4
 visualizations:
   -
+    name: Aggregation Table
+    sizeX: 6
+    sizeY: 4
+    type: count-by
+    icon: Count64
+  -
+    name: Bar Chart
+    sizeX: 6
+    sizeY: 4
+    type: barchart
+    icon: BarChart64
+  -
+    name: Data Table
+    sizeX: 6
+    sizeY: 4
+    type: query-results-table
+    icon: ViewData64
+  -
     name: Filter Builder
     sizeX: 12
     minSizeX: 12
@@ -66,31 +84,17 @@ visualizations:
     type: filter-builder
     icon: CreateFilter64
   -
-    name: Data Table
+    name: Gantt Chart
     sizeX: 6
     sizeY: 4
-    type: query-results-table
-    icon: ViewData64
+    type: gantt-chart
+    icon: Gantt64
   -
-    name: Timeline
-    sizeX: 12
-    minSizeX: 12
-    sizeY: 4
-    minSizeY: 4
-    type: timeline-selector
-    icon: Timeline64
-  -
-    name: Map
+    name: Graph
     sizeX: 12
     sizeY: 6
-    type: map
-    icon: Map64
-  -
-    name: Ops Clock
-    sizeX: 6
-    sizeY: 4
-    type: circular-heat-form
-    icon: OpsClock64
+    type: directed-graph
+    icon: Graph64
   -
     name: Line Chart
     sizeX: 6
@@ -98,11 +102,29 @@ visualizations:
     type: linechart
     icon: LineChart64
   -
-    name: Bar Chart
+    name: Map
+    sizeX: 12
+    sizeY: 6
+    type: map
+    icon: Map64
+  -
+    name: Newsfeed
     sizeX: 6
     sizeY: 4
-    type: barchart
-    icon: BarChart64
+    type: newsfeed
+    icon: News64
+  -
+    name: Ops Clock
+    sizeX: 6
+    sizeY: 4
+    type: circular-heat-form
+    icon: OpsClock64
+  -
+    name: Scatter Plot
+    sizeX: 6
+    sizeY: 4
+    type: plotly-graph
+    icon: ScatterPlot64
   -
     name: Sunburst Chart
     sizeX: 6
@@ -116,35 +138,13 @@ visualizations:
     type: tag-cloud
     icon: TagCloud64
   -
-    name: Aggregation Table
-    sizeX: 6
-    sizeY: 4
-    type: count-by
-    icon: Count64
-  -
-    name: Graph
+    name: Timeline
     sizeX: 12
-    sizeY: 6
-    type: directed-graph
-    icon: Graph64
-  -
-    name: Newsfeed
-    sizeX: 6
+    minSizeX: 12
     sizeY: 4
-    type: newsfeed
-    icon: News64
-  -
-    name: Gantt Chart
-    sizeX: 6
-    sizeY: 4
-    type: gantt-chart
-    icon: Gantt64
-  -
-    name: Scatterplot-gl
-    sizeX: 2
-    sizeY: 2
-    type: plotly-graph
-    icon: ScatterPlot64
+    minSizeY: 4
+    type: timeline-selector
+    icon: Timeline64
   -
     name: Sample
     sizeX: 6
