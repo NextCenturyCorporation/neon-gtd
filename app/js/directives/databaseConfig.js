@@ -315,21 +315,11 @@ angular.module('neonDemo.directives')
                     };
 
                     customDatabase.customTables.forEach(function(customTable) {
-                        var mappings = {};
-                        mappings[neonMappings.DATE] = customTable.date ? customTable.date.columnName : "";
-                        mappings[neonMappings.TAGS] = customTable.tags ? customTable.tags.columnName : "";
-                        mappings[neonMappings.LATITUDE] = customTable.latitude ? customTable.latitude.columnName : "";
-                        mappings[neonMappings.LONGITUDE] = customTable.longitude ? customTable.longitude.columnName : "";
-                        mappings[neonMappings.BAR_GROUPS] = customTable.bar_x_axis ? customTable.bar_x_axis.columnName : "";
-                        mappings[neonMappings.Y_AXIS] = customTable.y_axis ? customTable.y_axis.columnName : "";
-                        mappings[neonMappings.LINE_GROUPS] = customTable.line_category ? customTable.line_category.columnName : "";
-                        mappings[neonMappings.AGGREGATE] = customTable.count_by ? customTable.count_by.columnName : "";
-
                         var tableObject = {
                             name: customTable.table.name,
                             prettyName: customTable.table.prettyName,
                             fields: customTable.table.fields,
-                            mappings: mappings
+                            mappings: customTable.table.mappings
                         };
 
                         database.tables.push(tableObject);

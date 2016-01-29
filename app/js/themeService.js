@@ -43,7 +43,7 @@ angular.module("neonDemo.services")
         accentColor: "#A654A1",
         backgroundColor: "#1B313D"
     */
-    }]
+    }];
 
     var theme = _.find(themes, function(theme) {
         return theme.name === config.theme;

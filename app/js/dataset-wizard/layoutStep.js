@@ -35,166 +35,6 @@ angular.module('neonDemo.directives')
                 ", so a width of " + (config.gridsterColumns / 2) + " would make the visualization take up half " +
                 "of the dashboard.";
             $scope.heightTooltip = "The height of the visualization using the same units as the width.";
-            $scope.visualizationBindings = {
-                barchart: [
-                    {
-                        label: "X-Axis",
-                        name: "bind-x-axis-field",
-                        bindingName: "bar_x_axis"
-                    },{
-                        label: "Aggregation",
-                        name: "bind-aggregation-field",
-                        options: [{
-                            name: "count",
-                            prettyName: "Count",
-                            defaultOption: true
-                        },{
-                            name: "sum",
-                            prettyName: "Sum"
-                        },{
-                            name: "average",
-                            prettyName: "Average"
-                        }]
-                    },{
-                        label: "Y-Axis",
-                        name: "bind-y-axis-field",
-                        bindingName: "y_axis"
-                    }
-                ],
-                "circular-heat-form": [
-                    {
-                        label: "Date Field",
-                        name: "bind-date-field",
-                        bindingName: "date"
-                    }
-                ],
-                "count-by": [
-                    {
-                        label: "Group Field",
-                        name: "bind-data-field",
-                        bindingName: "count_by"
-                    },{
-                        label: "Aggregation",
-                        name: "bind-aggregation",
-                        options: [{
-                            name: "count",
-                            prettyName: "Count",
-                            defaultOption: true
-                        },{
-                            name: "min",
-                            prettyName: "Minimum"
-                        },{
-                            name: "max",
-                            prettyName: "maximum"
-                        }]
-                    },{
-                        label: "Aggregation Field",
-                        name: "bind-aggregation-field"
-                    }
-                ],
-                "directed-graph": [],
-                "filter-builder": [],
-                "gantt-chart": [
-                    {
-                        label: "Start Field",
-                        name: "bind-start-field"
-                    },{
-                        label: "End Field",
-                        name: "bind-end-field"
-                    },{
-                        label: "Color Field",
-                        name: "bind-color-field"
-                    }
-                ],
-                linechart: [
-                    {
-                        label: "Date Granularity",
-                        name: "bind-granularity",
-                        options: [{
-                            name: "day",
-                            prettyName: "Day",
-                            defaultOption: true
-                        },{
-                            name: "hour",
-                            prettyName: "Hour"
-                        }]
-                    }
-                ],
-                map: [],
-                newsfeed: [
-                    {
-                        label: "Primary Title Field",
-                        name: "bind-primary-title-field"
-                    },{
-                        label: "Secondary Title Field",
-                        name: "bind-secondary-title-field"
-                    },{
-                        label: "Date Field",
-                        name: "bind-date-field",
-                        bindingName: "date"
-                    },{
-                        label: "Content Field",
-                        name: "bind-content-field"
-                    }
-                ],
-                "plotly-graph": [
-                    {
-                        label: "X Attribute",
-                        name: "bind-attr-x"
-                    },{
-                        label: "Y Attribute",
-                        name: "bind-attr-y"
-                    },{
-                        label: "Type",
-                        name: "graph-type",
-                        options: [{
-                            name: "scatter",
-                            prettyName: "Scatter Plot",
-                            defaultOption: true
-                        },{
-                            name: "heatmapScatter",
-                            prettyName: "Heatmap Scatter Plot"
-                        },{
-                            name: "histogramScatter",
-                            prettyName: "Histogram Plot"
-                        }]
-                    }
-                ],
-                "query-results-table": [],
-                sunburst: [],
-                "tag-cloud": [
-                    {
-                        label: "Data Field",
-                        name: "bind-tag-field",
-                        bindingName: "tags"
-                    }
-                ],
-                "timeline-selector": [
-                    {
-                        label: "Date Field",
-                        name: "bind-date-field",
-                        bindingName: "date"
-                    },{
-                        label: "Date Granularity",
-                        name: "bind-granularity",
-                        options: [{
-                            name: "year",
-                            prettyName: "Year"
-                        },{
-                            name: "month",
-                            prettyName: "Month"
-                        },{
-                            name: "day",
-                            prettyName: "Day",
-                            defaultOption: true
-                        },{
-                            name: "hour",
-                            prettyName: "Hour"
-                        }]
-
-                    }
-                ]
-            };
 
             $("#customConnectionModal").tooltip({
                 selector: '[data-toggle=tooltip]'
@@ -268,8 +108,8 @@ angular.module('neonDemo.directives')
 
                                 // Attach mappings to bindings
                                 _.each(customVisualization.bindingOptions, function(option) {
-                                    if(option.bindingName && customTable[option.bindingName]) {
-                                        customVisualization.bindings[option.name] = customTable[option.bindingName].columnName;
+                                    if(option.bindingName && customTable.table.mappings[option.bindingName]) {
+                                        customVisualization.bindings[option.name] = customTable.table.mappings[option.bindingName];
                                     } else if(option.options) {
                                         var defaultOption = _.find(option.options, {
                                             defaultOption: true
@@ -385,6 +225,7 @@ angular.module('neonDemo.directives')
                 $scope.customDatabases = customDatabases;
                 $scope.customVisualizations = [];
                 $scope.newVisualizationType = "";
+                $scope.visualizationBindings = neonWizard.visualizationBindings;
             };
 
             /*
