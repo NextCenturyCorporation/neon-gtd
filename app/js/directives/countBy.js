@@ -26,7 +26,7 @@ exportService, linksPopupService, themeService, visualizationService) {
         scope: {
             bindTitle: '=',
             bindCountField: '=', // Deprecated
-            bindGroupField: '=',
+            bindDataField: '=',
             bindAggregation: '=',
             bindAggregationField: '=',
             bindFilterField: '=',

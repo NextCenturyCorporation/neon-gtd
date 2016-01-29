@@ -394,7 +394,7 @@ function(connectionService, datasetService, filterService, themeService) {
                         title: $scope.active.attrY.prettyName,
                         showgrid: false,
                         zeroline: false
-                    },
+                    }
                 };
 
                 if($scope.active.type === 'scatter' || $scope.active.type === 'scattergl') {

@@ -28,95 +28,258 @@ angular.module('neonDemo.directives')
             $scope.isSelected = false;
             $scope.customVisualizations = [];
             $scope.customDatabases = [];
+            $scope.newVisualizationType = "";
             $scope.visualizations = _.sortBy(visualizations, "name");
             $scope.widthTooltip = "The width of the visualization based upon the number of " +
                 "columns set for the dashboard. The current number of columns is " + config.gridsterColumns +
                 ", so a width of " + (config.gridsterColumns / 2) + " would make the visualization take up half " +
                 "of the dashboard.";
             $scope.heightTooltip = "The height of the visualization using the same units as the width.";
+            $scope.visualizationBindings = {
+                barchart: [
+                    {
+                        label: "X-Axis",
+                        name: "bind-x-axis-field",
+                        bindingName: "bar_x_axis"
+                    },{
+                        label: "Aggregation",
+                        name: "bind-aggregation-field",
+                        options: [{
+                            name: "count",
+                            prettyName: "Count",
+                            defaultOption: true
+                        },{
+                            name: "sum",
+                            prettyName: "Sum"
+                        },{
+                            name: "average",
+                            prettyName: "Average"
+                        }]
+                    },{
+                        label: "Y-Axis",
+                        name: "bind-y-axis-field",
+                        bindingName: "y_axis"
+                    }
+                ],
+                "circular-heat-form": [
+                    {
+                        label: "Date Field",
+                        name: "bind-date-field",
+                        bindingName: "date"
+                    }
+                ],
+                "count-by": [
+                    {
+                        label: "Group Field",
+                        name: "bind-data-field",
+                        bindingName: "count_by"
+                    },{
+                        label: "Aggregation",
+                        name: "bind-aggregation",
+                        options: [{
+                            name: "count",
+                            prettyName: "Count",
+                            defaultOption: true
+                        },{
+                            name: "min",
+                            prettyName: "Minimum"
+                        },{
+                            name: "max",
+                            prettyName: "maximum"
+                        }]
+                    },{
+                        label: "Aggregation Field",
+                        name: "bind-aggregation-field"
+                    }
+                ],
+                "directed-graph": [],
+                "filter-builder": [],
+                "gantt-chart": [
+                    {
+                        label: "Start Field",
+                        name: "bind-start-field"
+                    },{
+                        label: "End Field",
+                        name: "bind-end-field"
+                    },{
+                        label: "Color Field",
+                        name: "bind-color-field"
+                    }
+                ],
+                linechart: [
+                    {
+                        label: "Date Granularity",
+                        name: "bind-granularity",
+                        options: [{
+                            name: "day",
+                            prettyName: "Day",
+                            defaultOption: true
+                        },{
+                            name: "hour",
+                            prettyName: "Hour"
+                        }]
+                    }
+                ],
+                map: [],
+                newsfeed: [
+                    {
+                        label: "Primary Title Field",
+                        name: "bind-primary-title-field"
+                    },{
+                        label: "Secondary Title Field",
+                        name: "bind-secondary-title-field"
+                    },{
+                        label: "Date Field",
+                        name: "bind-date-field",
+                        bindingName: "date"
+                    },{
+                        label: "Content Field",
+                        name: "bind-content-field"
+                    }
+                ],
+                "plotly-graph": [
+                    {
+                        label: "X Attribute",
+                        name: "bind-attr-x"
+                    },{
+                        label: "Y Attribute",
+                        name: "bind-attr-y"
+                    },{
+                        label: "Type",
+                        name: "graph-type",
+                        options: [{
+                            name: "scatter",
+                            prettyName: "Scatter Plot",
+                            defaultOption: true
+                        },{
+                            name: "heatmapScatter",
+                            prettyName: "Heatmap Scatter Plot"
+                        },{
+                            name: "histogramScatter",
+                            prettyName: "Histogram Plot"
+                        }]
+                    }
+                ],
+                "query-results-table": [],
+                sunburst: [],
+                "tag-cloud": [
+                    {
+                        label: "Data Field",
+                        name: "bind-tag-field",
+                        bindingName: "tags"
+                    }
+                ],
+                "timeline-selector": [
+                    {
+                        label: "Date Field",
+                        name: "bind-date-field",
+                        bindingName: "date"
+                    },{
+                        label: "Date Granularity",
+                        name: "bind-granularity",
+                        options: [{
+                            name: "year",
+                            prettyName: "Year"
+                        },{
+                            name: "month",
+                            prettyName: "Month"
+                        },{
+                            name: "day",
+                            prettyName: "Day",
+                            defaultOption: true
+                        },{
+                            name: "hour",
+                            prettyName: "Hour"
+                        }]
+
+                    }
+                ]
+            };
 
             $("#customConnectionModal").tooltip({
                 selector: '[data-toggle=tooltip]'
             });
 
             /**
-             * Selection event for the given custom visualization object.
+             * Toggles the custom visualization options display for the given custom visualization.
              * @param {Object} customVisualization
-             * @method selectVisualization
+             * @method toggleCustomVisualization
              */
-            $scope.selectVisualization = function(customVisualization) {
-                XDATA.userALE.log({
-                    activity: "select",
-                    action: "click",
-                    elementId: "visualization-selector",
-                    elementType: "combobox",
-                    elementGroup: "top",
-                    source: "user",
-                    tags: ["visualization", (customVisualization ? customVisualization.name : "")]
-                });
-
-                var viz = _.find(visualizations, function(visualization) {
-                    return visualization.type === customVisualization.type;
-                });
-
-                if(viz) {
-                    customVisualization.minSizeX = viz.minSizeX;
-                    customVisualization.minSizeY = viz.minSizeY;
-                    customVisualization.sizeX = viz.sizeX;
-                    customVisualization.sizeY = viz.sizeY;
-
-                    if(!customVisualization.database) {
-                        customVisualization.database = $scope.customDatabases[0].database.name;
-
-                        $scope.selectCustomVisualizationDatabase(customVisualization);
-                        customVisualization.table = customVisualization.availableTables[0];
-                    }
-                }
+            $scope.toggleCustomVisualization = function(customVisualization) {
+                customVisualization.toggled = !customVisualization.toggled;
             };
 
             /**
              * Selection event for the given custom visualization object.
              * @param {Object} customVisualization
+             * @param {Boolean} systemEvent
              * @method selectCustomVisualizationDatabase
              */
-            $scope.selectCustomVisualizationDatabase = function(customVisualization) {
+            $scope.selectCustomVisualizationDatabase = function(customVisualization, systemEvent) {
                 XDATA.userALE.log({
                     activity: "select",
                     action: "click",
                     elementId: "visualization-database-selector",
                     elementType: "combobox",
                     elementGroup: "top",
-                    source: "user",
+                    source: (systemEvent ? "system" : "user"),
                     tags: ["visualization", (customVisualization ? customVisualization.name : ""),
                         "database", (customVisualization ? customVisualization.database : "")]
                 });
 
-                _.find($scope.customDatabases, function(db) {
+                _.each($scope.customDatabases, function(db) {
                     if(db.database.name === customVisualization.database) {
                         var tables = _.pluck(db.customTables, 'table');
                         customVisualization.availableTables = _.map(tables, function(table) {
                             return table.name;
                         });
-                        customVisualization.table = "";
+                        customVisualization.table = customVisualization.availableTables[0];
                     }
                 });
+
+                $scope.selectCustomVisualizationTable(customVisualization, systemEvent);
             };
 
             /**
              * Selection event for the given custom visualization object.
              * @param {Object} customVisualization
+             * @param {Boolean} systemEvent
              * @method selectCustomVisualizationTable
              */
-            $scope.selectCustomVisualizationTable = function(customVisualization) {
+            $scope.selectCustomVisualizationTable = function(customVisualization, systemEvent) {
                 XDATA.userALE.log({
                     activity: "select",
                     action: "click",
                     elementId: "visualization-table-selector",
                     elementType: "combobox",
                     elementGroup: "top",
-                    source: "user",
+                    source: (systemEvent ? "system" : "user"),
                     tags: ["visualization", (customVisualization ? customVisualization.name : ""),
                         "table", (customVisualization ? customVisualization.table : "")]
+                });
+
+                customVisualization.bindings = {};
+
+                _.each($scope.customDatabases, function(db) {
+                    if(db.database.name === customVisualization.database) {
+                        _.each(db.customTables, function(customTable) {
+                            if(customTable.table.name === customVisualization.table) {
+                                customVisualization.availableFields = customTable.table.fields;
+
+                                // Attach mappings to bindings
+                                _.each(customVisualization.bindingOptions, function(option) {
+                                    if(option.bindingName && customTable[option.bindingName]) {
+                                        customVisualization.bindings[option.name] = customTable[option.bindingName].columnName;
+                                    } else if(option.options) {
+                                        var defaultOption = _.find(option.options, {
+                                            defaultOption: true
+                                        });
+                                        customVisualization.bindings[option.name] = (defaultOption ? defaultOption.name : option.options[0].name);
+                                    }
+                                });
+                            }
+                        });
+                    }
                 });
             };
 
@@ -125,9 +288,28 @@ angular.module('neonDemo.directives')
              * @method addNewCustomVisualization
              */
             $scope.addNewCustomVisualization = function() {
-                $scope.customVisualizations.push({
-                    availableTables: []
+                var viz = _.find(visualizations, function(visualization) {
+                    return visualization.type === $scope.newVisualizationType;
                 });
+
+                if(viz) {
+                    var length = $scope.customVisualizations.push({
+                        type: $scope.newVisualizationType,
+                        name: viz.name,
+                        minSizeX: viz.minSizeX,
+                        minSizeY: viz.minSizeY,
+                        sizeX: viz.sizeX,
+                        sizeY: viz.sizeY,
+                        database: $scope.customDatabases[0].database.name,
+                        toggled: true,
+                        bindings: {},
+                        bindingOptions: $scope.visualizationBindings[$scope.newVisualizationType]
+                    });
+
+                    $scope.selectCustomVisualizationDatabase($scope.customVisualizations[length - 1], true);
+                }
+
+                $scope.newVisualizationType = "";
             };
 
             /**
@@ -146,7 +328,7 @@ angular.module('neonDemo.directives')
              */
             $scope.showVisualizationDatabaseProperties = function(customVisualization) {
                 if(!customVisualization.type || customVisualization.type === 'filter-builder' || customVisualization.type === 'map' ||
-                    customVisualization.type === 'directed-graph' || customVisualization.type === 'gantt-chart') {
+                    customVisualization.type === 'directed-graph' || customVisualization.type === 'linechart') {
                     return false;
                 }
                 return true;
@@ -202,6 +384,7 @@ angular.module('neonDemo.directives')
             var init = function(databases, customDatabases) {
                 $scope.customDatabases = customDatabases;
                 $scope.customVisualizations = [];
+                $scope.newVisualizationType = "";
             };
 
             /*

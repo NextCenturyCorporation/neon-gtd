@@ -68,7 +68,7 @@ function(external, connectionService, datasetService, errorNotificationService, 
                 table: {},
                 attrX: "",
                 attrY: "",
-                barType: "count",
+                barType: $scope.bindAggregationField || "count",
                 limitCount: $scope.limitCount || 100
             };
 

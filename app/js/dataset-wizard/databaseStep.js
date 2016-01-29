@@ -125,7 +125,7 @@ angular.module('neonDemo.directives')
              */
             $scope.removeButtonDisabled = function() {
                 return _.all($scope.customDatabases, function(db) {
-                    return _.any(db.customTables, function(table) {
+                    return _.all(db.customTables, function(table) {
                         return !table.selected;
                     });
                 });

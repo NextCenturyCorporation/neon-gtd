@@ -23,6 +23,8 @@ function(connectionService, datasetService, errorNotificationService, filterServ
         templateUrl: 'partials/directives/gantt-chart.html',
         restrict: 'EA',
         scope: {
+            bindDatabase: '=',
+            bindTable: '=',
             bindRowTitleField: "=",
             bindStartField: "=",
             bindEndField: "=",
@@ -149,7 +151,7 @@ function(connectionService, datasetService, errorNotificationService, filterServ
                 }
 
                 if(initializing) {
-                    $scope.queryForData();
+                    $scope.updateTables();
                 } else {
                     $scope.$apply(function() {
                         $scope.updateTables();
@@ -475,6 +477,8 @@ function(connectionService, datasetService, errorNotificationService, filterServ
                 bindingFields["bind-color-field"] = ($scope.options.colorField && $scope.options.colorField.columnName) ? "'" + $scope.options.colorField.columnName + "'" : undefined;
                 bindingFields["bind-group-fields"] = $scope.options.groupFields ? "'" + $scope.options.groupFields + "'" : undefined;
                 bindingFields["bind-selected-groups"] = $scope.options.selectedGroups ? "'" + $scope.options.selectedGroups + "'" : undefined;
+                bindingFields["bind-table"] = $scope.options.table ? "'" + $scope.options.table.name + "'" : undefined;
+                bindingFields["bind-database"] = $scope.options.database ? "'" + $scope.options.database.name + "'" : undefined;
                 return bindingFields;
             };
 

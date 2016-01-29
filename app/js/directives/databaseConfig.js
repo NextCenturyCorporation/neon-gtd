@@ -249,15 +249,20 @@ angular.module('neonDemo.directives')
                         minSizeX: visualization.minSizeX,
                         minSizeY: visualization.minSizeY,
                         type: visualization.type,
-                        id: uuid()
+                        id: uuid(),
+                        bindings: {}
                     };
 
-                    if($scope.showVisualizationDatabaseProperties(visualization)) {
+                    if(visualization.database && visualization.table) {
                         layout.bindings = {
                             "bind-database": "'" + visualization.database + "'",
                             "bind-table": "'" + visualization.table + "'"
                         };
                     }
+
+                    _.each(visualization.bindings, function(value, key) {
+                        layout.bindings[key] = "'" + value + "'";
+                    });
 
                     $scope.gridsterConfigs.push(layout);
                 });
@@ -395,19 +400,6 @@ angular.module('neonDemo.directives')
                 updateCustomLayout();
 
                 $element.find(".modal").modal("hide");
-            };
-
-            /**
-             * Returns whether the database and table inputs should be shown for the given custom visualization object.
-             * @param {Object} customVisualization
-             * @method showVisualizationDatabaseProperties
-             */
-            $scope.showVisualizationDatabaseProperties = function(customVisualization) {
-                if(!customVisualization.type || customVisualization.type === 'filter-builder' || customVisualization.type === 'map' ||
-                    customVisualization.type === 'directed-graph' || customVisualization.type === 'gantt-chart') {
-                    return false;
-                }
-                return true;
             };
 
             // Wait for neon to be ready, the create our messenger and intialize the view and data.
