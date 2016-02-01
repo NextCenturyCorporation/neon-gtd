@@ -16,12 +16,18 @@ Building the **neon-gtd** application requires [npm][10], [grunt][11], and [bowe
         git clone https://github.com/NextCenturyCorporation/neon-gtd.git
         cd neon-gtd/
         
-3. Use npm and grunt to download dependencies and build the application.  This will create a neon-gtd war file in  the **neon-gtd/target** directory.
+3. Copy the sample NEON-GTD configuration file to the app config folder or supply your own.  The configuration file specifies the default datasets and visualizations to display.  It is described in detail [here][15].  The sample configuration file is setup for the sample earthquake data referenced in step 1.
+
+        # Copy either the YAML or JSON config file.  If Neon-GTD cannot find one, it will look for the other.  
+        cp app/config/sample.config.yaml app/config/config.yaml
+        cp app/config/sample.config.json app/config/config.json
+
+4. Use npm and grunt to download dependencies and build the application.  This will create a neon-gtd war file in  the **neon-gtd/target** directory.
 
         npm install
         grunt
 
-4. Deploy the **neon-gtd-&lt;version&gt;.war** file to your container from step 1.
+5. Deploy the **neon-gtd-&lt;version&gt;.war** file to your container from step 1.
     Note: On Tomcat, this may be as simple as copying the file to your <apache-tomcat>/webapps folder.  Optionally, you may want to rename the war file to be simply neon-gtd.war.
 
 5. If running against a stock, localhost Tomcat instance, browse to the [http://localhost:8080/neon-gtd/app/][neon-gtd-localhost] to verify its installation.  The [Users Guide][neon-gtd-guide] describes its basic use.
@@ -63,3 +69,4 @@ Copyright 2014 Next Century Corporation
 [12]: http://bower.io/
 [13]: https://angularjs.org/
 [14]: https://www.elastic.co/products/elasticsearch
+[15]: https://github.com/NextCenturyCorporation/neon-gtd/wiki/Neon-Dashboard-Configuration-Guide
