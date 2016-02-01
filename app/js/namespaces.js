@@ -106,3 +106,257 @@ neonMappings.MIN_LON = "minLon";
 neonMappings.MAX_LAT = "maxLat";
 neonMappings.MAX_LON = "maxLon";
 neonMappings.BOUNDS = "bounds";
+
+var neonWizard = neonWizard || {};
+
+neonWizard.mappings = neonWizard.mappings || {};
+neonWizard.mappings.ID = {
+    name: "id",
+    prettyName: "ID"
+};
+neonWizard.mappings.DATE = {
+    name: "date",
+    prettyName: "Date"
+};
+neonWizard.mappings.TAGS = {
+    name: "tags",
+    prettyName: "Tag Cloud Field"
+};
+neonWizard.mappings.LATITUDE = {
+    name: "latitude",
+    prettyName: "Latitude"
+};
+neonWizard.mappings.LONGITUDE = {
+    name: "longitude",
+    prettyName: "Longitude"
+};
+neonWizard.mappings.COLOR = {
+    name: "color_by",
+    prettyName: "Map Color By"
+};
+neonWizard.mappings.SIZE = {
+    name: "size_by",
+    prettyName: "Map Size By"
+};
+neonWizard.mappings.SORT = {
+    name: "sort_by",
+    prettyName: "Data Table Sort By"
+};
+neonWizard.mappings.AGGREGATE = {
+    name: "count_by",
+    prettyName: "Aggregation Table Field"
+};
+neonWizard.mappings.Y_AXIS = {
+    name: "y_axis",
+    prettyName: "Y-Axis"
+};
+neonWizard.mappings.BAR_GROUPS = {
+    name: "bar_x_axis",
+    prettyName: "Bar Chart X-Axis"
+};
+neonWizard.mappings.LINE_GROUPS = {
+    name: "line_category",
+    prettyName: "Line Chart Grouping"
+};
+neonWizard.mappings.GRAPH_NODE = {
+    name: "graph_nodes",
+    prettyName: "Graph Nodes"
+};
+neonWizard.mappings.GRAPH_LINKED_NODE = {
+    name: "graph_links",
+    prettyName: "Graph Linked Nodes"
+};
+neonWizard.mappings.GRAPH_NODE_NAME = {
+    name: "graph_node_name",
+    prettyName: "Graph Nodes Name"
+};
+neonWizard.mappings.GRAPH_LINKED_NODE_NAME = {
+    name: "graph_link_name",
+    prettyName: "Graph Linked Nodes Name"
+};
+neonWizard.mappings.GRAPH_NODE_SIZE = {
+    name: "graph_node_size",
+    prettyName: "Graph Node Size"
+};
+neonWizard.mappings.GRAPH_LINKED_NODE_SIZE = {
+    name: "graph_link_size",
+    prettyName: "Graph Linked Node Size"
+};
+neonWizard.mappings.GRAPH_FLAG = {
+    name: "graph_flag",
+    prettyName: "Graph Flag Field"
+};
+neonWizard.mappings.NEWSFEED_TEXT = {
+    name: "newsfeed_text",
+    prettyName: "Graph Text Field"
+};
+
+neonWizard.visualizationBindings = neonWizard.visualizationBindings || {};
+neonWizard.visualizationBindings.barchart = [
+    {
+        label: "X-Axis",
+        name: "bind-x-axis-field",
+        bindingName: "bar_x_axis"
+    },{
+        label: "Aggregation",
+        name: "bind-aggregation-field",
+        options: [
+            {
+                name: "count",
+                prettyName: "Count",
+                defaultOption: true
+            },{
+                name: "sum",
+                prettyName: "Sum"
+            },{
+                name: "average",
+                prettyName: "Average"
+            }
+        ]
+    },{
+        label: "Y-Axis",
+        name: "bind-y-axis-field",
+        bindingName: "y_axis"
+    }
+];
+neonWizard.visualizationBindings["circular-heat-form"] = [
+    {
+        label: "Date Field",
+        name: "bind-date-field",
+        bindingName: "date"
+    }
+];
+neonWizard.visualizationBindings["count-by"] = [
+    {
+        label: "Group Field",
+        name: "bind-data-field",
+        bindingName: "count_by"
+    },{
+        label: "Aggregation",
+        name: "bind-aggregation",
+        options: [
+            {
+                name: "count",
+                prettyName: "Count",
+                defaultOption: true
+            },{
+                name: "min",
+                prettyName: "Minimum"
+            },{
+                name: "max",
+                prettyName: "maximum"
+            }
+        ]
+    },{
+        label: "Aggregation Field",
+        name: "bind-aggregation-field"
+    }
+];
+neonWizard.visualizationBindings["directed-graph"] = [];
+neonWizard.visualizationBindings["filter-builder"] = [];
+neonWizard.visualizationBindings["gantt-chart"] = [
+    {
+        label: "Start Field",
+        name: "bind-start-field"
+    },{
+        label: "End Field",
+        name: "bind-end-field"
+    },{
+        label: "Color Field",
+        name: "bind-color-field"
+    }
+];
+neonWizard.visualizationBindings.linechart = [
+    {
+        label: "Date Granularity",
+        name: "bind-granularity",
+        options: [
+            {
+                name: "day",
+                prettyName: "Day",
+                defaultOption: true
+            },{
+                name: "hour",
+                prettyName: "Hour"
+            }
+        ]
+    }
+];
+neonWizard.visualizationBindings.map = [];
+neonWizard.visualizationBindings.newsfeed = [
+    {
+        label: "Primary Title Field",
+        name: "bind-primary-title-field"
+    },{
+        label: "Secondary Title Field",
+        name: "bind-secondary-title-field"
+    },{
+        label: "Date Field",
+        name: "bind-date-field",
+        bindingName: "date"
+    },{
+        label: "Content Field",
+        name: "bind-content-field"
+    }
+];
+neonWizard.visualizationBindings["plotly-graph"] = [
+    {
+        label: "X Attribute",
+        name: "bind-attr-x"
+    },{
+        label: "Y Attribute",
+        name: "bind-attr-y"
+    },{
+        label: "Type",
+        name: "graph-type",
+        options: [
+            {
+                name: "scatter",
+                prettyName: "Scatter Plot",
+                defaultOption: true
+            },{
+                name: "heatmapScatter",
+                prettyName: "Heatmap Scatter Plot"
+            },{
+                name: "histogramScatter",
+                prettyName: "Histogram Plot"
+            }
+        ]
+    }
+];
+neonWizard.visualizationBindings["query-results-table"] = [];
+neonWizard.visualizationBindings.sunburst = [];
+neonWizard.visualizationBindings["tag-cloud"] = [
+    {
+        label: "Data Field",
+        name: "bind-tag-field",
+        bindingName: "tags"
+    }
+];
+neonWizard.visualizationBindings["timeline-selector"] = [
+    {
+        label: "Date Field",
+        name: "bind-date-field",
+        bindingName: "date"
+    },{
+        label: "Date Granularity",
+        name: "bind-granularity",
+        options: [
+            {
+                name: "year",
+                prettyName: "Year"
+            },{
+                name: "month",
+                prettyName: "Month"
+            },{
+                name: "day",
+                prettyName: "Day",
+                defaultOption: true
+            },{
+                name: "hour",
+                prettyName: "Hour"
+            }
+        ]
+
+    }
+];

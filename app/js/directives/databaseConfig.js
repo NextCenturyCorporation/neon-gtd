@@ -249,15 +249,20 @@ angular.module('neonDemo.directives')
                         minSizeX: visualization.minSizeX,
                         minSizeY: visualization.minSizeY,
                         type: visualization.type,
-                        id: uuid()
+                        id: uuid(),
+                        bindings: {}
                     };
 
-                    if($scope.showVisualizationDatabaseProperties(visualization)) {
+                    if(visualization.database && visualization.table) {
                         layout.bindings = {
                             "bind-database": "'" + visualization.database + "'",
                             "bind-table": "'" + visualization.table + "'"
                         };
                     }
+
+                    _.each(visualization.bindings, function(value, key) {
+                        layout.bindings[key] = "'" + value + "'";
+                    });
 
                     $scope.gridsterConfigs.push(layout);
                 });
@@ -310,21 +315,11 @@ angular.module('neonDemo.directives')
                     };
 
                     customDatabase.customTables.forEach(function(customTable) {
-                        var mappings = {};
-                        mappings[neonMappings.DATE] = customTable.date ? customTable.date.columnName : "";
-                        mappings[neonMappings.TAGS] = customTable.tags ? customTable.tags.columnName : "";
-                        mappings[neonMappings.LATITUDE] = customTable.latitude ? customTable.latitude.columnName : "";
-                        mappings[neonMappings.LONGITUDE] = customTable.longitude ? customTable.longitude.columnName : "";
-                        mappings[neonMappings.BAR_GROUPS] = customTable.bar_x_axis ? customTable.bar_x_axis.columnName : "";
-                        mappings[neonMappings.Y_AXIS] = customTable.y_axis ? customTable.y_axis.columnName : "";
-                        mappings[neonMappings.LINE_GROUPS] = customTable.line_category ? customTable.line_category.columnName : "";
-                        mappings[neonMappings.AGGREGATE] = customTable.count_by ? customTable.count_by.columnName : "";
-
                         var tableObject = {
                             name: customTable.table.name,
                             prettyName: customTable.table.prettyName,
                             fields: customTable.table.fields,
-                            mappings: mappings
+                            mappings: customTable.table.mappings
                         };
 
                         database.tables.push(tableObject);
@@ -395,19 +390,6 @@ angular.module('neonDemo.directives')
                 updateCustomLayout();
 
                 $element.find(".modal").modal("hide");
-            };
-
-            /**
-             * Returns whether the database and table inputs should be shown for the given custom visualization object.
-             * @param {Object} customVisualization
-             * @method showVisualizationDatabaseProperties
-             */
-            $scope.showVisualizationDatabaseProperties = function(customVisualization) {
-                if(!customVisualization.type || customVisualization.type === 'filter-builder' || customVisualization.type === 'map' ||
-                    customVisualization.type === 'directed-graph' || customVisualization.type === 'gantt-chart') {
-                    return false;
-                }
-                return true;
             };
 
             // Wait for neon to be ready, the create our messenger and intialize the view and data.

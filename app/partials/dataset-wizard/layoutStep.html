@@ -7,77 +7,109 @@
         </div>
     </div>
 
-    <div class="neon-well" ng-repeat="customVisualization in customVisualizations">
-        <div class="row">
-            <div class="col-md-6">
-                <div class="form-group">
-                    <label>Visualization</label>
-                    <select class="form-control" ng-change="selectVisualization(customVisualization)" ng-model="customVisualization.type" ng-options="visualization.type as visualization.name for visualization in visualizations">
-                        <option value="">Select Visualization</option>
-                    </select>
+    <div class="neon-well neon-well-dark" ng-repeat="customVisualization in customVisualizations">
+        <div class="row" ng-click="toggleCustomVisualization(customVisualization)" style="cursor:pointer;">
+            <div class="col-md-1">
+                <div class="no-margin">
+                    <span class="glyphicon glyphicon-chevron-down" ng-show="!customVisualization.toggled"></span>
+                    <span class="glyphicon glyphicon-chevron-up" ng-show="customVisualization.toggled"></span>
                 </div>
             </div>
 
-            <div class="col-md-6">
-                <div class="form-group no-margin">
-                    <label>&nbsp;</label>
-                    <button class="btn-medium btn btn-default form-control" ng-click="removeCustomVisualization($index)">
+            <div class="col-md-5">
+                <div class="no-margin">
+                    <label>Type:</label>
+                    <span ng-bind="customVisualization.name"></span>
+                </div>
+            </div>
+
+            <div class="col-md-4">
+                <div class="no-margin">
+                    <button class="btn btn-default form-control" ng-click="removeCustomVisualization($index)">
                         Remove Visualization
                     </button>
                 </div>
             </div>
         </div>
 
-        <div class="row" ng-show="showVisualizationDatabaseProperties(customVisualization)">
-            <div class="col-md-6">
-                <div class="form-group">
-                    <label>Database</label>
-                    <select class="form-control" ng-model="customVisualization.database" ng-change="selectCustomVisualizationDatabase(customVisualization)" ng-options="customDatabase.database.name as customDatabase.database.name for customDatabase in customDatabases">
-                        <option value="">Select Database</option>
-                    </select>
+        <div class="neon-well toggled-group" ng-show="customVisualization.toggled">
+            <div class="row">
+                <div class="col-md-4">
+                    <div class="form-group" ng-class="{true: 'has-error', false: ''}[customVisualization.sizeX < customVisualization.minSizeX]">
+                        <label>
+                            Width
+                            <i class="glyphicon glyphicon-question-sign" data-placement="bottom" data-toggle="tooltip" title="{{widthTooltip}}"></i>
+                            {{getMinWidthLabel(customVisualization)}}
+                        </label>
+                        <input class="form-control" type="number" ng-model="customVisualization.sizeX"/>
+                    </div>
                 </div>
-            </div>
 
-            <div class="col-md-6">
-                <div class="form-group">
-                    <label>Table</label>
-                    <select class="form-control" ng-model="customVisualization.table" ng-change="selectCustomVisualizationTable(customVisualization)" ng-options="table for table in customVisualization.availableTables">
-                        <option value="">Select Table</option>
-                    </select>
+                <div class="col-md-4">
+                    <div class="form-group" ng-class="{true: 'has-error', false: ''}[customVisualization.sizeY < customVisualization.minSizeY]">
+                        <label>
+                            Height
+                            <i class="glyphicon glyphicon-question-sign" data-placement="bottom" data-toggle="tooltip" title="{{heightTooltip}}"></i>
+                            {{getMinHeightLabel(customVisualization)}}
+
+                        </label>
+                        <input class="form-control" type="number" ng-model="customVisualization.sizeY"/>
+                    </div>
                 </div>
-            </div>
-        </div>
 
-        <div class="row" ng-show="customVisualization.type">
-            <div class="col-md-6">
-                <div class="form-group" ng-class="{true: 'has-error', false: ''}[customVisualization.sizeX < customVisualization.minSizeX]">
-                    <label>
-                        Width
-                        <i class="glyphicon glyphicon-question-sign" data-placement="bottom" data-toggle="tooltip" title="{{widthTooltip}}"></i>
-                        {{getMinWidthLabel(customVisualization)}}
-                    </label>
-                    <input class="form-control" type="number" ng-model="customVisualization.sizeX"/>
+                <div class="col-md-4" ng-if="showVisualizationDatabaseProperties(customVisualization)">
+                    <div class="form-group">
+                        <label>Database</label>
+                        <select class="form-control" ng-model="customVisualization.database" ng-change="selectCustomVisualizationDatabase(customVisualization)" ng-options="customDatabase.database.name as customDatabase.database.name for customDatabase in customDatabases">
+                            <option value="">Select Database</option>
+                        </select>
+                    </div>
                 </div>
-            </div>
 
-            <div class="col-md-6">
-                <div class="form-group" ng-class="{true: 'has-error', false: ''}[customVisualization.sizeY < customVisualization.minSizeY]">
-                    <label>
-                        Height
-                        <i class="glyphicon glyphicon-question-sign" data-placement="bottom" data-toggle="tooltip" title="{{heightTooltip}}"></i>
-                        {{getMinHeightLabel(customVisualization)}}
+                <div class="col-md-4" ng-if="showVisualizationDatabaseProperties(customVisualization)">
+                    <div class="form-group">
+                        <label>Table</label>
+                        <select class="form-control" ng-model="customVisualization.table" ng-change="selectCustomVisualizationTable(customVisualization)" ng-options="table for table in customVisualization.availableTables">
+                            <option value="">Select Table</option>
+                        </select>
+                    </div>
+                </div>
 
-                    </label>
-                    <input class="form-control" type="number" ng-model="customVisualization.sizeY"/>
+                <div class="col-md-4" ng-repeat="binding in customVisualization.bindingOptions">
+                    <div class="form-group">
+                        <label>{{binding.label}}</label>
+                        <select class="form-control"
+                            ng-model="customVisualization.bindings[binding.name]"
+                            ng-if="binding.options"
+                            ng-options="option.name as option.prettyName for option in binding.options">
+                            <option value="">Please choose an option</option>
+                        </select>
+                        <select class="form-control"
+                            ng-model="customVisualization.bindings[binding.name]"
+                            ng-if="!binding.options"
+                            ng-options="field.columnName as field.prettyName for field in customVisualization.availableFields">
+                            <option value="">Please choose a field</option>
+                        </select>
+                    </div>
                 </div>
             </div>
         </div>
     </div>
 
     <div class="row">
-        <div class="col-md-6">
+        <div class="col-md-4">
             <div class="form-group">
-                <button class="btn-medium btn btn-default form-control" ng-click="addNewCustomVisualization()">Add Visualization</button>
+                <label>Visualization</label>
+                <select class="form-control" ng-model="newVisualizationType" ng-options="visualization.type as visualization.name for visualization in visualizations">
+                    <option value="">Select Visualization</option>
+                </select>
+            </div>
+        </div>
+
+        <div class="col-md-4">
+            <div class="form-group">
+                <label>&nbsp;</label>
+                <button class="btn btn-default form-control" ng-click="addNewCustomVisualization()" ng-disabled="!newVisualizationType">Add Visualization</button>
             </div>
         </div>
     </div>

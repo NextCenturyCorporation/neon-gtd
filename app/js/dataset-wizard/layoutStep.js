@@ -28,6 +28,7 @@ angular.module('neonDemo.directives')
             $scope.isSelected = false;
             $scope.customVisualizations = [];
             $scope.customDatabases = [];
+            $scope.newVisualizationType = "";
             $scope.visualizations = _.sortBy(visualizations, "name");
             $scope.widthTooltip = "The width of the visualization based upon the number of " +
                 "columns set for the dashboard. The current number of columns is " + config.gridsterColumns +
@@ -40,83 +41,85 @@ angular.module('neonDemo.directives')
             });
 
             /**
-             * Selection event for the given custom visualization object.
+             * Toggles the custom visualization options display for the given custom visualization.
              * @param {Object} customVisualization
-             * @method selectVisualization
+             * @method toggleCustomVisualization
              */
-            $scope.selectVisualization = function(customVisualization) {
-                XDATA.userALE.log({
-                    activity: "select",
-                    action: "click",
-                    elementId: "visualization-selector",
-                    elementType: "combobox",
-                    elementGroup: "top",
-                    source: "user",
-                    tags: ["visualization", (customVisualization ? customVisualization.name : "")]
-                });
-
-                var viz = _.find(visualizations, function(visualization) {
-                    return visualization.type === customVisualization.type;
-                });
-
-                if(viz) {
-                    customVisualization.minSizeX = viz.minSizeX;
-                    customVisualization.minSizeY = viz.minSizeY;
-                    customVisualization.sizeX = viz.sizeX;
-                    customVisualization.sizeY = viz.sizeY;
-
-                    if(!customVisualization.database) {
-                        customVisualization.database = $scope.customDatabases[0].database.name;
-
-                        $scope.selectCustomVisualizationDatabase(customVisualization);
-                        customVisualization.table = customVisualization.availableTables[0];
-                    }
-                }
+            $scope.toggleCustomVisualization = function(customVisualization) {
+                customVisualization.toggled = !customVisualization.toggled;
             };
 
             /**
              * Selection event for the given custom visualization object.
              * @param {Object} customVisualization
+             * @param {Boolean} systemEvent
              * @method selectCustomVisualizationDatabase
              */
-            $scope.selectCustomVisualizationDatabase = function(customVisualization) {
+            $scope.selectCustomVisualizationDatabase = function(customVisualization, systemEvent) {
                 XDATA.userALE.log({
                     activity: "select",
                     action: "click",
                     elementId: "visualization-database-selector",
                     elementType: "combobox",
                     elementGroup: "top",
-                    source: "user",
+                    source: (systemEvent ? "system" : "user"),
                     tags: ["visualization", (customVisualization ? customVisualization.name : ""),
                         "database", (customVisualization ? customVisualization.database : "")]
                 });
 
-                _.find($scope.customDatabases, function(db) {
+                _.each($scope.customDatabases, function(db) {
                     if(db.database.name === customVisualization.database) {
                         var tables = _.pluck(db.customTables, 'table');
                         customVisualization.availableTables = _.map(tables, function(table) {
                             return table.name;
                         });
-                        customVisualization.table = "";
+                        customVisualization.table = customVisualization.availableTables[0];
                     }
                 });
+
+                $scope.selectCustomVisualizationTable(customVisualization, systemEvent);
             };
 
             /**
              * Selection event for the given custom visualization object.
              * @param {Object} customVisualization
+             * @param {Boolean} systemEvent
              * @method selectCustomVisualizationTable
              */
-            $scope.selectCustomVisualizationTable = function(customVisualization) {
+            $scope.selectCustomVisualizationTable = function(customVisualization, systemEvent) {
                 XDATA.userALE.log({
                     activity: "select",
                     action: "click",
                     elementId: "visualization-table-selector",
                     elementType: "combobox",
                     elementGroup: "top",
-                    source: "user",
+                    source: (systemEvent ? "system" : "user"),
                     tags: ["visualization", (customVisualization ? customVisualization.name : ""),
                         "table", (customVisualization ? customVisualization.table : "")]
+                });
+
+                customVisualization.bindings = {};
+
+                _.each($scope.customDatabases, function(db) {
+                    if(db.database.name === customVisualization.database) {
+                        _.each(db.customTables, function(customTable) {
+                            if(customTable.table.name === customVisualization.table) {
+                                customVisualization.availableFields = customTable.table.fields;
+
+                                // Attach mappings to bindings
+                                _.each(customVisualization.bindingOptions, function(option) {
+                                    if(option.bindingName && customTable.table.mappings[option.bindingName]) {
+                                        customVisualization.bindings[option.name] = customTable.table.mappings[option.bindingName];
+                                    } else if(option.options) {
+                                        var defaultOption = _.find(option.options, {
+                                            defaultOption: true
+                                        });
+                                        customVisualization.bindings[option.name] = (defaultOption ? defaultOption.name : option.options[0].name);
+                                    }
+                                });
+                            }
+                        });
+                    }
                 });
             };
 
@@ -125,9 +128,28 @@ angular.module('neonDemo.directives')
              * @method addNewCustomVisualization
              */
             $scope.addNewCustomVisualization = function() {
-                $scope.customVisualizations.push({
-                    availableTables: []
+                var viz = _.find(visualizations, function(visualization) {
+                    return visualization.type === $scope.newVisualizationType;
                 });
+
+                if(viz) {
+                    var length = $scope.customVisualizations.push({
+                        type: $scope.newVisualizationType,
+                        name: viz.name,
+                        minSizeX: viz.minSizeX,
+                        minSizeY: viz.minSizeY,
+                        sizeX: viz.sizeX,
+                        sizeY: viz.sizeY,
+                        database: $scope.customDatabases[0].database.name,
+                        toggled: true,
+                        bindings: {},
+                        bindingOptions: $scope.visualizationBindings[$scope.newVisualizationType]
+                    });
+
+                    $scope.selectCustomVisualizationDatabase($scope.customVisualizations[length - 1], true);
+                }
+
+                $scope.newVisualizationType = "";
             };
 
             /**
@@ -146,7 +168,7 @@ angular.module('neonDemo.directives')
              */
             $scope.showVisualizationDatabaseProperties = function(customVisualization) {
                 if(!customVisualization.type || customVisualization.type === 'filter-builder' || customVisualization.type === 'map' ||
-                    customVisualization.type === 'directed-graph' || customVisualization.type === 'gantt-chart') {
+                    customVisualization.type === 'directed-graph' || customVisualization.type === 'linechart') {
                     return false;
                 }
                 return true;
@@ -202,6 +224,8 @@ angular.module('neonDemo.directives')
             var init = function(databases, customDatabases) {
                 $scope.customDatabases = customDatabases;
                 $scope.customVisualizations = [];
+                $scope.newVisualizationType = "";
+                $scope.visualizationBindings = neonWizard.visualizationBindings;
             };
 
             /*

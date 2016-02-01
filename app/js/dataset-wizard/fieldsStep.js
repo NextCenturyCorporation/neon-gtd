@@ -30,34 +30,6 @@ angular.module('neonDemo.directives')
             $scope.isLoading = false;
             $scope.fieldTypes = [];
             $scope.datastore = {};
-            $scope.databaseMappings = {};
-            $scope.mappingOptions = [
-                {
-                    name: "count_by",
-                    prettyName: "Aggregation Table Field"
-                },{
-                    name: "bar_x_axis",
-                    prettyName: "Bar Chart X-Axis"
-                },{
-                    name: "date",
-                    prettyName: "Date"
-                },{
-                    name: "latitude",
-                    prettyName: "Latitude"
-                },{
-                    name: "line_category",
-                    prettyName: "Line Chart Grouping"
-                },{
-                    name: "longitude",
-                    prettyName: "Longitude"
-                },{
-                    name: "tags",
-                    prettyName: "Tag Cloud Field"
-                },{
-                    name: "y_axis",
-                    prettyName: "Y-Axis"
-                }
-            ];
 
             /**
              * Toggles the field mappings display for the given custom table.
@@ -70,13 +42,12 @@ angular.module('neonDemo.directives')
 
             /**
              * Selection event for the given mapping set to the given field.
-             * @param {Number} index Index of the mapping in the mapping options list.
-             * @param {Object} field Field to add a mapping for.
-             * @param {Object} table Table object for the given field.
-             * @param {Object} database Database object for the given field.
+             * @param {String} field Field name to add a mapping for.
+             * @param {String} mapping Name of the mapping to add.
+             * @param {Object} table Table object for the given field
              * @method selectMapping
              */
-            $scope.selectMapping = function(index, field, table, database) {
+            $scope.selectMapping = function(field, mapping, table) {
                 XDATA.userALE.log({
                     activity: "select",
                     action: "click",
@@ -84,60 +55,14 @@ angular.module('neonDemo.directives')
                     elementType: "combobox",
                     elementGroup: "top",
                     source: "user",
-                    tags: ["dataset", (index === "" ? "" : $scope.mappingOptions[index].name), "mapping", field.columnName, "field"]
+                    tags: ["dataset", mapping, "mapping", field, "field"]
                 });
 
-                if(!$scope.databaseMappings[database.name]) {
-                    $scope.databaseMappings[database.name] = {};
-                }
-                if(!$scope.databaseMappings[database.name][table.table.name]) {
-                    $scope.databaseMappings[database.name][table.table.name] = {};
-                }
-                if($scope.databaseMappings[database.name][table.table.name][field.columnName]) {
-                    var oldMapping = $scope.databaseMappings[database.name][table.table.name][field.columnName];
-                    delete table[oldMapping];
-                }
-
-                if(index !== "") {
-                    var mapping = $scope.mappingOptions[index].name;
-                    table[mapping] = field;
-                    $scope.databaseMappings[database.name][table.table.name][field.columnName] = mapping;
+                if(field) {
+                    table.mappings[mapping] = field;
                 } else {
-                    delete $scope.databaseMappings[database.name][table.table.name][field.columnName];
+                    delete table.mappings[mapping];
                 }
-            };
-
-            /**
-             * Returns whether the given mapping is already selected for another field in the given database and table.
-             * @param {Object} database
-             * @param {Object} table
-             * @param {Object} field
-             * @return {Boolean}
-             * @method isMappingDisabled
-             */
-            $scope.isMappingDisabled = function(database, table, mapping) {
-                if($scope.databaseMappings[database.name] && $scope.databaseMappings[database.name][table.table.name]) {
-                    return _.any($scope.databaseMappings[database.name][table.table.name], function(mappingName) {
-                        return mappingName === mapping.name;
-                    });
-                } else {
-                    return false;
-                }
-            };
-
-            /**
-             * Gets the field type for the given field name in the given database and table. If not found, returns 'Unknown'.
-             * @param {String} databaseName
-             * @param {String} tableName
-             * @param {String} fieldName
-             * @method getFieldType
-             */
-            $scope.getFieldType = function(databaseName, tableName, fieldName) {
-                if($scope.fieldTypes && $scope.fieldTypes[databaseName] && $scope.fieldTypes[databaseName][tableName] &&
-                    $scope.fieldTypes[databaseName][tableName][fieldName]) {
-                    return $scope.fieldTypes[databaseName][tableName][fieldName];
-                }
-                return "Unknown";
             };
 
             /**
@@ -213,6 +138,9 @@ angular.module('neonDemo.directives')
                 $scope.fieldTypes = [];
                 $scope.databaseMappings = {};
                 loadFieldTypes();
+                $scope.mappingOptions = _.sortBy(neonWizard.mappings, function(value) {
+                    return value.prettyName;
+                });
             };
 
             /*

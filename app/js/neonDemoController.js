@@ -286,4 +286,8 @@ function($scope, $timeout, $location, config, datasets, themeService, connection
     $("#videoModal").on("hidden.bs.modal", function() {
         $("#helpVideo")[0].pause();
     });
+
+    $('.select-theme').click(function(e) {
+        e.stopPropagation();
+    });
 }]);

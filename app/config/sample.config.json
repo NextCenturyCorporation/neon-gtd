@@ -438,7 +438,7 @@
         "sizeY": 4,
         "minSizeY": 4,
         "type": "timeline-selector",
-        "icon": "Timeline"
+        "icon": "Timeline64"
     }, {
         "name": "Sample",
         "sizeX": 6,

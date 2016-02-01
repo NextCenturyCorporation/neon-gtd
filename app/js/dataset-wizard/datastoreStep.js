@@ -81,9 +81,6 @@ angular.module('neonDemo.directives')
                     tags: ["dataset", $scope.datastoreType]
                 });
 
-                // Clear the active dataset while creating a custom connection so the visualizations cannot query.
-                datasetService.setActiveDataset({});
-
                 var connection = connectionService.createActiveConnection($scope.datastoreType, $scope.datastoreHost);
                 if(!connection) {
                     return;
