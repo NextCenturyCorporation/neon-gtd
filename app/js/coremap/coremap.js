@@ -383,7 +383,7 @@ coreMap.Map.prototype.createSelectControl =  function(layer) {
             source: "user",
             tags: ["map", "tooltip"]
         });
-        var createAndShowFeaturePopup = function(attributes) {
+        var createAndShowFeaturePopup = function(data) {
             var text;
 
             // If we're on a cluster layer, show specific fields, if defined
@@ -397,12 +397,12 @@ coreMap.Map.prototype.createSelectControl =  function(layer) {
 
                 text += '</tr>';
 
-                for(i = 0; i < feature.cluster.length; i++) {
+                for(i = 0; i < data.length; i++) {
                     text += '<tr>';
 
                     for(var j = 0; j < feature.layer.clusterPopupFields.length; j++) {
                         var field = feature.layer.clusterPopupFields[j];
-                        var fieldValue = me.getNestedValue(feature.cluster[i].attributes, field);
+                        var fieldValue = me.getNestedValue(data[i], field);
                         if(fieldValue) {
                             text += '<td>' + fieldValue + '</td>';
                         } else {
@@ -414,7 +414,7 @@ coreMap.Map.prototype.createSelectControl =  function(layer) {
                 }
                 text += '</table></div>';
             } else {
-                text = '<div><table class="table table-striped table-condensed">' + getNestedFields(attributes) + '</table></div>';
+                text = '<div><table class="table table-striped table-condensed">' + getNestedFields(feature.cluster? feature.attributes : data[0]) + '</table></div>';
             }
 
             me.featurePopup = new OpenLayers.Popup.FramedCloud("Data",
@@ -431,8 +431,8 @@ coreMap.Map.prototype.createSelectControl =  function(layer) {
             $(".olFramedCloudPopupContent td").linky(feature.layer.linkyConfig);
 
             if(me.linksPopupService && feature.layer.linksSource) {
-                var latitudeValue = me.getNestedValue(attributes, feature.layer.latitudeMapping);
-                var longitudeValue = me.getNestedValue(attributes, feature.layer.longitudeMapping);
+                var latitudeValue = me.getNestedValue(data[0], feature.layer.latitudeMapping);
+                var longitudeValue = me.getNestedValue(data[0], feature.layer.longitudeMapping);
                 var key = me.linksPopupService.generatePointKey(latitudeValue, longitudeValue);
                 var tooltip = "latitude " + longitudeValue + ", longitude " + longitudeValue;
                 var link = me.linksPopupService.createLinkHtml(feature.layer.linksSource, key, tooltip);
@@ -461,8 +461,16 @@ coreMap.Map.prototype.createSelectControl =  function(layer) {
             return text;
         };
 
-        var id = feature.cluster && feature.cluster.length === 1 ? feature.cluster[0].attributes._id : feature.attributes._id;
-        me.queryForMapPopupDataFunction(feature.layer.database, feature.layer.table, id, createAndShowFeaturePopup);
+        if(feature.cluster && feature.cluster.length > 1) {
+            var ids = [];
+            feature.cluster.forEach(function(obj) {
+                ids.push(obj.attributes._id);
+            });
+            me.queryForMapPopupDataFunction(feature.layer.database, feature.layer.table, ids, createAndShowFeaturePopup);
+        } else {
+            var id = feature.cluster && feature.cluster.length === 1 ? feature.cluster[0].attributes._id : feature.attributes._id;
+            me.queryForMapPopupDataFunction(feature.layer.database, feature.layer.table, id, createAndShowFeaturePopup);
+        }
     };
 
     var onFeatureUnselect = function() {

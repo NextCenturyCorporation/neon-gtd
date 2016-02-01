@@ -162,10 +162,19 @@ angular.module('neonDemo.directives')
                     return;
                 }
 
-                var query = new neon.query.Query().selectFrom(database, table).where("_id", "=", id);
+                var query = new neon.query.Query().selectFrom(database, table);
+
+                if(_.isArray(id)) {
+                    var whereClauses = id.map(function(value) {
+                        return neon.query.where("_id", "=", value);
+                    });
+                    query.where(neon.query.or.apply(neon.query, whereClauses));
+                } else {
+                    query.where("_id", "=", id);
+                }
 
                 connection.executeQuery(query, function(results) {
-                    callback(results.data.length ? results.data[0] : {});
+                    callback(results.data);
                 }, function(response) {
                     callback({});
                 });
@@ -1212,6 +1221,12 @@ angular.module('neonDemo.directives')
                         addField(layer.nodeColorBy);
                         addField(layer.lineColorBy);
 
+                        if(layer.popupFields) {
+                            layer.popupFields.forEach(function(popupField) {
+                                addField(popupField);
+                            });
+                        }
+
                         // Use the highest limit for the query from all layers for the given database/table; only the first X elements will be used for each layer based on the limit of the layer.
                         limit = limit ? Math.max(limit, layer.limit) : layer.limit;
                     }
@@ -1699,7 +1714,7 @@ angular.module('neonDemo.directives')
              */
             $scope.deleteLayer = function(layer) {
                 // Remove layer from the legend
-                index = _.findIndex($scope.legend.layers, {
+                var index = _.findIndex($scope.legend.layers, {
                     olLayerId: layer.olLayer.id
                 });
                 if(index >= 0) {
