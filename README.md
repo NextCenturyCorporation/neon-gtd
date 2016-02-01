@@ -4,7 +4,7 @@ The Neon Geo Temporal Dashboard (neon-gtd) is a sample analysis dashboard built 
 [Neon][5] is a software platform designed to help developers integrate disparate visualization widgets with your data stores. It includes a **Data Access API** that makes it easy to query an underlying database directly from JavaScript or RESTful endpoints. Additionally, the [Neon][5] **Interaction API** provides capabilities for inter-widget communication and shared data filters, allowing multiple visualizations to interact without being explicityly aware of one another.
 
 ## View an example application
-To see an example of this project, check out our [demo server](http://demo.neonframework.org/neon-gtd/app/#). Read more about how to use it and how it interacts with Neon [here][4].
+To see an example of this project, check out our [demo server](http://demo.neonframework.org/neon-gtd/app/#). Read more about how to use it and how it interacts with Neon [here][neon-gtd-guide].
 
 ## Build and run the example
 Building the **neon-gtd** application requires [npm][10], [grunt][11], and [bower][12]. Running the application requires a functioning Neon deployment.  Links to the Neon deployment instructions and the command line instructions to build **neon-gtd** follow:
