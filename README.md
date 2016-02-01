@@ -18,7 +18,8 @@ Building the **neon-gtd** application requires [npm][10], [grunt][11], and [bowe
         
 3. Copy the sample NEON-GTD configuration file to the app config folder or supply your own.  The configuration file specifies the default datasets and visualizations to display.  It is described in detail [here][15].  The sample configuration file is setup for the sample earthquake data referenced in step 1.
 
-        # Copy either the YAML or JSON config file.  If Neon-GTD cannot find one, it will look for the other.  
+        # Copy either the YAML or JSON config file.  If Neon-GTD cannot find one, 
+        # it will look for the other.  
         cp app/config/sample.config.yaml app/config/config.yaml
         cp app/config/sample.config.json app/config/config.json
 
