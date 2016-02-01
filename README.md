@@ -9,7 +9,7 @@ To see an example of this project, check out our [demo server](http://demo.neonf
 ## Build and run the example
 Building the **neon-gtd** application requires [npm][10], [grunt][11], and [bower][12]. Running the application requires a functioning Neon deployment.  Links to the Neon deployment instructions and the command line instructions to build **neon-gtd** follow:
 
-1. [Build and Deploy a Neon server][2] or simply drop the [latest neon.war](http://neonframework.org/versions/latest/) in a web application container such as [Tomcat](http://tomcat.apache.org/).
+1. [Build and Deploy a Neon server][2] or simply drop the [latest neon.war](https://s3.amazonaws.com/neonframework.org/neon/versions/latest/neon.war) in a web application container such as [Tomcat](http://tomcat.apache.org/).
 
 2. Clone the neon-gtd repo
 
