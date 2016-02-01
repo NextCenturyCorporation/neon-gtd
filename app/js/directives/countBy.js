@@ -92,7 +92,7 @@ exportService, linksPopupService, themeService, visualizationService) {
                 if($scope.showTooMuchDataError) {
                     return "Error";
                 }
-                return ($scope.active.count >= $scope.active.limit ? "Limited to " : "") + ($scope.active.count || "No") + " Values";
+                return ($scope.active.count >= $scope.active.limit ? "Limited to " : "") + ($scope.active.count || "No") + " Groups";
             };
             $scope.showOptionsMenuButtonText = function() {
                 return true;
@@ -215,7 +215,7 @@ exportService, linksPopupService, themeService, visualizationService) {
                     return field.columnName !== '_id';
                 });
 
-                var dataFieldName = $scope.bindDataField || $scope.bindCountField || datasetService.getMapping($scope.active.database.name, $scope.active.table.name, neonMappings.AGGREGATE) || "";
+                var dataFieldName = $scope.bindGroupField || $scope.bindCountField || datasetService.getMapping($scope.active.database.name, $scope.active.table.name, neonMappings.AGGREGATE) || "";
                 $scope.active.dataField = _.find($scope.fields, function(field) {
                     return field.columnName === dataFieldName;
                 }) || datasetService.createBlankField();

@@ -47,9 +47,11 @@ function(connectionService, datasetService, filterService, themeService) {
             graphType: "=",
             subType: "=?",
             bindLimit: "=?",
-            bindFilterField: "=?",
-            bindAttrX: "=?",
-            bindAttrY: "=?"
+            bindXAxisField: "=?",
+            bindYAxisField: "=?",
+            bindAttrX: "=?", // Deprecated
+            bindAttrY: "=?", // Deprecated
+            bindFilterField: "=?" // Deprecated
         },
         link: function($scope, $element) {
             $scope.element = $element;
@@ -156,7 +158,7 @@ function(connectionService, datasetService, filterService, themeService) {
             $scope.updateFields = function() {
                 $scope.fields = datasetService.getSortedFields($scope.active.database.name, $scope.active.table.name);
 
-                var xFieldName = $scope.bindAttrX ||
+                var xFieldName = $scope.bindXAxisField || $scope.bindAttrX ||
                     datasetService.getMapping($scope.active.database.name, $scope.active.table.name, "x_attr") ||
                     "";
 
@@ -164,7 +166,7 @@ function(connectionService, datasetService, filterService, themeService) {
                     return field.columnName === xFieldName;
                 }) || datasetService.createBlankField();
 
-                var yFieldName = $scope.bindAttrY ||
+                var yFieldName = $scope.bindYAxisField || $scope.bindAttrY ||
                     datasetService.getMapping($scope.active.database.name, $scope.active.table.name, "y_attr") ||
                     "";
                 $scope.active.attrY = _.find($scope.fields, function(field) {

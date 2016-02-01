@@ -61,6 +61,20 @@ angular.module('neonDemo.directives')
                 return true;
             };
 
+            // Function on resize given to the options menu directive.
+            $scope.resizeOptionsMenu = function() {
+                var container = $element.find(".menu-container");
+                // Make the height of the options menu match the height of the visualization below the header menu container.
+                var height = $element.height() - container.outerHeight(true);
+                // Make the width of the options menu match the width of the visualization.
+                var width = $element.outerWidth(true);
+
+                var popover = container.find(".popover-content");
+                popover.css("height", height + "px");
+                popover.css("width", width + "px");
+            };
+
+
             // Setup scope variables.
             $scope.cacheMap = false;
             $scope.databases = [];

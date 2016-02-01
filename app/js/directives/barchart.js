@@ -37,13 +37,14 @@ function(external, connectionService, datasetService, errorNotificationService, 
             bindTitle: '=',
             bindXAxisField: '=',
             bindYAxisField: '=',
-            bindAggregationField: '=',
+            bindAggregation: '=',
+            bindLimit: '=',
             bindTable: '=',
             bindDatabase: '=',
             bindStateId: '=',
             hideHeader: '=?',
             hideAdvancedOptions: '=?',
-            limitCount: '=?'
+            limitCount: '=?' // Deprecated
         },
         link: function($scope, $element) {
             $element.addClass('barchartDirective');
@@ -68,8 +69,8 @@ function(external, connectionService, datasetService, errorNotificationService, 
                 table: {},
                 attrX: "",
                 attrY: "",
-                barType: "count",
-                limitCount: $scope.limitCount || 100
+                barType: $scope.bindAggregation || "count",
+                limitCount: $scope.bindLimit || 100
             };
 
             var COUNT_FIELD_NAME = 'Count';

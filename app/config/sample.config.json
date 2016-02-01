@@ -383,12 +383,6 @@
         "type": "gantt-chart",
         "icon": "Gantt64"
     }, {
-        "name": "Graph",
-        "sizeX": 12,
-        "sizeY": 6,
-        "type": "directed-graph",
-        "icon": "Graph64"
-    }, {
         "name": "Line Chart",
         "sizeX": 6,
         "sizeY": 4,
@@ -400,6 +394,12 @@
         "sizeY": 6,
         "type": "map",
         "icon": "Map64"
+    }, {
+        "name": "Network Graph",
+        "sizeX": 12,
+        "sizeY": 6,
+        "type": "directed-graph",
+        "icon": "Graph64"
     }, {
         "name": "News Feed",
         "sizeX": 6,

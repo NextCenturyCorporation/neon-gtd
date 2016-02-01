@@ -663,7 +663,7 @@ function(external, connectionService, datasetService, errorNotificationService, 
             $scope.updateFields = function() {
                 $scope.loadingData = true;
                 $scope.fields = datasetService.getSortedFields($scope.options.newChart.database.name, $scope.options.newChart.table.name);
-                $scope.options.newChart.aggregation = $scope.bindAggregationField || "count";
+                $scope.options.newChart.aggregation = "count";
 
                 var attrX = datasetService.getMapping($scope.options.newChart.database.name, $scope.options.newChart.table.name, neonMappings.DATE) || "";
                 $scope.options.newChart.attrX = _.find($scope.fields, function(field) {

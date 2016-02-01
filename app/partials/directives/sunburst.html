@@ -12,18 +12,18 @@
             <select class="form-control" ng-model="options.table" ng-options="table.prettyName for table in tables" ng-required="true" ng-disabled="(tables.length < 2)" ng-change="updateFields()">
             </select>
         </div>
+        <div class="form-group"  ng-hide="arcValue === 'Record Count'">
+            <label>Count Field</label>
+            <select class="form-control" ng-model="options.valueField" ng-options="field.prettyName for field in fields">
+                <option value="">Select a Field</option>
+            </select>
+        </div>
         <div class="form-group">
             <label>Add a Ring</label>
             <select class="form-control" ng-model="options.selectedItem" ng-disabled="!(fields.length > 0)"
                 ng-options="field.prettyName for field in fields" ng-change="addGroup()">
             <option value="">Add a Ring</option>
         </select>
-        </div>
-        <div class="form-group"  ng-hide="arcValue === 'Record Count'">
-            <label>Value Field</label>
-            <select class="form-control" ng-model="options.valueField" ng-options="field.prettyName for field in fields">
-                <option value="">Select a Field</option>
-            </select>
         </div>
     </options-menu>
 </div>
