@@ -26,7 +26,7 @@ exportService, linksPopupService, themeService, visualizationService) {
         scope: {
             bindTitle: '=',
             bindCountField: '=', // Deprecated
-            bindDataField: '=',
+            bindGroupField: '=',
             bindAggregation: '=',
             bindAggregationField: '=',
             bindFilterField: '=',
@@ -730,7 +730,7 @@ exportService, linksPopupService, themeService, visualizationService) {
                 var bindingFields = {};
 
                 bindingFields["bind-title"] = "'" + $scope.generateTitle() + "'";
-                bindingFields["bind-data-field"] = ($scope.active.dataField && $scope.active.dataField.columnName) ? "'" + $scope.active.dataField.columnName + "'" : undefined;
+                bindingFields["bind-group-field"] = ($scope.active.dataField && $scope.active.dataField.columnName) ? "'" + $scope.active.dataField.columnName + "'" : undefined;
                 bindingFields["bind-aggregation"] = $scope.active.aggregation ? "'" + $scope.active.aggregation + "'" : undefined;
                 var hasAggField = $scope.active.aggregation && $scope.active.aggregation !== 'count' && $scope.active.aggregationField && $scope.active.aggregationField.columnName;
                 bindingFields["bind-aggregation-field"] = hasAggField ? "'" + $scope.active.aggregationField.columnName + "'" : undefined;
@@ -739,7 +739,7 @@ exportService, linksPopupService, themeService, visualizationService) {
                 bindingFields["bind-filter-value"] = hasFilterValue ? "'" + $scope.active.filterValue + "'" : undefined;
                 bindingFields["bind-table"] = ($scope.active.table && $scope.active.table.name) ? "'" + $scope.active.table.name + "'" : undefined;
                 bindingFields["bind-database"] = ($scope.active.database && $scope.active.database.name) ? "'" + $scope.active.database.name + "'" : undefined;
-                bindingFields["limit-count"] = $scope.active.limitCount;
+                bindingFields["bind-limit"] = $scope.active.limitCount;
 
                 return bindingFields;
             };

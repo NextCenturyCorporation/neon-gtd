@@ -891,10 +891,10 @@ function(external, $timeout, connectionService, datasetService, errorNotificatio
                 var bindingFields = {};
 
                 bindingFields["bind-title"] = $scope.bindTitle ? "'" + $scope.bindTitle + "'" : undefined;
-                bindingFields["bind-head-field"] = ($scope.options.headField && $scope.options.headField.columnName) ? "'" + $scope.options.headField.columnName + "'" : undefined;
-                bindingFields["bind-name-field"] = ($scope.options.nameField && $scope.options.nameField.columnName) ? "'" + $scope.options.nameField.columnName + "'" : undefined;
+                bindingFields["bind-primary-title-field"] = ($scope.options.primaryTitleField && $scope.options.primaryTitleField.columnName) ? "'" + $scope.options.primaryTitleField.columnName + "'" : undefined;
+                bindingFields["bind-secondary-title-field"] = ($scope.options.secondaryTitleField && $scope.options.secondaryTitleField.columnName) ? "'" + $scope.options.secondaryTitleField.columnName + "'" : undefined;
                 bindingFields["bind-date-field"] = ($scope.options.dateField && $scope.options.dateField.columnName) ? "'" + $scope.options.dateField.columnName + "'" : undefined;
-                bindingFields["bind-text-field"] = ($scope.options.textField && $scope.options.textField.columnName) ? "'" + $scope.options.textField.columnName + "'" : undefined;
+                bindingFields["bind-content-field"] = ($scope.options.contentField && $scope.options.contentField.columnName) ? "'" + $scope.options.contentField.columnName + "'" : undefined;
                 bindingFields["bind-filter-field"] = ($scope.options.bindFilterField && $scope.options.bindFilterField.columnName) ? "'" + $scope.options.bindFilterField.columnName + "'" : undefined;
                 var hasFilterValue = $scope.options.bindFilterField && $scope.options.bindFilterField.columnName && $scope.options.filterValue;
                 bindingFields["bind-filter-value"] = hasFilterValue ? "'" + $scope.options.filterValue + "'" : undefined;

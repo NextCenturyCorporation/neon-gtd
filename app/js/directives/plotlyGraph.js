@@ -38,8 +38,8 @@
  * @constructor
  */
 angular.module('neonDemo.directives')
-.directive('plotlyGraph', ['ConnectionService', 'DatasetService', 'FilterService', 'ThemeService',
-function(connectionService, datasetService, filterService, themeService) {
+.directive('plotlyGraph', ['ConnectionService', 'DatasetService', 'FilterService', 'ThemeService', 'VisualizationService',
+function(connectionService, datasetService, filterService, themeService, visualizationService) {
     return {
         templateUrl: 'partials/directives/plotlyGraph.html',
         restrict: 'EA',
@@ -51,7 +51,8 @@ function(connectionService, datasetService, filterService, themeService) {
             bindYAxisField: "=?",
             bindAttrX: "=?", // Deprecated
             bindAttrY: "=?", // Deprecated
-            bindFilterField: "=?" // Deprecated
+            bindFilterField: "=?", // Deprecated
+            bindStateId: '='
         },
         link: function($scope, $element) {
             $scope.element = $element;
@@ -103,6 +104,8 @@ function(connectionService, datasetService, filterService, themeService) {
 
                 themeService.registerListener($scope.graphId, onThemeChanged);
 
+                visualizationService.register($scope.bindStateId, bindFields);
+
                 $scope.$on('$destroy', function() {
                     $scope.messenger.removeEvents();
                     // Remove our filter if we had an active one.
@@ -115,14 +118,10 @@ function(connectionService, datasetService, filterService, themeService) {
                         $scope.outstandingQuery.abort();
                     }
                     themeService.unregisterListener($scope.graphId);
+                    visualizationService.unregister($scope.bindStateId);
                 });
 
                 initDataset();
-                $scope.updateTables();
-
-                $scope.updateFields();
-
-                $scope.queryForData();
             };
 
             var initDataset = function() {
@@ -140,6 +139,8 @@ function(connectionService, datasetService, filterService, themeService) {
                         }
                     }
                 }
+
+                $scope.updateTables();
             };
 
             $scope.updateTables = function() {
@@ -153,6 +154,8 @@ function(connectionService, datasetService, filterService, themeService) {
                         }
                     }
                 }
+
+                $scope.updateFields();
             };
 
             $scope.updateFields = function() {
@@ -178,6 +181,8 @@ function(connectionService, datasetService, filterService, themeService) {
                         return field.columnName === $scope.bindFilterField;
                     });
                 }
+
+                $scope.queryForData();
             };
 
             var buildQuery = function() {
@@ -475,6 +480,24 @@ function(connectionService, datasetService, filterService, themeService) {
                     $scope.textColor = theme.textColor;
                     $scope.drawGraph();
                 }
+            };
+
+            /**
+             * Creates and returns an object that contains all the binding fields needed to recreate the visualization's state.
+             * @return {Object}
+             * @method bindFields
+             * @private
+             */
+            var bindFields = function() {
+                var bindingFields = {};
+
+                bindingFields["graph-type"] = $scope.active.type ? "'" + $scope.active.type + "'" : undefined;
+                bindingFields["sub-type"] = ($scope.subType || 'markers');
+                bindingFields["bind-limit"] = $scope.active.limitCount ? "'" + $scope.active.limitCount + "'" : undefined;
+                bindingFields["bind-x-axis-field"] = ($scope.active.attrX && $scope.active.attrX.columnName) ? "'" + $scope.active.attrX.columnName + "'" : undefined;
+                bindingFields["bind-y-axis-field"] = ($scope.active.attrY && $scope.active.attrY.columnName) ? "'" + $scope.active.attrY.columnName + "'" : undefined;
+
+                return bindingFields;
             };
         }]
     };
