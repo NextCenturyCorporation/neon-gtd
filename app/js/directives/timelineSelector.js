@@ -108,6 +108,7 @@ function($interval, $filter, external, connectionService, datasetService, errorN
                 showFocus: "on_filter",
                 animatingTime: false,
                 animationFrame: 0,
+                animationStartFrame : 0,
                 animationFrameDelay: 250,
                 showAnimationControls: false
             };
@@ -164,6 +165,7 @@ function($interval, $filter, external, connectionService, datasetService, errorN
 
                 // Clear the current step data.
                 $scope.options.animationFrame = 0;
+                $scope.options.animationStartFrame = 0;
                 $scope.messenger.publish('date_selected', {});
             };
 
@@ -269,10 +271,10 @@ function($interval, $filter, external, connectionService, datasetService, errorN
              */
             $scope.doTimeAnimation = function() {
                 // Get the frame limits to see if we need to reset our animation.
-                var frameStart = $scope.getAnimationStartFrame();
+                $scope.options.animationStartFrame = $scope.getAnimationStartFrame();
                 var frameLimit = $scope.getAnimationFrameLimit();
-                if(($scope.options.animationFrame >= frameLimit) || ($scope.options.animationFrame < frameStart)) {
-                    $scope.options.animationFrame = frameStart;
+                if(($scope.options.animationFrame >= frameLimit) || ($scope.options.animationFrame < $scope.options.animationStartFrame)) {
+                    $scope.options.animationFrame = $scope.options.animationStartFrame;
                 }
 
                 // Get the time range for the current animation frame and publish it.
