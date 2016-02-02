@@ -514,6 +514,17 @@ angular.module("neonDemo.services")
     };
 
     /**
+     * Adds a map layer configuration for the active dataset.
+     * @param {String} name A name to map to the given layers.
+     * @param {Array} layers A list of map layer configuration objects.
+     * @method addMapLayer
+     */
+    service.addMapLayer = function(name, layers) {
+        service.dataset.mapLayers[name] = layers;
+        updateDataset();
+    };
+
+    /**
      * Returns the map layer configuration for the map with the given name in the active dataset.
      * @method getMapLayers
      * @return {Array}
@@ -536,7 +547,7 @@ angular.module("neonDemo.services")
      * Adds a line chart configuration for the active dataset.
      * @param {String} chartName A name to map to the given charts.
      * @param {Array} charts A list of line chart configuration objects.
-     * @method setLineCharts
+     * @method addLineChart
      */
     service.addLineChart = function(chartName, charts) {
         service.dataset.lineCharts[chartName] = charts;

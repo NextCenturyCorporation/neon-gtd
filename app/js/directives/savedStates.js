@@ -52,6 +52,7 @@ angular.module('neonDemo.directives')
                 var connection = connectionService.getActiveConnection();
                 if(connection) {
                     datasetService.setLineCharts({});
+                    datasetService.setMapLayers({});
 
                     // Get each visualization's bindings and save them to our dashboard state parameter
                     visualizationService.getWidgets().forEach(function(widget) {
@@ -64,7 +65,7 @@ angular.module('neonDemo.directives')
                         }
                     });
 
-                    stateParams.dataset = cleanDataset(datasetService.getDataset());
+                    stateParams.dataset = datasetService.getDataset();
 
                     connection.saveState(stateParams, handleSaveStateSuccess, handleStateFailure);
                 }
@@ -165,21 +166,6 @@ angular.module('neonDemo.directives')
              */
             var handleStateFailure = function(response) {
                 errorNotificationService.showErrorMessage(null, response.responseJSON.error);
-            };
-
-            /*
-             * Removes any unnecessary objects from the given dataset.
-             * @param {Object} dataset
-             * @method cleanDataset
-             * @private
-             */
-            var cleanDataset = function(dataset) {
-                _.each(dataset.databases, function(database) {
-                    _.each(database.tables, function(table) {
-                        delete table.dateBrushExtent;
-                    });
-                });
-                return dataset;
             };
 
             /*
