@@ -169,12 +169,15 @@
              loaded first, angular should pick up the included jQuery. -->
         <script src="/neon/js/neon.js"></script>
 
-        <!-- Must include OpenLayers outside the JS package because OpenLayers scans the index.html file for its own include to extract the relative path. -->
+        <!-- Include OpenLayers outside the JS package because OpenLayers scans the index.html file for its own include to extract its relative path. -->
         <script src="lib/openlayers/OpenLayers.js"></script>
 
-        <!-- build:js(app) js/neon-dashboard-lib.min.js -->
+        <!-- Include and minify Plotly in its own JS package because of its huge size in order to quicken the initial dashboard load. -->
+        <!-- build:js(app) js/plotly.min.js -->
         <script src="js/vendor/plotly.js"></script>
+        <!-- endbuild -->
 
+        <!-- build:js(app) js/neon-dashboard-lib.min.js -->
         <!-- bower:js -->
         <script src="lib/jquery/dist/jquery.js"></script>
         <script src="lib/angular/angular.js"></script>
