@@ -96,7 +96,6 @@ angular.module('neonDemo.directives')
             $scope.MAP_LAYER_TYPES = [coreMap.Map.POINTS_LAYER, coreMap.Map.CLUSTER_LAYER, coreMap.Map.HEATMAP_LAYER, coreMap.Map.NODE_LAYER];
             $scope.DEFAULT_LIMIT = 1000;
             $scope.DEFAULT_NEW_LAYER_TYPE = $scope.MAP_LAYER_TYPES[0];
-            $scope.SELECTION_EVENT_CHANNEL = "QUERY_RESULTS_SELECTION_EVENT";
 
             $scope.options = {
                 baseLayerColor: "light",
@@ -225,7 +224,7 @@ angular.module('neonDemo.directives')
                 $scope.messenger.subscribe(datasetService.UPDATE_DATA_CHANNEL, function() {
                     queryAllLayerTables();
                 });
-                $scope.messenger.subscribe($scope.SELECTION_EVENT_CHANNEL, createPoint);
+                $scope.messenger.subscribe(datasetService.SELECTION_EVENT_CHANNEL, createPoint);
 
                 $scope.exportID = exportService.register($scope.makeMapExportObject);
 
