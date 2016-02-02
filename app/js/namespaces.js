@@ -199,7 +199,7 @@ neonWizard.visualizationBindings.barchart = [
         bindingName: "bar_x_axis"
     },{
         label: "Aggregation",
-        name: "bind-aggregation-field",
+        name: "bind-aggregation",
         options: [
             {
                 name: "count",
@@ -229,7 +229,7 @@ neonWizard.visualizationBindings["circular-heat-form"] = [
 neonWizard.visualizationBindings["count-by"] = [
     {
         label: "Group Field",
-        name: "bind-data-field",
+        name: "bind-group-field",
         bindingName: "count_by"
     },{
         label: "Aggregation",
@@ -302,10 +302,10 @@ neonWizard.visualizationBindings.newsfeed = [
 neonWizard.visualizationBindings["plotly-graph"] = [
     {
         label: "X Attribute",
-        name: "bind-attr-x"
+        name: "bind-x-axis-field"
     },{
         label: "Y Attribute",
-        name: "bind-attr-y"
+        name: "bind-y-axis-field"
     },{
         label: "Type",
         name: "graph-type",

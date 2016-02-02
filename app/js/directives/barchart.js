@@ -630,12 +630,12 @@ function(external, connectionService, datasetService, errorNotificationService, 
 
                 bindingFields["bind-title"] = $scope.bindTitle ? "'" + $scope.bindTitle + "'" : undefined;
                 bindingFields["bind-x-axis-field"] = ($scope.options.attrX && $scope.options.attrX.columnName) ? "'" + $scope.options.attrX.columnName + "'" : undefined;
-                bindingFields["bind-aggregation-field"] = $scope.options.barType ? "'" + $scope.options.barType + "'" : undefined;
+                bindingFields["bind-aggregation"] = $scope.options.barType ? "'" + $scope.options.barType + "'" : undefined;
                 var hasYAxis = $scope.options.barType && $scope.options.barType !== 'count' && $scope.options.attrY && $scope.options.attrY.columnName;
                 bindingFields["bind-y-axis-field"] = hasYAxis ? "'" + $scope.options.attrY.columnName + "'" : undefined;
                 bindingFields["bind-table"] = ($scope.options.table && $scope.options.table.name) ? "'" + $scope.options.table.name + "'" : undefined;
                 bindingFields["bind-database"] = ($scope.options.database && $scope.options.database.name) ? "'" + $scope.options.database.name + "'" : undefined;
-                bindingFields["limit-count"] = $scope.options.limitCount;
+                bindingFields["bind-limit"] = $scope.options.limitCount;
 
                 return bindingFields;
             };
