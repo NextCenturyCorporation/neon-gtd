@@ -1938,7 +1938,12 @@ angular.module('neonDemo.directives')
              * @private
              */
             var bindFields = function() {
+                var bindingFields = {};
                 var layers = [];
+
+                var bindConfig = "map-" + $scope.bindStateId;
+                bindingFields["bind-config"] = "'" + bindConfig + "'";
+
                 _.each($scope.options.layers, function(layer) {
                     var editedLayer = {
                         database: layer.database,
@@ -1968,6 +1973,10 @@ angular.module('neonDemo.directives')
                         editedLayer.latitudeMapping = layer.latitudeMapping;
                         editedLayer.longitudeMapping = layer.longitudeMapping;
                         editedLayer.sizeBy = layer.sizeBy;
+                        editedLayer.gradient1 = layer.gradient1;
+                        editedLayer.gradient2 = layer.gradient2;
+                        editedLayer.gradient3 = layer.gradient3;
+                        editedLayer.gradient4 = layer.gradient4;
                     } else if(layer.type === coreMap.Map.NODE_LAYER) {
                         editedLayer.type = coreMap.Map.NODE_LAYER;
                         editedLayer.latitudeMapping = layer.latitudeMapping;
@@ -1982,8 +1991,10 @@ angular.module('neonDemo.directives')
                     }
                     layers.push(editedLayer);
                 });
-                datasetService.setMapLayers(layers);
-                return {};
+
+                datasetService.addMapLayer(bindConfig, layers);
+
+                return bindingFields;
             };
 
             // Wait for neon to be ready, the create our messenger and intialize the view and data.

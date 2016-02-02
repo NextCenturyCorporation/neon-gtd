@@ -109,7 +109,7 @@ function(connectionService, datasetService, filterService, themeService, visuali
                 $scope.$on('$destroy', function() {
                     $scope.messenger.removeEvents();
                     // Remove our filter if we had an active one.
-                    if($scope.filterSet) {
+                    if(datasetService.isFieldValid($scope.active.attrX) && datasetService.isFieldValid($scope.active.attrY)) {
                         filterService.removeFilter($scope.active.database.name, $scope.active.table.name, [$scope.active.attrX.columnName, $scope.active.attrY.columnName]);
                     }
                     $scope.element.off('resize');
@@ -276,24 +276,26 @@ function(connectionService, datasetService, filterService, themeService, visuali
                 var maxy;
 
                 _.each(data, function(row) {
-                    x.push(row[$scope.active.attrX.columnName]);
+                    var xValue = neon.helpers.getNestedValue(row, $scope.active.attrX.columnName);
+                    x.push(xValue);
 
-                    if(row[$scope.active.attrX.columnName] < minx) {
-                        minx = row[$scope.active.attrX.columnName];
+                    if(xValue < minx) {
+                        minx = xValue;
                     }
 
-                    if(row[$scope.active.attrX.columnName] > maxx) {
-                        maxx = row[$scope.active.attrX.columnName];
+                    if(xValue > maxx) {
+                        maxx = xValue;
                     }
 
-                    y.push(row[$scope.active.attrY.columnName]);
+                    var yValue = neon.helpers.getNestedValue(row, $scope.active.attrY.columnName);
+                    y.push(yValue);
 
-                    if(row[$scope.active.attrY.columnName] < miny) {
-                        miny = row[$scope.active.attrY.columnName];
+                    if(yValue < miny) {
+                        miny = yValue;
                     }
 
-                    if(row[$scope.active.attrY.columnName] > maxy) {
-                        maxy = row[$scope.active.attrY.columnName];
+                    if(yValue > maxy) {
+                        maxy = yValue;
                     }
 
                     if($scope.filterField) {
@@ -326,8 +328,8 @@ function(connectionService, datasetService, filterService, themeService, visuali
                 var y = [];
 
                 _.each(data, function(row) {
-                    x.push(row[$scope.active.attrX.columnName]);
-                    y.push(row[$scope.active.attrY.columnName]);
+                    x.push(neon.helpers.getNestedValue(row, $scope.active.attrX.columnName));
+                    y.push(neon.helpers.getNestedValue(row, $scope.active.attrY.columnName));
                 });
 
                 return {
