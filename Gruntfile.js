@@ -80,6 +80,8 @@ module.exports = function(grunt) {
         injector: {
             js: {
                 options: {
+                    starttag: "/* injector:js */",
+                    endtag: "/* endinjector */",
                     transform: function(filePath) {
                         filePath = filePath.replace("/app/", "");
                         return '<script src="' + filePath + '"></script>';
