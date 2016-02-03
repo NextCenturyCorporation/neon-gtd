@@ -658,9 +658,10 @@ function($interval, $filter, external, connectionService, datasetService, errorN
              * @method sendInvalidDates
              */
             $scope.sendInvalidDates = function() {
-                $scope.clearBrush();
-                $scope.invalidDatesFilter = true;
-                replaceDateFilters(true, queryForChartData);
+                $scope.clearBrush(function() {
+                    $scope.invalidDatesFilter = true;
+                    replaceDateFilters(true, queryForChartData);
+                });
             };
 
             /**
@@ -758,6 +759,8 @@ function($interval, $filter, external, connectionService, datasetService, errorN
                         setDateTimePickerEnd($scope.brush[1]);
                     } else if(!filter && $scope.brush && $scope.brush.length) {
                         $scope.brush = [];
+                    } else if(!filter && $scope.invalidDatesFilter) {
+                        $scope.invalidDatesFilter = false;
                     }
                 }
             };
@@ -1532,22 +1535,28 @@ function($interval, $filter, external, connectionService, datasetService, errorN
 
             /**
              * Removes the brush from this visualization and the dataset service.
+             * @param {Function} [callback]
              */
-            var removeBrushFromTimelineAndDatasetService = function() {
+            var removeBrushFromTimelineAndDatasetService = function(callback) {
                 $scope.brush = [];
                 $scope.extentDirty = true;
                 if($scope.bucketizer.getStartDate() && $scope.bucketizer.getEndDate()) {
                     setDateTimePickerStart($scope.bucketizer.getStartDate());
                     setDateTimePickerEnd($scope.bucketizer.getEndDate());
                 }
-                filterService.removeFilter($scope.options.database.name, $scope.options.table.name, [$scope.options.dateField.columnName]);
+                filterService.removeFilter($scope.options.database.name, $scope.options.table.name, [$scope.options.dateField.columnName], function() {
+                    if(callback) {
+                        callback();
+                    }
+                });
             };
 
             /**
              * Clears the timeline brush and filter.
+             * @param {Function} [callback]
              * @method clearBrush
              */
-            $scope.clearBrush = function() {
+            $scope.clearBrush = function(callback) {
                 XDATA.userALE.log({
                     activity: "deselect",
                     action: "click",
@@ -1558,7 +1567,7 @@ function($interval, $filter, external, connectionService, datasetService, errorN
                     tags: ["filter", "date-range"]
                 });
 
-                removeBrushFromTimelineAndDatasetService();
+                removeBrushFromTimelineAndDatasetService(callback);
             };
 
             $scope.updateDateField = function() {
