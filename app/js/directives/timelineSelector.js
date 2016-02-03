@@ -108,7 +108,7 @@ function($interval, $filter, external, connectionService, datasetService, errorN
                 showFocus: "on_filter",
                 animatingTime: false,
                 animationFrame: 0,
-                animationStartFrame : 0,
+                animationStartFrame: 0,
                 animationFrameDelay: 250,
                 showAnimationControls: false
             };

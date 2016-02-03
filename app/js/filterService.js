@@ -230,6 +230,9 @@ angular.module("neonDemo.services")
         var clausesEqual = function(first, second) {
             if(first.lhs === second.lhs && first.operator === second.operator && first.rhs === second.rhs) {
                 return true;
+            } else if((_.isDate(firstClause.rhs) || _.isDate(secondClause.rhs)) &&
+                new Date(first.rhs).valueOf() === new Date(second.rhs).valueOf()) {
+                return true;
             }
             return false;
         };

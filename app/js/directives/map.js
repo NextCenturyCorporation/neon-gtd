@@ -74,7 +74,6 @@ angular.module('neonDemo.directives')
                 popover.css("width", width + "px");
             };
 
-
             // Setup scope variables.
             $scope.cacheMap = false;
             $scope.databases = [];
@@ -608,7 +607,6 @@ angular.module('neonDemo.directives')
 
                 var mappings = datasetService.getMappings(layer.database, layer.table);
                 layer.date = mappings.date;
-
 
                 return layer;
             };

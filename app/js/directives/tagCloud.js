@@ -364,8 +364,13 @@ linksPopupService, themeService, translationService, visualizationService, $time
 
                 var whereClause = null;
                 if(datasetService.isFieldValid($scope.options.filterField) && $scope.options.filterValue) {
-                    var operator = $.isNumeric($scope.options.filterValue) ? "=" : "contains";
-                    whereClause = neon.query.where($scope.options.filterField.columnName, operator, $scope.options.filterValue);
+                    var operator = "contains";
+                    var value = $scope.options.filterValue;
+                    if($.isNumeric(value)) {
+                        operator = "=";
+                        value = parseFloat(value);
+                    }
+                    whereClause = neon.query.where($scope.options.filterField.columnName, operator, value);
                 }
 
                 connection.executeArrayCountQuery($scope.options.database.name, $scope.options.table.name,

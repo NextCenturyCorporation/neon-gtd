@@ -416,8 +416,13 @@ exportService, linksPopupService, themeService, visualizationService) {
                 }
 
                 if(datasetService.isFieldValid($scope.active.filterField) && $scope.active.filterValue) {
-                    var operator = $.isNumeric($scope.active.filterValue) ? "=" : "contains";
-                    query.where(neon.query.and(whereNotNull, neon.query.where($scope.active.filterField.columnName, operator, $scope.active.filterValue)));
+                    var operator = "contains";
+                    var value = $scope.active.filterValue;
+                    if($.isNumeric(value)) {
+                        operator = "=";
+                        value = parseFloat(value);
+                    }
+                    query.where(neon.query.and(whereNotNull, neon.query.where($scope.active.filterField.columnName, operator, value)));
                 }
 
                 if($scope.active.limit) {
