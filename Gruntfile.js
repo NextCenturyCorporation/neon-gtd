@@ -220,7 +220,7 @@ module.exports = function(grunt) {
             openlayers: {
                 expand: true,
                 cwd: "app/",
-                src: ["lib/openlayers/OpenLayers.js", "lib/openlayers/img/*", "lib/openlayers/theme/default/style.css"],
+                src: ["lib/openlayers/OpenLayers.js", "lib/openlayers/img/*", "lib/openlayers/theme/default/style.css", "lib/openlayers/theme/default/img/*"],
                 dest: "build/"
             },
             userale: {
