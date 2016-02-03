@@ -334,11 +334,16 @@ linksPopupService, themeService, visualizationService, linkify, $sce, $timeout) 
                         headerName: field.prettyName,
                         field: field.columnName,
                         suppressSizeToFit: true,
-                        onCellClicked: handleRowClick,
                         cellRenderer: function(params) {
                             return neon.helpers.getNestedValue(params.data, params.colDef.field);
                         }
                     };
+
+                    var table = datasetService.getTableWithName($scope.active.database.name, $scope.active.table.name);
+
+                    if(table.enableRowSelection) {
+                        config.onCellClicked = handleRowClick;
+                    }
 
                     if(field.class) {
                         config.cellClass = field.class;
@@ -385,6 +390,8 @@ linksPopupService, themeService, visualizationService, linkify, $sce, $timeout) 
                         tags: ["datagrid", "row"]
                     });
 
+                    $scope.messenger.publish(datasetService.SELECTION_EVENT_CHANNEL, {});
+
                     $scope.gridOptions.api.deselectIndex(cell.rowIndex);
                     return;
                 } else {
@@ -399,7 +406,7 @@ linksPopupService, themeService, visualizationService, linkify, $sce, $timeout) 
                             tags: ["datagrid", "row"]
                         });
 
-                        $scope.messenger.publish($scope.selectionEvent, {
+                        $scope.messenger.publish(datasetService.SELECTION_EVENT_CHANNEL, {
                             data: $scope.gridOptions.rowData[cell.rowIndex],
                             database: $scope.active.database.name,
                             table: $scope.active.table.name

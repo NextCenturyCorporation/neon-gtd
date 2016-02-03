@@ -96,7 +96,6 @@ angular.module('neonDemo.directives')
             $scope.MAP_LAYER_TYPES = [coreMap.Map.POINTS_LAYER, coreMap.Map.CLUSTER_LAYER, coreMap.Map.HEATMAP_LAYER, coreMap.Map.NODE_LAYER];
             $scope.DEFAULT_LIMIT = 1000;
             $scope.DEFAULT_NEW_LAYER_TYPE = $scope.MAP_LAYER_TYPES[0];
-            $scope.SELECTION_EVENT_CHANNEL = "QUERY_RESULTS_SELECTION_EVENT";
 
             $scope.options = {
                 baseLayerColor: "light",
@@ -225,7 +224,7 @@ angular.module('neonDemo.directives')
                 $scope.messenger.subscribe(datasetService.UPDATE_DATA_CHANNEL, function() {
                     queryAllLayerTables();
                 });
-                $scope.messenger.subscribe($scope.SELECTION_EVENT_CHANNEL, createPoint);
+                $scope.messenger.subscribe(datasetService.SELECTION_EVENT_CHANNEL, createPoint);
 
                 $scope.exportID = exportService.register($scope.makeMapExportObject);
 
@@ -606,6 +605,10 @@ angular.module('neonDemo.directives')
                 layer.targetField = datasetService.findField(layer.fields, layer.targetMapping);
                 layer.nodeColorField = datasetService.findField(layer.fields, layer.nodeColorBy);
                 layer.lineColorField = datasetService.findField(layer.fields, layer.lineColorBy);
+
+                var mappings = datasetService.getMappings(layer.database, layer.table);
+                layer.date = mappings.date;
+
 
                 return layer;
             };
@@ -1630,8 +1633,6 @@ angular.module('neonDemo.directives')
              * @private
              */
             var addLayer = function(layer) {
-                var mappings = datasetService.getMappings(layer.database, layer.table);
-
                 if(layer.type === coreMap.Map.POINTS_LAYER) {
                     layer.olLayer = new coreMap.Map.Layer.PointsLayer(layer.name, {
                         database: layer.database,
@@ -1641,7 +1642,7 @@ angular.module('neonDemo.directives')
                         longitudeMapping: layer.longitudeMapping,
                         sizeMapping: layer.sizeBy,
                         categoryMapping: layer.colorBy,
-                        dateMapping: mappings.date,
+                        dateMapping: layer.date,
                         gradient: layer.gradient,
                         defaultColor: layer.defaultColor,
                         linkyConfig: ($scope.linkyConfig.linkTo ? $scope.linkyConfig :
@@ -1662,7 +1663,7 @@ angular.module('neonDemo.directives')
                         longitudeMapping: layer.longitudeMapping,
                         sizeMapping: layer.sizeBy,
                         categoryMapping: layer.colorBy,
-                        dateMapping: mappings.date,
+                        dateMapping: layer.date,
                         defaultColor: layer.defaultColor,
                         cluster: true,
                         linkyConfig: ($scope.linkyConfig.linkTo ? $scope.linkyConfig :
@@ -1692,7 +1693,7 @@ angular.module('neonDemo.directives')
                         weightMapping: layer.weightMapping,
                         latitudeMapping: layer.latitudeMapping,
                         longitudeMapping: layer.longitudeMapping,
-                        dateMapping: mappings.date,
+                        dateMapping: layer.date,
                         nodeMapping: layer.nodeColorBy,
                         lineMapping: layer.lineColorBy,
                         nodeDefaultColor: layer.nodeDefaultColor,
@@ -1797,6 +1798,9 @@ angular.module('neonDemo.directives')
                     valid: true,
                     editing: false
                 };
+
+                var mappings = datasetService.getMappings(layer.database, layer.table);
+                layer.date = mappings.date;
 
                 layer.olLayer = addLayer(layer);
                 $scope.options.layers.push(layer);

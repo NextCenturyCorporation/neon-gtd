@@ -151,10 +151,10 @@
     <div class="animation-controls pull-left">
         <span class="form-group" ng-if="options.showAnimationControls">
             <span class="btn-group">
-                <label class="btn btn-default header-item" role="button" title="{{(options.animatingTime) ? 'Pause' : ((options.animationFrame > getAnimationStartFrame()) ? 'Resume' : 'Play')}}"
+                <label class="btn btn-default header-item" role="button" title="{{(options.animatingTime) ? 'Pause' : ((options.animationFrame > options.animationStartFrame) ? 'Resume' : 'Play')}}"
                     ng-click="(options.animatingTime) ? pauseTimeAnimation() : playTimeAnimation()">
                     <span class="glyphicon" ng-class="{true: 'glyphicon-pause', false: 'glyphicon-play-circle'}[options.animatingTime]"></span>
-                    <span ng-hide="(brush.length > 0 && width < 625) || (width < 500)" ng-bind="(options.animatingTime) ? 'Pause' : ((options.animationFrame > getAnimationStartFrame()) ? 'Resume' : 'Play')"></span>
+                    <span ng-hide="(brush.length > 0 && width < 625) || (width < 500)" ng-bind="(options.animatingTime) ? 'Pause' : ((options.animationFrame > options.animationStartFrame) ? 'Resume' : 'Play')"></span>
                 </label>
                 <label class="btn btn-default header-item" role="button" title="Step" ng-click="stepTimeAnimation()">
                     <span class="glyphicon glyphicon-step-forward"></span>
