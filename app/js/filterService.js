@@ -236,7 +236,7 @@ angular.module("neonDemo.services")
 
         if(firstClause.type === secondClause.type) {
             if(firstClause.type === "where") {
-                return clausesEqual;
+                return clausesEqual(firstClause, secondClause);
             } else if(firstClause.type !== "where" && firstClause.whereClauses.length === secondClause.whereClauses.length) {
                 for(var i = 0; i < firstClause.whereClauses.length; i++) {
                     if(!service.areClausesEqual(firstClause.whereClauses[i], secondClause.whereClauses[i])) {

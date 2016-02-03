@@ -259,7 +259,8 @@ function($location, datasetService, filterService, connectionService, errorNotif
 
                         service.messenger.publish(service.STATE_CHANGED_CHANNEL, {
                             dashboard: dashboardState.dashboard,
-                            dataset: dataset
+                            dataset: dataset,
+                            dashboardStateId: dashboardStateId
                         });
                     }, function(response) {
                         if(response.responseJSON) {
