@@ -646,6 +646,9 @@ function($interval, $filter, external, connectionService, datasetService, errorN
                 filterService.addFilter($scope.messenger, $scope.options.database.name, $scope.options.table.name,
                     [$scope.options.dateField.columnName], (showInvalidDates ? createFilterClauseForInvalidDates : createFilterClauseForDate),
                     filterNameObj, function() {
+                        if(showInvalidDates) {
+                            $scope.invalidDatesFilter = true;
+                        }
                         if(callback) {
                             callback();
                         }
