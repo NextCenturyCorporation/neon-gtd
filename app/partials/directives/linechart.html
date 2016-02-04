@@ -51,8 +51,15 @@
                         </div>
 
                         <div class="form-group chart-options-col" ng-class="{true: '', false: 'has-error'}[options.newChart.attrX.columnName !== '']">
-                            <label>Date Field (X Axis)</label>
+                            <label>Date Field</label>
                             <select class="form-control" ng-model="options.newChart.attrX" ng-options="field.prettyName for field in fields" ng-required="true" ng-disabled="!(fields.length > 0)" ng-change="validateChart()">
+                            </select>
+                        </div>
+
+                        <div class="form-group chart-options-col">
+                            <label>Group Field</label>
+                            <select class="form-control" ng-model="options.newChart.categoryField" ng-options="field.prettyName for field in fields" ng-required="true" ng-disabled="!(fields.length > 0)">
+                                <option value="">None</option>
                             </select>
                         </div>
                     </div>
@@ -70,15 +77,8 @@
                         </div>
 
                         <div class="form-group chart-options-col" ng-show="options.newChart.aggregation !== 'count'" ng-class="{true: '', false: 'has-error'}[options.newChart.attrY.columnName !== '']">
-                            <label>Agg. Field (Y Axis)</label>
+                            <label>Agg. Field</label>
                             <select class="form-control" ng-model="options.newChart.attrY" ng-options="field.prettyName for field in fields" ng-required="true" ng-disabled="!(fields.length > 0)" ng-change="validateChart()">
-                            </select>
-                        </div>
-
-                        <div class="form-group chart-options-col">
-                            <label>Group Field</label>
-                            <select class="form-control" ng-model="options.newChart.categoryField" ng-options="field.prettyName for field in fields" ng-required="true" ng-disabled="!(fields.length > 0)">
-                                <option value="">None</option>
                             </select>
                         </div>
                     </div>
@@ -148,8 +148,15 @@
                                 </div>
 
                                 <div class="form-group chart-options-col" ng-class="{true: '', false: 'has-error'}[chart.attrXField.columnName !== '']">
-                                    <label>Date Field (X Axis)</label>
+                                    <label>Date Field</label>
                                     <select class="form-control" ng-model="chart.attrXField" ng-options="field.prettyName for field in chart.fields" ng-required="true" ng-disabled="!(fields.length > 0)">
+                                    </select>
+                                </div>
+
+                                <div class="form-group chart-options-col">
+                                    <label>Group Field</label>
+                                    <select class="form-control" ng-model="chart.categoryField" ng-options="field.prettyName for field in chart.fields" ng-required="true" ng-disabled="!(fields.length > 0)">
+                                        <option value="">None</option>
                                     </select>
                                 </div>
                             </div>
@@ -167,15 +174,8 @@
                                 </div>
 
                                 <div class="form-group chart-options-col" ng-show="chart.aggregation !== 'count'" ng-class="{true: '', false: 'has-error'}[chart.attrYField.columnName !== '']">
-                                    <label>Agg. Field (Y Axis)</label>
+                                    <label>Agg. Field</label>
                                     <select class="form-control" ng-model="chart.attrYField" ng-options="field.prettyName for field in chart.fields" ng-required="true" ng-change="validateChart(chart, $index)" ng-disabled="!(fields.length > 0)">
-                                    </select>
-                                </div>
-
-                                <div class="form-group chart-options-col">
-                                    <label>Group Field</label>
-                                    <select class="form-control" ng-model="chart.categoryField" ng-options="field.prettyName for field in chart.fields" ng-required="true" ng-disabled="!(fields.length > 0)">
-                                        <option value="">None</option>
                                     </select>
                                 </div>
                             </div>
