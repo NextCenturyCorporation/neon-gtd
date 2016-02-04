@@ -414,7 +414,7 @@ coreMap.Map.prototype.createSelectControl =  function(layer) {
                 }
                 text += '</table></div>';
             } else {
-                text = '<div><table class="table table-striped table-condensed">' + getNestedFields(feature.cluster? feature.attributes : data[0]) + '</table></div>';
+                text = '<div><table class="table table-striped table-condensed">' + getNestedFields(feature.cluster ? feature.attributes : data[0]) + '</table></div>';
             }
 
             me.featurePopup = new OpenLayers.Popup.FramedCloud("Data",

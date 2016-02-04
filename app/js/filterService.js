@@ -230,13 +230,16 @@ angular.module("neonDemo.services")
         var clausesEqual = function(first, second) {
             if(first.lhs === second.lhs && first.operator === second.operator && first.rhs === second.rhs) {
                 return true;
+            } else if((_.isDate(firstClause.rhs) || _.isDate(secondClause.rhs)) &&
+                new Date(first.rhs).valueOf() === new Date(second.rhs).valueOf()) {
+                return true;
             }
             return false;
         };
 
         if(firstClause.type === secondClause.type) {
             if(firstClause.type === "where") {
-                return clausesEqual;
+                return clausesEqual(firstClause, secondClause);
             } else if(firstClause.type !== "where" && firstClause.whereClauses.length === secondClause.whereClauses.length) {
                 for(var i = 0; i < firstClause.whereClauses.length; i++) {
                     if(!service.areClausesEqual(firstClause.whereClauses[i], secondClause.whereClauses[i])) {

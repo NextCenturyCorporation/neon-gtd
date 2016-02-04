@@ -74,7 +74,6 @@ angular.module('neonDemo.directives')
                 popover.css("width", width + "px");
             };
 
-
             // Setup scope variables.
             $scope.cacheMap = false;
             $scope.databases = [];
@@ -613,7 +612,6 @@ angular.module('neonDemo.directives')
                 var mappings = datasetService.getMappings(layer.database, layer.table);
                 layer.date = mappings.date;
 
-
                 return layer;
             };
 
@@ -700,11 +698,11 @@ angular.module('neonDemo.directives')
                 $scope.options.newLayer.size = _.find($scope.fields, function(field) {
                     return field.columnName === size;
                 }) || datasetService.createBlankField();
-                var nodeColorBy = datasetService.getMapping($scope.options.newLayer.database.name, $scope.options.newLayer.table.name, "nodeColorBy") || "";
+                var nodeColorBy = datasetService.getMapping($scope.options.newLayer.database.name, $scope.options.newLayer.table.name, neonMappings.NODE_COLOR_BY) || "";
                 $scope.options.newLayer.nodeColorBy = _.find($scope.fields, function(field) {
                     return field.columnName === nodeColorBy;
                 }) || datasetService.createBlankField();
-                var lineColorBy = datasetService.getMapping($scope.options.newLayer.database.name, $scope.options.newLayer.table.name, "lineColorBy") || "";
+                var lineColorBy = datasetService.getMapping($scope.options.newLayer.database.name, $scope.options.newLayer.table.name, neonMappings.LINE_COLOR_BY) || "";
                 $scope.options.newLayer.lineColorBy = _.find($scope.fields, function(field) {
                     return field.columnName === lineColorBy;
                 }) || datasetService.createBlankField();

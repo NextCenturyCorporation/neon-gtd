@@ -528,8 +528,13 @@ function(external, $timeout, connectionService, datasetService, errorNotificatio
                     .limit($scope.options.limit);
 
                 if(datasetService.isFieldValid($scope.options.filterField) && $scope.options.filterValue) {
-                    var operator = $.isNumeric($scope.options.filterValue) ? "=" : "contains";
-                    query.where(neon.query.where($scope.options.filterField.columnName, operator, $scope.options.filterValue));
+                    var operator = "contains";
+                    var value = $scope.options.filterValue;
+                    if($.isNumeric(value)) {
+                        operator = "=";
+                        value = parseFloat(value);
+                    }
+                    query.where(neon.query.where($scope.options.filterField.columnName, operator, value));
                 }
 
                 return query;

@@ -127,6 +127,16 @@ angular.module("neonDemo.services")
     };
 
     /**
+     * Sets the layout name for the active dataset.
+     * @param {String} layoutName
+     * @method setLayout
+     */
+    service.setLayout = function(layoutName) {
+        service.dataset.layout = layoutName;
+        updateDataset();
+    };
+
+    /**
      * Returns the datastore for the active dataset.
      * @method getDatastore
      * @return {String}
@@ -797,7 +807,7 @@ angular.module("neonDemo.services")
     var updateDataset = function() {
         for(var i = 0; i < service.datasets.length; ++i) {
             if(service.datasets[i].name === service.dataset.name) {
-                service.datasets[i] = service.dataset;
+                service.datasets[i] = angular.copy(service.dataset);
             }
         }
     };

@@ -108,6 +108,14 @@ angular.module('neonDemo.directives')
                         }
                         if(message.dashboard) {
                             $scope.$apply(function() {
+                                var layoutName = "savedDashboard-" + message.dashboardStateId;
+
+                                layouts[layoutName] = message.dashboard;
+
+                                if(message.dataset) {
+                                    datasetService.setLayout(layoutName);
+                                }
+
                                 $scope.gridsterConfigs = message.dashboard;
 
                                 for(var i = 0; i < $scope.gridsterConfigs.length; ++i) {

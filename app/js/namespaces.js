@@ -65,19 +65,22 @@ neonColors.DEFAULT = neonColors.GRAY;
 
 // Mappings used in the JSON configuration file.
 var neonMappings = neonMappings || {};
-neonMappings.ID = "id";
 neonMappings.DATE = "date";
 neonMappings.TAGS = "tags";
 neonMappings.URLS = "url";
 neonMappings.LATITUDE = "latitude";
 neonMappings.LONGITUDE = "longitude";
 neonMappings.COLOR = "color_by";
+neonMappings.NODE_COLOR_BY = "nodeColorBy";
+neonMappings.LINE_COLOR_BY = "lineColorBy";
 neonMappings.SIZE = "size_by";
 neonMappings.SORT = "sort_by";
 neonMappings.AGGREGATE = "count_by";
 neonMappings.Y_AXIS = "y_axis";
 neonMappings.BAR_GROUPS = "bar_x_axis";
 neonMappings.LINE_GROUPS = "line_category";
+neonMappings.SCATTERPLOT_X_AXIS = "x_attr";
+neonMappings.SCATTERPLOT_Y_AXIS = "y_attr";
 neonMappings.GRAPH_NODE = "graph_nodes";
 neonMappings.GRAPH_LINKED_NODE = "graph_links";
 neonMappings.GRAPH_NODE_NAME = "graph_node_name";
@@ -110,10 +113,6 @@ neonMappings.BOUNDS = "bounds";
 var neonWizard = neonWizard || {};
 
 neonWizard.mappings = neonWizard.mappings || {};
-neonWizard.mappings.ID = {
-    name: "id",
-    prettyName: "ID"
-};
 neonWizard.mappings.DATE = {
     name: "date",
     prettyName: "Date"

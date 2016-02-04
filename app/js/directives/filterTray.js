@@ -58,7 +58,7 @@ function($timeout, external, datasetService, filterService, linksPopupService, p
                 //$(window).resize(updateContainerHeight);
             };
 
-            var onEventChanged = function(message) {
+            var onEventChanged = function() {
                 $scope.updateFilterTray(filterService.getAllFilters());
             };
 

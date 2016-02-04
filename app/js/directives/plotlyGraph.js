@@ -49,9 +49,9 @@ function(connectionService, datasetService, filterService, themeService, visuali
             bindLimit: "=?",
             bindXAxisField: "=?",
             bindYAxisField: "=?",
+            bindFilterField: "=?",
             bindAttrX: "=?", // Deprecated
             bindAttrY: "=?", // Deprecated
-            bindFilterField: "=?", // Deprecated
             bindStateId: '='
         },
         link: function($scope, $element) {
@@ -162,7 +162,7 @@ function(connectionService, datasetService, filterService, themeService, visuali
                 $scope.fields = datasetService.getSortedFields($scope.active.database.name, $scope.active.table.name);
 
                 var xFieldName = $scope.bindXAxisField || $scope.bindAttrX ||
-                    datasetService.getMapping($scope.active.database.name, $scope.active.table.name, "x_attr") ||
+                    datasetService.getMapping($scope.active.database.name, $scope.active.table.name, SCATTERPLOT_X_AXIS) ||
                     "";
 
                 $scope.active.attrX = _.find($scope.fields, function(field) {
@@ -170,7 +170,7 @@ function(connectionService, datasetService, filterService, themeService, visuali
                 }) || datasetService.createBlankField();
 
                 var yFieldName = $scope.bindYAxisField || $scope.bindAttrY ||
-                    datasetService.getMapping($scope.active.database.name, $scope.active.table.name, "y_attr") ||
+                    datasetService.getMapping($scope.active.database.name, $scope.active.table.name, SCATTERPLOT_Y_AXIS) ||
                     "";
                 $scope.active.attrY = _.find($scope.fields, function(field) {
                     return field.columnName === yFieldName;
