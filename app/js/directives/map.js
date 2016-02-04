@@ -93,7 +93,11 @@ angular.module('neonDemo.directives')
                 layers: []
             };
 
-            $scope.MAP_LAYER_TYPES = [coreMap.Map.POINTS_LAYER, coreMap.Map.CLUSTER_LAYER, coreMap.Map.HEATMAP_LAYER, coreMap.Map.NODE_LAYER];
+            $scope.POINT_LAYER = coreMap.Map.POINTS_LAYER;
+            $scope.CLUSTER_LAYER = coreMap.Map.CLUSTER_LAYER;
+            $scope.HEATMAP_LAYER = coreMap.Map.HEATMAP_LAYER;
+            $scope.NODE_AND_ARROW_LAYER = coreMap.Map.NODE_LAYER;
+            $scope.MAP_LAYER_TYPES = [$scope.POINT_LAYER, $scope.CLUSTER_LAYER, $scope.HEATMAP_LAYER, $scope.NODE_AND_ARROW_LAYER];
             $scope.DEFAULT_LIMIT = 1000;
             $scope.DEFAULT_NEW_LAYER_TYPE = $scope.MAP_LAYER_TYPES[0];
 
@@ -502,8 +506,8 @@ angular.module('neonDemo.directives')
             var onDateSelected = function(message) {
                 // Set a date range on any node layers to start.
                 for(var i = 0; i < $scope.options.layers.length; i++) {
-                    if($scope.options.layers[i].type === coreMap.Map.NODE_LAYER ||
-                        $scope.options.layers[i].type === coreMap.Map.POINTS_LAYER) {
+                    if($scope.options.layers[i].type === $scope.NODE_AND_ARROW_LAYER ||
+                        $scope.options.layers[i].type === $scope.POINT_LAYER) {
                         $scope.options.layers[i].olLayer.setDateFilter(message);
                     }
                 }
@@ -533,7 +537,7 @@ angular.module('neonDemo.directives')
                         _.each($scope.options.layers, function(layer) {
                             if(layer.database === message.removedFilter.databaseName && layer.table === message.removedFilter.tableName) {
                                 var filter;
-                                if(layer.type === coreMap.Map.NODE_LAYER) {
+                                if(layer.type === $scope.NODE_AND_ARROW_LAYER) {
                                     var sourceLat = layer.sourceMapping + "." + layer.latitudeMapping;
                                     var sourceLon = layer.sourceMapping + "." + layer.longitudeMapping;
                                     var targetLat = layer.targetMapping + "." + layer.latitudeMapping;
@@ -837,7 +841,7 @@ angular.module('neonDemo.directives')
              */
             var getLatLonMappings = function(layer) {
                 var latLons = [];
-                if(layer.type === coreMap.Map.NODE_LAYER) {
+                if(layer.type === $scope.NODE_AND_ARROW_LAYER) {
                     latLons.push(layer.sourceMapping + "." + layer.latitudeMapping);
                     latLons.push(layer.sourceMapping + "." + layer.longitudeMapping);
                     latLons.push(layer.targetMapping + "." + layer.latitudeMapping);
@@ -1030,7 +1034,7 @@ angular.module('neonDemo.directives')
                             var index = _.findIndex($scope.legend.layers, {
                                 olLayerId: $scope.options.layers[i].olLayer.id
                             });
-                            if($scope.options.layers[i].type === coreMap.Map.NODE_LAYER && _.keys(colorMappings).length) {
+                            if($scope.options.layers[i].type === $scope.NODE_AND_ARROW_LAYER && _.keys(colorMappings).length) {
                                 if(index >= 0) {
                                     $scope.legend.layers[index].nodeColorMappings = colorMappings.nodeColors;
                                     $scope.legend.layers[index].lineColorMappings = colorMappings.lineColors;
@@ -1107,7 +1111,7 @@ angular.module('neonDemo.directives')
                         var latMapping = layer.latitudeMapping ? layer.latitudeMapping : coreMap.Map.Layer.HeatmapLayer.DEFAULT_LATITUDE_MAPPING;
                         var lonMapping = layer.longitudeMapping ? layer.longitudeMapping : coreMap.Map.Layer.HeatmapLayer.DEFAULT_LONGITUDE_MAPPING;
 
-                        if(layer.type === coreMap.Map.NODE_LAYER) {
+                        if(layer.type === $scope.NODE_AND_ARROW_LAYER) {
                             var sourceMapping = layer.sourceMapping ? layer.sourceMapping : coreMap.Map.Layer.NodeLayer.DEFAULT_SOURCE;
                             var targetMapping = layer.targetMapping ? layer.targetMapping : coreMap.Map.Layer.NodeLayer.DEFAULT_TARGET;
 
@@ -1489,7 +1493,7 @@ angular.module('neonDemo.directives')
                         layer.addFeatures(features);
                     } else {
                         var pointsLayer = _.find(datasetService.getMapLayers($scope.bindConfig), {
-                            type: coreMap.Map.POINTS_LAYER,
+                            type: $scope.POINT_LAYER,
                             database: msg.database,
                             table: msg.table
                         });
@@ -1608,14 +1612,14 @@ angular.module('neonDemo.directives')
             var areSimilarLayers = function(layer) {
                 for(var i = 0; i < $scope.options.layers.length; i++) {
                     if($scope.options.layers[i].database === layer.database && $scope.options.layers[i].table === layer.table) {
-                        if($scope.options.layers[i].type === coreMap.Map.NODE_LAYER && layer.type === coreMap.Map.NODE_LAYER) {
+                        if($scope.options.layers[i].type === $scope.NODE_AND_ARROW_LAYER && layer.type === $scope.NODE_AND_ARROW_LAYER) {
                             if($scope.options.layers[i].sourceMapping === layer.sourceMapping &&
                                 $scope.options.layers[i].targetMapping === layer.targetMapping &&
                                 $scope.options.layers[i].latitudeMapping === layer.latitudeMapping &&
                                 $scope.options.layers[i].longitudeMapping === layer.longitudeMapping) {
                                 return true;
                             }
-                        } else if($scope.options.layers[i].type !== coreMap.Map.NODE_LAYER && layer.type !== coreMap.Map.NODE_LAYER) {
+                        } else if($scope.options.layers[i].type !== $scope.NODE_AND_ARROW_LAYER && layer.type !== $scope.NODE_AND_ARROW_LAYER) {
                             if($scope.options.layers[i].latitudeMapping === layer.latitudeMapping &&
                                 $scope.options.layers[i].longitudeMapping === layer.longitudeMapping) {
                                 return true;
@@ -1633,7 +1637,7 @@ angular.module('neonDemo.directives')
              * @private
              */
             var addLayer = function(layer) {
-                if(layer.type === coreMap.Map.POINTS_LAYER) {
+                if(layer.type === $scope.POINT_LAYER) {
                     layer.olLayer = new coreMap.Map.Layer.PointsLayer(layer.name, {
                         database: layer.database,
                         table: layer.table,
@@ -1654,7 +1658,7 @@ angular.module('neonDemo.directives')
                             })
                     });
                     $scope.map.addLayer(layer.olLayer);
-                } else if(layer.type === coreMap.Map.CLUSTER_LAYER) {
+                } else if(layer.type === $scope.CLUSTER_LAYER) {
                     layer.olLayer = new coreMap.Map.Layer.PointsLayer(layer.name, {
                         database: layer.database,
                         table: layer.table,
@@ -1676,7 +1680,7 @@ angular.module('neonDemo.directives')
                         clusterPopupFields: layer.popupFields
                     });
                     $scope.map.addLayer(layer.olLayer);
-                } else if(layer.type === coreMap.Map.HEATMAP_LAYER) {
+                } else if(layer.type === $scope.HEATMAP_LAYER) {
                     layer.olLayer = new coreMap.Map.Layer.HeatmapLayer(layer.name,
                         $scope.map.map,
                         $scope.map.map.baseLayer, {
@@ -1686,7 +1690,7 @@ angular.module('neonDemo.directives')
                         gradients: generateGradientList(layer)
                     });
                     $scope.map.addLayer(layer.olLayer);
-                } else if(layer.type === coreMap.Map.NODE_LAYER) {
+                } else if(layer.type === $scope.NODE_AND_ARROW_LAYER) {
                     layer.olLayer = new coreMap.Map.Layer.NodeLayer(layer.name, {
                         sourceMapping: layer.sourceMapping,
                         targetMapping: layer.targetMapping,
@@ -1957,23 +1961,23 @@ angular.module('neonDemo.directives')
                         limit: layer.limit
                     };
 
-                    if(layer.type === coreMap.Map.POINTS_LAYER) {
-                        editedLayer.type = coreMap.Map.POINTS_LAYER;
+                    if(layer.type === $scope.POINT_LAYER) {
+                        editedLayer.type = $scope.POINT_LAYER;
                         editedLayer.latitudeMapping = layer.latitudeMapping;
                         editedLayer.longitudeMapping = layer.longitudeMapping;
                         editedLayer.colorBy = layer.colorBy;
                         editedLayer.sizeBy = layer.sizeBy;
                         editedLayer.defaultColor = layer.defaultColor;
                         editedLayer.gradient = layer.gradient;
-                    } else if(layer.type === coreMap.Map.CLUSTER_LAYER) {
-                        editedLayer.type = coreMap.Map.CLUSTER_LAYER;
+                    } else if(layer.type === $scope.CLUSTER_LAYER) {
+                        editedLayer.type = $scope.CLUSTER_LAYER;
                         editedLayer.latitudeMapping = layer.latitudeMapping;
                         editedLayer.longitudeMapping = layer.longitudeMapping;
                         editedLayer.colorBy = layer.colorBy;
                         editedLayer.defaultColor = layer.defaultColor;
                         editedLayer.popupFields = layer.popupFields;
-                    } else if(layer.type === coreMap.Map.HEATMAP_LAYER) {
-                        editedLayer.type = coreMap.Map.HEATMAP_LAYER;
+                    } else if(layer.type === $scope.HEATMAP_LAYER) {
+                        editedLayer.type = $scope.HEATMAP_LAYER;
                         editedLayer.latitudeMapping = layer.latitudeMapping;
                         editedLayer.longitudeMapping = layer.longitudeMapping;
                         editedLayer.sizeBy = layer.sizeBy;
@@ -1981,8 +1985,8 @@ angular.module('neonDemo.directives')
                         editedLayer.gradient2 = layer.gradient2;
                         editedLayer.gradient3 = layer.gradient3;
                         editedLayer.gradient4 = layer.gradient4;
-                    } else if(layer.type === coreMap.Map.NODE_LAYER) {
-                        editedLayer.type = coreMap.Map.NODE_LAYER;
+                    } else if(layer.type === $scope.NODE_AND_ARROW_LAYER) {
+                        editedLayer.type = $scope.NODE_AND_ARROW_LAYER;
                         editedLayer.latitudeMapping = layer.latitudeMapping;
                         editedLayer.longitudeMapping = layer.longitudeMapping;
                         editedLayer.sourceMapping = layer.sourceMapping;

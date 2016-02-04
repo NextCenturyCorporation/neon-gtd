@@ -81,43 +81,43 @@
                             <select class="form-control" ng-model="options.newLayer.longitude" ng-options="field.prettyName for field in fields" ng-required="true" ng-disabled="!(fields.length > 0)"></select>
                         </div>
 
-                        <div class="form-group layer-options-col" ng-show="(options.newLayer.type == 'points' || options.newLayer.type == 'cluster' || options.newLayer.type == 'heatmap')">
+                        <div class="form-group layer-options-col" ng-show="(options.newLayer.type == POINT_LAYER || options.newLayer.type == CLUSTER_LAYER || options.newLayer.type == HEATMAP_LAYER)">
                             <label>Size Field</label>
                             <select class="form-control" ng-model="options.newLayer.size" ng-options="field.prettyName for field in fields" ng-required="false" ng-disabled="!(fields.length > 0)">
                                 <option value="">None</option>
                             </select>
                         </div>
 
-                        <div class="form-group layer-options-col" ng-show="(options.newLayer.type == 'points' || options.newLayer.type == 'cluster')">
+                        <div class="form-group layer-options-col" ng-show="(options.newLayer.type == POINT_LAYER || options.newLayer.type == CLUSTER_LAYER)">
                             <label>Color Field</label>
                             <select class="form-control" ng-model="options.newLayer.color" ng-options="field.prettyName for field in fields" ng-required="false" ng-disabled="!(fields.length > 0)">
                                 <option value="">None</option>
                             </select>
                         </div>
 
-                        <div class="form-group layer-options-col" ng-show="(options.newLayer.type == 'heatmap')">
+                        <div class="form-group layer-options-col" ng-show="(options.newLayer.type == HEATMAP_LAYER)">
                             <label>Color Code 1</label>
                             <input type="text" class="form-control" placeholder="None" ng-cancel-drag ng-model="options.newLayer.gradient1" ng-required="false"/>
                         </div>
 
-                        <div class="form-group layer-options-col" ng-show="(options.newLayer.type == 'node')">
+                        <div class="form-group layer-options-col" ng-show="(options.newLayer.type == NODE_AND_ARROW_LAYER)">
                             <label>Source Field</label>
-                            <select class="form-control" ng-model="options.newLayer.source" ng-options="field.prettyName for field in fields" ng-required="(options.newLayer.type == 'node')" ng-disabled="!(fields.length > 0)"></select>
+                            <select class="form-control" ng-model="options.newLayer.source" ng-options="field.prettyName for field in fields" ng-required="(options.newLayer.type == NODE_AND_ARROW_LAYER)" ng-disabled="!(fields.length > 0)"></select>
                         </div>
 
-                        <div class="form-group layer-options-col" ng-show="(options.newLayer.type == 'node')">
+                        <div class="form-group layer-options-col" ng-show="(options.newLayer.type == NODE_AND_ARROW_LAYER)">
                             <label>Target Field</label>
-                            <select class="form-control" ng-model="options.newLayer.target" ng-options="field.prettyName for field in fields" ng-required="(options.newLayer.type == 'node')" ng-disabled="!(fields.length > 0)"></select>
+                            <select class="form-control" ng-model="options.newLayer.target" ng-options="field.prettyName for field in fields" ng-required="(options.newLayer.type == NODE_AND_ARROW_LAYER)" ng-disabled="!(fields.length > 0)"></select>
                         </div>
                     </div>
 
-                    <div class="layer-options-row row-large" ng-show="(options.newLayer.type == 'points' || options.newLayer.type == 'cluster')">
+                    <div class="layer-options-row row-large" ng-show="(options.newLayer.type == POINT_LAYER || options.newLayer.type == CLUSTER_LAYER)">
                         <div class="form-group layer-options-col">
                             <label>Color Code</label>
                             <input type="text" class="form-control" placeholder="None" ng-model="options.newLayer.colorCode" ng-required="false"/>
                         </div>
 
-                        <div class="form-group layer-options-col" ng-show="options.newLayer.type == 'cluster'">
+                        <div class="form-group layer-options-col" ng-show="options.newLayer.type == CLUSTER_LAYER">
                             <label>Popup Fields</label>
                             <select class="form-control" ng-model="options.newLayer.popupFields"
                                 ng-disabled="!(fields.length > 0)" multiple>
@@ -128,7 +128,7 @@
                         </div>
                     </div>
 
-                    <div class="layer-options-row row-large" ng-show="(options.newLayer.type == 'heatmap')">
+                    <div class="layer-options-row row-large" ng-show="(options.newLayer.type == HEATMAP_LAYER)">
                         <div class="form-group layer-options-col">
                             <label>Color Code 2</label>
                             <input type="text" class="form-control" placeholder="None" ng-cancel-drag ng-model="options.newLayer.gradient2" ng-required="false"/>
@@ -150,7 +150,7 @@
                         </div>
                     </div>
 
-                    <div class="layer-options-row" ng-show="(options.newLayer.type == 'node')">
+                    <div class="layer-options-row" ng-show="(options.newLayer.type == NODE_AND_ARROW_LAYER)">
                         <div class="form-group layer-options-col">
                             <label>Point Color Field</label>
                             <select class="form-control" ng-model="options.newLayer.nodeColorBy" ng-options="field.prettyName for field in fields" ng-required="false" ng-disabled="!(fields.length > 0)">
@@ -176,7 +176,7 @@
                         </div>
                     </div>
 
-                    <div class="layer-options-row" ng-show="(options.newLayer.type == 'node')">
+                    <div class="layer-options-row" ng-show="(options.newLayer.type == NODE_AND_ARROW_LAYER)">
                         <div class="form-group layer-options-col">
                             <label>Size Field</label>
                             <select class="form-control" ng-model="options.newLayer.size" ng-options="field.prettyName for field in fields" ng-required="false" ng-disabled="!(fields.length > 0)">
@@ -274,45 +274,45 @@
                                     </select>
                                 </div>
 
-                                <div class="form-group layer-options-col" ng-show="layer.type == 'points' || layer.type == 'cluster' || layer.type == 'heatmap'">
+                                <div class="form-group layer-options-col" ng-show="layer.type == POINT_LAYER || layer.type == CLUSTER_LAYER || layer.type == HEATMAP_LAYER">
                                     <label>Size Field</label>
                                     <select class="form-control" ng-cancel-drag ng-model="layer.sizeField" ng-options="field.prettyName for field in layer.fields" ng-required="false" ng-disabled="!(layer.fields.length > 0)">
                                         <option value="">None</option>
                                     </select>
                                 </div>
 
-                                <div class="form-group layer-options-col" ng-show="layer.type == 'points' || layer.type == 'cluster'">
+                                <div class="form-group layer-options-col" ng-show="layer.type == POINT_LAYER || layer.type == CLUSTER_LAYER">
                                     <label>Color Field</label>
                                     <select class="form-control" ng-cancel-drag ng-model="layer.colorField" ng-options="field.prettyName for field in layer.fields" ng-required="false" ng-disabled="!(layer.fields.length > 0)">
                                         <option value="">None</option>
                                     </select>
                                 </div>
 
-                                <div class="form-group layer-options-col" ng-show="layer.type == 'heatmap'">
+                                <div class="form-group layer-options-col" ng-show="layer.type == HEATMAP_LAYER">
                                     <label>Color Code 1</label>
                                     <input type="text" class="form-control" placeholder="{{layer.gradient1 || 'None'}}" ng-cancel-drag ng-model="layer.gradient1" ng-required="false"/>
                                 </div>
 
-                                <div class="form-group layer-options-col" ng-show="layer.type == 'node'">
+                                <div class="form-group layer-options-col" ng-show="layer.type == NODE_AND_ARROW_LAYER">
                                     <label>Source Field</label>
-                                    <select class="form-control" ng-cancel-drag ng-model="layer.sourceField" ng-options="field.prettyName for field in layer.fields" ng-required="(layer.type == 'node')" ng-disabled="!(layer.fields.length > 0)">
+                                    <select class="form-control" ng-cancel-drag ng-model="layer.sourceField" ng-options="field.prettyName for field in layer.fields" ng-required="(layer.type == NODE_AND_ARROW_LAYER)" ng-disabled="!(layer.fields.length > 0)">
                                     </select>
                                 </div>
 
-                                <div class="form-group layer-options-col" ng-show="layer.type == 'node'">
+                                <div class="form-group layer-options-col" ng-show="layer.type == NODE_AND_ARROW_LAYER">
                                     <label>Target Field</label>
-                                    <select class="form-control" ng-cancel-drag ng-model="layer.targetField" ng-options="field.prettyName for field in layer.fields" ng-required="(layer.type == 'node')" ng-disabled="!(layer.fields.length > 0)">
+                                    <select class="form-control" ng-cancel-drag ng-model="layer.targetField" ng-options="field.prettyName for field in layer.fields" ng-required="(layer.type == NODE_AND_ARROW_LAYER)" ng-disabled="!(layer.fields.length > 0)">
                                     </select>
                                 </div>
                             </div>
 
-                            <div class="layer-options-row row-large" ng-show="layer.type == 'points' || layer.type == 'cluster'">
+                            <div class="layer-options-row row-large" ng-show="layer.type == POINT_LAYER || layer.type == CLUSTER_LAYER">
                                 <div class="form-group layer-options-col">
                                     <label>Color Code</label>
                                     <input type="text" class="form-control" placeholder="{{layer.defaultColor || 'None'}}" ng-cancel-drag ng-model="layer.defaultColor" ng-required="false">
                                 </div>
 
-                                <div class="form-group layer-options-col" ng-show="layer.type == 'cluster'">
+                                <div class="form-group layer-options-col" ng-show="layer.type == CLUSTER_LAYER">
                                     <label>Popup Fields</label>
                                     <select class="form-control" ng-model="layer.popupFields"
                                         ng-disabled="!(layer.fields.length > 0)" multiple>
@@ -324,7 +324,7 @@
                                 </div>
                             </div>
 
-                            <div class="layer-options-row row-large" ng-show="layer.type == 'heatmap'">
+                            <div class="layer-options-row row-large" ng-show="layer.type == HEATMAP_LAYER">
                                 <div class="form-group layer-options-col">
                                     <label>Color Code 2</label>
                                     <input type="text" class="form-control" placeholder="{{layer.gradient2 || 'None'}}" ng-cancel-drag ng-model="layer.gradient2" ng-required="false"/>
@@ -346,7 +346,7 @@
                                 </div>
                             </div>
 
-                            <div class="layer-options-row" ng-show="layer.type == 'node'">
+                            <div class="layer-options-row" ng-show="layer.type == NODE_AND_ARROW_LAYER">
 
                                 <div class="form-group layer-options-col">
                                     <label>Point Color Field</label>
@@ -373,7 +373,7 @@
                                 </div>
                             </div>
 
-                            <div class="layer-options-row" ng-show="layer.type == 'node'">
+                            <div class="layer-options-row" ng-show="layer.type == NODE_AND_ARROW_LAYER">
                                 <div class="form-group layer-options-col">
                                     <label>Size Field</label>
                                     <select class="form-control" ng-cancel-drag ng-model="layer.sizeField" ng-options="field.prettyName for field in layer.fields" ng-required="false" ng-disabled="!(layer.fields.length > 0)">
