@@ -296,6 +296,7 @@ angular.module('neonDemo.directives')
                 var redrawOnResize = function() {
                     $scope.map.resizeToElement();
                     $scope.resizePromise = null;
+                    resizeLegend();
                 };
 
                 var resizeLegend = function() {
@@ -320,7 +321,6 @@ angular.module('neonDemo.directives')
                         $timeout.cancel($scope.resizePromise);
                     }
                     $scope.resizePromise = $timeout(redrawOnResize, $scope.resizeRedrawDelay);
-                    resizeLegend();
                 };
 
                 $element.resize(updateSize);
