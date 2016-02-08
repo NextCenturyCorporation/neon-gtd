@@ -111,6 +111,7 @@ angular.module('neonDemo.directives')
                     database: {},
                     table: {},
                     name: "",
+                    date: "",
                     latitude: "",
                     longitude: "",
                     color: "",
@@ -610,7 +611,7 @@ angular.module('neonDemo.directives')
                 layer.lineColorField = datasetService.findField(layer.fields, layer.lineColorBy);
 
                 var mappings = datasetService.getMappings(layer.database, layer.table);
-                layer.date = mappings.date;
+                layer.dateField = datasetService.findField(layer.fields, layer.date || mappings.date);
 
                 return layer;
             };
@@ -682,6 +683,10 @@ angular.module('neonDemo.directives')
                 $scope.options.newLayer.gradient4 = "";
                 $scope.options.newLayer.gradient5 = "";
 
+                var date = datasetService.getMapping($scope.options.newLayer.database.name, $scope.options.newLayer.table.name, neonMappings.DATE) || "";
+                $scope.options.newLayer.date = _.find($scope.fields, function(field) {
+                    return field.columnName === date;
+                }) || datasetService.createBlankField();
                 var latitude = datasetService.getMapping($scope.options.newLayer.database.name, $scope.options.newLayer.table.name, neonMappings.LATITUDE) || "";
                 $scope.options.newLayer.latitude = _.find($scope.fields, function(field) {
                     return field.columnName === latitude;
@@ -1547,6 +1552,7 @@ angular.module('neonDemo.directives')
              * @private
              */
             var updateLayerFieldMappings = function(layer) {
+                layer.date = layer.dateField ? layer.dateField.columnName : "";
                 layer.latitudeMapping = layer.latitudeField.columnName;
                 layer.longitudeMapping = layer.longitudeField.columnName;
                 layer.sizeBy = layer.sizeField ? layer.sizeField.columnName : "";
@@ -1769,6 +1775,8 @@ angular.module('neonDemo.directives')
                     tablePrettyName: datasetService.getPrettyNameForTable($scope.options.newLayer.database.name, $scope.options.newLayer.table.name),
                     fields: $scope.fields,
                     limit: $scope.options.newLayer.limit,
+                    date: $scope.options.newLayer.date ? $scope.options.newLayer.date.columnName : "",
+                    dateField: $scope.options.newLayer.date,
                     latitudeField: $scope.options.newLayer.latitude,
                     latitudeMapping: $scope.options.newLayer.latitude.columnName,
                     longitudeField: $scope.options.newLayer.longitude,
@@ -1801,8 +1809,11 @@ angular.module('neonDemo.directives')
                     editing: false
                 };
 
-                var mappings = datasetService.getMappings(layer.database, layer.table);
-                layer.date = mappings.date;
+                if(!layer.date) {
+                    var mappings = datasetService.getMappings(layer.database, layer.table);
+                    layer.date = mappings.date;
+                    layer.dateField = datasetService.findField(layer.fields, mappings.date);
+                }
 
                 layer.olLayer = addLayer(layer);
                 $scope.options.layers.push(layer);
