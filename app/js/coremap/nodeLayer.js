@@ -22,11 +22,9 @@ coreMap.Map.Layer.NodeLayer = OpenLayers.Class(OpenLayers.Layer.Vector, {
     baseRadiusDiff: 0,
     edges: [],
     dateMapping: '',
-    latitudeMapping: '',
     lineDefaultColor: '',
     lineColors: {},
     lineWidthDiff: 0,
-    longitudeMapping: '',
     nodeMapping: '',
     lineMapping: '',
     maxNodeRadius: 0,
@@ -36,6 +34,12 @@ coreMap.Map.Layer.NodeLayer = OpenLayers.Class(OpenLayers.Layer.Vector, {
     nodeDefaultColor: '',
     nodeColors: {},
     nodeRadiusDiff: 0,
+    sourceLatitudeMapping: '',
+    sourceLongitudeMapping: '',
+    sourceWeightMapping: '',
+    targetLatitudeMapping: '',
+    targetLongitudeMapping: '',
+    targetWeightMapping: '',
     weightMapping: '',
 
     /**
@@ -90,9 +94,8 @@ coreMap.Map.Layer.NodeLayer = OpenLayers.Class(OpenLayers.Layer.Vector, {
  * @return {number} The radius
  * @method calculateNodeRadius
  */
-coreMap.Map.Layer.NodeLayer.prototype.calculateNodeRadius = function(element) {
-    var dataVal = this.getValueFromDataElement(this.weightMapping, element);
-    var percentOfDataRange = (dataVal - this.minNodeRadius) / this.nodeRadiusDiff;
+coreMap.Map.Layer.NodeLayer.prototype.calculateNodeRadius = function(weight) {
+    var percentOfDataRange = (weight - this.minNodeRadius) / this.nodeRadiusDiff;
     return coreMap.Map.Layer.NodeLayer.MIN_RADIUS + (percentOfDataRange * this.baseRadiusDiff);
 };
 
@@ -121,15 +124,12 @@ coreMap.Map.Layer.NodeLayer.prototype.calculateLineWidth = function(weight) {
  * @return {OpenLayers.Feature.Vector} the point to be added.
  * @method createNode
  */
-coreMap.Map.Layer.NodeLayer.prototype.createNode = function(element, nodeMappingElement) {
-    var point = new OpenLayers.Geometry.Point(
-        this.getValueFromDataElement(this.longitudeMapping, element),
-        this.getValueFromDataElement(this.latitudeMapping, element)
-    );
+coreMap.Map.Layer.NodeLayer.prototype.createNode = function(element, nodeWeight, nodeMappingElement, point) {
+    var point = new OpenLayers.Geometry.Point(point[0], point[1]);
     point.transform(coreMap.Map.SOURCE_PROJECTION, coreMap.Map.DESTINATION_PROJECTION);
 
     var feature = new OpenLayers.Feature.Vector(point);
-    feature.style = this.styleNode(element, nodeMappingElement);
+    feature.style = this.styleNode(nodeWeight, nodeMappingElement);
     feature.attributes = element;
     return feature;
 };
@@ -208,8 +208,8 @@ coreMap.Map.Layer.NodeLayer.prototype.createLineStyleObject = function(lineMappi
  * @return {OpenLayers.Symbolizer.Point} The style object
  * @method createArrowStyleObject
  */
-coreMap.Map.Layer.NodeLayer.prototype.createArrowStyleObject = function(lineMappingElement, width, angle, element) {
-    var radius = Math.ceil(this.calculateNodeRadius(element) || coreMap.Map.Layer.NodeLayer.MIN_RADIUS);
+coreMap.Map.Layer.NodeLayer.prototype.createArrowStyleObject = function(lineMappingElement, width, angle, weight) {
+    var radius = Math.ceil(this.calculateNodeRadius(weight) || coreMap.Map.Layer.NodeLayer.MIN_RADIUS);
 
     var arrowWidth = radius + 7;
     if(radius % 2 === 0) {
@@ -281,7 +281,7 @@ coreMap.Map.Layer.NodeLayer.prototype.createWeightedLine = function(pt1, pt2, we
  * @return {OpenLayers.Feature.Vector} the arrow to be added.
  * @method createWeightedArrow
  */
-coreMap.Map.Layer.NodeLayer.prototype.createWeightedArrow = function(pt1, pt2, weight, element, lineMappingElement) {
+coreMap.Map.Layer.NodeLayer.prototype.createWeightedArrow = function(pt1, pt2, weight, nodeWeight, lineMappingElement) {
     var wt = this.calculateLineWidth(weight);
     wt = (wt < coreMap.Map.Layer.NodeLayer.MIN_ARROW_POINT_RADIUS) ?
         coreMap.Map.Layer.NodeLayer.MIN_ARROW_POINT_RADIUS : wt;
@@ -292,7 +292,7 @@ coreMap.Map.Layer.NodeLayer.prototype.createWeightedArrow = function(pt1, pt2, w
         coreMap.Map.DESTINATION_PROJECTION);
 
     var featureArrow = new OpenLayers.Feature.Vector(point);
-    featureArrow.style = this.createArrowStyleObject(lineMappingElement, wt, angle, element);
+    featureArrow.style = this.createArrowStyleObject(lineMappingElement, wt, angle, nodeWeight);
 
     return featureArrow;
 };
@@ -346,16 +346,11 @@ coreMap.Map.Layer.NodeLayer.prototype.getValueFromDataElement = function(mapping
  * @method areValuesInDataElement
  */
 coreMap.Map.Layer.NodeLayer.prototype.areValuesInDataElement = function(element) {
-    var source = this.getValueFromDataElement(this.sourceMapping, element);
-    var target = this.getValueFromDataElement(this.targetMapping, element);
-
-    if(source !== undefined && target !== undefined && this.getValueFromDataElement(this.weightMapping, element) !== undefined) {
-        if(this.getValueFromDataElement(this.latitudeMapping, source) !== undefined &&
-            this.getValueFromDataElement(this.longitudeMapping, source) !== undefined &&
-            this.getValueFromDataElement(this.latitudeMapping, target) !== undefined &&
-            this.getValueFromDataElement(this.longitudeMapping, target) !== undefined) {
-            return true;
-        }
+    if(this.getValueFromDataElement(this.sourceLatitudeMapping, element) !== undefined &&
+        this.getValueFromDataElement(this.sourceLongitudeMapping, element) !== undefined &&
+        this.getValueFromDataElement(this.targetLatitudeMapping, element) !== undefined &&
+        this.getValueFromDataElement(this.targetLongitudeMapping, element) !== undefined) {
+        return true;
     }
 
     return false;
@@ -367,8 +362,8 @@ coreMap.Map.Layer.NodeLayer.prototype.areValuesInDataElement = function(element)
  * @return {OpenLayers.Symbolizer.Point} The style object
  * @method styleNode
  */
-coreMap.Map.Layer.NodeLayer.prototype.styleNode = function(element, nodeMappingElement) {
-    var radius = this.calculateNodeRadius(element) || coreMap.Map.Layer.NodeLayer.MIN_RADIUS;
+coreMap.Map.Layer.NodeLayer.prototype.styleNode = function(weight, nodeMappingElement) {
+    var radius = this.calculateNodeRadius(weight) || coreMap.Map.Layer.NodeLayer.MIN_RADIUS;
 
     return this.createNodeStyleObject(nodeMappingElement, radius);
 };
@@ -404,11 +399,9 @@ coreMap.Map.Layer.NodeLayer.prototype.calculateSizes = function() {
     this.minNodeRadius = this.minLineWidth = Number.MAX_VALUE;
     this.maxNodeRadius = this.maxLineWidth = Number.MIN_VALUE;
     _.each(this.edges, function(element) {
-        var src = me.getValueFromDataElement(me.sourceMapping || coreMap.Map.Layer.NodeLayer.DEFAULT_SOURCE, element);
-        var tgt = me.getValueFromDataElement(me.targetMapping || coreMap.Map.Layer.NodeLayer.DEFAULT_TARGET, element);
         var weight = me.getValueFromDataElement(me.weightMapping || coreMap.Map.Layer.NodeLayer.DEFAULT_WEIGHT_MAPPING, element) || 1;
-        var srcWeight = me.getValueFromDataElement(me.weightMapping || coreMap.Map.Layer.NodeLayer.DEFAULT_WEIGHT_MAPPING, src) || 1;
-        var tgtWeight = me.getValueFromDataElement(me.weightMapping || coreMap.Map.Layer.NodeLayer.DEFAULT_WEIGHT_MAPPING, tgt) || 1;
+        var srcWeight = me.getValueFromDataElement(me.sourceWeightMapping || coreMap.Map.Layer.NodeLayer.DEFAULT_SOURCE_WEIGHT_MAPPING, element) || 1;
+        var tgtWeight = me.getValueFromDataElement(me.targetWeightMapping || coreMap.Map.Layer.NodeLayer.DEFAULT_TARGET_WEIGHT_MAPPING, element) || 1;
 
         me.minNodeRadius = _.min([me.minNodeRadius, srcWeight, tgtWeight]);
         me.maxNodeRadius = _.max([me.maxNodeRadius, srcWeight, tgtWeight]);
@@ -437,9 +430,9 @@ coreMap.Map.Layer.NodeLayer.prototype.updateFeatures = function() {
     // Initialize the weighted values.
     this.calculateSizes(this.edges);
     _.each(this.edges, function(element) {
-        var src = me.getValueFromDataElement(me.sourceMapping || coreMap.Map.Layer.NodeLayer.DEFAULT_SOURCE, element);
-        var tgt = me.getValueFromDataElement(me.targetMapping || coreMap.Map.Layer.NodeLayer.DEFAULT_TARGET, element);
         var weight = me.getValueFromDataElement(me.weightMapping || coreMap.Map.Layer.NodeLayer.DEFAULT_WEIGHT_MAPPING, element);
+        var srcWeight = me.getValueFromDataElement(me.sourceWeightMapping || coreMap.Map.Layer.NodeLayer.DEFAULT_SOURCE_WEIGHT_MAPPING, element);
+        var tgtWeight = me.getValueFromDataElement(me.targetWeightMapping || coreMap.Map.Layer.NodeLayer.DEFAULT_TARGET_WEIGHT_MAPPING, element);
         var date = 'none';
         var dateMapping = me.dateMapping || coreMap.Map.Layer.PointsLayer.DEFAULT_DATE_MAPPING;
         var key = '';
@@ -449,13 +442,13 @@ coreMap.Map.Layer.NodeLayer.prototype.updateFeatures = function() {
         }
 
         var pt1 = [
-            me.getValueFromDataElement(me.longitudeMapping || coreMap.Map.Layer.NodeLayer.DEFAULT_LONGITUDE_MAPPING, src),
-            me.getValueFromDataElement(me.latitudeMapping || coreMap.Map.Layer.NodeLayer.DEFAULT_LATITUDE_MAPPING, src)
+            me.getValueFromDataElement(me.sourceLongitudeMapping || coreMap.Map.Layer.NodeLayer.DEFAULT_SOURCE_LONGITUDE_MAPPING, element),
+            me.getValueFromDataElement(me.sourceLatitudeMapping || coreMap.Map.Layer.NodeLayer.DEFAULT_SOURCE_LATITUDE_MAPPING, element)
         ];
 
         var pt2 = [
-            me.getValueFromDataElement(me.longitudeMapping || coreMap.Map.Layer.NodeLayer.DEFAULT_LONGITUDE_MAPPING, tgt),
-            me.getValueFromDataElement(me.latitudeMapping || coreMap.Map.Layer.NodeLayer.DEFAULT_LATITUDE_MAPPING, tgt)
+            me.getValueFromDataElement(me.targetLongitudeMapping || coreMap.Map.Layer.NodeLayer.DEFAULT_TARGET_LONGITUDE_MAPPING, element),
+            me.getValueFromDataElement(me.targetLatitudeMapping || coreMap.Map.Layer.NodeLayer.DEFAULT_TARGET_LATITUDE_MAPPING, element)
         ];
 
         // Note: The date mappings must be on the top level of each attributes in order for filtering to work.
@@ -469,7 +462,7 @@ coreMap.Map.Layer.NodeLayer.prototype.updateFeatures = function() {
             line.attributes[dateMapping] = date;
             lines.push(line);
 
-            var arrow = me.createWeightedArrow(pt1, pt2, weight, tgt, lineMappingElement);
+            var arrow = me.createWeightedArrow(pt1, pt2, weight, tgtWeight, lineMappingElement);
             arrow.attributes[dateMapping] = date;
             arrows.push(arrow);
         }
@@ -478,15 +471,15 @@ coreMap.Map.Layer.NodeLayer.prototype.updateFeatures = function() {
         var nodeMappingElement;
         key = pt1 + date;
         if(!nodes[key]) {
-            nodeMappingElement = me.getValueFromDataElement(me.nodeMapping, src);
-            nodes[key] = me.createNode(src, nodeMappingElement);
+            nodeMappingElement = me.getValueFromDataElement(me.nodeMapping, element);
+            nodes[key] = me.createNode(element, srcWeight, nodeMappingElement, pt1);
             nodes[key].attributes[dateMapping] = date;
         }
 
         key = pt2 + date;
         if(!nodes[key]) {
-            nodeMappingElement = me.getValueFromDataElement(me.nodeMapping, tgt);
-            nodes[key] = me.createNode(tgt, nodeMappingElement);
+            nodeMappingElement = me.getValueFromDataElement(me.nodeMapping, element);
+            nodes[key] = me.createNode(element, tgtWeight, nodeMappingElement, pt2);
             nodes[key].attributes[dateMapping] = date;
         }
     });
@@ -496,11 +489,13 @@ coreMap.Map.Layer.NodeLayer.prototype.updateFeatures = function() {
     this.addFeatures(_.values(nodes));
 };
 
-coreMap.Map.Layer.NodeLayer.DEFAULT_LATITUDE_MAPPING = "latitude";
-coreMap.Map.Layer.NodeLayer.DEFAULT_LONGITUDE_MAPPING = "longitude";
 coreMap.Map.Layer.NodeLayer.DEFAULT_WEIGHT_MAPPING = "wgt";
-coreMap.Map.Layer.NodeLayer.DEFAULT_SOURCE = "from";
-coreMap.Map.Layer.NodeLayer.DEFAULT_TARGET = "to";
+coreMap.Map.Layer.NodeLayer.DEFAULT_SOURCE_LATITUDE_MAPPING = "from.latitude";
+coreMap.Map.Layer.NodeLayer.DEFAULT_SOURCE_LONGITUDE_MAPPING = "from.longitude";
+coreMap.Map.Layer.NodeLayer.DEFAULT_SOURCE_WEIGHT_MAPPING = "from.wgt";
+coreMap.Map.Layer.NodeLayer.DEFAULT_TARGET_LATITUDE_MAPPING = "to.latitude";
+coreMap.Map.Layer.NodeLayer.DEFAULT_TARGET_LONGITUDE_MAPPING = "to.longitude";
+coreMap.Map.Layer.NodeLayer.DEFAULT_TARGET_WEIGHT_MAPPING = "to.wgt";
 coreMap.Map.Layer.NodeLayer.DEFAULT_DATE_MAPPING = "date";
 
 coreMap.Map.Layer.NodeLayer.DEFAULT_OPACITY = 1;
