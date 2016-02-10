@@ -27,6 +27,7 @@ coreMap.Map.Layer.NodeLayer = OpenLayers.Class(OpenLayers.Layer.Vector, {
     lineWidthDiff: 0,
     nodeMapping: '',
     lineMapping: '',
+    lineWeightMapping: '',
     maxNodeRadius: 0,
     minNodeRadius: 0,
     maxLineWidth: 0,
@@ -34,13 +35,11 @@ coreMap.Map.Layer.NodeLayer = OpenLayers.Class(OpenLayers.Layer.Vector, {
     nodeDefaultColor: '',
     nodeColors: {},
     nodeRadiusDiff: 0,
+    nodeWeightMapping: '',
     sourceLatitudeMapping: '',
     sourceLongitudeMapping: '',
-    sourceWeightMapping: '',
     targetLatitudeMapping: '',
     targetLongitudeMapping: '',
-    targetWeightMapping: '',
-    weightMapping: '',
 
     /**
      * Override the OpenLayers Contructor
@@ -399,14 +398,13 @@ coreMap.Map.Layer.NodeLayer.prototype.calculateSizes = function() {
     this.minNodeRadius = this.minLineWidth = Number.MAX_VALUE;
     this.maxNodeRadius = this.maxLineWidth = Number.MIN_VALUE;
     _.each(this.edges, function(element) {
-        var weight = me.getValueFromDataElement(me.weightMapping || coreMap.Map.Layer.NodeLayer.DEFAULT_WEIGHT_MAPPING, element) || 1;
-        var srcWeight = me.getValueFromDataElement(me.sourceWeightMapping || coreMap.Map.Layer.NodeLayer.DEFAULT_SOURCE_WEIGHT_MAPPING, element) || 1;
-        var tgtWeight = me.getValueFromDataElement(me.targetWeightMapping || coreMap.Map.Layer.NodeLayer.DEFAULT_TARGET_WEIGHT_MAPPING, element) || 1;
+        var lineWeight = me.getValueFromDataElement(me.lineWeightMapping || coreMap.Map.Layer.NodeLayer.DEFAULT_WEIGHT_MAPPING, element) || 1;
+        var nodeWeight = me.getValueFromDataElement(me.nodeWeightMapping || coreMap.Map.Layer.NodeLayer.DEFAULT_WEIGHT_MAPPING, element) || 1;
 
-        me.minNodeRadius = _.min([me.minNodeRadius, srcWeight, tgtWeight]);
-        me.maxNodeRadius = _.max([me.maxNodeRadius, srcWeight, tgtWeight]);
-        me.minLineWidth = _.min([me.minLineWidth, weight]);
-        me.maxLineWidth = _.max([me.maxLineWidth, weight]);
+        me.minNodeRadius = _.min([me.minNodeRadius, nodeWeight]);
+        me.maxNodeRadius = _.max([me.maxNodeRadius, nodeWeight]);
+        me.minLineWidth = _.min([me.minLineWidth, lineWeight]);
+        me.maxLineWidth = _.max([me.maxLineWidth, lineWeight]);
     });
 
     this.nodeRadiusDiff = this.maxNodeRadius - this.minNodeRadius;
@@ -430,9 +428,8 @@ coreMap.Map.Layer.NodeLayer.prototype.updateFeatures = function() {
     // Initialize the weighted values.
     this.calculateSizes(this.edges);
     _.each(this.edges, function(element) {
-        var weight = me.getValueFromDataElement(me.weightMapping || coreMap.Map.Layer.NodeLayer.DEFAULT_WEIGHT_MAPPING, element);
-        var srcWeight = me.getValueFromDataElement(me.sourceWeightMapping || coreMap.Map.Layer.NodeLayer.DEFAULT_SOURCE_WEIGHT_MAPPING, element);
-        var tgtWeight = me.getValueFromDataElement(me.targetWeightMapping || coreMap.Map.Layer.NodeLayer.DEFAULT_TARGET_WEIGHT_MAPPING, element);
+        var lineWeight = me.getValueFromDataElement(me.lineWeightMapping || coreMap.Map.Layer.NodeLayer.DEFAULT_WEIGHT_MAPPING, element);
+        var nodeWeight = me.getValueFromDataElement(me.nodeWeightMapping || coreMap.Map.Layer.NodeLayer.DEFAULT_WEIGHT_MAPPING, element);
         var date = 'none';
         var dateMapping = me.dateMapping || coreMap.Map.Layer.PointsLayer.DEFAULT_DATE_MAPPING;
         var key = '';
@@ -456,13 +453,13 @@ coreMap.Map.Layer.NodeLayer.prototype.updateFeatures = function() {
         // of in the object "to".
 
         // If the line has substance, render it.
-        if(weight > 0) {
+        if(lineWeight > 0) {
             var lineMappingElement = me.getValueFromDataElement(me.lineMapping, element);
-            var line = me.createWeightedLine(pt1, pt2, weight, lineMappingElement);
+            var line = me.createWeightedLine(pt1, pt2, lineWeight, lineMappingElement);
             line.attributes[dateMapping] = date;
             lines.push(line);
 
-            var arrow = me.createWeightedArrow(pt1, pt2, weight, tgtWeight, lineMappingElement);
+            var arrow = me.createWeightedArrow(pt1, pt2, lineWeight, nodeWeight, lineMappingElement);
             arrow.attributes[dateMapping] = date;
             arrows.push(arrow);
         }
@@ -472,14 +469,14 @@ coreMap.Map.Layer.NodeLayer.prototype.updateFeatures = function() {
         key = pt1 + date;
         if(!nodes[key]) {
             nodeMappingElement = me.getValueFromDataElement(me.nodeMapping, element);
-            nodes[key] = me.createNode(element, srcWeight, nodeMappingElement, pt1);
+            nodes[key] = me.createNode(element, nodeWeight, nodeMappingElement, pt1);
             nodes[key].attributes[dateMapping] = date;
         }
 
         key = pt2 + date;
         if(!nodes[key]) {
             nodeMappingElement = me.getValueFromDataElement(me.nodeMapping, element);
-            nodes[key] = me.createNode(element, tgtWeight, nodeMappingElement, pt2);
+            nodes[key] = me.createNode(element, nodeWeight, nodeMappingElement, pt2);
             nodes[key].attributes[dateMapping] = date;
         }
     });
@@ -492,10 +489,8 @@ coreMap.Map.Layer.NodeLayer.prototype.updateFeatures = function() {
 coreMap.Map.Layer.NodeLayer.DEFAULT_WEIGHT_MAPPING = "wgt";
 coreMap.Map.Layer.NodeLayer.DEFAULT_SOURCE_LATITUDE_MAPPING = "from.latitude";
 coreMap.Map.Layer.NodeLayer.DEFAULT_SOURCE_LONGITUDE_MAPPING = "from.longitude";
-coreMap.Map.Layer.NodeLayer.DEFAULT_SOURCE_WEIGHT_MAPPING = "from.wgt";
 coreMap.Map.Layer.NodeLayer.DEFAULT_TARGET_LATITUDE_MAPPING = "to.latitude";
 coreMap.Map.Layer.NodeLayer.DEFAULT_TARGET_LONGITUDE_MAPPING = "to.longitude";
-coreMap.Map.Layer.NodeLayer.DEFAULT_TARGET_WEIGHT_MAPPING = "to.wgt";
 coreMap.Map.Layer.NodeLayer.DEFAULT_DATE_MAPPING = "date";
 
 coreMap.Map.Layer.NodeLayer.DEFAULT_OPACITY = 1;

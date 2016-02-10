@@ -603,14 +603,14 @@ angular.module('neonDemo.directives')
                 layer.fields = datasetService.getSortedFields(layer.database, layer.table);
                 layer.latitudeField = datasetService.findField(layer.fields, layer.latitudeMapping);
                 layer.longitudeField = datasetService.findField(layer.fields, layer.longitudeMapping);
-                layer.sizeField = layer.weightMapping ? datasetService.findField(layer.fields, layer.weightMapping) : datasetService.findField(layer.fields, layer.sizeBy);
+                layer.sizeField = datasetService.findField(layer.fields, layer.sizeBy);
                 layer.colorField = datasetService.findField(layer.fields, layer.colorBy);
                 layer.sourceLatitudeField = datasetService.findField(layer.fields, layer.sourceLatitudeMapping);
                 layer.sourceLongitudeField = datasetService.findField(layer.fields, layer.sourceLongitudeMapping);
                 layer.targetLatitudeField = datasetService.findField(layer.fields, layer.targetLatitudeMapping);
                 layer.targetLongitudeField = datasetService.findField(layer.fields, layer.targetLongitudeMapping);
-                layer.sourceWeightField = datasetService.findField(layer.fields, layer.sourceWeightMapping);
-                layer.targetWeightField = datasetService.findField(layer.fields, layer.targetWeightMapping);
+                layer.nodeWeightField = datasetService.findField(layer.fields, layer.nodeWeightMapping);
+                layer.lineWeightField = datasetService.findField(layer.fields, layer.lineWeightMapping);
                 layer.nodeColorField = datasetService.findField(layer.fields, layer.nodeColorBy);
                 layer.lineColorField = datasetService.findField(layer.fields, layer.lineColorBy);
 
@@ -1075,6 +1075,7 @@ angular.module('neonDemo.directives')
                                 if(index >= 0) {
                                     $scope.legend.layers[index].nodeColorMappings = colorMappings.nodeColors;
                                     $scope.legend.layers[index].lineColorMappings = colorMappings.lineColors;
+                                    delete $scope.legend.layers[index].colorMappings;
                                 } else {
                                     $scope.legend.layers.push({
                                         layerName: $scope.options.layers[i].name,
@@ -1087,6 +1088,8 @@ angular.module('neonDemo.directives')
                             } else if(_.keys(colorMappings).length) {
                                 if(index >= 0) {
                                     $scope.legend.layers[index].colorMappings = colorMappings;
+                                    delete $scope.legend.layers[index].nodeColorMappings;
+                                    delete $scope.legend.layers[index].lineColorMappings;
                                 } else {
                                     $scope.legend.layers.push({
                                         layerName: $scope.options.layers[i].name,
@@ -1299,9 +1302,8 @@ angular.module('neonDemo.directives')
                         addField(layer.sourceLongitudeMapping);
                         addField(layer.targetLatitudeMapping);
                         addField(layer.targetLongitudeMapping);
-                        addField(layer.sourceWeightMapping);
-                        addField(layer.targetWeightMapping);
-                        addField(layer.weightMapping);
+                        addField(layer.nodeWeightMapping);
+                        addField(layer.lineWeightMapping);
                         addField(layer.nodeColorBy);
                         addField(layer.lineColorBy);
 
@@ -1617,9 +1619,8 @@ angular.module('neonDemo.directives')
                 layer.longitudeMapping = layer.longitudeField.columnName;
                 layer.sizeBy = layer.sizeField ? layer.sizeField.columnName : "";
                 layer.colorBy = layer.colorField ? layer.colorField.columnName : "";
-                layer.weightMapping = layer.sizeField ? layer.sizeField.columnName : "";
-                layer.sourceWeightMapping = layer.sourceWeightField ? layer.sourceWeightField.columnName : "";
-                layer.targetWeightMapping = layer.targetWeightField ? layer.targetWeightField.columnName : "";
+                layer.nodeWeightMapping = layer.nodeWeightField ? layer.nodeWeightField.columnName : "";
+                layer.lineWeightMapping = layer.lineWeightField ? layer.lineWeightField.columnName : "";
                 layer.sourceLatitudeMapping = layer.sourceLatitudeField ? layer.sourceLatitudeField.columnName : "";
                 layer.sourceLongitudeMapping = layer.sourceLongitudeField ? layer.sourceLongitudeField.columnName : "";
                 layer.targetLatitudeMapping = layer.targetLatitudeField ? layer.targetLatitudeField.columnName : "";
@@ -1764,9 +1765,8 @@ angular.module('neonDemo.directives')
                         sourceLongitudeMapping: layer.sourceLongitudeMapping,
                         targetLatitudeMapping: layer.targetLatitudeMapping,
                         targetLongitudeMapping: layer.targetLongitudeMapping,
-                        sourceWeightMapping: layer.sourceWeightMapping,
-                        targetWeightMapping: layer.targetWeightMapping,
-                        weightMapping: layer.weightMapping,
+                        nodeWeightMapping: layer.nodeWeightMapping,
+                        lineWeightMapping: layer.lineWeightMapping,
                         dateMapping: layer.date,
                         nodeMapping: layer.nodeColorBy,
                         lineMapping: layer.lineColorBy,
@@ -1852,19 +1852,18 @@ angular.module('neonDemo.directives')
                     colorField: $scope.options.newLayer.color,
                     colorBy: $scope.options.newLayer.color ? $scope.options.newLayer.color.columnName : "",
                     defaultColor: $scope.options.newLayer.colorCode,
-                    weightMapping: $scope.options.newLayer.size ? $scope.options.newLayer.size.columnName : "",
-                    sourceWeightField: $scope.options.newLayer.sourceSize,
-                    sourceWeightMapping: $scope.options.newLayer.sourceSize ? $scope.options.newLayer.sourceSize.columnName : "",
-                    targetWeightField: $scope.options.newLayer.targetSize,
-                    targetWeightMapping: $scope.options.newLayer.targetSize ? $scope.options.newLayer.targetSize.columnName : "",
+                    nodeWeightField: $scope.options.newLayer.nodeWeight,
+                    nodeWeightMapping: $scope.options.newLayer.nodeWeight ? $scope.options.newLayer.nodeWeight.columnName : "",
+                    lineWeightField: $scope.options.newLayer.lineWeight,
+                    lineWeightMapping: $scope.options.newLayer.lineWeight ? $scope.options.newLayer.lineWeight.columnName : "",
                     sourceLatitudeField: $scope.options.newLayer.sourceLatitude,
                     sourceLatitudeMapping: $scope.options.newLayer.sourceLatitude.columnName,
                     sourceLongitudeField: $scope.options.newLayer.sourceLongitude,
-                    sourceLongitudMapping: $scope.options.newLayer.sourceLongitude.columnName,
+                    sourceLongitudeMapping: $scope.options.newLayer.sourceLongitude.columnName,
                     targetLatitudeField: $scope.options.newLayer.targetLatitude,
                     targetLatitudeMapping: $scope.options.newLayer.targetLatitude.columnName,
-                    targetLongitudField: $scope.options.newLayer.targetLongitude,
-                    targetLongitudMapping: $scope.options.newLayer.targetLongitude.columnName,
+                    targetLongitudeField: $scope.options.newLayer.targetLongitude,
+                    targetLongitudeMapping: $scope.options.newLayer.targetLongitude.columnName,
                     nodeColorField: $scope.options.newLayer.nodeColorBy,
                     nodeColorBy: $scope.options.newLayer.nodeColorBy ? $scope.options.newLayer.nodeColorBy.columnName : "",
                     lineColorField: $scope.options.newLayer.lineColorBy,
@@ -2074,9 +2073,8 @@ angular.module('neonDemo.directives')
                         editedLayer.sourceLongitudeMapping = layer.sourceLongitudeMapping;
                         editedLayer.targetLatitudeMapping = layer.targetLatitudeMapping;
                         editedLayer.targetLongitudeMapping = layer.targetLongitudeMapping;
-                        editedLayer.sourceWeightMapping = layer.sourceWeightMapping;
-                        editedLayer.targetWeightMapping = layer.targetWeightMapping;
-                        editedLayer.weightMapping = layer.weightMapping;
+                        editedLayer.nodeWeightMapping = layer.nodeWeightMapping;
+                        editedLayer.lineWeightMapping = layer.lineWeightMapping;
                         editedLayer.nodeColorBy = layer.nodeColorBy;
                         editedLayer.lineColorBy = layer.lineColorBy;
                         editedLayer.nodeDefaultColor = layer.nodeDefaultColor;

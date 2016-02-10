@@ -197,22 +197,15 @@
 
                     <div class="layer-options-row" ng-show="(options.newLayer.type == NODE_AND_ARROW_LAYER)">
                         <div class="form-group layer-options-col">
-                            <label>Source Size Field</label>
-                            <select class="form-control" ng-model="options.newLayer.sourceSize" ng-options="field.prettyName for field in fields" ng-required="false" ng-disabled="!(fields.length > 0)">
-                                <option value="">None</option>
-                            </select>
-                        </div>
-
-                        <div class="form-group layer-options-col">
-                            <label>Target Size Field</label>
-                            <select class="form-control" ng-model="options.newLayer.targetSize" ng-options="field.prettyName for field in fields" ng-required="false" ng-disabled="!(fields.length > 0)">
+                            <label>Point Size Field</label>
+                            <select class="form-control" ng-model="options.newLayer.nodeWeight" ng-options="field.prettyName for field in fields" ng-required="false" ng-disabled="!(fields.length > 0)">
                                 <option value="">None</option>
                             </select>
                         </div>
 
                         <div class="form-group layer-options-col">
                             <label>Line Size Field</label>
-                            <select class="form-control" ng-model="options.newLayer.size" ng-options="field.prettyName for field in fields" ng-required="false" ng-disabled="!(fields.length > 0)">
+                            <select class="form-control" ng-model="options.newLayer.lineWeight" ng-options="field.prettyName for field in fields" ng-required="false" ng-disabled="!(fields.length > 0)">
                                 <option value="">None</option>
                             </select>
                         </div>
@@ -436,22 +429,15 @@
 
                             <div class="layer-options-row" ng-show="layer.type == NODE_AND_ARROW_LAYER">
                                 <div class="form-group layer-options-col">
-                                    <label>Source Size Field</label>
-                                    <select class="form-control" ng-cancel-drag ng-model="layer.sourceWeightField" ng-options="field.prettyName for field in layer.fields" ng-required="false" ng-disabled="!(layer.fields.length > 0)">
-                                        <option value="">None</option>
-                                    </select>
-                                </div>
-
-                                <div class="form-group layer-options-col">
-                                    <label>Target Size Field</label>
-                                    <select class="form-control" ng-cancel-drag ng-model="layer.targetWeightField" ng-options="field.prettyName for field in layer.fields" ng-required="false" ng-disabled="!(layer.fields.length > 0)">
+                                    <label>Point Size Field</label>
+                                    <select class="form-control" ng-cancel-drag ng-model="layer.nodeWeightField" ng-options="field.prettyName for field in layer.fields" ng-required="false" ng-disabled="!(layer.fields.length > 0)">
                                         <option value="">None</option>
                                     </select>
                                 </div>
 
                                 <div class="form-group layer-options-col">
                                     <label>Line Size Field</label>
-                                    <select class="form-control" ng-cancel-drag ng-model="layer.sizeField" ng-options="field.prettyName for field in layer.fields" ng-required="false" ng-disabled="!(layer.fields.length > 0)">
+                                    <select class="form-control" ng-cancel-drag ng-model="layer.lineWeightField" ng-options="field.prettyName for field in layer.fields" ng-required="false" ng-disabled="!(layer.fields.length > 0)">
                                         <option value="">None</option>
                                     </select>
                                 </div>
