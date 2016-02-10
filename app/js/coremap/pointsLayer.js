@@ -350,7 +350,7 @@ coreMap.Map.Layer.PointsLayer.prototype.setData = function(data) {
 };
 
 coreMap.Map.Layer.PointsLayer.prototype.setDateFilter = function(filterBounds) {
-    if(filterBounds && filterBounds.start && filterBounds.end) {
+    if(this.dateMapping && filterBounds && filterBounds.start && filterBounds.end) {
         // Update the filter
         this.dateFilter.lowerBoundary = filterBounds.start;
         this.dateFilter.upperBoundary = filterBounds.end;

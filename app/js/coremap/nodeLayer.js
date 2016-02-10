@@ -384,7 +384,7 @@ coreMap.Map.Layer.NodeLayer.prototype.setData = function(edges) {
 };
 
 coreMap.Map.Layer.NodeLayer.prototype.setDateFilter = function(filterBounds) {
-    if(filterBounds && filterBounds.start && filterBounds.end) {
+    if(this.dateMapping && filterBounds && filterBounds.start && filterBounds.end) {
         // Update the filter
         this.dateFilter.lowerBoundary = filterBounds.start;
         this.dateFilter.upperBoundary = filterBounds.end;

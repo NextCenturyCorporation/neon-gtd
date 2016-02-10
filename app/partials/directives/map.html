@@ -117,6 +117,13 @@
                             <input type="text" class="form-control" placeholder="None" ng-model="options.newLayer.colorCode" ng-required="false"/>
                         </div>
 
+                        <div class="form-group layer-options-col" ng-show="options.newLayer.type == POINT_LAYER">
+                            <label>Date Field</label>
+                            <select class="form-control" ng-model="options.newLayer.date" ng-options="field.prettyName for field in fields" ng-required="false" ng-disabled="!(fields.length > 0)">
+                                <option value="">None</option>
+                            </select>
+                        </div>
+
                         <div class="form-group layer-options-col" ng-show="options.newLayer.type == CLUSTER_LAYER">
                             <label>Popup Fields</label>
                             <select class="form-control" ng-model="options.newLayer.popupFields"
@@ -199,6 +206,13 @@
                     </div>
 
                     <div class="layer-options-row" ng-show="(options.newLayer.type == NODE_AND_ARROW_LAYER)">
+                        <div class="form-group layer-options-col">
+                            <label>Date Field</label>
+                            <select class="form-control" ng-model="options.newLayer.date" ng-options="field.prettyName for field in fields" ng-required="false" ng-disabled="!(fields.length > 0)">
+                                <option value="">None</option>
+                            </select>
+                        </div>
+
                         <div class="form-group layer-options-col">
                             <label>Size Field</label>
                             <select class="form-control" ng-model="options.newLayer.size" ng-options="field.prettyName for field in fields" ng-required="false" ng-disabled="!(fields.length > 0)">
@@ -334,6 +348,13 @@
                                     <input type="text" class="form-control" placeholder="{{layer.defaultColor || 'None'}}" ng-cancel-drag ng-model="layer.defaultColor" ng-required="false">
                                 </div>
 
+                                <div class="form-group layer-options-col" ng-show="layer.type == POINT_LAYER">
+                                    <label>Date Field</label>
+                                    <select class="form-control" ng-cancel-drag ng-model="layer.dateField" ng-options="field.prettyName for field in layer.fields" ng-required="false" ng-disabled="!(layer.fields.length > 0)">
+                                        <option value="">None</option>
+                                    </select>
+                                </div>
+
                                 <div class="form-group layer-options-col" ng-show="layer.type == CLUSTER_LAYER">
                                     <label>Popup Fields</label>
                                     <select class="form-control" ng-model="layer.popupFields"
@@ -420,6 +441,13 @@
                                 <div class="form-group layer-options-col">
                                     <label>Size Field</label>
                                     <select class="form-control" ng-cancel-drag ng-model="layer.sizeField" ng-options="field.prettyName for field in layer.fields" ng-required="false" ng-disabled="!(layer.fields.length > 0)">
+                                        <option value="">None</option>
+                                    </select>
+                                </div>
+
+                                <div class="form-group layer-options-col">
+                                    <label>Date Field</label>
+                                    <select class="form-control" ng-cancel-drag ng-model="layer.dateField" ng-options="field.prettyName for field in layer.fields" ng-required="false" ng-disabled="!(layer.fields.length > 0)">
                                         <option value="">None</option>
                                     </select>
                                 </div>

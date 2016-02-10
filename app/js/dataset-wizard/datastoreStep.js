@@ -87,6 +87,7 @@ angular.module('neonDemo.directives')
                 }
 
                 $scope.isLoading = true;
+                $scope.databases = [];
 
                 connection.getDatabaseNames(function(databaseNames) {
                     $scope.$apply(function() {

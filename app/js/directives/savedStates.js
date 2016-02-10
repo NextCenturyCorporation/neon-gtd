@@ -178,19 +178,21 @@ angular.module('neonDemo.directives')
                 $scope.stateNameError = false;
 
                 var connection = connectionService.getActiveConnection();
-                if(connection) {
-                    $scope.isLoading = true;
-                    connection.getAllStateNames(function(stateNames) {
-                        $scope.$apply(function() {
-                            $scope.isLoading = false;
-                            $scope.stateNames = stateNames;
-                        });
-                    }, function(response) {
-                        $scope.isLoading = false;
-                        $scope.stateNames = [];
-                        errorNotificationService.showErrorMessage(null, response.responseJSON.error);
-                    });
+                if(!connection) {
+                    connection = connectionService.createActiveConnection();
                 }
+
+                $scope.isLoading = true;
+                connection.getAllStateNames(function(stateNames) {
+                    $scope.$apply(function() {
+                        $scope.isLoading = false;
+                        $scope.stateNames = stateNames;
+                    });
+                }, function(response) {
+                    $scope.isLoading = false;
+                    $scope.stateNames = [];
+                    errorNotificationService.showErrorMessage(null, response.responseJSON.error);
+                });
             };
 
             $('#overwriteStateModal').on('show.bs.modal', modalOnShow);
