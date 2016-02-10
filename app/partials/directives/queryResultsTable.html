@@ -1,31 +1,31 @@
 <div class="header">
     <div class="header-container" ng-show="!(hideHeader)">
-        <div class="title header-text pull-left" ng-bind="(bindTitle != undefined) ? bindTitle : active.table.prettyName"></div>
+        <div class="title header-text pull-left" ng-bind="generateTitle()"></div>
 
         <options-menu parent-element="element" export-function="makeQueryResultsTableExportObject" button-text="optionsMenuButtonText" show-button-text="showOptionsMenuButtonText">
             <div class="form-group" ng-show="!(hideAdvancedOptions)">
                 <label>Database</label>
-                <select class="form-control" ng-model="active.database" ng-options="database.prettyName for database in databases" ng-required="true" ng-disabled="(databases.length < 2)" ng-change="handleDatabaseChange()">
+                <select class="form-control" ng-model="active.database" ng-options="database.prettyName for database in databases" ng-required="true" ng-disabled="(databases.length < 2)" ng-change="handleChangeDatabase()">
                 </select>
             </div>
             <div class="form-group" ng-show="!(hideAdvancedOptions)">
                 <label>Table</label>
-                <select class="form-control" ng-model="active.table" ng-options="table.prettyName for table in tables" ng-required="true" ng-disabled="(tables.length < 2)" ng-change="handleTableChange()">
+                <select class="form-control" ng-model="active.table" ng-options="table.prettyName for table in tables" ng-required="true" ng-disabled="(tables.length < 2)" ng-change="handleChangeTable()">
                 </select>
             </div>
 
             <div class="form-group">
                 <label>Sort By Field</label>
                 <div class="input-group">
-                    <select class="form-control" ng-model="active.sortByField" ng-disabled="!(fields.length > 0)" ng-options="field.prettyName for field in fields" ng-change="handleSortByFieldChange()">
+                    <select class="form-control" ng-model="active.sortByField" ng-disabled="!(fields.length > 0)" ng-options="field.prettyName for field in fields" ng-change="handleChangeSortField()">
                     </select>
 
                     <div class="input-group-btn">
                         <label class="btn btn-default active" ng-class="{true: 'active', false: ''}[active.sortDirection === ASCENDING]">
-                            <input type="radio" ng-model="active.sortDirection" style="display:none" ng-value="ASCENDING" ng-change="handleSortDirectionChange()">ASC
+                            <input type="radio" ng-model="active.sortDirection" style="display:none" ng-value="ASCENDING" ng-change="handleChangeSortDirection()">ASC
                         </label>
                         <label class="btn btn-default" ng-class="{true: 'active', false: ''}[active.sortDirection === DESCENDING]">
-                            <input type="radio" ng-model="active.sortDirection" style="display:none" ng-value="DESCENDING" ng-change="handleSortDirectionChange()">DESC
+                            <input type="radio" ng-model="active.sortDirection" style="display:none" ng-value="DESCENDING" ng-change="handleChangeSortDirection()">DESC
                         </label>
                     </div>
                 </div>
@@ -36,7 +36,26 @@
                 <div class="input-group">
                     <input type="number" min="1" class="form-control" ng-model="active.limit" required>
                     <div class="input-group-btn">
-                        <button type="button" class="btn btn-default refresh" title="Refresh" ng-click="handleLimitChange()">
+                        <button type="button" class="btn btn-default refresh" title="Refresh" ng-click="handleChangeLimit()">
+                            <span class="glyphicon glyphicon-refresh"></span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="form-group" ng-show="!(hideAdvancedOptions)">
+                <label>Unshared Filter</label>
+                <select class="form-control" ng-model="active.filterField" ng-required="false" ng-disabled="!(fields.length > 0)" ng-options="field.prettyName for field in fields" ng-change="handleChangeUnsharedFilterField()">
+                    <option selected value="">None</option>
+                </select>
+
+                <div class="input-group">
+                    <input type="text" class="form-control" placeholder="{{'Filter for ' + active.filterField.prettyName + '...'}}" ng-model="active.filterValue" ng-disabled="!(active.filterField.columnName)">
+                    <div class="input-group-btn">
+                        <button type="button" class="btn btn-default refresh" title="Remove Unshared Filter" ng-disabled="(active.filterField.columnName == undefined || active.filterValue == '')" ng-click="handleRemoveUnsharedFilter()">
+                            <span class="glyphicon glyphicon-remove"></span>
+                        </button>
+                        <button type="button" class="btn btn-default refresh" title="Set Unshared Filter" ng-click="handleChangeUnsharedFilterValue()">
                             <span class="glyphicon glyphicon-refresh"></span>
                         </button>
                     </div>

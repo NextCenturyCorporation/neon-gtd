@@ -40,6 +40,8 @@ function(connectionService, datasetService, errorNotificationService, exportServ
             bindGroupFields: '=',
             bindValueField: '=',
             bindArcValue: '=',
+            bindFilterField: '=',
+            bindFilterValue: '=',
             bindStateId: '=',
             hideHeader: '=?',
             hideAdvancedOptions: '=?'
@@ -65,7 +67,8 @@ function(connectionService, datasetService, errorNotificationService, exportServ
                 database: {},
                 table: {},
                 selectedItem: "",
-                valueField: ""
+                valueField: "",
+                filterField: {}
             };
 
             var initialize = function() {
@@ -178,6 +181,16 @@ function(connectionService, datasetService, errorNotificationService, exportServ
                     query.aggregate(neon.query.SUM, $scope.options.valueField.columnName, $scope.options.valueField.prettyName);
                 }
 
+                if(datasetService.isFieldValid($scope.options.filterField) && $scope.options.filterValue) {
+                    var operator = "contains";
+                    var value = $scope.options.filterValue;
+                    if($.isNumeric(value)) {
+                        operator = "=";
+                        value = parseFloat(value);
+                    }
+                    query.where($scope.options.filterField.columnName, operator, value);
+                }
+
                 return query;
             };
 
@@ -221,6 +234,7 @@ function(connectionService, datasetService, errorNotificationService, exportServ
             $scope.updateFields = function() {
                 $scope.loadingData = true;
                 $scope.fields = datasetService.getSortedFields($scope.options.database.name, $scope.options.table.name);
+
                 $scope.groupFields = [];
                 if($scope.bindGroupFields) {
                     _.each($scope.bindGroupFields.split(","), function(groupFieldName) {
@@ -232,10 +246,17 @@ function(connectionService, datasetService, errorNotificationService, exportServ
                         }
                     });
                 }
+
                 $scope.options.valueField = $scope.bindValueField ? _.find($scope.fields, function(field) {
                     return field.columnName === $scope.bindValueField;
                 }) || datasetService.createBlankField() : datasetService.createBlankField();
                 $scope.arcValue = $scope.bindArcValue ? $scope.bindArcValue : charts.SunburstChart.COUNT_PARTITION;
+                var filterFieldName = $scope.bindFilterField || "";
+                $scope.options.filterField = _.find($scope.fields, function(field) {
+                    return field.columnName === filterFieldName;
+                }) || datasetService.createBlankField();
+                $scope.options.filterValue = $scope.bindFilterValue || "";
+
                 queryForData();
             };
 
@@ -244,6 +265,9 @@ function(connectionService, datasetService, errorNotificationService, exportServ
                     errorNotificationService.hideErrorMessage($scope.errorMessage);
                     $scope.errorMessage = undefined;
                 }
+
+                // Save the title during the query so the title doesn't change immediately if the user changes the unshared filter.
+                $scope.queryTitle = $scope.generateTitle(true);
 
                 var connection = connectionService.getActiveConnection();
 
@@ -420,6 +444,26 @@ function(connectionService, datasetService, errorNotificationService, exportServ
                 queryForData();
             };
 
+            $scope.handleChangeUnsharedFilterField = function() {
+                // TODO Logging
+                $scope.options.filterValue = "";
+            };
+
+            $scope.handleChangeUnsharedFilterValue = function() {
+                // TODO Logging
+                if(!$scope.loadingData) {
+                    queryForData();
+                }
+            };
+
+            $scope.handleRemoveUnsharedFilter = function() {
+                // TODO Logging
+                $scope.options.filterValue = "";
+                if(!$scope.loadingData) {
+                    queryForData();
+                }
+            };
+
             /**
              * Creates and returns an object that contains information needed to export the data in this widget.
              * @return {Object} An object containing all the information needed to export the data in this widget.
@@ -481,8 +525,35 @@ function(connectionService, datasetService, errorNotificationService, exportServ
                 }).join(",") + "'" : undefined;
                 bindingFields["bind-value-field"] = ($scope.options.valueField && $scope.options.valueField.columnName) ? "'" + $scope.options.valueField.columnName + "'" : undefined;
                 bindingFields["bind-arc-value"] = ($scope.arcValue) ? "'" + $scope.arcValue + "'" : undefined;
+                bindingFields["bind-filter-field"] = ($scope.options.filterField && $scope.options.filterField.columnName) ? "'" + $scope.options.filterField.columnName + "'" : undefined;
+                var hasFilterValue = $scope.options.filterField && $scope.options.filterField.columnName && $scope.options.filterValue;
+                bindingFields["bind-filter-value"] = hasFilterValue ? "'" + $scope.options.filterValue + "'" : undefined;
                 return bindingFields;
             };
+
+            /**
+             * Generates and returns the title for this visualization.
+             * @param {Boolean} resetQueryTitle
+             * @method generateTitle
+             * @return {String}
+             */
+            $scope.generateTitle = function(resetQueryTitle) {
+                if(resetQueryTitle) {
+                    $scope.queryTitle = "";
+                }
+                if($scope.queryTitle) {
+                    return $scope.queryTitle;
+                }
+                var title = $scope.options.filterValue ? $scope.options.filterValue + " " : "";
+                if($scope.bindTitle) {
+                    return title + $scope.bindTitle;
+                }
+                if(_.keys($scope.options).length) {
+                    return title + $scope.options.table.prettyName;
+                }
+                return title;
+            };
+
 
             neon.ready(function() {
                 $scope.messenger = new neon.eventing.Messenger();

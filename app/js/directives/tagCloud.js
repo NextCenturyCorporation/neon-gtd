@@ -61,7 +61,6 @@ linksPopupService, themeService, translationService, visualizationService, $time
             $scope.loadingData = false;
             $scope.linksPopupButtonIsDisabled = true;
             $scope.tagColor = "#111";
-            $scope.queryTitle = "";
             $scope.translationAvailable = false;
             $scope.translationLanguages = {
                 fromLanguageOptions: {},
@@ -305,9 +304,9 @@ linksPopupService, themeService, translationService, visualizationService, $time
                 $scope.options.tagField = _.find($scope.fields, function(field) {
                     return field.columnName === tagField;
                 }) || datasetService.createBlankField();
-                var filterField = $scope.bindFilterField || "";
+                var filterFieldName = $scope.bindFilterField || "";
                 $scope.options.filterField = _.find($scope.fields, function(field) {
-                    return field.columnName === filterField;
+                    return field.columnName === filterFieldName;
                 }) || datasetService.createBlankField();
                 $scope.options.filterValue = $scope.bindFilterValue || "";
 
@@ -340,8 +339,7 @@ linksPopupService, themeService, translationService, visualizationService, $time
                 }
 
                 // Save the title during the query so the title doesn't change immediately if the user changes the unshared filter.
-                $scope.queryTitle = "";
-                $scope.queryTitle = $scope.generateTitle();
+                $scope.queryTitle = $scope.generateTitle(true);
 
                 var connection = connectionService.getActiveConnection();
 
@@ -595,7 +593,7 @@ linksPopupService, themeService, translationService, visualizationService, $time
                 setTagFilter();
             };
 
-            $scope.handleChangedTagField = function() {
+            $scope.handleChangeTagField = function() {
                 // TODO Logging
                 var tagField = $scope.options.previousTagField ? $scope.options.previousTagField.columnName : $scope.options.tagField.columnName;
                 $scope.options.previousTagField = $scope.options.tagField;
@@ -607,22 +605,19 @@ linksPopupService, themeService, translationService, visualizationService, $time
                 }
             };
 
-            $scope.handleChangedUnsharedFilterField = function() {
+            $scope.handleChangeUnsharedFilterField = function() {
                 // TODO Logging
-                if(!$scope.loadingData && $scope.options.filterValue) {
-                    $scope.options.filterValue = "";
-                    queryForTags();
-                }
+                $scope.options.filterValue = "";
             };
 
-            $scope.handleChangedUnsharedFilterValue = function() {
+            $scope.handleChangeUnsharedFilterValue = function() {
                 // TODO Logging
                 if(!$scope.loadingData) {
                     queryForTags();
                 }
             };
 
-            $scope.handleRemovedUnsharedFilter = function() {
+            $scope.handleRemoveUnsharedFilter = function() {
                 // TODO Logging
                 $scope.options.filterValue = "";
                 if(!$scope.loadingData) {
@@ -834,10 +829,14 @@ linksPopupService, themeService, translationService, visualizationService, $time
 
             /**
              * Generates and returns the title for this visualization.
+             * @param {Boolean} resetQueryTitle
              * @method generateTitle
              * @return {String}
              */
-            $scope.generateTitle = function() {
+            $scope.generateTitle = function(resetQueryTitle) {
+                if(resetQueryTitle) {
+                    $scope.queryTitle = "";
+                }
                 if($scope.queryTitle) {
                     return $scope.queryTitle;
                 }

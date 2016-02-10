@@ -31,6 +31,8 @@ function($filter, $timeout, connectionService, datasetService, errorNotification
             bindTitle: '=',
             bindFeedName: '=',
             bindFeedType: '=',
+            bindFilterField: '=',
+            bindFilterValue: '=',
             bindStateId: '=',
             hideHeader: '=?',
             hideAdvancedOptions: '=?'
@@ -82,6 +84,8 @@ function($filter, $timeout, connectionService, datasetService, errorNotification
                 selectedDateField: {},
                 selectedFlagField: {},
                 selectedTextField: {},
+                filterField: {},
+                filterValue: "",
                 selectedNodeId: "",
                 dataLimit: 500000,
                 hideSimpleNetworks: true,
@@ -323,6 +327,11 @@ function($filter, $timeout, connectionService, datasetService, errorNotification
                 $scope.options.selectedTextField = _.find($scope.fields, function(field) {
                     return field.columnName === selectedTextField;
                 }) || datasetService.createBlankField();
+                var filterFieldName = $scope.bindFilterField || "";
+                $scope.options.filterField = _.find($scope.fields, function(field) {
+                    return field.columnName === filterFieldName;
+                }) || datasetService.createBlankField();
+                $scope.options.filterValue = $scope.bindFilterValue || "";
 
                 updateGraphDataMappings();
                 $scope.selectedNodeIds = [];
@@ -361,6 +370,9 @@ function($filter, $timeout, connectionService, datasetService, errorNotification
                     errorNotificationService.hideErrorMessage($scope.errorMessage);
                     $scope.errorMessage = undefined;
                 }
+
+                // Save the title during the query so the title doesn't change immediately if the user changes the unshared filter.
+                $scope.queryTitle = $scope.generateTitle(true);
 
                 recreateGraph();
                 publishNews([]);
@@ -534,6 +546,16 @@ function($filter, $timeout, connectionService, datasetService, errorNotification
                     .groupBy($scope.options.selectedNodeField)
                     .aggregate(neon.query.COUNT, '*', 'count');
 
+                if(datasetService.isFieldValid($scope.options.filterField) && $scope.options.filterValue) {
+                    var operator = "contains";
+                    var value = $scope.options.filterValue;
+                    if($.isNumeric(value)) {
+                        operator = "=";
+                        value = parseFloat(value);
+                    }
+                    query.where($scope.options.filterField.columnName, operator, value);
+                }
+
                 return query;
             };
 
@@ -679,6 +701,26 @@ function($filter, $timeout, connectionService, datasetService, errorNotification
                 }
             };
 
+            $scope.handleChangeUnsharedFilterField = function() {
+                // TODO Logging
+                $scope.options.filterValue = "";
+            };
+
+            $scope.handleChangeUnsharedFilterValue = function() {
+                // TODO Logging
+                if(!$scope.loadingData) {
+                    $scope.queryForData();
+                }
+            };
+
+            $scope.handleRemoveUnsharedFilter = function() {
+                // TODO Logging
+                $scope.options.filterValue = "";
+                if(!$scope.loadingData) {
+                    $scope.queryForData();
+                }
+            };
+
             /**
              * Creates and returns an object that contains information needed to export the data in this widget.
              * @return {Object} An object containing all the information needed to export the data in this widget.
@@ -747,6 +789,9 @@ function($filter, $timeout, connectionService, datasetService, errorNotification
                 var bindingFields = {};
                 bindingFields["bind-feed-name"] = $scope.bindFeedName ? "'" + $scope.bindFeedName + "'" : undefined;
                 bindingFields["bind-feed-type"] = $scope.bindFeedType ? "'" + $scope.bindFeedType + "'" : undefined;
+                bindingFields["bind-filter-field"] = ($scope.options.filterField && $scope.options.filterField.columnName) ? "'" + $scope.options.filterField.columnName + "'" : undefined;
+                var hasFilterValue = $scope.options.filterField && $scope.options.filterField.columnName && $scope.options.filterValue;
+                bindingFields["bind-filter-value"] = hasFilterValue ? "'" + $scope.options.filterValue + "'" : undefined;
 
                 /* Set mappings for each field, if set */
 
@@ -810,6 +855,29 @@ function($filter, $timeout, connectionService, datasetService, errorNotification
                 }
 
                 return bindingFields;
+            };
+
+            /**
+             * Generates and returns the title for this visualization.
+             * @param {Boolean} resetQueryTitle
+             * @method generateTitle
+             * @return {String}
+             */
+            $scope.generateTitle = function(resetQueryTitle) {
+                if(resetQueryTitle) {
+                    $scope.queryTitle = "";
+                }
+                if($scope.queryTitle) {
+                    return $scope.queryTitle;
+                }
+                var title = $scope.options.filterValue ? $scope.options.filterValue + " " : "";
+                if($scope.bindTitle) {
+                    return title + $scope.bindTitle;
+                }
+                if(_.keys($scope.options).length) {
+                    return title + $scope.options.table.prettyName + ($scope.options.selectedNodeField.prettyName ? " / " + $scope.options.selectedNodeField.prettyName : "");
+                }
+                return title;
             };
 
             // Wait for neon to be ready, the create our messenger and intialize the view and data.

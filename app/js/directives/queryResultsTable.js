@@ -44,6 +44,8 @@ linksPopupService, themeService, visualizationService, linkify, $sce, $timeout) 
             bindSortField: '=',
             bindSortDirection: '=',
             bindLimit: '=',
+            bindFilterField: '=',
+            bindFilterValue: '=',
             hideHeader: '=?',
             hideAdvancedOptions: '=?'
         },
@@ -59,7 +61,8 @@ linksPopupService, themeService, visualizationService, linkify, $sce, $timeout) 
             $scope.active = {
                 database: {},
                 table: {},
-                sortByField: {}
+                sortByField: {},
+                filterField: {}
             };
 
             neon.ready(function() {
@@ -234,6 +237,11 @@ linksPopupService, themeService, visualizationService, linkify, $sce, $timeout) 
                 $scope.active.sortByField = _.find($scope.fields, function(field) {
                     return field.columnName === sortByFieldName;
                 }) || ($scope.fields.length ? $scope.fields[0] : datasetService.createBlankField());
+                var filterFieldName = $scope.bindFilterField || "";
+                $scope.active.filterField = _.find($scope.fields, function(field) {
+                    return field.columnName === filterFieldName;
+                }) || datasetService.createBlankField();
+                $scope.active.filterValue = $scope.bindFilterValue || "";
 
                 queryForTotalRows();
                 updateColumns();
@@ -253,6 +261,15 @@ linksPopupService, themeService, visualizationService, linkify, $sce, $timeout) 
                 }
 
                 var query = new neon.query.Query().selectFrom($scope.active.database.name, $scope.active.table.name).aggregate(neon.query.COUNT, '*', 'count');
+                if(datasetService.isFieldValid($scope.active.filterField) && $scope.active.filterValue) {
+                    var operator = "contains";
+                    var value = $scope.active.filterValue;
+                    if($.isNumeric(value)) {
+                        operator = "=";
+                        value = parseFloat(value);
+                    }
+                    query.where($scope.active.filterField.columnName, operator, value);
+                }
 
                 XDATA.userALE.log({
                     activity: "alter",
@@ -429,6 +446,9 @@ linksPopupService, themeService, visualizationService, linkify, $sce, $timeout) 
                     $scope.errorMessage = undefined;
                 }
 
+                // Save the title during the query so the title doesn't change immediately if the user changes the unshared filter.
+                $scope.queryTitle = $scope.generateTitle(true);
+
                 var connection = connectionService.getActiveConnection();
 
                 if(!connection) {
@@ -526,6 +546,15 @@ linksPopupService, themeService, visualizationService, linkify, $sce, $timeout) 
                 var query = new neon.query.Query().selectFrom($scope.active.database.name, $scope.active.table.name).limit($scope.active.limit);
                 if(datasetService.isFieldValid($scope.active.sortByField)) {
                     query.sortBy($scope.active.sortByField.columnName, $scope.active.sortDirection);
+                }
+                if(datasetService.isFieldValid($scope.active.filterField) && $scope.active.filterValue) {
+                    var operator = "contains";
+                    var value = $scope.active.filterValue;
+                    if($.isNumeric(value)) {
+                        operator = "=";
+                        value = parseFloat(value);
+                    }
+                    query.where($scope.active.filterField.columnName, operator, value);
                 }
                 return query;
             };
@@ -700,17 +729,17 @@ linksPopupService, themeService, visualizationService, linkify, $sce, $timeout) 
                 });
             };
 
-            $scope.handleDatabaseChange = function() {
+            $scope.handleChangeDatabase = function() {
                 logChange("database", $scope.active.database.name);
                 updateTables();
             };
 
-            $scope.handleTableChange = function() {
+            $scope.handleChangeTable = function() {
                 logChange("table", $scope.active.table.name);
                 updateFields();
             };
 
-            var handleSortChange = function() {
+            var handleChangeSort = function() {
                 var sort = {
                     colId: $scope.active.sortByField.columnName,
                     sort: $scope.active.sortDirection === $scope.ASCENDING ? "asc" : "desc"
@@ -723,20 +752,42 @@ linksPopupService, themeService, visualizationService, linkify, $sce, $timeout) 
                 }
             };
 
-            $scope.handleSortByFieldChange = function() {
+            $scope.handleChangeSortField = function() {
                 logChange("sort-field", $scope.active.sortByField.name);
-                handleSortChange();
+                handleChangeSort();
             };
 
-            $scope.handleSortDirectionChange = function() {
+            $scope.handleChangeSortDirection = function() {
                 logChange("sort-direction", $scope.active.sortDirection, "button");
-                handleSortChange();
+                handleChangeSort();
             };
 
-            $scope.handleLimitChange = function() {
+            $scope.handleChangeLimit = function() {
                 logChange("limit", $scope.active.limit, "button");
                 if(!$scope.initializing) {
                     queryForData();
+                }
+            };
+
+            $scope.handleChangeUnsharedFilterField = function() {
+                logChange("unshared-filter-field", $scope.active.filterField.columnName);
+                $scope.active.filterValue = "";
+            };
+
+            $scope.handleChangeUnsharedFilterValue = function() {
+                logChange("unshared-filter-value", $scope.active.filterValue);
+                if(!$scope.initializing) {
+                    queryForData();
+                    queryForTotalRows();
+                }
+            };
+
+            $scope.handleRemoveUnsharedFilter = function() {
+                logChange("unshared-filter", "", "button");
+                $scope.active.filterValue = "";
+                if(!$scope.initializing) {
+                    queryForData();
+                    queryForTotalRows();
                 }
             };
 
@@ -755,7 +806,33 @@ linksPopupService, themeService, visualizationService, linkify, $sce, $timeout) 
                 bindingFields["bind-sort-field"] = ($scope.active.sortByField && $scope.active.sortByField.columnName) ? "'" + $scope.active.sortByField.columnName + "'" : undefined;
                 bindingFields["bind-sort-direction"] = $scope.active.sortDirection;
                 bindingFields["bind-limit"] = $scope.active.limit;
+                bindingFields["bind-filter-field"] = ($scope.active.filterField && $scope.active.filterField.columnName) ? "'" + $scope.active.filterField.columnName + "'" : undefined;
+                var hasFilterValue = $scope.active.filterField && $scope.active.filterField.columnName && $scope.active.filterValue;
+                bindingFields["bind-filter-value"] = hasFilterValue ? "'" + $scope.active.filterValue + "'" : undefined;
                 return bindingFields;
+            };
+
+            /**
+             * Generates and returns the title for this visualization.
+             * @param {Boolean} resetQueryTitle
+             * @method generateTitle
+             * @return {String}
+             */
+            $scope.generateTitle = function(resetQueryTitle) {
+                if(resetQueryTitle) {
+                    $scope.queryTitle = "";
+                }
+                if($scope.queryTitle) {
+                    return $scope.queryTitle;
+                }
+                var title = $scope.active.filterValue ? $scope.active.filterValue + " " : "";
+                if($scope.bindTitle) {
+                    return title + $scope.bindTitle;
+                }
+                if(_.keys($scope.active).length) {
+                    return title + $scope.active.table.prettyName;
+                }
+                return title;
             };
 
             //TODO text selection on cells -- https://github.com/ceolter/ag-grid/issues/87

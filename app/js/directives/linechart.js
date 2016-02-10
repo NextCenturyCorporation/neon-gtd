@@ -116,7 +116,8 @@ function(external, connectionService, datasetService, errorNotificationService, 
                     attrX: {},
                     aggregation: "count",
                     attrY: {},
-                    categoryField: {}
+                    categoryField: {},
+                    filterField: {}
                 }
             };
 
@@ -538,12 +539,11 @@ function(external, connectionService, datasetService, errorNotificationService, 
                 }
 
                 // Creating a query with a where clause to exclude bad/null dates
-                var query = new neon.query.Query()
-                    .selectFrom(chart.database, chart.table)
-                    .where(neon.query.and(
-                        neon.query.where(chart.attrXMapping, '>=', new Date("1970-01-01T00:00:00.000Z")),
-                        neon.query.where(chart.attrXMapping, '<=', new Date("2025-01-01T00:00:00.000Z"))
-                    ));
+                var dateClause = neon.query.and(
+                    neon.query.where(chart.attrXMapping, '>=', new Date("1970-01-01T00:00:00.000Z")),
+                    neon.query.where(chart.attrXMapping, '<=', new Date("2025-01-01T00:00:00.000Z"))
+                );
+                var query = new neon.query.Query().selectFrom(chart.database, chart.table).where(dateClause);
 
                 query.groupBy.apply(query, groupByClause);
 
@@ -565,6 +565,16 @@ function(external, connectionService, datasetService, errorNotificationService, 
 
                 query.aggregate(neon.query.MIN, chart.attrXMapping, 'date')
                     .sortBy('date', neon.query.ASCENDING);
+
+                if(datasetService.isFieldValid(chart.filterField) && chart.filterValue) {
+                    var operator = "contains";
+                    var value = chart.filterValue;
+                    if($.isNumeric(value)) {
+                        operator = "=";
+                        value = parseFloat(value);
+                    }
+                    query.where(neon.query.and(dateClause, neon.query.where(chart.filterField.columnName, operator, value)));
+                }
 
                 if(!chart.active) {
                     var filterClause = createFilterClauseForDate({
@@ -664,6 +674,8 @@ function(external, connectionService, datasetService, errorNotificationService, 
                 $scope.loadingData = true;
                 $scope.fields = datasetService.getSortedFields($scope.options.newChart.database.name, $scope.options.newChart.table.name);
                 $scope.options.newChart.aggregation = "count";
+                $scope.options.newChart.filterField = datasetService.createBlankField();
+                $scope.options.newChart.filterValue = "";
 
                 var attrX = datasetService.getMapping($scope.options.newChart.database.name, $scope.options.newChart.table.name, neonMappings.DATE) || "";
                 $scope.options.newChart.attrX = _.find($scope.fields, function(field) {
@@ -711,6 +723,8 @@ function(external, connectionService, datasetService, errorNotificationService, 
                 chart.attrYMapping = chart.yAxis;
                 chart.categoryField = datasetService.findField(chart.fields, chart.category);
                 chart.categoryMapping = chart.category;
+                chart.filterField = datasetService.findField(chart.fields, chart.filterField);
+                chart.filterValue = chart.filterValue;
                 chart.active = chart.active;
                 chart.visible = true;
                 chart.id = uuid();
@@ -815,6 +829,8 @@ function(external, connectionService, datasetService, errorNotificationService, 
                     attrYMapping: ($scope.options.newChart.attrY ? $scope.options.newChart.attrY.columnName : ""),
                     categoryField: $scope.options.newChart.categoryField,
                     categoryMapping: ($scope.options.newChart.categoryField ? $scope.options.newChart.categoryField.columnName : ""),
+                    filterField: $scope.options.newChart.filterField,
+                    filterValue: $scope.options.newChart.filterValue,
                     active: $scope.options.newChart.active,
                     visible: $scope.options.newChart.visible,
                     validFields: true,
@@ -869,9 +885,8 @@ function(external, connectionService, datasetService, errorNotificationService, 
              * @private
              */
             var createChartTitle = function(chart) {
-                return chart.table.name +
-                    (chart.attrYMapping && chart.aggregation !== "count" ?
-                        ' / ' + chart.attrYMapping : '');
+                return ((chart.filterField.columnName && chart.filterValue) ? chart.filterValue + " " : "") + chart.table.name +
+                    ((chart.attrYMapping && chart.aggregation !== "count") ?  ' / ' + chart.attrYMapping : '');
             };
 
             /**
@@ -1897,8 +1912,9 @@ function(external, connectionService, datasetService, errorNotificationService, 
                         xAxis: chart.attrXMapping,
                         aggregation: chart.aggregation,
                         yAxis: chart.attrYMapping,
-                        category: chart.categoryMapping
-
+                        category: chart.categoryMapping,
+                        filterField: chart.filterField.columnName,
+                        filterValue: chart.filterValue
                     });
                 });
 

@@ -29,9 +29,9 @@ exportService, linksPopupService, themeService, visualizationService) {
             bindGroupField: '=',
             bindAggregation: '=',
             bindAggregationField: '=',
+            bindLimit: '=',
             bindFilterField: '=',
             bindFilterValue: '=',
-            bindLimit: '=',
             bindTable: '=',
             bindDatabase: '=',
             bindStateId: '=',
@@ -288,9 +288,10 @@ exportService, linksPopupService, themeService, visualizationService) {
                 }
 
                 $scope.showTooMuchDataError = false;
+
                 // Save the title during the query so the title doesn't change immediately if the user changes the unshared filter.
-                $scope.queryTitle = "";
-                $scope.queryTitle = $scope.generateTitle();
+                $scope.queryTitle = $scope.generateTitle(true);
+
                 resizeTitle();
 
                 var connection = connectionService.getActiveConnection();
@@ -415,6 +416,10 @@ exportService, linksPopupService, themeService, visualizationService) {
                     query.sortBy($scope.active.aggregation, neon.query.DESCENDING);
                 }
 
+                if($scope.active.limit) {
+                    query.limit($scope.active.limit);
+                }
+
                 if(datasetService.isFieldValid($scope.active.filterField) && $scope.active.filterValue) {
                     var operator = "contains";
                     var value = $scope.active.filterValue;
@@ -423,10 +428,6 @@ exportService, linksPopupService, themeService, visualizationService) {
                         value = parseFloat(value);
                     }
                     query.where(neon.query.and(whereNotNull, neon.query.where($scope.active.filterField.columnName, operator, value)));
-                }
-
-                if($scope.active.limit) {
-                    query.limit($scope.active.limit);
                 }
 
                 return query;
@@ -664,62 +665,59 @@ exportService, linksPopupService, themeService, visualizationService) {
                 });
             };
 
-            $scope.handleDatabaseChange = function() {
+            $scope.handleChangeDatabase = function() {
                 logChange("database", $scope.active.database.name);
                 updateTables();
             };
 
-            $scope.handleTableChange = function() {
+            $scope.handleChangeTable = function() {
                 logChange("table", $scope.active.table.name);
                 updateFields();
             };
 
-            $scope.handleDataFieldChange = function() {
+            $scope.handleChangeDataField = function() {
                 logChange("data-field", $scope.active.dataField.columnName);
                 if(!$scope.initializing) {
                     updateColumns();
                 }
             };
 
-            $scope.handleAggregationChange = function() {
+            $scope.handleChangeAggregation = function() {
                 logChange("aggregation", $scope.active.aggregation);
                 if(!$scope.initializing) {
                     updateColumns();
                 }
             };
 
-            $scope.handleAggregationFieldChange = function() {
+            $scope.handleChangeAggregationField = function() {
                 logChange("aggregation-field", $scope.active.aggregationField.columnName);
                 if(!$scope.initializing) {
                     updateColumns();
                 }
             };
 
-            $scope.handleUnsharedFilterFieldChange = function() {
-                logChange("unshared-filter-field", $scope.active.filterField.columnName);
+            $scope.handleChangeLimit = function() {
+                logChange("limit", $scope.active.limit, "button");
                 if(!$scope.initializing) {
-                    $scope.active.filterValue = "";
                     queryForData();
                 }
             };
 
-            $scope.handleUnsharedFilterValueChange = function() {
+            $scope.handleChangeUnsharedFilterField = function() {
+                logChange("unshared-filter-field", $scope.active.filterField.columnName);
+                $scope.active.filterValue = "";
+            };
+
+            $scope.handleChangeUnsharedFilterValue = function() {
                 logChange("unshared-filter-value", $scope.active.filterValue);
                 if(!$scope.initializing) {
                     queryForData();
                 }
             };
 
-            $scope.handleUnsharedFilterRemove = function() {
+            $scope.handleRemoveUnsharedFilter = function() {
                 logChange("unshared-filter", "");
                 $scope.active.filterValue = "";
-                if(!$scope.initializing) {
-                    queryForData();
-                }
-            };
-
-            $scope.handleLimitChange = function() {
-                logChange("limit", $scope.active.limit, "button");
                 if(!$scope.initializing) {
                     queryForData();
                 }
@@ -739,22 +737,26 @@ exportService, linksPopupService, themeService, visualizationService) {
                 bindingFields["bind-aggregation"] = $scope.active.aggregation ? "'" + $scope.active.aggregation + "'" : undefined;
                 var hasAggField = $scope.active.aggregation && $scope.active.aggregation !== 'count' && $scope.active.aggregationField && $scope.active.aggregationField.columnName;
                 bindingFields["bind-aggregation-field"] = hasAggField ? "'" + $scope.active.aggregationField.columnName + "'" : undefined;
-                bindingFields["bind-filter-field"] = ($scope.active.filterField && $scope.active.filterField.columnName) ? "'" + $scope.active.filterField.columnName + "'" : undefined;
-                var hasFilterValue = $scope.active.filterField && $scope.active.filterField.columnName && $scope.active.filterValue;
-                bindingFields["bind-filter-value"] = hasFilterValue ? "'" + $scope.active.filterValue + "'" : undefined;
                 bindingFields["bind-table"] = ($scope.active.table && $scope.active.table.name) ? "'" + $scope.active.table.name + "'" : undefined;
                 bindingFields["bind-database"] = ($scope.active.database && $scope.active.database.name) ? "'" + $scope.active.database.name + "'" : undefined;
                 bindingFields["bind-limit"] = $scope.active.limitCount;
+                bindingFields["bind-filter-field"] = ($scope.active.filterField && $scope.active.filterField.columnName) ? "'" + $scope.active.filterField.columnName + "'" : undefined;
+                var hasFilterValue = $scope.active.filterField && $scope.active.filterField.columnName && $scope.active.filterValue;
+                bindingFields["bind-filter-value"] = hasFilterValue ? "'" + $scope.active.filterValue + "'" : undefined;
 
                 return bindingFields;
             };
 
             /**
              * Generates and returns the title for this visualization.
+             * @param {Boolean} resetQueryTitle
              * @method generateTitle
              * @return {String}
              */
-            $scope.generateTitle = function() {
+            $scope.generateTitle = function(resetQueryTitle) {
+                if(resetQueryTitle) {
+                    $scope.queryTitle = "";
+                }
                 if($scope.queryTitle) {
                     return $scope.queryTitle;
                 }

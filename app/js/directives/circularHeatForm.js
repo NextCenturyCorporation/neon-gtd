@@ -39,6 +39,8 @@ function(connectionService, datasetService, errorNotificationService, exportServ
         scope: {
             bindTitle: '=',
             bindDateField: '=',
+            bindFilterField: '=',
+            bindFilterValue: '=',
             bindTable: '=',
             bindDatabase: '=',
             bindStateId: '=',
@@ -64,7 +66,8 @@ function(connectionService, datasetService, errorNotificationService, exportServ
             $scope.options = {
                 database: {},
                 table: {},
-                dateField: ""
+                dateField: "",
+                filterField: {}
             };
 
             var HOURS_IN_WEEK = 168;
@@ -226,6 +229,11 @@ function(connectionService, datasetService, errorNotificationService, exportServ
                 $scope.options.dateField = _.find($scope.fields, function(field) {
                     return field.columnName === dateField;
                 }) || datasetService.createBlankField();
+                var filterFieldName = $scope.bindFilterField || "";
+                $scope.options.filterField = _.find($scope.fields, function(field) {
+                    return field.columnName === filterFieldName;
+                }) || datasetService.createBlankField();
+                $scope.options.filterValue = $scope.bindFilterValue || "";
 
                 queryForChartData();
             };
@@ -241,6 +249,9 @@ function(connectionService, datasetService, errorNotificationService, exportServ
                     $scope.errorMessage = undefined;
                 }
 
+                // Save the title during the query so the title doesn't change immediately if the user changes the unshared filter.
+                $scope.queryTitle = $scope.generateTitle(true);
+
                 var connection = connectionService.getActiveConnection();
 
                 if(!connection || !datasetService.isFieldValid($scope.options.dateField)) {
@@ -255,14 +266,24 @@ function(connectionService, datasetService, errorNotificationService, exportServ
                 var groupByDayClause = new neon.query.GroupByFunctionClause('dayOfWeek', $scope.options.dateField.columnName, 'day');
                 var groupByHourClause = new neon.query.GroupByFunctionClause(neon.query.HOUR, $scope.options.dateField.columnName, 'hour');
 
+                var whereLower = neon.query.where($scope.options.dateField.columnName, '>=', new Date("1970-01-01T00:00:00.000Z"));
+                var whereUpper = neon.query.where($scope.options.dateField.columnName, '<=', new Date("2025-01-01T00:00:00.000Z"));
+
                 var query = new neon.query.Query()
                     .selectFrom($scope.options.database.name, $scope.options.table.name)
                     .groupBy(groupByDayClause, groupByHourClause)
-                    .where(neon.query.and(
-                        neon.query.where($scope.options.dateField.columnName, '>=', new Date("1970-01-01T00:00:00.000Z")),
-                        neon.query.where($scope.options.dateField.columnName, '<=', new Date("2025-01-01T00:00:00.000Z"))
-                    ))
+                    .where(neon.query.and(whereLower, whereUpper))
                     .aggregate(neon.query.COUNT, '*', 'count');
+
+                if(datasetService.isFieldValid($scope.options.filterField) && $scope.options.filterValue) {
+                    var operator = "contains";
+                    var value = $scope.options.filterValue;
+                    if($.isNumeric(value)) {
+                        operator = "=";
+                        value = parseFloat(value);
+                    }
+                    query.where(neon.query.and(whereLower, whereUpper, neon.query.where($scope.options.filterField.columnName, operator, value)));
+                }
 
                 // Issue the query and provide a success handler that will forcefully apply an update to the chart.
                 // This is done since the callbacks from queries execute outside digest cycle for angular.
@@ -418,8 +439,28 @@ function(connectionService, datasetService, errorNotificationService, exportServ
                 return data;
             };
 
-            $scope.updateDateField = function() {
+            $scope.handleChangeDateField = function() {
                 // TODO Logging
+                if(!$scope.loadingData) {
+                    queryForChartData();
+                }
+            };
+
+            $scope.handleChangeUnsharedFilterField = function() {
+                // TODO Logging
+                $scope.options.filterValue = "";
+            };
+
+            $scope.handleChangeUnsharedFilterValue = function() {
+                // TODO Logging
+                if(!$scope.loadingData) {
+                    queryForChartData();
+                }
+            };
+
+            $scope.handleRemoveUnsharedFilter = function() {
+                // TODO Logging
+                $scope.options.filterValue = "";
                 if(!$scope.loadingData) {
                     queryForChartData();
                 }
@@ -487,9 +528,35 @@ function(connectionService, datasetService, errorNotificationService, exportServ
                 var bindingFields = {};
                 bindingFields["bind-title"] = $scope.bindTitle ? "'" + $scope.bindTitle + "'" : undefined;
                 bindingFields["bind-date-field"] = ($scope.options.dateField && $scope.options.dateField.columnName) ? "'" + $scope.options.dateField.columnName + "'" : undefined;
+                bindingFields["bind-filter-field"] = ($scope.options.filterField && $scope.options.filterField.columnName) ? "'" + $scope.options.filterField.columnName + "'" : undefined;
+                var hasFilterValue = $scope.options.filterField && $scope.options.filterField.columnName && $scope.options.filterValue;
+                bindingFields["bind-filter-value"] = hasFilterValue ? "'" + $scope.options.filterValue + "'" : undefined;
                 bindingFields["bind-table"] = ($scope.options.table && $scope.options.table.name) ? "'" + $scope.options.table.name + "'" : undefined;
                 bindingFields["bind-database"] = ($scope.options.database && $scope.options.database.name) ? "'" + $scope.options.database.name + "'" : undefined;
                 return bindingFields;
+            };
+
+            /**
+             * Generates and returns the title for this visualization.
+             * @param {Boolean} resetQueryTitle
+             * @method generateTitle
+             * @return {String}
+             */
+            $scope.generateTitle = function(resetQueryTitle) {
+                if(resetQueryTitle) {
+                    $scope.queryTitle = "";
+                }
+                if($scope.queryTitle) {
+                    return $scope.queryTitle;
+                }
+                var title = $scope.options.filterValue ? $scope.options.filterValue + " " : "";
+                if($scope.bindTitle) {
+                    return title + $scope.bindTitle;
+                }
+                if(_.keys($scope.options).length) {
+                    return title + $scope.options.table.prettyName + ($scope.options.dateField.prettyName ? " / " + $scope.options.dateField.prettyName : "");
+                }
+                return title;
             };
 
             // Wait for neon to be ready, the create our messenger and intialize the view and data.

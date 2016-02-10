@@ -40,6 +40,8 @@ function($interval, $filter, external, connectionService, datasetService, errorN
         scope: {
             bindTitle: '=',
             bindDateField: '=',
+            bindFilterField: '=',
+            bindFilterValue: '=',
             bindTable: '=',
             bindDatabase: '=',
             bindGranularity: '=',
@@ -101,7 +103,8 @@ function($interval, $filter, external, connectionService, datasetService, errorN
             $scope.options = {
                 database: {},
                 table: {},
-                dateField: "",
+                dateField: {},
+                filterField: {},
                 primarySeries: false,
                 collapsed: true,
                 granularity: DAY,
@@ -819,6 +822,11 @@ function($interval, $filter, external, connectionService, datasetService, errorN
                 $scope.options.dateField = _.find($scope.fields, function(field) {
                     return field.columnName === dateField;
                 }) || datasetService.createBlankField();
+                var filterFieldName = $scope.bindFilterField || "";
+                $scope.options.filterField = _.find($scope.fields, function(field) {
+                    return field.columnName === filterFieldName;
+                }) || datasetService.createBlankField();
+                $scope.options.filterValue = $scope.bindFilterValue || "";
 
                 if(callback) {
                     callback();
@@ -845,12 +853,8 @@ function($interval, $filter, external, connectionService, datasetService, errorN
              * @return {neon.query.Query} query The Query object to be used by queryForChartData() and requestExport()
              */
             var createChartDataQuery = function() {
-                var query = new neon.query.Query()
-                    .selectFrom($scope.options.database.name, $scope.options.table.name)
-                    .where(neon.query.and(
-                        neon.query.where($scope.options.dateField.columnName, '>=', new Date("1970-01-01T00:00:00.000Z")),
-                        neon.query.where($scope.options.dateField.columnName, '<=', new Date("2025-01-01T00:00:00.000Z"))
-                    ));
+                var dateClause = createLowerAndUpperDateClause();
+                var query = new neon.query.Query().selectFrom($scope.options.database.name, $scope.options.table.name).where(dateClause);
 
                 $scope.addGroupByGranularityClause(query);
 
@@ -859,7 +863,24 @@ function($interval, $filter, external, connectionService, datasetService, errorN
                 query.aggregate(neon.query.MIN, $scope.options.dateField.columnName, 'date');
                 query.sortBy('date', neon.query.ASCENDING);
 
+                if(datasetService.isFieldValid($scope.options.filterField) && $scope.options.filterValue) {
+                    var operator = "contains";
+                    var value = $scope.options.filterValue;
+                    if($.isNumeric(value)) {
+                        operator = "=";
+                        value = parseFloat(value);
+                    }
+                    query.where(neon.query.and(dateClause, neon.query.where($scope.options.filterField.columnName, operator, value)));
+                }
+
                 return query;
+            };
+
+            var createLowerAndUpperDateClause = function() {
+                return neon.query.and(
+                    neon.query.where($scope.options.dateField.columnName, '>=', new Date("1970-01-01T00:00:00.000Z")),
+                    neon.query.where($scope.options.dateField.columnName, '<=', new Date("2025-01-01T00:00:00.000Z"))
+                );
             };
 
             /**
@@ -892,6 +913,9 @@ function($interval, $filter, external, connectionService, datasetService, errorN
                     errorNotificationService.hideErrorMessage($scope.errorMessage);
                     $scope.errorMessage = undefined;
                 }
+
+                // Save the title during the query so the title doesn't change immediately if the user changes the unshared filter.
+                $scope.queryTitle = $scope.generateTitle(true);
 
                 var connection = connectionService.getActiveConnection();
 
@@ -1132,18 +1156,20 @@ function($interval, $filter, external, connectionService, datasetService, errorN
 
                 var connection = connectionService.getActiveConnection();
 
+                var dateClause = createLowerAndUpperDateClause();
+
                 if($scope.overrideStartDate) {
                     $scope.referenceStartDate = new Date($scope.overrideStartDate);
                 } else {
                     // TODO: neon doesn't yet support a more efficient way to just get the min/max fields without aggregating
                     // TODO: This could be done better with a promise framework - just did this in a pinch for a demo
-                    var minDateQuery = new neon.query.Query()
-                        .selectFrom($scope.options.database.name, $scope.options.table.name).ignoreFilters()
-                        .where(neon.query.and(
-                            neon.query.where($scope.options.dateField.columnName, '>=', new Date("1970-01-01T00:00:00.000Z")),
-                            neon.query.where($scope.options.dateField.columnName, '<=', new Date("2025-01-01T00:00:00.000Z"))
-                        ))
-                        .sortBy($scope.options.dateField.columnName, neon.query.ASCENDING).limit(1);
+                    var minDateQuery = new neon.query.Query().selectFrom($scope.options.database.name, $scope.options.table.name).where(dateClause)
+                        .sortBy($scope.options.dateField.columnName, neon.query.ASCENDING).limit(1).ignoreFilters();
+
+                    if(datasetService.isFieldValid($scope.options.filterField) && $scope.options.filterValue) {
+                        var operator = $.isNumeric($scope.options.filterValue) ? "=" : "contains";
+                        minDateQuery.where(neon.query.and(dateClause, neon.query.where($scope.options.filterField.columnName, operator, $scope.options.filterValue)));
+                    }
 
                     XDATA.userALE.log({
                         activity: "alter",
@@ -1202,13 +1228,13 @@ function($interval, $filter, external, connectionService, datasetService, errorN
                         success();
                     }
                 } else {
-                    var maxDateQuery = new neon.query.Query()
-                        .selectFrom($scope.options.database.name, $scope.options.table.name).ignoreFilters()
-                        .where(neon.query.and(
-                            neon.query.where($scope.options.dateField.columnName, '>=', new Date("1970-01-01T00:00:00.000Z")),
-                            neon.query.where($scope.options.dateField.columnName, '<=', new Date("2025-01-01T00:00:00.000Z"))
-                        ))
-                        .sortBy($scope.options.dateField.columnName, neon.query.DESCENDING).limit(1);
+                    var maxDateQuery = new neon.query.Query().selectFrom($scope.options.database.name, $scope.options.table.name).where(dateClause)
+                        .sortBy($scope.options.dateField.columnName, neon.query.DESCENDING).limit(1).ignoreFilters();
+
+                    if(datasetService.isFieldValid($scope.options.filterField) && $scope.options.filterValue) {
+                        var operator = $.isNumeric($scope.options.filterValue) ? "=" : "contains";
+                        maxDateQuery.where(neon.query.and(dateClause, neon.query.where($scope.options.filterField.columnName, operator, $scope.options.filterValue)));
+                    }
 
                     XDATA.userALE.log({
                         activity: "alter",
@@ -1573,10 +1599,30 @@ function($interval, $filter, external, connectionService, datasetService, errorN
                 removeBrushFromTimelineAndDatasetService(callback);
             };
 
-            $scope.updateDateField = function() {
+            $scope.handleChangeDateField = function() {
                 // TODO Logging
                 if(!$scope.loadingData) {
                     resetAndQueryForChartData();
+                }
+            };
+
+            $scope.handleChangeUnsharedFilterField = function() {
+                // TODO Logging
+                $scope.options.filterValue = "";
+            };
+
+            $scope.handleChangeUnsharedFilterValue = function() {
+                // TODO Logging
+                if(!$scope.loadingData) {
+                    queryForChartData();
+                }
+            };
+
+            $scope.handleRemoveUnsharedFilter = function() {
+                // TODO Logging
+                $scope.options.filterValue = "";
+                if(!$scope.loadingData) {
+                    queryForChartData();
                 }
             };
 
@@ -1643,7 +1689,33 @@ function($interval, $filter, external, connectionService, datasetService, errorN
                 bindingFields["bind-table"] = ($scope.options.table && $scope.options.table.name) ? "'" + $scope.options.table.name + "'" : undefined;
                 bindingFields["bind-database"] = ($scope.options.database && $scope.options.database.name) ? "'" + $scope.options.database.name + "'" : undefined;
                 bindingFields["bind-granularity"] = $scope.options.granularity ? "'" + $scope.options.granularity + "'" : undefined;
+                bindingFields["bind-filter-field"] = ($scope.options.filterField && $scope.options.filterField.columnName) ? "'" + $scope.options.filterField.columnName + "'" : undefined;
+                var hasFilterValue = $scope.options.filterField && $scope.options.filterField.columnName && $scope.options.filterValue;
+                bindingFields["bind-filter-value"] = hasFilterValue ? "'" + $scope.options.filterValue + "'" : undefined;
                 return bindingFields;
+            };
+
+            /**
+             * Generates and returns the title for this visualization.
+             * @param {Boolean} resetQueryTitle
+             * @method generateTitle
+             * @return {String}
+             */
+            $scope.generateTitle = function(resetQueryTitle) {
+                if(resetQueryTitle) {
+                    $scope.queryTitle = "";
+                }
+                if($scope.queryTitle) {
+                    return $scope.queryTitle;
+                }
+                var title = $scope.options.filterValue ? $scope.options.filterValue + " " : "";
+                if($scope.bindTitle) {
+                    return title + $scope.bindTitle;
+                }
+                if(_.keys($scope.options).length) {
+                    return title + $scope.options.table.prettyName + ($scope.options.dateField.prettyName ? " / " + $scope.options.dateField.prettyName : "");
+                }
+                return title;
             };
 
             // Wait for neon to be ready, the create our messenger and intialize the view and data.

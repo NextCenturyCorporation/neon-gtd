@@ -1,5 +1,5 @@
 <div class="header-container" ng-show="!(hideHeader)">
-    <div class="title header-text pull-left" ng-bind="(bindTitle != undefined) ? bindTitle : options.table.prettyName + (options.dateField.prettyName ? ' / ' + options.dateField.prettyName : '')"></div>
+    <div class="title header-text pull-left" ng-bind="generateTitle()"></div>
 
     <h4 class="next-to-title pull-left">
         <span class="count text-primary" ng-bind="recordCount | number"></span>
@@ -28,7 +28,7 @@
 
         <div class="form-group" ng-show="!(hideAdvancedOptions)">
             <label>Date Field</label>
-            <select class="form-control" ng-model="options.dateField" ng-options="field.prettyName for field in fields" ng-required="true" ng-disabled="(fields.length == 0)" ng-change="updateDateField()">
+            <select class="form-control" ng-model="options.dateField" ng-options="field.prettyName for field in fields" ng-required="true" ng-disabled="(fields.length == 0)" ng-change="handleChangeDateField()">
             </select>
         </div>
 
@@ -78,6 +78,7 @@
             </div>
             <div class="clearfix"></div>
         </div>
+
         <div class="form-group">
             <label>Animation Controls</label>
             <div class="btn-group">
@@ -89,6 +90,25 @@
                 </label>
             </div>
             <div class="clearfix"></div>
+        </div>
+
+        <div class="form-group" ng-show="!(hideAdvancedOptions)">
+            <label>Unshared Filter</label>
+            <select class="form-control" ng-model="options.filterField" ng-required="false" ng-disabled="!(fields.length > 0)" ng-options="field.prettyName for field in fields" ng-change="handleChangeUnsharedFilterField()">
+                <option selected value="">None</option>
+            </select>
+
+            <div class="input-group">
+                <input type="text" class="form-control" placeholder="{{'Filter for ' + options.filterField.prettyName + '...'}}" ng-model="options.filterValue" ng-disabled="!(options.filterField.columnName)">
+                <div class="input-group-btn">
+                    <button type="button" class="btn btn-default refresh" title="Remove Unshared Filter" ng-disabled="(options.filterField.columnName == undefined || options.filterValue == '')" ng-click="handleRemoveUnsharedFilter()">
+                        <span class="glyphicon glyphicon-remove"></span>
+                    </button>
+                    <button type="button" class="btn btn-default refresh" title="Set Unshared Filter" ng-click="handleChangeUnsharedFilterValue()">
+                        <span class="glyphicon glyphicon-refresh"></span>
+                    </button>
+                </div>
+            </div>
         </div>
     </options-menu>
 </div>

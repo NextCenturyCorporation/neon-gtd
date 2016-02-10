@@ -39,6 +39,8 @@ function(external, connectionService, datasetService, errorNotificationService, 
             bindYAxisField: '=',
             bindAggregation: '=',
             bindLimit: '=',
+            bindFilterField: '=',
+            bindFilterValue: '=',
             bindTable: '=',
             bindDatabase: '=',
             bindStateId: '=',
@@ -70,7 +72,8 @@ function(external, connectionService, datasetService, errorNotificationService, 
                 attrX: "",
                 attrY: "",
                 barType: $scope.bindAggregation || "count",
-                limitCount: $scope.bindLimit || 100
+                limitCount: $scope.bindLimit || 100,
+                filterField: {}
             };
 
             var COUNT_FIELD_NAME = 'Count';
@@ -138,21 +141,21 @@ function(external, connectionService, datasetService, errorNotificationService, 
                 });
 
                 $scope.$watch('options.attrX', function(newValue) {
-                    handleChangedField('attrX', newValue);
+                    logChange('attrX', newValue);
                     if(!$scope.loadingData && $scope.options.database.name && $scope.options.table.name) {
                         queryForData(true);
                     }
                 });
 
                 $scope.$watch('options.attrY', function(newValue) {
-                    handleChangedField('attrY', newValue);
+                    logChange('attrY', newValue);
                     if(!$scope.loadingData && $scope.options.database.name && $scope.options.table.name) {
                         queryForData(true);
                     }
                 });
 
                 $scope.$watch('options.barType', function(newValue) {
-                    handleChangedField('aggregation', newValue);
+                    logChange('aggregation', newValue);
                     if(!$scope.loadingData && $scope.options.database.name && $scope.options.table.name) {
                         queryForData(false);
                     }
@@ -164,7 +167,7 @@ function(external, connectionService, datasetService, errorNotificationService, 
                 $element.find(".chart-options a").resize(updateChartSize);
             };
 
-            var handleChangedField = function(field, newValue) {
+            var logChange = function(field, newValue, type) {
                 var source = "user";
                 var action = "click";
 
@@ -179,7 +182,7 @@ function(external, connectionService, datasetService, errorNotificationService, 
                     activity: "select",
                     action: action,
                     elementId: "barchart",
-                    elementType: "combobox",
+                    elementType: type || "combobox",
                     elementSub: "barchart-" + field,
                     elementGroup: "chart_group",
                     source: source,
@@ -187,8 +190,28 @@ function(external, connectionService, datasetService, errorNotificationService, 
                 });
             };
 
-            $scope.handleChangedLimit = function() {
-                handleChangedField("limit", $scope.options.limitCount);
+            $scope.handleChangeUnsharedFilterField = function() {
+                logChange("unshared-filter-field", $scope.options.filterField.columnName);
+                $scope.options.filterValue = "";
+            };
+
+            $scope.handleChangeUnsharedFilterValue = function() {
+                logChange("unshared-filter-value", $scope.options.filterValue);
+                if(!$scope.loadingData) {
+                    queryForData(true);
+                }
+            };
+
+            $scope.handleRemoveUnsharedFilter = function() {
+                logChange("unshared-filter", "", "button");
+                $scope.options.filterValue = "";
+                if(!$scope.loadingData) {
+                    queryForData(true);
+                }
+            };
+
+            $scope.handleChangeLimit = function() {
+                logChange("limit", $scope.options.limitCount);
                 if(!$scope.loadingData && $scope.options.database.name && $scope.options.table.name) {
                     queryForData(true);
                 }
@@ -295,6 +318,11 @@ function(external, connectionService, datasetService, errorNotificationService, 
                 $scope.options.attrY = _.find($scope.fields, function(field) {
                     return field.columnName === attrY;
                 }) || datasetService.createBlankField();
+                var filterFieldName = $scope.bindFilterField || "";
+                $scope.options.filterField = _.find($scope.fields, function(field) {
+                    return field.columnName === filterFieldName;
+                }) || datasetService.createBlankField();
+                $scope.options.filterValue = $scope.bindFilterValue || "";
 
                 if($scope.filterSet) {
                     $scope.clearFilterSet();
@@ -306,10 +334,8 @@ function(external, connectionService, datasetService, errorNotificationService, 
             };
 
             var buildQuery = function() {
-                var query = new neon.query.Query()
-                    .selectFrom($scope.options.database.name, $scope.options.table.name)
-                    .where($scope.options.attrX.columnName, '!=', null)
-                    .groupBy($scope.options.attrX);
+                var whereNotNull = neon.query.where($scope.options.attrX.columnName, '!=', null);
+                var query = new neon.query.Query().selectFrom($scope.options.database.name, $scope.options.table.name).groupBy($scope.options.attrX).where(whereNotNull);
 
                 if($scope.filterSet && $scope.filterSet.key && $scope.filterSet.value) {
                     var filterClause = createFilterClauseForXAxis({
@@ -334,6 +360,16 @@ function(external, connectionService, datasetService, errorNotificationService, 
                     query.aggregate(queryType, $scope.options.attrY.columnName, COUNT_FIELD_NAME);
                 }
 
+                if(datasetService.isFieldValid($scope.options.filterField) && $scope.options.filterValue) {
+                    var operator = "contains";
+                    var value = $scope.options.filterValue;
+                    if($.isNumeric(value)) {
+                        operator = "=";
+                        value = parseFloat(value);
+                    }
+                    query.where(neon.query.and(whereNotNull, neon.query.where($scope.options.filterField.columnName, operator, value)));
+                }
+
                 query.sortBy(COUNT_FIELD_NAME, neon.query.DESCENDING);
                 query.limit($scope.options.limitCount);
                 return query;
@@ -344,6 +380,9 @@ function(external, connectionService, datasetService, errorNotificationService, 
                     errorNotificationService.hideErrorMessage($scope.errorMessage);
                     $scope.errorMessage = undefined;
                 }
+
+                // Save the title during the query so the title doesn't change immediately if the user changes the unshared filter.
+                $scope.queryTitle = $scope.generateTitle(true);
 
                 var connection = connectionService.getActiveConnection();
 
@@ -636,6 +675,9 @@ function(external, connectionService, datasetService, errorNotificationService, 
                 bindingFields["bind-table"] = ($scope.options.table && $scope.options.table.name) ? "'" + $scope.options.table.name + "'" : undefined;
                 bindingFields["bind-database"] = ($scope.options.database && $scope.options.database.name) ? "'" + $scope.options.database.name + "'" : undefined;
                 bindingFields["bind-limit"] = $scope.options.limitCount;
+                bindingFields["bind-filter-field"] = ($scope.options.filterField && $scope.options.filterField.columnName) ? "'" + $scope.options.filterField.columnName + "'" : undefined;
+                var hasFilterValue = $scope.options.filterField && $scope.options.filterField.columnName && $scope.options.filterValue;
+                bindingFields["bind-filter-value"] = hasFilterValue ? "'" + $scope.options.filterValue + "'" : undefined;
 
                 return bindingFields;
             };
@@ -647,6 +689,29 @@ function(external, connectionService, datasetService, errorNotificationService, 
              */
             $scope.generateLinksPopupKey = function(value) {
                 return linksPopupService.generateKey($scope.options.attrX, value);
+            };
+
+            /**
+             * Generates and returns the title for this visualization.
+             * @param {Boolean} resetQueryTitle
+             * @method generateTitle
+             * @return {String}
+             */
+            $scope.generateTitle = function(resetQueryTitle) {
+                if(resetQueryTitle) {
+                    $scope.queryTitle = "";
+                }
+                if($scope.queryTitle) {
+                    return $scope.queryTitle;
+                }
+                var title = $scope.options.filterValue ? $scope.options.filterValue + " " : "";
+                if($scope.bindTitle) {
+                    return title + $scope.bindTitle;
+                }
+                if(_.keys($scope.options).length) {
+                    return title + $scope.options.table.prettyName + ($scope.options.attrX.prettyName ? " / " + $scope.options.attrX.prettyName : "");
+                }
+                return title;
             };
 
             neon.ready(function() {

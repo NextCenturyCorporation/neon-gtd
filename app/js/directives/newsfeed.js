@@ -73,7 +73,6 @@ function(external, $timeout, connectionService, datasetService, errorNotificatio
             $scope.selectedDate = undefined;
             $scope.errorMessage = undefined;
             $scope.helpers = neon.helpers;
-            $scope.queryTitle = "";
 
             // Prevent extraneous queries from onFieldChanged during updateFields.
             $scope.loadingData = false;
@@ -481,8 +480,7 @@ function(external, $timeout, connectionService, datasetService, errorNotificatio
 
                 $scope.dataFromNewsEvent = false;
                 // Save the title during the query so the title doesn't change immediately if the user changes the unshared filter.
-                $scope.queryTitle = "";
-                $scope.queryTitle = $scope.generateTitle();
+                $scope.queryTitle = $scope.generateTitle(true);
 
                 var connection = connectionService.getActiveConnection();
 
@@ -534,7 +532,7 @@ function(external, $timeout, connectionService, datasetService, errorNotificatio
                         operator = "=";
                         value = parseFloat(value);
                     }
-                    query.where(neon.query.where($scope.options.filterField.columnName, operator, value));
+                    query.where($scope.options.filterField.columnName, operator, value);
                 }
 
                 return query;
@@ -784,9 +782,9 @@ function(external, $timeout, connectionService, datasetService, errorNotificatio
 
             /**
              * Triggered by changing a field in the options menu.
-             * @method handleChangedField
+             * @method handleChangeField
              */
-            $scope.handleChangedField = function() {
+            $scope.handleChangeField = function() {
                 // TODO Logging
                 if(!$scope.loadingData) {
                     $scope.dataFromNewsEvent = [];
@@ -795,46 +793,11 @@ function(external, $timeout, connectionService, datasetService, errorNotificatio
             };
 
             /**
-             * Triggered by changing the unshared filter field in the options menu.
-             * @method handleChangedUnsharedFilterField
-             */
-            $scope.handleChangedUnsharedFilterField = function() {
-                // TODO Logging
-                if(!$scope.loadingData && $scope.options.filterValue) {
-                    $scope.options.filterValue = "";
-                    resetAndQueryForData();
-                }
-            };
-
-            /**
-             * Triggered by changing the unshared filter value in the options menu.
-             * @method handleChangedUnsharedFilterValue
-             */
-            $scope.handleChangedUnsharedFilterValue = function() {
-                // TODO Logging
-                if(!$scope.loadingData) {
-                    resetAndQueryForData();
-                }
-            };
-
-            /**
-             * Triggered by removing the unshared filter in the options menu.
-             * @method handleRemovedUnsharedFilter
-             */
-            $scope.handleRemovedUnsharedFilter = function() {
-                // TODO Logging
-                $scope.options.filterValue = "";
-                if(!$scope.loadingData) {
-                    resetAndQueryForData();
-                }
-            };
-
-            /**
              * Triggered by clicking one of the sort-by-date buttons.
              * @param {Number} direction Either $scope.ASCENDING or $scope.DESCENDING
-             * @method handleChangedSort
+             * @method handleChangeSort
              */
-            $scope.handleChangedSort = function(direction) {
+            $scope.handleChangeSort = function(direction) {
                 // TODO Logging
                 if($scope.options.sortDirection === direction) {
                     if($scope.dataFromNewsEvent.length) {
@@ -843,6 +806,41 @@ function(external, $timeout, connectionService, datasetService, errorNotificatio
                     } else {
                         resetAndQueryForData();
                     }
+                }
+            };
+
+            /**
+             * Triggered by changing the unshared filter field in the options menu.
+             * @method handleChangeUnsharedFilterField
+             */
+            $scope.handleChangeUnsharedFilterField = function() {
+                // TODO Logging
+                $scope.options.filterValue = "";
+                if(!$scope.loadingData && $scope.options.filterValue) {
+                    resetAndQueryForData();
+                }
+            };
+
+            /**
+             * Triggered by changing the unshared filter value in the options menu.
+             * @method handleChangeUnsharedFilterValue
+             */
+            $scope.handleChangeUnsharedFilterValue = function() {
+                // TODO Logging
+                if(!$scope.loadingData) {
+                    resetAndQueryForData();
+                }
+            };
+
+            /**
+             * Triggered by removing the unshared filter in the options menu.
+             * @method handleRemoveUnsharedFilter
+             */
+            $scope.handleRemoveUnsharedFilter = function() {
+                // TODO Logging
+                $scope.options.filterValue = "";
+                if(!$scope.loadingData) {
+                    resetAndQueryForData();
                 }
             };
 
@@ -872,10 +870,14 @@ function(external, $timeout, connectionService, datasetService, errorNotificatio
 
             /**
              * Generates and returns the title for this visualization.
+             * @param {Boolean} resetQueryTitle
              * @method generateTitle
              * @return {String}
              */
-            $scope.generateTitle = function() {
+            $scope.generateTitle = function(resetQueryTitle) {
+                if(resetQueryTitle) {
+                    $scope.queryTitle = "";
+                }
                 if($scope.queryTitle) {
                     return $scope.queryTitle;
                 }
@@ -900,8 +902,8 @@ function(external, $timeout, connectionService, datasetService, errorNotificatio
                 bindingFields["bind-secondary-title-field"] = ($scope.options.secondaryTitleField && $scope.options.secondaryTitleField.columnName) ? "'" + $scope.options.secondaryTitleField.columnName + "'" : undefined;
                 bindingFields["bind-date-field"] = ($scope.options.dateField && $scope.options.dateField.columnName) ? "'" + $scope.options.dateField.columnName + "'" : undefined;
                 bindingFields["bind-content-field"] = ($scope.options.contentField && $scope.options.contentField.columnName) ? "'" + $scope.options.contentField.columnName + "'" : undefined;
-                bindingFields["bind-filter-field"] = ($scope.options.bindFilterField && $scope.options.bindFilterField.columnName) ? "'" + $scope.options.bindFilterField.columnName + "'" : undefined;
-                var hasFilterValue = $scope.options.bindFilterField && $scope.options.bindFilterField.columnName && $scope.options.filterValue;
+                bindingFields["bind-filter-field"] = ($scope.options.filterField && $scope.options.filterField.columnName) ? "'" + $scope.options.filterField.columnName + "'" : undefined;
+                var hasFilterValue = $scope.options.filterField && $scope.options.filterField.columnName && $scope.options.filterValue;
                 bindingFields["bind-filter-value"] = hasFilterValue ? "'" + $scope.options.filterValue + "'" : undefined;
                 bindingFields["bind-feed-name"] = $scope.feedName ? "'" + $scope.feedName + "'" : undefined;
                 bindingFields["bind-feed-type"] = $scope.feedType ? "'" + $scope.feedType + "'" : undefined;

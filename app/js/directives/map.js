@@ -65,7 +65,7 @@ angular.module('neonDemo.directives')
             $scope.resizeOptionsMenu = function() {
                 var container = $element.find(".menu-container");
                 // Make the height of the options menu match the height of the visualization below the header menu container.
-                var height = $element.height() - container.outerHeight(true);
+                var height = $element.height() - container.outerHeight(true) - 10;
                 // Make the width of the options menu match the width of the visualization.
                 var width = $element.outerWidth(true);
 
@@ -122,7 +122,8 @@ angular.module('neonDemo.directives')
                     nodeDefaultColor: "",
                     lineDefaultColor: "",
                     limit: $scope.DEFAULT_LIMIT,
-                    type: $scope.DEFAULT_NEW_LAYER_TYPE
+                    type: $scope.DEFAULT_NEW_LAYER_TYPE,
+                    filterField: {}
                 }
             };
 
@@ -608,6 +609,8 @@ angular.module('neonDemo.directives')
                 layer.targetField = datasetService.findField(layer.fields, layer.targetMapping);
                 layer.nodeColorField = datasetService.findField(layer.fields, layer.nodeColorBy);
                 layer.lineColorField = datasetService.findField(layer.fields, layer.lineColorBy);
+                layer.filterField = datasetService.findField(layer.fields, layer.filterField);
+                layer.filterValue = layer.filterValue;
 
                 var mappings = datasetService.getMappings(layer.database, layer.table);
                 layer.date = mappings.date;
@@ -681,6 +684,8 @@ angular.module('neonDemo.directives')
                 $scope.options.newLayer.gradient3 = "";
                 $scope.options.newLayer.gradient4 = "";
                 $scope.options.newLayer.gradient5 = "";
+                $scope.options.newLayer.filterField = {};
+                $scope.options.newLayer.filterValue = "";
 
                 var latitude = datasetService.getMapping($scope.options.newLayer.database.name, $scope.options.newLayer.table.name, neonMappings.LATITUDE) || "";
                 $scope.options.newLayer.latitude = _.find($scope.fields, function(field) {
@@ -1218,6 +1223,9 @@ angular.module('neonDemo.directives')
                     }
                 };
 
+                var filterField = "";
+                var filterValue = "";
+
                 $scope.options.layers.forEach(function(layer) {
                     if(layer.database === database && layer.table === table) {
                         latitudesAndLongitudes.push({
@@ -1246,19 +1254,37 @@ angular.module('neonDemo.directives')
                             });
                         }
 
+                        if(datasetService.isFieldValid(layer.filterField) && layer.filterValue) {
+                            filterField = layer.filterField.columnName;
+                            filterValue = layer.filterValue;
+                        }
+
                         // Use the highest limit for the query from all layers for the given database/table; only the first X elements will be used for each layer based on the limit of the layer.
                         limit = limit ? Math.max(limit, layer.limit) : layer.limit;
                     }
                 });
 
                 var query = new neon.query.Query().selectFrom(database, table).limit(limit || $scope.DEFAULT_LIMIT).withFields(Object.keys(fields));
+                var whereClause;
+
                 if(datasetService.getActiveDatasetOptions().checkForNullCoordinates) {
-                    var filterClauses = latitudesAndLongitudes.map(function(element) {
+                    var whereClauses = latitudesAndLongitudes.map(function(element) {
                         return neon.query.and(neon.query.where(element.latitude, "!=", null), neon.query.where(element.longitude, "!=", null));
                     });
-                    return query.where(neon.query.or.apply(neon.query, filterClauses));
+                    whereClause = neon.query.or.apply(neon.query, whereClauses);
                 }
-                return query;
+
+                if(filterField && filterValue) {
+                    var operator = "contains";
+                    var value = filterValue;
+                    if($.isNumeric(value)) {
+                        operator = "=";
+                        value = parseFloat(value);
+                    }
+                    whereClause = whereClause ? neon.query.and(whereClause, neon.query.where(filterField, operator, value)) : neon.query.where(filterField, operator, value);
+                }
+
+                return whereClause ? query.where(whereClause) : query;
             };
 
             /**
@@ -1573,6 +1599,13 @@ angular.module('neonDemo.directives')
                 layer.name = (layer.name || layer.table).toUpperCase();
                 layer = updateLayerFieldMappings(layer);
 
+                $scope.options.layers.forEach(function(element) {
+                    if(element.database === layer.database && element.table === layer.table) {
+                        element.filterField = datasetService.findField(element.fields, layer.filterField.columnName);
+                        element.filterValue = layer.filterValue;
+                    }
+                });
+
                 var index;
                 if(layer.olLayer) {
                     this.map.removeLayer(layer.olLayer);
@@ -1795,6 +1828,8 @@ angular.module('neonDemo.directives')
                     gradient4: $scope.options.newLayer.gradient4,
                     gradient5: $scope.options.newLayer.gradient5,
                     popupFields: $scope.options.newLayer.popupFields,
+                    filterField: $scope.options.newLayer.filterField,
+                    filterValue: $scope.options.newLayer.filterValue,
                     active: $scope.options.newLayer.active,
                     visible: $scope.options.newLayer.visible,
                     valid: true,
@@ -1956,7 +1991,9 @@ angular.module('neonDemo.directives')
                         table: layer.table,
                         active: layer.active,
                         name: layer.name,
-                        limit: layer.limit
+                        limit: layer.limit,
+                        filterField: layer.filterField.columnName,
+                        filterValue: layer.filterValue
                     };
 
                     if(layer.type === $scope.POINT_LAYER) {

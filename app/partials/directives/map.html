@@ -126,9 +126,19 @@
                                 </option>
                             </select>
                         </div>
+
+                        <div class="form-group layer-options-col layer-options-col-wide">
+                            <label>Unshared Filter</label>
+                            <div class="input-group">
+                                <select class="form-control col-half" ng-cancel-drag ng-model="options.newLayer.filterField" ng-required="false" ng-disabled="!(fields.length > 0)" ng-options="field.prettyName for field in fields">
+                                    <option selected value="">None</option>
+                                </select>
+                                <input type="text" class="form-control col-half" placeholder="{{'Filter for ' + options.newLayer.filterField.prettyName + '...'}}" ng-cancel-drag ng-model="options.newLayer.filterValue" ng-disabled="!(options.newLayer.filterField.columnName)">
+                            </div>
+                        </div>
                     </div>
 
-                    <div class="layer-options-row row-large" ng-show="(options.newLayer.type == HEATMAP_LAYER)">
+                    <div class="layer-options-row" ng-show="(options.newLayer.type == HEATMAP_LAYER)">
                         <div class="form-group layer-options-col">
                             <label>Color Code 2</label>
                             <input type="text" class="form-control" placeholder="None" ng-cancel-drag ng-model="options.newLayer.gradient2" ng-required="false"/>
@@ -173,6 +183,18 @@
                         <div class="form-group layer-options-col">
                             <label>Line Color Code</label>
                             <input type="text" class="form-control" placeholder="None" ng-model="options.newLayer.lineDefaultColor" ng-required="false"/>
+                        </div>
+                    </div>
+
+                    <div class="layer-options-row row-large" ng-show="(options.newLayer.type == HEATMAP_LAYER || options.newLayer.type == NODE_AND_ARROW_LAYER)">
+                        <div class="form-group layer-options-col layer-options-col-wide">
+                            <label>Unshared Filter</label>
+                            <div class="input-group">
+                                <select class="form-control col-half" ng-cancel-drag ng-model="options.newLayer.filterField" ng-required="false" ng-disabled="!(fields.length > 0)" ng-options="field.prettyName for field in fields">
+                                    <option selected value="">None</option>
+                                </select>
+                                <input type="text" class="form-control col-half" placeholder="{{'Filter for ' + options.newLayer.filterField.prettyName + '...'}}" ng-cancel-drag ng-model="options.newLayer.filterValue" ng-disabled="!(options.newLayer.filterField.columnName)">
+                            </div>
                         </div>
                     </div>
 
@@ -322,9 +344,19 @@
                                         </option>
                                     </select>
                                 </div>
+
+                                <div class="form-group layer-options-col layer-options-col-wide">
+                                    <label>Unshared Filter</label>
+                                    <div class="input-group">
+                                        <select class="form-control col-half" ng-cancel-drag ng-model="layer.filterField" ng-required="false" ng-disabled="!(fields.length > 0)" ng-options="field.prettyName for field in layer.fields">
+                                            <option selected value="">None</option>
+                                        </select>
+                                        <input type="text" class="form-control col-half" placeholder="{{'Filter for ' + layer.filterField.prettyName + '...'}}" ng-cancel-drag ng-model="layer.filterValue" ng-disabled="!(layer.filterField.columnName)">
+                                    </div>
+                                </div>
                             </div>
 
-                            <div class="layer-options-row row-large" ng-show="layer.type == HEATMAP_LAYER">
+                            <div class="layer-options-row" ng-show="layer.type == HEATMAP_LAYER">
                                 <div class="form-group layer-options-col">
                                     <label>Color Code 2</label>
                                     <input type="text" class="form-control" placeholder="{{layer.gradient2 || 'None'}}" ng-cancel-drag ng-model="layer.gradient2" ng-required="false"/>
@@ -347,7 +379,6 @@
                             </div>
 
                             <div class="layer-options-row" ng-show="layer.type == NODE_AND_ARROW_LAYER">
-
                                 <div class="form-group layer-options-col">
                                     <label>Point Color Field</label>
                                     <select class="form-control" ng-cancel-drag ng-model="layer.nodeColorField" ng-options="field.prettyName for field in layer.fields" ng-required="false" ng-disabled="!(layer.fields.length > 0)">
@@ -370,6 +401,18 @@
                                 <div class="form-group layer-options-col">
                                     <label>Line Color Code</label>
                                     <input type="text" class="form-control" placeholder="{{layer.lineDefaultColor || 'None'}}" ng-cancel-drag ng-model="layer.lineDefaultColor" ng-required="false"/>
+                                </div>
+                            </div>
+
+                            <div class="layer-options-row row-large" ng-show="(layer.type == HEATMAP_LAYER || layer.type == NODE_AND_ARROW_LAYER)">
+                                <div class="form-group layer-options-col layer-options-col-wide">
+                                    <label>Unshared Filter</label>
+                                    <div class="input-group">
+                                        <select class="form-control col-half" ng-cancel-drag ng-model="layer.filterField" ng-required="false" ng-disabled="!(fields.length > 0)" ng-options="field.prettyName for field in layer.fields">
+                                            <option selected value="">None</option>
+                                        </select>
+                                        <input type="text" class="form-control col-half" placeholder="{{'Filter for ' + layer.filterField.prettyName + '...'}}" ng-cancel-drag ng-model="layer.filterValue" ng-disabled="!(layer.filterField.columnName)">
+                                    </div>
                                 </div>
                             </div>
 
