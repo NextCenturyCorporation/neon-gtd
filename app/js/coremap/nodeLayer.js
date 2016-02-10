@@ -89,8 +89,8 @@ coreMap.Map.Layer.NodeLayer = OpenLayers.Class(OpenLayers.Layer.Vector, {
 /**
  * Calculate the desired radius of a point.  This will be a proporation of the
  * allowed coreMap.Map.Layer.NodeLayer.MIN_RADIUS and coreMap.Map.Layer.NodeLayer.MAX_RADIUS values.
- * @param {Object} element One data element of the map's data array.
- * @return {number} The radius
+ * @param {Object} weight The size of the node.
+ * @return {Number} The radius
  * @method calculateNodeRadius
  */
 coreMap.Map.Layer.NodeLayer.prototype.calculateNodeRadius = function(weight) {
@@ -101,8 +101,8 @@ coreMap.Map.Layer.NodeLayer.prototype.calculateNodeRadius = function(weight) {
 /**
  * Calculate the desired width of an edge.  This will be a proporation of the
  * allowed coreMap.Map.Layer.NodeLayer.MIN_RADIUS and coreMap.Map.Layer.NodeLayer.MAX_RADIUS values.
- * @param {Object} element One data element of the map's data array.
- * @return {number} The width
+ * @param {Number} weight The size of the line.
+ * @return {Number} The width
  * @method calculateLineWidth
  */
 coreMap.Map.Layer.NodeLayer.prototype.calculateLineWidth = function(weight) {
@@ -120,11 +120,14 @@ coreMap.Map.Layer.NodeLayer.prototype.calculateLineWidth = function(weight) {
 /**
  * Creates a point to be added to the Node layer, styled appropriately.
  * @param {Object} element One data element of the map's data array.
+ * @param {Number} nodeWeight The size of the node.
+ * @param {String} nodeMappingElement The color of the node.
+ * @param {Array<Number>} pt The [longitude, latitude] pair of the node.
  * @return {OpenLayers.Feature.Vector} the point to be added.
  * @method createNode
  */
-coreMap.Map.Layer.NodeLayer.prototype.createNode = function(element, nodeWeight, nodeMappingElement, point) {
-    var point = new OpenLayers.Geometry.Point(point[0], point[1]);
+coreMap.Map.Layer.NodeLayer.prototype.createNode = function(element, nodeWeight, nodeMappingElement, pt) {
+    var point = new OpenLayers.Geometry.Point(pt[0], pt[1]);
     point.transform(coreMap.Map.SOURCE_PROJECTION, coreMap.Map.DESTINATION_PROJECTION);
 
     var feature = new OpenLayers.Feature.Vector(point);
@@ -203,12 +206,12 @@ coreMap.Map.Layer.NodeLayer.prototype.createLineStyleObject = function(lineMappi
  * @param {String} color The color of the arrow
  * @param {Number} width The width of the arrow lines
  * @param {Number} angle The angle of rotation to set the arrow in the right direction
- * @param {Object} element An element of the data array.
+ * @param {Object} nodeWeight The size of the node.
  * @return {OpenLayers.Symbolizer.Point} The style object
  * @method createArrowStyleObject
  */
-coreMap.Map.Layer.NodeLayer.prototype.createArrowStyleObject = function(lineMappingElement, width, angle, weight) {
-    var radius = Math.ceil(this.calculateNodeRadius(weight) || coreMap.Map.Layer.NodeLayer.MIN_RADIUS);
+coreMap.Map.Layer.NodeLayer.prototype.createArrowStyleObject = function(lineMappingElement, width, angle, nodeWeight) {
+    var radius = Math.ceil(this.calculateNodeRadius(nodeWeight) || coreMap.Map.Layer.NodeLayer.MIN_RADIUS);
 
     var arrowWidth = radius + 7;
     if(radius % 2 === 0) {
@@ -246,10 +249,11 @@ coreMap.Map.Layer.NodeLayer.prototype.createArrowStyleObject = function(lineMapp
 /**
  * Creates a weighted line to be added to the Node layer, styled appropriately.  The weight
  * determines the thickness of the line.
- * @param {Array<Number>} pt1 The [latitude, longitude] pair of the source node
- * @param {Array<Number>} pt2 The [latitude, longitude] pair of the target node
+ * @param {Array<Number>} pt1 The [longitude, latitude] pair of the source node
+ * @param {Array<Number>} pt2 The [longitude, latitude] pair of the target node
  * @param {Number} weight The weight of the line.  This will be compared to other
  * datapoints to calculate an appropriate line width for rendering.
+ * @param {String} lineMappingElement The color of the line.
  * @return {OpenLayers.Feature.Vector} the line to be added.
  * @method createWeightedLine
  */
@@ -272,11 +276,12 @@ coreMap.Map.Layer.NodeLayer.prototype.createWeightedLine = function(pt1, pt2, we
 /**
  * Creates a weighted arrow tip to be added to the Node layer, styled appropriately.  The weight
  * determines the thickness of the arrow lines.
- * @param {Array<Number>} pt1 The [latitude, longitude] pair of the source node
- * @param {Array<Number>} pt2 The [latitude, longitude] pair of the target node
+ * @param {Array<Number>} pt1 The [longitude, latitude] pair of the source node
+ * @param {Array<Number>} pt2 The [longitude, latitude] pair of the target node
  * @param {Number} weight The weight of the arrow lines. This will be compared to other
  * datapoints to calculate an appropriate line width for rendering.
- * @param {Object} element An element of the data array.
+ * @param {Number} nodeWeight The weight of the nodes.
+ * @param {String} lineMappingElement The color of the line.
  * @return {OpenLayers.Feature.Vector} the arrow to be added.
  * @method createWeightedArrow
  */
@@ -357,7 +362,8 @@ coreMap.Map.Layer.NodeLayer.prototype.areValuesInDataElement = function(element)
 
 /**
  * Styles the data element based on the size and color.
- * @param {Object} element One data element of the map's data array.
+ * @param {Number} weight The size of the node to style.
+ * @param {String} nodeMappingElement The color of the node.
  * @return {OpenLayers.Symbolizer.Point} The style object
  * @method styleNode
  */

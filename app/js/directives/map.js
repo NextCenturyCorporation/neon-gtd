@@ -697,27 +697,22 @@ angular.module('neonDemo.directives')
                 $scope.options.newLayer.longitude = _.find($scope.fields, function(field) {
                     return field.columnName === longitude;
                 }) || datasetService.createBlankField();
-
-
-                var sourceLatitude = datasetService.getMapping($scope.options.newLayer.database.name, $scope.options.newLayer.table.name, "source_latitude") || "";
+                var sourceLatitude = datasetService.getMapping($scope.options.newLayer.database.name, $scope.options.newLayer.table.name, neonMappings.SOURCE_LATITUDE) || "";
                 $scope.options.newLayer.sourceLatitude = _.find($scope.fields, function(field) {
                     return field.columnName === sourceLatitude;
                 }) || datasetService.createBlankField();
-                var sourceLongitude = datasetService.getMapping($scope.options.newLayer.database.name, $scope.options.newLayer.table.name, "source_longitude") || "";
+                var sourceLongitude = datasetService.getMapping($scope.options.newLayer.database.name, $scope.options.newLayer.table.name, neonMappings.SOURCE_LONGITUDE) || "";
                 $scope.options.newLayer.sourceLongitude = _.find($scope.fields, function(field) {
                     return field.columnName === sourceLongitude;
                 }) || datasetService.createBlankField();
-
-
-                var targetLatitude = datasetService.getMapping($scope.options.newLayer.database.name, $scope.options.newLayer.table.name, "target_latitude") || "";
+                var targetLatitude = datasetService.getMapping($scope.options.newLayer.database.name, $scope.options.newLayer.table.name, neonMappings.TARGET_LATITUDE) || "";
                 $scope.options.newLayer.targetLatitude = _.find($scope.fields, function(field) {
                     return field.columnName === targetLatitude;
                 }) || datasetService.createBlankField();
-                var targetLongitude = datasetService.getMapping($scope.options.newLayer.database.name, $scope.options.newLayer.table.name, "target_longitude") || "";
+                var targetLongitude = datasetService.getMapping($scope.options.newLayer.database.name, $scope.options.newLayer.table.name, neonMappings.TARGET_LONGITUDE) || "";
                 $scope.options.newLayer.targetLongitude = _.find($scope.fields, function(field) {
                     return field.columnName === targetLongitude;
                 }) || datasetService.createBlankField();
-
                 var color = datasetService.getMapping($scope.options.newLayer.database.name, $scope.options.newLayer.table.name, neonMappings.COLOR) || "";
                 $scope.options.newLayer.color = _.find($scope.fields, function(field) {
                     return field.columnName === color;
@@ -726,17 +721,14 @@ angular.module('neonDemo.directives')
                 $scope.options.newLayer.size = _.find($scope.fields, function(field) {
                     return field.columnName === size;
                 }) || datasetService.createBlankField();
-
-
-                var sourceSize = datasetService.getMapping($scope.options.newLayer.database.name, $scope.options.newLayer.table.name, "source_size") || "";
-                $scope.options.newLayer.sourceSize = _.find($scope.fields, function(field) {
-                    return field.columnName === sourceSize;
+                var pointSize = datasetService.getMapping($scope.options.newLayer.database.name, $scope.options.newLayer.table.name, neonMappings.NODE_SIZE) || "";
+                $scope.options.newLayer.pointSize = _.find($scope.fields, function(field) {
+                    return field.columnName === pointSize;
                 }) || datasetService.createBlankField();
-                var targetSize = datasetService.getMapping($scope.options.newLayer.database.name, $scope.options.newLayer.table.name, "target_size") || "";
-                $scope.options.newLayer.targetSize = _.find($scope.fields, function(field) {
-                    return field.columnName === targetSize;
+                var lineSize = datasetService.getMapping($scope.options.newLayer.database.name, $scope.options.newLayer.table.name, neonMappings.LINE_SIZE) || "";
+                $scope.options.newLayer.lineSize = _.find($scope.fields, function(field) {
+                    return field.columnName === lineSize;
                 }) || datasetService.createBlankField();
-
                 var nodeColorBy = datasetService.getMapping($scope.options.newLayer.database.name, $scope.options.newLayer.table.name, neonMappings.NODE_COLOR_BY) || "";
                 $scope.options.newLayer.nodeColorBy = _.find($scope.fields, function(field) {
                     return field.columnName === nodeColorBy;
@@ -1157,7 +1149,7 @@ angular.module('neonDemo.directives')
 
                         if(layer.type === $scope.NODE_AND_ARROW_LAYER) {
                             sourceLatitudeMapping = layer.sourceLatitudeMapping ? layer.sourceLatitudeMapping : coreMap.Map.Layer.NodeLayer.DEFAULT_SOURCE_LATITUDE_MAPPING;
-                            sourceLongitudeMapping = layer.sourceLongitudeMapping ? layer.sourceLongitudeMapping : coreMap.Map.Layer.NodeLayer.DEFAULT_SOURCE_LONGITUDE_MAPPING
+                            sourceLongitudeMapping = layer.sourceLongitudeMapping ? layer.sourceLongitudeMapping : coreMap.Map.Layer.NodeLayer.DEFAULT_SOURCE_LONGITUDE_MAPPING;
                             targetLatitudeMapping = layer.targetLatitudeMapping ? layer.targetLatitudeMapping : coreMap.Map.Layer.NodeLayer.DEFAULT_TARGET_LATITUDE_MAPPING;
                             targetLongitudeMapping = layer.targetLongitudeMapping ? layer.targetLongitudeMapping : coreMap.Map.Layer.NodeLayer.DEFAULT_TARGET_LONGITUDE_MAPPING;
                         } else {
@@ -1644,7 +1636,6 @@ angular.module('neonDemo.directives')
                 layer.name = (layer.name || layer.table).toUpperCase();
                 layer = updateLayerFieldMappings(layer);
 
-                var index;
                 if(layer.olLayer) {
                     this.map.removeLayer(layer.olLayer);
                     layer.olLayer = undefined;
