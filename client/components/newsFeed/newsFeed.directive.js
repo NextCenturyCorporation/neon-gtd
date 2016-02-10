@@ -20,7 +20,7 @@ angular.module('neonDemo.directives')
 .directive('newsfeed', ['external', '$timeout', 'ConnectionService', 'DatasetService', 'ErrorNotificationService', 'LinksPopupService', 'TranslationService', 'VisualizationService',
 function(external, $timeout, connectionService, datasetService, errorNotificationService, linksPopupService, translationService, visualizationService) {
     return {
-        templateUrl: 'partials/directives/newsfeed.html',
+        templateUrl: 'components/newsFeed/newsFeed.html',
         restrict: 'EA',
         scope: {
             bindTitle: '=',

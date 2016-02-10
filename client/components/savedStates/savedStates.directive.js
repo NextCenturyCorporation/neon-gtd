@@ -26,7 +26,7 @@ angular.module('neonDemo.directives')
 .directive('savedStates', ['$location', 'ConnectionService', 'ErrorNotificationService', 'DatasetService','VisualizationService', 'ParameterService',
     function($location, connectionService, errorNotificationService, datasetService, visualizationService, parameterService) {
     return {
-        templateUrl: 'partials/directives/savedStates.html',
+        templateUrl: 'components/savedStates/savedStates.html',
         restrict: 'EA',
         link: function($scope) {
             $scope.stateNames = [];

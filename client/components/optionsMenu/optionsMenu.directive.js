@@ -18,7 +18,7 @@
 angular.module('neonDemo.directives')
 .directive('optionsMenu', ['ConnectionService', 'ErrorNotificationService', 'ExportService', 'config', function(connectionService, errorNotificationService, exportService, config) {
     return {
-        templateUrl: 'partials/directives/optionsMenu.html',
+        templateUrl: 'components/optionsMenu/optionsMenu.html',
         restrict: 'EA',
         transclude: true,
         scope: {

@@ -18,7 +18,7 @@
 angular.module('neonDemo.directives')
 .directive('linksPopup', ['LinksPopupService', function(linksPopupService) {
     return {
-        templateUrl: 'partials/directives/linksPopup.html',
+        templateUrl: 'components/linksPopup/linksPopup.html',
         restrict: 'EA',
         scope: {},
         link: function($scope) {

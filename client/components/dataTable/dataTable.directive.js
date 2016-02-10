@@ -33,7 +33,7 @@ angular.module('neonDemo.directives')
 function(external, connectionService, datasetService, errorNotificationService, exportService,
 linksPopupService, themeService, visualizationService, linkify, $sce, $timeout) {
     return {
-        templateUrl: 'partials/directives/queryResultsTable.html',
+        templateUrl: 'components/dataTable/dataTable.html',
         restrict: 'EA',
         scope: {
             bindTitle: '=',

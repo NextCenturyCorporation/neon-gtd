@@ -41,7 +41,7 @@ angular.module('neonDemo.directives')
 .directive('plotlyGraph', ['ConnectionService', 'DatasetService', 'FilterService', 'ThemeService', 'VisualizationService',
 function(connectionService, datasetService, filterService, themeService, visualizationService) {
     return {
-        templateUrl: 'partials/directives/plotlyGraph.html',
+        templateUrl: 'components/scatterPlot/scatterPlot.html',
         restrict: 'EA',
         scope: {
             graphType: "=",

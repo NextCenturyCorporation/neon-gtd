@@ -18,7 +18,7 @@
 angular.module('neonDemo.directives')
 .directive('translationOptions', [function() {
     return {
-        templateUrl: 'partials/directives/translationOptions.html',
+        templateUrl: 'components/translationOptions/translationOptions.html',
         restrict: 'EA',
         transclude: true,
         scope: {

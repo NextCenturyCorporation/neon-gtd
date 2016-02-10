@@ -25,7 +25,7 @@ angular.module('neonDemo.directives')
 .directive('importFile', ['ConnectionService', 'ErrorNotificationService', 'ImportService', 'DatasetService',
     function(connectionService, errorNotificationService, importService, datasetService) {
     return {
-        templateUrl: 'partials/directives/importFile.html',
+        templateUrl: 'components/import/import.html',
         restrict: 'EA',
         link: function($scope, $element) {
             $scope.nameTypePairs = undefined;

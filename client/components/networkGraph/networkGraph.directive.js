@@ -25,7 +25,7 @@ angular.module('neonDemo.directives')
 .directive('directedGraph', ['$filter', '$timeout', 'ConnectionService', 'DatasetService', 'ErrorNotificationService', 'ExportService', 'VisualizationService',
 function($filter, $timeout, connectionService, datasetService, errorNotificationService, exportService, visualizationService) {
     return {
-        templateUrl: 'partials/directives/directedGraph.html',
+        templateUrl: 'components/networkGraph/networkGraph.html',
         restrict: 'EA',
         scope: {
             bindTitle: '=',

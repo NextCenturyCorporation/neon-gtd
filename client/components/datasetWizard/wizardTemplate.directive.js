@@ -18,7 +18,7 @@ angular.module('neonDemo.directives')
 .directive('wizard', [
     function() {
     return {
-        templateUrl: 'partials/dataset-wizard/wizardTemplate.html',
+        templateUrl: 'components/datasetWizard/wizardTemplate.html',
         restrict: 'E',
         transclude: true,
         scope: {

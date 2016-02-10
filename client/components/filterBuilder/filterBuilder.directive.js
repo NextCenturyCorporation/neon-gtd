@@ -31,7 +31,7 @@
 angular.module('neonDemo.directives')
 .directive('filterBuilder', ["DatasetService", "FilterService", function(datasetService, filterService) {
     return {
-        templateUrl: 'partials/directives/filterBuilder.html',
+        templateUrl: 'components/filterBuilder/filterBuilder.html',
         restrict: 'EA',
         scope: {
             filterCount: '=?'

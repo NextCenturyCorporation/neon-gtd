@@ -144,7 +144,7 @@ var saveUserAle = function(config) {
             "query_group",
             "graph_group"
         ],
-        workerUrl: "lib/user-ale/helper-libs/javascript/userale-worker.js",
+        workerUrl: "bower_components/user-ale/helper-libs/javascript/userale-worker.js",
         debug: false,
         sendLogs: false
     });
@@ -456,10 +456,10 @@ var saveNeonConfig = function($http, config) {
 
 angular.element(document).ready(function() {
     var $http = angular.injector(['ng']).get('$http');
-    $http.get("./config/config.yaml").then(function(response) {
+    $http.get("./app/config/config.yaml").then(function(response) {
         saveNeonConfig($http, jsyaml.load(response.data));
     }, function() {
-        $http.get("./config/config.json").then(function(response) {
+        $http.get("./app/config/config.json").then(function(response) {
             saveNeonConfig($http, response.data);
         });
     });

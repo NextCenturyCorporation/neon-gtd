@@ -33,7 +33,7 @@ angular.module('neonDemo.directives')
     function(external, connectionService, datasetService, errorNotificationService, filterService, exportService,
     linksPopupService, themeService, visualizationService, $timeout, $filter) {
     return {
-        templateUrl: 'partials/directives/map.html',
+        templateUrl: 'components/map/map.html',
         restrict: 'EA',
         scope: {
             bindConfig: '=?',

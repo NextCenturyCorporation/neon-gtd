@@ -27,7 +27,7 @@ angular.module('neonDemo.directives')
 .directive('removeDataset', ['ConnectionService', 'ErrorNotificationService', 'ImportService', 'DatasetService',
     function(connectionService, errorNotificationService, importService, datasetService) {
     return {
-        templateUrl: 'partials/directives/removeDataset.html',
+        templateUrl: 'components/import/removeDataset.html',
         restrict: 'EA',
         link: function($scope, $element) {
             $scope.removeDatasetUserName = '';

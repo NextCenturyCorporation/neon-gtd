@@ -6,29 +6,29 @@
             <meta name="viewport" content="width=device-width, initial-scale=1">
         <title>Neon Dashboard</title>
 
-        <link type="image/png" rel="shortcut icon" href="img/Neon_16x16.png">
+        <link type="image/png" rel="shortcut icon" href="assets/images/Neon_16x16.png">
 
         <!-- OpenLayers will automatically add the link for its style during runtime if it can't find it in the index.html file even if it's included in the CSS package.  Put the link here so the style is defined before the Neon Dashboard style. -->
-        <link rel="stylesheet" href="lib/openlayers/theme/default/style.css" />
+        <link rel="stylesheet" href="bower_components/openlayers/theme/default/style.css" />
 
-        <!-- build:css css/neon-dashboard.min.css -->
+        <!-- build:css app/app.min.css -->
         <!-- bower:css -->
-        <link rel="stylesheet" href="lib/ag-grid/dist/ag-grid.css" />
-        <link rel="stylesheet" href="lib/ag-grid/dist/theme-fresh.css" />
-        <link rel="stylesheet" href="lib/ag-grid/dist/theme-blue.css" />
-        <link rel="stylesheet" href="lib/ag-grid/dist/theme-dark.css" />
-        <link rel="stylesheet" href="lib/angular-bootstrap-datetimepicker/src/css/datetimepicker.css" />
-        <link rel="stylesheet" href="lib/angular-gridster/dist/angular-gridster.min.css" />
-        <link rel="stylesheet" href="lib/angular-ui-tree/dist/angular-ui-tree.min.css" />
-        <link rel="stylesheet" href="lib/bootstrap/dist/css/bootstrap.css" />
+        <link rel="stylesheet" href="bower_components/ag-grid/dist/ag-grid.css" />
+        <link rel="stylesheet" href="bower_components/ag-grid/dist/theme-fresh.css" />
+        <link rel="stylesheet" href="bower_components/ag-grid/dist/theme-blue.css" />
+        <link rel="stylesheet" href="bower_components/ag-grid/dist/theme-dark.css" />
+        <link rel="stylesheet" href="bower_components/angular-bootstrap-datetimepicker/src/css/datetimepicker.css" />
+        <link rel="stylesheet" href="bower_components/angular-gridster/dist/angular-gridster.min.css" />
+        <link rel="stylesheet" href="bower_components/angular-ui-tree/dist/angular-ui-tree.min.css" />
+        <link rel="stylesheet" href="bower_components/bootstrap/dist/css/bootstrap.css" />
         <!-- endbower -->
 
-        <link rel="stylesheet" href="lib/angular-gantt/assets/angular-gantt.css" />
-        <link rel="stylesheet" href="lib/angular-gantt/assets/angular-gantt-plugins.css" />
-        <link rel="stylesheet" href="lib/jquery-ui/themes/ui-lightness/jquery-ui.css" />
-        <link rel="stylesheet" href="lib/jquery-ui/themes/ui-lightness/jquery.ui.theme.css" />
+        <link rel="stylesheet" href="bower_components/angular-gantt/assets/angular-gantt.css" />
+        <link rel="stylesheet" href="bower_components/angular-gantt/assets/angular-gantt-plugins.css" />
+        <link rel="stylesheet" href="bower_components/jquery-ui/themes/ui-lightness/jquery-ui.css" />
+        <link rel="stylesheet" href="bower_components/jquery-ui/themes/ui-lightness/jquery.ui.theme.css" />
 
-        <link rel="stylesheet" type="text/css" href="css/neon-dashboard-sprites.css">
+        <link rel="stylesheet" type="text/css" href="app/sprites.css">
         <!-- endbuild -->
 
         <!-- HTML5 Shim and Respond.js IE8 support of HTML5 elements and media queries -->
@@ -39,7 +39,7 @@
         <![endif]-->
     </head>
     <body class="ng-hide" ng-controller="neonDemoController" ng-show="displayDashboard">
-        <link rel="stylesheet" type="text/css" ng-href="css/{{theme.selected.file}}.css">
+        <link rel="stylesheet" type="text/css" ng-href="app/themes/{{theme.selected.file}}.css">
 
         <!-- Help Video Modal -->
         <div class="modal fade neon-popup" id="videoModal" tabindex="-1" role="dialog" aria-hidden="true">
@@ -170,131 +170,128 @@
         <script src="/neon/js/neon.js"></script>
 
         <!-- Include OpenLayers outside the JS package because OpenLayers scans the index.html file for its own include to extract its relative path. -->
-        <script src="lib/openlayers/OpenLayers.js"></script>
+        <script src="bower_components/openlayers/OpenLayers.js"></script>
 
         <!-- Include and minify Plotly in its own JS package because of its huge size in order to quicken the initial dashboard load. -->
-        <!-- build:js(app) js/plotly.min.js -->
-        <script src="js/vendor/plotly.js"></script>
+        <!-- build:js(client) plotly.min.js -->
+        <script src="assets/vendor/plotly.js"></script>
         <!-- endbuild -->
 
-        <!-- build:js(app) js/neon-dashboard-lib.min.js -->
+        <!-- build:js(client) app/lib.min.js -->
         <!-- bower:js -->
-        <script src="lib/jquery/dist/jquery.js"></script>
-        <script src="lib/angular/angular.js"></script>
-        <script src="lib/moment/moment.js"></script>
-        <script src="lib/angular-bootstrap-datetimepicker/src/js/datetimepicker.js"></script>
-        <script src="lib/angular-moment/angular-moment.js"></script>
-        <script src="lib/angular-gridster/src/angular-gridster.js"></script>
-        <script src="lib/angular-linkify/angular-linkify.js"></script>
-        <script src="lib/angular-loader/angular-loader.js"></script>
-        <script src="lib/angular-mocks/angular-mocks.js"></script>
-        <script src="lib/angular-route/angular-route.js"></script>
-        <script src="lib/angular-ui-tree/dist/angular-ui-tree.js"></script>
-        <script src="lib/bootstrap/dist/js/bootstrap.js"></script>
-        <script src="lib/d3/d3.js"></script>
-        <script src="lib/jquery-ui/ui/jquery-ui.js"></script>
-        <script src="lib/jquery.tagcloud/jquery.tagcloud.js"></script>
-        <script src="lib/js-yaml/dist/js-yaml.js"></script>
-        <script src="lib/mustache/mustache.js"></script>
-        <script src="lib/ngDraggable/ngDraggable.js"></script>
-        <script src="lib/remarkable-bootstrap-notify/bootstrap-notify.js"></script>
+        <script src="bower_components/jquery/dist/jquery.js"></script>
+        <script src="bower_components/angular/angular.js"></script>
+        <script src="bower_components/moment/moment.js"></script>
+        <script src="bower_components/angular-bootstrap-datetimepicker/src/js/datetimepicker.js"></script>
+        <script src="bower_components/angular-moment/angular-moment.js"></script>
+        <script src="bower_components/angular-gridster/src/angular-gridster.js"></script>
+        <script src="bower_components/angular-linkify/angular-linkify.js"></script>
+        <script src="bower_components/angular-loader/angular-loader.js"></script>
+        <script src="bower_components/angular-mocks/angular-mocks.js"></script>
+        <script src="bower_components/angular-route/angular-route.js"></script>
+        <script src="bower_components/angular-ui-tree/dist/angular-ui-tree.js"></script>
+        <script src="bower_components/bootstrap/dist/js/bootstrap.js"></script>
+        <script src="bower_components/d3/d3.js"></script>
+        <script src="bower_components/jquery-ui/ui/jquery-ui.js"></script>
+        <script src="bower_components/jquery.tagcloud/jquery.tagcloud.js"></script>
+        <script src="bower_components/js-yaml/dist/js-yaml.js"></script>
+        <script src="bower_components/mustache/mustache.js"></script>
+        <script src="bower_components/ngDraggable/ngDraggable.js"></script>
+        <script src="bower_components/remarkable-bootstrap-notify/bootstrap-notify.js"></script>
         <!-- endbower -->
 
-        <script src="lib/angular-gantt/dist/angular-gantt.js"></script>
-        <script src="lib/angular-gantt/dist/angular-gantt-plugins.js"></script>
+        <script src="bower_components/angular-gantt/dist/angular-gantt.js"></script>
+        <script src="bower_components/angular-gantt/dist/angular-gantt-plugins.js"></script>
 
-        <script src="lib/user-ale/helper-libs/javascript/userale.js"></script>
-        <script src="lib/user-ale/helper-libs/javascript/userale-worker.js"></script>
+        <script src="bower_components/user-ale/helper-libs/javascript/userale.js"></script>
+        <script src="bower_components/user-ale/helper-libs/javascript/userale-worker.js"></script>
 
         <!-- Include the opencpu library. OpenCPU needs to be included after JQuery and before the app config. -->
-        <script src="lib/opencpu/opencpu-0.5.js"></script>
+        <script src="bower_components/opencpu/opencpu-0.5.js"></script>
 
         <!-- Include the ag-grid library after the angular library. -->
-        <script src="lib/ag-grid/dist/ag-grid.js"></script>
+        <script src="bower_components/ag-grid/dist/ag-grid.js"></script>
 
         <!-- Include third party libs -->
-        <script src="lib/javascript-detect-element-resize/jquery.resize.js"></script>
-        <script src="lib/heatmapjs/build/heatmap.js"></script>
-        <script src="js/vendor/openlayers-heatmapjs/heatmap-openlayers.js"></script>
-        <script src="lib/threedubmedia.jquery.event/event.drag/jquery.event.drag.js"></script>
-        <script src="lib/threedubmedia.jquery.event/event.drop/jquery.event.drop.js"></script>
-        <script src="lib/jquery.linky/jquery.linky.js"></script>
-        <script src="lib/mergesort/merge-sort.js"></script>
-        <script src="lib/rainbowvis.js/rainbowvis.js"></script>
+        <script src="bower_components/javascript-detect-element-resize/jquery.resize.js"></script>
+        <script src="bower_components/heatmapjs/build/heatmap.js"></script>
+        <script src="assets/vendor/openlayers-heatmapjs/heatmap-openlayers.js"></script>
+        <script src="bower_components/threedubmedia.jquery.event/event.drag/jquery.event.drag.js"></script>
+        <script src="bower_components/threedubmedia.jquery.event/event.drop/jquery.event.drop.js"></script>
+        <script src="bower_components/jquery.linky/jquery.linky.js"></script>
+        <script src="bower_components/mergesort/merge-sort.js"></script>
+        <script src="bower_components/rainbowvis.js/rainbowvis.js"></script>
         <!-- endbuild -->
 
-        <!-- build:js(app) js/neon-dashboard-app.min.js -->
+        <!-- build:js(client) app/app.min.js -->
         <!-- injector:js -->
-        <script src="js/namespaces.js"></script>
-        <script src="js/neon-extensions/filtertable.js"></script>
-        <script src="js/charts/barchart.js"></script>
-        <script src="js/charts/circularHeatChart.js"></script>
-        <script src="js/charts/directedGraph.js"></script>
-        <script src="js/charts/linechart.js"></script>
-        <script src="js/charts/sunburst.js"></script>
-        <script src="js/charts/timelineSelectorChart.js"></script>
-        <script src="js/coremap/coremap.js"></script>
-        <script src="js/coremap/heatmapLayer.js"></script>
-        <script src="js/coremap/nodeLayer.js"></script>
-        <script src="js/coremap/pointsLayer.js"></script>
-        <script src="js/coremap/selectedPointsLayer.js"></script>
-        <script src="js/mediators/directedGraphMediator.js"></script>
-        <script src="js/time/dateBucketizer.js"></script>
-        <script src="js/time/monthBucketizer.js"></script>
-        <script src="js/time/yearBucketizer.js"></script>
-        <script src="js/app.js"></script>
-        <script src="js/connectionService.js"></script>
-        <script src="js/datasetService.js"></script>
-        <script src="js/errorNotificationService.js"></script>
-        <script src="js/exportService.js"></script>
-        <script src="js/filterService.js"></script>
-        <script src="js/importService.js"></script>
-        <script src="js/linksPopupService.js"></script>
-        <script src="js/parameterService.js"></script>
-        <script src="js/themeService.js"></script>
-        <script src="js/translationService.js"></script>
-        <script src="js/visualizationService.js"></script>
-        <script src="js/neonDemoController.js"></script>
-        <script src="js/dataset-wizard/databaseStep.js"></script>
-        <script src="js/dataset-wizard/datastoreStep.js"></script>
-        <script src="js/dataset-wizard/fieldsStep.js"></script>
-        <script src="js/dataset-wizard/layoutStep.js"></script>
-        <script src="js/dataset-wizard/relationsStep.js"></script>
-        <script src="js/dataset-wizard/wizardTemplate.js"></script>
-        <script src="js/directives/addVisualization.js"></script>
-        <script src="js/directives/arrayTextForm.js"></script>
-        <script src="js/directives/barchart.js"></script>
-        <script src="js/directives/circularHeatChart.js"></script>
-        <script src="js/directives/circularHeatForm.js"></script>
-        <script src="js/directives/countBy.js"></script>
-        <script src="js/directives/databaseConfig.js"></script>
-        <script src="js/directives/directedGraph.js"></script>
-        <script src="js/directives/exportWidgets.js"></script>
-        <script src="js/directives/fileFormats.js"></script>
-        <script src="js/directives/filterBuilder.js"></script>
-        <script src="js/directives/filterState.js"></script>
-        <script src="js/directives/filterTray.js"></script>
-        <script src="js/directives/gantt-chart.js"></script>
-        <script src="js/directives/importFile.js"></script>
-        <script src="js/directives/linechart.js"></script>
-        <script src="js/directives/linksPopup.js"></script>
-        <script src="js/directives/linksPopupButton.js"></script>
-        <script src="js/directives/map.js"></script>
-        <script src="js/directives/newsfeed.js"></script>
-        <script src="js/directives/optionsMenu.js"></script>
-        <script src="js/directives/plotlyGraph.js"></script>
-        <script src="js/directives/poweredByNeon.js"></script>
-        <script src="js/directives/queryResultsTable.js"></script>
-        <script src="js/directives/removeDataset.js"></script>
-        <script src="js/directives/sample.js"></script>
-        <script src="js/directives/savedStates.js"></script>
-        <script src="js/directives/stackedBarchart.js"></script>
-        <script src="js/directives/sunburst.js"></script>
-        <script src="js/directives/tagCloud.js"></script>
-        <script src="js/directives/timelineSelector.js"></script>
-        <script src="js/directives/timelineSelectorChart.js"></script>
-        <script src="js/directives/translationOptions.js"></script>
-        <script src="js/directives/visualizationWidget.js"></script>
+        <script src="app/namespaces.js"></script>
+        <script src="app/app.js"></script>
+        <script src="app/connection.service.js"></script>
+        <script src="app/dataset.service.js"></script>
+        <script src="app/errorNotification.service.js"></script>
+        <script src="app/export.service.js"></script>
+        <script src="app/filter.service.js"></script>
+        <script src="app/import.service.js"></script>
+        <script src="app/parameter.service.js"></script>
+        <script src="app/theme.service.js"></script>
+        <script src="app/translation.service.js"></script>
+        <script src="app/visualization.service.js"></script>
+        <script src="app/main/main.controller.js"></script>
+        <script src="components/addVisualization/addVisualization.directive.js"></script>
+        <script src="components/aggregationTable/aggregationTable.directive.js"></script>
+        <script src="components/barChart/barChart.directive.js"></script>
+        <script src="components/barChart/barChart.js"></script>
+        <script src="components/dataTable/dataTable.directive.js"></script>
+        <script src="components/databaseConfig/databaseConfig.directive.js"></script>
+        <script src="components/datasetWizard/databaseStep.directive.js"></script>
+        <script src="components/datasetWizard/datastoreStep.directive.js"></script>
+        <script src="components/datasetWizard/fieldsStep.directive.js"></script>
+        <script src="components/datasetWizard/layoutStep.directive.js"></script>
+        <script src="components/datasetWizard/relationsStep.directive.js"></script>
+        <script src="components/datasetWizard/wizardTemplate.directive.js"></script>
+        <script src="components/export/export.directive.js"></script>
+        <script src="components/export/fileFormats.directive.js"></script>
+        <script src="components/filterBuilder/filterBuilder.directive.js"></script>
+        <script src="components/filterBuilder/filterTable.js"></script>
+        <script src="components/filterTray/filterTray.directive.js"></script>
+        <script src="components/ganttChart/ganttChart.directive.js"></script>
+        <script src="components/import/import.directive.js"></script>
+        <script src="components/import/removeDataset.directive.js"></script>
+        <script src="components/lineChart/lineChart.directive.js"></script>
+        <script src="components/lineChart/lineChart.js"></script>
+        <script src="components/linksPopup/linksPopup.directive.js"></script>
+        <script src="components/linksPopup/linksPopup.service.js"></script>
+        <script src="components/linksPopup/linksPopupButton.directive.js"></script>
+        <script src="components/map/coremap.js"></script>
+        <script src="components/map/heatmapLayer.js"></script>
+        <script src="components/map/map.directive.js"></script>
+        <script src="components/map/nodeLayer.js"></script>
+        <script src="components/map/pointsLayer.js"></script>
+        <script src="components/map/selectedPointsLayer.js"></script>
+        <script src="components/networkGraph/directedGraph.js"></script>
+        <script src="components/networkGraph/directedGraphMediator.js"></script>
+        <script src="components/networkGraph/networkGraph.directive.js"></script>
+        <script src="components/newsFeed/newsFeed.directive.js"></script>
+        <script src="components/opsClock/circularHeatChart.js"></script>
+        <script src="components/opsClock/opsClock.directive.js"></script>
+        <script src="components/opsClock/opsClockChart.directive.js"></script>
+        <script src="components/optionsMenu/optionsMenu.directive.js"></script>
+        <script src="components/poweredByNeon/poweredByNeon.directive.js"></script>
+        <script src="components/sample/sample.directive.js"></script>
+        <script src="components/savedStates/savedStates.directive.js"></script>
+        <script src="components/scatterPlot/scatterPlot.directive.js"></script>
+        <script src="components/sunburstChart/sunburst.js"></script>
+        <script src="components/sunburstChart/sunburstChart.directive.js"></script>
+        <script src="components/textCloud/textCloud.directive.js"></script>
+        <script src="components/timeline/dateBucketizer.js"></script>
+        <script src="components/timeline/monthBucketizer.js"></script>
+        <script src="components/timeline/timeline.directive.js"></script>
+        <script src="components/timeline/timelineChart.directive.js"></script>
+        <script src="components/timeline/timelineSelectorChart.js"></script>
+        <script src="components/timeline/yearBucketizer.js"></script>
+        <script src="components/translationOptions/translationOptions.directive.js"></script>
+        <script src="components/visualizationWidget/visualizationWidget.directive.js"></script>
         <!-- endinjector -->
         <!-- endbuild -->
     </body>

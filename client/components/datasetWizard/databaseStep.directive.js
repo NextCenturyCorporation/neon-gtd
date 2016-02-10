@@ -18,7 +18,7 @@ angular.module('neonDemo.directives')
 .directive('databaseStep', [
     function() {
     return {
-        templateUrl: 'partials/dataset-wizard/databaseStep.html',
+        templateUrl: 'components/datasetWizard/databaseStep.html',
         restrict: 'E',
         require: '^wizard',
         scope: {

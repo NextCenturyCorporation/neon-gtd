@@ -21,7 +21,7 @@ angular.module('neonDemo.directives')
 function(external, connectionService, datasetService, errorNotificationService, filterService,
 exportService, linksPopupService, themeService, visualizationService) {
     return {
-        templateUrl: 'partials/directives/countby.html',
+        templateUrl: 'components/aggregationTable/aggregationTable.html',
         restrict: 'EA',
         scope: {
             bindTitle: '=',

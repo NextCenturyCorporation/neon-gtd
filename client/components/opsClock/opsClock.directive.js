@@ -34,7 +34,7 @@ angular.module('neonDemo.directives')
 .directive('circularHeatForm', ['ConnectionService', 'DatasetService', 'ErrorNotificationService', 'ExportService', 'VisualizationService',
 function(connectionService, datasetService, errorNotificationService, exportService, visualizationService) {
     return {
-        templateUrl: 'partials/directives/circularHeatForm.html',
+        templateUrl: 'components/opsClock/opsClock.html',
         restrict: 'EA',
         scope: {
             bindTitle: '=',

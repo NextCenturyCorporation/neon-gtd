@@ -20,7 +20,7 @@ angular.module('neonDemo.directives')
 .directive('ganttChart', ['ConnectionService', 'DatasetService', 'ErrorNotificationService', 'FilterService', 'VisualizationService',
 function(connectionService, datasetService, errorNotificationService, filterService, visualizationService) {
     return {
-        templateUrl: 'partials/directives/gantt-chart.html',
+        templateUrl: 'components/ganttChart/ganttChart.html',
         restrict: 'EA',
         scope: {
             bindDatabase: '=',

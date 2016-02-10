@@ -477,7 +477,7 @@
             "query_group",
             "graph_group"
         ],
-        "workerUrl": "lib/user-ale/helper-libs/javascript/userale-worker.js",
+        "workerUrl": "bower_components/user-ale/helper-libs/javascript/userale-worker.js",
         "debug": false,
         "sendLogs": false
     },
@@ -498,17 +498,17 @@
     },
 
     "help": {
-        "guide": "./help/Neon-Dashboard-User-Guide-1.1.5.pdf",
+        "guide": "./app/help/Neon-Dashboard-User-Guide-1.1.5.pdf",
         "webVideo": "",
         "localVideo": ""
     },
 
     "files": {
         "datasets": [
-            "./config/sample.dataset.config.json"
+            "./app/config/sample.dataset.config.json"
         ],
         "layouts": [
-            "./config/sample.layout.config.json"
+            "./app/config/sample.layout.config.json"
         ]
     },
 

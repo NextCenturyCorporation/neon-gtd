@@ -34,7 +34,7 @@ function(external, connectionService, datasetService, errorNotificationService, 
     var COUNT_FIELD_NAME = 'value';
 
     return {
-        templateUrl: 'partials/directives/linechart.html',
+        templateUrl: 'components/lineChart/lineChart.html',
         restrict: 'EA',
         scope: {
             bindConfig: '=',

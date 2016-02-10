@@ -18,7 +18,7 @@ angular.module('neonDemo.directives')
 .directive('databaseConfig', ['$location', 'config', 'layouts', 'visualizations', 'ConnectionService', 'DatasetService', 'ParameterService',
     function($location, config, layouts, visualizations, connectionService, datasetService, parameterService) {
     return {
-        templateUrl: 'partials/directives/databaseConfig.html',
+        templateUrl: 'components/databaseConfig/databaseConfig.html',
         restrict: 'E',
         scope: {
             storeSelect: '=',

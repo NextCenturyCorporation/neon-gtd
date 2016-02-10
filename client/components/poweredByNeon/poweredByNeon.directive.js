@@ -31,10 +31,10 @@
 angular.module('neonDemo.directives')
 .directive('poweredByNeon', ["$http", function($http) {
     return {
-        templateUrl: 'partials/directives/poweredByNeon.html',
+        templateUrl: 'components/poweredByNeon/poweredByNeon.html',
         restrict: 'EA',
         link: function($scope) {
-            var NEON_GTD_VERSION_FILE = './config/version.json';
+            var NEON_GTD_VERSION_FILE = './app/config/version.json';
             $scope.serverVersionString = "Loading...";
             $scope.neonGTDVersionString = "Loading...";
 

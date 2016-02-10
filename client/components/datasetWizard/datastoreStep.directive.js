@@ -18,7 +18,7 @@ angular.module('neonDemo.directives')
 .directive('datastoreStep', ['DatasetService', 'ConnectionService',
     function(datasetService, connectionService) {
     return {
-        templateUrl: 'partials/dataset-wizard/datastoreStep.html',
+        templateUrl: 'components/datasetWizard/datastoreStep.html',
         restrict: 'E',
         require: '^wizard',
         scope: {

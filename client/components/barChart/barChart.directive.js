@@ -31,7 +31,7 @@ angular.module('neonDemo.directives')
 .directive('barchart', ['external', 'ConnectionService', 'DatasetService', 'ErrorNotificationService', 'FilterService', 'ExportService', 'LinksPopupService', 'VisualizationService',
 function(external, connectionService, datasetService, errorNotificationService, filterService, exportService, linksPopupService, visualizationService) {
     return {
-        templateUrl: 'partials/directives/barchart.html',
+        templateUrl: 'components/barChart/barChart.html',
         restrict: 'EA',
         scope: {
             bindTitle: '=',

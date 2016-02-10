@@ -24,7 +24,7 @@ angular.module('neonDemo.directives')
 function(external, connectionService, datasetService, errorNotificationService, filterService, exportService,
 linksPopupService, themeService, translationService, visualizationService, $timeout) {
     return {
-        templateUrl: 'partials/directives/tagCloud.html',
+        templateUrl: 'components/textCloud/textCloud.html',
         restrict: 'EA',
         scope: {
             bindTitle: '=',

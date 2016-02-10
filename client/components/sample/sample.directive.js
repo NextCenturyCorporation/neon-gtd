@@ -20,7 +20,7 @@ angular.module('neonDemo.directives')
 .directive('sample', ['ConnectionService', 'DatasetService', 'ErrorNotificationService', 'FilterService', 'ExportService', 'VisualizationService',
 function(connectionService, datasetService, errorNotificationService, filterService, exportService, visualizationService) {
     return {
-        templateUrl: 'partials/directives/sample.html',
+        templateUrl: 'components/sample/sample.html',
         restrict: 'EA',
         // Bindings can be set in the config.json file using the following format (please note the two sets of quotation marks):
         //   "bind-database": "'myDatabase'"

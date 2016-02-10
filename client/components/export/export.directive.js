@@ -25,7 +25,7 @@ angular.module('neonDemo.directives')
 .directive('exportWidgets', ['ConnectionService', 'ErrorNotificationService', 'ExportService',
     function(connectionService, errorNotificationService, exportService) {
     return {
-        templateUrl: 'partials/directives/exportWidgets.html',
+        templateUrl: 'components/export/export.html',
         restrict: 'EA',
         link: function($scope) {
             var exportSuccess = function(queryResults) {

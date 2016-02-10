@@ -28,7 +28,7 @@
 angular.module('neonDemo.directives')
 .directive('addVisualization', ['$timeout', 'config', 'visualizations', function($timeout, config, visualizations) {
     return {
-        templateUrl: 'partials/directives/addVisualization.html',
+        templateUrl: 'components/addVisualization/addVisualization.html',
         restrict: 'EA',
         scope: {
             gridsterConfigs: "="

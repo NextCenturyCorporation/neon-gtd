@@ -25,7 +25,7 @@
 angular.module('neonDemo.directives')
 .directive('fileFormats', ['ExportService', function(exportService) {
     return {
-        templateUrl: 'partials/directives/fileFormats.html',
+        templateUrl: 'components/export/fileFormats.html',
         restrict: 'EA',
         link: function($scope) {
             /**

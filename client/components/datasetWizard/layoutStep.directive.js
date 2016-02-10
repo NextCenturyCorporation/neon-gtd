@@ -18,7 +18,7 @@ angular.module('neonDemo.directives')
 .directive('layoutStep', ['visualizations', 'config',
     function(visualizations, config) {
     return {
-        templateUrl: 'partials/dataset-wizard/layoutStep.html',
+        templateUrl: 'components/datasetWizard/layoutStep.html',
         restrict: 'E',
         require: '^wizard',
         scope: {

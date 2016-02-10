@@ -18,7 +18,7 @@ angular.module('neonDemo.directives')
 .directive('filterTray', ['$timeout', 'external', 'DatasetService', 'FilterService', 'LinksPopupService', 'ParameterService',
 function($timeout, external, datasetService, filterService, linksPopupService, parameterService) {
     return {
-        templateUrl: 'partials/directives/filterTray.html',
+        templateUrl: 'components/filterTray/filterTray.html',
         restrict: 'EA',
         scope: {
             boundParent: '=',

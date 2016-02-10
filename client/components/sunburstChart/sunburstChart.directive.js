@@ -31,7 +31,7 @@ angular.module('neonDemo.directives')
 .directive('sunburst', ['ConnectionService', 'DatasetService', 'ErrorNotificationService', 'ExportService', 'VisualizationService',
 function(connectionService, datasetService, errorNotificationService, exportService, visualizationService) {
     return {
-        templateUrl: 'partials/directives/sunburst.html',
+        templateUrl: 'components/sunburstChart/sunburstChart.html',
         restrict: 'EA',
         scope: {
             bindTitle: '=',

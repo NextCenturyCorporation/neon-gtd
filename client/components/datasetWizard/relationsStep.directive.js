@@ -18,7 +18,7 @@ angular.module('neonDemo.directives')
 .directive('relationsStep', [
     function() {
     return {
-        templateUrl: 'partials/dataset-wizard/relationsStep.html',
+        templateUrl: 'components/datasetWizard/relationsStep.html',
         restrict: 'E',
         require: '^wizard',
         scope: {

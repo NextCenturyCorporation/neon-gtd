@@ -18,7 +18,7 @@ angular.module('neonDemo.directives')
 .directive('fieldsStep', ['ConnectionService', 'ErrorNotificationService',
     function(connectionService, errorNotificationService) {
     return {
-        templateUrl: 'partials/dataset-wizard/fieldsStep.html',
+        templateUrl: 'components/datasetWizard/fieldsStep.html',
         restrict: 'E',
         require: '^wizard',
         scope: {

@@ -35,7 +35,7 @@ angular.module('neonDemo.directives')
 .directive('timelineSelector', ['$interval', '$filter', 'external', 'ConnectionService', 'DatasetService', 'ErrorNotificationService', 'FilterService', 'ExportService', 'LinksPopupService', 'VisualizationService', 'opencpu',
 function($interval, $filter, external, connectionService, datasetService, errorNotificationService, filterService, exportService, linksPopupService, visualizationService, opencpu) {
     return {
-        templateUrl: 'partials/directives/timelineSelector.html',
+        templateUrl: 'components/timeline/timeline.html',
         restrict: 'EA',
         scope: {
             bindTitle: '=',
