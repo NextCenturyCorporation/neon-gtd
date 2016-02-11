@@ -77,6 +77,18 @@ module.exports = function(grunt) {
             }
         },
 
+        eol: {
+            dist: {
+                options: {
+                    eol: "lf",
+                    replace: true
+                },
+                files: [{
+                    src: ["dist/index.html"]
+                }]
+            }
+        },
+
         injector: {
             js: {
                 options: {
@@ -383,6 +395,7 @@ module.exports = function(grunt) {
     grunt.loadNpmTasks('grunt-contrib-uglify');
     grunt.loadNpmTasks('grunt-contrib-watch');
     grunt.loadNpmTasks('grunt-contrib-yuidoc');
+    grunt.loadNpmTasks('grunt-eol');
     grunt.loadNpmTasks('grunt-exec');
     grunt.loadNpmTasks('grunt-git-describe');
     grunt.loadNpmTasks('grunt-injector');
@@ -427,6 +440,7 @@ module.exports = function(grunt) {
         'jshint:xml',
         'jscs:xml',
         'yuidoc',
+        'eol',
         'usemin',
         'war'
     ];
