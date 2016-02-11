@@ -161,17 +161,12 @@ function(connectionService, datasetService, filterService, themeService, visuali
             $scope.updateFields = function() {
                 $scope.fields = datasetService.getSortedFields($scope.active.database.name, $scope.active.table.name);
 
-                var xFieldName = $scope.bindXAxisField || $scope.bindAttrX ||
-                    datasetService.getMapping($scope.active.database.name, $scope.active.table.name, neonMappings.SCATTERPLOT_X_AXIS) ||
-                    "";
-
+                var xFieldName = $scope.bindXAxisField || $scope.bindAttrX || datasetService.getMapping($scope.active.database.name, $scope.active.table.name, neonMappings.SCATTERPLOT_X_AXIS) || "";
                 $scope.active.attrX = _.find($scope.fields, function(field) {
                     return field.columnName === xFieldName;
                 }) || datasetService.createBlankField();
 
-                var yFieldName = $scope.bindYAxisField || $scope.bindAttrY ||
-                    datasetService.getMapping($scope.active.database.name, $scope.active.table.name, neonMappings.SCATTERPLOT_Y_AXIS) ||
-                    "";
+                var yFieldName = $scope.bindYAxisField || $scope.bindAttrY || datasetService.getMapping($scope.active.database.name, $scope.active.table.name, neonMappings.SCATTERPLOT_Y_AXIS) || "";
                 $scope.active.attrY = _.find($scope.fields, function(field) {
                     return field.columnName === yFieldName;
                 }) || datasetService.createBlankField();
