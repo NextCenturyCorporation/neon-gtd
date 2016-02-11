@@ -1092,7 +1092,7 @@ angular.module('neonDemo.directives')
                                 }
                             }
 
-                            if(external.services.point) {
+                            if(external.services.point && $scope.options.layers[i].type !== $scope.NODE_AND_ARROW_LAYER) {
                                 var linksSource = generatePointLinksSource(database, table);
                                 createExternalLinks(data, linksSource, $scope.options.layers[i].latitudeMapping, $scope.options.layers[i].longitudeMapping);
                                 $scope.options.layers[i].olLayer.linksSource = linksSource;
