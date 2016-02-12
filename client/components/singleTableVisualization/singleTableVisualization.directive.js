@@ -37,25 +37,26 @@ function(connectionService, datasetService, errorNotificationService, filterServ
             $element.find(".visualization").attr("visualization-id", $attrs.visualizationId);
             $element.find(".visualization").attr("ng-controller", $attrs.type + "Controller");
             $element.find(".visualization-display").attr("ng-include", "'components/" + $attrs.type + "/" + $attrs.type + "Display.html'");
-            $element.find(".visualization-heading").attr("ng-include", "'components/" + $attrs.type + "/" + $attrs.type + "Heading.html'");
+            $element.find(".visualization-headers").attr("ng-include", "'components/" + $attrs.type + "/" + $attrs.type + "Headers.html'");
             $element.find(".visualization-options").attr("ng-include", "'components/" + $attrs.type + "/" + $attrs.type + "Options.html'");
 
             // Returns the angular directive link function.
             return function($scope, $element) {
                 $scope.element = $element;
-                $scope.logElementGroup = $scope.logElementGroup || "chart_group";
-                $scope.logElementType = $scope.logElementType || "canvas";
             }
         },
 
         controller: ["$scope", function($scope) {
-            $scope.functions = {};
+            $scope.logElementGroup = $scope.logElementGroup || "chart_group";
+            $scope.logElementType = $scope.logElementType || "canvas";
 
             $scope.active = {
                 database: {},
                 table: {},
                 unsharedFilterField: {}
             };
+
+            $scope.functions = {};
 
             /**
              * Initializes this visualization.
@@ -851,12 +852,12 @@ function(connectionService, datasetService, errorNotificationService, filterServ
             };
 
             /**
-             * Returns whether to hide the filter header for this visualization if a filter is not set.  The filter header will never be hidden if a filter is set.
+             * Returns whether to hide the filter header for this visualization.  The default implementation hides the filter header if a filter is not set.
              * @method hideFilterHeader
              * @return {Boolean}
              */
             $scope.functions.hideFilterHeader = function() {
-                return false;
+                return !$scope.filter;
             };
 
             /**

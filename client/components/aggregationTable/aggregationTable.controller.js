@@ -15,6 +15,7 @@
  * limitations under the License.
  *
  */
+
 angular.module('neonDemo.controllers').controller('aggregationTableController', ['$scope', 'external', 'LinksPopupService', function($scope, external, linksPopupService) {
     $scope.active.aggregation = $scope.bindings.aggregation || "count";
     $scope.active.aggregationField = {};
@@ -277,7 +278,7 @@ angular.module('neonDemo.controllers').controller('aggregationTableController', 
     };
 
     $scope.functions.hideFilterHeader = function() {
-        return !$scope.active.showTooMuchDataError;
+        return !$scope.filter && !$scope.active.showTooMuchDataError;
     };
 
     $scope.functions.addToBindings = function(bindings) {

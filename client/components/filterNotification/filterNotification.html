@@ -1,0 +1,4 @@
+<div class="header-item filter-reset pull-right" ng-class="{true: 'hidden', false: ''}[filter === undefined]">
+    <span class="filter-label" title="{{filter.field + ' = ' + filter.value}}" ng-bind="filter.value"></span>
+    <span class="glyphicon glyphicon-remove" title="Delete Filter {{filter.field + ' = ' + filter.value}}" ng-click="removeFilter()"></span>
+</div>
