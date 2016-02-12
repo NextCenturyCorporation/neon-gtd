@@ -16,7 +16,7 @@
 
 module.exports = function(grunt) {
     var packageJSON = require('./package.json');
-    var versionJSONFile = 'app/config/version.json';
+    var versionJSONFile = 'client/app/config/version.json';
 
     grunt.initConfig({
         exec: {
@@ -27,12 +27,12 @@ module.exports = function(grunt) {
         },
 
         clean: {
-            lib: ["app/lib"],
+            lib: ["client/bower_components"],
             docs: ["docs"],
             war: ["target"],
             tests: ["reports"],
-            less: ["app/css/app.css"],
-            build: [".tmp", "build"]
+            less: ["client/app/app.css"],
+            dist: [".tmp", "dist"]
         },
 
         "git-describe": {
@@ -49,9 +49,9 @@ module.exports = function(grunt) {
         // Injects the bower components into the <!-- bower --> blocks in our index.html file.
         wiredep: {
             app: {
-                src: "app/index.html",
-                directory: "app/lib",
-                ignorePath: "app/",
+                src: "client/index.html",
+                directory: "client/bower_components",
+                ignorePath: "client/",
                 // The dependencies for these libraries are added to index.html manually.
                 exclude: [
                     // Exclude ag-grid.js because it must be included after angular.js and wiredep may not order them correctly.
@@ -77,30 +77,34 @@ module.exports = function(grunt) {
             }
         },
 
+        eol: {
+            dist: {
+                options: {
+                    eol: "lf",
+                    replace: true
+                },
+                files: [{
+                    src: ["dist/index.html"]
+                }]
+            }
+        },
+
         injector: {
             js: {
                 options: {
-                    starttag: "/* injector:js */",
-                    endtag: "/* endinjector */",
+                    starttag: "<!-- injector:js -->",
+                    endtag: "<!-- endinjector -->",
                     transform: function(filePath) {
-                        filePath = filePath.replace("/app/", "");
+                        filePath = filePath.replace("/client/", "");
                         return '<script src="' + filePath + '"></script>';
                     }
                 },
                 files: {
-                    "app/index.html": [
-                        "app/js/namespaces.js",
-                        "app/js/neon-extensions/*.js",
-                        "app/js/charts/*.js",
-                        "app/js/coremap/*.js",
-                        "app/js/mediators/*.js",
-                        "app/js/tables/*.js",
-                        "app/js/time/*.js",
-                        "app/js/app.js",
-                        "app/js/*Service.js",
-                        "app/js/*Controller.js",
-                        "app/js/dataset-wizard/*.js",
-                        "app/js/directives/*.js"
+                    "client/index.html": [
+                        "client/app/namespaces.js",
+                        "client/app/app.js",
+                        "client/app/*.service.js",
+                        "client/{app,components}/**/*.js"
                     ]
                 }
             },
@@ -110,18 +114,15 @@ module.exports = function(grunt) {
                     starttag: "/* injector:less */",
                     endtag: "/* endinjector */",
                     transform: function(filePath) {
-                        filePath = filePath.replace("/app/css/", "");
+                        filePath = filePath.replace("/client/app/", "");
+                        filePath = filePath.replace("/client/components/", "../components/");
                         return '@import "' + filePath + '";';
                     }
                 },
                 files: {
-                    "app/css/app.less": [
-                        "app/css/*.less",
-                        "app/css/directives/*.less",
-                        "!app/css/app.less",
-                        "!app/css/theme*.less",
-                        "!app/css/variables*.less",
-                        "!app/css/widgetStyle.less"
+                    "client/app/app.less": [
+                        "client/{app,components}/**/*.less",
+                        "!client/app/themes/*.less"
                     ]
                 }
             }
@@ -129,24 +130,21 @@ module.exports = function(grunt) {
 
         less: {
             options: {
-                dumpLineNumbers: 'comments',
-                paths: [
-                    'app/components'
-                ]
+                dumpLineNumbers: 'comments'
             },
             themeDarkGreen: {
                 files: {
-                    'app/css/dark-green.css': 'app/css/theme-green-on-dark.less'
+                    'client/app/themes/dark-green.css': 'client/app/themes/theme-green-on-dark.less'
                 }
             },
             themeLightGreen: {
                 files: {
-                    'app/css/light-green.css': 'app/css/theme-green-on-light.less'
+                    'client/app/themes/light-green.css': 'client/app/themes/theme-green-on-light.less'
                 }
             },
             themeDarkPurple: {
                 files: {
-                    'app/css/dark-purple.css': 'app/css/theme-purple-on-dark.less'
+                    'client/app/themes/dark-purple.css': 'client/app/themes/theme-purple-on-dark.less'
                 }
             }
         },
@@ -154,26 +152,31 @@ module.exports = function(grunt) {
         // Packages all the images into a spritesheet and creates a CSS file for using the sprites.
         sprite: {
             app: {
-                src: ["app/img/*.png", "app/img/visualizations/*.png", "app/img/visualizations/gray/*.png", "!app/img/neon-dashboard-spritesheet.png"],
-                dest: "app/img/neon-dashboard-spritesheet.png",
-                destCss: "app/css/neon-dashboard-sprites.css"
+                src: [
+                    "client/assets/images/*.png",
+                    "client/assets/images/visualizations/*.png",
+                    "client/assets/images/visualizations/gray/*.png",
+                    "!client/assets/images/spritesheet.png"
+                ],
+                dest: "client/assets/images/spritesheet.png",
+                destCss: "client/app/sprites.css"
             }
         },
 
         // Prepares concatenation and minification of CSS and JS dependencies in our index.html file.
         // Automatically configures files for the concat, uglify, and cssmin tasks using the <!-- build --> blocks in our index.html.
         useminPrepare: {
-            html: "app/index.html",
+            html: "client/index.html",
             options: {
-                dest: "build"
+                dest: "dist"
             }
         },
 
         // Copies concatenated, minified files into the build directory and inject dependencies into our index.html file.
         usemin: {
-            html: ["build/{,*/}*.html"],
+            html: ["dist/{,*/}*.html"],
             options: {
-                assetsDirs: ["build"]
+                assetsDirs: ["dist"]
             }
         },
 
@@ -182,13 +185,13 @@ module.exports = function(grunt) {
             options: {
                 module: "neonDemo",
                 // Add the template JS file to the list of JS files that the usemin task configured to concatenate.
-                usemin: "build/js/neon-dashboard-app.min.js"
+                usemin: "dist/app/app.min.js"
                 // TODO Use the htmlmin option when the html-minifier task fully supports angular (currently the task just hangs when run).
             },
             app: {
-                cwd: "app/",
-                src: ["partials/**/*.html"],
-                dest: "build/js/neon-dashboard-templates.js"
+                cwd: "client/",
+                src: ["{app,components}/**/*.html"],
+                dest: "dist/app/templates.js"
             }
         },
 
@@ -203,39 +206,53 @@ module.exports = function(grunt) {
         copy: {
             bootstrap: {
                 expand: true,
-                cwd: "app/lib/bootstrap/dist/",
+                cwd: "client/bower_components/bootstrap/dist/",
                 src: ["fonts/**"],
-                dest: "build/"
+                dest: "dist/"
             },
             jquery_ui_lightness: {
                 expand: true,
-                cwd: "app/lib/jquery-ui/themes/ui-lightness",
+                cwd: "client/bower_components/jquery-ui/themes/ui-lightness",
                 src: ["images/**"],
-                dest: "build/css/"
+                dest: "dist/css/"
             },
             jquery_ui_smoothness: {
                 expand: true,
-                cwd: "app/lib/jquery-ui/themes/smoothness",
+                cwd: "client/bower_components/jquery-ui/themes/smoothness",
                 src: ["images/**"],
-                dest: "build/css/"
+                dest: "dist/css/"
             },
             openlayers: {
                 expand: true,
-                cwd: "app/",
-                src: ["lib/openlayers/OpenLayers.js", "lib/openlayers/img/*", "lib/openlayers/theme/default/style.css", "lib/openlayers/theme/default/img/*"],
-                dest: "build/"
+                cwd: "client/",
+                src: [
+                    "bower_components/openlayers/OpenLayers.js",
+                    "bower_components/openlayers/img/*",
+                    "bower_components/openlayers/theme/default/style.css",
+                    "bower_components/openlayers/theme/default/img/*"
+                ],
+                dest: "dist/"
             },
             userale: {
                 expand: true,
-                cwd: "app/",
-                src: ["lib/user-ale/helper-libs/javascript/userale-worker.js"],
-                dest: "build/"
+                cwd: "client/",
+                src: ["bower_components/user-ale/helper-libs/javascript/userale-worker.js"],
+                dest: "dist/"
             },
             app: {
                 expand: true,
-                cwd: "app/",
-                src: ["index.html", "config/**", "css/light-*.css", "css/dark-*.css", "fonts/**", "help/**", "img/Neon_16x16.png", "img/neon-dashboard-spritesheet.png"],
-                dest: "build/"
+                cwd: "client/",
+                src: [
+                    "index.html",
+                    "app/config/**",
+                    "app/help/**",
+                    "app/themes/light-*.css",
+                    "app/themes/dark-*.css",
+                    "assets/fonts/**",
+                    "assets/images/Neon_16x16.png",
+                    "assets/images/spritesheet.png"
+                ],
+                dest: "dist/"
             }
         },
 
@@ -246,10 +263,9 @@ module.exports = function(grunt) {
             },
             console: [
                 'Gruntfile.js',
-                'app/js/*.js',
-                'app/js/**/*.js',
-                'test/**/*.js',
-                '!app/js/vendor/**/*.js'
+                'e2e/',
+                'client/app/*.js',
+                'client/{app,components}/**/*.js'
             ],
             xml: {
                 options: {
@@ -259,10 +275,9 @@ module.exports = function(grunt) {
                 files: {
                     src: [
                         'Gruntfile.js',
-                        'app/js/*.js',
-                        'app/js/**/*.js',
-                        'test/**/*.js',
-                        '!app/js/vendor/**/*.js'
+                        'e2e/',
+                        'client/app/*.js',
+                        'client/{app,components}/**/*.js'
                     ]
                 }
             }
@@ -271,7 +286,7 @@ module.exports = function(grunt) {
         jscs: {
             options: {
                 config: ".jscsrc",
-                excludeFiles: ["app/js/vendor/**/*.js"],
+                excludeFiles: ["client/assets/vendor/**/*.js"],
                 force: true
             },
             console: {
@@ -279,7 +294,7 @@ module.exports = function(grunt) {
                     reporter: 'console'
                 },
                 files: {
-                    src: ['Gruntfile.js', 'app/js/**/*.js', 'test/**/*.js']
+                    src: ['Gruntfile.js', 'client/app/*.js', 'client/{app,components,test}/**/*.js']
                 }
             },
             xml: {
@@ -288,7 +303,7 @@ module.exports = function(grunt) {
                     reporter: 'checkstyle'
                 },
                 files: {
-                    src: ['Gruntfile.js', 'app/js/**/*.js', 'test/**/*.js']
+                    src: ['Gruntfile.js', 'client/app/*.js', 'client/{app,components,test}/**/*.js']
                 }
             }
         },
@@ -319,9 +334,9 @@ module.exports = function(grunt) {
                 },
                 files: [{
                     expand: true,
-                    cwd: ".",
-                    src: ["app/**", "!**/*.less"],
-                    dest: ""
+                    cwd: "client/",
+                    src: ["**", "!**/*.less"],
+                    dest: "app/"
                 }]
             },
             production: {
@@ -338,7 +353,7 @@ module.exports = function(grunt) {
                 },
                 files: [{
                     expand: true,
-                    cwd: "build/",
+                    cwd: "dist/",
                     src: ["**"],
                     dest: "app/"
                 }]
@@ -351,18 +366,17 @@ module.exports = function(grunt) {
                 description: packageJSON.description,
                 version: packageJSON.version,
                 url: packageJSON.repository.url,
-                logo: '../app/img/Neon_60x34.png',
+                logo: '../client/assets/images/Neon_60x34.png',
                 options: {
-                    paths: 'app/js',
-                    exclude: "vendor",
-                    outdir: 'docs'
+                    paths: ["client/app", "client/components"],
+                    outdir: "docs"
                 }
             }
         },
 
         watch: {
             less: {
-                files: ['app/css/**/*.less'],
+                files: ['client/app/*.less', 'client/{app,components}/**/*.less'],
                 tasks: ['compile-less'],
                 options: {
                     spawn: false
@@ -381,6 +395,7 @@ module.exports = function(grunt) {
     grunt.loadNpmTasks('grunt-contrib-uglify');
     grunt.loadNpmTasks('grunt-contrib-watch');
     grunt.loadNpmTasks('grunt-contrib-yuidoc');
+    grunt.loadNpmTasks('grunt-eol');
     grunt.loadNpmTasks('grunt-exec');
     grunt.loadNpmTasks('grunt-git-describe');
     grunt.loadNpmTasks('grunt-injector');
@@ -425,10 +440,11 @@ module.exports = function(grunt) {
         'jshint:xml',
         'jscs:xml',
         'yuidoc',
+        'eol',
         'usemin',
         'war'
     ];
 
-    grunt.registerTask('no-bower', ['clean:docs', 'clean:war', 'clean:tests', 'clean:build'].concat(defaultTasks));
+    grunt.registerTask('no-bower', ['clean:docs', 'clean:war', 'clean:tests', 'clean:dist'].concat(defaultTasks));
     grunt.registerTask('default', ['clean', 'exec:bower_install'].concat(defaultTasks));
 };

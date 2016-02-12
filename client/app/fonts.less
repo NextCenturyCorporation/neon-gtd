@@ -1,0 +1,99 @@
+//
+// Copyright 2014 Next Century Corporation
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+//
+
+@font-face {
+    font-family: 'Open Sans';
+    font-style: normal;
+    font-weight: 300;
+    src:  url('../../assets/fonts/OpenSans-Light.eot');
+    src:     url('../../assets/fonts/OpenSans-Light.eot?#iefix') format('embedded-opentype'),
+    url('../../assets/fonts/OpenSans-Light.woff') format('woff'),
+    url('../../assets/fonts/OpenSans-Light.ttf') format('truetype'),
+    url('../../assets/fonts/opensans-light-webfont.svg#open_sanslight') format('svg');
+}
+@font-face {
+    font-family: 'Open Sans';
+    font-style: normal;
+    font-weight: 400;
+    src:  url('../../assets/fonts/OpenSans-Regular.eot');
+    src:     url('../../assets/fonts/OpenSans-Regular.eot?#iefix') format('embedded-opentype'),
+    url('../../assets/fonts/OpenSans-Regular.woff') format('woff'),
+    url('../../assets/fonts/OpenSans-Regular.ttf') format('truetype'),
+    url('../../assets/fonts/opensans-regular-webfont.svg#open_sansregular') format('svg');
+}
+@font-face {
+    font-family: 'Open Sans';
+    font-style: normal;
+    font-weight: 700;
+    src:  url('../../assets/fonts/OpenSans-Bold.eot');
+    src:     url('../../assets/fonts/OpenSans-Bold.eot?#iefix') format('embedded-opentype'),
+    url('../../assets/fonts/OpenSans-Bold.woff') format('woff'),
+    url('../../assets/fonts/OpenSans-Bold.ttf') format('truetype'),
+    url('../../assets/fonts/opensans-bold-webfont.svg#open_sansbold') format('svg');
+}
+
+// Better font rendering for Chrome
+@media screen and (-webkit-min-device-pixel-ratio:0) {
+    @font-face {
+        font-family: 'Open Sans';
+        font-style: normal;
+        font-weight: 300;
+        src:     url('../../assets/fonts/opensans-light-webfont.svg#open_sanslight') format('svg');
+    }
+    @font-face {
+        font-family: 'Open Sans';
+        font-style: normal;
+        font-weight: 400;
+        src:     url('../../assets/fonts/opensans-regular-webfont.svg#open_sansregular') format('svg');
+    }
+    @font-face {
+        font-family: 'Open Sans';
+        font-style: normal;
+        font-weight: 700;
+        src:  url('../../assets/fonts/opensans-bold-webfont.svg#open_sansbold') format('svg');
+    }
+
+    /* Just for selects... */
+    @font-face {
+        font-family: 'Open Sans Selects';
+        font-style: normal;
+        font-weight: 300;
+        src:  url('../../assets/fonts/OpenSans-Light.eot');
+        src:     url('../../assets/fonts/OpenSans-Light.eot?#iefix') format('embedded-opentype'),
+        url('../../assets/fonts/OpenSans-Light.woff') format('woff'),
+        url('../../assets/fonts/OpenSans-Light.ttf') format('truetype');
+    }
+    @font-face {
+        font-family: 'Open Sans Selects';
+        font-style: normal;
+        font-weight: 400;
+        src:  url('../../assets/fonts/OpenSans-Regular.eot');
+        src:     url('../../assets/fonts/OpenSans-Regular.eot?#iefix') format('embedded-opentype'),
+        url('../../assets/fonts/OpenSans-Regular.woff') format('woff'),
+        url('../../assets/fonts/OpenSans-Regular.ttf') format('truetype');
+    }
+    @font-face {
+        font-family: 'Open Sans Selects';
+        font-style: normal;
+        font-weight: 700;
+        src:  url('../../assets/fonts/OpenSans-Bold.eot');
+        src:     url('../../assets/fonts/OpenSans-Bold.eot?#iefix') format('embedded-opentype'),
+        url('../../assets/fonts/OpenSans-Bold.woff') format('woff'),
+        url('../../assets/fonts/OpenSans-Bold.ttf') format('truetype');
+    }
+    select{
+        font-family: "Open Sans Selects", Helvetica, arial, sans-serif !important;
+    }
+}
