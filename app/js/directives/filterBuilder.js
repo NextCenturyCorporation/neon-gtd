@@ -633,14 +633,9 @@ angular.module('neonDemo.directives')
                 }
             };
 
-            var wrapGetInstanceId = function(qualifier, successCallback) {
-                var instanceId = neon.widget.getInstanceId(qualifier);
-                successCallback(instanceId);
-            };
-
             // Wait for neon to be ready, the create our messenger and intialize the view and data.
             neon.ready(function() {
-                wrapGetInstanceId("filterBuilder", function(instanceId) {
+                neon.widget.getInstanceId("filterBuilder", function(instanceId) {
                     $scope.instanceId = instanceId;
                     initialize();
                     displayActiveDataset();
