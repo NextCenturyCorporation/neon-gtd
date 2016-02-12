@@ -33,10 +33,11 @@ function(connectionService, datasetService, errorNotificationService, filterServ
         },
 
         compile: function($element, $attrs) {
-            $element.find(".visualization").attr("ng-controller", $attrs.type + "Controller");
+            // Must add angular attributes, controllers, and templates here before angular compiles the HTML for this directive.
             $element.find(".visualization").attr("visualization-id", $attrs.visualizationId);
+            $element.find(".visualization").attr("ng-controller", $attrs.type + "Controller");
             $element.find(".visualization-display").attr("ng-include", "'components/" + $attrs.type + "/" + $attrs.type + "Display.html'");
-            $element.find(".visualization-headers").attr("ng-include", "'components/" + $attrs.type + "/" + $attrs.type + "Headers.html'");
+            $element.find(".visualization-heading").attr("ng-include", "'components/" + $attrs.type + "/" + $attrs.type + "Heading.html'");
             $element.find(".visualization-options").attr("ng-include", "'components/" + $attrs.type + "/" + $attrs.type + "Options.html'");
 
             // Returns the angular directive link function.
@@ -47,7 +48,7 @@ function(connectionService, datasetService, errorNotificationService, filterServ
             }
         },
 
-        controller: ["$scope", "$element", function($scope, $element) {
+        controller: ["$scope", function($scope) {
             $scope.functions = {};
 
             $scope.active = {
@@ -85,6 +86,7 @@ function(connectionService, datasetService, errorNotificationService, filterServ
 
                     $scope.element.off("resize", resize);
                     $scope.element.find(".filter-container").off("resize", resizeDisplay);
+                    $scope.element.find(".chart-options-button").off("resize", resizeTitle);
                     $scope.messenger.unsubscribeAll();
 
                     if($scope.filter) {
@@ -100,6 +102,7 @@ function(connectionService, datasetService, errorNotificationService, filterServ
 
                 $scope.element.resize(resize);
                 $scope.element.find(".filter-container").resize(resizeDisplay);
+                $scope.element.find(".chart-options-button").resize(resizeTitle);
                 resize();
 
                 $scope.functions.onInit();
@@ -124,7 +127,7 @@ function(connectionService, datasetService, errorNotificationService, filterServ
              */
             var resizeTitle = function() {
                 // Set the width of the title to the width of this visualization minus the width of the options button/text, padding, and any other elements in the title header.
-                var titleWidth = $scope.element.width() - $scope.element.find(".chart-options").outerWidth(true) - 20;
+                var titleWidth = $scope.element.width() - $scope.element.find(".chart-options").outerWidth(true) - 10;
                 $scope.element.find(".title").css("maxWidth", titleWidth);
             };
 
@@ -844,6 +847,15 @@ function(connectionService, datasetService, errorNotificationService, filterServ
              * @return {Boolean}
              */
             $scope.functions.showMenuText = function() {
+                return false;
+            };
+
+            /**
+             * Returns whether to hide the filter header for this visualization if a filter is not set.  The filter header will never be hidden if a filter is set.
+             * @method hideFilterHeader
+             * @return {Boolean}
+             */
+            $scope.functions.hideFilterHeader = function() {
                 return false;
             };
 

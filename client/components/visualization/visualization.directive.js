@@ -29,7 +29,7 @@ angular.module('neonDemo.directives').directive('visualizationDisplay', function
     };
 });
 
-angular.module('neonDemo.directives').directive('visualizationHeaders', function() {
+angular.module('neonDemo.directives').directive('visualizationHeading', function() {
     return {
         scope: {
             active: '=',

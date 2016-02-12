@@ -1,3 +1,4 @@
+<!-- An ng-controller is added before compilation. -->
 <div class="visualization {{type + 'Directive'}}" active="active" bindings="bindings" fields="fields" filter="filter" functions="functions">
     <div class="header-container" ng-show="!(bindings.hideHeader)">
         <div class="title header-text pull-left" ng-bind="createTitle()"></div>
@@ -40,7 +41,14 @@
 
     <div class="clearfix"></div>
 
-    <visualization-headers class="visualization-headers" active="active" filter="filter" functions="functions"></visualization-headers>
+    <div class="header-container filter-container" ng-class="{true: 'shrink', false: ''}[filter === undefined && functions.hideFilterHeader()]">
+        <visualization-heading class="visualization-heading pull-left" active="active" functions="functions"></visualization-heading>
+
+        <div class="header-item filter-reset pull-right" ng-class="{true: 'hidden', false: ''}[filter === undefined]" title="functions.createFilterText()">
+            <span class="filter-label" ng-bind="filter.value"></span>
+            <span class="glyphicon glyphicon-remove" ng-click="functions.removeFilter()"></span>
+        </div>
+    </div>
 
     <div class="clearfix"></div>
 

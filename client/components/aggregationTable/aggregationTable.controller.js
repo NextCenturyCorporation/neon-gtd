@@ -1,7 +1,7 @@
 'use strict';
 
 /*
- * Copyright 2015 Next Century Corporation
+ * Copyright 2016 Next Century Corporation
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -151,7 +151,8 @@ angular.module('neonDemo.controllers').controller('aggregationTableController', 
         }
 
         $scope.active.showTooMuchDataError = false;
-        $scope.active.count = data.length;
+        $scope.active.dataLength = data.length;
+        $scope.active.queryLimit = $scope.active.limit;
         $scope.active.gridOptions.api.setRowData(stripIdField(data));
 
         if($scope.filter && data.length) {
@@ -264,13 +265,28 @@ angular.module('neonDemo.controllers').controller('aggregationTableController', 
         $scope.functions.handleChangeField("limit", $scope.active.limit, "button");
     };
 
+    $scope.functions.createMenuText = function() {
+        if($scope.active.showTooMuchDataError) {
+            return "Error";
+        }
+        return ($scope.active.dataLength >= $scope.active.queryLimit ? "Limited to " : "") + ($scope.active.dataLength || "No") + " Groups";
+    };
+
+    $scope.functions.showMenuText = function() {
+        return true;
+    };
+
+    $scope.functions.hideFilterHeader = function() {
+        return !$scope.active.showTooMuchDataError;
+    };
+
     $scope.functions.addToBindings = function(bindings) {
         // TODO Update to use the new binding system.
         bindings["bind-aggregation"] = $scope.active.aggregation ? "'" + $scope.active.aggregation + "'" : undefined;
         var hasAggField = $scope.active.aggregation && $scope.active.aggregation !== 'count' && $scope.active.aggregationField && $scope.active.aggregationField.columnName;
         bindings["bind-aggregation-field"] = hasAggField ? "'" + $scope.active.aggregationField.columnName + "'" : undefined;
         bindings["bind-group-field"] = ($scope.active.dataField && $scope.active.dataField.columnName) ? "'" + $scope.active.dataField.columnName + "'" : undefined;
-        bindings["bind-limit"] = $scope.active.limitCount;
+        bindings["bind-limit"] = $scope.active.limit;
         return bindings;
     };
 }]);
