@@ -162,7 +162,6 @@ function(connectionService, datasetService, filterService, themeService, visuali
                 $scope.fields = datasetService.getSortedFields($scope.active.database.name, $scope.active.table.name);
 
                 var xFieldName = $scope.bindXAxisField || $scope.bindAttrX || datasetService.getMapping($scope.active.database.name, $scope.active.table.name, neonMappings.SCATTERPLOT_X_AXIS) || "";
-
                 $scope.active.attrX = _.find($scope.fields, function(field) {
                     return field.columnName === xFieldName;
                 }) || datasetService.createBlankField();

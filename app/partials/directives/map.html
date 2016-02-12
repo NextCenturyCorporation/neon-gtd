@@ -70,18 +70,18 @@
                         </div>
                     </div>
 
-                    <div class="layer-options-row">
+                    <div class="layer-options-row" ng-show="(options.newLayer.type == POINT_LAYER || options.newLayer.type == CLUSTER_LAYER || options.newLayer.type == HEATMAP_LAYER)">
                         <div class="form-group layer-options-col">
                             <label>Latitude Field</label>
-                            <select class="form-control" ng-model="options.newLayer.latitude" ng-options="field.prettyName for field in fields" ng-required="true" ng-disabled="!(fields.length > 0)"></select>
+                            <select class="form-control" ng-model="options.newLayer.latitude" ng-options="field.prettyName for field in fields" ng-required="(options.newLayer.type == POINT_LAYER || options.newLayer.type == CLUSTER_LAYER || options.newLayer.type == HEATMAP_LAYER)" ng-disabled="!(fields.length > 0)"></select>
                         </div>
 
                         <div class="form-group layer-options-col">
                             <label>Longitude Field</label>
-                            <select class="form-control" ng-model="options.newLayer.longitude" ng-options="field.prettyName for field in fields" ng-required="true" ng-disabled="!(fields.length > 0)"></select>
+                            <select class="form-control" ng-model="options.newLayer.longitude" ng-options="field.prettyName for field in fields" ng-required="(options.newLayer.type == POINT_LAYER || options.newLayer.type == CLUSTER_LAYER || options.newLayer.type == HEATMAP_LAYER)" ng-disabled="!(fields.length > 0)"></select>
                         </div>
 
-                        <div class="form-group layer-options-col" ng-show="(options.newLayer.type == POINT_LAYER || options.newLayer.type == CLUSTER_LAYER || options.newLayer.type == HEATMAP_LAYER)">
+                        <div class="form-group layer-options-col">
                             <label>Size Field</label>
                             <select class="form-control" ng-model="options.newLayer.size" ng-options="field.prettyName for field in fields" ng-required="false" ng-disabled="!(fields.length > 0)">
                                 <option value="">None</option>
@@ -99,15 +99,27 @@
                             <label>Color Code 1</label>
                             <input type="text" class="form-control" placeholder="None" ng-cancel-drag ng-model="options.newLayer.gradient1" ng-required="false"/>
                         </div>
+                    </div>
 
-                        <div class="form-group layer-options-col" ng-show="(options.newLayer.type == NODE_AND_ARROW_LAYER)">
-                            <label>Source Field</label>
-                            <select class="form-control" ng-model="options.newLayer.source" ng-options="field.prettyName for field in fields" ng-required="(options.newLayer.type == NODE_AND_ARROW_LAYER)" ng-disabled="!(fields.length > 0)"></select>
+                    <div class="layer-options-row" ng-show="(options.newLayer.type == NODE_AND_ARROW_LAYER)">
+                        <div class="form-group layer-options-col">
+                            <label>Source Latitude Field</label>
+                            <select class="form-control" ng-model="options.newLayer.sourceLatitude" ng-options="field.prettyName for field in fields" ng-required="(options.newLayer.type == NODE_AND_ARROW_LAYER)" ng-disabled="!(fields.length > 0)"></select>
                         </div>
 
-                        <div class="form-group layer-options-col" ng-show="(options.newLayer.type == NODE_AND_ARROW_LAYER)">
-                            <label>Target Field</label>
-                            <select class="form-control" ng-model="options.newLayer.target" ng-options="field.prettyName for field in fields" ng-required="(options.newLayer.type == NODE_AND_ARROW_LAYER)" ng-disabled="!(fields.length > 0)"></select>
+                        <div class="form-group layer-options-col">
+                            <label>Source Longitude Field</label>
+                            <select class="form-control" ng-model="options.newLayer.sourceLongitude" ng-options="field.prettyName for field in fields" ng-required="(options.newLayer.type == NODE_AND_ARROW_LAYER)" ng-disabled="!(fields.length > 0)"></select>
+                        </div>
+
+                        <div class="form-group layer-options-col">
+                            <label>Target Latitude Field</label>
+                            <select class="form-control" ng-model="options.newLayer.targetLatitude" ng-options="field.prettyName for field in fields" ng-required="(options.newLayer.type == NODE_AND_ARROW_LAYER)" ng-disabled="!(fields.length > 0)"></select>
+                        </div>
+
+                        <div class="form-group layer-options-col">
+                            <label>Target Longitude Field</label>
+                            <select class="form-control" ng-model="options.newLayer.targetLongitude" ng-options="field.prettyName for field in fields" ng-required="(options.newLayer.type == NODE_AND_ARROW_LAYER)" ng-disabled="!(fields.length > 0)"></select>
                         </div>
                     </div>
 
@@ -207,15 +219,22 @@
 
                     <div class="layer-options-row" ng-show="(options.newLayer.type == NODE_AND_ARROW_LAYER)">
                         <div class="form-group layer-options-col">
-                            <label>Date Field</label>
-                            <select class="form-control" ng-model="options.newLayer.date" ng-options="field.prettyName for field in fields" ng-required="false" ng-disabled="!(fields.length > 0)">
+                            <label>Point Size Field</label>
+                            <select class="form-control" ng-model="options.newLayer.nodeWeight" ng-options="field.prettyName for field in fields" ng-required="false" ng-disabled="!(fields.length > 0)">
                                 <option value="">None</option>
                             </select>
                         </div>
 
                         <div class="form-group layer-options-col">
-                            <label>Size Field</label>
-                            <select class="form-control" ng-model="options.newLayer.size" ng-options="field.prettyName for field in fields" ng-required="false" ng-disabled="!(fields.length > 0)">
+                            <label>Line Size Field</label>
+                            <select class="form-control" ng-model="options.newLayer.lineWeight" ng-options="field.prettyName for field in fields" ng-required="false" ng-disabled="!(fields.length > 0)">
+                                <option value="">None</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group layer-options-col">
+                            <label>Date Field</label>
+                            <select class="form-control" ng-model="options.newLayer.date" ng-options="field.prettyName for field in fields" ng-required="false" ng-disabled="!(fields.length > 0)">
                                 <option value="">None</option>
                             </select>
                         </div>
@@ -297,20 +316,20 @@
                                 </div>
                             </div>
 
-                            <div class="layer-options-row">
+                            <div class="layer-options-row" ng-show="layer.type == POINT_LAYER || layer.type == CLUSTER_LAYER || layer.type == HEATMAP_LAYER">
                                 <div class="form-group layer-options-col">
                                     <label>Latitude Field</label>
-                                    <select class="form-control" ng-cancel-drag ng-model="layer.latitudeField" ng-options="field.prettyName for field in layer.fields" ng-required="true" ng-disabled="!(layer.fields.length > 0)">
+                                    <select class="form-control" ng-cancel-drag ng-model="layer.latitudeField" ng-options="field.prettyName for field in layer.fields" ng-required="(layer.type == POINT_LAYER || layer.type == CLUSTER_LAYER || layer.type == HEATMAP_LAYER)" ng-disabled="!(layer.fields.length > 0)">
                                     </select>
                                 </div>
 
                                 <div class="form-group layer-options-col">
                                     <label>Longitude Field</label>
-                                    <select class="form-control" ng-cancel-drag ng-model="layer.longitudeField" ng-options="field.prettyName for field in layer.fields" ng-required="true" ng-disabled="!(layer.fields.length > 0)">
+                                    <select class="form-control" ng-cancel-drag ng-model="layer.longitudeField" ng-options="field.prettyName for field in layer.fields" ng-required="(layer.type == POINT_LAYER || layer.type == CLUSTER_LAYER || layer.type == HEATMAP_LAYER)" ng-disabled="!(layer.fields.length > 0)">
                                     </select>
                                 </div>
 
-                                <div class="form-group layer-options-col" ng-show="layer.type == POINT_LAYER || layer.type == CLUSTER_LAYER || layer.type == HEATMAP_LAYER">
+                                <div class="form-group layer-options-col">
                                     <label>Size Field</label>
                                     <select class="form-control" ng-cancel-drag ng-model="layer.sizeField" ng-options="field.prettyName for field in layer.fields" ng-required="false" ng-disabled="!(layer.fields.length > 0)">
                                         <option value="">None</option>
@@ -328,16 +347,30 @@
                                     <label>Color Code 1</label>
                                     <input type="text" class="form-control" placeholder="{{layer.gradient1 || 'None'}}" ng-cancel-drag ng-model="layer.gradient1" ng-required="false"/>
                                 </div>
+                            </div>
 
+                            <div class="layer-options-row" ng-show="layer.type == NODE_AND_ARROW_LAYER">
                                 <div class="form-group layer-options-col" ng-show="layer.type == NODE_AND_ARROW_LAYER">
-                                    <label>Source Field</label>
-                                    <select class="form-control" ng-cancel-drag ng-model="layer.sourceField" ng-options="field.prettyName for field in layer.fields" ng-required="(layer.type == NODE_AND_ARROW_LAYER)" ng-disabled="!(layer.fields.length > 0)">
+                                    <label>Source Latitude Field</label>
+                                    <select class="form-control" ng-cancel-drag ng-model="layer.sourceLatitudeField" ng-options="field.prettyName for field in layer.fields" ng-required="(layer.type == NODE_AND_ARROW_LAYER)" ng-disabled="!(layer.fields.length > 0)">
                                     </select>
                                 </div>
 
                                 <div class="form-group layer-options-col" ng-show="layer.type == NODE_AND_ARROW_LAYER">
-                                    <label>Target Field</label>
-                                    <select class="form-control" ng-cancel-drag ng-model="layer.targetField" ng-options="field.prettyName for field in layer.fields" ng-required="(layer.type == NODE_AND_ARROW_LAYER)" ng-disabled="!(layer.fields.length > 0)">
+                                    <label>Source Longitude Field</label>
+                                    <select class="form-control" ng-cancel-drag ng-model="layer.sourceLongitudeField" ng-options="field.prettyName for field in layer.fields" ng-required="(layer.type == NODE_AND_ARROW_LAYER)" ng-disabled="!(layer.fields.length > 0)">
+                                    </select>
+                                </div>
+
+                                <div class="form-group layer-options-col" ng-show="layer.type == NODE_AND_ARROW_LAYER">
+                                    <label>Target Latitude Field</label>
+                                    <select class="form-control" ng-cancel-drag ng-model="layer.targetLatitudeField" ng-options="field.prettyName for field in layer.fields" ng-required="(layer.type == NODE_AND_ARROW_LAYER)" ng-disabled="!(layer.fields.length > 0)">
+                                    </select>
+                                </div>
+
+                                <div class="form-group layer-options-col" ng-show="layer.type == NODE_AND_ARROW_LAYER">
+                                    <label>Target Longitude Field</label>
+                                    <select class="form-control" ng-cancel-drag ng-model="layer.targetLongitudeField" ng-options="field.prettyName for field in layer.fields" ng-required="(layer.type == NODE_AND_ARROW_LAYER)" ng-disabled="!(layer.fields.length > 0)">
                                     </select>
                                 </div>
                             </div>
@@ -439,8 +472,15 @@
 
                             <div class="layer-options-row" ng-show="layer.type == NODE_AND_ARROW_LAYER">
                                 <div class="form-group layer-options-col">
-                                    <label>Size Field</label>
-                                    <select class="form-control" ng-cancel-drag ng-model="layer.sizeField" ng-options="field.prettyName for field in layer.fields" ng-required="false" ng-disabled="!(layer.fields.length > 0)">
+                                    <label>Point Size Field</label>
+                                    <select class="form-control" ng-cancel-drag ng-model="layer.nodeWeightField" ng-options="field.prettyName for field in layer.fields" ng-required="false" ng-disabled="!(layer.fields.length > 0)">
+                                        <option value="">None</option>
+                                    </select>
+                                </div>
+
+                                <div class="form-group layer-options-col">
+                                    <label>Line Size Field</label>
+                                    <select class="form-control" ng-cancel-drag ng-model="layer.lineWeightField" ng-options="field.prettyName for field in layer.fields" ng-required="false" ng-disabled="!(layer.fields.length > 0)">
                                         <option value="">None</option>
                                     </select>
                                 </div>
