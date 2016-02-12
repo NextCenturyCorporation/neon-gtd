@@ -1,7 +1,7 @@
 'use strict';
 
 /*
- * Copyright 2014 Next Century Corporation
+ * Copyright 2016 Next Century Corporation
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -29,58 +29,47 @@
  */
 angular.module('neonDemo.directives').directive('visualizationWidget', ["config", "$compile", function(config, $compile) {
     return {
-        restrict: 'A',
+        templateUrl: "components/visualizationWidget/visualizationWidget.html",
         scope: {
             gridsterConfigs: "=",
             gridsterConfigIndex: "="
         },
-        template: '<div class="visualization-drag-handle"><div class="visualization-buttons" ng-class="{small: hideCloseButton}">' +
-                '<a class="btn" ng-click="toggleSize()" ng-mouseover="$event.stopPropagation()" title="{{(oldSize) ? \'Shrink\' : \'Grow\'}}">' +
-                '   <span  class="glyphicon" ng-class="(oldSize) ? \'glyphicon-resize-small\' : \'glyphicon-resize-full\'"></span>' +
-                '</a>' +
-                '<a class="btn" ng-click="remove()" ng-hide="hideCloseButton" ng-mouseover="$event.stopPropagation()" title="Delete">' +
-                '   <span  class="glyphicon glyphicon-remove"></span>' +
-                '</a>' +
-                '<a class="btn move-to" ng-click="moveToTop()" ng-mouseover="$event.stopPropagation()" title="Move to Top">' +
-                '   <span  class="glyphicon glyphicon-chevron-up"></span><span  class="glyphicon glyphicon-chevron-up"></span>' +
-                '</a>' +
-                '<a class="btn move-to" ng-click="moveToBottom()" ng-mouseover="$event.stopPropagation()" title="Move to Bottom">' +
-                '   <span  class="glyphicon glyphicon-chevron-down"></span><span  class="glyphicon glyphicon-chevron-down"></span>' +
-                '</a>' +
-                '</div></div>',
-        // templateUrl: "partials/directives/visualizationWidget.html",
         link: function($scope, $element) {
             var MAXIMIZED_COLUMN_SIZE = config.gridsterColumns || 6;
             var MAXIMIZED_ROW_SIZE = MAXIMIZED_COLUMN_SIZE * (2 / 3);
 
-            // Create our widget.  Here, we are assuming the visualization is
-            // implementated as an attribute directive.
-            var widgetElement = document.createElement("div");
-            widgetElement.setAttribute($scope.gridsterConfigs[$scope.gridsterConfigIndex].type, "");
-            widgetElement.setAttribute('bind-state-id', "'" + $scope.gridsterConfigs[$scope.gridsterConfigIndex].id + "'");
+            // TODO Add to visualization configuration.
+            var superclass = ($scope.gridsterConfigs[$scope.gridsterConfigIndex].type === "linechart" || $scope.gridsterConfigs[$scope.gridsterConfigIndex].type === "map") ? "multiple-table-visualization" : "single-table-visualization";
 
-            if(config.hideAdvancedOptions) {
-                widgetElement.setAttribute("hide-advanced-options", true);
+            var visualization = document.createElement("div");
+            visualization.setAttribute(superclass, "");
+            visualization.setAttribute("class", superclass);
+            visualization.setAttribute("name", $scope.gridsterConfigs[$scope.gridsterConfigIndex].name);
+            visualization.setAttribute("type", $scope.gridsterConfigs[$scope.gridsterConfigIndex].type);
+            visualization.setAttribute("state-id", $scope.gridsterConfigs[$scope.gridsterConfigIndex].id);
+            visualization.setAttribute("visualization-id", $scope.gridsterConfigs[$scope.gridsterConfigIndex].type + "-" + uuid());
+
+            // TODO Add to visualization configuration.
+            if($scope.gridsterConfigs[$scope.gridsterConfigIndex].type === "map") {
+                visualization.setAttribute("log-element-group", "map_group");
             }
-            if(config.hideHeader) {
-                widgetElement.setAttribute("hide-header", true);
+
+            // TODO Add to visualization configuration.
+            if($scope.gridsterConfigs[$scope.gridsterConfigIndex].type === "aggregationTable" || $scope.gridsterConfigs[$scope.gridsterConfigIndex].type === "dataTable") {
+                visualization.setAttribute("log-element-group", "table_group");
+                visualization.setAttribute("log-element-type", "datagrid");
             }
+
+            $scope.gridsterConfigs[$scope.gridsterConfigIndex].bindings = $scope.gridsterConfigs[$scope.gridsterConfigIndex].bindings || {};
+            $scope.gridsterConfigs[$scope.gridsterConfigIndex].bindings.hideAdvancedOptions = config.hideAdvancedOptions;
+            $scope.gridsterConfigs[$scope.gridsterConfigIndex].bindings.hideHeader = config.hideHeader;
+            visualization.setAttribute("bindings", "gridsterConfigs[" + $scope.gridsterConfigIndex + "].bindings");
+
+            $element.append($compile(visualization)($scope));
+
             if(config.hideCloseButton) {
                 $scope.hideCloseButton = config.hideCloseButton;
             }
-
-            // Pass along any bindings.
-            if($scope.gridsterConfigs[$scope.gridsterConfigIndex] &&
-                $scope.gridsterConfigs[$scope.gridsterConfigIndex].bindings) {
-                var bindings = $scope.gridsterConfigs[$scope.gridsterConfigIndex].bindings;
-                for(var prop in bindings) {
-                    if(bindings.hasOwnProperty(prop)) {
-                        widgetElement.setAttribute(prop, bindings[prop]);
-                    }
-                }
-            }
-
-            $element.append($compile(widgetElement)($scope));
 
             /**
              * Toggles the visualization widget between default and maximized views.

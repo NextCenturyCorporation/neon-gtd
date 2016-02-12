@@ -1,12 +1,16 @@
 <div class="visualization-drag-handle">
-    <button type="button" class="btn pull-right"
-        ng-click="remove()" 
-        ng-mousedown="$event.stopPropagation()">
-       <span  class="glyphicon glyphicon-remove"></span>
-    </button>
-    <button type="button" class="btn pull-right"
-        ng-click="toggleSize()" 
-        ng-mousedown="$event.stopPropagation()">
-       <span  class="glyphicon" ng-class="(oldSize) ? 'glyphicon-resize-small' : 'glyphicon-resize-full'"></span>
-    </button>
+    <div class="visualization-buttons" ng-class="{small: hideCloseButton}">
+        <a class="btn" ng-click="toggleSize()" ng-mouseover="$event.stopPropagation()" title="{{(oldSize) ? 'Shrink' : 'Grow'}}">
+            <span  class="glyphicon" ng-class="(oldSize) ? 'glyphicon-resize-small' : 'glyphicon-resize-full'"></span>
+        </a>
+        <a class="btn" ng-click="remove()" ng-hide="hideCloseButton" ng-mouseover="$event.stopPropagation()" title="Delete">
+            <span  class="glyphicon glyphicon-remove"></span>
+        </a>
+        <a class="btn move-to" ng-click="moveToTop()" ng-mouseover="$event.stopPropagation()" title="Move to Top">
+            <span  class="glyphicon glyphicon-chevron-up"></span><span  class="glyphicon glyphicon-chevron-up"></span>
+        </a>
+        <a class="btn move-to" ng-click="moveToBottom()" ng-mouseover="$event.stopPropagation()" title="Move to Bottom">
+            <span  class="glyphicon glyphicon-chevron-down"></span><span  class="glyphicon glyphicon-chevron-down"></span>
+        </a>
+    </div>
 </div>

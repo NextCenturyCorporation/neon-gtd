@@ -1,0 +1,34 @@
+<div class="form-group" ng-show="!(bindings.hideAdvancedOptions)">
+    <label>Group Field</label>
+    <select class="form-control" ng-model="active.dataField" ng-required="true" ng-disabled="!(fields.length > 0)" ng-options="field.prettyName for field in fields" ng-change="handleChangeDataField()">
+        <option disabled selected value="">Please choose a field</option>
+    </select>
+</div>
+
+<div class="form-group" ng-show="!(bindings.hideAdvancedOptions)">
+    <label>Aggregation</label>
+    <select class="form-control" ng-model="active.aggregation" ng-required="true" ng-disabled="!(fields.length > 0)" ng-change="handleChangeAggregation()">
+        <option value="count">Count</option>
+        <option value="min">Minimum</option>
+        <option value="max">Maximum</option>
+    </select>
+</div>
+
+<div class="form-group" ng-show="!(bindings.hideAdvancedOptions) && (active.aggregation !== 'count')">
+    <label>Aggregation Field</label>
+    <select class="form-control" ng-model="active.aggregationField" ng-required="true" ng-disabled="!(fields.length > 0)" ng-options="field.prettyName for field in fields" ng-change="handleChangeAggregationField()">
+    </select>
+</div>
+
+<div class="form-group">
+    <label>Group (Row) Limit</label>
+    <div class="input-group">
+        <input type="number" min="1" class="form-control" ng-model="active.limit" required>
+        <div class="input-group-btn">
+            <button type="button" class="btn btn-default refresh" title="Refresh" ng-click="handleChangeLimit()">
+                <span class="glyphicon glyphicon-refresh"></span>
+            </button>
+        </div>
+    </div>
+</div>
+

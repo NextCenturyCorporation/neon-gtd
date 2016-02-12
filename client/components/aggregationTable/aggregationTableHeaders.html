@@ -1,0 +1,8 @@
+<div class="header-container filter-container" ng-class="{true: 'shrink', false: ''}[filter === undefined && !active.showTooMuchDataError]">
+    <h4 class="pull-left" ng-show="active.showTooMuchDataError">The query exceeded the memory limit.  Please add a filter to requery.</h4>
+
+    <div class="header-item filter-reset pull-right" ng-class="{true: 'hidden', false: ''}[filter === undefined]" title="functions.createFilterText()">
+        <span class="filter-label" ng-bind="filter.value"></span>
+        <span class="glyphicon glyphicon-remove" ng-click="functions.removeFilter()"></span>
+    </div>
+</div>

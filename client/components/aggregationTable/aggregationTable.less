@@ -1,5 +1,5 @@
 //
-// Copyright 2014 Next Century Corporation
+// Copyright 2016 Next Century Corporation
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
 // You may obtain a copy of the License at
@@ -13,14 +13,17 @@
 // limitations under the License.
 //
 
-.count-by-directive {
-    margin: 0px;
+.aggregationTableDirective {
     height: 100%;
     width: 100%;
     overflow: hidden;
 
     .active-count {
         color: @accent-bright;
+    }
+
+    .aggregation-table {
+        height: inherit;
     }
 
     .record-count {
@@ -47,17 +50,9 @@
     }
 }
 
-.visualization-widget {
-    .count-by-directive {
-        padding: 10px;
-        height: @widget-height;
-        width: @widget-width;
-    }
-}
-
 .gridster-mobile {
     .visualization-widget {
-        .count-by-directive {
+        .aggregationTableDirective {
             height: @mobile-widget-height;
             width: @widget-width;
         }
