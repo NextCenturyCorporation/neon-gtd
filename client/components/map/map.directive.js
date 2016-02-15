@@ -1326,10 +1326,21 @@ angular.module('neonDemo.directives')
                 var query = new neon.query.Query().selectFrom(database, table).limit(limit || $scope.DEFAULT_LIMIT).withFields(Object.keys(fields));
                 var whereClause;
 
-                if(datasetService.getActiveDatasetOptions().checkForNullCoordinates) {
+                if(datasetService.getActiveDatasetOptions().checkForCoordinateValidation === "valid_numbers") {
+                    var whereClauses = latitudesAndLongitudes.map(function(element) {
+                        var leftClause = neon.query.where(element.longitude, ">=", -180);
+                        var rightClause = neon.query.where(element.longitude, "<=", 180);
+                        var bottomClause = neon.query.where(element.latitude, ">=", -90);
+                        var topClause = neon.query.where(element.latitude, "<=", 90);
+                        return neon.query.and(leftClause, rightClause, bottomClause, topClause);
+                    });
+
+                    whereClause = neon.query.or.apply(neon.query, whereClauses);
+                } else if(datasetService.getActiveDatasetOptions().checkForCoordinateValidation === "null_values") {
                     var whereClauses = latitudesAndLongitudes.map(function(element) {
                         return neon.query.and(neon.query.where(element.latitude, "!=", null), neon.query.where(element.longitude, "!=", null));
                     });
+
                     whereClause = neon.query.or.apply(neon.query, whereClauses);
                 }
 
