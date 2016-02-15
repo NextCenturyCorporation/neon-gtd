@@ -16,10 +16,11 @@
  *
  */
 
-angular.module('neonDemo.controllers').controller('aggregationTableController', ['$scope', 'external', 'LinksPopupService', function($scope, external, linksPopupService) {
+angular.module('neonDemo.controllers').controller('aggregationTableController',
+['$scope', 'external', 'LinksPopupService', function($scope, external, linksPopupService) {
     $scope.active.aggregation = $scope.bindings.aggregation || "count";
     $scope.active.aggregationField = {};
-    $scope.active.dataField = {};
+    $scope.active.groupField = {};
     $scope.active.limit = $scope.bindings.limit || 500;
 
     // Unique field name used for the SlickGrid column containing the URLs for the external apps.
@@ -33,9 +34,9 @@ angular.module('neonDemo.controllers').controller('aggregationTableController', 
             $scope.active.gridOptions.api.selectIndex(cell.rowIndex, false);
         }
 
-        $scope.functions.addFilter({
-            field: $scope.active.dataField.columnName,
-            value: cell.node.data[$scope.active.dataField.columnName]
+        $scope.functions.replaceOrRemoveFilter({
+            field: $scope.active.groupField.columnName,
+            value: cell.node.data[$scope.active.groupField.columnName]
         });
     };
 
@@ -55,9 +56,9 @@ angular.module('neonDemo.controllers').controller('aggregationTableController', 
     };
 
     $scope.functions.onUpdateFields = function(datasetService) {
-        var dataFieldName = $scope.bindings.groupField || datasetService.getMapping($scope.active.database.name, $scope.active.table.name, neonMappings.AGGREGATE) || "";
-        $scope.active.dataField = _.find($scope.fields, function(field) {
-            return field.columnName === dataFieldName;
+        var groupFieldName = $scope.bindings.groupField || datasetService.getMapping($scope.active.database.name, $scope.active.table.name, neonMappings.AGGREGATE) || "";
+        $scope.active.groupField = _.find($scope.fields, function(field) {
+            return field.columnName === groupFieldName;
         }) || datasetService.createBlankField();
         var aggregationFieldName = $scope.bindings.aggregationField || "";
         $scope.active.aggregationField = _.find($scope.fields, function(field) {
@@ -85,8 +86,8 @@ angular.module('neonDemo.controllers').controller('aggregationTableController', 
         }
 
         columnDefinitions.push({
-            headerName: $scope.active.dataField.prettyName,
-            field: $scope.active.dataField.columnName,
+            headerName: $scope.active.groupField.prettyName,
+            field: $scope.active.groupField.columnName,
             suppressSizeToFit: false,
             onCellClicked: handleRowClick
         });
@@ -108,19 +109,19 @@ angular.module('neonDemo.controllers').controller('aggregationTableController', 
     };
 
     $scope.functions.hasValidDataFields = function(datasetService) {
-        return datasetService.isFieldValid($scope.active.dataField) && ($scope.active.aggregation === "count" || datasetService.isFieldValid($scope.active.aggregationField));
+        return datasetService.isFieldValid($scope.active.groupField) && ($scope.active.aggregation === "count" || datasetService.isFieldValid($scope.active.aggregationField));
     };
 
-    $scope.functions.createQueryClause = function() {
-        return neon.query.where($scope.active.dataField.columnName, "!=", null);
+    $scope.functions.createNeonQueryClause = function() {
+        return neon.query.where($scope.active.groupField.columnName, "!=", null);
     };
 
     $scope.functions.addToQuery = function(query, filterService) {
-        if($scope.filter) {
+        if($scope.functions.isFilterSet()) {
             var filterClause = $scope.functions.createNeonFilterClause({
                 database: $scope.active.database.name,
                 table: $scope.active.table.name
-            }, $scope.active.dataField.columnName);
+            }, $scope.active.groupField.columnName);
             query.ignoreFilters([filterService.getFilterKey($scope.active.database.name, $scope.active.table.name, filterClause)]);
         }
 
@@ -143,7 +144,7 @@ angular.module('neonDemo.controllers').controller('aggregationTableController', 
             query.limit($scope.active.limit);
         }
 
-        return query.groupBy($scope.active.dataField.columnName);
+        return query.groupBy($scope.active.groupField.columnName);
     };
 
     $scope.functions.updateData = function(data) {
@@ -156,9 +157,9 @@ angular.module('neonDemo.controllers').controller('aggregationTableController', 
         $scope.active.queryLimit = $scope.active.limit;
         $scope.active.gridOptions.api.setRowData(stripIdField(data));
 
-        if($scope.filter && data.length) {
+        if($scope.functions.isFilterSet() && data.length) {
             var selected = _.findWhere($scope.active.gridOptions.api.getRenderedNodes(), function(node) {
-                return node.data[$scope.filter.field] === $scope.filter.value;
+                return node.data[$scope.filter.data[0].field] === $scope.filter.data[0].value;
             });
             $scope.active.gridOptions.api.selectNode(selected);
         }
@@ -215,11 +216,7 @@ angular.module('neonDemo.controllers').controller('aggregationTableController', 
     };
 
     $scope.functions.getFilterableFields = function() {
-        return [$scope.active.dataField];
-    };
-
-    $scope.functions.createNeonFilterClause = function(databaseAndTableName, fieldName) {
-        return neon.query.where(fieldName, '=', $scope.filter.value);
+        return [$scope.active.groupField];
     };
 
     $scope.functions.onRemoveFilter = function() {
@@ -238,9 +235,9 @@ angular.module('neonDemo.controllers').controller('aggregationTableController', 
         var mappings = datasetService.getMappings($scope.active.database.name, $scope.active.table.name);
 
         data.forEach(function(row) {
-            var value = row[$scope.active.dataField.columnName];
-            var key = linksPopupService.generateKey($scope.active.dataField, value);
-            tableLinks[key] = linksPopupService.createAllServiceLinkObjects(external.services, mappings, $scope.active.dataField.columnName, value);
+            var value = row[$scope.active.groupField.columnName];
+            var key = linksPopupService.generateKey($scope.active.groupField, value);
+            tableLinks[key] = linksPopupService.createAllServiceLinkObjects(external.services, mappings, $scope.active.groupField.columnName, value);
             row[$scope.EXTERNAL_APP_FIELD_NAME] = tableLinks[key].length ? linksPopupService.createLinkHtml($scope.visualizationId, key, value) : linksPopupService.createDisabledLinkHtml(value);
         });
 
@@ -250,8 +247,8 @@ angular.module('neonDemo.controllers').controller('aggregationTableController', 
         return data;
     };
 
-    $scope.handleChangeDataField = function() {
-        $scope.functions.handleChangeField("data-field", $scope.active.dataField.columnName);
+    $scope.handleChangeGroupField = function() {
+        $scope.functions.handleChangeField("group-field", $scope.active.groupField.columnName);
     };
 
     $scope.handleChangeAggregation = function() {
@@ -278,7 +275,7 @@ angular.module('neonDemo.controllers').controller('aggregationTableController', 
     };
 
     $scope.functions.hideFilterHeader = function() {
-        return !$scope.filter && !$scope.active.showTooMuchDataError;
+        return !$scope.functions.isFilterSet() && !$scope.active.showTooMuchDataError;
     };
 
     $scope.functions.addToBindings = function(bindings) {
@@ -286,7 +283,7 @@ angular.module('neonDemo.controllers').controller('aggregationTableController', 
         bindings["bind-aggregation"] = $scope.active.aggregation ? "'" + $scope.active.aggregation + "'" : undefined;
         var hasAggField = $scope.active.aggregation && $scope.active.aggregation !== 'count' && $scope.active.aggregationField && $scope.active.aggregationField.columnName;
         bindings["bind-aggregation-field"] = hasAggField ? "'" + $scope.active.aggregationField.columnName + "'" : undefined;
-        bindings["bind-group-field"] = ($scope.active.dataField && $scope.active.dataField.columnName) ? "'" + $scope.active.dataField.columnName + "'" : undefined;
+        bindings["bind-group-field"] = ($scope.active.groupField && $scope.active.groupField.columnName) ? "'" + $scope.active.groupField.columnName + "'" : undefined;
         bindings["bind-limit"] = $scope.active.limit;
         return bindings;
     };

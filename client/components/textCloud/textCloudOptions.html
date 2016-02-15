@@ -1,0 +1,24 @@
+<div class="form-group" ng-hide="bindings.hideAdvancedOptions">
+    <label>Data Field</label>
+    <select class="form-control" ng-model="active.dataField" ng-options="field.prettyName for field in fields" ng-required="true" ng-disabled="(fields.length == 0)" ng-change="handleChangeDataField()">
+    </select>
+</div>
+
+<div class="form-group">
+    <label>Show Records With</label>
+    <div class="btn-group">
+        <label class="btn btn-default" ng-class="{true: 'active', false: ''}[active.andFilters]" ng-disabled="(filter.data.length <= 1)">
+            <input type="radio" ng-model="active.andFilters" style="display:none" ng-value="true" ng-change="handleChangeAndFilters()">
+            All Filters
+        </label>
+        <label class="btn btn-default" ng-class="{true: '', false: 'active'}[active.andFilters]" ng-disabled="(filter.data.length <= 1)">
+            <input type="radio" ng-model="active.andFilters" style="display:none" ng-value="false" ng-change="handleChangeAndFilters()">
+            Any Filters
+        </label>
+    </div>
+    <div class="clearfix"></div>
+</div>
+
+<translation-options ng-show="translationAvailable" on-translate="updateTranslation" from-language-change="handleChangeFromLanguage" to-language-change="handleChangeToLanguage"
+    from-language-options="translationLanguages.fromLanguageOptions" to-language-options="translationLanguages.toLanguageOptions">
+</translation-options>

@@ -16,7 +16,6 @@
 .aggregationTableDirective {
     height: 100%;
     width: 100%;
-    overflow: hidden;
 
     .active-count {
         color: @accent-bright;
@@ -34,18 +33,6 @@
         @media (min-width: 1500px) {
             //This makes the autosizing work while taking into account the options menu.
             padding-left: 20px;
-        }
-    }
-
-    .filter-container {
-        // Shrink the filter container whenever unused to trigger a jquery resize event that will update the size of the table.
-        &.shrink {
-            height: 0px;
-            min-height: 0px;
-        }
-
-        .header-item {
-            margin-top: 0px;
         }
     }
 }

@@ -1,5 +1,5 @@
 //
-// Copyright 2014 Next Century Corporation
+// Copyright 2016 Next Century Corporation
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
 // You may obtain a copy of the License at
@@ -13,7 +13,7 @@
 // limitations under the License.
 //
 
-.tagcloud {
+.text-cloud {
     text-align: center;
     margin: 0 -8px;
 
@@ -21,7 +21,7 @@
         font-size: 12px;
     }
 
-    .tag {
+    .text {
         display: inline-block;
         padding: 4px 8px;
         cursor: pointer;
@@ -33,12 +33,9 @@
     }
 }
 
-.tagcloud-container {
+.textCloudDirective {
     height: 100%;
     width: 100%;
-    overflow-x: hidden;
-    overflow-y: auto;
-    padding: 10px;
 
     .filter-container {
         .filter-label {
@@ -50,9 +47,8 @@
 
 .gridster-mobile {
     .visualization-widget {
-        .tagcloud {
-            min-height: @mobile-widget-height;
-            max-height: @mobile-widget-height;
+        .textCloudDirective {
+            height: @mobile-widget-height;
             width: @mobile-widget-width;
         }
     }
