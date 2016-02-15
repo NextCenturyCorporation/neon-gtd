@@ -384,6 +384,8 @@ coreMap.Map.prototype.createSelectControl =  function(layer) {
             tags: ["map", "tooltip"]
         });
         var createAndShowFeaturePopup = function(data) {
+            data = neon.helpers.escapeDataRecursively(data);
+
             var text;
 
             // If we're on a cluster layer, show specific fields, if defined

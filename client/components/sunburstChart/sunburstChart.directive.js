@@ -420,6 +420,7 @@ function(connectionService, datasetService, errorNotificationService, exportServ
             };
 
             var doDrawChart = function(data) {
+                data = neon.helpers.escapeDataRecursively(data);
                 $scope.chart.clearData();
                 $scope.dataShown = $scope.chart.drawData(data);
             };

@@ -246,7 +246,8 @@ function(connectionService, datasetService, errorNotificationService, filterServ
 
                     connection.executeQuery(query, function(queryResults) {
                         $scope.$apply(function() {
-                            $scope.options.selectableGroups = queryResults.data.map(function(item) {
+                            var data = neon.helpers.escapeDataRecursively(queryResults.data);
+                            $scope.options.selectableGroups = data.map(function(item) {
                                 return $scope.helpers.getNestedValue(item, $scope.options.groupFields[0].columnName);
                             }) || [];
                         });

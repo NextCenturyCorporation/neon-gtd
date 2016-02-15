@@ -434,6 +434,8 @@ exportService, linksPopupService, themeService, visualizationService) {
             };
 
             var updateData = function(data) {
+                data = neon.helpers.escapeDataRecursively(data);
+
                 if(external.active) {
                     data = addExternalLinksToColumnData(data);
                 }

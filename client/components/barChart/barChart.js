@@ -553,7 +553,7 @@ charts.BarChart.prototype.showTooltip_ = function(item, mouseEvent) {
     var yValue = this.isStacked ? (item.values - item[this.yMinAttribute_]) : item.values;
     yValue = d3.format("0,000.00")(yValue);
 
-    var html = '<div><strong>' + this.xLabel_ + ':</strong> ' + _.escape(xValue) + '</div>' +
+    var html = '<div><strong>' + this.xLabel_ + ':</strong> ' + xValue + '</div>' +
                 '<div><strong>' + this.yLabel_ + ':</strong> ' + yValue + '</div>';
 
     $("#tooltip-container").html(html);

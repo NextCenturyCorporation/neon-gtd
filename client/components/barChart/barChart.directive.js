@@ -555,8 +555,10 @@ function(external, connectionService, datasetService, errorNotificationService, 
             };
 
             var doDrawChart = function(data, destroy) {
+                data = neon.helpers.escapeDataRecursively(data.data);
+
                 var opts = {
-                    data: data.data,
+                    data: data,
                     x: $scope.options.attrX.columnName,
                     y: COUNT_FIELD_NAME,
                     responsive: false,
@@ -581,7 +583,7 @@ function(external, connectionService, datasetService, errorNotificationService, 
 
                 // Save the limit count for the most recent query to show in the options menu button text.
                 // Don't use the current limit count because that may be changed to a different number.
-                $scope.queryLimitCount = data.data.length >= $scope.options.limitCount ? $scope.options.limitCount : 0;
+                $scope.queryLimitCount = data.length >= $scope.options.limitCount ? $scope.options.limitCount : 0;
             };
 
             $scope.getLegendText = function() {

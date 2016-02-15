@@ -559,29 +559,8 @@ linksPopupService, themeService, visualizationService, linkify, $sce, $timeout) 
                 return query;
             };
 
-            /**
-             * Escapes all values in the given data, recursively.
-             * @method escapeDataRecursively
-             * @private
-             */
-            var escapeDataRecursively = function(data) {
-                if(_.isArray(data)) {
-                    for(var i = 0; i < data.length; i++) {
-                        data[i] = escapeDataRecursively(data[i]);
-                    }
-                } else if(_.keys(data).length) {
-                    var keys = _.keys(data);
-                    for(var i = 0; i < keys.length; i++) {
-                        data[keys[i]] = escapeDataRecursively(data[keys[i]]);
-                    }
-                } else {
-                    data = _.escape(data);
-                }
-                return data;
-            };
-
             var updateData = function(data) {
-                data = escapeDataRecursively(data);
+                data = neon.helpers.escapeDataRecursively(data);
 
                 if(external.active) {
                     data = addExternalLinksToColumnData(data);

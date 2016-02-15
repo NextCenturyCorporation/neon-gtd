@@ -579,13 +579,14 @@ function($filter, $timeout, connectionService, datasetService, errorNotification
                 $scope.outstandingGraphQuery.done(function(response) {
                     if(response.data.length) {
                         $scope.$apply(function() {
-                            $scope.dataLimited = (response.data.length >= $scope.options.dataLimit);
+                            var data = neon.helpers.escapeDataRecursively(response.data);
+                            $scope.dataLimited = (data.length >= $scope.options.dataLimit);
                             if($scope.mediator) {
-                                $scope.mediator.evaluateDataAndUpdateGraph(response.data, gatherMediatorOptions());
+                                $scope.mediator.evaluateDataAndUpdateGraph(data, gatherMediatorOptions());
                                 $scope.legend = $scope.mediator.createLegend($scope.options.useNodeClusters, datasetService.isFieldValid($scope.options.selectedFlagField), $scope.tooltip.flagLabel);
                             }
                             $scope.loadingData = false;
-                            publishNews(response.data);
+                            publishNews(data);
                         });
                     }
                 });

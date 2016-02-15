@@ -321,7 +321,7 @@ function(external, connectionService, datasetService, errorNotificationService, 
                             $scope.outstandingQuery[chart.id] = undefined;
                         }
                         queryForData(chart, function(results) {
-                            $scope.data[chart.id] = results.data;
+                            $scope.data[chart.id] = results;
                             queriesCompleted++;
 
                             if(queriesCompleted === $scope.options.charts.length) {
@@ -461,10 +461,11 @@ function(external, connectionService, datasetService, errorNotificationService, 
                         source: "system",
                         tags: ["receive", "linechart"]
                     });
+                    var data = neon.helpers.escapeDataRecursively(results.data);
                     if(successCallback) {
-                        successCallback(results);
+                        successCallback(data);
                     } else {
-                        $scope.data[chart.id] = results.data;
+                        $scope.data[chart.id] = data;
 
                         updateLineChartForBrushExtent(true);
                     }

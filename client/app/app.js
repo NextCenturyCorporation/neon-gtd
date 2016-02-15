@@ -55,6 +55,26 @@ neon.helpers = {
             }
         });
         return dataValue;
+    },
+    /**
+     * Escapes all values in the given data, recursively.
+     * @param {Object|Array} data
+     * @method escapeDataRecursively
+     */
+    escapeDataRecursively: function(data) {
+        if(_.isArray(data)) {
+            for(var i = 0; i < data.length; i++) {
+                data[i] = neon.helpers.escapeDataRecursively(data[i]);
+            }
+        } else if(_.keys(data).length) {
+            var keys = _.keys(data);
+            for(var i = 0; i < keys.length; i++) {
+                data[keys[i]] = neon.helpers.escapeDataRecursively(data[keys[i]]);
+            }
+        } else if(_.isString(data)) {
+            data = _.escape(data);
+        }
+        return data;
     }
 };
 
