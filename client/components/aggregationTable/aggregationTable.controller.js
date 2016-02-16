@@ -19,6 +19,7 @@
 angular.module('neonDemo.controllers').controller('aggregationTableController', ['$scope', '$timeout', 'external', function($scope, $timeout, external) {
     $scope.active.aggregation = $scope.bindings.aggregation || "count";
     $scope.active.aggregationField = {};
+    $scope.active.filter = undefined;
     $scope.active.groupField = {};
     $scope.active.limit = $scope.bindings.limit || 500;
 
@@ -33,10 +34,8 @@ angular.module('neonDemo.controllers').controller('aggregationTableController', 
             $scope.active.gridOptions.api.selectIndex(cell.rowIndex, false);
         }
 
-        $scope.functions.replaceOrRemoveFilter({
-            field: $scope.active.groupField.columnName,
-            value: cell.node.data[$scope.active.groupField.columnName]
-        });
+        onAddFilter(cell.node.data[$scope.active.groupField.columnName]);
+        $scope.functions.replaceFilter();
     };
 
     $scope.active.gridOptions = {
@@ -158,29 +157,53 @@ angular.module('neonDemo.controllers').controller('aggregationTableController', 
         $scope.active.gridOptions.api.setRowData(data);
 
         if($scope.functions.isFilterSet() && data.length) {
-            selectRow($scope.filter.data[0].field, $scope.filter.data[0].value);
+            selectRow($scope.active.filter);
         }
     };
 
     /**
-     * Selects the row in the table containing the given value in the given field.
-     * @param {String} field
+     * Selects the row in the table containing the given value in the global group field.
      * @param {String} value
      * @method selectRow
      * @private
      */
-    var selectRow = function(field, value) {
+    var selectRow = function(value) {
         var selected = _.findWhere($scope.active.gridOptions.api.getRenderedNodes(), function(node) {
-            return node.data[field] === value;
+            return node.data[$scope.active.groupField.columnName] === value;
         });
         $scope.active.gridOptions.api.selectNode(selected);
     };
 
-    $scope.functions.onAddFilter = function(item) {
-        selectRow(item.field, item.value);
-        item.title = item.field + " = " + item.value;
-        item.display = item.value;
-        return item;
+    $scope.functions.isFilterSet = function() {
+        return $scope.active.filter;
+    };
+
+    $scope.functions.getFilterFields = function() {
+        return [$scope.active.groupField];
+    };
+
+    $scope.functions.createNeonFilterClause = function(databaseAndTableName, fieldName) {
+        return neon.query.where(fieldName, "=", $scope.active.filter);
+    };
+
+    $scope.functions.createFilterTrayText = function() {
+        return $scope.active.filter ? $scope.active.groupField.columnName + " = " + $scope.active.filter : "";
+    };
+
+    $scope.functions.updateFilterFromNeonFilterClause = function(filterService, neonFilter) {
+        if(filterService.hasSingleClause(neonFilter)) {
+            onAddFilter(neonFilter.filter.whereClause.rhs);
+        }
+    };
+
+    var onAddFilter = function(value) {
+        $scope.active.filter = value;
+        selectRow(value);
+    };
+
+    $scope.functions.onRemoveFilter = function() {
+        $scope.active.filter = undefined;
+        $scope.active.gridOptions.api.deselectAll();
     };
 
     /**
@@ -238,14 +261,6 @@ angular.module('neonDemo.controllers').controller('aggregationTableController', 
         return finalObject;
     };
 
-    $scope.functions.getFilterableFields = function() {
-        return [$scope.active.groupField];
-    };
-
-    $scope.functions.onRemoveFilter = function() {
-        $scope.active.gridOptions.api.deselectAll();
-    };
-
     /**
      * Creates and adds the external links to the given data and returns the data.
      * @param {Array} data
@@ -286,6 +301,14 @@ angular.module('neonDemo.controllers').controller('aggregationTableController', 
 
     $scope.functions.showMenuText = function() {
         return true;
+    };
+
+    $scope.getFilterData = function() {
+        return $scope.active.filter ? [$scope.active.filter] : [];
+    };
+
+    $scope.createFilterDesc = function(value) {
+        return $scope.active.groupField.columnName + " = " + value;
     };
 
     $scope.functions.hideFilterHeader = function() {

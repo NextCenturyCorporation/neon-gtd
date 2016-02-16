@@ -21,12 +21,23 @@ angular.module('neonDemo.directives').directive('filterNotification', function()
         templateUrl: 'components/filterNotification/filterNotification.html',
         transclude: true,
         scope: {
-            filterData: '=',
+            getFilterData: '=',
+            getFilterDesc: '=?',
+            getFilterText: '=?',
             getLinksPopupKey: '=?',
             getLinksPopupJson: '=?',
             removeFilter: '=',
             showLinksPopupButton: '=?',
             visualizationId: '='
+        },
+        link: function($scope) {
+            $scope.getFilterDesc = $scope.getFilterDesc || function(value) {
+                return value;
+            };
+
+            $scope.getFilterText = $scope.getFilterText || function(value) {
+                return value;
+            };
         }
     };
 });

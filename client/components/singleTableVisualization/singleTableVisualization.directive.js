@@ -56,10 +56,6 @@ function(external, connectionService, datasetService, errorNotificationService, 
                 unsharedFilterField: {}
             };
 
-            $scope.filter = {
-                data: []
-            };
-
             $scope.functions = {};
 
             $scope.languages = {
@@ -116,7 +112,7 @@ function(external, connectionService, datasetService, errorNotificationService, 
                     $scope.messenger.unsubscribeAll();
 
                     if($scope.functions.isFilterSet()) {
-                        removeAllFilters(true);
+                        removeFilter(true);
                     }
 
                     exportService.unregister($scope.exportId);
@@ -187,35 +183,31 @@ function(external, connectionService, datasetService, errorNotificationService, 
              * @return {Boolean}
              */
             $scope.functions.isFilterSet = function() {
-                return isFilterSet();
-            };
-
-            var isFilterSet = function() {
-                return $scope.filter.data.length;
+                return false;
             };
 
             /**
-             * Handles the behavior for destroying this visualization.
+             * Handles any additional behavior for destroying this visualization.
              * @method onDestroy
              */
             $scope.functions.onDestroy = function() {
-                // Do nothing.
+                // Do nothing by default.
             };
 
             /**
-             * Handles the behavior for initializing this visualization.
+             * Handles any additional behavior for initializing this visualization.
              * @method onInit
              */
             $scope.functions.onInit = function() {
-                // Do nothing.
+                // Do nothing by default.
             };
 
             /**
-             * Handles the behavior for resizing this visualization.
+             * Handles any additional behavior for resizing this visualization.
              * @method onResize
              */
             $scope.functions.onResize = function() {
-                // Do nothing.
+                // Do nothing by default.
             };
 
             /**
@@ -266,7 +258,7 @@ function(external, connectionService, datasetService, errorNotificationService, 
                 $scope.initializing = true;
 
                 if($scope.functions.isFilterSet()) {
-                    removeAllFilters(true);
+                    removeFilter(true);
                 }
 
                 $scope.fields = datasetService.getSortedFields($scope.active.database.name, $scope.active.table.name);
@@ -290,20 +282,20 @@ function(external, connectionService, datasetService, errorNotificationService, 
             };
 
             /**
-             * Handles the behavior for updating the fields for this visualization.
+             * Handles any additional behavior for updating the fields for this visualization.
              * @param {Object} datasetService
              * @method onUpdateFields
              */
             $scope.functions.onUpdateFields = function() {
-                // Do nothing.
+                // Do nothing by default.
             };
 
             /**
-             * Handles the behavior for changing a data field in this visualization.
+             * Handles any additional behavior for changing a data field in this visualization.
              * @method onChangeField
              */
             $scope.functions.onChangeField = function() {
-                // Do nothing.
+                // Do nothing by default.
             };
 
             /**
@@ -450,7 +442,7 @@ function(external, connectionService, datasetService, errorNotificationService, 
              * @method updateData
              */
             $scope.functions.updateData = function(data) {
-                // Do nothing.
+                // Do nothing by default.
             };
 
             /**
@@ -501,13 +493,13 @@ function(external, connectionService, datasetService, errorNotificationService, 
             };
 
             /**
-             * Handles the behavior for additional responses to query errors.
+             * Handles any additional behavior for responding to query errors.
              * @param {Object} response The query response
              * @param {Object} errorCodes An object containing the error codes important to the Neon Dashboard
              * @method onError
              */
             $scope.functions.onError = function() {
-                // Do nothing.
+                // Do nothing by default.
             };
 
             /**
@@ -555,7 +547,7 @@ function(external, connectionService, datasetService, errorNotificationService, 
             };
 
             /**
-             * Handles the behavior for changing the theme of elements in this visualization to the given theme.
+             * Handles any behavior for changing the theme of elements in this visualization to the given theme.
              * @param {Object} theme
              * @method onThemeChanged
              * @return {Boolean} Whether them theme of any elements in this visualization needed to be changed
@@ -594,7 +586,7 @@ function(external, connectionService, datasetService, errorNotificationService, 
              * @private
              */
             var updateFilter = function() {
-                var filterFields = $scope.functions.getFilterableFields();
+                var filterFields = $scope.functions.getFilterFields();
                 var valid = true;
                 filterFields.forEach(function(field) {
                     valid = valid && datasetService.isFieldValid(field);
@@ -606,99 +598,38 @@ function(external, connectionService, datasetService, errorNotificationService, 
                     });
                     var neonFilter = filterService.getFilter($scope.active.database.name, $scope.active.table.name, filterFieldNames);
                     if(!neonFilter) {
-                        $scope.filter.data = [];
                         $scope.functions.onRemoveFilter();
                     } else {
-                        var data = [];
-                        if(filterService.hasSingleClause(neonFilter)) {
-                            var filterItem = {
-                                field: neonFilter.filter.whereClause.lhs,
-                                value: neonFilter.filter.whereClause.rhs
-                            };
-                            data.push($scope.functions.onAddFilter(filterItem, datasetService));
-                        } else {
-                            neonFilter.filter.whereClause.whereClauses.forEach(function(whereClause) {
-                                var filterItem = {
-                                    field: whereClause.lhs,
-                                    value: whereClause.rhs
-                                };
-                                data.push($scope.functions.onAddFilter(filterItem, datasetService));
-                            });
-                        }
-                        $scope.filter.database = neonFilter.filter.databaseName;
-                        $scope.filter.table = neonFilter.filter.tableName;
-                        $scope.filter.data = data;
+                        $scope.functions.updateFilterFromNeonFilterClause(filterService, neonFilter);
                     }
                 }
             };
 
             /**
              * Returns the list of field objects on which filters for this visualization are set.
-             * @method getFilterableFields
+             * @method getFilterFields
              * @return {Array}
              */
-            $scope.functions.getFilterableFields = function() {
+            $scope.functions.getFilterFields = function() {
                 return [];
             };
 
             /**
-             * Handles the behavior for adding a filter on the given filter data item to this visualization and returns the filter data item.
-             * @param {Object} item The filter item containing {String} field and {String} value
-             * @method onAddFilter
-             * @return {Object} item
-             */
-            $scope.functions.onAddFilter = function(item) {
-                return item;
-            };
-
-            /**
-             * Handles the behavior for removing the filter on the given filter data item from this visualization (or removing all filters if no item is given).
-             * @param {Object} item The filter item containing {String} field and {String} value (Optional)
+             * Handles any behavior after removing the filter from this visualization.
              * @method onRemoveFilter
              */
             $scope.functions.onRemoveFilter = function() {
-                // Do nothing.
+                // Do nothing by default.
             };
 
             /**
-             * Replaces the global filter with a new filter containing the given fields and values and updates the dashboard.
-             * Removes the global filter from the dashboard instead if it matches the given fields and values.
-             * @param {Object} or {Array} fieldsAndValues An object or list of objects each containing a {String} field and {String} value for the filter
-             * @method replaceOrRemoveFilter
+             * Updates the filter for this visualization using the where clause in the given Neon filter.
+             * @param {Object} filterService
+             * @param {neon.query.Filter} neonFilter
+             * @method updateFilterFromNeonFilterClause
              */
-            $scope.functions.replaceOrRemoveFilter = function(fieldsAndValues) {
-                replaceOrRemoveFilter(_.isArray(fieldsAndValues) ? fieldsAndValues : [fieldsAndValues]);
-            };
-
-            var replaceOrRemoveFilter = function(fieldsAndValues) {
-                if($scope.functions.isFilterSet() && $scope.functions.matchesFilter(fieldsAndValues)) {
-                    removeAllFilters(true);
-                } else {
-                    replaceFilter(fieldsAndValues);
-                }
-            };
-
-            /**
-             * Returns whether the the given fields and values match the fields and values set in the global filter data object.
-             * The default implementation compares the "field" and "value" properties of the objects.
-             * @param {Array} fieldsAndValues A list of objects each containing a {String} field and {String} value for the filter
-             * @method matchesFilter
-             * @return {Boolean}
-             */
-            $scope.functions.matchesFilter = function(fieldsAndValues) {
-                if(fieldsAndValues.length === $scope.filter.data.length) {
-                    var match = true;
-                    fieldsAndValues.forEach(function(item) {
-                        var index = _.findIndex($scope.filter.data, function(filterItem) {
-                            return item.field === filterItem.field && item.value === filterItem.value;
-                        });
-                        if(index < 0) {
-                            match = false;
-                        }
-                    });
-                    return match;
-                }
-                return false;
+            $scope.functions.updateFilterFromNeonFilterClause = function() {
+                // Do nothing by default.
             };
 
             /**
@@ -706,14 +637,12 @@ function(external, connectionService, datasetService, errorNotificationService, 
              * @param {Object} or {Array} fieldsAndValues An object or list of objects each containing a {String} field and {String} value for the filter
              * @method addFilter
              */
-            $scope.functions.replaceFilter = function(fieldsAndValues) {
-                replaceFilter(_.isArray(fieldsAndValues) ? fieldsAndValues : [fieldsAndValues]);
+            $scope.functions.replaceFilter = function() {
+                replaceFilter();
             };
 
-            var replaceFilter = function(fieldsAndValues) {
-                $scope.filter.data = [];
-                $scope.functions.onRemoveFilter();
-                addFilter(fieldsAndValues);
+            var replaceFilter = function() {
+                addFilter();
             };
 
             /**
@@ -721,24 +650,11 @@ function(external, connectionService, datasetService, errorNotificationService, 
              * @param {Object} or {Array} fieldsAndValues An object or list of objects each containing a {String} field and {String} value for the filter
              * @method addFilter
              */
-            $scope.functions.addFilter = function(fieldsAndValues) {
-                addFilter(_.isArray(fieldsAndValues) ? fieldsAndValues : [fieldsAndValues]);
+            $scope.functions.addFilter = function() {
+                addFilter();
             };
 
-            var addFilter = function(fieldsAndValues) {
-                $scope.filter.database = $scope.active.database.name;
-                $scope.filter.table = $scope.active.table.name;
-
-                fieldsAndValues.forEach(function(item) {
-                    if(item.field && item.value) {
-                        $scope.filter.data.push($scope.functions.onAddFilter(item, datasetService));
-                    }
-                });
-
-                if(!$scope.filter.data.length) {
-                    return;
-                }
-
+            var addFilter = function() {
                 XDATA.userALE.log({
                     activity: "select",
                     action: "click",
@@ -751,9 +667,9 @@ function(external, connectionService, datasetService, errorNotificationService, 
                 });
 
                 // Will add or replace the filter as appropriate.
-                filterService.addFilter($scope.messenger, $scope.filter.database, $scope.filter.table, getFilteredFields(), $scope.functions.createNeonFilterClause, {
+                filterService.addFilter($scope.messenger, $scope.active.database.name, $scope.active.table.name, getFilterFieldNames(), $scope.functions.createNeonFilterClause, {
                     visName: $scope.name,
-                    text: $scope.functions.createFilterText()
+                    text: $scope.functions.createFilterTrayText()
                 }, function() {
                     if($scope.functions.shouldQueryAfterFilter()) {
                         queryAndUpdate();
@@ -762,46 +678,34 @@ function(external, connectionService, datasetService, errorNotificationService, 
             };
 
             /**
-             * Returns the list of fields in the global filter data object.
-             * @method getFilteredFields
+             * Returns the list of field names on which filters for this visualization are set.
+             * @method getFilterFieldNames
              * @return {Array}
              */
-            var getFilteredFields = function() {
-                var fields = {};
-                $scope.filter.data.forEach(function(filterItem) {
-                    fields[filterItem.field] = true;
+            var getFilterFieldNames = function() {
+                return $scope.functions.getFilterFields().map(function(field) {
+                    return field.columnName;
                 });
-                return Object.keys(fields);
             };
 
             /**
-             * Creates and returns the Neon where clause for a Neon filter on the given database, table, and fields using the values set in this visualization.
+             * Creates and returns the Neon where clause for a Neon filter on the given database, table, and fields using the filters set in this visualization.
              * @param {Object} databaseAndTableName Contains {String} database and {String} table
              * @param {String} fieldName or {Array} fieldNames The name (or list of names) of the filter fields
              * @method createNeonFilterClause
              * @return {neon.query.Where}
              */
             $scope.functions.createNeonFilterClause = function(databaseAndTableName, fieldName) {
-                var filterClauses = $scope.filter.data.map(function(filterItem) {
-                    return neon.query.where(fieldName, "=", filterItem.value);
-                });
-                if(filterClauses.length === 1) {
-                    return filterClauses[0];
-                }
-                return neon.query.and.apply(neon.query, filterClauses);
+                return neon.query.where(fieldName, "!=", null);
             };
 
             /**
-             * Returns the description text for the global filter data object.  The default implementation uses the "field" and "value" properties of the object.
-             * @method createFilterText
+             * Returns the description text for the global filter data object to show in the filter tray.
+             * @method createFilterTrayText
              * @return {String}
              */
-            $scope.functions.createFilterText = function() {
-                var text = "";
-                $scope.filter.data.forEach(function(filterItem) {
-                    text += (text.length > 0 ? "," : "") + filterItem.field + " = " + filterItem.value;
-                });
-                return text;
+            $scope.functions.createFilterTrayText = function() {
+                return "";
             };
 
             /**
@@ -814,25 +718,15 @@ function(external, connectionService, datasetService, errorNotificationService, 
             };
 
             /**
-             * Removes the given fields and values from the global filter and updates the dashboard.  Removes the global filter from the dashboard if no fields or values are given.
-             * @param {Object} or {Array} fieldsAndValues An object or list of objects each containing a {String} field and {String} value for the filter (Optional)
+             * Removes the filter for this visualization and updates the dashboard.
              * @method removeFilter
              */
-            $scope.functions.removeFilter = function(fieldsAndValues) {
-                if(!fieldsAndValues || $scope.functions.matchesFilter(_.isArray(fieldsAndValues) ? fieldsAndValues : [fieldsAndValues])) {
-                    removeAllFilters(false);
-                } else {
-                    removeFilter(false, _.isArray(fieldsAndValues) ? fieldsAndValues : [fieldsAndValues]);
-                }
+            $scope.functions.removeFilter = function() {
+                removeFilter(false);
             };
 
-            var removeAllFilters = function(fromSystem) {
-                if(!$scope.functions.isFilterSet()) {
-                    return;
-                }
-
-                filterService.removeFilter($scope.filter.database, $scope.filter.table, getFilteredFields(), function() {
-                    $scope.filter.data = [];
+            var removeFilter = function(fromSystem) {
+                filterService.removeFilter($scope.active.database.name, $scope.active.table.name, getFilterFieldNames(), function() {
                     $scope.functions.onRemoveFilter();
 
                     if(!fromSystem) {
@@ -848,45 +742,6 @@ function(external, connectionService, datasetService, errorNotificationService, 
                         });
                     }
 
-                    if($scope.functions.shouldQueryAfterFilter()) {
-                        queryAndUpdate();
-                    }
-                });
-            };
-
-            var removeFilter = function(fromSystem, fieldsAndValues) {
-                if(!$scope.functions.isFilterSet() || !fieldsAndValues) {
-                    return;
-                }
-
-                fieldsAndValues.forEach(function(item) {
-                    var index = _.findIndex($scope.filter.data, function(filterItem) {
-                        return item.field === filterItem.field && item.value === filterItem.value;
-                    });
-                    if(index >= 0) {
-                        var filterItem = $scope.filter.data.splice(index, 1);
-                        $scope.functions.onRemoveFilter(filterItem);
-
-                        if(!fromSystem) {
-                            XDATA.userALE.log({
-                                activity: "remove",
-                                action: "click",
-                                elementId: $scope.type,
-                                elementType: "button",
-                                elementSub: $scope.type,
-                                elementGroup: $scope.logElementGroup,
-                                source: "user",
-                                tags: ["filter", $scope.type, filterItem.value]
-                            });
-                        }
-                    }
-                });
-
-                // Will replace the filter.
-                filterService.addFilter($scope.messenger, $scope.filter.database, $scope.filter.table, getFilteredFields(), $scope.functions.createNeonFilterClause, {
-                    visName: $scope.name,
-                    text: $scope.functions.createFilterText()
-                }, function() {
                     if($scope.functions.shouldQueryAfterFilter()) {
                         queryAndUpdate();
                     }
@@ -1115,7 +970,7 @@ function(external, connectionService, datasetService, errorNotificationService, 
              * @method onTranslationSuccess
              */
             $scope.functions.onTranslationSuccess = function() {
-                // Do nothing.
+                // Do nothing by default.
             };
 
             /**
@@ -1143,7 +998,7 @@ function(external, connectionService, datasetService, errorNotificationService, 
              * @method onTranslationFailure
              */
             $scope.functions.onTranslationFailure = function() {
-                // Do nothing.
+                // Do nothing by default.
             };
 
             /**
@@ -1158,27 +1013,26 @@ function(external, connectionService, datasetService, errorNotificationService, 
             };
 
             /**
-             * Handles the behavior for clearing all translations.
+             * Handles any behavior for clearing all translations.
              * @method onClearTranslation
              */
             $scope.functions.onClearTranslation = function() {
-                // Do nothing.
+                // Do nothing by default.
             };
 
             /**
              * Creates and returns the links for the given field object and item object.
              * @param {Object} field Containing {String} columnName
-             * @param {Object} item Containing a property matching the field name
+             * @param {String} value
              * @method createLinks
              * @return {Object} links
              */
-            $scope.functions.createLinks = function(field, item) {
-                return createLinks(field, item);
+            $scope.functions.createLinks = function(field, value) {
+                return createLinks(field, value);
             };
 
-            var createLinks = function(field, item) {
+            var createLinks = function(field, value) {
                 var mappings = datasetService.getMappings($scope.active.database.name, $scope.active.table.name);
-                var value = item[field.columnName];
                 var links = linksPopupService.createAllServiceLinkObjects(external.services, mappings, field.columnName, value);
                 var key = linksPopupService.generateKey(field, value);
                 linksPopupService.addLinks($scope.visualizationId, linksPopupService.generateKey(field, value), links);
@@ -1188,20 +1042,20 @@ function(external, connectionService, datasetService, errorNotificationService, 
             /**
              * Creates and returns the link buttons for the given field object and data array.
              * @param {Object} field Containing {String} columnName
-             * @param {Array} data A list of objects each containing a property matching the field name
+             * @param {Array} array A list of objects each containing a property matching the field name
              * @method createLinkButtons
              * @return {Array} buttons
              */
-            $scope.functions.createLinkButtons = function(field, data) {
-                return createLinkButtons(field, data);
+            $scope.functions.createLinkButtons = function(field, array) {
+                return createLinkButtons(field, array);
             };
 
-            var createLinkButtons = function(field, data) {
+            var createLinkButtons = function(field, array) {
                 var links = {};
                 var buttons = [];
 
-                data.forEach(function(item) {
-                    var value = item[field.columnName];
+                array.forEach(function(element) {
+                    var value = element[field.columnName];
                     var key = linksPopupService.generateKey(field, value);
                     links[key] = linksPopupService.createAllServiceLinkObjects(external.services, mappings, field.columnName, value);
                     buttons.push(links[key].length ? linksPopupService.createLinkHtml($scope.visualizationId, key, value) :

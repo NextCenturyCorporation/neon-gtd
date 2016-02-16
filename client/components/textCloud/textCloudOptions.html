@@ -7,11 +7,11 @@
 <div class="form-group">
     <label>Show Records With</label>
     <div class="btn-group">
-        <label class="btn btn-default" ng-class="{true: 'active', false: ''}[active.andFilters]" ng-disabled="(filter.data.length <= 1)">
+        <label class="btn btn-default" ng-class="{true: 'active', false: ''}[active.andFilters]" ng-disabled="(active.filters.length <= 1)">
             <input type="radio" ng-model="active.andFilters" style="display:none" ng-value="true" ng-change="handleChangeAndFilters()">
             All Filters
         </label>
-        <label class="btn btn-default" ng-class="{true: '', false: 'active'}[active.andFilters]" ng-disabled="(filter.data.length <= 1)">
+        <label class="btn btn-default" ng-class="{true: '', false: 'active'}[active.andFilters]" ng-disabled="(active.filters.length <= 1)">
             <input type="radio" ng-model="active.andFilters" style="display:none" ng-value="false" ng-change="handleChangeAndFilters()">
             Any Filters
         </label>
