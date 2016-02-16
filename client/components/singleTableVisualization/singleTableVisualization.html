@@ -4,6 +4,11 @@
         <div class="title header-text pull-left" ng-bind="createTitle()"></div>
 
         <options-menu parent-element="element" export-function="makeExportObject" button-text="optionsMenuButtonText" show-button-text="showOptionsMenuButtonText">
+            <translation-options ng-show="translationAvailable" on-translate="handleToggleTranslation"
+                from-language-change="handleChangeFromLanguage" to-language-change="handleChangeToLanguage"
+                from-language-options="translationLanguages.fromLanguageOptions" to-language-options="translationLanguages.toLanguageOptions">
+            </translation-options>
+
             <div class="form-group" ng-hide="bindings.hideAdvancedOptions">
                 <label>Database</label>
                 <select class="form-control" ng-model="active.database" ng-options="database.prettyName for database in databases" ng-required="true" ng-disabled="(databases.length < 2)" ng-change="handleChangeDatabase()">

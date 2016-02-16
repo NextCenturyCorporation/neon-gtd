@@ -17,8 +17,8 @@
  */
 
 angular.module('neonDemo.directives').directive('singleTableVisualization',
-['ConnectionService', 'DatasetService', 'ErrorNotificationService', 'FilterService', 'ExportService', 'ThemeService', 'VisualizationService',
-function(connectionService, datasetService, errorNotificationService, filterService, exportService, themeService, visualizationService) {
+['ConnectionService', 'DatasetService', 'ErrorNotificationService', 'FilterService', 'ExportService', 'ThemeService', 'TranslationService', 'VisualizationService',
+function(connectionService, datasetService, errorNotificationService, filterService, exportService, themeService, translationService, visualizationService) {
     return {
         templateUrl: 'components/singleTableVisualization/singleTableVisualization.html',
         restrict: 'EA',
@@ -62,6 +62,13 @@ function(connectionService, datasetService, errorNotificationService, filterServ
 
             $scope.functions = {};
 
+            $scope.translationLanguages = {
+                fromLanguageOptions: {},
+                toLanguageOptions: {},
+                chosenFromLanguage: "",
+                chosenToLanguage: ""
+            };
+
             /**
              * Initializes this visualization.
              * @method init
@@ -76,6 +83,20 @@ function(connectionService, datasetService, errorNotificationService, filterServ
                 $scope.exportId = exportService.register($scope.makeExportObject);
                 themeService.registerListener($scope.visualizationId, handleThemeChangedEvent);
                 visualizationService.register($scope.stateId, getBindingFields);
+
+                if($scope.functions.allowTranslation() && translationService.hasKey()) {
+                    $scope.translationAvailable = true;
+                    translationService.getSupportedLanguages(function(languages) {
+                        $scope.translationLanguages.fromLanguageOptions = languages;
+                        $scope.translationLanguages.toLanguageOptions = languages;
+                    }, function(response) {
+                        if($scope.errorMessage) {
+                            errorNotificationService.hideErrorMessage($scope.errorMessage);
+                            $scope.errorMessage = undefined;
+                        }
+                        $scope.errorMessage = errorNotificationService.showErrorMessage($scope.element, response.message,  response.reason);
+                    });
+                }
 
                 $scope.$on('$destroy', function() {
                     XDATA.userALE.log({
@@ -113,6 +134,15 @@ function(connectionService, datasetService, errorNotificationService, filterServ
                 $scope.functions.onInit();
 
                 updateDatabases();
+            };
+
+            /**
+             * Returns whether this visualization allows translation of its data.
+             * @method allowTranslation
+             * @return {Boolean}
+             */
+            $scope.functions.allowTranslation = function() {
+                return false;
             };
 
             /**
@@ -904,7 +934,7 @@ function(connectionService, datasetService, errorNotificationService, filterServ
                 XDATA.userALE.log({
                     activity: "select",
                     action: "click",
-                    elementId: $scope.type,
+                    elementId: $scope.type + "Options",
                     elementType: type || "combobox",
                     elementSub: option,
                     elementGroup: $scope.logElementGroup,
@@ -936,7 +966,7 @@ function(connectionService, datasetService, errorNotificationService, filterServ
              * @method handleChangeUnsharedFilterField
              */
             $scope.handleChangeUnsharedFilterField = function() {
-                logChange("unshared-filter-field", $scope.active.unsharedFilterField.columnName);
+                logChange("unsharedFilterField", $scope.active.unsharedFilterField.columnName);
                 $scope.active.unsharedFilterValue = "";
             };
 
@@ -945,7 +975,7 @@ function(connectionService, datasetService, errorNotificationService, filterServ
              * @method handleChangeUnsharedFilterValue
              */
             $scope.handleChangeUnsharedFilterValue = function() {
-                logChange("unshared-filter-value", $scope.active.unsharedFilterValue);
+                logChange("unsharedFilterValue", $scope.active.unsharedFilterValue);
                 if(!$scope.initializing) {
                     queryAndUpdate();
                 }
@@ -956,7 +986,7 @@ function(connectionService, datasetService, errorNotificationService, filterServ
              * @method handleRemoveUnsharedFilter
              */
             $scope.handleRemoveUnsharedFilter = function() {
-                logChange("unshared-filter", "", "button");
+                logChange("unsharedFilter", "", "button");
                 $scope.active.unsharedFilterValue = "";
                 if(!$scope.initializing) {
                     queryAndUpdate();
@@ -980,6 +1010,158 @@ function(connectionService, datasetService, errorNotificationService, filterServ
                     $scope.functions.onChangeField();
                     queryAndUpdate();
                 }
+            };
+
+            /**
+             * Updates the 'from' language on translation and translates if 'Show Translation' is checked
+             * @param {String} language The 'from' translation language to change to
+             * @method handleChangeFromLanguage
+             */
+            $scope.handleChangeFromLanguage = function(language) {
+                logChange("sourceTranslationLanguage", language);
+                $scope.translationLanguages.chosenFromLanguage = language;
+
+                if($scope.active.showTranslation) {
+                    performTranslation();
+                }
+            };
+
+            /**
+             * Updates the 'to' language on translation and translates if 'Show Translation' is checked
+             * @param {String} language The 'to' translation language to change to
+             * @method handleChangeToLanguage
+             */
+            $scope.handleChangeToLanguage = function(language) {
+                logChange("targetTranslationLanguage", language);
+                $scope.translationLanguages.chosenToLanguage = language;
+
+                if($scope.active.showTranslation) {
+                    performTranslation();
+                }
+            };
+
+            /**
+             * Translates all text back to its original form if checked is false, or to the specified 'to' language if checked is true.
+             * @param {Boolean} checked Whether 'Show Translation' is checked or unchecked
+             * @param {String} fromLang The 'from' language to use for translation
+             * @param {String} toLang The 'to' language to use for translation
+             * @method handleToggleTranslation
+             */
+            $scope.handleToggleTranslation = function(checked, fromLang, toLang) {
+                logChange("showTranslation", checked);
+                $scope.active.showTranslation = checked;
+
+                if(checked) {
+                    $scope.translationLanguages.chosenFromLanguage = fromLang;
+                    $scope.translationLanguages.chosenToLanguage = toLang;
+                    performTranslation();
+                } else {
+                    clearTranslation();
+                }
+            };
+
+            /**
+             * Translates data for this visualization using the global to/from languages.
+             * @method performTranslation
+             */
+            $scope.functions.performTranslation = function() {
+                performTranslation();
+            };
+
+            var performTranslation = function() {
+                if($scope.errorMessage) {
+                    errorNotificationService.hideErrorMessage($scope.errorMessage);
+                    $scope.errorMessage = undefined;
+                }
+
+                translationService.translate($scope.functions.getTranslationData(), $scope.translationLanguages.chosenToLanguage,
+                    translationSuccessCallback, translationFailureCallback, $scope.translationLanguages.chosenFromLanguage);
+            };
+
+            /**
+             * Returns the data on which to perform the translation for this visualization.
+             * @method getTranslationData
+             * @return {Array} data
+             */
+            $scope.functions.getTranslationData = function() {
+                return [];
+            };
+
+            /**
+             * Translation success callback for the given translation response that saves the translation cache.
+             * @param {Object} response Response object containing all the translations.
+             * @param {Array} response.data.data.translations List of all translations. It's assumed that
+             * all translations are given in the order the original text to translate was received in.
+             * @param {String} response.data.data.translations[].translatedText
+             * @param {String} [response.data.data.translations[].detectedSourceLanguage] Detected language
+             * code of the original version of translatedText. Only provided if the source language was auto-detected.
+             * @method translationSuccessCallback
+             * @private
+             */
+            var translationSuccessCallback = function(response) {
+                translationService.saveTranslationCache();
+                $scope.functions.onTranslationSuccess(response);
+            };
+
+            /**
+             * Handles translation success for the given response.
+             * @param {Object} response Response object containing all the translations.
+             * @param {Array} response.data.data.translations List of all translations. It's assumed that
+             * all translations are given in the order the original text to translate was received in.
+             * @param {String} response.data.data.translations[].translatedText
+             * @param {String} [response.data.data.translations[].detectedSourceLanguage] Detected language
+             * code of the original version of translatedText. Only provided if the source language was auto-detected.
+             * @method onTranslationSuccess
+             */
+            $scope.functions.onTranslationSuccess = function() {
+                // Do nothing.
+            };
+
+            /**
+             * Translation failure callback for the given translation response that displays an error message.
+             * @param {Object} response An error response containing the message and reason.
+             * @param {String} response.message
+             * @param {String} response.reason
+             * @method translationFailureCallback
+             * @private
+             */
+            var translationFailureCallback = function(response) {
+                if($scope.errorMessage) {
+                    errorNotificationService.hideErrorMessage($scope.errorMessage);
+                    $scope.errorMessage = undefined;
+                }
+                $scope.errorMessage = errorNotificationService.showErrorMessage($scope.element, response.message,  response.reason);
+                $scope.functions.onTranslationFailure(response);
+            };
+
+            /**
+             * Handles translation failure for the given response.
+             * @param {Object} response An error response containing the message and reason.
+             * @param {String} response.message
+             * @param {String} response.reason
+             * @method onTranslationFailure
+             */
+            $scope.functions.onTranslationFailure = function() {
+                // Do nothing.
+            };
+
+            /**
+             * Clears all translations and the global to/from languages.
+             * @method clearTranslation
+             * @private
+             */
+            var clearTranslation = function() {
+                $scope.functions.onClearTranslation();
+                $scope.translationLanguages.chosenFromLanguage = "";
+                $scope.translationLanguages.chosenToLanguage = "";
+            };
+
+            /**
+             * Handles the behavior for clearing all translations.
+             * @method onClearTranslation
+             */
+            $scope.functions.onClearTranslation = function() {
+                // Do nothing.
             };
 
             /**

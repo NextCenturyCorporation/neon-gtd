@@ -17,22 +17,16 @@
  */
 
 angular.module('neonDemo.directives').controller('textCloudController',
-['$scope', 'external', 'LinksPopupService', 'TranslationService', '$timeout', function($scope, external, linksPopupService, translationService, $timeout) {
+['$scope', 'external', 'LinksPopupService', '$timeout', function($scope, external, linksPopupService, $timeout) {
     $scope.active.dataField = {};
     $scope.active.andFilters = true;
     $scope.active.limit = 40;
-
+    $scope.active.textColor = "#111";
     $scope.active.data = [];
     $scope.active.linksPopupButtonIsDisabled = true;
-    $scope.active.showTranslation = false;
-    $scope.active.textColor = "#111";
 
-    $scope.translationAvailable = false;
-    $scope.translationLanguages = {
-        fromLanguageOptions: {},
-        toLanguageOptions: {},
-        chosenFromLanguage: "",
-        chosenToLanguage: ""
+    $scope.functions.allowTranslation = function() {
+        return true;
     };
 
     $scope.functions.onDestroy = function() {
@@ -40,43 +34,7 @@ angular.module('neonDemo.directives').controller('textCloudController',
     };
 
     $scope.functions.onInit = function() {
-        if(translationService.hasKey()) {
-            $scope.translationAvailable = true;
-            translationService.getSupportedLanguages(getSupportedLanguagesSuccessCallback, translationFailureCallback);
-        }
-
         updateTagcloudPluginSettings();
-    };
-
-    /**
-     * Sets the 'to' and 'from' language options for translating.
-     * @param {Object} languages A mapping of language codes to their names.
-     * @method getSupportedLanguagesSuccessCallback
-     * @private
-     */
-    var getSupportedLanguagesSuccessCallback = function(languages) {
-        $scope.translationLanguages.fromLanguageOptions = languages;
-        $scope.translationLanguages.toLanguageOptions = languages;
-    };
-
-    /**
-     * Shows an error message when an error occurs in the translation service.
-     * @param {Object} response An error response containing the message and reason.
-     * @param {String} response.message
-     * @param {String} response.reason
-     * @method translationFailureCallback
-     * @private
-     */
-    var translationFailureCallback = function(response) {
-        /*
-        $scope.initializing = false;
-
-        if($scope.errorMessage) {
-            errorNotificationService.hideErrorMessage($scope.errorMessage);
-            $scope.errorMessage = undefined;
-        }
-        $scope.errorMessage = errorNotificationService.showErrorMessage($element, response.message,  response.reason);
-        */
     };
 
     /**
@@ -131,7 +89,7 @@ angular.module('neonDemo.directives').controller('textCloudController',
         });
 
         if($scope.active.showTranslation) {
-            translate();
+            $scope.functions.performTranslation();
         }
 
         updateTextStyle();
@@ -215,98 +173,7 @@ angular.module('neonDemo.directives').controller('textCloudController',
         $scope.functions.handleChangeField("and-filters", $scope.active.andFilters);
     };
 
-    /**
-     * Updates the 'from' language on translation and translates if 'Show Translation' is checked
-     * @param {String} language The 'from' translation language to change to
-     * @method handleChangeFromLanguage
-     */
-    $scope.handleChangeFromLanguage = function(language) {
-        XDATA.userALE.log({
-            activity: "select",
-            action: "click",
-            elementId: "textCloudOptions",
-            elementType: "combobox",
-            elementSub: "targetTranslationLanguage",
-            elementGroup: "chart_group",
-            source: "user",
-            tags: ["options", "textCloud"]
-        });
-        $scope.translationLanguages.chosenFromLanguage = language;
-
-        if($scope.active.showTranslation) {
-            translate();
-        }
-    };
-
-    /**
-     * Updates the 'to' language on translation and translates if 'Show Translation' is checked
-     * @param {String} language The 'to' translation language to change to
-     * @method handleChangeToLanguage
-     */
-    $scope.handleChangeToLanguage = function(language) {
-        XDATA.userALE.log({
-            activity: "select",
-            action: "click",
-            elementId: "textCloudOptions",
-            elementType: "combobox",
-            elementSub: "targetTranslationLanguage",
-            elementGroup: "chart_group",
-            source: "user",
-            tags: ["options", "textCloud"]
-        });
-        $scope.translationLanguages.chosenToLanguage = language;
-
-        if($scope.active.showTranslation) {
-            translate();
-        }
-    };
-
-    /**
-     * Translates all text back to its original form if checked is false, or to the specified 'to' language
-     * if checked is true.
-     * @param {Boolean} checked Whether 'Show Translation' is checked or unchecked
-     * @param {String} fromLang The 'from' language to use for translation
-     * @param {String} toLang The 'to' language to use for translation
-     * @method updateTranslation
-     */
-    $scope.updateTranslation = function(checked, fromLang, toLang) {
-        XDATA.userALE.log({
-            activity: "select",
-            action: "click",
-            elementId: "textCloudOptions",
-            elementType: "button",
-            elementSub: (checked) ? "showTranslation" : "removeTranslation",
-            elementGroup: "chart_group",
-            source: "user",
-            tags: ["options", "textCloud"]
-        });
-
-        $scope.active.showTranslation = checked;
-
-        if(checked) {
-            $scope.translationLanguages.chosenFromLanguage = fromLang;
-            $scope.translationLanguages.chosenToLanguage = toLang;
-            translate();
-        } else {
-            resetTranslation();
-        }
-    };
-
-    /**
-     * Translates all tags and filter tags with the from/to languages specified.
-     * @method translate
-     * @private
-     */
-    var translate = function() {
-        /*
-        $scope.initializing = true;
-
-        if($scope.errorMessage) {
-            errorNotificationService.hideErrorMessage($scope.errorMessage);
-            $scope.errorMessage = undefined;
-        }
-        */
-
+    $scope.functions.getTranslationData = function() {
         var dataKeys = $scope.active.data.map(function(item) {
             return item.key;
         });
@@ -317,26 +184,10 @@ angular.module('neonDemo.directives').controller('textCloudController',
             });
         }
 
-        translationService.translate(dataKeys, $scope.translationLanguages.chosenToLanguage,
-            translateSuccessCallback, translationFailureCallback, $scope.translationLanguages.chosenFromLanguage);
+        return dataKeys;
     };
 
-    /**
-     * Refreshes all data and filter tags with their new translations.
-     * @param {Object} response Response object containing all the translations.
-     * @param {Array} response.data.data.translations List of all translations. It's assumed that
-     * all translations are given in the order the original text to translate was received in.
-     * @param {String} response.data.data.translations[].translatedText
-     * @param {String} [response.data.data.translations[].detectedSourceLanguage] Detected language
-     * code of the original version of translatedText. Only provided if the source language was auto-detected.
-     * @method translateSuccessCallback
-     * @private
-     */
-    var translateSuccessCallback = function(response) {
-        /*
-        $scope.initializing = false;
-        */
-
+    $scope.functions.onTranslationSuccess = function(response) {
         response.data.data.translations.forEach(function(elem, index) {
             if(index < $scope.active.data.length) {
                 $scope.active.data[index].keyTranslated = elem.translatedText;
@@ -344,16 +195,9 @@ angular.module('neonDemo.directives').controller('textCloudController',
                 $scope.filter.data[index - $scope.active.data.length].translated = elem.translatedText;
             }
         });
-
-        translationService.saveTranslationCache();
     };
 
-    /**
-     * Resets all tags and filter tags to its original text.
-     * @method resetTranslation
-     * @private
-     */
-    var resetTranslation = function() {
+    $scope.functions.onClearTranslation = function() {
         $scope.active.data = $scope.active.data.map(function(elem) {
             elem.keyTranslated = elem.key;
             return elem;
@@ -365,20 +209,17 @@ angular.module('neonDemo.directives').controller('textCloudController',
                 return item;
             });
         }
-
-        $scope.translationLanguages.chosenFromLanguage = "";
-        $scope.translationLanguages.chosenToLanguage = "";
     };
 
     $scope.functions.createExportDataObject = function(query) {
         var finalObject = {
-            name: "Tag_Cloud",
+            name: "Text_Cloud",
             data: [{
                 database: $scope.active.database.name,
                 table: $scope.active.table.name,
                 field: $scope.active.dataField.columnName,
                 limit: $scope.active.limit,
-                name: "tagCloud-" + $scope.exportID,
+                name: "textCloud-" + $scope.exportID,
                 fields: [],
                 type: "arraycount"
             }]
@@ -396,7 +237,7 @@ angular.module('neonDemo.directives').controller('textCloudController',
 
     $scope.functions.addToBindings = function(bindings) {
         // TODO Update to use the new binding system.
-        bindings["bind-tag-field"] = ($scope.active.dataField && $scope.active.dataField.columnName) ? "'" + $scope.active.dataField.columnName + "'" : undefined;
+        bindings["bind-data-field"] = ($scope.active.dataField && $scope.active.dataField.columnName) ? "'" + $scope.active.dataField.columnName + "'" : undefined;
         return bindings;
     };
 
