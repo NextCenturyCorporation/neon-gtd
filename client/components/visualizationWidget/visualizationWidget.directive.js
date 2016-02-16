@@ -39,7 +39,13 @@ angular.module('neonDemo.directives').directive('visualizationWidget', ["config"
             var MAXIMIZED_ROW_SIZE = MAXIMIZED_COLUMN_SIZE * (2 / 3);
 
             // TODO Add to visualization configuration.
-            var superclass = ($scope.gridsterConfigs[$scope.gridsterConfigIndex].type === "linechart" || $scope.gridsterConfigs[$scope.gridsterConfigIndex].type === "map") ? "multiple-table-visualization" : "single-table-visualization";
+            var superclass = "single-table-visualization";
+            if($scope.gridsterConfigs[$scope.gridsterConfigIndex].type === "lineChart" || $scope.gridsterConfigs[$scope.gridsterConfigIndex].type === "map") {
+                superclass = "multiple-table-visualization";
+            }
+            if($scope.gridsterConfigs[$scope.gridsterConfigIndex].type === "filterBuilder") {
+                superclass = "filter-builder";
+            }
 
             var visualization = document.createElement("div");
             visualization.setAttribute(superclass, "");
@@ -60,10 +66,11 @@ angular.module('neonDemo.directives').directive('visualizationWidget', ["config"
                 visualization.setAttribute("log-element-type", "datagrid");
             }
 
-            $scope.gridsterConfigs[$scope.gridsterConfigIndex].bindings = $scope.gridsterConfigs[$scope.gridsterConfigIndex].bindings || {};
-            $scope.gridsterConfigs[$scope.gridsterConfigIndex].bindings.hideAdvancedOptions = config.hideAdvancedOptions;
-            $scope.gridsterConfigs[$scope.gridsterConfigIndex].bindings.hideHeader = config.hideHeader;
-            visualization.setAttribute("bindings", "gridsterConfigs[" + $scope.gridsterConfigIndex + "].bindings");
+            // Save the bindings as a new object so that removing elements from the gridster configs doesn't cause errors.
+            $scope.bindings = $scope.gridsterConfigs[$scope.gridsterConfigIndex].bindings || {};
+            $scope.bindings.hideAdvancedOptions = config.hideAdvancedOptions;
+            $scope.bindings.hideHeader = config.hideHeader;
+            visualization.setAttribute("bindings", "bindings");
 
             $element.append($compile(visualization)($scope));
 
