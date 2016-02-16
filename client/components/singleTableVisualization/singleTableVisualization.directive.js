@@ -17,8 +17,8 @@
  */
 
 angular.module('neonDemo.directives').directive('singleTableVisualization',
-['ConnectionService', 'DatasetService', 'ErrorNotificationService', 'FilterService', 'ExportService', 'ThemeService', 'TranslationService', 'VisualizationService',
-function(connectionService, datasetService, errorNotificationService, filterService, exportService, themeService, translationService, visualizationService) {
+['external', 'ConnectionService', 'DatasetService', 'ErrorNotificationService', 'FilterService', 'ExportService', 'LinksPopupService', 'ThemeService', 'TranslationService', 'VisualizationService',
+function(external, connectionService, datasetService, errorNotificationService, filterService, exportService, linksPopupService, themeService, translationService, visualizationService) {
     return {
         templateUrl: 'components/singleTableVisualization/singleTableVisualization.html',
         restrict: 'EA',
@@ -62,7 +62,7 @@ function(connectionService, datasetService, errorNotificationService, filterServ
 
             $scope.functions = {};
 
-            $scope.translationLanguages = {
+            $scope.languages = {
                 fromLanguageOptions: {},
                 toLanguageOptions: {},
                 chosenFromLanguage: "",
@@ -85,10 +85,10 @@ function(connectionService, datasetService, errorNotificationService, filterServ
                 visualizationService.register($scope.stateId, getBindingFields);
 
                 if($scope.functions.allowTranslation() && translationService.hasKey()) {
-                    $scope.translationAvailable = true;
+                    $scope.translationsOn = true;
                     translationService.getSupportedLanguages(function(languages) {
-                        $scope.translationLanguages.fromLanguageOptions = languages;
-                        $scope.translationLanguages.toLanguageOptions = languages;
+                        $scope.languages.fromLanguageOptions = languages;
+                        $scope.languages.toLanguageOptions = languages;
                     }, function(response) {
                         if($scope.errorMessage) {
                             errorNotificationService.hideErrorMessage($scope.errorMessage);
@@ -120,6 +120,7 @@ function(connectionService, datasetService, errorNotificationService, filterServ
                     }
 
                     exportService.unregister($scope.exportId);
+                    linksPopupService.deleteLinks($scope.visualizationId);
                     themeService.unregisterListener($scope.visualizationId);
                     visualizationService.unregister($scope.stateId);
 
@@ -1018,10 +1019,10 @@ function(connectionService, datasetService, errorNotificationService, filterServ
              * @method handleChangeFromLanguage
              */
             $scope.handleChangeFromLanguage = function(language) {
-                logChange("sourceTranslationLanguage", language);
-                $scope.translationLanguages.chosenFromLanguage = language;
+                logChange("sourceLanguage", language);
+                $scope.languages.chosenFromLanguage = language;
 
-                if($scope.active.showTranslation) {
+                if($scope.active.showTranslations) {
                     performTranslation();
                 }
             };
@@ -1032,10 +1033,10 @@ function(connectionService, datasetService, errorNotificationService, filterServ
              * @method handleChangeToLanguage
              */
             $scope.handleChangeToLanguage = function(language) {
-                logChange("targetTranslationLanguage", language);
-                $scope.translationLanguages.chosenToLanguage = language;
+                logChange("targetLanguage", language);
+                $scope.languages.chosenToLanguage = language;
 
-                if($scope.active.showTranslation) {
+                if($scope.active.showTranslations) {
                     performTranslation();
                 }
             };
@@ -1047,13 +1048,13 @@ function(connectionService, datasetService, errorNotificationService, filterServ
              * @param {String} toLang The 'to' language to use for translation
              * @method handleToggleTranslation
              */
-            $scope.handleToggleTranslation = function(checked, fromLang, toLang) {
-                logChange("showTranslation", checked);
-                $scope.active.showTranslation = checked;
+            $scope.handleToggleTranslations = function(checked, fromLang, toLang) {
+                logChange("showTranslations", checked);
+                $scope.active.showTranslations = checked;
 
                 if(checked) {
-                    $scope.translationLanguages.chosenFromLanguage = fromLang;
-                    $scope.translationLanguages.chosenToLanguage = toLang;
+                    $scope.languages.chosenFromLanguage = fromLang;
+                    $scope.languages.chosenToLanguage = toLang;
                     performTranslation();
                 } else {
                     clearTranslation();
@@ -1074,8 +1075,8 @@ function(connectionService, datasetService, errorNotificationService, filterServ
                     $scope.errorMessage = undefined;
                 }
 
-                translationService.translate($scope.functions.getTranslationData(), $scope.translationLanguages.chosenToLanguage,
-                    translationSuccessCallback, translationFailureCallback, $scope.translationLanguages.chosenFromLanguage);
+                translationService.translate($scope.functions.getTranslationData(), $scope.languages.chosenToLanguage,
+                    translationSuccessCallback, translationFailureCallback, $scope.languages.chosenFromLanguage);
             };
 
             /**
@@ -1152,8 +1153,8 @@ function(connectionService, datasetService, errorNotificationService, filterServ
              */
             var clearTranslation = function() {
                 $scope.functions.onClearTranslation();
-                $scope.translationLanguages.chosenFromLanguage = "";
-                $scope.translationLanguages.chosenToLanguage = "";
+                $scope.languages.chosenFromLanguage = "";
+                $scope.languages.chosenToLanguage = "";
             };
 
             /**
@@ -1162,6 +1163,81 @@ function(connectionService, datasetService, errorNotificationService, filterServ
              */
             $scope.functions.onClearTranslation = function() {
                 // Do nothing.
+            };
+
+            /**
+             * Creates and returns the links for the given field object and item object.
+             * @param {Object} field Containing {String} columnName
+             * @param {Object} item Containing a property matching the field name
+             * @method createLinks
+             * @return {Object} links
+             */
+            $scope.functions.createLinks = function(field, item) {
+                return createLinks(field, item);
+            };
+
+            var createLinks = function(field, item) {
+                var mappings = datasetService.getMappings($scope.active.database.name, $scope.active.table.name);
+                var value = item[field.columnName];
+                var links = linksPopupService.createAllServiceLinkObjects(external.services, mappings, field.columnName, value);
+                var key = linksPopupService.generateKey(field, value);
+                linksPopupService.addLinks($scope.visualizationId, linksPopupService.generateKey(field, value), links);
+                return links;
+            };
+
+            /**
+             * Creates and returns the link buttons for the given field object and data array.
+             * @param {Object} field Containing {String} columnName
+             * @param {Array} data A list of objects each containing a property matching the field name
+             * @method createLinkButtons
+             * @return {Array} buttons
+             */
+            $scope.functions.createLinkButtons = function(field, data) {
+                return createLinkButtons(field, data);
+            };
+
+            var createLinkButtons = function(field, data) {
+                var links = {};
+                var buttons = [];
+
+                data.forEach(function(item) {
+                    var value = item[field.columnName];
+                    var key = linksPopupService.generateKey(field, value);
+                    links[key] = linksPopupService.createAllServiceLinkObjects(external.services, mappings, field.columnName, value);
+                    buttons.push(links[key].length ? linksPopupService.createLinkHtml($scope.visualizationId, key, value) :
+                        linksPopupService.createDisabledLinkHtml(value));
+                });
+
+                linksPopupService.setLinks($scope.visualizationId, links);
+
+                return buttons;
+            };
+
+            /**
+             * Removes the links for the given field object and value, or all links for this visualization if no field or value are given.
+             * @param {Object} field (Optional)
+             * @param {String} value (Optional)
+             * @method removeLinks
+             */
+            $scope.functions.removeLinks = function(field, value) {
+                removeLinks(field, value);
+            };
+
+            var removeLinks = function(field, value) {
+                if(datasetService.isFieldValid(field) && value) {
+                    linksPopupService.removeLinksForKey($scope.visualizationId, linksPopupService.generateKey(field, value));
+                } else {
+                    linksPopupService.deleteLinks($scope.visualizationId);
+                }
+            };
+
+            /**
+             * Returns the links popup service object.
+             * @method getLinksPopupService
+             * @return {Object}
+             */
+            $scope.functions.getLinksPopupService = function() {
+                return linksPopupService;
             };
 
             /**

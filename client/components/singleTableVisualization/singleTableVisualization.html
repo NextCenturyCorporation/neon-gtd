@@ -4,9 +4,9 @@
         <div class="title header-text pull-left" ng-bind="createTitle()"></div>
 
         <options-menu parent-element="element" export-function="makeExportObject" button-text="optionsMenuButtonText" show-button-text="showOptionsMenuButtonText">
-            <translation-options ng-show="translationAvailable" on-translate="handleToggleTranslation"
+            <translation-options ng-show="translationsOn" on-translate="handleToggleTranslations"
                 from-language-change="handleChangeFromLanguage" to-language-change="handleChangeToLanguage"
-                from-language-options="translationLanguages.fromLanguageOptions" to-language-options="translationLanguages.toLanguageOptions">
+                from-language-options="languages.fromLanguageOptions" to-language-options="languages.toLanguageOptions">
             </translation-options>
 
             <div class="form-group" ng-hide="bindings.hideAdvancedOptions">

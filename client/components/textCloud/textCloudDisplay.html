@@ -1,4 +1,4 @@
 <div class="text-cloud" ng-show="filter.data.length > 0 || active.data.length > 0">
-    <a ng-click="addFilter(item.key, item.keyTranslated)" class="text" ng-repeat="item in active.data" rel="{{item.count}}" title="{{'Count:  ' + item.count}}" ng-bind="item.key" ng-show="!active.showTranslation"></a>
-    <a ng-click="addFilter(item.key, item.keyTranslated)" class="text" ng-repeat="item in active.data" rel="{{item.count}}" title="{{'Count:  ' + item.count + '  (Original:  ' + item.key + ')'}}" ng-bind="item.keyTranslated" ng-show="active.showTranslation"></a>
+    <a ng-click="addFilter(item.key, item.keyTranslated)" class="text" ng-repeat="item in active.data" rel="{{item.count}}" title="{{'Count:  ' + item.count}}" ng-bind="item.key" ng-show="!active.showTranslations"></a>
+    <a ng-click="addFilter(item.key, item.keyTranslated)" class="text" ng-repeat="item in active.data" rel="{{item.count}}" title="{{'Count:  ' + item.count + '  (Original:  ' + item.key + ')'}}" ng-bind="item.keyTranslated" ng-show="active.showTranslations"></a>
 </div>

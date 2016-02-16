@@ -16,21 +16,15 @@
  *
  */
 
-angular.module('neonDemo.directives').controller('textCloudController',
-['$scope', 'external', 'LinksPopupService', '$timeout', function($scope, external, linksPopupService, $timeout) {
+angular.module('neonDemo.directives').controller('textCloudController', ['$scope', '$timeout', function($scope, $timeout) {
     $scope.active.dataField = {};
     $scope.active.andFilters = true;
     $scope.active.limit = 40;
     $scope.active.textColor = "#111";
     $scope.active.data = [];
-    $scope.active.linksPopupButtonIsDisabled = true;
 
     $scope.functions.allowTranslation = function() {
         return true;
-    };
-
-    $scope.functions.onDestroy = function() {
-        linksPopupService.deleteLinks($scope.visualizationId);
     };
 
     $scope.functions.onInit = function() {
@@ -88,7 +82,7 @@ angular.module('neonDemo.directives').controller('textCloudController',
             return item;
         });
 
-        if($scope.active.showTranslation) {
+        if($scope.active.showTranslations) {
             $scope.functions.performTranslation();
         }
 
@@ -125,23 +119,17 @@ angular.module('neonDemo.directives').controller('textCloudController',
         });
     };
 
-    // TODO Remove the need for the Dataset Service
-    $scope.functions.onAddFilter = function(item, datasetService) {
-        var mappings = datasetService.getMappings($scope.active.database.name, $scope.active.table.name);
-        var cloudLinks = linksPopupService.createAllServiceLinkObjects(external.services, mappings, item.field, item.value);
-        linksPopupService.addLinks($scope.visualizationId, linksPopupService.generateKey($scope.active.dataField, item.value), cloudLinks);
-        $scope.active.linksPopupButtonIsDisabled = !cloudLinks.length;
-
+    $scope.functions.onAddFilter = function(item) {
+        var links = $scope.functions.createLinks($scope.active.dataField, item);
+        $scope.showLinksPopupButton = !!links.length;
         item.translated = item.translated || item.value;
+        item.title = item.field + " = " + item.value;
+        item.display = $scope.active.showTranslations ? item.translated : item.value;
         return item;
     };
 
     $scope.functions.onRemoveFilter = function(item) {
-        if(item) {
-            linksPopupService.removeLinksForKey($scope.visualizationId, linksPopupService.generateKey($scope.active.dataField, item.value));
-        } else {
-            linksPopupService.deleteLinks($scope.visualizationId);
-        }
+        $scope.functions.removeLinks($scope.active.dataField, item ? item.value : undefined);
     };
 
     $scope.functions.createNeonFilterClause = function(databaseAndTableName, fieldName) {
@@ -162,8 +150,15 @@ angular.module('neonDemo.directives').controller('textCloudController',
     };
 
     $scope.functions.createFilterText = function() {
-        return (_.pluck($scope.filter.data, ($scope.active.showTranslation ? "translated" : "value"))).join(", ");
-    }
+        return (_.pluck($scope.filter.data, ($scope.active.showTranslations ? "translated" : "value"))).join(", ");
+    };
+
+    $scope.removeFilter = function(value) {
+        $scope.functions.removeFilter({
+            field: $scope.active.dataField.columnName,
+            value: value
+        });
+    };
 
     $scope.handleChangeDataField = function() {
         $scope.functions.handleChangeField("data-field", $scope.active.dataField.columnName);
@@ -195,6 +190,12 @@ angular.module('neonDemo.directives').controller('textCloudController',
                 $scope.filter.data[index - $scope.active.data.length].translated = elem.translatedText;
             }
         });
+
+        if($scope.functions.isFilterSet()) {
+            $scope.filter.data.forEach(function(item) {
+                item.display = item.translated;
+            });
+        }
     };
 
     $scope.functions.onClearTranslation = function() {
@@ -206,6 +207,7 @@ angular.module('neonDemo.directives').controller('textCloudController',
         if($scope.functions.isFilterSet()) {
             $scope.filter.data = _.map($scope.filter.data, function(item) {
                 item.translated = item.value;
+                item.display = item.value;
                 return item;
             });
         }
@@ -247,7 +249,7 @@ angular.module('neonDemo.directives').controller('textCloudController',
      * @return {String}
      */
     $scope.generateLinksPopupKey = function(value) {
-        return linksPopupService.generateKey($scope.active.dataField, value);
+        return $scope.functions.getLinksPopupService().generateKey($scope.active.dataField, value);
     };
 
     $scope.functions.onThemeChanged = function(theme) {

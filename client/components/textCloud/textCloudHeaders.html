@@ -1,6 +1,1 @@
-<div class="header-item filter-reset pull-right" ng-repeat="item in filter.data">
-    <links-popup-button key="{{generateLinksPopupKey(item.value)}}" source="{{visualizationId}}" tooltip="{{item.value}}" is-disabled="{{active.linksPopupButtonIsDisabled}}"></links-popup-button>
-    <span class="filter-label" ng-bind="item.value" title="{{item.field + ' = ' + item.value}}" ng-show="!active.showTranslation"></span>
-    <span class="filter-label" ng-bind="item.translated" title="{{item.field + ' = ' + item.value}}" ng-show="active.showTranslation"></span>
-    <span class="glyphicon glyphicon-remove" title="{{'Delete Filter ' + item.field + ' = ' + item.value}}" ng-click="functions.removeFilter(item)"></span>
-</div>
+<filter-notification filter-data="filter.data" get-links-popup-key="generateLinksPopupKey" remove-filter="removeFilter" show-links-popup-button="showLinksPopupButton" visualization-id="visualizationId"></filter-notification>

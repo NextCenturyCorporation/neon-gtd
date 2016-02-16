@@ -16,8 +16,7 @@
  *
  */
 
-angular.module('neonDemo.controllers').controller('aggregationTableController',
-['$scope', 'external', 'LinksPopupService', function($scope, external, linksPopupService) {
+angular.module('neonDemo.controllers').controller('aggregationTableController', ['$scope', '$timeout', 'external', function($scope, $timeout, external) {
     $scope.active.aggregation = $scope.bindings.aggregation || "count";
     $scope.active.aggregationField = {};
     $scope.active.groupField = {};
@@ -49,10 +48,6 @@ angular.module('neonDemo.controllers').controller('aggregationTableController',
         toolPanelSuppressPivot: true,
         toolPanelSuppressValues: true,
         suppressRowClickSelection: true
-    };
-
-    $scope.functions.onDestroy = function() {
-        linksPopupService.deleteLinks($scope.visualizationId);
     };
 
     $scope.functions.onUpdateFields = function(datasetService) {
@@ -152,23 +147,51 @@ angular.module('neonDemo.controllers').controller('aggregationTableController',
             data = addExternalLinksToColumnData(data);
         }
 
+        data = _.map(data, function(row) {
+            delete row._id;
+            return row;
+        });
+
         $scope.active.showTooMuchDataError = false;
         $scope.active.dataLength = data.length;
         $scope.active.queryLimit = $scope.active.limit;
-        $scope.active.gridOptions.api.setRowData(stripIdField(data));
+        $scope.active.gridOptions.api.setRowData(data);
 
         if($scope.functions.isFilterSet() && data.length) {
-            var selected = _.findWhere($scope.active.gridOptions.api.getRenderedNodes(), function(node) {
-                return node.data[$scope.filter.data[0].field] === $scope.filter.data[0].value;
-            });
-            $scope.active.gridOptions.api.selectNode(selected);
+            selectRow($scope.filter.data[0].field, $scope.filter.data[0].value);
         }
     };
 
-    var stripIdField = function(data) {
-        return _.map(data, function(row) {
-            delete row._id;
-            return row;
+    /**
+     * Selects the row in the table containing the given value in the given field.
+     * @param {String} field
+     * @param {String} value
+     * @method selectRow
+     * @private
+     */
+    var selectRow = function(field, value) {
+        var selected = _.findWhere($scope.active.gridOptions.api.getRenderedNodes(), function(node) {
+            return node.data[field] === value;
+        });
+        $scope.active.gridOptions.api.selectNode(selected);
+    };
+
+    $scope.functions.onAddFilter = function(item) {
+        selectRow(item.field, item.value);
+        item.title = item.field + " = " + item.value;
+        item.display = item.value;
+        return item;
+    };
+
+    /**
+     * Removes the filter set on the given value.
+     * @param {String} value
+     * @method removeFilter
+     */
+    $scope.removeFilter = function(value) {
+        $scope.functions.removeFilter({
+            field: $scope.active.groupField.columnName,
+            value: value
         });
     };
 
@@ -231,19 +254,10 @@ angular.module('neonDemo.controllers').controller('aggregationTableController',
      * @return {Array}
      */
     var addExternalLinksToColumnData = function(data) {
-        var tableLinks = {};
-        var mappings = datasetService.getMappings($scope.active.database.name, $scope.active.table.name);
-
-        data.forEach(function(row) {
-            var value = row[$scope.active.groupField.columnName];
-            var key = linksPopupService.generateKey($scope.active.groupField, value);
-            tableLinks[key] = linksPopupService.createAllServiceLinkObjects(external.services, mappings, $scope.active.groupField.columnName, value);
-            row[$scope.EXTERNAL_APP_FIELD_NAME] = tableLinks[key].length ? linksPopupService.createLinkHtml($scope.visualizationId, key, value) : linksPopupService.createDisabledLinkHtml(value);
+        var buttons = $scope.functions.createLinkButtons($scope.active.groupField, data);
+        data.forEach(function(row, index) {
+            row[$scope.EXTERNAL_APP_FIELD_NAME] = buttons[index];
         });
-
-        // Set the link data for the links popup for this visualization.
-        linksPopupService.setLinks($scope.visualizationId, tableLinks);
-
         return data;
     };
 
