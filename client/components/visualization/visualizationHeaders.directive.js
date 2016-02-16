@@ -16,35 +16,11 @@
  *
  */
 
-angular.module('neonDemo.directives').directive('visualizationDisplay', function() {
-    return {
-        scope: {
-            active: '=',
-            functions: '='
-        },
-        link: function($scope, $element) {
-            // The display is the last to load so initialize the visualization once the display has finished loading.
-            $scope.functions.init();
-        }
-    };
-});
-
 angular.module('neonDemo.directives').directive('visualizationHeaders', function() {
     return {
         scope: {
             active: '=',
             filter: '=',
-            functions: '='
-        }
-    };
-});
-
-angular.module('neonDemo.directives').directive('visualizationOptions', function() {
-    return {
-        scope: {
-            active: '=',
-            bindings: '=',
-            fields: '=',
             functions: '='
         }
     };
