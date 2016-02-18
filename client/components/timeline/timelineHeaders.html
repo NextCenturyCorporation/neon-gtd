@@ -1,0 +1,67 @@
+<div class="animation-controls pull-left">
+    <span class="form-group" ng-if="active.showAnimationControls">
+        <span class="btn-group">
+            <label class="btn btn-default header-item" role="button" title="{{(active.animatingTime) ? 'Pause' : ((active.animationFrame > active.animationStartFrame) ? 'Resume' : 'Play')}}"
+                ng-click="(active.animatingTime) ? pauseTimeAnimation() : playTimeAnimation()">
+                <span class="glyphicon" ng-class="{true: 'glyphicon-pause', false: 'glyphicon-play-circle'}[active.animatingTime]"></span>
+            </label>
+            <label class="btn btn-default header-item" role="button" title="Step" ng-click="stepTimeAnimation()">
+                <span class="glyphicon glyphicon-step-forward"></span>
+            </label>
+            <label class="btn btn-default header-item" role="button" title="Stop" ng-click="stopTimeAnimation()">
+                <span class="glyphicon glyphicon-stop"></span>
+            </label>
+        </span>
+    </span>
+</div>
+
+<div class="neon-datetimepicker dropdown pull-left">
+    <div class="dropdown-toggle" role="button" data-toggle="dropdown" data-target="#" href="#" title="{{'From ' + (active.startDateForDisplay || '?') + ' to ' + (active.endDateForDisplay || '?')}}">
+        <span ng-bind="(active.startDateForDisplay || '?') + ' - ' + (active.endDateForDisplay || '?')"></span>
+        <i class="glyphicon glyphicon-calendar"></i>
+    </div>
+
+    <ul class="dropdown-menu" role="menu">
+        <table>
+            <tr>
+                <th>
+                    <span><label>Start Date</label></span>
+                </th>
+                <th>
+                    <span><label>End Date</label></span>
+                    <span class="pull-right">
+                        <button class="btn btn-default header-item save-button disabled" ng-click="handleDateTimePickSave()">Save</button>
+                        <button class="btn btn-default header-item" ng-click="handleDateTimePickCancel()">Cancel</button>
+                    </span>
+                </th>
+            </tr>
+            <!-- Create a datetimepicker for each granularity because you can't change the configuration dynamically. -->
+            <tr>
+                <td>
+                    <datetimepicker data-ng-model="active.filter.start" data-datetimepicker-config="{ startView: active.HOUR, minView: active.HOUR }"
+                        ng-show="(active.granularity === active.HOUR)" ng-change="handleDateTimePickChange()"/>
+                    <datetimepicker data-ng-model="active.filter.start" data-datetimepicker-config="{ startView: active.DAY, minView: active.DAY }"
+                        ng-show="(active.granularity === active.DAY)" ng-change="handleDateTimePickChange()"/>
+                    <datetimepicker data-ng-model="active.filter.start" data-datetimepicker-config="{ startView: active.MONTH, minView: active.MONTH }"
+                        ng-show="(active.granularity === active.MONTH)" ng-change="handleDateTimePickChange()"/>
+                    <datetimepicker data-ng-model="active.filter.start" data-datetimepicker-config="{ startView: active.YEAR, minView: active.YEAR }"
+                        ng-show="(active.granularity === active.YEAR)" ng-change="handleDateTimePickChange()"/>
+                </td>
+                <td>
+                    <datetimepicker data-ng-model="active.filter.end" data-datetimepicker-config="{ startView: active.HOUR, minView: active.HOUR }"
+                        ng-show="(active.granularity === active.HOUR)" ng-change="handleDateTimePickChange()"/>
+                    <datetimepicker data-ng-model="active.filter.end" data-datetimepicker-config="{ startView: active.DAY, minView: active.DAY }"
+                        ng-show="(active.granularity === active.DAY)" ng-change="handleDateTimePickChange()"/>
+                    <datetimepicker data-ng-model="active.filter.end" data-datetimepicker-config="{ startView: active.MONTH, minView: active.MONTH }"
+                        ng-show="(active.granularity === active.MONTH)" ng-change="handleDateTimePickChange()"/>
+                    <datetimepicker data-ng-model="active.filter.end" data-datetimepicker-config="{ startView: active.YEAR, minView: active.YEAR }"
+                        ng-show="(active.granularity === active.YEAR)" ng-change="handleDateTimePickChange()"/>
+                </td>
+            </tr>
+        </table>
+    </ul>
+</div>
+
+<filter-notification get-filter-data="getFilterData" get-filter-desc="createFilterDesc" get-filter-text="createFilterText"
+    get-links-popup-key="getLinksPopupKey" remove-filter="clearBrush" show-links-popup-button="showLinksPopupButton"
+    visualization-id="visualizationId"></filter-notification>

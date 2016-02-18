@@ -1,0 +1,70 @@
+<div class="form-group" ng-hide="hideAdvancedOptions">
+    <label>Date Field</label>
+    <select class="form-control" ng-model="active.dateField" ng-options="field.prettyName for field in fields" ng-required="true" ng-disabled="(fields.length == 0)" ng-change="handleChangeDateField()">
+    </select>
+</div>
+
+<div class="form-group">
+    <label>Date Granularity</label>
+    <div class="btn-group">
+      <label class="btn btn-default" ng-class="{true: 'active', false: ''}[active.granularity === active.YEAR]">
+        <input type="radio" style="display:none" ng-model="active.granularity" ng-value="active.YEAR" ng-change="handleChangeGranularity()">
+        <span ng-bind="active.YEAR"></span>
+      </label>
+      <label class="btn btn-default" ng-class="{true: 'active', false: ''}[active.granularity === active.MONTH]">
+        <input type="radio" style="display:none" ng-model="active.granularity" ng-value="active.MONTH" ng-change="handleChangeGranularity()">
+        <span ng-bind="active.MONTH"></span>
+      </label>
+      <label class="btn btn-default" ng-class="{true: 'active', false: ''}[active.granularity === active.DAY]">
+        <input type="radio" style="display:none" ng-model="active.granularity" ng-value="active.DAY" ng-change="handleChangeGranularity()">
+        <span ng-bind="active.DAY"></span>
+      </label>
+      <label class="btn btn-default" ng-class="{true: 'active', false: ''}[active.granularity === active.HOUR]">
+        <input type="radio" style="display:none" ng-model="active.granularity" ng-value="active.HOUR" ng-change="handleChangeGranularity()">
+        <span ng-bind="active.HOUR"></span>
+      </label>
+    </div>
+    <div class="clearfix"></div>
+</div>
+
+<div class="form-group">
+    <label>Show Focus Timeline</label>
+    <div class="btn-group">
+        <label class="btn btn-default" ng-class="{true: 'active', false: ''}[active.showFocus === 'on_filter']">
+            <input type="radio" style="display:none" ng-model="active.showFocus" value="on_filter" ng-change="handleChangeShowFocus()">On Filter
+        </label>
+        <label class="btn btn-default" ng-class="{true: 'active', false: ''}[active.showFocus === 'always']">
+            <input type="radio" style="display:none" ng-model="active.showFocus" value="always" ng-change="handleChangeShowFocus()">Always
+        </label>
+        <label class="btn btn-default" ng-class="{true: 'active', false: ''}[active.showFocus === 'never']">
+            <input type="radio" style="display:none" ng-model="active.showFocus" value="never" ng-change="handleChangeShowFocus()">Never
+        </label>
+    </div>
+    <div class="clearfix"></div>
+</div>
+
+<div class="form-group">
+    <label>Animation Controls</label>
+    <div class="btn-group">
+        <label class="btn btn-default" ng-class="{true: 'active', false: ''}[active.showAnimationControls]">
+            <input type="radio" style="display:none" ng-model="active.showAnimationControls" ng-value="true">Show
+        </label>
+        <label class="btn btn-default" ng-class="{true: '', false: 'active'}[active.showAnimationControls]">
+            <input type="radio" style="display:none" ng-model="active.showAnimationControls" ng-value="false">Hide
+        </label>
+    </div>
+    <div class="clearfix"></div>
+</div>
+
+<div class="form-group" ng-hide="!active.numberInvalid">
+    <label>Invalid Dates</label>
+    <div class="btn-group">
+        <label class="btn btn-default" ng-class="{true: 'active', false: ''}[active.showInvalidDatesFilter]">
+            <input type="radio" style="display:none" ng-model="active.showInvalidDatesFilter" ng-value="true" ng-change="handleToggleInvalidDatesFilter()">Show
+        </label>
+        <label class="btn btn-default" ng-class="{true: '', false: 'active'}[active.showInvalidDatesFilter]">
+            <input type="radio" style="display:none" ng-model="active.showInvalidDatesFilter" ng-value="false" ng-change="handleToggleInvalidDatesFilter()">Hide
+        </label>
+    </div>
+    <div class="clearfix"></div>
+</div>

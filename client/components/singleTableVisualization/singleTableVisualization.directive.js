@@ -66,12 +66,42 @@ function(external, connectionService, datasetService, errorNotificationService, 
             };
 
             /**
+             * Returns the jQuery element in this visualization matching the given string, or the element for this visualization itself if no string is given.
+             * @param {String} element
+             * @method getElement
+             * @return {Object}
+             */
+            $scope.functions.getElement = function(element) {
+                return element ? $scope.element.find(element) : $scope.element;
+            };
+
+            /**
+             * Subscribes the messenger for this visualization to events with the given type using the given listener.
+             * @param {String} type
+             * @param {Function} listener
+             * @method subscribe
+             */
+            $scope.functions.subscribe = function(type, listener) {
+                $scope.messenger.subscribe(type, listener);
+            };
+
+            /**
+             * Publishes an event with the given type and data using the messenger for this visualization.
+             * @param {String} type
+             * @param {Object} data
+             * @method publish
+             */
+            $scope.functions.publish = function(type, data) {
+                $scope.messenger.publish(type, data);
+            };
+
+            /**
              * Initializes this visualization.
              * @method init
              */
             $scope.init = function() {
                 $scope.messenger = new neon.eventing.Messenger();
-                $scope.messenger.subscribe(datasetService.UPDATE_DATA_CHANNEL, queryAndUpdate);
+                $scope.messenger.subscribe(datasetService.UPDATE_DATA_CHANNEL, doQueryAndUpdate);
                 $scope.messenger.events({
                     filtersChanged: handleFiltersChangedEvent
                 });
@@ -158,8 +188,8 @@ function(external, connectionService, datasetService, errorNotificationService, 
              * @private
              */
             var resizeTitle = function() {
-                // Set the width of the title to the width of this visualization minus the width of the options button/text, padding, and any other elements in the title header.
-                var titleWidth = $scope.element.width() - $scope.element.find(".chart-options").outerWidth(true) - 10;
+                // Set the width of the title to the width of this visualization minus the width of the options button/text and margin/padding.
+                var titleWidth = $scope.element.width() - $scope.element.find(".chart-options").outerWidth(true) - 20;
                 $scope.element.find(".title").css("maxWidth", titleWidth);
             };
 
@@ -169,12 +199,12 @@ function(external, connectionService, datasetService, errorNotificationService, 
              * @private
              */
             var resizeDisplay = function() {
-                var headerHeight = 0;
+                var headersHeight = 0;
                 $scope.element.find(".header-container").each(function() {
-                    headerHeight += $(this).outerHeight(true);
+                    headersHeight += $(this).outerHeight(true);
                 });
-                $("#" + $scope.visualizationId).height($scope.element.height() - headerHeight);
-                $scope.functions.onResize();
+                $("#" + $scope.visualizationId).height($scope.element.height() - headersHeight);
+                $scope.functions.onResize($scope.element.height(), $scope.element.width(), headersHeight);
             };
 
             /**
@@ -204,6 +234,9 @@ function(external, connectionService, datasetService, errorNotificationService, 
 
             /**
              * Handles any additional behavior for resizing this visualization.
+             * @param {Number} elementHeight
+             * @param {Number} elementWidth
+             * @param {Number} headersHeight
              * @method onResize
              */
             $scope.functions.onResize = function() {
@@ -276,7 +309,7 @@ function(external, connectionService, datasetService, errorNotificationService, 
                     updateFilter();
                 }
 
-                queryAndUpdate();
+                doQueryAndUpdate();
 
                 $scope.initializing = false;
             };
@@ -299,11 +332,93 @@ function(external, connectionService, datasetService, errorNotificationService, 
             };
 
             /**
-             * Executes the query and updates the data for this visualization.
-             * @method queryAndUpdate
+             * Builds and executes the default data query and updates the data for this visualization.
+             * @method doQueryAndUpdate
              * @private
              */
-            var queryAndUpdate = function() {
+            var doQueryAndUpdate = function() {
+                queryAndUpdate($scope.functions.addToQuery, $scope.functions.executeQuery, $scope.functions.updateData);
+            };
+
+            /**
+             * Builds and returns the Neon query object for this visualization.
+             * @method buildQuery
+             * @return {neon.query.Query}
+             * @private
+             */
+            var buildQuery = function(callback) {
+                var query = new neon.query.Query().selectFrom($scope.active.database.name, $scope.active.table.name);
+                var whereClause = $scope.functions.createNeonQueryClause();
+
+                if(datasetService.isFieldValid($scope.active.unsharedFilterField) && $scope.active.unsharedFilterValue) {
+                    var operator = "contains";
+                    var value = $scope.active.unsharedFilterValue;
+                    if($.isNumeric(value)) {
+                        operator = "=";
+                        value = parseFloat(value);
+                    }
+                    var unsharedFilterWhereClause = neon.query.where($scope.active.unsharedFilterField.columnName, operator, value);
+                    whereClause = whereClause ? neon.query.and(whereClause, unsharedFilterWhereClause) : unsharedFilterWhereClause;
+                }
+
+                if(whereClause) {
+                    query.where(whereClause);
+                }
+
+                return callback ? callback(query, filterService) : $scope.functions.addToQuery(query, filterService);
+            };
+
+            /**
+             * Creates and returns the Neon where clause for queries for this visualization (or undefined).
+             * @method createNeonQueryClause
+             * @return {neon.query.WhereClause}
+             */
+            $scope.functions.createNeonQueryClause = function() {
+                return undefined;
+            };
+
+            /**
+             * Adds to the given Neon query and returns the updated query for this visualization.
+             * @param {neon.query.Query} query
+             * @param {Object} filterService
+             * @method addToQuery
+             * @return {neon.query.Query}
+             */
+            $scope.functions.addToQuery = function(query) {
+                return query;
+            };
+
+            /**
+             * Executes the given query using the given connection.
+             * @param {Object} connection
+             * @param {neon.query.Query} query
+             * @method executeQuery
+             */
+            $scope.functions.executeQuery = function(connection, query) {
+                return connection.executeQuery(query);
+            };
+
+            /**
+             * Updates the data and display for this visualization.  Clears the display if the data array is empty.
+             * @param {Array} data
+             * @method updateData
+             */
+            $scope.functions.updateData = function(data) {
+                // Do nothing by default.
+            };
+
+            /**
+             * Builds and executes a query and updates the data for this visualization using the given build, execute, and update data callbacks.
+             * @param {Function} buildQueryCallback
+             * @param {Function} executeQueryCallback
+             * @param {Function} updateDataCallback
+             * @method queryAndUpdate
+             */
+            $scope.functions.queryAndUpdate = function(buildQueryCallback, executeQueryCallback, updateDataCallback) {
+                queryAndUpdate(buildQueryCallback, executeQueryCallback, updateDataCallback);
+            };
+
+            var queryAndUpdate = function(buildQueryCallback, executeQueryCallback, updateDataCallback) {
                 if($scope.errorMessage) {
                     errorNotificationService.hideErrorMessage($scope.errorMessage);
                     $scope.errorMessage = undefined;
@@ -316,7 +431,7 @@ function(external, connectionService, datasetService, errorNotificationService, 
                 resize();
 
                 // Clear the display.
-                $scope.functions.updateData([]);
+                updateDataCallback([]);
 
                 var connection = connectionService.getActiveConnection();
 
@@ -324,7 +439,7 @@ function(external, connectionService, datasetService, errorNotificationService, 
                     return;
                 }
 
-                var query = createQuery();
+                var query = buildQuery(buildQueryCallback);
 
                 XDATA.userALE.log({
                     activity: "alter",
@@ -341,7 +456,7 @@ function(external, connectionService, datasetService, errorNotificationService, 
                     $scope.outstandingDataQuery.abort();
                 }
 
-                $scope.outstandingDataQuery = $scope.functions.executeQuery(connection, query);
+                $scope.outstandingDataQuery = executeQueryCallback(connection, query);
                 $scope.outstandingDataQuery.done(function() {
                     $scope.outstandingDataQuery = undefined;
                 });
@@ -360,7 +475,7 @@ function(external, connectionService, datasetService, errorNotificationService, 
 
                     $scope.$apply(function() {
                         // The response for an array-counts query is an array and the response for other queries is an object containing a data array.
-                        $scope.functions.updateData(response.data || response);
+                        updateDataCallback(response.data || response);
                     });
 
                     XDATA.userALE.log({
@@ -406,11 +521,12 @@ function(external, connectionService, datasetService, errorNotificationService, 
                         // See if the error response contains a Neon notification to show through the Error Notification Service.
                         if(response.responseJSON) {
                             $scope.errorMessage = errorNotificationService.showErrorMessage($scope.element, response.responseJSON.error, response.responseJSON.stackTrace);
-                            // TODO Create an ERROR_CODES object in the Error Notification Service
-                            $scope.functions.onError(response, {
-                                TOO_MUCH_DATA_ERROR: errorNotificationService.TOO_MUCH_DATA_ERROR
-                            });
                         }
+
+                        // TODO Create an ERROR_CODES object in the Error Notification Service
+                        $scope.functions.onError(response, {
+                            TOO_MUCH_DATA_ERROR: errorNotificationService.TOO_MUCH_DATA_ERROR
+                        });
                     }
                 });
             };
@@ -426,74 +542,7 @@ function(external, connectionService, datasetService, errorNotificationService, 
             };
 
             /**
-             * Executes the given query using the given connection and returns its result.
-             * @param connection
-             * @param query
-             * @method executeQuery
-             * @return {Object} outstandingDataQuery
-             */
-            $scope.functions.executeQuery = function(connection, query) {
-                return connection.executeQuery(query);
-            };
-
-            /**
-             * Updates the data and display for this visualization.  Clears the display if the data array is empty.
-             * @param {Array} data
-             * @method updateData
-             */
-            $scope.functions.updateData = function(data) {
-                // Do nothing by default.
-            };
-
-            /**
-             * Creates a query object for this visualization.
-             * @return neon.query.Query
-             * @method createQuery
-             */
-            var createQuery = function() {
-                var query = new neon.query.Query().selectFrom($scope.active.database.name, $scope.active.table.name);
-                var whereClause = $scope.functions.createNeonQueryClause();
-
-                if(datasetService.isFieldValid($scope.active.unsharedFilterField) && $scope.active.unsharedFilterValue) {
-                    var operator = "contains";
-                    var value = $scope.active.unsharedFilterValue;
-                    if($.isNumeric(value)) {
-                        operator = "=";
-                        value = parseFloat(value);
-                    }
-                    var unsharedFilterWhereClause = neon.query.where($scope.active.unsharedFilterField.columnName, operator, value);
-                    whereClause = whereClause ? neon.query.and(whereClause, unsharedFilterWhereClause) : unsharedFilterWhereClause;
-                }
-
-                if(whereClause) {
-                    query.where(whereClause);
-                }
-
-                return $scope.functions.addToQuery(query, filterService);
-            }
-
-            /**
-             * Creates and returns the Neon where clause for the query for this visualization (or undefined).
-             * @method createNeonQueryClause
-             * @return {neon.query.Where}
-             */
-            $scope.functions.createNeonQueryClause = function() {
-                return undefined;
-            };
-
-            /**
-             * Adds to the given Neon query and returns the updated query for this visualization.
-             * @param {neon.query.Query} query
-             * @param {Object} filterService
-             * @method addToQuery
-             * @return {neon.query.Query}
-             */
-            $scope.functions.addToQuery = function(query) {
-                return query;
-            };
-
-            /**
-             * Handles any additional behavior for responding to query errors.
+             * Handles any additional behavior for responding to a query error.
              * @param {Object} response The query response
              * @param {Object} errorCodes An object containing the error codes important to the Neon Dashboard
              * @method onError
@@ -576,7 +625,7 @@ function(external, connectionService, datasetService, errorNotificationService, 
                     });
 
                     updateFilter();
-                    queryAndUpdate();
+                    doQueryAndUpdate();
                 }
             };
 
@@ -597,9 +646,10 @@ function(external, connectionService, datasetService, errorNotificationService, 
                         return field.columnName;
                     });
                     var neonFilter = filterService.getFilter($scope.active.database.name, $scope.active.table.name, filterFieldNames);
-                    if(!neonFilter) {
+                    if(!neonFilter && $scope.functions.isFilterSet()) {
                         $scope.functions.onRemoveFilter();
-                    } else {
+                    }
+                    if(neonFilter) {
                         $scope.functions.updateFilterFromNeonFilterClause(filterService, neonFilter);
                     }
                 }
@@ -634,27 +684,27 @@ function(external, connectionService, datasetService, errorNotificationService, 
 
             /**
              * Replaces the global filter with a new filter containing the given fields and values and updates the dashboard.
-             * @param {Object} or {Array} fieldsAndValues An object or list of objects each containing a {String} field and {String} value for the filter
-             * @method addFilter
+             * @param {Boolean} queryAndUpdate (Optional)
+             * @method replaceFilter
              */
-            $scope.functions.replaceFilter = function() {
-                replaceFilter();
+            $scope.functions.replaceFilter = function(queryAndUpdate) {
+                replaceFilter(queryAndUpdate);
             };
 
-            var replaceFilter = function() {
-                addFilter();
+            var replaceFilter = function(queryAndUpdate) {
+                addFilter(queryAndUpdate);
             };
 
             /**
              * Adds the given fields and values to the global filter and updates the dashboard.
-             * @param {Object} or {Array} fieldsAndValues An object or list of objects each containing a {String} field and {String} value for the filter
+             * @param {Boolean} queryAndUpdate (Optional)
              * @method addFilter
              */
-            $scope.functions.addFilter = function() {
-                addFilter();
+            $scope.functions.addFilter = function(queryAndUpdate) {
+                addFilter(queryAndUpdate);
             };
 
-            var addFilter = function() {
+            var addFilter = function(queryAndUpdate) {
                 XDATA.userALE.log({
                     activity: "select",
                     action: "click",
@@ -671,8 +721,8 @@ function(external, connectionService, datasetService, errorNotificationService, 
                     visName: $scope.name,
                     text: $scope.functions.createFilterTrayText()
                 }, function() {
-                    if($scope.functions.shouldQueryAfterFilter()) {
-                        queryAndUpdate();
+                    if($scope.functions.shouldQueryAfterFilter() || queryAndUpdate) {
+                        doQueryAndUpdate();
                     }
                 });
             };
@@ -693,7 +743,7 @@ function(external, connectionService, datasetService, errorNotificationService, 
              * @param {Object} databaseAndTableName Contains {String} database and {String} table
              * @param {String} fieldName or {Array} fieldNames The name (or list of names) of the filter fields
              * @method createNeonFilterClause
-             * @return {neon.query.Where}
+             * @return {neon.query.WhereClause}
              */
             $scope.functions.createNeonFilterClause = function(databaseAndTableName, fieldName) {
                 return neon.query.where(fieldName, "!=", null);
@@ -743,7 +793,7 @@ function(external, connectionService, datasetService, errorNotificationService, 
                     }
 
                     if($scope.functions.shouldQueryAfterFilter()) {
-                        queryAndUpdate();
+                        doQueryAndUpdate();
                     }
                 });
             };
@@ -833,7 +883,7 @@ function(external, connectionService, datasetService, errorNotificationService, 
             $scope.handleChangeUnsharedFilterValue = function() {
                 logChange("unsharedFilterValue", $scope.active.unsharedFilterValue);
                 if(!$scope.initializing) {
-                    queryAndUpdate();
+                    doQueryAndUpdate();
                 }
             };
 
@@ -845,7 +895,7 @@ function(external, connectionService, datasetService, errorNotificationService, 
                 logChange("unsharedFilter", "", "button");
                 $scope.active.unsharedFilterValue = "";
                 if(!$scope.initializing) {
-                    queryAndUpdate();
+                    doQueryAndUpdate();
                 }
             };
 
@@ -864,7 +914,7 @@ function(external, connectionService, datasetService, errorNotificationService, 
                 logChange(option, value, type);
                 if(!$scope.initializing) {
                     $scope.functions.onChangeField();
-                    queryAndUpdate();
+                    doQueryAndUpdate();
                 }
             };
 
@@ -1040,6 +1090,27 @@ function(external, connectionService, datasetService, errorNotificationService, 
             };
 
             /**
+             * Creates and returns the links for the given external service type, link key, and link data.
+             * @param {String} type
+             * @param {String} key
+             * @param {Object} data
+             * @method createLinksForData
+             * @return {Object} links
+             */
+            $scope.functions.createLinksForData = function(type, key, data) {
+                return createLinksForData(type, key, data);
+            };
+
+            var createLinksForData = function(type, key, data) {
+                var links = [];
+                Object.keys(external.services[type].apps).forEach(function(app) {
+                    links.push(linksPopupService.createServiceLinkObjectWithData(external.services[type], app, data));
+                });
+                linksPopupService.addLinks($scope.visualizationId, key, links);
+                return links;
+            };
+
+            /**
              * Creates and returns the link buttons for the given field object and data array.
              * @param {Object} field Containing {String} columnName
              * @param {Array} array A list of objects each containing a property matching the field name
@@ -1156,14 +1227,16 @@ function(external, connectionService, datasetService, errorNotificationService, 
                     tags: ["options", $scope.type, "export"]
                 });
 
-                var query = createQuery();
+                var query = buildQuery();
                 query.limitClause = exportService.getLimitClause();
-                return $scope.functions.createExportDataObject(query);
+                return $scope.functions.createExportDataObject($scope.exportId, query, exportService);
             };
 
             /**
              * Creates and returns an object containing the data needed to export this visualization.
+             * @param {String} exportId
              * @param {neon.query.Query} query
+             * @param {Object} exportService
              * @method createExportDataObject
              * @return {Object}
              */

@@ -253,7 +253,7 @@ angular.module('neonDemo.directives').controller('textCloudController', ['$scope
         }
     };
 
-    $scope.functions.createExportDataObject = function(query) {
+    $scope.functions.createExportDataObject = function(exportId, query) {
         var finalObject = {
             name: "Text_Cloud",
             data: [{
@@ -261,7 +261,7 @@ angular.module('neonDemo.directives').controller('textCloudController', ['$scope
                 table: $scope.active.table.name,
                 field: $scope.active.dataField.columnName,
                 limit: $scope.active.limit,
-                name: "textCloud-" + $scope.exportID,
+                name: "textCloud-" + exportId,
                 fields: [],
                 type: "arraycount"
             }]

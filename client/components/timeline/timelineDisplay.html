@@ -1,0 +1,11 @@
+<div class="header-container" ng-show="active.OPENCPU.enableMmpp && active.granularity === HOUR && !active.displayEventProbabilities && !active.showNoDataError">
+    <a class="btn" ng-click="runMMPP()">
+        Click to run event probability analysis (this may take a few minutes) <span class="glyphicon glyphicon-transfer"></span>
+    </a>
+</div>
+
+<div ng-hide="active.showNoDataError">
+    <div class="timeline-selector-chart"></div>
+</div>
+
+<span class="no-data pull-left" ng-show="active.showNoDataError">No data for current filters.</span>

@@ -171,7 +171,9 @@ angular.module('neonDemo.controllers').controller('aggregationTableController', 
         var selected = _.findWhere($scope.active.gridOptions.api.getRenderedNodes(), function(node) {
             return node.data[$scope.active.groupField.columnName] === value;
         });
-        $scope.active.gridOptions.api.selectNode(selected);
+        if(selected) {
+            $scope.active.gridOptions.api.selectNode(selected);
+        }
     };
 
     $scope.functions.isFilterSet = function() {
@@ -231,12 +233,12 @@ angular.module('neonDemo.controllers').controller('aggregationTableController', 
         return true;
     };
 
-    $scope.functions.createExportDataObject = function(query) {
+    $scope.functions.createExportDataObject = function(exportId, query) {
         var finalObject = {
             name: "Aggregation_Table",
             data: [{
                 query: query,
-                name: "aggregationTable-" + $scope.exportID,
+                name: "aggregationTable-" + exportId,
                 fields: [],
                 ignoreFilters: query.ignoreFilters_,
                 selectionOnly: query.selectionOnly_,
