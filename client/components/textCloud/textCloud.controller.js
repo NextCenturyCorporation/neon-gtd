@@ -16,7 +16,7 @@
  *
  */
 
-angular.module('neonDemo.directives').controller('textCloudController', ['$scope', '$timeout', function($scope, $timeout) {
+angular.module('neonDemo.controllers').controller('textCloudController', ['$scope', '$timeout', function($scope, $timeout) {
     $scope.active.dataField = {};
     $scope.active.andFilters = true;
     $scope.active.limit = 40;

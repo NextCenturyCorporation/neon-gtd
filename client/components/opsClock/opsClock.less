@@ -13,20 +13,33 @@
 // limitations under the License.
 //
 
-.circularheatform {
-    height: @widget-height;
-    width: @widget-width;
-    margin: 0px;
-    overflow: auto;
-    padding: 10px;
+.opsClockDirective {
+    height: 100%;
+    width: 100%;
 
-    .circularheatchart {
+    .circular-heat-chart {
         height: 80%;
         width: 100%;
+        margin: auto;
+        display: block;
+
+        svg {
+            width: 100%;
+            height: 100%;
+            margin: auto;
+
+            .segment, .radial {
+                fill: @main-text-color;
+                font-weight: bold;
+            }
+        }
+    }
+
+    .filter-container {
+        min-height: 20px;
     }
 
     .most-active {
-        padding-top: 10px;
         color: @main-text-color;
 
         .ops-clock-active {
@@ -40,8 +53,9 @@
 
 .gridster-mobile {
     .visualization-widget {
-        .circularheatform {
+        .opsClockDirective {
             height: @mobile-widget-height;
+            width: @mobile-widget-width;
         }
     }
 }

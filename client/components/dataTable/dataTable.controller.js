@@ -16,7 +16,7 @@
  *
  */
 
-angular.module('neonDemo.directives').controller('dataTableController', ['$scope', 'external', 'linkify', '$sce', '$timeout', function($scope, external, linkify, $sce, $timeout) {
+angular.module('neonDemo.controllers').controller('dataTableController', ['$scope', 'external', 'linkify', '$sce', '$timeout', function($scope, external, linkify, $sce, $timeout) {
     // Unique field name used for the SlickGrid column containing the URLs for the external apps.
     // This name should be one that is highly unlikely to be a column name in a real database.
     var EXTERNAL_APP_FIELD_NAME = "neonExternalApps";

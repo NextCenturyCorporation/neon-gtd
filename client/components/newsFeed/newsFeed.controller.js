@@ -16,7 +16,7 @@
  *
  */
 
-angular.module('neonDemo.directives').controller('newsFeedController', ['$scope', '$timeout', function($scope, $timeout) {
+angular.module('neonDemo.controllers').controller('newsFeedController', ['$scope', '$timeout', function($scope, $timeout) {
     $scope.active.ASCENDING = neon.query.ASCENDING;
     $scope.active.DESCENDING = neon.query.DESCENDING;
     $scope.active.TWITTER = "TWITTER";

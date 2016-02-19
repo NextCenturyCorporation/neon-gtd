@@ -16,7 +16,7 @@
  *
  */
 
-angular.module('neonDemo.directives').controller('timelineController', ['$scope', '$interval', '$filter', 'external', 'opencpu', function($scope, $interval, $filter, external, opencpu) {
+angular.module('neonDemo.controllers').controller('timelineController', ['$scope', '$interval', '$filter', 'external', 'opencpu', function($scope, $interval, $filter, external, opencpu) {
     $scope.active.OPENCPU = opencpu;
     $scope.active.YEAR = "year";
     $scope.active.MONTH = "month";
@@ -1191,7 +1191,7 @@ angular.module('neonDemo.directives').controller('timelineController', ['$scope'
         return $scope.active.numberValid || $scope.active.numberInvalid;
     };
 
-    $scope.functions.hideFilterHeader = function() {
+    $scope.functions.hideHeaders = function() {
         return false;
     };
 

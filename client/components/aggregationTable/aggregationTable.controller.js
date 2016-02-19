@@ -313,7 +313,7 @@ angular.module('neonDemo.controllers').controller('aggregationTableController', 
         return $scope.active.groupField.columnName + " = " + value;
     };
 
-    $scope.functions.hideFilterHeader = function() {
+    $scope.functions.hideHeaders = function() {
         return !$scope.functions.isFilterSet() && !$scope.active.showTooMuchDataError;
     };
 

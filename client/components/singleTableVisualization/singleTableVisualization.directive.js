@@ -1177,11 +1177,11 @@ function(external, connectionService, datasetService, errorNotificationService, 
             };
 
             /**
-             * Returns whether to hide the filter header for this visualization.  The default implementation hides the filter header if a filter is not set.
-             * @method hideFilterHeader
+             * Returns whether to hide the headers in the filter header container for this visualization.  The default implementation hides the headers if a filter is not set.
+             * @method hideHeaders
              * @return {Boolean}
              */
-            $scope.functions.hideFilterHeader = function() {
+            $scope.functions.hideHeaders = function() {
                 return !$scope.functions.isFilterSet();
             };
 

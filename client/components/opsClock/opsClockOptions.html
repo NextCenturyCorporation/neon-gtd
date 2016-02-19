@@ -1,0 +1,5 @@
+<div class="form-group" ng-hide="hideAdvancedOptions">
+    <label>Date Field</label>
+    <select class="form-control" ng-model="active.dateField" ng-options="field.prettyName for field in fields" ng-required="true" ng-disabled="(fields.length == 0)" ng-change="handleChangeDateField()">
+    </select>
+</div>
