@@ -13,13 +13,13 @@
 // limitations under the License.
 //
 
-.newsfeed-directive {
-    height: @widget-height;
-    width: @widget-width;
-    padding: 10px;
+.newsFeedDirective {
+    height: 100%;
+    width: 100%;
 
     .newsfeed {
         overflow: auto;
+        height: inherit;
     }
 
     .item {
@@ -90,8 +90,9 @@
 
 .gridster-mobile {
     .visualization-widget {
-        .newsfeed-directive {
+        .newsFeedDirective {
             height: @mobile-widget-height;
+            width: @mobile-widget-width;
         }
     }
 }

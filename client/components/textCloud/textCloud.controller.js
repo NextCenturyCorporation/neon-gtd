@@ -207,15 +207,15 @@ angular.module('neonDemo.directives').controller('textCloudController', ['$scope
     };
 
     $scope.handleChangeDataField = function() {
-        $scope.functions.handleChangeField("data-field", $scope.active.dataField.columnName);
+        $scope.functions.handleChangeField("dataField", $scope.active.dataField.columnName);
     };
 
     $scope.handleChangeAndFilters = function() {
-        $scope.functions.handleChangeField("and-filters", $scope.active.andFilters);
+        $scope.functions.handleChangeField("andFilters", $scope.active.andFilters);
         $scope.functions.replaceFilter();
     };
 
-    $scope.functions.getTranslationData = function() {
+    $scope.functions.updateTranslations = function() {
         var dataKeys = $scope.active.data.map(function(item) {
             return item.key;
         });
@@ -226,23 +226,23 @@ angular.module('neonDemo.directives').controller('textCloudController', ['$scope
             });
         }
 
-        return dataKeys;
+        $scope.functions.runTranslation(data, onTranslationSuccess);
     };
 
-    $scope.functions.onTranslationSuccess = function(response) {
-        response.data.data.translations.forEach(function(elem, index) {
+    var onTranslationSuccess = function(translations) {
+        translations.forEach(function(item, index) {
             if(index < $scope.active.data.length) {
-                $scope.active.data[index].keyTranslated = elem.translatedText;
+                $scope.active.data[index].keyTranslated = item.translatedText;
             } else {
-                $scope.active.filters[index - $scope.active.data.length].translated = elem.translatedText;
+                $scope.active.filters[index - $scope.active.data.length].translated = item.translatedText;
             }
         });
     };
 
-    $scope.functions.onClearTranslation = function() {
-        $scope.active.data = $scope.active.data.map(function(elem) {
-            elem.keyTranslated = elem.key;
-            return elem;
+    $scope.functions.removeTranslations = function() {
+        $scope.active.data = $scope.active.data.map(function(item) {
+            item.keyTranslated = item.key;
+            return item;
         });
 
         if($scope.functions.isFilterSet()) {

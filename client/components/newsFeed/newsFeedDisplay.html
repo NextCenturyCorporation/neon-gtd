@@ -1,0 +1,23 @@
+<div class="newsfeed">
+	<div class="item" ng-class="getNewsItemStyleClass(item)" ng-repeat='item in active.data track by $index'>
+        <div>
+            <span ng-if="active.feedType == active.TWITTER" class="icon-Twitter_32x32 neon-sprite" title="Tweet"></span>
+            <span ng-show="active.showTranslations && item.isTranslated" class="icon-Translated_20x20 neon-sprite" title="Showing Translation"></span>
+            <span ng-class="{true: 'vertical-align', false: ''}[active.feedType == active.TWITTER]">
+                <span class="primary-title" ng-if="item.primaryTitle != undefined" ng-hide="active.showTranslations" ng-bind="item.primaryTitle"></span>
+                <span class="primary-title" ng-if="item.primaryTitleTranslated != undefined" ng-show="active.showTranslations" ng-bind="item.primaryTitleTranslated" title="{{item.primaryTitle}}"></span>
+                <span class="secondary-title" ng-if="item.secondaryTitle != undefined" ng-hide="active.showTranslations" ng-bind="item.secondaryTitle"></span>
+                <span class="secondary-title" ng-if="item.secondaryTitleTranslated != undefined" ng-show="active.showTranslations" ng-bind="item.secondaryTitleTranslated" title="{{item.secondaryTitle}}"></span>
+                <links-popup-button key="" source="" tooltip="{{item.primaryTitle}} or {{item.secondaryTitle}}"
+                    json="{{item.linksPopupButtonJson}}" is-disabled="{{item.showLinksPopupButton}}"></links-popup-button>
+            </span>
+        </div>
+        <div>
+            <span class="date" ng-bind="item.date.toUTCString()"></span>
+        </div>
+        <div>
+            <span class="content" ng-hide="active.showTranslations" ng-bind="item.content"></span>
+            <span class="content" ng-show="active.showTranslations" ng-bind="item.contentTranslated" title="{{item.content}}"></span>
+        </div>
+	</div>
+</div>

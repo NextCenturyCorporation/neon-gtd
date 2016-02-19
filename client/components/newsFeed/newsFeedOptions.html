@@ -1,0 +1,53 @@
+<div class="form-group" ng-hide="hideAdvancedOptions">
+    <label>Primary Title Field</label>
+    <select class="form-control" ng-model="active.primaryTitleField" ng-required="false" ng-disabled="!(fields.length > 0)" ng-options="field.prettyName for field in fields" ng-change="handleChangePrimaryTitleField()">
+        <option value="">None</option>
+    </select>
+</div>
+
+<div class="form-group" ng-hide="hideAdvancedOptions">
+    <label>Secondary Title Field</label>
+    <select class="form-control" ng-model="active.secondaryTitleField" ng-required="false" ng-disabled="!(fields.length > 0)" ng-options="field.prettyName for field in fields" ng-change="handleChangeSecondaryTitleField()">
+        <option value="">None</option>
+    </select>
+</div>
+
+<div class="form-group" ng-hide="hideAdvancedOptions">
+    <label>Date Field</label>
+    <select class="form-control" ng-model="active.dateField" ng-required="true" ng-disabled="!(fields.length > 0)" ng-options="field.prettyName for field in fields" ng-change="handleChangeDateField()">
+        <option disabled selected value="">Please choose a field</option>
+    </select>
+</div>
+
+<div class="form-group" ng-hide="hideAdvancedOptions">
+    <label>Content Field</label>
+    <select class="form-control" ng-model="active.contentField" ng-required="true" ng-disabled="!(fields.length > 0)" ng-options="field.prettyName for field in fields" ng-change="handleChangeContentField()">
+        <option disabled selected value="">Please choose a field</option>
+    </select>
+</div>
+
+<div class="form-group">
+    <label>Sort By Date</label>
+    <div class="btn-group">
+        <label class="btn btn-default active" ng-class="{true: 'active', false: ''}[active.sortDirection === active.ASCENDING]">
+            <input type="radio" ng-model="active.sortDirection" style="display:none" ng-value="active.ASCENDING" ng-change="handleChangeSort()">ASC
+        </label>
+        <label class="btn btn-default" ng-class="{true: 'active', false: ''}[active.sortDirection === active.DESCENDING]">
+            <input type="radio" ng-model="active.sortDirection" style="display:none" ng-value="active.DESCENDING" ng-change="handleChangeSort()">DESC
+        </label>
+    </div>
+    <div class="clearfix"></div>
+</div>
+
+<div class="form-group">
+    <label>News Limit</label>
+    <div class="input-group">
+        <input type="number" min="1" class="form-control" ng-model="active.limit" required>
+        <div class="input-group-btn">
+            <button type="button" class="btn btn-default refresh" title="Refresh" ng-click="handleChangeLimit()">
+                <span class="glyphicon glyphicon-refresh"></span>
+            </button>
+        </div>
+    </div>
+</div>
+

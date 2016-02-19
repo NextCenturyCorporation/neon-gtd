@@ -65,6 +65,13 @@ function(external, connectionService, datasetService, errorNotificationService, 
                 chosenToLanguage: ""
             };
 
+            var DEFAULT_LINKY_CONFIG = {
+                hashtags: false,
+                mentions: false,
+                urls: true,
+                linkTo: ""
+            };
+
             /**
              * Returns the jQuery element in this visualization matching the given string, or the element for this visualization itself if no string is given.
              * @param {String} element
@@ -928,7 +935,7 @@ function(external, connectionService, datasetService, errorNotificationService, 
                 $scope.languages.chosenFromLanguage = language;
 
                 if($scope.active.showTranslations) {
-                    performTranslation();
+                    $scope.functions.updateTranslations();
                 }
             };
 
@@ -942,7 +949,7 @@ function(external, connectionService, datasetService, errorNotificationService, 
                 $scope.languages.chosenToLanguage = language;
 
                 if($scope.active.showTranslations) {
-                    performTranslation();
+                    $scope.functions.updateTranslations();
                 }
             };
 
@@ -960,113 +967,59 @@ function(external, connectionService, datasetService, errorNotificationService, 
                 if(checked) {
                     $scope.languages.chosenFromLanguage = fromLang;
                     $scope.languages.chosenToLanguage = toLang;
-                    performTranslation();
+                    $scope.functions.updateTranslations();
                 } else {
-                    clearTranslation();
+                    $scope.functions.removeTranslations();
                 }
             };
 
             /**
-             * Translates data for this visualization using the global to/from languages.
-             * @method performTranslation
+             * Updates all translations in this visualization.
+             * @method updateTranslations
              */
-            $scope.functions.performTranslation = function() {
-                performTranslation();
+            $scope.functions.updateTranslations = function() {
+                // Do nothing by default.
             };
 
-            var performTranslation = function() {
+            /**
+             * Translates the given data for this visualization using the global to/from languages and the given success/failure callbacks.
+             * @param {Array} data
+             * @param {Function} translationSuccessCallback (Optional)
+             * @param {Function} translationFailureCallback (Optional)
+             * @method runTranslation
+             */
+            $scope.functions.runTranslation = function(data, translationSuccessCallback, translationFailureCallback) {
+                runTranslation(data, translationSuccessCallback, translationFailureCallback);
+            };
+
+            var runTranslation = function(data, translationSuccessCallback, translationFailureCallback) {
                 if($scope.errorMessage) {
                     errorNotificationService.hideErrorMessage($scope.errorMessage);
                     $scope.errorMessage = undefined;
                 }
 
-                translationService.translate($scope.functions.getTranslationData(), $scope.languages.chosenToLanguage,
-                    translationSuccessCallback, translationFailureCallback, $scope.languages.chosenFromLanguage);
+                translationService.translate(data, $scope.languages.chosenToLanguage, function(response) {
+                    translationService.saveTranslationCache();
+                    if(translationSuccessCallback) {
+                        translationSuccessCallback(response.data.data.translations);
+                    }
+                }, function(response) {
+                    if($scope.errorMessage) {
+                        errorNotificationService.hideErrorMessage($scope.errorMessage);
+                        $scope.errorMessage = undefined;
+                    }
+                    $scope.errorMessage = errorNotificationService.showErrorMessage($scope.element, response.message,  response.reason);
+                    if(translationFailureCallback) {
+                        translationFailureCallback(response.data.data.translations);
+                    }
+                }, $scope.languages.chosenFromLanguage);
             };
 
             /**
-             * Returns the data on which to perform the translation for this visualization.
-             * @method getTranslationData
-             * @return {Array} data
+             * Removes all translations from this visualization.
+             * @method removeTranslations
              */
-            $scope.functions.getTranslationData = function() {
-                return [];
-            };
-
-            /**
-             * Translation success callback for the given translation response that saves the translation cache.
-             * @param {Object} response Response object containing all the translations.
-             * @param {Array} response.data.data.translations List of all translations. It's assumed that
-             * all translations are given in the order the original text to translate was received in.
-             * @param {String} response.data.data.translations[].translatedText
-             * @param {String} [response.data.data.translations[].detectedSourceLanguage] Detected language
-             * code of the original version of translatedText. Only provided if the source language was auto-detected.
-             * @method translationSuccessCallback
-             * @private
-             */
-            var translationSuccessCallback = function(response) {
-                translationService.saveTranslationCache();
-                $scope.functions.onTranslationSuccess(response);
-            };
-
-            /**
-             * Handles translation success for the given response.
-             * @param {Object} response Response object containing all the translations.
-             * @param {Array} response.data.data.translations List of all translations. It's assumed that
-             * all translations are given in the order the original text to translate was received in.
-             * @param {String} response.data.data.translations[].translatedText
-             * @param {String} [response.data.data.translations[].detectedSourceLanguage] Detected language
-             * code of the original version of translatedText. Only provided if the source language was auto-detected.
-             * @method onTranslationSuccess
-             */
-            $scope.functions.onTranslationSuccess = function() {
-                // Do nothing by default.
-            };
-
-            /**
-             * Translation failure callback for the given translation response that displays an error message.
-             * @param {Object} response An error response containing the message and reason.
-             * @param {String} response.message
-             * @param {String} response.reason
-             * @method translationFailureCallback
-             * @private
-             */
-            var translationFailureCallback = function(response) {
-                if($scope.errorMessage) {
-                    errorNotificationService.hideErrorMessage($scope.errorMessage);
-                    $scope.errorMessage = undefined;
-                }
-                $scope.errorMessage = errorNotificationService.showErrorMessage($scope.element, response.message,  response.reason);
-                $scope.functions.onTranslationFailure(response);
-            };
-
-            /**
-             * Handles translation failure for the given response.
-             * @param {Object} response An error response containing the message and reason.
-             * @param {String} response.message
-             * @param {String} response.reason
-             * @method onTranslationFailure
-             */
-            $scope.functions.onTranslationFailure = function() {
-                // Do nothing by default.
-            };
-
-            /**
-             * Clears all translations and the global to/from languages.
-             * @method clearTranslation
-             * @private
-             */
-            var clearTranslation = function() {
-                $scope.functions.onClearTranslation();
-                $scope.languages.chosenFromLanguage = "";
-                $scope.languages.chosenToLanguage = "";
-            };
-
-            /**
-             * Handles any behavior for clearing all translations.
-             * @method onClearTranslation
-             */
-            $scope.functions.onClearTranslation = function() {
+            $scope.functions.removeTranslations = function() {
                 // Do nothing by default.
             };
 
@@ -1163,6 +1116,25 @@ function(external, connectionService, datasetService, errorNotificationService, 
              */
             $scope.functions.getLinksPopupService = function() {
                 return linksPopupService;
+            };
+
+            /**
+             * Returns the configuration for the linky library.
+             * @method getLinkyConfig
+             * @return {Object}
+             */
+            $scope.functions.getLinkyConfig = function() {
+                return datasetService.getLinkyConfig() || DEFAULT_LINKY_CONFIG;
+            };
+
+            /**
+             * Returns whether the given field object is valid.
+             * @param {Object} field
+             * @method isFieldValid
+             * @return {Boolean}
+             */
+            $scope.functions.isFieldValid = function(field) {
+                return datasetService.isFieldValid(field);
             };
 
             /**
