@@ -468,7 +468,7 @@ angular.module('neonDemo.directives').controller('timelineController', ['$scope'
                 onChangeBrush();
             }
         }
-        $scope.functions.handleChangeField("granularity", $scope.active.granularity);
+        $scope.functions.handleChangeField("granularity", $scope.active.granularity, "button");
     };
 
     var onChangeBrush = function() {
@@ -1138,7 +1138,7 @@ angular.module('neonDemo.directives').controller('timelineController', ['$scope'
     };
 
     $scope.handleChangeDateField = function() {
-        $scope.functions.handleChangeField("date-field", $scope.active.dateField.columName);
+        $scope.functions.handleChangeField("dateField", $scope.active.dateField.columName);
     };
 
     $scope.functions.createExportDataObject = function(query, exportService) {

@@ -17,15 +17,15 @@
  */
 
 angular.module('neonDemo.controllers').controller('aggregationTableController', ['$scope', '$timeout', 'external', function($scope, $timeout, external) {
+    // Unique field name used for the SlickGrid column containing the URLs for the external apps.
+    // This name should be one that is highly unlikely to be a column name in a real database.
+    var EXTERNAL_APP_FIELD_NAME = "neonExternalApps";
+
     $scope.active.aggregation = $scope.bindings.aggregation || "count";
     $scope.active.aggregationField = {};
     $scope.active.filter = undefined;
     $scope.active.groupField = {};
-    $scope.active.limit = $scope.bindings.limit || 500;
-
-    // Unique field name used for the SlickGrid column containing the URLs for the external apps.
-    // This name should be one that is highly unlikely to be a column name in a real database.
-    $scope.EXTERNAL_APP_FIELD_NAME = "neonExternalApps";
+    $scope.active.limit = $scope.bindings.limit || 100;
 
     var handleRowClick = function(cell) {
         if($scope.active.gridOptions.api.getSelectedNodes()[0] && $scope.active.gridOptions.api.getSelectedNodes()[0].id === cell.rowIndex) {
@@ -69,8 +69,8 @@ angular.module('neonDemo.controllers').controller('aggregationTableController', 
 
         if(external.active) {
             var externalAppColumn = {
+                field: EXTERNAL_APP_FIELD_NAME,
                 headerName: "",
-                field: $scope.EXTERNAL_APP_FIELD_NAME,
                 suppressSizeToFit: false,
                 cellClass: 'centered',
                 width: 30
@@ -273,13 +273,13 @@ angular.module('neonDemo.controllers').controller('aggregationTableController', 
     var addExternalLinksToColumnData = function(data) {
         var buttons = $scope.functions.createLinkButtons($scope.active.groupField, data);
         data.forEach(function(row, index) {
-            row[$scope.EXTERNAL_APP_FIELD_NAME] = buttons[index];
+            row[EXTERNAL_APP_FIELD_NAME] = buttons[index];
         });
         return data;
     };
 
     $scope.handleChangeGroupField = function() {
-        $scope.functions.handleChangeField("group-field", $scope.active.groupField.columnName);
+        $scope.functions.handleChangeField("groupField", $scope.active.groupField.columnName);
     };
 
     $scope.handleChangeAggregation = function() {
@@ -287,7 +287,7 @@ angular.module('neonDemo.controllers').controller('aggregationTableController', 
     };
 
     $scope.handleChangeAggregationField = function() {
-        $scope.functions.handleChangeField("aggregation-field", $scope.active.aggregationField.columnName);
+        $scope.functions.handleChangeField("aggregationField", $scope.active.aggregationField.columnName);
     };
 
     $scope.handleChangeLimit = function() {

@@ -211,7 +211,7 @@ angular.module('neonDemo.directives').controller('textCloudController', ['$scope
     };
 
     $scope.handleChangeAndFilters = function() {
-        $scope.functions.handleChangeField("andFilters", $scope.active.andFilters);
+        $scope.functions.handleChangeField("andFilters", $scope.active.andFilters, "button");
         $scope.functions.replaceFilter();
     };
 

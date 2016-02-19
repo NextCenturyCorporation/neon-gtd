@@ -13,46 +13,20 @@
 // limitations under the License.
 //
 
-.query-results-directive {
-    margin: 0px;
+.dataTableDirective {
     height: 100%;
     width: 100%;
 
     .results-table {
-        height: 100%;
-
-        //This makes the autosizing work while taking into account the options menu.
-        padding-top: 25px;
-        margin-top: -25px;
-    }
-
-    .header {
-        .header-container {
-            .edit-table {
-                .glyphicon {
-                    font-size: 14px;
-                    padding: 0px 10px;
-
-                    &.active, &:active, &:focus, &:hover {
-                        color: @accent-bright;
-                        cursor: pointer;
-                    }
-                }
-            }
-        }
-    }
-}
-
-.visualization-widget {
-    .query-results-directive {
-        padding: 10px;
+        height: inherit;
     }
 }
 
 .gridster-mobile {
     .visualization-widget {
-        .query-results-directive {
+        .dataTableDirective {
             height: @mobile-widget-height;
+            width: @mobile-widget-width;
         }
     }
 }

@@ -301,6 +301,7 @@ function(external, connectionService, datasetService, errorNotificationService, 
                     removeFilter(true);
                 }
 
+                // Sort the fields that are displayed in the dropdowns in the options menus alphabetically.
                 $scope.fields = datasetService.getSortedFields($scope.active.database.name, $scope.active.table.name);
 
                 var filterFieldName = $scope.bindings.unsharedFilterField || "";
@@ -437,8 +438,10 @@ function(external, connectionService, datasetService, errorNotificationService, 
                 // Resize the title and display after the error is hidden and the title is changed.
                 resize();
 
+                var updateDataFunction = updateDataCallback || $scope.functions.updateData;
+
                 // Clear the display.
-                updateDataCallback([]);
+                updateDataFunction([]);
 
                 var connection = connectionService.getActiveConnection();
 
@@ -463,7 +466,7 @@ function(external, connectionService, datasetService, errorNotificationService, 
                     $scope.outstandingDataQuery.abort();
                 }
 
-                $scope.outstandingDataQuery = executeQueryCallback(connection, query);
+                $scope.outstandingDataQuery = executeQueryCallback ? executeQueryCallback(connection, query) : $scope.functions.executeQuery(connection, query);
                 $scope.outstandingDataQuery.done(function() {
                     $scope.outstandingDataQuery = undefined;
                 });
@@ -482,7 +485,7 @@ function(external, connectionService, datasetService, errorNotificationService, 
 
                     $scope.$apply(function() {
                         // The response for an array-counts query is an array and the response for other queries is an object containing a data array.
-                        updateDataCallback(response.data || response);
+                        updateDataFunction(response.data || response);
                     });
 
                     XDATA.userALE.log({
@@ -522,7 +525,7 @@ function(external, connectionService, datasetService, errorNotificationService, 
                         });
 
                         $scope.$apply(function() {
-                            $scope.functions.updateData([]);
+                            updateDataFunction([]);
                         });
 
                         // See if the error response contains a Neon notification to show through the Error Notification Service.

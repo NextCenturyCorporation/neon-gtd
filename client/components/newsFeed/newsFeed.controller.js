@@ -472,12 +472,12 @@ angular.module('neonDemo.directives').controller('newsFeedController', ['$scope'
             $scope.active.data.reverse();
             translatedIndexRange = [$scope.active.data.length - translatedIndexRange[1], $scope.active.data.length - translatedIndexRange[0]];
         } else {
-            $scope.functions.handleChangeField("sortDirection", $scope.active.sortDirection);
+            $scope.functions.handleChangeField("sortDirection", $scope.active.sortDirection, "button");
         }
     };
 
     $scope.handleChangeLimit = function() {
-        $scope.functions.handleChangeField("limit", $scope.active.limit);
+        $scope.functions.handleChangeField("limit", $scope.active.limit, "button");
     };
 
     /**

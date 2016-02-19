@@ -37,9 +37,6 @@ angular.module("neonDemo.services")
     // The Dataset Service may ask the visualizations to update their data.
     service.UPDATE_DATA_CHANNEL = "update_data";
 
-    // Channel name for a data table row selection event
-    service.SELECTION_EVENT_CHANNEL = "query_results_selection_event";
-
     /**
      * Returns the list of datasets maintained by this service.
      * @method getDatasets

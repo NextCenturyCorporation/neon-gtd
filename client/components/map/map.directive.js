@@ -229,7 +229,7 @@ angular.module('neonDemo.directives')
                 $scope.messenger.subscribe(datasetService.UPDATE_DATA_CHANNEL, function() {
                     queryAllLayerTables();
                 });
-                $scope.messenger.subscribe(datasetService.SELECTION_EVENT_CHANNEL, createPoint);
+                $scope.messenger.subscribe("data_table_select", createPoint);
 
                 $scope.exportID = exportService.register($scope.makeMapExportObject);
 
