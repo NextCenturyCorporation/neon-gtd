@@ -166,7 +166,7 @@ angular.module('neonDemo.controllers').controller('opsClockController', ['$scope
     };
 
     $scope.handleChangeDateField = function() {
-        $scope.functions.handleChangeField("dateField", $scope.active.dateField.columnName);
+        $scope.functions.logChangeAndUpdateData("dateField", $scope.active.dateField.columnName);
     };
 
     $scope.functions.showFilterHeader = function() {

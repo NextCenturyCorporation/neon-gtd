@@ -20,6 +20,8 @@
 }
 
 .sunburst-chart {
+    height: inherit;
+
     path {
         stroke: #FFFFFF;
         fill-rule: evenodd;
@@ -36,8 +38,9 @@
     }
 }
 
-.sunburst-directive {
-    padding: 10px;
+.sunburstChartDirective {
+    height: 100%;
+    width: 100%;
 
     .form-input-group {
         margin: 0px 5px 5px 0px;
@@ -119,18 +122,10 @@
     }
 }
 
-.visualization-widget {
-    .sunburst-directive {
-        height: @widget-height;
-        width: @widget-width;
-    }
-}
-
 .gridster-mobile {
     .visualization-widget {
-        .sunburst-directive {
-            min-height: @mobile-widget-height;
-            max-height: @mobile-widget-height;
+        .sunburstChartDirective {
+            height: @mobile-widget-height;
             width: @mobile-widget-width;
         }
     }

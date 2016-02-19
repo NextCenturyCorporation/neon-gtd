@@ -1,0 +1,8 @@
+<div class="sunburst-tooltip"></div>
+
+<div class="sunburst-chart" ng-show="active.hasData"></div>
+
+<div class="no-data" ng-show="!active.hasData">
+    No data for current filters.
+    <button ng-click="showChart()" class="btn btn-default">Zoom out</button>
+</div>

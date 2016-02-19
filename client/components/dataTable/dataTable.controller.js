@@ -93,7 +93,7 @@ angular.module('neonDemo.controllers').controller('dataTableController', ['$scop
         unsortedFields = datasetService.getFields($scope.active.database.name, $scope.active.table.name);
     };
 
-    $scope.functions.onChangeField = function() {
+    $scope.functions.onChangeDataOption = function() {
         updateColumns();
     };
 
@@ -331,16 +331,16 @@ angular.module('neonDemo.controllers').controller('dataTableController', ['$scop
 
     $scope.handleChangeSortField = function() {
         handleChangeSort();
-        $scope.functions.handleChangeField("sortField", $scope.active.sortByField.name);
+        $scope.functions.logChangeAndUpdateData("sortField", $scope.active.sortByField.name);
     };
 
     $scope.handleChangeSortDirection = function() {
         handleChangeSort();
-        $scope.functions.handleChangeField("sortDirection", $scope.active.sortDirection, "button");
+        $scope.functions.logChangeAndUpdateData("sortDirection", $scope.active.sortDirection, "button");
     };
 
     $scope.handleChangeLimit = function() {
-        $scope.functions.handleChangeField("limit", $scope.active.limit, "button");
+        $scope.functions.logChangeAndUpdateData("limit", $scope.active.limit, "button");
     };
 
     $scope.functions.addToBindings = function(bindings) {

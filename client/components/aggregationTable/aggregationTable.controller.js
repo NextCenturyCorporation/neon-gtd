@@ -60,7 +60,7 @@ angular.module('neonDemo.controllers').controller('aggregationTableController', 
         }) || datasetService.createBlankField();
     };
 
-    $scope.functions.onChangeField = function() {
+    $scope.functions.onChangeDataOption = function() {
         updateColumns();
     };
 
@@ -279,19 +279,19 @@ angular.module('neonDemo.controllers').controller('aggregationTableController', 
     };
 
     $scope.handleChangeGroupField = function() {
-        $scope.functions.handleChangeField("groupField", $scope.active.groupField.columnName);
+        $scope.functions.logChangeAndUpdateData("groupField", $scope.active.groupField.columnName);
     };
 
     $scope.handleChangeAggregation = function() {
-        $scope.functions.handleChangeField("aggregation", $scope.active.aggregation);
+        $scope.functions.logChangeAndUpdateData("aggregation", $scope.active.aggregation);
     };
 
     $scope.handleChangeAggregationField = function() {
-        $scope.functions.handleChangeField("aggregationField", $scope.active.aggregationField.columnName);
+        $scope.functions.logChangeAndUpdateData("aggregationField", $scope.active.aggregationField.columnName);
     };
 
     $scope.handleChangeLimit = function() {
-        $scope.functions.handleChangeField("limit", $scope.active.limit, "button");
+        $scope.functions.logChangeAndUpdateData("limit", $scope.active.limit, "button");
     };
 
     $scope.functions.createMenuText = function() {

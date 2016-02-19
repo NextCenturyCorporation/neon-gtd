@@ -311,7 +311,7 @@ function(external, connectionService, datasetService, errorNotificationService, 
                 $scope.active.unsharedFilterValue = $scope.bindings.unsharedFilterValue || "";
 
                 $scope.functions.onUpdateFields(datasetService);
-                $scope.functions.onChangeField();
+                $scope.functions.onChangeDataOption();
 
                 if($scope.active.database && $scope.active.database.name && $scope.active.table && $scope.active.table.name) {
                     updateFilter();
@@ -333,9 +333,9 @@ function(external, connectionService, datasetService, errorNotificationService, 
 
             /**
              * Handles any additional behavior for changing a data field in this visualization.
-             * @method onChangeField
+             * @method onChangeDataOption
              */
-            $scope.functions.onChangeField = function() {
+            $scope.functions.onChangeDataOption = function() {
                 // Do nothing by default.
             };
 
@@ -910,20 +910,20 @@ function(external, connectionService, datasetService, errorNotificationService, 
             };
 
             /**
-             * Utility function for logging a change of the given option to the given value using an element of the given type and executing a new query.
+             * Utility function for logging a change of the given option to the given value using an element of the given type, running a new query and updating the data.
              * @param {String} option
              * @param {String} value
              * @param {String} type (Optional) [Default:  combobox]
-             * @method handleChangeField
+             * @method logChangeAndUpdateData
              */
-            $scope.functions.handleChangeField = function(option, value, type) {
-                handleChangeField(option, value, type);
+            $scope.functions.logChangeAndUpdateData = function(option, value, type) {
+                logChangeAndUpdateData(option, value, type);
             };
 
-            var handleChangeField = function(option, value, type) {
+            var logChangeAndUpdateData = function(option, value, type) {
                 logChange(option, value, type);
                 if(!$scope.initializing) {
-                    $scope.functions.onChangeField();
+                    $scope.functions.onChangeDataOption();
                     doQueryAndUpdate();
                 }
             };

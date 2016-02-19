@@ -468,7 +468,7 @@ angular.module('neonDemo.controllers').controller('timelineController', ['$scope
                 onChangeBrush();
             }
         }
-        $scope.functions.handleChangeField("granularity", $scope.active.granularity, "button");
+        $scope.functions.logChangeAndUpdateData("granularity", $scope.active.granularity, "button");
     };
 
     var onChangeBrush = function() {
@@ -605,7 +605,7 @@ angular.module('neonDemo.controllers').controller('timelineController', ['$scope
         }) || datasetService.createBlankField();
     };
 
-    $scope.functions.onChangeField = function() {
+    $scope.functions.onChangeDataOption = function() {
         $scope.bucketizer.setStartDate(undefined);
         clearDisplayDates();
         $scope.referenceStartDate = undefined;
@@ -1138,7 +1138,7 @@ angular.module('neonDemo.controllers').controller('timelineController', ['$scope
     };
 
     $scope.handleChangeDateField = function() {
-        $scope.functions.handleChangeField("dateField", $scope.active.dateField.columName);
+        $scope.functions.logChangeAndUpdateData("dateField", $scope.active.dateField.columName);
     };
 
     $scope.functions.createExportDataObject = function(query, exportService) {

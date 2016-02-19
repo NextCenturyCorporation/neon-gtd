@@ -251,7 +251,7 @@ angular.module('neonDemo.controllers').controller('newsFeedController', ['$scope
         newsEventData = [];
     };
 
-    $scope.functions.onChangeField = function() {
+    $scope.functions.onChangeDataOption = function() {
         deleteData();
     }
 
@@ -447,19 +447,19 @@ angular.module('neonDemo.controllers').controller('newsFeedController', ['$scope
     };
 
     $scope.handleChangePrimaryTitleField = function() {
-        $scope.functions.handleChangeField("primaryTitleField", $scope.active.primaryTitleField);
+        $scope.functions.logChangeAndUpdateData("primaryTitleField", $scope.active.primaryTitleField);
     };
 
     $scope.handleChangeSecondaryTitleField = function() {
-        $scope.functions.handleChangeField("secondaryTitleField", $scope.active.secondaryTitleField);
+        $scope.functions.logChangeAndUpdateData("secondaryTitleField", $scope.active.secondaryTitleField);
     };
 
     $scope.handleChangeDateField = function() {
-        $scope.functions.handleChangeField("dateField", $scope.active.dateField);
+        $scope.functions.logChangeAndUpdateData("dateField", $scope.active.dateField);
     };
 
     $scope.handleChangeContentField = function() {
-        $scope.functions.handleChangeField("contentField", $scope.active.contentField);
+        $scope.functions.logChangeAndUpdateData("contentField", $scope.active.contentField);
     };
 
     /**
@@ -472,12 +472,12 @@ angular.module('neonDemo.controllers').controller('newsFeedController', ['$scope
             $scope.active.data.reverse();
             translatedIndexRange = [$scope.active.data.length - translatedIndexRange[1], $scope.active.data.length - translatedIndexRange[0]];
         } else {
-            $scope.functions.handleChangeField("sortDirection", $scope.active.sortDirection, "button");
+            $scope.functions.logChangeAndUpdateData("sortDirection", $scope.active.sortDirection, "button");
         }
     };
 
     $scope.handleChangeLimit = function() {
-        $scope.functions.handleChangeField("limit", $scope.active.limit, "button");
+        $scope.functions.logChangeAndUpdateData("limit", $scope.active.limit, "button");
     };
 
     /**

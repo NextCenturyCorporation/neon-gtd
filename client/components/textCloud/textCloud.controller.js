@@ -207,11 +207,11 @@ angular.module('neonDemo.controllers').controller('textCloudController', ['$scop
     };
 
     $scope.handleChangeDataField = function() {
-        $scope.functions.handleChangeField("dataField", $scope.active.dataField.columnName);
+        $scope.functions.logChangeAndUpdateData("dataField", $scope.active.dataField.columnName);
     };
 
     $scope.handleChangeAndFilters = function() {
-        $scope.functions.handleChangeField("andFilters", $scope.active.andFilters, "button");
+        $scope.functions.logChangeAndUpdateData("andFilters", $scope.active.andFilters, "button");
         $scope.functions.replaceFilter();
     };
 

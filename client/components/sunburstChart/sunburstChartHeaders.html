@@ -1,0 +1,25 @@
+<div class="sunburst-controls" ng-show="active.groupFields.length > 0">
+    <div class="sunburst-transient-breadcrumb" ng-repeat="groupField in active.groupFields">
+        <a class="breadcrumb-title" ng-click="handleRemoveGroup(groupField)">
+          <span ng-bind="groupField.prettyName"></span></span>
+        </a>
+        <a class="breadcrumb-remove" ng-click="handleRemoveGroup(groupField)">
+          <span class="glyphicon glyphicon-remove"></span>
+        </a>
+        <span class="glyphicon glyphicon-chevron-right"></span>
+    </div>
+    <div class="sunburst-breadcrumb">
+        <span ng-bind="(active.arcValue === 'count') ? active.arcValue : 'TOTAL (' + active.valueField.prettyName + ')'"></span>
+    </div>
+</div>
+
+<div class="sunburst-controls" ng-show="active.valueField.columnName">
+    <form>
+        <label><input type="radio" ng-model="active.arcValue" value="count" class="sunburst-chart-selector" ng-change="handleChangeArcValue()">
+            Count
+        </label>
+        <label><input type="radio" ng-model="active.arcValue" value="total" class="sunburst-chart-selector"  ng-change="handleChangeArcValue()" ng-disabled="!active.valueField.columnName">
+            <span ng-bind="'TOTAL (' + active.valueField.prettyName + ')'"></span>
+        </label>
+    </form>
+</div>
