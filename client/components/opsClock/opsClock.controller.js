@@ -101,6 +101,10 @@ angular.module('neonDemo.controllers').controller('opsClockController', ['$scope
         }) || datasetService.createBlankField();
     };
 
+    $scope.functions.hasValidDataFields = function(datasetService) {
+        return datasetService.isFieldValid($scope.active.dateField);
+    };
+
     $scope.functions.createNeonQueryClause = function() {
         return neon.query.and(
             neon.query.where($scope.active.dateField.columnName, '>=', new Date("1970-01-01T00:00:00.000Z")),

@@ -1,0 +1,38 @@
+<div class="form-group">
+    <label>X-Axis Field</label>
+    <select class="form-control" ng-model="active.xAxisField" ng-options="field.prettyName for field in fields track by field.columnName" ng-required="true" ng-disabled="!(fields.length > 0)" ng-change="handleChangeXAxisField()">
+    </select>
+</div>
+
+<div class="form-group">
+    <label>Y-Axis Field</label>
+    <select class="form-control" ng-model="active.yAxisField" ng-options="field.prettyName for field in fields" ng-required="true" ng-disabled="!(fields.length > 0)" ng-change="handleChangeYAxisField()">
+    </select>
+</div>
+
+<div class="form-group">
+    <label>Text Field</label>
+    <select class="form-control" ng-model="active.textField" ng-options="field.prettyName for field in fields" ng-required="true" ng-disabled="!(fields.length > 0)" ng-change="handleChangeTextField()">
+    </select>
+</div>
+
+<div class="form-group">
+    <label>Type</label>
+    <select class="form-control" ng-model="active.type" ng-required="true" ng-change="handleChangeType()">
+        <option value="scatter">Scatter Plot</option>
+        <option value="heatmapScatter">Heatmap Scatter Plot</option>
+        <option value="histogramScatter">Histogram Scatter Plot</option>
+    </select>
+</div>
+
+<div class="form-group limit-count-field">
+    <label>Point Limit</label>
+    <div class="input-group">
+        <input type="number" min="1" class="form-control" ng-model="active.limit">
+        <div class="input-group-btn">
+            <button type="button" class="btn btn-default refresh" title="Refresh" ng-click="handleChangeLimit()">
+                <span class="glyphicon glyphicon-refresh"></span>
+            </button>
+        </div>
+    </div>
+</div>
