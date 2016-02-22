@@ -34,25 +34,14 @@ angular.module('neonDemo.controllers').controller('scatterPlotController', ['$sc
         $scope.graph.bind('plotly_filter_box', updateFilter);
     };
 
-    $scope.functions.onUpdateFields = function(datasetService) {
-        var xAxisFieldName = $scope.bindings.xAxisField || datasetService.getMapping($scope.active.database.name, $scope.active.table.name, neonMappings.SCATTERPLOT_X_AXIS) || "";
-        $scope.active.xAxisField = _.find($scope.fields, function(field) {
-            return field.columnName === xAxisFieldName;
-        }) || datasetService.createBlankField();
-
-        var yAxisFieldName = $scope.bindings.yAxisField || datasetService.getMapping($scope.active.database.name, $scope.active.table.name, neonMappings.SCATTERPLOT_Y_AXIS) || "";
-        $scope.active.yAxisField = _.find($scope.fields, function(field) {
-            return field.columnName === yAxisFieldName;
-        }) || datasetService.createBlankField();
-
-        var textFieldName = $scope.bindings.textField || "";
-        $scope.active.textField = _.find($scope.fields, function(field) {
-            return field.columnName === textFieldName;
-        }) || datasetService.createBlankField;
+    $scope.functions.onUpdateFields = function() {
+        $scope.active.xAxisField = $scope.functions.findFieldObject("xAxisField", neonMappings.SCATTERPLOT_X_AXIS);
+        $scope.active.yAxisField = $scope.functions.findFieldObject("yAxisField", neonMappings.SCATTERPLOT_Y_AXIS);
+        $scope.active.textField = $scope.functions.findFieldObject("textField");
     };
 
-    $scope.functions.hasValidDataFields = function(datasetService) {
-        return datasetService.isFieldValid($scope.active.xAxisField) && datasetService.isFieldValid($scope.active.yAxisField);
+    $scope.functions.hasValidDataFields = function() {
+        return $scope.functions.isFieldValid($scope.active.xAxisField) && $scope.functions.isFieldValid($scope.active.yAxisField);
     };
 
     $scope.functions.createNeonQueryClause = function() {

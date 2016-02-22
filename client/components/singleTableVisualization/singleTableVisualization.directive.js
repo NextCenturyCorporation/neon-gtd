@@ -72,6 +72,8 @@ function(external, connectionService, datasetService, errorNotificationService, 
                 linkTo: ""
             };
 
+            var resizeListeners = [];
+
             /**
              * Returns the jQuery element in this visualization matching the given string, or the element for this visualization itself if no string is given.
              * @param {String} element
@@ -156,6 +158,10 @@ function(external, connectionService, datasetService, errorNotificationService, 
                     linksPopupService.deleteLinks($scope.visualizationId);
                     themeService.unregisterListener($scope.visualizationId);
                     visualizationService.unregister($scope.stateId);
+
+                    resizeListeners.forEach(function(element) {
+                        $scope.element.find(element).off("resize", resize);
+                    });
 
                     $scope.functions.onDestroy();
                 });
@@ -251,6 +257,16 @@ function(external, connectionService, datasetService, errorNotificationService, 
             };
 
             /**
+             * Adds a resize listener to the given element in this visualization.
+             * @param {String} element
+             * @method addResizeListener
+             */
+            $scope.functions.addResizeListener = function(element) {
+                $scope.element.find(element).resize(resize);
+                resizeListeners.push(element);
+            };
+
+            /**
              * Gets the list of databases from the dataset service, sets the active database, table, and fields, and queries for new data.
              * @method updateDatabases
              * @private
@@ -310,7 +326,7 @@ function(external, connectionService, datasetService, errorNotificationService, 
                 }) || datasetService.createBlankField();
                 $scope.active.unsharedFilterValue = $scope.bindings.unsharedFilterValue || "";
 
-                $scope.functions.onUpdateFields(datasetService);
+                $scope.functions.onUpdateFields();
                 $scope.functions.onChangeDataOption();
 
                 if($scope.active.database && $scope.active.database.name && $scope.active.table && $scope.active.table.name) {
@@ -324,7 +340,6 @@ function(external, connectionService, datasetService, errorNotificationService, 
 
             /**
              * Handles any additional behavior for updating the fields for this visualization.
-             * @param {Object} datasetService
              * @method onUpdateFields
              */
             $scope.functions.onUpdateFields = function() {
@@ -388,7 +403,6 @@ function(external, connectionService, datasetService, errorNotificationService, 
             /**
              * Adds to the given Neon query and returns the updated query for this visualization.
              * @param {neon.query.Query} query
-             * @param {Object} filterService
              * @method addToQuery
              * @return {neon.query.Query}
              */
@@ -445,7 +459,7 @@ function(external, connectionService, datasetService, errorNotificationService, 
 
                 var connection = connectionService.getActiveConnection();
 
-                if(!connection || !$scope.functions.hasValidDataFields(datasetService)) {
+                if(!connection || !$scope.functions.hasValidDataFields()) {
                     return;
                 }
 
@@ -543,7 +557,6 @@ function(external, connectionService, datasetService, errorNotificationService, 
 
             /**
              * Returns whether this visualization has valid data fields in order to execute a query.
-             * @param {Object} datasetService
              * @method hasValidDataFields
              * @return {Boolean}
              */
@@ -660,7 +673,7 @@ function(external, connectionService, datasetService, errorNotificationService, 
                         $scope.functions.onRemoveFilter();
                     }
                     if(neonFilter) {
-                        $scope.functions.updateFilterFromNeonFilterClause(filterService, neonFilter);
+                        $scope.functions.updateFilterFromNeonFilterClause(neonFilter);
                     }
                 }
             };
@@ -684,7 +697,6 @@ function(external, connectionService, datasetService, errorNotificationService, 
 
             /**
              * Updates the filter for this visualization using the where clause in the given Neon filter.
-             * @param {Object} filterService
              * @param {neon.query.Filter} neonFilter
              * @method updateFilterFromNeonFilterClause
              */
@@ -1131,13 +1143,68 @@ function(external, connectionService, datasetService, errorNotificationService, 
             };
 
             /**
+             * Finds and returns the field object in the global list of fields that matches the given binding key,
+             * mapping key, or default field name, or returns a blank field object if no such field exists.
+             * @param {String} bindingKey
+             * @param {String} mappingKey
+             * @param {String} defaultFieldName
+             * @method findFieldObject
+             * @return {Object}
+             */
+            $scope.functions.findFieldObject = function(bindingKey, mappingKey, defaultFieldName) {
+                var fieldName = (bindingKey ? $scope.bindings[bindingKey] : null) || (mappingKey ? $scope.functions.getMapping(mappingKey) : null) || defaultFieldName || "";
+                return _.find($scope.fields, function(field) {
+                    return field.columnName === fieldName;
+                }) || datasetService.createBlankField();
+            };
+
+            /**
              * Returns whether the given field object is valid.
-             * @param {Object} field
+             * @param {Object} fieldObject
              * @method isFieldValid
              * @return {Boolean}
              */
-            $scope.functions.isFieldValid = function(field) {
-                return datasetService.isFieldValid(field);
+            $scope.functions.isFieldValid = function(fieldObject) {
+                return datasetService.isFieldValid(fieldObject);
+            };
+
+            /**
+             * Returns the mapping for the given key or any empty string if no mapping exists.
+             * @param {String} key
+             * @method getMapping
+             * @return {String}
+             */
+            $scope.functions.getMapping = function(key) {
+                return datasetService.getMapping($scope.active.database.name, $scope.active.table.name, key);
+            };
+
+            /**
+             * Returns the list of unsorted fields (in the order they are defined in the dashboard configuration).
+             * @method getUnsortedFields
+             * @return {Array}
+             */
+            $scope.functions.getUnsortedFields = function() {
+                return datasetService.getFields($scope.active.database.name, $scope.active.table.name);
+            };
+
+            /**
+             * Returns the filter key for the given filter clause.
+             * @param {Object} filterClause
+             * @method getFilterKey
+             * @return {String}
+             */
+            $scope.functions.getFilterKey = function(filterClause) {
+                return filterService.getFilterKey($scope.active.database.name, $scope.active.table.name, filterClause);
+            };
+
+            /**
+             * Returns whether the given Neon filter object is a single clause filter.
+             * @param {neon.query.Filter} filter
+             * @method isSingleClauseFilter
+             * @return {Boolean}
+             */
+            $scope.functions.getNumberOfFilterClauses = function(neonFilter) {
+                return filterService.hasSingleClause(neonFilter) ? 1 : filterService.getMultipleClausesLength(neonFilter);
             };
 
             /**
@@ -1204,6 +1271,8 @@ function(external, connectionService, datasetService, errorNotificationService, 
 
                 var query = buildQuery();
                 query.limitClause = exportService.getLimitClause();
+                query.ignoreFilters_ = exportService.getIgnoreFilters();
+                query.ignoredFilterIds_ = exportService.getIgnoredFilterIds();
                 return $scope.functions.createExportDataObject($scope.exportId, query, exportService);
             };
 
@@ -1211,7 +1280,6 @@ function(external, connectionService, datasetService, errorNotificationService, 
              * Creates and returns an object containing the data needed to export this visualization.
              * @param {String} exportId
              * @param {neon.query.Query} query
-             * @param {Object} exportService
              * @method createExportDataObject
              * @return {Object}
              */

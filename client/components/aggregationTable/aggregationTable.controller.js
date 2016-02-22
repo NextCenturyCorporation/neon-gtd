@@ -49,15 +49,9 @@ angular.module('neonDemo.controllers').controller('aggregationTableController', 
         suppressRowClickSelection: true
     };
 
-    $scope.functions.onUpdateFields = function(datasetService) {
-        var groupFieldName = $scope.bindings.groupField || datasetService.getMapping($scope.active.database.name, $scope.active.table.name, neonMappings.AGGREGATE) || "";
-        $scope.active.groupField = _.find($scope.fields, function(field) {
-            return field.columnName === groupFieldName;
-        }) || datasetService.createBlankField();
-        var aggregationFieldName = $scope.bindings.aggregationField || "";
-        $scope.active.aggregationField = _.find($scope.fields, function(field) {
-            return field.columnName === aggregationFieldName;
-        }) || datasetService.createBlankField();
+    $scope.functions.onUpdateFields = function() {
+        $scope.active.groupField = $scope.functions.findFieldObject("groupField", neonMappings.AGGREGATE);
+        $scope.active.aggregationField = $scope.functions.findFieldObject("aggregationField");
     };
 
     $scope.functions.onChangeDataOption = function() {
@@ -102,21 +96,21 @@ angular.module('neonDemo.controllers').controller('aggregationTableController', 
         $scope.active.gridOptions.api.sizeColumnsToFit();
     };
 
-    $scope.functions.hasValidDataFields = function(datasetService) {
-        return datasetService.isFieldValid($scope.active.groupField) && ($scope.active.aggregation === "count" || datasetService.isFieldValid($scope.active.aggregationField));
+    $scope.functions.hasValidDataFields = function() {
+        return $scope.functions.isFieldValid($scope.active.groupField) && ($scope.active.aggregation === "count" || $scope.functions.isFieldValid($scope.active.aggregationField));
     };
 
     $scope.functions.createNeonQueryClause = function() {
         return neon.query.where($scope.active.groupField.columnName, "!=", null);
     };
 
-    $scope.functions.addToQuery = function(query, filterService) {
+    $scope.functions.addToQuery = function(query) {
         if($scope.functions.isFilterSet()) {
             var filterClause = $scope.functions.createNeonFilterClause({
                 database: $scope.active.database.name,
                 table: $scope.active.table.name
             }, $scope.active.groupField.columnName);
-            query.ignoreFilters([filterService.getFilterKey($scope.active.database.name, $scope.active.table.name, filterClause)]);
+            query.ignoreFilters([$scope.functions.getFilterKey(filterClause)]);
         }
 
         if($scope.active.aggregation === "count") {
@@ -192,8 +186,8 @@ angular.module('neonDemo.controllers').controller('aggregationTableController', 
         return $scope.active.filter ? $scope.active.groupField.columnName + " = " + $scope.active.filter : "";
     };
 
-    $scope.functions.updateFilterFromNeonFilterClause = function(filterService, neonFilter) {
-        if(filterService.hasSingleClause(neonFilter)) {
+    $scope.functions.updateFilterFromNeonFilterClause = function(neonFilter) {
+        if($scope.functions.getNumberOfFilterClauses(neonFilter) === 1) {
             onAddFilter(neonFilter.filter.whereClause.rhs);
         }
     };

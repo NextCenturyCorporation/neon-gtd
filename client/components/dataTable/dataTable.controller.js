@@ -41,7 +41,6 @@ angular.module('neonDemo.controllers').controller('dataTableController', ['$scop
     };
 
     var hiddenFields = [];
-    var unsortedFields = [];
 
     var handleColumnVisibiltyChange = function(event) {
         if(event.column.visible && hiddenFields[event.column.colId]) {
@@ -77,20 +76,14 @@ angular.module('neonDemo.controllers').controller('dataTableController', ['$scop
         return true;
     };
 
-    $scope.functions.onUpdateFields = function(datasetService) {
+    $scope.functions.onUpdateFields = function() {
         $scope.fields.forEach(function(field) {
             if(field.hide) {
                 hiddenFields[field.columnName] = true;
             }
         });
 
-        var sortByFieldName = $scope.bindings.sortField || datasetService.getMapping($scope.active.database.name, $scope.active.table.name, neonMappings.SORT) || "";
-        $scope.active.sortByField = _.find($scope.fields, function(field) {
-            return field.columnName === sortByFieldName;
-        }) || ($scope.fields.length ? $scope.fields[0] : datasetService.createBlankField());
-
-        // Save the fields in the order they are defined in the dashboard configuration (so we can't use sorted $scope.fields) for the order of the columns.
-        unsortedFields = datasetService.getFields($scope.active.database.name, $scope.active.table.name);
+        $scope.active.sortByField = $scope.functions.findFieldObject("sortField", neonMappings.SORT);
     };
 
     $scope.functions.onChangeDataOption = function() {
@@ -103,7 +96,8 @@ angular.module('neonDemo.controllers').controller('dataTableController', ['$scop
      * @private
      */
     var updateColumns = function() {
-        var columnDefinitions = _.map(unsortedFields, function(field) {
+        // Use the fields in the order they are defined in the dashboard configuration (so we can't use sorted $scope.fields) for the order of the columns.
+        var columnDefinitions = _.map($scope.functions.getUnsortedFields(), function(field) {
             var config = {
                 field: field.columnName,
                 headerName: field.prettyName,
@@ -311,7 +305,7 @@ angular.module('neonDemo.controllers').controller('dataTableController', ['$scop
                 type: "query"
             }]
         };
-        unsortedFields.forEach(function(field) {
+        $scope.functions.getUnsortedFields().forEach(function(field) {
             finalObject.data[0].fields.push({
                 query: field.columnName,
                 pretty: field.prettyName || field.columnName

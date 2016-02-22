@@ -226,27 +226,14 @@ angular.module('neonDemo.controllers').controller('newsFeedController', ['$scope
         }
     };
 
-    $scope.functions.onUpdateFields = function(datasetService) {
-        var primaryTitleFieldName = $scope.bindings.primaryTitleField || "";
-        $scope.active.primaryTitleField = _.find($scope.fields, function(field) {
-            return field.columnName === primaryTitleFieldName;
-        }) || datasetService.createBlankField();
-        var secondaryTitleFieldName = $scope.bindings.secondaryTitleField || "";
-        $scope.active.secondaryTitleField = _.find($scope.fields, function(field) {
-            return field.columnName === secondaryTitleFieldName;
-        }) || datasetService.createBlankField();
-        var dateFieldName = $scope.bindings.dateField || datasetService.getMapping($scope.active.database.name, $scope.active.table.name, neonMappings.DATE) || "";
-        $scope.active.dateField = _.find($scope.fields, function(field) {
-            return field.columnName === dateFieldName;
-        }) || datasetService.createBlankField();
-        var contentFieldName = $scope.bindings.contentField || "";
-        $scope.active.contentField = _.find($scope.fields, function(field) {
-            return field.columnName === contentFieldName;
-        }) || datasetService.createBlankField();
+    $scope.functions.onUpdateFields = function() {
+        $scope.active.primaryTitleField = $scope.functions.findFieldObject("primaryTitleField");
+        $scope.active.secondaryTitleField = $scope.functions.findFieldObject("secondaryTitleField");
+        $scope.active.dateField = $scope.functions.findFieldObject("dateField", neonMappings.DATE);
+        $scope.active.contentField = $scope.functions.findFieldObject("contentField");
 
-        $scope.feedName = $scope.bindings.feedName || datasetService.getMapping($scope.active.database.name, $scope.active.table.name, neonMappings.NEWSFEED_NAME) || "";
-        $scope.active.feedType = $scope.bindings.feedType ? $scope.bindings.feedType.toUpperCase() :
-            datasetService.getMapping($scope.active.database.name, $scope.active.table.name, neonMappings.NEWSFEED_TYPE) || DEFAULT_TYPE;
+        $scope.active.feedType = $scope.bindings.feedType ? $scope.bindings.feedType.toUpperCase() : $scope.functions.getMapping(neonMappings.NEWSFEED_TYPE) || DEFAULT_TYPE;
+        $scope.feedName = $scope.bindings.feedName || $scope.functions.getMapping(neonMappings.NEWSFEED_NAME) || "";
 
         newsEventData = [];
     };
@@ -263,11 +250,11 @@ angular.module('neonDemo.controllers').controller('newsFeedController', ['$scope
         newsEventData = [];
     };
 
-    $scope.functions.hasValidDataFields = function(datasetService) {
-        return datasetService.isFieldValid($scope.active.dateField) || datasetService.isFieldValid($scope.active.contentField);
+    $scope.functions.hasValidDataFields = function() {
+        return $scope.functions.isFieldValid($scope.active.dateField) || $scope.functions.isFieldValid($scope.active.contentField);
     };
 
-    $scope.functions.addToQuery = function(query, filterService) {
+    $scope.functions.addToQuery = function(query) {
         var fields = [$scope.active.dateField.columnName, $scope.active.contentField.columnName];
         if($scope.functions.isFieldValid($scope.active.primaryTitleField)) {
             fields.push($scope.active.primaryTitleField.columnName);

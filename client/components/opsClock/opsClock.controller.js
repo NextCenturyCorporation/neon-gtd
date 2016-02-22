@@ -94,15 +94,12 @@ angular.module('neonDemo.controllers').controller('opsClockController', ['$scope
         $scope.chart.render(createHoursList());
     };
 
-    $scope.functions.onUpdateFields = function(datasetService) {
-        var dateField = $scope.bindings.dateField || datasetService.getMapping($scope.active.database.name, $scope.active.table.name, neonMappings.DATE) || "";
-        $scope.active.dateField = _.find($scope.fields, function(field) {
-            return field.columnName === dateField;
-        }) || datasetService.createBlankField();
+    $scope.functions.onUpdateFields = function() {
+        $scope.active.dateField = $scope.functions.findFieldObject("dateField", neonMappings.DATE);
     };
 
-    $scope.functions.hasValidDataFields = function(datasetService) {
-        return datasetService.isFieldValid($scope.active.dateField);
+    $scope.functions.hasValidDataFields = function() {
+        return $scope.functions.isFieldValid($scope.active.dateField);
     };
 
     $scope.functions.createNeonQueryClause = function() {

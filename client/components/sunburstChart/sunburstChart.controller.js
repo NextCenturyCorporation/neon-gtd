@@ -43,7 +43,7 @@ angular.module('neonDemo.controllers').controller('sunburstChartController', ['$
         return query;
     };
 
-    $scope.functions.onUpdateFields = function(datasetService) {
+    $scope.functions.onUpdateFields = function() {
         $scope.active.groupFields = [];
         if($scope.bindings.groupFields) {
             _.each($scope.bindings.groupFields.split(","), function(groupFieldName) {
@@ -56,9 +56,7 @@ angular.module('neonDemo.controllers').controller('sunburstChartController', ['$
             });
         }
 
-        $scope.active.valueField = $scope.bindings.valueField ? _.find($scope.fields, function(field) {
-            return field.columnName === $scope.bindings.valueField;
-        }) || datasetService.createBlankField() : datasetService.createBlankField();
+        $scope.active.valueField = $scope.functions.findFieldObject("valueField");
         $scope.active.arcValue = $scope.bindings.arcValue ? $scope.bindings.arcValue : charts.SunburstChart.COUNT_PARTITION;
     };
 

@@ -51,15 +51,12 @@ angular.module('neonDemo.controllers').controller('textCloudController', ['$scop
         };
     };
 
-    $scope.functions.onUpdateFields = function(datasetService) {
-        var dataFieldName = $scope.bindings.dataField || datasetService.getMapping($scope.active.database.name, $scope.active.table.name, neonMappings.TAGS) || "";
-        $scope.active.dataField = _.find($scope.fields, function(field) {
-            return field.columnName === dataFieldName;
-        }) || datasetService.createBlankField();
+    $scope.functions.onUpdateFields = function() {
+        $scope.active.dataField = $scope.functions.findFieldObject("dataField", neonMappings.TAGS);
     };
 
-    $scope.functions.hasValidDataFields = function(datasetService) {
-        return datasetService.isFieldValid($scope.active.dataField);
+    $scope.functions.hasValidDataFields = function() {
+        return $scope.functions.isFieldValid($scope.active.dataField);
     }
 
     $scope.functions.executeQuery = function(connection, query) {
@@ -131,9 +128,9 @@ angular.module('neonDemo.controllers').controller('textCloudController', ['$scop
         return (_.pluck($scope.active.filters, ($scope.active.showTranslations ? "translated" : "value"))).join(", ");
     };
 
-    $scope.functions.updateFilterFromNeonFilterClause = function(filterService, neonFilter) {
+    $scope.functions.updateFilterFromNeonFilterClause = function(neonFilter) {
         $scope.active.filters = [];
-        if(filterService.hasSingleClause(neonFilter)) {
+        if($scope.functions.getNumberOfFilterClauses(neonFilter) === 1) {
             onAddFilter(neonFilter.filter.whereClause.rhs);
         } else {
             neonFilter.filter.whereClause.whereClauses.forEach(function(whereClause) {

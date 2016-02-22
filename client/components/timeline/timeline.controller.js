@@ -573,16 +573,16 @@ angular.module('neonDemo.controllers').controller('timelineController', ['$scope
         return $scope.brush.length === 2;
     };
 
-    $scope.functions.hasValidDataFields = function(datasetService) {
-        return datasetService.isFieldValid($scope.active.dateField);
+    $scope.functions.hasValidDataFields = function() {
+        return $scope.functions.isFieldValid($scope.active.dateField);
     };
 
     $scope.functions.getFilterFields = function() {
         return [$scope.active.dateField];
     };
 
-    $scope.functions.updateFilterFromNeonFilterClause = function(filterService, neonFilter) {
-        if(filterService.hasMultipleClauses(neonFilter) && filterService.getMultipleClausesLength(neonFilter) === 2) {
+    $scope.functions.updateFilterFromNeonFilterClause = function(neonFilter) {
+        if($scope.functions.getNumberOfFilterClauses(neonFilter) === 2) {
             $scope.brush = [
                 new Date(neonFilter.filter.whereClause.whereClauses[0].rhs),
                 new Date(neonFilter.filter.whereClause.whereClauses[1].rhs)
@@ -598,11 +598,8 @@ angular.module('neonDemo.controllers').controller('timelineController', ['$scope
         $scope.active.showInvalidDatesFilter = false;
     };
 
-    $scope.functions.onUpdateFields = function(datasetService) {
-        var dateField = $scope.bindings.dateField || datasetService.getMapping($scope.active.database.name, $scope.active.table.name, neonMappings.DATE) || "date";
-        $scope.active.dateField = _.find($scope.fields, function(field) {
-            return field.columnName === dateField;
-        }) || datasetService.createBlankField();
+    $scope.functions.onUpdateFields = function() {
+        $scope.active.dateField = $scope.functions.findFieldObject("dateField", neonMappings.DATE, "date");
     };
 
     $scope.functions.onChangeDataOption = function() {
@@ -664,7 +661,7 @@ angular.module('neonDemo.controllers').controller('timelineController', ['$scope
         return query;
     };
 
-    $scope.functions.addToQuery = function(query, filterService) {
+    $scope.functions.addToQuery = function(query) {
         var queryGroup = new neon.query.QueryGroup();
         var validDatesQuery = buildValidDatesQuery(angular.copy(query));
         var invalidDatesQuery = buildInvalidDatesQuery(query);
@@ -677,7 +674,7 @@ angular.module('neonDemo.controllers').controller('timelineController', ['$scope
                 database: $scope.active.database.name,
                 table: $scope.active.table.name
             }, $scope.active.dateField.columnName);
-            queryGroup.ignoreFilters([filterService.getFilterKey($scope.active.database.name, $scope.active.table.name, filterClause)]);
+            queryGroup.ignoreFilters([$scope.functions.getFilterKey(filterClause)]);
         }
 
         return queryGroup;
@@ -1141,14 +1138,12 @@ angular.module('neonDemo.controllers').controller('timelineController', ['$scope
         $scope.functions.logChangeAndUpdateData("dateField", $scope.active.dateField.columName);
     };
 
-    $scope.functions.createExportDataObject = function(query, exportService) {
-        query.ignoreFilters_ = exportService.getIgnoreFilters();
-        query.ignoredFilterIds_ = exportService.getIgnoredFilterIds();
+    $scope.functions.createExportDataObject = function(exportId, query) {
         var finalObject = {
             name: "Timeline",
             data: [{
                 query: query,
-                name: "timeline-" + $scope.exportID,
+                name: "timeline-" + exportId,
                 fields: [],
                 ignoreFilters: query.ignoreFilters_,
                 selectionOnly: query.selectionOnly_,
