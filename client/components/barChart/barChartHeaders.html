@@ -1,0 +1,9 @@
+<div class="legend pull-left">
+    <div class="legend-item" title="{{getLegendText()}}">
+        <span class="legend-icon" style="background-color: #39b54a"></span>
+        <span class="legend-text" ng-bind="getLegendText()"></span>
+    </div>
+</div>
+
+<filter-notification get-data="getFilterData" get-desc="createFilterDesc" get-links-popup-key="generateLinksPopupKey" remove="removeFilter"
+    show-links-popup-button="showLinksPopupButton" visualization-id="visualizationId"></filter-notification>
