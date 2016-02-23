@@ -23,7 +23,6 @@ angular.module('neonDemo.controllers').controller('aggregationTableController', 
 
     $scope.active.aggregation = $scope.bindings.aggregation || "count";
     $scope.active.aggregationField = {};
-    $scope.active.filter = undefined;
     $scope.active.groupField = {};
     $scope.active.limit = $scope.bindings.limit || 100;
 
@@ -151,7 +150,7 @@ angular.module('neonDemo.controllers').controller('aggregationTableController', 
         $scope.active.gridOptions.api.setRowData(data);
 
         if($scope.functions.isFilterSet() && data.length) {
-            selectRow($scope.active.filter);
+            selectRow($scope.filter);
         }
     };
 
@@ -171,7 +170,7 @@ angular.module('neonDemo.controllers').controller('aggregationTableController', 
     };
 
     $scope.functions.isFilterSet = function() {
-        return $scope.active.filter;
+        return $scope.filter;
     };
 
     $scope.functions.getFilterFields = function() {
@@ -179,11 +178,11 @@ angular.module('neonDemo.controllers').controller('aggregationTableController', 
     };
 
     $scope.functions.createNeonFilterClause = function(databaseAndTableName, fieldName) {
-        return neon.query.where(fieldName, "=", $scope.active.filter);
+        return neon.query.where(fieldName, "=", $scope.filter);
     };
 
     $scope.functions.createFilterTrayText = function() {
-        return $scope.active.filter ? $scope.active.groupField.columnName + " = " + $scope.active.filter : "";
+        return $scope.filter ? $scope.active.groupField.columnName + " = " + $scope.filter : "";
     };
 
     $scope.functions.updateFilterFromNeonFilterClause = function(neonFilter) {
@@ -193,12 +192,12 @@ angular.module('neonDemo.controllers').controller('aggregationTableController', 
     };
 
     var onAddFilter = function(value) {
-        $scope.active.filter = value;
+        $scope.filter = value;
         selectRow(value);
     };
 
     $scope.functions.onRemoveFilter = function() {
-        $scope.active.filter = undefined;
+        $scope.filter = undefined;
         $scope.active.gridOptions.api.deselectAll();
     };
 
@@ -300,7 +299,7 @@ angular.module('neonDemo.controllers').controller('aggregationTableController', 
     };
 
     $scope.getFilterData = function() {
-        return $scope.active.filter ? [$scope.active.filter] : [];
+        return $scope.filter ? [$scope.filter] : [];
     };
 
     $scope.createFilterDesc = function(value) {

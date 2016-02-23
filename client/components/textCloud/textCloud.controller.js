@@ -22,7 +22,7 @@ angular.module('neonDemo.controllers').controller('textCloudController', ['$scop
     $scope.active.limit = 40;
     $scope.active.textColor = "#111";
     $scope.active.data = [];
-    $scope.active.filters = [];
+    $scope.filters = [];
 
     $scope.functions.allowTranslation = function() {
         return true;
@@ -68,7 +68,7 @@ angular.module('neonDemo.controllers').controller('textCloudController', ['$scop
     $scope.functions.updateData = function(data) {
         if($scope.functions.isFilterSet() && $scope.active.andFilters) {
             data = data.filter(function(item) {
-                var index = _.findIndex($scope.active.filters, {
+                var index = _.findIndex($scope.filters, {
                     value: item.key
                 });
                 return index === -1;
@@ -104,7 +104,7 @@ angular.module('neonDemo.controllers').controller('textCloudController', ['$scop
     };
 
     $scope.functions.isFilterSet = function() {
-        return $scope.active.filters.length;
+        return $scope.filters.length;
     };
 
     $scope.functions.getFilterFields = function() {
@@ -112,7 +112,7 @@ angular.module('neonDemo.controllers').controller('textCloudController', ['$scop
     };
 
     $scope.functions.createNeonFilterClause = function(databaseAndTableName, fieldName) {
-        var filterClauses = $scope.active.filters.map(function(filter) {
+        var filterClauses = $scope.filters.map(function(filter) {
             return neon.query.where(fieldName, "=", filter.value);
         });
         if(filterClauses.length === 1) {
@@ -125,11 +125,11 @@ angular.module('neonDemo.controllers').controller('textCloudController', ['$scop
     };
 
     $scope.functions.createFilterTrayText = function() {
-        return (_.pluck($scope.active.filters, ($scope.active.showTranslations ? "translated" : "value"))).join(", ");
+        return (_.pluck($scope.filters, ($scope.active.showTranslations ? "translated" : "value"))).join(", ");
     };
 
     $scope.functions.updateFilterFromNeonFilterClause = function(neonFilter) {
-        $scope.active.filters = [];
+        $scope.filters = [];
         if($scope.functions.getNumberOfFilterClauses(neonFilter) === 1) {
             onAddFilter(neonFilter.filter.whereClause.rhs);
         } else {
@@ -140,7 +140,7 @@ angular.module('neonDemo.controllers').controller('textCloudController', ['$scop
     };
 
     var onAddFilter = function(value, translated) {
-        $scope.active.filters.push({
+        $scope.filters.push({
             translated: translated || value,
             value: value
         });
@@ -149,7 +149,7 @@ angular.module('neonDemo.controllers').controller('textCloudController', ['$scop
     };
 
     $scope.functions.onRemoveFilter = function() {
-        $scope.active.filters = [];
+        $scope.filters = [];
         $scope.functions.removeLinks($scope.active.dataField);
     };
 
@@ -160,7 +160,7 @@ angular.module('neonDemo.controllers').controller('textCloudController', ['$scop
      * @method addFilter
      */
     $scope.addFilter = function(value, translated) {
-        var index = _.findIndex($scope.active.filters, {
+        var index = _.findIndex($scope.filters, {
             value: value
         });
 
@@ -176,12 +176,12 @@ angular.module('neonDemo.controllers').controller('textCloudController', ['$scop
      * @method removeFilter
      */
     $scope.removeFilter = function(value) {
-        var index = _.findIndex($scope.active.filters, {
+        var index = _.findIndex($scope.filters, {
             value: value
         });
 
         if(index >= 0) {
-            $scope.active.filters.splice(index, 1);
+            $scope.filters.splice(index, 1);
             $scope.functions.removeLinks($scope.active.dataField, value);
 
             XDATA.userALE.log({
@@ -196,7 +196,7 @@ angular.module('neonDemo.controllers').controller('textCloudController', ['$scop
             });
         }
 
-        if($scope.active.filters.length) {
+        if($scope.filters.length) {
             $scope.functions.replaceFilter();
         } else {
             $scope.functions.removeFilter();
@@ -218,7 +218,7 @@ angular.module('neonDemo.controllers').controller('textCloudController', ['$scop
         });
 
         if($scope.functions.isFilterSet()) {
-            $scope.active.filters.forEach(function(filter) {
+            $scope.filters.forEach(function(filter) {
                 dataKeys.push(filter.value);
             });
         }
@@ -231,7 +231,7 @@ angular.module('neonDemo.controllers').controller('textCloudController', ['$scop
             if(index < $scope.active.data.length) {
                 $scope.active.data[index].keyTranslated = item.translatedText;
             } else {
-                $scope.active.filters[index - $scope.active.data.length].translated = item.translatedText;
+                $scope.filters[index - $scope.active.data.length].translated = item.translatedText;
             }
         });
     };
@@ -243,7 +243,7 @@ angular.module('neonDemo.controllers').controller('textCloudController', ['$scop
         });
 
         if($scope.functions.isFilterSet()) {
-            $scope.active.filters = _.map($scope.active.filters, function(filter) {
+            $scope.filters = _.map($scope.filters, function(filter) {
                 filter.translated = filter.value;
                 return filter;
             });
@@ -307,7 +307,7 @@ angular.module('neonDemo.controllers').controller('textCloudController', ['$scop
     };
 
     $scope.getFilterData = function() {
-        return $scope.active.filters.map(function(filter) {
+        return $scope.filters.map(function(filter) {
             return filter.value;
         });
     };
@@ -322,7 +322,7 @@ angular.module('neonDemo.controllers').controller('textCloudController', ['$scop
         }
 
         var text = "";
-        $scope.active.filters.forEach(function(filter) {
+        $scope.filters.forEach(function(filter) {
             if(filter.value === value) {
                 text = filter.translated || filter.value;
             }

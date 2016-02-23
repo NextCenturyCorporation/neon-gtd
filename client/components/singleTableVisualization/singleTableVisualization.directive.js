@@ -707,27 +707,19 @@ function(external, connectionService, datasetService, errorNotificationService, 
 
             /**
              * Replaces the global filter with a new filter containing the given fields and values and updates the dashboard.
-             * @param {Boolean} queryAndUpdate (Optional)
+             * @param {Boolean} shouldQueryAndUpdate (Optional)
              * @method replaceFilter
              */
-            $scope.functions.replaceFilter = function(queryAndUpdate) {
-                replaceFilter(queryAndUpdate);
-            };
-
-            var replaceFilter = function(queryAndUpdate) {
-                addFilter(queryAndUpdate);
+            $scope.functions.replaceFilter = function(shouldQueryAndUpdate) {
+                $scope.functions.addFilter(shouldQueryAndUpdate);
             };
 
             /**
              * Adds the given fields and values to the global filter and updates the dashboard.
-             * @param {Boolean} queryAndUpdate (Optional)
+             * @param {Boolean} shouldQueryAndUpdate (Optional)
              * @method addFilter
              */
-            $scope.functions.addFilter = function(queryAndUpdate) {
-                addFilter(queryAndUpdate);
-            };
-
-            var addFilter = function(queryAndUpdate) {
+            $scope.functions.addFilter = function(shouldQueryAndUpdate) {
                 XDATA.userALE.log({
                     activity: "select",
                     action: "click",
@@ -744,7 +736,7 @@ function(external, connectionService, datasetService, errorNotificationService, 
                     visName: $scope.name,
                     text: $scope.functions.createFilterTrayText()
                 }, function() {
-                    if($scope.functions.shouldQueryAfterFilter() || queryAndUpdate) {
+                    if($scope.functions.shouldQueryAfterFilter() || shouldQueryAndUpdate) {
                         doQueryAndUpdate();
                     }
                 });
@@ -930,10 +922,6 @@ function(external, connectionService, datasetService, errorNotificationService, 
              * @method logChangeAndUpdateData
              */
             $scope.functions.logChangeAndUpdateData = function(option, value, type) {
-                logChangeAndUpdateData(option, value, type);
-            };
-
-            var logChangeAndUpdateData = function(option, value, type) {
                 logChange(option, value, type);
                 if(!$scope.initializing) {
                     $scope.functions.onChangeDataOption();
@@ -1005,10 +993,6 @@ function(external, connectionService, datasetService, errorNotificationService, 
              * @method runTranslation
              */
             $scope.functions.runTranslation = function(data, translationSuccessCallback, translationFailureCallback) {
-                runTranslation(data, translationSuccessCallback, translationFailureCallback);
-            };
-
-            var runTranslation = function(data, translationSuccessCallback, translationFailureCallback) {
                 if($scope.errorMessage) {
                     errorNotificationService.hideErrorMessage($scope.errorMessage);
                     $scope.errorMessage = undefined;
@@ -1047,10 +1031,6 @@ function(external, connectionService, datasetService, errorNotificationService, 
              * @return {Object} links
              */
             $scope.functions.createLinks = function(field, value) {
-                return createLinks(field, value);
-            };
-
-            var createLinks = function(field, value) {
                 var mappings = datasetService.getMappings($scope.active.database.name, $scope.active.table.name);
                 var links = linksPopupService.createAllServiceLinkObjects(external.services, mappings, field.columnName, value);
                 var key = linksPopupService.generateKey(field, value);
@@ -1067,10 +1047,6 @@ function(external, connectionService, datasetService, errorNotificationService, 
              * @return {Object} links
              */
             $scope.functions.createLinksForData = function(type, key, data) {
-                return createLinksForData(type, key, data);
-            };
-
-            var createLinksForData = function(type, key, data) {
                 var links = [];
                 Object.keys(external.services[type].apps).forEach(function(app) {
                     links.push(linksPopupService.createServiceLinkObjectWithData(external.services[type], app, data));
@@ -1087,10 +1063,6 @@ function(external, connectionService, datasetService, errorNotificationService, 
              * @return {Array} buttons
              */
             $scope.functions.createLinkButtons = function(field, array) {
-                return createLinkButtons(field, array);
-            };
-
-            var createLinkButtons = function(field, array) {
                 var links = {};
                 var buttons = [];
 
@@ -1114,10 +1086,6 @@ function(external, connectionService, datasetService, errorNotificationService, 
              * @method removeLinks
              */
             $scope.functions.removeLinks = function(field, value) {
-                removeLinks(field, value);
-            };
-
-            var removeLinks = function(field, value) {
                 if(datasetService.isFieldValid(field) && value) {
                     linksPopupService.removeLinksForKey($scope.visualizationId, linksPopupService.generateKey(field, value));
                 } else {
@@ -1209,16 +1177,8 @@ function(external, connectionService, datasetService, errorNotificationService, 
             };
 
             /**
-             * Called by the options-menu directive.  Wrapper for createMenuText.
-             * @method optionsMenuButtonText
-             * @return {String}
-             */
-            $scope.optionsMenuButtonText = function() {
-                return $scope.functions.createMenuText();
-            };
-
-            /**
              * Creates and returns the text for the options menu button.
+             * Called by the options-menu directive.
              * @method createMenuText
              * @return {String}
              */
@@ -1227,16 +1187,8 @@ function(external, connectionService, datasetService, errorNotificationService, 
             };
 
             /**
-             * Called by the options-menu directive.  Wrapper for showMenuText.
-             * @method showOptionsMenuButtonText
-             * @return {Boolean}
-             */
-            $scope.showOptionsMenuButtonText = function() {
-                return $scope.functions.showMenuText();
-            };
-
-            /**
              * Returns whether to show the text for the options menu button.
+             * Called by the options-menu directive.
              * @method showMenuText
              * @return {Boolean}
              */

@@ -3,7 +3,7 @@
     <div class="header-container" ng-hide="bindings.hideHeader">
         <div class="title header-text pull-left" ng-bind="createTitle()" title="{{createTitle()}}"></div>
 
-        <options-menu parent-element="element" export-function="makeExportObject" button-text="optionsMenuButtonText" show-button-text="showOptionsMenuButtonText">
+        <options-menu parent-element="element" export-function="makeExportObject" button-text="functions.createMenuText" show-button-text="functions.showMenuText">
             <translation-options ng-show="translationsOn" on-translate="handleToggleTranslations"
                 from-language-change="handleChangeFromLanguage" to-language-change="handleChangeToLanguage"
                 from-language-options="languages.fromLanguageOptions" to-language-options="languages.toLanguageOptions">
