@@ -71,7 +71,6 @@ angular.module('neonDemo.directives')
              * @private
              */
             var initialize = function() {
-                $scope.instanceId = neon.widget.getInstanceId("filterBuilder");
 
                 $element.resize(resizeDateTimePickerDropdowns);
 
@@ -636,8 +635,11 @@ angular.module('neonDemo.directives')
 
             // Wait for neon to be ready, the create our messenger and intialize the view and data.
             neon.ready(function() {
-                initialize();
-                displayActiveDataset();
+                neon.widget.getInstanceId("filterBuilder", function(instanceId) {
+                    $scope.instanceId = instanceId;
+                    initialize();
+                    displayActiveDataset();
+                });
             });
         }
     };
