@@ -21,21 +21,26 @@ angular.module('neonDemo.directives').directive('filterNotification', function()
         templateUrl: 'components/filterNotification/filterNotification.html',
         transclude: true,
         scope: {
-            getFilterData: '=',
-            getFilterDesc: '=?',
-            getFilterText: '=?',
+            getData: '=',
+            getDesc: '=?',
+            getRemoveDesc: '=?',
+            getText: '=?',
             getLinksPopupKey: '=?',
             getLinksPopupJson: '=?',
-            removeFilter: '=',
+            remove: '=',
             showLinksPopupButton: '=?',
             visualizationId: '='
         },
         link: function($scope) {
-            $scope.getFilterDesc = $scope.getFilterDesc || function(value) {
+            $scope.getDesc = $scope.getDesc || function(value) {
                 return value;
             };
 
-            $scope.getFilterText = $scope.getFilterText || function(value) {
+            $scope.getRemoveDesc = $scope.getRemoveDesc || function(value) {
+                return "Delete Filter " + $scope.getDesc(value);
+            };
+
+            $scope.getText = $scope.getText || function(value) {
                 return value;
             };
         }

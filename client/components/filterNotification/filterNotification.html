@@ -1,6 +1,6 @@
-<div class="header-item filter-reset pull-right" ng-repeat="value in getFilterData()">
+<div class="header-item filter-reset pull-right" ng-repeat="value in getData()">
     <links-popup-button key="{{getLinksPopupKey(value)}}" json="{{getLinksPopupJson(value)}}" source="{{visualizationId}}" tooltip="{{value}}"
         is-disabled="{{!showLinksPoupButton}}"></links-popup-button>
-    <span class="filter-label" title="{{getFilterDesc(value)}}" ng-bind="getFilterText(value)"></span>
-    <span class="glyphicon glyphicon-remove" title="{{'Delete Filter ' + getFilterDesc(value)}}" ng-click="removeFilter(value)"></span>
+    <span class="filter-label" title="{{getDesc(value)}}" ng-bind="getText(value)"></span>
+    <span class="glyphicon glyphicon-remove" title="{{getRemoveDesc(value)}}" ng-click="remove(value)"></span>
 </div>
