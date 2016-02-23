@@ -122,7 +122,9 @@ mediators.DirectedGraphMediator = (function() {
 
             if(nodeId) {
                 var node = addNodeIfUnique(nodes, nodeId, nodeName, nodeSize);
-                node.dates.push(itemDate);
+                if(itemDate) {
+                    node.dates.push(itemDate);
+                }
                 // Add a flag using a boolean field in the data if configured to do so.  The flag defaults to false.
                 node.flag = (options.flagMode === DirectedGraphMediator.FLAG_RESULT || options.flagMode === DirectedGraphMediator.FLAG_ALL) ? nodeFlag : false;
                 mediator.maps.nodeIdsToFlags[node.id] = node.flag;
@@ -266,7 +268,9 @@ mediators.DirectedGraphMediator = (function() {
             }
         }
 
-        maps.sourcesToTargetsToLinkDates[sourceId][targetId].push(date);
+        if(date) {
+            maps.sourcesToTargetsToLinkDates[sourceId][targetId].push(date);
+        }
     };
 
     /**

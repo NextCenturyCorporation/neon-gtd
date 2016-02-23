@@ -1,0 +1,7 @@
+<div class="pull-left">
+    <label type="button" class="btn btn-default header-item" title="{{'Load ' + (active.selectedNodeIds.length ? 'Selected' : 'All')}}"
+        ng-bind="'Load ' + (active.selectedNodeIds.length ? 'Selected' : 'All')" ng-click="queryForNetworkGraph()"/>
+</div>
+
+<filter-notification get-data="getNotificationData" get-desc="createNotificationDescOrText" get-remove-desc="createNotificationRemoveDesc"
+    get-text="createNotificationDescOrText" remove="deselectAllNodesAndNetwork" visualization-id="visualizationId"></filter-notification>

@@ -13,10 +13,19 @@
 // limitations under the License.
 //
 
-.directedGraphDirective {
-    padding: 10px;
+.networkGraphDirective {
     height: 100%;
     width: 100%;
+
+    .directed-graph {
+        height: inherit;
+        width: inherit;
+
+        svg {
+            height: inherit;
+            width: inherit;
+        }
+    }
 
     .link {
       cursor: pointer;
@@ -63,8 +72,9 @@
 
 .gridster-mobile {
     .visualization-widget {
-        .directedGraphDirective {
+        .networkGraphDirective {
             height: @mobile-widget-height;
+            width: @mobile-widget-width;
         }
     }
 }

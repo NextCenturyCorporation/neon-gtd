@@ -1,0 +1,123 @@
+<div class="form-group" ng-hide="hideAdvancedOptions">
+    <label>Node Field</label>
+    <select class="form-control" ng-model="active.nodeField" ng-options="field.prettyName for field in fields" ng-required="true" ng-disabled="(fields.length == 0)" ng-change="handleChangeNodeField()">
+    </select>
+</div>
+
+<div class="form-group" ng-hide="hideAdvancedOptions">
+    <label>Name Field</label>
+    <select class="form-control" ng-model="active.nameField" ng-options="field.prettyName for field in fields" ng-required="false" ng-disabled="(fields.length == 0)" ng-change="handleChangeNameField()">
+        <option value="">None</option>
+    </select>
+</div>
+
+<div class="form-group" ng-hide="hideAdvancedOptions">
+    <label>Size Field</label>
+    <select class="form-control" ng-model="active.sizeField" ng-options="field.prettyName for field in fields" ng-required="false" ng-disabled="(fields.length == 0)" ng-change="handleChangeSizeField()">
+        <option value="">None</option>
+    </select>
+</div>
+
+<div class="form-group" ng-hide="hideAdvancedOptions">
+    <label>Linked Node(s) Field</label>
+    <select class="form-control" ng-model="active.linkedNodeField" ng-options="field.prettyName for field in fields" ng-required="false" ng-disabled="(fields.length == 0)" ng-change="handleChangeLinkedNodeField()">
+        <option value="">None</option>
+    </select>
+</div>
+
+<div class="form-group" ng-hide="hideAdvancedOptions">
+    <label>Linked Node(s) Name Field</label>
+    <select class="form-control" ng-model="active.linkedNameField" ng-options="field.prettyName for field in fields" ng-required="false" ng-disabled="(fields.length == 0)" ng-change="handleChangeLinkedNameField()">
+        <option value="">None</option>
+    </select>
+</div>
+
+<div class="form-group" ng-hide="hideAdvancedOptions">
+    <label>Linked Node(s) Size Field</label>
+    <select class="form-control" ng-model="active.linkedSizeField" ng-options="field.prettyName for field in fields" ng-required="false" ng-disabled="(fields.length == 0)" ng-change="handleChangeLinkedSizeField()">
+        <option value="">None</option>
+    </select>
+</div>
+
+<div class="form-group" ng-hide="hideAdvancedOptions">
+    <label>Date Field</label>
+    <select class="form-control" ng-model="active.dateField" ng-options="field.prettyName for field in fields" ng-required="false" ng-disabled="(fields.length == 0)" ng-change="handleChangeDateField()">
+        <option value="">None</option>
+    </select>
+</div>
+
+<div class="form-group" ng-hide="hideAdvancedOptions">
+    <label>Flag Field</label>
+    <select class="form-control" ng-model="active.flagField" ng-options="field.prettyName for field in fields" ng-required="false" ng-disabled="(fields.length == 0)" ng-change="handleChangeFlagField()">
+        <option value="">None</option>
+    </select>
+</div>
+
+<div class="form-group" ng-hide="hideAdvancedOptions">
+    <label>Text Field</label>
+    <select class="form-control" ng-model="active.textField" ng-options="field.prettyName for field in fields" ng-required="false" ng-disabled="(fields.length == 0)" ng-change="handleChangeTextField()">
+        <option value="">None</option>
+    </select>
+</div>
+
+<div class="form-group" ng-show="active.nodeField.columnName">
+    <label ng-bind="'Select ' + active.nodeField.prettyName"></label>
+    <div class="input-group">
+        <input type="text" class="form-control" placeholder="{{'Enter ' + active.nodeField.prettyName + '...'}}" ng-model="active.selectedNodeId" ng-disabled="!(active.nodeField)">
+        <div class="input-group-btn">
+            <button type="button" class="btn btn-default refresh" title="Select Node" ng-click="selectNodeAndNetworkFromNodeId()">
+                <span class="glyphicon glyphicon-plus"></span>
+            </button>
+        </div>
+    </div>
+
+    <div class="input-group">
+        <select class="form-control" ng-model="active.selectedNodeId" ng-options="nodeId for nodeId in active.existingNodeIds track by nodeId" ng-required="false" ng-disabled="(active.existingNodeIds.length == 0) || !(active.nodeField)" ng-change="selectNodeAndNetworkFromNodeId()">
+            <option value="" ng-bind="'Select ' + active.nodeField.prettyName + '...'"></option>
+        </select>
+        <div class="input-group-btn">
+            <button type="button" class="btn btn-default refresh" title="Refresh Node List" ng-click="queryForNodeList()">
+                <span class="glyphicon glyphicon-refresh"></span>
+            </button>
+        </div>
+    </div>
+</div>
+
+<div class="form-group">
+    <label>Data Limit</label>
+    <div class="input-group">
+        <input type="number" min="1" class="form-control" ng-model="active.limit" required>
+        <div class="input-group-btn">
+            <button type="button" class="btn btn-default refresh" title="Refresh" ng-click="handleChangeLimit()">
+                <span class="glyphicon glyphicon-refresh"></span>
+            </button>
+        </div>
+    </div>
+</div>
+
+<div class="form-group">
+    <label>Single-Link & Unlinked Networks</label>
+    <div class="btn-group">
+        <label class="btn btn-default" ng-class="{true: 'active', false: ''}[active.hideSimpleNetworks]" title="Hide Single-Link Networks and Unlinked Nodes">
+            <input type="radio" style="display:none" ng-model="active.hideSimpleNetworks" ng-value="true" ng-change="handleToggleHideSimpleNetworks"()/>Hide
+        </label>
+        <label class="btn btn-default" ng-class="{true: '', false: 'active'}[active.hideSimpleNetworks]" title="Show Single-Link Networks and Unlinked Nodes">
+            <input type="radio" style="display:none" ng-model="active.hideSimpleNetworks" ng-value="false" ng-change="handleToggleHideSimpleNetworks()"/>Show
+        </label>
+    </div>
+    <div class="clearfix"></div>
+</div>
+
+<div class="form-group">
+    <label>Cluster Leaf & Unlinked Nodes</label>
+    <div class="btn-group">
+        <label class="btn btn-default" ng-class="{true: 'active', false: ''}[active.clusterNodes]" title="Cluster Leaf Nodes and Unlinked Nodes">
+            <input type="radio" style="display:none" ng-model="active.clusterNodes" ng-value="true" ng-change="handleToggleClusterNodes()"/>On
+        </label>
+        <label class="btn btn-default" ng-class="{true: '', false: 'active'}[active.clusterNodes]" title="Dont' Cluster Leaf Nodes and Unlinked Nodes">
+            <input type="radio" style="display:none" ng-model="active.clusterNodes" ng-value="false" ng-change="handleToggleClusterNodes()"/>Off
+        </label>
+    </div>
+    <div class="clearfix"></div>
+</div>
+

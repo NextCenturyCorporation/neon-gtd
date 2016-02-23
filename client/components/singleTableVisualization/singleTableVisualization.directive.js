@@ -217,6 +217,7 @@ function(external, connectionService, datasetService, errorNotificationService, 
                     headersHeight += $(this).outerHeight(true);
                 });
                 $("#" + $scope.visualizationId).height($scope.element.height() - headersHeight);
+                $("#" + $scope.visualizationId).width($scope.element.width());
                 $scope.functions.onResize($scope.element.height(), $scope.element.width(), headersHeight);
             };
 

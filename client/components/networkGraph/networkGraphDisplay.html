@@ -1,0 +1,13 @@
+<div class="directed-graph"></div>
+
+<div class="clearfix"></div>
+
+<div class="header-container legend" ng-show="(active.legend.length > 0)">
+    <span class="legend-item" title="Legend">
+        <span class="legend-text">Legend:</span>
+    </span>
+    <span class="legend-item" ng-repeat="item in active.legend" ng-show="(item.display ? item.display() : true)" title="{{item.label}}">
+        <span class="legend-icon" style="background-color: {{item.color}};"></span>
+        <span class="legend-text" ng-bind="item.label"></span>
+    </span>
+</div>
