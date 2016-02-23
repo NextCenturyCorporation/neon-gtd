@@ -117,7 +117,7 @@ function(external, connectionService, datasetService, errorNotificationService, 
 
                 $scope.exportId = exportService.register($scope.makeExportObject);
                 themeService.registerListener($scope.visualizationId, handleThemeChangedEvent);
-                visualizationService.register($scope.stateId, getBindingFields);
+                visualizationService.register($scope.stateId, getBindings);
 
                 if($scope.functions.allowTranslation() && translationService.hasKey()) {
                     $scope.translationsOn = true;
@@ -822,23 +822,23 @@ function(external, connectionService, datasetService, errorNotificationService, 
             };
 
             /**
-             * Creates and returns an object that contains all the binding fields needed to recreate this visualization's state.
+             * Creates and returns an object that contains all the bindings needed to recreate this visualization's state.
              * @return {Object}
-             * @method getBindingFields
+             * @method getBindings
              * @private
              */
-            var getBindingFields = function() {
-                var bindingFields = {};
+            var getBindings = function() {
+                var hasUnsharedFilter = datasetService.isFieldValid($scope.active.unsharedFilterField) && $scope.active.unsharedFilterValue;
 
-                // TODO Update to use the new binding system.
-                bindingFields["bind-database"] = ($scope.active.database && $scope.active.database.name) ? "'" + $scope.active.database.name + "'" : undefined;
-                bindingFields["bind-filter-field"] = datasetService.isFieldValid($scope.active.unsharedFilterField) ? "'" + $scope.active.unsharedFilterField.columnName + "'" : undefined;
-                var hasFilterValue = datasetService.isFieldValid($scope.active.unsharedFilterField) && $scope.active.unsharedFilterValue;
-                bindingFields["bind-filter-value"] = hasFilterValue ? "'" + $scope.active.unsharedFilterValue + "'" : undefined;
-                bindingFields["bind-table"] = ($scope.active.table && $scope.active.table.name) ? "'" + $scope.active.table.name + "'" : undefined;
-                bindingFields["bind-title"] = "'" + $scope.createTitle() + "'";
+                var bindings = {
+                    database: ($scope.active.database && $scope.active.database.name) ? $scope.active.database.name : undefined,
+                    unsharedFilterField: hasUnsharedFilter ? $scope.active.unsharedFilterField.columnName : undefined,
+                    unsharedFilterValue: hasUnsharedFilter ? $scope.active.unsharedFilterValue : undefined,
+                    table: ($scope.active.table && $scope.active.table.name) ? $scope.active.table.name : undefined,
+                    title: $scope.createTitle()
+                };
 
-                return $scope.functions.addToBindings(bindingFields);
+                return $scope.functions.addToBindings(bindings);
             };
 
             /**

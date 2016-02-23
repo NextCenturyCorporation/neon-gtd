@@ -312,12 +312,11 @@ angular.module('neonDemo.controllers').controller('aggregationTableController', 
     };
 
     $scope.functions.addToBindings = function(bindings) {
-        // TODO Update to use the new binding system.
-        bindings["bind-aggregation"] = $scope.active.aggregation ? "'" + $scope.active.aggregation + "'" : undefined;
-        var hasAggField = $scope.active.aggregation && $scope.active.aggregation !== 'count' && $scope.active.aggregationField && $scope.active.aggregationField.columnName;
-        bindings["bind-aggregation-field"] = hasAggField ? "'" + $scope.active.aggregationField.columnName + "'" : undefined;
-        bindings["bind-group-field"] = ($scope.active.groupField && $scope.active.groupField.columnName) ? "'" + $scope.active.groupField.columnName + "'" : undefined;
-        bindings["bind-limit"] = $scope.active.limit;
+        bindings.aggregation = $scope.active.aggregation || undefined;
+        var hasAggField = $scope.active.aggregation && $scope.active.aggregation !== 'count' && $scope.functions.isFieldValid($scope.active.aggregationField);
+        bindings.aggregationField = hasAggField ? $scope.active.aggregationField.columnName : undefined;
+        bindings.groupField = $scope.functions.isFieldValid($scope.active.groupField) ? $scope.active.groupField.columnName : undefined;
+        bindings.limit = $scope.active.limit;
         return bindings;
     };
 }]);

@@ -20,7 +20,7 @@ angular.module('neonDemo.controllers').controller('scatterPlotController', ['$sc
     $scope.backgroundColor = "#fff";
     $scope.textColor = "#777";
 
-    $scope.active.type = $scope.bindings.graphType;
+    $scope.active.type = $scope.bindings.type;
     $scope.active.limit = $scope.bindings.limit;
 
     // TODO Add scattergl once bugs are fixed in the plotly library.
@@ -329,12 +329,11 @@ angular.module('neonDemo.controllers').controller('scatterPlotController', ['$sc
     };
 
     $scope.functions.addToBindings = function(bindings) {
-        // TODO
-        bindings["graph-type"] = $scope.active.type ? "'" + $scope.active.type + "'" : undefined;
-        bindings["sub-type"] = ($scope.bindings.subType || 'markers');
-        bindings["bind-limit"] = $scope.active.limit ? "'" + $scope.active.limit + "'" : undefined;
-        bindings["bind-x-axis-field"] = ($scope.active.xAxisField && $scope.active.xAxisField.columnName) ? "'" + $scope.active.xAxisField.columnName + "'" : undefined;
-        bindings["bind-y-axis-field"] = ($scope.active.yAxisField && $scope.active.yAxisField.columnName) ? "'" + $scope.active.yAxisField.columnName + "'" : undefined;
+        bindings.type = $scope.active.type || undefined;
+        bindings.subType = $scope.bindings.subType || undefined;
+        bindings.limit = $scope.active.limit || undefined;
+        bindings.xAxisField = $scope.functions.isFieldValid($scope.active.xAxisField) ? $scope.active.xAxisField.columnName : undefined;
+        bindings.yAxisField = $scope.functions.isFieldValid($scope.active.yAxisField) ? $scope.active.yAxisField.columnName : undefined;
         return bindings;
     };
 

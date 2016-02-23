@@ -203,8 +203,7 @@ angular.module('neonDemo.controllers').controller('opsClockController', ['$scope
     };
 
     $scope.functions.addToBindings = function(bindings) {
-        // TODO
-        bindings["bind-date-field"] = ($scope.active.dateField && $scope.active.dateField.columnName) ? "'" + $scope.active.dateField.columnName + "'" : undefined;
+        bindings.dateField = $scope.functions.isFieldValid($scope.active.dateField) ? $scope.active.dateField.columnName : undefined;
         return bindings;
     };
 }]);

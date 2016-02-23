@@ -338,10 +338,10 @@ angular.module('neonDemo.controllers').controller('dataTableController', ['$scop
     };
 
     $scope.functions.addToBindings = function(bindings) {
-        bindings["bind-id-field"] = $scope.bindings.idField ? "'" + $scope.bindings.idField + "'" : undefined;
-        bindings["bind-sort-field"] = ($scope.active.sortByField && $scope.active.sortByField.columnName) ? "'" + $scope.active.sortByField.columnName + "'" : undefined;
-        bindings["bind-sort-direction"] = $scope.active.sortDirection;
-        bindings["bind-limit"] = $scope.active.limit;
+        bindings.idField = $scope.bindings.idField || undefined;
+        bindings.sortField = $scope.functions.isFieldValid($scope.active.sortByField) ? $scope.active.sortByField.columnName : undefined;
+        bindings.sortDirection = $scope.active.sortDirection;
+        bindings.limit = $scope.active.limit;
         return bindings;
     };
 

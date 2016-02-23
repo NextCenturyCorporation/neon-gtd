@@ -275,8 +275,7 @@ angular.module('neonDemo.controllers').controller('textCloudController', ['$scop
     };
 
     $scope.functions.addToBindings = function(bindings) {
-        // TODO Update to use the new binding system.
-        bindings["bind-data-field"] = ($scope.active.dataField && $scope.active.dataField.columnName) ? "'" + $scope.active.dataField.columnName + "'" : undefined;
+        bindings.dataField = $scope.functions.isFieldValid($scope.active.dataField) ? $scope.active.dataField.columnName : undefined;
         return bindings;
     };
 

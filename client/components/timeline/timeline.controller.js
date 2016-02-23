@@ -1172,9 +1172,8 @@ angular.module('neonDemo.controllers').controller('timelineController', ['$scope
     };
 
     $scope.functions.addToBindings = function(bindings) {
-        // TODO
-        bindings["bind-date-field"] = ($scope.active.dateField && $scope.active.dateField.columnName) ? "'" + $scope.active.dateField.columnName + "'" : undefined;
-        bindings["bind-granularity"] = $scope.active.granularity ? "'" + $scope.active.granularity + "'" : undefined;
+        bindings.dateField = $scope.functions.isFieldValid($scope.active.dateField) ? $scope.active.dateField.columnName : undefined;
+        bindings.granularity = $scope.active.granularity || undefined;
         return bindings;
     };
 

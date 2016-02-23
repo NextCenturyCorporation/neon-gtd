@@ -492,13 +492,12 @@ angular.module('neonDemo.controllers').controller('newsFeedController', ['$scope
     };
 
     $scope.functions.addToBindings = function(bindings) {
-        // TODO
-        bindings["bind-primary-title-field"] = ($scope.active.primaryTitleField && $scope.active.primaryTitleField.columnName) ? "'" + $scope.active.primaryTitleField.columnName + "'" : undefined;
-        bindings["bind-secondary-title-field"] = ($scope.active.secondaryTitleField && $scope.active.secondaryTitleField.columnName) ? "'" + $scope.active.secondaryTitleField.columnName + "'" : undefined;
-        bindings["bind-date-field"] = ($scope.active.dateField && $scope.active.dateField.columnName) ? "'" + $scope.active.dateField.columnName + "'" : undefined;
-        bindings["bind-content-field"] = ($scope.active.contentField && $scope.active.contentField.columnName) ? "'" + $scope.active.contentField.columnName + "'" : undefined;
-        bindings["bind-feed-name"] = $scope.feedName ? "'" + $scope.feedName + "'" : undefined;
-        bindings["bind-feed-type"] = $scope.active.feedType ? "'" + $scope.active.feedType + "'" : undefined;
+        bindings.primaryTitleField = $scope.functions.isFieldValid($scope.active.primaryTitleField) ? $scope.active.primaryTitleField.columnName : undefined;
+        bindings.secondaryTitleField = $scope.functions.isFieldValid($scope.active.secondaryTitleField) ? $scope.active.secondaryTitleField.columnName : undefined;
+        bindings.dateField = $scope.functions.isFieldValid($scope.active.dateField) ? $scope.active.dateField.columnName : undefined;
+        bindings.contentField = $scope.functions.isFieldValid($scope.active.contentField) ? $scope.active.contentField.columnName : undefined;
+        bindings.feedName = $scope.feedName || undefined;
+        bindings.feedType = $scope.active.feedType || undefined;
         return bindings;
     };
 

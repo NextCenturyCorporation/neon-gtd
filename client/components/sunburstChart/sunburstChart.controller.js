@@ -179,11 +179,11 @@ angular.module('neonDemo.controllers').controller('sunburstChartController', ['$
     };
 
     $scope.functions.addToBindings = function(bindings) {
-        bindings["bind-group-fields"] = $scope.active.groupFields.length ? "'" + _.map($scope.active.groupFields, function(field) {
+        bindings.groupFields = $scope.active.groupFields.length ? _.map($scope.active.groupFields, function(field) {
             return field.columnName;
-        }).join(",") + "'" : undefined;
-        bindings["bind-value-field"] = ($scope.options.valueField && $scope.options.valueField.columnName) ? "'" + $scope.options.valueField.columnName + "'" : undefined;
-        bindings["bind-arc-value"] = ($scope.active.arcValue) ? "'" + $scope.active.arcValue + "'" : undefined;
+        }).join(",") : undefined;
+        bindings.valueField = $scope.functions.isFieldValid($scope.active.valueField) ? $scope.active.valueField.columnName : undefined;
+        bindings.arcValue = $scope.active.arcValue || undefined;
         return bindings;
     };
 }]);

@@ -119,28 +119,20 @@ angular.module('neonDemo.controllers').controller('networkGraphController', ['$s
         $scope.active.linkedNameField = $scope.functions.findFieldObject("linkedNameField", neonMappings.GRAPH_LINKED_NODE_NAME);
         $scope.active.linkedSizeField = $scope.functions.findFieldObject("linkedSizeField", neonMappings.GRAPH_LINKED_NODE_SIZE);
 
-        updateGraphDataMappings();
         $scope.active.selectedNodeIds = [];
-    };
 
-    /**
-     * Updates the options in the visualization using the graph data mappings in the selected database/table.
-     * @method updateGraphDataMappings
-     * @private
-     */
-    var updateGraphDataMappings = function() {
-        $scope.active.flagMode = $scope.functions.getMapping(neonMappings.GRAPH_FLAG_MODE) || "";
+        $scope.active.flagMode = $scope.bindings.flagMode || $scope.functions.getMapping(neonMappings.GRAPH_FLAG_MODE) || "";
 
         $scope.tooltip = {
-            idLabel: $scope.functions.getMapping(neonMappings.GRAPH_TOOLTIP_ID_LABEL) || "",
-            dataLabel: $scope.functions.getMapping(neonMappings.GRAPH_TOOLTIP_DATA_LABEL) || "",
-            nameLabel: $scope.functions.getMapping(neonMappings.GRAPH_TOOLTIP_NAME_LABEL) || "",
-            sizeLabel: $scope.functions.getMapping(neonMappings.GRAPH_TOOLTIP_SIZE_LABEL) || "",
-            flagLabel: $scope.functions.getMapping(neonMappings.GRAPH_TOOLTIP_FLAG_LABEL) || "",
-            sourceNameLabel: $scope.functions.getMapping(neonMappings.GRAPH_TOOLTIP_SOURCE_NAME_LABEL) || "",
-            targetNameLabel: $scope.functions.getMapping(neonMappings.GRAPH_TOOLTIP_TARGET_NAME_LABEL) || "",
-            sourceSizeLabel: $scope.functions.getMapping(neonMappings.GRAPH_TOOLTIP_SOURCE_SIZE_LABEL) || "",
-            targetSizeLabel: $scope.functions.getMapping(neonMappings.GRAPH_TOOLTIP_TARGET_SIZE_LABEL) || ""
+            idLabel: $scope.bindings.tooltipIdLabel || $scope.functions.getMapping(neonMappings.GRAPH_TOOLTIP_ID_LABEL) || "",
+            dataLabel: $scope.bindings.tooltipDateLabel || $scope.functions.getMapping(neonMappings.GRAPH_TOOLTIP_DATA_LABEL) || "",
+            nameLabel: $scope.bindings.tooltipNameLabel || $scope.functions.getMapping(neonMappings.GRAPH_TOOLTIP_NAME_LABEL) || "",
+            sizeLabel: $scope.bindings.tooltipSizeLabel || $scope.functions.getMapping(neonMappings.GRAPH_TOOLTIP_SIZE_LABEL) || "",
+            flagLabel: $scope.bindings.tooltipFlagLabel || $scope.functions.getMapping(neonMappings.GRAPH_TOOLTIP_FLAG_LABEL) || "",
+            sourceNameLabel: $scope.bindings.tooltipSourceNameLabel || $scope.functions.getMapping(neonMappings.GRAPH_TOOLTIP_SOURCE_NAME_LABEL) || "",
+            targetNameLabel: $scope.bindings.tooltipTargetNameLabel || $scope.functions.getMapping(neonMappings.GRAPH_TOOLTIP_TARGET_NAME_LABEL) || "",
+            sourceSizeLabel: $scope.bindings.tooltipSourceSizeLabel || $scope.functions.getMapping(neonMappings.GRAPH_TOOLTIP_SOURCE_SIZE_LABEL) || "",
+            targetSizeLabel: $scope.bindings.tooltipTargetSizeLabel || $scope.functions.getMapping(neonMappings.GRAPH_TOOLTIP_TARGET_SIZE_LABEL) || ""
         };
     };
 
@@ -502,71 +494,27 @@ angular.module('neonDemo.controllers').controller('networkGraphController', ['$s
     };
 
     $scope.functions.addToBindings = function(bindings) {
-        // TODO
-        bindings["bind-feed-name"] = $scope.bindFeedName ? "'" + $scope.bindFeedName + "'" : undefined;
-        bindings["bind-feed-type"] = $scope.bindFeedType ? "'" + $scope.bindFeedType + "'" : undefined;
-
-        /*
-        if($scope.options.nodeField && $scope.options.nodeField.columnName) {
-            datasetService.setMapping($scope.options.database.name, $scope.options.table.name, neonMappings.GRAPH_NODE, $scope.options.nodeField.columnName);
-        }
-        if($scope.options.nameField && $scope.options.nameField.columnName) {
-            datasetService.setMapping($scope.options.database.name, $scope.options.table.name, neonMappings.GRAPH_NODE_NAME, $scope.options.nameField.columnName);
-        }
-        if($scope.options.sizeField && $scope.options.sizeField.columnName) {
-            datasetService.setMapping($scope.options.database.name, $scope.options.table.name, neonMappings.GRAPH_NODE_SIZE, $scope.options.sizeField.columnName);
-        }
-        if($scope.options.linkedNodeField && $scope.options.linkedNodeField.columnName) {
-            datasetService.setMapping($scope.options.database.name, $scope.options.table.name, neonMappings.GRAPH_LINKED_NODE, $scope.options.linkedNodeField.columnName);
-        }
-        if($scope.options.linkedNameField && $scope.options.linkedNameField.columnName) {
-            datasetService.setMapping($scope.options.database.name, $scope.options.table.name, neonMappings.GRAPH_LINKED_NODE_NAME, $scope.options.linkedNameField.columnName);
-        }
-        if($scope.options.linkedSizeField && $scope.options.linkedSizeField.columnName) {
-            datasetService.setMapping($scope.options.database.name, $scope.options.table.name, neonMappings.GRAPH_LINKED_NODE_SIZE, $scope.options.linkedSizeField.columnName);
-        }
-        if($scope.options.flagField && $scope.options.flagField.columnName) {
-            datasetService.setMapping($scope.options.database.name, $scope.options.table.name, neonMappings.GRAPH_FLAG, $scope.options.flagField.columnName);
-        }
-        if($scope.options.dateField && $scope.options.dateField.columnName) {
-            datasetService.setMapping($scope.options.database.name, $scope.options.table.name, neonMappings.DATE, $scope.options.dateField.columnName);
-        }
-        if($scope.options.textField && $scope.options.textField.columnName) {
-            datasetService.setMapping($scope.options.database.name, $scope.options.table.name, neonMappings.NEWSFEED_TEXT, $scope.options.textField.columnName);
-        }
-
-        if($scope.options.flagMode) {
-            datasetService.setMapping($scope.options.database.name, $scope.options.table.name, neonMappings.GRAPH_FLAG_MODE, $scope.options.flagMode);
-        }
-        if($scope.tooltip.idLabel && $scope.tooltip.idLabel.columnName) {
-            datasetService.setMapping($scope.options.database.name, $scope.options.table.name, neonMappings.GRAPH_TOOLTIP_ID_LABEL, $scope.tooltip.idLabel.columnName);
-        }
-        if($scope.tooltip.dataLabel && $scope.tooltip.dataLabel.columnName) {
-            datasetService.setMapping($scope.options.database.name, $scope.options.table.name, neonMappings.GRAPH_TOOLTIP_DATA_LABEL, $scope.tooltip.dataLabel.columnName);
-        }
-        if($scope.tooltip.nameLabel && $scope.tooltip.nameLabel.columnName) {
-            datasetService.setMapping($scope.options.database.name, $scope.options.table.name, neonMappings.GRAPH_TOOLTIP_NAME_LABEL, $scope.tooltip.nameLabel.columnName);
-        }
-        if($scope.tooltip.sizeLabel && $scope.tooltip.sizeLabel.columnName) {
-            datasetService.setMapping($scope.options.database.name, $scope.options.table.name, neonMappings.GRAPH_TOOLTIP_SIZE_LABEL, $scope.tooltip.sizeLabel.columnName);
-        }
-        if($scope.tooltip.flagLabel && $scope.tooltip.flagLabel.columnName) {
-            datasetService.setMapping($scope.options.database.name, $scope.options.table.name, neonMappings.GRAPH_TOOLTIP_FLAG_LABEL, $scope.tooltip.flagLabel.columnName);
-        }
-        if($scope.tooltip.sourceNameLabel && $scope.tooltip.sourceNameLabel.columnName) {
-            datasetService.setMapping($scope.options.database.name, $scope.options.table.name, neonMappings.GRAPH_TOOLTIP_SOURCE_NAME_LABEL, $scope.tooltip.sourceNameLabel.columnName);
-        }
-        if($scope.tooltip.targetNameLabel && $scope.tooltip.targetNameLabel.columnName) {
-            datasetService.setMapping($scope.options.database.name, $scope.options.table.name, neonMappings.GRAPH_TOOLTIP_TARGET_NAME_LABEL, $scope.tooltip.targetNameLabel.columnName);
-        }
-        if($scope.tooltip.sourceSizeLabel && $scope.tooltip.sourceSizeLabel.columnName) {
-            datasetService.setMapping($scope.options.database.name, $scope.options.table.name, neonMappings.GRAPH_TOOLTIP_SOURCE_SIZE_LABEL, $scope.tooltip.sourceSizeLabel.columnName);
-        }
-        if($scope.tooltip.targetSizeLabel && $scope.tooltip.targetSizeLabel.columnName) {
-            datasetService.setMapping($scope.options.database.name, $scope.options.table.name, neonMappings.GRAPH_TOOLTIP_TARGET_SIZE_LABEL, $scope.tooltip.targetSizeLabel.columnName);
-        }
-        */
-
+        bindings.feedName = $scope.bindFeedName ? $scope.bindFeedName : undefined;
+        bindings.feedType = $scope.bindFeedType ? $scope.bindFeedType : undefined;
+        bindings.nodeField = $scope.functions.isFieldValid($scope.active.nodeField) ? $scope.active.nodeField : undefined;
+        bindings.nameField = $scope.functions.isFieldValid($scope.active.nameField) ? $scope.active.nameField : undefined;
+        bindings.sizeField = $scope.functions.isFieldValid($scope.active.sizeField) ? $scope.active.sizeField : undefined;
+        bindings.dateField = $scope.functions.isFieldValid($scope.active.dateField) ? $scope.active.dateField : undefined;
+        bindings.flagField = $scope.functions.isFieldValid($scope.active.flagField) ? $scope.active.flagField : undefined;
+        bindings.textField = $scope.functions.isFieldValid($scope.active.textField) ? $scope.active.textField : undefined;
+        bindings.linkedNodeField = $scope.functions.isFieldValid($scope.active.linkedNodeField) ? $scope.active.linkedNodeField : undefined;
+        bindings.linkedNameField = $scope.functions.isFieldValid($scope.active.linkedNameField) ? $scope.active.linkedNameField : undefined;
+        bindings.linkedSizeField = $scope.functions.isFieldValid($scope.active.linkedSizeField) ? $scope.active.linkedSizeField : undefined;
+        bindings.flagMode = $scope.active.flagMode || undefined;
+        bindings.tooltipIdLabel = $scope.tooltip.idLabel || undefined;
+        bindings.tooltipDataLabel = $scope.tooltip.dataLabel || undefined;
+        bindings.tooltipNameLabel = $scope.tooltip.nameLabel || undefined;
+        bindings.tooltipSizeLabel = $scope.tooltip.sizeLabel || undefined;
+        bindings.tooltipFlagLabel = $scope.tooltip.flagLabel || undefined;
+        bindings.tooltipSourceNameLabel = $scope.tooltip.sourceNameLabel || undefined;
+        bindings.tooltipTargetNameLabel = $scope.tooltip.targetNameLabel || undefined;
+        bindings.tooltipSourceSizeLabel = $scope.tooltip.sourceSizeLabel || undefined;
+        bindings.tooltipTargetSizeLabel = $scope.tooltip.targetSizeLabel || undefined;
         return bindings;
     };
 }]);
