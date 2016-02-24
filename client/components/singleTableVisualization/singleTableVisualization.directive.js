@@ -422,11 +422,12 @@ function(external, connectionService, datasetService, errorNotificationService, 
             };
 
             /**
-             * Updates the data and display for this visualization.  Clears the display if the data array is empty.
+             * Updates the data and display for this visualization.  Clears the display if the data array is empty or reset is true.
              * @param {Array} data
+             * @param {Boolean} reset
              * @method updateData
              */
-            $scope.functions.updateData = function(data) {
+            $scope.functions.updateData = function() {
                 // Do nothing by default.
             };
 
@@ -456,7 +457,7 @@ function(external, connectionService, datasetService, errorNotificationService, 
                 var updateDataFunction = updateDataCallback || $scope.functions.updateData;
 
                 // Clear the display.
-                updateDataFunction([]);
+                updateDataFunction([], true);
 
                 var connection = connectionService.getActiveConnection();
 
@@ -540,7 +541,7 @@ function(external, connectionService, datasetService, errorNotificationService, 
                         });
 
                         $scope.$apply(function() {
-                            updateDataFunction([]);
+                            updateDataFunction([], true);
                         });
 
                         // See if the error response contains a Neon notification to show through the Error Notification Service.
@@ -1154,6 +1155,16 @@ function(external, connectionService, datasetService, errorNotificationService, 
              */
             $scope.functions.getUnsortedFields = function() {
                 return datasetService.getFields($scope.active.database.name, $scope.active.table.name);
+            };
+
+            /**
+             * Returns the color maps for the given field object.
+             * @param {Object} field
+             * @method getColorMaps
+             * @return {Object}
+             */
+            $scope.functions.getColorMaps = function(field) {
+                return datasetService.getActiveDatasetColorMaps($scope.active.database.name, $scope.active.table.name, field.columnName);
             };
 
             /**

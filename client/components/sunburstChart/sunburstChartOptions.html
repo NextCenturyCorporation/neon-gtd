@@ -7,7 +7,14 @@
 
 <div class="form-group">
     <label>Add a Ring</label>
-    <select class="form-control" ng-model="active.addField" ng-disabled="!(fields.length > 0)" ng-options="field.prettyName for field in fields" ng-change="handleAddGroup()">
-        <option value="">Add a Ring</option>
-    </select>
+    <div class="input-group">
+        <select class="form-control" ng-model="active.addField" ng-disabled="!(fields.length > 0)" ng-options="field.prettyName for field in fields">
+            <option value="">Add a Ring</option>
+        </select>
+        <div class="input-group-btn">
+            <button type="button" class="btn btn-default refresh" title="Add a Ring" ng-click="handleAddGroup()">
+                <span class="glyphicon glyphicon-plus"></span>
+            </button>
+        </div>
+    </div>
 </div>

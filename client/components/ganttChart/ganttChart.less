@@ -13,10 +13,14 @@
 // limitations under the License.
 //
 
-.gantt-chart-directive {
+.ganttChartDirective {
     height: 100%;
-    overflow: scroll;
-    padding: 10px;
+    width: 100%;
+
+    .gantt-chart {
+        height: inherit;
+        overflow: auto;
+    }
 
     .gantt-column-header {
         color: @main-text-color;
@@ -31,7 +35,7 @@
 
 .gridster-mobile {
     .visualization-widget {
-        .gantt-chart-directive {
+        .ganttChartDirective {
             height: @mobile-widget-height;
             width: @mobile-widget-width;
         }
