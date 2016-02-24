@@ -36,10 +36,9 @@ angular.module('neonDemo.directives')
         templateUrl: 'components/map/map.html',
         restrict: 'EA',
         scope: {
-            bindConfig: '=?',
-            bindStateId: '=',
-            hideHeader: '=?',
-            hideAdvancedOptions: '=?'
+            bindings: '=',
+            stateId: '@',
+            visualizationId: '@'
         },
         link: function($scope, $element) {
             $element.addClass('map-container');
@@ -128,9 +127,7 @@ angular.module('neonDemo.directives')
                 }
             };
 
-            // Setup our map.
-            $scope.mapId = uuid();
-            $element.append('<div id="' + $scope.mapId + '" class="map"></div>');
+            $element.append('<div id="' + $scope.visualizationId + '" class="map"></div>');
 
             /**
              * Returns the list of tables for which we currently have layers.
@@ -207,7 +204,7 @@ angular.module('neonDemo.directives')
             var initialize = function() {
                 var datasetOptions = datasetService.getActiveDatasetOptions();
                 $scope.options.baseLayerColor = (datasetOptions && datasetOptions.mapBaseLayer ? datasetOptions.mapBaseLayer.color : undefined) || "light";
-                $scope.map = new coreMap.Map($scope.mapId, {
+                $scope.map = new coreMap.Map($scope.visualizationId, {
                     responsive: false,
                     mapBaseLayer: (datasetOptions ? datasetOptions.mapBaseLayer : undefined) || {},
                     getNestedValue: $scope.helpers.getNestedValue,
@@ -233,13 +230,13 @@ angular.module('neonDemo.directives')
 
                 $scope.exportID = exportService.register($scope.makeMapExportObject);
 
-                visualizationService.register($scope.bindStateId, bindFields);
+                visualizationService.register($scope.stateId, bindFields);
 
                 $scope.linkyConfig = datasetService.getLinkyConfig();
 
                 $scope.messenger.subscribe('date_selected', onDateSelected);
 
-                themeService.registerListener($scope.mapId, onThemeChanged);
+                themeService.registerListener($scope.visualizationId, onThemeChanged);
 
                 $element.find('.legend-container .legend').on({
                     "shown.bs.dropdown": function() {
@@ -265,7 +262,7 @@ angular.module('neonDemo.directives')
                         tags: ["remove", "map"]
                     });
 
-                    linksPopupService.deleteLinks($scope.mapId);
+                    linksPopupService.deleteLinks($scope.visualizationId);
                     $scope.options.layers.forEach(function(layer) {
                         linksPopupService.deleteLinks(generatePointLinksSource(layer.database, layer.table));
                     });
@@ -276,8 +273,8 @@ angular.module('neonDemo.directives')
                         $scope.clearFilters();
                     }
                     exportService.unregister($scope.exportID);
-                    visualizationService.unregister($scope.bindStateId);
-                    themeService.unregisterListener($scope.mapId);
+                    visualizationService.unregister($scope.stateId);
+                    themeService.unregisterListener($scope.visualizationId);
                 });
 
                 // Handle toggling map caching.
@@ -341,7 +338,7 @@ angular.module('neonDemo.directives')
                             linkData[neonMappings.BOUNDS][neonMappings.MAX_LON] = $scope.extent.maximumLongitude;
                             boundsLinks.push(linksPopupService.createServiceLinkObjectWithData(external.services.bounds, app, linkData));
                         });
-                        linksPopupService.addLinks($scope.mapId, $scope.getBoundsKeyForLinksPopupButton(), boundsLinks);
+                        linksPopupService.addLinks($scope.visualizationId, $scope.getBoundsKeyForLinksPopupButton(), boundsLinks);
                         $scope.linksPopupButtonIsDisabled = !boundsLinks.length;
                     }
 
@@ -625,7 +622,7 @@ angular.module('neonDemo.directives')
 
             var cloneDatasetLayersConfig = function() {
                 var mapLayers = [];
-                datasetService.getMapLayers($scope.bindConfig).forEach(function(mapLayer) {
+                datasetService.getMapLayers($scope.bindings.config).forEach(function(mapLayer) {
                     mapLayers.push(setDefaultLayerProperties(_.clone(mapLayer)));
                 });
                 return mapLayers;
@@ -804,7 +801,7 @@ angular.module('neonDemo.directives')
                             linkData[neonMappings.BOUNDS][neonMappings.MAX_LON] = $scope.extent.maximumLongitude;
                             boundsLinks.push(linksPopupService.createServiceLinkObjectWithData(external.services.bounds, app, linkData));
                         });
-                        linksPopupService.addLinks($scope.mapId, $scope.getBoundsKeyForLinksPopupButton(), boundsLinks);
+                        linksPopupService.addLinks($scope.visualizationId, $scope.getBoundsKeyForLinksPopupButton(), boundsLinks);
                         $scope.linksPopupButtonIsDisabled = !boundsLinks.length;
                     }
 
@@ -1016,7 +1013,7 @@ angular.module('neonDemo.directives')
              * @return {String}
              */
             var generatePointLinksSource = function(database, table) {
-                return $scope.mapId + "-" + database + "-" + table;
+                return $scope.visualizationId + "-" + database + "-" + table;
             };
 
             /**
@@ -1473,7 +1470,7 @@ angular.module('neonDemo.directives')
             var clearExtent = function() {
                 $scope.extent = undefined;
                 $scope.error = "";
-                linksPopupService.deleteLinks($scope.mapId);
+                linksPopupService.deleteLinks($scope.visualizationId);
             };
 
             $scope.updateFilteringOnLayer = function(layer) {
@@ -1575,7 +1572,7 @@ angular.module('neonDemo.directives')
 
                         layer.addFeatures(features);
                     } else {
-                        var pointsLayer = _.find(datasetService.getMapLayers($scope.bindConfig), {
+                        var pointsLayer = _.find(datasetService.getMapLayers($scope.bindings.config), {
                             type: $scope.POINT_LAYER,
                             database: msg.database,
                             table: msg.table
@@ -1609,7 +1606,7 @@ angular.module('neonDemo.directives')
              * @method setDefaultView
              */
             $scope.setDefaultView = function() {
-                var mapConfig = datasetService.getMapConfig($scope.bindConfig);
+                var mapConfig = datasetService.getMapConfig($scope.bindings.config);
                 if(mapConfig && mapConfig.bounds) {
                     $scope.map.zoomToBounds(mapConfig.bounds);
                 } else if($scope.dataBounds) {
@@ -2057,7 +2054,8 @@ angular.module('neonDemo.directives')
                 var bindingFields = {};
                 var layers = [];
 
-                var bindConfig = "map-" + $scope.bindStateId;
+                // TODO
+                var bindConfig = "map-" + $scope.stateId;
                 bindingFields["bind-config"] = "'" + bindConfig + "'";
 
                 _.each($scope.options.layers, function(layer) {

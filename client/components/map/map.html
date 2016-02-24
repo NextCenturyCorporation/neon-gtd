@@ -250,7 +250,7 @@
                 <div ng-drag="true" ng-drag-data="layer">
                     <div class="form-group layer-options-well neon-well neon-well-dark">
                         <div class="layer-options-row">
-                            <div class="btn-group layer-options-col layer-options-col-wide" ng-if="!hideAdvancedOptions">
+                            <div class="btn-group layer-options-col layer-options-col-wide" ng-if="!bindings.hideAdvancedOptions">
                                 <label class="btn btn-default" ng-cancel-drag ng-class="{true: 'active', false: ''}[layer.visible === true]" title="{{'Layer Visibility ' + (layer.visible ? 'On' : 'Off')}}">
                                     <input type="checkbox" style="display:none" ng-model="layer.visible" ng-change="updateLayerVisibility(layer)">
                                     <span class="glyphicon glyphicon-eye-open"></span>
@@ -273,7 +273,7 @@
                                 </label>
                             </div>
 
-                            <div class="btn-group layer-options-col layer-options-col-wide" ng-if="hideAdvancedOptions">
+                            <div class="btn-group layer-options-col layer-options-col-wide" ng-if="bindings.hideAdvancedOptions">
                                 <label class="btn btn-default" ng-cancel-drag ng-class="{true: 'active', false: ''}[layer.visible === true]" style="width: 50%;" title="{{'Layer Visibility ' + (layer.visible ? 'On' : 'Off')}}">
                                     <input type="checkbox" style="display:none" ng-model="layer.visible" ng-change="updateLayerVisibility(layer)">
                                     <span class="glyphicon glyphicon-eye-open"></span>

@@ -1,4 +1,4 @@
-<div class="header-container menu-container" ng-show="!(hideHeader)">
+<div class="header-container menu-container" ng-show="!(bindings.hideHeader)">
     <div class="title header-text pull-left">Line Chart</div>
 
     <options-menu parent-element="element" export-function="makeLinechartExportObject" resize-menu="resizeOptionsMenu" button-text="optionsMenuButtonText" show-button-text="showOptionsMenuButtonText">
@@ -103,7 +103,7 @@
                 <div>
                     <div class="form-group chart-options-well neon-well neon-well-dark">
                         <div class="chart-options-row">
-                            <div class="btn-group chart-options-col chart-options-col-wide" ng-if="!hideAdvancedOptions">
+                            <div class="btn-group chart-options-col chart-options-col-wide" ng-if="!bindings.hideAdvancedOptions">
                                 <label class="btn btn-default" ng-class="{true: 'active', false: ''}[chart.visible === true]" title="{{'Chart Visibility ' + (chart.visible ? 'On' : 'Off')}}">
                                     <input type="checkbox" style="display:none" ng-model="chart.visible" ng-change="updateChartVisibility(chart)">
                                     <span class="glyphicon glyphicon-eye-open"></span>
@@ -126,7 +126,7 @@
                                 </label>
                             </div>
 
-                            <div class="btn-group chart-options-col chart-options-col-wide" ng-if="hideAdvancedOptions">
+                            <div class="btn-group chart-options-col chart-options-col-wide" ng-if="bindings.hideAdvancedOptions">
                                 <label class="btn btn-default" ng-class="{true: 'active', false: ''}[chart.visible === true]" style="width: 50%;" title="{{'Chart Visibility ' + (chart.visible ? 'On' : 'Off')}}">
                                     <input type="checkbox" style="display:none" ng-model="chart.visible" ng-change="updateChartVisibility(chart)">
                                     <span class="glyphicon glyphicon-eye-open"></span>

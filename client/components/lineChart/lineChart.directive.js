@@ -37,11 +37,9 @@ function(external, connectionService, datasetService, errorNotificationService, 
         templateUrl: 'components/lineChart/lineChart.html',
         restrict: 'EA',
         scope: {
-            bindConfig: '=',
-            bindGranularity: '=',
-            bindStateId: '=',
-            hideHeader: '=?',
-            hideAdvancedOptions: '=?'
+            bindings: '=',
+            stateId: '@',
+            visualizationId: '@'
         },
         link: function($scope, $element) {
             var HOUR = "hour";
@@ -50,7 +48,6 @@ function(external, connectionService, datasetService, errorNotificationService, 
             $element.addClass('linechartDirective');
 
             $scope.element = $element;
-            $scope.visualizationId = "linechart-" + uuid();
 
             $scope.optionsMenuButtonText = function() {
                 if($scope.noData) {
@@ -101,7 +98,7 @@ function(external, connectionService, datasetService, errorNotificationService, 
             };
 
             $scope.options = {
-                granularity: $scope.bindGranularity ? $scope.bindGranularity.toLowerCase() : DAY,
+                granularity: $scope.bindings.granularity ? $scope.bindings.granularity.toLowerCase() : DAY,
                 trendlines: 'hide',
                 charts: [],
                 newChart: {
@@ -175,7 +172,7 @@ function(external, connectionService, datasetService, errorNotificationService, 
                 $scope.messenger.subscribe("date_selected", onDateSelected);
 
                 $scope.exportID = exportService.register($scope.makeLinechartExportObject);
-                visualizationService.register($scope.bindStateId, bindFields);
+                visualizationService.register($scope.stateId, bindFields);
 
                 $element.find('.legend-container .legend').on({
                     "shown.bs.dropdown": function() {
@@ -205,7 +202,7 @@ function(external, connectionService, datasetService, errorNotificationService, 
                     $element.find(".chart-options a").off("resize", updateChartSize);
                     $scope.messenger.unsubscribeAll();
                     exportService.unregister($scope.exportID);
-                    visualizationService.unregister($scope.bindStateId);
+                    visualizationService.unregister($scope.stateId);
                     if($scope.brushExtent.length) {
                         $scope.removeBrush();
                     }
@@ -699,7 +696,7 @@ function(external, connectionService, datasetService, errorNotificationService, 
              * @private
              */
             var cloneDatasetChartsConfig = function() {
-                datasetService.getLineCharts($scope.bindConfig).forEach(function(chart) {
+                datasetService.getLineCharts($scope.bindings.config).forEach(function(chart) {
                     $scope.options.charts.push(setDefaultChartProperties(_.clone(chart)));
                 });
             };
@@ -1899,7 +1896,7 @@ function(external, connectionService, datasetService, errorNotificationService, 
                 var bindingFields = {};
                 var charts = [];
 
-                var bindConfig = "linechart-" + $scope.bindStateId;
+                var bindConfig = "linechart-" + $scope.stateId;
                 bindingFields["bind-config"] = "'" + bindConfig + "'";
                 bindingFields["bind-granularity"] = $scope.options.granularity ? "'" + $scope.options.granularity + "'" : undefined;
 
