@@ -1,0 +1,6 @@
+<!-- TODO:  Replace this code with your own data visualization! -->
+<div ng-repeat="item in active.data">
+    <!-- Using ng-bind is the optimal way of converting javascript code and angular scope variables to text for HTML elements. -->
+    <a ng-bind="'Add Filter ' + item[active.dataField.columnName]" ng-class="{true: 'bold', false: ''}[filter == item[active.dataField.columnName]]"
+        ng-click="addFilter(item[active.dataField.columnName])"></a>
+</div>
