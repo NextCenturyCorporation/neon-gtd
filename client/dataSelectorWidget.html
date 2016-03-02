@@ -1,0 +1,334 @@
+<!doctype html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge">
+            <meta name="viewport" content="width=device-width, initial-scale=1">
+        <title>Neon Dashboard</title>
+
+        <link type="image/png" rel="shortcut icon" href="assets/images/Neon_16x16.png">
+
+        <!-- OpenLayers will automatically add the link for its style during runtime if it can't find it in the index.html file even if it's included in the CSS package.  Put the link here so the style is defined before the Neon Dashboard style. -->
+        <link rel="stylesheet" href="bower_components/openlayers/theme/default/style.css" />
+
+        <!-- build:css app/app.min.css -->
+        <!-- bower:css -->
+        <link rel="stylesheet" href="bower_components/ag-grid/dist/ag-grid.css" />
+        <link rel="stylesheet" href="bower_components/ag-grid/dist/theme-fresh.css" />
+        <link rel="stylesheet" href="bower_components/ag-grid/dist/theme-blue.css" />
+        <link rel="stylesheet" href="bower_components/ag-grid/dist/theme-dark.css" />
+        <link rel="stylesheet" href="bower_components/angular-bootstrap-datetimepicker/src/css/datetimepicker.css" />
+        <link rel="stylesheet" href="bower_components/angular-gridster/dist/angular-gridster.min.css" />
+        <link rel="stylesheet" href="bower_components/angular-ui-tree/dist/angular-ui-tree.min.css" />
+        <link rel="stylesheet" href="bower_components/bootstrap/dist/css/bootstrap.css" />
+        <!-- endbower -->
+
+        <link rel="stylesheet" href="bower_components/angular-gantt/assets/angular-gantt.css" />
+        <link rel="stylesheet" href="bower_components/angular-gantt/assets/angular-gantt-plugins.css" />
+        <link rel="stylesheet" href="bower_components/jquery-ui/themes/ui-lightness/jquery-ui.css" />
+        <link rel="stylesheet" href="bower_components/jquery-ui/themes/ui-lightness/jquery.ui.theme.css" />
+
+        <link rel="stylesheet" type="text/css" href="app/sprites.css">
+        <!-- endbuild -->
+
+        <!-- HTML5 Shim and Respond.js IE8 support of HTML5 elements and media queries -->
+        <!-- WARNING: Respond.js doesn't work if you view the page via file:// -->
+        <!--[if lt IE 9]>
+        <script src="lib/html5shiv.js"></script>
+        <script src="lib/respond.min.js"></script>
+        <![endif]-->
+    </head>
+    <body class="ng-hide" ng-controller="neonDemoController" ng-show="displayDashboard">
+        <link rel="stylesheet" type="text/css" ng-href="app/themes/{{theme.selected.file}}.css">
+
+        <!-- Database Config -->
+        <database-config gridster-configs="visualizations"></database-config>
+
+        <!-- In production use:
+        <script src="//ajax.googleapis.com/ajax/libs/angularjs/x.x.x/angular.min.js"></script>
+        -->
+
+        <!-- Including neon before angular here as neon has lodash and jquery wrapped into it.  If this is
+             loaded first, angular should pick up the included jQuery. -->
+        <script src="assets/vendor/owf-widget-debug.js"></script>
+
+        <!-- Including neon before angular here as neon has lodash and jquery wrapped into it.  If this is
+             loaded first, angular should pick up the included jQuery. -->
+        <script src="/neon/js/neon.js"></script>
+
+        <!-- Include OpenLayers outside the JS package because OpenLayers scans the index.html file for its own include to extract its relative path. -->
+        <script src="bower_components/openlayers/OpenLayers.js"></script>
+
+        <!-- Include and minify Plotly in its own JS package because of its huge size in order to quicken the initial dashboard load. -->
+        <!-- build:js(client) plotly.min.js -->
+        <script src="assets/vendor/plotly.js"></script>
+        <!-- endbuild -->
+
+        <!-- build:js(client) app/lib.min.js -->
+        <!-- bower:js -->
+        <script src="bower_components/jquery/dist/jquery.js"></script>
+        <script src="bower_components/angular/angular.js"></script>
+        <script src="bower_components/moment/moment.js"></script>
+        <script src="bower_components/angular-bootstrap-datetimepicker/src/js/datetimepicker.js"></script>
+        <script src="bower_components/angular-moment/angular-moment.js"></script>
+        <script src="bower_components/angular-gridster/src/angular-gridster.js"></script>
+        <script src="bower_components/angular-linkify/angular-linkify.js"></script>
+        <script src="bower_components/angular-loader/angular-loader.js"></script>
+        <script src="bower_components/angular-mocks/angular-mocks.js"></script>
+        <script src="bower_components/angular-route/angular-route.js"></script>
+        <script src="bower_components/angular-ui-tree/dist/angular-ui-tree.js"></script>
+        <script src="bower_components/bootstrap/dist/js/bootstrap.js"></script>
+        <script src="bower_components/d3/d3.js"></script>
+        <script src="bower_components/jquery-ui/ui/jquery-ui.js"></script>
+        <script src="bower_components/jquery.tagcloud/jquery.tagcloud.js"></script>
+        <script src="bower_components/js-yaml/dist/js-yaml.js"></script>
+        <script src="bower_components/mustache/mustache.js"></script>
+        <script src="bower_components/ngDraggable/ngDraggable.js"></script>
+        <script src="bower_components/remarkable-bootstrap-notify/bootstrap-notify.js"></script>
+        <!-- endbower -->
+
+        <script src="bower_components/angular-gantt/dist/angular-gantt.js"></script>
+        <script src="bower_components/angular-gantt/dist/angular-gantt-plugins.js"></script>
+
+        <script src="bower_components/user-ale/helper-libs/javascript/userale.js"></script>
+        <script src="bower_components/user-ale/helper-libs/javascript/userale-worker.js"></script>
+
+        <!-- Include the opencpu library. OpenCPU needs to be included after JQuery and before the app config. -->
+        <script src="bower_components/opencpu/opencpu-0.5.js"></script>
+
+        <!-- Include the ag-grid library after the angular library. -->
+        <script src="bower_components/ag-grid/dist/ag-grid.js"></script>
+
+        <!-- Include third party libs -->
+        <script src="bower_components/javascript-detect-element-resize/jquery.resize.js"></script>
+        <script src="bower_components/heatmapjs/build/heatmap.js"></script>
+        <script src="assets/vendor/openlayers-heatmapjs/heatmap-openlayers.js"></script>
+        <script src="bower_components/threedubmedia.jquery.event/event.drag/jquery.event.drag.js"></script>
+        <script src="bower_components/threedubmedia.jquery.event/event.drop/jquery.event.drop.js"></script>
+        <script src="bower_components/jquery.linky/jquery.linky.js"></script>
+        <script src="bower_components/mergesort/merge-sort.js"></script>
+        <script src="bower_components/rainbowvis.js/rainbowvis.js"></script>
+        <!-- endbuild -->
+
+       
+
+        <!-- build:js(client) app/app.min.js -->
+        <!-- injector:js -->
+        <script src="app/namespaces.js"></script>
+         <!-- Setup our widget's OWF handlers and trigger the angular code -->
+        <script type="text/javascript">
+            // -----------------------------------
+            // Initialize the close handlers.
+            // -----------------------------------
+
+            OWF.ready(function () {
+
+                // -----------------------------------
+                // Hide the body when the widget is not visible.
+                // -----------------------------------
+                var widgetState = Ozone.state.WidgetState.getInstance({
+                    onStateEventReceived: function(sender, msg) {
+                        var event = msg.eventName;
+
+                        if(event === 'activate' || event === 'show') {
+                            $(document.body).show();
+                        }
+                        else if(event === 'hide') {
+                            $(document.body).hide();
+                        }
+                    }
+                });
+
+                // listen for  activate and hide events so that we can
+                // hide our body.  Some browsers, specifically Chrome, continues
+                // to render iframes with elments that use specific webkit transforms
+                // even when they are hidden.  This impact many Map packages and some
+                // SVG packages.  The work around for this is to hide our widget body
+                // on hide events.
+                widgetState.addStateEventListeners({
+                    events: ['activate', 'hide', 'show']
+                });
+
+                OWF.notifyWidgetReady();
+            });
+
+            // Defaulting the Neon SERVER_URL to be under the neon context on the same host machine.
+// Used by neon core server.  Don't delete this or you will probably break everything!
+neon.SERVER_URL = "/neon";
+
+/**
+ * Utility that calls the given function in an $apply if the given $scope is not in the apply/digest phase or just calls the given function normally otherwise.
+ * @param {Object} $scope The $scope of an angular directive.
+ * @param {Fucntion} func The function to call.
+ * @method safeApply
+ */
+neon.safeApply = function($scope, func) {
+    if(!$scope || !func || typeof func !== "function") {
+        return;
+    }
+
+    var phase = $scope.$root.$$phase;
+    if(phase === "$apply" || phase === "$digest") {
+        func();
+    } else {
+        $scope.$apply(func);
+    }
+};
+
+neon.helpers = {
+    /**
+     * Finds and returns the field value in data. If field contains '.', representing that the field is in an object within data, it will
+     * find the nested field value.
+     * @param {Object} data
+     * @param {String} field
+     * @method getNestedValue
+     */
+    getNestedValue: function(data, field) {
+        var fieldArray = field.split(".");
+        var dataValue = data;
+        fieldArray.forEach(function(field) {
+            if(dataValue) {
+                dataValue = dataValue[field];
+            }
+        });
+        return dataValue;
+    }
+};
+
+            var neonDemo = angular.module('neonDemo', [
+                'neonDemo.controllers',
+                'neonDemo.services',
+                'neonDemo.directives',
+                'neonDemo.filters',
+                'gridster',
+                'ngDraggable',
+                'ngRoute',
+                'ui.bootstrap.datetimepicker',
+                'linkify',
+
+                'agGrid',
+
+                'gantt',
+                'gantt.tooltips',
+                'gantt.tree',
+                'gantt.groups'
+            ]);
+
+            neonDemo.config(["$routeProvider", "$locationProvider", function($routeProvider, $locationProvider) {
+                $routeProvider.when('/', {
+                    templateUrl: 'dataSelectorWidget.html',
+                    controller: 'neonDemoController'
+                });
+                $locationProvider.html5Mode({
+                    enabled: true,
+                    requireBase: false
+                });
+            }]);
+
+
+            // AngularJS filter for reversing the order of an array.
+            // http://stackoverflow.com/questions/15266671/angular-ng-repeat-in-reverse
+            neonDemo.filter("reverse", function() {
+                return function(items) {
+                    return items.slice().reverse();
+                };
+            });
+
+            angular.module('neonDemo.directives', []);
+            angular.module('neonDemo.controllers', []);
+            angular.module('neonDemo.services', []);
+
+            angular.module('neonDemo.filters', [])
+            .filter('numberShort', function() {
+                return function(number) {
+                    if(typeof number !== undefined) {
+                        var abs = Math.abs(number);
+                        if(abs >= Math.pow(10, 12)) {
+                            number = (number / Math.pow(10, 12)).toFixed(1) + "T";
+                        } else if(abs < Math.pow(10, 12) && abs >= Math.pow(10, 9)) {
+                            number = (number / Math.pow(10, 9)).toFixed(1) + "B";
+                        } else if(abs < Math.pow(10, 9) && abs >= Math.pow(10, 6)) {
+                            number = (number / Math.pow(10, 6)).toFixed(1) + "M";
+                        } else if(abs < Math.pow(10, 6) && abs >= Math.pow(10, 3)) {
+                            number = (number / Math.pow(10, 3)).toFixed(1) + "K";
+                        } else {
+                            number = Math.round(number * 100) / 100;
+                        }
+                    }
+                    return number;
+                };
+            });
+        </script>
+        <script src="app/widget.js"></script>
+        <script src="app/connection.service.js"></script>
+        <script src="app/dataset.service.js"></script>
+        <script src="app/errorNotification.service.js"></script>
+        <script src="app/export.service.js"></script>
+        <script src="app/filter.service.js"></script>
+        <script src="app/import.service.js"></script>
+        <script src="app/parameter.service.js"></script>
+        <script src="app/theme.service.js"></script>
+        <script src="app/translation.service.js"></script>
+        <script src="app/visualization.service.js"></script>
+        <script src="app/main/main.controller.js"></script>
+        <script src="components/addVisualization/addVisualization.directive.js"></script>
+        <script src="components/aggregationTable/aggregationTable.controller.js"></script>
+        <script src="components/barChart/barChart.controller.js"></script>
+        <script src="components/barChart/barChart.js"></script>
+        <script src="components/dataTable/dataTable.controller.js"></script>
+        <script src="components/databaseConfig/databaseConfig.directive.js"></script>
+        <script src="components/datasetWizard/databaseStep.directive.js"></script>
+        <script src="components/datasetWizard/datastoreStep.directive.js"></script>
+        <script src="components/datasetWizard/fieldsStep.directive.js"></script>
+        <script src="components/datasetWizard/layoutStep.directive.js"></script>
+        <script src="components/datasetWizard/relationsStep.directive.js"></script>
+        <script src="components/datasetWizard/wizardTemplate.directive.js"></script>
+        <script src="components/export/export.directive.js"></script>
+        <script src="components/export/fileFormats.directive.js"></script>
+        <script src="components/filterBuilder/filterBuilder.directive.js"></script>
+        <script src="components/filterBuilder/filterTable.js"></script>
+        <script src="components/filterNotification/filterNotification.directive.js"></script>
+        <script src="components/filterTray/filterTray.directive.js"></script>
+        <script src="components/ganttChart/ganttChart.controller.js"></script>
+        <script src="components/import/import.directive.js"></script>
+        <script src="components/import/removeDataset.directive.js"></script>
+        <script src="components/lineChart/lineChart.directive.js"></script>
+        <script src="components/lineChart/lineChart.js"></script>
+        <script src="components/linksPopup/linksPopup.directive.js"></script>
+        <script src="components/linksPopup/linksPopup.service.js"></script>
+        <script src="components/linksPopup/linksPopupButton.directive.js"></script>
+        <script src="components/map/coremap.js"></script>
+        <script src="components/map/heatmapLayer.js"></script>
+        <script src="components/map/map.directive.js"></script>
+        <script src="components/map/nodeLayer.js"></script>
+        <script src="components/map/pointsLayer.js"></script>
+        <script src="components/map/selectedPointsLayer.js"></script>
+        <script src="components/networkGraph/directedGraph.js"></script>
+        <script src="components/networkGraph/directedGraphMediator.js"></script>
+        <script src="components/networkGraph/networkGraph.controller.js"></script>
+        <script src="components/newsFeed/newsFeed.controller.js"></script>
+        <script src="components/opsClock/circularHeatChart.js"></script>
+        <script src="components/opsClock/opsClock.controller.js"></script>
+        <script src="components/optionsMenu/optionsMenu.directive.js"></script>
+        <script src="components/poweredByNeon/poweredByNeon.directive.js"></script>
+        <script src="components/sample/sample.controller.js"></script>
+        <script src="components/savedStates/savedStates.directive.js"></script>
+        <script src="components/scatterPlot/scatterPlot.controller.js"></script>
+        <script src="components/singleTableVisualization/singleTableVisualization.directive.js"></script>
+        <script src="components/sunburstChart/sunburst.js"></script>
+        <script src="components/sunburstChart/sunburstChart.controller.js"></script>
+        <script src="components/textCloud/textCloud.controller.js"></script>
+        <script src="components/timeline/dateBucketizer.js"></script>
+        <script src="components/timeline/monthBucketizer.js"></script>
+        <script src="components/timeline/timeline.controller.js"></script>
+        <script src="components/timeline/timelineSelectorChart.js"></script>
+        <script src="components/timeline/yearBucketizer.js"></script>
+        <script src="components/translationOptions/translationOptions.directive.js"></script>
+        <script src="components/visualization/visualizationDisplay.directive.js"></script>
+        <script src="components/visualization/visualizationHeaders.directive.js"></script>
+        <script src="components/visualization/visualizationOptions.directive.js"></script>
+        <script src="components/visualizationWidget/visualizationWidget.directive.js"></script>
+        <!-- endinjector -->
+        <!-- endbuild -->
+    </body>
+</html>
