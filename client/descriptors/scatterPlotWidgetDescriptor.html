@@ -21,13 +21,13 @@ p=/[\\\"\x00-\x1f\x7f-\x9f\u00ad\u0600-\u0604\u070f\u17b4\u17b5\u200c-\u200f\u20
     path = path.replace(/\/[^\/]+$/, "/");
 
     widgetData = {
-        "universalName": "neon.demo.widget.circularheatmap",
-        "displayName": "Neon Circular Temporal Heat Map",
-        "description": "A sample widget that uses Neon's querying and aggregation capabilities to pull data from a database and populate an circular chart representing the record density for particular days/hours.",
+        "universalName": "neon.demo.widget.scatter-plot",
+        "displayName": "Neon Scatter Plot",
+        "description": "A sample widget that uses Neon's querying and aggregation capabilities to pull data from a database and populate an Plot.ly scatter-plot.",
         "widgetVersion": "1.0",
-        "widgetUrl": path + "../circularHeatFormWidget.html",
-        "imageUrlSmall": path + "../img/Neon_16x16.png",
-        "imageUrlLarge": path + "../img/Neon_60x34.png",
+        "widgetUrl": path + "../scatterPlotWidget.html",
+        "imageUrlSmall": path + "../assets/images/visualizations/ScatterPlot64.png",
+        "imageUrlLarge": path + "../assets/images/visualizations/ScatterPlot64.png",
         "width": 500,
         "height": 500,
         "visible": true,
@@ -36,7 +36,7 @@ p=/[\\\"\x00-\x1f\x7f-\x9f\u00ad\u0600-\u0604\u070f\u17b4\u17b5\u200c-\u200f\u20
         "widgetTypes": [
             "standard"
         ],
-        "defaultTags": ["barchart", "time", "neon"],
+        "defaultTags": ["scatterplot", "time", "neon"],
         "intents": {}
     };
     /********************************************************************/

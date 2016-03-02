@@ -41,7 +41,7 @@
     <body style="height:100%" ng-controller="neonDemoController">
         <link rel="stylesheet" type="text/css" ng-href="app/themes/{{theme.selected.file}}.css">
         <!-- Database Config -->
-        <div single-table-visualization name="Aggregation Table" type="aggregationTable" class="single-table-visualization" active="active" bindings="bindings" log-element-group="table_group" log-element-type="table" visualization-id="{{visualizationId}}"></div>
+        <div single-table-visualization name="Scatter Plot" type="scatterPlot" class="single-table-visualization" active="active" bindings="bindings" log-element-group="chart_group" log-element-type="scatter" visualization-id="{{visualizationId}}"></div>
 
         <!-- In production use:
         <script src="//ajax.googleapis.com/ajax/libs/angularjs/x.x.x/angular.min.js"></script>
@@ -316,7 +316,9 @@
                     limit: 1000,
                     database: {'name': 'test'},
                     table: {'name': 'earthquakes'},
-                    groupField: 'type'
+                    xAxisField: 'depth',
+                    yAxisField: 'mag',
+                    textField: 'place'
                 };
                 $scope.bindings.hideAdvancedOptions = config.hideAdvancedOptions;
                 $scope.bindings.hideHeader = config.hideHeader;
