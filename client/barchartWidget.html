@@ -40,9 +40,10 @@
     </head>
     <body style="height:100%" ng-controller="neonDemoController">
         <link rel="stylesheet" type="text/css" ng-href="app/themes/{{theme.selected.file}}.css">
-        <!-- Database Config -->
-        <div single-table-visualization name="BarChart" type="barChart" class="single-table-visualization" active="active" bindings="bindings" log-element-group="chart_group" log-element-type="barchart" visualization-id="{{visualizationId}}"></div>
-
+        <!-- Widget Config -->
+        <div class="visualization-well visualization-widget">
+            <div single-table-visualization name="BarChart" type="barChart" class="single-table-visualization" active="active" bindings="bindings" log-element-group="chart_group" log-element-type="barchart" visualization-id="{{visualizationId}}"></div>
+        </div>
         <!-- In production use:
         <script src="//ajax.googleapis.com/ajax/libs/angularjs/x.x.x/angular.min.js"></script>
         -->
