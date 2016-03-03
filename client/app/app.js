@@ -19,6 +19,7 @@
 // Used by neon core server.  Don't delete this or you will probably break everything!
 neon.SERVER_URL = "/neon";
 
+// TODO Remove safeApply because it is a bad practice.
 /**
  * Utility that calls the given function in an $apply if the given $scope is not in the apply/digest phase or just calls the given function normally otherwise.
  * @param {Object} $scope The $scope of an angular directive.
@@ -92,7 +93,7 @@ neonDemo.config(["$routeProvider", "$locationProvider", function($routeProvider,
 // http://stackoverflow.com/questions/15266671/angular-ng-repeat-in-reverse
 neonDemo.filter("reverse", function() {
     return function(items) {
-        return items.slice().reverse();
+        return items ? items.slice().reverse() : items;
     };
 });
 

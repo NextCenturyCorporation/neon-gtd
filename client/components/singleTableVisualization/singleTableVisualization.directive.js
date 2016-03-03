@@ -110,7 +110,7 @@ function(external, connectionService, datasetService, errorNotificationService, 
              */
             $scope.init = function() {
                 $scope.messenger = new neon.eventing.Messenger();
-                $scope.messenger.subscribe(datasetService.UPDATE_DATA_CHANNEL, doQueryAndUpdate);
+                $scope.messenger.subscribe(datasetService.UPDATE_DATA_CHANNEL, runDefaultQueryAndUpdate);
                 $scope.messenger.events({
                     filtersChanged: handleFiltersChangedEvent
                 });
@@ -156,6 +156,9 @@ function(external, connectionService, datasetService, errorNotificationService, 
 
                     exportService.unregister($scope.exportId);
                     linksPopupService.deleteLinks($scope.visualizationId);
+                    $scope.active.layers.forEach(function(layer) {
+                        linksPopupService.deleteLinks(createLayerLinksSource(layer));
+                    });
                     themeService.unregisterListener($scope.visualizationId);
                     visualizationService.unregister($scope.stateId);
 
@@ -174,6 +177,16 @@ function(external, connectionService, datasetService, errorNotificationService, 
                 $scope.functions.onInit();
 
                 updateDatabases();
+            };
+
+            /**
+             * Creates and returns the source for the links popup data for the given layer.
+             * @param {Object} layer
+             * @method createLayerLinksSource
+             * @return {String}
+             */
+            var createLayerLinksSource = function(layer) {
+                return $scope.visualizationId + "-" + layer.database.name + "-" + layer.table.name;
             };
 
             /**
@@ -321,10 +334,7 @@ function(external, connectionService, datasetService, errorNotificationService, 
                 // Sort the fields that are displayed in the dropdowns in the options menus alphabetically.
                 $scope.fields = datasetService.getSortedFields($scope.active.database.name, $scope.active.table.name);
 
-                var filterFieldName = $scope.bindings.unsharedFilterField || "";
-                $scope.active.unsharedFilterField = _.find($scope.fields, function(field) {
-                    return field.columnName === filterFieldName;
-                }) || datasetService.createBlankField();
+                $scope.active.unsharedFilterField = $scope.functions.findFieldObject("unsharedFilterField");
                 $scope.active.unsharedFilterValue = $scope.bindings.unsharedFilterValue || "";
 
                 $scope.functions.onUpdateFields();
@@ -334,7 +344,7 @@ function(external, connectionService, datasetService, errorNotificationService, 
                     updateFilter();
                 }
 
-                doQueryAndUpdate();
+                runDefaultQueryAndUpdate();
 
                 $scope.initializing = false;
             };
@@ -357,15 +367,22 @@ function(external, connectionService, datasetService, errorNotificationService, 
 
             /**
              * Builds and executes the default data query and updates the data for this visualization.
-             * @method doQueryAndUpdate
+             * @method runDefaultQueryAndUpdate
              * @private
              */
-            var doQueryAndUpdate = function() {
+            var runDefaultQueryAndUpdate = function() {
+                // Save the title during the query so the title doesn't change immediately if the user changes the unshared filter.
+                $scope.queryTitle = $scope.createTitle(true);
+
+                // Resize the title and display after the error is hidden and the title is changed.
+                resize();
+
                 queryAndUpdate($scope.functions.addToQuery, $scope.functions.executeQuery, $scope.functions.updateData);
             };
 
             /**
              * Builds and returns the Neon query object for this visualization.
+             * @param {Function} callback (Optional)
              * @method buildQuery
              * @return {neon.query.Query}
              * @private
@@ -389,7 +406,7 @@ function(external, connectionService, datasetService, errorNotificationService, 
                     query.where(whereClause);
                 }
 
-                return callback ? callback(query, filterService) : $scope.functions.addToQuery(query, filterService);
+                return callback ? callback(query) : $scope.functions.addToQuery(query);
             };
 
             /**
@@ -448,12 +465,6 @@ function(external, connectionService, datasetService, errorNotificationService, 
                     $scope.errorMessage = undefined;
                 }
 
-                // Save the title during the query so the title doesn't change immediately if the user changes the unshared filter.
-                $scope.queryTitle = $scope.createTitle(true);
-
-                // Resize the title and display after the error is hidden and the title is changed.
-                resize();
-
                 var updateDataFunction = updateDataCallback || $scope.functions.updateData;
 
                 // Clear the display.
@@ -483,7 +494,7 @@ function(external, connectionService, datasetService, errorNotificationService, 
                 }
 
                 $scope.outstandingDataQuery = executeQueryCallback ? executeQueryCallback(connection, query) : $scope.functions.executeQuery(connection, query);
-                $scope.outstandingDataQuery.done(function() {
+                $scope.outstandingDataQuery.always(function() {
                     $scope.outstandingDataQuery = undefined;
                 });
 
@@ -637,6 +648,7 @@ function(external, connectionService, datasetService, errorNotificationService, 
              * @private
              */
             var handleFiltersChangedEvent = function(message) {
+                // All valid filters changed events will contain an addedFilter including replace and remove filter events.
                 if(message.addedFilter && message.addedFilter.databaseName === $scope.active.database.name && message.addedFilter.tableName === $scope.active.table.name) {
                     XDATA.userALE.log({
                         activity: "alter",
@@ -650,7 +662,7 @@ function(external, connectionService, datasetService, errorNotificationService, 
                     });
 
                     updateFilter();
-                    doQueryAndUpdate();
+                    runDefaultQueryAndUpdate();
                 }
             };
 
@@ -660,17 +672,12 @@ function(external, connectionService, datasetService, errorNotificationService, 
              * @private
              */
             var updateFilter = function() {
-                var filterFields = $scope.functions.getFilterFields();
-                var valid = true;
-                filterFields.forEach(function(field) {
-                    valid = valid && datasetService.isFieldValid(field);
+                var valid = $scope.functions.getFilterFields().every(function(field) {
+                    return datasetService.isFieldValid(field);
                 });
 
                 if(valid) {
-                    var filterFieldNames = filterFields.map(function(field) {
-                        return field.columnName;
-                    });
-                    var neonFilter = filterService.getFilter($scope.active.database.name, $scope.active.table.name, filterFieldNames);
+                    var neonFilter = filterService.getFilter($scope.active.database.name, $scope.active.table.name, getFilterFieldNames());
                     if(!neonFilter && $scope.functions.isFilterSet()) {
                         $scope.functions.onRemoveFilter();
                     }
@@ -687,6 +694,17 @@ function(external, connectionService, datasetService, errorNotificationService, 
              */
             $scope.functions.getFilterFields = function() {
                 return [];
+            };
+
+            /**
+             * Returns the list of field names on which filters for this visualization are set.
+             * @method getFilterFieldNames
+             * @return {Array}
+             */
+            var getFilterFieldNames = function() {
+                return $scope.functions.getFilterFields().map(function(field) {
+                    return field.columnName;
+                });
             };
 
             /**
@@ -707,7 +725,7 @@ function(external, connectionService, datasetService, errorNotificationService, 
             };
 
             /**
-             * Replaces the global filter with a new filter containing the given fields and values and updates the dashboard.
+             * Replaces the global filter with a new filter for this visualization and updates the dashboard.
              * @param {Boolean} shouldQueryAndUpdate (Optional)
              * @method replaceFilter
              */
@@ -716,7 +734,7 @@ function(external, connectionService, datasetService, errorNotificationService, 
             };
 
             /**
-             * Adds the given fields and values to the global filter and updates the dashboard.
+             * Adds or replaces the global filter with the filter for this visualization and updates the dashboard.
              * @param {Boolean} shouldQueryAndUpdate (Optional)
              * @method addFilter
              */
@@ -738,19 +756,8 @@ function(external, connectionService, datasetService, errorNotificationService, 
                     text: $scope.functions.createFilterTrayText()
                 }, function() {
                     if($scope.functions.shouldQueryAfterFilter() || shouldQueryAndUpdate) {
-                        doQueryAndUpdate();
+                        runDefaultQueryAndUpdate();
                     }
-                });
-            };
-
-            /**
-             * Returns the list of field names on which filters for this visualization are set.
-             * @method getFilterFieldNames
-             * @return {Array}
-             */
-            var getFilterFieldNames = function() {
-                return $scope.functions.getFilterFields().map(function(field) {
-                    return field.columnName;
                 });
             };
 
@@ -809,7 +816,7 @@ function(external, connectionService, datasetService, errorNotificationService, 
                     }
 
                     if($scope.functions.shouldQueryAfterFilter()) {
-                        doQueryAndUpdate();
+                        runDefaultQueryAndUpdate();
                     }
                 });
             };
@@ -836,9 +843,9 @@ function(external, connectionService, datasetService, errorNotificationService, 
 
             /**
              * Adds to the given list of bindings and returns the updated list for this visualization.
-             * @param {Array} bindings
+             * @param {Object} bindings
              * @method addToBindings
-             * @return {Array}
+             * @return {Object}
              */
             $scope.functions.addToBindings = function(bindings) {
                 return bindings;
@@ -899,7 +906,7 @@ function(external, connectionService, datasetService, errorNotificationService, 
             $scope.handleChangeUnsharedFilterValue = function() {
                 logChange("unsharedFilterValue", $scope.active.unsharedFilterValue);
                 if(!$scope.initializing) {
-                    doQueryAndUpdate();
+                    runDefaultQueryAndUpdate();
                 }
             };
 
@@ -911,7 +918,7 @@ function(external, connectionService, datasetService, errorNotificationService, 
                 logChange("unsharedFilter", "", "button");
                 $scope.active.unsharedFilterValue = "";
                 if(!$scope.initializing) {
-                    doQueryAndUpdate();
+                    runDefaultQueryAndUpdate();
                 }
             };
 
@@ -926,7 +933,7 @@ function(external, connectionService, datasetService, errorNotificationService, 
                 logChange(option, value, type);
                 if(!$scope.initializing) {
                     $scope.functions.onChangeDataOption();
-                    doQueryAndUpdate();
+                    runDefaultQueryAndUpdate();
                 }
             };
 
@@ -1237,7 +1244,7 @@ function(external, connectionService, datasetService, errorNotificationService, 
                 query.limitClause = exportService.getLimitClause();
                 query.ignoreFilters_ = exportService.getIgnoreFilters();
                 query.ignoredFilterIds_ = exportService.getIgnoredFilterIds();
-                return $scope.functions.createExportDataObject($scope.exportId, query, exportService);
+                return $scope.functions.createExportDataObject($scope.exportId, query);
             };
 
             /**

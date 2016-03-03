@@ -38,9 +38,6 @@ angular.module('neonDemo.directives')
             $scope.uniqueVisualizationOptions = 'chart-options-' + uuid();
             $element.find('.chart-options').addClass($scope.uniqueVisualizationOptions);
 
-            var showSymbol = true;
-            var chartOptionsTotalWidth = 0;
-
             $scope.toggleOptionsDisplay = function() {
                 $scope.optionsDisplayed = !$scope.optionsDisplayed;
                 var activity = ($scope.optionsDisplayed) ? 'show' : 'hide';
@@ -63,28 +60,16 @@ angular.module('neonDemo.directives')
             };
 
             var resizeButton = function() {
-                var chartOptions = $element.find(".chart-options");
-                if(!showSymbol) {
-                    // Save the total width of the chart options button (not abbreviated showing the symbol) including extra padding.
-                    chartOptionsTotalWidth = chartOptions.outerWidth(true) + 40;
-                }
-
-                // Use jQuery hide/show instead of angular here because angular's update is delayed in some cases which causes bad UX.
-                if(!showSymbol && chartOptionsTotalWidth > $scope.parentElement.width()) {
-                    showSymbol = true;
-                    chartOptions.find("#text").hide();
-                    chartOptions.find("#symbol").show();
-                } else if(showSymbol && chartOptionsTotalWidth < $scope.parentElement.width()) {
-                    showSymbol = false;
-                    chartOptions.find("#text").show();
-                    chartOptions.find("#symbol").hide();
-                }
+                var optionsButtonElement = $element.find(".chart-options .chart-options-button");
+                // Subtract the width of the options menu icon and caret.
+                var width = $scope.parentElement.width() - optionsButtonElement.find(".glyphicon").outerWidth(true) - optionsButtonElement.find(".caret").outerWidth(true) - 4;
+                optionsButtonElement.find(".header-text").css("max-width", width + "px");
             };
 
             var resizeMenu = $scope.resizeMenu || function() {
-                var chartOptions = $element.find(".chart-options");
-                var height = $scope.parentElement.innerHeight() - (chartOptions.outerHeight(true) - chartOptions.height() + $scope.CHART_OPTIONS_BUFFER_Y);
-                chartOptions.find(".popover-content").css("max-height", height + "px");
+                // Subtract the height of the options menu container and popover arrow.
+                var height = $scope.parentElement.height() - $scope.parentElement.find(".options-container").outerHeight(true) - 10;
+                $element.find(".chart-options .popover .popover-content").css("max-height", height + "px");
             };
 
             var resizeButtonAndMenu = function() {

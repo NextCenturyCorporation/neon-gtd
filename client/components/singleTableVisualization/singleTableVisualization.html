@@ -1,7 +1,7 @@
 <!-- An ng-controller is added before compilation. -->
 <div class="visualization {{type + 'Directive'}}" active="active" bindings="bindings" fields="fields" functions="functions">
-    <div class="header-container" ng-hide="bindings.hideHeader">
-        <div class="title header-text pull-left" ng-bind="createTitle()" title="{{createTitle()}}"></div>
+    <div class="header-container options-container" ng-hide="bindings.hideHeader">
+        <div class="title header-text pull-left" ng-bind="createTitle()" title="{{createTitle()}}" style="max-width: 0px;"></div>
 
         <options-menu parent-element="element" export-function="makeExportObject" button-text="functions.createMenuText" show-button-text="functions.showMenuText">
             <translation-options ng-show="translationsOn" on-translate="handleToggleTranslations"
@@ -53,6 +53,6 @@
 
     <div class="clearfix"></div>
 
-    <visualization-display id="{{visualizationId}}" class="visualization-display" active="active" functions="functions"></visualization-display>
+    <visualization-display id="{{visualizationId}}" class="visualization-display" active="active" functions="functions" style="height: 0px; width: 0px;"></visualization-display>
 </div>
 
