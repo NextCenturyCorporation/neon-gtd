@@ -276,6 +276,7 @@
             function($scope, $timeout, $location, config, layouts, datasets, themeService, connectionService, datasetService, errorNotificationService) {
                 $scope.messenger = new neon.eventing.Messenger();
 
+                themeService.setTheme("Dark Green");
                 $scope.theme = {
                     list: themeService.getThemes(),
                     selected: themeService.getTheme()
