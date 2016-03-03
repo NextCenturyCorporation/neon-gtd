@@ -778,19 +778,6 @@ angular.module("neonDemo.services")
         return name;
     };
 
-    /**
-     * Returns the field object in the given fields with the given field name.
-     * @param {Array} fields
-     * @param {String} fieldName
-     * @method findField
-     * @return {Object}
-     */
-    service.findField = function(fields, fieldName) {
-        return _.find(fields, function(field) {
-            return field.columnName === fieldName;
-        }) || service.createBlankField();
-    };
-
     // Validate the datasets from the configuration file on initialization.
     service.datasets.forEach(function(dataset) {
         validateDatabases(dataset);

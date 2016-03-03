@@ -161,6 +161,15 @@ html {
                 color: @accent-bright;
             }
         }
+
+        .header-text {
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .glyphicon {
+            margin-left: 5px;
+        }
     }
 
     .btn-group{
@@ -216,15 +225,10 @@ html {
             .form-control[disabled] {
                 background-color: @light-background;
             }
-        }
-    }
 
-    span {
-        &.header-text {
-            /* Set the top position so the text aligns vertically with the gear icon. */
-            position: relative;
-            top: -1px;
-            margin-right: 5px;
+            .glyphicon {
+                top: 1.5px;
+            }
         }
     }
 }
@@ -333,14 +337,11 @@ html {
     border: @main-border;
     border-radius: 4px;
     margin: 0px 0px 15px;
-    padding: 9px;
+    padding: 4px;
+    background-color: @visualization-box-background;
 
     &.neon-well-dark {
-        background-color: @visualization-box-background;
-    }
-
-    &.neon-well-thin {
-        padding: 4px;
+        background-color: @main-background;
     }
 
     .inner-group {

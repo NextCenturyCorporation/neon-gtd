@@ -78,10 +78,8 @@ coreMap.Map = function(elementId, opts) {
     this.resetZoom();
 };
 
-coreMap.Map.DEFAULT_WIDTH = 1024;
-coreMap.Map.DEFAULT_HEIGHT = 680;
-coreMap.Map.MIN_HEIGHT = 200;
-coreMap.Map.MIN_WIDTH = 200;
+coreMap.Map.DEFAULT_WIDTH = 200;
+coreMap.Map.DEFAULT_HEIGHT = 200;
 coreMap.Map.BOX_COLOR = "#f20101";
 coreMap.Map.BOX_WIDTH = 4;
 coreMap.Map.BOX_OPACITY = 0.9;
@@ -384,6 +382,10 @@ coreMap.Map.prototype.createSelectControl =  function(layer) {
             tags: ["map", "tooltip"]
         });
         var createAndShowFeaturePopup = function(data) {
+            if(!data.length) {
+                return;
+            }
+
             var text;
 
             // If we're on a cluster layer, show specific fields, if defined
@@ -520,7 +522,7 @@ coreMap.Map.prototype.setupLayers = function() {
  */
 coreMap.Map.prototype.addBaseLayer = function() {
     var tilesURL = coreMap.Map.MAP_TILES[this.baseLayerColor][this.baseLayerProtocol];
-    $("#" + this.elementId).css("background-color", coreMap.Map.MAP_TILES[this.baseLayerColor].backgroundColor);
+    $("#" + this.elementId + " .olMapViewport").css("background-color", coreMap.Map.MAP_TILES[this.baseLayerColor].backgroundColor);
 
     this.baseLayer = new OpenLayers.Layer.OSM("OSM", tilesURL, {
         attribution:  "Map tiles by CartoDB, under CC BY 3.0. Data by OpenStreetMap, under ODbL.",
@@ -591,10 +593,12 @@ coreMap.Map.prototype.zoomToBounds = function(bounds) {
 /**
  * Resize the map to its element size. This should be called
  * when the window resizes on the containing element resizes
+ * @param {Number} height (Optional)
+ * @param {Number} width (Optional)
  */
-coreMap.Map.prototype.resizeToElement = function() {
-    this.width = Math.max(this.selector.width() || coreMap.Map.MIN_WIDTH);
-    this.height = Math.max(this.selector.height() || coreMap.Map.MIN_HEIGHT);
+coreMap.Map.prototype.resizeToElement = function(height, width) {
+    this.width = Math.max(width || this.selector.width() || coreMap.Map.DEFAULT_WIDTH);
+    this.height = Math.max(height || this.selector.height() || coreMap.Map.DEFAULT_HEIGHT);
     this.selector.css({
         width: this.width + 'px',
         height: this.height + 'px'

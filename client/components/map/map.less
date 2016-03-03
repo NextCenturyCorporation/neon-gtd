@@ -13,7 +13,7 @@
 // limitations under the License.
 //
 
-.map-container {
+.mapDirective {
     height: @widget-height;
     width: @widget-width;
     min-height: 100px;
@@ -30,249 +30,204 @@
         color: @error-color;
     }
 
-    .header-container {
-        position: absolute;
+    .options-container {
+        z-index: 1010;
+
+        .chart-options {
+            .popover {
+                max-width: none;
+            }
+        }
+
+        .all-layer-options {
+            .layer-options-container {
+                /* Make the width match the width of the layer-options-well element + border. */
+                width: 595px;
+
+                &.drag-enter {
+                    border-color: @accent-dark;
+                }
+
+                .dragging {
+                    /* Display the dragged element above the other elements in its list, even if the other elements are defined after the dragged element in the DOM. */
+                    position: relative;
+                }
+
+                > label {
+                    font-size: 14px;
+                }
+
+                .layer-options-well {
+                    cursor: move;
+                    /* Make the width match the width of four columns + the columns' margins + this element's padding + this element's borders. */
+                    width: 580px;
+
+                    &.new-layer {
+                        cursor: inherit;
+                    }
+
+                    .layer-options-row {
+                        height: 75px;
+
+                        &.row-large {
+                            height: auto;
+                            display: flex;
+                        }
+
+                        .layer-options-col {
+                            float: left;
+                            width: 130px;
+                            margin-left: 5px;
+                            margin-right: 5px;
+
+                            &.layer-options-col-wide {
+                                width: 270px;
+
+                                .col-half {
+                                    width: 50%;
+                                }
+                            }
+
+                            &.btn-group {
+                                /* Make the layer options buttons vertically align with the dropdowns. */
+                                margin-top: 25px;
+
+                                .btn {
+                                    /* Make the combined width of the four layer options buttons match the width of the column. */
+                                    padding: 3px 24px 3px 23px;
+
+                                    &.btn-default {
+                                        &.active, &.active&:hover, &.active&:focus {
+                                            color: #FFFFFF;
+                                            background-color: @accent-dark;
+                                            border-color: @accent-dark;
+                                        }
+                                    }
+
+                                    &.active {
+                                        z-index: auto;
+                                    }
+                                }
+
+                                .glyphicon {
+                                    font-size: 18px;
+                                    top: 3px;
+                                }
+                            }
+                        }
+                    }
+
+                    .layer-options-error {
+                        color: @error-text-color;
+                        margin: 10px 0px 0px;
+                    }
+
+                    .layer-options-editing {
+                        margin-top: 10px;
+                    }
+                }
+            }
+        }
+    }
+
+    .legend-container {
         z-index: 1005;
 
-        &.name-container {
-            left: 10px;
-            top: 10px;
-        }
+        .legend {
+            background-color: @visualization-box-background;
+            border: @main-border;
+            border-radius: 4px;
 
-        &.menu-container {
-            right: 10px;
-            top: 10px;
-            z-index: 1010;
-
-            .chart-options {
-                border: @main-border;
-                border-radius: 4px;
-
-                .popover {
-                    max-width: none;
-                    padding: 10px 0px 0px;
-                    top: 30px;
-                }
-
-                .arrow {
-                    right: 25px;
-                }
-
-                /* Give the menu container a background to make it more readable.  Make it the same height (30 px) and color of the filter reset notification and the legend. */
-                a {
-                    background-color: @visualization-box-background;
-                    border: none;
-                    border-radius: 4px;
-                    padding: 5px 5px 2px;
-
-                    &.collapsed {
-                        background-color: @visualization-box-background-transparent;
-                    }
-                }
+            .divider {
+                height: 1px;
+                margin: 0 0 9px 0;
+                overflow: hidden;
+                background-color: @border-color;
             }
 
-            .all-layer-options {
-                /* Make the width match the width of the layer-options-well element + border + right padding. */
-                width: 555px;
+            .legend-toggle {
+                padding: 5px;
+            }
 
-                .layer-options-container {
-                    /* Make the width match the width of the layer-options-well element + border. */
-                    width: 540px;
+            .legend-details {
+                overflow: auto;
 
-                    &.drag-enter {
-                        border-color: @accent-dark;
-                    }
+                .legend-layer {
+                    margin-bottom: 10px;
 
-                    .dragging {
-                        /* Display the dragged element above the other elements in its list, even if the other elements are defined after the dragged element in the DOM. */
+                    .legend-header {
+                        cursor: pointer;
                         position: relative;
-                    }
+                        padding: 5px;
 
-                    > label {
-                        font-size: 14px;
-                    }
-
-                    .layer-options-well {
-                        cursor: move;
-                        /* Make the width match the width of four columns + the columns' margins + this element's padding + this element's borders. */
-                        width: 530px;
-
-                        &.new-layer {
-                            cursor: inherit;
-                        }
-
-                        .layer-options-row {
-                            height: 75px;
-
-                            &.row-large {
-                                height: auto;
-                                display: flex;
-                            }
-
-                            .layer-options-col {
-                                float: left;
-                                width: 120px;
-                                margin-left: 10px;
-
-                                &:first-child {
-                                    margin-left: 0px;
-                                }
-
-                                &.layer-options-col-wide {
-                                    width: 250px;
-
-                                    .col-half {
-                                        width: 50%;
-                                    }
-                                }
-
-                                &.btn-group {
-                                    /* Make the layer options buttons vertically align with the dropdowns. */
-                                    margin-top: 25px;
-
-                                    .btn {
-                                        /* Make the combined width of the four layer options buttons match the width of the column. */
-                                        padding: 3px 22px 3px 21px;
-
-                                        &.btn-default {
-                                            &.active, &.active&:hover, &.active&:focus {
-                                                color: #FFFFFF;
-                                                background-color: @accent-dark;
-                                                border-color: @accent-dark;
-                                            }
-                                        }
-
-                                        &.active {
-                                            z-index: auto;
-                                        }
-                                    }
-
-                                    .glyphicon {
-                                        font-size: 18px;
-                                        top: 3px;
-                                    }
-                                }
-                            }
-                        }
-
-                        .layer-options-error {
-                            color: @error-text-color;
-                            margin: 10px 0px 0px;
-                        }
-
-                        .layer-options-editing {
-                            margin-top: 10px;
-                        }
-                    }
-                }
-            }
-        }
-
-        &.legend-container {
-            bottom: 5px;
-            left: 10px;
-            z-index: 1009;
-
-            .legend {
-                background-color: @visualization-box-background;
-                border: @main-border;
-                border-radius: 4px;
-
-                .divider {
-                    height: 1px;
-                    margin: 0 0 9px 0;
-                    overflow: hidden;
-                    background-color: @border-color;
-                }
-
-                .legend-toggle {
-                    padding: 5px;
-                }
-
-                .legend-details {
-                    overflow: auto;
-
-                    .legend-layer {
-                        margin-bottom: 10px;
-
-                        .legend-header {
-                            cursor: pointer;
-                            position: relative;
-                            padding: 5px;
-
-                            .legend-title {
-                                margin-right: 25px;
-                                font-size: 14px;
-                            }
-
-                            .glyphicon {
-                                color: @main-text-color;
-                                position: absolute;
-                                right: 5px;
-                                top: 50%;
-                                transform: translate(0, -50%);
-                            }
-                        }
-
-                        .node-title {
-                            color: @main-text-color;
+                        .legend-title {
+                            margin-right: 25px;
                             font-size: 14px;
-                            font-weight: bold;
-                            line-height: 1.33;
-                            text-transform: uppercase;
-                            margin-left: 20px;
                         }
 
-                        .legend-item {
-                            margin-left: 20px;
+                        .glyphicon {
+                            color: @main-text-color;
+                            position: absolute;
+                            right: 5px;
+                            top: 50%;
+                            transform: translate(0, -50%);
                         }
                     }
-                }
 
-                .header-text {
-                    cursor: pointer;
+                    .node-title {
+                        color: @main-text-color;
+                        font-size: 14px;
+                        font-weight: bold;
+                        line-height: 1.33;
+                        text-transform: uppercase;
+                        margin-left: 20px;
+                    }
+
+                    .legend-item {
+                        margin-left: 20px;
+                    }
                 }
             }
 
-            .legend-item {
-                border: @main-border;
-                border-radius: 5px;
-                font-size: 14px;
-                margin-top: 0px;
-                margin-right: 5px;
-                opacity: .8;
-                padding: 3px;
-                display: block;
-                font-size: 12px;
+            .header-text {
+                cursor: pointer;
             }
         }
 
-        &.filter-container {
-            top: 50px;
-            right: 45px;
+        .legend-item {
+            border: @main-border;
+            border-radius: 5px;
+            font-size: 14px;
+            margin-top: 0px;
+            margin-right: 5px;
+            opacity: .8;
+            padding: 3px;
+            display: block;
+            font-size: 12px;
+        }
+    }
 
-            .filter-reset {
-                background-color: @visualization-box-background-transparent;
-            }
+    .filter-container {
+        position: absolute;
+        top: 50px;
+        left: 55px;
+        right: 10px;
+
+        .filter-reset {
+            background-color: @visualization-box-background-transparent;
         }
     }
 
     .olMap {
         // The JS will set the correct background color depending on the base layer used.
         background-color: #fff;
-        border-radius: 0 0 4px 4px;
-        width: auto !important;
-        height: 100% !important;
-        position: static;
-        margin: 0px !important;
 
         .olMapViewport {
+            height: inherit !important;
+            width: inherit !important;
+
             .olControlZoom {
-                left: inherit;
-                right: 10px;
-                top: 50px;
                 background: transparent;
-                padding: 0px;
 
                 a {
                     background-color: @button-background-color;
@@ -341,7 +296,7 @@
 }
 
 .gridster-mobile  {
-    .map-container {
+    .mapDirective {
         .olMap {
             height: @mobile-widget-height !important;
         }

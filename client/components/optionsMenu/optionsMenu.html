@@ -1,7 +1,6 @@
 <div class="chart-options pull-right">
     <a class="chart-options-button btn collapsed" data-toggle="collapse" data-target=".{{uniqueVisualizationOptions}} .popover" data-animation=false ng-click="toggleOptionsDisplay()">
-        <span id="text" class="header-text" ng-bind="getButtonText()" ng-show="showButtonText()" title="Open/Close the Options Menu" style="display: none;"></span>
-        <span id="symbol" class="glyphicon glyphicon-exclamation-sign" ng-show="showButtonText()" title="Open/Close the Options Menu"></span>
+        <span class="header-text pull-left" ng-bind="getButtonText()" ng-show="showButtonText()" title="Open/Close the Options Menu"></span>
         <span class="glyphicon glyphicon-cog" title="Open/Close the Options Menu"></span>
         <span class="caret"></span>
     </a>
@@ -9,9 +8,9 @@
     <div class="popover bottom">
         <div class="arrow"></div>
         <div class="popover-content">
-            <div id="symbol" class="form-group" ng-show="showButtonText()">
+            <div class="form-group" ng-show="showButtonText()">
                 <label class="glyphicon glyphicon-exclamation-sign"></label>
-                <label ng-bind="getButtonText()"></label>
+                <label ng-bind="getButtonText()" style="display: inline;"></label>
             </div>
 
             <div ng-transclude></div>
