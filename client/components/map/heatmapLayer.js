@@ -102,7 +102,9 @@ coreMap.Map.Layer.HeatmapLayer = OpenLayers.Class(OpenLayers.Layer.Heatmap, {
 
             this.resizeHandler = function() {
                 me.heatmap._renderer.setDimensions(this.getSize().w, this.getSize().h);
-                me.updateLayer();
+                if(me.data.length) {
+                    me.updateLayer();
+                }
             };
             this.map.events.register('updatesize', this.map, this.resizeHandler);
         });

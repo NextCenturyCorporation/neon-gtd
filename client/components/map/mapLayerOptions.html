@@ -1,0 +1,160 @@
+<div class="layer-options-row">
+    <div class="form-group layer-options-col">
+        <label>Layer Type</label>
+        <select class="form-control" ng-cancel-drag ng-model="layer.type" ng-options="type for type in MAP_LAYER_TYPES" ng-required="true" ng-change="validateLayerFields(layer)">
+        </select>
+    </div>
+
+    <div class="form-group layer-options-col">
+        <label>Data Limit</label>
+        <input type="number" min="1" class="form-control" ng-cancel-drag ng-model="layer.limit" ng-required="true">
+    </div>
+
+    <div class="form-group layer-options-col" ng-show="layer.type == POINT_LAYER || layer.type == CLUSTER_LAYER || layer.type == HEATMAP_LAYER">
+        <label>Latitude Field</label>
+        <select class="form-control" ng-cancel-drag ng-model="layer.latitudeField" ng-options="field.prettyName for field in layer.fields" ng-required="(layer.type == POINT_LAYER || layer.type == CLUSTER_LAYER || layer.type == HEATMAP_LAYER)" ng-disabled="!(layer.fields.length > 0)" ng-change="validateLayerFields(layer)">
+        </select>
+    </div>
+
+    <div class="form-group layer-options-col" ng-show="layer.type == POINT_LAYER || layer.type == CLUSTER_LAYER || layer.type == HEATMAP_LAYER">
+        <label>Longitude Field</label>
+        <select class="form-control" ng-cancel-drag ng-model="layer.longitudeField" ng-options="field.prettyName for field in layer.fields" ng-required="(layer.type == POINT_LAYER || layer.type == CLUSTER_LAYER || layer.type == HEATMAP_LAYER)" ng-disabled="!(layer.fields.length > 0)" ng-change="validateLayerFields(layer)">
+        </select>
+    </div>
+
+    <div class="form-group layer-options-col" ng-show="layer.type == NODE_AND_ARROW_LAYER">
+        <label>Source Lat. Field</label>
+        <select class="form-control" ng-cancel-drag ng-model="layer.sourceLatitudeField" ng-options="field.prettyName for field in layer.fields" ng-required="(layer.type == NODE_AND_ARROW_LAYER)" ng-disabled="!(layer.fields.length > 0)" ng-change="validateLayerFields(layer)">
+        </select>
+    </div>
+
+    <div class="form-group layer-options-col" ng-show="layer.type == NODE_AND_ARROW_LAYER">
+        <label>Source Lon. Field</label>
+        <select class="form-control" ng-cancel-drag ng-model="layer.sourceLongitudeField" ng-options="field.prettyName for field in layer.fields" ng-required="(layer.type == NODE_AND_ARROW_LAYER)" ng-disabled="!(layer.fields.length > 0)" ng-change="validateLayerFields(layer)">
+        </select>
+    </div>
+</div>
+
+<div class="layer-options-row" ng-class="{true: 'row-large', false:''}[layer.type === CLUSTER_LAYER]">
+    <div class="form-group layer-options-col" ng-show="layer.type == NODE_AND_ARROW_LAYER">
+        <label>Target Lat. Field</label>
+        <select class="form-control" ng-cancel-drag ng-model="layer.targetLatitudeField" ng-options="field.prettyName for field in layer.fields" ng-required="(layer.type == NODE_AND_ARROW_LAYER)" ng-disabled="!(layer.fields.length > 0)" ng-change="validateLayerFields(layer)">
+        </select>
+    </div>
+
+    <div class="form-group layer-options-col" ng-show="layer.type == NODE_AND_ARROW_LAYER">
+        <label>Target Lon. Field</label>
+        <select class="form-control" ng-cancel-drag ng-model="layer.targetLongitudeField" ng-options="field.prettyName for field in layer.fields" ng-required="(layer.type == NODE_AND_ARROW_LAYER)" ng-disabled="!(layer.fields.length > 0)" ng-change="validateLayerFields(layer)">
+        </select>
+    </div>
+
+    <div class="form-group layer-options-col" ng-show="layer.type == NODE_AND_ARROW_LAYER">
+        <label>Point Size Field</label>
+        <select class="form-control" ng-cancel-drag ng-model="layer.nodeSizeField" ng-options="field.prettyName for field in layer.fields" ng-required="false" ng-disabled="!(layer.fields.length > 0)">
+            <option value="">None</option>
+        </select>
+    </div>
+
+    <div class="form-group layer-options-col" ng-show="layer.type == NODE_AND_ARROW_LAYER">
+        <label>Line Size Field</label>
+        <select class="form-control" ng-cancel-drag ng-model="layer.lineSizeField" ng-options="field.prettyName for field in layer.fields" ng-required="false" ng-disabled="!(layer.fields.length > 0)">
+            <option value="">None</option>
+        </select>
+    </div>
+
+    <div class="form-group layer-options-col" ng-show="layer.type == POINT_LAYER || layer.type == CLUSTER_LAYER || layer.type == HEATMAP_LAYER">
+        <label>Size Field</label>
+        <select class="form-control" ng-cancel-drag ng-model="layer.sizeField" ng-options="field.prettyName for field in layer.fields" ng-required="false" ng-disabled="!(layer.fields.length > 0)">
+            <option value="">None</option>
+        </select>
+    </div>
+
+    <div class="form-group layer-options-col" ng-show="layer.type == POINT_LAYER || layer.type == CLUSTER_LAYER">
+        <label>Color Field</label>
+        <select class="form-control" ng-cancel-drag ng-model="layer.colorField" ng-options="field.prettyName for field in layer.fields" ng-required="false" ng-disabled="!(layer.fields.length > 0)">
+            <option value="">None</option>
+        </select>
+    </div>
+
+    <div class="form-group layer-options-col" ng-show="layer.type == POINT_LAYER || layer.type == CLUSTER_LAYER">
+        <label>Color Code</label>
+        <input type="text" class="form-control" placeholder="{{layer.colorCode || 'None'}}" ng-cancel-drag ng-model="layer.colorCode" ng-required="false">
+    </div>
+
+    <div class="form-group layer-options-col" ng-show="layer.type == POINT_LAYER">
+        <label>Date Field</label>
+        <select class="form-control" ng-cancel-drag ng-model="layer.dateField" ng-options="field.prettyName for field in layer.fields" ng-required="false" ng-disabled="!(layer.fields.length > 0)">
+            <option value="">None</option>
+        </select>
+    </div>
+
+    <div class="form-group layer-options-col" ng-show="layer.type == CLUSTER_LAYER">
+        <label>Popup Fields</label>
+        <select class="form-control" ng-model="layer.popupFields"
+            ng-disabled="!(layer.fields.length > 0)" multiple>
+            <option ng-repeat="field in layer.fields" ng-cancel-drag value="{{field.columnName}}" ng-selected="{{layer.popupFields.indexOf(field.columnName) >= 0}}" ng-bind="field.prettyName">
+            </option>
+        </select>
+    </div>
+
+    <div class="form-group layer-options-col" ng-show="layer.type == HEATMAP_LAYER">
+        <label>Color Code 1</label>
+        <input type="text" class="form-control" placeholder="{{layer.gradientColorCode1 || 'None'}}" ng-cancel-drag ng-model="layer.gradientColorCode1" ng-required="false"/>
+    </div>
+
+    <div class="form-group layer-options-col" ng-show="layer.type == HEATMAP_LAYER">
+        <label>Color Code 2</label>
+        <input type="text" class="form-control" placeholder="{{layer.gradientColorCode2 || 'None'}}" ng-cancel-drag ng-model="layer.gradientColorCode2" ng-required="false"/>
+    </div>
+
+    <div class="form-group layer-options-col" ng-show="layer.type == HEATMAP_LAYER">
+        <label>Color Code 3</label>
+        <input type="text" class="form-control" placeholder="{{layer.gradientColorCode3 || 'None'}}" ng-cancel-drag ng-model="layer.gradientColorCode3" ng-required="false"/>
+    </div>
+
+</div>
+
+<div class="layer-options-row" ng-show="layer.type == HEATMAP_LAYER || layer.type == NODE_AND_ARROW_LAYER">
+    <div class="form-group layer-options-col" ng-show="layer.type == HEATMAP_LAYER">
+        <label>Color Code 4</label>
+        <input type="text" class="form-control" placeholder="{{layer.gradientColorCode4 || 'None'}}" ng-cancel-drag ng-model="layer.gradientColorCode4" ng-required="false"/>
+    </div>
+
+    <div class="form-group layer-options-col" ng-show="layer.type == HEATMAP_LAYER">
+        <label>Color Code 5</label>
+        <input type="text" class="form-control" placeholder="{{layer.gradientColorCode5 || 'None'}}" ng-cancel-drag ng-model="layer.gradientColorCode5" ng-required="false"/>
+    </div>
+
+    <div class="form-group layer-options-col" ng-show="layer.type == NODE_AND_ARROW_LAYER">
+        <label>Point Color Field</label>
+        <select class="form-control" ng-cancel-drag ng-model="layer.nodeColorField" ng-options="field.prettyName for field in layer.fields" ng-required="false" ng-disabled="!(layer.fields.length > 0)">
+            <option value="">None</option>
+        </select>
+    </div>
+
+    <div class="form-group layer-options-col" ng-show="layer.type == NODE_AND_ARROW_LAYER">
+        <label>Line Color Field</label>
+        <select class="form-control" ng-cancel-drag ng-model="layer.lineColorField" ng-options="field.prettyName for field in layer.fields" ng-required="false" ng-disabled="!(layer.fields.length > 0)">
+            <option value="">None</option>
+        </select>
+    </div>
+
+    <div class="form-group layer-options-col" ng-show="layer.type == NODE_AND_ARROW_LAYER">
+        <label>Point Color Code</label>
+        <input type="text" class="form-control" placeholder="{{layer.nodeColorCode || 'None'}}" ng-cancel-drag ng-model="layer.nodeColorCode" ng-required="false"/>
+    </div>
+
+    <div class="form-group layer-options-col" ng-show="layer.type == NODE_AND_ARROW_LAYER">
+        <label>Line Color Code</label>
+        <input type="text" class="form-control" placeholder="{{layer.lineColorCode || 'None'}}" ng-cancel-drag ng-model="layer.lineColorCode" ng-required="false"/>
+    </div>
+</div>
+
+<div class="layer-options-row" ng-show="layer.type == NODE_AND_ARROW_LAYER">
+    <div class="form-group layer-options-col" ng-show="layer.type == NODE_AND_ARROW_LAYER">
+        <label>Date Field</label>
+        <select class="form-control" ng-cancel-drag ng-model="layer.dateField" ng-options="field.prettyName for field in layer.fields" ng-required="false" ng-disabled="!(layer.fields.length > 0)">
+            <option value="">None</option>
+        </select>
+    </div>
+</div>

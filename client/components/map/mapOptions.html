@@ -1,0 +1,23 @@
+<div style="margin-bottom: 5px;">
+    <label class="glyphicon glyphicon-info-sign"></label>
+    <label>SHIFT + DRAG on Map to Filter</label>
+</div>
+
+<div class="form-group">
+    <button type="button" class="btn btn-default" title="Reset Map View" ng-click="setDefaultView()">
+        Reset Map View
+    </button>
+</div>
+
+<div class="form-group">
+    <label>Base Layer Options</label>
+    <div class="btn-group">
+      <label class="btn btn-default" ng-class="{true: 'active', false: ''}[active.baseLayerColor === 'light']">
+        <input type="radio" style="display:none" ng-model="active.baseLayerColor" value="light" ng-change="updateBaseLayerColor()">Light
+      </label>
+      <label class="btn btn-default" ng-class="{true: 'active', false: ''}[active.baseLayerColor === 'dark']">
+        <input type="radio" style="display:none" ng-model="active.baseLayerColor" value="dark" ng-change="updateBaseLayerColor()">Dark
+      </label>
+    </div>
+    <div class="clearfix"></div>
+</div>
