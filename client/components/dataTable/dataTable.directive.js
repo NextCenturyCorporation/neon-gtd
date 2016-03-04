@@ -137,6 +137,18 @@ linksPopupService, themeService, visualizationService, linkify, $sce, $timeout) 
                 $scope.element.find(".title").css("maxWidth", titleWidth);
             };
 
+            var resizeColumns = function() {
+                // Force the grid to update its size so that when we tell it to calculate the column
+                // widths it is using an up-to-date width.
+                $scope.gridOptions.api.doLayout();
+                $scope.gridOptions.api.sizeColumnsToFit();
+            };
+
+            var resize = function() {
+                resizeTitle();
+                resizeColumns();
+            };
+
             /**
              * intitalize all fields and add a messenger then query for data
              * @method init
@@ -152,7 +164,7 @@ linksPopupService, themeService, visualizationService, linkify, $sce, $timeout) 
                 $scope.exportID = exportService.register($scope.makeQueryResultsTableExportObject);
                 visualizationService.register($scope.bindStateId, bindFields);
 
-                $scope.element.resize(resizeTitle);
+                $scope.element.resize(resize);
                 $scope.element.find(".chart-options a").resize(resizeTitle);
 
                 themeService.registerListener($scope.tableId, onThemeChanged);

@@ -114,9 +114,17 @@ exportService, linksPopupService, themeService, visualizationService) {
                 $("#" + $scope.tableId).height($scope.element.height() - headerHeight);
             };
 
+            var resizeColumns = function() {
+                // Force the grid to update its size so that when we tell it to calculate the column
+                // widths it is using an up-to-date width.
+                $scope.gridOptions.api.doLayout();
+                $scope.gridOptions.api.sizeColumnsToFit();
+            };
+
             var resize = function() {
                 resizeTitle();
                 resizeTable();
+                resizeColumns();
             };
 
             $scope.init = function() {
