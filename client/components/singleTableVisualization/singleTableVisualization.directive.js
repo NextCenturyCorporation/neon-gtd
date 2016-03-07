@@ -156,9 +156,6 @@ function(external, connectionService, datasetService, errorNotificationService, 
 
                     exportService.unregister($scope.exportId);
                     linksPopupService.deleteLinks($scope.visualizationId);
-                    $scope.active.layers.forEach(function(layer) {
-                        linksPopupService.deleteLinks(createLayerLinksSource(layer));
-                    });
                     themeService.unregisterListener($scope.visualizationId);
                     visualizationService.unregister($scope.stateId);
 
@@ -177,16 +174,6 @@ function(external, connectionService, datasetService, errorNotificationService, 
                 $scope.functions.onInit();
 
                 updateDatabases();
-            };
-
-            /**
-             * Creates and returns the source for the links popup data for the given layer.
-             * @param {Object} layer
-             * @method createLayerLinksSource
-             * @return {String}
-             */
-            var createLayerLinksSource = function(layer) {
-                return $scope.visualizationId + "-" + layer.database.name + "-" + layer.table.name;
             };
 
             /**
@@ -327,10 +314,6 @@ function(external, connectionService, datasetService, errorNotificationService, 
                 // Stop extra data queries that may be caused by event handlers triggered by setting the active fields.
                 $scope.initializing = true;
 
-                if($scope.functions.isFilterSet()) {
-                    removeFilter(true);
-                }
-
                 // Sort the fields that are displayed in the dropdowns in the options menus alphabetically.
                 $scope.fields = datasetService.getSortedFields($scope.active.database.name, $scope.active.table.name);
 
@@ -341,7 +324,7 @@ function(external, connectionService, datasetService, errorNotificationService, 
                 $scope.functions.onChangeDataOption();
 
                 if($scope.active.database && $scope.active.database.name && $scope.active.table && $scope.active.table.name) {
-                    updateFilter();
+                    checkDashboardFilter();
                 }
 
                 runDefaultQueryAndUpdate();
@@ -661,17 +644,17 @@ function(external, connectionService, datasetService, errorNotificationService, 
                         tags: ["filters-changed", $scope.type]
                     });
 
-                    updateFilter();
+                    checkDashboardFilter();
                     runDefaultQueryAndUpdate();
                 }
             };
 
-            /*
-             * Updates the filter for this visualization by finding any matching filters set by other visualizations through the filter service.
-             * @method updateFilter
+            /**
+             * Checks for a dashboard filter for the data in this visualization.  Adds, replaces, or removes the filter displayed by this visualization if needed.
+             * @method checkDashboardFilter
              * @private
              */
-            var updateFilter = function() {
+            var checkDashboardFilter = function() {
                 var valid = $scope.functions.getFilterFields().every(function(field) {
                     return datasetService.isFieldValid(field);
                 });

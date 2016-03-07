@@ -18,13 +18,43 @@
     stroke-width: 2px;
 }
 
-.linechart{
+.line-chart {
+    height: inherit;
+    width: inherit;
     margin: 0 0 0;
-    min-height: 50px;
     overflow: hidden;
 
     svg{
         font-size: 10px;
+    }
+
+    .brush {
+        .extent {
+            fill-opacity: 0;
+            shape-rendering: crispEdges;
+        }
+
+        .mask{
+            fill: @main-background;
+            fill-opacity: 0.65;
+        }
+
+        .resize {
+            path {
+                fill: @light-chart-axis-color;
+                stroke: @chart-text-color;
+                stroke-opacity: 0.5;
+            }
+        }
+
+        .resize-divider{
+            fill: @chart-text-color;
+            fill-opacity: 0.3;
+        }
+
+        rect.background {
+            cursor: pointer !important;
+        }
     }
 
     .dot{
@@ -90,20 +120,16 @@
     }
 }
 
-.linechartDirective {
-    margin: 0px;
-    padding: 10px;
+.lineChartDirective {
     height: 100%;
     width: 100%;
 
     .legend-container {
-        top: 35px;
-        position: absolute;
-
         .legend {
             background-color: @visualization-box-background;
             border: @main-border;
             border-radius: 4px;
+            position: absolute;
 
             &.open {
                 min-width: 175px;
@@ -190,94 +216,6 @@
     .chart-options {
         .popover {
             max-width: none;
-            padding: 10px 0 0;
-        }
-    }
-
-    .all-chart-options {
-        /* Make the width match the width of the chart-options-well element + border + right padding. */
-        width: 555px;
-
-        .chart-options-container {
-            /* Make the width match the width of the chart-options-well element + border. */
-            width: 540px;
-
-            > label {
-                font-size: 14px;
-            }
-
-            .chart-options-well {
-                /* Make the width match the width of four columns + the columns' margins + this element's padding + this element's borders. */
-                width: 530px;
-
-                .chart-options-row {
-                    height: 75px;
-
-                    &.row-large {
-                        height: auto;
-                        display: flex;
-                    }
-
-                    .chart-options-col {
-                        float: left;
-                        width: 120px;
-                        margin-left: 10px;
-
-                        &:first-child {
-                            margin-left: 0px;
-                        }
-
-                        &.chart-options-col-wide {
-                            width: 250px;
-
-                            .col-half {
-                                width: 50%;
-                            }
-                        }
-
-                        &.btn-group {
-                            /* Make the chart options buttons vertically align with the dropdowns. */
-                            margin-top: 25px;
-
-                            .btn {
-                                /* Make the combined width of the four chart options buttons match the width of the column. */
-                                padding: 3px 22px 3px 21px;
-
-                                &.btn-default {
-                                    &.active, &.active&:hover, &.active&:focus {
-                                        color: #FFFFFF;
-                                        background-color: @accent-dark;
-                                        border-color: @accent-dark;
-                                    }
-                                }
-
-                                &.active {
-                                    z-index: auto;
-                                }
-                            }
-
-                            .glyphicon {
-                                font-size: 18px;
-                                top: 3px;
-                            }
-                        }
-
-                        select {
-                            cursor: pointer;
-                        }
-                    }
-                }
-
-                .chart-options-error {
-                    color: @error-text-color;
-                    margin: 10px 0px 0px;
-                    display: block;
-                }
-
-                .chart-options-editing {
-                    margin-top: 10px;
-                }
-            }
         }
     }
 }
@@ -290,16 +228,9 @@
     }
 }
 
-.visualization-widget {
-    .linechartDirective {
-        height: @widget-height;
-        width: @widget-width;
-    }
-}
-
 .gridster-mobile {
     .visualization-widget {
-        .linechartDirective {
+        .lineChartDirective {
             min-height: @mobile-widget-height;
             height: @mobile-widget-height;
             width: @mobile-widget-width;

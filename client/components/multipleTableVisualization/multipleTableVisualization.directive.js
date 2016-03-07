@@ -51,7 +51,9 @@ function(external, connectionService, datasetService, errorNotificationService, 
             $scope.logElementType = $scope.logElementType || "canvas";
 
             $scope.active = {
-                layers: []
+                layers: [],
+                queryByTable: false,
+                displayOverlapsHeaders: false
             };
 
             $scope.functions = {};
@@ -149,11 +151,16 @@ function(external, connectionService, datasetService, errorNotificationService, 
                     $scope.messenger.unsubscribeAll();
 
                     if($scope.functions.isFilterSet()) {
-                        $scope.functions.removeFilter(null, null, false, true);
+                        removeNeonFilter({
+                            fromSystem: true
+                        });
                     }
 
                     exportService.unregister($scope.exportId);
                     linksPopupService.deleteLinks($scope.visualizationId);
+                    $scope.active.layers.forEach(function(layer) {
+                        linksPopupService.deleteLinks(createLayerLinksSource(layer));
+                    });
                     themeService.unregisterListener($scope.visualizationId);
                     visualizationService.unregister($scope.stateId);
 
@@ -183,9 +190,21 @@ function(external, connectionService, datasetService, errorNotificationService, 
                 });
 
                 if($scope.active.layers.length) {
-                    updateFilter();
-                    runDefaultQueryAndUpdate();
+                    var updated = checkDashboardFilters();
+                    if(!updated) {
+                        runDefaultQueryAndUpdate();
+                    }
                 }
+            };
+
+            /**
+             * Creates and returns the source for the links popup data for the given layer.
+             * @param {Object} layer
+             * @method createLayerLinksSource
+             * @return {String}
+             */
+            var createLayerLinksSource = function(layer) {
+                return $scope.visualizationId + "-" + layer.database.name + "-" + layer.table.name;
             };
 
             /**
@@ -224,7 +243,11 @@ function(external, connectionService, datasetService, errorNotificationService, 
              * @private
              */
             var resizeDisplay = function() {
-                $("#" + $scope.visualizationId).height($scope.element.height() - $scope.element.find(".options-container").outerHeight(true));
+                var height = $scope.element.height() - $scope.element.find(".options-container").outerHeight(true);
+                if(!$scope.active.displayOverlapsHeaders) {
+                    height -= $scope.element.find(".filter-container").outerHeight(true);
+                }
+                $("#" + $scope.visualizationId).height(height);
                 $("#" + $scope.visualizationId).width($scope.element.width());
 
                 $scope.functions.onResize($scope.element.height(), $scope.element.width(), 25);
@@ -293,7 +316,7 @@ function(external, connectionService, datasetService, errorNotificationService, 
             };
 
             /**
-             * Gets the list of databases from the dataset service, sets the active database, table, and fields for the given layer, and queries for new data.
+             * Gets the list of databases from the dataset service and sets the active database, table, and fields for the given layer.
              * @param {Object} layer
              * @method updateDatabases
              */
@@ -304,7 +327,7 @@ function(external, connectionService, datasetService, errorNotificationService, 
             };
 
             /**
-             * Gets the list of tables from the dataset service, sets the active table and fields for the given layer, and queries for new data.
+             * Gets the list of tables from the dataset service and sets the active table and fields for the given layer.
              * @param {Object} layer
              * @method updateTables
              */
@@ -315,14 +338,18 @@ function(external, connectionService, datasetService, errorNotificationService, 
             };
 
             /**
-             * Gets the list of fields from the dataset service, sets the active fields for the given layer, and queries for new data.
+             * Gets the list of fields from the dataset service and sets the active fields for the given layer.
              * @param {Object} layer
              * @method updateFields
              * @private
              */
             $scope.updateFields = function(layer) {
-                if($scope.functions.isFilterSet(layer)) {
-                    $scope.functions.removeFilter(layer.database.name, layer.table.name, false, true);
+                if($scope.functions.isFilterSet()) {
+                    removeNeonFilter({
+                        database: layer.database.name,
+                        table: layer.table.name,
+                        fromSystem: true
+                    });
                 }
 
                 // Sort the fields that are displayed in the dropdowns in the options menus alphabetically.
@@ -345,50 +372,66 @@ function(external, connectionService, datasetService, errorNotificationService, 
 
             /**
              * Builds and executes the default data query for the databases and tables with the given names and updates the data for this visualization.
-             * @param {Array} databaseAndTableNames (Optional) A list of objects containing {String} database and {String} table
+             * @param {String} databaseName (Optional)
+             * @param {String} tableName (Optional)
              * @method runDefaultQueryAndUpdate
              * @private
              */
-            var runDefaultQueryAndUpdate = function(databaseAndTableNames) {
+            var runDefaultQueryAndUpdate = function(databaseName, tableName) {
                 // Save the title during the query so the title doesn't change immediately if the user changes the unshared filter.
                 $scope.queryTitle = $scope.createTitle(true);
 
                 // Resize the title and display after the error is hidden and the title is changed.
                 resize();
 
-                var list = databaseAndTableNames || getDatabaseAndTableNamesToQuery();
-                list.forEach(function(item) {
-                    queryAndUpdate(item.database, item.table, $scope.functions.addToQuery, $scope.functions.executeQuery, $scope.functions.updateData);
+                findQueryAndUpdateData(databaseName, tableName).forEach(function(item) {
+                    queryAndUpdate(item.layers, item.database, item.table, $scope.functions.addToQuery,  $scope.functions.executeQuery, $scope.functions.updateData);
                 });
             };
 
             /**
-             * Returns a list of objects each containing the {String} database and {String} table on which to query.
-             * @method getDatabaseAndTableNamesToQuery
+             * Returns a list of objects each containing the {String} database, {String} table, and {Array} of {Object} layers on which to query and update.
+             * @param {String} databaseName (Optional)
+             * @param {String} tableName (Optional)
+             * @method findQueryAndUpdateData
              * @return {Array}
              * @private
              */
-            var getDatabaseAndTableNamesToQuery = function() {
-                var databaseAndTableNames = [];
+            var findQueryAndUpdateData = function(databaseName, tableName) {
+                var data = [];
                 $scope.active.layers.forEach(function(layer) {
-                    if(!layer.new) {
-                        var index = _.findIndex(databaseAndTableNames, {
-                            database: layer.database.name,
-                            table: layer.table.name
-                        });
-                        if(index < 0) {
-                            databaseAndTableNames.push({
+                    if(!layer.new && ((databaseName && tableName) ? (layer.database.name === databaseName && layer.table.name === tableName) : true)) {
+                        // If queryByTable is enabled, add all layers with the same database and table to the same data item so their query and update happens together.
+                        if($scope.active.queryByTable) {
+                            var index = _.findIndex(data, {
                                 database: layer.database.name,
                                 table: layer.table.name
+                            });
+                            if(index < 0) {
+                                data.push({
+                                    database: layer.database.name,
+                                    table: layer.table.name,
+                                    layers: [layer]
+                                });
+                            } else {
+                                data[index].layers.push(layer);
+                            }
+                        } else {
+                            // If queryByTable is not enabled, add each layer as its own data item so its query and update happens independently.
+                            data.push({
+                                database: layer.database.name,
+                                table: layer.table.name,
+                                layers: [layer]
                             });
                         }
                     }
                 });
-                return databaseAndTableNames;
+                return data;
             };
 
             /**
-             * Builds and returns the Neon query object for the database and table with the given names.
+             * Builds and returns the Neon query object for the given layers using the database and table with the given names.
+             * @param {Array} layers
              * @param {String} databaseName
              * @param {String} tableName
              * @param {Function} addToQuery (Optional)
@@ -396,9 +439,9 @@ function(external, connectionService, datasetService, errorNotificationService, 
              * @return {neon.query.Query}
              * @private
              */
-            var buildQuery = function(databaseName, tableName, addToQuery) {
+            var buildQuery = function(layers, databaseName, tableName, addToQuery) {
                 var query = new neon.query.Query().selectFrom(databaseName, tableName);
-                var whereClause = $scope.functions.createNeonQueryClause(databaseName, tableName);
+                var whereClause = $scope.functions.createNeonQueryClause(layers);
 
                 var unsharedFilterField;
                 var unsharedFilterValue;
@@ -423,13 +466,12 @@ function(external, connectionService, datasetService, errorNotificationService, 
                     query.where(whereClause);
                 }
 
-                return addToQuery ? addToQuery(query, databaseName, tableName) : $scope.functions.addToQuery(query, databaseName, tableName);
+                return addToQuery ? addToQuery(query, layers) : $scope.functions.addToQuery(query, layers);
             };
 
             /**
-             * Creates and returns the Neon where clause for queries for this visualization (or undefined).
-             * @param {String} databaseName
-             * @param {String} tableName
+             * Creates and returns the Neon where clause for queries for the given layers (or returns undefined).
+             * @param {Array} layers
              * @method createNeonQueryClause
              * @return {neon.query.WhereClause}
              */
@@ -438,10 +480,9 @@ function(external, connectionService, datasetService, errorNotificationService, 
             };
 
             /**
-             * Adds to the given Neon query and returns the updated query for the database and table with the given names.
+             * Adds to the given Neon query and returns the updated query for the given layers.
              * @param {neon.query.Query} query
-             * @param {String} databaseName
-             * @param {String} tableName
+             * @param {Array} layers
              * @method addToQuery
              * @return {neon.query.Query}
              */
@@ -460,10 +501,9 @@ function(external, connectionService, datasetService, errorNotificationService, 
             };
 
             /**
-             * Updates the data and display for the database and table with the given names in this visualization.  Clears the display if the data array is empty or reset is true.
+             * Updates the data and display for the given layers in this visualization.  Clears the display if the data array is empty or reset is true.
              * @param {Array} data
-             * @param {String} databaseName
-             * @param {String} tableName
+             * @param {Array} layers
              * @param {Boolean} reset
              * @method updateData
              */
@@ -482,20 +522,15 @@ function(external, connectionService, datasetService, errorNotificationService, 
              * @method queryAndUpdate
              */
             $scope.functions.queryAndUpdate = function(options) {
-                if(options.database && options.table) {
-                    queryAndUpdate(options.database, options.table, options.addToQuery || $scope.functions.addToQuery, options.executeQuery || $scope.functions.executeQuery,
-                            options.updateData || $scope.functions.updateData);
-                    return;
-                }
-
-                getDatabaseAndTableNamesToQuery().forEach(function(item) {
-                    queryAndUpdate(item.database, item.table, options.addToQuery || $scope.functions.addToQuery, options.executeQuery || $scope.functions.executeQuery,
+                findQueryAndUpdateData(options.database, options.table).forEach(function(item) {
+                    queryAndUpdate(item.layers, item.database, item.table, options.addToQuery || $scope.functions.addToQuery, options.executeQuery || $scope.functions.executeQuery,
                         options.updateData || $scope.functions.updateData);
                 });
             };
 
             /**
-             * Builds and executes a query on the database and table with the given names and updates the data for this visualization using the given functions.
+             * Builds and executes a query on the given layers for the database and table with the given names and updates the data for this visualization using the given functions.
+             * @param {Array} layers
              * @param {String} databaseName
              * @param {String} tableName
              * @param {Function} addToQuery
@@ -504,30 +539,35 @@ function(external, connectionService, datasetService, errorNotificationService, 
              * @method queryAndUpdate
              * @private
              */
-            var queryAndUpdate = function(databaseName, tableName, addToQuery, executeQuery, updateData) {
+            var queryAndUpdate = function(layers, databaseName, tableName, addToQuery, executeQuery, updateData) {
                 if($scope.errorMessage) {
                     errorNotificationService.hideErrorMessage($scope.errorMessage);
                     $scope.errorMessage = undefined;
                 }
 
-                var hasLayer = $scope.active.layers.some(function(layer) {
-                    return !layer.new && layer.database.name === databaseName && layer.table.name === tableName;
+                // Mark each layer as querying for use in some visualizations.
+                layers.forEach(function(layer) {
+                    layer.querying = true;
                 });
 
-                if(!hasLayer) {
-                    return;
-                }
-
                 // Clear the display.
-                updateData([], databaseName, tableName, true);
+                updateData([], layers, true);
+
+                var finishQueryingLayers = function() {
+                    // Reset the querying status of each layer.
+                    layers.forEach(function(layer) {
+                        layer.querying = false;
+                    });
+                };
 
                 var connection = connectionService.getActiveConnection();
 
-                if(!connection || !$scope.functions.hasValidDataFields()) {
+                if(!connection || !$scope.functions.haveValidDataFields(layers)) {
+                    finishQueryingLayers();
                     return;
                 }
 
-                var query = buildQuery(databaseName, tableName, addToQuery);
+                var query = buildQuery(layers, databaseName, tableName, addToQuery);
 
                 XDATA.userALE.log({
                     activity: "alter",
@@ -540,11 +580,14 @@ function(external, connectionService, datasetService, errorNotificationService, 
                     tags: ["query", $scope.type]
                 });
 
+                // Cancel any previous data query currently running.
                 if($scope.outstandingDataQuery[databaseName] && $scope.outstandingDataQuery[databaseName][tableName]) {
                     $scope.outstandingDataQuery[databaseName][tableName].abort();
                 }
 
+                // Execute the data query, calling the function defined in "done" or "fail" as needed.
                 $scope.outstandingDataQuery[databaseName][tableName] = executeQuery(connection, query);
+
                 $scope.outstandingDataQuery[databaseName][tableName].always(function() {
                     $scope.outstandingDataQuery[databaseName][tableName] = undefined;
                 });
@@ -561,9 +604,11 @@ function(external, connectionService, datasetService, errorNotificationService, 
                         tags: ["receive", $scope.type]
                     });
 
+                    finishQueryingLayers();
+
                     $scope.$apply(function() {
                         // The response for an array-counts query is an array and the response for other queries is an object containing a data array.
-                        updateData(response.data || response, databaseName, tableName);
+                        updateData(response.data || response, layers);
                     });
 
                     XDATA.userALE.log({
@@ -579,6 +624,8 @@ function(external, connectionService, datasetService, errorNotificationService, 
                 });
 
                 $scope.outstandingDataQuery[databaseName][tableName].fail(function(response) {
+                    finishQueryingLayers();
+
                     if(response.status === 0) {
                         XDATA.userALE.log({
                             activity: "alter",
@@ -603,7 +650,7 @@ function(external, connectionService, datasetService, errorNotificationService, 
                         });
 
                         $scope.$apply(function() {
-                            updateData([], databaseName, tableName, true);
+                            updateData([], layers, true);
                         });
 
                         // See if the error response contains a Neon notification to show through the Error Notification Service.
@@ -620,11 +667,12 @@ function(external, connectionService, datasetService, errorNotificationService, 
             };
 
             /**
-             * Returns whether this visualization has valid data fields in order to execute a query.
-             * @method hasValidDataFields
+             * Returns whether the given layers have valid data fields in order to execute a query.
+             * @param {Array} layers
+             * @method haveValidDataFields
              * @return {Boolean}
              */
-            $scope.functions.hasValidDataFields = function() {
+            $scope.functions.haveValidDataFields = function(layers) {
                 return true;
             };
 
@@ -651,11 +699,7 @@ function(external, connectionService, datasetService, errorNotificationService, 
                 if($scope.queryTitle) {
                     return $scope.queryTitle;
                 }
-                var title = $scope.active.unsharedFilterValue ? $scope.active.unsharedFilterValue + " " : "";
-                if($scope.bindings.title) {
-                    return title + $scope.bindings.title;
-                }
-                return title + $scope.name;
+                return $scope.bindings.title || $scope.name;
             };
 
             /**
@@ -709,79 +753,89 @@ function(external, connectionService, datasetService, errorNotificationService, 
                         tags: ["filters-changed", $scope.type]
                     });
 
-                    updateFilter(message.addedFilter.databaseName, message.addedFilter.tableName);
-                    runDefaultQueryAndUpdate([{
-                        database: message.addedFilter.databaseName,
-                        table: message.addedFilter.tableName
-                    }]);
+                    var updated = checkDashboardFilters();
+                    if(!updated) {
+                        runDefaultQueryAndUpdate(message.addedFilter.databaseName, message.addedFilter.tableName);
+                    }
                 }
             };
 
-            /*
-             * Updates the filter for the database and table with the given names (or all databases and tables if no names were given) by
-             * finding any matching filters set by other visualizations through the filter service.
-             * @param {String} databaseName (Optional)
-             * @param {String} tableName (Optional)
-             * @method updateFilter
+            /**
+             * Checks for dashboard filters for all filterable layers in this visualization.  Adds, replaces, or removes the filter displayed by this visualization if needed.
+             * Queries and updates the data for the layers in this visualization if needed and returns whether a query was run.
+             * @method checkDashboardFilters
+             * @return {Boolean}
              * @private
              */
-            var updateFilter = function(databaseName, tableName) {
-                findDataToFilter(databaseName, tableName).forEach(function(item) {
+            var checkDashboardFilters = function() {
+                var neonFilters = [];
+                var filterFields = [];
+
+                // Check for dashboard filters on all filterable database/table/field combinations in active layers.
+                var data = findFilterData();
+                data.forEach(function(item) {
                     var neonFilter = filterService.getFilter(item.database, item.table, item.fields);
-                    if(!neonFilter && $scope.functions.isFilterSet()) {
-                        item.layers.forEach(function(layer) {
-                            layer.filter = false;
-                            layer.filtered = false;
-                        });
-                        $scope.functions.onRemoveFilter();
-                    }
                     if(neonFilter) {
-                        item.layers.forEach(function(layer) {
-                            layer.filter = true;
-                            layer.filtered = true;
-                        });
-                        $scope.functions.updateFilterFromNeonFilterClause(neonFilter, item.fields);
+                        neonFilters.push(neonFilter);
+                        filterFields.push(item.fields);
                     }
                 });
+
+                // If no dashboard filters are set on the filtered data in this visualization yet its own filter is set, remove the filter.
+                if((!neonFilters.length || neonFilters.length < data.length) && $scope.functions.isFilterSet()) {
+                    $scope.functions.onRemoveFilter();
+                    runDefaultQueryAndUpdate();
+                    return true;
+                }
+
+                // If all filtered data in this visualization have the same dashboard filters that are compatible with this visualization, update the filter.
+                if(neonFilters.length && neonFilters.length === data.length && $scope.functions.needToUpdateFilter(neonFilters)) {
+                    $scope.functions.updateFilter(neonFilters[0], filterFields[0]);
+                    $scope.functions.onAddFilter();
+                    runDefaultQueryAndUpdate();
+                    return true;
+                }
+
+                return false;
             };
 
             /**
              * Returns a list of objects each containing the {String} database, {String} table, {Array} of {String} fields, and {Array} of {Object} layers on which to filter.
              * @param {String} databaseName (Optional)
              * @param {String} tableName (Optional)
-             * @method findDataToFilter
+             * @method findFilterData
              * @return {Array}
              * @private
              */
-            var findDataToFilter = function(databaseName, tableName) {
-                var dataToFilter = [];
-                $scope.active.layers.forEach(function(layer) {
-                    if(!layer.new && (layer.filter || layer.filtered)) {
+            var findFilterData = function(databaseName, tableName, layers, ignoreFilter) {
+                var data = [];
+                (layers || $scope.active.layers).forEach(function(layer) {
+                    if(!layer.new && (layer.filterable || ignoreFilter) && ((databaseName && tableName) ? (databaseName === layer.database.name && tableName === layer.table.name) : true)) {
                         var valid = $scope.functions.getFilterFields(layer).every(function(field) {
                             return datasetService.isFieldValid(field);
                         });
-                        if(valid && ((databaseName && tableName) ? (databaseName === layer.database.name && tableName === layer.table.name) : true)) {
+                        if(valid) {
                             // Check whether the database/table/filter fields for this layer already exist in the data.
                             var fields = getFilterFieldNames(layer);
-                            var index = _.findIndex(dataToFilter, {
+                            var index = _.findIndex(data, {
                                 database: layer.database.name,
                                 table: layer.table.name,
                                 fields: fields
                             });
                             if(index < 0) {
-                                dataToFilter.push({
+                                data.push({
                                     database: layer.database.name,
                                     table: layer.table.name,
                                     fields: fields,
                                     layers: [layer]
                                 });
                             } else {
-                                dataToFilter[index].layers.push(layer);
+                                data[index].layers.push(layer);
                             }
                         }
                     }
                 });
-                return dataToFilter;
+                return data;
             };
 
             /**
@@ -807,7 +861,15 @@ function(external, connectionService, datasetService, errorNotificationService, 
             };
 
             /**
-             * Handles any behavior after removing the filter.
+             * Handles any behavior after adding a filter.
+             * @method onAddFilter
+             */
+            $scope.functions.onAddFilter = function() {
+                // Do nothing by default.
+            };
+
+            /**
+             * Handles any behavior after removing a filter.
              * @method onRemoveFilter
              */
             $scope.functions.onRemoveFilter = function() {
@@ -815,81 +877,89 @@ function(external, connectionService, datasetService, errorNotificationService, 
             };
 
             /**
-             * Updates the filter for the fields with the given names using the where clause in the given Neon filter.
+             * Returns whether the filter displayed by this visualization needs to be updated based on the given list of Neon filters set in the dashboard.
+             * @param {Array} of {neon.query.Filter} neonFilters
+             * @method needToUpdateFilter
+             * @return {Boolean}
+             */
+            $scope.functions.needToUpdateFilter = function() {
+                return false;
+            };
+
+            /**
+             * Updates the filter displayed by this visualization on the fields with the given names using the where clause in the given Neon filter.
              * @param {neon.query.Filter} neonFilter
              * @param {Array} fieldNames
-             * @method updateFilterFromNeonFilterClause
+             * @method updateFilter
              */
-            $scope.functions.updateFilterFromNeonFilterClause = function() {
+            $scope.functions.updateFilter = function() {
                 // Do nothing by default.
             };
 
             /**
-             * Replaces the global filter for the layers matching the given database and table names (or all layers if no names are given) with a new filter for this visualization
-             * and updates the dashboard.
-             * @param {String} databaseName (Optional)
-             * @param {String} tableName (Optional)
-             * @param {Boolean} shouldQueryAndUpdate (Optional)
-             * @method replaceFilter
+             * Adds or replaces the Neon filter in the dashboard on all filterable layers in this visualization.
+             * @method addNeonFilter
              */
-            $scope.functions.replaceFilter = function(databaseName, tableName, shouldQueryAndUpdate) {
-                $scope.functions.addFilter(databaseName, tableName, shouldQueryAndUpdate);
+            $scope.functions.addNeonFilter = function() {
+                addNeonFilter({});
             };
 
             /**
-             * Adds or replaces the global filter for the layers matching the given database and table names (or all layers if no names are given) with the filter for this
-             * visualization and updates the dashboard.
-             * @param {String} databaseName (Optional)
-             * @param {String} tableName (Optional)
-             * @param {Boolean} shouldQueryAndUpdate (Optional)
-             * @method addFilter
+             * Adds or replaces the Neon filter in the dashboard on filterable layers in this visualization.
+             * @param {Object} options A collection of the following options:
+             *        {String} databaseName (Optional) The name of a databse.  If not given, adds a filter on all layers.
+             *        {String} tableName (Optional) The name of a table.  If not given, adds a filter on all layers.
+             *        {Boolean} queryAfterFilter (Optional) Whether to run a query and update the data for this visualization after adding the last filter.
+             * @method addNeonFilter
+             * @private
              */
-            $scope.functions.addFilter = function(databaseName, tableName, shouldQueryAndUpdate) {
-                XDATA.userALE.log({
-                    activity: "select",
-                    action: "click",
-                    elementId: $scope.type,
-                    elementType: $scope.logElementType,
-                    elementSub: $scope.type,
-                    elementGroup: $scope.logElementGroup,
-                    source: "user",
-                    tags: ["filter", $scope.type]
-                });
-
-                var dataToFilter = findDataToFilter(databaseName, tableName);
-                if(dataToFilter.length) {
-                    addFiltersForData(dataToFilter, 0);
-                }
+            var addNeonFilter = function(options) {
+                addFiltersForData(findFilterData(options.database, options.table), 0, options.queryAfterFilter);
             };
 
             /**
              * Adds or replaces the filter for the database, table, and fields in the given list of data at the given index and at each index that follows.
-             * @param {Array} dataToFilter Contains {String} database, {String} table, {Array} of {String} fields, and {Array} of {Object} layers
+             * @param {Array} data Contains {String} database, {String} table, {Array} of {String} fields, and {Array} of {Object} layers
              * @param {Number} index
-             * @param {Boolean} shouldQueryAndUpdate (Optional)
+             * @param {Boolean} queryAfterFilter (Optional)
              * @method addFiltersForData
              * @private
              */
-            var addFiltersForData = function(dataToFilter, index, shouldQueryAndUpdate) {
-                var item = dataToFilter[index];
-                // Will add or replace the filter as appropriate.
+            var addFiltersForData = function(data, index, queryAfterFilter) {
+                if(!data.length || index >= data.length) {
+                    $scope.functions.onAddFilter();
+
+                    if($scope.functions.shouldQueryAfterFilter() || queryAfterFilter) {
+                        data.forEach(function(item) {
+                            runDefaultQueryAndUpdate(item.database, item.table);
+                        });
+                    }
+
+                    return;
+                }
+
+                var item = data[index];
                 filterService.addFilter($scope.messenger, item.database, item.table, item.fields, $scope.functions.createNeonFilterClause, {
                     visName: $scope.name,
                     text: $scope.functions.createFilterTrayText(item.database, item.table, item.fields)
                 }, function() {
-                    item.layers.forEach(function(layer) {
-                        layer.filtered = true;
+                    XDATA.userALE.log({
+                        activity: "select",
+                        action: "click",
+                        elementId: $scope.type,
+                        elementType: $scope.logElementType,
+                        elementSub: $scope.type,
+                        elementGroup: $scope.logElementGroup,
+                        source: "user",
+                        tags: ["filter", $scope.type]
                     });
-                    if(++index < dataToFilter.length) {
-                        addFiltersForData(dataToFilter, index);
-                    } else if($scope.functions.shouldQueryAfterFilter() || shouldQueryAndUpdate) {
-                        runDefaultQueryAndUpdate(dataToFilter);
-                    }
+                    addFiltersForData(data, ++index, queryAfterFilter);
                 });
             };
 
             /**
              * Creates and returns the Neon where clause for a Neon filter on the given database, table, and fields using the filters set in this visualization.
+             * Called by the Filter Service.
              * @param {Object} databaseAndTableName Contains {String} database and {String} table
              * @param {String} fieldName or {Array} fieldNames The name (or list of names) of the filter fields
              * @method createNeonFilterClause
@@ -921,37 +991,58 @@ function(external, connectionService, datasetService, errorNotificationService, 
             };
 
             /**
-             * Removes the global filter for the layers matching the given database and table names (or all layers if no names are given) from this visualization and updates the dashboard.
-             * @param {String} databaseName (Optional)
-             * @param {String} tableName (Optional)
-             * @param {Boolean} shouldQueryAndUpdate (Optional)
-             * @param {Boolean} fromSystem (Optional)
-             * @method removeFilter
+             * Removes the Neon filter from the dashboard on all filterable layers in this visualization.
+             * @method removeNeonFilter
              */
-            $scope.functions.removeFilter = function(databaseName, tableName, shouldQueryAndUpdate, fromSystem) {
-                var dataToFilter = findDataToFilter(databaseName, tableName);
-                if(dataToFilter.length) {
-                    removeFiltersForData(dataToFilter, 0, shouldQueryAndUpdate, fromSystem);
-                }
+            $scope.functions.removeNeonFilter = function() {
+                removeNeonFilter({});
+            };
+
+            /**
+             * Removes the Neon filter from the dashboard on filterable layers in this visualization.
+             * @param {Object} options A collection of the following options:
+             *        {Array} layers (Optional) The layers from which to remove the filter.  If not given, uses active.layers.
+             *        {String} databaseName (Optional) The name of a databse.  If not given, removes the filter from all layers.
+             *        {String} tableName (Optional) The name of a table.  If not given, removes the filter from all layers.
+             *        {Boolean} queryAfterFilter (Optional) Whether to run a query and update the data for this visualization after removing the last filter.
+             *        {Boolean} fromSystem (Optional) Whether removing filters was triggered by a system event.
+             * @method removeNeonFilter
+             * @private
+             */
+            var removeNeonFilter = function(options) {
+                removeFiltersForData(findFilterData(options.database, options.table, options.layers, true), 0, options.queryAfterFilter, options.fromSystem);
             };
 
             /**
              * Removes the filter for the database, table, and fields in the given list of data at the given index and at each index that follows.
-             * @param {Array} dataToFilter Contains {String} database, {String} table, {Array} of {String} fields, and {Array} of {Object} layers
+             * @param {Array} data Contains {String} database, {String} table, {Array} of {String} fields, and {Array} of {Object} layers
              * @param {Number} index
-             * @param {Boolean} shouldQueryAndUpdate (Optional)
+             * @param {Boolean} queryAfterFilter (Optional)
              * @param {Boolean} fromSystem (Optional)
              * @method removeFiltersForData
              * @private
              */
-            var removeFiltersForData = function(dataToFilter, index, shouldQueryAndUpdate, fromSystem) {
-                var item = dataToFilter[index];
-                filterService.removeFilter(item.database, item.table, item.fields, function() {
-                    item.layers.forEach(function(layer) {
-                        layer.filtered = false;
+            var removeFiltersForData = function(data, index, queryAfterFilter, fromSystem) {
+                if(!data.length || index >= data.length) {
+                    var unfiltered = $scope.active.layers.every(function(layer) {
+                        return !layer.filterable;
                     });
-                    $scope.functions.onRemoveFilter();
 
+                    if(unfiltered) {
+                        $scope.functions.onRemoveFilter();
+                    }
+
+                    if($scope.functions.shouldQueryAfterFilter() || queryAfterFilter) {
+                        data.forEach(function(item) {
+                            runDefaultQueryAndUpdate(item.database, item.table);
+                        });
+                    }
+
+                    return;
+                }
+
+                var item = data[index];
+                filterService.removeFilter(item.database, item.table, item.fields, function() {
                     if(!fromSystem) {
                         XDATA.userALE.log({
                             activity: "deselect",
@@ -964,12 +1055,7 @@ function(external, connectionService, datasetService, errorNotificationService, 
                             tags: ["filter", $scope.type]
                         });
                     }
-
-                    if(++index < dataToFilter.length) {
-                        removeFiltersForData(dataToFilter, index, shouldQueryAndUpdate, fromSystem);
-                    } else if($scope.functions.shouldQueryAfterFilter() || shouldQueryAndUpdate) {
-                        runDefaultQueryAndUpdate(dataToFilter);
-                    }
+                    removeFiltersForData(data, ++index, queryAfterFilter, fromSystem);
                 });
             };
 
@@ -1045,6 +1131,21 @@ function(external, connectionService, datasetService, errorNotificationService, 
                     tags: ["options", $scope.type, value]
                 });
             };
+
+            /**
+             * Utility function for logging a change of the given option to the given value using an element of the given type, running a new query and updating the data.
+             * @param {String} option
+             * @param {String} value
+             * @param {String} type (Optional) [Default:  combobox]
+             * @method logChangeAndUpdateData
+             */
+            $scope.functions.logChangeAndUpdateData = function(option, value, type) {
+                logChange(option, value, type);
+                if(!$scope.initializing) {
+                    runDefaultQueryAndUpdate();
+                }
+            };
+
 
             /**
              * Updates the 'from' language on translation and translates if 'Show Translation' is checked
@@ -1239,10 +1340,26 @@ function(external, connectionService, datasetService, errorNotificationService, 
              * @return {Object}
              */
             $scope.functions.findFieldObject = function(layer, fieldName, bindingKey, mappingKey) {
-                var name = fieldName || (bindingKey ? $scope.bindings[bindingKey] : null) || (mappingKey ? $scope.functions.getMapping(layer.database.name, layer.table.name, mappingKey) : null) || "";
-                return _.find(layer.fields, function(field) {
-                    return field.columnName === name;
-                }) || datasetService.createBlankField();
+                var find = function(name) {
+                    return _.find(layer.fields, function(field) {
+                        return field.columnName === name;
+                    });
+                };
+
+                var field;
+                if(fieldName) {
+                    field = find(fieldName);
+                }
+
+                if(!field && bindingKey) {
+                    field = find($scope.bindings[bindingKey]);
+                }
+
+                if(!field && mappingKey) {
+                    field = find($scope.functions.getMapping(layer.database.name, layer.table.name, mappingKey));
+                }
+
+                return field || datasetService.createBlankField();
             };
 
             /**
@@ -1296,12 +1413,13 @@ function(external, connectionService, datasetService, errorNotificationService, 
             };
 
             /**
-             * Returns the filter key for the given filter clause.
+             * Returns the filter key for the database and table in the given layer and the given filter clause.
+             * @param {Object} layer
              * @param {Object} filterClause
              * @method getFilterKey
              * @return {String}
              */
-            $scope.functions.getFilterKey = function(filterClause, layer) {
+            $scope.functions.getFilterKey = function(layer, filterClause) {
                 return filterService.getFilterKey(layer.database.name, layer.table.name, filterClause);
             };
 
@@ -1369,13 +1487,12 @@ function(external, connectionService, datasetService, errorNotificationService, 
                             table: layer.table.name
                         });
                         if(index < 0) {
-                            var query = buildQuery(layer.database.name, layer.table.name);
+                            var query = buildQuery([layer], layer.database.name, layer.table.name);
                             query.limitClause = exportService.getLimitClause();
                             query.ignoreFilters_ = exportService.getIgnoreFilters();
                             query.ignoredFilterIds_ = exportService.getIgnoredFilterIds();
                             queryData.push({
-                                database: layer.database.name,
-                                table: layer.table.name,
+                                layer: layer,
                                 query: query
                             });
                         }
@@ -1405,7 +1522,7 @@ function(external, connectionService, datasetService, errorNotificationService, 
             $scope.createLayer = function(config) {
                 var layer = {
                     databases: datasetService.getDatabases(),
-                    filter: true,
+                    filterable: true,
                     show: true
                 };
 
@@ -1421,11 +1538,11 @@ function(external, connectionService, datasetService, errorNotificationService, 
                 layer.table = (config && config.table) ? datasetService.getTableWithName(layer.database.name, config.table) : layer.tables[0];
 
                 if(layer.database && layer.database.name && layer.table && layer.table.name) {
-                    layer.name = (config ? config.name : layer.table.name || layer.table.name).toUpperCase();
+                    layer.name = ((config ? config.name : layer.table.name) || layer.table.name).toUpperCase();
                     layer.fields = datasetService.getSortedFields(layer.database.name, layer.table.name);
                     layer.unsharedFilterField = $scope.functions.findFieldObject(layer, config ? config.unsharedFilterField : "");
                     layer.unsharedFilterValue = config ? config.unsharedFilterValue : "";
-                    $scope.active.layers.push($scope.functions.addToLayer(layer, config || {}));
+                    $scope.active.layers.push($scope.functions.addToNewLayer(layer, config || {}));
                     $scope.validateLayerName(layer, 0);
                 }
 
@@ -1435,10 +1552,10 @@ function(external, connectionService, datasetService, errorNotificationService, 
             /**
              * Adds properties to the given layer object specific to this visualization and returns the updated layer.
              * @param {Object} layer
-             * @method addToLayer
+             * @method addToNewLayer
              * @return {Object}
              */
-            $scope.functions.addToLayer = function(layer) {
+            $scope.functions.addToNewLayer = function(layer) {
                 return layer;
             };
 
@@ -1459,22 +1576,30 @@ function(external, connectionService, datasetService, errorNotificationService, 
              */
             $scope.updateLayer = function(layer) {
                 // TODO Logging
-                var wasNew = layer.new;
+                var isNew = layer.new;
+                var updated = false;
                 layer.edit = false;
                 layer.new = false;
 
                 updateOtherLayers(layer);
                 $scope.functions.onUpdateLayer(layer);
 
-                if(wasNew && layer.filter && $scope.functions.isFilterSet()) {
-                    // Add a filter on the layer and query for new data.
-                    $scope.functions.replaceFilter(layer.database.name, layer.table.name, true)
-                } else {
-                    updateFilter(layer.database.name, layer.table.name);
-                    runDefaultQueryAndUpdate([{
-                        database: layer.database.name,
-                        table: layer.table.name
-                    }]);
+                // For new filterable layers, add a neon filter to the dashboard or check for dashboard filters.
+                if(isNew && layer.filterable) {
+                    if($scope.functions.isFilterSet()) {
+                        $scope.functions.addNeonFilter({
+                            database: layer.database.name,
+                            table: layer.table.name,
+                            queryAfterFilter: true
+                        });
+                        return;
+                    }
+
+                    updated = checkDashboardFilters();
+                }
+
+                if(!updated) {
+                    runDefaultQueryAndUpdate(layer.database.name, layer.table.name);
                 }
             };
 
@@ -1490,7 +1615,7 @@ function(external, connectionService, datasetService, errorNotificationService, 
                     if(other.database.name === layer.database.name && other.table.name === layer.table.name) {
                         other.unsharedFilterField = $scope.functions.findFieldObject(other, layer.unsharedFilterField.columnName);
                         other.unsharedFilterValue = layer.unsharedFilterValue;
-                        other.filter = layer.filter;
+                        other.filterable = layer.filterable;
                     };
                 });
 
@@ -1513,9 +1638,16 @@ function(external, connectionService, datasetService, errorNotificationService, 
              */
             $scope.deleteLayer = function(layer, indexReversed) {
                 // TODO Logging
-                $scope.active.layers.splice($scope.active.layers.length - 1 - indexReversed, 1);
                 $scope.functions.onDeleteLayer(layer);
-                $scope.functions.removeFilter(layer.database.name, layer.table.name);
+                $scope.active.layers.splice($scope.active.layers.length - 1 - indexReversed, 1);
+                if(layer.filterable && $scope.functions.isFilterSet()) {
+                    removeNeonFilter({
+                        // Include the deleted layer in the options because it will not be found in the list of active layers.
+                        layers: [layer],
+                        database: layer.database.name,
+                        table: layer.table.name
+                    });
+                }
             };
 
             /**
@@ -1577,11 +1709,23 @@ function(external, connectionService, datasetService, errorNotificationService, 
                 // TODO Logging
                 updateOtherLayers(layer);
 
-                if(!layer.new && $scope.functions.isFilterSet()) {
-                    if(layer.filter) {
-                        $scope.functions.replaceFilter(layer.database.name, layer.table.name, true)
+                if(!layer.new) {
+                    if($scope.functions.isFilterSet()) {
+                        if(layer.filterable) {
+                            $scope.functions.addNeonFilter({
+                                database: layer.database.name,
+                                table: layer.table.name,
+                                queryAfterFilter: true
+                            })
+                        } else {
+                            removeNeonFilter({
+                                database: layer.database.name,
+                                table: layer.table.name,
+                                queryAfterFilter: true
+                            });
+                        }
                     } else {
-                        $scope.functions.removeFilter(layer.database.name, layer.table.name, true);
+                        checkDashboardFiltersAndQueryIfNeeded();
                     }
                 }
             };

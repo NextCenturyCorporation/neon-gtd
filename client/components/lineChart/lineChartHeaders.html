@@ -1,0 +1,26 @@
+<div class="legend pull-left" ng-class="{true: 'open', false: ''}[active.legend.show]" ng-show="active.layers.length">
+    <div class="legend-toggle header-text" ng-click="toggleLegend()">
+        <span>Legend</span>
+    </div>
+    <div class="divider" ng-show="active.legend.show"></div>
+    <div class="legend-details" ng-show="active.legend.show">
+        <div class="legend-layer" ng-repeat="(chartID, chartColorMappings) in colorMappings">
+            <div class="legend-header" ng-click="toggleLegendChart(chartID)">
+                <span class="legend-title header-text" ng-bind="getTitleFromMapping(chartColorMappings[0])"></span>
+                <span class="glyphicon glyphicon-chevron-down pull-right" ng-show="!active.legend.layers[chartID].show"></span>
+                <span class="glyphicon glyphicon-chevron-up pull-right" ng-show="active.legend.layers[chartID].show"></span>
+            </div>
+            <div class="legend-item legend-item-clickable" title="getLegendItemAggregationText(chartID, colorMapping)}}"
+                ng-repeat="colorMapping in chartColorMappings" ng-show="active.legend.layers[chartID].show" ng-click="toggleSeries(colorMapping)"
+                ng-class="{true: 'legend-hidden', false: ''}[colorMapping.hidden]">
+                <span class="legend-icon" style="background-color: {{colorMapping.color}}"></span>
+                <span class="legend-text" ng-bind="getLegendItemAggregationText(chartID, colorMapping)"></span>
+            </div>
+        </div>
+    </div>
+</div>
+
+<span class="no-data pull-left" ng-show="noData">No data for current filters.</span>
+
+<filter-notification get-data="getFilterData" get-desc="createFilterDesc" get-links-popup-key="getDateKeyForLinksPopupButton" remove="removeBrush"
+    show-links-popup-button="showLinksPopupButton" visualization-id="visualizationId"></filter-notification>

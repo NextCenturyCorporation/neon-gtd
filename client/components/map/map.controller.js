@@ -16,7 +16,7 @@
  *
  */
 
-angular.module('neonDemo.controllers').controller('mapController', ['$scope', '$timeout', '$filter', 'external', function($scope, $timeout, $filter, external) {
+angular.module('neonDemo.controllers').controller('mapController', ['$scope', '$filter', 'external', function($scope, $filter, external) {
     $scope.POINT_LAYER = coreMap.Map.POINTS_LAYER;
     $scope.CLUSTER_LAYER = coreMap.Map.CLUSTER_LAYER;
     $scope.HEATMAP_LAYER = coreMap.Map.HEATMAP_LAYER;
@@ -31,6 +31,12 @@ angular.module('neonDemo.controllers').controller('mapController', ['$scope', '$
         layers: []
     };
     $scope.active.baseLayerColor = "light";
+
+    // Set this option so the superclass queries for data by all layers with the same database & table instead of by individual layers.
+    $scope.active.queryByTable = true;
+
+    // Set this option so the superclass resizes the display to overlap (underneath) the legend/filter container.
+    $scope.active.displayOverlapsHeaders = true;
 
     $scope.functions.createMenuText = function() {
         var text = "";
@@ -105,11 +111,11 @@ angular.module('neonDemo.controllers').controller('mapController', ['$scope', '$
         $scope.map.register("zoom", this, onMapEvent);
         $scope.map.register("zoomend", this, onMapEvent);
 
-        $scope.functions.subscribe("data_table_select", onPointSelected);
-        $scope.functions.subscribe("date_selected", onDateSelected);
+        $scope.functions.subscribe("data_table_select", handlePointSelected);
+        $scope.functions.subscribe("date_selected", handleDateSelected);
         $scope.linkyConfig = $scope.functions.getLinkyConfig();
 
-        $scope.functions.getElement('.legend-container .legend').on({
+        $scope.functions.getElement('.legend').on({
             "shown.bs.dropdown": function() {
                 this.closable = false;
             },
@@ -156,17 +162,11 @@ angular.module('neonDemo.controllers').controller('mapController', ['$scope', '$
                 maximumLatitude: Math.max(lowerLeftPoint.lat, upperRightPoint.lat)
             };
 
-            onAddFilter();
-            $scope.functions.replaceFilter();
+            $scope.functions.addNeonFilter();
         };
     };
 
-    /**
-     * Handles additional behavior for adding a filter.  Creates links for the new bounds and updates the bounds rectangle drawn on the map.
-     * @method onAddFilter
-     * @private
-     */
-    var onAddFilter = function() {
+    $scope.functions.onAddFilter = function() {
         if(external.services.bounds) {
             var linkData = {};
             linkData[neonMappings.BOUNDS] = {};
@@ -195,8 +195,8 @@ angular.module('neonDemo.controllers').controller('mapController', ['$scope', '$
         return $scope.extent;
     };
 
-    $scope.functions.createFilterTrayText = function(databaseName, tableName) {
-        return databaseName + " - " + tableName;
+    $scope.functions.createFilterTrayText = function(databaseName, tableName, fieldNames) {
+        return databaseName + " - " + tableName + " - " + fieldNames.join(", ");
     };
 
     $scope.functions.shouldQueryAfterFilter = function() {
@@ -238,10 +238,10 @@ angular.module('neonDemo.controllers').controller('mapController', ['$scope', '$
     /**
      * Event handler for date selected events issued over Neon's messaging channels.
      * @param {Object} message A Neon date selected message.
-     * @method onDateSelected
+     * @method handleDateSelected
      * @private
      */
-    var onDateSelected = function(message) {
+    var handleDateSelected = function(message) {
         $scope.active.layers.forEach(function(layer) {
             if(!layer.new && (layer.type === $scope.NODE_AND_ARROW_LAYER || layer.type === $scope.POINT_LAYER)) {
                 layer.olLayer.setDateFilter(message);
@@ -273,19 +273,19 @@ angular.module('neonDemo.controllers').controller('mapController', ['$scope', '$
      * @private
      */
     var updateFields = function(layer, config) {
-        layer.latitudeField = $scope.functions.findFieldObject(layer, config.latitude, null, neonMappings.LATITUDE);
-        layer.longitudeField = $scope.functions.findFieldObject(layer, config.longitude, null, neonMappings.LONGITUDE);
-        layer.dateField = $scope.functions.findFieldObject(layer, config.date, null, neonMappings.DATE);
-        layer.sizeField = $scope.functions.findFieldObject(layer, config.size, null, neonMappings.SIZE);
-        layer.colorField = $scope.functions.findFieldObject(layer, config.color, null, neonMappings.COLOR);
-        layer.sourceLatitudeField = $scope.functions.findFieldObject(layer, config.sourceLatitude, null, neonMappings.SOURCE_LATITUDE_FIELD);
-        layer.sourceLongitudeField = $scope.functions.findFieldObject(layer, config.sourceLongitude, null, neonMappings.SOURCE_LONGITUDE_FIELD);
-        layer.targetLatitudeField = $scope.functions.findFieldObject(layer, config.targetLatitude, null, neonMappings.TARGET_LATITUDE_FIELD);
-        layer.targetLongitudeField = $scope.functions.findFieldObject(layer, config.targetLongitude, null, neonMappings.TARGET_LONGITUDE_FIELD);
-        layer.lineColorField = $scope.functions.findFieldObject(layer, config.lineColor, null, neonMappings.LINE_COLOR_BY);
-        layer.nodeColorField = $scope.functions.findFieldObject(layer, config.nodeColor, null, neonMappings.NODE_COLOR_BY);
-        layer.lineSizeField = $scope.functions.findFieldObject(layer, config.lineSize, null, neonMappings.LINE_SIZE);
-        layer.nodeSizeField = $scope.functions.findFieldObject(layer, config.nodeSize, null, neonMappings.NODE_SIZE);
+        layer.latitudeField = $scope.functions.findFieldObject(layer, config.latitudeField, null, neonMappings.LATITUDE);
+        layer.longitudeField = $scope.functions.findFieldObject(layer, config.longitudeField, null, neonMappings.LONGITUDE);
+        layer.dateField = $scope.functions.findFieldObject(layer, config.dateField, null, neonMappings.DATE);
+        layer.sizeField = $scope.functions.findFieldObject(layer, config.sizeField, null, neonMappings.SIZE);
+        layer.colorField = $scope.functions.findFieldObject(layer, config.colorField, null, neonMappings.COLOR);
+        layer.sourceLatitudeField = $scope.functions.findFieldObject(layer, config.sourceLatitudeField, null, neonMappings.SOURCE_LATITUDE_FIELD);
+        layer.sourceLongitudeField = $scope.functions.findFieldObject(layer, config.sourceLongitudeField, null, neonMappings.SOURCE_LONGITUDE_FIELD);
+        layer.targetLatitudeField = $scope.functions.findFieldObject(layer, config.targetLatitudeField, null, neonMappings.TARGET_LATITUDE_FIELD);
+        layer.targetLongitudeField = $scope.functions.findFieldObject(layer, config.targetLongitudeField, null, neonMappings.TARGET_LONGITUDE_FIELD);
+        layer.lineColorField = $scope.functions.findFieldObject(layer, config.lineColorField, null, neonMappings.LINE_COLOR_BY);
+        layer.nodeColorField = $scope.functions.findFieldObject(layer, config.nodeColorField, null, neonMappings.NODE_COLOR_BY);
+        layer.lineSizeField = $scope.functions.findFieldObject(layer, config.lineSizeField, null, neonMappings.LINE_SIZE);
+        layer.nodeSizeField = $scope.functions.findFieldObject(layer, config.nodeSizeField, null, neonMappings.NODE_SIZE);
         $scope.validateLayerFields(layer);
     };
 
@@ -320,7 +320,7 @@ angular.module('neonDemo.controllers').controller('mapController', ['$scope', '$
         layer.error = fields.length ? "Please choose fields:  " + fields.join(", ") : undefined;
     };
 
-    $scope.functions.addToLayer = function(layer, config) {
+    $scope.functions.addToNewLayer = function(layer, config) {
         layer.type = config.type || $scope.POINT_LAYER;
         layer.limit = config.limit || $scope.DEFAULT_LIMIT;
         layer.colorCode = config.colorCode;
@@ -336,12 +336,37 @@ angular.module('neonDemo.controllers').controller('mapController', ['$scope', '$
         return layer;
     };
 
-    $scope.functions.updateFilterFromNeonFilterClause = function(neonFilter, fieldNames, layers) {
+    $scope.functions.updateFilter = function(neonFilter, fieldNames) {
         var extentInFilter = findExtentInNeonFilter(neonFilter, fieldNames);
         if(_.keys(extentInFilter).length) {
             $scope.extent = extentInFilter;
-            onAddFilter();
         }
+    };
+
+    $scope.functions.needToUpdateFilter = function(neonFilters) {
+        // TODO Map filters can be created in configurations other than [minLon, maxLon, minLat, maxLat] so we should probably handle those correctly too.
+        if(!neonFilters.length || $scope.functions.getNumberOfFilterClauses(neonFilters[0]) !== 4) {
+            return false;
+        }
+
+        // The bounds for each given neon filter must be the same.
+        var minLon = neonFilters[0].filter.whereClause.whereClauses[0].rhs;
+        var maxLon = neonFilters[0].filter.whereClause.whereClauses[1].rhs;
+        var minLat = neonFilters[0].filter.whereClause.whereClauses[2].rhs;
+        var maxLat = neonFilters[0].filter.whereClause.whereClauses[3].rhs;
+
+        // If the bounds in the neon filter are the same as the extent then we don't need to update the extent.
+        var same = $scope.extent ? $scope.extent.minimumLongitude === minLon && $scope.extent.maximumLongitude === maxLon &&
+            $scope.extent.minimumLatitude === minLat && $scope.extent.maximumLatitude === maxLat : false;
+        var answer = !same;
+
+        neonFilters.forEach(function(neonFilter) {
+            answer = answer && $scope.functions.getNumberOfFilterClauses(neonFilter) === 4 && minLon === neonFilter.filter.whereClause.whereClauses[0].rhs &&
+                maxLon === neonFilter.filter.whereClause.whereClauses[1].rhs && minLat === neonFilter.filter.whereClause.whereClauses[2].rhs &&
+                maxLat === neonFilter.filter.whereClause.whereClauses[3].rhs;
+        });
+
+        return answer;
     };
 
     /**
@@ -418,11 +443,11 @@ angular.module('neonDemo.controllers').controller('mapController', ['$scope', '$
         $scope.active.legend.layers[index].show = !$scope.active.legend.layers[index].show;
     };
 
-    $scope.functions.updateData = function(data, databaseName, tableName, reset) {
+    $scope.functions.updateData = function(data, layers, reset) {
         $scope.dataBounds = $scope.dataBounds || computeDataBounds(data);
 
-        $scope.active.layers.forEach(function(layer) {
-            if(!layer.new && layer.database.name === databaseName && layer.table.name === tableName && layer.olLayer) {
+        layers.forEach(function(layer) {
+            if(layer.olLayer) {
                 layer.queryLimited = data.length >= layer.limit ? layer.limit : 0;
                 // Only use elements up to the limit of this layer; other layers for this database/table may have a higher limit.
                 var layerData = data.slice(0, layer.limit);
@@ -466,7 +491,7 @@ angular.module('neonDemo.controllers').controller('mapController', ['$scope', '$
                     }
 
                     if(external.services.point && layer.type !== $scope.NODE_AND_ARROW_LAYER) {
-                        var linksSource = generatePointLinksSource(databaseName, tableName);
+                        var linksSource = generatePointLinksSource(layer.database.name, layer.table.name);
                         createExternalLinks(layerData, linksSource, layer.latitudeField.columnName, layer.longitudeField.columnName);
                         layer.olLayer.linksSource = linksSource;
                     }
@@ -617,7 +642,7 @@ angular.module('neonDemo.controllers').controller('mapController', ['$scope', '$
         $scope.functions.getLinksPopupService().setLinks(source, mapLinks);
     };
 
-    $scope.functions.addToQuery = function(query, databaseName, tableName) {
+    $scope.functions.addToQuery = function(query, layers) {
         var queryFields = {
             _id: true
         };
@@ -631,62 +656,58 @@ angular.module('neonDemo.controllers').controller('mapController', ['$scope', '$
             });
         };
 
-        $scope.active.layers.forEach(function(layer) {
-            if(!layer.new && layer.database.name === databaseName && layer.table.name === tableName) {
-                var layerFields = [
-                    layer.latitudeField,
-                    layer.longitudeField,
-                    layer.sourceLatitudeField,
-                    layer.sourceLongitudeField,
-                    layer.targetLatitudeField,
-                    layer.targetLongitudeField,
-                    layer.lineColorField,
-                    layer.lineSizeField,
-                    layer.nodeColorField,
-                    layer.nodeSizeField,
-                    layer.colorField,
-                    layer.dateField,
-                    layer.sizeField
-                ];
+        layers.forEach(function(layer) {
+            var layerFields = [
+                layer.latitudeField,
+                layer.longitudeField,
+                layer.sourceLatitudeField,
+                layer.sourceLongitudeField,
+                layer.targetLatitudeField,
+                layer.targetLongitudeField,
+                layer.lineColorField,
+                layer.lineSizeField,
+                layer.nodeColorField,
+                layer.nodeSizeField,
+                layer.colorField,
+                layer.dateField,
+                layer.sizeField
+            ];
 
-                if(layer.popupFields) {
-                    layer.popupFields.forEach(function(fieldName) {
-                        layerFields.push(fieldName);
-                    });
-                }
-
-                addFields(layerFields);
-
-                // Use the highest limit for the data query from all layers for the given database/table.
-                // Only the first X elements will be used for each layer based on the limit of the layer.
-                limit = limit ? Math.max(limit, layer.limit) : layer.limit;
+            if(layer.popupFields) {
+                layer.popupFields.forEach(function(fieldName) {
+                    layerFields.push(fieldName);
+                });
             }
+
+            addFields(layerFields);
+
+            // Use the highest limit for the data query from all layers for the given database/table.
+            // Only the first X elements will be used for each layer based on the limit of the layer.
+            limit = limit ? Math.max(limit, layer.limit) : layer.limit;
         });
 
         query.limit(limit || $scope.DEFAULT_LIMIT).withFields(Object.keys(queryFields));
         return query;
     };
 
-    $scope.functions.createNeonQueryClause = function(databaseName, tableName) {
+    $scope.functions.createNeonQueryClause = function(layers) {
         if($scope.functions.getDatasetOptions().checkForNullCoordinates) {
             var whereClauses = [];
-            $scope.active.layers.forEach(function(layer) {
-                if(!layer.new && layer.database.name === databaseName && layer.table.name === tableName) {
-                    if(layer.type === coreMap.Map.NODE_AND_ARROW_LAYER) {
-                        whereClauses.push(neon.query.and(
-                            neon.query.where(layer.sourceLatitudeField.columnName, "!=", null),
-                            neon.query.where(layer.sourceLongitudeField.columnName, "!=", null)
-                        ));
-                        whereClauses.push(neon.query.and(
-                            neon.query.where(layer.targetLatitudeField.columnName, "!=", null),
-                            neon.query.where(layer.targetLongitudeField.columnName, "!=", null)
-                        ));
-                    } else {
-                        whereClauses.push(neon.query.and(
-                            neon.query.where(layer.latitudeField.columnName, "!=", null),
-                            neon.query.where(layer.longitudeField.columnName, "!=", null)
-                        ));
-                    }
+            layers.forEach(function(layer) {
+                if(layer.type === coreMap.Map.NODE_AND_ARROW_LAYER) {
+                    whereClauses.push(neon.query.and(
+                        neon.query.where(layer.sourceLatitudeField.columnName, "!=", null),
+                        neon.query.where(layer.sourceLongitudeField.columnName, "!=", null)
+                    ));
+                    whereClauses.push(neon.query.and(
+                        neon.query.where(layer.targetLatitudeField.columnName, "!=", null),
+                        neon.query.where(layer.targetLongitudeField.columnName, "!=", null)
+                    ));
+                } else {
+                    whereClauses.push(neon.query.and(
+                        neon.query.where(layer.latitudeField.columnName, "!=", null),
+                        neon.query.where(layer.longitudeField.columnName, "!=", null)
+                    ));
                 }
             });
 
@@ -710,9 +731,9 @@ angular.module('neonDemo.controllers').controller('mapController', ['$scope', '$
      */
     $scope.functions.createNeonFilterClause = function(databaseAndTableName, fieldNames) {
         if(fieldNames.length === 2) {
-            return createFilterClauseForFields(fieldNames[0], fieldNames[1]);
+            return createNeonFilterClauseForFields(fieldNames[0], fieldNames[1]);
         } else if(fieldNames.length === 4) {
-            var clauses = [createFilterClauseForFields(fieldNames[0], fieldNames[1]), createFilterClauseForFields(fieldNames[2], fieldNames[3])];
+            var clauses = [createNeonFilterClauseForFields(fieldNames[0], fieldNames[1]), createNeonFilterClauseForFields(fieldNames[2], fieldNames[3])];
             return neon.query.and.apply(neon.query, clauses);
         }
     };
@@ -721,16 +742,16 @@ angular.module('neonDemo.controllers').controller('mapController', ['$scope', '$
      * Creates and returns a filter on the given latitude/longitude fields
      * @param {String} latitudeFieldName The name of the latitude field
      * @param {String} longitudeFieldName The name of the longitude field
-     * @method createFilterClauseForFields
+     * @method createNeonFilterClauseForFields
      * @return {Object} A neon.query.Filter object
      */
-    var createFilterClauseForFields = function(latitudeFieldName, longitudeFieldName) {
+    var createNeonFilterClauseForFields = function(latitudeFieldName, longitudeFieldName) {
         var leftClause = neon.query.where(longitudeFieldName, ">=", $scope.extent.minimumLongitude);
         var rightClause = neon.query.where(longitudeFieldName, "<=", $scope.extent.maximumLongitude);
         var bottomClause = neon.query.where(latitudeFieldName, ">=", $scope.extent.minimumLatitude);
         var topClause = neon.query.where(latitudeFieldName, "<=", $scope.extent.maximumLatitude);
 
-        //Deal with different dateline crossing scenarios.
+        // Deal with different dateline crossing scenarios.
         if($scope.extent.minimumLongitude < -180 && $scope.extent.maximumLongitude > 180) {
             return neon.query.and(topClause, bottomClause);
         }
@@ -759,20 +780,14 @@ angular.module('neonDemo.controllers').controller('mapController', ['$scope', '$
      * @method removeFilter
      */
     $scope.removeFilter = function() {
-        $scope.extent = undefined;
-        $scope.functions.removeFilter();
+        $scope.functions.removeNeonFilter();
     };
 
     $scope.functions.onRemoveFilter = function() {
-        var filtered = $scope.active.layers.some(function(layer) {
-            return layer.filtered;
-        });
-        if(!filtered) {
-            removeZoomRect();
-            $scope.extent = undefined;
-            $scope.error = "";
-            $scope.functions.removeLinks();
-        }
+        removeZoomRect();
+        $scope.extent = undefined;
+        $scope.error = "";
+        $scope.functions.removeLinks();
     };
 
     $scope.functions.onToggleShowLayer = function(layer) {
@@ -785,10 +800,10 @@ angular.module('neonDemo.controllers').controller('mapController', ['$scope', '$
      * @param {Object} message.data
      * @param {String} message.database
      * @param {String} message.table
-     * @method onPointSelected
+     * @method handlePointSelected
      * @private
      */
-    var onPointSelected = function(message) {
+    var handlePointSelected = function(message) {
         // Remove previously selected point, if exists
         if($scope.selectedPointLayer && $scope.selectedPointLayer.name) {
             $scope.map.removeLayer($scope.selectedPointLayer);
@@ -868,7 +883,7 @@ angular.module('neonDemo.controllers').controller('mapController', ['$scope', '$
             layer.olLayer = undefined;
         }
 
-        createMapLayer(layer);
+        layer.olLayer = createMapLayer(layer);
 
         $scope.map.setLayerVisibility(layer.olLayer.id, layer.show);
     };
@@ -877,6 +892,7 @@ angular.module('neonDemo.controllers').controller('mapController', ['$scope', '$
      * Creates and adds a layer to the map
      * @param {Object} layer
      * @method createMapLayer
+     * @return {Object} olLayer
      * @private
      */
     var createMapLayer = function(layer) {
@@ -905,20 +921,23 @@ angular.module('neonDemo.controllers').controller('mapController', ['$scope', '$
             linkyConfig: $scope.linkyConfig
         };
 
+        var olLayer;
         if(layer.type === $scope.POINT_LAYER) {
-            layer.olLayer = new coreMap.Map.Layer.PointsLayer(layer.name, options);
+            olLayer = new coreMap.Map.Layer.PointsLayer(layer.name, options);
         } else if(layer.type === $scope.CLUSTER_LAYER) {
             options.cluster = true;
-            layer.olLayer = new coreMap.Map.Layer.PointsLayer(layer.name, options);
+            olLayer = new coreMap.Map.Layer.PointsLayer(layer.name, options);
         } else if(layer.type === $scope.HEATMAP_LAYER) {
-            layer.olLayer = new coreMap.Map.Layer.HeatmapLayer(layer.name, $scope.map.map, $scope.map.map.baseLayer, options);
+            olLayer = new coreMap.Map.Layer.HeatmapLayer(layer.name, $scope.map.map, $scope.map.map.baseLayer, options);
         } else if(layer.type === $scope.NODE_AND_ARROW_LAYER) {
-            layer.olLayer = new coreMap.Map.Layer.NodeLayer(layer.name, options);
+            olLayer = new coreMap.Map.Layer.NodeLayer(layer.name, options);
         }
 
-        if(layer.olLayer) {
-            $scope.map.addLayer(layer.olLayer);
+        if(olLayer) {
+            $scope.map.addLayer(olLayer);
         }
+
+        return olLayer;
     };
 
     var generateGradientList = function(layer) {
@@ -990,14 +1009,14 @@ angular.module('neonDemo.controllers').controller('mapController', ['$scope', '$
         queries.forEach(function(queryData) {
             var tempObject = {
                 query: queryData.query,
-                name: "map_" + queryData.database + "_" + queryData.table + "-" + exportId,
+                name: "map_" + queryData.layer.database.name + "_" + queryData.layer.table.name + "-" + exportId,
                 fields: [],
                 ignoreFilters: queryData.query.ignoreFilters_,
                 selectionOnly: queryData.query.selectionOnly_,
                 ignoredFilterIds: queryData.query.ignoredFilterIds_,
                 type: "query"
             };
-            for(var count = 0, fields = $scope.functions.getUnsortedFields(queryData.database, queryData.table); count < fields.length; count++) {
+            for(var count = 0, fields = $scope.functions.getUnsortedFields(queryData.layer.database.name, queryData.layer.table.name); count < fields.length; count++) {
                 tempObject.fields.push({
                     query: fields[count].columnName,
                     pretty: fields[count].prettyName || fields[count].columnName
@@ -1012,20 +1031,20 @@ angular.module('neonDemo.controllers').controller('mapController', ['$scope', '$
     $scope.functions.addToLayerBindings = function(bindings, layer) {
         bindings.type = layer.type;
         bindings.limit = layer.limit;
-        bindings.latitude = $scope.functions.isFieldValid(layer.latitudeField) ? layer.latitudeField.columnName : "";
-        bindings.longitude = $scope.functions.isFieldValid(layer.longitudeField) ? layer.longitudeField.columnName : "";
-        bindings.sourceLatitude = $scope.functions.isFieldValid(layer.sourceLatitudeField) ? layer.sourceLatitudeField.columnName : "";
-        bindings.sourceLongitude = $scope.functions.isFieldValid(layer.sourceLongitudeField) ? layer.sourceLongitudeField.columnName : "";
-        bindings.targetLatitude = $scope.functions.isFieldValid(layer.targetLatitudeField) ? layer.targetLatitudeField.columnName : "";
-        bindings.targetLongitude = $scope.functions.isFieldValid(layer.targetLongitudeField) ? layer.targetLongitudeField.columnName : "";
-        bindings.color = $scope.functions.isFieldValid(layer.colorField) ? layer.colorField.columnName : "";
-        bindings.date = $scope.functions.isFieldValid(layer.dateField) ? layer.dateField.columnName : "";
-        bindings.size = $scope.functions.isFieldValid(layer.sizeField) ? layer.sizeField.columnName : "";
+        bindings.latitudeField = $scope.functions.isFieldValid(layer.latitudeField) ? layer.latitudeField.columnName : "";
+        bindings.longitudeField = $scope.functions.isFieldValid(layer.longitudeField) ? layer.longitudeField.columnName : "";
+        bindings.sourceLatitudeField = $scope.functions.isFieldValid(layer.sourceLatitudeField) ? layer.sourceLatitudeField.columnName : "";
+        bindings.sourceLongitudeField = $scope.functions.isFieldValid(layer.sourceLongitudeField) ? layer.sourceLongitudeField.columnName : "";
+        bindings.targetLatitudeField = $scope.functions.isFieldValid(layer.targetLatitudeField) ? layer.targetLatitudeField.columnName : "";
+        bindings.targetLongitudeField = $scope.functions.isFieldValid(layer.targetLongitudeField) ? layer.targetLongitudeField.columnName : "";
+        bindings.colorField = $scope.functions.isFieldValid(layer.colorField) ? layer.colorField.columnName : "";
+        bindings.dateField = $scope.functions.isFieldValid(layer.dateField) ? layer.dateField.columnName : "";
+        bindings.sizeField = $scope.functions.isFieldValid(layer.sizeField) ? layer.sizeField.columnName : "";
         bindings.colorCode = layer.colorCode || "";
-        bindings.lineColor = $scope.functions.isFieldValid(layer.lineColorField) ? layer.lineColorField.columnName : "";
-        bindings.nodeColor = $scope.functions.isFieldValid(layer.nodeColorField) ? layer.nodeColorField.columnName : "";
-        bindings.lineSize = $scope.functions.isFieldValid(layer.lineSizeField) ? layer.lineSizeField.columnName : "";
-        bindings.nodeSize = $scope.functions.isFieldValid(layer.nodeSizeField) ? layer.nodeSizeField.columnName : "";
+        bindings.lineColorField = $scope.functions.isFieldValid(layer.lineColorField) ? layer.lineColorField.columnName : "";
+        bindings.nodeColorField = $scope.functions.isFieldValid(layer.nodeColorField) ? layer.nodeColorField.columnName : "";
+        bindings.lineSizeField = $scope.functions.isFieldValid(layer.lineSizeField) ? layer.lineSizeField.columnName : "";
+        bindings.nodeSizeField = $scope.functions.isFieldValid(layer.nodeSizeField) ? layer.nodeSizeField.columnName : "";
         bindings.lineColorCode = layer.lineColorCode || "";
         bindings.nodeColorCode = layer.nodeColorCode || "";
         bindings.gradientColorCode1 = layer.gradientColorCode1 || "";
