@@ -40,9 +40,9 @@
     </head>
     <body style="height:100%" ng-controller="neonDemoController">
         <link rel="stylesheet" type="text/css" ng-href="app/themes/{{theme.selected.file}}.css">
-        <!-- Database Config -->
+        <!-- Widget Config -->
         <div class="visualization-well visualization-widget">
-            <div multiple-table-visualization name="Line Chart" type="lineChart" class="multiple-table-visualization" active="active" bindings="bindings" log-element-group="chart_group" log-element-type="linechart" visualization-id="{{visualizationId}}"></div>
+            <div multiple-table-visualization name="Map" type="map" class="multiple-table-visualization" active="active" bindings="bindings" log-element-group="map_group" log-element-type="map" visualization-id="{{visualizationId}}"></div>
         </div>
         <!-- In production use:
         <script src="//ajax.googleapis.com/ajax/libs/angularjs/x.x.x/angular.min.js"></script>
@@ -277,6 +277,7 @@
             function($scope, $timeout, $location, config, layouts, datasets, themeService, connectionService, datasetService, errorNotificationService) {
                 $scope.messenger = new neon.eventing.Messenger();
 
+                themeService.setTheme("Dark Green");
                 $scope.theme = {
                     list: themeService.getThemes(),
                     selected: themeService.getTheme()
@@ -313,11 +314,7 @@
 
                 
                 $scope.bindings = {
-                    aggregation: 'count',
-                    limit: 1000,
-                    database: {'name': 'test'},
-                    table: {'name': 'earthquakes'},
-                    dateField: 'time'
+
                 };
                 $scope.bindings.hideAdvancedOptions = config.hideAdvancedOptions;
                 $scope.bindings.hideHeader = config.hideHeader;
@@ -347,7 +344,7 @@
         <script src="components/ganttChart/ganttChart.controller.js"></script>
         <script src="components/import/import.directive.js"></script>
         <script src="components/import/removeDataset.directive.js"></script>
-        <script src="components/lineChart/lineChart.controller.js"></script>
+       <!--  <script src="components/lineChart/lineChart.controller.js"></script> -->
         <script src="components/lineChart/lineChart.js"></script>
         <script src="components/linksPopup/linksPopup.directive.js"></script>
         <script src="components/linksPopup/linksPopup.service.js"></script>
@@ -358,6 +355,7 @@
         <script src="components/map/nodeLayer.js"></script>
         <script src="components/map/pointsLayer.js"></script>
         <script src="components/map/selectedPointsLayer.js"></script>
+        <script src="components/multipleTableVisualization/multipleTableVisualization.directive.js"></script>
         <script src="components/networkGraph/directedGraph.js"></script>
         <script src="components/networkGraph/directedGraphMediator.js"></script>
         <script src="components/networkGraph/networkGraph.controller.js"></script>
