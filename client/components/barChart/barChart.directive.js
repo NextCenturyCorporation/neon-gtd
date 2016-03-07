@@ -348,10 +348,13 @@ function(external, connectionService, datasetService, errorNotificationService, 
                 var queryType;
                 if($scope.options.barType === 'count') {
                     queryType = neon.query.COUNT;
+                    COUNT_FIELD_NAME = 'Count';
                 } else if($scope.options.barType === 'sum') {
                     queryType = neon.query.SUM;
+                    COUNT_FIELD_NAME = 'Sum';
                 } else if($scope.options.barType === 'average') {
                     queryType = neon.query.AVG;
+                    COUNT_FIELD_NAME = 'Average';
                 }
 
                 if($scope.options.barType === "count") {
