@@ -18,13 +18,18 @@
 
 angular.module('neonDemo.directives').directive('visualizationDisplay', function() {
     return {
-        scope: {
-            active: '=',
-            functions: '='
-        },
-        link: function($scope, $element) {
-            // The display is the last to load so initialize the visualization once the display has finished loading.
-            $scope.functions.init();
+
+        compile: function()  {
+            return {
+                pre: function($scope, $element) {
+                    // This directive is used in conjunction with an ng-include, so the element is transcluded to the outer
+                    // scope which contains the appropriate visualization ID.
+                    $element.attr("id", $scope.visualizationId);
+                },
+                post: function($scope, $element) {
+                    $scope.functions.init();
+                }
+            };
         }
     };
 });
