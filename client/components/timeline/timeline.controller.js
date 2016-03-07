@@ -444,6 +444,8 @@ angular.module('neonDemo.controllers').controller('timelineController', ['$scope
     };
 
     $scope.functions.onResize = function(elementHeight, elementWidth, headersHeight) {
+        $scope.functions.getElement(".neon-datetimepicker .dropdown-menu").css("max-height", (elementHeight - headersHeight) + "px");
+
         if($scope.chart) {
             // TODO Fix size calculations in the timeline selector chart so we don't have to add/subtract these values to make the chart fit the visualization.
             $scope.chart.config.height = elementHeight - headersHeight - 20;
