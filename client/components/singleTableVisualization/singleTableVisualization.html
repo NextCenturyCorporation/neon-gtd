@@ -21,7 +21,7 @@
                 </select>
             </div>
 
-            <visualization-options class="visualization-options" active="active" bindings="bindings" fields="fields" functions="functions"></visualization-options>
+            <visualization-options class="visualization-options"></visualization-options>
 
             <div class="form-group" ng-hide="bindings.hideAdvancedOptions">
                 <label>Unshared Filter</label>
@@ -48,11 +48,11 @@
 
     <!-- Shrink the container instead of hiding it in order to trigger a resize event. -->
     <div class="header-container filter-container" ng-class="{true: 'shrink', false: ''}[functions.hideHeaders()]">
-        <visualization-headers class="visualization-headers" active="active" functions="functions"></visualization-headers>
+        <visualization-headers class="visualization-headers"></visualization-headers>
     </div>
 
     <div class="clearfix"></div>
 
-    <visualization-display id="{{visualizationId}}" class="visualization-display" active="active" functions="functions" style="height: 0px; width: 0px;"></visualization-display>
+    <visualization-display id="{{visualizationId}}" class="visualization-display"style="height: 0px; width: 0px;"></visualization-display>
 </div>
 
