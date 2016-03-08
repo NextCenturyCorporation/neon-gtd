@@ -757,6 +757,21 @@ function(external, connectionService, datasetService, errorNotificationService, 
                     if(!updated) {
                         runDefaultQueryAndUpdate(message.addedFilter.databaseName, message.addedFilter.tableName);
                     }
+                } else if(message.type === 'CLEAR') {
+                    XDATA.userALE.log({
+                        activity: "alter",
+                        action: "query",
+                        elementId: $scope.type,
+                        elementType: $scope.logElementType,
+                        elementSub: $scope.type,
+                        elementGroup: $scope.logElementGroup,
+                        source: "system",
+                        tags: ["filters-changed", $scope.type]
+                    });
+                    if($scope.functions.isFilterSet()) {
+                        $scope.functions.onRemoveFilter();
+                    }
+                    runDefaultQueryAndUpdate();
                 }
             };
 
