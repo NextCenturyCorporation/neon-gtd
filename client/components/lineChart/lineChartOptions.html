@@ -1,0 +1,25 @@
+<div class="form-group">
+    <label>Date Granularity</label>
+    <div class="btn-group">
+      <label class="btn btn-default" ng-class="{true: 'active', false: ''}[active.granularity === 'day']">
+        <input type="radio" style="display:none" ng-model="active.granularity" value="day" ng-change="changeGranularity()">Day
+      </label>
+      <label class="btn btn-default" ng-class="{true: 'active', false: ''}[active.granularity === 'hour']">
+        <input type="radio" style="display:none" ng-model="active.granularity" value="hour" ng-change="changeGranularity()">Hour
+      </label>
+    </div>
+    <div class="clearfix"></div>
+</div>
+
+<div class="form-group">
+    <label>Trendlines</label>
+    <div class="btn-group">
+      <label class="btn btn-default" ng-class="{true: 'active', false: ''}[active.showTrendlines]">
+        <input type="radio" style="display:none" ng-model="active.showTrendlines" ng-value="true" ng-change="toggleShowTrendlines()">Show
+      </label>
+      <label class="btn btn-default" ng-class="{true: '', false: 'active'}[active.showTrendlines]">
+        <input type="radio" style="display:none" ng-model="active.showTrendlines" ng-value="false" ng-change="toggleShowTrendlines()">Hide
+      </label>
+    </div>
+    <div class="clearfix"></div>
+</div>

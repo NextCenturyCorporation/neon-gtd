@@ -1,0 +1,31 @@
+<div class="layer-options-row">
+    <div class="form-group layer-options-col" ng-class="{true: '', false: 'has-error'}[layer.dateField.columnName]">
+        <label>Date Field</label>
+        <select class="form-control" ng-cancel-drag ng-model="layer.dateField" ng-options="field.prettyName for field in layer.fields" ng-required="true" ng-disabled="!(layer.fields.length > 0)">
+        </select>
+    </div>
+
+    <div class="form-group layer-options-col">
+        <label>Group Field</label>
+        <select class="form-control" ng-cancel-drag ng-model="layer.groupField" ng-options="field.prettyName for field in layer.fields" ng-required="true" ng-disabled="!(layer.fields.length > 0)">
+            <option value="">None</option>
+        </select>
+    </div>
+
+    <div class="form-group layer-options-col">
+        <label>Aggregation</label>
+        <select class="form-control" ng-cancel-drag ng-model="layer.aggregationType" ng-disabled="!(layer.fields.length > 0)" ng-required="true">
+            <option value="count">Count</option>
+            <option value="sum">Sum</option>
+            <option value="average">Average</option>
+            <option value="min">Minimum</option>
+            <option value="max">Maximum</option>
+        </select>
+    </div>
+
+    <div class="form-group layer-options-col" ng-show="layer.aggregationType !== 'count'" ng-class="{true: '', false: 'has-error'}[layer.aggregationField.columnName]">
+        <label>Agg. Field</label>
+        <select class="form-control" ng-cancel-drag ng-model="layer.aggregationField" ng-required="false" ng-disabled="!(layer.fields.length > 0)" ng-options="field.prettyName for field in layer.fields">
+        </select>
+    </div>
+</div>
