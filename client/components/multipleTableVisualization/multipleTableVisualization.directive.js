@@ -184,7 +184,7 @@ function(external, connectionService, datasetService, errorNotificationService, 
                 $scope.functions.onInit();
 
                 ($scope.bindings.config || []).forEach(function(item) {
-                    var layer = $scope.createLayer(item);
+                    var layer = createLayerFromConfig(item);
                     updateOtherLayers(layer);
                     $scope.functions.onUpdateLayer(layer);
                 });
@@ -316,25 +316,14 @@ function(external, connectionService, datasetService, errorNotificationService, 
             };
 
             /**
-             * Gets the list of databases from the dataset service and sets the active database, table, and fields for the given layer.
-             * @param {Object} layer
-             * @method updateDatabases
-             */
-            $scope.updateDatabases = function(layer) {
-                layer.databases = datasetService.getDatabases();
-                layer.database = layer.databases[0];
-                $scope.updateTables(layer);
-            };
-
-            /**
              * Gets the list of tables from the dataset service and sets the active table and fields for the given layer.
              * @param {Object} layer
              * @method updateTables
              */
-            $scope.updateTables = function(layer) {
+            $scope.functions.updateTables = function(layer) {
                 layer.tables = datasetService.getTables(layer.database.name);
                 layer.table = layer.tables[0];
-                $scope.updateFields(layer);
+                $scope.functions.updateFields(layer);
             };
 
             /**
@@ -343,7 +332,7 @@ function(external, connectionService, datasetService, errorNotificationService, 
              * @method updateFields
              * @private
              */
-            $scope.updateFields = function(layer) {
+            $scope.functions.updateFields = function(layer) {
                 if($scope.functions.isFilterSet()) {
                     removeNeonFilter({
                         database: layer.database.name,
@@ -1321,7 +1310,7 @@ function(external, connectionService, datasetService, errorNotificationService, 
             };
 
             /**
-             * Returns the configuration for the linky library.
+             * Returns the config for the linky library.
              * @method getLinkyConfig
              * @return {Object}
              */
@@ -1385,7 +1374,7 @@ function(external, connectionService, datasetService, errorNotificationService, 
             };
 
             /**
-             * Returns the list of unsorted fields (in the order they are defined in the dashboard configuration).
+             * Returns the list of unsorted fields (in the order they are defined in the dashboard config).
              * @method getUnsortedFields
              * @return {Array}
              */
@@ -1514,36 +1503,40 @@ function(external, connectionService, datasetService, errorNotificationService, 
             };
 
             /**
-             * Creates a new data layer for this visualization using the given configuration data and dataset defaults.
-             * If the configuration data is not given, the new data layer is created in new & edit mode.
-             * @param {Object} config (Optional)
+             * Creates a new data layer for this visualization using the dataset defaults and set in new & edit mode.
              * @method createLayer
              */
-            $scope.createLayer = function(config) {
+            $scope.functions.createLayer = function() {
+                // TODO Logging
+                var layer = createLayerFromConfig({});
+                layer.edit = true;
+                layer.new = true;
+            };
+
+            /**
+             * Creates a new data layer for this visualization using the given config and dataset defaults.
+             * @param {Object} config
+             * @method createLayerFromConfig
+             * @private
+             */
+            var createLayerFromConfig = function(config) {
                 var layer = {
                     databases: datasetService.getDatabases(),
                     filterable: true,
                     show: true
                 };
 
-                // Layers are either created during initialization (with a config) or by the user through a button click (without a config).
-                if(!config) {
-                    // TODO Logging
-                    layer.edit = true;
-                    layer.new = true;
-                }
-
-                layer.database = (config && config.database) ? datasetService.getDatabaseWithName(config.database) : layer.databases[0];
+                layer.database = config.database ? datasetService.getDatabaseWithName(config.database) : layer.databases[0];
                 layer.tables = datasetService.getTables(layer.database.name);
-                layer.table = (config && config.table) ? datasetService.getTableWithName(layer.database.name, config.table) : layer.tables[0];
+                layer.table = config.table ? datasetService.getTableWithName(layer.database.name, config.table) : layer.tables[0];
 
                 if(layer.database && layer.database.name && layer.table && layer.table.name) {
-                    layer.name = ((config ? config.name : layer.table.name) || layer.table.name).toUpperCase();
+                    layer.name = (config.name || layer.table.name).toUpperCase();
                     layer.fields = datasetService.getSortedFields(layer.database.name, layer.table.name);
-                    layer.unsharedFilterField = $scope.functions.findFieldObject(layer, config ? config.unsharedFilterField : "");
-                    layer.unsharedFilterValue = config ? config.unsharedFilterValue : "";
-                    $scope.active.layers.push($scope.functions.addToNewLayer(layer, config || {}));
-                    $scope.validateLayerName(layer, 0);
+                    layer.unsharedFilterField = $scope.functions.findFieldObject(layer, config.unsharedFilterField || "");
+                    layer.unsharedFilterValue = config.unsharedFilterValue || "";
+                    $scope.active.layers.push($scope.functions.addToNewLayer(layer, config));
+                    $scope.functions.validateLayerName(layer, 0);
                 }
 
                 return layer;
@@ -1564,7 +1557,7 @@ function(external, connectionService, datasetService, errorNotificationService, 
              * @param {Object} layer
              * @method toggleEditLayer
              */
-            $scope.toggleEditLayer = function(layer) {
+            $scope.functions.toggleEditLayer = function(layer) {
                 // TODO Logging
                 layer.edit = true;
             };
@@ -1574,7 +1567,7 @@ function(external, connectionService, datasetService, errorNotificationService, 
              * @param {Object} layer
              * @method updateLayer
              */
-            $scope.updateLayer = function(layer) {
+            $scope.functions.updateLayer = function(layer) {
                 // TODO Logging
                 var isNew = layer.new;
                 var updated = false;
@@ -1636,7 +1629,7 @@ function(external, connectionService, datasetService, errorNotificationService, 
              * @param {Number} indexReversed The index of the layer in the list of layers (reversed).
              * @method deleteLayer
              */
-            $scope.deleteLayer = function(layer, indexReversed) {
+            $scope.functions.deleteLayer = function(layer, indexReversed) {
                 // TODO Logging
                 $scope.functions.onDeleteLayer(layer);
                 $scope.active.layers.splice($scope.active.layers.length - 1 - indexReversed, 1);
@@ -1665,7 +1658,7 @@ function(external, connectionService, datasetService, errorNotificationService, 
              * @param {Number} newIndexReversed The new index of the layer in the list of layers (reversed).
              * @method reorderLayer
              */
-            $scope.reorderLayer = function(layer, newIndexReversed) {
+            $scope.functions.reorderLayer = function(layer, newIndexReversed) {
                 var newIndex = $scope.active.layers.length - 1 - newIndexReversed;
                 var oldIndex = $scope.active.layers.indexOf(layer);
                 $scope.active.layers.splice(oldIndex, 1);
@@ -1686,7 +1679,7 @@ function(external, connectionService, datasetService, errorNotificationService, 
              * @param {Object} layer
              * @method toggleShowLayer
              */
-            $scope.toggleShowLayer = function(layer) {
+            $scope.functions.toggleShowLayer = function(layer) {
                 // TODO Logging
                 $scope.functions.onToggleShowLayer(layer);
             };
@@ -1705,7 +1698,7 @@ function(external, connectionService, datasetService, errorNotificationService, 
              * @param {Object} layer
              * @method toggleFilterLayer
              */
-            $scope.toggleFilterLayer = function(layer) {
+            $scope.functions.toggleFilterLayer = function(layer) {
                 // TODO Logging
                 updateOtherLayers(layer);
 
@@ -1736,7 +1729,7 @@ function(external, connectionService, datasetService, errorNotificationService, 
              * @param {Number} indexReversed The index of the layer in the list of layers (reversed).
              * @method validateLayerName
              */
-            $scope.validateLayerName = function(layer, indexReversed) {
+            $scope.functions.validateLayerName = function(layer, indexReversed) {
                 var index = $scope.active.layers.length - 1 - indexReversed;
                 var invalid = $scope.active.layers.some(function(otherLayer, otherIndex) {
                     return otherLayer.name === (layer.name || layer.table.name).toUpperCase() && otherIndex !== index;
