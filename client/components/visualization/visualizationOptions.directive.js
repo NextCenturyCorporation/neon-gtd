@@ -16,14 +16,15 @@
  *
  */
 
+/**
+ * This generic directive represents the options for a Neon dashboard visualization.
+ * @namespace neonDemo.directives
+ * @class visualizationOptions
+ * @constructor
+ */
 angular.module('neonDemo.directives').directive('visualizationOptions', function() {
     return {
-        scope: {
-            active: '=',
-            bindings: '=',
-            fields: '=',
-            functions: '='
-        }
+        // HTML template and controller are set during compilation by the visualization superclass.
     };
 });
 

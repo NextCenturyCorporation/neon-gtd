@@ -16,9 +16,15 @@
  *
  */
 
+/**
+ * This generic directive represents the display for a Neon dashboard visualization.
+ * @namespace neonDemo.directives
+ * @class visualizationDisplay
+ * @constructor
+ */
 angular.module('neonDemo.directives').directive('visualizationDisplay', function() {
     return {
-
+        // HTML template and controller are set during compilation by the visualization superclass.
         compile: function()  {
             return {
                 pre: function($scope, $element) {
