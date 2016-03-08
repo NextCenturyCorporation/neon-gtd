@@ -1538,7 +1538,7 @@ function(external, connectionService, datasetService, errorNotificationService, 
                 layer.table = (config && config.table) ? datasetService.getTableWithName(layer.database.name, config.table) : layer.tables[0];
 
                 if(layer.database && layer.database.name && layer.table && layer.table.name) {
-                    layer.name = ((config ? config.name : layer.table.name) || layer.table.name).toUpperCase();
+                    layer.name = (((config && config.name) ? config.name : layer.table.name) || layer.table.name).toUpperCase();
                     layer.fields = datasetService.getSortedFields(layer.database.name, layer.table.name);
                     layer.unsharedFilterField = $scope.functions.findFieldObject(layer, config ? config.unsharedFilterField : "");
                     layer.unsharedFilterValue = config ? config.unsharedFilterValue : "";
