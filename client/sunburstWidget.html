@@ -42,7 +42,7 @@
         <link rel="stylesheet" type="text/css" ng-href="app/themes/{{theme.selected.file}}.css">
         <!-- Widget Config -->
         <div class="visualization-well visualization-widget">
-            <div multiple-table-visualization name="Line Chart" type="lineChart" class="multiple-table-visualization" active="active" bindings="bindings" log-element-group="chart_group" log-element-type="linechart" visualization-id="{{visualizationId}}"></div>
+            <div single-table-visualization name="Sunburst" type="sunburstChart" class="single-table-visualization" active="active" bindings="bindings" log-element-group="chart_group" log-element-type="sunburstChart" visualization-id="{{visualizationId}}"></div>
         </div>
         <div id="tooltip-container"></div>
         <!-- In production use:
@@ -133,15 +133,9 @@
 
                         if(event === 'activate' || event === 'show') {
                             $(document.body).show();
-                            console.log("activating line chart widget");
                         }
                         else if(event === 'hide') {
                             $(document.body).hide();
-                            console.log("hiding line chart widget");
-                        } else if (event === 'beforedestroy') {
-                            console.log("destroying line chart widget");
-                        } else if (event === 'beforeclose') {
-                            console.log("closing line chart widget");
                         }
                     }
                 });
@@ -153,7 +147,7 @@
                 // SVG packages.  The work around for this is to hide our widget body
                 // on hide events.
                 widgetState.addStateEventListeners({
-                    events: ['activate', 'hide', 'show', 'destroy']
+                    events: ['activate', 'hide', 'show']
                 });
 
                 OWF.notifyWidgetReady();
@@ -302,7 +296,6 @@
                 $scope.element = $("body");
 
                 $scope.element = $(window);
-                $scope.visualizationId = OWF.getInstanceId();
 
                 // Load the possible datasets.
                 // for (var i = 0; i < datasets.length; i++) {
@@ -319,17 +312,15 @@
 
                 
                 $scope.bindings = {
-                    config: [{
-                        name: 'Counts by Type',
-                        date: 'time',
-                        aggregation: 'count',
-                        group: 'type'
-                    }]
+                    aggregation: 'count',
+                    limit: 1000,
+                    database: {'name': 'test'},
+                    table: {'name': 'earthquakes'},
+                    dateField: 'time'
                 };
-
                 $scope.bindings.hideAdvancedOptions = config.hideAdvancedOptions;
                 $scope.bindings.hideHeader = config.hideHeader;
-                
+                $scope.visualizationId = OWF.getInstanceId();
             }]);
 
         </script>
@@ -366,7 +357,6 @@
         <script src="components/map/nodeLayer.js"></script>
         <script src="components/map/pointsLayer.js"></script>
         <script src="components/map/selectedPointsLayer.js"></script>
-        <script src="components/multipleTableVisualization/multipleTableVisualization.directive.js"></script>
         <script src="components/networkGraph/directedGraph.js"></script>
         <script src="components/networkGraph/directedGraphMediator.js"></script>
         <script src="components/networkGraph/networkGraph.controller.js"></script>
@@ -390,7 +380,6 @@
         <script src="components/translationOptions/translationOptions.directive.js"></script>
         <script src="components/visualization/visualizationDisplay.directive.js"></script>
         <script src="components/visualization/visualizationHeaders.directive.js"></script>
-        <script src="components/visualization/visualizationLayerOptions.directive.js"></script>
         <script src="components/visualization/visualizationOptions.directive.js"></script>
         <script src="components/visualizationWidget/visualizationWidget.directive.js"></script>
         <!-- endinjector -->

@@ -296,9 +296,6 @@
 
                 $scope.element = $(window);
 
-                console.log(config);
-                console.log(datasets);
-                console.log(layouts);
                 // Load the possible datasets.
                 // for (var i = 0; i < datasets.length; i++) {
                 //     datasetService.addDataset(datasets[i]);
@@ -312,7 +309,6 @@
                     table: {'name': 'earthquakes'}
                 };
 
-                
                 $scope.bindings = {
                     aggregation: 'count',
                     limit: 1000,
@@ -352,12 +348,12 @@
         <script src="components/import/removeDataset.directive.js"></script>
         <script src="components/lineChart/lineChart.directive.js"></script>
         <script src="components/lineChart/lineChart.js"></script>
-        <script src="components/linksPopup/linksPopup.directive.js"></script>
+        <script src="components/linksPopup/linksPopup.controller.js"></script>
         <script src="components/linksPopup/linksPopup.service.js"></script>
         <script src="components/linksPopup/linksPopupButton.directive.js"></script>
         <script src="components/map/coremap.js"></script>
         <script src="components/map/heatmapLayer.js"></script>
-        <script src="components/map/map.directive.js"></script>
+        <script src="components/map/map.controller.js"></script>
         <script src="components/map/nodeLayer.js"></script>
         <script src="components/map/pointsLayer.js"></script>
         <script src="components/map/selectedPointsLayer.js"></script>

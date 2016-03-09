@@ -277,16 +277,6 @@
             function($scope, $timeout, $location, config, layouts, datasets, themeService, connectionService, datasetService, errorNotificationService) {
                 $scope.messenger = new neon.eventing.Messenger();
 
-                themeService.setTheme("Dark Green");
-                $scope.theme = {
-                    list: themeService.getThemes(),
-                    selected: themeService.getTheme()
-                };
-
-                $scope.updateTheme = function() {
-                    themeService.setTheme($scope.theme.selected.name);
-                };
-
                 $scope.hideNavbarItems = config.hideNavbarItems;
                 $scope.hideFilterStatusTray = config.hideFilterStatusTray;
 
@@ -306,18 +296,29 @@
                 datasetService.updateDatabases(datasets[0], connectionService.getActiveConnection());
                 $scope.active = {
                     database: {'name': 'test'},
-                    table: {'name': 'earthquakes'}
+                    table: {'name': 'earthquakes'},
+                    baseLayerColor: 'dark',
+                    baseLayerProtocol: 'https'
                 };
 
                 
                 $scope.bindings = {
-                    config : datasets[0].mapLayers,
-                    baseLayerColor: 'dark'
+                    config : datasets[0].mapLayers
                 };
 
                 $scope.bindings.hideAdvancedOptions = config.hideAdvancedOptions;
                 $scope.bindings.hideHeader = config.hideHeader;
                 $scope.visualizationId = OWF.getInstanceId();
+
+                themeService.setTheme("Dark Green");
+                $scope.theme = {
+                    list: themeService.getThemes(),
+                    selected: themeService.getTheme()
+                };
+
+                $scope.updateTheme = function() {
+                    themeService.setTheme($scope.theme.selected.name);
+                };
             }]);
 
         </script>

@@ -21,13 +21,13 @@ p=/[\\\"\x00-\x1f\x7f-\x9f\u00ad\u0600-\u0604\u070f\u17b4\u17b5\u200c-\u200f\u20
     path = path.replace(/\/[^\/]+$/, "/");
 
     widgetData = {
-        "universalName": "neon.demo.widget.filterbuilder",
-        "displayName": "Neon Filter Builder",
-        "description": "A sample widget that uses Neon's filter capabilities to limit data returned from a datasource via a Neon connection.  Filters created by this widget will effect any other widget attached to the same data source in the same session.",
+        "universalName": "neon.demo.widget.text-cloud",
+        "displayName": "Neon Text Cloud",
+        "description": "A sample widget that uses Neon's querying capabilities to pull data from a database and populate a text cloud.",
         "widgetVersion": "1.0",
-        "widgetUrl": path + "../filterBuilderWidget.html",
-        "imageUrlSmall": path + "../assets/images/visualizations/CreateFilter64.png",
-        "imageUrlLarge": path + "../assets/images/visualizations/CreateFilter64.png",
+        "widgetUrl": path + "../textCloudWidget.html",
+        "imageUrlSmall": path + "../assets/images/visualizations/TagCloud64.png",
+        "imageUrlLarge": path + "../assets/images/visualizations/TagCloud64.png",
         "width": 500,
         "height": 500,
         "visible": true,
@@ -36,7 +36,7 @@ p=/[\\\"\x00-\x1f\x7f-\x9f\u00ad\u0600-\u0604\u070f\u17b4\u17b5\u200c-\u200f\u20
         "widgetTypes": [
             "standard"
         ],
-        "defaultTags": ["map", "geo", "neon"],
+        "defaultTags": ["textcloud", "neon"],
         "intents": {}
     };
     /********************************************************************/

@@ -101,7 +101,11 @@ angular.module('neonDemo.controllers').controller('mapController', ['$scope', '$
         $scope.map = new coreMap.Map($scope.visualizationId, {
             responsive: false,
             getNestedValue: neon.helpers.getNestedValue,
-            queryForMapPopupDataFunction: queryForMapPopupData
+            queryForMapPopupDataFunction: queryForMapPopupData,
+            mapBaseLayer: {
+                color: $scope.active.baseLayerColor || 'light',
+                protocol: $scope.active.baseLayerProtocol || 'http'
+            }
         });
         $scope.map.linksPopupService = $scope.functions.getLinksPopupService();
         $scope.setDefaultView();
